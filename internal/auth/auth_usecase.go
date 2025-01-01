@@ -115,7 +115,7 @@ func (u *auth) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				loggedInPerson, errGetPerson := u.persons.GetOrCreatePersonBySteamID(ctx, sid)
+				loggedInPerson, errGetPerson := u.persons.GetOrCreatePersonBySteamID(ctx, nil, sid)
 				if errGetPerson != nil {
 					slog.Error("Failed to load person during auth", log.ErrAttr(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)

@@ -26,7 +26,7 @@ func NewBanSteamRepository(database database.Database, persons domain.PersonUsec
 }
 
 func (r banSteamRepository) TruncateCache(ctx context.Context) error {
-	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.Builder().Delete("steam_friends")))
+	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.Builder().Delete("steam_friends")))
 }
 
 func (r banSteamRepository) InsertCache(ctx context.Context, steamID steamid.SteamID, entries []int64) error {
@@ -36,7 +36,7 @@ func (r banSteamRepository) InsertCache(ctx context.Context, steamID steamid.Ste
 	now := time.Now()
 
 	for _, entrySteamID := range entries {
-		_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, steamid.New(entrySteamID))
+		_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, nil, steamid.New(entrySteamID))
 		if errPerson != nil {
 			slog.Error("Failed to validate person for friend insertion", log.ErrAttr(errPerson))
 
@@ -46,7 +46,7 @@ func (r banSteamRepository) InsertCache(ctx context.Context, steamID steamid.Ste
 		batch.Queue(query, steamID.Int64(), entrySteamID, now)
 	}
 
-	batchResults := r.db.SendBatch(ctx, &batch)
+	batchResults := r.db.SendBatch(ctx, nil, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}
@@ -68,7 +68,7 @@ func (r banSteamRepository) Stats(ctx context.Context, stats *domain.Stats) erro
 		(SELECT COUNT(filter_id) FROM filtered_word) as filtered_words,
 		(SELECT COUNT(server_id) FROM server) as servers_total`
 
-	if errQuery := r.db.QueryRow(ctx, query).
+	if errQuery := r.db.QueryRow(ctx, nil, query).
 		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth, &stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal, &stats.FilteredWords, &stats.ServersTotal); errQuery != nil {
 		return r.db.DBErr(errQuery)
 	}
@@ -78,7 +78,7 @@ func (r banSteamRepository) Stats(ctx context.Context, stats *domain.Stats) erro
 
 func (r banSteamRepository) Delete(ctx context.Context, ban *domain.BanSteam, hardDelete bool) error {
 	if hardDelete {
-		if errExec := r.db.Exec(ctx, `DELETE FROM ban WHERE ban_id = $1`, ban.BanID); errExec != nil {
+		if errExec := r.db.Exec(ctx, nil, `DELETE FROM ban WHERE ban_id = $1`, ban.BanID); errExec != nil {
 			return r.db.DBErr(errExec)
 		}
 
@@ -124,7 +124,7 @@ func (r banSteamRepository) getBanByColumn(ctx context.Context, column string, i
 		OrderBy("b.created_on DESC").
 		Limit(1)
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, query)
+	row, errQuery := r.db.QueryRowBuilder(ctx, nil, query)
 	if errQuery != nil {
 		return person, r.db.DBErr(errQuery)
 	}
@@ -169,12 +169,12 @@ func (r banSteamRepository) GetByLastIP(ctx context.Context, lastIP netip.Addr, 
 // New records will have the Ban.BanID set automatically.
 func (r banSteamRepository) Save(ctx context.Context, ban *domain.BanSteam) error {
 	// Ensure the foreign keys are satisfied
-	_, errGetPerson := r.persons.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
+	_, errGetPerson := r.persons.GetOrCreatePersonBySteamID(ctx, nil, ban.TargetID)
 	if errGetPerson != nil {
 		return errors.Join(errGetPerson, domain.ErrPersonTarget)
 	}
 
-	_, errGetAuthor := r.persons.GetPersonBySteamID(ctx, ban.SourceID)
+	_, errGetAuthor := r.persons.GetPersonBySteamID(ctx, nil, ban.SourceID)
 	if errGetAuthor != nil {
 		return errors.Join(errGetAuthor, domain.ErrPersonSource)
 	}
@@ -210,7 +210,7 @@ func (r banSteamRepository) insertBan(ctx context.Context, ban *domain.BanSteam)
 		RETURNING ban_id`
 
 	errQuery := r.db.
-		QueryRow(ctx, query, ban.TargetID.Int64(), ban.SourceID.Int64(), ban.BanType, ban.Reason, ban.ReasonText,
+		QueryRow(ctx, nil, query, ban.TargetID.Int64(), ban.SourceID.Int64(), ban.BanType, ban.Reason, ban.ReasonText,
 			ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Origin, ban.ReportID, ban.AppealState,
 			ban.IncludeFriends, ban.EvadeOk, &ban.LastIP).
 		Scan(&ban.BanID)
@@ -249,7 +249,7 @@ func (r banSteamRepository) updateBan(ctx context.Context, ban *domain.BanSteam)
 		Set("evade_ok", ban.EvadeOk).
 		Where(sq.Eq{"ban_id": ban.BanID})
 
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, query))
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, query))
 }
 
 func (r banSteamRepository) ExpiredBans(ctx context.Context) ([]domain.BanSteam, error) {
@@ -261,7 +261,7 @@ func (r banSteamRepository) ExpiredBans(ctx context.Context) ([]domain.BanSteam,
 		From("ban").
 		Where(sq.And{sq.Lt{"valid_until": time.Now()}, sq.Eq{"deleted": false}})
 
-	rows, errQuery := r.db.QueryBuilder(ctx, query)
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, query)
 	if errQuery != nil {
 		return nil, r.db.DBErr(errQuery)
 	}
@@ -322,7 +322,7 @@ func (r banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQuer
 
 	var bans []domain.BannedSteamPerson
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder)
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
 	if errQuery != nil {
 		return nil, r.db.DBErr(errQuery)
 	}
@@ -370,7 +370,7 @@ func (r banSteamRepository) GetOlderThan(ctx context.Context, filter domain.Quer
 		From("ban b").
 		Where(sq.And{sq.Lt{"b.updated_on": since}, sq.Eq{"b.deleted": false}})
 
-	rows, errQuery := r.db.QueryBuilder(ctx, filter.ApplyLimitOffsetDefault(query))
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, filter.ApplyLimitOffsetDefault(query))
 	if errQuery != nil {
 		return nil, r.db.DBErr(errQuery)
 	}

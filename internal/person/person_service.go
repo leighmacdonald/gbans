@@ -61,7 +61,7 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.persons.SetPermissionLevel(ctx, steamID, req.PermissionLevel); err != nil {
+		if err := h.persons.SetPermissionLevel(ctx, nil, steamID, req.PermissionLevel); err != nil {
 			httphelper.HandleErrs(ctx, err)
 			slog.Error("Failed to set permission level", log.ErrAttr(err),
 				slog.Int("level", int(req.PermissionLevel)), slog.String("steam_id", steamID.String()))
@@ -69,7 +69,7 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		person, errPerson := h.persons.GetPersonBySteamID(ctx, steamID)
+		person, errPerson := h.persons.GetPersonBySteamID(ctx, nil, steamID)
 		if errPerson != nil {
 			httphelper.HandleErrs(ctx, errParam)
 			slog.Error("Failed to load new person", log.ErrAttr(errParam),
@@ -168,7 +168,7 @@ func (h personHandler) searchPlayers() gin.HandlerFunc {
 			return
 		}
 
-		people, count, errGetPeople := h.persons.GetPeople(ctx, query)
+		people, count, errGetPeople := h.persons.GetPeople(ctx, nil, query)
 		if errGetPeople != nil {
 			httphelper.HandleErrs(ctx, errGetPeople)
 			slog.Error("Failed to query players", log.ErrAttr(errGetPeople))

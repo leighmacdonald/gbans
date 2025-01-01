@@ -32,32 +32,32 @@ func (r *notificationRepository) SendSite(ctx context.Context, targetIDs steamid
 		batch.Queue(query, sid.Int64(), severity, message, link, time.Now(), authorID)
 	}
 
-	return r.db.DBErr(r.db.SendBatch(ctx, batch).Close())
+	return r.db.DBErr(r.db.SendBatch(ctx, nil, batch).Close())
 }
 
 func (r *notificationRepository) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
 func (r *notificationRepository) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
 func (r *notificationRepository) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
 func (r *notificationRepository) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
@@ -75,7 +75,7 @@ func (r *notificationRepository) GetPersonNotifications(ctx context.Context, ste
 
 	constraints := sq.And{sq.Eq{"r.deleted": false}, sq.Eq{"r.steam_id": steamID.Int64()}}
 
-	rows, errRows := r.db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errRows := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errRows != nil {
 		return nil, r.db.DBErr(errRows)
 	}

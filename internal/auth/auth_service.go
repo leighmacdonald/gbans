@@ -95,7 +95,7 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			return
 		}
 
-		person, errPerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, sid)
+		person, errPerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, nil, sid)
 		if errPerson != nil {
 			ctx.Redirect(302, referralURL)
 			slog.Error("Failed to create or load user profile", log.ErrAttr(errPerson), handlerName)
@@ -105,7 +105,7 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
 				slog.Error("Failed to fetch user profile on login", log.ErrAttr(errGetProfile), handlerName)
 			} else {
-				if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
+				if errSave := h.personUsecase.SavePerson(ctx, nil, &person); errSave != nil {
 					slog.Error("Failed to save summary update", log.ErrAttr(errSave), handlerName)
 				}
 			}

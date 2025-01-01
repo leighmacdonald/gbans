@@ -21,7 +21,7 @@ func NewSteamGroupRepository(database database.Database) domain.BanGroupReposito
 }
 
 func (r *steamGroupRepository) TruncateCache(ctx context.Context) error {
-	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.Builder().Delete("steam_group_members")))
+	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.Builder().Delete("steam_group_members")))
 }
 
 func (r *steamGroupRepository) InsertCache(ctx context.Context, groupID steamid.SteamID, entries []int64) error {
@@ -34,7 +34,7 @@ func (r *steamGroupRepository) InsertCache(ctx context.Context, groupID steamid.
 		batch.Queue(query, entrySteamID, groupID.Int64(), now)
 	}
 
-	batchResults := r.db.SendBatch(ctx, &batch)
+	batchResults := r.db.SendBatch(ctx, nil, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}
@@ -73,7 +73,7 @@ func (r *steamGroupRepository) insertBanGroup(ctx context.Context, banGroup *dom
 	RETURNING ban_group_id`
 
 	return r.db.DBErr(r.db.
-		QueryRow(ctx, query, banGroup.SourceID.Int64(), banGroup.TargetID.Int64(), banGroup.GroupID.Int64(),
+		QueryRow(ctx, nil, query, banGroup.SourceID.Int64(), banGroup.TargetID.Int64(), banGroup.GroupID.Int64(),
 			banGroup.GroupName, banGroup.IsEnabled, banGroup.Deleted, banGroup.Note, banGroup.UnbanReasonText, banGroup.Origin,
 			banGroup.CreatedOn, banGroup.UpdatedOn, banGroup.ValidUntil, banGroup.AppealState).
 		Scan(&banGroup.BanGroupID))
@@ -82,7 +82,7 @@ func (r *steamGroupRepository) insertBanGroup(ctx context.Context, banGroup *dom
 func (r *steamGroupRepository) updateBanGroup(ctx context.Context, banGroup *domain.BanGroup) error {
 	banGroup.UpdatedOn = time.Now()
 
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 		Builder().
 		Update("ban_group").
 		Set("source_id", banGroup.SourceID.Int64()).
@@ -114,7 +114,7 @@ func (r *steamGroupRepository) GetByGID(ctx context.Context, groupID steamid.Ste
 		newGroupID int64
 	)
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, query)
+	row, errQuery := r.db.QueryRowBuilder(ctx, nil, query)
 	if errQuery != nil {
 		return r.db.DBErr(errQuery)
 	}
@@ -150,7 +150,7 @@ func (r *steamGroupRepository) GetByID(ctx context.Context, banGroupID int64) (d
 		targetID int64
 	)
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, query)
+	row, errQuery := r.db.QueryRowBuilder(ctx, nil, query)
 	if errQuery != nil {
 		return banGroup, r.db.DBErr(errQuery)
 	}
@@ -205,7 +205,7 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 
 	builder = builder.Where(constraints)
 
-	rows, errRows := r.db.QueryBuilder(ctx, builder)
+	rows, errRows := r.db.QueryBuilder(ctx, nil, builder)
 	if errRows != nil {
 		if errors.Is(errRows, domain.ErrNoResult) {
 			return []domain.BannedGroupPerson{}, nil
@@ -263,7 +263,7 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 }
 
 func (r *steamGroupRepository) GetMembersList(ctx context.Context, parentID int64, list *domain.MembersList) error {
-	row, err := r.db.QueryRowBuilder(ctx, r.db.
+	row, err := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("members_id", "parent_id", "members", "created_on", "updated_on").
 		From("members").
@@ -281,11 +281,11 @@ func (r *steamGroupRepository) SaveMembersList(ctx context.Context, list *domain
 
 		const update = `UPDATE members SET members = $2::jsonb, updated_on = $3 WHERE members_id = $1`
 
-		return r.db.DBErr(r.db.Exec(ctx, update, list.MembersID, list.Members, list.UpdatedOn))
+		return r.db.DBErr(r.db.Exec(ctx, nil, update, list.MembersID, list.Members, list.UpdatedOn))
 	}
 
 	const insert = `INSERT INTO members (parent_id, members, created_on, updated_on) 
 		VALUES ($1, $2::jsonb, $3, $4) RETURNING members_id`
 
-	return r.db.DBErr(r.db.QueryRow(ctx, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
+	return r.db.DBErr(r.db.QueryRow(ctx, nil, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
 }

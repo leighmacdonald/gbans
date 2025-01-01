@@ -47,7 +47,7 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 		LeftJoin("person source on source.steam_id = b.source_id").
 		LeftJoin("person target on target.steam_id = b.target_id")
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder)
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
 	if errQuery != nil {
 		return nil, r.db.DBErr(errQuery)
 	}
@@ -112,7 +112,7 @@ func (r *appealRepository) updateBanMessage(ctx context.Context, message *domain
 		Set("message_md", message.MessageMD).
 		Where(sq.Eq{"ban_message_id": message.BanMessageID})
 
-	if errQuery := r.db.ExecUpdateBuilder(ctx, query); errQuery != nil {
+	if errQuery := r.db.ExecUpdateBuilder(ctx, nil, query); errQuery != nil {
 		return r.db.DBErr(errQuery)
 	}
 
@@ -128,7 +128,7 @@ func (r *appealRepository) insertBanMessage(ctx context.Context, message *domain
 	RETURNING ban_message_id
 	`
 
-	if errQuery := r.db.QueryRow(ctx, query,
+	if errQuery := r.db.QueryRow(ctx, nil, query,
 		message.BanID,
 		message.AuthorID.Int64(),
 		message.MessageMD,
@@ -152,7 +152,7 @@ func (r *appealRepository) GetBanMessages(ctx context.Context, banID int64) ([]d
 		Where(sq.And{sq.Eq{"a.deleted": false}, sq.Eq{"a.ban_id": banID}}).
 		OrderBy("a.created_on")
 
-	rows, errQuery := r.db.QueryBuilder(ctx, query)
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, query)
 	if errQuery != nil {
 		if errors.Is(r.db.DBErr(errQuery), domain.ErrNoResult) {
 			return nil, nil
@@ -210,7 +210,7 @@ func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID i
 		message  domain.BanAppealMessage
 	)
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, query)
+	row, errQuery := r.db.QueryRowBuilder(ctx, nil, query)
 	if errQuery != nil {
 		return message, r.db.DBErr(errQuery)
 	}
@@ -242,7 +242,7 @@ func (r *appealRepository) DropBanMessage(ctx context.Context, message *domain.B
 		Set("deleted", true).
 		Where(sq.Eq{"ban_message_id": message.BanMessageID})
 
-	if errExec := r.db.ExecUpdateBuilder(ctx, query); errExec != nil {
+	if errExec := r.db.ExecUpdateBuilder(ctx, nil, query); errExec != nil {
 		return r.db.DBErr(errExec)
 	}
 

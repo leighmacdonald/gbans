@@ -92,7 +92,7 @@ func (r reportUsecase) addAuthorsToReports(ctx context.Context, reports []domain
 		peopleIDs = append(peopleIDs, report.SourceID, report.TargetID)
 	}
 
-	people, errAuthors := r.persons.GetPeopleBySteamID(ctx, fp.Uniq(peopleIDs))
+	people, errAuthors := r.persons.GetPeopleBySteamID(ctx, nil, fp.Uniq(peopleIDs))
 	if errAuthors != nil {
 		return nil, errAuthors
 	}
@@ -188,7 +188,7 @@ func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo,
 		return domain.ReportWithAuthor{}, err
 	}
 
-	author, errAuthor := r.persons.GetPersonBySteamID(ctx, report.SourceID)
+	author, errAuthor := r.persons.GetPersonBySteamID(ctx, nil, report.SourceID)
 	if errAuthor != nil {
 		return domain.ReportWithAuthor{}, errAuthor
 	}
@@ -197,7 +197,7 @@ func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo,
 		return domain.ReportWithAuthor{}, domain.ErrPermissionDenied
 	}
 
-	target, errTarget := r.persons.GetPersonBySteamID(ctx, report.TargetID)
+	target, errTarget := r.persons.GetPersonBySteamID(ctx, nil, report.TargetID)
 	if errTarget != nil {
 		return domain.ReportWithAuthor{}, errTarget
 	}
@@ -278,12 +278,12 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 		return domain.ReportWithAuthor{}, fmt.Errorf("%w: cannot report self", domain.ErrParamInvalid)
 	}
 
-	personSource, errSource := r.persons.GetPersonBySteamID(ctx, req.SourceID)
+	personSource, errSource := r.persons.GetPersonBySteamID(ctx, nil, req.SourceID)
 	if errSource != nil {
 		return domain.ReportWithAuthor{}, errSource
 	}
 
-	personTarget, errTarget := r.persons.GetOrCreatePersonBySteamID(ctx, req.TargetID)
+	personTarget, errTarget := r.persons.GetOrCreatePersonBySteamID(ctx, nil, req.TargetID)
 	if errTarget != nil {
 		return domain.ReportWithAuthor{}, errTarget
 	}
@@ -292,7 +292,7 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 		if err := thirdparty.UpdatePlayerSummary(ctx, &personTarget); err != nil {
 			slog.Error("Failed to update target player", log.ErrAttr(err))
 		} else {
-			if errSave := r.persons.SavePerson(ctx, &personTarget); errSave != nil {
+			if errSave := r.persons.SavePerson(ctx, nil, &personTarget); errSave != nil {
 				slog.Error("Failed to save target player update", log.ErrAttr(err))
 			}
 		}

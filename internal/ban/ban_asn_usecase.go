@@ -53,12 +53,12 @@ func (s banASN) Ban(ctx context.Context, req domain.RequestBanASNCreate) (domain
 		return ban, domain.ErrInvalidTargetSID
 	}
 
-	author, errAuthor := s.person.GetOrCreatePersonBySteamID(ctx, sourceID)
+	author, errAuthor := s.person.GetOrCreatePersonBySteamID(ctx, nil, sourceID)
 	if errAuthor != nil {
 		return ban, errors.Join(errAuthor, domain.ErrGetPerson)
 	}
 
-	target, errTarget := s.person.GetOrCreatePersonBySteamID(ctx, targetID)
+	target, errTarget := s.person.GetOrCreatePersonBySteamID(ctx, nil, targetID)
 	if errTarget != nil {
 		return ban, errors.Join(errTarget, domain.ErrGetPerson)
 	}

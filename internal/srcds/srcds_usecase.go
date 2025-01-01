@@ -324,12 +324,12 @@ func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req d
 		return domain.ReportWithAuthor{}, domain.ErrSelfReport
 	}
 
-	personSource, errCreateSource := h.persons.GetPersonBySteamID(ctx, req.SourceID)
+	personSource, errCreateSource := h.persons.GetPersonBySteamID(ctx, nil, req.SourceID)
 	if errCreateSource != nil {
 		return domain.ReportWithAuthor{}, errCreateSource
 	}
 
-	personTarget, errCreateTarget := h.persons.GetOrCreatePersonBySteamID(ctx, req.TargetID)
+	personTarget, errCreateTarget := h.persons.GetOrCreatePersonBySteamID(ctx, nil, req.TargetID)
 	if errCreateTarget != nil {
 		return domain.ReportWithAuthor{}, errCreateTarget
 	}
@@ -338,7 +338,7 @@ func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req d
 		if err := thirdparty.UpdatePlayerSummary(ctx, &personTarget); err != nil {
 			slog.Error("Failed to update target player", log.ErrAttr(err))
 		} else {
-			if errSave := h.persons.SavePerson(ctx, &personTarget); errSave != nil {
+			if errSave := h.persons.SavePerson(ctx, nil, &personTarget); errSave != nil {
 				slog.Error("Failed to save target player update", log.ErrAttr(err))
 			}
 		}
@@ -482,7 +482,7 @@ func (h srcds) SaveAdmin(ctx context.Context, admin domain.SMAdmin) (domain.SMAd
 	var steamID steamid.SteamID
 	if admin.AuthType == domain.AuthTypeSteam {
 		steamID = steamid.New(realIdentity)
-		if _, err := h.persons.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
+		if _, err := h.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID); err != nil {
 			return domain.SMAdmin{}, domain.ErrGetPerson
 		}
 
@@ -515,7 +515,7 @@ func (h srcds) AddAdmin(ctx context.Context, alias string, authType domain.AuthT
 	var steamID steamid.SteamID
 	if authType == domain.AuthTypeSteam {
 		steamID = steamid.New(realIdentity)
-		if _, err := h.persons.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
+		if _, err := h.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID); err != nil {
 			return domain.SMAdmin{}, domain.ErrGetPerson
 		}
 

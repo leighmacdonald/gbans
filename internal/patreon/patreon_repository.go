@@ -23,7 +23,7 @@ func (r patreonRepository) OldAuths(ctx context.Context) ([]domain.PatreonCreden
                           expires_in, scope, token_type, version, created_on, updated_on FROM auth_patreon
 					WHERE to_timestamp(extract(epoch from updated_on) + expires_in) < (now() + interval '7 days');`
 
-	rows, errRows := r.db.Query(ctx, query)
+	rows, errRows := r.db.Query(ctx, nil, query)
 	if errRows != nil {
 		return nil, r.db.DBErr(errRows)
 	}
@@ -52,11 +52,11 @@ func (r patreonRepository) DeleteTokens(ctx context.Context, steamID steamid.Ste
 		return r.db.DBErr(errQuery)
 	}
 
-	return r.db.Exec(ctx, query, vars...)
+	return r.db.Exec(ctx, nil, query, vars...)
 }
 
 func (r patreonRepository) SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 		Builder().
 		Update("auth_patreon").
 		Set("creator_access_token", accessToken).
@@ -79,7 +79,7 @@ func (r patreonRepository) GetPatreonAuth(ctx context.Context) (string, string, 
 	)
 
 	if errScan := r.db.
-		QueryRow(ctx, query, args...).
+		QueryRow(ctx, nil, query, args...).
 		Scan(&creatorAccessToken, &creatorRefreshToken); errScan != nil {
 		return "", "", errors.Join(errQuery, domain.ErrQueryPatreon)
 	}
@@ -97,13 +97,13 @@ func (r patreonRepository) SaveTokens(ctx context.Context, creds domain.PatreonC
 				              expires_in = $5, scope = $6, token_type = $7, version = $8, updated_on = $10
 				`
 
-	return r.db.DBErr(r.db.Exec(ctx, query, creds.SteamID.Int64(), creds.PatreonID, creds.AccessToken, creds.RefreshToken,
+	return r.db.DBErr(r.db.Exec(ctx, nil, query, creds.SteamID.Int64(), creds.PatreonID, creds.AccessToken, creds.RefreshToken,
 		creds.ExpiresIn, creds.Scope, creds.TokenType, creds.Version, creds.CreatedOn, creds.UpdatedOn,
 	))
 }
 
 func (r patreonRepository) GetTokens(ctx context.Context, steamID steamid.SteamID) (domain.PatreonCredential, error) {
-	row, errRow := r.db.QueryRowBuilder(ctx, r.db.Builder().
+	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.Builder().
 		Select("patreon_id", "access_token", "refresh_token",
 			"expires_in", "scope", "token_type", "version", "created_on", "updated_on").
 		From("auth_patreon").

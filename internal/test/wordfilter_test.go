@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ func TestWordFilter(t *testing.T) {
 
 	// Shouldn't be filters already
 	var filters []domain.Filter
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/filters", nil, http.StatusOK, creds, &filters)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/filters", nil, http.StatusOK, &authTokens{user: creds}, &filters)
 	require.Empty(t, filters)
 
 	// Create a filter
@@ -24,11 +24,11 @@ func TestWordFilter(t *testing.T) {
 	require.NoError(t, errReq)
 
 	var created domain.Filter
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filters", req, http.StatusOK, creds, &created)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filters", req, http.StatusOK, &authTokens{user: creds}, &created)
 	require.Positive(t, created.FilterID)
 
 	// Check it was added
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/filters", req, http.StatusOK, creds, &filters)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/filters", req, http.StatusOK, &authTokens{user: creds}, &filters)
 	require.NotEmpty(t, filters)
 
 	// Edit it
@@ -37,7 +37,7 @@ func TestWordFilter(t *testing.T) {
 	edit.IsRegex = false
 
 	var edited domain.Filter
-	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/filters/%d", edit.FilterID), edit, http.StatusOK, creds, &edited)
+	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/filters/%d", edit.FilterID), edit, http.StatusOK, &authTokens{user: creds}, &edited)
 	require.Equal(t, edit.FilterID, edited.FilterID)
 	require.Equal(t, edit.AuthorID, edited.AuthorID)
 	require.Equal(t, edit.Pattern, edited.Pattern)
@@ -51,19 +51,19 @@ func TestWordFilter(t *testing.T) {
 
 	// Match it
 	var matched []domain.Filter
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filter_match", domain.RequestQuery{Query: edited.Pattern}, http.StatusOK, creds, &matched)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filter_match", domain.RequestQuery{Query: edited.Pattern}, http.StatusOK, &authTokens{user: creds}, &matched)
 	require.NotEmpty(t, matched)
 	require.Equal(t, matched[0].FilterID, edited.FilterID)
 
 	// Delete it
-	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/filters/%d", edit.FilterID), req, http.StatusOK, creds)
+	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/filters/%d", edit.FilterID), req, http.StatusOK, &authTokens{user: creds})
 
 	// Shouldn't match now
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filter_match", domain.RequestQuery{Query: edited.Pattern}, http.StatusOK, creds, &matched)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filter_match", domain.RequestQuery{Query: edited.Pattern}, http.StatusOK, &authTokens{user: creds}, &matched)
 	require.Empty(t, matched)
 
 	// Make sure it was deleted
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/filters", nil, http.StatusOK, creds, &filters)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/filters", nil, http.StatusOK, &authTokens{user: creds}, &filters)
 	require.Empty(t, filters)
 }
 

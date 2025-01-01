@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"context"
@@ -54,6 +54,7 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 				"POSTGRES_USER":     username,
 				"POSTGRES_PASSWORD": password,
 			},
+			AlwaysPullImage: false,
 			WaitingFor: wait.
 				ForLog("database system is ready to accept connections").
 				WithOccurrence(2),
@@ -130,7 +131,7 @@ func testPermissions(t *testing.T, router *gin.Engine, testCases []permTestValue
 				tokens = loginUser(getModerator())
 			}
 
-			testEndpoint(t, router, testCase.method, testCase.path, nil, testCase.code, tokens)
+			testEndpoint(t, router, testCase.method, testCase.path, nil, testCase.code, &authTokens{user: tokens})
 		}
 	}
 }

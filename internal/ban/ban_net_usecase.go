@@ -59,12 +59,12 @@ func (s *banNet) Ban(ctx context.Context, banNet *domain.BanCIDR) error {
 		return errors.Join(errSaveBanNet, domain.ErrSaveBan)
 	}
 
-	author, errAuthor := s.persons.GetOrCreatePersonBySteamID(ctx, banNet.SourceID)
+	author, errAuthor := s.persons.GetOrCreatePersonBySteamID(ctx, nil, banNet.SourceID)
 	if errAuthor != nil {
 		return errors.Join(errAuthor, domain.ErrFetchSource)
 	}
 
-	target, errTarget := s.persons.GetOrCreatePersonBySteamID(ctx, banNet.TargetID)
+	target, errTarget := s.persons.GetOrCreatePersonBySteamID(ctx, nil, banNet.TargetID)
 	if errTarget != nil {
 		return errors.Join(errTarget, domain.ErrFetchTarget)
 	}

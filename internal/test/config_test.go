@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"net/http"
@@ -14,7 +14,7 @@ func TestConfig(t *testing.T) {
 	owner := loginUser(getOwner())
 
 	var config domain.Config
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/config", nil, http.StatusOK, owner, &config)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/config", nil, http.StatusOK, &authTokens{user: owner}, &config)
 	config.StaticConfig = configUC.Config().StaticConfig
 	require.EqualValues(t, configUC.Config(), config)
 
@@ -113,7 +113,7 @@ func TestConfig(t *testing.T) {
 	config.SSH.DemoPathFmt += "x"
 
 	var updated domain.Config
-	testEndpointWithReceiver(t, router, http.MethodPut, "/api/config", config, http.StatusOK, owner, &updated)
+	testEndpointWithReceiver(t, router, http.MethodPut, "/api/config", config, http.StatusOK, &authTokens{user: owner}, &updated)
 	updated.StaticConfig = configUC.Config().StaticConfig
 	require.EqualValues(t, config, updated)
 }

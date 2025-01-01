@@ -57,7 +57,7 @@ func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter
 		"src.": {"personaname"},
 	}, "vote_id")
 
-	rows, errRows := r.db.QueryBuilder(ctx, builder)
+	rows, errRows := r.db.QueryBuilder(ctx, nil, builder)
 	if errRows != nil {
 		return nil, 0, r.db.DBErr(errRows)
 	}
@@ -87,7 +87,7 @@ func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter
 		results = append(results, result)
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.Builder().
+	count, errCount := r.db.GetCount(ctx, nil, r.db.Builder().
 		Select("COUNT(v.vote_id)").
 		From("vote_result v").
 		Where(constraints))
@@ -99,7 +99,7 @@ func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter
 }
 
 func (r voteRepository) AddResult(ctx context.Context, voteResult domain.VoteResult) error {
-	return r.db.DBErr(r.db.ExecInsertBuilder(ctx, r.db.Builder().
+	return r.db.DBErr(r.db.ExecInsertBuilder(ctx, nil, r.db.Builder().
 		Insert("vote_result").
 		SetMap(map[string]interface{}{
 			"server_id":  voteResult.ServerID,

@@ -53,7 +53,7 @@ import (
 func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news domain.NewsUsecase,
 	wiki domain.WikiUsecase, conf domain.Config,
 ) error {
-	_, errRootUser := persons.GetPersonBySteamID(ctx, steamid.New(conf.Owner))
+	_, errRootUser := persons.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
 	if errRootUser == nil {
 		return nil
 	}
@@ -65,7 +65,7 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 	newOwner := domain.NewPerson(steamid.New(conf.Owner))
 	newOwner.PermissionLevel = domain.PAdmin
 
-	if errSave := persons.SavePerson(ctx, &newOwner); errSave != nil {
+	if errSave := persons.SavePerson(ctx, nil, &newOwner); errSave != nil {
 		slog.Error("Failed create new owner", log.ErrAttr(errSave))
 	}
 
@@ -317,7 +317,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(dbConn))
 
-			speedruns := srcds.NewSpeedrunUsecase(srcds.NewSpeedrunRepository(dbConn))
+			speedruns := srcds.NewSpeedrunUsecase(srcds.NewSpeedrunRepository(dbConn, personUsecase))
 
 			if err := firstTimeSetup(ctx, personUsecase, newsUsecase, wikiUsecase, conf); err != nil {
 				slog.Error("Failed to run first time setup", log.ErrAttr(err))

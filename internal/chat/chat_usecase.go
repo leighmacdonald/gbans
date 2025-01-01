@@ -74,7 +74,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 		}
 	}
 
-	admin, errAdmin := u.persons.GetPersonBySteamID(ctx, u.owner)
+	admin, errAdmin := u.persons.GetPersonBySteamID(ctx, nil, u.owner)
 	if errAdmin != nil {
 		return errAdmin
 	}
@@ -122,7 +122,7 @@ func (u chatUsecase) onWarningHandler(ctx context.Context, newWarning domain.New
 
 	newWarning.MatchedFilter.TriggerCount++
 
-	admin, errAdmin := u.persons.GetPersonBySteamID(ctx, u.owner)
+	admin, errAdmin := u.persons.GetPersonBySteamID(ctx, nil, u.owner)
 	if errAdmin != nil {
 		return errAdmin
 	}

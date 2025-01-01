@@ -81,7 +81,7 @@ func (s banGroupUsecase) UpdateCache(ctx context.Context) error {
 			}
 
 			// Statisfy FK
-			_, errCreate := s.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+			_, errCreate := s.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
 			if errCreate != nil {
 				return errCreate
 			}
@@ -175,12 +175,12 @@ func (s banGroupUsecase) Ban(ctx context.Context, req domain.RequestBanGroupCrea
 		return domain.BannedGroupPerson{}, errors.Join(membersErr, domain.ErrGroupValidate)
 	}
 
-	author, errAuthor := s.persons.GetPersonBySteamID(ctx, sid)
+	author, errAuthor := s.persons.GetPersonBySteamID(ctx, nil, sid)
 	if errAuthor != nil {
 		return domain.BannedGroupPerson{}, errors.Join(membersErr, domain.ErrGetPerson)
 	}
 
-	_, errTarget := s.persons.GetPersonBySteamID(ctx, targetID)
+	_, errTarget := s.persons.GetPersonBySteamID(ctx, nil, targetID)
 	if errTarget != nil {
 		return domain.BannedGroupPerson{}, errors.Join(membersErr, domain.ErrGetPerson)
 	}

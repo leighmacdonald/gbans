@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ func TestBansSteam(t *testing.T) {
 
 	// Ensure no bans exist
 	var bansEmpty []domain.BanSteam
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/steam", nil, http.StatusOK, modCreds, &bansEmpty)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/steam", nil, http.StatusOK, &authTokens{user: modCreds}, &bansEmpty)
 	require.Len(t, bansEmpty, 1)
 
 	// Create a ban
@@ -39,7 +39,7 @@ func TestBansSteam(t *testing.T) {
 	}
 
 	var fetchedBan domain.BannedSteamPerson
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/steam/create", banReq, http.StatusCreated, modCreds, &fetchedBan)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/steam/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
 	require.Equal(t, banReq.SourceIDField.SourceID, fetchedBan.SourceID.String())
 	require.Equal(t, banReq.TargetIDField.TargetID, fetchedBan.TargetID.String())
@@ -54,7 +54,7 @@ func TestBansSteam(t *testing.T) {
 
 	// Ensure it's in the ban collection
 	var bans []domain.BanSteam
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/steam", nil, http.StatusOK, modCreds, &bans)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/steam", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
 	require.Len(t, bans, 2)
 
 	updateReq := ban.RequestBanSteamUpdate{
@@ -71,7 +71,7 @@ func TestBansSteam(t *testing.T) {
 	// Update the ban
 	var updatedBan domain.BannedSteamPerson
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/steam/%d", fetchedBan.BanID),
-		updateReq, http.StatusOK, modCreds, &updatedBan)
+		updateReq, http.StatusOK, &authTokens{user: modCreds}, &updatedBan)
 
 	require.Equal(t, updateReq.TargetID, updatedBan.TargetID)
 	require.Equal(t, updateReq.BanType, updatedBan.BanType)
@@ -85,26 +85,26 @@ func TestBansSteam(t *testing.T) {
 	// Get the ban by ban_id
 	var banByBanID domain.BannedSteamPerson
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steam/%d?deleted=true", updatedBan.BanID),
-		nil, http.StatusOK, modCreds, &banByBanID)
+		nil, http.StatusOK, &authTokens{user: modCreds}, &banByBanID)
 	require.EqualExportedValues(t, updatedBan, banByBanID)
 
 	// Get the same ban when querying a users active ban
 	var banBySteamID domain.BannedSteamPerson
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steamid/%d", target.SteamID.Int64()),
-		nil, http.StatusOK, modCreds, &banBySteamID)
+		nil, http.StatusOK, &authTokens{user: modCreds}, &banBySteamID)
 	require.EqualExportedValues(t, updatedBan, banBySteamID)
 
 	// Delete the ban
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
-		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, modCreds)
+		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, &authTokens{user: modCreds})
 
 	// Ensure it was deleted
 	testEndpoint(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
-		nil, http.StatusNotFound, modCreds)
+		nil, http.StatusNotFound, &authTokens{user: modCreds})
 
 	// Try to delete non existent bam
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
-		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, modCreds)
+		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, &authTokens{user: modCreds})
 }
 
 func TestBansSteamPermissions(t *testing.T) {

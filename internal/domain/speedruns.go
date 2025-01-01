@@ -10,11 +10,13 @@ import (
 type SpeedrunRepository interface {
 	Query(ctx context.Context, query SpeedrunQuery) ([]Speedrun, error)
 	Save(ctx context.Context, details *Speedrun) error
+	ByID(ctx context.Context, speedrunID int) (Speedrun, error)
 }
 
 type SpeedrunUsecase interface {
 	Save(ctx context.Context, details Speedrun) (Speedrun, error)
 	Query(ctx context.Context, query SpeedrunQuery) ([]Speedrun, error)
+	ByID(ctx context.Context, speedrunID int) (Speedrun, error)
 }
 
 type SpeedrunInterval int
@@ -27,6 +29,18 @@ const (
 	AllTime                  = -1
 )
 
+type SpeedrunCategory string
+
+const (
+	Mode24v40 SpeedrunCategory = "24_40"
+)
+
+type MapDetail struct {
+	MapID   int    `json:"map_id"`
+	MapName string `json:"map_name"`
+	TimeStamped
+}
+
 type SpeedrunQuery struct {
 	Map      string           `json:"map"`
 	Interval SpeedrunInterval `json:"interval"`
@@ -34,29 +48,28 @@ type SpeedrunQuery struct {
 }
 
 type SpeedrunPointCaptures struct {
-	RoundID  int                   `json:"round_id"`
-	Players  []SpeedrunParticipant `json:"players"`
-	Duration time.Duration         `json:"duration"`
+	SpeedrunID int                   `json:"speedrun_id"`
+	RoundID    int                   `json:"round_id"`
+	Players    []SpeedrunParticipant `json:"players"`
+	Duration   time.Duration         `json:"duration"`
+	PointName  string                `json:"point_name"`
 }
 
 type Speedrun struct {
 	SpeedrunID    int                     `json:"speedrun_id"`
-	MapName       string                  `json:"map_name"`
+	ServerID      int                     `json:"server_id"`
+	MapDetail     MapDetail               `json:"map_detail"`
 	PointCaptures []SpeedrunPointCaptures `json:"point_captures"`
 	Players       []SpeedrunParticipant   `json:"players"`
-	Duration      int                     `json:"duration"`
+	Duration      time.Duration           `json:"duration"`
 	PlayerCount   int                     `json:"player_count"`
-	HostAddr      string                  `json:"host_addr"`
 	BotCount      int                     `json:"bot_count"`
 	CreatedOn     time.Time               `json:"created_on"`
-	Category      string                  `json:"category"`
-}
-
-func (sr Speedrun) AsDuration() time.Duration {
-	return time.Duration(sr.Duration) * time.Millisecond
+	Category      SpeedrunCategory        `json:"category"`
 }
 
 type SpeedrunParticipant struct {
+	RoundID  int             `json:"round_id"`
 	SteamID  steamid.SteamID `json:"steam_id"`
 	Duration time.Duration   `json:"duration"`
 }

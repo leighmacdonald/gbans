@@ -140,7 +140,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			return nil, domain.ErrInvalidSID
 		}
 
-		player, errGetPlayer := h.persons.GetOrCreatePersonBySteamID(ctx, sid)
+		player, errGetPlayer := h.persons.GetOrCreatePersonBySteamID(ctx, nil, sid)
 		if errGetPlayer != nil {
 			return nil, domain.ErrCommandFailed
 		}
@@ -181,7 +181,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 		// TODO Show the longest remaining ban.
 		if ban.BanID > 0 {
 			if ban.SourceID.Valid() {
-				ap, errGetProfile := h.persons.GetPersonBySteamID(ctx, ban.SourceID)
+				ap, errGetProfile := h.persons.GetPersonBySteamID(ctx, nil, ban.SourceID)
 				if errGetProfile != nil {
 					slog.Error("Failed to load author for ban", log.ErrAttr(errGetProfile))
 				} else {
@@ -227,7 +227,7 @@ func (h discordService) onHistoryIP(ctx context.Context, _ *discordgo.Session, i
 		return nil, domain.ErrInvalidSID
 	}
 
-	person, errPersonBySID := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+	person, errPersonBySID := h.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
 	if errPersonBySID != nil {
 		return nil, domain.ErrCommandFailed
 	}
@@ -286,7 +286,7 @@ func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, 
 		return nil, domain.ErrBanDoesNotExist
 	}
 
-	user, errUser := h.persons.GetPersonBySteamID(ctx, steamID)
+	user, errUser := h.persons.GetPersonBySteamID(ctx, nil, steamID)
 	if errUser != nil {
 		slog.Warn("Could not fetch unbanned Person", slog.String("steam_id", steamID.String()), log.ErrAttr(errUser))
 	}
@@ -512,7 +512,7 @@ func (h discordService) onStatsPlayer(ctx context.Context, _ *discordgo.Session,
 		return nil, domain.ErrInvalidSID
 	}
 
-	person, errAuthor := h.persons.GetPersonBySteamID(ctx, steamID)
+	person, errAuthor := h.persons.GetPersonBySteamID(ctx, nil, steamID)
 	if errAuthor != nil {
 		return nil, errAuthor
 	}
@@ -675,7 +675,7 @@ func (h discordService) makeOnFind() func(context.Context, *discordgo.Session, *
 				return nil, errors.Join(errServer, domain.ErrGetServer)
 			}
 
-			_, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, player.Player.SID)
+			_, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, nil, player.Player.SID)
 			if errPerson != nil {
 				return nil, errors.Join(errPerson, domain.ErrFetchPerson)
 			}

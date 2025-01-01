@@ -49,7 +49,7 @@ func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 		return
 	}
 
-	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, person.SID)
+	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, nil, person.SID)
 	if errPerson != nil && !errors.Is(errPerson, domain.ErrDuplicate) {
 		slog.Error("Failed to handle message, could not get author", log.ErrAttr(errPerson), slog.String("message", msg))
 
@@ -146,7 +146,7 @@ func (r chatRepository) GetWarningChan() chan domain.NewUserWarning {
 }
 
 func (r chatRepository) TopChatters(ctx context.Context, count uint64) ([]domain.TopChatterResult, error) {
-	rows, errRows := r.db.QueryBuilder(ctx, r.db.
+	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("p.personaname", "p.steam_id", "count(person_message_id) as total").
 		From("person_messages m").
@@ -188,7 +188,7 @@ func (r chatRepository) AddChatHistory(ctx context.Context, message *domain.Pers
 			RETURNING person_message_id`
 
 	if errScan := r.db.
-		QueryRow(ctx, query, message.SteamID.Int64(), message.ServerID, message.Body, message.Team,
+		QueryRow(ctx, nil, query, message.SteamID.Int64(), message.ServerID, message.Body, message.Team,
 			message.CreatedOn, message.PersonaName, message.MatchID).
 		Scan(&message.PersonMessageID); errScan != nil {
 		return r.db.DBErr(errScan)
@@ -273,7 +273,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 
 	var messages []domain.QueryChatHistoryResult
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errQuery != nil {
 		return nil, r.db.DBErr(errQuery)
 	}
@@ -344,7 +344,7 @@ func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (
 
 	var msg domain.QueryChatHistoryResult
 
-	if err := r.db.DBErr(r.db.QueryRow(ctx, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
+	if err := r.db.DBErr(r.db.QueryRow(ctx, nil, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 		&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged)); err != nil {
 		return msg, err
 	}
@@ -398,7 +398,7 @@ func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID in
 		paddedMessageCount = 5
 	}
 
-	rows, errRows := r.db.Query(ctx, query, messageID, paddedMessageCount, serverID)
+	rows, errRows := r.db.Query(ctx, nil, query, messageID, paddedMessageCount, serverID)
 	if errRows != nil {
 		return nil, errors.Join(errRows, domain.ErrMessageContext)
 	}

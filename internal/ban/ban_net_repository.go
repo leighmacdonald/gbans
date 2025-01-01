@@ -34,7 +34,7 @@ func (r banNetRepository) GetByAddress(ctx context.Context, ipAddr netip.Addr) (
 
 	var nets []domain.BanCIDR
 
-	rows, errQuery := r.db.Query(ctx, query, ipAddr.String())
+	rows, errQuery := r.db.Query(ctx, nil, query, ipAddr.String())
 	if errQuery != nil {
 		return nil, r.db.DBErr(errQuery)
 	}
@@ -93,7 +93,7 @@ func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFi
 
 	var nets []domain.BannedCIDRPerson
 
-	rows, errRows := r.db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errRows := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errRows != nil {
 		return nil, r.db.DBErr(errRows)
 	}
@@ -154,7 +154,7 @@ func (r banNetRepository) updateBanNet(ctx context.Context, banNet *domain.BanCI
 		Set("appeal_state", banNet.AppealState).
 		Where(sq.Eq{"net_id": banNet.NetID})
 
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, query))
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, query))
 }
 
 func (r banNetRepository) insertBanNet(ctx context.Context, banNet *domain.BanCIDR) error {
@@ -172,7 +172,7 @@ func (r banNetRepository) insertBanNet(ctx context.Context, banNet *domain.BanCI
 		return r.db.DBErr(errQueryArgs)
 	}
 
-	return r.db.DBErr(r.db.QueryRow(ctx, query, args...).Scan(&banNet.NetID))
+	return r.db.DBErr(r.db.QueryRow(ctx, nil, query, args...).Scan(&banNet.NetID))
 }
 
 func (r banNetRepository) Save(ctx context.Context, banNet *domain.BanCIDR) error {
@@ -189,7 +189,7 @@ func (r banNetRepository) Delete(ctx context.Context, banNet *domain.BanCIDR) er
 		Delete("ban_net").
 		Where(sq.Eq{"net_id": banNet.NetID})
 
-	if errExec := r.db.ExecDeleteBuilder(ctx, query); errExec != nil {
+	if errExec := r.db.ExecDeleteBuilder(ctx, nil, query); errExec != nil {
 		return r.db.DBErr(errExec)
 	}
 
@@ -208,7 +208,7 @@ func (r banNetRepository) Expired(ctx context.Context) ([]domain.BanCIDR, error)
 
 	var bans []domain.BanCIDR
 
-	rows, errQuery := r.db.QueryBuilder(ctx, query)
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, query)
 	if errQuery != nil {
 		return nil, r.db.DBErr(errQuery)
 	}
@@ -259,7 +259,7 @@ func (r banNetRepository) GetByID(ctx context.Context, netID int64, banNet *doma
 	)
 
 	errQuery := r.db.
-		QueryRow(ctx, query, netID).
+		QueryRow(ctx, nil, query, netID).
 		Scan(&banNet.NetID, &cidr, &banNet.Origin,
 			&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 			&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,

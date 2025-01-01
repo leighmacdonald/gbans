@@ -31,7 +31,7 @@ func (r banASNRepository) Expired(ctx context.Context) ([]domain.BanASN, error) 
 
 	var bans []domain.BanASN
 
-	rows, errQuery := r.db.QueryBuilder(ctx, query)
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, query)
 	if errQuery != nil {
 		return nil, r.db.DBErr(errQuery)
 	}
@@ -78,7 +78,7 @@ func (r banASNRepository) GetByASN(ctx context.Context, asNum int64, banASN *dom
 	)
 
 	if errQuery := r.db.
-		QueryRow(ctx, query, asNum).
+		QueryRow(ctx, nil, query, asNum).
 		Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin,
 			&sourceID, &targetID, &banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn,
 			&banASN.UpdatedOn, &banASN.Deleted, &banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText,
@@ -109,7 +109,7 @@ func (r banASNRepository) GetByID(ctx context.Context, banID int64) (domain.Bann
 	)
 
 	if errQuery := r.db.
-		QueryRow(ctx, query, banID).
+		QueryRow(ctx, nil, query, banID).
 		Scan(&ban.BanASNId, &ban.ASNum, &ban.Origin,
 			&sourceID, &targetID, &ban.ReasonText, &ban.ValidUntil, &ban.CreatedOn,
 			&ban.UpdatedOn, &ban.Deleted, &ban.Reason, &ban.IsEnabled, &ban.UnbanReasonText,
@@ -143,7 +143,7 @@ func (r banASNRepository) Get(ctx context.Context, filter domain.ASNBansQueryFil
 		constraints = append(constraints, sq.Eq{"b.deleted": false})
 	}
 
-	rows, errRows := r.db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errRows := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errRows != nil {
 		if errors.Is(errRows, domain.ErrNoResult) {
 			return []domain.BannedASNPerson{}, nil
@@ -198,7 +198,7 @@ func (r banASNRepository) Save(ctx context.Context, banASN *domain.BanASN) (doma
 				valid_until = $7, updated_on = $8, reason_text = $9, is_enabled = $10, deleted = $11, 
 				unban_reason_text = $12, appeal_state = $13, note = $14
 			WHERE ban_asn_id = $1`
-		if err := r.db.Exec(ctx, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceID.Int64(),
+		if err := r.db.Exec(ctx, nil, queryUpdate, banASN.BanASNId, banASN.ASNum, banASN.Origin, banASN.SourceID.Int64(),
 			banASN.TargetID.Int64(), banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.ReasonText, banASN.IsEnabled,
 			banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState, banASN.Note); err != nil {
 			return bannedPerson, r.db.DBErr(err)
@@ -211,7 +211,7 @@ func (r banASNRepository) Save(ctx context.Context, banASN *domain.BanASN) (doma
 		RETURNING ban_asn_id`
 
 		if err := r.db.
-			QueryRow(ctx, queryInsert, banASN.ASNum, banASN.Origin, banASN.SourceID.Int64(), banASN.TargetID.Int64(),
+			QueryRow(ctx, nil, queryInsert, banASN.ASNum, banASN.Origin, banASN.SourceID.Int64(), banASN.TargetID.Int64(),
 				banASN.Reason, banASN.ValidUntil, banASN.UpdatedOn, banASN.CreatedOn, banASN.ReasonText, banASN.IsEnabled,
 				banASN.Deleted, banASN.UnbanReasonText, banASN.AppealState, banASN.Note).
 			Scan(&banASN.BanASNId); err != nil {

@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"fmt"
@@ -20,13 +20,13 @@ func TestAppeal(t *testing.T) {
 
 	// Check for no messages
 	var banMessages []domain.BanAppealMessage
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), nil, http.StatusOK, targetAuth, &banMessages)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), nil, http.StatusOK, &authTokens{user: targetAuth}, &banMessages)
 	require.Empty(t, banMessages)
 
 	// Create a message
 	newMessage := domain.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
 	var createdMessage domain.BanAppealMessage
-	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), newMessage, http.StatusCreated, targetAuth, &createdMessage)
+	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), newMessage, http.StatusCreated, &authTokens{user: targetAuth}, &createdMessage)
 	require.Equal(t, newMessage.BodyMD, createdMessage.MessageMD)
 
 	// Try and create a message as non target user or mod
@@ -35,24 +35,24 @@ func TestAppeal(t *testing.T) {
 
 	// Get appeals
 	var appeals []domain.AppealOverview
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/appeals", domain.AppealQueryFilter{Deleted: false}, http.StatusOK, modAuth, &appeals)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/appeals", domain.AppealQueryFilter{Deleted: false}, http.StatusOK, &authTokens{user: modAuth}, &appeals)
 	require.NotEmpty(t, appeals)
 
 	// Get messages
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), nil, http.StatusOK, modAuth, &banMessages)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), nil, http.StatusOK, &authTokens{user: modAuth}, &banMessages)
 	require.NotEmpty(t, banMessages)
 
 	// Edit the message
 	editMessage := domain.RequestMessageBodyMD{BodyMD: createdMessage.MessageMD + "x"}
 	var editedMessage domain.BanAppealMessage
-	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/message/%d", createdMessage.BanMessageID), editMessage, http.StatusOK, modAuth, &editedMessage)
+	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/message/%d", createdMessage.BanMessageID), editMessage, http.StatusOK, &authTokens{user: modAuth}, &editedMessage)
 	require.Equal(t, editMessage.BodyMD, editedMessage.MessageMD)
 
 	// Delete the message
-	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/message/%d", createdMessage.BanMessageID), nil, http.StatusOK, modAuth)
+	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/message/%d", createdMessage.BanMessageID), nil, http.StatusOK, &authTokens{user: modAuth})
 
 	// Confirm delete
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), nil, http.StatusOK, modAuth, &banMessages)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), nil, http.StatusOK, &authTokens{user: modAuth}, &banMessages)
 	require.Empty(t, banMessages)
 }
 
