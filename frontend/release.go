@@ -4,7 +4,6 @@ package frontend
 
 import (
 	"embed"
-	"errors"
 	"net/http"
 
 	"github.com/gin-contrib/static"
@@ -21,10 +20,11 @@ func AddRoutes(engine *gin.Engine, _ string) error {
 		c.Redirect(http.StatusMovedPermanently, "/")
 	})
 
-	indexData, errIndex := embedFS.ReadFile("dist/index.html")
-	if errIndex != nil {
-		return errors.Join(errIndex, ErrContentRoot)
-	}
+	//indexData, errIndex := embedFS.ReadFile("dist/index.html")
+	//if errIndex != nil {
+	//	slog.Warn("")
+	//	return errors.Join(errIndex, ErrContentRoot)
+	//}
 
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(ctx *gin.Context) {

@@ -10,13 +10,14 @@ import (
 )
 
 var (
-	ErrSMInvalidAuthName  = errors.New("invalid auth name")
-	ErrSMImmunity         = errors.New("invalid immunity level, must be between 0-100")
-	ErrSMGroupName        = errors.New("group name cannot be empty")
-	ErrSMAdminGroupExists = errors.New("admin group already exists")
-	ErrSMAdminExists      = errors.New("admin already exists")
-	ErrSMAdminFlagInvalid = errors.New("invalid admin flag")
-	ErrSMRequirePassword  = errors.New("name auth type requires password")
+	ErrSMInvalidAuthName   = errors.New("invalid auth name")
+	ErrSMImmunity          = errors.New("invalid immunity level, must be between 0-100")
+	ErrSMGroupName         = errors.New("group name cannot be empty")
+	ErrSMAdminGroupExists  = errors.New("admin group already exists")
+	ErrSMAdminExists       = errors.New("admin already exists")
+	ErrSMAdminFlagInvalid  = errors.New("invalid admin flag")
+	ErrSMRequirePassword   = errors.New("name auth type requires password")
+	ErrInsufficientDetails = errors.New("insufficient details")
 )
 
 type SRCDSRepository interface { //nolint:interfacebloat

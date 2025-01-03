@@ -10,3 +10,4 @@ export * from './demo';
 export * from './match';
 export * from './contests';
 export * from './network';
+export * from './speedruns';
