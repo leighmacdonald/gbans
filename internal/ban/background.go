@@ -56,7 +56,7 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 				continue
 			}
 
-			person, errPerson := monitor.person.GetPersonBySteamID(ctx, ban.TargetID)
+			person, errPerson := monitor.person.GetPersonBySteamID(ctx, nil, ban.TargetID)
 			if errPerson != nil {
 				slog.Error("Failed to get expired Person", log.ErrAttr(errPerson))
 
