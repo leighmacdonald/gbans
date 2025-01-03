@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/maruel/natural"
 )
 
 type serversHandler struct {
@@ -121,8 +122,8 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 			})
 		}
 
-		sort.SliceStable(servers, func(i, j int) bool {
-			return servers[i].Name < servers[j].Name
+		sort.Slice(servers, func(i, j int) bool {
+			return natural.Less(servers[i].Name, servers[j].Name)
 		})
 
 		if servers == nil {
