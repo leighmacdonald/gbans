@@ -64,6 +64,7 @@ func (r *speedrunRepository) Save(ctx context.Context, details *domain.Speedrun)
 				"map_id":       details.MapDetail.MapID,
 				"category":     details.Category,
 				"duration":     details.Duration,
+				"initial_rank": details.InitialRank,
 				"player_count": details.PlayerCount,
 				"bot_count":    details.BotCount,
 				"created_on":   details.CreatedOn,
@@ -86,8 +87,38 @@ func (r *speedrunRepository) Save(ctx context.Context, details *domain.Speedrun)
 			return errPlayers
 		}
 
+		rank, errRank := r.updateSpeedrunRank(ctx, transaction, details.SpeedrunID)
+		if errRank != nil {
+			return errRank
+		}
+
+		details.Rank = rank
+
 		return nil
 	})
+}
+
+func (r *speedrunRepository) updateSpeedrunRank(ctx context.Context, transaction pgx.Tx, speedrunID int) (int, error) {
+	const query = `
+		SELECT rank
+		FROM (
+			 SELECT speedrun_id, rank() OVER (PARTITION BY s.map_id ORDER BY duration ) as rank
+			 FROM speedrun s
+			 LEFT JOIN map m on s.map_id = m.map_id
+		 ) s
+		WHERE speedrun_id = $1;`
+
+	var rank int
+	if err := transaction.QueryRow(ctx, query, speedrunID).Scan(&rank); err != nil {
+		return 0, r.db.DBErr(err)
+	}
+
+	const queryUpdate = `UPDATE speedrun SET initial_rank = $1 WHERE speedrun_id = $2`
+	if _, err := transaction.Exec(ctx, queryUpdate, rank, speedrunID); err != nil {
+		return 0, r.db.DBErr(err)
+	}
+
+	return rank, nil
 }
 
 func (r *speedrunRepository) insertPlayers(ctx context.Context, transaction pgx.Tx, players []domain.SpeedrunParticipant) error {
@@ -181,12 +212,12 @@ func (r *speedrunRepository) Query(_ context.Context, _ domain.SpeedrunQuery) ([
 }
 
 func (r *speedrunRepository) TopNOverall(ctx context.Context, count int) (map[string][]domain.Speedrun, error) {
-	const q = `
+	const query = `
 		SELECT
 			*
 		FROM
 			(SELECT
-				 s.speedrun_id, s.server_id, s.category, s.duration, s.player_count, s.bot_count, s.created_on,
+				 s.speedrun_id, s.server_id, s.category, s.duration, s.player_count, s.bot_count, s.created_on, s.initial_rank,
 				 rank() OVER (PARTITION BY s.map_id ORDER BY duration ) as rank,
 				 m.map_id, m.map_name, m.updated_on, m.created_on
 			 FROM speedrun s
@@ -194,7 +225,7 @@ func (r *speedrunRepository) TopNOverall(ctx context.Context, count int) (map[st
 			) s
 		WHERE s.rank <= $1
 	`
-	rows, errRows := r.db.Query(ctx, nil, q, count)
+	rows, errRows := r.db.Query(ctx, nil, query, count)
 	if errRows != nil {
 		return nil, r.db.DBErr(errRows)
 	}
@@ -202,34 +233,34 @@ func (r *speedrunRepository) TopNOverall(ctx context.Context, count int) (map[st
 
 	runs := map[string][]domain.Speedrun{}
 	for rows.Next() {
-		var sr domain.Speedrun
+		var run domain.Speedrun
 		if err := rows.Scan(
-			&sr.SpeedrunID, &sr.ServerID, &sr.Category, &sr.Duration, &sr.PlayerCount, &sr.BotCount, &sr.CreatedOn,
-			&sr.Rank,
-			&sr.MapDetail.MapID, &sr.MapDetail.MapName, &sr.MapDetail.UpdatedOn, &sr.MapDetail.CreatedOn); err != nil {
+			&run.SpeedrunID, &run.ServerID, &run.Category, &run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn,
+			&run.InitialRank, &run.Rank,
+			&run.MapDetail.MapID, &run.MapDetail.MapName, &run.MapDetail.UpdatedOn, &run.MapDetail.CreatedOn); err != nil {
 			return nil, r.db.DBErr(err)
 		}
-		if _, ok := runs[sr.MapDetail.MapName]; !ok {
-			runs[sr.MapDetail.MapName] = []domain.Speedrun{}
+		if _, ok := runs[run.MapDetail.MapName]; !ok {
+			runs[run.MapDetail.MapName] = []domain.Speedrun{}
 		}
 
-		runs[sr.MapDetail.MapName] = append(runs[sr.MapDetail.MapName], sr)
+		runs[run.MapDetail.MapName] = append(runs[run.MapDetail.MapName], run)
 	}
 
 	// TODO this is quite expensive, cache or change to single query
 	for _, speedruns := range runs {
-		for i := range speedruns {
-			runners, errRunners := r.getRunners(ctx, speedruns[i].SpeedrunID)
+		for runnerIdx := range speedruns {
+			runners, errRunners := r.getRunners(ctx, speedruns[runnerIdx].SpeedrunID)
 			if errRunners != nil {
 				return nil, errRunners
 			}
-			speedruns[i].Players = runners
+			speedruns[runnerIdx].Players = runners
 
-			captures, errCaptures := r.getCaptures(ctx, speedruns[i].SpeedrunID)
+			captures, errCaptures := r.getCaptures(ctx, speedruns[runnerIdx].SpeedrunID)
 			if errCaptures != nil {
 				return nil, errCaptures
 			}
-			speedruns[i].PointCaptures = captures
+			speedruns[runnerIdx].PointCaptures = captures
 		}
 	}
 
@@ -237,35 +268,123 @@ func (r *speedrunRepository) TopNOverall(ctx context.Context, count int) (map[st
 }
 
 func (r *speedrunRepository) ByID(ctx context.Context, speedrunID int) (domain.Speedrun, error) {
-	const q = `
-		SELECT s.speedrun_id, s.server_id, s.category, s.duration, s.player_count, s.bot_count, s.created_on,
-		       m.map_id, m.map_name, m.updated_on, m.created_on
-		FROM speedrun s
-		LEFT JOIN public.map m on s.map_id = m.map_id
-		WHERE speedrun_id = $1`
+	const query = `
+		SELECT *
+		FROM (
+			SELECT s.speedrun_id, s.server_id, s.category, s.duration, s.player_count, s.bot_count, s.created_on, s.initial_rank,
+				m.map_id, m.map_name, m.updated_on, m.created_on,
+				rank() OVER (PARTITION BY s.map_id ORDER BY duration ) as rank
+			FROM speedrun s
+			LEFT JOIN public.map m on s.map_id = m.map_id
+		) s
+		WHERE speedrun_id =  $1`
 
-	var sr domain.Speedrun
+	var run domain.Speedrun
 	if err := r.db.
-		QueryRow(ctx, nil, q, speedrunID).
-		Scan(&sr.SpeedrunID, &sr.ServerID, &sr.Category, &sr.Duration, &sr.PlayerCount, &sr.BotCount, &sr.CreatedOn,
-			&sr.MapDetail.MapID, &sr.MapDetail.MapName, &sr.MapDetail.UpdatedOn, &sr.MapDetail.CreatedOn); err != nil {
+		QueryRow(ctx, nil, query, speedrunID).
+		Scan(&run.SpeedrunID, &run.ServerID, &run.Category, &run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
+			&run.MapDetail.MapID, &run.MapDetail.MapName, &run.MapDetail.UpdatedOn, &run.MapDetail.CreatedOn, &run.Rank); err != nil {
 		return domain.Speedrun{}, r.db.DBErr(err)
 	}
 
 	runners, errRunners := r.getRunners(ctx, speedrunID)
 	if errRunners != nil {
-		return sr, errRunners
+		return run, errRunners
 	}
 
 	captures, errCaptures := r.getCaptures(ctx, speedrunID)
 	if errCaptures != nil {
-		return sr, errCaptures
+		return run, errCaptures
 	}
 
-	sr.Players = runners
-	sr.PointCaptures = captures
+	run.Players = runners
+	run.PointCaptures = captures
 
-	return sr, nil
+	return run, nil
+}
+
+func (r *speedrunRepository) Recent(ctx context.Context, limit int) ([]domain.SpeedrunMapOverview, error) {
+	const query = `
+		SELECT s.*,
+			   r.count,
+			   m.map_name
+		FROM (SELECT s.speedrun_id,
+					 s.map_id,
+					 s.server_id,
+					 s.category,
+					 s.duration,
+					 s.player_count,
+					 s.bot_count,
+					 s.created_on,
+					 s.initial_rank,
+					 rank() OVER (PARTITION BY s.map_id ORDER BY s.duration ) as rank
+			  FROM speedrun s) s
+				 LEFT JOIN (SELECT speedrun_id, COUNT(r.steam_id) as count
+							FROM speedrun_runners r
+							GROUP BY speedrun_id) r ON s.speedrun_id = r.speedrun_id
+		LEFT JOIN map m ON m.map_id = s.map_id
+		ORDER BY s.created_on DESC
+		LIMIT $1`
+	rows, errRows := r.db.Query(ctx, nil, query, limit)
+	if errRows != nil {
+		return nil, r.db.DBErr(errRows)
+	}
+	defer rows.Close()
+
+	var smo []domain.SpeedrunMapOverview
+	for rows.Next() {
+		var run domain.SpeedrunMapOverview
+		if err := rows.Scan(&run.SpeedrunID, &run.MapDetail.MapID, &run.ServerID, &run.Category,
+			&run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
+			&run.Rank, &run.PlayerCount, &run.MapDetail.MapName); err != nil {
+			return []domain.SpeedrunMapOverview{}, r.db.DBErr(err)
+		}
+		smo = append(smo, run)
+	}
+
+	return smo, nil
+}
+
+func (r *speedrunRepository) ByMap(ctx context.Context, mapName string) ([]domain.SpeedrunMapOverview, error) {
+	const query = `
+		SELECT s.*,
+			   r.count,
+			   m.map_name
+		FROM (SELECT s.speedrun_id,
+					 s.map_id,
+					 s.server_id,
+					 s.category,
+					 s.duration,
+					 s.player_count,
+					 s.bot_count,
+					 s.created_on,
+					 s.initial_rank,
+					 rank() OVER (PARTITION BY s.map_id ORDER BY s.duration ) as rank
+			  FROM speedrun s) s
+				 LEFT JOIN (SELECT speedrun_id, COUNT(r.steam_id) as count
+							FROM speedrun_runners r
+							GROUP BY speedrun_id) r ON s.speedrun_id = r.speedrun_id
+		LEFT JOIN map m ON m.map_id = s.map_id
+		WHERE m.map_name = lower($1)
+		ORDER BY rank`
+	rows, errRows := r.db.Query(ctx, nil, query, mapName)
+	if errRows != nil {
+		return nil, r.db.DBErr(errRows)
+	}
+	defer rows.Close()
+
+	var smo []domain.SpeedrunMapOverview
+	for rows.Next() {
+		var run domain.SpeedrunMapOverview
+		if err := rows.Scan(&run.SpeedrunID, &run.MapDetail.MapID, &run.ServerID, &run.Category,
+			&run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
+			&run.Rank, &run.PlayerCount, &run.MapDetail.MapName); err != nil {
+			return []domain.SpeedrunMapOverview{}, r.db.DBErr(err)
+		}
+		smo = append(smo, run)
+	}
+
+	return smo, nil
 }
 
 func (r *speedrunRepository) getCapturedPoints(ctx context.Context, speedrunID int) ([]domain.SpeedrunPointCaptures, error) {
@@ -300,12 +419,13 @@ func (r *speedrunRepository) getCaptures(ctx context.Context, speedrunID int) ([
 		return nil, errPoints
 	}
 
-	const q = `
-		SELECT r.round_id, r.steam_id, r.duration
+	const query = `
+		SELECT r.round_id, r.steam_id, r.duration, p.avatarhash, p.personaname
 		FROM speedrun_capture_runners r
+		LEFT JOIN person p USING (steam_id)
 		WHERE r.speedrun_id = $1
 		ORDER BY r.round_id`
-	rows, errRows := r.db.Query(ctx, nil, q, speedrunID)
+	rows, errRows := r.db.Query(ctx, nil, query, speedrunID)
 	if errRows != nil {
 		return nil, r.db.DBErr(errRows)
 	}
@@ -319,7 +439,7 @@ func (r *speedrunRepository) getCaptures(ctx context.Context, speedrunID int) ([
 			participant domain.SpeedrunParticipant
 			sid         int64
 		)
-		if err := rows.Scan(&participant.RoundID, &sid, &participant.Duration); err != nil {
+		if err := rows.Scan(&participant.RoundID, &sid, &participant.Duration, &participant.AvatarHash, &participant.PersonaName); err != nil {
 			return nil, r.db.DBErr(err)
 		}
 
@@ -341,8 +461,9 @@ func (r *speedrunRepository) getCaptures(ctx context.Context, speedrunID int) ([
 
 func (r *speedrunRepository) getRunners(ctx context.Context, speedrunID int) ([]domain.SpeedrunParticipant, error) {
 	const q = `
-		SELECT r.steam_id, r.duration 
+		SELECT r.steam_id, r.duration, p.avatarhash, p.personaname
 		FROM speedrun_runners r
+		LEFT OUTER JOIN person p USING(steam_id)
 		WHERE speedrun_id = $1`
 	rows, errRows := r.db.Query(ctx, nil, q, speedrunID)
 	if errRows != nil {
@@ -358,7 +479,7 @@ func (r *speedrunRepository) getRunners(ctx context.Context, speedrunID int) ([]
 			sid         int64
 		)
 
-		if err := rows.Scan(&sid, &participant.Duration); err != nil {
+		if err := rows.Scan(&sid, &participant.Duration, &participant.AvatarHash, &participant.PersonaName); err != nil {
 			return nil, r.db.DBErr(err)
 		}
 		participant.SteamID = steamid.New(sid)

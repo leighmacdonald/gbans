@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS map
     created_on timestamptz not null default now()
 );
 
+CREATE INDEX IF NOT EXISTS map_name_idx ON map (map_name);
+
 CREATE TABLE IF NOT EXISTS speedrun
 (
     speedrun_id  int PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -17,6 +19,7 @@ CREATE TABLE IF NOT EXISTS speedrun
     duration     interval                                                        not null,
     player_count int                                                             not null,
     bot_count    int                                                             not null,
+    initial_rank int                                                             not null,
     created_on   timestamptz                                                     not null default now()
 );
 
@@ -47,6 +50,5 @@ CREATE TABLE IF NOT EXISTS speedrun_capture_runners
 
 ALTER TABLE config
     ADD COLUMN general_speedruns_enabled bool not null default false;
-
 
 COMMIT;

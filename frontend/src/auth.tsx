@@ -1,5 +1,6 @@
-import { createContext, ReactNode, useCallback, useEffect } from 'react';
+import { ReactNode, useCallback, useEffect } from 'react';
 import { apiGetCurrentProfile, defaultAvatarHash, PermissionLevel, UserProfile } from './api';
+import { AuthContext } from './component/AuthContext.tsx';
 import { logoutFn } from './util/auth/logoutFn.ts';
 import { readAccessToken } from './util/auth/readAccessToken.ts';
 import { logErr } from './util/errors.ts';
@@ -8,8 +9,6 @@ import { emptyOrNullString } from './util/types.ts';
 export const accessTokenKey = 'token';
 export const profileKey = 'profile';
 export const logoutKey = 'logout';
-
-export const AuthContext = createContext<AuthContext | null>(null);
 
 export function AuthProvider({
     children,
@@ -93,7 +92,7 @@ export function AuthProvider({
     );
 }
 
-export type AuthContext = {
+export type AuthContextProps = {
     profile: UserProfile;
     login: (profile: UserProfile) => void;
     logout: () => Promise<void>;

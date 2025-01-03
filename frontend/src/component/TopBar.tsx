@@ -52,13 +52,13 @@ import { useNavigate } from '@tanstack/react-router';
 import { MenuItemData, NestedDropdown } from 'mui-nested-menu';
 import { apiGetNotifications, PermissionLevel, UserNotification } from '../api';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
-import { NotificationsProvider } from '../contexts/NotificationsCtx';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import { generateOIDCLink } from '../util/auth/generateOIDCLink.ts';
 import { DesktopNotifications } from './DesktopNotifications.tsx';
+import { NotificationsProvider } from './NotificationsProvider.tsx';
 import RouterLink from './RouterLink.tsx';
 import { VCenterBox } from './VCenterBox.tsx';
 
@@ -75,6 +75,9 @@ export const TopBar = () => {
     const { data: notifications, isLoading } = useQuery({
         queryKey: ['notifications'],
         queryFn: async () => {
+            if (profile.steam_id == '') {
+                return [];
+            }
             return (await apiGetNotifications()) ?? [];
         },
         refetchInterval: 60 * 1000,

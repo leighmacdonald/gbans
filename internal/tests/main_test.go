@@ -1,5 +1,5 @@
 //nolint:gochecknoglobals
-package test
+package tests_test
 
 import (
 	"bytes"

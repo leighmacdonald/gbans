@@ -8,16 +8,18 @@ import (
 )
 
 type SpeedrunRepository interface {
-	Query(ctx context.Context, query SpeedrunQuery) ([]Speedrun, error)
 	Save(ctx context.Context, details *Speedrun) error
 	ByID(ctx context.Context, speedrunID int) (Speedrun, error)
+	ByMap(ctx context.Context, name string) ([]SpeedrunMapOverview, error)
+	Recent(ctx context.Context, limit int) ([]SpeedrunMapOverview, error)
 	TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error)
 }
 
 type SpeedrunUsecase interface {
 	Save(ctx context.Context, details Speedrun) (Speedrun, error)
-	Query(ctx context.Context, query SpeedrunQuery) ([]Speedrun, error)
 	ByID(ctx context.Context, speedrunID int) (Speedrun, error)
+	ByMap(ctx context.Context, name string) ([]SpeedrunMapOverview, error)
+	Recent(ctx context.Context, limit int) ([]SpeedrunMapOverview, error)
 	TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error)
 }
 
@@ -60,7 +62,8 @@ type SpeedrunPointCaptures struct {
 type Speedrun struct {
 	SpeedrunID    int                     `json:"speedrun_id"`
 	ServerID      int                     `json:"server_id"`
-	Rank          int                     `json:"rank"`
+	Rank          int                     `json:"rank,omitempty"`
+	InitialRank   int                     `json:"initial_rank,omitempty"`
 	MapDetail     MapDetail               `json:"map_detail"`
 	PointCaptures []SpeedrunPointCaptures `json:"point_captures"`
 	Players       []SpeedrunParticipant   `json:"players"`
@@ -69,10 +72,27 @@ type Speedrun struct {
 	BotCount      int                     `json:"bot_count"`
 	CreatedOn     time.Time               `json:"created_on"`
 	Category      SpeedrunCategory        `json:"category"`
+	TotalPlayers  int                     `json:"total_players"`
 }
 
 type SpeedrunParticipant struct {
-	RoundID  int             `json:"round_id"`
-	SteamID  steamid.SteamID `json:"steam_id"`
-	Duration time.Duration   `json:"duration"`
+	RoundID     int             `json:"round_id"`
+	SteamID     steamid.SteamID `json:"steam_id"`
+	Duration    time.Duration   `json:"duration"`
+	AvatarHash  string          `json:"avatar_hash"`
+	PersonaName string          `json:"persona_name"`
+}
+
+type SpeedrunMapOverview struct {
+	SpeedrunID   int              `json:"speedrun_id"`
+	ServerID     int              `json:"server_id"`
+	Rank         int              `json:"rank"`
+	InitialRank  int              `json:"initial_rank"`
+	MapDetail    MapDetail        `json:"map_detail"`
+	Duration     time.Duration    `json:"duration"`
+	PlayerCount  int              `json:"player_count"`
+	BotCount     int              `json:"bot_count"`
+	CreatedOn    time.Time        `json:"created_on"`
+	Category     SpeedrunCategory `json:"category"`
+	TotalPlayers int              `json:"total_players"`
 }
