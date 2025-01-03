@@ -29,7 +29,6 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@date-io/date-fns": "^3.2.0",
     "@ebay/nice-modal-react": "^1.2.13",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
