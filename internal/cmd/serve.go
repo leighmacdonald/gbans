@@ -366,7 +366,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			person.NewPersonHandler(router, configUsecase, personUsecase, authUsecase)
 			report.NewReportHandler(router, reportUsecase, authUsecase, notificationUsecase)
 			servers.NewServerHandler(router, serversUC, stateUsecase, authUsecase, personUsecase)
-			srcds.NewSpeedrunHandler(router, speedruns, authUsecase)
+			srcds.NewSpeedrunHandler(router, speedruns, authUsecase, configUsecase)
 			srcds.NewSRCDSHandler(router, srcdsUsecase, serversUC, personUsecase, assets,
 				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, demos, authUsecase, banASNUsecase, banNetUsecase,
 				configUsecase, notificationUsecase, stateUsecase, blocklistUsecase)
