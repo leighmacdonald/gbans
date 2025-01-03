@@ -1,4 +1,4 @@
-import { createContext, Dispatch, SetStateAction, useState, JSX } from 'react';
+import { createContext, Dispatch, SetStateAction } from 'react';
 import { UserNotification } from '../api';
 import { noop } from '../util/lists.ts';
 
@@ -15,21 +15,3 @@ export const NotificationsCtx = createContext<NotificationState>({
     selectedIds: [],
     setSelectedIds: () => noop
 });
-
-export const NotificationsProvider = ({ children }: { children: JSX.Element }) => {
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [notifications, setNotifications] = useState<UserNotification[]>([]);
-
-    return (
-        <NotificationsCtx.Provider
-            value={{
-                setNotifications,
-                notifications,
-                selectedIds,
-                setSelectedIds
-            }}
-        >
-            {children}
-        </NotificationsCtx.Provider>
-    );
-};

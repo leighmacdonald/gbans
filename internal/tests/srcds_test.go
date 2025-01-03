@@ -1,4 +1,4 @@
-package test
+package tests_test
 
 import (
 	"fmt"
@@ -79,7 +79,7 @@ func TestSubmitSpeedrun(t *testing.T) {
 	require.Equal(t, result.ServerID, result2.ServerID)
 	require.Equal(t, result.SpeedrunID, result2.SpeedrunID)
 
-	for range 20 {
+	for range 40 {
 		var result3 domain.Speedrun
 		sr := genSpeedrun(24, 40)
 		sr.MapDetail.MapName = speedrun.MapDetail.MapName

@@ -16,6 +16,14 @@ type speedrunUsecase struct {
 	repo domain.SpeedrunRepository
 }
 
+func (u *speedrunUsecase) Recent(ctx context.Context, limit int) ([]domain.SpeedrunMapOverview, error) {
+	if limit <= 0 || limit > 100 {
+		return nil, domain.ErrValueOutOfRange
+	}
+
+	return u.repo.Recent(ctx, limit)
+}
+
 func (u *speedrunUsecase) TopNOverall(ctx context.Context, count int) (map[string][]domain.Speedrun, error) {
 	if count <= 0 || count > 1000 {
 		return nil, domain.ErrValueOutOfRange
@@ -30,6 +38,14 @@ func (u *speedrunUsecase) ByID(ctx context.Context, speedrunID int) (domain.Spee
 	}
 
 	return u.repo.ByID(ctx, speedrunID)
+}
+
+func (u *speedrunUsecase) ByMap(ctx context.Context, mapName string) ([]domain.SpeedrunMapOverview, error) {
+	if mapName == "" {
+		return []domain.SpeedrunMapOverview{}, domain.ErrValueOutOfRange
+	}
+
+	return u.repo.ByMap(ctx, mapName)
 }
 
 func (u *speedrunUsecase) Save(ctx context.Context, details domain.Speedrun) (domain.Speedrun, error) {

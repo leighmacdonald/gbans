@@ -10,18 +10,18 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { QueryClient } from '@tanstack/react-query';
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
-import { AuthContext } from '../auth.tsx';
+import { AuthContextProps } from '../auth.tsx';
 import { Flash, Flashes } from '../component/Flashes.tsx';
 import { Footer } from '../component/Footer.tsx';
 import { LogoutHandler } from '../component/LogoutHandler.tsx';
+import { NotificationsProvider } from '../component/NotificationsProvider.tsx';
 import { TopBar } from '../component/TopBar.tsx';
 import { ColourModeContext } from '../contexts/ColourModeContext.tsx';
-import { NotificationsProvider } from '../contexts/NotificationsCtx.tsx';
 import { UserFlashCtx } from '../contexts/UserFlashCtx.tsx';
 import { createThemeByMode } from '../theme.ts';
 
 type RouterContext = {
-    auth: AuthContext;
+    auth: AuthContextProps;
     queryClient: QueryClient;
 };
 

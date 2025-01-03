@@ -31,7 +31,7 @@ function Index() {
 
     return (
         <>
-            <Title />
+            <Title>Home</Title>
             <Grid container spacing={3}>
                 <Grid xs={12} sm={12} md={10}>
                     <NewsView itemsPerPage={3} />

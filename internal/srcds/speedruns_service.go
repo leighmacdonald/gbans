@@ -29,8 +29,9 @@ func NewSpeedrunHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, au
 		guest := guestGroup.Use(auth.AuthMiddleware(domain.PGuest))
 		// Groups
 		// guest.GET("/api/speedruns/overall", handler.getOverall())
-		guest.GET("/api/speedruns/map", handler.getLeaders())
+		guest.GET("/api/speedruns/map", handler.getByMap())
 		guest.GET("/api/speedruns/overall/top", handler.getOverallTopN())
+		guest.GET("/api/speedruns/overall/recent", handler.getRecentChanges())
 		guest.GET("/api/speedruns/byid/:speedrun_id", handler.getSpeedrun())
 	}
 
@@ -60,7 +61,7 @@ func (s *speedrunHandler) postSpeedrun() gin.HandlerFunc {
 	}
 }
 
-//func (s *speedrunHandler) getOverall() gin.HandlerFunc {
+// func (s *speedrunHandler) getOverall() gin.HandlerFunc {
 //	return func(ctx *gin.Context) {
 //		top, errTop := s.speedruns.TopNOverall(ctx, 3)
 //		if errTop != nil {
@@ -72,11 +73,28 @@ func (s *speedrunHandler) postSpeedrun() gin.HandlerFunc {
 //
 //		ctx.JSON(http.StatusOK, top)
 //	}
-//}
+// }
 
-func (s *speedrunHandler) getLeaders() gin.HandlerFunc {
+func (s *speedrunHandler) getByMap() gin.HandlerFunc {
+	type q struct {
+		MapName string `schema:"map_name"`
+	}
+
 	return func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{})
+		var query q
+		if !httphelper.BindQuery(ctx, &query) {
+			return
+		}
+
+		runs, errRuns := s.speedruns.ByMap(ctx, query.MapName)
+		if errRuns != nil {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to load map speedrun results", log.ErrAttr(errRuns))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, runs)
 	}
 }
 
@@ -105,6 +123,34 @@ func (s *speedrunHandler) getSpeedrun() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, speedrun)
+	}
+}
+
+func (s *speedrunHandler) getRecentChanges() gin.HandlerFunc {
+	var query struct {
+		Count int `json:"count"`
+	}
+
+	return func(ctx *gin.Context) {
+		if !httphelper.BindQuery(ctx, &query) {
+			return
+		}
+
+		top, errTop := s.speedruns.Recent(ctx, query.Count)
+		if errTop != nil {
+			if errors.Is(errTop, domain.ErrValueOutOfRange) {
+				httphelper.HandleErrBadRequest(ctx)
+				slog.Warn("Got out of bounds recent speedruns value", log.ErrAttr(errTop))
+
+				return
+			}
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to load recent speedruns", log.ErrAttr(errTop))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, top)
 	}
 }
 

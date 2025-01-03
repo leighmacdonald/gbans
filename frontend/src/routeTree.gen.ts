@@ -18,7 +18,6 @@ import { Route as AdminImport } from './routes/_admin'
 import { Route as GuestIndexImport } from './routes/_guest.index'
 import { Route as GuestWikiImport } from './routes/_guest.wiki'
 import { Route as GuestStvImport } from './routes/_guest.stv'
-import { Route as GuestSpeedrunsImport } from './routes/_guest.speedruns'
 import { Route as GuestServersImport } from './routes/_guest.servers'
 import { Route as GuestPrivacyPolicyImport } from './routes/_guest.privacy-policy'
 import { Route as GuestPatreonImport } from './routes/_guest.patreon'
@@ -34,6 +33,7 @@ import { Route as AuthLogoutImport } from './routes/_auth.logout'
 import { Route as AuthForumsImport } from './routes/_auth.forums'
 import { Route as AuthChatlogsImport } from './routes/_auth.chatlogs'
 import { Route as GuestWikiIndexImport } from './routes/_guest.wiki.index'
+import { Route as GuestSpeedrunsIndexImport } from './routes/_guest.speedruns.index'
 import { Route as GuestLoginIndexImport } from './routes/_guest.login.index'
 import { Route as AuthStatsIndexImport } from './routes/_auth.stats.index'
 import { Route as AuthReportIndexImport } from './routes/_auth.report.index'
@@ -65,6 +65,8 @@ import { Route as ModAdminBanSteamImport } from './routes/_mod.admin.ban.steam'
 import { Route as ModAdminBanGroupImport } from './routes/_mod.admin.ban.group'
 import { Route as ModAdminBanCidrImport } from './routes/_mod.admin.ban.cidr'
 import { Route as ModAdminBanAsnImport } from './routes/_mod.admin.ban.asn'
+import { Route as GuestSpeedrunsMapMapNameImport } from './routes/_guest.speedruns.map.$mapName'
+import { Route as GuestSpeedrunsIdSpeedrunIdImport } from './routes/_guest.speedruns.id.$speedrunId'
 import { Route as AuthStatsWeaponWeaponidImport } from './routes/_auth.stats.weapon.$weapon_id'
 import { Route as AuthForumsThreadForumthreadidImport } from './routes/_auth.forums.thread.$forum_thread_id'
 import { Route as AuthLogsSteamIdImport } from './routes/_auth.logs.$steamId.'
@@ -106,12 +108,6 @@ const GuestWikiRoute = GuestWikiImport.update({
 const GuestStvRoute = GuestStvImport.update({
   id: '/stv',
   path: '/stv',
-  getParentRoute: () => GuestRoute,
-} as any)
-
-const GuestSpeedrunsRoute = GuestSpeedrunsImport.update({
-  id: '/speedruns',
-  path: '/speedruns',
   getParentRoute: () => GuestRoute,
 } as any)
 
@@ -203,6 +199,12 @@ const GuestWikiIndexRoute = GuestWikiIndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => GuestWikiRoute,
+} as any)
+
+const GuestSpeedrunsIndexRoute = GuestSpeedrunsIndexImport.update({
+  id: '/speedruns/',
+  path: '/speedruns/',
+  getParentRoute: () => GuestRoute,
 } as any)
 
 const GuestLoginIndexRoute = GuestLoginIndexImport.update({
@@ -393,6 +395,20 @@ const ModAdminBanAsnRoute = ModAdminBanAsnImport.update({
   getParentRoute: () => ModRoute,
 } as any)
 
+const GuestSpeedrunsMapMapNameRoute = GuestSpeedrunsMapMapNameImport.update({
+  id: '/speedruns/map/$mapName',
+  path: '/speedruns/map/$mapName',
+  getParentRoute: () => GuestRoute,
+} as any)
+
+const GuestSpeedrunsIdSpeedrunIdRoute = GuestSpeedrunsIdSpeedrunIdImport.update(
+  {
+    id: '/speedruns/id/$speedrunId',
+    path: '/speedruns/id/$speedrunId',
+    getParentRoute: () => GuestRoute,
+  } as any,
+)
+
 const AuthStatsWeaponWeaponidRoute = AuthStatsWeaponWeaponidImport.update({
   id: '/weapon/$weapon_id',
   path: '/weapon/$weapon_id',
@@ -540,13 +556,6 @@ declare module '@tanstack/react-router' {
       path: '/servers'
       fullPath: '/servers'
       preLoaderRoute: typeof GuestServersImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/speedruns': {
-      id: '/_guest/speedruns'
-      path: '/speedruns'
-      fullPath: '/speedruns'
-      preLoaderRoute: typeof GuestSpeedrunsImport
       parentRoute: typeof GuestImport
     }
     '/_guest/stv': {
@@ -724,6 +733,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestLoginIndexImport
       parentRoute: typeof GuestImport
     }
+    '/_guest/speedruns/': {
+      id: '/_guest/speedruns/'
+      path: '/speedruns'
+      fullPath: '/speedruns'
+      preLoaderRoute: typeof GuestSpeedrunsIndexImport
+      parentRoute: typeof GuestImport
+    }
     '/_guest/wiki/': {
       id: '/_guest/wiki/'
       path: '/'
@@ -751,6 +767,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/stats/weapon/$weapon_id'
       preLoaderRoute: typeof AuthStatsWeaponWeaponidImport
       parentRoute: typeof AuthStatsImport
+    }
+    '/_guest/speedruns/id/$speedrunId': {
+      id: '/_guest/speedruns/id/$speedrunId'
+      path: '/speedruns/id/$speedrunId'
+      fullPath: '/speedruns/id/$speedrunId'
+      preLoaderRoute: typeof GuestSpeedrunsIdSpeedrunIdImport
+      parentRoute: typeof GuestImport
+    }
+    '/_guest/speedruns/map/$mapName': {
+      id: '/_guest/speedruns/map/$mapName'
+      path: '/speedruns/map/$mapName'
+      fullPath: '/speedruns/map/$mapName'
+      preLoaderRoute: typeof GuestSpeedrunsMapMapNameImport
+      parentRoute: typeof GuestImport
     }
     '/_mod/admin/ban/asn': {
       id: '/_mod/admin/ban/asn'
@@ -932,13 +962,15 @@ interface GuestRouteChildren {
   GuestPatreonRoute: typeof GuestPatreonRoute
   GuestPrivacyPolicyRoute: typeof GuestPrivacyPolicyRoute
   GuestServersRoute: typeof GuestServersRoute
-  GuestSpeedrunsRoute: typeof GuestSpeedrunsRoute
   GuestStvRoute: typeof GuestStvRoute
   GuestWikiRoute: typeof GuestWikiRouteWithChildren
   GuestIndexRoute: typeof GuestIndexRoute
   GuestLoginSuccessRoute: typeof GuestLoginSuccessRoute
   GuestProfileSteamIdRoute: typeof GuestProfileSteamIdRoute
   GuestLoginIndexRoute: typeof GuestLoginIndexRoute
+  GuestSpeedrunsIndexRoute: typeof GuestSpeedrunsIndexRoute
+  GuestSpeedrunsIdSpeedrunIdRoute: typeof GuestSpeedrunsIdSpeedrunIdRoute
+  GuestSpeedrunsMapMapNameRoute: typeof GuestSpeedrunsMapMapNameRoute
 }
 
 const GuestRouteChildren: GuestRouteChildren = {
@@ -947,13 +979,15 @@ const GuestRouteChildren: GuestRouteChildren = {
   GuestPatreonRoute: GuestPatreonRoute,
   GuestPrivacyPolicyRoute: GuestPrivacyPolicyRoute,
   GuestServersRoute: GuestServersRoute,
-  GuestSpeedrunsRoute: GuestSpeedrunsRoute,
   GuestStvRoute: GuestStvRoute,
   GuestWikiRoute: GuestWikiRouteWithChildren,
   GuestIndexRoute: GuestIndexRoute,
   GuestLoginSuccessRoute: GuestLoginSuccessRoute,
   GuestProfileSteamIdRoute: GuestProfileSteamIdRoute,
   GuestLoginIndexRoute: GuestLoginIndexRoute,
+  GuestSpeedrunsIndexRoute: GuestSpeedrunsIndexRoute,
+  GuestSpeedrunsIdSpeedrunIdRoute: GuestSpeedrunsIdSpeedrunIdRoute,
+  GuestSpeedrunsMapMapNameRoute: GuestSpeedrunsMapMapNameRoute,
 }
 
 const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren)
@@ -1014,7 +1048,6 @@ export interface FileRoutesByFullPath {
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
-  '/speedruns': typeof GuestSpeedrunsRoute
   '/stv': typeof GuestStvRoute
   '/wiki': typeof GuestWikiRouteWithChildren
   '/': typeof GuestIndexRoute
@@ -1040,10 +1073,13 @@ export interface FileRoutesByFullPath {
   '/report/': typeof AuthReportIndexRoute
   '/stats/': typeof AuthStatsIndexRoute
   '/login': typeof GuestLoginIndexRoute
+  '/speedruns': typeof GuestSpeedrunsIndexRoute
   '/wiki/': typeof GuestWikiIndexRoute
   '/logs/$steamId': typeof AuthLogsSteamIdRoute
   '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForumthreadidRoute
   '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeaponidRoute
+  '/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
+  '/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
   '/admin/ban/asn': typeof ModAdminBanAsnRoute
   '/admin/ban/cidr': typeof ModAdminBanCidrRoute
   '/admin/ban/group': typeof ModAdminBanGroupRoute
@@ -1068,7 +1104,6 @@ export interface FileRoutesByTo {
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
-  '/speedruns': typeof GuestSpeedrunsRoute
   '/stv': typeof GuestStvRoute
   '/': typeof GuestIndexRoute
   '/admin/game-admins': typeof AdminAdminGameAdminsRoute
@@ -1093,10 +1128,13 @@ export interface FileRoutesByTo {
   '/report': typeof AuthReportIndexRoute
   '/stats': typeof AuthStatsIndexRoute
   '/login': typeof GuestLoginIndexRoute
+  '/speedruns': typeof GuestSpeedrunsIndexRoute
   '/wiki': typeof GuestWikiIndexRoute
   '/logs/$steamId': typeof AuthLogsSteamIdRoute
   '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForumthreadidRoute
   '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeaponidRoute
+  '/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
+  '/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
   '/admin/ban/asn': typeof ModAdminBanAsnRoute
   '/admin/ban/cidr': typeof ModAdminBanCidrRoute
   '/admin/ban/group': typeof ModAdminBanGroupRoute
@@ -1128,7 +1166,6 @@ export interface FileRoutesById {
   '/_guest/patreon': typeof GuestPatreonRoute
   '/_guest/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/_guest/servers': typeof GuestServersRoute
-  '/_guest/speedruns': typeof GuestSpeedrunsRoute
   '/_guest/stv': typeof GuestStvRoute
   '/_guest/wiki': typeof GuestWikiRouteWithChildren
   '/_guest/': typeof GuestIndexRoute
@@ -1154,10 +1191,13 @@ export interface FileRoutesById {
   '/_auth/report/': typeof AuthReportIndexRoute
   '/_auth/stats/': typeof AuthStatsIndexRoute
   '/_guest/login/': typeof GuestLoginIndexRoute
+  '/_guest/speedruns/': typeof GuestSpeedrunsIndexRoute
   '/_guest/wiki/': typeof GuestWikiIndexRoute
   '/_auth/logs/$steamId/': typeof AuthLogsSteamIdRoute
   '/_auth/forums/thread/$forum_thread_id': typeof AuthForumsThreadForumthreadidRoute
   '/_auth/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeaponidRoute
+  '/_guest/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
+  '/_guest/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
   '/_mod/admin/ban/asn': typeof ModAdminBanAsnRoute
   '/_mod/admin/ban/cidr': typeof ModAdminBanCidrRoute
   '/_mod/admin/ban/group': typeof ModAdminBanGroupRoute
@@ -1187,7 +1227,6 @@ export interface FileRouteTypes {
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
-    | '/speedruns'
     | '/stv'
     | '/wiki'
     | '/'
@@ -1213,10 +1252,13 @@ export interface FileRouteTypes {
     | '/report/'
     | '/stats/'
     | '/login'
+    | '/speedruns'
     | '/wiki/'
     | '/logs/$steamId'
     | '/forums/thread/$forum_thread_id'
     | '/stats/weapon/$weapon_id'
+    | '/speedruns/id/$speedrunId'
+    | '/speedruns/map/$mapName'
     | '/admin/ban/asn'
     | '/admin/ban/cidr'
     | '/admin/ban/group'
@@ -1240,7 +1282,6 @@ export interface FileRouteTypes {
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
-    | '/speedruns'
     | '/stv'
     | '/'
     | '/admin/game-admins'
@@ -1265,10 +1306,13 @@ export interface FileRouteTypes {
     | '/report'
     | '/stats'
     | '/login'
+    | '/speedruns'
     | '/wiki'
     | '/logs/$steamId'
     | '/forums/thread/$forum_thread_id'
     | '/stats/weapon/$weapon_id'
+    | '/speedruns/id/$speedrunId'
+    | '/speedruns/map/$mapName'
     | '/admin/ban/asn'
     | '/admin/ban/cidr'
     | '/admin/ban/group'
@@ -1298,7 +1342,6 @@ export interface FileRouteTypes {
     | '/_guest/patreon'
     | '/_guest/privacy-policy'
     | '/_guest/servers'
-    | '/_guest/speedruns'
     | '/_guest/stv'
     | '/_guest/wiki'
     | '/_guest/'
@@ -1324,10 +1367,13 @@ export interface FileRouteTypes {
     | '/_auth/report/'
     | '/_auth/stats/'
     | '/_guest/login/'
+    | '/_guest/speedruns/'
     | '/_guest/wiki/'
     | '/_auth/logs/$steamId/'
     | '/_auth/forums/thread/$forum_thread_id'
     | '/_auth/stats/weapon/$weapon_id'
+    | '/_guest/speedruns/id/$speedrunId'
+    | '/_guest/speedruns/map/$mapName'
     | '/_mod/admin/ban/asn'
     | '/_mod/admin/ban/cidr'
     | '/_mod/admin/ban/group'
@@ -1404,13 +1450,15 @@ export const routeTree = rootRoute
         "/_guest/patreon",
         "/_guest/privacy-policy",
         "/_guest/servers",
-        "/_guest/speedruns",
         "/_guest/stv",
         "/_guest/wiki",
         "/_guest/",
         "/_guest/login/success",
         "/_guest/profile/$steamId",
-        "/_guest/login/"
+        "/_guest/login/",
+        "/_guest/speedruns/",
+        "/_guest/speedruns/id/$speedrunId",
+        "/_guest/speedruns/map/$mapName"
       ]
     },
     "/_mod": {
@@ -1501,10 +1549,6 @@ export const routeTree = rootRoute
     },
     "/_guest/servers": {
       "filePath": "_guest.servers.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/speedruns": {
-      "filePath": "_guest.speedruns.tsx",
       "parent": "/_guest"
     },
     "/_guest/stv": {
@@ -1611,6 +1655,10 @@ export const routeTree = rootRoute
       "filePath": "_guest.login.index.tsx",
       "parent": "/_guest"
     },
+    "/_guest/speedruns/": {
+      "filePath": "_guest.speedruns.index.tsx",
+      "parent": "/_guest"
+    },
     "/_guest/wiki/": {
       "filePath": "_guest.wiki.index.tsx",
       "parent": "/_guest/wiki"
@@ -1626,6 +1674,14 @@ export const routeTree = rootRoute
     "/_auth/stats/weapon/$weapon_id": {
       "filePath": "_auth.stats.weapon.$weapon_id.tsx",
       "parent": "/_auth/stats"
+    },
+    "/_guest/speedruns/id/$speedrunId": {
+      "filePath": "_guest.speedruns.id.$speedrunId.tsx",
+      "parent": "/_guest"
+    },
+    "/_guest/speedruns/map/$mapName": {
+      "filePath": "_guest.speedruns.map.$mapName.tsx",
+      "parent": "/_guest"
     },
     "/_mod/admin/ban/asn": {
       "filePath": "_mod.admin.ban.asn.tsx",
