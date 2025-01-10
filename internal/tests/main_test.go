@@ -440,6 +440,7 @@ func makeTestConfig(dsn string) domain.Config {
 			DemoCleanupMinPct:   0,
 			DemoCleanupMount:    "",
 			DemoCountLimit:      2,
+			DemoParserURL:       "http://localhost:8811",
 		},
 		Filters: domain.ConfigFilter{
 			Enabled:        true,

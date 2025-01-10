@@ -187,7 +187,7 @@ const SpeedrunRecentTable = ({
             size: 60,
             cell: (info) => (
                 <TableCellSmall>
-                    <Typography align={'center'}>{durationString(info.getValue())}</Typography>
+                    <Typography align={'center'}>{durationString(info.getValue() / 1000)}</Typography>
                 </TableCellSmall>
             )
         }),
@@ -269,7 +269,7 @@ const SpeedrunTopTable = ({
             size: 60,
             cell: (info) => (
                 <TableCellSmall>
-                    <Typography align={'center'}>{durationString(info.getValue())}</Typography>
+                    <Typography align={'center'}>{durationString(info.getValue() / 1000)}</Typography>
                 </TableCellSmall>
             )
         }),
