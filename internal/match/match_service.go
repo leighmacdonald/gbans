@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -41,78 +40,6 @@ func NewMatchHandler(ctx context.Context, engine *gin.Engine, matches domain.Mat
 		authed.GET("/api/stats/player/:steam_id/weapons", handler.onAPIGetPlayerWeaponStatsOverall())
 		authed.GET("/api/stats/player/:steam_id/classes", handler.onAPIGetPlayerClassStatsOverall())
 		authed.GET("/api/stats/player/:steam_id/overall", handler.onAPIGetPlayerStatsOverall())
-		authed.POST("/api/sm/match/start", handler.onAPIPostMatchStart())
-		authed.GET("/api/sm/match/end", handler.onAPIPostMatchEnd())
-	}
-}
-
-func (h matchHandler) onAPIPostMatchEnd() gin.HandlerFunc {
-	type endMatchResponse struct {
-		URL string `json:"url"`
-	}
-
-	return func(ctx *gin.Context) {
-		serverID, errServerID := httphelper.GetIntParam(ctx, "server_id")
-		if errServerID != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Warn("Failed to get server_id", log.ErrAttr(errServerID))
-
-			return
-		}
-
-		matchUUID, errEnd := h.matches.EndMatch(ctx, serverID)
-		if errEnd != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrUnknownServerID)
-			slog.Error("Failed to end match", log.ErrAttr(errEnd))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, endMatchResponse{URL: h.config.ExtURLRaw("/match/%s", matchUUID.String())})
-	}
-}
-
-func (h matchHandler) onAPIPostMatchStart() gin.HandlerFunc {
-	type matchStartRequest struct {
-		MapName  string `json:"map_name"`
-		DemoName string `json:"demo_name"`
-	}
-
-	type matchStartResponse struct {
-		MatchID uuid.UUID `json:"match_id"`
-	}
-
-	return func(ctx *gin.Context) {
-		var req matchStartRequest
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
-
-		serverID, errServerID := httphelper.GetIntParam(ctx, "server_id")
-		if errServerID != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrUnknownServerID)
-			slog.Warn("Failed to get server_id", log.ErrAttr(errServerID))
-
-			return
-		}
-
-		server, errServer := h.servers.Server(ctx, serverID)
-		if errServer != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrUnknownServerID)
-			slog.Error("Failed to get server", log.ErrAttr(errServer))
-
-			return
-		}
-
-		matchUUID, errMatch := h.matches.StartMatch(server, req.MapName, req.DemoName)
-		if errMatch != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrUnknownServerID)
-			slog.Error("Failed to start match", log.ErrAttr(errMatch))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, matchStartResponse{MatchID: matchUUID})
 	}
 }
 

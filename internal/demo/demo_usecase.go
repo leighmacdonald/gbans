@@ -1,22 +1,17 @@
 package demo
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
-	"mime/multipart"
-	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/demostats"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/ricochet2200/go-disk-usage/du"
@@ -205,69 +200,6 @@ func (d demoUsecase) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
 	return d.repository.GetDemos(ctx)
 }
 
-func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain.DemoDetails, error) {
-	fileHandle, errDF := os.Open(path)
-	if errDF != nil {
-		return nil, errors.Join(errDF, domain.ErrDemoLoad)
-	}
-
-	content, errContent := io.ReadAll(fileHandle)
-	if errContent != nil {
-		return nil, errors.Join(errDF, domain.ErrDemoLoad)
-	}
-
-	info, errInfo := fileHandle.Stat()
-	if errInfo != nil {
-		return nil, errors.Join(errInfo, domain.ErrDemoLoad)
-	}
-
-	log.Closer(fileHandle)
-
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-
-	part, errCreate := writer.CreateFormFile("file", info.Name())
-	if errCreate != nil {
-		return nil, errors.Join(errCreate, domain.ErrDemoLoad)
-	}
-
-	if _, err := part.Write(content); err != nil {
-		return nil, errors.Join(errCreate, domain.ErrDemoLoad)
-	}
-
-	if errClose := writer.Close(); errClose != nil {
-		return nil, errors.Join(errClose, domain.ErrDemoLoad)
-	}
-
-	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, d.config.Config().Demo.DemoParserURL, body)
-	if errReq != nil {
-		return nil, errors.Join(errReq, domain.ErrDemoLoad)
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	client := &http.Client{}
-	resp, errSend := client.Do(req)
-	if errSend != nil {
-		return nil, errors.Join(errSend, domain.ErrDemoLoad)
-	}
-
-	defer resp.Body.Close()
-
-	var demo domain.DemoDetails
-
-	// TODO remove this extra copy once this feature doesnt have much need for debugging/inspection.
-	rawBody, errRead := io.ReadAll(resp.Body)
-	if errRead != nil {
-		return nil, errors.Join(errRead, domain.ErrDemoLoad)
-	}
-
-	if errDecode := json.NewDecoder(bytes.NewReader(rawBody)).Decode(&demo); errDecode != nil {
-		return nil, errors.Join(errDecode, domain.ErrDemoLoad)
-	}
-
-	return &demo, nil
-}
-
 func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, serverID int) (*domain.DemoFile, error) {
 	_, errGetServer := d.servers.Server(ctx, serverID)
 	if errGetServer != nil {
@@ -290,13 +222,14 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
 	intStats := map[string]gin.H{}
 
-	demoDetail, errDetail := d.SendAndParseDemo(ctx, asset.LocalPath)
-	if errDetail != nil {
-		return nil, errDetail
+	demoStats, errStats := demostats.Submit(ctx, d.config.Config().Demo.DemoParserURL, asset.LocalPath)
+	if errStats != nil {
+		return nil, errStats
 	}
 
-	for key := range demoDetail.State.Users {
-		intStats[key] = gin.H{}
+	for key := range demoStats.PlayerSummaries {
+		sid := demoStats.PlayerSummaries[key].SteamID
+		intStats[string(sid)] = gin.H{}
 	}
 
 	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])

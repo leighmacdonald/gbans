@@ -16,7 +16,6 @@ type DemoUsecase interface {
 	GetDemos(ctx context.Context) ([]DemoFile, error)
 	CreateFromAsset(ctx context.Context, asset Asset, serverID int) (*DemoFile, error)
 	Cleanup(ctx context.Context)
-	SendAndParseDemo(ctx context.Context, path string) (*DemoDetails, error)
 }
 
 type DemoRepository interface {
@@ -32,11 +31,6 @@ type DemoPlayerStats struct {
 	Score      int `json:"score"`
 	ScoreTotal int `json:"score_total"`
 	Deaths     int `json:"deaths"`
-}
-
-type DemoMetaData struct {
-	MapName string                     `json:"map_name"`
-	Scores  map[string]DemoPlayerStats `json:"scores"`
 }
 
 type DemoFile struct {
@@ -58,34 +52,4 @@ type DemoInfo struct {
 	DemoID  int64
 	Title   string
 	AssetID uuid.UUID
-}
-
-type DemoPlayer struct {
-	Classes struct{} `json:"classes"`
-	Name    string   `json:"name"`
-	UserID  int      `json:"userId"`  //nolint:tagliatelle
-	SteamID string   `json:"steamId"` //nolint:tagliatelle
-	Team    string   `json:"team"`
-}
-
-type DemoHeader struct {
-	DemoType string  `json:"demo_type"`
-	Version  int     `json:"version"`
-	Protocol int     `json:"protocol"`
-	Server   string  `json:"server"`
-	Nick     string  `json:"nick"`
-	Map      string  `json:"map"`
-	Game     string  `json:"game"`
-	Duration float64 `json:"duration"`
-	Ticks    int     `json:"ticks"`
-	Frames   int     `json:"frames"`
-	Signon   int     `json:"signon"`
-}
-
-type DemoDetails struct {
-	State struct {
-		PlayerSummaries struct{}              `json:"player_summaries"`
-		Users           map[string]DemoPlayer `json:"users"`
-	} `json:"state"`
-	Header DemoHeader `json:"header"`
 }

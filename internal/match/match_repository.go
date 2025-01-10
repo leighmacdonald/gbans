@@ -21,7 +21,6 @@ type matchRepository struct {
 	notifications domain.NotificationUsecase
 	servers       domain.ServersUsecase
 	state         domain.StateUsecase
-	summarizer    *Summarizer
 	wm            fp.MutexMap[logparse.Weapon, int]
 	events        chan logparse.ServerEvent
 	broadcaster   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
@@ -44,17 +43,7 @@ func NewMatchRepository(broadcaster *fp.Broadcaster[logparse.EventType, logparse
 		events:        make(chan logparse.ServerEvent),
 	}
 
-	matchRepo.summarizer = newMatchSummarizer(matchRepo.events, matchRepo.onMatchComplete)
-
 	return matchRepo
-}
-
-func (r *matchRepository) StartMatch(startTrigger domain.MatchTrigger) {
-	r.summarizer.triggers <- startTrigger
-}
-
-func (r *matchRepository) EndMatch(endTrigger domain.MatchTrigger) {
-	r.summarizer.triggers <- endTrigger
 }
 
 func (r *matchRepository) onMatchComplete(ctx context.Context, matchContext *activeMatchContext) error {
@@ -101,10 +90,6 @@ func (r *matchRepository) onMatchComplete(ctx context.Context, matchContext *act
 		discord.MatchMessage(result, "")))
 
 	return nil
-}
-
-func (r *matchRepository) Start(ctx context.Context) {
-	r.summarizer.Start(ctx)
 }
 
 func (r *matchRepository) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {

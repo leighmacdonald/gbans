@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/demostats"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -29,45 +30,6 @@ func NewMatchUsecase(repository domain.MatchRepository, state domain.StateUsecas
 	}
 }
 
-func (m matchUsecase) StartMatch(server domain.Server, mapName string, demoName string) (uuid.UUID, error) {
-	matchUUID, errUUID := uuid.NewV4()
-	if errUUID != nil {
-		return uuid.UUID{}, errors.Join(errUUID, domain.ErrUUIDCreate)
-	}
-
-	trigger := domain.MatchTrigger{
-		Type:     domain.MatchTriggerStart,
-		UUID:     matchUUID,
-		Server:   server,
-		MapName:  mapName,
-		DemoName: demoName,
-	}
-
-	m.repository.StartMatch(trigger)
-
-	return matchUUID, nil
-}
-
-func (m matchUsecase) EndMatch(ctx context.Context, serverID int) (uuid.UUID, error) {
-	matchID, found := m.repository.GetMatchIDFromServerID(serverID)
-	if !found {
-		return matchID, domain.ErrLoadMatch
-	}
-
-	server, errServer := m.servers.Server(ctx, serverID)
-	if errServer != nil {
-		return matchID, errors.Join(errServer, domain.ErrUnknownServer)
-	}
-
-	m.repository.EndMatch(domain.MatchTrigger{
-		Type:   domain.MatchTriggerEnd,
-		UUID:   matchID,
-		Server: server,
-	})
-
-	return matchID, nil
-}
-
 func (m matchUsecase) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {
 	return m.repository.GetMatchIDFromServerID(serverID)
 }
@@ -81,8 +43,20 @@ func (m matchUsecase) MatchGetByID(ctx context.Context, matchID uuid.UUID, match
 }
 
 // todo hide.
-func (m matchUsecase) MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
-	return m.repository.MatchSave(ctx, match, weaponMap)
+func (m matchUsecase) MatchSaveFromDemo(ctx context.Context, demo demostats.Stats, weaponMap fp.MutexMap[logparse.Weapon, int]) (logparse.Match, error) {
+	var ma logparse.Match
+	matchID, err := uuid.NewV4()
+	if err != nil {
+		return ma, errors.Join(err, domain.ErrUUIDCreate)
+	}
+
+	ma.MatchID = matchID
+
+	if errSave := m.repository.MatchSave(ctx, &ma, weaponMap); errSave != nil {
+		return ma, errSave
+	}
+
+	return ma, nil
 }
 
 func (m matchUsecase) StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (domain.PlayerClassStatsCollection, error) {

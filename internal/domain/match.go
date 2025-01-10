@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/pkg/demostats"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -29,9 +30,6 @@ type MatchTrigger struct {
 }
 
 type MatchRepository interface {
-	Start(ctx context.Context)
-	StartMatch(startTrigger MatchTrigger)
-	EndMatch(endTrigger MatchTrigger)
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
 	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
@@ -56,12 +54,10 @@ type MatchRepository interface {
 	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
 }
 type MatchUsecase interface {
-	StartMatch(server Server, mapName string, demoName string) (uuid.UUID, error)
-	EndMatch(ctx context.Context, serverID int) (uuid.UUID, error)
 	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
-	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
+	MatchSaveFromDemo(ctx context.Context, demo demostats.Stats, weaponMap fp.MutexMap[logparse.Weapon, int]) (logparse.Match, error)
 	StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (PlayerClassStatsCollection, error)
 	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]PlayerWeaponStats, error)
 	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]PlayerKillstreakStats, error)
