@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/fs"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/demo"
@@ -60,8 +62,10 @@ func TestDemosCleanup(t *testing.T) {
 }
 
 func TestDemoUpload(t *testing.T) {
-	t.Skipf("Fix me")
-	details := demostats.Stats{}
+	inputResponse, errOpen := os.Open(fs.FindFile(path.Join("testdata", "demostats-good.json"), "gbans"))
+	require.NoError(t, errOpen)
+	details, errGood := demostats.ParseReader(inputResponse)
+	require.NoError(t, errGood)
 	match, errSave := matchUC.MatchSaveFromDemo(context.Background(), details, fp.MutexMap[logparse.Weapon, int]{})
 	require.NoError(t, errSave)
 	require.False(t, match.MatchID.IsNil())

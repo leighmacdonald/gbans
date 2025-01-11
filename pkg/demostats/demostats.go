@@ -21,6 +21,8 @@ var (
 	ErrDemoParseResponse  = errors.New("error parsing response")
 )
 
+type UserID string
+
 type Stats struct {
 	DemoType        string            `json:"demo_type"`
 	Version         int               `json:"version"`
@@ -33,7 +35,7 @@ type Stats struct {
 	Ticks           int               `json:"ticks"`
 	Frames          int               `json:"frames"`
 	Signon          int               `json:"signon"`
-	PlayerSummaries map[string]Player `json:"player_summaries"`
+	PlayerSummaries map[UserID]Player `json:"player_summaries"`
 }
 
 type Team string
@@ -95,7 +97,7 @@ type Player struct {
 
 var ErrPlayerNotFound = errors.New("player not found")
 
-func (s Stats) Player(steamID steamid.SteamID) (Player, string, error) {
+func (s Stats) Player(steamID steamid.SteamID) (Player, UserID, error) {
 	for uid, player := range s.PlayerSummaries {
 		if player.SteamID == steamID.Steam3() {
 			return player, uid, nil

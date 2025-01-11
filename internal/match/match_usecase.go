@@ -3,6 +3,7 @@ package match
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -43,7 +44,7 @@ func (m matchUsecase) MatchGetByID(ctx context.Context, matchID uuid.UUID, match
 }
 
 // todo hide.
-func (m matchUsecase) MatchSaveFromDemo(ctx context.Context, demo demostats.Stats, weaponMap fp.MutexMap[logparse.Weapon, int]) (logparse.Match, error) {
+func (m matchUsecase) MatchSaveFromDemo(ctx context.Context, stats demostats.Stats, weaponMap fp.MutexMap[logparse.Weapon, int]) (logparse.Match, error) {
 	var ma logparse.Match
 	matchID, err := uuid.NewV4()
 	if err != nil {
@@ -51,6 +52,44 @@ func (m matchUsecase) MatchSaveFromDemo(ctx context.Context, demo demostats.Stat
 	}
 
 	ma.MatchID = matchID
+	ma.MapName = stats.Map
+	ma.ServerID = 0
+	ma.Version = stats.Version
+	ma.DemoID = 0
+	// FixME
+	now := time.Now()
+	start := now.Add(-((time.Microsecond * time.Duration(166600)) * time.Duration(stats.Ticks)))
+	ma.TimeStart = &start
+	ma.TimeEnd = &now
+	ma.Chat = []logparse.MatchChat{}
+
+	for _, player := range stats.PlayerSummaries {
+		p := logparse.PlayerStats{
+			SteamID:         steamid.New(player.SteamID),
+			Team:            0,
+			Name:            player.Name,
+			TimeStart:       nil,
+			TimeEnd:         nil,
+			TargetInfo:      nil,
+			WeaponInfo:      nil,
+			Assists:         player.Assists,
+			Suicides:        player.Suicides,
+			HealingPacks:    player.HealingPacks,
+			HealingStats:    nil,
+			Pickups:         map[logparse.PickupItem]int{},
+			Captures:        nil,
+			CapturesBlocked: nil,
+			BuildingBuilt:   player.BuildingBuilt,
+			// BuildingDetonated: player.BuildingDetonated,
+			BuildingDestroyed: player.BuildingsDestroyed,
+			// BuildingDropped:   player.BuildingDropped,
+			// BuildingCarried:   0,
+			Classes:     nil,
+			KillStreaks: nil,
+		}
+
+		ma.PlayerSums[p.SteamID] = &p
+	}
 
 	if errSave := m.repository.MatchSave(ctx, &ma, weaponMap); errSave != nil {
 		return ma, errSave

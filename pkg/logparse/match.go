@@ -94,6 +94,8 @@ type Match struct {
 	Chat       []MatchChat      `json:"chat"`
 	TimeStart  *time.Time       `json:"time_start"`
 	TimeEnd    *time.Time       `json:"time_end"`
+	Version    int
+	DemoID     int
 	curRound   int
 }
 
