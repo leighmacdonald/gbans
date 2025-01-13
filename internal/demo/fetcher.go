@@ -160,7 +160,14 @@ type Downloader struct {
 }
 
 func (d Downloader) Start(ctx context.Context) {
-	ticker := time.NewTicker(time.Second * 5)
+	seconds := d.config.Config().SSH.UpdateInterval
+	interval := time.Duration(seconds) * time.Second
+	if interval < time.Minute*5 {
+		slog.Error("Interval is too short, overriding to 5 minutes", slog.Duration("interval", interval))
+		interval = time.Minute * 5
+	}
+
+	ticker := time.NewTicker(interval)
 	for {
 		select {
 		case <-ticker.C:
