@@ -62,6 +62,7 @@ export interface Server extends TimeStamped {
     enable_stats: boolean;
     log_secret: number;
     token_created_on: Date;
+    address_internal: string;
 }
 
 export interface Location {
@@ -92,6 +93,7 @@ export interface SaveServerOpts {
     is_enabled: boolean;
     enable_stats: boolean;
     log_secret: number;
+    address_internal: string;
 }
 
 export const apiCreateServer = async (opts: SaveServerOpts) =>

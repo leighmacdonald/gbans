@@ -64,12 +64,13 @@ func (f SCPExecer) Update(ctx context.Context) error {
 	mappedServers := map[string][]domain.Server{}
 
 	for _, server := range servers {
-		_, ok := mappedServers[server.Address]
+		actualAddr := server.AddrInternalOrDefault()
+		_, ok := mappedServers[actualAddr]
 		if !ok {
-			mappedServers[server.Address] = []domain.Server{}
+			mappedServers[actualAddr] = []domain.Server{}
 		}
 
-		mappedServers[server.Address] = append(mappedServers[server.Address], server)
+		mappedServers[actualAddr] = append(mappedServers[actualAddr], server)
 	}
 
 	sshConfig := f.config.Config().SSH
@@ -228,6 +229,8 @@ func (f SCPExecer) trustedHostKeyCallback(ctx context.Context) ssh.HostKeyCallba
 			if errSet := setKey(addr.String(), pubKeyString); errSet != nil {
 				return errSet
 			}
+
+			trustedPubKeyString = pubKeyString
 		}
 
 		if trustedPubKeyString != pubKeyString {

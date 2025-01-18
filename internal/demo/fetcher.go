@@ -82,6 +82,7 @@ var (
 	errFailedToList   = errors.New("failed to list files")
 	errFailedOpenFile = errors.New("failed to open file")
 	errFailedReadFile = errors.New("failed to read file")
+	errCloseReader    = errors.New("failed to close file reader")
 )
 
 func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, servers []domain.Server) error {
@@ -105,7 +106,7 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 
 			demoPath := path.Join(demoDir, file.Name())
 
-			slog.Debug("Downloading demo", slog.String("name", file.Name()))
+			slog.Info("Downloading demo", slog.String("name", file.Name()), slog.String("server", server.ShortName))
 
 			reader, err := client.Open(ctx, demoPath)
 			if err != nil {
@@ -119,7 +120,9 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 				return errors.Join(errRead, errFailedReadFile)
 			}
 
-			_ = reader.Close()
+			if errClose := reader.Close(); errClose != nil {
+				return errors.Join(errClose, errCloseReader)
+			}
 
 			// need Seeker, but afs does not provide
 			demo := UploadedDemo{Name: file.Name(), Server: server, Content: data}
@@ -136,7 +139,7 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 				slog.Error("Failed to cleanup demo", log.ErrAttr(errDelete), slog.String("path", demoPath))
 			}
 
-			slog.Debug("Deleted demo on remote host", slog.String("path", demoPath))
+			slog.Info("Deleted demo on remote host", slog.String("path", demoPath))
 		}
 	}
 

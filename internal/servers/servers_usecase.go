@@ -7,10 +7,16 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
+func NewServersUsecase(repository domain.ServersRepository) domain.ServersUsecase {
+	return &serversUsecase{repository: repository}
+}
+
 type serversUsecase struct {
 	repository domain.ServersRepository
 }
 
+// Delete performs a soft delete of the server. We use soft deleted because we dont wand to delete all the relationships
+// that rely on this suchs a stats.
 func (s *serversUsecase) Delete(ctx context.Context, serverID int) error {
 	if serverID <= 0 {
 		return domain.ErrInvalidParameter
@@ -24,10 +30,6 @@ func (s *serversUsecase) Delete(ctx context.Context, serverID int) error {
 	server.Deleted = true
 
 	return s.repository.SaveServer(ctx, &server)
-}
-
-func NewServersUsecase(repository domain.ServersRepository) domain.ServersUsecase {
-	return &serversUsecase{repository: repository}
 }
 
 func (s *serversUsecase) Server(ctx context.Context, serverID int) (domain.Server, error) {
@@ -82,6 +84,7 @@ func (s *serversUsecase) Save(ctx context.Context, req domain.RequestServerUpdat
 	server.IsEnabled = req.IsEnabled
 	server.LogSecret = req.LogSecret
 	server.EnableStats = req.EnableStats
+	server.AddressInternal = req.AddressInternal
 
 	if err := s.repository.SaveServer(ctx, &server); err != nil {
 		return domain.Server{}, err

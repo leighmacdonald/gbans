@@ -314,6 +314,10 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 
 			resp, errExec := s.state.ExecRaw(egCtx, serverConf.Addr(), serverConf.RconPassword, cmd)
 			if errExec != nil {
+				if errors.Is(errExec, context.Canceled) {
+					return nil
+				}
+
 				slog.Error("Failed to exec server command", slog.String("name", serverConf.DefaultHostname),
 					slog.Int("server_id", sid), log.ErrAttr(errExec))
 

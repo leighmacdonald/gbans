@@ -21,7 +21,7 @@ import (
 
 var (
 	ErrRCONCommand      = errors.New("failed to execute rcon command")
-	ErrFailedToDialRCON = errors.New("failed to connect to conf")
+	ErrFailedToDialRCON = errors.New("failed to dial rcon")
 )
 
 type Collector struct {
