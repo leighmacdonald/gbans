@@ -29,6 +29,7 @@ type RequestServerUpdate struct {
 	IsEnabled       bool    `json:"is_enabled"`
 	EnableStats     bool    `json:"enable_stats"`
 	LogSecret       int     `json:"log_secret"`
+	AddressInternal string  `json:"address_internal"`
 }
 
 type ServerInfoSafe struct {
@@ -89,6 +90,8 @@ type Server struct {
 	Name      string `json:"name"`
 	// Address is the ip of the server
 	Address string `json:"address"`
+	// Internal/VPN network. When defined its used for things like pulling demos over ssh.
+	AddressInternal string `json:"address_internal"`
 	// Port is the port of the server
 	Port int `json:"port"`
 	// RCON is the RCON password for the server
@@ -127,6 +130,14 @@ func (s Server) IP(ctx context.Context) (net.IP, error) {
 
 func (s Server) Addr() string {
 	return fmt.Sprintf("%s:%d", s.Address, s.Port)
+}
+
+func (s Server) AddrInternalOrDefault() string {
+	if s.AddressInternal != "" {
+		return s.AddressInternal
+	}
+
+	return s.Address
 }
 
 func (s Server) Slots(statusSlots int) int {

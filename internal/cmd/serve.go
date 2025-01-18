@@ -424,8 +424,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				}
 			}()
 
-			periodicJons := createPeriodicJobs()
-			queueClient, errClient := queue.Client(dbConn.Pool(), workers, periodicJons)
+			queueClient, errClient := queue.Client(dbConn.Pool(), workers, createPeriodicJobs())
 			if errClient != nil {
 				slog.Error("Failed to setup job queue", log.ErrAttr(errClient))
 

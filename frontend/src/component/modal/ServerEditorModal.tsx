@@ -17,6 +17,7 @@ type ServerEditValues = {
     short_name: string;
     name: string;
     address: string;
+    address_internal: string;
     port: string;
     password: string;
     rcon: string;
@@ -50,7 +51,8 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 reserved_slots: Number(values.reserved_slots),
                 is_enabled: values.is_enabled,
                 enable_stats: values.enabled_stats,
-                log_secret: Number(values.log_secret)
+                log_secret: Number(values.log_secret),
+                address_internal: values.address_internal
             };
             if (server?.server_id) {
                 modal.resolve(await apiSaveServer(server.server_id, opts));
@@ -80,7 +82,8 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
             reserved_slots: server ? String(server.reserved_slots) : '0',
             is_enabled: server ? server.is_enabled : true,
             enabled_stats: server ? server.enable_stats : true,
-            log_secret: server ? String(server.log_secret) : ''
+            log_secret: server ? String(server.log_secret) : '',
+            address_internal: server ? server.address_internal : ''
         }
     });
 
@@ -140,6 +143,17 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'Port'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={8}>
+                            <Field
+                                name={'address_internal'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Address Internal'} />;
                                 }}
                             />
                         </Grid>

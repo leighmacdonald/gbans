@@ -26,7 +26,7 @@ func (r *serversRepository) GetServer(ctx context.Context, serverID int) (domain
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-			"latitude", "longitude", "deleted", "log_secret", "enable_stats").
+			"latitude", "longitude", "deleted", "log_secret", "enable_stats", "address_internal").
 		From("server").
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}))
 	if rowErr != nil {
@@ -39,7 +39,7 @@ func (r *serversRepository) GetServer(ctx context.Context, serverID int) (domain
 		&server.Password, &tokenTime, &server.CreatedOn, &server.UpdatedOn,
 		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
 		&server.Latitude, &server.Longitude,
-		&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
+		&server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal); errScan != nil {
 		return server, r.db.DBErr(errScan)
 	}
 
@@ -101,7 +101,7 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 		Builder().
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
 			"s.token_created_on", "s.created_on", "s.updated_on", "s.reserved_slots", "s.is_enabled", "s.region", "s.cc",
-			"s.latitude", "s.longitude", "s.deleted", "s.log_secret", "s.enable_stats").
+			"s.latitude", "s.longitude", "s.deleted", "s.log_secret", "s.enable_stats", "s.address_internal").
 		From("server s")
 
 	var constraints sq.And
@@ -118,7 +118,7 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 		"s.": {
 			"server_id", "short_name", "name", "address", "port",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-			"latitude", "longitude", "deleted", "enable_stats",
+			"latitude", "longitude", "deleted", "enable_stats", "address_internal",
 		},
 	}, "short_name")
 
@@ -143,7 +143,7 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 			Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
 				&server.Password, &tokenDate, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 				&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
-				&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
+				&server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal); errScan != nil {
 			return nil, 0, errors.Join(errScan, domain.ErrScanResult)
 		}
 
@@ -184,14 +184,12 @@ func (r *serversRepository) GetServerByName(ctx context.Context, serverName stri
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-			"latitude", "longitude", "deleted", "log_secret", "enable_stats").
+			"latitude", "longitude", "deleted", "log_secret", "enable_stats", "address_internal").
 		From("server").
 		Where(and))
 	if errRow != nil {
 		return r.db.DBErr(errRow)
 	}
-
-	var tokenTime *time.Time
 
 	if err := row.Scan(
 		&server.ServerID,
@@ -202,12 +200,8 @@ func (r *serversRepository) GetServerByName(ctx context.Context, serverName stri
 		&server.RCON,
 		&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 		&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
-		&server.Deleted, &server.LogSecret, &server.EnableStats); err != nil {
+		&server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal); err != nil {
 		return r.db.DBErr(err)
-	}
-
-	if tokenTime != nil {
-		server.TokenCreatedOn = *tokenTime
 	}
 
 	return nil
@@ -227,7 +221,7 @@ func (r *serversRepository) GetServerByPassword(ctx context.Context, serverPassw
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-			"latitude", "longitude", "deleted", "log_secret", "enable_stats").
+			"latitude", "longitude", "deleted", "log_secret", "enable_stats", "address_internal").
 		From("server").
 		Where(and))
 	if errRow != nil {
@@ -239,7 +233,7 @@ func (r *serversRepository) GetServerByPassword(ctx context.Context, serverPassw
 	if err := row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port,
 		&server.RCON, &server.Password, &tokenTime, &server.CreatedOn, &server.UpdatedOn,
 		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC, &server.Latitude,
-		&server.Longitude, &server.Deleted, &server.LogSecret, &server.EnableStats); err != nil {
+		&server.Longitude, &server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal); err != nil {
 		return r.db.DBErr(err)
 	}
 
@@ -264,14 +258,14 @@ func (r *serversRepository) insertServer(ctx context.Context, server *domain.Ser
 		INSERT INTO server (
 		    short_name, name, address, port, rcon, token_created_on, 
 		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, latitude, longitude, 
-			deleted, log_secret, enable_stats) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+			deleted, log_secret, enable_stats, address_internal) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
 		RETURNING server_id;`
 
 	err := r.db.QueryRow(ctx, nil, query, server.ShortName, server.Name, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
-		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret, &server.EnableStats).
+		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal).
 		Scan(&server.ServerID)
 	if err != nil {
 		return r.db.DBErr(err)
@@ -303,5 +297,6 @@ func (r *serversRepository) updateServer(ctx context.Context, server *domain.Ser
 		Set("longitude", server.Longitude).
 		Set("log_secret", server.LogSecret).
 		Set("enable_stats", server.EnableStats).
+		Set("address_internal", server.AddressInternal).
 		Where(sq.Eq{"server_id": server.ServerID})))
 }
