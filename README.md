@@ -143,13 +143,6 @@ For installation, configuration and usage instruction, developer notes, please s
                 </a>
             </td>
             <td align="center">
-                <a href="https://github.com/rjdXpxigYxNT">
-                    <img src="https://avatars.githubusercontent.com/u/168137561?v=4" width="100;" alt="rjdXpxigYxNT"/>
-                    <br />
-                    <sub><b>rjdXpxigYxNT</b></sub>
-                </a>
-            </td>
-            <td align="center">
                 <a href="https://github.com/crescentrose">
                     <img src="https://avatars.githubusercontent.com/u/9057156?v=4" width="100;" alt="crescentrose"/>
                     <br />
@@ -170,8 +163,6 @@ For installation, configuration and usage instruction, developer notes, please s
                     <sub><b>Matthew</b></sub>
                 </a>
             </td>
-		</tr>
-		<tr>
             <td align="center">
                 <a href="https://github.com/Naleksuh">
                     <img src="https://avatars.githubusercontent.com/u/24828999?v=4" width="100;" alt="Naleksuh"/>
@@ -179,6 +170,8 @@ For installation, configuration and usage instruction, developer notes, please s
                     <sub><b>Naleksuh</b></sub>
                 </a>
             </td>
+		</tr>
+		<tr>
             <td align="center">
                 <a href="https://github.com/camp3r101">
                     <img src="https://avatars.githubusercontent.com/u/10223311?v=4" width="100;" alt="camp3r101"/>
