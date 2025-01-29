@@ -20,7 +20,7 @@ type serversHandler struct {
 	persons domain.PersonUsecase
 }
 
-func NewServerHandler(engine *gin.Engine, serversUsecase domain.ServersUsecase,
+func NewHandler(engine *gin.Engine, serversUsecase domain.ServersUsecase,
 	stateUsecase domain.StateUsecase, ath domain.AuthUsecase, personUsecase domain.PersonUsecase,
 ) {
 	handler := &serversHandler{
@@ -35,7 +35,7 @@ func NewServerHandler(engine *gin.Engine, serversUsecase domain.ServersUsecase,
 	// admin
 	srvGrp := engine.Group("/")
 	{
-		admin := srvGrp.Use(ath.AuthMiddleware(domain.PAdmin))
+		admin := srvGrp.Use(ath.Middleware(domain.PAdmin))
 		admin.POST("/api/servers", handler.onAPIPostServer())
 		admin.POST("/api/servers/:server_id", handler.onAPIPostServerUpdate())
 		admin.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())

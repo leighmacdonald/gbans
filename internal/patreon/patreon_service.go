@@ -15,7 +15,7 @@ type patreonHandler struct {
 	config  domain.ConfigUsecase
 }
 
-func NewPatreonHandler(engine *gin.Engine, patreon domain.PatreonUsecase, auth domain.AuthUsecase, config domain.ConfigUsecase) {
+func NewHandler(engine *gin.Engine, patreon domain.PatreonUsecase, auth domain.AuthUsecase, config domain.ConfigUsecase) {
 	handler := patreonHandler{
 		patreon: patreon,
 		config:  config,
@@ -26,7 +26,7 @@ func NewPatreonHandler(engine *gin.Engine, patreon domain.PatreonUsecase, auth d
 
 	authGrp := engine.Group("/")
 	{
-		authed := authGrp.Use(auth.AuthMiddleware(domain.PUser))
+		authed := authGrp.Use(auth.Middleware(domain.PUser))
 		authed.GET("/api/patreon/login", handler.onLogin())
 		authed.GET("/api/patreon/logout", handler.onLogout())
 	}
@@ -34,7 +34,7 @@ func NewPatreonHandler(engine *gin.Engine, patreon domain.PatreonUsecase, auth d
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.Middleware(domain.PModerator))
 		mod.GET("/api/patreon/pledges", handler.onAPIGetPatreonPledges())
 	}
 }

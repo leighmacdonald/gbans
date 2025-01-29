@@ -19,7 +19,7 @@ type forumHandler struct {
 	forums domain.ForumUsecase
 }
 
-func NewForumHandler(engine *gin.Engine, forums domain.ForumUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, forums domain.ForumUsecase, auth domain.AuthUsecase) {
 	handler := &forumHandler{
 		forums: forums,
 	}
@@ -29,7 +29,7 @@ func NewForumHandler(engine *gin.Engine, forums domain.ForumUsecase, auth domain
 	// opt
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(auth.AuthMiddleware(domain.PGuest))
+		opt := optGrp.Use(auth.Middleware(domain.PGuest))
 		opt.GET("/api/forum/overview", handler.onAPIForumOverview())
 		opt.GET("/api/forum/messages/recent", handler.onAPIForumMessagesRecent())
 		opt.POST("/api/forum/threads", handler.onAPIForumThreads())
@@ -41,7 +41,7 @@ func NewForumHandler(engine *gin.Engine, forums domain.ForumUsecase, auth domain
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(auth.Middleware(domain.PUser))
 		authed.POST("/api/forum/forum/:forum_id/thread", handler.onAPIThreadCreate())
 		authed.POST("/api/forum/thread/:forum_thread_id/message", handler.onAPIThreadCreateReply())
 		authed.POST("/api/forum/message/:forum_message_id", handler.onAPIThreadMessageUpdate())
@@ -52,7 +52,7 @@ func NewForumHandler(engine *gin.Engine, forums domain.ForumUsecase, auth domain
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.Middleware(domain.PModerator))
 		mod.POST("/api/forum/category", handler.onAPICreateForumCategory())
 		mod.GET("/api/forum/category/:forum_category_id", handler.onAPIForumCategory())
 		mod.POST("/api/forum/category/:forum_category_id", handler.onAPIUpdateForumCategory())

@@ -33,7 +33,7 @@ type srcdsHandler struct {
 	blocklist     domain.BlocklistUsecase
 }
 
-func NewSRCDSHandler(engine *gin.Engine, srcds domain.SRCDSUsecase, servers domain.ServersUsecase,
+func NewHandlerSRCDS(engine *gin.Engine, srcds domain.SRCDSUsecase, servers domain.ServersUsecase,
 	persons domain.PersonUsecase, assets domain.AssetUsecase, reports domain.ReportUsecase,
 	bans domain.BanSteamUsecase, network domain.NetworkUsecase, bansGroup domain.BanGroupUsecase,
 	demos domain.DemoUsecase, auth domain.AuthUsecase, bansASNU domain.BanASNUsecase, bansNet domain.BanNetUsecase,
@@ -60,7 +60,7 @@ func NewSRCDSHandler(engine *gin.Engine, srcds domain.SRCDSUsecase, servers doma
 
 	adminGroup := engine.Group("/")
 	{
-		admin := adminGroup.Use(auth.AuthMiddleware(domain.PAdmin))
+		admin := adminGroup.Use(auth.Middleware(domain.PAdmin))
 		// Groups
 		admin.GET("/api/smadmin/groups", handler.onAPISMGroups())
 		admin.POST("/api/smadmin/groups", handler.onCreateSMGroup())
@@ -94,7 +94,7 @@ func NewSRCDSHandler(engine *gin.Engine, srcds domain.SRCDSUsecase, servers doma
 	// Endpoints called by sourcemod plugin
 	srcdsGroup := engine.Group("/")
 	{
-		server := srcdsGroup.Use(auth.AuthServerMiddleWare())
+		server := srcdsGroup.Use(auth.ServerMiddleware())
 		server.POST("/api/sm/check", handler.onAPICheckPlayer())
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())

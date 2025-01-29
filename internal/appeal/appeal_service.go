@@ -14,7 +14,7 @@ type appealHandler struct {
 	appealUsecase domain.AppealUsecase
 }
 
-func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, authUsecase domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, authUsecase domain.AuthUsecase) {
 	handler := &appealHandler{
 		appealUsecase: appealUsecase,
 	}
@@ -22,7 +22,7 @@ func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, au
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authUsecase.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(authUsecase.Middleware(domain.PUser))
 		authed.GET("/api/bans/:ban_id/messages", handler.onAPIGetBanMessages())
 		authed.POST("/api/bans/:ban_id/messages", handler.createBanMessage())
 		authed.POST("/api/bans/message/:ban_message_id", handler.editBanMessage())
@@ -32,7 +32,7 @@ func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, au
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUsecase.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(authUsecase.Middleware(domain.PModerator))
 		mod.POST("/api/appeals", handler.onAPIGetAppeals())
 	}
 }

@@ -14,7 +14,7 @@ type steamgroupHandler struct {
 	bansGroup domain.BanGroupUsecase
 }
 
-func NewSteamgroupHandler(engine *gin.Engine, bgu domain.BanGroupUsecase, ath domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, bgu domain.BanGroupUsecase, ath domain.AuthUsecase) {
 	handler := steamgroupHandler{
 		bansGroup: bgu,
 	}
@@ -22,7 +22,7 @@ func NewSteamgroupHandler(engine *gin.Engine, bgu domain.BanGroupUsecase, ath do
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(ath.Middleware(domain.PModerator))
 		mod.POST("/api/bans/group/create", handler.onAPIPostBansGroupCreate())
 		mod.GET("/api/bans/group", handler.onAPIGetBansGroup())
 		mod.DELETE("/api/bans/group/:ban_group_id", handler.onAPIDeleteBansGroup())

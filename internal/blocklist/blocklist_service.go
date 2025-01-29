@@ -17,7 +17,7 @@ type blocklistHandler struct {
 	networks   domain.NetworkUsecase
 }
 
-func NewBlocklistHandler(engine *gin.Engine, bu domain.BlocklistUsecase, nu domain.NetworkUsecase, ath domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, bu domain.BlocklistUsecase, nu domain.NetworkUsecase, ath domain.AuthUsecase) {
 	handler := blocklistHandler{
 		blocklists: bu,
 		networks:   nu,
@@ -26,7 +26,7 @@ func NewBlocklistHandler(engine *gin.Engine, bu domain.BlocklistUsecase, nu doma
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(ath.Middleware(domain.PModerator))
 		mod.GET("/api/block_list/sources", handler.onAPIGetBlockListSources())
 
 		mod.GET("/api/block_list/whitelist/ip", handler.onAPIWhitelistIPs())
@@ -44,7 +44,7 @@ func NewBlocklistHandler(engine *gin.Engine, bu domain.BlocklistUsecase, nu doma
 	// admin
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(ath.AuthMiddleware(domain.PAdmin))
+		admin := adminGrp.Use(ath.Middleware(domain.PAdmin))
 		admin.POST("/api/block_list/sources", handler.onAPIPostBlockListCreate())
 		admin.POST("/api/block_list/sources/:cidr_block_source_id", handler.onAPIPostBlockListUpdate())
 		admin.DELETE("/api/block_list/sources/:cidr_block_source_id", handler.onAPIDeleteBlockList())

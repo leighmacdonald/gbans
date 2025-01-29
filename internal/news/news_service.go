@@ -18,7 +18,7 @@ type newsHandler struct {
 	notifications domain.NotificationUsecase
 }
 
-func NewNewsHandler(engine *gin.Engine, news domain.NewsUsecase, notifications domain.NotificationUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, news domain.NewsUsecase, notifications domain.NotificationUsecase, auth domain.AuthUsecase) {
 	handler := newsHandler{news: news, notifications: notifications}
 
 	engine.POST("/api/news_latest", handler.onAPIGetNewsLatest())
@@ -26,7 +26,7 @@ func NewNewsHandler(engine *gin.Engine, news domain.NewsUsecase, notifications d
 	// editor
 	editorGrp := engine.Group("/")
 	{
-		editor := editorGrp.Use(auth.AuthMiddleware(domain.PEditor))
+		editor := editorGrp.Use(auth.Middleware(domain.PEditor))
 		editor.POST("/api/news", handler.onAPIPostNewsCreate())
 		editor.POST("/api/news/:news_id", handler.onAPIPostNewsUpdate())
 		editor.DELETE("/api/news/:news_id", handler.onAPIPostNewsDelete())
@@ -73,7 +73,7 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 			UpdatedOn:   time.Now(),
 		}
 
-		if errSave := h.news.SaveNewsArticle(ctx, &entry); errSave != nil {
+		if errSave := h.news.Save(ctx, &entry); errSave != nil {
 			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to save news article", log.ErrAttr(errSave))
 
@@ -123,7 +123,7 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 		entry.IsPublished = req.IsPublished
 		entry.UpdatedOn = time.Now()
 
-		if errSave := h.news.SaveNewsArticle(ctx, &entry); errSave != nil {
+		if errSave := h.news.Save(ctx, &entry); errSave != nil {
 			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to save news article", log.ErrAttr(errSave))
 

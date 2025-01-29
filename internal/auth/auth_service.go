@@ -21,7 +21,7 @@ type authHandler struct {
 	personUsecase domain.PersonUsecase
 }
 
-func NewAuthHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, configUsecase domain.ConfigUsecase,
+func NewHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, configUsecase domain.ConfigUsecase,
 	personUsecase domain.PersonUsecase,
 ) {
 	handler := &authHandler{
@@ -35,7 +35,7 @@ func NewAuthHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, configUs
 	authGrp := engine.Group("/")
 	{
 		// authed
-		env := authGrp.Use(authUsecase.AuthMiddleware(domain.PUser))
+		env := authGrp.Use(authUsecase.Middleware(domain.PUser))
 
 		env.GET("/api/auth/logout", handler.onAPILogout())
 	}

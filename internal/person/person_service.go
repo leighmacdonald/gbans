@@ -17,7 +17,7 @@ type personHandler struct {
 	config  domain.ConfigUsecase
 }
 
-func NewPersonHandler(engine *gin.Engine, config domain.ConfigUsecase, persons domain.PersonUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, persons domain.PersonUsecase, auth domain.AuthUsecase) {
 	handler := &personHandler{persons: persons, config: config}
 
 	engine.GET("/api/profile", handler.onAPIProfile())
@@ -25,7 +25,7 @@ func NewPersonHandler(engine *gin.Engine, config domain.ConfigUsecase, persons d
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(auth.Middleware(domain.PUser))
 		authed.GET("/api/current_profile", handler.onAPICurrentProfile())
 		authed.GET("/api/current_profile/settings", handler.onAPIGetPersonSettings())
 		authed.POST("/api/current_profile/settings", handler.onAPIPostPersonSettings())
@@ -34,14 +34,14 @@ func NewPersonHandler(engine *gin.Engine, config domain.ConfigUsecase, persons d
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.Middleware(domain.PModerator))
 		mod.POST("/api/players", handler.searchPlayers())
 	}
 
 	// admin
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(auth.AuthMiddleware(domain.PAdmin))
+		admin := adminGrp.Use(auth.Middleware(domain.PAdmin))
 		admin.PUT("/api/player/:steam_id/permissions", handler.onAPIPutPlayerPermission())
 	}
 }

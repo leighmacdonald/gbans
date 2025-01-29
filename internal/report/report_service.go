@@ -17,7 +17,7 @@ type reportHandler struct {
 	notifications domain.NotificationUsecase
 }
 
-func NewReportHandler(engine *gin.Engine, reports domain.ReportUsecase, auth domain.AuthUsecase, notifications domain.NotificationUsecase) {
+func NewHandler(engine *gin.Engine, reports domain.ReportUsecase, auth domain.AuthUsecase, notifications domain.NotificationUsecase) {
 	handler := reportHandler{
 		reports:       reports,
 		notifications: notifications,
@@ -26,7 +26,7 @@ func NewReportHandler(engine *gin.Engine, reports domain.ReportUsecase, auth dom
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(auth.Middleware(domain.PUser))
 
 		// Reports
 		authed.POST("/api/report", handler.onAPIPostReportCreate())
@@ -43,7 +43,7 @@ func NewReportHandler(engine *gin.Engine, reports domain.ReportUsecase, auth dom
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.Middleware(domain.PModerator))
 		mod.POST("/api/reports", handler.onAPIGetAllReports())
 	}
 }

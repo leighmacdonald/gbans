@@ -245,23 +245,23 @@ func testRouter() *gin.Engine {
 		panic(errRouter)
 	}
 
-	ban.NewBanHandler(router, banSteamUC, discordUC, personUC, configUC, authUC)
-	ban.NewBanNetHandler(router, banNetUC, authUC)
-	ban.NewBanASNHandler(router, banASNUC, authUC)
-	servers.NewServerHandler(router, serversUC, stateUC, authUC, personUC)
-	steamgroup.NewSteamgroupHandler(router, banGroupUC, authUC)
-	news.NewNewsHandler(router, newsUC, notificationUC, authUC)
-	wiki.NewWIkiHandler(router, wikiUC, authUC)
-	votes.NewVoteHandler(router, votesUC, authUC)
-	config.NewConfigHandler(router, configUC, authUC, app.Version())
-	report.NewReportHandler(router, reportUC, authUC, notificationUC)
-	appeal.NewAppealHandler(router, appealUC, authUC)
-	wordfilter.NewWordFilterHandler(router, configUC, wordFilterUC, chatUC, authUC)
-	person.NewPersonHandler(router, configUC, personUC, authUC)
-	srcds.NewSRCDSHandler(router, srcdsUC, serversUC, personUC, assetUC, reportUC, banSteamUC, networkUC, banGroupUC,
+	ban.NewHandlerSteam(router, banSteamUC, discordUC, personUC, configUC, authUC)
+	ban.NewHandlerNet(router, banNetUC, authUC)
+	ban.NewASNHandlerASN(router, banASNUC, authUC)
+	servers.NewHandler(router, serversUC, stateUC, authUC, personUC)
+	steamgroup.NewHandler(router, banGroupUC, authUC)
+	news.NewHandler(router, newsUC, notificationUC, authUC)
+	wiki.NewHandler(router, wikiUC, authUC)
+	votes.NewHandler(router, votesUC, authUC)
+	config.NewHandler(router, configUC, authUC, app.Version())
+	report.NewHandler(router, reportUC, authUC, notificationUC)
+	appeal.NewHandler(router, appealUC, authUC)
+	wordfilter.NewHandler(router, configUC, wordFilterUC, chatUC, authUC)
+	person.NewHandler(router, configUC, personUC, authUC)
+	srcds.NewHandlerSRCDS(router, srcdsUC, serversUC, personUC, assetUC, reportUC, banSteamUC, networkUC, banGroupUC,
 		demoUC, authUC, banASNUC, banNetUC, configUC, notificationUC, stateUC, blocklistUC)
-	blocklist.NewBlocklistHandler(router, blocklistUC, networkUC, authUC)
-	srcds.NewSpeedrunHandler(router, speedrunsUC, authUC, configUC)
+	blocklist.NewHandler(router, blocklistUC, networkUC, authUC)
+	srcds.NewHandler(router, speedrunsUC, authUC, configUC)
 
 	return router
 }

@@ -1424,7 +1424,7 @@ type Pos struct {
 }
 
 // Encode returns an ST_MakePointM
-// Uses ESPG 4326 (WSG-84).
+// Uses EPSG 4326 (WSG-84).
 func (p *Pos) Encode() string {
 	return fmt.Sprintf(`ST_SetSRID(ST_MakePoint(%f, %f, %f), 4326)`, p.Y, p.X, p.Z)
 }

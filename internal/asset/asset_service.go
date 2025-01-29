@@ -16,19 +16,19 @@ type mediaHandler struct {
 	config domain.ConfigUsecase
 }
 
-func NewAssetHandler(engine *gin.Engine, config domain.ConfigUsecase, assets domain.AssetUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, assets domain.AssetUsecase, auth domain.AuthUsecase) {
 	handler := mediaHandler{config: config, assets: assets}
 
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(auth.AuthMiddleware(domain.PGuest))
+		opt := optGrp.Use(auth.Middleware(domain.PGuest))
 		opt.GET("/asset/:asset_id", handler.onGetByUUID())
 	}
 
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(auth.Middleware(domain.PUser))
 		authed.POST("/api/asset", handler.onAPISaveMedia())
 	}
 }

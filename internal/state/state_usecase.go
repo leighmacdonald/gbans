@@ -273,7 +273,7 @@ func (s *stateUsecase) ExecRaw(ctx context.Context, addr string, password string
 
 func (s *stateUsecase) LogAddressAdd(ctx context.Context, logAddress string) {
 	time.Sleep(20 * time.Second)
-	slog.Info("Enabling log forwarding for host", slog.String("host", logAddress))
+	slog.Info("Enabling log forwarding", slog.String("host", logAddress))
 	s.Broadcast(ctx, nil, "logaddress_add "+logAddress)
 }
 

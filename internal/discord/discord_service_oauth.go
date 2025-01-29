@@ -18,8 +18,8 @@ type discordOAuthHandler struct {
 	discord domain.DiscordOAuthUsecase
 }
 
-// NewDiscordOAuthHandler provides handlers for authentication with discord connect.
-func NewDiscordOAuthHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase,
+// NewHandler provides handlers for authentication with discord connect.
+func NewHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase,
 	persons domain.PersonUsecase, discord domain.DiscordOAuthUsecase,
 ) {
 	handler := discordOAuthHandler{
@@ -34,7 +34,7 @@ func NewDiscordOAuthHandler(engine *gin.Engine, auth domain.AuthUsecase, config 
 	authGrp := engine.Group("/")
 	{
 		// authed
-		authed := authGrp.Use(auth.AuthMiddleware(domain.PUser))
+		authed := authGrp.Use(auth.Middleware(domain.PUser))
 		authed.GET("/api/discord/login", handler.onLogin())
 		authed.GET("/api/discord/logout", handler.onLogout())
 		authed.GET("/api/discord/user", handler.onGetDiscordUser())

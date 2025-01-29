@@ -91,7 +91,7 @@ func (r newsRepository) GetNewsByID(ctx context.Context, newsID int, entry *doma
 	return nil
 }
 
-func (r newsRepository) SaveNewsArticle(ctx context.Context, entry *domain.NewsEntry) error {
+func (r newsRepository) Save(ctx context.Context, entry *domain.NewsEntry) error {
 	if entry.NewsID > 0 {
 		return r.updateNewsArticle(ctx, entry)
 	}

@@ -86,6 +86,8 @@ type Server struct {
 	// Auto generated id
 	ServerID int `json:"server_id"`
 	// ShortName is a short reference name for the server eg: us-1
+	// This is used as a unique identifier for servers and is used for many different things such as paths,
+	// so its best to keep it short and without whitespace.
 	ShortName string `json:"short_name"`
 	Name      string `json:"name"`
 	// Address is the ip of the server

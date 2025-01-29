@@ -17,7 +17,7 @@ type speedrunHandler struct {
 	config    domain.ConfigUsecase
 }
 
-func NewSpeedrunHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, auth domain.AuthUsecase, config domain.ConfigUsecase) {
+func NewHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, auth domain.AuthUsecase, config domain.ConfigUsecase) {
 	handler := speedrunHandler{
 		speedruns: speedruns,
 		auth:      auth,
@@ -26,7 +26,7 @@ func NewSpeedrunHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, au
 
 	guestGroup := engine.Group("/")
 	{
-		guest := guestGroup.Use(auth.AuthMiddleware(domain.PGuest))
+		guest := guestGroup.Use(auth.Middleware(domain.PGuest))
 		// Groups
 		// guest.GET("/api/speedruns/overall", handler.getOverall())
 		guest.GET("/api/speedruns/map", handler.getByMap())
@@ -37,7 +37,7 @@ func NewSpeedrunHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, au
 
 	srcdsGroup := engine.Group("/")
 	{
-		server := srcdsGroup.Use(auth.AuthServerMiddleWare())
+		server := srcdsGroup.Use(auth.ServerMiddleware())
 		server.POST("/api/sm/speedruns", handler.postSpeedrun())
 	}
 }

@@ -22,7 +22,7 @@ type contestHandler struct {
 	assets   domain.AssetUsecase
 }
 
-func NewContestHandler(engine *gin.Engine, contests domain.ContestUsecase,
+func NewHandler(engine *gin.Engine, contests domain.ContestUsecase,
 	config domain.ConfigUsecase, assets domain.AssetUsecase, auth domain.AuthUsecase,
 ) {
 	handler := &contestHandler{
@@ -34,7 +34,7 @@ func NewContestHandler(engine *gin.Engine, contests domain.ContestUsecase,
 	// opt
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(auth.AuthMiddleware(domain.PGuest))
+		opt := optGrp.Use(auth.Middleware(domain.PGuest))
 		opt.GET("/api/contests", handler.onAPIGetContests())
 		opt.GET("/api/contests/:contest_id", handler.onAPIGetContest())
 		opt.GET("/api/contests/:contest_id/entries", handler.onAPIGetContestEntries())
@@ -43,7 +43,7 @@ func NewContestHandler(engine *gin.Engine, contests domain.ContestUsecase,
 	// auth
 	authGrp := engine.Group("/")
 	{
-		authed := authGrp.Use(auth.AuthMiddleware(domain.PUser))
+		authed := authGrp.Use(auth.Middleware(domain.PUser))
 		authed.POST("/api/contests/:contest_id/upload", handler.onAPISaveContestEntryMedia())
 		authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", handler.onAPISaveContestEntryVote())
 		authed.POST("/api/contests/:contest_id/submit", handler.onAPISaveContestEntrySubmit())
@@ -53,7 +53,7 @@ func NewContestHandler(engine *gin.Engine, contests domain.ContestUsecase,
 	// mods
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.Middleware(domain.PModerator))
 		mod.POST("/api/contests", handler.onAPIPostContest())
 		mod.DELETE("/api/contests/:contest_id", handler.onAPIDeleteContest())
 		mod.PUT("/api/contests/:contest_id", handler.onAPIUpdateContest())
