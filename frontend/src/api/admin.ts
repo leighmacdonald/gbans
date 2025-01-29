@@ -135,6 +135,7 @@ type SSH = {
     update_interval: string;
     timeout: string;
     demo_path_fmt: string;
+    stac_path_fmt: string;
 };
 
 type Exports = {

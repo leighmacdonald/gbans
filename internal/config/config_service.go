@@ -15,14 +15,14 @@ type configHandler struct {
 	auth   domain.AuthUsecase
 }
 
-func NewConfigHandler(engine *gin.Engine, cu domain.ConfigUsecase, auth domain.AuthUsecase, version domain.BuildInfo) {
+func NewHandler(engine *gin.Engine, cu domain.ConfigUsecase, auth domain.AuthUsecase, version domain.BuildInfo) {
 	handler := configHandler{config: cu, auth: auth}
 	engine.GET("/api/info", handler.onAppInfo(version))
 	engine.GET("/api/changelog", handler.onChangelog())
 
 	adminGroup := engine.Group("/")
 	{
-		admin := adminGroup.Use(auth.AuthMiddleware(domain.PAdmin))
+		admin := adminGroup.Use(auth.Middleware(domain.PAdmin))
 		admin.GET("/api/config", handler.onAPIGetConfig())
 		admin.PUT("/api/config", handler.onAPIPutConfig())
 	}

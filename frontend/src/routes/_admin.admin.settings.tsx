@@ -1800,7 +1800,8 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
             password: settings.ssh.password,
             update_interval: settings.ssh.update_interval,
             timeout: settings.ssh.timeout,
-            demo_path_fmt: settings.ssh.demo_path_fmt
+            demo_path_fmt: settings.ssh.demo_path_fmt,
+            stac_path_fmt: settings.ssh.stac_path_fmt
         }
     });
 
@@ -1920,6 +1921,21 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>
                             Format for generating a path to look for demos. Use <kbd>%s</kbd> as a substitution for the
                             short server name.
+                        </SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'stac_path_fmt'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Path format for retrieving stac logs'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            Format for generating a path to look for stac anticheat logs. Use <kbd>%s</kbd> as a
+                            substitution for the short server name.
                         </SubHeading>
                     </Grid>
                     <Grid xs={12}>
