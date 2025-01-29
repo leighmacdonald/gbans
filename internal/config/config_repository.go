@@ -54,7 +54,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 		       
 		       local_store_path_root,
 		       
-		       ssh_enabled, ssh_username, ssh_password, ssh_port, ssh_private_key_path, ssh_update_interval, ssh_timeout, ssh_demo_path_fmt,
+		       ssh_enabled, ssh_username, ssh_password, ssh_port, ssh_private_key_path, ssh_update_interval, ssh_timeout, ssh_demo_path_fmt, ssh_stac_path_fmt,
 		       
 		       exports_bd_enabled, exports_valve_enabled, exports_authorized_keys
 		 FROM config`
@@ -81,7 +81,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 			&cfg.Debug.SkipOpenIDValidation, &cfg.Debug.AddRCONLogAddress,
 			&cfg.LocalStore.PathRoot,
 			&cfg.SSH.Enabled, &cfg.SSH.Username, &cfg.SSH.Password, &cfg.SSH.Port, &cfg.SSH.PrivateKeyPath, &cfg.SSH.UpdateInterval,
-			&cfg.SSH.Timeout, &cfg.SSH.DemoPathFmt,
+			&cfg.SSH.Timeout, &cfg.SSH.DemoPathFmt, &cfg.SSH.StacPathFmt,
 			&cfg.Exports.BDEnabled, &cfg.Exports.ValveEnabled, &authorizedKeys)
 	if err != nil {
 		return cfg, c.db.DBErr(err)
@@ -195,6 +195,7 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"ssh_update_interval":                 config.SSH.UpdateInterval,
 			"ssh_timeout":                         config.SSH.Timeout,
 			"ssh_demo_path_fmt":                   config.SSH.DemoPathFmt,
+			"ssh_stac_path_fmt":                   config.SSH.StacPathFmt,
 			"exports_bd_enabled":                  config.Exports.BDEnabled,
 			"exports_valve_enabled":               config.Exports.ValveEnabled,
 			"exports_authorized_keys":             strings.Split(config.Exports.AuthorizedKeys, ","),
