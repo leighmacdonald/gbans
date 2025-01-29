@@ -15,20 +15,20 @@ type chatHandler struct {
 	chat domain.ChatUsecase
 }
 
-func NewChatHandler(engine *gin.Engine, chat domain.ChatUsecase, authUsecase domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, chat domain.ChatUsecase, authUsecase domain.AuthUsecase) {
 	handler := chatHandler{chat: chat}
 
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authUsecase.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(authUsecase.Middleware(domain.PUser))
 		authed.POST("/api/messages", handler.onAPIQueryMessages())
 	}
 
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUsecase.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(authUsecase.Middleware(domain.PModerator))
 		mod.GET("/api/message/:person_message_id/context/:padding", handler.onAPIQueryMessageContext())
 	}
 }

@@ -54,7 +54,7 @@ func NewSCPExecer(database database.Database, config domain.ConfigUsecase, serve
 }
 
 func (f SCPExecer) Update(ctx context.Context) error {
-	servers, _, errServers := f.servers.Servers(ctx, domain.ServerQueryFilter{})
+	servers, _, errServers := f.servers.Servers(ctx, domain.ServerQueryFilter{IncludeDisabled: false})
 	if errServers != nil {
 		return errServers
 	}

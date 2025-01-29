@@ -14,7 +14,7 @@ type demoHandler struct {
 	demos domain.DemoUsecase
 }
 
-func NewDemoHandler(engine *gin.Engine, du domain.DemoUsecase) {
+func NewHandler(engine *gin.Engine, du domain.DemoUsecase) {
 	handler := demoHandler{
 		demos: du,
 	}

@@ -25,7 +25,7 @@ type banHandler struct {
 	config    domain.ConfigUsecase
 }
 
-func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.DiscordUsecase,
+func NewHandlerSteam(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.DiscordUsecase,
 	pu domain.PersonUsecase, configUsecase domain.ConfigUsecase, ath domain.AuthUsecase,
 ) {
 	handler := banHandler{bansSteam: bu, discord: du, persons: pu, config: configUsecase}
@@ -41,14 +41,14 @@ func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.Disc
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(ath.Middleware(domain.PUser))
 		authed.GET("/api/bans/steam/:ban_id", handler.onAPIGetBanByID())
 	}
 
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(ath.Middleware(domain.PModerator))
 
 		mod.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
 		mod.GET("/api/stats", handler.onAPIGetStats())

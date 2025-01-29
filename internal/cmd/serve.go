@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/appeal"
 	"github.com/leighmacdonald/gbans/internal/asset"
@@ -77,7 +78,7 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 		UpdatedOn:   time.Now(),
 	}
 
-	if errSave := news.SaveNewsArticle(ctx, &newsEntry); errSave != nil {
+	if errSave := news.Save(ctx, &newsEntry); errSave != nil {
 		return errSave
 	}
 
@@ -311,6 +312,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbConn))
 			authRepo := auth.NewAuthRepository(dbConn)
 			authUsecase := auth.NewAuthUsecase(authRepo, configUsecase, personUsecase, banUsecase, serversUC)
+			anticheatUsecase := anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(dbConn), personUsecase)
 
 			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), personUsecase, matchUsecase, notificationUsecase, configUsecase, eventBroadcaster)
 			go voteUsecase.Start(ctx)
@@ -325,7 +327,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return err
 			}
 
-			// start workers
 			if conf.General.Mode == domain.ReleaseMode {
 				gin.SetMode(gin.ReleaseMode)
 			} else {
@@ -343,56 +344,51 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase, banASNUsecase)
 			discordHandler.Start(ctx)
 
-			appeal.NewAppealHandler(router, appeals, authUsecase)
-			auth.NewAuthHandler(router, authUsecase, configUsecase, personUsecase)
-			ban.NewBanHandler(router, banUsecase, discordUsecase, personUsecase, configUsecase, authUsecase)
-			ban.NewBanNetHandler(router, banNetUsecase, authUsecase)
-			ban.NewBanASNHandler(router, banASNUsecase, authUsecase)
-			config.NewConfigHandler(router, configUsecase, authUsecase, app.Version())
-			discord.NewDiscordOAuthHandler(router, authUsecase, configUsecase, personUsecase, discordOAuthUsecase)
-			steamgroup.NewSteamgroupHandler(router, banGroupUsecase, authUsecase)
-			blocklist.NewBlocklistHandler(router, blocklistUsecase, networkUsecase, authUsecase)
-			chat.NewChatHandler(router, chatUsecase, authUsecase)
-			contest.NewContestHandler(router, contestUsecase, configUsecase, assets, authUsecase)
-			demo.NewDemoHandler(router, demos)
-			forum.NewForumHandler(router, forumUsecase, authUsecase)
-			match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
-			asset.NewAssetHandler(router, configUsecase, assets, authUsecase)
-			metrics.NewMetricsHandler(router)
-			network.NewNetworkHandler(router, networkUsecase, authUsecase)
-			news.NewNewsHandler(router, newsUsecase, notificationUsecase, authUsecase)
-			notification.NewNotificationHandler(router, notificationUsecase, authUsecase)
-			patreon.NewPatreonHandler(router, patreonUsecase, authUsecase, configUsecase)
-			person.NewPersonHandler(router, configUsecase, personUsecase, authUsecase)
-			report.NewReportHandler(router, reportUsecase, authUsecase, notificationUsecase)
-			servers.NewServerHandler(router, serversUC, stateUsecase, authUsecase, personUsecase)
-			srcds.NewSpeedrunHandler(router, speedruns, authUsecase, configUsecase)
-			srcds.NewSRCDSHandler(router, srcdsUsecase, serversUC, personUsecase, assets,
+			anticheat.NewHandler(router, authUsecase, anticheatUsecase)
+			appeal.NewHandler(router, appeals, authUsecase)
+			auth.NewHandler(router, authUsecase, configUsecase, personUsecase)
+			ban.NewHandlerSteam(router, banUsecase, discordUsecase, personUsecase, configUsecase, authUsecase)
+			ban.NewHandlerNet(router, banNetUsecase, authUsecase)
+			ban.NewASNHandlerASN(router, banASNUsecase, authUsecase)
+			config.NewHandler(router, configUsecase, authUsecase, app.Version())
+			discord.NewHandler(router, authUsecase, configUsecase, personUsecase, discordOAuthUsecase)
+			steamgroup.NewHandler(router, banGroupUsecase, authUsecase)
+			blocklist.NewHandler(router, blocklistUsecase, networkUsecase, authUsecase)
+			chat.NewHandler(router, chatUsecase, authUsecase)
+			contest.NewHandler(router, contestUsecase, configUsecase, assets, authUsecase)
+			demo.NewHandler(router, demos)
+			forum.NewHandler(router, forumUsecase, authUsecase)
+			match.NewHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
+			asset.NewHandler(router, configUsecase, assets, authUsecase)
+			metrics.NewHandler(router)
+			network.NewHandler(router, networkUsecase, authUsecase)
+			news.NewHandler(router, newsUsecase, notificationUsecase, authUsecase)
+			notification.NewHandler(router, notificationUsecase, authUsecase)
+			patreon.NewHandler(router, patreonUsecase, authUsecase, configUsecase)
+			person.NewHandler(router, configUsecase, personUsecase, authUsecase)
+			report.NewHandler(router, reportUsecase, authUsecase, notificationUsecase)
+			servers.NewHandler(router, serversUC, stateUsecase, authUsecase, personUsecase)
+			srcds.NewHandler(router, speedruns, authUsecase, configUsecase)
+			srcds.NewHandlerSRCDS(router, srcdsUsecase, serversUC, personUsecase, assets,
 				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, demos, authUsecase, banASNUsecase, banNetUsecase,
 				configUsecase, notificationUsecase, stateUsecase, blocklistUsecase)
-			votes.NewVoteHandler(router, voteUsecase, authUsecase)
-			wiki.NewWIkiHandler(router, wikiUsecase, authUsecase)
-			wordfilter.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
+			votes.NewHandler(router, voteUsecase, authUsecase)
+			wiki.NewHandler(router, wikiUsecase, authUsecase)
+			wordfilter.NewHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
 
 			if conf.Debug.AddRCONLogAddress != "" {
 				go stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
-				defer stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+				defer stateUsecase.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
 			}
-
-			// River Queue
-			workers := createQueueWorkers(
-				personUsecase,
-				notificationUsecase,
-				discordUsecase,
-				authRepo,
-				patreonUsecase,
-				reportUsecase,
-				discordOAuthUsecase)
 
 			memberships := steamgroup.NewMemberships(banGroupRepo)
 			banExpirations := ban.NewExpirationMonitor(banUsecase, banNetUsecase, banASNUsecase, personUsecase, notificationUsecase, configUsecase)
 
 			go func() {
+				if errSync := anticheatUsecase.SyncDemoIDs(ctx, 100); errSync != nil {
+					slog.Error("failed to sync anticheat demos")
+				}
+
 				go memberships.Update(ctx)
 				go banExpirations.Update(ctx)
 				go blocklistUsecase.Sync(ctx)
@@ -402,7 +398,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				expirationsTicker := time.NewTicker(60 * time.Second)
 				reportIntoTicker := time.NewTicker(24 * time.Hour)
 				blocklistTicker := time.NewTicker(6 * time.Hour)
-				demoTicker := time.NewTicker(5 * time.Minute)
+				demoTicker := time.NewTicker(15 * time.Minute)
 
 				select {
 				case <-ctx.Done():
@@ -421,10 +417,23 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 					go blocklistUsecase.Sync(ctx)
 				case <-demoTicker.C:
 					go demos.Cleanup(ctx)
+					if errSync := anticheatUsecase.SyncDemoIDs(ctx, 100); errSync != nil {
+						slog.Error("failed to sync anticheat demos")
+					}
 				}
 			}()
 
-			queueClient, errClient := queue.Client(dbConn.Pool(), workers, createPeriodicJobs())
+			// River Queue
+			workers := createQueueWorkers(
+				personUsecase,
+				notificationUsecase,
+				discordUsecase,
+				authRepo,
+				patreonUsecase,
+				reportUsecase,
+				discordOAuthUsecase)
+
+			queueClient, errClient := queue.New(dbConn.Pool(), workers, createPeriodicJobs())
 			if errClient != nil {
 				slog.Error("Failed to setup job queue", log.ErrAttr(errClient))
 
@@ -439,9 +448,9 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			notificationUsecase.SetQueueClient(queueClient)
 
-			httpServer := httphelper.NewHTTPServer(conf.Addr(), router)
+			httpServer := httphelper.NewServer(conf.Addr(), router)
 
-			demoDownloader := demo.NewDownloader(configUsecase, dbConn, serversUC, assets, demos)
+			demoDownloader := demo.NewDownloader(configUsecase, dbConn, serversUC, assets, demos, anticheatUsecase)
 			go demoDownloader.Start(ctx)
 
 			go func() {

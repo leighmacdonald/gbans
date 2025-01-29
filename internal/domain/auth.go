@@ -24,8 +24,8 @@ type AuthUsecase interface {
 	DeletePersonAuth(ctx context.Context, authID int64) error
 	NewUserToken(steamID steamid.SteamID, cookieKey string, userContext string, validDuration time.Duration) (string, error)
 	Sid64FromJWTToken(token string, cookieKey string, fingerprint string) (steamid.SteamID, error)
-	AuthMiddleware(level Privilege) gin.HandlerFunc
-	AuthServerMiddleWare() gin.HandlerFunc
+	Middleware(level Privilege) gin.HandlerFunc
+	ServerMiddleware() gin.HandlerFunc
 	MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID) (UserTokens, error)
 	TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error)
 	MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error)

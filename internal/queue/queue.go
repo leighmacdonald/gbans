@@ -56,7 +56,7 @@ func Init(ctx context.Context, dbPool *pgxpool.Pool) error {
 	return nil
 }
 
-func Client(dbPool *pgxpool.Pool, workers *river.Workers, periodic []*river.PeriodicJob) (*river.Client[pgx.Tx], error) {
+func New(dbPool *pgxpool.Pool, workers *river.Workers, periodic []*river.PeriodicJob) (*river.Client[pgx.Tx], error) {
 	newRiverClient, err := river.NewClient[pgx.Tx](riverpgxv5.New(dbPool), &river.Config{
 		Logger:     slog.New(&slogutil.SlogMessageOnlyHandler{Level: slog.LevelWarn}),
 		JobTimeout: time.Minute * 5,

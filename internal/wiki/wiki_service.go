@@ -12,20 +12,20 @@ type wikiHandler struct {
 	wiki domain.WikiUsecase
 }
 
-func NewWIkiHandler(engine *gin.Engine, wiki domain.WikiUsecase, ath domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, wiki domain.WikiUsecase, ath domain.AuthUsecase) {
 	handler := &wikiHandler{wiki: wiki}
 
 	// optional
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(ath.AuthMiddleware(domain.PGuest))
+		opt := optGrp.Use(ath.Middleware(domain.PGuest))
 		opt.GET("/api/wiki/slug/*slug", handler.onAPIGetWikiSlug())
 	}
 
 	// editor
 	editorGrp := engine.Group("/")
 	{
-		editor := editorGrp.Use(ath.AuthMiddleware(domain.PEditor))
+		editor := editorGrp.Use(ath.Middleware(domain.PEditor))
 		// TODO use PUT and slug param
 		editor.POST("/api/wiki/slug", handler.onAPISaveWikiSlug())
 	}

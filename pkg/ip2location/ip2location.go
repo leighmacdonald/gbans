@@ -466,8 +466,8 @@ func ReadLocationRecords(ctx context.Context, path string, ipv6 bool, onRecords 
 			RegionName:  recordLine[4],
 			CityName:    recordLine[5],
 			LatLong: LatLong{
-				convert.StringToFloat64(recordLine[6], 0),
-				convert.StringToFloat64(recordLine[7], 0),
+				convert.StringToFloat64Default(recordLine[6], 0),
+				convert.StringToFloat64Default(recordLine[7], 0),
 			},
 		}
 

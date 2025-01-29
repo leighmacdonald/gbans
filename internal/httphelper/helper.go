@@ -172,7 +172,7 @@ type ResultsCount struct {
 
 const ctxKeyUserProfile = "user_profile"
 
-func NewHTTPServer(listenAddr string, handler http.Handler) *http.Server {
+func NewServer(listenAddr string, handler http.Handler) *http.Server {
 	httpServer := &http.Server{
 		Addr:           listenAddr,
 		Handler:        handler,

@@ -7,7 +7,7 @@ import (
 
 type metricsHandler struct{}
 
-func NewMetricsHandler(engine *gin.Engine) {
+func NewHandler(engine *gin.Engine) {
 	handler := metricsHandler{}
 	engine.GET("/metrics", handler.prometheusHandler())
 }

@@ -9,7 +9,7 @@ type NewsRepository interface {
 	GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]NewsEntry, error)
 	GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *NewsEntry) error
 	GetNewsByID(ctx context.Context, newsID int, entry *NewsEntry) error
-	SaveNewsArticle(ctx context.Context, entry *NewsEntry) error
+	Save(ctx context.Context, entry *NewsEntry) error
 	DropNewsArticle(ctx context.Context, newsID int) error
 }
 
@@ -17,7 +17,7 @@ type NewsUsecase interface {
 	GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]NewsEntry, error)
 	GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *NewsEntry) error
 	GetNewsByID(ctx context.Context, newsID int, entry *NewsEntry) error
-	SaveNewsArticle(ctx context.Context, entry *NewsEntry) error
+	Save(ctx context.Context, entry *NewsEntry) error
 	DropNewsArticle(ctx context.Context, newsID int) error
 }
 

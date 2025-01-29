@@ -17,14 +17,14 @@ type banNetHandler struct {
 	bans domain.BanNetUsecase
 }
 
-func NewBanNetHandler(engine *gin.Engine, bans domain.BanNetUsecase, auth domain.AuthUsecase) {
+func NewHandlerNet(engine *gin.Engine, bans domain.BanNetUsecase, auth domain.AuthUsecase) {
 	handler := banNetHandler{
 		bans: bans,
 	}
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.Middleware(domain.PModerator))
 		mod.GET("/export/bans/valve/network", handler.onAPIExportBansValveIP())
 		mod.POST("/api/bans/cidr/create", handler.onAPIPostBansCIDRCreate())
 		mod.GET("/api/bans/cidr", handler.onAPIGetBansCIDR())

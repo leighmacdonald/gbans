@@ -16,7 +16,7 @@ type wordFilterHandler struct {
 	config  domain.ConfigUsecase
 }
 
-func NewWordFilterHandler(engine *gin.Engine, config domain.ConfigUsecase, wordFilters domain.WordFilterUsecase, chat domain.ChatUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, wordFilters domain.WordFilterUsecase, chat domain.ChatUsecase, auth domain.AuthUsecase) {
 	handler := wordFilterHandler{
 		config:  config,
 		filters: wordFilters,
@@ -26,7 +26,7 @@ func NewWordFilterHandler(engine *gin.Engine, config domain.ConfigUsecase, wordF
 	// editor
 	modGroup := engine.Group("/")
 	{
-		mod := modGroup.Use(auth.AuthMiddleware(domain.PModerator))
+		mod := modGroup.Use(auth.Middleware(domain.PModerator))
 		mod.GET("/api/filters", handler.queryFilters())
 		mod.GET("/api/filters/state", handler.filterStates())
 		mod.POST("/api/filters", handler.createFilter())

@@ -56,8 +56,6 @@ func (remoteSrc *UDPLogListener) SetSecrets(secrets map[int]ServerIDMap) {
 	defer remoteSrc.Unlock()
 
 	remoteSrc.secretMap = secrets
-
-	slog.Debug("Updated server id map")
 }
 
 type ServerIDMap struct {

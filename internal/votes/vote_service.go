@@ -14,12 +14,12 @@ type voteHandler struct {
 	votes domain.VoteUsecase
 }
 
-func NewVoteHandler(engine *gin.Engine, votes domain.VoteUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, votes domain.VoteUsecase, auth domain.AuthUsecase) {
 	handler := voteHandler{votes: votes}
 
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.Middleware(domain.PModerator))
 		mod.POST("/api/votes", handler.onVotes())
 	}
 }

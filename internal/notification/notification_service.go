@@ -19,7 +19,7 @@ type notificationHandler struct {
 	notifications domain.NotificationUsecase
 }
 
-func NewNotificationHandler(engine *gin.Engine, notifications domain.NotificationUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, notifications domain.NotificationUsecase, auth domain.AuthUsecase) {
 	handler := notificationHandler{
 		notifications: notifications,
 	}
@@ -27,7 +27,7 @@ func NewNotificationHandler(engine *gin.Engine, notifications domain.Notificatio
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(auth.Middleware(domain.PUser))
 		authed.GET("/api/notifications", handler.onNotifications())
 		authed.POST("/api/notifications/all", handler.onMarkAllRead())
 		authed.POST("/api/notifications", handler.onMarkRead())

@@ -27,7 +27,7 @@ func (u newsUsecase) GetNewsByID(ctx context.Context, newsID int, entry *domain.
 	return u.repository.GetNewsByID(ctx, newsID, entry)
 }
 
-func (u newsUsecase) SaveNewsArticle(ctx context.Context, entry *domain.NewsEntry) error {
+func (u newsUsecase) Save(ctx context.Context, entry *domain.NewsEntry) error {
 	if entry.Title == "" {
 		return domain.ErrTooShort
 	}
@@ -36,7 +36,7 @@ func (u newsUsecase) SaveNewsArticle(ctx context.Context, entry *domain.NewsEntr
 		return domain.ErrTooShort
 	}
 
-	return u.repository.SaveNewsArticle(ctx, entry)
+	return u.repository.Save(ctx, entry)
 }
 
 func (u newsUsecase) DropNewsArticle(ctx context.Context, newsID int) error {

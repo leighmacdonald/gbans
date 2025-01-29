@@ -21,7 +21,7 @@ type matchHandler struct {
 }
 
 // todo move data updaters to repository.
-func NewMatchHandler(ctx context.Context, engine *gin.Engine, matches domain.MatchUsecase, servers domain.ServersUsecase,
+func NewHandler(ctx context.Context, engine *gin.Engine, matches domain.MatchUsecase, servers domain.ServersUsecase,
 	auth domain.AuthUsecase, config domain.ConfigUsecase,
 ) {
 	handler := matchHandler{matches: matches, servers: servers, config: config}
@@ -31,7 +31,7 @@ func NewMatchHandler(ctx context.Context, engine *gin.Engine, matches domain.Mat
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(auth.Middleware(domain.PUser))
 		authed.POST("/api/logs", handler.onAPIGetMatches())
 		authed.GET("/api/log/:match_id", handler.onAPIGetMatch())
 		authed.GET("/api/stats/weapons", handler.onAPIGetStatsWeaponsOverall(ctx))

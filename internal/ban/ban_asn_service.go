@@ -15,14 +15,14 @@ type banASNHandler struct {
 	banASN domain.BanASNUsecase
 }
 
-func NewBanASNHandler(engine *gin.Engine, banASNUsecase domain.BanASNUsecase, ath domain.AuthUsecase) {
+func NewASNHandlerASN(engine *gin.Engine, banASNUsecase domain.BanASNUsecase, ath domain.AuthUsecase) {
 	handler := banASNHandler{
 		banASN: banASNUsecase,
 	}
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(ath.Middleware(domain.PModerator))
 		mod.POST("/api/bans/asn/create", handler.onAPIPostBansASNCreate())
 		mod.GET("/api/bans/asn", handler.onAPIGetBansASN())
 		mod.DELETE("/api/bans/asn/:asn_id", handler.onAPIDeleteBansASN())

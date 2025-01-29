@@ -80,7 +80,7 @@ func (u *auth) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID
 	return domain.UserTokens{Access: accessToken, Fingerprint: fingerprint}, nil
 }
 
-func (u *auth) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
+func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
 	cookieKey := u.config.Config().HTTPCookieKey
 
 	return func(ctx *gin.Context) {
@@ -177,7 +177,7 @@ func (u *auth) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error)
 	}
 }
 
-func (u *auth) AuthServerMiddleWare() gin.HandlerFunc {
+func (u *auth) ServerMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reqAuthHeader := ctx.GetHeader("Authorization")
 		if reqAuthHeader == "" {

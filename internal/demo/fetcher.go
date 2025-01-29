@@ -29,6 +29,7 @@ type UploadedDemo struct {
 
 type Fetcher struct {
 	database       database.Database
+	anticheat      domain.AntiCheatUsecase
 	serversUsecase domain.ServersUsecase
 	configUsecase  domain.ConfigUsecase
 	assetUsecase   domain.AssetUsecase
@@ -38,7 +39,7 @@ type Fetcher struct {
 }
 
 func NewFetcher(database database.Database, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
-	assetUsecase domain.AssetUsecase, demoUsecase domain.DemoUsecase,
+	assetUsecase domain.AssetUsecase, demoUsecase domain.DemoUsecase, anticheat domain.AntiCheatUsecase,
 ) *Fetcher {
 	return &Fetcher{
 		database:       database,
@@ -46,6 +47,7 @@ func NewFetcher(database database.Database, configUsecase domain.ConfigUsecase, 
 		serversUsecase: serversUsecase,
 		assetUsecase:   assetUsecase,
 		demoUsecase:    demoUsecase,
+		anticheat:      anticheat,
 		demoChan:       make(chan UploadedDemo),
 		parserMu:       &sync.Mutex{},
 	}
@@ -85,69 +87,118 @@ var (
 	errCloseReader    = errors.New("failed to close file reader")
 )
 
-func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, servers []domain.Server) error {
-	demoPathFmt := d.configUsecase.Config().SSH.DemoPathFmt
+func (d Fetcher) fetchDemos(ctx context.Context, demoPathFmt string, server domain.Server, client storage.Storager) error {
+	demoDir := fmt.Sprintf(demoPathFmt, server.ShortName)
 
-	for _, server := range servers {
-		demoDir := fmt.Sprintf(demoPathFmt, server.ShortName)
+	filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
+	if errFilelist != nil {
+		slog.Error("remote list dir failed", log.ErrAttr(errFailedToList),
+			slog.String("server", server.ShortName), slog.String("path", demoDir))
 
-		filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
-		if errFilelist != nil {
-			slog.Error("remote list dir failed", log.ErrAttr(errFailedToList),
-				slog.String("server", server.ShortName), slog.String("path", demoDir))
+		return nil //nolint:nilerr
+	}
 
+	for _, file := range filelist {
+		if !strings.HasSuffix(file.Name(), ".dem") {
 			continue
 		}
 
-		for _, file := range filelist {
-			if !strings.HasSuffix(file.Name(), ".dem") {
+		demoPath := path.Join(demoDir, file.Name())
+
+		slog.Info("Downloading demo", slog.String("name", file.Name()), slog.String("server", server.ShortName))
+
+		reader, err := client.Open(ctx, demoPath)
+		if err != nil {
+			return errors.Join(err, errFailedOpenFile)
+		}
+
+		data, errRead := io.ReadAll(reader)
+		if errRead != nil {
+			_ = reader.Close()
+
+			return errors.Join(errRead, errFailedReadFile)
+		}
+
+		if errClose := reader.Close(); errClose != nil {
+			return errors.Join(errClose, errCloseReader)
+		}
+
+		// need Seeker, but afs does not provide
+		demo := UploadedDemo{Name: file.Name(), Server: server, Content: data}
+
+		if errDemo := d.OnDemoReceived(ctx, demo); errDemo != nil {
+			if !errors.Is(errDemo, domain.ErrAssetTooLarge) {
+				slog.Error("Failed to create new demo asset", log.ErrAttr(errDemo))
+
 				continue
 			}
+		}
 
-			demoPath := path.Join(demoDir, file.Name())
+		if errDelete := client.Delete(ctx, demoPath); errDelete != nil {
+			slog.Error("Failed to cleanup demo", log.ErrAttr(errDelete), slog.String("path", demoPath))
+		}
 
-			slog.Info("Downloading demo", slog.String("name", file.Name()), slog.String("server", server.ShortName))
+		slog.Info("Deleted demo on remote host", slog.String("path", demoPath))
+	}
 
-			reader, err := client.Open(ctx, demoPath)
-			if err != nil {
-				return errors.Join(err, errFailedOpenFile)
-			}
+	return nil
+}
 
-			data, errRead := io.ReadAll(reader)
-			if errRead != nil {
-				_ = reader.Close()
+func (d Fetcher) fetchStacLogs(ctx context.Context, stactPathFmt string, server domain.Server, client storage.Storager) error {
+	logDir := fmt.Sprintf(stactPathFmt, server.ShortName)
 
-				return errors.Join(errRead, errFailedReadFile)
-			}
+	filelist, errFilelist := client.List(ctx, logDir, option.NewPage(0, 1))
+	if errFilelist != nil {
+		slog.Error("remote list dir failed", log.ErrAttr(errFailedToList),
+			slog.String("server", server.ShortName), slog.String("path", logDir))
 
-			if errClose := reader.Close(); errClose != nil {
-				return errors.Join(errClose, errCloseReader)
-			}
+		return nil //nolint:nilerr
+	}
 
-			// need Seeker, but afs does not provide
-			demo := UploadedDemo{Name: file.Name(), Server: server, Content: data}
+	for _, file := range filelist {
+		if !strings.HasSuffix(file.Name(), ".log") {
+			continue
+		}
 
-			if errDemo := d.OnDemoReceived(ctx, demo); errDemo != nil {
-				if !errors.Is(errDemo, domain.ErrAssetTooLarge) {
-					slog.Error("Failed to create new demo asset", log.ErrAttr(errDemo))
+		logPath := path.Join(logDir, file.Name())
 
-					continue
-				}
-			}
+		reader, err := client.Open(ctx, logPath)
+		if err != nil {
+			return errors.Join(err, errFailedOpenFile)
+		}
 
-			if errDelete := client.Delete(ctx, demoPath); errDelete != nil {
-				slog.Error("Failed to cleanup demo", log.ErrAttr(errDelete), slog.String("path", demoPath))
-			}
+		if errImport := d.anticheat.Import(ctx, file.Name(), reader, server.ServerID); errImport != nil {
+			slog.Error("Failed to import stac logs", log.ErrAttr(errImport))
+		}
 
-			slog.Info("Deleted demo on remote host", slog.String("path", demoPath))
+		if errClose := reader.Close(); errClose != nil {
+			return errors.Join(errClose, errCloseReader)
 		}
 	}
 
 	return nil
 }
 
-func NewDownloader(config domain.ConfigUsecase, dbConn database.Database, servers domain.ServersUsecase, assets domain.AssetUsecase, demos domain.DemoUsecase) Downloader {
-	fetcher := NewFetcher(dbConn, config, servers, assets, demos)
+func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, servers []domain.Server) error {
+	for _, server := range servers {
+		slog.Debug("Fetching demos")
+		//if err := d.fetchDemos(ctx, d.configUsecase.Config().SSH.DemoPathFmt, server, client); err != nil {
+		//	slog.Error("Failed to fetch demos", log.ErrAttr(err))
+		//}
+
+		slog.Debug("Fetching anticheat logs")
+		if err := d.fetchStacLogs(ctx, d.configUsecase.Config().SSH.StacPathFmt, server, client); err != nil {
+			slog.Error("Failed to fetch stac logs", log.ErrAttr(err))
+		}
+	}
+
+	return nil
+}
+
+func NewDownloader(config domain.ConfigUsecase, dbConn database.Database, servers domain.ServersUsecase,
+	assets domain.AssetUsecase, demos domain.DemoUsecase, anticheat domain.AntiCheatUsecase,
+) Downloader {
+	fetcher := NewFetcher(dbConn, config, servers, assets, demos, anticheat)
 
 	return Downloader{
 		fetcher: fetcher,
@@ -166,11 +217,11 @@ func (d Downloader) Start(ctx context.Context) {
 	seconds := d.config.Config().SSH.UpdateInterval
 	interval := time.Duration(seconds) * time.Second
 	if interval < time.Minute*5 {
-		slog.Error("Interval is too short, overriding to 5 minutes", slog.Duration("interval", interval))
+		slog.Warn("Interval is too short, overriding to 5 minutes", slog.Duration("interval", interval))
 		interval = time.Minute * 5
 	}
 
-	ticker := time.NewTicker(interval)
+	ticker := time.NewTicker(time.Second * 10)
 	for {
 		select {
 		case <-ticker.C:
