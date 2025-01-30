@@ -93,6 +93,8 @@ type FoundPlayer struct {
 type Cmd string
 
 const (
+	CmdAC          Cmd = "ac"
+	CmdACPlayer    Cmd = "player"
 	CmdBan         Cmd = "ban"
 	CmdFind        Cmd = "find"
 	CmdMute        Cmd = "mute"

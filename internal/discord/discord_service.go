@@ -22,6 +22,7 @@ import (
 )
 
 type discordService struct {
+	anticheat   domain.AntiCheatUsecase
 	discord     domain.DiscordUsecase
 	persons     domain.PersonUsecase
 	bansSteam   domain.BanSteamUsecase
@@ -39,6 +40,7 @@ func NewDiscordHandler(discordUsecase domain.DiscordUsecase, persons domain.Pers
 	bansSteam domain.BanSteamUsecase, state domain.StateUsecase, servers domain.ServersUsecase,
 	config domain.ConfigUsecase, network domain.NetworkUsecase, wordFilters domain.WordFilterUsecase,
 	matches domain.MatchUsecase, bansNet domain.BanNetUsecase, bansASN domain.BanASNUsecase,
+	anticheat domain.AntiCheatUsecase,
 ) domain.ServiceStarter {
 	handler := &discordService{
 		discord:     discordUsecase,
@@ -52,6 +54,7 @@ func NewDiscordHandler(discordUsecase domain.DiscordUsecase, persons domain.Pers
 		wordFilters: wordFilters,
 		bansNet:     bansNet,
 		bansASN:     bansASN,
+		anticheat:   anticheat,
 	}
 
 	return handler
@@ -76,6 +79,7 @@ func (h discordService) Start(_ context.Context) {
 		domain.CmdServers: h.makeOnServers(),
 		domain.CmdUnban:   h.makeOnUnban(),
 		domain.CmdStats:   h.makeOnStats(),
+		domain.CmdAC:      h.makeOnAC(),
 	}
 
 	for k, v := range cmdMap {
@@ -502,6 +506,43 @@ func (h discordService) makeOnStats() func(context.Context, *discordgo.Session, 
 			return nil, domain.ErrCommandFailed
 		}
 	}
+}
+
+func (h discordService) makeOnAC() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+		name := interaction.ApplicationCommandData().Options[0].Name
+		switch name {
+		case "player":
+			return h.onACPlayer(ctx, session, interaction)
+		// case string(cmdStatsGlobal):
+		//	return discord.onStatsGlobal(ctx, session, interaction, response)
+		// case string(cmdStatsServer):
+		//	return discord.onStatsServer(ctx, session, interaction, response)
+		default:
+			return nil, domain.ErrCommandFailed
+		}
+	}
+}
+
+func (h discordService) onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+
+	steamID, errResolveSID := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
+	if errResolveSID != nil || !steamID.Valid() {
+		return nil, domain.ErrInvalidSID
+	}
+
+	person, errAuthor := h.persons.GetPersonBySteamID(ctx, nil, steamID)
+	if errAuthor != nil {
+		return nil, errAuthor
+	}
+
+	logs, errQuery := h.anticheat.Query(ctx, domain.AnticheatQuery{SteamID: steamID.String()})
+	if errQuery != nil {
+		return nil, errQuery
+	}
+
+	return ACPlayerLogs(person, logs), nil
 }
 
 func (h discordService) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {

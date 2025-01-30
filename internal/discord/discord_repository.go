@@ -605,6 +605,22 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		},
 		{
 			ApplicationID:            appID,
+			Name:                     string(domain.CmdAC),
+			Description:              "Query Anticheat Logs",
+			DefaultMemberPermissions: &modPerms,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        string(domain.CmdACPlayer),
+					Description: "Query a players anticheat logs by steam id",
+					Options: []*discordgo.ApplicationCommandOption{
+						optUserID,
+					},
+				},
+			},
+		},
+
+		{
+			ApplicationID:            appID,
 			Name:                     string(domain.CmdFilter),
 			Description:              "Manage and test global word filters",
 			DMPermission:             &dmPerms,
