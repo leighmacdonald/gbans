@@ -879,6 +879,40 @@ func FilterCheckMessage(matches []domain.Filter) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
+func ACPlayerLogs(person domain.PersonInfo, entries []domain.AnticheatEntry) *discordgo.MessageEmbed {
+	sid := person.GetSteamID()
+	emb := NewEmbed()
+	emb.Embed().
+		SetTitle(fmt.Sprintf("Anticheat DetectionsStats: %s (%s)", person.GetName(), sid.String())).
+		SetColor(ColourSuccess)
+
+	emb.Embed().SetDescription(fmt.Sprintf("Logs ```%s```",
+		makeACLogTable(entries),
+	))
+
+	return emb.Embed().MessageEmbed
+}
+
+func makeACLogTable(entries []domain.AnticheatEntry) string {
+	writer := &strings.Builder{}
+	table := defaultTable(writer)
+	table.SetHeader([]string{"Srv", "Time", "Name", "Cnt", "Summary"})
+
+	for _, player := range entries {
+		table.Append([]string{
+			player.ServerName,
+			player.CreatedOn.Format(time.DateTime),
+			player.Name,
+			string(player.Detection),
+			player.Summary,
+		})
+	}
+
+	table.Render()
+
+	return strings.Trim(writer.String(), "\n")
+}
+
 func StatsPlayerMessage(person domain.PersonInfo, url string, classStats domain.PlayerClassStatsCollection,
 	medicStats []domain.PlayerMedicStats, weaponStats []domain.PlayerWeaponStats, killstreakStats []domain.PlayerKillstreakStats,
 ) *discordgo.MessageEmbed {

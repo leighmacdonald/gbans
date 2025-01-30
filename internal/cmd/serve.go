@@ -341,7 +341,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			discordHandler := discord.NewDiscordHandler(discordUsecase, personUsecase, banUsecase,
-				stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase, banASNUsecase)
+				stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase,
+				banASNUsecase, anticheatUsecase)
 			discordHandler.Start(ctx)
 
 			anticheat.NewHandler(router, authUsecase, anticheatUsecase)
