@@ -19,6 +19,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-querystring/query"
+	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/appeal"
 	"github.com/leighmacdonald/gbans/internal/asset"
@@ -90,6 +91,7 @@ var (
 	votesRepo      domain.VoteRepository
 	wordFilterUC   domain.WordFilterUsecase
 	appealUC       domain.AppealUsecase
+	anticheatUC    domain.AntiCheatUsecase
 )
 
 func TestMain(m *testing.M) {
@@ -171,6 +173,7 @@ func TestMain(m *testing.M) {
 	appealUC = appeal.NewAppealUsecase(appeal.NewAppealRepository(databaseConn), banSteamUC, personUC, notificationUC, configUC)
 	speedrunsUC = srcds.NewSpeedrunUsecase(srcds.NewSpeedrunRepository(databaseConn, personUC))
 	blocklistUC = blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(databaseConn), banSteamUC, banGroupUC)
+	anticheatUC = anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(databaseConn), personUC)
 
 	if internalDB {
 		server, errServer := serversUC.Save(context.Background(), domain.RequestServerUpdate{

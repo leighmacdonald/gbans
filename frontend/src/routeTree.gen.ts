@@ -45,6 +45,7 @@ import { Route as ModAdminNewsImport } from './routes/_mod.admin.news'
 import { Route as ModAdminFiltersImport } from './routes/_mod.admin.filters'
 import { Route as ModAdminContestsImport } from './routes/_mod.admin.contests'
 import { Route as ModAdminAppealsImport } from './routes/_mod.admin.appeals'
+import { Route as ModAdminAnticheatImport } from './routes/_mod.admin.anticheat'
 import { Route as GuestWikiSlugImport } from './routes/_guest.wiki.$slug'
 import { Route as GuestProfileSteamIdImport } from './routes/_guest.profile.$steamId'
 import { Route as GuestLoginSuccessImport } from './routes/_guest.login.success'
@@ -270,6 +271,12 @@ const ModAdminContestsRoute = ModAdminContestsImport.update({
 const ModAdminAppealsRoute = ModAdminAppealsImport.update({
   id: '/admin/appeals',
   path: '/admin/appeals',
+  getParentRoute: () => ModRoute,
+} as any)
+
+const ModAdminAnticheatRoute = ModAdminAnticheatImport.update({
+  id: '/admin/anticheat',
+  path: '/admin/anticheat',
   getParentRoute: () => ModRoute,
 } as any)
 
@@ -656,6 +663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestWikiSlugImport
       parentRoute: typeof GuestWikiImport
     }
+    '/_mod/admin/anticheat': {
+      id: '/_mod/admin/anticheat'
+      path: '/admin/anticheat'
+      fullPath: '/admin/anticheat'
+      preLoaderRoute: typeof ModAdminAnticheatImport
+      parentRoute: typeof ModImport
+    }
     '/_mod/admin/appeals': {
       id: '/_mod/admin/appeals'
       path: '/admin/appeals'
@@ -993,6 +1007,7 @@ const GuestRouteChildren: GuestRouteChildren = {
 const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren)
 
 interface ModRouteChildren {
+  ModAdminAnticheatRoute: typeof ModAdminAnticheatRoute
   ModAdminAppealsRoute: typeof ModAdminAppealsRoute
   ModAdminContestsRoute: typeof ModAdminContestsRoute
   ModAdminFiltersRoute: typeof ModAdminFiltersRoute
@@ -1012,6 +1027,7 @@ interface ModRouteChildren {
 }
 
 const ModRouteChildren: ModRouteChildren = {
+  ModAdminAnticheatRoute: ModAdminAnticheatRoute,
   ModAdminAppealsRoute: ModAdminAppealsRoute,
   ModAdminContestsRoute: ModAdminContestsRoute,
   ModAdminFiltersRoute: ModAdminFiltersRoute,
@@ -1062,6 +1078,7 @@ export interface FileRoutesByFullPath {
   '/login/success': typeof GuestLoginSuccessRoute
   '/profile/$steamId': typeof GuestProfileSteamIdRoute
   '/wiki/$slug': typeof GuestWikiSlugRoute
+  '/admin/anticheat': typeof ModAdminAnticheatRoute
   '/admin/appeals': typeof ModAdminAppealsRoute
   '/admin/contests': typeof ModAdminContestsRoute
   '/admin/filters': typeof ModAdminFiltersRoute
@@ -1117,6 +1134,7 @@ export interface FileRoutesByTo {
   '/login/success': typeof GuestLoginSuccessRoute
   '/profile/$steamId': typeof GuestProfileSteamIdRoute
   '/wiki/$slug': typeof GuestWikiSlugRoute
+  '/admin/anticheat': typeof ModAdminAnticheatRoute
   '/admin/appeals': typeof ModAdminAppealsRoute
   '/admin/contests': typeof ModAdminContestsRoute
   '/admin/filters': typeof ModAdminFiltersRoute
@@ -1180,6 +1198,7 @@ export interface FileRoutesById {
   '/_guest/login/success': typeof GuestLoginSuccessRoute
   '/_guest/profile/$steamId': typeof GuestProfileSteamIdRoute
   '/_guest/wiki/$slug': typeof GuestWikiSlugRoute
+  '/_mod/admin/anticheat': typeof ModAdminAnticheatRoute
   '/_mod/admin/appeals': typeof ModAdminAppealsRoute
   '/_mod/admin/contests': typeof ModAdminContestsRoute
   '/_mod/admin/filters': typeof ModAdminFiltersRoute
@@ -1241,6 +1260,7 @@ export interface FileRouteTypes {
     | '/login/success'
     | '/profile/$steamId'
     | '/wiki/$slug'
+    | '/admin/anticheat'
     | '/admin/appeals'
     | '/admin/contests'
     | '/admin/filters'
@@ -1295,6 +1315,7 @@ export interface FileRouteTypes {
     | '/login/success'
     | '/profile/$steamId'
     | '/wiki/$slug'
+    | '/admin/anticheat'
     | '/admin/appeals'
     | '/admin/contests'
     | '/admin/filters'
@@ -1356,6 +1377,7 @@ export interface FileRouteTypes {
     | '/_guest/login/success'
     | '/_guest/profile/$steamId'
     | '/_guest/wiki/$slug'
+    | '/_mod/admin/anticheat'
     | '/_mod/admin/appeals'
     | '/_mod/admin/contests'
     | '/_mod/admin/filters'
@@ -1464,6 +1486,7 @@ export const routeTree = rootRoute
     "/_mod": {
       "filePath": "_mod.tsx",
       "children": [
+        "/_mod/admin/anticheat",
         "/_mod/admin/appeals",
         "/_mod/admin/contests",
         "/_mod/admin/filters",
@@ -1610,6 +1633,10 @@ export const routeTree = rootRoute
     "/_guest/wiki/$slug": {
       "filePath": "_guest.wiki.$slug.tsx",
       "parent": "/_guest/wiki"
+    },
+    "/_mod/admin/anticheat": {
+      "filePath": "_mod.admin.anticheat.tsx",
+      "parent": "/_mod"
     },
     "/_mod/admin/appeals": {
       "filePath": "_mod.admin.appeals.tsx",

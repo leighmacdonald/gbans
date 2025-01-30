@@ -28,7 +28,7 @@ func TestDemosCleanup(t *testing.T) {
 
 	require.NoError(t, configUC.Write(ctx, conf))
 
-	fetcher := demo.NewFetcher(tempDB, configUC, serversUC, assetUC, demoUC)
+	fetcher := demo.NewFetcher(tempDB, configUC, serversUC, assetUC, demoUC, anticheatUC)
 
 	for demoNum := range 10 {
 		content := make([]byte, 100000)

@@ -35,6 +35,7 @@ export type Order = 'asc' | 'desc';
 export interface LazyResult<T> extends DataCount {
     data: T[];
 }
+
 export const initSortOrder = (
     id: string | undefined,
     desc: 'desc' | 'asc' | undefined,
@@ -49,7 +50,8 @@ export const initColumnFilter = (filters: Record<string, unknown>): ColumnFilter
             (k) =>
                 filters[k] != undefined ||
                 commonPropNames.includes(k) ||
-                (typeof filters[k] == 'string' && !emptyOrNullString(filters[k] as string))
+                (typeof filters[k] == 'string' && !emptyOrNullString(filters[k] as string)) ||
+                (typeof filters[k] == 'number' && Number(filters[k]) > 0)
         )
         .map((k) => {
             return { id: k, value: filters[k] };

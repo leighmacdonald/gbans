@@ -40,18 +40,18 @@ const (
 )
 
 type StacEntry struct {
-	AnticheatID int
-	SteamID     steamid.SteamID
-	ServerID    int
-	ServerName  string
-	DemoID      *int
-	DemoName    string
-	DemoTick    int
-	Name        string
-	Detection   Detection
-	Summary     string
-	RawLog      string
-	CreatedOn   time.Time
+	AnticheatID int             `json:"anticheat_id"`
+	SteamID     steamid.SteamID `json:"steam_id"`
+	ServerID    int             `json:"server_id"`
+	ServerName  string          `json:"server_name"`
+	DemoID      *int            `json:"demo_id"`
+	DemoName    string          `json:"demo_name"`
+	DemoTick    int             `json:"demo_tick"`
+	Name        string          `json:"name"`
+	Detection   Detection       `json:"detection"`
+	Summary     string          `json:"summary"`
+	RawLog      string          `json:"raw_log"`
+	CreatedOn   time.Time       `json:"created_on"`
 }
 
 type StacParser struct {
@@ -69,7 +69,7 @@ func NewStacParser() StacParser {
 		reSummary: regexp.MustCompile(`\[StAC]\s+(.+?)$`),
 		rePlayer:  regexp.MustCompile(`Player: (?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>`),
 		reLogName: regexp.MustCompile(`^stac_(\d{2})(\d{2})(\d{2}).log$`),
-		reTime:    regexp.MustCompile(`^<(\d{2}):(\d{2}):(\d{2})>$`),
+		reTime:    regexp.MustCompile(`^<(\d{2}):(\d{2}):(\d{2})>`),
 		// <05:28:30> Demo file: stv_demos/active/20240512-052232-pl_badwater.dem. Demo tick: 23861
 		reDemo: regexp.MustCompile(`Demo file:.+?(\d+-\d+-.+?\.dem)\..+?Demo tick: (\d+)$`),
 		// <08:40:49> Server framerate stuttered. Expected: ~66.6, got 5.
@@ -92,30 +92,31 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 	}
 
 	var (
-		entries   []StacEntry
-		current   = StacEntry{CreatedOn: date}
-		foundTime = false
+		entries []StacEntry
+		current = StacEntry{CreatedOn: date}
 	)
 
 	lines := strings.Split(string(bodyBytes), "\n")
 	for _, line := range lines {
 		if line == splitMarker {
 			if current.Summary != "" {
-				// If a summary is set, we know we have a previous entry to keep
-				entries = append(entries, current)
+				if !current.SteamID.Valid() {
+					slog.Debug("Anticheat entry had invalid steam_id", slog.String("raw", current.RawLog))
+				} else {
+					// If a summary is set, we know we have a previous entry to keep
+					entries = append(entries, current)
+				}
 			}
 
 			current = StacEntry{CreatedOn: date}
-			foundTime = false
 
 			continue
 		}
 
-		if !foundTime {
+		if strings.Contains(line, "<") {
 			parsedTime, errTime := p.parseTime(line)
 			if errTime == nil {
 				current.CreatedOn = current.CreatedOn.Add(parsedTime)
-				foundTime = true
 			}
 		}
 
@@ -169,7 +170,11 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 	}
 
 	if current.Summary != "" {
-		entries = append(entries, current)
+		if !current.SteamID.Valid() {
+			slog.Debug("Anticheat entry had invalid steam_id", slog.String("raw", current.RawLog))
+		} else {
+			entries = append(entries, current)
+		}
 	}
 
 	return entries, nil
@@ -224,7 +229,7 @@ func (p StacParser) parseFileName(logName string) (time.Time, error) {
 		return time.Time{}, errors.Join(errYear, ErrParseFileName)
 	}
 
-	return time.Date(int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC), nil
+	return time.Date(2000+int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC), nil
 }
 
 // parseTime transforms a log timestamp (eg: <01:13:00>) into a time.Duration.

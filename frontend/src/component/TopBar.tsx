@@ -302,6 +302,11 @@ export const TopBar = () => {
                     callback: onClickHandler('/admin/votes')
                 },
                 {
+                    leftIcon: <DeveloperBoardIcon sx={colourOpts} />,
+                    label: 'Anticheat Logs',
+                    callback: onClickHandler('/admin/anticheat')
+                },
+                {
                     leftIcon: <SettingsIcon sx={colourOpts} />,
                     label: 'Servers',
                     callback: onClickHandler('/admin/servers')

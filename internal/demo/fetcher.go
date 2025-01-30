@@ -167,6 +167,7 @@ func (d Fetcher) fetchStacLogs(ctx context.Context, stactPathFmt string, server 
 			return errors.Join(err, errFailedOpenFile)
 		}
 
+		slog.Debug("Importing stac log", slog.String("name", file.Name()), slog.String("server", server.ShortName))
 		if errImport := d.anticheat.Import(ctx, file.Name(), reader, server.ServerID); errImport != nil {
 			slog.Error("Failed to import stac logs", log.ErrAttr(errImport))
 		}
@@ -180,13 +181,16 @@ func (d Fetcher) fetchStacLogs(ctx context.Context, stactPathFmt string, server 
 }
 
 func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, servers []domain.Server) error {
+	config := d.configUsecase.Config()
 	for _, server := range servers {
-		slog.Debug("Fetching demos")
-		//if err := d.fetchDemos(ctx, d.configUsecase.Config().SSH.DemoPathFmt, server, client); err != nil {
-		//	slog.Error("Failed to fetch demos", log.ErrAttr(err))
-		//}
+		if config.General.DemosEnabled {
+			slog.Debug("Fetching demos")
+			if err := d.fetchDemos(ctx, d.configUsecase.Config().SSH.DemoPathFmt, server, client); err != nil {
+				slog.Error("Failed to fetch demos", log.ErrAttr(err))
+			}
+		}
 
-		slog.Debug("Fetching anticheat logs")
+		slog.Debug("Fetching anticheat logs", slog.String("server", server.ShortName))
 		if err := d.fetchStacLogs(ctx, d.configUsecase.Config().SSH.StacPathFmt, server, client); err != nil {
 			slog.Error("Failed to fetch stac logs", log.ErrAttr(err))
 		}
@@ -221,11 +225,17 @@ func (d Downloader) Start(ctx context.Context) {
 		interval = time.Minute * 5
 	}
 
-	ticker := time.NewTicker(time.Second * 10)
+	// TODO remove
+	if err := d.scpExec.Update(ctx); err != nil {
+		slog.Error("Error trying to download demos", log.ErrAttr(err))
+	}
+
+	ticker := time.NewTicker(interval)
 	for {
 		select {
 		case <-ticker.C:
-			if !d.config.Config().SSH.Enabled {
+			conf := d.config.Config()
+			if !conf.SSH.Enabled /**|| !conf.General.DemosEnabled */ {
 				continue
 			}
 
