@@ -12,6 +12,7 @@ type AnticheatEntry struct {
 	logparse.StacEntry
 	Personaname string `json:"personaname"`
 	AvatarHash  string `json:"avatar_hash"`
+	Triggered   int    `json:"triggered"`
 }
 
 type AntiCheatRepository interface {

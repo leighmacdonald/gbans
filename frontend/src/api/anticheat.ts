@@ -1,18 +1,22 @@
 import { transformCreatedOnDate } from '../util/time.ts';
 import { apiCall, QueryFilter } from './common.ts';
 
-export type Detection =
-    | 'unknown'
-    | 'silent_aim'
-    | 'aim_snap'
-    | 'too_many_conn'
-    | 'interp'
-    | 'bhop'
-    | 'cmdnum_spike'
-    | 'eye_angles'
-    | 'invalid_user_cmd'
-    | 'oob_cvar'
-    | 'cheat_cvar';
+export const Detections = [
+    'unknown',
+    'silent_aim',
+    'aim_snap',
+    'too_many_conn',
+    'interp',
+    'bhop',
+    'cmdnum_spike',
+    'cmdnum_spike',
+    'eye_angles',
+    'invalid_user_cmd',
+    'oob_cvar',
+    'cheat_cvar'
+] as const;
+
+export type Detection = (typeof Detections)[number];
 
 export type StacEntry = {
     anticheat_id: number;
@@ -24,6 +28,7 @@ export type StacEntry = {
     demo_tick: number;
     name: string;
     detection: Detection;
+    triggered: number;
     summary: string;
     raw_log: string;
     created_on: Date;

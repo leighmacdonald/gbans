@@ -15,7 +15,7 @@ import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-rou
 import { createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import { apiGetAnticheatLogs, apiGetServers, Detection, ServerSimple, StacEntry } from '../api';
+import { apiGetAnticheatLogs, apiGetServers, Detection, Detections, ServerSimple, StacEntry } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from '../component/FullTable.tsx';
@@ -194,6 +194,11 @@ function AdminAnticheat() {
         }),
         columnHelper.accessor('detection', {
             header: 'Detection',
+            size: 130,
+            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
+        }),
+        columnHelper.accessor('triggered', {
+            header: 'Count',
             size: 80,
             cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
         }),
@@ -240,14 +245,6 @@ function AdminAnticheat() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6} md={3}>
-                                <Field
-                                    name={'summary'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Message'} />;
-                                    }}
-                                />
-                            </Grid>
 
                             <Grid xs={6} md={3}>
                                 <Field
@@ -276,6 +273,44 @@ function AdminAnticheat() {
                                                 </FormControl>
                                             </>
                                         );
+                                    }}
+                                />
+                            </Grid>
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'detection'}
+                                    children={({ state, handleChange, handleBlur }) => {
+                                        return (
+                                            <>
+                                                <FormControl fullWidth>
+                                                    <InputLabel id="detection-select-label">Detection</InputLabel>
+                                                    <Select
+                                                        fullWidth
+                                                        value={state.value}
+                                                        label="Detection"
+                                                        onChange={(e) => {
+                                                            handleChange(e.target.value);
+                                                        }}
+                                                        onBlur={handleBlur}
+                                                    >
+                                                        <MenuItem value={0}>All</MenuItem>
+                                                        {Detections.map((s) => (
+                                                            <MenuItem value={s} key={s}>
+                                                                {s}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                            </>
+                                        );
+                                    }}
+                                />
+                            </Grid>
+                            <Grid xs={12}>
+                                <Field
+                                    name={'summary'}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Message'} />;
                                     }}
                                 />
                             </Grid>

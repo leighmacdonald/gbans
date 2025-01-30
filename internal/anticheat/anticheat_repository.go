@@ -23,14 +23,15 @@ type anticheatRepository struct {
 func (a anticheatRepository) Query(ctx context.Context, query domain.AnticheatQuery) ([]domain.AnticheatEntry, error) {
 	builder := a.db.Builder().
 		Select("a.anticheat_id", "a.steam_id", "a.name", "a.detection", "a.summary", "a.demo_id", "a.demo_tick",
-			"a.server_id", "a.raw_log", "s.short_name", "p.personaname", "p.avatarhash").
+			"a.server_id", "a.raw_log", "s.short_name", "p.personaname", "p.avatarhash", "a.created_on",
+			"RANK () OVER (PARTITION BY a.steam_id, a.detection ORDER BY a.created_on) triggered").
 		From("anticheat a").
 		LeftJoin("server s USING(server_id)").
 		LeftJoin("person p USING(steam_id)")
 
 	var filters sq.And
 	if query.Summary != "" {
-		filters = append(filters, sq.Like{"a.summary": "%" + strings.ToLower(query.Summary) + "%"})
+		filters = append(filters, sq.Like{"lower(a.summary)": "%" + strings.ToLower(query.Summary) + "%"})
 	}
 	if query.SteamID != "" {
 		sid := steamid.New(query.SteamID)
@@ -41,6 +42,9 @@ func (a anticheatRepository) Query(ctx context.Context, query domain.AnticheatQu
 	}
 	if query.Name != "" {
 		filters = append(filters, sq.Like{"a.name": "%" + strings.ToLower(query.Name) + "%"})
+	}
+	if query.Detection != "" {
+		filters = append(filters, sq.Eq{"a.detection": query.Detection})
 	}
 
 	if len(filters) > 0 {
@@ -68,7 +72,7 @@ func (a anticheatRepository) Query(ctx context.Context, query domain.AnticheatQu
 		var entry domain.AnticheatEntry
 		if err := rows.Scan(&entry.AnticheatID, &entry.SteamID, &entry.Personaname, &entry.Detection, &entry.Summary,
 			&entry.DemoID, &entry.DemoTick, &entry.ServerID, &entry.RawLog, &entry.ServerName, &entry.Personaname,
-			&entry.AvatarHash); err != nil {
+			&entry.AvatarHash, &entry.CreatedOn, &entry.Triggered); err != nil {
 			return nil, a.db.DBErr(err)
 		}
 
