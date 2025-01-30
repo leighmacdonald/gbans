@@ -1,4 +1,3 @@
-import { Title } from '@mui/icons-material';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ChatIcon from '@mui/icons-material/Chat';
 import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
@@ -18,6 +17,7 @@ import { PermissionLevel } from '../api';
 import { LeftAlignButton } from '../component/LeftAlignButton.tsx';
 import { NewsView } from '../component/NewsView';
 import RouterLink from '../component/RouterLink.tsx';
+import { Title } from '../component/Title.tsx';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 
 export const Route = createFileRoute('/_guest/')({
