@@ -3,6 +3,7 @@ package logparse_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/stretchr/testify/require"
@@ -376,5 +377,6 @@ Previous buttons - use https://sapphonie.github.io/flags.html to convert to read
 		require.NotEmpty(t, entry.Summary)
 		require.NotEmpty(t, entry.RawLog)
 		require.NotEmpty(t, entry.Name)
+		require.Truef(t, entry.CreatedOn.After(time.Date(2007, 0, 0, 0, 0, 0, 0, time.UTC)), "Failed to parse time: %s", entry.RawLog)
 	}
 }

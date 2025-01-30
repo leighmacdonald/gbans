@@ -50,8 +50,15 @@ func (a antiCheatUsecase) Import(ctx context.Context, fileName string, reader io
 	}
 
 	for _, entry := range entries {
-		if _, err := a.person.GetOrCreatePersonBySteamID(ctx, nil, entry.SteamID); err != nil {
+		player, err := a.person.GetOrCreatePersonBySteamID(ctx, nil, entry.SteamID)
+		if err != nil {
 			return err
+		}
+		if player.PersonaName == "" && entry.Name != "" {
+			player.PersonaName = entry.Name
+			if errSave := a.person.SavePerson(ctx, nil, &player); errSave != nil {
+				return errSave
+			}
 		}
 	}
 
@@ -64,4 +71,15 @@ func (a antiCheatUsecase) SyncDemoIDs(ctx context.Context, limit uint64) error {
 	}
 
 	return a.repo.SyncDemoIDs(ctx, limit)
+}
+
+func (a antiCheatUsecase) Query(ctx context.Context, query domain.AnticheatQuery) ([]domain.AnticheatEntry, error) {
+	if query.SteamID != "" {
+		sid := steamid.New(query.SteamID)
+		if !sid.Valid() {
+			return nil, domain.ErrInvalidSID
+		}
+	}
+
+	return a.repo.Query(ctx, query)
 }

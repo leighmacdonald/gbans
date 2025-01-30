@@ -21,6 +21,7 @@ func NewHandler(engine *gin.Engine, auth domain.AuthUsecase, anticheat domain.An
 	modGrp := engine.Group("/api/anticheat")
 	{
 		mod := modGrp.Use(auth.Middleware(domain.PModerator))
+		mod.GET("/entries", handler.query())
 		mod.GET("/steamid/:steam_id", handler.bySteamID())
 		mod.GET("/detection/:detection_type", handler.byDetection())
 	}
@@ -71,5 +72,29 @@ func (h antiCheatHandler) byDetection() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, detections)
+	}
+}
+
+func (h antiCheatHandler) query() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var query domain.AnticheatQuery
+		if !httphelper.BindQuery(ctx, &query) {
+			return
+		}
+
+		entries, errEntries := h.anticheat.Query(ctx, query)
+		if errEntries != nil {
+			slog.Error("Failed to query anticheat logs",
+				log.ErrAttr(errEntries))
+			httphelper.HandleErrInternal(ctx)
+
+			return
+		}
+
+		if entries == nil {
+			entries = []domain.AnticheatEntry{}
+		}
+
+		ctx.JSON(http.StatusOK, entries)
 	}
 }

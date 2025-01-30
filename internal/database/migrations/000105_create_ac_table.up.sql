@@ -30,10 +30,14 @@ CREATE TABLE IF NOT EXISTS anticheat
     summary      text           not null,
     demo_id      int references demo (demo_id) ON DELETE RESTRICT, -- Make sure we dont rm demos tied to a cheating incident
     demo_name    text           not null default '',
-    server_id    int references server (server_id) ON DELETE RESTRICT,
+    demo_tick    int            not null default 0,
+    server_id    int            not null references server (server_id) ON DELETE RESTRICT,
     raw_log      text           not null,
-    created_on   timestamptz    not null unique                    -- Used to uniquely identify a record
+    created_on   timestamptz    not null                           -- Used to uniquely identify a record
 );
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS anticheat_record_uidx ON anticheat (steam_id, created_on);
 
 ALTER TABLE config
     ADD COLUMN IF NOT EXISTS ssh_stac_path_fmt text not null default '~/srcds-%s/tf/addons/sourcemod/logs/stac';

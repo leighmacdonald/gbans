@@ -1,3 +1,4 @@
+export * from './anticheat';
 export * from './common';
 export * from './const';
 export * from './bans';

@@ -9,9 +9,11 @@ import {
     OnChangeFn,
     PaginationState,
     SortingState,
-    useReactTable
+    useReactTable,
+    VisibilityState
 } from '@tanstack/react-table';
 import { DataTable } from './DataTable.tsx';
+import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
 
 type FullTableProps<T> = {
@@ -25,6 +27,7 @@ type FullTableProps<T> = {
     sorting?: SortingState;
     infinitePage?: boolean;
     toOptions: ToOptions;
+    columnVisibility?: VisibilityState;
 };
 
 // Higher level table component. Most/all tables with client side data should use this eventually.
@@ -37,12 +40,14 @@ export const FullTable = <T,>({
     infinitePage = false,
     sorting = undefined,
     columnFilters = undefined,
-    toOptions
+    toOptions,
+    columnVisibility
 }: FullTableProps<T>) => {
     const navigate = useNavigate();
 
     const table = useReactTable<T>({
         data: data,
+        enableHiding: true,
         columns: columns,
         autoResetPageIndex: true,
         getCoreRowModel: getCoreRowModel(),
@@ -52,13 +57,14 @@ export const FullTable = <T,>({
         state: {
             sorting,
             pagination,
-            columnFilters
+            columnFilters,
+            columnVisibility
         }
     });
 
     return (
         <>
-            <DataTable table={table} isLoading={isLoading} />
+            {isLoading ? <LoadingPlaceholder /> : <DataTable table={table} isLoading={isLoading} />}
             {pagination && setPagination && (
                 <PaginatorLocal
                     onRowsChange={async (rows) => {

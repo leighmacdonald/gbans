@@ -163,7 +163,6 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 	}()
 
 	parser := NewLogParser()
-
 	rejects := map[int]time.Time{}
 
 	for {
