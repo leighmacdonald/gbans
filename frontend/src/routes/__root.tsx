@@ -15,9 +15,8 @@ import { Flash, Flashes } from '../component/Flashes.tsx';
 import { Footer } from '../component/Footer.tsx';
 import { LogoutHandler } from '../component/LogoutHandler.tsx';
 import { NotificationsProvider } from '../component/NotificationsProvider.tsx';
-import { QueueChat } from '../component/QueueChat.tsx';
+import { QueueProvider } from '../component/QueueProvider.tsx';
 import { TopBar } from '../component/TopBar.tsx';
-import { WebsocketConnector } from '../component/WebsocketConnector.tsx';
 import { ColourModeContext } from '../contexts/ColourModeContext.tsx';
 import { UserFlashCtx } from '../contexts/UserFlashCtx.tsx';
 import { createThemeByMode } from '../theme.ts';
@@ -79,34 +78,34 @@ function Root() {
 
     return (
         <UserFlashCtx.Provider value={{ flashes, setFlashes, sendFlash }}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <Fragment>
-                    <ColourModeContext.Provider value={colorMode}>
-                        <ThemeProvider theme={theme}>
-                            <NotificationsProvider>
-                                <NiceModal.Provider>
-                                    <LogoutHandler />
-                                    <CssBaseline />
-                                    <Container maxWidth={'lg'}>
-                                        <TopBar />
-                                        <WebsocketConnector />
-                                        <QueueChat />
-                                        <div
-                                            style={{
-                                                marginTop: 24
-                                            }}
-                                        >
-                                            <Outlet />
-                                        </div>
-                                        <Footer />
-                                    </Container>
-                                    <Flashes />
-                                </NiceModal.Provider>
-                            </NotificationsProvider>
-                        </ThemeProvider>
-                    </ColourModeContext.Provider>
-                </Fragment>
-            </LocalizationProvider>
+            <QueueProvider>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <Fragment>
+                        <ColourModeContext.Provider value={colorMode}>
+                            <ThemeProvider theme={theme}>
+                                <NotificationsProvider>
+                                    <NiceModal.Provider>
+                                        <LogoutHandler />
+                                        <CssBaseline />
+                                        <Container maxWidth={'lg'}>
+                                            <TopBar />
+                                            <div
+                                                style={{
+                                                    marginTop: 24
+                                                }}
+                                            >
+                                                <Outlet />
+                                            </div>
+                                            <Footer />
+                                        </Container>
+                                        <Flashes />
+                                    </NiceModal.Provider>
+                                </NotificationsProvider>
+                            </ThemeProvider>
+                        </ColourModeContext.Provider>
+                    </Fragment>
+                </LocalizationProvider>
+            </QueueProvider>
         </UserFlashCtx.Provider>
     );
 }
