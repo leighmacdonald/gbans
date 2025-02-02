@@ -171,6 +171,100 @@ func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
 	}
 }
 
+func (u *auth) TokenFromQuery(ctx *gin.Context) (string, error) {
+	token, found := ctx.GetQuery("token")
+	if !found || token == "" {
+		ctx.AbortWithStatus(http.StatusForbidden)
+
+		return "", domain.ErrMalformedAuthHeader
+	}
+
+	return token, nil
+}
+
+func (u *auth) AuthMiddlewareWS(level domain.Privilege) gin.HandlerFunc {
+	cookieKey := u.config.Config().HTTPCookieKey
+
+	return func(ctx *gin.Context) {
+		var token string
+
+		queryToken, errToken := u.TokenFromQuery(ctx)
+		if errToken != nil || queryToken == "" {
+			ctx.Set(ctxKeyUserProfile, domain.UserProfile{PermissionLevel: domain.PGuest, Name: "Guest"})
+		} else {
+			token = queryToken
+
+			if level >= domain.PGuest {
+				sid, errFromToken := u.Sid64FromJWTTokenNoFP(token, cookieKey)
+				if errFromToken != nil {
+					if errors.Is(errFromToken, domain.ErrExpired) {
+						ctx.AbortWithStatus(http.StatusUnauthorized)
+
+						return
+					}
+
+					slog.Error("Failed to load sid from access token", log.ErrAttr(errFromToken))
+					ctx.AbortWithStatus(http.StatusForbidden)
+
+					return
+				}
+
+				loggedInPerson, errGetPerson := u.persons.GetOrCreatePersonBySteamID(ctx, nil, sid)
+				if errGetPerson != nil {
+					slog.Error("Failed to load person during auth", log.ErrAttr(errGetPerson))
+					ctx.AbortWithStatus(http.StatusForbidden)
+
+					return
+				}
+
+				if level > loggedInPerson.PermissionLevel {
+					ctx.AbortWithStatus(http.StatusForbidden)
+
+					return
+				}
+
+				bannedPerson, errBan := u.bans.GetBySteamID(ctx, sid, false, true)
+				if errBan != nil {
+					if !errors.Is(errBan, domain.ErrNoResult) {
+						slog.Error("Failed to fetch authed user ban", log.ErrAttr(errBan))
+					}
+				}
+
+				profile := domain.UserProfile{
+					SteamID:         loggedInPerson.SteamID,
+					CreatedOn:       loggedInPerson.CreatedOn,
+					UpdatedOn:       loggedInPerson.UpdatedOn,
+					PermissionLevel: loggedInPerson.PermissionLevel,
+					DiscordID:       loggedInPerson.DiscordID,
+					PatreonID:       loggedInPerson.PatreonID,
+					Name:            loggedInPerson.PersonaName,
+					Avatarhash:      loggedInPerson.AvatarHash,
+					Muted:           loggedInPerson.Muted,
+					BanID:           bannedPerson.BanID,
+				}
+
+				ctx.Set(ctxKeyUserProfile, profile)
+
+				if u.config.Config().Sentry.SentryDSN != "" {
+					if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+						hub.WithScope(func(scope *sentry.Scope) {
+							scope.SetUser(sentry.User{
+								ID:        sid.String(),
+								IPAddress: ctx.ClientIP(),
+								Username:  loggedInPerson.PersonaName,
+							})
+						})
+					}
+				}
+			} else {
+				ctx.Set(ctxKeyUserProfile, domain.UserProfile{PermissionLevel: domain.PGuest, Name: "Guest"})
+			}
+		}
+
+		ctx.Next()
+	}
+}
+
 func (u *auth) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
 	return func(_ *jwt.Token) (any, error) {
 		return []byte(cookieKey), nil
@@ -293,6 +387,34 @@ func (u *auth) Sid64FromJWTToken(token string, cookieKey string, fingerprint str
 	if claims.Fingerprint != FingerprintHash(fingerprint) {
 		slog.Error("Invalid cookie fingerprint, token rejected")
 
+		return steamid.SteamID{}, domain.ErrAuthentication
+	}
+
+	sid := steamid.New(claims.Subject)
+	if !sid.Valid() {
+		return steamid.SteamID{}, domain.ErrAuthentication
+	}
+
+	return sid, nil
+}
+
+func (u *auth) Sid64FromJWTTokenNoFP(token string, cookieKey string) (steamid.SteamID, error) {
+	claims := &domain.UserAuthClaims{}
+
+	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))
+	if errParseClaims != nil {
+		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
+			return steamid.SteamID{}, domain.ErrAuthentication
+		}
+
+		if errors.Is(errParseClaims, jwt.ErrTokenExpired) {
+			return steamid.SteamID{}, domain.ErrExpired
+		}
+
+		return steamid.SteamID{}, domain.ErrAuthentication
+	}
+
+	if !tkn.Valid {
 		return steamid.SteamID{}, domain.ErrAuthentication
 	}
 

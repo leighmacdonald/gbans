@@ -66,7 +66,7 @@ func MustCreateLogger(debugLogPath string, level Level) func() {
 }
 
 func ErrAttr(err error) slog.Attr {
-	return slog.Any("error", err)
+	return slog.Any("reason", err)
 }
 
 func HandlerName(skip int) slog.Attr {
