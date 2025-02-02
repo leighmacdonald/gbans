@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/internal/server_queue"
 	"log/slog"
 	"net/http"
 	"os"
@@ -373,6 +374,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			votes.NewVoteHandler(router, voteUsecase, authUsecase)
 			wiki.NewWIkiHandler(router, wikiUsecase, authUsecase)
 			wordfilter.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
+
+			server_queue.NewServerQueueHandler(router, authUsecase)
 
 			if conf.Debug.AddRCONLogAddress != "" {
 				go stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)

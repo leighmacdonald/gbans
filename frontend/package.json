@@ -100,6 +100,7 @@
     "react-leaflet": "^4.2.1",
     "react-modal-image": "^2.6.0",
     "react-timer-hook": "^3.0.8",
+    "react-use-websocket": "^4.11.1",
     "steamid": "^2.1.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
