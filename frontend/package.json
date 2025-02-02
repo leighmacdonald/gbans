@@ -104,6 +104,7 @@
     "steamid": "^2.1.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0",
+    "uuidv7": "^1.0.2",
     "video-react": "^0.16.0",
     "vite": "^5.4.11",
     "vite-plugin-html": "^3.2.2",
