@@ -221,6 +221,9 @@ importers:
       react-timer-hook:
         specifier: ^3.0.8
         version: 3.0.8(react@18.3.1)
+      react-use-websocket:
+        specifier: ^4.11.1
+        version: 4.11.1
       steamid:
         specifier: ^2.1.0
         version: 2.1.0
@@ -4061,6 +4064,9 @@ packages:
     peerDependencies:
       react: '>=16.6.0'
       react-dom: '>=16.6.0'
+
+  react-use-websocket@4.11.1:
+    resolution: {integrity: sha512-39e8mK2a2A1h8uY3ePF45b2q0vwMOmaEy7J5qEhQg4n7vYa5oDLmqutG36kZQgAQ/3KCZS0brlGRbbZJ0+zfKQ==}
 
   react@18.3.1:
     resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
@@ -9305,6 +9311,8 @@ snapshots:
       prop-types: 15.8.1
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
+
+  react-use-websocket@4.11.1: {}
 
   react@18.3.1:
     dependencies:

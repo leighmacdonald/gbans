@@ -26,12 +26,14 @@ export const SubmitButton = ({
     disabled = false,
     label = 'Save',
     startIcon = <SaveIcon />,
-    fullWidth = false
+    fullWidth = false,
+    size = 'large'
 }: onClickProps & {
     disabled?: boolean;
     label?: string;
     startIcon?: ReactNode;
     fullWidth?: boolean;
+    size?: 'small' | 'large' | 'medium';
 }) => {
     return (
         <Button
@@ -42,8 +44,8 @@ export const SubmitButton = ({
             disabled={disabled}
             type={'submit'}
             form={formId}
-            size={'large'}
-            sx={{ height: '52px' }}
+            size={size}
+            // sx={{ height: '52px' }}
         >
             {label}
         </Button>

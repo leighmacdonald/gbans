@@ -21,18 +21,26 @@ type APIError struct {
 	Message string `json:"message"`
 }
 
+func abortWithErrorJSON(ctx *gin.Context, code int, jsonObj any, err error) {
+	if err != nil {
+		_ = ctx.Error(err)
+	}
+	ctx.Abort()
+	ctx.JSON(code, jsonObj)
+}
+
 func ResponseAPIErr(ctx *gin.Context, statusCode int, err error) {
 	userErr := "API Error"
 	if err != nil {
 		userErr = err.Error()
 	}
 
-	ctx.JSON(statusCode, APIError{Message: userErr})
+	abortWithErrorJSON(ctx, statusCode, APIError{Message: userErr}, err)
 }
 
 func Bind(ctx *gin.Context, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
-		HandleErrBadRequest(ctx)
+		ctx.AbortWithError(http.StatusBadRequest, errBind)
 		slog.Error("Failed to bind request", log.ErrAttr(errBind), log.HandlerName(3))
 
 		return false
