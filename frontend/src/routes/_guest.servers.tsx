@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
@@ -11,6 +11,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { LatLngLiteral } from 'leaflet';
 import { apiGetServerStates, BaseServer } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { ServerFilters } from '../component/ServerFilters.tsx';
 import { ServerList } from '../component/ServerList.tsx';
 import { ServerMap } from '../component/ServerMap.tsx';
@@ -42,22 +43,31 @@ function LinearProgressWithLabel(props: LinearProgressProps & { value: number })
 
 export const ServerStats = () => {
     const { servers } = useMapStateCtx();
-    const cap = servers.length * 24;
-    const use = sum(servers.map((value) => value?.players || 0));
-    const regions = servers.reduce(
-        (acc, cv) => {
-            if (!Object.prototype.hasOwnProperty.call(acc, cv.region)) {
-                acc[cv.region] = [];
-            }
-            acc[cv.region].push(cv);
-            return acc;
-        },
-        {} as Record<string, BaseServer[]>
-    );
-    const keys = Object.keys(regions);
-    keys.sort();
+
+    const cap = useMemo(() => servers?.length, [servers]);
+    const use = useMemo(() => {
+        return sum(servers.map((value) => value?.players || 0));
+    }, [servers]);
+
+    const regions = useMemo(() => {
+        return servers.reduce(
+            (acc, cv) => {
+                if (!Object.prototype.hasOwnProperty.call(acc, cv.region)) {
+                    acc[cv.region] = [];
+                }
+                acc[cv.region].push(cv);
+                return acc;
+            },
+            {} as Record<string, BaseServer[]>
+        );
+    }, [servers]);
+
+    const keys = useMemo(() => {
+        return Object.keys(regions).sort();
+    }, [regions]);
+
     if (servers.length === 0) {
-        return <></>;
+        return <LoadingPlaceholder />;
     }
 
     return (

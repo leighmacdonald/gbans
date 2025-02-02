@@ -96,9 +96,10 @@ func (p UserProfile) GetDiscordID() string {
 }
 
 func (p UserProfile) GetName() string {
-	if p.Name != "" {
+	if p.Name == "" {
 		return p.SteamID.String()
 	}
+
 	return p.Name
 }
 

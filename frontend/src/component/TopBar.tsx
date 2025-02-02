@@ -12,6 +12,8 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import ForumIcon from '@mui/icons-material/Forum';
 import GroupsIcon from '@mui/icons-material/Groups';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
+import KeyboardIcon from '@mui/icons-material/Keyboard';
+import KeyboardHideIcon from '@mui/icons-material/KeyboardHide';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 import MailIcon from '@mui/icons-material/Mail';
@@ -54,12 +56,14 @@ import { apiGetNotifications, PermissionLevel, UserNotification } from '../api';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
+import { useQueueCtx } from '../hooks/useQueueCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import { generateOIDCLink } from '../util/auth/generateOIDCLink.ts';
 import { DesktopNotifications } from './DesktopNotifications.tsx';
-import { NotificationsProvider } from './NotificationsProvider.tsx';
+import { QueueChat } from './QueueChat.tsx';
 import RouterLink from './RouterLink.tsx';
+import { StyledBadge } from './StyledBadge.tsx';
 import { VCenterBox } from './VCenterBox.tsx';
 
 interface menuRoute {
@@ -71,6 +75,7 @@ interface menuRoute {
 export const TopBar = () => {
     const { profile, hasPermission, isAuthenticated } = useAuth();
     const { appInfo } = useAppInfoCtx();
+    const { users, showChat, setShowChat } = useQueueCtx();
 
     const { data: notifications, isLoading } = useQuery({
         queryKey: ['notifications'],
@@ -348,6 +353,10 @@ export const TopBar = () => {
         );
     }, [theme.palette.mode]);
 
+    const handleToggleChat = () => {
+        setShowChat(!showChat);
+    };
+
     return (
         <AppBar position="sticky">
             <Container maxWidth="xl">
@@ -427,26 +436,35 @@ export const TopBar = () => {
 
                     <Box sx={{ flexGrow: 0 }}>
                         <Stack direction={'row'} spacing={1}>
+                            <Tooltip title="Toggle Chat Window">
+                                <IconButton onClick={handleToggleChat}>
+                                    <StyledBadge badgeContent={users.length}>
+                                        {showChat ? (
+                                            <KeyboardHideIcon sx={{ color: '#fff', rotate: 180 }} />
+                                        ) : (
+                                            <KeyboardIcon sx={{ color: '#fff' }} />
+                                        )}
+                                    </StyledBadge>
+                                </IconButton>
+                            </Tooltip>
+
                             <Tooltip title="Toggle BLU/RED mode">
                                 <IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
                             </Tooltip>
 
                             {hasPermission(PermissionLevel.User) && (
-                                <NotificationsProvider>
-                                    <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
-                                        <Badge
-                                            color={'success'}
-                                            badgeContent={
-                                                isLoading
-                                                    ? '...'
-                                                    : (notifications ?? []).filter((n: UserNotification) => !n.read)
-                                                          .length
-                                            }
-                                        >
-                                            <MailIcon />
-                                        </Badge>
-                                    </IconButton>
-                                </NotificationsProvider>
+                                <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
+                                    <Badge
+                                        color={'success'}
+                                        badgeContent={
+                                            isLoading
+                                                ? '...'
+                                                : (notifications ?? []).filter((n: UserNotification) => !n.read).length
+                                        }
+                                    >
+                                        <MailIcon />
+                                    </Badge>
+                                </IconButton>
                             )}
 
                             {!isAuthenticated() && (
@@ -505,6 +523,7 @@ export const TopBar = () => {
                 </Toolbar>
             </Container>
             <DesktopNotifications notifications={notifications} isLoading={isLoading} />
+            <QueueChat />
         </AppBar>
     );
 };

@@ -40,7 +40,10 @@ func ResponseAPIErr(ctx *gin.Context, statusCode int, err error) {
 
 func Bind(ctx *gin.Context, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errBind)
+		if err := ctx.AbortWithError(http.StatusBadRequest, errBind); err != nil {
+			slog.Error("Failed to abort", log.ErrAttr(err), log.HandlerName(3))
+		}
+
 		slog.Error("Failed to bind request", log.ErrAttr(errBind), log.HandlerName(3))
 
 		return false
