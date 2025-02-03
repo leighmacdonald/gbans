@@ -23,7 +23,7 @@ import { TopBar } from '../component/TopBar.tsx';
 import { ColourModeContext } from '../contexts/ColourModeContext.tsx';
 import { UserFlashCtx } from '../contexts/UserFlashCtx.tsx';
 import { useAuth } from '../hooks/useAuth.ts';
-import * as bg from '../images/bg-orig.jpg';
+import * as bg from '../images/bg.jpg';
 import { createThemeByMode } from '../theme.ts';
 import { checkFeatureEnabled } from '../util/features.ts';
 
