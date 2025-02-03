@@ -34,7 +34,9 @@ export const ServerList = () => {
 
     const isQueued = (server_id: number) => {
         try {
-            return Boolean(servers.find((s) => s.server_id == server_id)?.members?.includes(profile.steam_id));
+            return Boolean(
+                servers.find((s) => s.server_id == server_id)?.members?.find((m) => m.steam_id == profile.steam_id)
+            );
         } catch {
             return false;
         }
@@ -120,7 +122,7 @@ export const ServerList = () => {
                     const count = servers
                         ? (servers.find((value) => {
                               return value.server_id == info.row.original.server_id;
-                          })?.members.length ?? 0)
+                          })?.members?.length ?? 0)
                         : 0;
 
                     return (

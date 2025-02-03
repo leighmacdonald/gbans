@@ -17,16 +17,19 @@ export type QueueMember = {
     hash: string;
 };
 
-export type queuePayload<T> = {
+export type QueuePayload<T> = {
     op: Operation;
     payload: T;
 };
 
-export type pingPayload = queuePayload<{ created_on: Date }>;
+export type pingPayload = QueuePayload<{ created_on: Date }>;
 
+export type clientQueueState = {
+    steam_id: string;
+};
 export type ServerQueueState = {
     server_id: number;
-    members: string[];
+    members: clientQueueState[];
 };
 
 export type ServerQueueMessage = {
@@ -64,4 +67,17 @@ export type ClientStatePayload = {
     update_servers: boolean;
     servers: ServerQueueState[];
     users: Member[];
+};
+
+export type Server = {
+    name: string;
+    short_name: string;
+    cc: string;
+    connect_url: string;
+    connect_command: string;
+};
+
+export type GameStartPayload = {
+    users: Member[];
+    server: Server;
 };
