@@ -14,7 +14,9 @@ const mapValues = (o: object, fn: (v: unknown) => unknown) =>
 // https://vitejs.dev/config/
 export default defineConfig({
     base: '/',
+    publicDir: 'public',
     build: {
+        copyPublicDir: true,
         //sourcemap: true,
         rollupOptions: {
             treeshake: 'recommended',

@@ -32,12 +32,12 @@ function Index() {
     return (
         <>
             <Title>Home</Title>
-            <Grid container spacing={3}>
+            <Grid container spacing={2}>
                 <Grid xs={12} sm={12} md={10}>
                     <NewsView itemsPerPage={3} />
                 </Grid>
                 <Grid xs={12} sm={12} md={2}>
-                    <Stack spacing={3}>
+                    <Stack spacing={2}>
                         {profile && profile.ban_id == 0 && appInfo.servers_enabled && (
                             <LeftAlignButton
                                 startIcon={<StorageIcon />}
