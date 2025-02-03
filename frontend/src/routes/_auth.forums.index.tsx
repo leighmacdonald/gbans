@@ -207,12 +207,12 @@ function ForumOverview() {
     }, [overview?.categories, sendFlash]);
 
     return (
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
             <Grid xs={12}>
                 <Typography variant={'h2'}>{appInfo.site_name} community</Typography>
             </Grid>
             <Grid md={9} xs={12}>
-                <Stack spacing={3}>
+                <Stack spacing={2}>
                     {isLoading ? (
                         <LoadingPlaceholder />
                     ) : (
@@ -225,7 +225,7 @@ function ForumOverview() {
                 </Stack>
             </Grid>
             <Grid md={3} xs={12}>
-                <Stack spacing={3}>
+                <Stack spacing={2}>
                     <ForumRecentMessageActivity />
                     <ForumRecentUserActivity />
                     {hasPermission(PermissionLevel.Moderator) && (

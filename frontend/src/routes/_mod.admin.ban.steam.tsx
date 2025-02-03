@@ -251,7 +251,7 @@ function AdminBanSteam() {
                         </Button>
                     ]}
                 >
-                    <Grid container spacing={3}>
+                    <Grid container spacing={2}>
                         <Grid xs={12}>
                             <FullTable
                                 columnFilters={columnFilters}

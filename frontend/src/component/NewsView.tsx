@@ -23,7 +23,7 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
     });
 
     return (
-        <Stack spacing={3}>
+        <Stack spacing={2}>
             {!isLoading &&
                 (articles || [])?.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage).map((article) => {
                     if (!article.created_on || !article.updated_on) {

@@ -89,7 +89,7 @@ function ReportCreate() {
     });
 
     return (
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
             <Title>Create Report</Title>
             <Grid xs={12} md={8}>
                 <Stack spacing={2}>

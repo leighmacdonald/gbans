@@ -1,4 +1,4 @@
-import { Fragment, ReactNode, useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import { PaletteMode } from '@mui/material';
 import { AlertColor } from '@mui/material/Alert';
@@ -6,13 +6,13 @@ import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import GlobalStyles from '@mui/system/GlobalStyles';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { QueryClient } from '@tanstack/react-query';
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
 import { AuthContextProps } from '../auth.tsx';
+import { BackgroundImageProvider } from '../component/BackgroundImageProvider.tsx';
 import { Flash, Flashes } from '../component/Flashes.tsx';
 import { Footer } from '../component/Footer.tsx';
 import { LogoutHandler } from '../component/LogoutHandler.tsx';
@@ -23,7 +23,6 @@ import { TopBar } from '../component/TopBar.tsx';
 import { ColourModeContext } from '../contexts/ColourModeContext.tsx';
 import { UserFlashCtx } from '../contexts/UserFlashCtx.tsx';
 import { useAuth } from '../hooks/useAuth.ts';
-import * as bg from '../images/bg.jpg';
 import { createThemeByMode } from '../theme.ts';
 import { checkFeatureEnabled } from '../util/features.ts';
 
@@ -89,33 +88,28 @@ function Root() {
                     <Fragment>
                         <ColourModeContext.Provider value={colorMode}>
                             <ThemeProvider theme={theme}>
-                                <BackgroundImageProvider>
-                                    <NotificationsProvider>
-                                        <NiceModal.Provider>
-                                            <LogoutHandler />
-                                            <CssBaseline />
-                                            <GlobalStyles
-                                                styles={{
-                                                    body: { backgroundImage: bg.default }
+                                <BackgroundImageProvider />
+                                <NotificationsProvider>
+                                    <NiceModal.Provider>
+                                        <LogoutHandler />
+                                        <CssBaseline />
+
+                                        <Container maxWidth={'lg'}>
+                                            <TopBar />
+                                            <div
+                                                style={{
+                                                    marginTop: 24
                                                 }}
-                                            />
-                                            <Container maxWidth={'lg'}>
-                                                <TopBar />
-                                                <div
-                                                    style={{
-                                                        marginTop: 24
-                                                    }}
-                                                >
-                                                    {checkFeatureEnabled('playerqueue_enabled') &&
-                                                        hasPermission(PermissionLevel.Moderator) && <QueueChat />}
-                                                    <Outlet />
-                                                </div>
-                                                <Footer />
-                                            </Container>
-                                            <Flashes />
-                                        </NiceModal.Provider>
-                                    </NotificationsProvider>
-                                </BackgroundImageProvider>
+                                            >
+                                                {checkFeatureEnabled('playerqueue_enabled') &&
+                                                    hasPermission(PermissionLevel.Moderator) && <QueueChat />}
+                                                <Outlet />
+                                            </div>
+                                            <Footer />
+                                        </Container>
+                                        <Flashes />
+                                    </NiceModal.Provider>
+                                </NotificationsProvider>
                             </ThemeProvider>
                         </ColourModeContext.Provider>
                     </Fragment>
@@ -124,19 +118,3 @@ function Root() {
         </UserFlashCtx.Provider>
     );
 }
-
-const BackgroundImageProvider = ({ children }: { children: ReactNode }) => {
-    return (
-        <div
-            style={{
-                backgroundColor: '#000',
-                backgroundSize: '100%',
-                backgroundImage: `url(${bg.default})`,
-                backgroundRepeat: 'repeat',
-                height: '100%'
-            }}
-        >
-            {children}
-        </div>
-    );
-};

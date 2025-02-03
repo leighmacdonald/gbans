@@ -23,7 +23,7 @@ export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
         }
     });
     return (
-        <Stack spacing={3} padding={3}>
+        <Stack spacing={2} padding={2}>
             <List dense={true}>
                 {isLoading ? (
                     <LoadingPlaceholder />

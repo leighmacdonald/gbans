@@ -1,8 +1,11 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
+import PersonIcon from '@mui/icons-material/Person';
+import PersonOffIcon from '@mui/icons-material/PersonOff';
 import SendIcon from '@mui/icons-material/Send';
 import Avatar from '@mui/material/Avatar';
 import Collapse from '@mui/material/Collapse';
+import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -18,8 +21,9 @@ import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 import { SubmitButton } from './modal/Buttons.tsx';
 
 export const QueueChat = () => {
-    const { messages, isReady, sendMessage, showChat } = useQueueCtx();
+    const { messages, isReady, sendMessage, showChat, users } = useQueueCtx();
     const { hasPermission } = useAuth();
+    const [showPeople, setShowPeople] = useState<boolean>(false);
     const [msg, setMsg] = useState<string>('');
     const [sending, setSending] = useState(false);
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
@@ -31,8 +35,10 @@ export const QueueChat = () => {
     };
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+        if (showChat) {
+            scrollToBottom();
+        }
+    }, [messages, showChat]);
 
     const onSubmit = useCallback(
         async (event: FormEvent<HTMLFormElement | HTMLDivElement>) => {
@@ -54,27 +60,27 @@ export const QueueChat = () => {
 
     return (
         <Collapse in={showChat}>
-            <Paper sx={{ marginBottom: 3 }}>
-                <Stack
-                    maxHeight={200}
-                    minHeight={200}
-                    overflow={'auto'}
-                    sx={{ overflowX: 'hidden' }}
-                    direction={'column'}
-                    padding={1}
-                >
-                    {!isReady ? (
-                        <LoadingPlaceholder></LoadingPlaceholder>
-                    ) : (
-                        messages.map((message, i) => {
-                            return <ChatRow message={message} key={`${message.id}-${i}`} />;
-                        })
-                    )}
-                    <span ref={messagesEndRef} key={'hi'} />
-                </Stack>
+            <Grid container spacing={1}>
+                <Grid xs={showPeople ? 10 : 12}>
+                    <Paper sx={{ marginBottom: 3 }}>
+                        <Stack
+                            maxHeight={200}
+                            minHeight={200}
+                            overflow={'auto'}
+                            sx={{ overflowX: 'hidden' }}
+                            direction={'column'}
+                            padding={1}
+                        >
+                            {!isReady ? (
+                                <LoadingPlaceholder></LoadingPlaceholder>
+                            ) : (
+                                messages.map((message, i) => {
+                                    return <ChatRow message={message} key={`${message.id}-${i}`} />;
+                                })
+                            )}
+                            {isReady && showChat && <div ref={messagesEndRef} key={'hi'} />}
+                        </Stack>
 
-                <Grid container padding={1}>
-                    <Grid xs={12}>
                         <form onSubmit={onSubmit}>
                             <Stack direction={'row'} spacing={1}>
                                 <TextField
@@ -88,6 +94,14 @@ export const QueueChat = () => {
                                         setMsg(event.target.value);
                                     }}
                                 />
+                                <IconButton
+                                    color={'warning'}
+                                    onClick={() => {
+                                        setShowPeople((prevState) => !prevState);
+                                    }}
+                                >
+                                    {showPeople ? <PersonIcon /> : <PersonOffIcon />}
+                                </IconButton>
                                 <SubmitButton
                                     label={'Send'}
                                     startIcon={sending ? <HourglassBottomIcon /> : <SendIcon />}
@@ -95,9 +109,34 @@ export const QueueChat = () => {
                                 />
                             </Stack>
                         </form>
-                    </Grid>
+                    </Paper>
                 </Grid>
-            </Paper>
+                {showPeople && (
+                    <Grid xs={2}>
+                        <Paper>
+                            <Stack
+                                maxHeight={237}
+                                minHeight={237}
+                                overflow={'auto'}
+                                sx={{ overflowX: 'hidden' }}
+                                direction={'column'}
+                                padding={1}
+                            >
+                                {users.map((u) => {
+                                    return (
+                                        <ChatName
+                                            key={`memberlist-${u.steam_id}`}
+                                            personaname={u.name}
+                                            steam_id={u.steam_id}
+                                            avatarhash={u.hash}
+                                        />
+                                    );
+                                })}
+                            </Stack>
+                        </Paper>
+                    </Grid>
+                )}
+            </Grid>
         </Collapse>
     );
 };
