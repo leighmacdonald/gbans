@@ -291,7 +291,8 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             reports_enabled: settings.general.reports_enabled,
             chatlogs_enabled: settings.general.chatlogs_enabled,
             demos_enabled: settings.general.demos_enabled,
-            speedruns_enabled: settings.general.speedruns_enabled
+            speedruns_enabled: settings.general.speedruns_enabled,
+            playerqueue_enabled: settings.general.playerqueue_enabled
         }
     });
 
@@ -505,7 +506,20 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                         <SubHeading>Enables the 1000 uncles speedruns tracking support.</SubHeading>
                     </Grid>
-
+                    <Grid xs={12}>
+                        <Field
+                            name={'playerqueue_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable Playerqueue support'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            Enables the functionality allowing players to queue up together using the website.
+                        </SubHeading>
+                    </Grid>
                     <Grid xs={12}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}

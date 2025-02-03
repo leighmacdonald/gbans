@@ -108,7 +108,8 @@ const AppInfoProvider = ({ children }: PropsWithChildren) => {
         chatlogs_enabled: false,
         demos_enabled: false,
         news_enabled: false,
-        speedruns_enabled: false
+        speedruns_enabled: false,
+        playerqueue_enabled: false
     });
 
     useQuery({

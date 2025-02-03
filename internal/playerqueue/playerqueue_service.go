@@ -40,10 +40,13 @@ type Msg struct {
 }
 
 type serverQueueHandler struct {
-	queue *Queue
+	queue       *Queue
+	playerQueue domain.PlayerqueueUsecase
 }
 
-func NewServerQueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase, servers domain.ServersUsecase, state domain.StateUsecase) {
+func NewServerQueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase,
+	servers domain.ServersUsecase, state domain.StateUsecase, playerQueue domain.PlayerqueueUsecase, chatLogs []domain.Message,
+) {
 	conf := config.Config()
 	var origins []string
 	if conf.General.Mode == domain.ReleaseMode {
@@ -51,12 +54,13 @@ func NewServerQueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config d
 	}
 
 	handler := &serverQueueHandler{
-		queue: NewServerQueue(100, 1, servers, state),
+		queue:       NewServerQueue(100, 1, servers, state, chatLogs),
+		playerQueue: playerQueue,
 	}
 
 	modGroup := engine.Group("/")
 	{
-		mod := modGroup.Use(auth.AuthMiddlewareWS(domain.PUser))
+		mod := modGroup.Use(auth.MiddlewareWS(domain.PUser))
 		mod.GET("/ws", handler.start(origins))
 	}
 }
@@ -125,7 +129,17 @@ func (h *serverQueueHandler) handleMessage(ctx context.Context, client *Client, 
 			return errors.Join(errUnmarshal, ErrQueueParseMessage)
 		}
 
-		err = h.queue.Message(p, user)
+		msg, errMessage := h.queue.Message(p, user)
+		if errMessage != nil {
+			err = errMessage
+
+			break
+		}
+
+		if _, errAdd := h.playerQueue.Add(ctx, msg); errAdd != nil {
+			slog.Error("Failed to add playerqueue message", log.ErrAttr(errAdd))
+		}
+
 	default:
 		return ErrUnexpectedMessage
 	}

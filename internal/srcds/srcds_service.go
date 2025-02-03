@@ -94,7 +94,7 @@ func NewHandlerSRCDS(engine *gin.Engine, srcds domain.SRCDSUsecase, servers doma
 	// Endpoints called by sourcemod plugin
 	srcdsGroup := engine.Group("/")
 	{
-		server := srcdsGroup.Use(auth.ServerMiddleware())
+		server := srcdsGroup.Use(auth.MiddlewareServer())
 		server.POST("/api/sm/check", handler.onAPICheckPlayer())
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())

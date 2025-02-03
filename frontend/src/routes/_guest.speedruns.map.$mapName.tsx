@@ -18,14 +18,14 @@ import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
-import { checkFeatureEnabled } from '../util/features.ts';
+import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime, durationString } from '../util/time.ts';
 
 export const Route = createFileRoute('/_guest/speedruns/map/$mapName')({
     component: SpeedrunsMap,
     beforeLoad: () => {
-        checkFeatureEnabled('speedruns_enabled');
+        ensureFeatureEnabled('speedruns_enabled');
     }
 });
 

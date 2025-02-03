@@ -30,13 +30,13 @@ import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { Title } from '../component/Title';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';
-import { checkFeatureEnabled } from '../util/features.ts';
+import { ensureFeatureEnabled } from '../util/features.ts';
 import { PageNotFound } from './_auth.page-not-found.tsx';
 
 export const Route = createFileRoute('/_auth/match/$matchId')({
     component: MatchPage,
     beforeLoad: () => {
-        checkFeatureEnabled('stats_enabled');
+        ensureFeatureEnabled('stats_enabled');
     }
 });
 

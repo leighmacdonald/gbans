@@ -18,13 +18,13 @@ import { ServerMap } from '../component/ServerMap.tsx';
 import { Title } from '../component/Title.tsx';
 import { MapStateCtx } from '../contexts/MapStateCtx.tsx';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
-import { checkFeatureEnabled } from '../util/features.ts';
+import { ensureFeatureEnabled } from '../util/features.ts';
 import { sum } from '../util/lists.ts';
 
 export const Route = createFileRoute('/_guest/servers')({
     component: Servers,
     beforeLoad: () => {
-        checkFeatureEnabled('servers_enabled');
+        ensureFeatureEnabled('servers_enabled');
     }
 });
 

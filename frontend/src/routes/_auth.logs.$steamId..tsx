@@ -14,7 +14,7 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
-import { checkFeatureEnabled } from '../util/features.ts';
+import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
@@ -29,7 +29,7 @@ const matchSummarySchema = z.object({
 export const Route = createFileRoute('/_auth/logs/$steamId/')({
     component: MatchListPage,
     beforeLoad: () => {
-        checkFeatureEnabled('stats_enabled');
+        ensureFeatureEnabled('stats_enabled');
     },
 
     validateSearch: (search) => matchSummarySchema.parse(search)

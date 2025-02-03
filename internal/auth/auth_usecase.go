@@ -182,7 +182,7 @@ func (u *auth) TokenFromQuery(ctx *gin.Context) (string, error) {
 	return token, nil
 }
 
-func (u *auth) AuthMiddlewareWS(level domain.Privilege) gin.HandlerFunc {
+func (u *auth) MiddlewareWS(level domain.Privilege) gin.HandlerFunc {
 	cookieKey := u.config.Config().HTTPCookieKey
 
 	return func(ctx *gin.Context) {
@@ -271,7 +271,7 @@ func (u *auth) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error)
 	}
 }
 
-func (u *auth) ServerMiddleware() gin.HandlerFunc {
+func (u *auth) MiddlewareServer() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reqAuthHeader := ctx.GetHeader("Authorization")
 		if reqAuthHeader == "" {

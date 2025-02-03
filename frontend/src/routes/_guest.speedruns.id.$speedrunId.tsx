@@ -23,14 +23,14 @@ import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { Title } from '../component/Title';
-import { checkFeatureEnabled } from '../util/features.ts';
+import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { durationString, renderDateTime } from '../util/time.ts';
 
 export const Route = createFileRoute('/_guest/speedruns/id/$speedrunId')({
     component: SpeedrunDetail,
     beforeLoad: () => {
-        checkFeatureEnabled('speedruns_enabled');
+        ensureFeatureEnabled('speedruns_enabled');
     }
 });
 

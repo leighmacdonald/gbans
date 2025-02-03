@@ -179,22 +179,23 @@ const (
 )
 
 type ConfigGeneral struct {
-	SiteName         string        `json:"site_name"`
-	Mode             RunMode       `json:"mode"`
-	FileServeMode    FileServeMode `json:"file_serve_mode"`
-	SrcdsLogAddr     string        `json:"srcds_log_addr"`
-	AssetURL         string        `json:"asset_url"`
-	DefaultRoute     string        `json:"default_route"`
-	NewsEnabled      bool          `json:"news_enabled"`
-	ForumsEnabled    bool          `json:"forums_enabled"`
-	ContestsEnabled  bool          `json:"contests_enabled"`
-	WikiEnabled      bool          `json:"wiki_enabled"`
-	StatsEnabled     bool          `json:"stats_enabled"`
-	ServersEnabled   bool          `json:"servers_enabled"`
-	ReportsEnabled   bool          `json:"reports_enabled"`
-	ChatlogsEnabled  bool          `json:"chatlogs_enabled"`
-	DemosEnabled     bool          `json:"demos_enabled"`
-	SpeedrunsEnabled bool          `json:"speedruns_enabled"`
+	SiteName           string        `json:"site_name"`
+	Mode               RunMode       `json:"mode"`
+	FileServeMode      FileServeMode `json:"file_serve_mode"`
+	SrcdsLogAddr       string        `json:"srcds_log_addr"`
+	AssetURL           string        `json:"asset_url"`
+	DefaultRoute       string        `json:"default_route"`
+	NewsEnabled        bool          `json:"news_enabled"`
+	ForumsEnabled      bool          `json:"forums_enabled"`
+	ContestsEnabled    bool          `json:"contests_enabled"`
+	WikiEnabled        bool          `json:"wiki_enabled"`
+	StatsEnabled       bool          `json:"stats_enabled"`
+	ServersEnabled     bool          `json:"servers_enabled"`
+	ReportsEnabled     bool          `json:"reports_enabled"`
+	ChatlogsEnabled    bool          `json:"chatlogs_enabled"`
+	DemosEnabled       bool          `json:"demos_enabled"`
+	SpeedrunsEnabled   bool          `json:"speedruns_enabled"`
+	PlayerqueueEnabled bool          `json:"playerqueue_enabled"`
 }
 
 type ConfigDemo struct {

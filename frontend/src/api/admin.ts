@@ -40,6 +40,7 @@ type General = {
     chatlogs_enabled: boolean;
     demos_enabled: boolean;
     speedruns_enabled: boolean;
+    playerqueue_enabled: boolean;
 };
 
 type Filters = {

@@ -60,8 +60,8 @@ import { useQueueCtx } from '../hooks/useQueueCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import { generateOIDCLink } from '../util/auth/generateOIDCLink.ts';
+import { checkFeatureEnabled } from '../util/features.ts';
 import { DesktopNotifications } from './DesktopNotifications.tsx';
-import { QueueChat } from './QueueChat.tsx';
 import RouterLink from './RouterLink.tsx';
 import { StyledBadge } from './StyledBadge.tsx';
 import { VCenterBox } from './VCenterBox.tsx';
@@ -358,172 +358,180 @@ export const TopBar = () => {
     };
 
     return (
-        <AppBar position="sticky">
-            <Container maxWidth="xl">
-                <Toolbar disableGutters variant="dense">
-                    <Typography
-                        variant="h6"
-                        noWrap
-                        component="div"
-                        sx={{
-                            mr: 2,
-                            display: { xs: 'none', md: 'flex' },
-                            ...tf2Fonts
-                        }}
-                    >
-                        {appInfo.site_name}
-                    </Typography>
-
-                    <Box
-                        sx={{
-                            flexGrow: 1,
-                            display: { xs: 'flex', md: 'none' }
-                        }}
-                    >
-                        <IconButton
-                            size="large"
-                            aria-label="account of current user"
-                            aria-controls="menu-appbar"
-                            aria-haspopup="true"
-                            onClick={handleOpenNavMenu}
-                        >
-                            <MenuIcon />
-                        </IconButton>
-                        <Menu
-                            id="menu-appbar"
-                            anchorEl={anchorElNav}
-                            anchorOrigin={{
-                                vertical: 'bottom',
-                                horizontal: 'left'
-                            }}
-                            keepMounted
-                            transformOrigin={{
-                                vertical: 'top',
-                                horizontal: 'left'
-                            }}
-                            open={Boolean(anchorElNav)}
-                            onClose={handleCloseNavMenu}
+        <>
+            <AppBar>
+                <Container maxWidth="xl">
+                    <Toolbar disableGutters variant="dense">
+                        <Typography
+                            variant="h6"
+                            noWrap
+                            component="div"
                             sx={{
-                                display: { xs: 'block', md: 'none' }
+                                mr: 2,
+                                display: { xs: 'none', md: 'flex' },
+                                ...tf2Fonts
+                            }}
+                        >
+                            {appInfo.site_name}
+                        </Typography>
+
+                        <Box
+                            sx={{
+                                flexGrow: 1,
+                                display: { xs: 'flex', md: 'none' }
+                            }}
+                        >
+                            <IconButton
+                                size="large"
+                                aria-label="account of current user"
+                                aria-controls="menu-appbar"
+                                aria-haspopup="true"
+                                onClick={handleOpenNavMenu}
+                            >
+                                <MenuIcon />
+                            </IconButton>
+                            <Menu
+                                id="menu-appbar"
+                                anchorEl={anchorElNav}
+                                anchorOrigin={{
+                                    vertical: 'bottom',
+                                    horizontal: 'left'
+                                }}
+                                keepMounted
+                                transformOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'left'
+                                }}
+                                open={Boolean(anchorElNav)}
+                                onClose={handleCloseNavMenu}
+                                sx={{
+                                    display: { xs: 'block', md: 'none' }
+                                }}
+                            >
+                                {menuItems.map((value) => {
+                                    return renderLinkedMenuItem(value.text, value.to, value.icon);
+                                })}
+                            </Menu>
+                        </Box>
+                        <Typography
+                            variant="h6"
+                            noWrap
+                            component="div"
+                            sx={{
+                                flexGrow: 1,
+                                display: { xs: 'flex', md: 'none' }
+                            }}
+                        >
+                            {appInfo.site_name}
+                        </Typography>
+                        <Box
+                            sx={{
+                                flexGrow: 1,
+                                display: { xs: 'none', md: 'flex' }
                             }}
                         >
                             {menuItems.map((value) => {
                                 return renderLinkedMenuItem(value.text, value.to, value.icon);
                             })}
-                        </Menu>
-                    </Box>
-                    <Typography
-                        variant="h6"
-                        noWrap
-                        component="div"
-                        sx={{
-                            flexGrow: 1,
-                            display: { xs: 'flex', md: 'none' }
-                        }}
-                    >
-                        {appInfo.site_name}
-                    </Typography>
-                    <Box
-                        sx={{
-                            flexGrow: 1,
-                            display: { xs: 'none', md: 'flex' }
-                        }}
-                    >
-                        {menuItems.map((value) => {
-                            return renderLinkedMenuItem(value.text, value.to, value.icon);
-                        })}
-                    </Box>
+                        </Box>
 
-                    <Box sx={{ flexGrow: 0 }}>
-                        <Stack direction={'row'} spacing={1}>
-                            <Tooltip title="Toggle Chat Window">
-                                <IconButton onClick={handleToggleChat}>
-                                    <StyledBadge badgeContent={users.length}>
-                                        {showChat ? (
-                                            <KeyboardHideIcon sx={{ color: '#fff', rotate: 180 }} />
-                                        ) : (
-                                            <KeyboardIcon sx={{ color: '#fff' }} />
-                                        )}
-                                    </StyledBadge>
-                                </IconButton>
-                            </Tooltip>
+                        <Box sx={{ flexGrow: 0 }}>
+                            <Stack direction={'row'} spacing={1}>
+                                {checkFeatureEnabled('playerqueue_enabled') &&
+                                    hasPermission(PermissionLevel.Moderator) && (
+                                        <Tooltip title="Toggle Chat Window">
+                                            <IconButton onClick={handleToggleChat}>
+                                                <StyledBadge badgeContent={users.length}>
+                                                    {showChat ? (
+                                                        <KeyboardHideIcon sx={{ color: '#fff', rotate: 180 }} />
+                                                    ) : (
+                                                        <KeyboardIcon sx={{ color: '#fff' }} />
+                                                    )}
+                                                </StyledBadge>
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
 
-                            <Tooltip title="Toggle BLU/RED mode">
-                                <IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
-                            </Tooltip>
-
-                            {hasPermission(PermissionLevel.User) && (
-                                <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
-                                    <Badge
-                                        color={'success'}
-                                        badgeContent={
-                                            isLoading
-                                                ? '...'
-                                                : (notifications ?? []).filter((n: UserNotification) => !n.read).length
-                                        }
-                                    >
-                                        <MailIcon />
-                                    </Badge>
-                                </IconButton>
-                            )}
-
-                            {!isAuthenticated() && (
-                                <Tooltip title="Steam Login">
-                                    <Button component={Link} href={generateOIDCLink(window.location.pathname)}>
-                                        <img src={steamLogo} alt={'Steam Login'} />
-                                    </Button>
+                                <Tooltip title="Toggle BLU/RED mode">
+                                    <IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
                                 </Tooltip>
-                            )}
-                            {hasPermission(PermissionLevel.Moderator) && (
-                                <VCenterBox>
-                                    <NestedDropdown
-                                        menuItemsData={adminItems}
-                                        MenuProps={{
-                                            elevation: 0
-                                        }}
-                                        ButtonProps={{
-                                            sx: { color: 'common.white' },
-                                            variant: 'text'
-                                        }}
-                                    />
-                                </VCenterBox>
-                            )}
 
-                            {isAuthenticated() && (
-                                <>
-                                    <Tooltip title="User Settings">
-                                        <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                            <Avatar alt={profile.name} src={profile.avatarhash} />
-                                        </IconButton>
+                                {hasPermission(PermissionLevel.User) && (
+                                    <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
+                                        <Badge
+                                            color={'success'}
+                                            badgeContent={
+                                                isLoading
+                                                    ? '...'
+                                                    : (notifications ?? []).filter((n: UserNotification) => !n.read)
+                                                          .length
+                                            }
+                                        >
+                                            <MailIcon />
+                                        </Badge>
+                                    </IconButton>
+                                )}
+
+                                {!isAuthenticated() && (
+                                    <Tooltip title="Steam Login">
+                                        <Button component={Link} href={generateOIDCLink(window.location.pathname)}>
+                                            <img src={steamLogo} alt={'Steam Login'} />
+                                        </Button>
                                     </Tooltip>
-                                    <Menu
-                                        sx={{ mt: '45px' }}
-                                        id="menu-appbar"
-                                        anchorEl={anchorElUser}
-                                        anchorOrigin={{
-                                            vertical: 'top',
-                                            horizontal: 'right'
-                                        }}
-                                        keepMounted
-                                        transformOrigin={{
-                                            vertical: 'top',
-                                            horizontal: 'right'
-                                        }}
-                                        open={Boolean(anchorElUser)}
-                                        onClose={handleCloseUserMenu}
-                                    >
-                                        {userItems.map((value) => {
-                                            return renderLinkedMenuItem(value.text, value.to, value.icon);
-                                        })}
-                                    </Menu>
-                                </>
-                            )}
-                        </Stack>
-                    </Box>
-                </Toolbar>
-            </Container>
-            <DesktopNotifications notifications={notifications} isLoading={isLoading} />
-            <QueueChat />
-        </AppBar>
+                                )}
+                                {hasPermission(PermissionLevel.Moderator) && (
+                                    <VCenterBox>
+                                        <NestedDropdown
+                                            menuItemsData={adminItems}
+                                            MenuProps={{
+                                                elevation: 0
+                                            }}
+                                            ButtonProps={{
+                                                sx: { color: 'common.white' },
+                                                variant: 'text'
+                                            }}
+                                        />
+                                    </VCenterBox>
+                                )}
+
+                                {isAuthenticated() && (
+                                    <>
+                                        <Tooltip title="User Settings">
+                                            <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                                                <Avatar alt={profile.name} src={profile.avatarhash} />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Menu
+                                            sx={{ mt: '45px' }}
+                                            id="menu-appbar"
+                                            anchorEl={anchorElUser}
+                                            anchorOrigin={{
+                                                vertical: 'top',
+                                                horizontal: 'right'
+                                            }}
+                                            keepMounted
+                                            transformOrigin={{
+                                                vertical: 'top',
+                                                horizontal: 'right'
+                                            }}
+                                            open={Boolean(anchorElUser)}
+                                            onClose={handleCloseUserMenu}
+                                        >
+                                            {userItems.map((value) => {
+                                                return renderLinkedMenuItem(value.text, value.to, value.icon);
+                                            })}
+                                        </Menu>
+                                    </>
+                                )}
+                            </Stack>
+                        </Box>
+                    </Toolbar>
+                </Container>
+                {hasPermission(PermissionLevel.User) && (
+                    <DesktopNotifications notifications={notifications} isLoading={isLoading} />
+                )}
+            </AppBar>
+            <div style={{ padding: 24 }}></div>
+        </>
     );
 };

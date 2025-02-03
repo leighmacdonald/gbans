@@ -35,7 +35,7 @@ export const createThemeByMode = (mode: PaletteMode) => {
                       main: '#9d312f'
                   },
                   background: {
-                      default: '#dabdab',
+                      default: 'inherit',
                       paper: '#f5e7de'
                   },
                   common: {
@@ -52,7 +52,7 @@ export const createThemeByMode = (mode: PaletteMode) => {
                       main: '#395c78'
                   },
                   background: {
-                      default: '#6a4535',
+                      default: 'inherit',
                       paper: '#3e281f'
                   },
                   common: {
