@@ -17,6 +17,7 @@ import { ForumThreadEditorModal } from './ForumThreadEditorModal.tsx';
 import { IPWhitelistEditorModal } from './IPWhitelistEditorModal.tsx';
 import { NewsEditModal } from './NewsEditModal.tsx';
 import { PersonEditModal } from './PersonEditModal.tsx';
+import { QueueJoinModal } from './QueueJoinModal.tsx';
 import { SMAdminEditorModal } from './SMAdminEditorModal.tsx';
 import { SMGroupEditorModal } from './SMGroupEditorModal.tsx';
 import { SMGroupImmunityCreateModal } from './SMGroupImmunityCreateModal.tsx';
@@ -64,8 +65,10 @@ export const ModalForumForumEditor = 'modal-forum-forum-editor';
 export const ModalForumThreadCreator = 'modal-forum-thread-creator';
 export const ModalForumThreadEditor = 'modal-forum-thread-editor';
 export const ModalNewsEditor = 'modal-news-editor';
+export const ModalQueueJoin = 'modal-queue-join';
 
 [
+    [ModalQueueJoin, QueueJoinModal],
     [ModalSMGroupImmunityEditor, SMGroupImmunityCreateModal],
     [ModalSMGroupOverridesEditor, SMGroupOverrideEditorModal],
     [ModalSMOverridesEditor, SMOverrideEditorModal],

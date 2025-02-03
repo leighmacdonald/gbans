@@ -26,9 +26,13 @@ type member struct {
 	Hash    string `json:"hash"`
 }
 
+type ClientQueueState struct {
+	SteamID steamid.SteamID `json:"steam_id"`
+}
+
 type ServerQueueState struct {
-	ServerID int               `json:"server_id"`
-	Members  []steamid.SteamID `json:"members"`
+	ServerID int                `json:"server_id"`
+	Members  []ClientQueueState `json:"members"`
 }
 
 type clientStatePayload struct {
@@ -36,4 +40,17 @@ type clientStatePayload struct {
 	UpdateServers bool               `json:"update_servers"`
 	Servers       []ServerQueueState `json:"servers"`
 	Users         []member           `json:"users"`
+}
+
+type server struct {
+	Name           string `json:"name"`
+	ShortName      string `json:"short_name"`
+	CC             string `json:"cc"`
+	ConnectURL     string `json:"connect_url"`
+	ConnectCommand string `json:"connect_command"`
+}
+
+type gameStartPayload struct {
+	Users  []member `json:"users"`
+	Server server   `json:"server"`
 }

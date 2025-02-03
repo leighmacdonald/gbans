@@ -15,17 +15,14 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 var (
-	errQueueUnknownServer  = errors.New("unknown queue server")
-	ErrUnexpectedMessage   = errors.New("unexpected message")
-	ErrQueueMissingEntries = errors.New("failed to find all queue members")
-	errMessageID           = errors.New("failed to create message id")
-	ErrQueueIO             = errors.New("failed to read / write from connection")
-	ErrQueueParseMessage   = errors.New("failed to parse message")
-	ErrBadInput            = errors.New("bad user input")
+	ErrUnexpectedMessage = errors.New("unexpected message")
+	errMessageID         = errors.New("failed to create message id")
+	ErrQueueIO           = errors.New("failed to read / write from connection")
+	ErrQueueParseMessage = errors.New("failed to parse message")
+	ErrBadInput          = errors.New("bad user input")
 )
 
 // TODO Track a users desired minimum size for them to be counted towards play.
@@ -58,27 +55,66 @@ func (c *Client) close() {
 	}
 }
 
-type ServerQueue struct {
+type Queue struct {
 	chatLogHistorySize int
-	state              map[int][]steamid.SteamID
-	mu                 *sync.RWMutex
+	minQueueSize       int
+	serverQueues       []*ServerQueueState
 	clients            []*Client
 	chatLogs           []domain.Message
 	servers            domain.ServersUsecase
+	serverState        domain.StateUsecase
+	mu                 *sync.RWMutex
 }
 
-func NewServerQueue(chatLogHistorySize int, servers domain.ServersUsecase) *ServerQueue {
-	return &ServerQueue{
-		clients:            make([]*Client, 0),
+func NewServerQueue(chatLogHistorySize int, minQueueSize int, servers domain.ServersUsecase, serverState domain.StateUsecase) *Queue {
+	return &Queue{
+		minQueueSize:       minQueueSize,
+		clients:            []*Client{},
 		chatLogs:           []domain.Message{},
-		state:              map[int][]steamid.SteamID{},
+		serverQueues:       []*ServerQueueState{},
 		mu:                 &sync.RWMutex{},
 		chatLogHistorySize: chatLogHistorySize,
+		serverState:        serverState,
 		servers:            servers,
 	}
 }
 
-func (q *ServerQueue) syncServerIDs(ctx context.Context) {
+func (q *Queue) Start(ctx context.Context) {
+	cleanupTicker := time.NewTicker(time.Second * 30)
+	queueQueck := time.NewTicker(time.Second * 2)
+	for {
+		select {
+		case <-cleanupTicker.C:
+			q.removeZombies()
+		case <-queueQueck.C:
+			if err := q.checkQueueCompat(ctx); err != nil {
+				slog.Error("Failed to check queue compatibility", log.ErrAttr(err))
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (q *Queue) removeZombies() {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	var valid []*Client
+	for _, client := range q.clients {
+		if time.Since(client.lastPing) > time.Minute {
+			q.removeFromQueues(client)
+			client.close()
+			slog.Debug("Removing zombie client", slog.String("addr", client.conn.RemoteAddr().String()))
+		} else {
+			valid = append(valid, client)
+		}
+	}
+
+	q.clients = valid
+}
+
+func (q *Queue) syncServerIDs(ctx context.Context) {
 	servers, _, errServers := q.servers.Servers(ctx, domain.ServerQueryFilter{
 		QueryFilter:     domain.QueryFilter{},
 		IncludeDisabled: false,
@@ -91,22 +127,34 @@ func (q *ServerQueue) syncServerIDs(ctx context.Context) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	valid := map[int][]steamid.SteamID{}
+	//goland:noinspection GoPreferNilSlice
+	valid := []*ServerQueueState{}
 
-	for _, validID := range servers {
-		if _, found := q.state[validID.ServerID]; found {
-			// Keep any existing queue states that remain valid.
-			valid[validID.ServerID] = q.state[validID.ServerID]
-		} else {
+	for _, srv := range servers {
+		found := false
+		for _, serverQueue := range q.serverQueues {
+			if serverQueue.ServerID == srv.ServerID {
+				// Keep any existing queue states that remain valid.
+				valid = append(valid, serverQueue)
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
 			// Create new entries for missing keys.
-			valid[validID.ServerID] = []steamid.SteamID{}
+			valid = append(valid, &ServerQueueState{
+				ServerID: srv.ServerID,
+				Members:  []ClientQueueState{},
+			})
 		}
 	}
 
-	q.state = valid
+	q.serverQueues = valid
 }
 
-func (q *ServerQueue) updateClientStates(fullUpdate bool) {
+func (q *Queue) updateClientStates(fullUpdate bool) {
 	update := clientStatePayload{}
 
 	q.mu.RLock()
@@ -114,11 +162,8 @@ func (q *ServerQueue) updateClientStates(fullUpdate bool) {
 
 	//goland:noinspection GoPreferNilSlice
 	updateMap := []ServerQueueState{}
-	for key, value := range q.state {
-		updateMap = append(updateMap, ServerQueueState{
-			ServerID: key,
-			Members:  value,
-		})
+	for _, value := range q.serverQueues {
+		updateMap = append(updateMap, *value)
 	}
 
 	update.UpdateServers = true
@@ -141,29 +186,28 @@ func (q *ServerQueue) updateClientStates(fullUpdate bool) {
 	q.broadcast(Msg{Op: StateUpdate, Payload: update})
 }
 
-func (q *ServerQueue) LeaveQueue(client *Client, servers []int) error {
-	q.mu.Lock()
-
+func (q *Queue) LeaveQueue(client *Client, servers []int) error {
 	changed := false
+
+	q.mu.Lock()
 	for _, serverID := range servers {
-		members, ok := q.state[serverID]
-		if !ok {
-			q.mu.Unlock()
-
-			return errQueueUnknownServer
-		}
-
-		//goland:noinspection GoPreferNilSlice
-		valid := []steamid.SteamID{}
-		for _, member := range members {
-			if member != client.user.SteamID {
-				valid = append(valid, member)
-			} else {
-				changed = true
+		for _, srv := range q.serverQueues {
+			if srv.ServerID != serverID {
+				continue
 			}
-		}
 
-		q.state[serverID] = valid
+			//goland:noinspection GoPreferNilSlice
+			valid := []ClientQueueState{}
+			for _, mem := range srv.Members {
+				if mem.SteamID != client.user.SteamID {
+					valid = append(valid, mem)
+				} else {
+					changed = true
+				}
+			}
+
+			srv.Members = valid
+		}
 	}
 	q.mu.Unlock()
 
@@ -174,28 +218,29 @@ func (q *ServerQueue) LeaveQueue(client *Client, servers []int) error {
 	return nil
 }
 
-func (q *ServerQueue) JoinQueue(ctx context.Context, client *Client, servers []int) error {
+func (q *Queue) JoinQueue(ctx context.Context, client *Client, servers []int) error {
 	changed := false
 	q.mu.Lock()
 
 	for _, serverID := range servers {
-		members, exists := q.state[serverID]
-		if !exists {
-			q.mu.Unlock()
-
-			return errQueueUnknownServer
-		}
-
-		found := false
-		for _, mem := range members {
-			if mem == client.user.SteamID {
-				found = true
+		for _, srv := range q.serverQueues {
+			if srv.ServerID != serverID {
+				continue
 			}
-		}
 
-		if !found {
-			q.state[serverID] = append(q.state[serverID], client.user.SteamID)
-			changed = true
+			found := false
+			for _, mem := range srv.Members {
+				if mem.SteamID == client.user.SteamID {
+					found = true
+				}
+			}
+
+			if !found {
+				srv.Members = append(srv.Members, ClientQueueState{SteamID: client.user.SteamID})
+				changed = true
+			}
+
+			break
 		}
 	}
 
@@ -212,7 +257,7 @@ func (q *ServerQueue) JoinQueue(ctx context.Context, client *Client, servers []i
 
 // Connect adds the user to the swarm. If a user exists with the same steamid exists, it will be replaced with
 // the new connection.
-func (q *ServerQueue) Connect(ctx context.Context, user domain.UserProfile, conn *websocket.Conn) *Client {
+func (q *Queue) Connect(ctx context.Context, user domain.UserProfile, conn *websocket.Conn) *Client {
 	// Sync valid servers each time a client connects.
 	q.syncServerIDs(ctx)
 
@@ -243,63 +288,68 @@ func (q *ServerQueue) Connect(ctx context.Context, user domain.UserProfile, conn
 	return client
 }
 
-func (q *ServerQueue) checkQueueCompat(ctx context.Context) error {
-	const minSize = 2
+func (q *Queue) checkQueueCompat(ctx context.Context) error {
+	var serverID int
 
-	q.mu.RLock()
-	defer q.mu.RUnlock()
-
-	for serverID, members := range q.state {
-		if len(members) < minSize {
+	q.mu.Lock()
+	for _, serverQueue := range q.serverQueues {
+		if len(serverQueue.Members) < q.minQueueSize {
 			continue
 		}
 
-		if err := q.initiateGame(ctx, serverID); err != nil {
-			return err
+		state, found := q.serverState.ByServerID(serverQueue.ServerID)
+		if !found {
+			continue
 		}
 
+		if state.MaxPlayers-state.PlayerCount-len(serverQueue.Members) < 0 {
+			continue
+		}
+
+		serverID = serverQueue.ServerID
+
 		break
+	}
+	q.mu.Unlock()
+
+	if serverID > 0 {
+		return q.initiateGame(ctx, serverID)
 	}
 
 	return nil
 }
 
-type server struct {
-	Name           string `json:"name"`
-	ShortName      string `json:"short_name"`
-	CC             string `json:"cc"`
-	ConnectURL     string `json:"connect_url"`
-	ConnectCommand string `json:"connect_command"`
-}
-
-type gameStartPayload struct {
-	Users  []member `json:"users"`
-	Server server   `json:"server"`
-}
-
-func (q *ServerQueue) initiateGame(ctx context.Context, serverID int) error {
+func (q *Queue) initiateGame(ctx context.Context, serverID int) error {
 	srv, errServer := q.servers.Server(ctx, serverID)
 	if errServer != nil {
 		return errServer
 	}
 
 	q.mu.RLock()
-	defer q.mu.RUnlock()
+	var queuedClients []*Client
 
-	var sendTargets []*Client
+	for _, serverQueue := range q.serverQueues {
+		if serverQueue.ServerID != serverID {
+			continue
+		}
 
-	for _, steamID := range q.state[serverID] {
+		// Find the queued users via their matching steamid
 		for _, client := range q.clients {
-			if client.user.SteamID == steamID {
-				sendTargets = append(sendTargets, client)
+			for _, c := range serverQueue.Members {
+				if client.user.SteamID == c.SteamID {
+					queuedClients = append(queuedClients, client)
 
-				break
+					break
+				}
 			}
 		}
 	}
 
-	if len(sendTargets) != len(q.state[serverID]) {
-		return ErrQueueMissingEntries
+	ipAddr, errIP := srv.IP(ctx)
+	if errIP != nil {
+		q.mu.RUnlock()
+
+		return errors.Join(errIP, domain.ErrResolveIP)
 	}
 
 	startPayload := gameStartPayload{
@@ -307,12 +357,12 @@ func (q *ServerQueue) initiateGame(ctx context.Context, serverID int) error {
 			Name:           srv.Name,
 			ShortName:      srv.ShortName,
 			CC:             srv.CC,
-			ConnectURL:     fmt.Sprintf("steam://connect/%s:%d", srv.Address, srv.Port),
+			ConnectURL:     fmt.Sprintf("steam://connect/%s:%d", ipAddr.String(), srv.Port),
 			ConnectCommand: fmt.Sprintf("connect %s:%d", srv.Address, srv.Port),
 		},
 	}
 
-	for _, target := range sendTargets {
+	for _, target := range queuedClients {
 		startPayload.Users = append(startPayload.Users, member{
 			Name:    target.user.Name,
 			SteamID: target.user.SteamID.String(),
@@ -320,16 +370,39 @@ func (q *ServerQueue) initiateGame(ctx context.Context, serverID int) error {
 		})
 	}
 
-	q.broadcast(Msg{Op: StartGame, Payload: startPayload}, sendTargets...)
+	q.broadcast(Msg{Op: StartGame, Payload: startPayload}, queuedClients...)
+	q.mu.RUnlock()
+
+	q.mu.Lock()
+	for _, client := range queuedClients {
+		q.removeFromQueues(client)
+	}
+	q.mu.Unlock()
+
+	q.updateClientStates(false)
 
 	return nil
 }
 
-func (q *ServerQueue) Disconnect(client *Client) {
+func (q *Queue) removeFromQueues(client *Client) {
+	for _, srv := range q.serverQueues {
+		var valid []ClientQueueState
+
+		for _, mem := range srv.Members {
+			if mem.SteamID != client.user.SteamID {
+				valid = append(valid, mem)
+			}
+		}
+
+		srv.Members = valid
+	}
+}
+
+func (q *Queue) Disconnect(client *Client) {
 	q.mu.RLock()
 
 	var serverIDs []int //nolint:prealloc
-	for server := range q.state {
+	for server := range q.serverQueues {
 		serverIDs = append(serverIDs, server)
 	}
 
@@ -357,7 +430,7 @@ func (q *ServerQueue) Disconnect(client *Client) {
 	q.updateClientStates(true)
 }
 
-func (q *ServerQueue) Message(message domain.Message, user domain.UserProfile) error {
+func (q *Queue) Message(message domain.Message, user domain.UserProfile) error {
 	message.BodyMD = sanitizeUserMessage(message.BodyMD)
 	if len(message.BodyMD) == 0 {
 		return ErrBadInput
@@ -391,7 +464,7 @@ func (q *ServerQueue) Message(message domain.Message, user domain.UserProfile) e
 	return nil
 }
 
-func (q *ServerQueue) broadcast(payload Msg, targetClients ...*Client) {
+func (q *Queue) broadcast(payload Msg, targetClients ...*Client) {
 	if len(targetClients) == 0 {
 		targetClients = q.clients
 	}
@@ -422,7 +495,7 @@ func removeNonPrintable(input string) string {
 	return out
 }
 
-func (q *ServerQueue) Ping(client *Client) {
+func (q *Queue) Ping(client *Client) {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
@@ -432,7 +505,7 @@ func (q *ServerQueue) Ping(client *Client) {
 	}
 }
 
-func (q *ServerQueue) sendClientChatHistory(client *Client) {
+func (q *Queue) sendClientChatHistory(client *Client) {
 	q.mu.RLock()
 	msgs := make([]Msg, len(q.chatLogs))
 	for i, cl := range q.chatLogs {

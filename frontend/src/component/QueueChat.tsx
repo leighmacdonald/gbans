@@ -66,8 +66,8 @@ export const QueueChat = () => {
                     {!isReady ? (
                         <LoadingPlaceholder></LoadingPlaceholder>
                     ) : (
-                        messages.map((message) => {
-                            return <ChatRow message={message} key={message.id} />;
+                        messages.map((message, i) => {
+                            return <ChatRow message={message} key={`${message.id}-${i}`} />;
                         })
                     )}
                     <span ref={messagesEndRef} key={'hi'} />

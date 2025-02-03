@@ -40,10 +40,10 @@ type Msg struct {
 }
 
 type serverQueueHandler struct {
-	queue *ServerQueue
+	queue *Queue
 }
 
-func NewServerQueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase, servers domain.ServersUsecase) {
+func NewServerQueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase, servers domain.ServersUsecase, state domain.StateUsecase) {
 	conf := config.Config()
 	var origins []string
 	if conf.General.Mode == domain.ReleaseMode {
@@ -51,7 +51,7 @@ func NewServerQueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config d
 	}
 
 	handler := &serverQueueHandler{
-		queue: NewServerQueue(100, servers),
+		queue: NewServerQueue(100, servers, state),
 	}
 
 	modGroup := engine.Group("/")
