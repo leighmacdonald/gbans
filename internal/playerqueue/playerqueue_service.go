@@ -51,7 +51,7 @@ func NewServerQueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config d
 	}
 
 	handler := &serverQueueHandler{
-		queue: NewServerQueue(100, servers, state),
+		queue: NewServerQueue(100, 1, servers, state),
 	}
 
 	modGroup := engine.Group("/")
