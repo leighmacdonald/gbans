@@ -378,7 +378,14 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			wiki.NewHandler(router, wikiUsecase, authUsecase)
 			wordfilter.NewHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
 
-			playerqueue.NewServerQueueHandler(router, authUsecase, configUsecase, serversUC, stateUsecase)
+			playerqueueUC := playerqueue.NewPlayerqueueUsecase(playerqueue.NewPlayerqueueRepository(dbConn, personUsecase))
+
+			chatlogs, errChatlogs := playerqueueUC.Recent(ctx, 100)
+			if errChatlogs != nil {
+				slog.Error("Failed to warm playerqueue chatlogs", log.ErrAttr(err))
+				chatlogs = []domain.Message{}
+			}
+			playerqueue.NewServerQueueHandler(router, authUsecase, configUsecase, serversUC, stateUsecase, playerqueueUC, chatlogs)
 
 			if conf.Debug.AddRCONLogAddress != "" {
 				go stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)

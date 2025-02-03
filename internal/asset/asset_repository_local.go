@@ -90,6 +90,10 @@ func (l localRepository) Delete(ctx context.Context, assetID uuid.UUID) (int64, 
 	}
 
 	if errRemove := os.Remove(assetPath); errRemove != nil {
+		var e *os.PathError
+		if errors.As(errRemove, &e) && errors.Is(e.Err, os.ErrNotExist) {
+			return 0, nil
+		}
 		return 0, errors.Join(errRemove, domain.ErrDeleteAssetFile)
 	}
 

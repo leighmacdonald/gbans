@@ -54,7 +54,7 @@ export const QueueChat = () => {
 
     return (
         <Collapse in={showChat}>
-            <Paper>
+            <Paper sx={{ marginBottom: 3 }}>
                 <Stack
                     maxHeight={200}
                     minHeight={200}

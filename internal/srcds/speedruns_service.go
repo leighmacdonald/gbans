@@ -37,7 +37,7 @@ func NewHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, auth domai
 
 	srcdsGroup := engine.Group("/")
 	{
-		server := srcdsGroup.Use(auth.ServerMiddleware())
+		server := srcdsGroup.Use(auth.MiddlewareServer())
 		server.POST("/api/sm/speedruns", handler.postSpeedrun())
 	}
 }

@@ -251,7 +251,7 @@ func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain
 		return nil, errors.Join(errSend, domain.ErrDemoLoad)
 	}
 
-	defer resp.Body.Close()
+	defer log.Closer(resp.Body)
 
 	var demo domain.DemoDetails
 
@@ -336,7 +336,8 @@ func (d demoUsecase) RemoveOrphans(ctx context.Context) error {
 		var remove bool
 		asset, _, errAsset := d.asset.Get(ctx, demo.AssetID)
 		if errAsset != nil {
-			if errors.Is(errAsset, domain.ErrNoResult) {
+			// If it doesn't exist on disk we want to delete our internal references to it.
+			if errors.Is(errAsset, domain.ErrNoResult) || errors.Is(errAsset, domain.ErrOpenFile) {
 				remove = true
 			} else {
 				return errAsset
@@ -354,15 +355,19 @@ func (d demoUsecase) RemoveOrphans(ctx context.Context) error {
 			continue
 		}
 
-		if _, err := d.asset.Delete(ctx, asset.AssetID); err != nil {
+		if _, err := d.asset.Delete(ctx, demo.AssetID); err != nil {
 			slog.Error("Failed to remove orphan demo asset", log.ErrAttr(err))
+
+			continue
 		}
 
 		if err := d.repository.Delete(ctx, demo.DemoID); err != nil {
 			slog.Error("Failed to remove orphan demo entry", log.ErrAttr(err))
+
+			continue
 		}
 
-		slog.Info("Removed orphan demo file", slog.String("filename", demo.Title))
+		slog.Warn("Removed orphan demo file", slog.String("filename", demo.Title))
 	}
 
 	return nil

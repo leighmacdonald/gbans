@@ -26,7 +26,7 @@ import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { stringToColour } from '../util/colours.ts';
-import { checkFeatureEnabled } from '../util/features.ts';
+import { ensureFeatureEnabled } from '../util/features.ts';
 import { initColumnFilter, initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
 import { humanFileSize } from '../util/text.tsx';
 import { renderDateTime } from '../util/time.ts';
@@ -42,7 +42,7 @@ const demosSchema = z.object({
 export const Route = createFileRoute('/_guest/stv')({
     component: STV,
     beforeLoad: () => {
-        checkFeatureEnabled('demos_enabled');
+        ensureFeatureEnabled('demos_enabled');
     },
     validateSearch: (search) => demosSchema.parse(search),
     loader: async ({ context }) => {

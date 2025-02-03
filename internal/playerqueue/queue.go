@@ -66,11 +66,13 @@ type Queue struct {
 	mu                 *sync.RWMutex
 }
 
-func NewServerQueue(chatLogHistorySize int, minQueueSize int, servers domain.ServersUsecase, serverState domain.StateUsecase) *Queue {
+func NewServerQueue(chatLogHistorySize int, minQueueSize int, servers domain.ServersUsecase,
+	serverState domain.StateUsecase, chatlogs []domain.Message,
+) *Queue {
 	return &Queue{
 		minQueueSize:       minQueueSize,
 		clients:            []*Client{},
-		chatLogs:           []domain.Message{},
+		chatLogs:           chatlogs,
 		serverQueues:       []*ServerQueueState{},
 		mu:                 &sync.RWMutex{},
 		chatLogHistorySize: chatLogHistorySize,
@@ -430,18 +432,18 @@ func (q *Queue) Disconnect(client *Client) {
 	q.updateClientStates(true)
 }
 
-func (q *Queue) Message(message domain.Message, user domain.UserProfile) error {
+func (q *Queue) Message(message domain.Message, user domain.UserProfile) (domain.Message, error) {
 	message.BodyMD = sanitizeUserMessage(message.BodyMD)
 	if len(message.BodyMD) == 0 {
-		return ErrBadInput
+		return message, ErrBadInput
 	}
 
 	id, errID := uuid.NewV7()
 	if errID != nil {
-		return errors.Join(errID, errMessageID)
+		return message, errors.Join(errID, errMessageID)
 	}
 
-	message.ID = id
+	message.MessageID = id
 	message.CreatedOn = time.Now()
 	message.Avatarhash = user.Avatarhash
 	message.Personaname = user.GetName()
@@ -461,7 +463,7 @@ func (q *Queue) Message(message domain.Message, user domain.UserProfile) error {
 	})
 	q.mu.RUnlock()
 
-	return nil
+	return message, nil
 }
 
 func (q *Queue) broadcast(payload Msg, targetClients ...*Client) {
