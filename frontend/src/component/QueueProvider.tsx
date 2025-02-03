@@ -1,23 +1,28 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { useModal } from '@ebay/nice-modal-react';
 import { uuidv7 } from 'uuidv7';
 import {
     ClientStatePayload,
     defaultAvatarHash,
+    GameStartPayload,
     JoinQueuePayload,
     LeaveQueuePayload,
     Operation,
     PermissionLevel,
     pingPayload,
     QueueMember,
-    queuePayload,
+    QueuePayload,
     ServerQueueMessage,
     ServerQueueState,
     websocketURL
 } from '../api';
 import { QueueCtx } from '../hooks/useQueueCtx';
+import * as killsound from '../icons/Killsound.mp3';
 import { readAccessToken } from '../util/auth/readAccessToken.ts';
+import { logErr } from '../util/errors.ts';
 import { transformCreatedOnDate } from '../util/time.ts';
+import { ModalQueueJoin } from './modal';
 
 export const QueueProvider = ({ children }: { children: ReactNode }) => {
     const [isReady, setIsReady] = useState(false);
@@ -26,6 +31,8 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
     const [showChat, setShowChat] = useState(false);
     const [servers, setServers] = useState<ServerQueueState[]>([]);
     const [lastPong, setLastPong] = useState(new Date());
+
+    const modal = useModal(ModalQueueJoin);
 
     const { readyState, sendJsonMessage, lastJsonMessage } = useWebSocket(websocketURL(), {
         queryParams: { token: readAccessToken() },
@@ -74,15 +81,20 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
     }, [readyState]);
 
     useEffect(() => {
-        const request = lastJsonMessage as queuePayload<never>;
+        const request = lastJsonMessage as QueuePayload<never>;
         if (!request) {
             return;
         }
+        handleRequest(request).catch(logErr);
+    }, [lastJsonMessage]);
 
+    const handleRequest = async (request: QueuePayload<never>) => {
         switch (request.op) {
-            case Operation.Pong:
+            case Operation.Pong: {
                 setLastPong(new Date());
                 break;
+            }
+
             case Operation.StateUpdate: {
                 const payload = request.payload as ClientStatePayload;
                 if (payload.update_users) {
@@ -93,6 +105,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                 }
                 break;
             }
+
             case Operation.MessageRecv: {
                 const payload = request.payload as ServerQueueMessage;
                 setMessages((prev) => [...prev, transformCreatedOnDate(payload)]);
@@ -100,18 +113,25 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
             }
 
             case Operation.StartGame: {
-                const payload = request.payload as ServerQueueState;
-                startGame(payload);
+                const payload = request.payload as GameStartPayload;
+                await startGame(payload);
             }
         }
-    }, [lastJsonMessage]);
+    };
 
-    const startGame = (state: ServerQueueState) => {
-        alert(`start game: ${state.server_id}`);
+    const startGame = async (gameStart: GameStartPayload) => {
+        const audio = new Audio(killsound.default);
+        try {
+            await audio.play();
+        } catch (e) {
+            logErr(e);
+        }
+
+        await modal.show({ gameStart });
     };
 
     const sendMessage = useCallback((message: string) => {
-        sendJsonMessage<queuePayload<ServerQueueMessage>>({
+        sendJsonMessage<QueuePayload<ServerQueueMessage>>({
             op: Operation.MessageSend,
             payload: {
                 body_md: message,
@@ -126,7 +146,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const joinQueue = (servers: string[]) => {
-        sendJsonMessage<queuePayload<JoinQueuePayload>>({
+        sendJsonMessage<QueuePayload<JoinQueuePayload>>({
             op: Operation.JoinQueue,
             payload: {
                 servers: servers.map(Number)
@@ -134,7 +154,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
         });
     };
     const leaveQueue = (servers: string[]) => {
-        sendJsonMessage<queuePayload<LeaveQueuePayload>>({
+        sendJsonMessage<QueuePayload<LeaveQueuePayload>>({
             op: Operation.LeaveQueue,
             payload: {
                 servers: servers.map(Number)

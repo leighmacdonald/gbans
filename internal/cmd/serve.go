@@ -378,7 +378,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			wiki.NewHandler(router, wikiUsecase, authUsecase)
 			wordfilter.NewHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
 
-			playerqueue.NewServerQueueHandler(router, authUsecase, configUsecase, serversUC)
+			playerqueue.NewServerQueueHandler(router, authUsecase, configUsecase, serversUC, stateUsecase)
 
 			if conf.Debug.AddRCONLogAddress != "" {
 				go stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
