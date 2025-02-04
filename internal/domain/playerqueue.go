@@ -16,6 +16,7 @@ type Message struct {
 	Avatarhash      string    `json:"avatarhash"`
 	PermissionLevel Privilege `json:"permission_level"`
 	BodyMD          string    `json:"body_md"`
+	Deleted         bool      `json:"deleted"`
 }
 
 type PlayerqueueRepository interface {
