@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS playerqueue_messages
     personaname text        not null,
     avatarhash  text        not null,
     created_on  timestamptz not null,
+    deleted     bool        not null default false,
     body_md     text        not null check ( length(body_md) > 0 )
 );
 

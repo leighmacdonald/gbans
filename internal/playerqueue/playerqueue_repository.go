@@ -20,8 +20,9 @@ type playerqueueRepository struct {
 }
 
 func (r playerqueueRepository) Delete(ctx context.Context, messageID ...uuid.UUID) error {
-	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.Builder().
-		Delete("playerqueue_messages").
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+		Update("playerqueue_messages").
+		Set("deleted", true).
 		Where(sq.Eq{"message_id": messageID})))
 }
 
@@ -67,6 +68,10 @@ func (r playerqueueRepository) Query(ctx context.Context, query domain.Playerque
 			"message_id", "steam_id", "created_on", "personaname", "avatarhash", "body_md",
 		},
 	}, "steam_id")
+
+	if !query.Deleted {
+		builder.Where(sq.Eq{"m.deleted": false})
+	}
 
 	var msgs []domain.Message
 

@@ -1,7 +1,6 @@
 import { FormEvent, useCallback, useState } from 'react';
 import ScrollableFeed from 'react-scrollable-feed';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
-import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import PersonIcon from '@mui/icons-material/Person';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
 import SendIcon from '@mui/icons-material/Send';
@@ -14,16 +13,16 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
-import { PermissionLevel, ServerQueueMessage } from '../api';
+import { PermissionLevel } from '../api';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useQueueCtx } from '../hooks/useQueueCtx.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 import { ButtonLink } from './ButtonLink.tsx';
-import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
+import { QueueChatMessageContainer } from './QueueChatMessageContainer.tsx';
 import { SubmitButton } from './modal/Buttons.tsx';
 
 export const QueueChat = () => {
-    const { messages, isReady, sendMessage, showChat, users } = useQueueCtx();
+    const { isReady, sendMessage, showChat, users } = useQueueCtx();
     const { hasPermission, profile } = useAuth();
     const [showPeople, setShowPeople] = useState<boolean>(false);
     const [msg, setMsg] = useState<string>('');
@@ -53,29 +52,8 @@ export const QueueChat = () => {
             <Grid container spacing={1} sx={{ marginBottom: 3 }}>
                 <Grid xs={showPeople ? 10 : 12}>
                     <Paper>
-                        <Stack
-                            maxHeight={200}
-                            minHeight={200}
-                            overflow={'auto'}
-                            sx={{ overflowX: 'hidden' }}
-                            direction={'column'}
-                            padding={1}
-                        >
-                            {!isReady ? (
-                                <LoadingPlaceholder></LoadingPlaceholder>
-                            ) : (
-                                <ScrollableFeed>
-                                    {messages.map((message, i) => {
-                                        return (
-                                            <ChatRow
-                                                message={message}
-                                                key={`${message.message_id}-${i}`}
-                                                showControls={isMod}
-                                            />
-                                        );
-                                    })}
-                                </ScrollableFeed>
-                            )}
+                        <Stack maxHeight={200} minHeight={200} overflow={'auto'} sx={{ overflowX: 'hidden' }}>
+                            <QueueChatMessageContainer />
                         </Stack>
 
                         <form onSubmit={onSubmit}>
@@ -177,40 +155,5 @@ const ChatName = ({
                 {personaname != '' ? personaname : steam_id}
             </Typography>
         </ButtonLink>
-    );
-};
-
-const ChatRow = ({ message, showControls }: { message: ServerQueueMessage; showControls: boolean }) => {
-    return (
-        <Grid container key={`${message.message_id}-id`} spacing={1} paddingLeft={1} paddingRight={1}>
-            <Grid xs={2} alignItems="flex-start" justifyContent="flex-start">
-                <ChatName
-                    personaname={message.personaname}
-                    steam_id={message.steam_id}
-                    avatarhash={message.avatarhash}
-                />
-            </Grid>
-            <Grid xs={10}>
-                <Stack direction={'row'} spacing={1}>
-                    {showControls && (
-                        <IconButton
-                            color={'primary'}
-                            sx={{
-                                size: '10',
-                                padding: 0,
-                                borderLeft: '1px solid #666',
-                                borderRadius: 0,
-                                paddingLeft: 1
-                            }}
-                        >
-                            <ManageAccountsIcon color={'error'} />
-                        </IconButton>
-                    )}
-                    <Typography variant="body1" color="text" sx={{ borderLeft: '1px solid #666', paddingLeft: 1 }}>
-                        {message.body_md}
-                    </Typography>
-                </Stack>
-            </Grid>
-        </Grid>
     );
 };
