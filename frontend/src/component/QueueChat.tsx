@@ -1,24 +1,19 @@
 import { FormEvent, useCallback, useState } from 'react';
-import ScrollableFeed from 'react-scrollable-feed';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import PersonIcon from '@mui/icons-material/Person';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
 import SendIcon from '@mui/icons-material/Send';
-import Avatar from '@mui/material/Avatar';
 import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { useTheme } from '@mui/material/styles';
 import { PermissionLevel } from '../api';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useQueueCtx } from '../hooks/useQueueCtx.ts';
-import { avatarHashToURL } from '../util/text.tsx';
-import { ButtonLink } from './ButtonLink.tsx';
 import { QueueChatMessageContainer } from './QueueChatMessageContainer.tsx';
+import { QueueChatName } from './QueueChatName.tsx';
 import { SubmitButton } from './modal/Buttons.tsx';
 
 export const QueueChat = () => {
@@ -53,7 +48,7 @@ export const QueueChat = () => {
                 <Grid xs={showPeople ? 10 : 12}>
                     <Paper>
                         <Stack maxHeight={200} minHeight={200} overflow={'auto'} sx={{ overflowX: 'hidden' }}>
-                            <QueueChatMessageContainer />
+                            <QueueChatMessageContainer showControls={isMod} />
                         </Stack>
 
                         <form onSubmit={onSubmit}>
@@ -100,7 +95,7 @@ export const QueueChat = () => {
                             >
                                 {users.map((u) => {
                                     return (
-                                        <ChatName
+                                        <QueueChatName
                                             key={`memberlist-${u.steam_id}`}
                                             personaname={u.name}
                                             steam_id={u.steam_id}
@@ -114,46 +109,5 @@ export const QueueChat = () => {
                 )}
             </Grid>
         </Collapse>
-    );
-};
-
-const ChatName = ({
-    steam_id,
-    personaname,
-    avatarhash
-}: {
-    steam_id: string;
-    personaname: string;
-    avatarhash: string;
-}) => {
-    const theme = useTheme();
-    return (
-        <ButtonLink
-            fullWidth={true}
-            size={'small'}
-            to={'/profile/$steamId'}
-            params={{ steamId: steam_id }}
-            sx={{
-                justifyContent: 'flex-start',
-                padding: 0,
-                margin: 0,
-                '&:hover': {
-                    cursor: 'pointer',
-                    backgroundColor: theme.palette.background.default
-                }
-            }}
-            startIcon={
-                <Avatar
-                    alt={personaname}
-                    src={avatarHashToURL(avatarhash, 'small')}
-                    variant={'square'}
-                    sx={{ height: '16px', width: '16px' }}
-                />
-            }
-        >
-            <Typography fontWeight={'bold'} color={theme.palette.text.primary} variant={'body1'}>
-                {personaname != '' ? personaname : steam_id}
-            </Typography>
-        </ButtonLink>
     );
 };

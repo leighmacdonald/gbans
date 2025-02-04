@@ -74,7 +74,7 @@ export type ClientStatePayload = {
     users: Member[];
 };
 
-export type Server = {
+export type QueueServer = {
     name: string;
     short_name: string;
     cc: string;
@@ -84,5 +84,5 @@ export type Server = {
 
 export type GameStartPayload = {
     users: Member[];
-    server: Server;
+    server: QueueServer;
 };
