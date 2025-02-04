@@ -15,6 +15,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
+	"github.com/leighmacdonald/steamid/v4/steamid"
+	"golang.org/x/exp/slices"
 )
 
 var (
@@ -384,6 +386,39 @@ func (q *Queue) initiateGame(ctx context.Context, serverID int) error {
 	q.updateClientStates(false)
 
 	return nil
+}
+
+func (q *Queue) findMessages(steamID steamid.SteamID, limit int) []domain.Message {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
+
+	var messages []domain.Message
+	for i := len(q.chatLogs); i > 0; i-- {
+		if q.chatLogs[i].SteamID == steamID.String() {
+			messages = append(messages, q.chatLogs[i])
+			if len(messages) == limit {
+				return messages
+			}
+		}
+	}
+
+	return messages
+}
+
+func (q *Queue) purgeMessages(ids ...uuid.UUID) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	// Remove the purged messages from the local cache.
+	var valid []domain.Message
+	for _, existing := range q.chatLogs {
+		if !slices.Contains(ids, existing.MessageID) {
+			valid = append(valid, existing)
+		}
+	}
+	q.chatLogs = valid
+
+	q.broadcast(Msg{Op: Purge, Payload: purgePayload{MessageIDs: ids}})
 }
 
 func (q *Queue) removeFromQueues(client *Client) {

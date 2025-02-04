@@ -3,6 +3,7 @@ package playerqueue
 import (
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -53,4 +54,8 @@ type server struct {
 type gameStartPayload struct {
 	Users  []member `json:"users"`
 	Server server   `json:"server"`
+}
+
+type purgePayload struct {
+	MessageIDs []uuid.UUID `json:"message_ids"`
 }

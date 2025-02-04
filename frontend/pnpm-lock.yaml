@@ -218,6 +218,9 @@ importers:
       react-modal-image:
         specifier: ^2.6.0
         version: 2.6.0
+      react-scrollable-feed:
+        specifier: ^2.0.2
+        version: 2.0.2(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-timer-hook:
         specifier: ^3.0.8
         version: 3.0.8(react@18.3.1)
@@ -4046,6 +4049,13 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  react-scrollable-feed@2.0.2:
+    resolution: {integrity: sha512-G00Wab4hxKJ6IP/FnYHOHz2pwNPG/LyrbqusUXHtn3yNW/owAGx+hMfQMnH6b4yXS+pH8kNKCDG0TVNSGBGFbQ==}
+    peerDependencies:
+      prop-types: ^15.7.2
+      react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
 
   react-style-singleton@2.2.1:
     resolution: {integrity: sha512-ZWj0fHEMyWkHzKYUr2Bs/4zU6XLmq9HsgBURm7g5pAVfyn49DgUiNgY2d4lXRlYSiCif9YBGpQleewkcqddc7g==}
@@ -9296,6 +9306,12 @@ snapshots:
       use-sidecar: 1.1.2(@types/react@18.3.18)(react@18.3.1)
     optionalDependencies:
       '@types/react': 18.3.18
+
+  react-scrollable-feed@2.0.2(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      prop-types: 15.8.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   react-style-singleton@2.2.1(@types/react@18.3.18)(react@18.3.1):
     dependencies:

@@ -3,6 +3,7 @@ package playerqueue
 import (
 	"context"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -16,6 +17,12 @@ func NewPlayerqueueRepository(db database.Database, persons domain.PersonUsecase
 type playerqueueRepository struct {
 	db      database.Database
 	persons domain.PersonUsecase
+}
+
+func (r playerqueueRepository) Delete(ctx context.Context, messageID ...uuid.UUID) error {
+	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.Builder().
+		Delete("playerqueue_messages").
+		Where(sq.Eq{"message_id": messageID})))
 }
 
 func (r playerqueueRepository) Save(ctx context.Context, message domain.Message) (domain.Message, error) {

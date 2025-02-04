@@ -34,6 +34,8 @@ export interface UserNotification {
     created_on: Date;
 }
 
+export type ChatStatus = 'readwrite' | 'readonly' | 'noaccess';
+
 export interface UserProfile extends TimeStamped {
     steam_id: string;
     permission_level: PermissionLevel;
@@ -43,6 +45,7 @@ export interface UserProfile extends TimeStamped {
     avatarhash: string;
     ban_id: number;
     muted: boolean;
+    playerqueue_chat_status: ChatStatus;
 }
 
 export interface Person extends UserProfile {

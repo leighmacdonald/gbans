@@ -16,7 +16,7 @@ function getImageUrl(name: string | number) {
 }
 
 const randBGNum = () => {
-    const numberOfBgImages = 115;
+    const numberOfBgImages = 265;
 
     return Math.floor(Math.random() * numberOfBgImages);
 };

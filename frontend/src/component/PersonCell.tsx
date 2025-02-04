@@ -24,7 +24,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, showCo
     const { sendFlash } = useUserFlashCtx();
 
     return (
-        <Stack minWidth={200} direction={'row'} alignItems={'center'}>
+        <Stack minWidth={200} direction={'row'} alignItems={'center'} overflow={'hidden'}>
             {showCopy && (
                 <Tooltip title={'Copy Steamid'}>
                     <IconButton
