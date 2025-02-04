@@ -43,7 +43,8 @@ export function AuthProvider({
                 discord_id: '',
                 created_on: new Date(),
                 updated_on: new Date(),
-                patreon_id: ''
+                patreon_id: '',
+                playerqueue_chat_status: 'noaccess'
             });
         }
     }, [setProfile]);
@@ -73,7 +74,7 @@ export function AuthProvider({
                 await logout();
             }
         };
-        loadProfile();
+        loadProfile().catch(logErr);
     }, [login, logout]);
 
     return (

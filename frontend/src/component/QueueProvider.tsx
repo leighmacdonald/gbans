@@ -11,6 +11,7 @@ import {
     Operation,
     PermissionLevel,
     pingPayload,
+    PurgePayload,
     QueueMember,
     QueuePayload,
     ServerQueueMessage,
@@ -56,7 +57,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                         permission_level: PermissionLevel.Reserved,
                         personaname: 'SYSTEM',
                         steam_id: 'SYSTEM',
-                        id: uuidv7()
+                        message_id: uuidv7()
                     } as ServerQueueMessage
                 ]);
                 break;
@@ -71,7 +72,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                         permission_level: PermissionLevel.Reserved,
                         personaname: 'SYSTEM',
                         steam_id: 'SYSTEM',
-                        id: uuidv7()
+                        message_id: uuidv7()
                     } as ServerQueueMessage
                 ]);
                 break;
@@ -85,10 +86,10 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
         if (!request) {
             return;
         }
-        handleRequest(request).catch(logErr);
+        handleIncomingOperation(request).catch(logErr);
     }, [lastJsonMessage]);
 
-    const handleRequest = async (request: QueuePayload<never>) => {
+    const handleIncomingOperation = async (request: QueuePayload<never>) => {
         switch (request.op) {
             case Operation.Pong: {
                 setLastPong(new Date());
@@ -96,27 +97,38 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
             }
 
             case Operation.StateUpdate: {
-                const payload = request.payload as ClientStatePayload;
-                if (payload.update_users) {
-                    setUsers(payload.users);
-                }
-                if (payload.update_servers) {
-                    setServers(payload.servers);
-                }
+                updateState(request.payload as ClientStatePayload);
                 break;
             }
 
             case Operation.MessageRecv: {
-                const payload = request.payload as ServerQueueMessage;
-                setMessages((prev) => [...prev, transformCreatedOnDate(payload)]);
+                setMessages((prev) => [...prev, transformCreatedOnDate(request.payload as ServerQueueMessage)]);
                 break;
             }
 
             case Operation.StartGame: {
-                const payload = request.payload as GameStartPayload;
-                await startGame(payload);
+                await startGame(request.payload as GameStartPayload);
+                break;
+            }
+
+            case Operation.Purge: {
+                purgeMessages((request.payload as PurgePayload).message_ids);
+                break;
             }
         }
+    };
+
+    const updateState = (state: ClientStatePayload) => {
+        if (state.update_users) {
+            setUsers(state.users);
+        }
+        if (state.update_servers) {
+            setServers(state.servers);
+        }
+    };
+
+    const purgeMessages = (message_ids: string[]) => {
+        setMessages((prevState) => prevState.filter((m) => !message_ids.includes(m.message_id)));
     };
 
     const startGame = async (gameStart: GameStartPayload) => {
@@ -140,7 +152,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                 avatarhash: defaultAvatarHash,
                 steam_id: 'queue',
                 created_on: new Date(),
-                id: uuidv7()
+                message_id: uuidv7()
             }
         });
     }, []);

@@ -8,7 +8,8 @@ export enum Operation {
     MessageSend,
     MessageRecv,
     StateUpdate,
-    StartGame
+    StartGame,
+    Purge
 }
 
 export type QueueMember = {
@@ -20,6 +21,10 @@ export type QueueMember = {
 export type QueuePayload<T> = {
     op: Operation;
     payload: T;
+};
+
+export type PurgePayload = {
+    message_ids: string[];
 };
 
 export type pingPayload = QueuePayload<{ created_on: Date }>;
@@ -39,7 +44,7 @@ export type ServerQueueMessage = {
     avatarhash: string;
     permission_level: PermissionLevel;
     body_md: string;
-    id: string;
+    message_id: string;
 };
 
 export type JoinQueuePayload = {

@@ -8,7 +8,7 @@ import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { createColumnHelper, getCoreRowModel, TableOptions, useReactTable } from '@tanstack/react-table';
-import { BaseServer, cleanMapName } from '../api';
+import { BaseServer, cleanMapName, PermissionLevel } from '../api';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
 import { useQueueCtx } from '../hooks/useQueueCtx.ts';
@@ -23,7 +23,7 @@ type ServerRow = BaseServer & { copy: string; connect: string };
 
 export const ServerList = () => {
     const { sendFlash } = useUserFlashCtx();
-    const { profile } = useAuth();
+    const { profile, hasPermission } = useAuth();
     const { selectedServers } = useMapStateCtx();
     const { joinQueue, leaveQueue, servers } = useQueueCtx();
     const columnHelper = createColumnHelper<ServerRow>();
@@ -128,6 +128,7 @@ export const ServerList = () => {
                     return (
                         <Tooltip title="Join/Leave server queue. Number indicates actively queued players.">
                             <IconButton
+                                disabled={!hasPermission(PermissionLevel.Moderator)}
                                 color={queued ? 'success' : undefined}
                                 onClick={() => {
                                     if (queued) {

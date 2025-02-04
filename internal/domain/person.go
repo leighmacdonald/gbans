@@ -75,16 +75,17 @@ type SimplePerson struct {
 
 // UserProfile is the model used in the webui representing the logged-in user.
 type UserProfile struct {
-	SteamID         steamid.SteamID `json:"steam_id"`
-	CreatedOn       time.Time       `json:"created_on"`
-	UpdatedOn       time.Time       `json:"updated_on"`
-	PermissionLevel Privilege       `json:"permission_level"`
-	DiscordID       string          `json:"discord_id"`
-	PatreonID       string          `json:"patreon_id"`
-	Name            string          `json:"name"`
-	Avatarhash      string          `json:"avatarhash"`
-	BanID           int64           `json:"ban_id"`
-	Muted           bool            `json:"muted"`
+	SteamID               steamid.SteamID `json:"steam_id"`
+	CreatedOn             time.Time       `json:"created_on"`
+	UpdatedOn             time.Time       `json:"updated_on"`
+	PermissionLevel       Privilege       `json:"permission_level"`
+	DiscordID             string          `json:"discord_id"`
+	PatreonID             string          `json:"patreon_id"`
+	Name                  string          `json:"name"`
+	Avatarhash            string          `json:"avatarhash"`
+	BanID                 int64           `json:"ban_id"`
+	Muted                 bool            `json:"muted"`
+	PlayerqueueChatStatus ChatStatus      `json:"playerqueue_chat_status"`
 }
 
 func (p UserProfile) HasPermission(privilege Privilege) bool {
@@ -128,23 +129,32 @@ func NewUserProfile(sid64 steamid.SteamID) UserProfile {
 	}
 }
 
+type ChatStatus string
+
+const (
+	Readwrite ChatStatus = "readwrite"
+	Readonly  ChatStatus = "readonly"
+	Noaccess  ChatStatus = "noaccess"
+)
+
 type Person struct {
 	// TODO merge use of steamid & steam_id
-	SteamID          steamid.SteamID       `db:"steam_id" json:"steam_id"`
-	CreatedOn        time.Time             `json:"created_on"`
-	UpdatedOn        time.Time             `json:"updated_on"`
-	PermissionLevel  Privilege             `json:"permission_level"`
-	Muted            bool                  `json:"muted"`
-	IsNew            bool                  `json:"-"`
-	DiscordID        string                `json:"discord_id"`
-	PatreonID        string                `json:"patreon_id"`
-	IPAddr           netip.Addr            `json:"-"` // TODO Allow json for admins endpoints
-	CommunityBanned  bool                  `json:"community_banned"`
-	VACBans          int                   `json:"vac_bans"`
-	GameBans         int                   `json:"game_bans"`
-	EconomyBan       steamweb.EconBanState `json:"economy_ban"`
-	DaysSinceLastBan int                   `json:"days_since_last_ban"`
-	UpdatedOnSteam   time.Time             `json:"updated_on_steam"`
+	SteamID               steamid.SteamID       `db:"steam_id" json:"steam_id"`
+	CreatedOn             time.Time             `json:"created_on"`
+	UpdatedOn             time.Time             `json:"updated_on"`
+	PermissionLevel       Privilege             `json:"permission_level"`
+	Muted                 bool                  `json:"muted"`
+	IsNew                 bool                  `json:"-"`
+	DiscordID             string                `json:"discord_id"`
+	PatreonID             string                `json:"patreon_id"`
+	IPAddr                netip.Addr            `json:"-"` // TODO Allow json for admins endpoints
+	CommunityBanned       bool                  `json:"community_banned"`
+	VACBans               int                   `json:"vac_bans"`
+	GameBans              int                   `json:"game_bans"`
+	EconomyBan            steamweb.EconBanState `json:"economy_ban"`
+	DaysSinceLastBan      int                   `json:"days_since_last_ban"`
+	UpdatedOnSteam        time.Time             `json:"updated_on_steam"`
+	PlayerqueueChatStatus ChatStatus            `json:"playerqueue_chat_status"`
 	*steamweb.PlayerSummary
 }
 
@@ -178,16 +188,17 @@ func (p Person) Path() string {
 
 func (p Person) ToUserProfile() UserProfile {
 	return UserProfile{
-		SteamID:         p.SteamID,
-		CreatedOn:       p.CreatedOn,
-		UpdatedOn:       p.UpdatedOn,
-		PermissionLevel: p.PermissionLevel,
-		DiscordID:       p.DiscordID,
-		PatreonID:       p.PatreonID,
-		Name:            p.PersonaName,
-		Avatarhash:      p.AvatarHash,
-		BanID:           0,
-		Muted:           p.Muted,
+		SteamID:               p.SteamID,
+		CreatedOn:             p.CreatedOn,
+		UpdatedOn:             p.UpdatedOn,
+		PermissionLevel:       p.PermissionLevel,
+		DiscordID:             p.DiscordID,
+		PatreonID:             p.PatreonID,
+		Name:                  p.PersonaName,
+		Avatarhash:            p.AvatarHash,
+		BanID:                 0,
+		Muted:                 p.Muted,
+		PlayerqueueChatStatus: p.PlayerqueueChatStatus,
 	}
 }
 

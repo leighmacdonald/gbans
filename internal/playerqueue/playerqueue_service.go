@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -27,6 +28,7 @@ const (
 	MessageRecv
 	StateUpdate
 	StartGame
+	Purge
 )
 
 type ServerQueuePayloadInbound struct {
@@ -58,10 +60,44 @@ func NewServerQueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config d
 		playerQueue: playerQueue,
 	}
 
-	modGroup := engine.Group("/")
+	authedGroup := engine.Group("/api/playerqueue")
 	{
-		mod := modGroup.Use(auth.MiddlewareWS(domain.PUser))
+		mod := authedGroup.Use(auth.Middleware(domain.PModerator))
+		mod.PUT("/status/:steam_id", handler.status())
+		mod.DELETE("/message/:message_id", handler.messageDelete())
+		mod.DELETE("/purge/:steam_id/:count", handler.purge())
+	}
+
+	authedGroupWS := engine.Group("/")
+	{
+		mod := authedGroupWS.Use(auth.MiddlewareWS(domain.PUser))
 		mod.GET("/ws", handler.start(origins))
+	}
+}
+
+func (h *serverQueueHandler) status() gin.HandlerFunc {
+	type request struct {
+		Reason     string            `json:"reason"`
+		ChatStatus domain.ChatStatus `json:"chat_status"`
+	}
+
+	return func(ctx *gin.Context) {
+		user := httphelper.CurrentUserProfile(ctx)
+
+		var req request
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		if err := h.playerQueue.SetChatStatus(ctx, user.SteamID, req.ChatStatus); err != nil {
+			httphelper.HandleErrInternal(ctx)
+
+			return
+		}
+
+		slog.Info("Set chat status", slog.String("steam_id", user.SteamID.String()), slog.String("status", string(req.ChatStatus)))
+
+		ctx.JSON(http.StatusOK, gin.H{})
 	}
 }
 
@@ -145,6 +181,64 @@ func (h *serverQueueHandler) handleMessage(ctx context.Context, client *Client, 
 	}
 
 	return err
+}
+
+func (h *serverQueueHandler) messageDelete() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		messageID, errID := httphelper.GetUUIDParam(ctx, "message_id")
+		if errID != nil {
+			httphelper.HandleErrBadRequest(ctx)
+
+			return
+		}
+
+		if errDelete := h.playerQueue.Delete(ctx, messageID); errDelete != nil {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to delete message", log.ErrAttr(errDelete))
+
+			return
+		}
+
+		h.queue.purgeMessages(messageID)
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+func (h *serverQueueHandler) purge() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		steamID, err := httphelper.GetSID64Param(ctx, "steam_id")
+		if err != nil {
+			httphelper.HandleErrBadRequest(ctx)
+
+			return
+		}
+
+		count, errCount := httphelper.GetIntParam(ctx, "count")
+		if errCount != nil || count <= 0 {
+			httphelper.HandleErrBadRequest(ctx)
+
+			return
+		}
+
+		var messageIDs []uuid.UUID
+		for _, msg := range h.queue.findMessages(steamID, count) {
+			messageIDs = append(messageIDs, msg.MessageID)
+		}
+
+		if len(messageIDs) == 0 {
+			ctx.JSON(http.StatusOK, gin.H{})
+		}
+
+		h.queue.purgeMessages(messageIDs...)
+
+		if errDelete := h.playerQueue.Delete(ctx, messageIDs...); errDelete != nil {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to delete message", log.ErrAttr(errDelete))
+
+			return
+		}
+	}
 }
 
 var errUpgrader = errors.New("failed to upgrade websocket connection")

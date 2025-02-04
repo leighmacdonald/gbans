@@ -1,5 +1,7 @@
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
+import ScrollableFeed from 'react-scrollable-feed';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import PersonIcon from '@mui/icons-material/Person';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
 import SendIcon from '@mui/icons-material/Send';
@@ -22,23 +24,10 @@ import { SubmitButton } from './modal/Buttons.tsx';
 
 export const QueueChat = () => {
     const { messages, isReady, sendMessage, showChat, users } = useQueueCtx();
-    const { hasPermission } = useAuth();
+    const { hasPermission, profile } = useAuth();
     const [showPeople, setShowPeople] = useState<boolean>(false);
     const [msg, setMsg] = useState<string>('');
     const [sending, setSending] = useState(false);
-    const messagesEndRef = useRef<null | HTMLDivElement>(null);
-
-    const scrollToBottom = () => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
-
-    useEffect(() => {
-        if (showChat) {
-            scrollToBottom();
-        }
-    }, [messages, showChat]);
 
     const onSubmit = useCallback(
         async (event: FormEvent<HTMLFormElement | HTMLDivElement>) => {
@@ -53,16 +42,17 @@ export const QueueChat = () => {
         },
         [msg]
     );
+    const isMod = hasPermission(PermissionLevel.Moderator);
 
-    if (!hasPermission(PermissionLevel.Moderator)) {
+    if (!isMod || profile.playerqueue_chat_status == 'noaccess') {
         return <></>;
     }
 
     return (
         <Collapse in={showChat}>
-            <Grid container spacing={1}>
+            <Grid container spacing={1} sx={{ marginBottom: 3 }}>
                 <Grid xs={showPeople ? 10 : 12}>
-                    <Paper sx={{ marginBottom: 3 }}>
+                    <Paper>
                         <Stack
                             maxHeight={200}
                             minHeight={200}
@@ -74,17 +64,24 @@ export const QueueChat = () => {
                             {!isReady ? (
                                 <LoadingPlaceholder></LoadingPlaceholder>
                             ) : (
-                                messages.map((message, i) => {
-                                    return <ChatRow message={message} key={`${message.id}-${i}`} />;
-                                })
+                                <ScrollableFeed>
+                                    {messages.map((message, i) => {
+                                        return (
+                                            <ChatRow
+                                                message={message}
+                                                key={`${message.message_id}-${i}`}
+                                                showControls={isMod}
+                                            />
+                                        );
+                                    })}
+                                </ScrollableFeed>
                             )}
-                            {isReady && showChat && <div ref={messagesEndRef} key={'hi'} />}
                         </Stack>
 
                         <form onSubmit={onSubmit}>
-                            <Stack direction={'row'} spacing={1}>
+                            <Stack direction={'row'} spacing={1} padding={2}>
                                 <TextField
-                                    disabled={sending || !isReady}
+                                    disabled={sending || !isReady || profile.playerqueue_chat_status != 'readwrite'}
                                     onSubmit={onSubmit}
                                     fullWidth={true}
                                     size={'small'}
@@ -94,8 +91,9 @@ export const QueueChat = () => {
                                         setMsg(event.target.value);
                                     }}
                                 />
+
                                 <IconButton
-                                    color={'warning'}
+                                    color={'primary'}
                                     onClick={() => {
                                         setShowPeople((prevState) => !prevState);
                                     }}
@@ -181,9 +179,10 @@ const ChatName = ({
         </ButtonLink>
     );
 };
-const ChatRow = ({ message }: { message: ServerQueueMessage }) => {
+
+const ChatRow = ({ message, showControls }: { message: ServerQueueMessage; showControls: boolean }) => {
     return (
-        <Grid container key={`${message.id}-id`} spacing={1}>
+        <Grid container key={`${message.message_id}-id`} spacing={1} paddingLeft={1} paddingRight={1}>
             <Grid xs={2} alignItems="flex-start" justifyContent="flex-start">
                 <ChatName
                     personaname={message.personaname}
@@ -192,9 +191,25 @@ const ChatRow = ({ message }: { message: ServerQueueMessage }) => {
                 />
             </Grid>
             <Grid xs={10}>
-                <Typography variant="body1" color="text">
-                    {message.body_md}
-                </Typography>
+                <Stack direction={'row'} spacing={1}>
+                    {showControls && (
+                        <IconButton
+                            color={'primary'}
+                            sx={{
+                                size: '10',
+                                padding: 0,
+                                borderLeft: '1px solid #666',
+                                borderRadius: 0,
+                                paddingLeft: 1
+                            }}
+                        >
+                            <ManageAccountsIcon color={'error'} />
+                        </IconButton>
+                    )}
+                    <Typography variant="body1" color="text" sx={{ borderLeft: '1px solid #666', paddingLeft: 1 }}>
+                        {message.body_md}
+                    </Typography>
+                </Stack>
             </Grid>
         </Grid>
     );

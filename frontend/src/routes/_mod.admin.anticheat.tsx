@@ -165,6 +165,7 @@ function AdminAnticheat() {
         columnHelper.accessor('name', {
             header: 'Name',
             enableHiding: false,
+            size: 300,
             cell: (info) => (
                 <PersonCell
                     showCopy={true}

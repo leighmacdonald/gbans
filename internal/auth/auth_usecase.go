@@ -137,16 +137,17 @@ func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
 				}
 
 				profile := domain.UserProfile{
-					SteamID:         loggedInPerson.SteamID,
-					CreatedOn:       loggedInPerson.CreatedOn,
-					UpdatedOn:       loggedInPerson.UpdatedOn,
-					PermissionLevel: loggedInPerson.PermissionLevel,
-					DiscordID:       loggedInPerson.DiscordID,
-					PatreonID:       loggedInPerson.PatreonID,
-					Name:            loggedInPerson.PersonaName,
-					Avatarhash:      loggedInPerson.AvatarHash,
-					Muted:           loggedInPerson.Muted,
-					BanID:           bannedPerson.BanID,
+					SteamID:               loggedInPerson.SteamID,
+					CreatedOn:             loggedInPerson.CreatedOn,
+					UpdatedOn:             loggedInPerson.UpdatedOn,
+					PermissionLevel:       loggedInPerson.PermissionLevel,
+					DiscordID:             loggedInPerson.DiscordID,
+					PatreonID:             loggedInPerson.PatreonID,
+					Name:                  loggedInPerson.PersonaName,
+					Avatarhash:            loggedInPerson.AvatarHash,
+					Muted:                 loggedInPerson.Muted,
+					BanID:                 bannedPerson.BanID,
+					PlayerqueueChatStatus: loggedInPerson.PlayerqueueChatStatus,
 				}
 
 				ctx.Set(ctxKeyUserProfile, profile)

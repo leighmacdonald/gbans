@@ -3,6 +3,7 @@ package playerqueue
 import (
 	"context"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -12,7 +13,35 @@ func NewPlayerqueueUsecase(repo domain.PlayerqueueRepository) domain.Playerqueue
 }
 
 type playerqueueUsecase struct {
-	repo domain.PlayerqueueRepository
+	repo    domain.PlayerqueueRepository
+	persons domain.PersonUsecase
+}
+
+func (p playerqueueUsecase) Delete(ctx context.Context, messageID ...uuid.UUID) error {
+	if len(messageID) == 0 {
+		return nil
+	}
+
+	return p.repo.Delete(ctx, messageID...)
+}
+
+func (p playerqueueUsecase) SetChatStatus(ctx context.Context, steamID steamid.SteamID, status domain.ChatStatus) error {
+	if !steamID.Valid() {
+		return domain.ErrInvalidSID
+	}
+
+	person, errPerson := p.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
+	if errPerson != nil {
+		return errPerson
+	}
+
+	person.PlayerqueueChatStatus = status
+
+	if errSave := p.persons.SavePerson(ctx, nil, &person); errSave != nil {
+		return errSave
+	}
+
+	return nil
 }
 
 func (p playerqueueUsecase) Add(ctx context.Context, message domain.Message) (domain.Message, error) {

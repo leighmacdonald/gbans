@@ -1,17 +1,23 @@
 import { useMemo, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
+import HelpIcon from '@mui/icons-material/Help';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import StorageIcon from '@mui/icons-material/Storage';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
+import IconButton from '@mui/material/IconButton';
 import LinearProgress, { LinearProgressProps } from '@mui/material/LinearProgress';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { createFileRoute } from '@tanstack/react-router';
 import { LatLngLiteral } from 'leaflet';
 import { apiGetServerStates, BaseServer } from '../api';
-import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
+import { QueueHelp } from '../component/QueueHelp.tsx';
 import { ServerFilters } from '../component/ServerFilters.tsx';
 import { ServerList } from '../component/ServerList.tsx';
 import { ServerMap } from '../component/ServerMap.tsx';
@@ -34,6 +40,7 @@ function LinearProgressWithLabel(props: LinearProgressProps & { value: number })
             <Box width="100%" mr={1}>
                 <LinearProgress variant="determinate" {...props} />
             </Box>
+            a
             <Box minWidth={35}>
                 <Typography variant="body2" color="textSecondary">{`${Math.round(props.value)}%`}</Typography>
             </Box>
@@ -124,6 +131,7 @@ function Servers() {
     const [filterByRegion, setFilterByRegion] = useState<boolean>(false);
     const [showOpenOnly, setShowOpenOnly] = useState<boolean>(false);
     const [selectedRegion, setSelectedRegion] = useState<string>('any');
+    const [showHelp, setShowHelp] = useState<boolean>(false);
 
     const interval = 5;
 
@@ -184,9 +192,25 @@ function Servers() {
                         <ServerMap />
                     </Paper>
                     <ServerFilters />
-                    <ContainerWithHeader title={'Servers'}>
+                    {showHelp && <QueueHelp />}
+                    <ContainerWithHeaderAndButtons
+                        title={`Servers (${selectedServers.length}/${servers.length})`}
+                        buttons={[
+                            <Tooltip title={'Toggle server queue help'}>
+                                <IconButton
+                                    color={'default'}
+                                    onClick={() => {
+                                        setShowHelp((prevState) => !prevState);
+                                    }}
+                                >
+                                    {showHelp ? <HelpIcon /> : <HelpOutlineIcon />}
+                                </IconButton>
+                            </Tooltip>
+                        ]}
+                        iconLeft={<StorageIcon />}
+                    >
                         <ServerList />
-                    </ContainerWithHeader>
+                    </ContainerWithHeaderAndButtons>
                     <ServerStats />
                 </Stack>
             </MapStateCtx.Provider>

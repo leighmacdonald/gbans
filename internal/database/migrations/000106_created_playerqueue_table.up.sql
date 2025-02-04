@@ -15,4 +15,23 @@ CREATE INDEX playerqueue_messages_created_on_idx ON playerqueue_messages (create
 ALTER TABLE config
     ADD COLUMN IF NOT EXISTS general_playerqueue_enabled bool not null default false;
 
+BEGIN;
+
+DO
+$$
+    BEGIN
+        CREATE TYPE chat_status AS ENUM (
+            'readwrite',
+            'readonly',
+            'noaccess'
+            );
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END
+$$;
+
+
+ALTER TABLE person
+    ADD COLUMN IF NOT EXISTS playerqueue_chat_status chat_status DEFAULT 'readwrite';
+
 COMMIT;
