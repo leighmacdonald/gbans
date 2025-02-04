@@ -246,7 +246,7 @@ func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	client := &http.Client{}
-	resp, errSend := client.Do(req)
+	resp, errSend := client.Do(req) //nolint:bodyclose
 	if errSend != nil {
 		return nil, errors.Join(errSend, domain.ErrDemoLoad)
 	}

@@ -57,5 +57,5 @@ type gameStartPayload struct {
 }
 
 type purgePayload struct {
-	MessageIDs []uuid.UUID `json:"message_ids"`
+	MessageIDs []uuid.UUID `json:"message_ids"` //nolint:tagliatelle
 }

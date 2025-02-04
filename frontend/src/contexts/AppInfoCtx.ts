@@ -29,7 +29,8 @@ export const UseAppInfoCtx = createContext<AppInfoCtx>({
         servers_enabled: true,
         stats_enabled: false,
         wiki_enabled: false,
-        speedruns_enabled: false
+        speedruns_enabled: false,
+        playerqueue_enabled: false
     }
 });
 

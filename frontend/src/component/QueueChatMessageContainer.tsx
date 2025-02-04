@@ -7,14 +7,9 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { ServerQueueMessage } from '../api';
 import { useQueueCtx } from '../hooks/useQueueCtx.ts';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
+import { QueueChatName } from './QueueChatName.tsx';
 
-export const QueueChatMessageContainer = ({
-    message,
-    showControls
-}: {
-    message: ServerQueueMessage;
-    showControls: boolean;
-}) => {
+export const QueueChatMessageContainer = ({ showControls }: { showControls: boolean }) => {
     const { messages, isReady } = useQueueCtx();
 
     if (!isReady) {
@@ -40,7 +35,7 @@ const QueueChatMessage = ({ message, showControls }: { message: ServerQueueMessa
     return (
         <Grid container key={`${message.message_id}-id`} spacing={1} overflow={'hidden'}>
             <Grid xs={2}>
-                <ChatName
+                <QueueChatName
                     personaname={message.personaname}
                     steam_id={message.steam_id}
                     avatarhash={message.avatarhash}
