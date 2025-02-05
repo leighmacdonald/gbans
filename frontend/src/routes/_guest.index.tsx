@@ -10,7 +10,6 @@ import StorageIcon from '@mui/icons-material/Storage';
 import SupportIcon from '@mui/icons-material/Support';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import Link from '@mui/material/Link';
-import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useNavigate, useRouteContext, createFileRoute } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
@@ -37,145 +36,168 @@ function Index() {
                     <NewsView itemsPerPage={3} />
                 </Grid>
                 <Grid xs={12} sm={12} md={2}>
-                    <Stack spacing={2}>
-                        {profile && profile.ban_id == 0 && appInfo.servers_enabled && (
-                            <LeftAlignButton
-                                startIcon={<StorageIcon />}
-                                fullWidth
-                                color={'success'}
-                                variant={'contained'}
-                                onClick={async () => {
-                                    await navigate({ to: '/servers' });
-                                }}
-                            >
-                                Play Now!
-                            </LeftAlignButton>
-                        )}
-                        {profile && profile.ban_id != 0 && appInfo.reports_enabled && (
-                            <LeftAlignButton
-                                startIcon={<SupportIcon />}
-                                fullWidth
-                                color={'success'}
-                                variant={'contained'}
-                                onClick={async () => {
-                                    await navigate({
-                                        to: `/ban/${profile.ban_id}`
-                                    });
-                                }}
-                            >
-                                Appeal Ban
-                            </LeftAlignButton>
-                        )}
-                        {appInfo.wiki_enabled && (
-                            <>
-                                <LeftAlignButton
-                                    component={RouterLink}
-                                    startIcon={<GavelIcon />}
-                                    fullWidth
-                                    color={'primary'}
-                                    variant={'contained'}
-                                    href={`/wiki/Rules`}
-                                >
-                                    Rules
-                                </LeftAlignButton>
-
-                                <LeftAlignButton
-                                    component={RouterLink}
-                                    startIcon={<EventIcon />}
-                                    fullWidth
-                                    color={'primary'}
-                                    variant={'contained'}
-                                    href={'/wiki/Events'}
-                                >
-                                    Events
-                                </LeftAlignButton>
-                            </>
-                        )}
-                        {appInfo.patreon_enabled && (
-                            <LeftAlignButton
-                                component={RouterLink}
-                                startIcon={<AttachMoneyIcon />}
-                                fullWidth
-                                color={'primary'}
-                                variant={'contained'}
-                                href={`/patreon`}
-                            >
-                                Donate
-                            </LeftAlignButton>
-                        )}
-                        {appInfo.contests_enabled && (
-                            <LeftAlignButton
-                                component={RouterLink}
-                                startIcon={<EmojiEventsIcon />}
-                                fullWidth
-                                color={'primary'}
-                                variant={'contained'}
-                                href={`/contests`}
-                            >
-                                Contests
-                            </LeftAlignButton>
-                        )}
-                        {appInfo.chatlogs_enabled && (
-                            <LeftAlignButton
-                                component={RouterLink}
-                                startIcon={<ChatIcon />}
-                                fullWidth
-                                color={'primary'}
-                                variant={'contained'}
-                                href={`/chatlogs`}
-                            >
-                                Chat Logs
-                            </LeftAlignButton>
-                        )}
-                        {appInfo.demos_enabled && (
-                            <LeftAlignButton
-                                component={RouterLink}
-                                startIcon={<VideocamIcon />}
-                                fullWidth
-                                color={'primary'}
-                                variant={'contained'}
-                                href={`/stv`}
-                            >
-                                SourceTV
-                            </LeftAlignButton>
-                        )}
-                        {appInfo.stats_enabled && (
-                            <LeftAlignButton
-                                component={RouterLink}
-                                startIcon={<PieChartIcon />}
-                                fullWidth
-                                color={'primary'}
-                                variant={'contained'}
-                                href={`/stats`}
-                            >
-                                Stats (Beta)
-                            </LeftAlignButton>
-                        )}
-                        {appInfo.speedruns_enabled && profile.permission_level >= PermissionLevel.Moderator && (
-                            <LeftAlignButton
-                                component={RouterLink}
-                                startIcon={<ElectricBoltIcon />}
-                                fullWidth
-                                color={'primary'}
-                                variant={'contained'}
-                                href={'/speedruns'}
-                            >
-                                Speedruns
-                            </LeftAlignButton>
-                        )}
-                        {appInfo.discord_enabled && appInfo.link_id != '' && (
-                            <LeftAlignButton
-                                component={Link}
-                                startIcon={<MarkUnreadChatAltIcon />}
-                                fullWidth
-                                sx={{ backgroundColor: '#5865F2' }}
-                                variant={'contained'}
-                                href={`https://discord.gg/${appInfo.link_id}`}
-                            >
-                                Join Discord
-                            </LeftAlignButton>
-                        )}
-                    </Stack>
+                    <div>
+                        <Grid container spacing={2}>
+                            {profile && profile.ban_id == 0 && appInfo.servers_enabled && (
+                                <Grid md={12} sm={4}>
+                                    <LeftAlignButton
+                                        startIcon={<StorageIcon />}
+                                        fullWidth
+                                        color={'success'}
+                                        variant={'contained'}
+                                        onClick={async () => {
+                                            await navigate({ to: '/servers' });
+                                        }}
+                                    >
+                                        Play Now!
+                                    </LeftAlignButton>
+                                </Grid>
+                            )}
+                            {profile && profile.ban_id != 0 && appInfo.reports_enabled && (
+                                <Grid md={12} sm={4}>
+                                    <LeftAlignButton
+                                        startIcon={<SupportIcon />}
+                                        fullWidth
+                                        color={'success'}
+                                        variant={'contained'}
+                                        onClick={async () => {
+                                            await navigate({
+                                                to: `/ban/${profile.ban_id}`
+                                            });
+                                        }}
+                                    >
+                                        Appeal Ban
+                                    </LeftAlignButton>
+                                </Grid>
+                            )}
+                            {appInfo.wiki_enabled && (
+                                <>
+                                    <Grid md={12} sm={4}>
+                                        <LeftAlignButton
+                                            component={RouterLink}
+                                            startIcon={<GavelIcon />}
+                                            fullWidth
+                                            color={'primary'}
+                                            variant={'contained'}
+                                            href={`/wiki/Rules`}
+                                        >
+                                            Rules
+                                        </LeftAlignButton>
+                                    </Grid>
+                                    <Grid md={12} sm={4}>
+                                        <LeftAlignButton
+                                            component={RouterLink}
+                                            startIcon={<EventIcon />}
+                                            fullWidth
+                                            color={'primary'}
+                                            variant={'contained'}
+                                            href={'/wiki/Events'}
+                                        >
+                                            Events
+                                        </LeftAlignButton>
+                                    </Grid>
+                                </>
+                            )}
+                            {appInfo.patreon_enabled && (
+                                <Grid md={12} sm={4}>
+                                    <LeftAlignButton
+                                        component={RouterLink}
+                                        startIcon={<AttachMoneyIcon />}
+                                        fullWidth
+                                        color={'primary'}
+                                        variant={'contained'}
+                                        href={`/patreon`}
+                                    >
+                                        Donate
+                                    </LeftAlignButton>
+                                </Grid>
+                            )}
+                            {appInfo.contests_enabled && (
+                                <Grid md={12} sm={4}>
+                                    <LeftAlignButton
+                                        component={RouterLink}
+                                        startIcon={<EmojiEventsIcon />}
+                                        fullWidth
+                                        color={'primary'}
+                                        variant={'contained'}
+                                        href={`/contests`}
+                                    >
+                                        Contests
+                                    </LeftAlignButton>
+                                </Grid>
+                            )}
+                            {appInfo.chatlogs_enabled && (
+                                <Grid md={12} sm={4}>
+                                    <LeftAlignButton
+                                        component={RouterLink}
+                                        startIcon={<ChatIcon />}
+                                        fullWidth
+                                        color={'primary'}
+                                        variant={'contained'}
+                                        href={`/chatlogs`}
+                                    >
+                                        Chat Logs
+                                    </LeftAlignButton>
+                                </Grid>
+                            )}
+                            {appInfo.demos_enabled && (
+                                <Grid md={12} sm={4}>
+                                    <LeftAlignButton
+                                        component={RouterLink}
+                                        startIcon={<VideocamIcon />}
+                                        fullWidth
+                                        color={'primary'}
+                                        variant={'contained'}
+                                        href={`/stv`}
+                                    >
+                                        SourceTV
+                                    </LeftAlignButton>
+                                </Grid>
+                            )}
+                            {appInfo.stats_enabled && (
+                                <Grid md={12} sm={4}>
+                                    <LeftAlignButton
+                                        component={RouterLink}
+                                        startIcon={<PieChartIcon />}
+                                        fullWidth
+                                        color={'primary'}
+                                        variant={'contained'}
+                                        href={`/stats`}
+                                    >
+                                        Stats (Beta)
+                                    </LeftAlignButton>
+                                </Grid>
+                            )}
+                            {appInfo.speedruns_enabled && profile.permission_level >= PermissionLevel.Moderator && (
+                                <Grid md={12} sm={4}>
+                                    <LeftAlignButton
+                                        component={RouterLink}
+                                        startIcon={<ElectricBoltIcon />}
+                                        fullWidth
+                                        color={'primary'}
+                                        variant={'contained'}
+                                        href={'/speedruns'}
+                                    >
+                                        Speedruns
+                                    </LeftAlignButton>
+                                </Grid>
+                            )}
+                            {appInfo.discord_enabled && appInfo.link_id != '' && (
+                                <Grid md={12} sm={4}>
+                                    <LeftAlignButton
+                                        component={Link}
+                                        startIcon={<MarkUnreadChatAltIcon />}
+                                        fullWidth
+                                        sx={{ backgroundColor: '#5865F2' }}
+                                        variant={'contained'}
+                                        href={`https://discord.gg/${appInfo.link_id}`}
+                                    >
+                                        Join Discord
+                                    </LeftAlignButton>
+                                </Grid>
+                            )}
+                        </Grid>
+                    </div>
                 </Grid>
             </Grid>
         </>
