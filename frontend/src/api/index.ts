@@ -12,4 +12,4 @@ export * from './match';
 export * from './contests';
 export * from './network';
 export * from './speedruns';
-export * from './queue';
+export * from './playerqueue.ts';

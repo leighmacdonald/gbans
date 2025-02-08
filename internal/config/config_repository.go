@@ -42,7 +42,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 		       discord_enabled, discord_app_id, discord_app_secret, discord_link_id, discord_token, discord_guild_id, discord_log_channel_id,
 		       discord_public_log_channel_enabled, discord_public_log_channel_id, discord_public_match_log_channel_id, discord_mod_ping_role_id,
 		       discord_unregister_on_start, discord_bot_enabled, discord_integrations_enabled, discord_vote_log_channel_id ,discord_appeal_log_channel_id,
-		       discord_ban_log_channel_id, discord_forum_log_channel_id, discord_word_filter_log_channel_id, discord_kick_log_channel_id,
+		       discord_ban_log_channel_id, discord_forum_log_channel_id, discord_word_filter_log_channel_id, discord_kick_log_channel_id, discord_playerqueue_channel_id,
 		       
 		       logging_level, logging_file, logging_http_enabled, logging_http_otel_enabled, logging_http_level,
 		       
@@ -75,7 +75,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 			&cfg.Discord.Enabled, &cfg.Discord.AppID, &cfg.Discord.AppSecret, &cfg.Discord.LinkID, &cfg.Discord.Token, &cfg.Discord.GuildID, &cfg.Discord.LogChannelID,
 			&cfg.Discord.PublicLogChannelEnable, &cfg.Discord.PublicLogChannelID, &cfg.Discord.PublicMatchLogChannelID, &cfg.Discord.ModPingRoleID,
 			&cfg.Discord.UnregisterOnStart, &cfg.Discord.BotEnabled, &cfg.Discord.IntegrationsEnabled, &cfg.Discord.VoteLogChannelID, &cfg.Discord.AppealLogChannelID,
-			&cfg.Discord.BanLogChannelID, &cfg.Discord.ForumLogChannelID, &cfg.Discord.WordFilterLogChannelID, &cfg.Discord.KickLogChannelID,
+			&cfg.Discord.BanLogChannelID, &cfg.Discord.ForumLogChannelID, &cfg.Discord.WordFilterLogChannelID, &cfg.Discord.KickLogChannelID, &cfg.Discord.PlayerqueueChannelID,
 			&cfg.Log.Level, &cfg.Log.File, &cfg.Log.HTTPEnabled, &cfg.Log.HTTPOtelEnabled, &cfg.Log.HTTPLevel,
 			&cfg.Sentry.SentryDSN, &cfg.Sentry.SentryDSNWeb, &cfg.Sentry.SentryTrace, &cfg.Sentry.SentrySampleRate,
 			&cfg.GeoLocation.Enabled, &cfg.GeoLocation.CachePath, &cfg.GeoLocation.Token,
@@ -174,6 +174,7 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"discord_word_filter_log_channel_id":  config.Discord.WordFilterLogChannelID,
 			"discord_kick_log_channel_id":         config.Discord.KickLogChannelID,
 			"discord_unregister_on_start":         config.Discord.UnregisterOnStart,
+			"discord_playerqueue_channel_id":      config.Discord.PlayerqueueChannelID,
 			"logging_level":                       config.Log.Level,
 			"logging_file":                        config.Log.File,
 			"logging_http_enabled":                config.Log.HTTPEnabled,

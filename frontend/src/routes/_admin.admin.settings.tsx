@@ -114,7 +114,12 @@ export const TabSection = <Tabs,>({
     currentTab,
     label,
     description
-}: PropsWithChildren & { tab: Tabs; currentTab: Tabs; label: string; description: string }) => {
+}: PropsWithChildren & {
+    tab: Tabs;
+    currentTab: Tabs;
+    label: string;
+    description: string;
+}) => {
     return (
         <Grid xs={8} sm={9} md={10} display={tab == currentTab ? undefined : 'none'} marginTop={1}>
             <Typography variant={'h1'}>{label}</Typography>
@@ -126,7 +131,19 @@ export const TabSection = <Tabs,>({
     );
 };
 
-export const SubHeading = ({ children }: PropsWithChildren) => <Typography variant={'caption'}>{children}</Typography>;
+const ConfigContainer = ({ children }: { children: ReactNode[] }) => {
+    return (
+        <Grid container spacing={4}>
+            {children}
+        </Grid>
+    );
+};
+
+export const SubHeading = ({ children }: PropsWithChildren) => (
+    <Typography variant={'subtitle1'} padding={1}>
+        {children}
+    </Typography>
+);
 
 function AdminServers() {
     const { sendFlash } = useUserFlashCtx();
@@ -310,8 +327,12 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     await handleSubmit();
                 }}
             >
-                <Grid container spacing={2}>
+                <ConfigContainer>
                     <Grid xs={12}>
+                        <SubHeading>
+                            This name is displayed in various places throughout the app such as the title bar and site
+                            heading. It should be short and simple.
+                        </SubHeading>
                         <Field
                             name={'site_name'}
                             validators={{
@@ -321,12 +342,9 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Global Site Name'} />;
                             }}
                         />
-                        <SubHeading>
-                            This name is displayed in various places throughout the app such as the title bar and site
-                            heading. It should be short and simple.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
                         <Field
                             name={'asset_url'}
                             validators={{
@@ -336,10 +354,13 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'URL path pointing to assets'} />;
                             }}
                         />
-                        <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>
+                            What address to listen for UDP log events. host:port format. If host is empty, it will
+                            listen on all available hosts.
+                        </SubHeading>
                         <Field
                             name={'srcds_log_addr'}
                             validators={{
@@ -349,15 +370,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'UDP Log Listen Address'} />;
                             }}
                         />
-                        <SubHeading>
-                            What address to listen for UDP log events. host:port format. If host is empty, it will
-                            listen on all available hosts.
-                        </SubHeading>
                     </Grid>
 
                     <Typography variant={'h5'}>Configure Toplevel Features</Typography>
 
                     <Grid xs={12}>
+                        {' '}
+                        <SubHeading>
+                            Sets the default page to load when a user opens the root url <kbd>example.com/</kbd>.
+                        </SubHeading>
                         <Field
                             name={'default_route'}
                             validators={{
@@ -367,12 +388,10 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Default Index Route'} />;
                             }}
                         />
-                        <SubHeading>
-                            Sets the default page to load when a user opens the root url <kbd>example.com/</kbd>.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>Enable the news/blog functionality.</SubHeading>
                         <Field
                             name={'news_enabled'}
                             validators={{
@@ -382,10 +401,10 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable news features.'} />;
                             }}
                         />
-                        <SubHeading>Enable the news/blog functionality.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>Enabled/disable the forums functionality.</SubHeading>
                         <Field
                             name={'forums_enabled'}
                             validators={{
@@ -395,10 +414,13 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable forums'} />;
                             }}
                         />
-                        <SubHeading>Enabled/disable the forums functionality.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>
+                            Enable contests in which users can participate. Users can submit entries and users can vote
+                            on them.
+                        </SubHeading>
                         <Field
                             name={'contests_enabled'}
                             validators={{
@@ -408,13 +430,12 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable contests'} />;
                             }}
                         />
-                        <SubHeading>
-                            Enable contests in which users can participate. Users can submit entries and users can vote
-                            on them.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>
+                            Enables a wiki section which is editable by moderators, and viewable by the public.
+                        </SubHeading>
                         <Field
                             name={'wiki_enabled'}
                             validators={{
@@ -424,11 +445,9 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable Wiki'} />;
                             }}
                         />
-                        <SubHeading>
-                            Enables a wiki section which is editable by moderators, and viewable by the public.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Allows users to search and download demos.</SubHeading>
                         <Field
                             name={'demos_enabled'}
                             validators={{
@@ -438,9 +457,9 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable Demo/STV Support'} />;
                             }}
                         />
-                        <SubHeading>Allows users to search and download demos.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Process demos and calculate game stats.</SubHeading>
                         <Field
                             name={'stats_enabled'}
                             validators={{
@@ -450,10 +469,13 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable Game Stats'} />;
                             }}
                         />
-                        <SubHeading>Process demos and calculate game stats.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        {' '}
+                        <SubHeading>
+                            Enables the server status page showing the current map and player counts.
+                        </SubHeading>
                         <Field
                             name={'servers_enabled'}
                             validators={{
@@ -463,12 +485,10 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable Servers Page'} />;
                             }}
                         />
-                        <SubHeading>
-                            Enables the server status page showing the current map and player counts.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>Allows users to report other users.</SubHeading>
                         <Field
                             name={'reports_enabled'}
                             validators={{
@@ -478,10 +498,10 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable User Reports'} />;
                             }}
                         />
-                        <SubHeading>Allows users to report other users.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>Enable showing the searchable chatlogs.</SubHeading>
                         <Field
                             name={'chatlogs_enabled'}
                             validators={{
@@ -491,10 +511,10 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable public chatlogs'} />;
                             }}
                         />
-                        <SubHeading>Enable showing the searchable chatlogs.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>Enables the 1000 uncles speedruns tracking support.</SubHeading>
                         <Field
                             name={'speedruns_enabled'}
                             validators={{
@@ -504,9 +524,11 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable Speedruns support'} />;
                             }}
                         />
-                        <SubHeading>Enables the 1000 uncles speedruns tracking support.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Enables the functionality allowing players to queue up together using the website.
+                        </SubHeading>
                         <Field
                             name={'playerqueue_enabled'}
                             validators={{
@@ -516,9 +538,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable Playerqueue support'} />;
                             }}
                         />
-                        <SubHeading>
-                            Enables the functionality allowing players to queue up together using the website.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
                         <Subscribe
@@ -528,7 +547,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             )}
                         />
                     </Grid>
-                </Grid>
+                </ConfigContainer>
             </form>
         </TabSection>
     );
@@ -569,8 +588,9 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     await handleSubmit();
                 }}
             >
-                <Grid container spacing={2}>
+                <ConfigContainer>
                     <Grid xs={12}>
+                        <SubHeading>Enable/disable the feature</SubHeading>
                         <Field
                             name={'enabled'}
                             validators={{
@@ -580,9 +600,9 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable Word Filters'} />;
                             }}
                         />
-                        <SubHeading>Enable/disable the feature</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>If a user gets a warning, it will expire after this duration of time.</SubHeading>
                         <Field
                             name={'warning_timeout'}
                             validators={{
@@ -594,9 +614,12 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 );
                             }}
                         />
-                        <SubHeading>If a user gets a warning, it will expire after this duration of time.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        {' '}
+                        <SubHeading>
+                            A hard limit to the number of warnings a user can receive before action is taken.
+                        </SubHeading>
                         <Field
                             name={'warning_limit'}
                             validators={{
@@ -606,12 +629,10 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Maximum number of warnings allowed'} />;
                             }}
                         />
-                        <SubHeading>
-                            A hard limit to the number of warnings a user can receive before action is taken.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>Run the chat filters, but do not actually punish users.</SubHeading>
                         <Field
                             name={'dry'}
                             validators={{
@@ -621,9 +642,9 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable dry run mode'} />;
                             }}
                         />
-                        <SubHeading>Run the chat filters, but do not actually punish users.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>If discord is enabled, send filter match notices to the log channel.</SubHeading>
                         <Field
                             name={'ping_discord'}
                             validators={{
@@ -633,9 +654,12 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Send discord notices on match'} />;
                             }}
                         />
-                        <SubHeading>If discord is enabled, send filter match notices to the log channel.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            When the sum of warning weights issued to a user is greater than this value, take action
+                            against the user.
+                        </SubHeading>
                         <Field
                             name={'max_weight'}
                             validators={{
@@ -645,12 +669,9 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Max Weight'} />;
                             }}
                         />
-                        <SubHeading>
-                            When the sum of warning weights issued to a user is greater than this value, take action
-                            against the user.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>How frequent warnings will be checked for users exceeding limits.</SubHeading>
                         <Field
                             name={'check_timeout'}
                             validators={{
@@ -660,10 +681,10 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Check Frequency (seconds)'} />;
                             }}
                         />
-                        <SubHeading>How frequent warnings will be checked for users exceeding limits.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>How long it takes for a users warning to expire after being matched.</SubHeading>
                         <Field
                             name={'match_timeout'}
                             validators={{
@@ -673,7 +694,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Match Timeout'} />;
                             }}
                         />
-                        <SubHeading>How long it takes for a users warning to expire after being matched.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
@@ -684,7 +704,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             )}
                         />
                     </Grid>
-                </Grid>
+                </ConfigContainer>
             </form>
         </TabSection>
     );
@@ -733,7 +753,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                     await handleSubmit();
                 }}
             >
-                <Grid container spacing={2}>
+                <ConfigContainer>
                     <Grid xs={12}>
                         <Button
                             startIcon={<CleaningServicesIcon />}
@@ -745,6 +765,9 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         </Button>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Enable automatic deletion of demos. This ignores demos that have been marked as archived.
+                        </SubHeading>
                         <Field
                             name={'demo_cleanup_enabled'}
                             validators={{
@@ -754,11 +777,9 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                                 return <CheckboxSimple {...props} label={'Enable Scheduled Demo Cleanup'} />;
                             }}
                         />
-                        <SubHeading>
-                            Enable automatic deletion of demos. This ignores demos that have been marked as archived.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Method used to determine what demos to delete.</SubHeading>
                         <Field
                             name={'demo_cleanup_strategy'}
                             validators={{
@@ -781,9 +802,12 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                                 );
                             }}
                         />
-                        <SubHeading>Method used to determine what demos to delete.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            When using the percent free strategy, defined how much free space should be retained on the
+                            demo mount/volume.
+                        </SubHeading>
                         <Field
                             name={'demo_cleanup_min_pct'}
                             validators={{
@@ -793,13 +817,10 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                                 return <TextFieldSimple {...props} label={'Minimum percent free space to retain'} />;
                             }}
                         />
-                        <SubHeading>
-                            When using the percent free strategy, defined how much free space should be retained on the
-                            demo mount/volume.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>The mount point that demos are stored. Used to determine free space.</SubHeading>
                         <Field
                             name={'demo_cleanup_mount'}
                             validators={{
@@ -809,9 +830,11 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                                 return <TextFieldSimple {...props} label={'Mount point to check for free space'} />;
                             }}
                         />
-                        <SubHeading>The mount point that demos are stored. Used to determine free space.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            When using the count deletion strategy, this is the maximum number of demos to keep.
+                        </SubHeading>
                         <Field
                             name={'demo_count_limit'}
                             validators={{
@@ -821,12 +844,13 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                                 return <TextFieldSimple {...props} label={'Max amount of demos to keep'} />;
                             }}
                         />
-                        <SubHeading>
-                            When using the count deletion strategy, this is the maximum number of demos to keep.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>
+                            This url should point to an instance of https://github.com/leighmacdonald/tf2_demostats.
+                            This is used to pull stats & player steamids out of demos that are fetched.
+                        </SubHeading>
                         <Field
                             name={'demo_parser_url'}
                             validators={{
@@ -836,10 +860,6 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                                 return <TextFieldSimple {...props} label={'URL for demo parsing submissions'} />;
                             }}
                         />
-                        <SubHeading>
-                            This url should point to an instance of https://github.com/leighmacdonald/tf2_demostats.
-                            This is used to pull stats & player steamids out of demos that are fetched.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
@@ -850,7 +870,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                             )}
                         />
                     </Grid>
-                </Grid>
+                </ConfigContainer>
             </form>
         </TabSection>
     );
@@ -883,6 +903,7 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             >
                 <Grid container spacing={2}>
                     <Grid xs={12}>
+                        <SubHeading>Enabled/Disable patreon integrations</SubHeading>
                         <Field
                             name={'enabled'}
                             validators={{
@@ -892,9 +913,11 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable Patreon Integration'} />;
                             }}
                         />
-                        <SubHeading>Enabled/Disable patreon integrations</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Enables integration into the website. Enables: Donate button, Account Linking.
+                        </SubHeading>
                         <Field
                             name={'integrations_enabled'}
                             validators={{
@@ -904,11 +927,9 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable website integrations'} />;
                             }}
                         />
-                        <SubHeading>
-                            Enables integration into the website. Enables: Donate button, Account Linking.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Your patron client ID</SubHeading>
                         <Field
                             name={'client_id'}
                             validators={{
@@ -918,9 +939,9 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Client ID'} />;
                             }}
                         />
-                        <SubHeading>Your patron client ID</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Patreon app client secret</SubHeading>
                         <Field
                             name={'client_secret'}
                             validators={{
@@ -930,10 +951,10 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Client Secret'} />;
                             }}
                         />
-                        <SubHeading>Patreon app client secret</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>Access token</SubHeading>
                         <Field
                             name={'creator_access_token'}
                             validators={{
@@ -943,9 +964,9 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Access Token'} />;
                             }}
                         />
-                        <SubHeading>Access token</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Refresh token</SubHeading>
                         <Field
                             name={'creator_refresh_token'}
                             validators={{
@@ -955,7 +976,6 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Refresh Token'} />;
                             }}
                         />
-                        <SubHeading>Refresh token</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
@@ -998,7 +1018,8 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             ban_log_channel_id: settings.discord.ban_log_channel_id,
             forum_log_channel_id: settings.discord.forum_log_channel_id,
             word_filter_log_channel_id: settings.discord.word_filter_log_channel_id,
-            kick_log_channel_id: settings.discord.kick_log_channel_id
+            kick_log_channel_id: settings.discord.kick_log_channel_id,
+            playerqueue_channel_id: settings.discord.playerqueue_channel_id
         }
     });
 
@@ -1011,8 +1032,9 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     await handleSubmit();
                 }}
             >
-                <Grid container spacing={2}>
+                <ConfigContainer>
                     <Grid xs={12}>
+                        <SubHeading>Enabled or disable all discord integration.</SubHeading>
                         <Field
                             name={'enabled'}
                             validators={{
@@ -1022,9 +1044,13 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable discord integration'} />;
                             }}
                         />
-                        <SubHeading>Enabled or disable all discord integration.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Enabled the discord bot integration. This is self-hosted within the app. You must can create
+                            a discord application{' '}
+                            <Link href={'https://discord.com/developers/applications?new_application=true'}>here</Link>.
+                        </SubHeading>
                         <Field
                             name={'bot_enabled'}
                             validators={{
@@ -1034,13 +1060,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Discord Bot'} />;
                             }}
                         />
-                        <SubHeading>
-                            Enabled the discord bot integration. This is self-hosted within the app. You must can create
-                            a discord application{' '}
-                            <Link href={'https://discord.com/developers/applications?new_application=true'}>here</Link>.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Enables integrations into the website. Enables: Showing Join Discord button, Account
+                            Linking.
+                        </SubHeading>
                         <Field
                             name={'integrations_enabled'}
                             validators={{
@@ -1050,12 +1075,9 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable website integrations'} />;
                             }}
                         />
-                        <SubHeading>
-                            Enables integrations into the website. Enables: Showing Join Discord button, Account
-                            Linking.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Your discord application ID.</SubHeading>
                         <Field
                             name={'app_id'}
                             validators={{
@@ -1065,9 +1087,9 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Discord app ID'} />;
                             }}
                         />
-                        <SubHeading>Your discord application ID.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Your discord app secret.</SubHeading>
                         <Field
                             name={'app_secret'}
                             validators={{
@@ -1077,10 +1099,13 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Discord bot app secret'} />;
                             }}
                         />
-                        <SubHeading>Your discord app secret.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>
+                            The unique ID for your permanent discord link. This is only the unique string at the end if
+                            a invite url: https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
+                        </SubHeading>
                         <Field
                             name={'link_id'}
                             validators={{
@@ -1090,12 +1115,9 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Invite link ID'} />;
                             }}
                         />
-                        <SubHeading>
-                            The unique ID for your permanent discord link. This is only the unique string at the end if
-                            a invite url: https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Bot authentication token.</SubHeading>
                         <Field
                             name={'token'}
                             validators={{
@@ -1105,9 +1127,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Discord Bot Token'} />;
                             }}
                         />
-                        <SubHeading>Bot authentication token.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            This is the guild id of your discord server. With discoed developer mode enabled,
+                            right-click on the server title and select "Copy ID" to get the guild ID.
+                        </SubHeading>
                         <Field
                             name={'guild_id'}
                             validators={{
@@ -1117,12 +1142,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Discord guild ID'} />;
                             }}
                         />
-                        <SubHeading>
-                            This is the guild id of your discord server. With discoed developer mode enabled,
-                            right-click on the server title and select "Copy ID" to get the guild ID.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            This should be a private channel. Its the default log channel and is used as the default for
+                            other channels if their id is empty.
+                        </SubHeading>
                         <Field
                             name={'log_channel_id'}
                             validators={{
@@ -1132,10 +1157,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Log channel ID'} />;
                             }}
                         />
-                        <SubHeading>
-                            This should be a private channel. Its the default log channel and is used as the default for
-                            other channels if their id is empty.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
                         <Field
@@ -1150,6 +1171,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Whether or not to enable public notices for less sensitive log events.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>What role to include when pinging for certain events being sent.</SubHeading>
                         <Field
                             name={'mod_ping_role_id'}
                             validators={{
@@ -1159,9 +1181,9 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Mod ping role ID'} />;
                             }}
                         />
-                        <SubHeading>What role to include when pinging for certain events being sent.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Public log channel ID.</SubHeading>
                         <Field
                             name={'public_log_channel_id'}
                             validators={{
@@ -1171,9 +1193,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Public log channel ID'} />;
                             }}
                         />
-                        <SubHeading>Public log channel ID.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            A channel to send match logs to. This can be very large and spammy, so its generally best to
+                            use a separate channel, but not required.
+                        </SubHeading>
                         <Field
                             name={'public_match_log_channel_id'}
                             validators={{
@@ -1183,13 +1208,13 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Public match log channel ID'} />;
                             }}
                         />
-                        <SubHeading>
-                            A channel to send match logs to. This can be very large and spammy, so its generally best to
-                            use a separate channel, but not required.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>
+                            A channel to send in-game kick voting. This can be very noisy, so its generally best to use
+                            a separate channel, but not required.
+                        </SubHeading>
                         <Field
                             name={'vote_log_channel_id'}
                             validators={{
@@ -1199,12 +1224,9 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Vote log channel ID'} />;
                             }}
                         />
-                        <SubHeading>
-                            A channel to send in-game kick voting. This can be very noisy, so its generally best to use
-                            a separate channel, but not required.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>New appeals and appeal messages are shown here.</SubHeading>
                         <Field
                             name={'appeal_log_channel_id'}
                             validators={{
@@ -1214,9 +1236,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Appeal changelog channel ID'} />;
                             }}
                         />
-                        <SubHeading>New appeals and appeal messages are shown here.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            A channel to send match logs to. This can be very large and spammy, so its generally best to
+                            use a separate channel, but not required. This only shows steam based bans.
+                        </SubHeading>
                         <Field
                             name={'ban_log_channel_id'}
                             validators={{
@@ -1226,12 +1251,11 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'New ban log channel ID'} />;
                             }}
                         />
-                        <SubHeading>
-                            A channel to send match logs to. This can be very large and spammy, so its generally best to
-                            use a separate channel, but not required. This only shows steam based bans.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Show new forum activity. This includes threads, new messages, message deletions.
+                        </SubHeading>
                         <Field
                             name={'forum_log_channel_id'}
                             validators={{
@@ -1241,11 +1265,9 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Forum activity log channel ID'} />;
                             }}
                         />
-                        <SubHeading>
-                            Show new forum activity. This includes threads, new messages, message deletions.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>A channel to send notices to when a user triggers a word filter.</SubHeading>
                         <Field
                             name={'word_filter_log_channel_id'}
                             validators={{
@@ -1255,9 +1277,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Word filter log channel ID'} />;
                             }}
                         />
-                        <SubHeading>A channel to send notices to when a user triggers a word filter.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            A channel to send notices to when a user is kicked either from being banned or denied entry
+                            while already in a banned state.
+                        </SubHeading>
                         <Field
                             name={'kick_log_channel_id'}
                             validators={{
@@ -1267,12 +1292,24 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Kick log channel ID'} />;
                             }}
                         />
-                        <SubHeading>
-                            A channel to send notices to when a user is kicked either from being banned or denied entry
-                            while already in a banned state.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>A channel which relays the chat messages from the website chat lobby.</SubHeading>
+                        <Field
+                            name={'playerqueue_channel_id'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Playerqueue log channel ID'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid xs={12}>
+                        <SubHeading>
+                            Do you want to unregister all existing slash commands on bot startup. This is normally not
+                            needed and its mostly useful when creating or modifying existing command.
+                        </SubHeading>
                         <Field
                             name={'unregister_on_start'}
                             validators={{
@@ -1287,10 +1324,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 );
                             }}
                         />
-                        <SubHeading>
-                            Do you want to unregister all existing slash commands on bot startup. This is normally not
-                            needed and its mostly useful when creating or modifying existing command.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
@@ -1301,7 +1334,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             )}
                         />
                     </Grid>
-                </Grid>
+                </ConfigContainer>
             </form>
         </TabSection>
     );
@@ -1331,8 +1364,9 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     await handleSubmit();
                 }}
             >
-                <Grid container spacing={2}>
+                <ConfigContainer>
                     <Grid xs={12}>
+                        <SubHeading>What logging level to use.</SubHeading>
                         <Field
                             name={'level'}
                             validators={{
@@ -1355,9 +1389,9 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 );
                             }}
                         />
-                        <SubHeading>What logging level to use.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>If supplied, save log output to this file as well as stdout.</SubHeading>
                         <Field
                             name={'file'}
                             validators={{
@@ -1367,10 +1401,10 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Log file'} />;
                             }}
                         />
-                        <SubHeading>If supplied, save log output to this file as well as stdout.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>Enables logging for incoming HTTP requests.</SubHeading>
                         <Field
                             name={'http_enabled'}
                             validators={{
@@ -1380,9 +1414,9 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable HTTP request logs'} />;
                             }}
                         />
-                        <SubHeading>Enables logging for incoming HTTP requests.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Enables OpenTelemetry support (span id/trace id).</SubHeading>
                         <Field
                             name={'http_otel_enabled'}
                             validators={{
@@ -1392,10 +1426,10 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable OpenTelemetry Support'} />;
                             }}
                         />
-                        <SubHeading>Enables OpenTelemetry support (span id/trace id).</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>What logging level to use for HTTP requests.</SubHeading>
                         <Field
                             name={'http_level'}
                             validators={
@@ -1420,7 +1454,6 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 );
                             }}
                         />
-                        <SubHeading>What logging level to use for HTTP requests.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
@@ -1431,7 +1464,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             )}
                         />
                     </Grid>
-                </Grid>
+                </ConfigContainer>
             </form>
         </TabSection>
     );
@@ -1468,6 +1501,7 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                         <Link href={'https://develop.sentry.dev/self-hosted/'}>self-hosted</Link> operation.
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>The URL to your backend sentry application.</SubHeading>
                         <Field
                             name={'sentry_dsn'}
                             validators={{
@@ -1486,9 +1520,9 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                                 return <TextFieldSimple {...props} label={'Backend sentry url'} />;
                             }}
                         />
-                        <SubHeading>The URL to your backend sentry application.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>The URL to your frontend sentry application.</SubHeading>
                         <Field
                             name={'sentry_dsn_web'}
                             validators={{
@@ -1507,9 +1541,12 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                                 return <TextFieldSimple {...props} label={'Frontend sentry url'} />;
                             }}
                         />
-                        <SubHeading>The URL to your frontend sentry application.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Enable <Link href={'https://docs.sentry.io/concepts/key-terms/tracing/'}>tracing</Link>{' '}
+                            support.
+                        </SubHeading>
                         <Field
                             name={'sentry_trace'}
                             validators={{
@@ -1519,22 +1556,9 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                                 return <CheckboxSimple {...props} label={'Enable tracing'} />;
                             }}
                         />
-                        <SubHeading>
-                            Enable <Link href={'https://docs.sentry.io/concepts/key-terms/tracing/'}>tracing</Link>{' '}
-                            support.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
-                        <Field
-                            name={'sentry_sample_rate'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 1))
-                            }}
-                            children={(props) => {
-                                return <TextFieldSimple {...props} label={'Sample rate'} />;
-                            }}
-                        />
                         <SubHeading>
                             Configure the{' '}
                             <Link
@@ -1545,6 +1569,15 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                                 sample rate
                             </Link>
                         </SubHeading>
+                        <Field
+                            name={'sentry_sample_rate'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 1))
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Sample rate'} />;
+                            }}
+                        />
                     </Grid>
 
                     <Grid xs={12}>
@@ -1607,7 +1640,7 @@ const GeoLocationSection = ({
                     await handleSubmit();
                 }}
             >
-                <Grid container spacing={2}>
+                <ConfigContainer>
                     <Grid xs={12}>
                         IP2Location is a 3rd party service that provides geoip databases along with some basic proxy
                         detections. gbans uses the IP2Location LITE database for{' '}
@@ -1620,6 +1653,7 @@ const GeoLocationSection = ({
                         </Button>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Enables the download and usage of geo location tools.</SubHeading>
                         <Field
                             name={'enabled'}
                             validators={{
@@ -1629,9 +1663,9 @@ const GeoLocationSection = ({
                                 return <CheckboxSimple {...props} label={'Enable geolocation services'} />;
                             }}
                         />
-                        <SubHeading>Enables the download and usage of geo location tools.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Your ip2location API key.</SubHeading>
                         <Field
                             name={'token'}
                             validators={{
@@ -1641,9 +1675,9 @@ const GeoLocationSection = ({
                                 return <TextFieldSimple {...props} label={'API Key'} />;
                             }}
                         />
-                        <SubHeading>Your ip2location API key.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Path to store downloaded databases.</SubHeading>
                         <Field
                             name={'cache_path'}
                             validators={{
@@ -1653,7 +1687,6 @@ const GeoLocationSection = ({
                                 return <TextFieldSimple {...props} label={'Database download cache path'} />;
                             }}
                         />
-                        <SubHeading>Path to store downloaded databases.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
                         <Subscribe
@@ -1663,7 +1696,7 @@ const GeoLocationSection = ({
                             )}
                         />
                     </Grid>
-                </Grid>
+                </ConfigContainer>
             </form>
         </TabSection>
     );
@@ -1695,8 +1728,11 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                     await handleSubmit();
                 }}
             >
-                <Grid container spacing={2}>
+                <ConfigContainer>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Disable validation for OpenID responses. Do not enable this on a live site.
+                        </SubHeading>
                         <Field
                             name={'skip_open_id_validation'}
                             validators={{
@@ -1706,12 +1742,13 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                                 return <CheckboxSimple {...props} label={'Skip OpenID validation'} />;
                             }}
                         />
-                        <SubHeading>
-                            Disable validation for OpenID responses. Do not enable this on a live site.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
+                        <SubHeading>
+                            Add this additional address to all known servers to start receiving log events. Make sure
+                            you setup port forwarding.
+                        </SubHeading>
                         <Field
                             name={'add_rcon_log_address'}
                             validators={{
@@ -1727,10 +1764,6 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                                 );
                             }}
                         />
-                        <SubHeading>
-                            Add this additional address to all known servers to start receiving log events. Make sure
-                            you setup port forwarding.
-                        </SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
@@ -1741,7 +1774,7 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                             )}
                         />
                     </Grid>
-                </Grid>
+                </ConfigContainer>
             </form>
         </TabSection>
     );
@@ -1772,7 +1805,7 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
                     await handleSubmit();
                 }}
             >
-                <Grid container spacing={2}>
+                <ConfigContainer>
                     <Grid xs={12}>
                         <Field
                             name={'path_root'}
@@ -1794,7 +1827,7 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
                             )}
                         />
                     </Grid>
-                </Grid>
+                </ConfigContainer>
             </form>
         </TabSection>
     );
@@ -1833,8 +1866,9 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                     await handleSubmit();
                 }}
             >
-                <Grid container spacing={2}>
+                <ConfigContainer>
                     <Grid xs={12}>
+                        <SubHeading>Enable the use of SSH/SCP for downloading demos from a remote server.</SubHeading>
                         <Field
                             name={'enabled'}
                             validators={{
@@ -1844,9 +1878,9 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                                 return <CheckboxSimple {...props} label={'Enable SSH downloader'} />;
                             }}
                         />
-                        <SubHeading>Enable the use of SSH/SCP for downloading demos from a remote server.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>SSH username</SubHeading>
                         <Field
                             name={'username'}
                             validators={{
@@ -1856,9 +1890,11 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                                 return <TextFieldSimple {...props} label={'SSH username'} />;
                             }}
                         />
-                        <SubHeading>SSH username</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            SSH port to use. This assumes all servers are configured using the same port.
+                        </SubHeading>
                         <Field
                             name={'port'}
                             validators={{
@@ -1868,11 +1904,9 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                                 return <TextFieldSimple {...props} label={'SSH port'} />;
                             }}
                         />
-                        <SubHeading>
-                            SSH port to use. This assumes all servers are configured using the same port.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Path to your private key if using key based authentication.</SubHeading>
                         <Field
                             name={'private_key_path'}
                             validators={{
@@ -1882,9 +1916,11 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                                 return <TextFieldSimple {...props} label={'Path to private key'} />;
                             }}
                         />
-                        <SubHeading>Path to your private key if using key based authentication.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Password when using standard auth. Passphrase to unlock the private key when using key auth.
+                        </SubHeading>
                         <Field
                             name={'password'}
                             validators={{
@@ -1894,11 +1930,9 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                                 return <TextFieldSimple {...props} label={'SSH/Private key password'} />;
                             }}
                         />
-                        <SubHeading>
-                            Password when using standard auth. Passphrase to unlock the private key when using key auth.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>How often to connect to remove systems and check for demos.</SubHeading>
                         <Field
                             name={'update_interval'}
                             validators={{
@@ -1908,9 +1942,9 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                                 return <TextFieldSimple {...props} label={'Check frequency (seconds)'} />;
                             }}
                         />
-                        <SubHeading>How often to connect to remove systems and check for demos.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>Connection timeout.</SubHeading>
                         <Field
                             name={'timeout'}
                             validators={{
@@ -1920,9 +1954,12 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                                 return <TextFieldSimple {...props} label={'Connection timeout (seconds)'} />;
                             }}
                         />
-                        <SubHeading>Connection timeout.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Format for generating a path to look for demos. Use <kbd>%s</kbd> as a substitution for the
+                            short server name.
+                        </SubHeading>
                         <Field
                             name={'demo_path_fmt'}
                             validators={{
@@ -1932,12 +1969,12 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                                 return <TextFieldSimple {...props} label={'Path format for retrieving demos'} />;
                             }}
                         />
-                        <SubHeading>
-                            Format for generating a path to look for demos. Use <kbd>%s</kbd> as a substitution for the
-                            short server name.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Format for generating a path to look for stac anticheat logs. Use <kbd>%s</kbd> as a
+                            substitution for the short server name.
+                        </SubHeading>
                         <Field
                             name={'stac_path_fmt'}
                             validators={{
@@ -1947,10 +1984,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                                 return <TextFieldSimple {...props} label={'Path format for retrieving stac logs'} />;
                             }}
                         />
-                        <SubHeading>
-                            Format for generating a path to look for stac anticheat logs. Use <kbd>%s</kbd> as a
-                            substitution for the short server name.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
                         <Subscribe
@@ -1960,7 +1993,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             )}
                         />
                     </Grid>
-                </Grid>
+                </ConfigContainer>
             </form>
         </TabSection>
     );
@@ -1993,8 +2026,13 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     await handleSubmit();
                 }}
             >
-                <Grid container spacing={2}>
+                <ConfigContainer>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Comma separated list of authorized keys which can access these resources. If no keys are
+                            specified, access will be granted to everyone. Append key to query with{' '}
+                            <kbd>&key=value</kbd>
+                        </SubHeading>
                         <Field
                             name={'authorized_keys'}
                             validators={{
@@ -2004,13 +2042,12 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Authorized Keys (comma separated).'} />;
                             }}
                         />
-                        <SubHeading>
-                            Comma separated list of authorized keys which can access these resources. If no keys are
-                            specified, access will be granted to everyone. Append key to query with{' '}
-                            <kbd>&key=value</kbd>
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Enable exporting of a TF2 Bot Detector compatible player list. Only exports users banned
+                            with the cheater reason.
+                        </SubHeading>
                         <Field
                             name={'bd_enabled'}
                             validators={{
@@ -2022,12 +2059,12 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 );
                             }}
                         />
-                        <SubHeading>
-                            Enable exporting of a TF2 Bot Detector compatible player list. Only exports users banned
-                            with the cheater reason.
-                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
+                        <SubHeading>
+                            Enable exporting of a SRCDS banned_user.cfg compatible player list. Only exports users
+                            banned with the cheater reason.
+                        </SubHeading>
                         <Field
                             name={'valve_enabled'}
                             validators={{
@@ -2037,10 +2074,6 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <CheckboxSimple {...props} label={'Enable srcds formatted ban list'} />;
                             }}
                         />
-                        <SubHeading>
-                            Enable exporting of a SRCDS banned_user.cfg compatible player list. Only exports users
-                            banned with the cheater reason.
-                        </SubHeading>
                     </Grid>
                     {/*<Grid xs={12}>*/}
                     {/*    <Field*/}
@@ -2062,7 +2095,7 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             )}
                         />
                     </Grid>
-                </Grid>
+                </ConfigContainer>
             </form>
         </TabSection>
     );

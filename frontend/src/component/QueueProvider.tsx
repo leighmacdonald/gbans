@@ -1,10 +1,11 @@
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useModal } from '@ebay/nice-modal-react';
-import { uuidv7 } from 'uuidv7';
 import {
+    ChatStatus,
+    ChatStatusChangePayload,
     ClientStatePayload,
-    defaultAvatarHash,
+    createMessage,
     GameStartPayload,
     JoinQueuePayload,
     LeaveQueuePayload,
@@ -13,11 +14,12 @@ import {
     pingPayload,
     PurgePayload,
     QueueMember,
-    QueuePayload,
+    QueueRequest,
     ServerQueueMessage,
     ServerQueueState,
     websocketURL
 } from '../api';
+import { useAuth } from '../hooks/useAuth.ts';
 import { QueueCtx } from '../hooks/useQueueCtx';
 import * as killsound from '../icons/Killsound.mp3';
 import { readAccessToken } from '../util/auth/readAccessToken.ts';
@@ -32,6 +34,9 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
     const [showChat, setShowChat] = useState(false);
     const [servers, setServers] = useState<ServerQueueState[]>([]);
     const [lastPong, setLastPong] = useState(new Date());
+    const { profile } = useAuth();
+    const [chatStatus, setChatStatus] = useState<ChatStatus>(profile.playerqueue_chat_status);
+    const [reason, setReason] = useState<string>('');
 
     const modal = useModal(ModalQueueJoin);
 
@@ -56,8 +61,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                         avatarhash: '',
                         permission_level: PermissionLevel.Reserved,
                         personaname: 'SYSTEM',
-                        steam_id: 'SYSTEM',
-                        message_id: uuidv7()
+                        steam_id: 'SYSTEM'
                     } as ServerQueueMessage
                 ]);
                 break;
@@ -71,8 +75,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                         avatarhash: '',
                         permission_level: PermissionLevel.Reserved,
                         personaname: 'SYSTEM',
-                        steam_id: 'SYSTEM',
-                        message_id: uuidv7()
+                        steam_id: 'SYSTEM'
                     } as ServerQueueMessage
                 ]);
                 break;
@@ -82,14 +85,14 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
     }, [readyState]);
 
     useEffect(() => {
-        const request = lastJsonMessage as QueuePayload<never>;
+        const request = lastJsonMessage as QueueRequest<never>;
         if (!request) {
             return;
         }
         handleIncomingOperation(request).catch(logErr);
     }, [lastJsonMessage]);
 
-    const handleIncomingOperation = async (request: QueuePayload<never>) => {
+    const handleIncomingOperation = async (request: QueueRequest<never>) => {
         switch (request.op) {
             case Operation.Pong: {
                 setLastPong(new Date());
@@ -101,7 +104,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                 break;
             }
 
-            case Operation.MessageRecv: {
+            case Operation.Message: {
                 setMessages((prev) => [...prev, transformCreatedOnDate(request.payload as ServerQueueMessage)]);
                 break;
             }
@@ -115,6 +118,14 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                 purgeMessages((request.payload as PurgePayload).message_ids);
                 break;
             }
+            case Operation.ChatStatusChange: {
+                const pl = request.payload as ChatStatusChangePayload;
+                setChatStatus(pl.status);
+                if (pl.status == 'noaccess') {
+                    setMessages([]);
+                }
+                setReason(pl.reason);
+            }
         }
     };
 
@@ -127,7 +138,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const purgeMessages = (message_ids: string[]) => {
+    const purgeMessages = (message_ids: number[]) => {
         setMessages((prevState) => prevState.filter((m) => !message_ids.includes(m.message_id)));
     };
 
@@ -142,23 +153,17 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
         await modal.show({ gameStart });
     };
 
-    const sendMessage = useCallback((message: string) => {
-        sendJsonMessage<QueuePayload<ServerQueueMessage>>({
-            op: Operation.MessageSend,
+    const sendMessage = (body_md: string) => {
+        sendJsonMessage<QueueRequest<createMessage>>({
+            op: Operation.Message,
             payload: {
-                body_md: message,
-                personaname: 'queue',
-                permission_level: PermissionLevel.Reserved,
-                avatarhash: defaultAvatarHash,
-                steam_id: 'queue',
-                created_on: new Date(),
-                message_id: uuidv7()
+                body_md
             }
         });
-    }, []);
+    };
 
     const joinQueue = (servers: string[]) => {
-        sendJsonMessage<QueuePayload<JoinQueuePayload>>({
+        sendJsonMessage<QueueRequest<JoinQueuePayload>>({
             op: Operation.JoinQueue,
             payload: {
                 servers: servers.map(Number)
@@ -166,7 +171,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
         });
     };
     const leaveQueue = (servers: string[]) => {
-        sendJsonMessage<QueuePayload<LeaveQueuePayload>>({
+        sendJsonMessage<QueueRequest<LeaveQueuePayload>>({
             op: Operation.LeaveQueue,
             payload: {
                 servers: servers.map(Number)
@@ -186,7 +191,9 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                 leaveQueue,
                 lastPong,
                 showChat,
-                setShowChat
+                setShowChat,
+                chatStatus,
+                reason
             }}
         >
             {children}

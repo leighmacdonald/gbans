@@ -93,6 +93,7 @@ type Discord = {
     forum_log_channel_id: string;
     kick_log_channel_id: string;
     word_filter_log_channel_id: string;
+    playerqueue_channel_id: string;
 };
 
 type LogLevels = 'debug' | 'info' | 'warn' | 'error';

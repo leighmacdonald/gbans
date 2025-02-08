@@ -84,6 +84,7 @@ func (r *personRepository) updatePerson(ctx context.Context, transaction pgx.Tx,
 				"updated_on_steam":         person.UpdatedOnSteam,
 				"muted":                    person.Muted,
 				"playerqueue_chat_status":  person.PlayerqueueChatStatus,
+				"playerqueue_chat_reason":  person.PlayerqueueChatReason,
 			}).
 			Where(sq.Eq{"steam_id": person.SteamID.Int64()})))
 }
@@ -96,7 +97,7 @@ func (r *personRepository) insertPerson(ctx context.Context, transaction pgx.Tx,
 			"personaname", "profileurl", "avatar", "avatarmedium", "avatarfull", "avatarhash", "personastate",
 			"realname", "timecreated", "loccountrycode", "locstatecode", "loccityid", "permission_level",
 			"discord_id", "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
-			"updated_on_steam", "muted", "playerqueue_chat_status").
+			"updated_on_steam", "muted", "playerqueue_chat_status", "playerqueue_chat_reason").
 		Values(person.CreatedOn, person.UpdatedOn, person.SteamID.Int64(), person.PlayerSummary.CommunityVisibilityState,
 			person.PlayerSummary.ProfileState, person.PlayerSummary.PersonaName, person.PlayerSummary.ProfileURL,
 			person.PlayerSummary.Avatar, person.PlayerSummary.AvatarMedium, person.PlayerSummary.AvatarFull,
@@ -104,7 +105,7 @@ func (r *personRepository) insertPerson(ctx context.Context, transaction pgx.Tx,
 			person.PlayerSummary.TimeCreated, person.PlayerSummary.LocCountryCode, person.PlayerSummary.LocStateCode,
 			person.PlayerSummary.LocCityID, person.PermissionLevel, person.DiscordID, person.CommunityBanned,
 			person.VACBans, person.GameBans, person.EconomyBan, person.DaysSinceLastBan, person.UpdatedOnSteam,
-			person.Muted, person.PlayerqueueChatStatus))
+			person.Muted, person.PlayerqueueChatStatus, person.PlayerqueueChatReason))
 	if errExec != nil {
 		return r.db.DBErr(errExec)
 	}
@@ -121,7 +122,7 @@ var profileColumns = []string{ //nolint:gochecknoglobals
 	"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
 	"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id",
 	"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban", "updated_on_steam",
-	"muted", "playerqueue_chat_status",
+	"muted", "playerqueue_chat_status", "playerqueue_chat_reason",
 }
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
@@ -161,7 +162,8 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, transaction p
 			"p.updated_on_steam",
 			"p.muted",
 			"coalesce(pt.patreon_id, '')",
-			"p.playerqueue_chat_status").
+			"p.playerqueue_chat_status",
+			"p.playerqueue_chat_reason").
 		From("person p").
 		LeftJoin("auth_patreon pt USING (steam_id)").
 		Where(sq.Eq{"p.steam_id": sid64.Int64()}))
@@ -182,7 +184,7 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, transaction p
 		&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 		&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 		&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam,
-		&person.Muted, &person.PatreonID, &person.PlayerqueueChatStatus)); err != nil {
+		&person.Muted, &person.PatreonID, &person.PlayerqueueChatStatus, &person.PlayerqueueChatReason)); err != nil {
 		return person, err
 	}
 
@@ -219,7 +221,7 @@ func (r *personRepository) GetPeopleBySteamID(ctx context.Context, transaction p
 			&person.AvatarFull, &person.AvatarHash, &person.PersonaState, &person.RealName, &person.TimeCreated,
 			&person.LocCountryCode, &person.LocStateCode, &person.LocCityID, &person.PermissionLevel, &person.DiscordID,
 			&person.CommunityBanned, &person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
-			&person.UpdatedOnSteam, &person.Muted, &person.PlayerqueueChatStatus); errScan != nil {
+			&person.UpdatedOnSteam, &person.Muted, &person.PlayerqueueChatStatus, &person.PlayerqueueChatReason); errScan != nil {
 			return nil, errors.Join(errScan, domain.ErrScanResult)
 		}
 
@@ -272,7 +274,8 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 			"p.avatarmedium", "p.avatarfull", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
 			"p.loccountrycode", "p.locstatecode", "p.loccityid", "p.permission_level", "p.discord_id",
 			"p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban", "p.days_since_last_ban",
-			"p.updated_on_steam", "p.muted", "coalesce(pt.patreon_id, '')", "p.playerqueue_chat_status").
+			"p.updated_on_steam", "p.muted", "coalesce(pt.patreon_id, '')", "p.playerqueue_chat_status",
+			"p.playerqueue_chat_reason").
 		From("person p").
 		LeftJoin("auth_patreon pt USING (steam_id)")
 
@@ -317,7 +320,7 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 			"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
 			"loccountrycode", "locstatecode", "loccityid", "p.permission_level", "discord_id",
 			"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
-			"updated_on_steam", "muted", "playerqueue_chat_status",
+			"updated_on_steam", "muted", "playerqueue_chat_status", "playerqueue_chat_reason",
 		},
 		"pt.": {"patreon_id"},
 	}, "steam_id")
@@ -344,7 +347,8 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 				&person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 				&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
-				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID, &person.PlayerqueueChatStatus); errScan != nil {
+				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID, &person.PlayerqueueChatStatus,
+				&person.PlayerqueueChatReason); errScan != nil {
 			return nil, 0, errors.Join(errScan, domain.ErrScanResult)
 		}
 
@@ -390,7 +394,7 @@ func (r *personRepository) GetPersonByDiscordID(ctx context.Context, discordID s
 		&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 		&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned, &person.VACBans,
 		&person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam, &person.Muted,
-		&person.PlayerqueueChatStatus)
+		&person.PlayerqueueChatStatus, &person.PlayerqueueChatReason)
 	if errQuery != nil {
 		return person, r.db.DBErr(errQuery)
 	}
@@ -410,7 +414,7 @@ func (r *personRepository) GetExpiredProfiles(ctx context.Context, transaction p
 			"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
 			"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id",
 			"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban", "updated_on_steam",
-			"muted", "playerqueue_chat_status").
+			"muted", "playerqueue_chat_status", "playerqueue_chat_reason").
 		From("person").
 		OrderBy("updated_on_steam ASC").
 		Where(sq.Lt{"updated_on_steam": time.Now().AddDate(0, 0, -30)}).
@@ -433,7 +437,7 @@ func (r *personRepository) GetExpiredProfiles(ctx context.Context, transaction p
 			&person.LocCountryCode, &person.LocStateCode, &person.LocCityID, &person.PermissionLevel,
 			&person.DiscordID, &person.CommunityBanned, &person.VACBans, &person.GameBans,
 			&person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam, &person.Muted,
-			&person.PlayerqueueChatStatus); errScan != nil {
+			&person.PlayerqueueChatStatus, &person.PlayerqueueChatReason); errScan != nil {
 			return nil, r.db.DBErr(errScan)
 		}
 

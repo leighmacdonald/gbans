@@ -3,9 +3,12 @@ package playerqueue
 import (
 	"time"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+type byePayload struct {
+	Message string `json:"message"`
+}
 
 type pingPayload struct {
 	CreatedOn time.Time `json:"created_on"`
@@ -13,12 +16,16 @@ type pingPayload struct {
 
 type pongPayload = pingPayload
 
-type joinPayload struct {
+type JoinPayload struct {
 	Servers []int `json:"servers"`
 }
 
-type leavePayload struct {
+type LeavePayload struct {
 	Servers []int `json:"servers"`
+}
+
+type MessageCreatePayload struct {
+	BodyMD string `json:"body_md"`
 }
 
 type member struct {
@@ -31,16 +38,16 @@ type ClientQueueState struct {
 	SteamID steamid.SteamID `json:"steam_id"`
 }
 
-type ServerQueueState struct {
+type queueState struct {
 	ServerID int                `json:"server_id"`
 	Members  []ClientQueueState `json:"members"`
 }
 
 type clientStatePayload struct {
-	UpdateUsers   bool               `json:"update_users"`
-	UpdateServers bool               `json:"update_servers"`
-	Servers       []ServerQueueState `json:"servers"`
-	Users         []member           `json:"users"`
+	UpdateUsers   bool         `json:"update_users"`
+	UpdateServers bool         `json:"update_servers"`
+	Servers       []queueState `json:"servers"`
+	Users         []member     `json:"users"`
 }
 
 type server struct {
@@ -57,5 +64,5 @@ type gameStartPayload struct {
 }
 
 type purgePayload struct {
-	MessageIDs []uuid.UUID `json:"message_ids"` //nolint:tagliatelle
+	MessageIDs []int64 `json:"message_ids"` //nolint:tagliatelle
 }

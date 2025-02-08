@@ -30,6 +30,20 @@ func NewPersonUsecase(repository domain.PersonRepository, config domain.ConfigUs
 	}
 }
 
+func (u personUsecase) CanAlter(ctx context.Context, sourceID steamid.SteamID, targetID steamid.SteamID) (bool, error) {
+	source, errSource := u.GetOrCreatePersonBySteamID(ctx, nil, sourceID)
+	if errSource != nil {
+		return false, errSource
+	}
+
+	target, errGetProfile := u.GetOrCreatePersonBySteamID(ctx, nil, targetID)
+	if errGetProfile != nil {
+		return false, errGetProfile
+	}
+
+	return source.PermissionLevel > target.PermissionLevel, nil
+}
+
 func (u personUsecase) QueryProfile(ctx context.Context, query string) (domain.ProfileResponse, error) {
 	var resp domain.ProfileResponse
 

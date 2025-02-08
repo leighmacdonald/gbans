@@ -1,6 +1,7 @@
 import { LazyResult } from '../util/table.ts';
 import { parseDateTime, TimeStamped, transformCreatedOnDate, transformTimeStampedDates } from '../util/time.ts';
 import { apiCall, PermissionLevel, QueryFilter } from './common';
+import { ChatStatus } from './playerqueue.ts';
 
 export const defaultAvatarHash = 'fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb';
 
@@ -34,8 +35,6 @@ export interface UserNotification {
     created_on: Date;
 }
 
-export type ChatStatus = 'readwrite' | 'readonly' | 'noaccess';
-
 export interface UserProfile extends TimeStamped {
     steam_id: string;
     permission_level: PermissionLevel;
@@ -46,6 +45,7 @@ export interface UserProfile extends TimeStamped {
     ban_id: number;
     muted: boolean;
     playerqueue_chat_status: ChatStatus;
+    playerqueue_chat_reason: string;
 }
 
 export interface Person extends UserProfile {

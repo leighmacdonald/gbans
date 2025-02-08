@@ -18,6 +18,8 @@ import { IPWhitelistEditorModal } from './IPWhitelistEditorModal.tsx';
 import { NewsEditModal } from './NewsEditModal.tsx';
 import { PersonEditModal } from './PersonEditModal.tsx';
 import { QueueJoinModal } from './QueueJoinModal.tsx';
+import { QueuePurgeModal } from './QueuePurgeModal.tsx';
+import { QueueStatusModal } from './QueueStatusModal.tsx';
 import { SMAdminEditorModal } from './SMAdminEditorModal.tsx';
 import { SMGroupEditorModal } from './SMGroupEditorModal.tsx';
 import { SMGroupImmunityCreateModal } from './SMGroupImmunityCreateModal.tsx';
@@ -66,8 +68,11 @@ export const ModalForumThreadCreator = 'modal-forum-thread-creator';
 export const ModalForumThreadEditor = 'modal-forum-thread-editor';
 export const ModalNewsEditor = 'modal-news-editor';
 export const ModalQueueJoin = 'modal-queue-join';
-
+export const ModalQueuePurge = 'modal-queue-delete-messages';
+export const ModalQueueStatus = 'modal-queue-status';
 [
+    [ModalQueuePurge, QueuePurgeModal],
+    [ModalQueueStatus, QueueStatusModal],
     [ModalQueueJoin, QueueJoinModal],
     [ModalSMGroupImmunityEditor, SMGroupImmunityCreateModal],
     [ModalSMGroupOverridesEditor, SMGroupOverrideEditorModal],
@@ -102,5 +107,5 @@ export const ModalQueueJoin = 'modal-queue-join';
     [ModalUnbanGroup, UnbanGroupModal],
     [ModalNewsEditor, NewsEditModal]
 ].map((value) => {
-    NiceModal.register(value[0] as never, value[1] as never);
+    NiceModal.register(value[0] as string, value[1] as never);
 });

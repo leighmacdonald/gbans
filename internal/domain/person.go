@@ -36,6 +36,7 @@ type PersonUsecase interface {
 	SetSteam(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID, discordID string) error
 	SetPermissionLevel(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID, level Privilege) error
 	UpdateProfiles(ctx context.Context, transaction pgx.Tx, people People) (int, error)
+	CanAlter(ctx context.Context, sourceID steamid.SteamID, targetID steamid.SteamID) (bool, error)
 }
 
 type PersonRepository interface {
@@ -129,14 +130,6 @@ func NewUserProfile(sid64 steamid.SteamID) UserProfile {
 	}
 }
 
-type ChatStatus string
-
-const (
-	Readwrite ChatStatus = "readwrite"
-	Readonly  ChatStatus = "readonly"
-	Noaccess  ChatStatus = "noaccess"
-)
-
 type Person struct {
 	// TODO merge use of steamid & steam_id
 	SteamID               steamid.SteamID       `db:"steam_id" json:"steam_id"`
@@ -155,6 +148,7 @@ type Person struct {
 	DaysSinceLastBan      int                   `json:"days_since_last_ban"`
 	UpdatedOnSteam        time.Time             `json:"updated_on_steam"`
 	PlayerqueueChatStatus ChatStatus            `json:"playerqueue_chat_status"`
+	PlayerqueueChatReason string                `json:"playerqueue_chat_reason"`
 	*steamweb.PlayerSummary
 }
 
@@ -218,19 +212,20 @@ func NewPerson(sid64 steamid.SteamID) Person {
 	curTime := time.Now()
 
 	return Person{
-		SteamID:          sid64,
-		CreatedOn:        curTime,
-		UpdatedOn:        curTime,
-		PermissionLevel:  PUser,
-		Muted:            false,
-		IsNew:            true,
-		DiscordID:        "",
-		CommunityBanned:  false,
-		VACBans:          0,
-		GameBans:         0,
-		EconomyBan:       "none",
-		DaysSinceLastBan: 0,
-		UpdatedOnSteam:   time.Unix(0, 0),
+		SteamID:               sid64,
+		CreatedOn:             curTime,
+		UpdatedOn:             curTime,
+		PermissionLevel:       PUser,
+		Muted:                 false,
+		IsNew:                 true,
+		DiscordID:             "",
+		CommunityBanned:       false,
+		VACBans:               0,
+		GameBans:              0,
+		EconomyBan:            "none",
+		DaysSinceLastBan:      0,
+		UpdatedOnSteam:        time.Unix(0, 0),
+		PlayerqueueChatStatus: "readwrite",
 		PlayerSummary: &steamweb.PlayerSummary{
 			SteamID: sid64,
 		},

@@ -126,7 +126,7 @@ export const ServerList = () => {
                         : 0;
 
                     return (
-                        <Tooltip title="Join/Leave server queue. Number indicates actively queued players.">
+                        <Tooltip title="Join/Leave server queue. Number indicates actively queued players. (in testing)">
                             <IconButton
                                 disabled={!hasPermission(PermissionLevel.Moderator)}
                                 color={queued ? 'success' : undefined}
