@@ -1,15 +1,16 @@
-import { PermissionLevel } from './common.ts';
+import { apiCall, PermissionLevel } from './common.ts';
 
 export enum Operation {
     Ping,
     Pong,
     JoinQueue,
     LeaveQueue,
-    MessageSend,
-    MessageRecv,
+    Message,
     StateUpdate,
     StartGame,
-    Purge
+    Purge,
+    Bye,
+    ChatStatusChange
 }
 
 export type QueueMember = {
@@ -18,16 +19,16 @@ export type QueueMember = {
     hash: string;
 };
 
-export type QueuePayload<T> = {
+export type QueueRequest<T> = {
     op: Operation;
     payload: T;
 };
 
 export type PurgePayload = {
-    message_ids: string[];
+    message_ids: number[];
 };
 
-export type pingPayload = QueuePayload<{ created_on: Date }>;
+export type pingPayload = QueueRequest<{ created_on: Date }>;
 
 export type clientQueueState = {
     steam_id: string;
@@ -37,6 +38,10 @@ export type ServerQueueState = {
     members: clientQueueState[];
 };
 
+export type createMessage = {
+    body_md: string;
+};
+
 export type ServerQueueMessage = {
     steam_id: string;
     created_on: Date;
@@ -44,7 +49,7 @@ export type ServerQueueMessage = {
     avatarhash: string;
     permission_level: PermissionLevel;
     body_md: string;
-    message_id: string;
+    message_id: number;
 };
 
 export type JoinQueuePayload = {
@@ -52,14 +57,6 @@ export type JoinQueuePayload = {
 };
 
 export type LeaveQueuePayload = JoinQueuePayload;
-
-export const websocketURL = () => {
-    let protocol = 'ws';
-    if (location.protocol === 'https:') {
-        protocol = 'wss:';
-    }
-    return `${protocol}://${location.host}/ws`;
-};
 
 export type Member = {
     name: string;
@@ -82,7 +79,30 @@ export type QueueServer = {
     connect_command: string;
 };
 
+export type ChatStatusChangePayload = {
+    status: ChatStatus;
+    reason: string;
+};
+
 export type GameStartPayload = {
     users: Member[];
     server: QueueServer;
+};
+
+export type ChatStatus = 'readwrite' | 'readonly' | 'noaccess';
+
+export const websocketURL = () => {
+    let protocol = 'ws';
+    if (location.protocol === 'https:') {
+        protocol = 'wss:';
+    }
+    return `${protocol}://${location.host}/ws`;
+};
+
+export const apiQueueMessagesDelete = async (message_id: number, count: number) => {
+    return await apiCall(`/api/playerqueue/messages/${message_id}/${count}`, 'DELETE', {});
+};
+
+export const apiQueueSetUserStatus = async (steam_id: string, chat_status: ChatStatus, reason: string) => {
+    return await apiCall(`/api/playerqueue/status/${steam_id}`, 'PUT', { chat_status, reason });
 };

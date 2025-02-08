@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { QueueMember, ServerQueueMessage, ServerQueueState } from '../api';
+import { ChatStatus, QueueMember, ServerQueueMessage, ServerQueueState } from '../api';
 import { noop } from '../util/lists.ts';
 
 type QueueCtxProps = {
@@ -7,6 +7,8 @@ type QueueCtxProps = {
     showChat: boolean;
     setShowChat: (showChat: boolean) => void;
     isReady: boolean;
+    chatStatus: ChatStatus;
+    reason: string;
     users: QueueMember[];
     servers: ServerQueueState[];
     messages: ServerQueueMessage[];
@@ -19,6 +21,8 @@ export const QueueCtx = createContext<QueueCtxProps>({
     lastPong: new Date(),
     showChat: false,
     isReady: false,
+    chatStatus: 'noaccess',
+    reason: '',
     users: [],
     servers: [],
     messages: [],

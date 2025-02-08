@@ -76,6 +76,7 @@ const (
 	ChannelForumLog
 	ChannelWordFilterLog
 	ChannelKickLog
+	ChannelPlayerqueue
 )
 
 type DiscordUsecase interface {

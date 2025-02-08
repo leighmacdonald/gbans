@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE TABLE IF NOT EXISTS playerqueue_messages
 (
-    message_id  uuid primary key,
+    message_id  bigint primary key generated always as identity,
     steam_id    bigint      not null references person (steam_id) ON DELETE CASCADE,
     personaname text        not null,
     avatarhash  text        not null,
@@ -15,6 +15,9 @@ CREATE INDEX playerqueue_messages_created_on_idx ON playerqueue_messages (create
 
 ALTER TABLE config
     ADD COLUMN IF NOT EXISTS general_playerqueue_enabled bool not null default false;
+
+ALTER TABLE config
+    ADD COLUMN IF NOT EXISTS discord_playerqueue_channel_id text not null default '';
 
 BEGIN;
 
@@ -33,6 +36,9 @@ $$;
 
 
 ALTER TABLE person
-    ADD COLUMN IF NOT EXISTS playerqueue_chat_status chat_status DEFAULT 'readwrite';
+    ADD COLUMN IF NOT EXISTS playerqueue_chat_status chat_status not null DEFAULT 'readwrite';
+
+ALTER TABLE person
+    ADD COLUMN IF NOT EXISTS playerqueue_chat_reason text not null DEFAULT '';
 
 COMMIT;

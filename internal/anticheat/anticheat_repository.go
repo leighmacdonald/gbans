@@ -148,7 +148,7 @@ func (a anticheatRepository) SaveEntries(ctx context.Context, entries []logparse
 				"raw_log":    entry.RawLog,
 				"created_on": entry.CreatedOn.Truncate(time.Second),
 			})); err != nil {
-			return err
+			return a.db.DBErr(err)
 		}
 	}
 

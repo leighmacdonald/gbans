@@ -1,3 +1,4 @@
+import { MouseEvent } from 'react';
 import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
@@ -7,15 +8,18 @@ import { ButtonLink } from './ButtonLink.tsx';
 export const QueueChatName = ({
     steam_id,
     personaname,
-    avatarhash
+    avatarhash,
+    onClick = undefined
 }: {
     steam_id: string;
     personaname: string;
     avatarhash: string;
+    onClick?: (e: MouseEvent<HTMLElement>) => void;
 }) => {
     const theme = useTheme();
     return (
         <ButtonLink
+            onClick={onClick}
             fullWidth={true}
             size={'small'}
             to={'/profile/$steamId'}
@@ -24,6 +28,7 @@ export const QueueChatName = ({
                 justifyContent: 'flex-start',
                 padding: 0,
                 margin: 0,
+                overflow: 'hidden',
                 '&:hover': {
                     cursor: 'pointer',
                     backgroundColor: theme.palette.background.default

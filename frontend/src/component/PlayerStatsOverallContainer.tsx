@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { formatDistance } from 'date-fns';
 import { apiGetPlayerStats, PlayerOverallResult } from '../api';
+import { logErr } from '../util/errors.ts';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import FmtWhenGt from './FmtWhenGT.tsx';
@@ -69,6 +70,7 @@ export const PlayerStatsOverallContainer = ({ steam_id }: PlayerStatsOverallCont
             .then((resp) => {
                 setStats(resp);
             })
+            .catch(logErr)
             .finally(() => {
                 setLoading(false);
             });

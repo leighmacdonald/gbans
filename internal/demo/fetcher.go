@@ -168,7 +168,7 @@ func (d Fetcher) fetchStacLogs(ctx context.Context, stactPathFmt string, server 
 		}
 
 		slog.Debug("Importing stac log", slog.String("name", file.Name()), slog.String("server", server.ShortName))
-		if errImport := d.anticheat.Import(ctx, file.Name(), reader, server.ServerID); errImport != nil {
+		if errImport := d.anticheat.Import(ctx, file.Name(), reader, server.ServerID); errImport != nil && !errors.Is(errImport, domain.ErrDuplicate) {
 			slog.Error("Failed to import stac logs", log.ErrAttr(errImport))
 		}
 
@@ -223,11 +223,6 @@ func (d Downloader) Start(ctx context.Context) {
 	if interval < time.Minute*5 {
 		slog.Warn("Interval is too short, overriding to 5 minutes", slog.Duration("interval", interval))
 		interval = time.Minute * 5
-	}
-
-	// TODO remove
-	if err := d.scpExec.Update(ctx); err != nil {
-		slog.Error("Error trying to download demos", log.ErrAttr(err))
 	}
 
 	ticker := time.NewTicker(interval)

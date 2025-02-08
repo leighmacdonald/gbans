@@ -196,7 +196,7 @@ function Servers() {
                     <ContainerWithHeaderAndButtons
                         title={`Servers (${selectedServers.length}/${servers.length})`}
                         buttons={[
-                            <Tooltip title={'Toggle server queue help'}>
+                            <Tooltip title={'Toggle server queue help'} key={'help-queue-button'}>
                                 <IconButton
                                     color={'default'}
                                     onClick={() => {

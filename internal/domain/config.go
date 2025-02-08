@@ -226,6 +226,7 @@ type ConfigDiscord struct {
 	ForumLogChannelID       string `json:"forum_log_channel_id"`
 	WordFilterLogChannelID  string `json:"word_filter_log_channel_id"`
 	KickLogChannelID        string `json:"kick_log_channel_id"`
+	PlayerqueueChannelID    string `json:"playerqueue_channel_id"`
 	ModPingRoleID           string `json:"mod_ping_role_id"`
 	UnregisterOnStart       bool   `json:"unregister_on_start"`
 }

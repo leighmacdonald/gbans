@@ -9,45 +9,18 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
-type op int
-
-const (
-	// Ping is how you both join the swarm, and stay in it.
-	Ping op = iota
-	Pong
-	JoinQueue
-	LeaveQueue
-	MessageSend
-	MessageRecv
-	StateUpdate
-	StartGame
-	Purge
-)
-
-type ServerQueuePayloadInbound struct {
-	Op      op              `json:"op"`
-	Payload json.RawMessage `json:"payload"`
-}
-
-type Msg struct {
-	Op      op  `json:"op"`
-	Payload any `json:"payload"`
-}
-
 type serverQueueHandler struct {
-	queue       *Queue
-	playerQueue domain.PlayerqueueUsecase
+	queue domain.PlayerqueueUsecase
 }
 
-func NewServerQueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase,
-	servers domain.ServersUsecase, state domain.StateUsecase, playerQueue domain.PlayerqueueUsecase, chatLogs []domain.Message,
+func NewPlayerqueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase,
+	playerQueue domain.PlayerqueueUsecase,
 ) {
 	conf := config.Config()
 	var origins []string
@@ -56,16 +29,14 @@ func NewServerQueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config d
 	}
 
 	handler := &serverQueueHandler{
-		queue:       NewServerQueue(100, 1, servers, state, chatLogs),
-		playerQueue: playerQueue,
+		queue: playerQueue,
 	}
 
 	authedGroup := engine.Group("/api/playerqueue")
 	{
 		mod := authedGroup.Use(auth.Middleware(domain.PModerator))
 		mod.PUT("/status/:steam_id", handler.status())
-		mod.DELETE("/message/:message_id", handler.messageDelete())
-		mod.DELETE("/purge/:steam_id/:count", handler.purge())
+		mod.DELETE("/messages/:message_id/:count", handler.purge())
 	}
 
 	authedGroupWS := engine.Group("/")
@@ -82,20 +53,37 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		user := httphelper.CurrentUserProfile(ctx)
+		currentUser := httphelper.CurrentUserProfile(ctx)
 
 		var req request
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		if err := h.playerQueue.SetChatStatus(ctx, user.SteamID, req.ChatStatus); err != nil {
-			httphelper.HandleErrInternal(ctx)
+		steamID, errSteamID := httphelper.GetSID64Param(ctx, "steam_id")
+		if errSteamID != nil {
+			httphelper.HandleErrBadRequest(ctx)
 
 			return
 		}
 
-		slog.Info("Set chat status", slog.String("steam_id", user.SteamID.String()), slog.String("status", string(req.ChatStatus)))
+		if err := h.queue.SetChatStatus(ctx, currentUser.SteamID, steamID, req.ChatStatus, req.Reason); err != nil {
+			if errors.Is(err, domain.ErrPermissionDenied) {
+				httphelper.HandleErrPermissionDenied(ctx)
+
+				return
+			}
+
+			if errors.Is(err, domain.ErrDuplicate) {
+				httphelper.HandleErrDuplicate(ctx)
+
+				return
+			}
+
+			return
+		}
+
+		slog.Info("Set chat status", slog.String("steam_id", currentUser.SteamID.String()), slog.String("status", string(req.ChatStatus)))
 
 		ctx.JSON(http.StatusOK, gin.H{})
 	}
@@ -104,6 +92,7 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := httphelper.CurrentUserProfile(ctx)
+		// Create ws connection
 		wsConn, errConn := newClientConn(ctx, validOrigins)
 		if errConn != nil {
 			httphelper.HandleErrBadRequest(ctx)
@@ -112,20 +101,21 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 			return
 		}
 
+		// Connect to the coordinator with our connection
 		client := h.queue.Connect(ctx, currentUser, wsConn)
 		defer h.queue.Disconnect(client)
-
-		slog.Debug("Client joined queue swarm", slog.String("client", client.conn.RemoteAddr().String()))
 
 		for {
 			select {
 			case <-ctx.Done():
-				slog.Debug("Closing client connection", slog.String("client", client.conn.RemoteAddr().String()))
+				slog.Debug("Closing client connection", slog.String("client", client.ID()))
 
 				return
 			default:
-				if err := h.handleMessage(ctx, client, currentUser); err != nil {
+				if err := h.handleWSMessage(ctx, client, currentUser); err != nil {
 					if errors.Is(err, ErrQueueIO) {
+						slog.Debug("Client connection error", slog.String("client", client.ID()), log.ErrAttr(ErrQueueIO))
+
 						return
 					}
 					slog.Error("Failed to handle message", log.ErrAttr(err))
@@ -135,46 +125,38 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 	}
 }
 
-func (h *serverQueueHandler) handleMessage(ctx context.Context, client *Client, user domain.UserProfile) error {
-	var payloadInbound ServerQueuePayloadInbound
-	if errRead := client.conn.ReadJSON(&payloadInbound); errRead != nil {
+func (h *serverQueueHandler) handleWSMessage(ctx context.Context, client domain.QueueClient, user domain.UserProfile) error {
+	var payloadInbound domain.Request
+	if errRead := client.Next(&payloadInbound); errRead != nil {
 		return errors.Join(errRead, ErrQueueIO)
 	}
 
 	var err error
 	switch payloadInbound.Op {
-	case Ping:
-		h.queue.Ping(client)
-	case JoinQueue:
-		var p joinPayload
+	case domain.Ping:
+		client.Ping()
+	case domain.JoinQueue:
+		var p JoinPayload
 		if errUnmarshal := json.Unmarshal(payloadInbound.Payload, &p); errUnmarshal != nil {
 			return errors.Join(errUnmarshal, ErrQueueParseMessage)
 		}
-		err = h.queue.JoinQueue(ctx, client, p.Servers)
+		err = h.queue.JoinLobbies(client, p.Servers)
 
-	case LeaveQueue:
-		var p leavePayload
-		if errUnmarshal := json.Unmarshal(payloadInbound.Payload, &p); errUnmarshal != nil {
-			return errors.Join(errUnmarshal, ErrQueueParseMessage)
-		}
-
-		err = h.queue.LeaveQueue(client, p.Servers)
-	case MessageSend:
-		var p domain.Message
+	case domain.LeaveQueue:
+		var p LeavePayload
 		if errUnmarshal := json.Unmarshal(payloadInbound.Payload, &p); errUnmarshal != nil {
 			return errors.Join(errUnmarshal, ErrQueueParseMessage)
 		}
 
-		msg, errMessage := h.queue.Message(p, user)
-		if errMessage != nil {
-			err = errMessage
-
-			break
+		err = h.queue.LeaveLobbies(client, p.Servers)
+	case domain.Message:
+		client.Limit()
+		var p MessageCreatePayload
+		if errUnmarshal := json.Unmarshal(payloadInbound.Payload, &p); errUnmarshal != nil {
+			return errors.Join(errUnmarshal, ErrQueueParseMessage)
 		}
 
-		if _, errAdd := h.playerQueue.Add(ctx, msg); errAdd != nil {
-			slog.Error("Failed to add playerqueue message", log.ErrAttr(errAdd))
-		}
+		err = h.queue.AddMessage(ctx, p.BodyMD, user)
 
 	default:
 		return ErrUnexpectedMessage
@@ -183,33 +165,13 @@ func (h *serverQueueHandler) handleMessage(ctx context.Context, client *Client, 
 	return err
 }
 
-func (h *serverQueueHandler) messageDelete() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		messageID, errID := httphelper.GetUUIDParam(ctx, "message_id")
-		if errID != nil {
-			httphelper.HandleErrBadRequest(ctx)
-
-			return
-		}
-
-		if errDelete := h.playerQueue.Delete(ctx, messageID); errDelete != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to delete message", log.ErrAttr(errDelete))
-
-			return
-		}
-
-		h.queue.purgeMessages(messageID)
-
-		ctx.JSON(http.StatusOK, gin.H{})
-	}
-}
-
 func (h *serverQueueHandler) purge() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		steamID, err := httphelper.GetSID64Param(ctx, "steam_id")
+		user := httphelper.CurrentUserProfile(ctx)
+
+		messageID, err := httphelper.GetInt64Param(ctx, "message_id")
 		if err != nil {
-			httphelper.HandleErrBadRequest(ctx)
+			httphelper.HandleErrNotFound(ctx)
 
 			return
 		}
@@ -221,23 +183,14 @@ func (h *serverQueueHandler) purge() gin.HandlerFunc {
 			return
 		}
 
-		var messageIDs []uuid.UUID
-		for _, msg := range h.queue.findMessages(steamID, count) {
-			messageIDs = append(messageIDs, msg.MessageID)
-		}
-
-		if len(messageIDs) == 0 {
-			ctx.JSON(http.StatusOK, gin.H{})
-		}
-
-		h.queue.purgeMessages(messageIDs...)
-
-		if errDelete := h.playerQueue.Delete(ctx, messageIDs...); errDelete != nil {
+		errPurge := h.queue.Purge(ctx, user.SteamID, messageID, count)
+		if errPurge != nil {
 			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to delete message", log.ErrAttr(errDelete))
 
 			return
 		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
 	}
 }
 
