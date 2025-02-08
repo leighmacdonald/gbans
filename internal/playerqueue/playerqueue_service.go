@@ -106,35 +106,46 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 		defer h.queue.Disconnect(client)
 
 		for {
-			select {
-			case <-ctx.Done():
-				slog.Debug("Closing client connection", slog.String("client", client.ID()))
+			request, err := h.handleWSMessage(client)
+			if err != nil {
+				switch {
+				case errors.Is(err, context.Canceled):
+					return
+				case errors.Is(err, ErrQueueIO):
+					slog.Debug("Client connection error", slog.String("client", client.ID()), log.ErrAttr(ErrQueueIO))
 
-				return
-			default:
-				if err := h.handleWSMessage(ctx, client, currentUser); err != nil {
-					if errors.Is(err, ErrQueueIO) {
-						slog.Debug("Client connection error", slog.String("client", client.ID()), log.ErrAttr(ErrQueueIO))
+					return
+				default:
+					slog.Error("Error trying to handle websocket message", log.ErrAttr(err))
 
-						return
-					}
-					slog.Error("Failed to handle message", log.ErrAttr(err))
+					return
 				}
+			}
+
+			if errHandler := h.handleRequest(ctx, client, request, currentUser); errHandler != nil {
+				slog.Error("Error trying to handle websocket request", log.ErrAttr(errHandler))
+
+				continue
+
 			}
 		}
 	}
 }
 
-func (h *serverQueueHandler) handleWSMessage(ctx context.Context, client domain.QueueClient, user domain.UserProfile) error {
+func (h *serverQueueHandler) handleWSMessage(client domain.QueueClient) (domain.Request, error) {
 	var payloadInbound domain.Request
 	if errRead := client.Next(&payloadInbound); errRead != nil {
-		return errors.Join(errRead, ErrQueueIO)
+		return payloadInbound, errors.Join(errRead, ErrQueueIO)
 	}
 
+	return payloadInbound, nil
+}
+
+func (h *serverQueueHandler) handleRequest(ctx context.Context, client domain.QueueClient, payloadInbound domain.Request, user domain.UserProfile) error {
 	var err error
 	switch payloadInbound.Op {
 	case domain.Ping:
-		client.Ping()
+		client.Pong()
 	case domain.JoinQueue:
 		var p JoinPayload
 		if errUnmarshal := json.Unmarshal(payloadInbound.Payload, &p); errUnmarshal != nil {

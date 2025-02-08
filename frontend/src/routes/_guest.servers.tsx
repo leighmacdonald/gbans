@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { createFileRoute } from '@tanstack/react-router';
 import { LatLngLiteral } from 'leaflet';
-import { apiGetServerStates, BaseServer } from '../api';
+import { apiGetServerStates, BaseServer, PermissionLevel } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { QueueHelp } from '../component/QueueHelp.tsx';
@@ -23,6 +23,7 @@ import { ServerList } from '../component/ServerList.tsx';
 import { ServerMap } from '../component/ServerMap.tsx';
 import { Title } from '../component/Title.tsx';
 import { MapStateCtx } from '../contexts/MapStateCtx.tsx';
+import { useAuth } from '../hooks/useAuth.ts';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { sum } from '../util/lists.ts';
@@ -122,6 +123,7 @@ export const ServerStats = () => {
 
 function Servers() {
     const [servers, setServers] = useState<BaseServer[]>([]);
+    const { hasPermission } = useAuth();
     const [pos, setPos] = useState<LatLngLiteral>({
         lat: 0.0,
         lng: 0.0
@@ -195,18 +197,22 @@ function Servers() {
                     {showHelp && <QueueHelp />}
                     <ContainerWithHeaderAndButtons
                         title={`Servers (${selectedServers.length}/${servers.length})`}
-                        buttons={[
-                            <Tooltip title={'Toggle server queue help'} key={'help-queue-button'}>
-                                <IconButton
-                                    color={'default'}
-                                    onClick={() => {
-                                        setShowHelp((prevState) => !prevState);
-                                    }}
-                                >
-                                    {showHelp ? <HelpIcon /> : <HelpOutlineIcon />}
-                                </IconButton>
-                            </Tooltip>
-                        ]}
+                        buttons={
+                            !hasPermission(PermissionLevel.Moderator)
+                                ? []
+                                : [
+                                      <Tooltip title={'Toggle server queue help'} key={'help-queue-button'}>
+                                          <IconButton
+                                              color={'default'}
+                                              onClick={() => {
+                                                  setShowHelp((prevState) => !prevState);
+                                              }}
+                                          >
+                                              {showHelp ? <HelpIcon /> : <HelpOutlineIcon />}
+                                          </IconButton>
+                                      </Tooltip>
+                                  ]
+                        }
                         iconLeft={<StorageIcon />}
                     >
                         <ServerList />

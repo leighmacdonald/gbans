@@ -3,7 +3,6 @@ import { ChatStatus, QueueMember, ServerQueueMessage, ServerQueueState } from '.
 import { noop } from '../util/lists.ts';
 
 type QueueCtxProps = {
-    lastPong: Date;
     showChat: boolean;
     setShowChat: (showChat: boolean) => void;
     isReady: boolean;
@@ -18,7 +17,6 @@ type QueueCtxProps = {
 };
 
 export const QueueCtx = createContext<QueueCtxProps>({
-    lastPong: new Date(),
     showChat: false,
     isReady: false,
     chatStatus: 'noaccess',

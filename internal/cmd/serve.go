@@ -386,6 +386,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				chatlogs = []domain.ChatLog{}
 			}
 			playerqueueUC := playerqueue.NewPlayerqueueUsecase(playerqueueRepo, personUsecase, serversUC, stateUsecase, chatlogs, notificationUsecase)
+			go playerqueueUC.Start(ctx)
 			playerqueue.NewPlayerqueueHandler(router, authUsecase, configUsecase, playerqueueUC)
 
 			if conf.Debug.AddRCONLogAddress != "" {

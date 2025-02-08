@@ -129,7 +129,7 @@ export const ServerList = () => {
                         <Tooltip title="Join/Leave server queue. Number indicates actively queued players. (in testing)">
                             <IconButton
                                 disabled={!hasPermission(PermissionLevel.Moderator)}
-                                color={queued ? 'success' : undefined}
+                                color={queued ? 'success' : 'primary'}
                                 onClick={() => {
                                     if (queued) {
                                         leaveQueue([String(info.row.original.server_id)]);
