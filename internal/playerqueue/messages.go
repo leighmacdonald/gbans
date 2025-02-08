@@ -1,8 +1,6 @@
 package playerqueue
 
 import (
-	"time"
-
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -10,11 +8,7 @@ type byePayload struct {
 	Message string `json:"message"`
 }
 
-type pingPayload struct {
-	CreatedOn time.Time `json:"created_on"`
-}
-
-type pongPayload = pingPayload
+type emptyPayload struct{}
 
 type JoinPayload struct {
 	Servers []int `json:"servers"`

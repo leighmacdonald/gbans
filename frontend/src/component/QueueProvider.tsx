@@ -11,7 +11,6 @@ import {
     LeaveQueuePayload,
     Operation,
     PermissionLevel,
-    pingPayload,
     PurgePayload,
     QueueMember,
     QueueRequest,
@@ -33,7 +32,6 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
     const [messages, setMessages] = useState<ServerQueueMessage[]>([]);
     const [showChat, setShowChat] = useState(false);
     const [servers, setServers] = useState<ServerQueueState[]>([]);
-    const [lastPong, setLastPong] = useState(new Date());
     const { profile } = useAuth();
     const [chatStatus, setChatStatus] = useState<ChatStatus>(profile.playerqueue_chat_status);
     const [reason, setReason] = useState<string>('');
@@ -43,8 +41,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
     const { readyState, sendJsonMessage, lastJsonMessage } = useWebSocket(websocketURL(), {
         queryParams: { token: readAccessToken() },
         share: false,
-        // heartbeat: true,
-        reconnectInterval: 10,
+        //reconnectInterval: 10,
         shouldReconnect: () => true
     });
 
@@ -52,7 +49,6 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
         switch (readyState) {
             case ReadyState.OPEN:
                 setIsReady(true);
-                sendJsonMessage({ op: Operation.Ping, payload: { created_on: new Date() } } as pingPayload);
                 setMessages((prevState) => [
                     ...prevState,
                     {
@@ -94,18 +90,20 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
 
     const handleIncomingOperation = async (request: QueueRequest<never>) => {
         switch (request.op) {
-            case Operation.Pong: {
-                setLastPong(new Date());
-                break;
-            }
-
             case Operation.StateUpdate: {
                 updateState(request.payload as ClientStatePayload);
                 break;
             }
 
             case Operation.Message: {
-                setMessages((prev) => [...prev, transformCreatedOnDate(request.payload as ServerQueueMessage)]);
+                setMessages((prev) => {
+                    const messages = (request.payload as ServerQueueMessage[]).map(transformCreatedOnDate);
+                    let all = [...prev, ...messages];
+                    if (all.length > 100) {
+                        all = all.slice(all.length - 100, 100);
+                    }
+                    return all;
+                });
                 break;
             }
 
@@ -189,7 +187,6 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                 sendMessage,
                 joinQueue,
                 leaveQueue,
-                lastPong,
                 showChat,
                 setShowChat,
                 chatStatus,

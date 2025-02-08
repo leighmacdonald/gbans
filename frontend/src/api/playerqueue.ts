@@ -28,8 +28,6 @@ export type PurgePayload = {
     message_ids: number[];
 };
 
-export type pingPayload = QueueRequest<{ created_on: Date }>;
-
 export type clientQueueState = {
     steam_id: string;
 };

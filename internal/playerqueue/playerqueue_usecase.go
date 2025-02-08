@@ -20,7 +20,7 @@ func NewPlayerqueueUsecase(repo domain.PlayerqueueRepository, persons domain.Per
 		repo:    repo,
 		notif:   notif,
 		persons: persons,
-		queue: New(100, 1, chatLogs, func() ([]Lobby, error) {
+		queue: New(100, 2, chatLogs, func() ([]Lobby, error) {
 			currentState := state.Current()
 
 			srvs, _, errServers := servers.Servers(context.Background(), domain.ServerQueryFilter{
@@ -33,8 +33,8 @@ func NewPlayerqueueUsecase(repo domain.PlayerqueueRepository, persons domain.Per
 			}
 
 			var lobbies []Lobby
-			for _, server := range srvs {
-				lobby := Lobby{ServerID: server.ServerID}
+			for _, srv := range srvs {
+				lobby := Lobby{ServerID: srv.ServerID}
 				for _, serverState := range currentState {
 					if serverState.ServerID == lobby.ServerID {
 						lobby.Hostname = serverState.Host
@@ -60,6 +60,26 @@ type playerqueueUsecase struct {
 	persons domain.PersonUsecase
 	notif   domain.NotificationUsecase
 	queue   *Coordinator
+}
+
+func (p playerqueueUsecase) Start(ctx context.Context) {
+	cleanupTicker := time.NewTicker(time.Second * 30)
+	refreshState := time.NewTicker(time.Second * 2)
+
+	p.queue.updateState()
+
+	for {
+		select {
+		case <-cleanupTicker.C:
+			//p.queue.removeZombies()
+		case <-refreshState.C:
+			p.queue.updateState()
+		case <-ctx.Done():
+			p.queue.broadcast(domain.Response{Op: domain.Bye, Payload: byePayload{Message: "Server shutting down... run!!!"}})
+
+			return
+		}
+	}
 }
 
 func (p playerqueueUsecase) JoinLobbies(client domain.QueueClient, servers []int) error {

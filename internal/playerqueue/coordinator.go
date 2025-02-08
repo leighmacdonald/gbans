@@ -3,15 +3,13 @@ package playerqueue
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"sync"
-	"time"
-
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
+	"log/slog"
+	"sync"
 )
 
 // TODO Track a users desired minimum size for them to be counted towards play.
@@ -24,7 +22,7 @@ type Coordinator struct {
 	clients            []domain.QueueClient
 	chatLogs           []domain.ChatLog
 	mu                 *sync.RWMutex
-	currentState       func() ([]Lobby, error)
+	validLobbies       func() ([]Lobby, error)
 }
 
 func New(chatLogHistorySize int, minQueueSize int, chatlogs []domain.ChatLog, currentStateFunc func() ([]Lobby, error)) *Coordinator {
@@ -35,36 +33,22 @@ func New(chatLogHistorySize int, minQueueSize int, chatlogs []domain.ChatLog, cu
 		lobbies:            []*Lobby{},
 		mu:                 &sync.RWMutex{},
 		chatLogHistorySize: chatLogHistorySize,
-		currentState:       currentStateFunc,
+		validLobbies:       currentStateFunc,
 	}
 }
 
-func (q *Coordinator) Start(ctx context.Context) {
-	cleanupTicker := time.NewTicker(time.Second * 30)
-	refreshState := time.NewTicker(time.Second * 2)
+func (q *Coordinator) updateState() {
+	lobbies, errUpdate := q.validLobbies()
+	if errUpdate != nil {
+		slog.Error("Failed to update state", log.ErrAttr(errUpdate))
 
-	for {
-		select {
-		case <-cleanupTicker.C:
-			q.removeZombies()
-		case <-refreshState.C:
-			state, errUpdate := q.currentState()
-			if errUpdate != nil {
-				slog.Error("Failed to update state", log.ErrAttr(errUpdate))
+		return
+	}
 
-				continue
-			}
+	q.replaceLobbies(lobbies)
 
-			q.UpdateState(state)
-
-			if err := q.checkQueueCompat(); err != nil {
-				slog.Error("Failed to check queue compatibility", log.ErrAttr(err))
-			}
-		case <-ctx.Done():
-			q.broadcast(domain.Response{Op: domain.Bye, Payload: byePayload{Message: "Server shutting down... run!!!"}})
-
-			return
-		}
+	if err := q.checkQueueCompat(); err != nil {
+		slog.Error("Failed to check queue compatibility", log.ErrAttr(err))
 	}
 }
 
@@ -119,7 +103,7 @@ func (q *Coordinator) updateClientStates(fullUpdate bool) {
 		update.Users = players
 	}
 
-	q.broadcast(domain.Response{Op: domain.StateUpdate, Payload: update})
+	go q.broadcast(domain.Response{Op: domain.StateUpdate, Payload: update})
 }
 
 func (q *Coordinator) Leave(client domain.QueueClient, servers []int) error {
@@ -148,7 +132,7 @@ func (q *Coordinator) Leave(client domain.QueueClient, servers []int) error {
 	q.mu.Unlock()
 
 	if changed {
-		q.updateClientStates(false)
+		go q.updateClientStates(false)
 	}
 
 	return nil
@@ -218,7 +202,7 @@ func (q *Coordinator) Connect(ctx context.Context, steamID steamid.SteamID, name
 	return client
 }
 
-func (q *Coordinator) UpdateState(lobbies []Lobby) {
+func (q *Coordinator) replaceLobbies(lobbies []Lobby) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -427,7 +411,7 @@ func (q *Coordinator) Message(message domain.ChatLog) {
 	q.mu.RLock()
 	q.broadcast(domain.Response{
 		Op:      domain.Message,
-		Payload: message,
+		Payload: []domain.ChatLog{message},
 	})
 	q.mu.RUnlock()
 }
@@ -466,19 +450,19 @@ func (q *Coordinator) removeFromQueues(client domain.QueueClient) {
 
 // sendClientChatHistory sends the last N messages of the chatLogs history to the client provided.
 func (q *Coordinator) sendClientChatHistory(client domain.QueueClient) {
+
+	var payload []domain.ChatLog
+
 	q.mu.RLock()
-	msgs := make([]domain.Response, len(q.chatLogs))
-	for i, cl := range q.chatLogs {
-		msgs[i] = domain.Response{
-			Op:      domain.Message,
-			Payload: cl,
-		}
+	for _, cl := range q.chatLogs {
+		payload = append(payload, cl)
 	}
 	q.mu.RUnlock()
 
-	for _, msg := range msgs {
-		client.Send(msg)
-	}
+	go client.Send(domain.Response{
+		Op:      domain.Message,
+		Payload: payload,
+	})
 }
 
 // UpdateChatStatus updates a client with their new ChatStatus.

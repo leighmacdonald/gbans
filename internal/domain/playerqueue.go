@@ -26,6 +26,7 @@ type PlayerqueueUsecase interface {
 	Disconnect(client QueueClient)
 	JoinLobbies(client QueueClient, servers []int) error
 	LeaveLobbies(client QueueClient, servers []int) error
+	Start(ctx context.Context)
 }
 
 type PlayerqueueQueryOpts struct {
@@ -48,8 +49,6 @@ type QueueClient interface {
 	ID() string
 	// Next handles the incoming operation request
 	Next(r *Request) error
-	// Ping performs a ping/pong relay with the client
-	Ping()
 	SteamID() steamid.SteamID
 	Name() string
 	Avatarhash() string

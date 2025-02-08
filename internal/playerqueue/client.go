@@ -21,6 +21,7 @@ var (
 	ErrFindLobby         = errors.New("failed to find a Lobby")
 	ErrHostname          = errors.New("failed to resolve hostname")
 	ErrReadRequest       = errors.New("failed to read/decode request")
+	ErrClosedConnection  = errors.New("closed connection")
 )
 
 func newClient(steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) domain.QueueClient {
@@ -74,17 +75,14 @@ func (c *Client) Avatarhash() string {
 
 func (c *Client) Next(request *domain.Request) error {
 	if err := c.conn.ReadJSON(request); err != nil {
+		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			return ErrClosedConnection
+		}
+
 		return errors.Join(err, ErrReadRequest)
 	}
 
 	return nil
-}
-
-func (c *Client) Ping() {
-	c.Send(domain.Response{
-		Op:      domain.Pong,
-		Payload: pongPayload{CreatedOn: time.Now()},
-	})
 }
 
 func (c *Client) ID() string {
