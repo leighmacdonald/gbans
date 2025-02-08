@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { ChatStatus, QueueMember, ServerQueueMessage, ServerQueueState } from '../api';
+import { ChatStatus, QueueMember, ChatLog, LobbyState } from '../api';
 import { noop } from '../util/lists.ts';
 
 type QueueCtxProps = {
@@ -9,8 +9,8 @@ type QueueCtxProps = {
     chatStatus: ChatStatus;
     reason: string;
     users: QueueMember[];
-    servers: ServerQueueState[];
-    messages: ServerQueueMessage[];
+    lobbies: LobbyState[];
+    messages: ChatLog[];
     joinQueue: (serverIds: string[]) => void;
     leaveQueue: (serverIds: string[]) => void;
     sendMessage: (message: string) => void;
@@ -22,7 +22,7 @@ export const QueueCtx = createContext<QueueCtxProps>({
     chatStatus: 'noaccess',
     reason: '',
     users: [],
-    servers: [],
+    lobbies: [],
     messages: [],
     joinQueue: () => noop,
     leaveQueue: () => noop,

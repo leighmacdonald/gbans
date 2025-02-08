@@ -8,13 +8,13 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import { apiQueueMessagesDelete, ServerQueueMessage } from '../../api';
+import { apiQueueMessagesDelete, ChatLog } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-export const QueuePurgeModal = NiceModal.create(({ message }: { message: ServerQueueMessage }) => {
+export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog }) => {
     const modal = useModal();
     const { sendFlash } = useUserFlashCtx();
 

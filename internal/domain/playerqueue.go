@@ -57,9 +57,7 @@ type QueueClient interface {
 	// Start begins the clients response sender worker
 	Start(ctx context.Context)
 	Send(response Response)
-	// IsTimedOut checks the last ping time to see if a client has stopped pinging us for some reason.
-	IsTimedOut() bool
-	// HasMessageAccess checks if the user has at leasat readonly access to chat logs
+	// HasMessageAccess checks if the user has at least readonly access to chat logs
 	HasMessageAccess() bool
 	// Limit slows down incoming messages, similar to "slow mode", but much dumber, for now.
 	Limit()
@@ -76,10 +74,7 @@ const (
 type Op int
 
 const (
-	// Ping is how you both Join the swarm, and stay in it.
-	Ping Op = iota
-	Pong
-	JoinQueue
+	JoinQueue Op = iota
 	LeaveQueue
 	Message
 	StateUpdate

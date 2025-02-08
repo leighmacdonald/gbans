@@ -34,7 +34,7 @@ export const QueueChat = () => {
     const matches = useMediaQuery(theme.breakpoints.down('md'));
 
     const onSubmit = useCallback(
-        async (event: FormEvent<HTMLFormElement | HTMLDivElement>) => {
+        async (event: FormEvent<HTMLFormElement | HTMLDivElement | HTMLButtonElement>) => {
             event.preventDefault();
 
             if (msg.length > 0) {
@@ -60,7 +60,7 @@ export const QueueChat = () => {
     }, [matches, showPeople]);
 
     const inputStates: { readonly: boolean; label: string; reason: string } = useMemo(() => {
-        const canSend = profile.playerqueue_chat_status == 'readwrite';
+        const readonly = profile.playerqueue_chat_status != 'readwrite';
         if (!isReady) {
             return { readonly: true, label: 'Connecting', reason: '' };
         }
@@ -73,7 +73,7 @@ export const QueueChat = () => {
             return { readonly: true, label: 'Muted', reason: reason };
         }
 
-        return { readonly: !canSend, label: '', reason: '' };
+        return { readonly: readonly, label: '', reason: '' };
     }, [isReady, sending, profile.playerqueue_chat_status, reason, chatStatus]);
 
     return (
@@ -135,6 +135,7 @@ export const QueueChat = () => {
                                         disabled={inputStates.readonly}
                                         size={'small'}
                                         color={msg.length > 0 ? 'success' : 'default'}
+                                        onClick={onSubmit}
                                     >
                                         {inputStates.readonly ? <HourglassBottomIcon /> : <SendIcon />}
                                     </IconButton>

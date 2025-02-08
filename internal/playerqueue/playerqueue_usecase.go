@@ -63,19 +63,16 @@ type playerqueueUsecase struct {
 }
 
 func (p playerqueueUsecase) Start(ctx context.Context) {
-	cleanupTicker := time.NewTicker(time.Second * 30)
 	refreshState := time.NewTicker(time.Second * 2)
 
 	p.queue.updateState()
 
 	for {
 		select {
-		case <-cleanupTicker.C:
-			//p.queue.removeZombies()
 		case <-refreshState.C:
 			p.queue.updateState()
 		case <-ctx.Done():
-			p.queue.broadcast(domain.Response{Op: domain.Bye, Payload: byePayload{Message: "Server shutting down... run!!!"}})
+			p.queue.broadcast(domain.Response{Op: domain.Bye, Payload: ByePayload{Message: "Server shutting down... run!!!"}})
 
 			return
 		}

@@ -25,7 +25,7 @@ export const ServerList = () => {
     const { sendFlash } = useUserFlashCtx();
     const { profile, hasPermission } = useAuth();
     const { selectedServers } = useMapStateCtx();
-    const { joinQueue, leaveQueue, servers } = useQueueCtx();
+    const { joinQueue, leaveQueue, lobbies } = useQueueCtx();
     const columnHelper = createColumnHelper<ServerRow>();
 
     const metaServers = useMemo(() => {
@@ -35,7 +35,7 @@ export const ServerList = () => {
     const isQueued = (server_id: number) => {
         try {
             return Boolean(
-                servers.find((s) => s.server_id == server_id)?.members?.find((m) => m.steam_id == profile.steam_id)
+                lobbies.find((s) => s.server_id == server_id)?.members?.find((m) => m.steam_id == profile.steam_id)
             );
         } catch {
             return false;
@@ -119,8 +119,8 @@ export const ServerList = () => {
                 cell: (info) => {
                     const queued = isQueued(info.row.original.server_id);
 
-                    const count = servers
-                        ? (servers.find((value) => {
+                    const count = lobbies
+                        ? (lobbies.find((value) => {
                               return value.server_id == info.row.original.server_id;
                           })?.members?.length ?? 0)
                         : 0;
@@ -163,7 +163,7 @@ export const ServerList = () => {
                 )
             })
         ];
-    }, [servers, selectedServers, profile]);
+    }, [lobbies, selectedServers, profile]);
 
     const opts: TableOptions<ServerRow> = {
         data: metaServers,
