@@ -10,7 +10,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { ServerQueueMessage } from '../api';
+import { ChatLog } from '../api';
 import { useQueueCtx } from '../hooks/useQueueCtx.ts';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 import { QueueChatName } from './QueueChatName.tsx';
@@ -37,7 +37,7 @@ export const QueueChatMessageContainer = ({ showControls }: { showControls: bool
     );
 };
 
-const QueueChatMessage = ({ message, showControls }: { message: ServerQueueMessage; showControls: boolean }) => {
+const QueueChatMessage = ({ message, showControls }: { message: ChatLog; showControls: boolean }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 

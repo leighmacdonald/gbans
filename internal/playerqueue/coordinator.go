@@ -3,13 +3,14 @@ package playerqueue
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"sync"
+
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
-	"log/slog"
-	"sync"
 )
 
 // TODO Track a users desired minimum size for them to be counted towards play.
@@ -52,48 +53,30 @@ func (q *Coordinator) updateState() {
 	}
 }
 
-func (q *Coordinator) removeZombies() {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	var valid []domain.QueueClient
-	for _, client := range q.clients {
-		if client.IsTimedOut() {
-			q.removeFromQueues(client)
-			client.Close()
-			slog.Debug("Removing zombie client", slog.String("client", client.ID()))
-		} else {
-			valid = append(valid, client)
-		}
-	}
-
-	q.clients = valid
-}
-
 func (q *Coordinator) updateClientStates(fullUpdate bool) {
-	update := clientStatePayload{}
+	update := ClientStatePayload{}
 
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
 	//goland:noinspection GoPreferNilSlice
-	updateMap := []queueState{}
+	updateMap := []LobbyState{}
 	for _, value := range q.lobbies {
-		updateMap = append(updateMap, queueState{
+		updateMap = append(updateMap, LobbyState{
 			ServerID: value.ServerID,
 			Members:  value.Members,
 		})
 	}
 
 	update.UpdateServers = true
-	update.Servers = updateMap
+	update.Lobbies = updateMap
 
 	if fullUpdate {
 		//goland:noinspection GoPreferNilSlice
-		players := []member{}
+		players := []Member{}
 		for _, client := range q.clients {
 			sid := client.SteamID()
-			players = append(players, member{
+			players = append(players, Member{
 				Name:    client.Name(),
 				SteamID: sid.String(),
 				Hash:    client.Avatarhash(),
@@ -213,9 +196,8 @@ func (q *Coordinator) replaceLobbies(lobbies []Lobby) {
 
 		for _, existingLobby := range q.lobbies {
 			if lobby.ServerID == existingLobby.ServerID {
-				existingLobby.PlayerCount = lobby.PlayerCount
-				existingLobby.MaxPlayers = lobby.MaxPlayers
-				valid = append(valid, existingLobby)
+				lobby.Members = existingLobby.Members
+				valid = append(valid, &lobby)
 
 				found = true
 
@@ -299,8 +281,8 @@ func (q *Coordinator) initiateGame(serverID int) error {
 		return errIP
 	}
 
-	startPayload := gameStartPayload{
-		Server: server{
+	startPayload := GameStartPayload{
+		Server: LobbyServer{
 			Name:           currentLobby.Title,
 			ShortName:      currentLobby.ShortName,
 			CC:             currentLobby.CC,
@@ -311,7 +293,7 @@ func (q *Coordinator) initiateGame(serverID int) error {
 
 	for _, target := range queuedClients {
 		sid := target.SteamID()
-		startPayload.Users = append(startPayload.Users, member{
+		startPayload.Users = append(startPayload.Users, Member{
 			Name:    target.Name(),
 			SteamID: sid.String(),
 			Hash:    target.Avatarhash(),
@@ -362,7 +344,7 @@ func (q *Coordinator) PurgeMessages(deletedIDs ...int64) {
 	}
 	q.chatLogs = valid
 
-	q.broadcast(domain.Response{Op: domain.Purge, Payload: purgePayload{MessageIDs: deletedIDs}})
+	q.broadcast(domain.Response{Op: domain.Purge, Payload: PurgePayload{MessageIDs: deletedIDs}})
 }
 
 // Disconnect removes a client from the coordinator entirely, leaving all its queues, closing the underlying client and broadcasting
@@ -399,7 +381,7 @@ func (q *Coordinator) Disconnect(client domain.QueueClient) {
 	client.Close()
 }
 
-// Message adds a new chat log entry and broadcasts the entry to all elidgable clients.
+// Message adds a new chat log entry and broadcasts the entry to all eligible clients.
 func (q *Coordinator) Message(message domain.ChatLog) {
 	q.mu.Lock()
 	q.chatLogs = append(q.chatLogs, message)
@@ -410,8 +392,10 @@ func (q *Coordinator) Message(message domain.ChatLog) {
 
 	q.mu.RLock()
 	q.broadcast(domain.Response{
-		Op:      domain.Message,
-		Payload: []domain.ChatLog{message},
+		Op: domain.Message,
+		Payload: MessagePayload{
+			Messages: []domain.ChatLog{message},
+		},
 	})
 	q.mu.RUnlock()
 }
@@ -450,13 +434,12 @@ func (q *Coordinator) removeFromQueues(client domain.QueueClient) {
 
 // sendClientChatHistory sends the last N messages of the chatLogs history to the client provided.
 func (q *Coordinator) sendClientChatHistory(client domain.QueueClient) {
-
-	var payload []domain.ChatLog
+	payload := MessagePayload{
+		Messages: []domain.ChatLog{},
+	}
 
 	q.mu.RLock()
-	for _, cl := range q.chatLogs {
-		payload = append(payload, cl)
-	}
+	payload.Messages = append(payload.Messages, q.chatLogs...)
 	q.mu.RUnlock()
 
 	go client.Send(domain.Response{
@@ -475,7 +458,7 @@ func (q *Coordinator) UpdateChatStatus(steamID steamid.SteamID, status domain.Ch
 			continue
 		}
 
-		client.Send(domain.Response{
+		go client.Send(domain.Response{
 			Op:      domain.ChatStatusChange,
 			Payload: domain.ChatStatusChangePayload{Status: status, Reason: reason},
 		})

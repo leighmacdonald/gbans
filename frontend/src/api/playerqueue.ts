@@ -1,8 +1,14 @@
 import { apiCall, PermissionLevel } from './common.ts';
 
+export const apiQueueMessagesDelete = async (message_id: number, count: number) => {
+    return await apiCall(`/api/playerqueue/messages/${message_id}/${count}`, 'DELETE', {});
+};
+
+export const apiQueueSetUserStatus = async (steam_id: string, chat_status: ChatStatus, reason: string) => {
+    return await apiCall(`/api/playerqueue/status/${steam_id}`, 'PUT', { chat_status, reason });
+};
+
 export enum Operation {
-    Ping,
-    Pong,
     JoinQueue,
     LeaveQueue,
     Message,
@@ -28,19 +34,20 @@ export type PurgePayload = {
     message_ids: number[];
 };
 
-export type clientQueueState = {
+export type ClientQueueState = {
     steam_id: string;
 };
-export type ServerQueueState = {
+
+export type LobbyState = {
     server_id: number;
-    members: clientQueueState[];
+    members: ClientQueueState[];
 };
 
-export type createMessage = {
+export type MessageCreatePayload = {
     body_md: string;
 };
 
-export type ServerQueueMessage = {
+export type ChatLog = {
     steam_id: string;
     created_on: Date;
     personaname: string;
@@ -50,11 +57,15 @@ export type ServerQueueMessage = {
     message_id: number;
 };
 
-export type JoinQueuePayload = {
+export type MessagePayload = {
+    messages: ChatLog[];
+};
+
+export type JoinPayload = {
     servers: number[];
 };
 
-export type LeaveQueuePayload = JoinQueuePayload;
+export type LeavePayload = JoinPayload;
 
 export type Member = {
     name: string;
@@ -65,11 +76,11 @@ export type Member = {
 export type ClientStatePayload = {
     update_users: boolean;
     update_servers: boolean;
-    servers: ServerQueueState[];
+    lobbies: LobbyState[];
     users: Member[];
 };
 
-export type QueueServer = {
+export type LobbyServer = {
     name: string;
     short_name: string;
     cc: string;
@@ -84,7 +95,7 @@ export type ChatStatusChangePayload = {
 
 export type GameStartPayload = {
     users: Member[];
-    server: QueueServer;
+    server: LobbyServer;
 };
 
 export type ChatStatus = 'readwrite' | 'readonly' | 'noaccess';
@@ -95,12 +106,4 @@ export const websocketURL = () => {
         protocol = 'wss:';
     }
     return `${protocol}://${location.host}/ws`;
-};
-
-export const apiQueueMessagesDelete = async (message_id: number, count: number) => {
-    return await apiCall(`/api/playerqueue/messages/${message_id}/${count}`, 'DELETE', {});
-};
-
-export const apiQueueSetUserStatus = async (steam_id: string, chat_status: ChatStatus, reason: string) => {
-    return await apiCall(`/api/playerqueue/status/${steam_id}`, 'PUT', { chat_status, reason });
 };

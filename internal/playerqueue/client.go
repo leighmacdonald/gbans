@@ -30,8 +30,7 @@ func newClient(steamID steamid.SteamID, name string, avatarHash string, conn *we
 		name:         name,
 		avatarhash:   avatarHash,
 		conn:         conn,
-		responseChan: make(chan domain.Response, 2),
-		lastPing:     time.Time{},
+		responseChan: make(chan domain.Response),
 		rl:           ratelimit.New(1, ratelimit.Per(5*time.Second)),
 	}
 
@@ -44,7 +43,6 @@ type Client struct {
 	avatarhash   string
 	conn         *websocket.Conn
 	responseChan chan domain.Response
-	lastPing     time.Time
 	chatStatus   domain.ChatStatus
 	rl           ratelimit.Limiter
 }
@@ -74,6 +72,7 @@ func (c *Client) Avatarhash() string {
 }
 
 func (c *Client) Next(request *domain.Request) error {
+	c.rl.Take()
 	if err := c.conn.ReadJSON(request); err != nil {
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 			return ErrClosedConnection
@@ -89,12 +88,8 @@ func (c *Client) ID() string {
 	return c.conn.RemoteAddr().String()
 }
 
-func (c *Client) IsTimedOut() bool {
-	return time.Since(c.lastPing) > time.Minute
-}
-
 func (c *Client) Start(ctx context.Context) {
-	// TODO refactor this so there is nonoe of this logic under domain.
+	// TODO refactor this so there is none of this logic under domain.
 	for {
 		select {
 		case <-ctx.Done():

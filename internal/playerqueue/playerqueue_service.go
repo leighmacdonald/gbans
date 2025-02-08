@@ -126,7 +126,6 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 				slog.Error("Error trying to handle websocket request", log.ErrAttr(errHandler))
 
 				continue
-
 			}
 		}
 	}
@@ -144,8 +143,6 @@ func (h *serverQueueHandler) handleWSMessage(client domain.QueueClient) (domain.
 func (h *serverQueueHandler) handleRequest(ctx context.Context, client domain.QueueClient, payloadInbound domain.Request, user domain.UserProfile) error {
 	var err error
 	switch payloadInbound.Op {
-	case domain.Ping:
-		client.Pong()
 	case domain.JoinQueue:
 		var p JoinPayload
 		if errUnmarshal := json.Unmarshal(payloadInbound.Payload, &p); errUnmarshal != nil {

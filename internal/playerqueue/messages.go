@@ -1,14 +1,17 @@
 package playerqueue
 
 import (
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type byePayload struct {
+type ByePayload struct {
 	Message string `json:"message"`
 }
 
-type emptyPayload struct{}
+type MessagePayload struct {
+	Messages []domain.ChatLog `json:"messages"`
+}
 
 type JoinPayload struct {
 	Servers []int `json:"servers"`
@@ -22,7 +25,7 @@ type MessageCreatePayload struct {
 	BodyMD string `json:"body_md"`
 }
 
-type member struct {
+type Member struct {
 	Name    string `json:"name"`
 	SteamID string `json:"steam_id"`
 	Hash    string `json:"hash"`
@@ -32,19 +35,19 @@ type ClientQueueState struct {
 	SteamID steamid.SteamID `json:"steam_id"`
 }
 
-type queueState struct {
+type LobbyState struct {
 	ServerID int                `json:"server_id"`
 	Members  []ClientQueueState `json:"members"`
 }
 
-type clientStatePayload struct {
+type ClientStatePayload struct {
 	UpdateUsers   bool         `json:"update_users"`
 	UpdateServers bool         `json:"update_servers"`
-	Servers       []queueState `json:"servers"`
-	Users         []member     `json:"users"`
+	Lobbies       []LobbyState `json:"lobbies"`
+	Users         []Member     `json:"users"`
 }
 
-type server struct {
+type LobbyServer struct {
 	Name           string `json:"name"`
 	ShortName      string `json:"short_name"`
 	CC             string `json:"cc"`
@@ -52,11 +55,11 @@ type server struct {
 	ConnectCommand string `json:"connect_command"`
 }
 
-type gameStartPayload struct {
-	Users  []member `json:"users"`
-	Server server   `json:"server"`
+type GameStartPayload struct {
+	Users  []Member    `json:"users"`
+	Server LobbyServer `json:"server"`
 }
 
-type purgePayload struct {
+type PurgePayload struct {
 	MessageIDs []int64 `json:"message_ids"` //nolint:tagliatelle
 }

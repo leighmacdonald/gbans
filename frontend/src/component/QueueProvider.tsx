@@ -5,17 +5,18 @@ import {
     ChatStatus,
     ChatStatusChangePayload,
     ClientStatePayload,
-    createMessage,
+    MessageCreatePayload,
     GameStartPayload,
-    JoinQueuePayload,
-    LeaveQueuePayload,
+    JoinPayload,
+    LeavePayload,
+    MessagePayload,
     Operation,
     PermissionLevel,
     PurgePayload,
     QueueMember,
     QueueRequest,
-    ServerQueueMessage,
-    ServerQueueState,
+    ChatLog,
+    LobbyState,
     websocketURL
 } from '../api';
 import { useAuth } from '../hooks/useAuth.ts';
@@ -29,9 +30,9 @@ import { ModalQueueJoin } from './modal';
 export const QueueProvider = ({ children }: { children: ReactNode }) => {
     const [isReady, setIsReady] = useState(false);
     const [users, setUsers] = useState<QueueMember[]>([]);
-    const [messages, setMessages] = useState<ServerQueueMessage[]>([]);
+    const [messages, setMessages] = useState<ChatLog[]>([]);
     const [showChat, setShowChat] = useState(false);
-    const [servers, setServers] = useState<ServerQueueState[]>([]);
+    const [lobbies, setLobbies] = useState<LobbyState[]>([]);
     const { profile } = useAuth();
     const [chatStatus, setChatStatus] = useState<ChatStatus>(profile.playerqueue_chat_status);
     const [reason, setReason] = useState<string>('');
@@ -40,7 +41,8 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
 
     const { readyState, sendJsonMessage, lastJsonMessage } = useWebSocket(websocketURL(), {
         queryParams: { token: readAccessToken() },
-        share: false,
+        heartbeat: true,
+        share: true,
         //reconnectInterval: 10,
         shouldReconnect: () => true
     });
@@ -58,7 +60,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                         permission_level: PermissionLevel.Reserved,
                         personaname: 'SYSTEM',
                         steam_id: 'SYSTEM'
-                    } as ServerQueueMessage
+                    } as ChatLog
                 ]);
                 break;
             case ReadyState.CLOSED:
@@ -72,7 +74,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
                         permission_level: PermissionLevel.Reserved,
                         personaname: 'SYSTEM',
                         steam_id: 'SYSTEM'
-                    } as ServerQueueMessage
+                    } as ChatLog
                 ]);
                 break;
             default:
@@ -97,7 +99,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
 
             case Operation.Message: {
                 setMessages((prev) => {
-                    const messages = (request.payload as ServerQueueMessage[]).map(transformCreatedOnDate);
+                    const messages = (request.payload as MessagePayload).messages.map(transformCreatedOnDate);
                     let all = [...prev, ...messages];
                     if (all.length > 100) {
                         all = all.slice(all.length - 100, 100);
@@ -132,7 +134,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
             setUsers(state.users);
         }
         if (state.update_servers) {
-            setServers(state.servers);
+            setLobbies(state.lobbies);
         }
     };
 
@@ -152,7 +154,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const sendMessage = (body_md: string) => {
-        sendJsonMessage<QueueRequest<createMessage>>({
+        sendJsonMessage<QueueRequest<MessageCreatePayload>>({
             op: Operation.Message,
             payload: {
                 body_md
@@ -161,7 +163,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const joinQueue = (servers: string[]) => {
-        sendJsonMessage<QueueRequest<JoinQueuePayload>>({
+        sendJsonMessage<QueueRequest<JoinPayload>>({
             op: Operation.JoinQueue,
             payload: {
                 servers: servers.map(Number)
@@ -169,7 +171,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
         });
     };
     const leaveQueue = (servers: string[]) => {
-        sendJsonMessage<QueueRequest<LeaveQueuePayload>>({
+        sendJsonMessage<QueueRequest<LeavePayload>>({
             op: Operation.LeaveQueue,
             payload: {
                 servers: servers.map(Number)
@@ -181,7 +183,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
         <QueueCtx.Provider
             value={{
                 users,
-                servers,
+                lobbies,
                 messages,
                 isReady,
                 sendMessage,
