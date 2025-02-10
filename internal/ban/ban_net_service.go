@@ -37,7 +37,7 @@ func (h banNetHandler) onAPIExportBansValveIP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bans, errBans := h.bans.Get(ctx, domain.CIDRBansQueryFilter{})
 		if errBans != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBans))
 
 			return
 		}
@@ -71,36 +71,34 @@ func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 
 		duration, errDuration := datetime.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Error("Received invalid duration", log.ErrAttr(errDuration))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errDuration))
 
 			return
 		}
 
 		targetID, targetIDOk := req.TargetSteamID(ctx)
 		if !targetIDOk {
-			httphelper.HandleErrs(ctx, domain.ErrTargetID)
-			slog.Warn("Got invalid target steam id", slog.String("target_id", req.TargetID))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrTargetID))
 
 			return
 		}
 
 		if errBanCIDR := domain.NewBanCIDR(sid, targetID, duration, req.Reason, req.ReasonText, req.Note, domain.Web,
 			req.CIDR, domain.Banned, &banCIDR); errBanCIDR != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-			slog.Warn("Failed to create new ban cidr", log.ErrAttr(errBanCIDR))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errBanCIDR))
 
 			return
 		}
 
 		if errBan := h.bans.Ban(ctx, &banCIDR); errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
-				httphelper.ResponseAPIErr(ctx, http.StatusConflict, domain.ErrDuplicate)
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusConflict, errBan))
 
 				return
 			}
 
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBan))
+
 			slog.Error("Failed to save cidr ban", log.ErrAttr(errBan))
 
 			return
@@ -124,8 +122,7 @@ func (h banNetHandler) onAPIGetBansCIDR() gin.HandlerFunc {
 
 		bans, errBans := h.bans.Get(ctx, req)
 		if errBans != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Failed to fetch cidr bans", log.ErrAttr(errBans))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBans))
 
 			return
 		}
@@ -136,10 +133,8 @@ func (h banNetHandler) onAPIGetBansCIDR() gin.HandlerFunc {
 
 func (h banNetHandler) onAPIDeleteBansCIDR() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		netID, netIDErr := httphelper.GetInt64Param(ctx, "net_id")
-		if netIDErr != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
-
+		netID, idFound := httphelper.GetInt64Param(ctx, "net_id")
+		if !idFound {
 			return
 		}
 
@@ -149,8 +144,7 @@ func (h banNetHandler) onAPIDeleteBansCIDR() gin.HandlerFunc {
 		}
 
 		if errSave := h.bans.Delete(ctx, netID, req, false); errSave != nil {
-			httphelper.HandleErrs(ctx, errSave)
-			slog.Error("Failed to delete cidr ban", log.ErrAttr(errSave), slog.Int64("net_id", netID))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -162,10 +156,8 @@ func (h banNetHandler) onAPIDeleteBansCIDR() gin.HandlerFunc {
 
 func (h banNetHandler) onAPIPostBansCIDRUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		netID, banIDErr := httphelper.GetInt64Param(ctx, "net_id")
-		if banIDErr != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
-
+		netID, idFound := httphelper.GetInt64Param(ctx, "net_id")
+		if !idFound {
 			return
 		}
 
@@ -176,18 +168,17 @@ func (h banNetHandler) onAPIPostBansCIDRUpdate() gin.HandlerFunc {
 
 		if ban, errSave := h.bans.Update(ctx, netID, req); errSave != nil {
 			if errors.Is(errSave, domain.ErrNoResult) {
-				httphelper.HandleErrNotFound(ctx)
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
 
 				return
 			}
 			if errors.Is(errSave, domain.ErrInvalidParameter) {
-				httphelper.HandleErrBadRequest(ctx)
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrInvalidParameter))
 
 				return
 			}
 
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to update cidr ban", log.ErrAttr(errSave), slog.Int64("net_id", netID))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 		} else {
 			ctx.JSON(http.StatusOK, ban)
 			slog.Info("CIDR Ban updated", slog.Int64("net_id", netID))

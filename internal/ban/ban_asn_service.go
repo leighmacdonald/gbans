@@ -2,13 +2,11 @@ package ban
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type banASNHandler struct {
@@ -40,13 +38,12 @@ func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
 		bannedPerson, errBan := h.banASN.Ban(ctx, req)
 		if errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
-				httphelper.HandleErrDuplicate(ctx)
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusConflict, errBan))
 
 				return
 			}
 
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to save asn ban", log.ErrAttr(errBan))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBan))
 
 			return
 		}
@@ -64,8 +61,7 @@ func (h banASNHandler) onAPIGetBansASN() gin.HandlerFunc {
 
 		bansASN, errBans := h.banASN.Get(ctx, req)
 		if errBans != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Failed to fetch banASN", log.ErrAttr(errBans))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBans))
 
 			return
 		}
@@ -76,10 +72,8 @@ func (h banASNHandler) onAPIGetBansASN() gin.HandlerFunc {
 
 func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		asnID, asnIDErr := httphelper.GetInt64Param(ctx, "asn_id")
-		if asnIDErr != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
-
+		asnID, idFound := httphelper.GetInt64Param(ctx, "asn_id")
+		if !idFound {
 			return
 		}
 
@@ -89,8 +83,7 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 		}
 
 		if errSave := h.banASN.Delete(ctx, asnID, req); errSave != nil {
-			httphelper.HandleErrs(ctx, errSave)
-			slog.Error("Failed to delete asn ban", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -101,10 +94,8 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 
 func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		asnID, asnIDErr := httphelper.GetInt64Param(ctx, "asn_id")
-		if asnIDErr != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
-
+		asnID, idFound := httphelper.GetInt64Param(ctx, "asn_id")
+		if !idFound {
 			return
 		}
 
@@ -115,8 +106,7 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 
 		ban, errSave := h.banASN.Update(ctx, asnID, req)
 		if errSave != nil {
-			httphelper.HandleErrs(ctx, errSave)
-			slog.Error("Failed to update ASN ban", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}

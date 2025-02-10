@@ -159,22 +159,19 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 }
 
 func (h authHandler) onAPILogout() gin.HandlerFunc {
-	handlerName := log.HandlerName(1)
 	conf := h.configUsecase.Config()
 
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(domain.FingerprintCookieName)
 		if errCookie != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, nil)
-			slog.Warn("Failed to get fingerprint", handlerName)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errCookie))
 
 			return
 		}
 
 		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
-			ctx.Status(http.StatusInternalServerError)
-			slog.Error("Failed to parse ext url", log.ErrAttr(errExternal), handlerName)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errExternal))
 
 			return
 		}
@@ -184,15 +181,13 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 
 		personAuth := domain.PersonAuth{}
 		if errGet := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, nil)
-			slog.Warn("Failed to load person via fingerprint", handlerName)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGet))
 
 			return
 		}
 
 		if errDelete := h.authUsecase.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, nil)
-			slog.Error("Failed to delete person auth on logout", log.ErrAttr(errDelete), handlerName)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDelete))
 
 			return
 		}

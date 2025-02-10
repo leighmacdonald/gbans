@@ -1,13 +1,11 @@
 package steamgroup
 
 import (
-	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type steamgroupHandler struct {
@@ -43,8 +41,7 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 
 		ban, errBan := h.bansGroup.Ban(ctx, req)
 		if errBan != nil {
-			httphelper.HandleErrs(ctx, errBan)
-			slog.Error("Failed to ban group", log.ErrAttr(errBan))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBan))
 
 			return
 		}
@@ -62,8 +59,7 @@ func (h steamgroupHandler) onAPIGetBansGroup() gin.HandlerFunc {
 
 		banGroups, errBans := h.bansGroup.Get(ctx, req)
 		if errBans != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to fetch banGroups", log.ErrAttr(errBans))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBans))
 
 			return
 		}
@@ -74,11 +70,8 @@ func (h steamgroupHandler) onAPIGetBansGroup() gin.HandlerFunc {
 
 func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		groupID, groupIDErr := httphelper.GetInt64Param(ctx, "ban_group_id")
-		if groupIDErr != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Failed to get ban_group_id", log.ErrAttr(groupIDErr))
-
+		groupID, idFound := httphelper.GetInt64Param(ctx, "ban_group_id")
+		if !idFound {
 			return
 		}
 
@@ -88,8 +81,7 @@ func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 		}
 
 		if err := h.bansGroup.Delete(ctx, groupID, req); err != nil {
-			httphelper.HandleErrs(ctx, err)
-			slog.Error("Failed to delete asn ban", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -100,11 +92,8 @@ func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 
 func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		banGroupID, banIDErr := httphelper.GetInt64Param(ctx, "ban_group_id")
-		if banIDErr != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
-			slog.Warn("Failed to get ban_group_id", log.ErrAttr(banIDErr))
-
+		banGroupID, idFound := httphelper.GetInt64Param(ctx, "ban_group_id")
+		if !idFound {
 			return
 		}
 
@@ -115,8 +104,7 @@ func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 
 		ban, errSave := h.bansGroup.Save(ctx, banGroupID, req)
 		if errSave != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to update group ban", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}

@@ -2,6 +2,7 @@ package appeal
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -28,8 +29,8 @@ func (u *appeals) GetAppealsByActivity(ctx context.Context, opts domain.AppealQu
 	return u.repository.GetAppealsByActivity(ctx, opts)
 }
 
-func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile, reportID int64, newMsg string) (domain.BanAppealMessage, error) {
-	existing, err := u.GetBanMessageByID(ctx, reportID)
+func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile, banMessageID int64, newMsg string) (domain.BanAppealMessage, error) {
+	existing, err := u.GetBanMessageByID(ctx, banMessageID)
 	if err != nil {
 		return domain.BanAppealMessage{}, err
 	}
@@ -61,6 +62,8 @@ func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile
 
 	u.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelModAppealLog, discord.NewAppealMessage(existing.MessageMD,
 		conf.ExtURL(bannedPerson.BanSteam), curUser, conf.ExtURL(curUser))))
+
+	slog.Debug("Appeal message updated", slog.Int64("message_id", banMessageID))
 
 	return existing, nil
 }
@@ -169,6 +172,8 @@ func (u *appeals) DropBanMessage(ctx context.Context, curUser domain.UserProfile
 	u.notifications.Enqueue(ctx, domain.NewDiscordNotification(
 		domain.ChannelModAppealLog,
 		discord.DeleteAppealMessage(&existing, curUser, u.config.ExtURL(curUser))))
+
+	slog.Info("Appeal message deleted", slog.Int64("ban_message_id", banMessageID))
 
 	return nil
 }

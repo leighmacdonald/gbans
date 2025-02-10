@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type configHandler struct {
@@ -42,8 +41,7 @@ func (c configHandler) onAPIPutConfig() gin.HandlerFunc {
 		}
 
 		if errSave := c.config.Write(ctx, req); errSave != nil {
-			httphelper.HandleErrs(ctx, errSave)
-			slog.Error("Failed to save new config", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -111,8 +109,7 @@ func (c configHandler) onChangelog() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		releases, err := getGithubReleases(ctx)
 		if err != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to fetch github releases", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}

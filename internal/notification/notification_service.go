@@ -2,13 +2,11 @@ package notification
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type messagesRequest struct {
@@ -39,8 +37,7 @@ func NewHandler(engine *gin.Engine, notifications domain.NotificationUsecase, au
 func (h notificationHandler) onMarkAllRead() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if err := h.notifications.MarkAllRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, domain.ErrNoResult) {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to mark all notifications read", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -57,14 +54,13 @@ func (h notificationHandler) onMarkRead() gin.HandlerFunc {
 		}
 
 		if len(request.MessageIDs) == 0 {
-			httphelper.HandleErrs(ctx, domain.ErrBadRequest)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
 
 		if err := h.notifications.MarkMessagesRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, domain.ErrNoResult) {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to mark all notifications read", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -76,8 +72,7 @@ func (h notificationHandler) onMarkRead() gin.HandlerFunc {
 func (h notificationHandler) onDeleteAll() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if err := h.notifications.DeleteAll(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, domain.ErrNoResult) {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to delete all notifications", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -94,14 +89,13 @@ func (h notificationHandler) onDelete() gin.HandlerFunc {
 		}
 
 		if len(request.MessageIDs) == 0 {
-			httphelper.HandleErrs(ctx, domain.ErrBadRequest)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
 
 		if err := h.notifications.DeleteMessages(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, domain.ErrNoResult) {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to delete notifications", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -120,8 +114,7 @@ func (h notificationHandler) onNotifications() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get personal notifications", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}

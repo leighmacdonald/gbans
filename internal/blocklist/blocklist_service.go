@@ -1,7 +1,6 @@
 package blocklist
 
 import (
-	"log/slog"
 	"net/http"
 	"net/netip"
 	"strings"
@@ -9,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type blocklistHandler struct {
@@ -63,8 +61,7 @@ func (b *blocklistHandler) onAPIWhitelistSteam() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		whiteLists, errWl := b.blocklists.GetSteamBlockWhitelists(ctx)
 		if errWl != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to load ip whitelist", log.ErrAttr(errWl))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errWl))
 
 			return
 		}
@@ -86,16 +83,14 @@ func (b *blocklistHandler) onAPICreateWhitelistSteam() gin.HandlerFunc {
 
 		steamID, ok := req.SteamID(ctx)
 		if !ok {
-			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidSID)
-			slog.Warn("Got invalid steamid", slog.String("steam_id", req.SteamIDValue))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrInvalidSID))
 
 			return
 		}
 
 		whitelist, errSave := b.blocklists.CreateSteamBlockWhitelists(ctx, steamID)
 		if errSave != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to save steam block whitelist", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -106,17 +101,13 @@ func (b *blocklistHandler) onAPICreateWhitelistSteam() gin.HandlerFunc {
 
 func (b *blocklistHandler) onAPIDeleteBlockList() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		sourceID, errSourceID := httphelper.GetIntParam(ctx, "cidr_block_source_id")
-		if errSourceID != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Failed to parse cidr_block_source_id query")
-
+		sourceID, idFound := httphelper.GetIntParam(ctx, "cidr_block_source_id")
+		if !idFound {
 			return
 		}
 
 		if err := b.blocklists.DeleteCIDRBlockSources(ctx, sourceID); err != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to delete blocklist", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -129,8 +120,7 @@ func (b *blocklistHandler) onAPIWhitelistIPs() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		whiteLists, errWl := b.blocklists.GetCIDRBlockWhitelists(ctx)
 		if errWl != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to load ip whitelist", log.ErrAttr(errWl))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errWl))
 
 			return
 		}
@@ -150,18 +140,14 @@ func (b *blocklistHandler) onAPIWhitelistIPs() gin.HandlerFunc {
 
 func (b *blocklistHandler) onAPIDeleteWhitelistSteam() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		steamID, errID := httphelper.GetSID64Param(ctx, "steam_id")
-		if errID != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Failed to delete steam whitelist", slog.String("steam_id", steamID.String()))
-
+		steamID, idFound := httphelper.GetSID64Param(ctx, "steam_id")
+		if !idFound {
 			return
 		}
 
 		errSave := b.blocklists.DeleteSteamBlockWhitelists(ctx, steamID)
 		if errSave != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to save whitelist", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -174,8 +160,7 @@ func (b *blocklistHandler) onAPIGetBlockListSources() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		blockLists, err := b.blocklists.GetCIDRBlockSources(ctx)
 		if err != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to load blocklist sources", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -199,8 +184,7 @@ func (b *blocklistHandler) onAPIPostBlockListCreate() gin.HandlerFunc {
 
 		blockList, errSave := b.blocklists.CreateCIDRBlockSources(ctx, req.Name, req.URL, req.Enabled)
 		if errSave != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to save blocklist", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -217,11 +201,8 @@ func (b *blocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		sourceID, err := httphelper.GetIntParam(ctx, "cidr_block_source_id")
-		if err != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Got invalid cidr_block_source_id", slog.Int("cidr_block_source_id", sourceID))
-
+		sourceID, idFound := httphelper.GetIntParam(ctx, "cidr_block_source_id")
+		if !idFound {
 			return
 		}
 
@@ -232,7 +213,7 @@ func (b *blocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
 
 		blockSource, errUpdate := b.blocklists.UpdateCIDRBlockSource(ctx, sourceID, req.Name, req.URL, req.Enabled)
 		if errUpdate != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errUpdate))
 
 			return
 		}
@@ -254,8 +235,7 @@ func (b *blocklistHandler) onAPICreateWhitelistIP() gin.HandlerFunc {
 
 		whitelist, errSave := b.blocklists.CreateCIDRBlockWhitelist(ctx, req.Address)
 		if errSave != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to create ip whitelist", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -274,11 +254,8 @@ func (b *blocklistHandler) onAPIUpdateWhitelistIP() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		whitelistID, errID := httphelper.GetIntParam(ctx, "cidr_block_whitelist_id")
-		if errID != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Git invalid cidr_block_whitelist_id")
-
+		whitelistID, idFound := httphelper.GetIntParam(ctx, "cidr_block_whitelist_id")
+		if !idFound {
 			return
 		}
 
@@ -293,8 +270,7 @@ func (b *blocklistHandler) onAPIUpdateWhitelistIP() gin.HandlerFunc {
 
 		whiteList, errSave := b.blocklists.UpdateCIDRBlockWhitelist(ctx, whitelistID, req.Address)
 		if errSave != nil {
-			httphelper.HandleErrInvalidFormat(ctx)
-			slog.Error("Failed to save whitelist", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errSave))
 
 			return
 		}
@@ -305,17 +281,13 @@ func (b *blocklistHandler) onAPIUpdateWhitelistIP() gin.HandlerFunc {
 
 func (b *blocklistHandler) onAPIDeleteBlockListWhitelist() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		whitelistID, errWhitelistID := httphelper.GetIntParam(ctx, "cidr_block_whitelist_id")
-		if errWhitelistID != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Git invalid cidr_block_whitelist_id")
-
+		whitelistID, idFound := httphelper.GetIntParam(ctx, "cidr_block_whitelist_id")
+		if !idFound {
 			return
 		}
 
 		if err := b.blocklists.DeleteCIDRBlockWhitelist(ctx, whitelistID); err != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to delete whitelist", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}

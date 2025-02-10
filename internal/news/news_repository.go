@@ -37,7 +37,8 @@ func (r newsRepository) GetNewsLatest(ctx context.Context, limit int, includeUnp
 
 	defer rows.Close()
 
-	var articles []domain.NewsEntry
+	//goland:noinspection GoPreferNilSlice
+	articles := []domain.NewsEntry{}
 
 	for rows.Next() {
 		var entry domain.NewsEntry

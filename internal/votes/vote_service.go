@@ -1,13 +1,11 @@
 package votes
 
 import (
-	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type voteHandler struct {
@@ -33,8 +31,7 @@ func (h voteHandler) onVotes() gin.HandlerFunc {
 
 		votes, count, errVotes := h.votes.Query(ctx, req)
 		if errVotes != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to query vote history", log.ErrAttr(errVotes))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errVotes))
 
 			return
 		}

@@ -2,7 +2,6 @@ package news
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type newsHandler struct {
@@ -38,8 +36,7 @@ func (h newsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsLatest, errGetNewsLatest := h.news.GetNewsLatest(ctx, 50, false)
 		if errGetNewsLatest != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to load news", log.ErrAttr(errGetNewsLatest))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGetNewsLatest))
 
 			return
 		}
@@ -74,8 +71,7 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 		}
 
 		if errSave := h.news.Save(ctx, &entry); errSave != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to save news article", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -90,25 +86,20 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 
 func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		newsID, errID := httphelper.GetIntParam(ctx, "news_id")
-		if errID != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Failed to get news_id", log.ErrAttr(errID))
-
+		newsID, idFound := httphelper.GetIntParam(ctx, "news_id")
+		if !idFound {
 			return
 		}
 
 		var entry domain.NewsEntry
 		if errGet := h.news.GetNewsByID(ctx, newsID, &entry); errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
-				httphelper.HandleErrNotFound(ctx)
-				slog.Warn("Failed to get news by id. Not found.", log.ErrAttr(errGet))
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			httphelper.HandleErrInternal(ctx)
-			slog.Warn("Failed to get news by id. Not found.", log.ErrAttr(errGet))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGet))
 
 			return
 		}
@@ -124,8 +115,7 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 		entry.UpdatedOn = time.Now()
 
 		if errSave := h.news.Save(ctx, &entry); errSave != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to save news article", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -142,8 +132,7 @@ func (h newsHandler) onAPIGetNewsAll() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsLatest, errGetNewsLatest := h.news.GetNewsLatest(ctx, 100, true)
 		if errGetNewsLatest != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get latest news", log.ErrAttr(errGetNewsLatest))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGetNewsLatest))
 
 			return
 		}
@@ -158,31 +147,26 @@ func (h newsHandler) onAPIGetNewsAll() gin.HandlerFunc {
 
 func (h newsHandler) onAPIPostNewsDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		newsID, errID := httphelper.GetIntParam(ctx, "news_id")
-		if errID != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Failed to get news_id", log.ErrAttr(errID))
-
+		newsID, idFound := httphelper.GetIntParam(ctx, "news_id")
+		if !idFound {
 			return
 		}
 
 		var entry domain.NewsEntry
 		if errGet := h.news.GetNewsByID(ctx, newsID, &entry); errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
-				httphelper.HandleErrNotFound(ctx)
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get news by ID", log.ErrAttr(errGet))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGet))
 
 			return
 		}
 
 		if err := h.news.DropNewsArticle(ctx, newsID); err != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to delete news entry", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}

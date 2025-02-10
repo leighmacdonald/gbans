@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type wordFilterHandler struct {
@@ -40,8 +39,7 @@ func (h *wordFilterHandler) queryFilters() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		words, errGetFilters := h.filters.GetFilters(ctx)
 		if errGetFilters != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get query filters", log.ErrAttr(errGetFilters))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGetFilters))
 
 			return
 		}
@@ -56,11 +54,8 @@ func (h *wordFilterHandler) queryFilters() gin.HandlerFunc {
 
 func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		filterID, wordIDErr := httphelper.GetInt64Param(ctx, "filter_id")
-		if wordIDErr != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Got invalid filter_id", log.ErrAttr(wordIDErr))
-
+		filterID, idFound := httphelper.GetInt64Param(ctx, "filter_id")
+		if !idFound {
 			return
 		}
 
@@ -71,8 +66,7 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 
 		wordFilter, errEdit := h.filters.Edit(ctx, httphelper.CurrentUserProfile(ctx), filterID, req)
 		if errEdit != nil {
-			httphelper.HandleErrs(ctx, errEdit)
-			slog.Error("Failed to edit word filter", log.ErrAttr(errEdit))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errEdit))
 
 			return
 		}
@@ -91,8 +85,7 @@ func (h *wordFilterHandler) createFilter() gin.HandlerFunc {
 
 		wordFilter, errCreate := h.filters.Create(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errCreate != nil {
-			httphelper.HandleErrs(ctx, errCreate)
-			slog.Error("Failed to create word filter", log.ErrAttr(errCreate))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errCreate))
 
 			return
 		}
@@ -104,16 +97,13 @@ func (h *wordFilterHandler) createFilter() gin.HandlerFunc {
 
 func (h *wordFilterHandler) deleteFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		filterID, filterIDErr := httphelper.GetInt64Param(ctx, "filter_id")
-		if filterIDErr != nil {
-			httphelper.HandleErrs(ctx, filterIDErr)
-
+		filterID, idFound := httphelper.GetInt64Param(ctx, "filter_id")
+		if !idFound {
 			return
 		}
 
 		if errDrop := h.filters.DropFilter(ctx, filterID); errDrop != nil {
-			httphelper.HandleErrs(ctx, domain.ErrFailedFetchBan)
-			slog.Error("Failed to drop filter", log.ErrAttr(errDrop))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDrop))
 
 			return
 		}

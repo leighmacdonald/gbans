@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type personHandler struct {
@@ -48,11 +47,8 @@ func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, persons domain.
 
 func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		steamID, errParam := httphelper.GetSID64Param(ctx, "steam_id")
-		if errParam != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Failed to get steam_id", log.ErrAttr(errParam))
-
+		steamID, idFound := httphelper.GetSID64Param(ctx, "steam_id")
+		if !idFound {
 			return
 		}
 
@@ -62,18 +58,14 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 		}
 
 		if err := h.persons.SetPermissionLevel(ctx, nil, steamID, req.PermissionLevel); err != nil {
-			httphelper.HandleErrs(ctx, err)
-			slog.Error("Failed to set permission level", log.ErrAttr(err),
-				slog.Int("level", int(req.PermissionLevel)), slog.String("steam_id", steamID.String()))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
 
 		person, errPerson := h.persons.GetPersonBySteamID(ctx, nil, steamID)
 		if errPerson != nil {
-			httphelper.HandleErrs(ctx, errParam)
-			slog.Error("Failed to load new person", log.ErrAttr(errParam),
-				slog.Int("level", int(req.PermissionLevel)), slog.String("steam_id", steamID.String()))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errPerson))
 
 			return
 		}
@@ -92,8 +84,7 @@ func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 
 		settings, err := h.persons.GetPersonSettings(ctx, user.SteamID)
 		if err != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to fetch person settings", log.ErrAttr(err), slog.Int64("steam_id", user.SteamID.Int64()))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -112,8 +103,7 @@ func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 
 		settings, err := h.persons.SavePersonSettings(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if err != nil {
-			httphelper.HandleErrs(ctx, err)
-			slog.Error("Failed to save person settings", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -130,7 +120,7 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 				slog.Int64("sid64", profile.SteamID.Int64()),
 				slog.String("name", profile.Name),
 				slog.String("permission_level", profile.PermissionLevel.String()))
-			httphelper.HandleErrNotFound(ctx)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrInvalidSID))
 
 			return
 		}
@@ -151,8 +141,7 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 		response, err := h.persons.QueryProfile(requestCtx, req.Query)
 		if err != nil {
-			httphelper.HandleErrs(ctx, err)
-			slog.Error("Failed to query profile", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -170,8 +159,7 @@ func (h personHandler) searchPlayers() gin.HandlerFunc {
 
 		people, count, errGetPeople := h.persons.GetPeople(ctx, nil, query)
 		if errGetPeople != nil {
-			httphelper.HandleErrs(ctx, errGetPeople)
-			slog.Error("Failed to query players", log.ErrAttr(errGetPeople))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGetPeople))
 
 			return
 		}
