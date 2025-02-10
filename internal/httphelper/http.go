@@ -19,12 +19,32 @@ import (
 	"github.com/unrolled/secure/cspbuilder"
 )
 
-func httpErrorHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Next()
+func errorHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.Next()
 
-		for _, ginErr := range c.Errors {
-			slog.Error("Unhandled HTTP Error", log.ErrAttr(ginErr))
+		// slog.HandlerName(2)
+		if err := ctx.Errors.Last(); err != nil {
+			var apiError APIError
+			if errors.As(err, &apiError) {
+				ctx.AbortWithStatusJSON(apiError.Code, apiError)
+			} else {
+				ctx.AbortWithStatusJSON(http.StatusInternalServerError, APIError{
+					Message: domain.ErrInternal.Error(),
+				})
+			}
+			args := []any{
+				slog.String("method", ctx.Request.Method),
+				slog.String("path", ctx.Request.URL.RawPath),
+				log.ErrAttr(err),
+			}
+
+			user := CurrentUserProfile(ctx)
+			if user.SteamID.Valid() {
+				args = append(args, slog.String("steam_id", user.SteamID.String()))
+			}
+
+			slog.Error("Error in http handler", args...)
 		}
 	}
 }
@@ -71,61 +91,6 @@ func useSecure(mode domain.RunMode, cspOrigin string) gin.HandlerFunc {
 	return secureFunc
 }
 
-func HandleErrsReturn(ctx *gin.Context, err error) error {
-	HandleErrs(ctx, err)
-
-	return err
-}
-
-func HandleErrs(ctx *gin.Context, err error) {
-	if err == nil {
-		return
-	}
-
-	switch {
-	case errors.Is(err, domain.ErrPermissionDenied):
-		HandleErrPermissionDenied(ctx)
-	case errors.Is(err, domain.ErrNoResult):
-		HandleErrNotFound(ctx)
-	case errors.Is(err, domain.ErrParamKeyMissing):
-		HandleErrBadRequest(ctx)
-	case errors.Is(err, domain.ErrInvalidParameter):
-		HandleErrBadRequest(ctx)
-	case errors.Is(err, domain.ErrBadRequest):
-		HandleErrBadRequest(ctx)
-	case errors.Is(err, domain.ErrDuplicate):
-		HandleErrDuplicate(ctx)
-	case errors.Is(err, domain.ErrInvalidFormat):
-		HandleErrInvalidFormat(ctx)
-	default:
-		HandleErrInternal(ctx)
-	}
-}
-
-func HandleErrPermissionDenied(ctx *gin.Context) {
-	ResponseAPIErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
-}
-
-func HandleErrNotFound(ctx *gin.Context) {
-	ResponseAPIErr(ctx, http.StatusNotFound, domain.ErrNotFound)
-}
-
-func HandleErrBadRequest(ctx *gin.Context) {
-	ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-}
-
-func HandleErrInternal(ctx *gin.Context) {
-	ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-}
-
-func HandleErrDuplicate(ctx *gin.Context) {
-	ResponseAPIErr(ctx, http.StatusConflict, domain.ErrDuplicate)
-}
-
-func HandleErrInvalidFormat(ctx *gin.Context) {
-	ResponseAPIErr(ctx, http.StatusUnsupportedMediaType, domain.ErrInvalidFormat)
-}
-
 func useSentry(engine *gin.Engine, version string) {
 	engine.Use(sentrygin.New(sentrygin.Options{Repanic: true}))
 	engine.Use(func(ctx *gin.Context) {
@@ -138,7 +103,7 @@ func useSentry(engine *gin.Engine, version string) {
 }
 
 func useCors(engine *gin.Engine, conf domain.Config) {
-	engine.Use(httpErrorHandler(), gin.Recovery())
+	engine.Use(errorHandler(), gin.Recovery())
 	engine.Use(useSecure(conf.General.Mode, ""))
 
 	if len(conf.HTTPCorsOrigins) > 0 {
@@ -209,7 +174,8 @@ func useSloggin(engine *gin.Engine, config domain.Config) {
 func CreateRouter(conf domain.Config, version domain.BuildInfo) (*gin.Engine, error) {
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
-	engine.Use(gin.Recovery())
+	engine.Use(recoveryHandler())
+	engine.Use(errorHandler())
 
 	if conf.Log.HTTPEnabled {
 		useSloggin(engine, conf)

@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/maruel/natural"
 )
 
@@ -47,8 +46,7 @@ func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fullServers, _, errServers := h.servers.Servers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get servers", log.ErrAttr(errServers))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errServers))
 
 			return
 		}
@@ -149,8 +147,7 @@ func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 
 		server, errSave := h.servers.Save(ctx, req)
 		if errSave != nil {
-			httphelper.HandleErrs(ctx, errSave)
-			slog.Error("Failed to save new server", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -162,11 +159,8 @@ func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		serverID, errServerID := httphelper.GetIntParam(ctx, "server_id")
-		if errServerID != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Failed to get server_id", log.ErrAttr(errServerID))
-
+		serverID, idFound := httphelper.GetIntParam(ctx, "server_id")
+		if !idFound {
 			return
 		}
 
@@ -179,8 +173,7 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 
 		server, errSave := h.servers.Save(ctx, req)
 		if errSave != nil {
-			httphelper.HandleErrs(ctx, errServerID)
-			slog.Error("Failed to update server", log.ErrAttr(errSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -198,8 +191,7 @@ func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 
 		servers, _, errServers := h.servers.Servers(ctx, filter)
 		if errServers != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get servers", log.ErrAttr(errServers))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errServers))
 
 			return
 		}
@@ -214,17 +206,13 @@ func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		serverID, errID := httphelper.GetIntParam(ctx, "server_id")
-		if errID != nil {
-			httphelper.HandleErrs(ctx, errID)
-			slog.Error("Failed to get server_id", log.ErrAttr(errID))
-
+		serverID, idFound := httphelper.GetIntParam(ctx, "server_id")
+		if !idFound {
 			return
 		}
 
 		if err := h.servers.Delete(ctx, serverID); err != nil {
-			httphelper.HandleErrs(ctx, err)
-			slog.Error("Failed to delete server", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}

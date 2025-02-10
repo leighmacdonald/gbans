@@ -1,13 +1,12 @@
 package appeal
 
 import (
-	"log/slog"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type appealHandler struct {
@@ -39,18 +38,14 @@ func NewHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, authUsec
 
 func (h *appealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		banID, errParam := httphelper.GetInt64Param(ctx, "ban_id")
-		if errParam != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusNotFound, domain.ErrInvalidParameter)
-			slog.Warn("Got invalid ban_id parameter", log.ErrAttr(errParam), log.HandlerName(2))
-
+		banID, idFound := httphelper.GetInt64Param(ctx, "ban_id")
+		if !idFound {
 			return
 		}
 
 		banMessages, errGetBanMessages := h.appealUsecase.GetBanMessages(ctx, httphelper.CurrentUserProfile(ctx), banID)
-		if errGetBanMessages != nil {
-			httphelper.HandleErrs(ctx, errGetBanMessages)
-			slog.Error("Failed to load ban messages", log.ErrAttr(errGetBanMessages), log.HandlerName(2))
+		if errGetBanMessages != nil && !errors.Is(errGetBanMessages, domain.ErrNotFound) {
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errGetBanMessages))
 
 			return
 		}
@@ -61,11 +56,8 @@ func (h *appealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 
 func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		banID, errID := httphelper.GetInt64Param(ctx, "ban_id")
-		if errID != nil {
-			httphelper.HandleErrs(ctx, errID)
-			slog.Warn("Got invalid ban_id parameter", log.ErrAttr(errID), log.HandlerName(2))
-
+		banID, idFound := httphelper.GetInt64Param(ctx, "ban_id")
+		if !idFound {
 			return
 		}
 
@@ -75,7 +67,9 @@ func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 		}
 
 		msg, errSave := h.appealUsecase.CreateBanMessage(ctx, httphelper.CurrentUserProfile(ctx), banID, req.BodyMD)
-		if err := httphelper.HandleErrsReturn(ctx, errSave); err != nil {
+		if errSave != nil {
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errSave))
+
 			return
 		}
 
@@ -85,10 +79,13 @@ func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 
 func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportMessageID, errID := httphelper.GetInt64Param(ctx, "ban_message_id")
-		if errID != nil || reportMessageID == 0 {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Error("Failed to get ban_message_id", log.ErrAttr(errID), log.HandlerName(2))
+		reportMessageID, idFound := httphelper.GetInt64Param(ctx, "ban_message_id")
+		if !idFound {
+			return
+		}
+
+		if reportMessageID == 0 {
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
@@ -102,14 +99,12 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 
 		msg, errSave := h.appealUsecase.EditBanMessage(ctx, curUser, reportMessageID, req.BodyMD)
 		if errSave != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Failed to save ban appeal message", log.ErrAttr(errSave), log.HandlerName(2))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, msg)
-		slog.Info("Appeal message updated", slog.Int64("message_id", reportMessageID))
 	}
 }
 
@@ -117,20 +112,24 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		curUser := httphelper.CurrentUserProfile(ctx)
 
-		banMessageID, errID := httphelper.GetInt64Param(ctx, "ban_message_id")
-		if errID != nil || banMessageID == 0 {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Error("Failed to get ban_message_id", log.ErrAttr(errID), log.HandlerName(2))
+		banMessageID, idFound := httphelper.GetInt64Param(ctx, "ban_message_id")
+		if !idFound {
+			return
+		}
+
+		if banMessageID == 0 {
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
 
-		if err := httphelper.HandleErrsReturn(ctx, h.appealUsecase.DropBanMessage(ctx, curUser, banMessageID)); err != nil {
+		if err := h.appealUsecase.DropBanMessage(ctx, curUser, banMessageID); err != nil {
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+
 			return
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{})
-		slog.Info("Appeal message deleted", slog.Int64("ban_message_id", banMessageID))
 	}
 }
 
@@ -143,8 +142,7 @@ func (h *appealHandler) onAPIGetAppeals() gin.HandlerFunc {
 
 		bans, errBans := h.appealUsecase.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Failed to fetch appeals", log.ErrAttr(errBans))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBans))
 
 			return
 		}

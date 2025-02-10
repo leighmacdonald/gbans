@@ -358,7 +358,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			blocklist.NewHandler(router, blocklistUsecase, networkUsecase, authUsecase)
 			chat.NewHandler(router, chatUsecase, authUsecase)
 			contest.NewHandler(router, contestUsecase, configUsecase, assets, authUsecase)
-			demo.NewHandler(router, demos)
+			demo.NewHandler(router, demos, authUsecase)
 			forum.NewHandler(router, forumUsecase, authUsecase)
 			match.NewHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
 			asset.NewHandler(router, configUsecase, assets, authUsecase)

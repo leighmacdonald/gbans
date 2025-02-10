@@ -1,14 +1,13 @@
 package asset
 
 import (
+	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type mediaHandler struct {
@@ -34,22 +33,16 @@ func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, assets domain.A
 }
 
 func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
-	handlerName := log.HandlerName(1)
-
 	return func(ctx *gin.Context) {
 		var req domain.UserUploadedFile
 
-		if err := ctx.Bind(&req); err != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Failed to bind request", handlerName)
-
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		mediaFile, errOpen := req.File.Open()
 		if errOpen != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Failed to open form file", log.ErrAttr(errOpen), handlerName)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOpen))
 
 			return
 		}
@@ -60,8 +53,7 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 
 		media, errMedia := h.assets.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID, "media", req.Name, mediaFile)
 		if errMedia != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, errMedia)
-			slog.Error("Failed to create new asset", log.ErrAttr(errMedia), handlerName)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errMedia))
 
 			return
 		}
@@ -71,21 +63,21 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 }
 
 func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
-	handlerName := log.HandlerName(1)
-
 	return func(ctx *gin.Context) {
-		mediaID, idErr := httphelper.GetUUIDParam(ctx, "asset_id")
-		if idErr != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
-			slog.Error("Got invalid asset_id", handlerName)
-
+		mediaID, idFound := httphelper.GetUUIDParam(ctx, "asset_id")
+		if !idFound {
 			return
 		}
 
 		asset, reader, errGet := h.assets.Get(ctx, mediaID)
 		if errGet != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, errGet)
-			slog.Error("Failed to load asset", slog.String("asset_id", mediaID.String()), handlerName)
+			if errors.Is(errGet, domain.ErrNotFound) {
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+
+				return
+			}
+
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errGet))
 
 			return
 		}
@@ -93,8 +85,7 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 		if asset.IsPrivate {
 			user := httphelper.CurrentUserProfile(ctx)
 			if !user.SteamID.Valid() && (user.SteamID == asset.AuthorID || user.HasPermission(domain.PModerator)) {
-				httphelper.ResponseAPIErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
-				slog.Warn("Tried to access private asset", slog.String("asset_id", mediaID.String()), handlerName)
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
 
 				return
 			}

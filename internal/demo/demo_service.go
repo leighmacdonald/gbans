@@ -1,26 +1,29 @@
 package demo
 
 import (
-	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type demoHandler struct {
 	demos domain.DemoUsecase
 }
 
-func NewHandler(engine *gin.Engine, du domain.DemoUsecase) {
+func NewHandler(engine *gin.Engine, du domain.DemoUsecase, auth domain.AuthUsecase) {
 	handler := demoHandler{
 		demos: du,
 	}
 
 	engine.POST("/api/demos", handler.onAPIPostDemosQuery())
-	engine.GET("/api/demos/cleanup", handler.onAPIGetCleanup())
+
+	adminGrp := engine.Group("/")
+	{
+		mod := adminGrp.Use(auth.Middleware(domain.PAdmin))
+		mod.GET("/api/demos/cleanup", handler.onAPIGetCleanup())
+	}
 }
 
 func (h demoHandler) onAPIGetCleanup() gin.HandlerFunc {
@@ -35,8 +38,7 @@ func (h demoHandler) onAPIPostDemosQuery() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		demos, errDemos := h.demos.GetDemos(ctx)
 		if errDemos != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Failed to query demos", log.ErrAttr(errDemos))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDemos))
 
 			return
 		}

@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -60,13 +59,12 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		report, errReportSave := h.reports.SaveReport(ctx, currentUser, req)
 		if errReportSave != nil {
 			if errors.Is(errReportSave, domain.ErrReportExists) {
-				httphelper.ResponseAPIErr(ctx, http.StatusConflict, domain.ErrReportExists)
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrReportExists))
 
 				return
 			}
 
-			httphelper.HandleErrs(ctx, errReportSave)
-			slog.Error("Failed to save report", log.ErrAttr(errReportSave))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReportSave))
 
 			return
 		}
@@ -79,18 +77,14 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportID, errParam := httphelper.GetInt64Param(ctx, "report_id")
-		if errParam != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Failed to get report_id", log.ErrAttr(errParam))
-
+		reportID, idFound := httphelper.GetInt64Param(ctx, "report_id")
+		if !idFound {
 			return
 		}
 
 		report, errReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errReport != nil {
-			httphelper.HandleErrs(ctx, errReport)
-			slog.Error("failed to get report", log.ErrAttr(errReport))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReport))
 
 			return
 		}
@@ -105,8 +99,7 @@ func (h reportHandler) onAPIGetUserReports() gin.HandlerFunc {
 
 		reports, errReports := h.reports.GetReportsBySteamID(ctx, user.SteamID)
 		if errReports != nil {
-			httphelper.HandleErrs(ctx, errReports)
-			slog.Error("Failed to get reports by steam id", log.ErrAttr(errReports))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReports))
 
 			return
 		}
@@ -124,8 +117,7 @@ func (h reportHandler) onAPIGetAllReports() gin.HandlerFunc {
 
 		reports, errReports := h.reports.GetReports(ctx)
 		if errReports != nil {
-			httphelper.HandleErrs(ctx, errReports)
-			slog.Error("Failed to get reports", log.ErrAttr(errReports))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReports))
 
 			return
 		}
@@ -136,11 +128,8 @@ func (h reportHandler) onAPIGetAllReports() gin.HandlerFunc {
 
 func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportID, errParam := httphelper.GetInt64Param(ctx, "report_id")
-		if errParam != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Error("Failed to get report_id", log.ErrAttr(errParam))
-
+		reportID, idParam := httphelper.GetInt64Param(ctx, "report_id")
+		if !idParam {
 			return
 		}
 
@@ -151,8 +140,7 @@ func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 
 		report, err := h.reports.SetReportStatus(ctx, reportID, httphelper.CurrentUserProfile(ctx), req.Status)
 		if err != nil {
-			httphelper.HandleErrs(ctx, err)
-			slog.Error("Failed to set report status", log.ErrAttr(err), slog.Int64("report_id", reportID), slog.String("status", req.Status.String()))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}
@@ -166,18 +154,20 @@ func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 
 func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportID, errParam := httphelper.GetInt64Param(ctx, "report_id")
-		if errParam != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Got invalid report_id", log.ErrAttr(errParam))
-
+		reportID, idFound := httphelper.GetInt64Param(ctx, "report_id")
+		if !idFound {
 			return
 		}
 
 		report, errGetReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errGetReport != nil {
-			httphelper.HandleErrNotFound(ctx)
-			slog.Error("Failed to get report. Not found.", log.ErrAttr(errGetReport))
+			if errors.Is(errGetReport, domain.ErrNoResult) {
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+
+				return
+			}
+
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGetReport))
 
 			return
 		}
@@ -188,8 +178,7 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 
 		reportMessages, errGetReportMessages := h.reports.GetReportMessages(ctx, reportID)
 		if errGetReportMessages != nil {
-			httphelper.HandleErrNotFound(ctx)
-			slog.Error("Failed to get report messages", log.ErrAttr(errGetReportMessages))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGetReport))
 
 			return
 		}
@@ -204,13 +193,13 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 
 func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportID, errID := httphelper.GetInt64Param(ctx, "report_id")
-		if errID != nil || reportID == 0 {
-			httphelper.HandleErrBadRequest(ctx)
+		reportID, idFound := httphelper.GetInt64Param(ctx, "report_id")
+		if !idFound {
+			return
+		}
 
-			if errID != nil {
-				slog.Warn("Failed to get report_id", log.ErrAttr(errID))
-			}
+		if reportID == 0 {
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
@@ -224,8 +213,7 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 
 		msg, errSave := h.reports.CreateReportMessage(ctx, reportID, curUser, req)
 		if errSave != nil {
-			httphelper.HandleErrs(ctx, errSave)
-			slog.Error("Failed to save report message", log.ErrAttr(errSave), slog.Int64("report_id", reportID))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -239,10 +227,9 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 
 func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportMessageID, errID := httphelper.GetInt64Param(ctx, "report_message_id")
-		if errID != nil {
-			httphelper.HandleErrs(ctx, errID)
-			slog.Warn("Failed to get report_message_id", log.ErrAttr(errID))
+		reportMessageID, idFound := httphelper.GetInt64Param(ctx, "report_message_id")
+		if idFound {
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
@@ -254,8 +241,7 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 
 		msg, errMsg := h.reports.EditReportMessage(ctx, reportMessageID, httphelper.CurrentUserProfile(ctx), req)
 		if errMsg != nil {
-			httphelper.HandleErrs(ctx, errMsg)
-			slog.Error("Failed to edit report message", log.ErrAttr(errMsg))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errMsg))
 
 			return
 		}
@@ -267,17 +253,18 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 
 func (h reportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		reportMessageID, errID := httphelper.GetInt64Param(ctx, "report_message_id")
-		if errID != nil || reportMessageID == 0 {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Warn("Failed to get report_message_id", log.ErrAttr(errID))
+		reportMessageID, idFound := httphelper.GetInt64Param(ctx, "report_message_id")
+		if !idFound {
+			return
+		}
+		if reportMessageID == 0 {
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
 
 		if err := h.reports.DropReportMessage(ctx, httphelper.CurrentUserProfile(ctx), reportMessageID); err != nil {
-			httphelper.HandleErrs(ctx, err)
-			slog.Error("Failed to drop report message", log.ErrAttr(err))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
 		}

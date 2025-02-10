@@ -47,8 +47,7 @@ func (h discordOAuthHandler) onLogin() gin.HandlerFunc {
 
 		loginURL, errURL := h.discord.CreateStatefulLoginURL(currentUser.SteamID)
 		if errURL != nil {
-			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, nil)
-			slog.Error("Failed to get state from query")
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errURL))
 
 			return
 		}
@@ -91,13 +90,12 @@ func (h discordOAuthHandler) onGetDiscordUser() gin.HandlerFunc {
 		discord, errUser := h.discord.GetUserDetail(ctx, user.SteamID)
 		if errUser != nil {
 			if errors.Is(errUser, domain.ErrNoResult) {
-				httphelper.ResponseAPIErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Error trying to fetch discord user details", log.ErrAttr(errUser))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrInternal))
 
 			return
 		}
@@ -118,8 +116,7 @@ func (h discordOAuthHandler) onLogout() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Error trying to logout discord user", log.ErrAttr(errUser))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrInternal))
 
 			return
 		}

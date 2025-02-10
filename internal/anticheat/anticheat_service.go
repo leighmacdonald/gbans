@@ -1,13 +1,12 @@
 package anticheat
 
 import (
-	"log/slog"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
@@ -29,20 +28,14 @@ func NewHandler(engine *gin.Engine, auth domain.AuthUsecase, anticheat domain.An
 
 func (h antiCheatHandler) bySteamID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		steamID, errSteamID := httphelper.GetSID64Param(ctx, "steam_id")
-		if errSteamID != nil {
-			slog.Error("Failed to query anticheat logs by steam_id",
-				log.ErrAttr(errSteamID))
-			httphelper.HandleErrBadRequest(ctx)
-
+		steamID, idFound := httphelper.GetSID64Param(ctx, "steam_id")
+		if !idFound {
 			return
 		}
 
 		detections, errDetections := h.anticheat.DetectionsBySteamID(ctx, steamID)
 		if errDetections != nil {
-			slog.Error("Failed to query anticheat logs by steam_id",
-				log.ErrAttr(errSteamID), slog.Int64("steam_id", steamID.Int64()))
-			httphelper.HandleErrInternal(ctx)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDetections))
 
 			return
 		}
@@ -53,20 +46,14 @@ func (h antiCheatHandler) bySteamID() gin.HandlerFunc {
 
 func (h antiCheatHandler) byDetection() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		detectionType, errDetectionType := httphelper.GetStringParam(ctx, "detection_type")
-		if errDetectionType != nil {
-			slog.Error("Failed to query anticheat logs by detection_type",
-				log.ErrAttr(errDetectionType))
-			httphelper.HandleErrBadRequest(ctx)
-
+		detectionType, typeFound := httphelper.GetStringParam(ctx, "detection_type")
+		if !typeFound {
 			return
 		}
 
 		detections, errDetections := h.anticheat.DetectionsByType(ctx, logparse.Detection(detectionType))
 		if errDetections != nil {
-			slog.Error("Failed to query anticheat logs by steam_id",
-				log.ErrAttr(errDetections), slog.String("detection_type", detectionType))
-			httphelper.HandleErrInternal(ctx)
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDetections))
 
 			return
 		}
@@ -83,10 +70,8 @@ func (h antiCheatHandler) query() gin.HandlerFunc {
 		}
 
 		entries, errEntries := h.anticheat.Query(ctx, query)
-		if errEntries != nil {
-			slog.Error("Failed to query anticheat logs",
-				log.ErrAttr(errEntries))
-			httphelper.HandleErrInternal(ctx)
+		if errEntries != nil && !errors.Is(errEntries, domain.ErrNoResult) {
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errEntries))
 
 			return
 		}

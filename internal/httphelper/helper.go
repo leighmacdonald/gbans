@@ -13,38 +13,50 @@ import (
 	"github.com/gorilla/schema"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/convert"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+func SetAPIError(ctx *gin.Context, err APIError) {
+	_ = ctx.Error(err)
+}
+
+func NewAPIError(code int, err error, message ...string) APIError {
+	apiErr := APIError{
+		Message: err.Error(),
+		Code:    code,
+		Err:     err,
+	}
+
+	if len(message) > 0 {
+		apiErr.Message = message[0]
+	}
+
+	return apiErr
+}
+
 type APIError struct {
 	Message string `json:"message"`
+	Code    int    `json:"code"`
+	Err     error  `json:"-"`
 }
 
-func abortWithErrorJSON(ctx *gin.Context, code int, jsonObj any, err error) {
-	if err != nil {
-		_ = ctx.Error(err)
-	}
-	ctx.Abort()
-	ctx.JSON(code, jsonObj)
+func (e APIError) Error() string {
+	return e.Message
 }
 
-func ResponseAPIErr(ctx *gin.Context, statusCode int, err error) {
-	userErr := "API Error"
-	if err != nil {
-		userErr = err.Error()
-	}
+func recoveryHandler() gin.HandlerFunc {
+	return gin.CustomRecoveryWithWriter(nil, func(c *gin.Context, err interface{}) {
+		slog.Error("Recovery error:", slog.String("err", fmt.Sprintf("%v", err)))
 
-	abortWithErrorJSON(ctx, statusCode, APIError{Message: userErr}, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Something went wrong",
+		})
+	})
 }
 
 func Bind(ctx *gin.Context, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
-		if err := ctx.AbortWithError(http.StatusBadRequest, errBind); err != nil {
-			slog.Error("Failed to abort", log.ErrAttr(err), log.HandlerName(3))
-		}
-
-		slog.Error("Failed to bind request", log.ErrAttr(errBind), log.HandlerName(3))
+		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, errBind))
 
 		return false
 	}
@@ -58,8 +70,7 @@ var decoder = schema.NewDecoder() //nolint:gochecknoglobals
 
 func BindQuery(ctx *gin.Context, target any) bool {
 	if errBind := decoder.Decode(target, ctx.Request.URL.Query()); errBind != nil {
-		HandleErrs(ctx, domain.ErrBadRequest)
-		slog.Error("Failed to bind query request", log.ErrAttr(errBind), log.HandlerName(2))
+		SetAPIError(ctx, NewAPIError(http.StatusInternalServerError, errBind, domain.ErrBadRequest.Error()))
 
 		return false
 	}
@@ -81,74 +92,84 @@ func CurrentUserProfile(ctx *gin.Context) domain.UserProfile {
 	return person
 }
 
-func GetSID64Param(c *gin.Context, key string) (steamid.SteamID, error) {
-	i, errGetParam := GetInt64Param(c, key)
-	if errGetParam != nil {
-		return steamid.SteamID{}, errGetParam
+func GetSID64Param(ctx *gin.Context, key string) (steamid.SteamID, bool) {
+	i, found := GetInt64Param(ctx, key)
+	if !found {
+		return steamid.SteamID{}, false
 	}
 
 	sid := steamid.New(i)
 	if !sid.Valid() {
-		return steamid.SteamID{}, domain.ErrInvalidSID
+		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrInvalidSID))
+
+		return steamid.SteamID{}, false
 	}
 
-	return sid, nil
+	return sid, true
 }
 
-func GetInt64Param(ctx *gin.Context, key string) (int64, error) {
+func GetInt64Param(ctx *gin.Context, key string) (int64, bool) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		HandleErrBadRequest(ctx)
+		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamKeyMissing))
 
-		return 0, fmt.Errorf("%w: %s", domain.ErrParamKeyMissing, key)
+		return 0, false
 	}
 
 	value, valueErr := strconv.ParseInt(valueStr, 10, 64)
 	if valueErr != nil {
-		HandleErrBadRequest(ctx)
+		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamParse))
 
-		return 0, domain.ErrParamParse
+		return 0, false
 	}
 
 	if value <= 0 {
-		HandleErrBadRequest(ctx)
+		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamInvalid))
 
-		return 0, fmt.Errorf("%w: %s", domain.ErrParamInvalid, key)
+		return 0, false
 	}
 
-	return value, nil
+	return value, true
 }
 
-func GetIntParam(ctx *gin.Context, key string) (int, error) {
+func GetIntParam(ctx *gin.Context, key string) (int, bool) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		return 0, fmt.Errorf("%w: %s", domain.ErrParamKeyMissing, key)
+		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamKeyMissing))
+
+		return 0, false
 	}
 
-	return convert.StringToInt(valueStr), nil
+	return convert.StringToInt(valueStr), true
 }
 
-func GetStringParam(ctx *gin.Context, key string) (string, error) {
+func GetStringParam(ctx *gin.Context, key string) (string, bool) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		return "", fmt.Errorf("%w: %s", domain.ErrParamKeyMissing, key)
+		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamKeyMissing))
+
+		return "", false
 	}
 
-	return valueStr, nil
+	return valueStr, true
 }
 
-func GetUUIDParam(ctx *gin.Context, key string) (uuid.UUID, error) {
+func GetUUIDParam(ctx *gin.Context, key string) (uuid.UUID, bool) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		return uuid.UUID{}, fmt.Errorf("%w: %s", domain.ErrParamKeyMissing, key)
+		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamKeyMissing))
+
+		return uuid.UUID{}, false
 	}
 
 	parsedUUID, errString := uuid.FromString(valueStr)
 	if errString != nil {
-		return uuid.UUID{}, errors.Join(errString, domain.ErrParamParse)
+		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, errors.Join(errString, domain.ErrParamParse)))
+
+		return uuid.UUID{}, false
 	}
 
-	return parsedUUID, nil
+	return parsedUUID, true
 }
 
 func GetDefaultFloat64(s string, def float64) float64 {

@@ -131,7 +131,8 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 
 	defer rows.Close()
 
-	var servers []domain.Server
+	//goland:noinspection GoPreferNilSlice
+	servers := []domain.Server{}
 
 	for rows.Next() {
 		var (
