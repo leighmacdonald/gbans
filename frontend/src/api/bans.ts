@@ -342,6 +342,7 @@ interface UpdateBanGroupPayload {
 
 export const apiUpdateBanGroup = async (ban_group_id: number, payload: UpdateBanGroupPayload) =>
     await apiCall<GroupBanRecord, UpdateBanGroupPayload>(`/api/bans/group/${ban_group_id}`, 'POST', payload);
+
 export const apiDeleteBan = async (ban_id: number, unban_reason_text: string) =>
     await apiCall<null, UnbanPayload>(`/api/bans/steam/${ban_id}`, 'DELETE', {
         unban_reason_text

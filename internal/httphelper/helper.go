@@ -20,7 +20,7 @@ func SetAPIError(ctx *gin.Context, err APIError) {
 	_ = ctx.Error(err)
 }
 
-func NewAPIError(code int, err error, message ...string) APIError {
+func NewAPIError(code Code, err error, message ...string) APIError {
 	apiErr := APIError{
 		Message: err.Error(),
 		Code:    code,
@@ -36,7 +36,7 @@ func NewAPIError(code int, err error, message ...string) APIError {
 
 type APIError struct {
 	Message string `json:"message"`
-	Code    int    `json:"code"`
+	Code    Code   `json:"code"`
 	Err     error  `json:"-"`
 }
 

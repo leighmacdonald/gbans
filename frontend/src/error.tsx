@@ -9,10 +9,10 @@ export enum ErrorCode {
     NotFound = 5
 }
 
-export class AppError extends Error {
+export class ApiError extends Error {
     public code: ErrorCode;
 
-    constructor(code: ErrorCode, message?: string, options?: never) {
+    constructor(code: ErrorCode, message: string, options?: never) {
         if (emptyOrNullString(message)) {
             switch (code) {
                 case ErrorCode.InvalidMimetype:
@@ -34,8 +34,9 @@ export class AppError extends Error {
                     message = '🤯 🤯 🤯 Something went wrong 🤯 🤯 🤯';
             }
         }
-        // @ts-expect-error not supported
-        super(message, options);
+
+        super(options);
         this.code = code;
+        this.message = message;
     }
 }
