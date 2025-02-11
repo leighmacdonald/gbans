@@ -35,7 +35,7 @@ func (h antiCheatHandler) bySteamID() gin.HandlerFunc {
 
 		detections, errDetections := h.anticheat.DetectionsBySteamID(ctx, steamID)
 		if errDetections != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDetections))
+			httphelper.SetAPIError(ctx, httphelper.NewAPIError(httphelper.ParamInvalid, errDetections))
 
 			return
 		}

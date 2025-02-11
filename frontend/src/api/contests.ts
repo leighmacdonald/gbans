@@ -1,4 +1,3 @@
-import { logErr } from '../util/errors';
 import { DateRange, TimeStamped, transformDateRange, transformTimeStampedDates } from '../util/time.ts';
 import { apiCall, PermissionLevel } from './common';
 import { EmptyUUID } from './const';
@@ -35,14 +34,10 @@ export const apiContest = async (contest_id: number) => {
 };
 
 export const apiContestEntries = async (contest_id: string) => {
-    try {
-        const entries = await apiCall<ContestEntry[]>(`/api/contests/${contest_id}/entries`, 'GET');
-        return entries.map(transformTimeStampedDates);
-    } catch (e) {
-        logErr(e);
-        return [];
-    }
+    const entries = await apiCall<ContestEntry[]>(`/api/contests/${contest_id}/entries`, 'GET');
+    return entries.map(transformTimeStampedDates);
 };
+
 export const apiContestDelete = async (contest_id: string) =>
     await apiCall<Contest>(`/api/contests/${contest_id}`, 'DELETE');
 

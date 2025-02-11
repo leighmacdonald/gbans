@@ -1,6 +1,5 @@
-import { AppError, ErrorCode } from '../error.tsx';
+import { ApiError } from '../error.tsx';
 import { readAccessToken } from '../util/auth/readAccessToken.ts';
-import { logErr } from '../util/errors.ts';
 import { emptyOrNullString } from '../util/types';
 import { AppealState } from './bans';
 
@@ -50,11 +49,6 @@ export interface DataCount {
 }
 
 export class EmptyBody {}
-
-interface errorMessage {
-    message: string;
-    code?: number;
-}
 
 export type CallbackLink = {
     url: string;
@@ -115,40 +109,16 @@ export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Recor
 
     const response = await fetch(fullURL, requestOptions);
 
-    switch (response.status) {
-        case 415:
-            throw new AppError(ErrorCode.InvalidMimetype);
-        case 424:
-            throw new AppError(ErrorCode.DependencyMissing);
-        case 401:
-            if (accessToken != '') {
-                throw new AppError(ErrorCode.LoginRequired);
-            }
-            break;
-        case 403:
-            if (accessToken != '') {
-                throw new AppError(ErrorCode.PermissionDenied);
-            }
-    }
-
     if (!response.ok) {
-        let err: errorMessage = { message: 'Error', code: ErrorCode.Unknown };
-        try {
-            err = (await response.json()) as errorMessage;
-        } catch (e) {
-            logErr(e);
-            throw new AppError(ErrorCode.Unknown);
-        }
-        throw new AppError(err.code ?? ErrorCode.Unknown, err.message);
+        throw (await response.json()) as ApiError;
     }
 
     if (response.status == 204) {
         return null as TResponse;
     }
+
     return (await response.json()) as TResponse;
 };
-
-export class ValidationException extends Error {}
 
 export interface QueryFilter {
     offset?: number;

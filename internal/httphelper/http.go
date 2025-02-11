@@ -27,7 +27,7 @@ func errorHandler() gin.HandlerFunc {
 		if err := ctx.Errors.Last(); err != nil {
 			var apiError APIError
 			if errors.As(err, &apiError) {
-				ctx.AbortWithStatusJSON(apiError.Code, apiError)
+				ctx.AbortWithStatusJSON(int(apiError.Code), apiError)
 			} else {
 				ctx.AbortWithStatusJSON(http.StatusInternalServerError, APIError{
 					Message: domain.ErrInternal.Error(),
