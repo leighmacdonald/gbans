@@ -42,7 +42,7 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 
 		mediaFile, errOpen := req.File.Open()
 		if errOpen != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOpen))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errOpen))
 
 			return
 		}
@@ -53,7 +53,7 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 
 		media, errMedia := h.assets.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID, "media", req.Name, mediaFile)
 		if errMedia != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errMedia))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMedia))
 
 			return
 		}
@@ -72,12 +72,12 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 		asset, reader, errGet := h.assets.Get(ctx, mediaID)
 		if errGet != nil {
 			if errors.Is(errGet, domain.ErrNotFound) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errGet))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, errGet))
 
 			return
 		}
@@ -85,7 +85,7 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 		if asset.IsPrivate {
 			user := httphelper.CurrentUserProfile(ctx)
 			if !user.SteamID.Valid() && (user.SteamID == asset.AuthorID || user.HasPermission(domain.PModerator)) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrPermissionDenied))
 
 				return
 			}

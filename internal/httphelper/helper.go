@@ -16,34 +16,6 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func SetAPIError(ctx *gin.Context, err APIError) {
-	_ = ctx.Error(err)
-}
-
-func NewAPIError(code Code, err error, message ...string) APIError {
-	apiErr := APIError{
-		Message: err.Error(),
-		Code:    code,
-		Err:     err,
-	}
-
-	if len(message) > 0 {
-		apiErr.Message = message[0]
-	}
-
-	return apiErr
-}
-
-type APIError struct {
-	Message string `json:"message"`
-	Code    Code   `json:"code"`
-	Err     error  `json:"-"`
-}
-
-func (e APIError) Error() string {
-	return e.Message
-}
-
 func recoveryHandler() gin.HandlerFunc {
 	return gin.CustomRecoveryWithWriter(nil, func(c *gin.Context, err interface{}) {
 		slog.Error("Recovery error:", slog.String("err", fmt.Sprintf("%v", err)))
@@ -56,7 +28,7 @@ func recoveryHandler() gin.HandlerFunc {
 
 func Bind(ctx *gin.Context, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
-		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, errBind))
+		SetError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
 
 		return false
 	}
@@ -70,7 +42,10 @@ var decoder = schema.NewDecoder() //nolint:gochecknoglobals
 
 func BindQuery(ctx *gin.Context, target any) bool {
 	if errBind := decoder.Decode(target, ctx.Request.URL.Query()); errBind != nil {
-		SetAPIError(ctx, NewAPIError(http.StatusInternalServerError, errBind, domain.ErrBadRequest.Error()))
+		SetError(ctx,
+			NewAPIErrorf(http.StatusInternalServerError,
+				errors.Join(errBind, domain.ErrBadRequest),
+				"Could not decode query params"))
 
 		return false
 	}
@@ -100,7 +75,8 @@ func GetSID64Param(ctx *gin.Context, key string) (steamid.SteamID, bool) {
 
 	sid := steamid.New(i)
 	if !sid.Valid() {
-		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrInvalidSID))
+		_ = ctx.Error(NewAPIErrorf(ctx, http.StatusBadRequest, nil, domain.ErrInvalidSID,
+			"%s contains an invalid Steam ID: %s", key, ctx.Param(key)))
 
 		return steamid.SteamID{}, false
 	}
@@ -111,20 +87,23 @@ func GetSID64Param(ctx *gin.Context, key string) (steamid.SteamID, bool) {
 func GetInt64Param(ctx *gin.Context, key string) (int64, bool) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamKeyMissing))
+		_ = ctx.Error(NewAPIErrorf(ctx, http.StatusBadRequest, domain.ErrParamKeyMissing,
+			"Cannot read value for param: %s", key))
 
 		return 0, false
 	}
 
 	value, valueErr := strconv.ParseInt(valueStr, 10, 64)
 	if valueErr != nil {
-		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamParse))
+		_ = ctx.Error(NewAPIErrorf(ctx, http.StatusBadRequest, domain.ErrParamParse,
+			"Must be a valid integer: %s", key))
 
 		return 0, false
 	}
 
 	if value <= 0 {
-		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamInvalid))
+		_ = ctx.Error(NewAPIErrorf(ctx, http.StatusBadRequest, domain.ErrParamInvalid,
+			"Integer value cannot be negative: %s", key))
 
 		return 0, false
 	}
@@ -135,7 +114,8 @@ func GetInt64Param(ctx *gin.Context, key string) (int64, bool) {
 func GetIntParam(ctx *gin.Context, key string) (int, bool) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamKeyMissing))
+		_ = ctx.Error(NewAPIErrorf(ctx, http.StatusBadRequest, domain.ErrParamKeyMissing,
+			"Cannot read value for param: %s", key))
 
 		return 0, false
 	}
@@ -146,7 +126,8 @@ func GetIntParam(ctx *gin.Context, key string) (int, bool) {
 func GetStringParam(ctx *gin.Context, key string) (string, bool) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamKeyMissing))
+		_ = ctx.Error(NewAPIErrorf(ctx, http.StatusBadRequest, domain.ErrParamKeyMissing,
+			"Cannot find param: %s", key))
 
 		return "", false
 	}
@@ -157,14 +138,15 @@ func GetStringParam(ctx *gin.Context, key string) (string, bool) {
 func GetUUIDParam(ctx *gin.Context, key string) (uuid.UUID, bool) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrParamKeyMissing))
+		_ = ctx.Error(NewAPIErrorf(ctx, http.StatusBadRequest, domain.ErrParamKeyMissing,
+			"Cannot find param: %s", key))
 
 		return uuid.UUID{}, false
 	}
 
 	parsedUUID, errString := uuid.FromString(valueStr)
 	if errString != nil {
-		SetAPIError(ctx, NewAPIError(http.StatusBadRequest, errors.Join(errString, domain.ErrParamParse)))
+		_ = ctx.Error(NewAPIErrorf(ctx, http.StatusBadRequest, domain.ErrParamParse, "Supplied value is not a valid UUID: %s", valueStr))
 
 		return uuid.UUID{}, false
 	}

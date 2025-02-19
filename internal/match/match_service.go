@@ -57,7 +57,7 @@ func (h matchHandler) onAPIPostMatchEnd() gin.HandlerFunc {
 
 		matchUUID, errEnd := h.matches.EndMatch(ctx, serverID)
 		if errEnd != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errEnd))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errEnd))
 
 			return
 		}
@@ -89,14 +89,14 @@ func (h matchHandler) onAPIPostMatchStart() gin.HandlerFunc {
 
 		server, errServer := h.servers.Server(ctx, serverID)
 		if errServer != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errServer))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errServer))
 
 			return
 		}
 
 		matchUUID, errMatch := h.matches.StartMatch(server, req.MapName, req.DemoName)
 		if errMatch != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errMatch))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMatch))
 
 			return
 		}
@@ -144,14 +144,14 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 
 		errWeapon := h.matches.GetWeaponByID(ctx, weaponID, &weapon)
 		if errWeapon != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
 
 			return
 		}
 
 		weaponStats, errChat := h.matches.WeaponsOverallTopPlayers(ctx, weaponID)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errChat))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errChat))
 
 			return
 		}
@@ -209,7 +209,7 @@ func (h matchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
 
 		weaponStats, errChat := h.matches.WeaponsOverallByPlayer(ctx, steamID)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errChat))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errChat))
 
 			return
 		}
@@ -231,7 +231,7 @@ func (h matchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
 
 		classStats, errChat := h.matches.PlayerOverallClassStats(ctx, steamID)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errChat))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errChat))
 
 			return
 		}
@@ -253,7 +253,7 @@ func (h matchHandler) onAPIGetPlayerStatsOverall() gin.HandlerFunc {
 
 		var por domain.PlayerOverallResult
 		if errChat := h.matches.PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errChat))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errChat))
 
 			return
 		}
@@ -266,7 +266,7 @@ func (h matchHandler) onAPIGetMapUsage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		mapUsages, errServers := h.matches.GetMapUsageStats(ctx)
 		if errServers != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errServers))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errServers))
 
 			return
 		}
@@ -288,12 +288,12 @@ func (h matchHandler) onAPIGetMatch() gin.HandlerFunc {
 
 		if errMatch != nil {
 			if errors.Is(errMatch, domain.ErrNoResult) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errMatch))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMatch))
 
 			return
 		}
@@ -314,13 +314,13 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 		if user.PermissionLevel <= domain.PUser {
 			targetID, ok := req.TargetSteamID()
 			if !ok {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
 
 				return
 			}
 
 			if user.SteamID != targetID {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrPermissionDenied))
 
 				return
 			}
@@ -328,7 +328,7 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 
 		matches, totalCount, errMatches := h.matches.Matches(ctx, req)
 		if errMatches != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errMatches))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMatches))
 
 			return
 		}

@@ -47,7 +47,7 @@ func (h discordOAuthHandler) onLogin() gin.HandlerFunc {
 
 		loginURL, errURL := h.discord.CreateStatefulLoginURL(currentUser.SteamID)
 		if errURL != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errURL))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, errURL))
 
 			return
 		}
@@ -90,12 +90,12 @@ func (h discordOAuthHandler) onGetDiscordUser() gin.HandlerFunc {
 		discord, errUser := h.discord.GetUserDetail(ctx, user.SteamID)
 		if errUser != nil {
 			if errors.Is(errUser, domain.ErrNoResult) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrInternal))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, domain.ErrInternal))
 
 			return
 		}
@@ -116,7 +116,7 @@ func (h discordOAuthHandler) onLogout() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrInternal))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, domain.ErrInternal))
 
 			return
 		}

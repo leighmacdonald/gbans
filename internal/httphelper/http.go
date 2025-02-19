@@ -1,25 +1,41 @@
 package httphelper
 
 import (
+	"encoding/json"
 	"errors"
-	"log/slog"
-	"net/http"
-	"path/filepath"
-
 	"github.com/Depado/ginprom"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/render"
 	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	sloggin "github.com/samber/slog-gin"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
+	"log/slog"
+	"net/http"
+	"path/filepath"
 )
 
 func errorHandler() gin.HandlerFunc {
+	// To conform to rfc9457, we need to set the content-type. Calling ctx.JSON() would use the default application/json
+	// content type.
+	abort := func(ctx *gin.Context, apiError APIError) {
+		ctx.Abort()
+		ctx.Header("Content-Type", "application/problem+json")
+		ctx.Render(apiError.Status, render.JSON{Data: apiError})
+
+		err := json.NewEncoder(ctx.Writer).Encode(apiError)
+		if err != nil {
+			ctx.Abort()
+
+			return
+		}
+	}
+
 	return func(ctx *gin.Context) {
 		ctx.Next()
 
@@ -27,11 +43,9 @@ func errorHandler() gin.HandlerFunc {
 		if err := ctx.Errors.Last(); err != nil {
 			var apiError APIError
 			if errors.As(err, &apiError) {
-				ctx.AbortWithStatusJSON(int(apiError.Code), apiError)
+				abort(ctx, apiError)
 			} else {
-				ctx.AbortWithStatusJSON(http.StatusInternalServerError, APIError{
-					Message: domain.ErrInternal.Error(),
-				})
+				abort(ctx, NewAPIError(ctx, http.StatusInternalServerError, domain.ErrInternal))
 			}
 			args := []any{
 				slog.String("method", ctx.Request.Method),

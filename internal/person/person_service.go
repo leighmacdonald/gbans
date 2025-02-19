@@ -58,14 +58,14 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 		}
 
 		if err := h.persons.SetPermissionLevel(ctx, nil, steamID, req.PermissionLevel); err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
 
 		person, errPerson := h.persons.GetPersonBySteamID(ctx, nil, steamID)
 		if errPerson != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errPerson))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errPerson))
 
 			return
 		}
@@ -84,7 +84,7 @@ func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 
 		settings, err := h.persons.GetPersonSettings(ctx, user.SteamID)
 		if err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -103,7 +103,7 @@ func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 
 		settings, err := h.persons.SavePersonSettings(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -120,7 +120,7 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 				slog.Int64("sid64", profile.SteamID.Int64()),
 				slog.String("name", profile.Name),
 				slog.String("permission_level", profile.PermissionLevel.String()))
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrInvalidSID))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrInvalidSID))
 
 			return
 		}
@@ -141,7 +141,7 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 		response, err := h.persons.QueryProfile(requestCtx, req.Query)
 		if err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -159,7 +159,7 @@ func (h personHandler) searchPlayers() gin.HandlerFunc {
 
 		people, count, errGetPeople := h.persons.GetPeople(ctx, nil, query)
 		if errGetPeople != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGetPeople))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGetPeople))
 
 			return
 		}

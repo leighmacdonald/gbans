@@ -164,14 +164,14 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(domain.FingerprintCookieName)
 		if errCookie != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errCookie))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errCookie))
 
 			return
 		}
 
 		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errExternal))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errExternal))
 
 			return
 		}
@@ -181,13 +181,13 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 
 		personAuth := domain.PersonAuth{}
 		if errGet := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGet))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGet))
 
 			return
 		}
 
 		if errDelete := h.authUsecase.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDelete))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDelete))
 
 			return
 		}

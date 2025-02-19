@@ -334,6 +334,8 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 		return domain.ReportWithAuthor{}, err
 	}
 
+	slog.Info("New report created", slog.Int64("report_id", report.ReportID))
+
 	if demo.DemoID > 0 && !demo.Archive {
 		if errMark := r.demos.MarkArchived(ctx, &demo); errMark != nil {
 			slog.Error("Failed to mark demo as archived", log.ErrAttr(errMark))

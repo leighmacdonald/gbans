@@ -61,7 +61,7 @@ func (b *blocklistHandler) onAPIWhitelistSteam() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		whiteLists, errWl := b.blocklists.GetSteamBlockWhitelists(ctx)
 		if errWl != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errWl))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errWl))
 
 			return
 		}
@@ -83,14 +83,14 @@ func (b *blocklistHandler) onAPICreateWhitelistSteam() gin.HandlerFunc {
 
 		steamID, ok := req.SteamID(ctx)
 		if !ok {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrInvalidSID))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrInvalidSID))
 
 			return
 		}
 
 		whitelist, errSave := b.blocklists.CreateSteamBlockWhitelists(ctx, steamID)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -107,7 +107,7 @@ func (b *blocklistHandler) onAPIDeleteBlockList() gin.HandlerFunc {
 		}
 
 		if err := b.blocklists.DeleteCIDRBlockSources(ctx, sourceID); err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -120,7 +120,7 @@ func (b *blocklistHandler) onAPIWhitelistIPs() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		whiteLists, errWl := b.blocklists.GetCIDRBlockWhitelists(ctx)
 		if errWl != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errWl))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errWl))
 
 			return
 		}
@@ -147,7 +147,7 @@ func (b *blocklistHandler) onAPIDeleteWhitelistSteam() gin.HandlerFunc {
 
 		errSave := b.blocklists.DeleteSteamBlockWhitelists(ctx, steamID)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -160,7 +160,7 @@ func (b *blocklistHandler) onAPIGetBlockListSources() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		blockLists, err := b.blocklists.GetCIDRBlockSources(ctx)
 		if err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -184,7 +184,7 @@ func (b *blocklistHandler) onAPIPostBlockListCreate() gin.HandlerFunc {
 
 		blockList, errSave := b.blocklists.CreateCIDRBlockSources(ctx, req.Name, req.URL, req.Enabled)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -213,7 +213,7 @@ func (b *blocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
 
 		blockSource, errUpdate := b.blocklists.UpdateCIDRBlockSource(ctx, sourceID, req.Name, req.URL, req.Enabled)
 		if errUpdate != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errUpdate))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errUpdate))
 
 			return
 		}
@@ -235,7 +235,7 @@ func (b *blocklistHandler) onAPICreateWhitelistIP() gin.HandlerFunc {
 
 		whitelist, errSave := b.blocklists.CreateCIDRBlockWhitelist(ctx, req.Address)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -270,7 +270,7 @@ func (b *blocklistHandler) onAPIUpdateWhitelistIP() gin.HandlerFunc {
 
 		whiteList, errSave := b.blocklists.UpdateCIDRBlockWhitelist(ctx, whitelistID, req.Address)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, errSave))
 
 			return
 		}
@@ -287,7 +287,7 @@ func (b *blocklistHandler) onAPIDeleteBlockListWhitelist() gin.HandlerFunc {
 		}
 
 		if err := b.blocklists.DeleteCIDRBlockWhitelist(ctx, whitelistID); err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}

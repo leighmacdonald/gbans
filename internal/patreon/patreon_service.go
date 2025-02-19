@@ -44,7 +44,7 @@ func (h patreonHandler) onLogout() gin.HandlerFunc {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
 		if err := h.patreon.Forget(ctx, currentUser.SteamID); err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, err))
 
 			return
 		}
@@ -67,14 +67,14 @@ func (h patreonHandler) onOAuth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		grantCode, codeOK := ctx.GetQuery("code")
 		if !codeOK {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrInvalidParameter))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrInvalidParameter))
 
 			return
 		}
 
 		state, stateOK := ctx.GetQuery("state")
 		if !stateOK {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrInvalidParameter))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrInvalidParameter))
 
 			return
 		}

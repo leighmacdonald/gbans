@@ -38,12 +38,12 @@ func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
 		bannedPerson, errBan := h.banASN.Ban(ctx, req)
 		if errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusConflict, errBan))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusConflict, errBan))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBan))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBan))
 
 			return
 		}
@@ -61,7 +61,7 @@ func (h banASNHandler) onAPIGetBansASN() gin.HandlerFunc {
 
 		bansASN, errBans := h.banASN.Get(ctx, req)
 		if errBans != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBans))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBans))
 
 			return
 		}
@@ -83,7 +83,7 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 		}
 
 		if errSave := h.banASN.Delete(ctx, asnID, req); errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -106,7 +106,7 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 
 		ban, errSave := h.banASN.Update(ctx, asnID, req)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
