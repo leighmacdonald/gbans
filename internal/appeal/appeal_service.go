@@ -45,7 +45,7 @@ func (h *appealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 
 		banMessages, errGetBanMessages := h.appealUsecase.GetBanMessages(ctx, httphelper.CurrentUserProfile(ctx), banID)
 		if errGetBanMessages != nil && !errors.Is(errGetBanMessages, domain.ErrNotFound) {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errGetBanMessages))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, errGetBanMessages))
 
 			return
 		}
@@ -68,7 +68,7 @@ func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 
 		msg, errSave := h.appealUsecase.CreateBanMessage(ctx, httphelper.CurrentUserProfile(ctx), banID, req.BodyMD)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, errSave))
 
 			return
 		}
@@ -85,7 +85,7 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 		}
 
 		if reportMessageID == 0 {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
@@ -99,7 +99,7 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 
 		msg, errSave := h.appealUsecase.EditBanMessage(ctx, curUser, reportMessageID, req.BodyMD)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -118,13 +118,13 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 		}
 
 		if banMessageID == 0 {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
 
 		if err := h.appealUsecase.DropBanMessage(ctx, curUser, banMessageID); err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -142,7 +142,7 @@ func (h *appealHandler) onAPIGetAppeals() gin.HandlerFunc {
 
 		bans, errBans := h.appealUsecase.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBans))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBans))
 
 			return
 		}

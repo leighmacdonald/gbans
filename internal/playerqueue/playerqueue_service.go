@@ -67,13 +67,13 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 
 		if err := h.queue.SetChatStatus(ctx, currentUser.SteamID, steamID, req.ChatStatus, req.Reason); err != nil {
 			if errors.Is(err, domain.ErrPermissionDenied) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrPermissionDenied))
 
 				return
 			}
 
 			if errors.Is(err, domain.ErrDuplicate) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusConflict, domain.ErrDuplicate))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusConflict, domain.ErrDuplicate))
 
 				return
 			}
@@ -93,7 +93,7 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 		// Create ws connection
 		wsConn, errConn := newClientConn(ctx, validOrigins)
 		if errConn != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusConflict, errConn, "Cannot open connection"))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusConflict, errConn, "Cannot open connection"))
 
 			return
 		}
@@ -176,7 +176,7 @@ func (h *serverQueueHandler) purge() gin.HandlerFunc {
 
 		messageID, idFound := httphelper.GetInt64Param(ctx, "message_id")
 		if !idFound {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
 
 			return
 		}
@@ -186,14 +186,14 @@ func (h *serverQueueHandler) purge() gin.HandlerFunc {
 			return
 		}
 		if count <= 0 {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
 
 		errPurge := h.queue.Purge(ctx, user.SteamID, messageID, count)
 		if errPurge != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errPurge))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errPurge))
 
 			return
 		}

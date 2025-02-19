@@ -220,7 +220,7 @@ func (s *srcdsHandler) onGetGroupImmunities() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		immunities, errImmunities := s.srcds.GetGroupImmunities(ctx)
 		if errImmunities != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errImmunities))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errImmunities))
 
 			return
 		}
@@ -247,7 +247,7 @@ func (s *srcdsHandler) onCreateGroupImmunity() gin.HandlerFunc {
 
 		immunity, errImmunity := s.srcds.AddGroupImmunity(ctx, req.GroupID, req.OtherID)
 		if errImmunity != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errImmunity))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errImmunity))
 
 			return
 		}
@@ -264,7 +264,7 @@ func (s *srcdsHandler) onDeleteGroupImmunity() gin.HandlerFunc {
 		}
 
 		if err := s.srcds.DelGroupImmunity(ctx, groupImmunityID); err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -286,7 +286,7 @@ func (s *srcdsHandler) onGroupOverrides() gin.HandlerFunc {
 
 		overrides, errOverrides := s.srcds.GroupOverrides(ctx, groupID)
 		if errOverrides != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOverrides))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errOverrides))
 
 			return
 		}
@@ -319,7 +319,7 @@ func (s *srcdsHandler) onCreateGroupOverride() gin.HandlerFunc {
 
 		override, errOverride := s.srcds.AddGroupOverride(ctx, groupID, req.Name, req.Type, req.Access)
 		if errOverride != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOverride))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errOverride))
 
 			return
 		}
@@ -343,12 +343,12 @@ func (s *srcdsHandler) onSaveGroupOverride() gin.HandlerFunc {
 		override, errOverride := s.srcds.GetGroupOverride(ctx, groupOverrideID)
 		if errOverride != nil {
 			if errors.Is(errOverride, domain.ErrNoResult) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNoResult))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOverride))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errOverride))
 
 			return
 		}
@@ -359,7 +359,7 @@ func (s *srcdsHandler) onSaveGroupOverride() gin.HandlerFunc {
 
 		edited, errSave := s.srcds.SaveGroupOverride(ctx, override)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -377,12 +377,12 @@ func (s *srcdsHandler) onDeleteGroupOverride() gin.HandlerFunc {
 
 		if err := s.srcds.DelGroupOverride(ctx, groupOverrideID); err != nil {
 			if errors.Is(err, domain.ErrNoResult) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNoResult))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -412,12 +412,12 @@ func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
 		override, errOverride := s.srcds.GetOverride(ctx, overrideID)
 		if errOverride != nil {
 			if errors.Is(errOverride, domain.ErrNoResult) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNoResult))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOverride))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errOverride))
 
 			return
 		}
@@ -428,7 +428,7 @@ func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
 
 		edited, errSave := s.srcds.SaveOverride(ctx, override)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -446,7 +446,7 @@ func (s *srcdsHandler) onCreateOverrides() gin.HandlerFunc {
 
 		override, errCreate := s.srcds.AddOverride(ctx, req.Name, req.Type, req.Flags)
 		if errCreate != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errCreate))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errCreate))
 
 			return
 		}
@@ -463,7 +463,7 @@ func (s *srcdsHandler) onDeleteOverrides() gin.HandlerFunc {
 		}
 
 		if errCreate := s.srcds.DelOverride(ctx, override); errCreate != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errCreate))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errCreate))
 
 			return
 		}
@@ -476,7 +476,7 @@ func (s *srcdsHandler) onGetOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		overrides, errOverrides := s.srcds.Overrides(ctx)
 		if errOverrides != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOverrides))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errOverrides))
 
 			return
 		}
@@ -503,7 +503,7 @@ func (s *srcdsHandler) onAddAdminGroup() gin.HandlerFunc {
 
 		admin, err := s.srcds.AddAdminGroup(ctx, adminID, req.GroupID)
 		if err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -526,7 +526,7 @@ func (s *srcdsHandler) onDeleteAdminGroup() gin.HandlerFunc {
 
 		admin, errDel := s.srcds.DelAdminGroup(ctx, adminID, groupID)
 		if errDel != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDel))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDel))
 
 			return
 		}
@@ -545,12 +545,12 @@ func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {
 		admin, errAdmin := s.srcds.GetAdminByID(ctx, adminID)
 		if errAdmin != nil {
 			if errors.Is(errAdmin, domain.ErrNoResult) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNoResult))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errAdmin))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errAdmin))
 
 			return
 		}
@@ -569,7 +569,7 @@ func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {
 
 		editedGroup, errSave := s.srcds.SaveAdmin(ctx, admin)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -586,7 +586,7 @@ func (s *srcdsHandler) onDeleteSMAdmin() gin.HandlerFunc {
 		}
 
 		if err := s.srcds.DelAdmin(ctx, adminID); err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -613,7 +613,7 @@ func (s *srcdsHandler) onCreateSMAdmin() gin.HandlerFunc {
 
 		admin, errAdmin := s.srcds.AddAdmin(ctx, req.Name, req.AuthType, req.Identity, req.Flags, req.Immunity, req.Password)
 		if errAdmin != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errAdmin))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errAdmin))
 
 			return
 		}
@@ -631,12 +631,12 @@ func (s *srcdsHandler) onDeleteSMGroup() gin.HandlerFunc {
 
 		if err := s.srcds.DelGroup(ctx, groupID); err != nil {
 			if errors.Is(err, domain.ErrNoResult) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNoResult))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -661,12 +661,12 @@ func (s *srcdsHandler) onSaveSMGroup() gin.HandlerFunc {
 		group, errGroup := s.srcds.GetGroupByID(ctx, groupID)
 		if errGroup != nil {
 			if errors.Is(errGroup, domain.ErrNoResult) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNoResult))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGroup))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGroup))
 
 			return
 		}
@@ -682,7 +682,7 @@ func (s *srcdsHandler) onSaveSMGroup() gin.HandlerFunc {
 
 		editedGroup, errSave := s.srcds.SaveGroup(ctx, group)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -700,7 +700,7 @@ func (s *srcdsHandler) onCreateSMGroup() gin.HandlerFunc {
 
 		group, errGroup := s.srcds.AddGroup(ctx, req.Name, req.Flags, req.Immunity)
 		if errGroup != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGroup))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGroup))
 
 			return
 		}
@@ -713,7 +713,7 @@ func (s *srcdsHandler) onAPISMGroups() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groups, errGroups := s.srcds.Groups(ctx)
 		if errGroups != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGroups))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGroups))
 
 			return
 		}
@@ -726,7 +726,7 @@ func (s *srcdsHandler) onGetSMAdmins() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		admins, errAdmins := s.srcds.Admins(ctx)
 		if errAdmins != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errAdmins))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errAdmins))
 
 			return
 		}
@@ -752,7 +752,7 @@ func (s *srcdsHandler) onAPIPostServerState() gin.HandlerFunc {
 		}
 
 		if errUpdate := s.state.Update(serverID, req); errUpdate != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errUpdate))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errUpdate))
 
 			return
 		}
@@ -772,7 +772,7 @@ func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		report, errReport := s.srcds.Report(ctx, currentUser, req)
 		if errReport != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReport))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errReport))
 
 			return
 		}
@@ -792,12 +792,12 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		ban, errBan := s.bans.Ban(ctx, httphelper.CurrentUserProfile(ctx), domain.InGame, req)
 		if errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusConflict, domain.ErrDuplicate))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusConflict, domain.ErrDuplicate))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBan))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBan))
 
 			return
 		}
@@ -817,7 +817,7 @@ func (s *srcdsHandler) onAPIGetServerOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		overrides, errOverrides := s.srcds.Overrides(ctx)
 		if errOverrides != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOverrides))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errOverrides))
 
 			return
 		}
@@ -856,14 +856,14 @@ func (s *srcdsHandler) onAPIGetServerGroups() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groups, errGroups := s.srcds.Groups(ctx)
 		if errGroups != nil && !errors.Is(errGroups, domain.ErrNoResult) {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
 
 			return
 		}
 
 		immunities, errImmunities := s.srcds.GetGroupImmunities(ctx)
 		if errImmunities != nil && !errors.Is(errImmunities, domain.ErrNoResult) {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errImmunities))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errImmunities))
 
 			return
 		}
@@ -918,7 +918,7 @@ func (s *srcdsHandler) onAPIGetServerUsers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		users, errUsers := s.srcds.Admins(ctx)
 		if errUsers != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errUsers))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errUsers))
 
 			return
 		}
@@ -970,7 +970,7 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 		players := s.state.FindBySteamID(req.SteamID)
 
 		if len(players) == 0 && conf.General.Mode != domain.TestMode {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrInternal))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, domain.ErrInternal))
 
 			return
 		}

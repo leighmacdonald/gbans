@@ -59,19 +59,18 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		report, errReportSave := h.reports.SaveReport(ctx, currentUser, req)
 		if errReportSave != nil {
 			if errors.Is(errReportSave, domain.ErrReportExists) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrReportExists))
+				_ = ctx.Error(httphelper.NewAPIErrorf(ctx, http.StatusConflict, domain.ErrReportExists,
+					"An open report already exists for this player, duplicates are not allowed."))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReportSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errReportSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusCreated, report)
-
-		slog.Info("New report created", slog.Int64("report_id", report.ReportID))
 	}
 }
 
@@ -84,7 +83,8 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 
 		report, errReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errReport != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReport))
+			_ = ctx.Error(httphelper.NewAPIErrorf(ctx, http.StatusInternalServerError, errReport,
+				"Could not find a report with the id: %d", reportID))
 
 			return
 		}
@@ -99,7 +99,7 @@ func (h reportHandler) onAPIGetUserReports() gin.HandlerFunc {
 
 		reports, errReports := h.reports.GetReportsBySteamID(ctx, user.SteamID)
 		if errReports != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReports))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errReports))
 
 			return
 		}
@@ -117,7 +117,7 @@ func (h reportHandler) onAPIGetAllReports() gin.HandlerFunc {
 
 		reports, errReports := h.reports.GetReports(ctx)
 		if errReports != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReports))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errReports))
 
 			return
 		}
@@ -140,7 +140,7 @@ func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 
 		report, err := h.reports.SetReportStatus(ctx, reportID, httphelper.CurrentUserProfile(ctx), req.Status)
 		if err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -162,12 +162,12 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 		report, errGetReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errGetReport != nil {
 			if errors.Is(errGetReport, domain.ErrNoResult) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNoResult))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGetReport))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGetReport))
 
 			return
 		}
@@ -178,7 +178,7 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 
 		reportMessages, errGetReportMessages := h.reports.GetReportMessages(ctx, reportID)
 		if errGetReportMessages != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGetReport))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGetReport))
 
 			return
 		}
@@ -199,7 +199,7 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 		}
 
 		if reportID == 0 {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
@@ -213,7 +213,7 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 
 		msg, errSave := h.reports.CreateReportMessage(ctx, reportID, curUser, req)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -229,7 +229,7 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportMessageID, idFound := httphelper.GetInt64Param(ctx, "report_message_id")
 		if idFound {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
@@ -241,7 +241,7 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 
 		msg, errMsg := h.reports.EditReportMessage(ctx, reportMessageID, httphelper.CurrentUserProfile(ctx), req)
 		if errMsg != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errMsg))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMsg))
 
 			return
 		}
@@ -258,13 +258,13 @@ func (h reportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 			return
 		}
 		if reportMessageID == 0 {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
 
 		if err := h.reports.DropReportMessage(ctx, httphelper.CurrentUserProfile(ctx), reportMessageID); err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}

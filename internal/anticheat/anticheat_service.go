@@ -34,8 +34,8 @@ func (h antiCheatHandler) bySteamID() gin.HandlerFunc {
 		}
 
 		detections, errDetections := h.anticheat.DetectionsBySteamID(ctx, steamID)
-		if errDetections != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(httphelper.ParamInvalid, errDetections))
+		if errDetections != nil && !errors.Is(errDetections, domain.ErrNoResult) {
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, domain.ErrInternal))
 
 			return
 		}
@@ -53,7 +53,7 @@ func (h antiCheatHandler) byDetection() gin.HandlerFunc {
 
 		detections, errDetections := h.anticheat.DetectionsByType(ctx, logparse.Detection(detectionType))
 		if errDetections != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDetections))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDetections))
 
 			return
 		}
@@ -71,7 +71,7 @@ func (h antiCheatHandler) query() gin.HandlerFunc {
 
 		entries, errEntries := h.anticheat.Query(ctx, query)
 		if errEntries != nil && !errors.Is(errEntries, domain.ErrNoResult) {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errEntries))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errEntries))
 
 			return
 		}

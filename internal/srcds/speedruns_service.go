@@ -49,7 +49,7 @@ func (s *speedrunHandler) postSpeedrun() gin.HandlerFunc {
 
 		speedrun, errSpeedrun := s.speedruns.Save(ctx, sr)
 		if errSpeedrun != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSpeedrun))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSpeedrun))
 
 			return
 		}
@@ -85,7 +85,7 @@ func (s *speedrunHandler) getByMap() gin.HandlerFunc {
 
 		runs, errRuns := s.speedruns.ByMap(ctx, query.MapName)
 		if errRuns != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errRuns))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errRuns))
 
 			return
 		}
@@ -104,12 +104,12 @@ func (s *speedrunHandler) getSpeedrun() gin.HandlerFunc {
 		speedrun, errSpeedrun := s.speedruns.ByID(ctx, speedrunID)
 		if errSpeedrun != nil {
 			if errors.Is(errSpeedrun, domain.ErrNoResult) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSpeedrun))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSpeedrun))
 
 			return
 		}
@@ -131,12 +131,12 @@ func (s *speedrunHandler) getRecentChanges() gin.HandlerFunc {
 		top, errTop := s.speedruns.Recent(ctx, query.Count)
 		if errTop != nil {
 			if errors.Is(errTop, domain.ErrValueOutOfRange) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrValueOutOfRange))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrValueOutOfRange))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errTop))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errTop))
 
 			return
 		}
@@ -158,12 +158,12 @@ func (s *speedrunHandler) getOverallTopN() gin.HandlerFunc {
 		top, errTop := s.speedruns.TopNOverall(ctx, query.Count)
 		if errTop != nil {
 			if errors.Is(errTop, domain.ErrValueOutOfRange) {
-				httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrValueOutOfRange))
+				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrValueOutOfRange))
 
 				return
 			}
 
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errTop))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errTop))
 
 			return
 		}

@@ -31,7 +31,7 @@ func (h voteHandler) onVotes() gin.HandlerFunc {
 
 		votes, count, errVotes := h.votes.Query(ctx, req)
 		if errVotes != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errVotes))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errVotes))
 
 			return
 		}

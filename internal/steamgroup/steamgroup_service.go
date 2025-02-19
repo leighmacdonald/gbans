@@ -41,7 +41,7 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 
 		ban, errBan := h.bansGroup.Ban(ctx, req)
 		if errBan != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBan))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBan))
 
 			return
 		}
@@ -59,7 +59,7 @@ func (h steamgroupHandler) onAPIGetBansGroup() gin.HandlerFunc {
 
 		banGroups, errBans := h.bansGroup.Get(ctx, req)
 		if errBans != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBans))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBans))
 
 			return
 		}
@@ -81,7 +81,7 @@ func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 		}
 
 		if err := h.bansGroup.Delete(ctx, groupID, req); err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}
@@ -104,7 +104,7 @@ func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 
 		ban, errSave := h.bansGroup.Save(ctx, banGroupID, req)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}

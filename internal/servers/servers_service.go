@@ -46,7 +46,7 @@ func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fullServers, _, errServers := h.servers.Servers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errServers))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errServers))
 
 			return
 		}
@@ -147,7 +147,7 @@ func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 
 		server, errSave := h.servers.Save(ctx, req)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -173,7 +173,7 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 
 		server, errSave := h.servers.Save(ctx, req)
 		if errSave != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
 
 			return
 		}
@@ -191,7 +191,7 @@ func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 
 		servers, _, errServers := h.servers.Servers(ctx, filter)
 		if errServers != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errServers))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errServers))
 
 			return
 		}
@@ -212,7 +212,7 @@ func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 		}
 
 		if err := h.servers.Delete(ctx, serverID); err != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
 
 			return
 		}

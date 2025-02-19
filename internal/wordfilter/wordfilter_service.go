@@ -39,7 +39,7 @@ func (h *wordFilterHandler) queryFilters() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		words, errGetFilters := h.filters.GetFilters(ctx)
 		if errGetFilters != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGetFilters))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGetFilters))
 
 			return
 		}
@@ -66,7 +66,7 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 
 		wordFilter, errEdit := h.filters.Edit(ctx, httphelper.CurrentUserProfile(ctx), filterID, req)
 		if errEdit != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errEdit))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errEdit))
 
 			return
 		}
@@ -85,7 +85,7 @@ func (h *wordFilterHandler) createFilter() gin.HandlerFunc {
 
 		wordFilter, errCreate := h.filters.Create(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errCreate != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errCreate))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errCreate))
 
 			return
 		}
@@ -103,7 +103,7 @@ func (h *wordFilterHandler) deleteFilter() gin.HandlerFunc {
 		}
 
 		if errDrop := h.filters.DropFilter(ctx, filterID); errDrop != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDrop))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDrop))
 
 			return
 		}

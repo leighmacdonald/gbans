@@ -38,7 +38,7 @@ func (h demoHandler) onAPIPostDemosQuery() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		demos, errDemos := h.demos.GetDemos(ctx)
 		if errDemos != nil {
-			httphelper.SetAPIError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDemos))
+			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDemos))
 
 			return
 		}
