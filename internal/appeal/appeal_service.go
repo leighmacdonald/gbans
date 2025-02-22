@@ -134,6 +134,7 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 		if banMessageID == 0 {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
 				"ban_message_id cannot be <= 0"))
+
 			return
 		}
 

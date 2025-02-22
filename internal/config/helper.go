@@ -26,7 +26,12 @@ func decodeDuration() mapstructure.DecodeHookFuncType {
 			return data, nil
 		}
 
-		duration, errDuration := datetime.ParseUserStringDuration(data.(string))
+		durString, ok := data.(string)
+		if !ok {
+			return nil, domain.ErrDecodeDuration
+		}
+
+		duration, errDuration := datetime.ParseUserStringDuration(durString)
 		if errDuration != nil {
 			return nil, errors.Join(errDuration, fmt.Errorf("%w: %s", domain.ErrDecodeDuration, target.String()))
 		}

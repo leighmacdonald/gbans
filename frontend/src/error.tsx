@@ -21,7 +21,7 @@ export enum ErrorCode {
 export class AppError extends Error {
     public code: ErrorCode;
 
-    constructor(code: ErrorCode, message: string, options?: never) {
+    constructor(code: ErrorCode, message: string = '', options?: never) {
         if (emptyOrNullString(message)) {
             switch (code) {
                 case ErrorCode.InvalidMimetype:
@@ -48,4 +48,8 @@ export class AppError extends Error {
         this.message = message;
         this.code = code;
     }
+}
+
+export function isApiError(err: unknown): err is ApiError {
+    return (err as ApiError).instance !== undefined;
 }

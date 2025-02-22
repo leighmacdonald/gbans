@@ -17,8 +17,7 @@ import (
 func TestDemosCleanup(t *testing.T) {
 	ctx := context.Background()
 
-	tempDir, errDir := os.MkdirTemp("", "test-assets")
-	require.NoError(t, errDir)
+	tempDir := os.TempDir()
 
 	conf := configUC.Config()
 	conf.LocalStore.PathRoot = tempDir

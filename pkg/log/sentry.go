@@ -8,7 +8,7 @@ import (
 
 var ErrClientInit = errors.New("failed to initialize sentry client")
 
-func NewSentryClient(dsn string, tracing bool, sampleRate float64, buildVersion string) (*go sentry.Client, error) {
+func NewSentryClient(dsn string, tracing bool, sampleRate float64, buildVersion string) (*sentry.Client, error) {
 	hub := sentry.CurrentHub()
 	client, errClient := sentry.NewClient(sentry.ClientOptions{
 		// "https://examplePublicKey@o0.ingest.sentry.io/0"

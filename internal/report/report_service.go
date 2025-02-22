@@ -176,6 +176,7 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 
 		if !httphelper.HasPrivilege(httphelper.CurrentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, domain.PModerator) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+
 			return
 		}
 

@@ -32,9 +32,9 @@ func NewAPIError(code int, err error) APIError {
 		}
 
 		return apiErr
-	} else {
-		apiErr.Title = err.Error()
 	}
+
+	apiErr.Title = err.Error()
 
 	return apiErr
 }
@@ -60,8 +60,10 @@ func (e APIError) Error() string {
 	return e.err.Error()
 }
 
-func SetError(ctx *gin.Context, error APIError) {
-	error.Instance = ctx.Request.URL.Path
+// SetError handles sending the error to the error handler middleware. You should return
+// from the handler after calling this.
+func SetError(ctx *gin.Context, err APIError) {
+	err.Instance = ctx.Request.URL.Path
 
-	_ = ctx.Error(error)
+	_ = ctx.Error(err)
 }

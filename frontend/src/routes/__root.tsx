@@ -22,7 +22,7 @@ import { QueueProvider } from '../component/QueueProvider.tsx';
 import { TopBar } from '../component/TopBar.tsx';
 import { ColourModeContext } from '../contexts/ColourModeContext.tsx';
 import { UserFlashCtx } from '../contexts/UserFlashCtx.tsx';
-import { ApiError } from '../error.tsx';
+import { ApiError, isApiError } from '../error.tsx';
 import { useAuth } from '../hooks/useAuth.ts';
 import { createThemeByMode } from '../theme.ts';
 import { checkFeatureEnabled } from '../util/features.ts';
@@ -87,9 +87,14 @@ function Root() {
     );
 
     const sendError = useCallback(
-        (error: ApiError) => {
-            if (error) {
-                sendFlash('error', error.detail, error.title, true);
+        (error: unknown) => {
+            if (!error) {
+                return;
+            }
+            if (isApiError(error)) {
+                sendFlash('error', (error as ApiError).detail, (error as ApiError).title, true);
+            } else {
+                sendFlash('error', (error as Error).message, (error as Error).name, true);
             }
         },
         [sendFlash]

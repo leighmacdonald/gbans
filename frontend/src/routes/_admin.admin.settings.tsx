@@ -146,7 +146,7 @@ export const SubHeading = ({ children }: PropsWithChildren) => (
 );
 
 function AdminServers() {
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const settings = Route.useLoaderData();
     const { section } = Route.useSearch();
     const navigate = useNavigate();
