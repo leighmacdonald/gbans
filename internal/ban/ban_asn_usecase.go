@@ -39,7 +39,7 @@ func (s banASN) Ban(ctx context.Context, req domain.RequestBanASNCreate) (domain
 	var existing domain.BanASN
 	if errGetExistingBan := s.repository.GetByASN(ctx, req.ASNum, &existing); errGetExistingBan != nil {
 		if !errors.Is(errGetExistingBan, domain.ErrNoResult) {
-			return ban, errors.Join(errGetExistingBan, domain.ErrFailedFetchBan)
+			return ban, errors.Join(errGetExistingBan, domain.ErrGetBan)
 		}
 	}
 
