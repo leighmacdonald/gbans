@@ -82,7 +82,11 @@ func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 		}
 
 		if err := h.bansGroup.Delete(ctx, groupID, req); err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			if errors.Is(err, domain.ErrNoResult) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, domain.ErrNotFound)))
+			} else {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			}
 
 			return
 		}

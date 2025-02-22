@@ -147,7 +147,7 @@ func (h banNetHandler) onAPIDeleteBansCIDR() gin.HandlerFunc {
 		if errSave := h.bans.Delete(ctx, netID, req, false); errSave != nil {
 			switch {
 			case errors.Is(errSave, domain.ErrNoResult):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, domain.ErrNoResult,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNoResult,
 					"CIDR ban with net_id %d does not exist", netID))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))

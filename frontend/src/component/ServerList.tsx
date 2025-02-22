@@ -7,7 +7,7 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { createColumnHelper, getCoreRowModel, TableOptions, useReactTable } from '@tanstack/react-table';
+import { ColumnDef, createColumnHelper, getCoreRowModel, TableOptions, useReactTable } from '@tanstack/react-table';
 import { BaseServer, cleanMapName, PermissionLevel } from '../api';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
@@ -112,40 +112,42 @@ export const ServerList = () => {
                     </IconButton>
                 )
             }),
-            columnHelper.display({
-                header: 'Queue',
-                id: 'queue',
-                size: 30,
-                cell: (info) => {
-                    const queued = isQueued(info.row.original.server_id);
+            hasPermission(PermissionLevel.Moderator)
+                ? columnHelper.display({
+                      header: 'Queue',
+                      id: 'queue',
+                      size: 30,
+                      cell: (info) => {
+                          const queued = isQueued(info.row.original.server_id);
 
-                    const count = lobbies
-                        ? (lobbies.find((value) => {
-                              return value.server_id == info.row.original.server_id;
-                          })?.members?.length ?? 0)
-                        : 0;
+                          const count = lobbies
+                              ? (lobbies.find((value) => {
+                                    return value.server_id == info.row.original.server_id;
+                                })?.members?.length ?? 0)
+                              : 0;
 
-                    return (
-                        <Tooltip title="Join/Leave server queue. Number indicates actively queued players. (in testing)">
-                            <IconButton
-                                disabled={!hasPermission(PermissionLevel.Moderator)}
-                                color={queued ? 'success' : 'primary'}
-                                onClick={() => {
-                                    if (queued) {
-                                        leaveQueue([String(info.row.original.server_id)]);
-                                    } else {
-                                        joinQueue([String(info.row.original.server_id)]);
-                                    }
-                                }}
-                            >
-                                <StyledBadge badgeContent={count}>
-                                    <GroupsIcon />
-                                </StyledBadge>
-                            </IconButton>
-                        </Tooltip>
-                    );
-                }
-            }),
+                          return (
+                              <Tooltip title="Join/Leave server queue. Number indicates actively queued players. (in testing)">
+                                  <IconButton
+                                      disabled={false}
+                                      color={queued ? 'success' : 'primary'}
+                                      onClick={() => {
+                                          if (queued) {
+                                              leaveQueue([String(info.row.original.server_id)]);
+                                          } else {
+                                              joinQueue([String(info.row.original.server_id)]);
+                                          }
+                                      }}
+                                  >
+                                      <StyledBadge badgeContent={count}>
+                                          <GroupsIcon />
+                                      </StyledBadge>
+                                  </IconButton>
+                              </Tooltip>
+                          );
+                      }
+                  })
+                : undefined,
             columnHelper.accessor('connect', {
                 header: 'Connect',
                 size: 100,
@@ -162,12 +164,12 @@ export const ServerList = () => {
                     </Button>
                 )
             })
-        ];
+        ].filter((f) => f);
     }, [lobbies, selectedServers, profile]);
 
     const opts: TableOptions<ServerRow> = {
         data: metaServers,
-        columns: columns,
+        columns: columns as ColumnDef<ServerRow, any>[],
         getCoreRowModel: getCoreRowModel(),
         manualPagination: false,
         autoResetPageIndex: true

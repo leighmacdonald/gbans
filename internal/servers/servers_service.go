@@ -206,7 +206,12 @@ func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 		}
 
 		if err := h.servers.Delete(ctx, serverID); err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			switch {
+			case errors.Is(err, domain.ErrNoResult):
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, domain.ErrNotFound)))
+			default:
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			}
 
 			return
 		}
