@@ -2,6 +2,7 @@ package playerqueue
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"time"
 	"unicode"
@@ -179,6 +180,8 @@ func (p playerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.
 
 	p.notif.Enqueue(ctx, domain.NewDiscordNotification(
 		domain.ChannelPlayerqueue, discord.NewPlayerqueueChatStatus(author.ToUserProfile(), person.ToUserProfile(), status, reason)))
+
+	slog.Info("Set chat status", slog.String("steam_id", person.SteamID.String()), slog.String("status", string(status)))
 
 	return nil
 }

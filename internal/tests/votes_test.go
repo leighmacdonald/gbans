@@ -2,6 +2,7 @@ package tests_test
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"net/http"
 	"testing"
 	"time"
@@ -19,7 +20,7 @@ func TestVotes(t *testing.T) {
 	target := getUser()
 	moderator := loginUser(getModerator())
 
-	var results domain.LazyResult
+	var results httphelper.LazyResult
 	req := domain.VoteQueryFilter{
 		Success: -1,
 	}

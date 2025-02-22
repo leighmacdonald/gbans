@@ -47,7 +47,8 @@ func (h discordOAuthHandler) onLogin() gin.HandlerFunc {
 
 		loginURL, errURL := h.discord.CreateStatefulLoginURL(currentUser.SteamID)
 		if errURL != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, errURL))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, errors.Join(errURL, domain.ErrBadRequest),
+				"Could not construct oauth login URL"))
 
 			return
 		}
@@ -90,12 +91,13 @@ func (h discordOAuthHandler) onGetDiscordUser() gin.HandlerFunc {
 		discord, errUser := h.discord.GetUserDetail(ctx, user.SteamID)
 		if errUser != nil {
 			if errors.Is(errUser, domain.ErrNoResult) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, domain.ErrInternal))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, domain.ErrInternal,
+				"Failed to fetch discord user details"))
 
 			return
 		}
@@ -116,7 +118,8 @@ func (h discordOAuthHandler) onLogout() gin.HandlerFunc {
 				return
 			}
 
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, domain.ErrInternal))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, domain.ErrInternal,
+				"Could not perform discord logout."))
 
 			return
 		}

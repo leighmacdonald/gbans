@@ -67,21 +67,20 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 
 		if err := h.queue.SetChatStatus(ctx, currentUser.SteamID, steamID, req.ChatStatus, req.Reason); err != nil {
 			if errors.Is(err, domain.ErrPermissionDenied) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrPermissionDenied))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
 
 				return
 			}
 
 			if errors.Is(err, domain.ErrDuplicate) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusConflict, domain.ErrDuplicate))
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, domain.ErrDuplicate,
+					"Status must be different"))
 
 				return
 			}
 
 			return
 		}
-
-		slog.Info("Set chat status", slog.String("steam_id", currentUser.SteamID.String()), slog.String("status", string(req.ChatStatus)))
 
 		ctx.JSON(http.StatusOK, gin.H{})
 	}
@@ -93,7 +92,8 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 		// Create ws connection
 		wsConn, errConn := newClientConn(ctx, validOrigins)
 		if errConn != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusConflict, errConn, "Cannot open connection"))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, errors.Join(errConn, domain.ErrBadRequest),
+				"Cannot open ws connection"))
 
 			return
 		}
@@ -176,7 +176,7 @@ func (h *serverQueueHandler) purge() gin.HandlerFunc {
 
 		messageID, idFound := httphelper.GetInt64Param(ctx, "message_id")
 		if !idFound {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 			return
 		}
@@ -186,14 +186,14 @@ func (h *serverQueueHandler) purge() gin.HandlerFunc {
 			return
 		}
 		if count <= 0 {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
 
 			return
 		}
 
 		errPurge := h.queue.Purge(ctx, user.SteamID, messageID, count)
 		if errPurge != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errPurge))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errPurge))
 
 			return
 		}

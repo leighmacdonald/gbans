@@ -36,7 +36,7 @@ func (h newsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsLatest, errGetNewsLatest := h.news.GetNewsLatest(ctx, 50, false)
 		if errGetNewsLatest != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGetNewsLatest))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetNewsLatest, domain.ErrInternal)))
 
 			return
 		}
@@ -71,7 +71,7 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 		}
 
 		if errSave := h.news.Save(ctx, &entry); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
 
 			return
 		}
@@ -94,12 +94,12 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 		var entry domain.NewsEntry
 		if errGet := h.news.GetNewsByID(ctx, newsID, &entry); errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGet))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal)))
 
 			return
 		}
@@ -115,7 +115,7 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 		entry.UpdatedOn = time.Now()
 
 		if errSave := h.news.Save(ctx, &entry); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
 
 			return
 		}
@@ -132,7 +132,7 @@ func (h newsHandler) onAPIGetNewsAll() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsLatest, errGetNewsLatest := h.news.GetNewsLatest(ctx, 100, true)
 		if errGetNewsLatest != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGetNewsLatest))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetNewsLatest, domain.ErrInternal)))
 
 			return
 		}
@@ -155,18 +155,18 @@ func (h newsHandler) onAPIPostNewsDelete() gin.HandlerFunc {
 		var entry domain.NewsEntry
 		if errGet := h.news.GetNewsByID(ctx, newsID, &entry); errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGet))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal)))
 
 			return
 		}
 
 		if err := h.news.DropNewsArticle(ctx, newsID); err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}

@@ -2,6 +2,7 @@ package ban
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/netip"
 	"time"
@@ -95,35 +96,40 @@ func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFi
 
 	rows, errRows := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errRows != nil {
-		return nil, r.db.DBErr(errRows)
+		err := r.db.DBErr(errRows)
+		if errors.Is(err, domain.ErrNoResult) {
+			return []domain.BannedCIDRPerson{}, nil
+		}
+
+		return nil, err
 	}
 
 	defer rows.Close()
 
 	for rows.Next() {
 		var (
-			banNet   domain.BannedCIDRPerson
+			ban      domain.BannedCIDRPerson
 			sourceID int64
 			targetID int64
 			cidr     *net.IPNet
 		)
 
 		if errScan := rows.
-			Scan(&banNet.NetID, &cidr, &banNet.Origin,
-				&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
-				&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-				&banNet.IsEnabled, &targetID, &sourceID, &banNet.AppealState,
-				&banNet.SourceTarget.SourcePersonaname, &banNet.SourceTarget.SourceAvatarhash,
-				&banNet.SourceTarget.TargetPersonaname, &banNet.SourceTarget.TargetAvatarhash,
-				&banNet.CommunityBanned, &banNet.VacBans, &banNet.GameBans); errScan != nil {
+			Scan(&ban.NetID, &cidr, &ban.Origin,
+				&ban.CreatedOn, &ban.UpdatedOn, &ban.Reason, &ban.ReasonText,
+				&ban.ValidUntil, &ban.Deleted, &ban.Note, &ban.UnbanReasonText,
+				&ban.IsEnabled, &targetID, &sourceID, &ban.AppealState,
+				&ban.SourceTarget.SourcePersonaname, &ban.SourceTarget.SourceAvatarhash,
+				&ban.SourceTarget.TargetPersonaname, &ban.SourceTarget.TargetAvatarhash,
+				&ban.CommunityBanned, &ban.VacBans, &ban.GameBans); errScan != nil {
 			return nil, r.db.DBErr(errScan)
 		}
 
-		banNet.CIDR = cidr.String()
-		banNet.SourceID = steamid.New(sourceID)
-		banNet.TargetID = steamid.New(targetID)
+		ban.CIDR = cidr.String()
+		ban.SourceID = steamid.New(sourceID)
+		ban.TargetID = steamid.New(targetID)
 
-		nets = append(nets, banNet)
+		nets = append(nets, ban)
 	}
 
 	if nets == nil {

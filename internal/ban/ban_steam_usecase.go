@@ -163,13 +163,12 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.UserProfile, or
 	}
 
 	existing, errGetExistingBan := s.banRepo.GetBySteamID(ctx, banSteam.TargetID, false, true)
+	if errGetExistingBan != nil && !errors.Is(errGetExistingBan, domain.ErrNoResult) {
+		return ban, errors.Join(errGetExistingBan, domain.ErrGetBan)
+	}
 
 	if existing.BanID > 0 {
 		return ban, domain.ErrDuplicate
-	}
-
-	if errGetExistingBan != nil && !errors.Is(errGetExistingBan, domain.ErrNoResult) {
-		return ban, errors.Join(errGetExistingBan, domain.ErrFailedFetchBan)
 	}
 
 	if errSave := s.banRepo.Save(ctx, &banSteam); errSave != nil {
@@ -251,7 +250,7 @@ func (s banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, r
 			return false, nil
 		}
 
-		return false, errors.Join(errGetBan, domain.ErrFailedFetchBan)
+		return false, errors.Join(errGetBan, domain.ErrGetBan)
 	}
 
 	bannedPerson.Deleted = true

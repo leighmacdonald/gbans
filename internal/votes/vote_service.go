@@ -1,6 +1,7 @@
 package votes
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -31,7 +32,7 @@ func (h voteHandler) onVotes() gin.HandlerFunc {
 
 		votes, count, errVotes := h.votes.Query(ctx, req)
 		if errVotes != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errVotes))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errVotes, domain.ErrInternal)))
 
 			return
 		}
@@ -40,7 +41,7 @@ func (h voteHandler) onVotes() gin.HandlerFunc {
 			votes = []domain.VoteResult{}
 		}
 
-		ctx.JSON(http.StatusOK, domain.LazyResult{
+		ctx.JSON(http.StatusOK, httphelper.LazyResult{
 			Count: count,
 			Data:  votes,
 		})

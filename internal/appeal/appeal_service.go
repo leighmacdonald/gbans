@@ -45,7 +45,7 @@ func (h *appealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 
 		banMessages, errGetBanMessages := h.appealUsecase.GetBanMessages(ctx, httphelper.CurrentUserProfile(ctx), banID)
 		if errGetBanMessages != nil && !errors.Is(errGetBanMessages, domain.ErrNotFound) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, errGetBanMessages))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetBanMessages, domain.ErrInternal)))
 
 			return
 		}
@@ -68,7 +68,7 @@ func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 
 		msg, errSave := h.appealUsecase.CreateBanMessage(ctx, httphelper.CurrentUserProfile(ctx), banID, req.BodyMD)
 		if errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
 
 			return
 		}
@@ -84,8 +84,9 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 			return
 		}
 
-		if reportMessageID == 0 {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
+		if reportMessageID <= 0 {
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				"ban_message_id cannot be <= 0"))
 
 			return
 		}
@@ -99,7 +100,20 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 
 		msg, errSave := h.appealUsecase.EditBanMessage(ctx, curUser, reportMessageID, req.BodyMD)
 		if errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			switch {
+			case errors.Is(errSave, domain.ErrParamInvalid):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+					"Invalid message body"))
+			case errors.Is(errSave, domain.ErrPermissionDenied):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
+					"Not allowed to edit message."))
+			case errors.Is(errSave, domain.ErrDuplicate):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, domain.ErrDuplicate,
+					"Message cannot be the same."))
+			default:
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
+					"Could not edit ban message"))
+			}
 
 			return
 		}
@@ -118,13 +132,23 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 		}
 
 		if banMessageID == 0 {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
-
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				"ban_message_id cannot be <= 0"))
 			return
 		}
 
 		if err := h.appealUsecase.DropBanMessage(ctx, curUser, banMessageID); err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			switch {
+			case errors.Is(err, domain.ErrPermissionDenied):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
+					"You are not allowed to delete this message."))
+			case errors.Is(err, domain.ErrNoResult):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNoResult,
+					"Message does not exist with id: %d", banMessageID))
+			default:
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal),
+					"Could not delete message with id: %d", banMessageID))
+			}
 
 			return
 		}
@@ -142,7 +166,7 @@ func (h *appealHandler) onAPIGetAppeals() gin.HandlerFunc {
 
 		bans, errBans := h.appealUsecase.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBans))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, domain.ErrInternal)))
 
 			return
 		}

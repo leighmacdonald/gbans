@@ -2,6 +2,7 @@ package tests_test
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"net/http"
 	"testing"
 
@@ -40,7 +41,7 @@ func TestPerson(t *testing.T) {
 	require.Equal(t, update.StatsHidden, updated.StatsHidden)
 	require.Equal(t, update.ForumProfileMessages, updated.ForumProfileMessages)
 
-	var res domain.LazyResult
+	var res httphelper.LazyResult
 	query := domain.PlayerQuery{
 		TargetIDField: domain.TargetIDField{TargetID: source.SteamID.String()},
 	}

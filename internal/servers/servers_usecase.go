@@ -2,6 +2,7 @@ package servers
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -29,7 +30,13 @@ func (s *serversUsecase) Delete(ctx context.Context, serverID int) error {
 
 	server.Deleted = true
 
-	return s.repository.SaveServer(ctx, &server)
+	if err := s.repository.SaveServer(ctx, &server); err != nil {
+		return err
+	}
+
+	slog.Info("Deleted server", slog.Int("server_id", serverID))
+
+	return nil
 }
 
 func (s *serversUsecase) Server(ctx context.Context, serverID int) (domain.Server, error) {
@@ -88,6 +95,12 @@ func (s *serversUsecase) Save(ctx context.Context, req domain.RequestServerUpdat
 
 	if err := s.repository.SaveServer(ctx, &server); err != nil {
 		return domain.Server{}, err
+	}
+
+	if req.ServerID > 0 {
+		slog.Info("Updated server successfully", slog.String("name", server.ShortName))
+	} else {
+		slog.Info("Created new server", slog.String("name", server.ShortName), slog.Int("server_id", server.ServerID))
 	}
 
 	return s.Server(ctx, server.ServerID)

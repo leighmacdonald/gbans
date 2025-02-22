@@ -64,7 +64,7 @@ func (h networkHandler) onAPIQueryNetwork() gin.HandlerFunc {
 
 		details, err := h.networks.QueryNetwork(ctx, req.IP)
 		if err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
@@ -82,11 +82,11 @@ func (h networkHandler) onAPIQueryConnections() gin.HandlerFunc {
 
 		ipHist, totalCount, errIPHist := h.networks.QueryConnectionHistory(ctx, req)
 		if errIPHist != nil && !errors.Is(errIPHist, domain.ErrNoResult) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errIPHist))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errIPHist, domain.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(totalCount, ipHist))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(totalCount, ipHist))
 	}
 }

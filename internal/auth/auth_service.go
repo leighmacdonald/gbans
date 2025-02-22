@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -164,14 +165,16 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(domain.FingerprintCookieName)
 		if errCookie != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errCookie))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errCookie, domain.ErrBadRequest),
+				"Failed to find fingerprint cookie: %s", domain.FingerprintCookieName))
 
 			return
 		}
 
 		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errExternal))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errExternal, domain.ErrInternal),
+				"Invalid external url: %s", conf.ExternalURL))
 
 			return
 		}
@@ -181,13 +184,13 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 
 		personAuth := domain.PersonAuth{}
 		if errGet := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGet))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal)))
 
 			return
 		}
 
 		if errDelete := h.authUsecase.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDelete))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDelete, domain.ErrInternal)))
 
 			return
 		}

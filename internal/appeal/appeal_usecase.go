@@ -45,7 +45,7 @@ func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile
 	}
 
 	if newMsg == "" {
-		return existing, domain.ErrBadRequest
+		return existing, domain.ErrInvalidParameter
 	}
 
 	if newMsg == existing.MessageMD {

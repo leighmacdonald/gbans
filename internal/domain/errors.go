@@ -9,7 +9,6 @@ var (
 	ErrFailedWeapon             = errors.New("failed to save weapon")
 	ErrSaveChanges              = errors.New("cannot save changes")
 	ErrDiscordAlreadyLinked     = errors.New("discord account is already linked")
-	ErrFailedFetchBan           = errors.New("failed to get existing ban")
 	ErrSaveBan                  = errors.New("failed to save ban")
 	ErrReportStateUpdate        = errors.New("failed to update report state")
 	ErrFetchPerson              = errors.New("failed to fetch/create person")

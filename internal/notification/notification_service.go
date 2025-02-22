@@ -37,7 +37,7 @@ func NewHandler(engine *gin.Engine, notifications domain.NotificationUsecase, au
 func (h notificationHandler) onMarkAllRead() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if err := h.notifications.MarkAllRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, domain.ErrNoResult) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
@@ -54,13 +54,14 @@ func (h notificationHandler) onMarkRead() gin.HandlerFunc {
 		}
 
 		if len(request.MessageIDs) == 0 {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				"No message_ids value provided"))
 
 			return
 		}
 
 		if err := h.notifications.MarkMessagesRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, domain.ErrNoResult) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
@@ -72,7 +73,7 @@ func (h notificationHandler) onMarkRead() gin.HandlerFunc {
 func (h notificationHandler) onDeleteAll() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if err := h.notifications.DeleteAll(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, domain.ErrNoResult) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
@@ -89,13 +90,14 @@ func (h notificationHandler) onDelete() gin.HandlerFunc {
 		}
 
 		if len(request.MessageIDs) == 0 {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				"message_ids cannot be empty."))
 
 			return
 		}
 
 		if err := h.notifications.DeleteMessages(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, domain.ErrNoResult) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
@@ -114,7 +116,7 @@ func (h notificationHandler) onNotifications() gin.HandlerFunc {
 				return
 			}
 
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
