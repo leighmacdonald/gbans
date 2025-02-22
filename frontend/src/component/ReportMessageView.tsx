@@ -30,7 +30,7 @@ export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const queryClient = useQueryClient();
 
     const [editing, setEditing] = useState<boolean>(false);
@@ -46,7 +46,8 @@ export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
                 (messages: ReportMessage[]) => (messages ?? []).filter((m) => m.report_message_id != message_id)
             );
             sendFlash('success', 'Deleted message successfully');
-        }
+        },
+        onError: sendError
     });
 
     const onDelete = async (message_id: number) => {
@@ -71,9 +72,7 @@ export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
             setEditing(false);
             sendFlash('success', 'Edited message successfully');
         },
-        onError: (e) => {
-            sendFlash('error', `Error editing message: ${e}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

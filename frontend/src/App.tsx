@@ -8,7 +8,7 @@ import { AuthProvider, profileKey } from './auth.tsx';
 import { ErrorDetails } from './component/ErrorDetails.tsx';
 import { LoadingPlaceholder } from './component/LoadingPlaceholder.tsx';
 import { UseAppInfoCtx } from './contexts/AppInfoCtx.ts';
-import { AppError, ErrorCode } from './error.tsx';
+import { AppError } from './error.tsx';
 import { useAuth } from './hooks/useAuth.ts';
 import { routeTree } from './routeTree.gen.ts';
 import { logErr } from './util/errors.ts';
@@ -25,7 +25,7 @@ const router = createRouter({
     },
     defaultPendingComponent: LoadingPlaceholder,
     defaultErrorComponent: () => {
-        return <ErrorDetails error={new AppError(ErrorCode.Unknown)} />;
+        return <ErrorDetails error={new AppError('')} />;
     },
     // Since we're using React Query, we don't want loader calls to ever be stale
     // This will ensure that the loader is always called when the route is preloaded or visited

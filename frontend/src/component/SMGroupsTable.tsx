@@ -23,7 +23,7 @@ import { TableCellString } from './TableCellString.tsx';
 import { ModalConfirm, ModalSMGroupEditor, ModalSMGroupOverrides } from './modal';
 
 export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoading: boolean }) => {
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const queryClient = useQueryClient();
     const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
@@ -51,9 +51,7 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
             );
             sendFlash('success', 'Group deleted successfully');
         },
-        onError: (error) => {
-            sendFlash('error', `Error trying to delete group: ${error}`);
-        }
+        onError: sendError
     });
 
     const groupColumns = useMemo(() => {

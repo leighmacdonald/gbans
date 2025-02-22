@@ -15,7 +15,6 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { apiAddAdminToGroup, apiDelAdminFromGroup, apiDeleteSMAdmin, SMAdmin, SMGroups } from '../api';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { Route } from '../routes/_admin.admin.game-admins.tsx';
-import { logErr } from '../util/errors.ts';
 import { initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
@@ -32,7 +31,7 @@ export const SMAdminsTable = ({
     groups: SMGroups[];
     isLoading: boolean;
 }) => {
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const queryClient = useQueryClient();
     const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
@@ -42,8 +41,7 @@ export const SMAdminsTable = ({
             queryClient.setQueryData(['serverAdmins'], [...(admins ?? []), admin]);
             sendFlash('success', `Admin created successfully: ${admin.name}`);
         } catch (e) {
-            logErr(e);
-            sendFlash('error', 'Error trying to add admin');
+            sendError(e);
         }
     };
 
@@ -60,9 +58,7 @@ export const SMAdminsTable = ({
             );
             sendFlash('success', 'Admin deleted successfully');
         },
-        onError: (error) => {
-            sendFlash('error', `Error trying to delete admin: ${error}`);
-        }
+        onError: sendError
     });
 
     const addGroupMutation = useMutation({
@@ -78,7 +74,8 @@ export const SMAdminsTable = ({
                 })
             );
             sendFlash('success', `Admin updated successfully: ${edited.name}`);
-        }
+        },
+        onError: sendError
     });
 
     const delGroupMutation = useMutation({
@@ -95,7 +92,8 @@ export const SMAdminsTable = ({
                 })
             );
             sendFlash('success', `Admin updated successfully: ${edited.name}`);
-        }
+        },
+        onError: sendError
     });
 
     const adminColumns = useMemo(() => {
@@ -110,8 +108,7 @@ export const SMAdminsTable = ({
                 );
                 sendFlash('success', `Admin updated successfully: ${admin.name}`);
             } catch (e) {
-                logErr(e);
-                sendFlash('error', 'Error trying to update admin');
+                sendError(e);
             }
         };
         const onDelete = async (admin: SMAdmin) => {
@@ -137,7 +134,7 @@ export const SMAdminsTable = ({
                 });
                 addGroupMutation.mutate({ admin, group });
             } catch (e) {
-                sendFlash('error', `Error trying to add group: ${e}`);
+                sendError(e);
             }
         };
 
@@ -149,8 +146,7 @@ export const SMAdminsTable = ({
                 });
                 delGroupMutation.mutate({ admin, group });
             } catch (e) {
-                logErr(e);
-                sendFlash('error', 'Error trying to add group');
+                sendError(e);
             }
         };
 

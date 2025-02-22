@@ -7,9 +7,12 @@ export type CurrentFlashes = {
     flashes: Flash[];
     setFlashes: (flashes: Flash[]) => void;
     sendFlash: (level: AlertColor, message: string, heading?: string, closable?: boolean) => void;
+    sendError: (error: unknown) => void;
 };
+
 export const UserFlashCtx = createContext<CurrentFlashes>({
     flashes: [],
     setFlashes: () => noop,
-    sendFlash: () => noop
+    sendFlash: () => noop,
+    sendError: () => noop
 });

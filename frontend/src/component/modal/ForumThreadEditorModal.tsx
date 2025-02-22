@@ -25,7 +25,7 @@ type ThreadEditValues = {
 export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: ForumThread }) => {
     const modal = useModal();
     const confirmModal = useModal(ModalConfirm);
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
 
     const onDelete = useCallback(async () => {
         const abortController = new AbortController();
@@ -58,9 +58,7 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
             modal.resolve(editedThread);
             await modal.hide();
         },
-        onError: (error) => {
-            sendFlash('error', `${error}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

@@ -30,7 +30,7 @@ type mutateOverrideArgs = {
 export const SMGroupOverrideEditorModal = NiceModal.create(
     ({ group, override }: { group: SMGroups; override?: SMGroupOverrides }) => {
         const modal = useModal();
-        const { sendFlash } = useUserFlashCtx();
+        const { sendError } = useUserFlashCtx();
         const mutation = useMutation({
             mutationKey: ['adminSMGroupOverride'],
             mutationFn: async ({ name, type, access }: mutateOverrideArgs) => {
@@ -42,9 +42,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
                 modal.resolve(override);
                 await modal.hide();
             },
-            onError: (error) => {
-                sendFlash('error', `Failed to create group override: ${error}`);
-            }
+            onError: sendError
         });
 
         const { Field, Subscribe, handleSubmit, reset } = useForm({

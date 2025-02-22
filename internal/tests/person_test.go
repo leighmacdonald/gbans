@@ -2,11 +2,11 @@ package tests_test
 
 import (
 	"fmt"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"net/http"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/stretchr/testify/require"
 )
 

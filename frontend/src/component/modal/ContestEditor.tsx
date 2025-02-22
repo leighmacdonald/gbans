@@ -56,7 +56,7 @@ type ContestEditorFormValues = {
 
 export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest }) => {
     const modal = useModal();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['adminContest'],
@@ -84,9 +84,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
             modal.resolve(contest);
             await modal.hide();
         },
-        onError: (error) => {
-            sendFlash('error', `${error}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

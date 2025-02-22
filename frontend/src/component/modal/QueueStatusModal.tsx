@@ -9,6 +9,7 @@ import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiQueueSetUserStatus, ChatStatus } from '../../api';
 import { useQueueCtx } from '../../hooks/useQueueCtx.ts';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
@@ -17,6 +18,7 @@ import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: string }) => {
     const modal = useModal();
     const { chatStatus, reason } = useQueueCtx();
+    const { sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['playerqueue_status', { steam_id }],
@@ -26,7 +28,8 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
         onSuccess: async (result) => {
             modal.resolve(result);
             await modal.hide();
-        }
+        },
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

@@ -51,7 +51,7 @@ export const Route = createFileRoute('/_auth/notifications')({
 
 function NotificationsPage() {
     const queryClient = useQueryClient();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendError, sendFlash } = useUserFlashCtx();
     const [rowSelection, setRowSelection] = useState({});
 
     // const { page, rows, sortOrder, sortColumn } = Route.useSearch();
@@ -89,9 +89,7 @@ function NotificationsPage() {
             sendFlash('success', `Successfully marked ${notifications?.length} as read`);
             setRowSelection({});
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to mark all messages read: ${error}`);
-        }
+        onError: sendError
     });
 
     const onMarkSelected = useMutation({
@@ -108,9 +106,7 @@ function NotificationsPage() {
             sendFlash('success', `Successfully marked ${ids?.length} as read`);
             setRowSelection({});
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to mark all messages read: ${error}`);
-        }
+        onError: sendError
     });
 
     const onDeleteAll = useMutation({
@@ -123,9 +119,7 @@ function NotificationsPage() {
             sendFlash('success', `Successfully deleted ${notifications?.length} messages`);
             setRowSelection({});
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to delete all messages: ${error}`);
-        }
+        onError: sendError
     });
 
     const onDeleteSelected = useMutation({
@@ -142,9 +136,7 @@ function NotificationsPage() {
             sendFlash('success', `Successfully deleted ${ids?.length} messages`);
             setRowSelection({});
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to delete all messages: ${error}`);
-        }
+        onError: sendError
     });
 
     const onConfirmDeleteSelected = async () => {

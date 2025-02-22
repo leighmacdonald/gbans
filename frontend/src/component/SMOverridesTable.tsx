@@ -21,7 +21,7 @@ import { TableCellString } from './TableCellString.tsx';
 import { ModalConfirm, ModalSMOverridesEditor } from './modal';
 
 export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverrides[]; isLoading: boolean }) => {
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const queryClient = useQueryClient();
     const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
@@ -51,9 +51,7 @@ export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverri
             );
             sendFlash('success', `Override deleted successfully: ${deleted.name}`);
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to delete override: ${error}`);
-        }
+        onError: sendError
     });
 
     const overridesColumns = useMemo(() => {

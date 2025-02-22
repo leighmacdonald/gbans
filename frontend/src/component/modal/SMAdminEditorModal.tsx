@@ -29,7 +29,7 @@ type mutateAdminArgs = {
 
 export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin; groups: SMGroups[] }) => {
     const modal = useModal();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendError } = useUserFlashCtx();
 
     const edit = useMutation({
         mutationKey: ['adminSMAdmin'],
@@ -42,9 +42,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
             modal.resolve(admin);
             await modal.hide();
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to create admin: ${error}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

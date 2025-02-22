@@ -15,6 +15,7 @@ import {
     FilterActionCollection,
     filterActionString
 } from '../../api/filters.ts';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
@@ -32,6 +33,7 @@ type FilterEditFormValues = {
 
 export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }) => {
     const modal = useModal();
+    const { sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['filters'],
@@ -59,7 +61,8 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
         onSuccess: async (result) => {
             modal.resolve(result);
             await modal.hide();
-        }
+        },
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

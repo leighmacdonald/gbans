@@ -17,7 +17,7 @@ import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroups }) => {
     const modal = useModal();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendError } = useUserFlashCtx();
 
     const edit = useMutation({
         mutationKey: ['adminSMGroup'],
@@ -31,9 +31,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
             modal.resolve(group);
             await modal.hide();
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to create group: ${error}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

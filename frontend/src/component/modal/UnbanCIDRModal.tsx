@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiDeleteCIDRBan } from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Buttons } from '../field/Buttons.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
@@ -17,6 +18,7 @@ export const UnbanCIDRModal = NiceModal.create(
         personaName?: string;
     }) => {
         const modal = useModal();
+        const { sendError } = useUserFlashCtx();
 
         const mutation = useMutation({
             mutationKey: ['deleteCIDRBan', { banId }],
@@ -28,6 +30,7 @@ export const UnbanCIDRModal = NiceModal.create(
                 await modal.hide();
             },
             onError: (error) => {
+                sendError(error);
                 modal.reject(error);
             }
         });

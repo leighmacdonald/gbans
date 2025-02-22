@@ -27,7 +27,7 @@ type ForumThreadEditorValues = {
 export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: Forum }) => {
     const threadModal = useModal(ModalForumThreadCreator);
     const confirmModal = useModal(ModalConfirm);
-    const { sendFlash } = useUserFlashCtx();
+    const { sendError } = useUserFlashCtx();
     const theme = useTheme();
     const modal = useModal();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
@@ -64,9 +64,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
             mdEditorRef.current?.setMarkdown('');
             await modal.hide();
         },
-        onError: (error) => {
-            sendFlash('error', `${error}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

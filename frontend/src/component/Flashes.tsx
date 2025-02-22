@@ -2,6 +2,7 @@ import { forwardRef, JSX, SyntheticEvent, useState } from 'react';
 import { AlertColor } from '@mui/material/Alert';
 import MuiAlert, { AlertProps } from '@mui/material/Alert';
 import Snackbar, { SnackbarOrigin } from '@mui/material/Snackbar';
+import Typography from '@mui/material/Typography';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 
 export interface Flash {
@@ -37,8 +38,21 @@ export const PositionedSnackbar = ({ notification }: { notification: Flash }) =>
 
     return (
         <Snackbar open={state.open} autoHideDuration={10000} onClose={handleClose}>
-            <Alert severity={notification.level} sx={{ width: '100%' }}>
-                {notification.message}
+            <Alert
+                severity={notification.level}
+                sx={{ width: '100%' }}
+                onClose={() => {
+                    setState((prevState) => {
+                        return { ...prevState, open: false };
+                    });
+                }}
+            >
+                {notification.heading && (
+                    <Typography fontWeight={700} sx={{ textTransform: 'capitalize' }}>
+                        {notification.heading}
+                    </Typography>
+                )}
+                <Typography>{notification.message}</Typography>
             </Alert>
         </Snackbar>
     );

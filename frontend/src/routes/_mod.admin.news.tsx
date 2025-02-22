@@ -38,7 +38,7 @@ function AdminNews() {
     const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
     const [sorting] = useState<SortingState>([{ id: 'news_id', desc: true }]);
 
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
 
     const { data: news, isLoading } = useQuery({
         queryKey: ['newsList'],
@@ -70,9 +70,7 @@ function AdminNews() {
             );
             sendFlash('success', `Entry deleted successfully`);
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to delete entry: ${error}`);
-        }
+        onError: sendError
     });
 
     const columns = useMemo(() => {

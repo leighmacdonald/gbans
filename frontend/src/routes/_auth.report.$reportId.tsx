@@ -57,7 +57,7 @@ function ReportView() {
     const [stateAction, setStateAction] = useState(ReportStatus.Opened);
     const [newStateAction, setNewStateAction] = useState(stateAction);
     const { hasPermission } = useRouteContext({ from: '/_auth/report/$reportId' });
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
@@ -104,9 +104,7 @@ function ReportView() {
                 )} => ${reportStatusString(newStateAction)}`
             );
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to update status: ${error}`);
-        }
+        onError: sendError
     });
 
     const renderBan = useMemo(() => {

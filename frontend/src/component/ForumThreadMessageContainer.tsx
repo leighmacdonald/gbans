@@ -16,6 +16,7 @@ import { isAfter } from 'date-fns/fp';
 import { z } from 'zod';
 import { PermissionLevel, permissionLevelString } from '../api';
 import { apiSaveThreadMessage, ForumMessage } from '../api/forum.ts';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 import { renderDateTime } from '../util/time.ts';
 import { ForumAvatar } from './ForumAvatar.tsx';
@@ -37,6 +38,7 @@ export const ThreadMessageContainer = ({
 }) => {
     const [edit, setEdit] = useState(false);
     const { hasPermission, profile } = useRouteContext({ from: '/_auth/forums/thread/$forum_thread_id' });
+    const { sendError } = useUserFlashCtx();
     const theme = useTheme();
 
     const editable = useMemo(() => {
@@ -51,7 +53,8 @@ export const ThreadMessageContainer = ({
             mdEditorRef.current?.setMarkdown('');
             setEdit(false);
             await onSave(data);
-        }
+        },
+        onError: sendError
     });
 
     const form = useForm({

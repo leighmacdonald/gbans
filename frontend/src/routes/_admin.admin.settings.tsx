@@ -160,9 +160,7 @@ function AdminServers() {
         onSuccess: () => {
             sendFlash('success', 'Settings saved successfully');
         },
-        onError: (error) => {
-            sendFlash('error', `Error saving settings: ${error}`);
-        }
+        onError: sendError
     });
 
     const onTabClick = async (section: tabs) => {

@@ -54,7 +54,7 @@ export const Route = createFileRoute('/_mod/admin/network/cidrblocks')({
 
 function AdminNetworkCIDRBlocks() {
     const queryClient = useQueryClient();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const confirmModal = useModal(ModalConfirm);
     const { hasPermission } = useRouteContext({ from: '/_mod/admin/network/cidrblocks' });
 
@@ -108,9 +108,7 @@ function AdminNetworkCIDRBlocks() {
         onSuccess: () => {
             sendFlash('success', 'IP whitelist deleted');
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to delete ip whitelist: ${error}`);
-        }
+        onError: sendError
     });
 
     const onIPWhitelistDelete = useCallback(
@@ -143,9 +141,7 @@ function AdminNetworkCIDRBlocks() {
                 blockSources?.filter((b) => b.cidr_block_source_id != variables.cidr_block_source_id)
             );
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to delete source: ${error}`);
-        }
+        onError: sendError
     });
 
     const onDeleteSource = useCallback(
@@ -194,9 +190,7 @@ function AdminNetworkCIDRBlocks() {
         onSuccess: () => {
             sendFlash('success', 'Steam whitelist deleted');
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to delete steam whitelist: ${error}`);
-        }
+        onError: sendError
     });
 
     const onSteamWhitelistEdit = useCallback(async () => {

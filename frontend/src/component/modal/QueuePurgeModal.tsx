@@ -16,7 +16,7 @@ import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog }) => {
     const modal = useModal();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
 
     const purge = useMutation({
         mutationKey: ['playerqueue_message', { message_id: message.message_id }],
@@ -29,9 +29,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
             modal.resolve();
             await modal.hide();
         },
-        onError: (error) => {
-            sendFlash('error', `Error trying to purge message(s): ${error}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
@@ -63,7 +61,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                         <Typography>
                             To delete a single message, use a count of 1, otherwise you can purge more messages if you
                             want. When purging more than one messages, only messages older than the selected message are
-                            eligable for deletion. This will only delete the messages of the user who created the
+                            eligible for deletion. This will only delete the messages of the user who created the
                             selected message.
                         </Typography>
                         <Grid container spacing={2}>

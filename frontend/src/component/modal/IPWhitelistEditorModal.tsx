@@ -7,12 +7,14 @@ import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiCreateWhitelistIP, apiUpdateWhitelistIP, WhitelistIP } from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: WhitelistIP }) => {
     const modal = useModal();
+    const { sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['blockSource'],
@@ -30,6 +32,7 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
             await modal.hide();
         },
         onError: (error) => {
+            sendError(error);
             modal.reject(error);
         }
     });
