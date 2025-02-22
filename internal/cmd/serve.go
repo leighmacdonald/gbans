@@ -349,7 +349,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			anticheat.NewHandler(router, authUsecase, anticheatUsecase)
 			appeal.NewHandler(router, appeals, authUsecase)
 			auth.NewHandler(router, authUsecase, configUsecase, personUsecase)
-			ban.NewHandlerSteam(router, banUsecase, discordUsecase, personUsecase, configUsecase, authUsecase)
+			ban.NewHandlerSteam(router, banUsecase, configUsecase, authUsecase)
 			ban.NewHandlerNet(router, banNetUsecase, authUsecase)
 			ban.NewASNHandlerASN(router, banASNUsecase, authUsecase)
 			config.NewHandler(router, configUsecase, authUsecase, app.Version())
@@ -357,7 +357,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			steamgroup.NewHandler(router, banGroupUsecase, authUsecase)
 			blocklist.NewHandler(router, blocklistUsecase, networkUsecase, authUsecase)
 			chat.NewHandler(router, chatUsecase, authUsecase)
-			contest.NewHandler(router, contestUsecase, configUsecase, assets, authUsecase)
+			contest.NewHandler(router, contestUsecase, assets, authUsecase)
 			demo.NewHandler(router, demos, authUsecase)
 			forum.NewHandler(router, forumUsecase, authUsecase)
 			match.NewHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
@@ -369,10 +369,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			patreon.NewHandler(router, patreonUsecase, authUsecase, configUsecase)
 			person.NewHandler(router, configUsecase, personUsecase, authUsecase)
 			report.NewHandler(router, reportUsecase, authUsecase, notificationUsecase)
-			servers.NewHandler(router, serversUC, stateUsecase, authUsecase, personUsecase)
+			servers.NewHandler(router, serversUC, stateUsecase, authUsecase)
 			srcds.NewHandler(router, speedruns, authUsecase, configUsecase)
 			srcds.NewHandlerSRCDS(router, srcdsUsecase, serversUC, personUsecase, assets,
-				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, demos, authUsecase, banASNUsecase, banNetUsecase,
+				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, authUsecase, banASNUsecase, banNetUsecase,
 				configUsecase, notificationUsecase, stateUsecase, blocklistUsecase)
 			votes.NewHandler(router, voteUsecase, authUsecase)
 			wiki.NewHandler(router, wikiUsecase, authUsecase)
