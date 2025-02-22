@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine
+FROM golang:1.24-alpine
 RUN apk add make gcc g++
 WORKDIR /build
 COPY go.mod go.sum ./
