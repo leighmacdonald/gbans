@@ -169,7 +169,7 @@ export const ServerList = () => {
 
     const opts: TableOptions<ServerRow> = {
         data: metaServers,
-        columns: columns as ColumnDef<ServerRow, any>[],
+        columns: columns as ColumnDef<ServerRow>[],
         getCoreRowModel: getCoreRowModel(),
         manualPagination: false,
         autoResetPageIndex: true
