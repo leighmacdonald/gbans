@@ -90,11 +90,14 @@ jobs:
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
 
       - name: Upload snapshot
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: snapshot
+          #pattern: snapshot-*
+          #merge-multiple: true
           path: build/*
           retention-days: 1
+          overwrite: true
 
       - name: Build & publish image
         run: |
