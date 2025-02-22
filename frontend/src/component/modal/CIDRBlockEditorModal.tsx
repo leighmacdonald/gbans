@@ -7,6 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiCreateCIDRBlockSource, apiUpdateCIDRBlockSource, CIDRBlockSource } from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
@@ -20,6 +21,7 @@ interface CIDRBlockEditorValues {
 
 export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CIDRBlockSource }) => {
     const modal = useModal();
+    const { sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['blockSource'],
@@ -42,6 +44,7 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
             await modal.hide();
         },
         onError: (error) => {
+            sendError(error);
             modal.reject(error);
         }
     });

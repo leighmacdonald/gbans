@@ -29,7 +29,7 @@ export const SMImmunityTable = ({
     groups: SMGroups[];
     isLoading: boolean;
 }) => {
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const queryClient = useQueryClient();
     const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
@@ -59,9 +59,7 @@ export const SMImmunityTable = ({
             );
             sendFlash('success', `Group immunity deleted successfully: ${deleted.group_immunity_id}`);
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to delete group immunity: ${error}`);
-        }
+        onError: sendError
     });
 
     const immunityColumns = useMemo(() => {

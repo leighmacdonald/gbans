@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiDeleteGroupBan } from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Buttons } from '../field/Buttons.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
@@ -16,6 +17,7 @@ export const UnbanGroupModal = NiceModal.create(
         banId: number; // common placeholder for any primary key id for a ban
     }) => {
         const modal = useModal();
+        const { sendError } = useUserFlashCtx();
 
         const mutation = useMutation({
             mutationKey: ['deleteGroupBan', { banId }],
@@ -27,6 +29,7 @@ export const UnbanGroupModal = NiceModal.create(
                 await modal.hide();
             },
             onError: (error) => {
+                sendError(error);
                 modal.reject(error);
             }
         });

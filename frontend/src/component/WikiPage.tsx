@@ -29,7 +29,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
     const [editMode, setEditMode] = useState<boolean>(false);
     const queryClient = useQueryClient();
     const { hasPermission } = useRouteContext({ from: path });
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const page = useLoaderData({ from: path }) as Page;
 
     const buttons = useMemo(() => {
@@ -71,9 +71,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
             mdEditorRef.current?.setMarkdown('');
             sendFlash('success', `Updated ${slug} successfully. Revision: ${savedPage.revision}`);
         },
-        onError: (error) => {
-            sendFlash('error', `Error trying to save: ${error.message}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

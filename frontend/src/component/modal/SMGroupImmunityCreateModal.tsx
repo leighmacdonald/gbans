@@ -7,12 +7,14 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
 import { apiCreateSMGroupImmunity, SMGroups } from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
 
 export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups: SMGroups[] }) => {
     const modal = useModal();
+    const { sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['createGroupImmunity'],
@@ -23,7 +25,8 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
         onSuccess: async (immunity) => {
             modal.resolve(immunity);
             await modal.hide();
-        }
+        },
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

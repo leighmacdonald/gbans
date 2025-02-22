@@ -10,7 +10,7 @@ export interface DeleteServerModalProps extends ConfirmationModalProps<Server> {
 }
 
 export const ServerDeleteModal = ({ onSuccess, server }: DeleteServerModalProps) => {
-    const { sendFlash } = useUserFlashCtx();
+    const { sendError, sendFlash } = useUserFlashCtx();
 
     const handleSubmit = useCallback(() => {
         apiDeleteServer(server.server_id)
@@ -20,10 +20,8 @@ export const ServerDeleteModal = ({ onSuccess, server }: DeleteServerModalProps)
                     onSuccess(server);
                 }
             })
-            .catch((err) => {
-                sendFlash('error', `Failed to unban: ${err}`);
-            });
-    }, [server, sendFlash, onSuccess]);
+            .catch(sendError);
+    }, [server, sendFlash, sendError, onSuccess]);
 
     return (
         <ConfirmationModal

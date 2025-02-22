@@ -22,9 +22,11 @@ import { QueueProvider } from '../component/QueueProvider.tsx';
 import { TopBar } from '../component/TopBar.tsx';
 import { ColourModeContext } from '../contexts/ColourModeContext.tsx';
 import { UserFlashCtx } from '../contexts/UserFlashCtx.tsx';
+import { ApiError } from '../error.tsx';
 import { useAuth } from '../hooks/useAuth.ts';
 import { createThemeByMode } from '../theme.ts';
 import { checkFeatureEnabled } from '../util/features.ts';
+import { emptyOrNullString } from '../util/types.ts';
 
 type RouterContext = {
     auth: AuthContextProps;
@@ -63,10 +65,13 @@ function Root() {
     const theme = useMemo(() => createThemeByMode(mode), [mode]);
 
     const sendFlash = useCallback(
-        (level: AlertColor, message: string, heading = 'header', closable = true) => {
+        (level: AlertColor, message: string, heading = '', closable = true) => {
             if (flashes.length && flashes[flashes.length - 1]?.message == message) {
                 // Skip duplicates
                 return;
+            }
+            if (emptyOrNullString(heading)) {
+                heading = level;
             }
             setFlashes([
                 ...flashes,
@@ -81,8 +86,17 @@ function Root() {
         [flashes, setFlashes]
     );
 
+    const sendError = useCallback(
+        (error: ApiError) => {
+            if (error) {
+                sendFlash('error', error.detail, error.title, true);
+            }
+        },
+        [sendFlash]
+    );
+
     return (
-        <UserFlashCtx.Provider value={{ flashes, setFlashes, sendFlash }}>
+        <UserFlashCtx.Provider value={{ flashes, setFlashes, sendFlash, sendError }}>
             <QueueProvider>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <Fragment>

@@ -86,7 +86,7 @@ const makeColumns = (
 export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGroups }) => {
     const modal = useModal();
     const queryClient = useQueryClient();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
     const { data: overrides, isLoading } = useQuery({
@@ -124,9 +124,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
             );
             sendFlash('success', `Group override deleted successfully: ${edited.name}`);
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to delete group override: ${error}`);
-        }
+        onError: sendError
     });
     const columns = useMemo(() => {
         const onEdit = async (override: SMGroupOverrides) => {

@@ -2,12 +2,12 @@ package tests_test
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/stretchr/testify/require"
 )

@@ -25,7 +25,7 @@ type ForumCategoryEditorValues = {
 
 export const ForumCategoryEditorModal = NiceModal.create(({ category }: { category?: ForumCategory }) => {
     const modal = useModal();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['forumCategory'],
@@ -45,9 +45,7 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
             modal.resolve(category);
             await modal.hide();
         },
-        onError: (error) => {
-            sendFlash('error', `${error}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

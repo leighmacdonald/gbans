@@ -6,11 +6,13 @@ import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiDeleteASNBan } from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Buttons } from '../field/Buttons.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 export const UnbanASNModal = NiceModal.create(({ banId }: { banId: number }) => {
     const modal = useModal();
+    const { sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['deleteASNBan', { banId }],
@@ -22,6 +24,7 @@ export const UnbanASNModal = NiceModal.create(({ banId }: { banId: number }) => 
             await modal.hide();
         },
         onError: (error) => {
+            sendError(error);
             modal.reject(error);
         }
     });

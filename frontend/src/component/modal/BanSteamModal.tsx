@@ -21,7 +21,6 @@ import {
     DurationCollection,
     SteamBanRecord
 } from '../../api';
-import { ApiError } from '../../error.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
@@ -48,7 +47,7 @@ type BanSteamFormValues = {
 
 export const BanSteamModal = NiceModal.create(
     ({ existing, steamId = '' }: { existing?: SteamBanRecord; steamId?: string }) => {
-        const { sendFlash } = useUserFlashCtx();
+        const { sendFlash, sendError } = useUserFlashCtx();
         const modal = useModal();
 
         const mutation = useMutation({
@@ -88,9 +87,7 @@ export const BanSteamModal = NiceModal.create(
                 modal.resolve(banRecord);
                 await modal.hide();
             },
-            onError: (error: ApiError) => {
-                sendFlash('error', error.detail, error.title);
-            }
+            onError: sendError
         });
 
         const { Field, Subscribe, handleSubmit, reset } = useForm({

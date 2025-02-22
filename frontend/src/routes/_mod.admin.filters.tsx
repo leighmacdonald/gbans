@@ -61,7 +61,7 @@ export const Route = createFileRoute('/_mod/admin/filters')({
 });
 
 function AdminFilters() {
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const queryClient = useQueryClient();
     const [rowSelection, setRowSelection] = useState({});
 
@@ -117,7 +117,8 @@ function AdminFilters() {
         },
         onSuccess: (_, filterId) => {
             sendFlash('error', `Deleted filter: ${filterId}`);
-        }
+        },
+        onError: sendError
     });
 
     const onDelete = useCallback(async () => {

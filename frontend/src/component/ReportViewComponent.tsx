@@ -51,7 +51,7 @@ import { MarkdownField, mdEditorRef } from './field/MarkdownField.tsx';
 export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): JSX.Element => {
     const theme = useTheme();
     const queryClient = useQueryClient();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const [value, setValue] = useState<number>(0);
     const { hasPermission } = useRouteContext({ from: '/_auth/report/$reportId' });
 
@@ -122,9 +122,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
             reset();
             sendFlash('success', 'Created message successfully');
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to create message: ${error}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

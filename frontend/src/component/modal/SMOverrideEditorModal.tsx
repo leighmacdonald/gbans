@@ -24,7 +24,7 @@ type mutateOverrideArgs = {
 
 export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?: SMOverrides }) => {
     const modal = useModal();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendError } = useUserFlashCtx();
     const mutation = useMutation({
         mutationKey: ['adminSMOverride'],
         mutationFn: async ({ name, type, flags }: mutateOverrideArgs) => {
@@ -36,9 +36,7 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
             modal.resolve(admin);
             await modal.hide();
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to create override: ${error}`);
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

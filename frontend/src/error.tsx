@@ -1,5 +1,14 @@
 import { emptyOrNullString } from './util/types.ts';
 
+export type ApiError = {
+    type: string;
+    title: string;
+    status: number;
+    detail: string;
+    instance: string;
+    timestamp: string;
+};
+
 export enum ErrorCode {
     InvalidMimetype,
     DependencyMissing,
@@ -9,7 +18,7 @@ export enum ErrorCode {
     NotFound = 5
 }
 
-export class ApiError extends Error {
+export class AppError extends Error {
     public code: ErrorCode;
 
     constructor(code: ErrorCode, message: string, options?: never) {
@@ -36,7 +45,7 @@ export class ApiError extends Error {
         }
 
         super(options);
-        this.code = code;
         this.message = message;
+        this.code = code;
     }
 }

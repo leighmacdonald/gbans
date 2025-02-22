@@ -6,6 +6,7 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { apiCreateWhitelistSteam } from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
@@ -13,6 +14,7 @@ import { SteamIDField } from '../field/SteamIDField.tsx';
 
 export const SteamWhitelistEditorModal = NiceModal.create(() => {
     const modal = useModal();
+    const { sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['blockSourceSteam'],
@@ -25,6 +27,7 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
             await modal.hide();
         },
         onError: (error) => {
+            sendError(error);
             modal.reject(error);
         }
     });

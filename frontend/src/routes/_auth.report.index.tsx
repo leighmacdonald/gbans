@@ -45,7 +45,6 @@ import {
 import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
-import { ErrorBar } from '../component/ErrorBar.tsx';
 import { IconButtonLink } from '../component/IconButtonLink.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
@@ -57,7 +56,6 @@ import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
-import { ApiError } from '../error.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
 import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
@@ -252,8 +250,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
 export const ReportCreateForm = (): JSX.Element => {
     const { demo_id, steam_id, person_message_id } = Route.useSearch();
     const [validatedProfile, setValidatedProfile] = useState<PlayerProfile>();
-    const [error, setError] = useState<ApiError>();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationFn: async (variables: CreateReportRequest) => {
@@ -263,11 +260,8 @@ export const ReportCreateForm = (): JSX.Element => {
             mdEditorRef.current?.setMarkdown('');
             await navigate({ to: '/report/$reportId', params: { reportId: String(data.report_id) } });
             sendFlash('success', 'Created report successfully');
-            setError(undefined);
         },
-        onError: (error: ApiError) => {
-            setError(error);
-        }
+        onError: sendError
     });
 
     const navigate = useNavigate();
@@ -451,11 +445,6 @@ export const ReportCreateForm = (): JSX.Element => {
                             }}
                         />
                     </Grid>
-                    {error && (
-                        <Grid xs={12}>
-                            <ErrorBar error={error} />
-                        </Grid>
-                    )}
                     <Grid xs={12}>
                         <form.Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}

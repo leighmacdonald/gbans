@@ -53,7 +53,7 @@ function ForumThreadPage() {
     const { hasPermission, permissionLevel } = useRouteContext({ from: '/_auth/forums/thread/$forum_thread_id' });
     const { forum_thread_id } = Route.useParams();
     const { pageIndex } = Route.useSearch();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const queryClient = useQueryClient();
     const confirmModal = useModal(ModalConfirm);
     const navigate = useNavigate();
@@ -130,9 +130,7 @@ function ForumThreadPage() {
                 await navigate({ to: '/forums' });
             }
         },
-        onError: (error) => {
-            sendFlash('error', `Failed to delete message: ${error}`);
-        }
+        onError: sendError
     });
 
     const onMessageDeleted = useCallback(
@@ -172,7 +170,8 @@ function ForumThreadPage() {
             mdEditorRef.current?.setMarkdown('');
             reset();
             sendFlash('success', `New message created (#${message.forum_message_id})`);
-        }
+        },
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({

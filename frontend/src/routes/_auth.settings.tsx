@@ -73,7 +73,7 @@ interface SettingsValues {
 type userSettingTabs = 'general' | 'connections' | 'forums' | 'game';
 
 function ProfileSettings() {
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const { profile, hasPermission } = Route.useRouteContext();
     const settings = useLoaderData({ from: '/_auth/settings' }) as PersonSettings;
     const { section } = Route.useSearch();
@@ -94,9 +94,7 @@ function ProfileSettings() {
             mdEditorRef.current?.setMarkdown('');
             sendFlash('success', 'Updated Settings');
         },
-        onError: (error) => {
-            sendFlash('error', `Error Saving ${error}`);
-        }
+        onError: sendError
     });
 
     const onTabClick = async (section: userSettingTabs) => {

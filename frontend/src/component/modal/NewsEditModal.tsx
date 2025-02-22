@@ -8,7 +8,6 @@ import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiNewsCreate, apiNewsSave, NewsEntry } from '../../api/news.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { logErr } from '../../util/errors.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
@@ -17,7 +16,7 @@ import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry }) => {
     const modal = useModal();
-    const { sendFlash } = useUserFlashCtx();
+    const { sendError, sendFlash } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['newsEdit'],
@@ -30,12 +29,10 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
         },
         onSuccess: async (entry) => {
             modal.resolve(entry);
+            sendFlash('success', 'News edited successfully.');
             await modal.hide();
         },
-        onError: (err) => {
-            logErr(err);
-            sendFlash('error', 'Error sending edit request');
-        }
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
