@@ -36,9 +36,12 @@ func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		page, err := w.wiki.GetWikiPageBySlug(ctx, httphelper.CurrentUserProfile(ctx), ctx.Param("slug"))
 		if err != nil {
-			if errors.Is(err, domain.ErrNotFound) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, domain.ErrNoResult)))
-			} else {
+			switch {
+			case errors.Is(err, domain.ErrNoResult):
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, domain.ErrNotFound)))
+			case errors.Is(err, domain.ErrPermissionDenied):
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, domain.ErrPermissionDenied)))
+			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 			}
 
