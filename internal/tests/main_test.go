@@ -248,10 +248,10 @@ func testRouter() *gin.Engine {
 		panic(errRouter)
 	}
 
-	ban.NewHandlerSteam(router, banSteamUC, discordUC, personUC, configUC, authUC)
+	ban.NewHandlerSteam(router, banSteamUC, configUC, authUC)
 	ban.NewHandlerNet(router, banNetUC, authUC)
 	ban.NewASNHandlerASN(router, banASNUC, authUC)
-	servers.NewHandler(router, serversUC, stateUC, authUC, personUC)
+	servers.NewHandler(router, serversUC, stateUC, authUC)
 	steamgroup.NewHandler(router, banGroupUC, authUC)
 	news.NewHandler(router, newsUC, notificationUC, authUC)
 	wiki.NewHandler(router, wikiUC, authUC)
@@ -262,7 +262,7 @@ func testRouter() *gin.Engine {
 	wordfilter.NewHandler(router, configUC, wordFilterUC, chatUC, authUC)
 	person.NewHandler(router, configUC, personUC, authUC)
 	srcds.NewHandlerSRCDS(router, srcdsUC, serversUC, personUC, assetUC, reportUC, banSteamUC, networkUC, banGroupUC,
-		demoUC, authUC, banASNUC, banNetUC, configUC, notificationUC, stateUC, blocklistUC)
+		authUC, banASNUC, banNetUC, configUC, notificationUC, stateUC, blocklistUC)
 	blocklist.NewHandler(router, blocklistUC, networkUC, authUC)
 	srcds.NewHandler(router, speedrunsUC, authUC, configUC)
 
