@@ -170,6 +170,7 @@ type SafeServer struct {
 	Latitude   float64  `json:"latitude"`
 	Longitude  float64  `json:"longitude"`
 	Distance   float64  `json:"distance"`
+	Humans     int      `json:"humans"`
 }
 
 type PlayerServerInfo struct {

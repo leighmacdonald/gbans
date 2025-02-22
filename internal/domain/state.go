@@ -128,4 +128,5 @@ type ServerState struct {
 
 	Tags    []string       `json:"tags"`
 	Players []extra.Player `json:"players"`
+	Humans  int            `json:"humans"`
 }
