@@ -1,6 +1,7 @@
 package demo
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -38,7 +39,7 @@ func (h demoHandler) onAPIPostDemosQuery() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		demos, errDemos := h.demos.GetDemos(ctx)
 		if errDemos != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDemos))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDemos, domain.ErrInternal)))
 
 			return
 		}

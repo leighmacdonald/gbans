@@ -1,4 +1,4 @@
-package domain
+package httphelper
 
 type LazyResult struct {
 	Count int64 `json:"count"`

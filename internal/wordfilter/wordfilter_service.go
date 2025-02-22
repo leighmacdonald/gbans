@@ -1,7 +1,7 @@
 package wordfilter
 
 import (
-	"log/slog"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -39,7 +39,7 @@ func (h *wordFilterHandler) queryFilters() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		words, errGetFilters := h.filters.GetFilters(ctx)
 		if errGetFilters != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGetFilters))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetFilters, domain.ErrInternal)))
 
 			return
 		}
@@ -66,13 +66,12 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 
 		wordFilter, errEdit := h.filters.Edit(ctx, httphelper.CurrentUserProfile(ctx), filterID, req)
 		if errEdit != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errEdit))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEdit, domain.ErrInternal)))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, wordFilter)
-		slog.Info("Filter updated", slog.Int64("filter_id", wordFilter.FilterID))
 	}
 }
 
@@ -85,13 +84,12 @@ func (h *wordFilterHandler) createFilter() gin.HandlerFunc {
 
 		wordFilter, errCreate := h.filters.Create(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errCreate != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errCreate))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCreate, domain.ErrInternal)))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, wordFilter)
-		slog.Info("Created filter", slog.Int64("filter_id", wordFilter.FilterID))
 	}
 }
 
@@ -103,13 +101,12 @@ func (h *wordFilterHandler) deleteFilter() gin.HandlerFunc {
 		}
 
 		if errDrop := h.filters.DropFilter(ctx, filterID); errDrop != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDrop))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDrop))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{})
-		slog.Info("Deleted filter", slog.Int64("filter_id", filterID))
 	}
 }
 

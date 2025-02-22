@@ -3,30 +3,29 @@ package httphelper
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
+	"net/http"
+	"path/filepath"
+
 	"github.com/Depado/ginprom"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/render"
 	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	sloggin "github.com/samber/slog-gin"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
-	"log/slog"
-	"net/http"
-	"path/filepath"
 )
 
 func errorHandler() gin.HandlerFunc {
 	// To conform to rfc9457, we need to set the content-type. Calling ctx.JSON() would use the default application/json
 	// content type.
 	abort := func(ctx *gin.Context, apiError APIError) {
-		ctx.Abort()
 		ctx.Header("Content-Type", "application/problem+json")
-		ctx.Render(apiError.Status, render.JSON{Data: apiError})
+		ctx.Status(apiError.Status)
 
 		err := json.NewEncoder(ctx.Writer).Encode(apiError)
 		if err != nil {
@@ -41,11 +40,13 @@ func errorHandler() gin.HandlerFunc {
 
 		// slog.HandlerName(2)
 		if err := ctx.Errors.Last(); err != nil {
+			ctx.Abort()
+
 			var apiError APIError
 			if errors.As(err, &apiError) {
 				abort(ctx, apiError)
 			} else {
-				abort(ctx, NewAPIError(ctx, http.StatusInternalServerError, domain.ErrInternal))
+				abort(ctx, NewAPIError(http.StatusInternalServerError, domain.ErrInternal))
 			}
 			args := []any{
 				slog.String("method", ctx.Request.Method),
@@ -117,7 +118,6 @@ func useSentry(engine *gin.Engine, version string) {
 }
 
 func useCors(engine *gin.Engine, conf domain.Config) {
-	engine.Use(errorHandler(), gin.Recovery())
 	engine.Use(useSecure(conf.General.Mode, ""))
 
 	if len(conf.HTTPCorsOrigins) > 0 {

@@ -1,6 +1,7 @@
 package patreon
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -44,7 +45,7 @@ func (h patreonHandler) onLogout() gin.HandlerFunc {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
 		if err := h.patreon.Forget(ctx, currentUser.SteamID); err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
@@ -67,14 +68,14 @@ func (h patreonHandler) onOAuth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		grantCode, codeOK := ctx.GetQuery("code")
 		if !codeOK {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrInvalidParameter))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrInvalidParameter, "code invalid."))
 
 			return
 		}
 
 		state, stateOK := ctx.GetQuery("state")
 		if !stateOK {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrInvalidParameter))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrInvalidParameter, "state invalid."))
 
 			return
 		}

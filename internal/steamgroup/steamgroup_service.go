@@ -1,6 +1,7 @@
 package steamgroup
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -41,7 +42,7 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 
 		ban, errBan := h.bansGroup.Ban(ctx, req)
 		if errBan != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBan))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBan, domain.ErrInternal)))
 
 			return
 		}
@@ -59,7 +60,7 @@ func (h steamgroupHandler) onAPIGetBansGroup() gin.HandlerFunc {
 
 		banGroups, errBans := h.bansGroup.Get(ctx, req)
 		if errBans != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBans))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, domain.ErrInternal)))
 
 			return
 		}
@@ -81,7 +82,7 @@ func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 		}
 
 		if err := h.bansGroup.Delete(ctx, groupID, req); err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
@@ -104,7 +105,7 @@ func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 
 		ban, errSave := h.bansGroup.Save(ctx, banGroupID, req)
 		if errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
 
 			return
 		}

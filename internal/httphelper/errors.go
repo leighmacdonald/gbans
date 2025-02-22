@@ -28,10 +28,12 @@ func NewAPIError(code int, err error) APIError {
 		// common sentinel errors that is safe for showing and wont expose any internal details.
 		wrappedErrs := e.Unwrap()
 		if len(wrappedErrs) > 0 {
-			apiErr.Title = wrappedErrs[len(wrappedErrs)-1]
+			apiErr.Title = wrappedErrs[len(wrappedErrs)-1].Error()
 		}
 
 		return apiErr
+	} else {
+		apiErr.Title = err.Error()
 	}
 
 	return apiErr
@@ -42,7 +44,7 @@ func NewAPIError(code int, err error) APIError {
 type APIError struct {
 	err       error
 	Type      string    `json:"type"`
-	Title     error     `json:"title"`
+	Title     string    `json:"title"`
 	Status    int       `json:"status"`
 	Detail    string    `json:"detail"`
 	Instance  string    `json:"instance"`
@@ -52,7 +54,7 @@ type APIError struct {
 func (e APIError) Error() string {
 	if e.err == nil {
 		// Its just a simple validation error, which does not have any wrapped errors.
-		return e.Title.Error()
+		return e.Title
 	}
 
 	return e.err.Error()

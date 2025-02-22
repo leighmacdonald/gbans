@@ -149,6 +149,10 @@ func (r reportUsecase) SetReportStatus(ctx context.Context, reportID int64, user
 		report.Path(),
 	))
 
+	slog.Info("Report status changed",
+		slog.Int64("report_id", report.ReportID),
+		slog.String("to_status", report.ReportStatus.String()))
+
 	return report, nil
 }
 
@@ -160,7 +164,7 @@ func (r reportUsecase) GetReportsBySteamID(ctx context.Context, steamID steamid.
 	reports, errReports := r.repository.GetReports(ctx, steamID)
 	if errReports != nil {
 		if errors.Is(errReports, domain.ErrNoResult) {
-			return nil, nil
+			return []domain.ReportWithAuthor{}, nil
 		}
 
 		return nil, errReports
@@ -173,7 +177,7 @@ func (r reportUsecase) GetReports(ctx context.Context) ([]domain.ReportWithAutho
 	reports, errReports := r.repository.GetReports(ctx, steamid.SteamID{})
 	if errReports != nil {
 		if errors.Is(errReports, domain.ErrNoResult) {
-			return nil, nil
+			return []domain.ReportWithAuthor{}, nil
 		}
 
 		return nil, errReports
@@ -246,6 +250,8 @@ func (r reportUsecase) DropReportMessage(ctx context.Context, curUser domain.Per
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
 		domain.ChannelModAppealLog,
 		discord.DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser))))
+
+	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
 
 	return nil
 }
@@ -407,6 +413,8 @@ func (r reportUsecase) EditReportMessage(ctx context.Context, reportMessageID in
 		discord.EditReportMessageResponse(req.BodyMD, existing.MessageMD,
 			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))))
 
+	slog.Info("Report message edited", slog.Int64("report_message_id", reportMessageID))
+
 	return r.GetReportMessageByID(ctx, reportMessageID)
 }
 
@@ -457,6 +465,9 @@ func (r reportUsecase) CreateReportMessage(ctx context.Context, reportID int64, 
 			path,
 		))
 	}
+
+	slog.Info("New report message created",
+		slog.Int64("report_id", reportID), slog.String("steam_id", curUser.SteamID.String()))
 
 	return msg, nil
 }

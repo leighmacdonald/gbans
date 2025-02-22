@@ -40,7 +40,7 @@ func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 
 		messages, errChat := h.chat.QueryChatHistory(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errChat))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
 
 			return
 		}
@@ -63,7 +63,7 @@ func (h chatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
 
 		messages, errQuery := h.chat.GetPersonMessageContext(ctx, messageID, padding)
 		if errQuery != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errQuery))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errQuery, domain.ErrInternal)))
 
 			return
 		}

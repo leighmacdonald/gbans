@@ -2,7 +2,6 @@ package forum
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -73,7 +72,8 @@ func (f *forumHandler) onAPIForumMessagesRecent() gin.HandlerFunc {
 
 		messages, errThreads := f.forums.ForumRecentActivity(ctx, 5, user.PermissionLevel)
 		if errThreads != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errThreads))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errThreads, domain.ErrInternal),
+				"Could not load recent forum activity"))
 
 			return
 		}
@@ -101,7 +101,8 @@ func (f *forumHandler) onAPICreateForumCategory() gin.HandlerFunc {
 		}
 
 		if errSave := f.forums.ForumCategorySave(ctx, &category); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
+				"Failed to create forum category."))
 
 			return
 		}
@@ -120,7 +121,8 @@ func (f *forumHandler) onAPIForumCategory() gin.HandlerFunc {
 		var category domain.ForumCategory
 
 		if errGet := f.forums.ForumCategory(ctx, forumCategoryID, &category); errGet != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGet))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal),
+				"Could not load forum category with id: %d", forumCategoryID))
 
 			return
 		}
@@ -138,7 +140,8 @@ func (f *forumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
 
 		var category domain.ForumCategory
 		if errGet := f.forums.ForumCategory(ctx, categoryID, &category); errGet != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGet))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal),
+				"Failed to load existing category"))
 
 			return
 		}
@@ -153,7 +156,8 @@ func (f *forumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
 		category.Ordering = req.Ordering
 
 		if errSave := f.forums.ForumCategorySave(ctx, &category); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
+				"Failed to save forum category."))
 
 			return
 		}
@@ -185,7 +189,8 @@ func (f *forumHandler) onAPICreateForumForum() gin.HandlerFunc {
 		}
 
 		if errSave := f.forums.ForumSave(ctx, &forum); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
+				"Failed to save new forum"))
 
 			return
 		}
@@ -203,7 +208,7 @@ func (f *forumHandler) onAPIUpdateForumForum() gin.HandlerFunc {
 
 		var forum domain.Forum
 		if errGet := f.forums.Forum(ctx, forumID, &forum); errGet != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGet))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal)))
 
 			return
 		}
@@ -220,7 +225,8 @@ func (f *forumHandler) onAPIUpdateForumForum() gin.HandlerFunc {
 		forum.PermissionLevel = req.PermissionLevel
 
 		if errSave := f.forums.ForumSave(ctx, &forum); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
+				"Could not save changed to forum"))
 
 			return
 		}
@@ -258,20 +264,29 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 		}
 
 		if len(req.BodyMD) <= 1 {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", domain.ErrTooShort)))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				"Body must be >1 characters"))
 
 			return
 		}
 
 		if len(req.Title) <= 4 {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, fmt.Errorf("title: %w", domain.ErrTooShort)))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				"Title must be >4 characters"))
 
 			return
 		}
 
 		var forum domain.Forum
 		if errForum := f.forums.Forum(ctx, forumID, &forum); errForum != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errForum))
+			switch {
+			case errors.Is(errForum, domain.ErrNoResult):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errForum, domain.ErrInternal),
+					"The forum_id provided does not exist: %d", forumID))
+			default:
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errForum, domain.ErrInternal),
+					"Failed to fetch forum with forum_id: %d", forumID))
+			}
 
 			return
 		}
@@ -281,13 +296,13 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 		thread.Locked = req.Locked
 
 		if errSaveThread := f.forums.ForumThreadSave(ctx, &thread); errSaveThread != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSaveThread))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSaveThread, domain.ErrInternal),
+				"Failed to save new thread."))
 
 			return
 		}
 
 		message := thread.NewMessage(user.SteamID, req.BodyMD)
-
 		if errSaveMessage := f.forums.ForumMessageSave(ctx, &message); errSaveMessage != nil {
 			// Drop created thread.
 			// TODO transaction
@@ -295,7 +310,7 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 				slog.Error("Failed to rollback new thread", log.ErrAttr(errRollback))
 			}
 
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSaveMessage))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSaveMessage, domain.ErrInternal)))
 
 			slog.Error("Failed to save new forum message", log.ErrAttr(errSaveMessage))
 
@@ -303,7 +318,7 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 		}
 
 		if errIncr := f.forums.ForumIncrMessageCount(ctx, forum.ForumID, true); errIncr != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errIncr))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errIncr, domain.ErrInternal)))
 
 			return
 		}
@@ -338,7 +353,8 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 		req.Title = stringutil.SanitizeUGC(req.Title)
 
 		if len(req.Title) < 2 {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				"Title must be at least 2 characters long."))
 
 			return
 		}
@@ -346,16 +362,19 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 		var thread domain.ForumThread
 		if errGet := f.forums.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNotFound,
+					"Forum thread does not exist: %d", forumThreadID))
 			} else {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGet))
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal),
+					"Failed to load existing forum thread."))
 			}
 
 			return
 		}
 
 		if thread.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= domain.PModerator) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrPermissionDenied))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
+				"You do not have access to edit this."))
 
 			return
 		}
@@ -365,7 +384,8 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 		thread.Locked = req.Locked
 
 		if errDelete := f.forums.ForumThreadSave(ctx, &thread); errDelete != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDelete))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errDelete, domain.ErrInternal),
+				"Failed to save thread."))
 
 			return
 		}
@@ -383,24 +403,26 @@ func (f *forumHandler) onAPIThreadDelete() gin.HandlerFunc {
 
 		var thread domain.ForumThread
 		if errGet := f.forums.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
-			if errors.Is(errGet, domain.ErrNoResult) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
-			} else {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGet))
+			switch {
+			case errors.Is(errGet, domain.ErrNoResult):
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+			default:
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal)))
 			}
 
 			return
 		}
 
 		if errDelete := f.forums.ForumThreadDelete(ctx, thread.ForumThreadID); errDelete != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDelete))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errDelete, domain.ErrInternal),
+				"Could not delete forum thread: forum_thread_id=%d", forumThreadID))
 
 			return
 		}
 
 		var forum domain.Forum
 		if errForum := f.forums.Forum(ctx, thread.ForumID, &forum); errForum != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errForum))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errForum, domain.ErrInternal)))
 
 			return
 		}
@@ -408,7 +430,7 @@ func (f *forumHandler) onAPIThreadDelete() gin.HandlerFunc {
 		forum.CountThreads--
 
 		if errSave := f.forums.ForumSave(ctx, &forum); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
 
 			return
 		}
@@ -439,13 +461,20 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 
 		var message domain.ForumMessage
 		if errMessage := f.forums.ForumMessage(ctx, forumMessageID, &message); errMessage != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMessage))
+			switch {
+			case errors.Is(errMessage, domain.ErrNoResult):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, errors.Join(errMessage, domain.ErrNotFound),
+					"Message not found, cannot update."))
+			default:
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMessage, domain.ErrInternal)))
+			}
 
 			return
 		}
 
 		if message.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= domain.PModerator) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrPermissionDenied))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
+				"You do not have permission to edit this message."))
 
 			return
 		}
@@ -453,7 +482,8 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 		req.BodyMD = stringutil.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 10 {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrTooShort))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrTooShort,
+				"Body must be at least 10 characters."))
 
 			return
 		}
@@ -461,7 +491,8 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 		message.BodyMD = req.BodyMD
 
 		if errSave := f.forums.ForumMessageSave(ctx, &message); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
+				"Could not save forum message"))
 
 			return
 		}
@@ -480,9 +511,9 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 		var message domain.ForumMessage
 		if err := f.forums.ForumMessage(ctx, forumMessageID, &message); err != nil {
 			if errors.Is(err, domain.ErrNoResult) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, domain.ErrNotFound, "Forum message does not exist"))
 			} else {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 			}
 
 			return
@@ -491,23 +522,23 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 		var thread domain.ForumThread
 		if err := f.forums.ForumThread(ctx, message.ForumThreadID, &thread); err != nil {
 			if errors.Is(err, domain.ErrNoResult) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrNotFound))
 			} else {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 			}
 
 			return
 		}
 
 		if thread.Locked {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrThreadLocked))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrThreadLocked))
 
 			return
 		}
 
 		messages, errMessage := f.forums.ForumMessages(ctx, domain.ThreadMessagesQuery{ForumThreadID: message.ForumThreadID})
 		if errMessage != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMessage))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMessage, domain.ErrInternal)))
 
 			return
 		}
@@ -516,7 +547,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 
 		if isThreadParent {
 			if err := f.forums.ForumThreadDelete(ctx, message.ForumThreadID); err != nil {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 				return
 			}
@@ -524,7 +555,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 			// Delete the thread if it's the first message
 			var forum domain.Forum
 			if errForum := f.forums.Forum(ctx, thread.ForumID, &forum); errForum != nil {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errForum))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errForum, domain.ErrInternal)))
 
 				return
 			}
@@ -532,7 +563,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 			forum.CountThreads--
 
 			if errSave := f.forums.ForumSave(ctx, &forum); errSave != nil {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
 
 				return
 			}
@@ -540,7 +571,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 			slog.Error("Thread deleted due to parent deletion", slog.Int64("forum_thread_id", thread.ForumThreadID))
 		} else {
 			if errDelete := f.forums.ForumMessageDelete(ctx, message.ForumMessageID); errDelete != nil {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errDelete))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDelete, domain.ErrInternal)))
 
 				return
 			}
@@ -567,13 +598,13 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 
 		var thread domain.ForumThread
 		if errThread := f.forums.ForumThread(ctx, forumThreadID, &thread); errThread != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errThread))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errThread, domain.ErrInternal)))
 
 			return
 		}
 
 		if thread.Locked && currentUser.PermissionLevel < domain.PEditor {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrThreadLocked))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrThreadLocked))
 
 			return
 		}
@@ -586,27 +617,28 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 		req.BodyMD = stringutil.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 3 {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", domain.ErrTooShort)))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				"Body must be at least 3 characters."))
 
 			return
 		}
 
 		newMessage := thread.NewMessage(currentUser.SteamID, req.BodyMD)
 		if errSave := f.forums.ForumMessageSave(ctx, &newMessage); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
 
 			return
 		}
 
 		var message domain.ForumMessage
 		if errFetch := f.forums.ForumMessage(ctx, newMessage.ForumMessageID, &message); errFetch != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errFetch))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errFetch, domain.ErrInternal)))
 
 			return
 		}
 
 		if errIncr := f.forums.ForumIncrMessageCount(ctx, thread.ForumID, true); errIncr != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errIncr))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errIncr, domain.ErrInternal)))
 
 			return
 		}
@@ -632,14 +664,14 @@ func (f *forumHandler) onAPIForumOverview() gin.HandlerFunc {
 
 		categories, errCats := f.forums.ForumCategories(ctx)
 		if errCats != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errCats))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCats, domain.ErrInternal)))
 
 			return
 		}
 
 		currentForums, errForums := f.forums.Forums(ctx)
 		if errForums != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errForums))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errForums, domain.ErrInternal)))
 
 			return
 		}
@@ -681,20 +713,21 @@ func (f *forumHandler) onAPIForumThreads() gin.HandlerFunc {
 
 		threads, errThreads := f.forums.ForumThreads(ctx, tqf)
 		if errThreads != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errThreads))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errThreads, domain.ErrInternal)))
 
 			return
 		}
 
 		var forum domain.Forum
 		if err := f.forums.Forum(ctx, tqf.ForumID, &forum); err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
 
 		if forum.PermissionLevel > currentUser.PermissionLevel {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrPermissionDenied))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
+				"You do not have permission to access this forum."))
 
 			return
 		}
@@ -717,9 +750,9 @@ func (f *forumHandler) onAPIForumThread() gin.HandlerFunc {
 		var thread domain.ForumThread
 		if errThreads := f.forums.ForumThread(ctx, forumThreadID, &thread); errThreads != nil {
 			if errors.Is(errThreads, domain.ErrNoResult) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 			} else {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errThreads))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errThreads, domain.ErrInternal)))
 			}
 
 			return
@@ -745,13 +778,13 @@ func (f *forumHandler) onAPIForum() gin.HandlerFunc {
 		var forum domain.Forum
 
 		if errForum := f.forums.Forum(ctx, forumID, &forum); errForum != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errForum))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errForum, domain.ErrInternal)))
 
 			return
 		}
 
 		if forum.PermissionLevel > currentUser.PermissionLevel {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrPermissionDenied))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
 
 			return
 		}
@@ -769,7 +802,7 @@ func (f *forumHandler) onAPIForumMessages() gin.HandlerFunc {
 
 		messages, errMessages := f.forums.ForumMessages(ctx, queryFilter)
 		if errMessages != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMessages))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMessages, domain.ErrInternal)))
 
 			return
 		}

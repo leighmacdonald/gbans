@@ -57,7 +57,7 @@ func (h matchHandler) onAPIPostMatchEnd() gin.HandlerFunc {
 
 		matchUUID, errEnd := h.matches.EndMatch(ctx, serverID)
 		if errEnd != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errEnd))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errEnd))
 
 			return
 		}
@@ -89,14 +89,14 @@ func (h matchHandler) onAPIPostMatchStart() gin.HandlerFunc {
 
 		server, errServer := h.servers.Server(ctx, serverID)
 		if errServer != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errServer))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServer, domain.ErrInternal)))
 
 			return
 		}
 
 		matchUUID, errMatch := h.matches.StartMatch(server, req.MapName, req.DemoName)
 		if errMatch != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMatch))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMatch, domain.ErrInternal)))
 
 			return
 		}
@@ -124,13 +124,13 @@ func (h matchHandler) onAPIGetStatsWeaponsOverall(ctx context.Context) gin.Handl
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(stats)), stats))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(int64(len(stats)), stats))
 	}
 }
 
 func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 	type resp struct {
-		domain.LazyResult
+		httphelper.LazyResult
 		Weapon domain.Weapon `json:"weapon"`
 	}
 
@@ -144,14 +144,14 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 
 		errWeapon := h.matches.GetWeaponByID(ctx, weaponID, &weapon)
 		if errWeapon != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 			return
 		}
 
 		weaponStats, errChat := h.matches.WeaponsOverallTopPlayers(ctx, weaponID)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errChat))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
 
 			return
 		}
@@ -160,7 +160,7 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 			weaponStats = []domain.PlayerWeaponResult{}
 		}
 
-		ctx.JSON(http.StatusOK, resp{LazyResult: domain.NewLazyResult(int64(len(weaponStats)), weaponStats), Weapon: weapon})
+		ctx.JSON(http.StatusOK, resp{LazyResult: httphelper.NewLazyResult(int64(len(weaponStats)), weaponStats), Weapon: weapon})
 	}
 }
 
@@ -178,7 +178,7 @@ func (h matchHandler) onAPIGetStatsPlayersOverall(ctx context.Context) gin.Handl
 
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(stats)), stats))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(int64(len(stats)), stats))
 	}
 }
 
@@ -196,7 +196,7 @@ func (h matchHandler) onAPIGetStatsHealersOverall(ctx context.Context) gin.Handl
 
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(stats)), stats))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(int64(len(stats)), stats))
 	}
 }
 
@@ -209,7 +209,7 @@ func (h matchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
 
 		weaponStats, errChat := h.matches.WeaponsOverallByPlayer(ctx, steamID)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errChat))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
 
 			return
 		}
@@ -218,7 +218,7 @@ func (h matchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
 			weaponStats = []domain.WeaponsOverallResult{}
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(weaponStats)), weaponStats))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(int64(len(weaponStats)), weaponStats))
 	}
 }
 
@@ -231,7 +231,7 @@ func (h matchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
 
 		classStats, errChat := h.matches.PlayerOverallClassStats(ctx, steamID)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errChat))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
 
 			return
 		}
@@ -240,7 +240,7 @@ func (h matchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
 			classStats = []domain.PlayerClassOverallResult{}
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(classStats)), classStats))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(int64(len(classStats)), classStats))
 	}
 }
 
@@ -253,7 +253,7 @@ func (h matchHandler) onAPIGetPlayerStatsOverall() gin.HandlerFunc {
 
 		var por domain.PlayerOverallResult
 		if errChat := h.matches.PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errChat))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
 
 			return
 		}
@@ -266,7 +266,7 @@ func (h matchHandler) onAPIGetMapUsage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		mapUsages, errServers := h.matches.GetMapUsageStats(ctx)
 		if errServers != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errServers))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServers, domain.ErrInternal)))
 
 			return
 		}
@@ -288,12 +288,12 @@ func (h matchHandler) onAPIGetMatch() gin.HandlerFunc {
 
 		if errMatch != nil {
 			if errors.Is(errMatch, domain.ErrNoResult) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMatch))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMatch, domain.ErrInternal)))
 
 			return
 		}
@@ -314,13 +314,13 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 		if user.PermissionLevel <= domain.PUser {
 			targetID, ok := req.TargetSteamID()
 			if !ok {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusBadRequest, domain.ErrBadRequest))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
 
 				return
 			}
 
 			if user.SteamID != targetID {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusForbidden, domain.ErrPermissionDenied))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
 
 				return
 			}
@@ -328,11 +328,11 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 
 		matches, totalCount, errMatches := h.matches.Matches(ctx, req)
 		if errMatches != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errMatches))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMatches, domain.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(totalCount, matches))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(totalCount, matches))
 	}
 }

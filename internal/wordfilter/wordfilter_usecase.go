@@ -56,10 +56,10 @@ func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, fi
 		return domain.Filter{}, errSave
 	}
 
-	slog.Info("Edited filter", slog.Int64("filter_id", filterID))
-
 	w.wordFilters.Remove(filterID)
 	w.wordFilters.Add(existingFilter)
+
+	slog.Info("Filter updated", slog.Int64("filter_id", filterID))
 
 	return existingFilter, nil
 }
@@ -113,6 +113,8 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 
 	w.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelWordFilterLog, discord.FilterAddMessage(newFilter)))
 
+	slog.Info("Created filter", slog.Int64("filter_id", newFilter.FilterID))
+
 	return newFilter, nil
 }
 
@@ -129,6 +131,8 @@ func (w *wordFilterUsecase) DropFilter(ctx context.Context, filterID int64) erro
 	w.wordFilters.Remove(filterID)
 
 	w.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelWordFilterLog, discord.FilterDelMessage(filter)))
+
+	slog.Info("Deleted filter", slog.Int64("filter_id", filterID))
 
 	return nil
 }

@@ -21,6 +21,7 @@ import {
     DurationCollection,
     SteamBanRecord
 } from '../../api';
+import { ApiError } from '../../error.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
@@ -87,8 +88,8 @@ export const BanSteamModal = NiceModal.create(
                 modal.resolve(banRecord);
                 await modal.hide();
             },
-            onError: (error) => {
-                sendFlash('error', `Failed to create ban: ${error}`);
+            onError: (error: ApiError) => {
+                sendFlash('error', error.detail, error.title);
             }
         });
 

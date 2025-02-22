@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log/slog"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -41,13 +41,13 @@ func (c configHandler) onAPIPutConfig() gin.HandlerFunc {
 		}
 
 		if errSave := c.config.Write(ctx, req); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
+				"Failed to write new config"))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, req)
-		slog.Info("Wrote new config")
 	}
 }
 
@@ -109,7 +109,8 @@ func (c configHandler) onChangelog() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		releases, err := getGithubReleases(ctx)
 		if err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal),
+				"Failed to load changelog from github"))
 
 			return
 		}

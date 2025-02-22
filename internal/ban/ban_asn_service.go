@@ -38,12 +38,14 @@ func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
 		bannedPerson, errBan := h.banASN.Ban(ctx, req)
 		if errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
-				_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusConflict, errBan))
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, domain.ErrDuplicate,
+					"An existing ban already exists matching this asn"))
 
 				return
 			}
 
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBan))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errBan, domain.ErrInternal),
+				"Could not create ASN ban"))
 
 			return
 		}
@@ -61,7 +63,8 @@ func (h banASNHandler) onAPIGetBansASN() gin.HandlerFunc {
 
 		bansASN, errBans := h.banASN.Get(ctx, req)
 		if errBans != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errBans))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errBans, domain.ErrInternal),
+				"Could not query asn bans"))
 
 			return
 		}
@@ -83,7 +86,13 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 		}
 
 		if errSave := h.banASN.Delete(ctx, asnID, req); errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			if errors.Is(errSave, domain.ErrNoResult) {
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNotFound,
+					"Cannot find an ASN ban with asn_id: %d", asnID))
+
+				return
+			}
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
 
 			return
 		}
@@ -106,7 +115,8 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 
 		ban, errSave := h.banASN.Update(ctx, asnID, req)
 		if errSave != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errSave))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
+				"Could not update ASN ban"))
 
 			return
 		}

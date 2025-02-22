@@ -2,6 +2,7 @@ package person
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -58,14 +59,14 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 		}
 
 		if err := h.persons.SetPermissionLevel(ctx, nil, steamID, req.PermissionLevel); err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
 
 		person, errPerson := h.persons.GetPersonBySteamID(ctx, nil, steamID)
 		if errPerson != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errPerson))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errPerson, domain.ErrInternal)))
 
 			return
 		}
@@ -84,7 +85,7 @@ func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 
 		settings, err := h.persons.GetPersonSettings(ctx, user.SteamID)
 		if err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
@@ -103,7 +104,7 @@ func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 
 		settings, err := h.persons.SavePersonSettings(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
@@ -116,11 +117,7 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		profile := httphelper.CurrentUserProfile(ctx)
 		if !profile.SteamID.Valid() {
-			slog.Error("Failed to load user profile",
-				slog.Int64("sid64", profile.SteamID.Int64()),
-				slog.String("name", profile.Name),
-				slog.String("permission_level", profile.PermissionLevel.String()))
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusNotFound, domain.ErrInvalidSID))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrInvalidSID))
 
 			return
 		}
@@ -141,7 +138,7 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 		response, err := h.persons.QueryProfile(requestCtx, req.Query)
 		if err != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, err))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
 		}
@@ -159,11 +156,11 @@ func (h personHandler) searchPlayers() gin.HandlerFunc {
 
 		people, count, errGetPeople := h.persons.GetPeople(ctx, nil, query)
 		if errGetPeople != nil {
-			_ = ctx.Error(httphelper.NewAPIError(ctx, http.StatusInternalServerError, errGetPeople))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetPeople, domain.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, people))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(count, people))
 	}
 }
