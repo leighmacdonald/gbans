@@ -290,7 +290,7 @@ type authTokens struct {
 func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, body any, expectedStatus int, tokens *authTokens) *httptest.ResponseRecorder {
 	t.Helper()
 
-	reqCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	reqCtx, cancel := context.WithTimeout(t.Context(), time.Second*10)
 	defer cancel()
 
 	recorder := httptest.NewRecorder()

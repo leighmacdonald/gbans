@@ -1,7 +1,6 @@
 package tests_test
 
 import (
-	"context"
 	"crypto/rand"
 	"fmt"
 	"os"
@@ -15,8 +14,6 @@ import (
 )
 
 func TestDemosCleanup(t *testing.T) {
-	ctx := context.Background()
-
 	tempDir := os.TempDir()
 
 	conf := configUC.Config()
@@ -25,7 +22,7 @@ func TestDemosCleanup(t *testing.T) {
 	conf.Demo.DemoCleanupStrategy = domain.DemoStrategyCount
 	conf.Demo.DemoCountLimit = 5
 
-	require.NoError(t, configUC.Write(ctx, conf))
+	require.NoError(t, configUC.Write(t.Context(), conf))
 
 	fetcher := demo.NewFetcher(tempDB, configUC, serversUC, assetUC, demoUC, anticheatUC)
 
@@ -34,7 +31,7 @@ func TestDemosCleanup(t *testing.T) {
 		_, err := rand.Read(content)
 		require.NoError(t, err)
 		if configUC.Config().Demo.DemoParserURL != "" {
-			require.NoError(t, fetcher.OnDemoReceived(ctx, demo.UploadedDemo{
+			require.NoError(t, fetcher.OnDemoReceived(t.Context(), demo.UploadedDemo{
 				Name:    fmt.Sprintf("2023111%d-063943-koth_harvest_final.dem", demoNum),
 				Server:  testServer,
 				Content: content,
@@ -42,15 +39,15 @@ func TestDemosCleanup(t *testing.T) {
 		}
 	}
 
-	expired, errExpired := demoRepository.ExpiredDemos(ctx, 5)
+	expired, errExpired := demoRepository.ExpiredDemos(t.Context(), 5)
 	require.NoError(t, errExpired)
 	for _, expiredDemo := range expired {
 		require.Less(t, expiredDemo.DemoID, int64(6))
 	}
 
-	demoUC.Cleanup(ctx)
+	demoUC.Cleanup(t.Context())
 
-	allDemos, err := demoUC.GetDemos(ctx)
+	allDemos, err := demoUC.GetDemos(t.Context())
 	require.NoError(t, err)
 	if configUC.Config().Demo.DemoParserURL != "" {
 		require.Len(t, allDemos, 5)
@@ -62,7 +59,7 @@ func TestDemoUpload(t *testing.T) {
 		t.Skip("Parser url undefined")
 	}
 	demoPath := fs.FindFile(path.Join("testdata", "test.dem"), "gbans")
-	detail, err := demoUC.SendAndParseDemo(context.Background(), demoPath)
+	detail, err := demoUC.SendAndParseDemo(t.Context(), demoPath)
 	require.NoError(t, err)
 	require.Len(t, detail.State.Users, 46)
 }
