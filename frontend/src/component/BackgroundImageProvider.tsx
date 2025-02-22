@@ -11,7 +11,7 @@ function getImageUrl(name: string | number) {
     if (import.meta.env.MODE === 'development') {
         return `/public/bg/${name}.png`;
     } else {
-        return `/bg/${name}`;
+        return `/bg/${name}.png`;
     }
 }
 
