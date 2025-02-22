@@ -1,7 +1,6 @@
 package vpksign_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/pkg/vpksign"
@@ -9,6 +8,6 @@ import (
 )
 
 func TestSign(t *testing.T) {
-	require.NoError(t, vpksign.Sign(context.Background(), "./vpk_bin",
+	require.NoError(t, vpksign.Sign(t.Context(), "./vpk_bin",
 		"", ""))
 }

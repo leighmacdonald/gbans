@@ -1,7 +1,6 @@
 package tests_test
 
 import (
-	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -27,7 +26,7 @@ func TestVotes(t *testing.T) {
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/votes", req, http.StatusOK, &authTokens{user: moderator}, &results)
 	require.Empty(t, results.Data)
 
-	require.NoError(t, votesRepo.AddResult(context.Background(), domain.VoteResult{
+	require.NoError(t, votesRepo.AddResult(t.Context(), domain.VoteResult{
 		SourceID:         source.SteamID,
 		SourceName:       source.PersonaName,
 		SourceAvatarHash: source.AvatarHash,
