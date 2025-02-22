@@ -130,7 +130,7 @@ export const TopBar = () => {
                 icon: <DashboardIcon color={'primary'} sx={topColourOpts} />
             }
         ];
-        if (appInfo.servers_enabled && profile.ban_id <= 0) {
+        if (appInfo.servers_enabled && (profile.ban_id <= 0 || profile.muted)) {
             items.push({
                 to: '/servers',
                 text: 'Servers',

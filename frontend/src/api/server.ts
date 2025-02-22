@@ -13,6 +13,7 @@ export interface BaseServer {
     players: number;
     max_players: number;
     bots: number;
+    humans: number;
     map: string;
     game_types: string[];
     latitude: number;

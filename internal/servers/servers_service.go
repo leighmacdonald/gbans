@@ -108,6 +108,7 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 				Players:    srv.PlayerCount,
 				MaxPlayers: srv.MaxPlayers,
 				Bots:       srv.Bots,
+				Humans:     srv.Humans,
 				Map:        srv.Map,
 				GameTypes:  []string{},
 				Latitude:   srv.Latitude,

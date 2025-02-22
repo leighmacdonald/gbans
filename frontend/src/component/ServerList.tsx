@@ -69,7 +69,7 @@ export const ServerList = () => {
                 cell: (info) => (
                     <Typography
                         variant={'body2'}
-                    >{`${info.getValue()}/${selectedServers[info.row.index].max_players}`}</Typography>
+                    >{`${selectedServers[info.row.index].humans + selectedServers[info.row.index].bots}/${selectedServers[info.row.index].max_players}`}</Typography>
                 )
             }),
             columnHelper.accessor('distance', {

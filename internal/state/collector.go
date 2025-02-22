@@ -32,6 +32,7 @@ type Collector struct {
 	configs          []domain.ServerConfig
 	configMu         *sync.RWMutex
 	maxPlayersRx     *regexp.Regexp
+	playersRx        *regexp.Regexp
 	serverUsecase    domain.ServersUsecase
 }
 
@@ -48,6 +49,7 @@ func NewCollector(serverUsecase domain.ServersUsecase) *Collector {
 		stateMu:          &sync.RWMutex{},
 		configMu:         &sync.RWMutex{},
 		maxPlayersRx:     regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`),
+		playersRx:        regexp.MustCompile(`players\s: (\d+)\s+humans,\s+(\d+)\s+bots\s\((\d+)\s+max`),
 		serverUsecase:    serverUsecase,
 	}
 }
@@ -114,7 +116,7 @@ func (c *Collector) Current() []domain.ServerState {
 	return curState
 }
 
-func (c *Collector) onStatusUpdate(conf domain.ServerConfig, newState extra.Status, maxVisible int) {
+func (c *Collector) onStatusUpdate(conf domain.ServerConfig, newState Status, maxVisible int) {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
 
@@ -140,6 +142,8 @@ func (c *Collector) onStatusUpdate(conf domain.ServerConfig, newState extra.Stat
 	}
 
 	server.Players = newState.Players
+	server.Humans = newState.Humans
+	server.Bots = newState.Bots
 
 	c.serverState[conf.ServerID] = server
 }
@@ -228,6 +232,12 @@ func (c *Collector) Update(serverID int, update domain.PartialStateUpdate) error
 	return nil
 }
 
+type Status struct {
+	extra.Status
+	Humans int
+	Bots   int
+}
+
 var (
 	ErrStatusParse       = errors.New("failed to parse status response")
 	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
@@ -236,20 +246,50 @@ var (
 	ErrRCONExecCommand   = errors.New("failed to perform command")
 )
 
-func (c *Collector) status(ctx context.Context, serverID int) (extra.Status, error) {
+func (c *Collector) status(ctx context.Context, serverID int) (Status, error) {
 	server, errServerID := c.GetServer(serverID)
 	if errServerID != nil {
-		return extra.Status{}, errServerID
+		return Status{}, errServerID
 	}
 
 	statusResp, errStatus := c.ExecRaw(ctx, server.Addr(), server.RconPassword, "status")
 	if errStatus != nil {
-		return extra.Status{}, errStatus
+		return Status{}, errStatus
 	}
 
-	status, errParse := extra.ParseStatus(statusResp, true)
+	pStatus, errParse := extra.ParseStatus(statusResp, true)
 	if errParse != nil {
-		return extra.Status{}, errors.Join(errParse, ErrStatusParse)
+		return Status{}, errors.Join(errParse, ErrStatusParse)
+	}
+
+	status := Status{Status: pStatus}
+
+	matches := c.playersRx.FindStringSubmatch(statusResp)
+	if len(matches) > 0 {
+		players, errPlayers := strconv.Atoi(matches[1])
+		if errPlayers != nil {
+			return Status{}, ErrStatusParse
+		}
+		status.Humans = players
+
+		bots, errBots := strconv.Atoi(matches[2])
+		if errBots != nil {
+			return Status{}, ErrStatusParse
+		}
+		status.Bots = bots
+
+		maxPlayers, errMaxPlayers := strconv.Atoi(matches[3])
+		if errMaxPlayers != nil {
+			return Status{}, ErrStatusParse
+		}
+
+		if maxPlayers%2 != 0 {
+			// Assume that if we have an uneven player count that it's a SourceTV instance and ignore it.
+			status.Bots--
+			maxPlayers--
+		}
+
+		status.PlayersMax = maxPlayers
 	}
 
 	return status, nil

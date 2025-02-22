@@ -33,14 +33,14 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
     const [messages, setMessages] = useState<ChatLog[]>([]);
     const [showChat, setShowChat] = useState(false);
     const [lobbies, setLobbies] = useState<LobbyState[]>([]);
-    const { profile } = useAuth();
+    const { profile, isAuthenticated } = useAuth();
     const [chatStatus, setChatStatus] = useState<ChatStatus>(profile.playerqueue_chat_status);
     const [reason, setReason] = useState<string>('');
 
     const modal = useModal(ModalQueueJoin);
 
     const { readyState, sendJsonMessage, lastJsonMessage } = useWebSocket(websocketURL(), {
-        queryParams: { token: readAccessToken() },
+        queryParams: { token: isAuthenticated() ? readAccessToken() : '' },
         heartbeat: true,
         share: true,
         //reconnectInterval: 10,
