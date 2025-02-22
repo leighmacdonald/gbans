@@ -229,9 +229,7 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportMessageID, idFound := httphelper.GetInt64Param(ctx, "report_message_id")
-		if idFound {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
-
+		if !idFound {
 			return
 		}
 
