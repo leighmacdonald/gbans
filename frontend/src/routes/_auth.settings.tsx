@@ -19,7 +19,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { standardSchemaValidator, useForm } from '@tanstack/react-form';
+import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -175,7 +175,7 @@ const GeneralSection = ({
         return 'Notification' in window;
     }, []);
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const { Field, Subscribe, handleSubmit, reset, state } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
@@ -276,7 +276,13 @@ const GeneralSection = ({
                                 onChange: z.boolean()
                             }}
                             children={(props) => {
-                                return <CheckboxSimple {...props} label={'Hide personal stats on profile'} />;
+                                return (
+                                    <CheckboxSimple
+                                        {...props}
+                                        state={state.values.stats_hidden}
+                                        label={'Hide personal stats on profile'}
+                                    />
+                                );
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
@@ -305,7 +311,7 @@ const GameplaySection = ({
     settings: PersonSettings;
     mutate: (s: PersonSettings) => void;
 }) => {
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const { Field, Subscribe, handleSubmit, reset, state } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
@@ -331,7 +337,13 @@ const GameplaySection = ({
                                 onChange: z.boolean()
                             }}
                             children={(props) => {
-                                return <CheckboxSimple {...props} label={'Use center projectiles'} />;
+                                return (
+                                    <CheckboxSimple
+                                        {...props}
+                                        state={state.values.center_projectiles}
+                                        label={'Use center projectiles'}
+                                    />
+                                );
                             }}
                         />
                         <SubHeading>Applies to all projectile weapons</SubHeading>
@@ -360,7 +372,7 @@ const ForumSection = ({
     settings: PersonSettings;
     mutate: (s: PersonSettings) => void;
 }) => {
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const { Field, Subscribe, handleSubmit, reset, state } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
@@ -387,7 +399,14 @@ const ForumSection = ({
                                 onChange: z.string()
                             }}
                             children={(props) => {
-                                return <MarkdownField {...props} label={'Your forum signature'} rows={10} />;
+                                return (
+                                    <MarkdownField
+                                        {...props}
+                                        state={state.values.forum_signature}
+                                        label={'Your forum signature'}
+                                        rows={10}
+                                    />
+                                );
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
@@ -400,7 +419,13 @@ const ForumSection = ({
                                 onChange: z.boolean()
                             }}
                             children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable people to sign your profile.'} />;
+                                return (
+                                    <CheckboxSimple
+                                        {...props}
+                                        state={state.values.forum_profile_messages}
+                                        label={'Enable people to sign your profile.'}
+                                    />
+                                );
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>

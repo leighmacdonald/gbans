@@ -1,5 +1,5 @@
 import { formatDistance, parseISO, parseJSON } from 'date-fns';
-import format from 'date-fns/format';
+import { format } from 'date-fns/format';
 import { isAfter } from 'date-fns/fp';
 
 export type Duration = number;
