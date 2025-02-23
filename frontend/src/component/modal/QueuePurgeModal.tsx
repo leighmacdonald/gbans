@@ -1,12 +1,11 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiQueueMessagesDelete, ChatLog } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -38,7 +37,6 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                 count: Number(value.count)
             });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             count: '1'
         }
@@ -65,7 +63,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                             selected message.
                         </Typography>
                         <Grid container spacing={2}>
-                            <Grid xs={8}>
+                            <Grid size={{ xs: 8 }}>
                                 <Field
                                     name={'count'}
                                     validators={{
@@ -89,7 +87,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                 </DialogContent>
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }} mdOffset="auto">
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

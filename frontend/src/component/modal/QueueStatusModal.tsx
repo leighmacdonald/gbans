@@ -1,11 +1,10 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiQueueSetUserStatus, ChatStatus } from '../../api';
 import { useQueueCtx } from '../../hooks/useQueueCtx.ts';
@@ -36,7 +35,6 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             chat_status: chatStatus,
             reason: reason
@@ -57,7 +55,7 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
                 </DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={2}>
+                        <Grid size={{ xs: 2 }}>
                             <Field
                                 name={'chat_status'}
                                 validators={{

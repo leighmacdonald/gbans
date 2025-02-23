@@ -4,9 +4,9 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import TimerIcon from '@mui/icons-material/Timer';
 import WallpaperIcon from '@mui/icons-material/Wallpaper';
+import Grid from '@mui/material/Grid2';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
@@ -60,42 +60,42 @@ function SpeedrunDetail() {
 
             {!isLoading && speedrun && (
                 <Grid container spacing={2}>
-                    <Grid xs={2}>
+                    <Grid size={{ xs: 2 }}>
                         <ContainerWithHeader title={'Rank (Initial)'} iconLeft={<EmojiEventsIcon />}>
                             <Typography textAlign={'center'} fontSize={'large'} fontWeight={'bold'}>
                                 {speedrun.rank} ({speedrun.initial_rank})
                             </Typography>
                         </ContainerWithHeader>
                     </Grid>
-                    <Grid xs={2}>
+                    <Grid size={{ xs: 2 }}>
                         <ContainerWithHeader title={'Time'} iconLeft={<TimerIcon />}>
                             <Typography textAlign={'center'} fontSize={'large'} fontWeight={'bold'}>
                                 {durationString((speedrun.duration ?? 0) / 1000)}
                             </Typography>
                         </ContainerWithHeader>
                     </Grid>
-                    <Grid xs={4}>
+                    <Grid size={{ xs: 4 }}>
                         <ContainerWithHeader title={'Map'} iconLeft={<WallpaperIcon />}>
                             <Typography textAlign={'center'} fontSize={'large'} fontWeight={'bold'}>
                                 {speedrun.map_detail.map_name}
                             </Typography>
                         </ContainerWithHeader>
                     </Grid>
-                    <Grid xs={2}>
+                    <Grid size={{ xs: 2 }}>
                         <ContainerWithHeader title={'Category'} iconLeft={<CategoryIcon />}>
                             <Typography textAlign={'center'} fontSize={'large'} fontWeight={'bold'}>
                                 {speedrun.category}
                             </Typography>
                         </ContainerWithHeader>
                     </Grid>
-                    <Grid xs={2}>
+                    <Grid size={{ xs: 2 }}>
                         <ContainerWithHeader title={'Submitted'} iconLeft={<CategoryIcon />}>
                             <Typography textAlign={'center'} fontSize={'large'} fontWeight={'bold'}>
                                 {renderDateTime(speedrun.created_on)}
                             </Typography>
                         </ContainerWithHeader>
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <ContainerWithHeader title={'Players'} iconLeft={<GroupAddIcon />}>
                             <SpeedrunPlayerTable
                                 captures={speedrun.point_captures}

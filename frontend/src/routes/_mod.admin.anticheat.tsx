@@ -3,17 +3,16 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
+import Grid from '@mui/material/Grid2';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetAnticheatLogs, apiGetServers, Detection, Detections, ServerSimple, StacEntry } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -115,7 +114,6 @@ function AdminAnticheat() {
             //setColumnFilters(initColumnFilter(value));
             await navigate({ to: '/admin/anticheat', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             name: search.name ?? '',
             summary: search.summary ?? '',
@@ -213,7 +211,7 @@ function AdminAnticheat() {
     return (
         <Grid container spacing={2}>
             <Title>Anticheat Logs</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
@@ -223,7 +221,7 @@ function AdminAnticheat() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'name'}
                                     children={(props) => {
@@ -231,7 +229,7 @@ function AdminAnticheat() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'steam_id'}
                                     children={({ state, handleChange, handleBlur }) => {
@@ -247,7 +245,7 @@ function AdminAnticheat() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'server_id'}
                                     children={({ state, handleChange, handleBlur }) => {
@@ -277,7 +275,7 @@ function AdminAnticheat() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'detection'}
                                     children={({ state, handleChange, handleBlur }) => {
@@ -307,7 +305,7 @@ function AdminAnticheat() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'summary'}
                                     children={(props) => {
@@ -315,7 +313,7 @@ function AdminAnticheat() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }} mdOffset="auto">
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -332,7 +330,7 @@ function AdminAnticheat() {
                     </form>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeaderAndButtons title={`Entries`} iconLeft={<FilterAltIcon />}>
                     <FullTable<StacEntry>
                         // columnFilters={columnFilters}

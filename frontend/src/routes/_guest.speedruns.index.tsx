@@ -4,9 +4,9 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import HistoryIcon from '@mui/icons-material/History';
 import PageviewIcon from '@mui/icons-material/Pageview';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Grid from '@mui/material/Grid2';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
@@ -73,7 +73,7 @@ function SpeedrunsOverall() {
         <>
             <Title>Speedrun Overall Results</Title>
             <Grid container spacing={2}>
-                <Grid xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                     <ContainerWithHeader title={'Speedruns'} iconLeft={<ElectricBoltIcon />}>
                         <Typography>
                             These are the overall results for the speedruns. Speedruns are automatically created upon
@@ -83,7 +83,7 @@ function SpeedrunsOverall() {
                     </ContainerWithHeader>
                 </Grid>
 
-                <Grid md={8} xs={12}>
+                <Grid size={{ xs: 12, md: 8 }}>
                     <ContainerWithHeader title={'Most Recent Changes'} iconLeft={<HistoryIcon />}>
                         <SpeedrunRecentTable
                             speedruns={recent ?? []}
@@ -96,7 +96,7 @@ function SpeedrunsOverall() {
                 {speedruns &&
                     keys.map((map_name) => {
                         return (
-                            <Grid xs={12} md={6} lg={4} key={`map-${map_name}`}>
+                            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={`map-${map_name}`}>
                                 <ContainerWithHeaderAndButtons
                                     title={map_name}
                                     iconLeft={<EmojiEventsIcon />}
