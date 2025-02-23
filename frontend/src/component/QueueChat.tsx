@@ -7,11 +7,11 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import SendIcon from '@mui/icons-material/Send';
 import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
+import Grid from '@mui/material/Grid2';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { PermissionLevel } from '../api';
@@ -145,7 +145,7 @@ export const QueueChat = () => {
                     </ContainerWithHeaderAndButtons>
                 </Grid>
                 {showPeople && (
-                    <Grid md={2} sm={12}>
+                    <Grid size={{ sm: 12, md: 2 }}>
                         <ContainerWithHeader title={`Online`} iconLeft={<GroupIcon />}>
                             <Grid
                                 container
@@ -157,7 +157,7 @@ export const QueueChat = () => {
                             >
                                 {users.map((u) => {
                                     return (
-                                        <Grid xs={4} md={12} key={`memberlist-${u.steam_id}`}>
+                                        <Grid size={{ xs: 4, md: 12 }} key={`memberlist-${u.steam_id}`}>
                                             <QueueChatName
                                                 personaname={emptyOrNullString(u.name) ? u.steam_id : u.name}
                                                 steam_id={u.steam_id}

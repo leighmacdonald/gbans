@@ -6,8 +6,8 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { GameStartPayload } from '../../api';
 import { logErr } from '../../util/errors.ts';
 import { avatarHashToURL } from '../../util/text.tsx';
@@ -34,7 +34,7 @@ export const QueueJoinModal = NiceModal.create(({ gameStart }: { gameStart: Game
                     {gameStart.users.map((p) => {
                         return (
                             <Grid
-                                xs={4}
+                                size={{ xs: 4 }}
                                 display="flex"
                                 justifyContent="center"
                                 alignItems="center"
@@ -55,7 +55,7 @@ export const QueueJoinModal = NiceModal.create(({ gameStart }: { gameStart: Game
             </DialogContent>
             <DialogActions>
                 <Grid container>
-                    <Grid xs={12} mdOffset="auto">
+                    <Grid size={{ xs: 12 }}>
                         <ButtonGroup fullWidth={false}>
                             <Button
                                 color={'success'}

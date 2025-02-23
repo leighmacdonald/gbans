@@ -1,12 +1,12 @@
+import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 
 export const QueueHelp = () => {
     return (
         <Paper>
             <Grid container>
-                <Grid xs={12} padding={2}>
+                <Grid size={{ xs: 12 }} padding={2}>
                     <Typography variant={'h2'} padding={1}>
                         Welcome To The Server Queue!
                     </Typography>
