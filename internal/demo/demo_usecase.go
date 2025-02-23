@@ -1,10 +1,16 @@
 package demo
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"mime/multipart"
+	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -201,7 +207,7 @@ func (d demoUsecase) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
 	return d.repository.GetDemos(ctx)
 }
 
-func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain.DemoDetails, error) {
+func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain.DemoFile, error) {
 	fileHandle, errDF := os.Open(path)
 	if errDF != nil {
 		return nil, errors.Join(errDF, domain.ErrDemoLoad)
@@ -249,7 +255,7 @@ func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain
 
 	defer log.Closer(resp.Body)
 
-	var demo domain.DemoDetails
+	var demo domain.DemoFile
 
 	// TODO remove this extra copy once this feature doesnt have much need for debugging/inspection.
 	rawBody, errRead := io.ReadAll(resp.Body)

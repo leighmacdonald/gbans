@@ -17,7 +17,7 @@ import (
 type MatchRepository interface {
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchResult, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
-	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
+	MatchSave(ctx context.Context, match *MatchResult) error
 	StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (PlayerClassStatsCollection, error)
 	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]PlayerWeaponStats, error)
 	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]PlayerKillstreakStats, error)
@@ -43,7 +43,7 @@ type MatchUsecase interface {
 	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchResult, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
-	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
+	MatchSave(ctx context.Context, match *MatchResult) error
 	StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (PlayerClassStatsCollection, error)
 	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]PlayerWeaponStats, error)
 	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]PlayerKillstreakStats, error)
