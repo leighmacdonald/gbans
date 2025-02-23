@@ -52,12 +52,12 @@ func (m matchUsecase) CreateFromDemo(_ context.Context, serverID int, details de
 	}
 
 	endTime := time.Now()
-	startTime := endTime.Add(-time.Duration(int(math.Ceil(details.Header.Duration))))
+	startTime := endTime.Add(-time.Duration(int(math.Ceil(details.Duration))))
 	result := domain.MatchResult{
 		MatchID:  newID,
 		ServerID: server.ServerID,
-		Title:    details.Header.Server,
-		MapName:  details.Header.Map,
+		Title:    details.Server,
+		MapName:  details.Map,
 		TeamScores: logparse.TeamScores{
 			Red:     details.State.Results.ScoreRed,
 			RedTime: details.State.Results.RedTime,
@@ -137,8 +137,8 @@ func (m matchUsecase) MatchGetByID(ctx context.Context, matchID uuid.UUID, match
 }
 
 // todo hide.
-func (m matchUsecase) MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
-	return m.repository.MatchSave(ctx, match, weaponMap)
+func (m matchUsecase) MatchSave(ctx context.Context, match *domain.MatchResult) error {
+	return m.repository.MatchSave(ctx, match)
 }
 
 func (m matchUsecase) StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (domain.PlayerClassStatsCollection, error) {

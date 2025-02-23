@@ -38,69 +38,6 @@ func NewHandler(ctx context.Context, engine *gin.Engine, matches domain.MatchUse
 		authed.GET("/api/stats/player/:steam_id/weapons", handler.onAPIGetPlayerWeaponStatsOverall())
 		authed.GET("/api/stats/player/:steam_id/classes", handler.onAPIGetPlayerClassStatsOverall())
 		authed.GET("/api/stats/player/:steam_id/overall", handler.onAPIGetPlayerStatsOverall())
-		authed.POST("/api/sm/match/start", handler.onAPIPostMatchStart())
-		authed.GET("/api/sm/match/end", handler.onAPIPostMatchEnd())
-	}
-}
-
-func (h matchHandler) onAPIPostMatchEnd() gin.HandlerFunc {
-	type endMatchResponse struct {
-		URL string `json:"url"`
-	}
-
-	return func(ctx *gin.Context) {
-		serverID, idFound := httphelper.GetIntParam(ctx, "server_id")
-		if !idFound {
-			return
-		}
-
-		matchUUID, errEnd := h.matches.EndMatch(ctx, serverID)
-		if errEnd != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errEnd))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, endMatchResponse{URL: h.config.ExtURLRaw("/match/%s", matchUUID.String())})
-	}
-}
-
-func (h matchHandler) onAPIPostMatchStart() gin.HandlerFunc {
-	type matchStartRequest struct {
-		MapName  string `json:"map_name"`
-		DemoName string `json:"demo_name"`
-	}
-
-	type matchStartResponse struct {
-		MatchID uuid.UUID `json:"match_id"`
-	}
-
-	return func(ctx *gin.Context) {
-		var req matchStartRequest
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
-
-		serverID, idFound := httphelper.GetIntParam(ctx, "server_id")
-		if !idFound {
-			return
-		}
-
-		server, errServer := h.servers.Server(ctx, serverID)
-		if errServer != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServer, domain.ErrInternal)))
-
-			return
-		}
-
-		matchUUID, errMatch := h.matches.StartMatch(server, req.MapName, req.DemoName)
-		if errMatch != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMatch, domain.ErrInternal)))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, matchStartResponse{MatchID: matchUUID})
 	}
 }
 
