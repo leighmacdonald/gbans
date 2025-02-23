@@ -6,8 +6,19 @@ import (
 )
 
 type Demo struct {
-	State  GameState `json:"state"`
-	Header Header    `json:"header"`
+	Filename        string
+	DemoType        string
+	Version         int
+	Protocol        int
+	Server          string
+	Nick            string
+	Map             string
+	Game            string
+	Duration        float64
+	Ticks           int
+	Frames          int
+	Signon          int
+	PlayerSummaries map[string]PlayerSummary
 }
 
 type GameState struct {
@@ -17,19 +28,90 @@ type GameState struct {
 	Rounds  []DemoRoundSummary    `json:"rounds"`
 	Chat    []ChatMessage         `json:"chat"`
 }
+type HealingSummary struct {
+	PreroundHealing     int `json:"preround_healing"`
+	Healing             int `json:"healing"`
+	PostroundHealing    int `json:"postround_healing"`
+	Drops               int `json:"drops"`
+	NearFullChargeDeath int `json:"near_full_charge_death"`
+	ChargesUber         int `json:"charges_uber"`
+	ChargesKritz        int `json:"charges_kritz"`
+	ChargesQuickfix     int `json:"charges_quickfix"`
+}
+type ClassSummary struct {
+	Kills            int `json:"kills"`
+	Assists          int `json:"assists"`
+	Deaths           int `json:"deaths"`
+	PostroundKills   int `json:"postround_kills"`
+	PostroundAssists int `json:"postround_assists"`
+	PostroundDeaths  int `json:"postround_deaths"`
+	PreroundHealing  int `json:"preround_healing"`
+	Healing          int `json:"healing"`
+	PostroundHealing int `json:"postround_healing"`
+	Damage           int `json:"damage"`
+	DamageTaken      int `json:"damage_taken"`
+	Dominations      int `json:"dominations"`
+	Dominated        int `json:"dominated"`
+	Revenges         int `json:"revenges"`
+	Revenged         int `json:"revenged"`
+	Airshots         int `json:"airshots"`
+	HeadshotKills    int `json:"headshot_kills"`
+	BackstabKills    int `json:"backstab_kills"`
+	Headshots        int `json:"headshots"`
+	Backstabs        int `json:"backstabs"`
+	WasHeadshot      int `json:"was_headshot"`
+	WasBackstabbed   int `json:"was_backstabbed"`
+}
 
-type Header struct {
-	DemoType string  `json:"demo_type"`
-	Version  int     `json:"version"`
-	Protocol int     `json:"protocol"`
-	Server   string  `json:"server"`
-	Nick     string  `json:"nick"`
-	Map      string  `json:"map"`
-	Game     string  `json:"game"`
-	Duration float64 `json:"duration"`
-	Ticks    int     `json:"ticks"`
-	Frames   int     `json:"frames"`
-	Signon   int     `json:"signon"`
+type PlayerSummary struct {
+	Name             string          `json:"name"`
+	Steamid          steamid.SteamID `json:"steamid"`
+	Team             string          `json:"team"`
+	TimeStart        int             `json:"time_start"`
+	TimeEnd          int             `json:"time_end"`
+	Points           int             `json:"points"`
+	ConnectionCount  int             `json:"connection_count"`
+	BonusPoints      int             `json:"bonus_points"`
+	Kills            int             `json:"kills"`
+	Assists          int             `json:"assists"`
+	Deaths           int             `json:"deaths"`
+	PostroundKills   int             `json:"postround_kills"`
+	PostroundAssists int             `json:"postround_assists"`
+	PostroundDeaths  int             `json:"postround_deaths"`
+	PreroundHealing  int             `json:"preround_healing"`
+	Healing          HealingSummary  `json:"healing"`
+	PostroundHealing int             `json:"postround_healing"`
+	Damage           int             `json:"damage"`
+	DamageTaken      int             `json:"damage_taken"`
+	Dominations      int             `json:"dominations"`
+	Dominated        int             `json:"dominated"`
+	Revenges         int             `json:"revenges"`
+	Revenged         int             `json:"revenged"`
+	Airshots         int             `json:"airshots"`
+	HeadshotKills    int             `json:"headshot_kills"`
+	BackstabKills    int             `json:"backstab_kills"`
+	Headshots        int             `json:"headshots"`
+	Backstabs        int             `json:"backstabs"`
+	WasHeadshot      int             `json:"was_headshot"`
+	WasBackstabbed   int             `json:"was_backstabbed"`
+	Classes          struct {
+		Pyro     ClassSummary `json:"pyro"`
+		Heavy    ClassSummary `json:"heavy"`
+		Soldier  ClassSummary `json:"soldier"`
+		Sniper   ClassSummary `json:"sniper"`
+		SpyClass ClassSummary `json:"spy"`
+		Scout    ClassSummary `json:"scout"`
+		Demoman  ClassSummary `json:"demoman"`
+	} `json:"classes"`
+	Weapons struct {
+	} `json:"weapons"`
+	ScoreboardKills   int         `json:"scoreboard_kills"`
+	ScoreboardAssists interface{} `json:"scoreboard_assists"`
+	Suicides          int         `json:"suicides"`
+	ScoreboardDeaths  int         `json:"scoreboard_deaths"`
+	Captures          int         `json:"captures"`
+	CapturesBlocked   int         `json:"captures_blocked"`
+	ScoreboardDamage  int         `json:"scoreboard_damage"`
 }
 
 type Player struct {
@@ -48,37 +130,6 @@ type WeaponSummary struct {
 	Backstabs int `json:"backstabs"`
 	Headshots int `json:"headshots"`
 	Airshots  int `json:"airshots"`
-}
-
-type PlayerSummary struct {
-	Points             int                        `json:"points"`
-	Kills              int                        `json:"kills"`
-	Assists            int                        `json:"assists"`
-	Deaths             int                        `json:"deaths"`
-	BuildingsDestroyed int                        `json:"buildings_destroyed"`
-	Captures           int                        `json:"captures"`
-	Defenses           int                        `json:"defenses"`
-	Dominations        int                        `json:"dominations"`
-	Revenges           int                        `json:"revenges"`
-	Ubercharges        int                        `json:"ubercharges"`
-	Headshots          int                        `json:"headshots"`
-	Teleports          int                        `json:"teleports"`
-	Healing            int                        `json:"healing"`
-	Backstabs          int                        `json:"backstabs"`
-	BonusPoints        int                        `json:"bonus_points"`
-	Support            int                        `json:"support"`
-	DamageDealt        int                        `json:"damage_dealt"`
-	DamageTaken        int                        `json:"damage_taken"`
-	HealingTaken       int                        `json:"healing_taken"`
-	HealthPacks        int                        `json:"health_packs"`
-	HealingPacks       int                        `json:"healing_packs"`
-	Extinguishes       int                        `json:"extinguishes"`
-	BuildingBuilt      int                        `json:"building_built"`
-	BuildingDestroyed  int                        `json:"building_destroyed"`
-	Airshots           int                        `json:"airshots"`
-	Shots              int                        `json:"shots"`
-	Hits               int                        `json:"hits"`
-	WeaponMap          map[WeaponID]WeaponSummary `json:"weapon_map"`
 }
 
 type ChatMessage struct {
