@@ -7,34 +7,17 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
 )
 
-type MatchTriggerType int
-
-const (
-	MatchTriggerStart MatchTriggerType = 1
-	MatchTriggerEnd   MatchTriggerType = 2
-)
-
-type MatchTrigger struct {
-	Type     MatchTriggerType
-	UUID     uuid.UUID
-	Server   Server
-	MapName  string
-	DemoName string
-}
-
 type MatchRepository interface {
-	Start(ctx context.Context)
-	StartMatch(startTrigger MatchTrigger)
-	EndMatch(endTrigger MatchTrigger)
-	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
+	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchResult, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
-	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
+	MatchSave(ctx context.Context, match *MatchResult) error
 	StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (PlayerClassStatsCollection, error)
 	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]PlayerWeaponStats, error)
 	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]PlayerKillstreakStats, error)
@@ -56,12 +39,11 @@ type MatchRepository interface {
 	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
 }
 type MatchUsecase interface {
-	StartMatch(server Server, mapName string, demoName string) (uuid.UUID, error)
-	EndMatch(ctx context.Context, serverID int) (uuid.UUID, error)
+	CreateFromDemo(ctx context.Context, serverID int, details demoparse.Demo) (MatchResult, error)
 	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
-	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
+	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchResult, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
-	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
+	MatchSave(ctx context.Context, match *MatchResult) error
 	StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (PlayerClassStatsCollection, error)
 	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]PlayerWeaponStats, error)
 	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]PlayerKillstreakStats, error)
@@ -186,6 +168,13 @@ type MatchWeapon struct {
 	MatchPlayerID  int64 `json:"match_player_id"`
 }
 
+type MatchChat struct {
+	SteamID     steamid.SteamID `json:"steam_id"`
+	PersonaName string          `json:"persona_name"`
+	Body        string          `json:"body"`
+	Team        bool            `json:"team"`
+}
+
 type MatchResult struct {
 	MatchID    uuid.UUID           `json:"match_id"`
 	ServerID   int                 `json:"server_id"`
@@ -196,7 +185,11 @@ type MatchResult struct {
 	TimeEnd    time.Time           `json:"time_end"`
 	Winner     logparse.Team       `json:"winner"`
 	Players    []*MatchPlayer      `json:"players"`
-	Chat       PersonMessages      `json:"chat"`
+	Chat       []MatchChat         `json:"chat"`
+}
+
+func (match *MatchResult) Path() string {
+	return "/log/" + match.MatchID.String()
 }
 
 func (match *MatchResult) TopPlayers() []*MatchPlayer {
@@ -443,7 +436,7 @@ type PlayerMedicStats struct {
 type CommonPlayerStats struct {
 	SteamID           steamid.SteamID `json:"steam_id"`
 	Name              string          `json:"name"`
-	AvatarHash        string          `json:"avatar_hash"`
+	AvatarHash        string          `json:"avatar_hash"` // todo make
 	Kills             int             `json:"kills"`
 	Assists           int             `json:"assists"`
 	Deaths            int             `json:"deaths"`
@@ -473,21 +466,4 @@ type PlayerStats struct {
 	MatchesTotal int           `json:"matches_total"`
 	MatchesWon   int           `json:"matches_won"`
 	PlayTime     time.Duration `json:"play_time"`
-}
-
-type MatchSummary struct {
-	MatchID   uuid.UUID `json:"match_id"`
-	ServerID  int       `json:"server_id"`
-	IsWinner  bool      `json:"is_winner"`
-	ShortName string    `json:"short_name"`
-	Title     string    `json:"title"`
-	MapName   string    `json:"map_name"`
-	ScoreBlu  int       `json:"score_blu"`
-	ScoreRed  int       `json:"score_red"`
-	TimeStart time.Time `json:"time_start"`
-	TimeEnd   time.Time `json:"time_end"`
-}
-
-func (m MatchSummary) Path() string {
-	return "/log/" + m.MatchID.String()
 }
