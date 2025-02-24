@@ -7,6 +7,7 @@ import EmergencyRecordingIcon from '@mui/icons-material/EmergencyRecording';
 import GradingIcon from '@mui/icons-material/Grading';
 import HeadsetMicIcon from '@mui/icons-material/HeadsetMic';
 import LanIcon from '@mui/icons-material/Lan';
+import LocalPoliceIcon from '@mui/icons-material/LocalPolice';
 import PaymentIcon from '@mui/icons-material/Payment';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ShareIcon from '@mui/icons-material/Share';
@@ -26,7 +27,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetDemoCleanup, apiGetNetworkUpdateDB } from '../api';
-import { apiGetSettings, apiSaveSettings, Config } from '../api/admin.ts';
+import { Action, ActionColl, apiGetSettings, apiSaveSettings, Config } from '../api/admin.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
@@ -51,7 +52,8 @@ const settingsSchema = z.object({
             'debug',
             'local_store',
             'ssh',
-            'exports'
+            'exports',
+            'anticheat'
         ])
         .optional()
         .default('general')
@@ -82,7 +84,8 @@ type tabs =
     | 'debug'
     | 'local_store'
     | 'ssh'
-    | 'exports';
+    | 'exports'
+    | 'anticheat';
 
 type TabButtonProps<Tabs> = {
     label: string;
@@ -247,6 +250,13 @@ function AdminServers() {
                                 label={'SSH'}
                             />
                             <TabButton
+                                tab={'anticheat'}
+                                onClick={onTabClick}
+                                icon={<LocalPoliceIcon />}
+                                currentTab={tab}
+                                label={'Anticheat'}
+                            />
+                            <TabButton
                                 tab={'patreon'}
                                 onClick={onTabClick}
                                 icon={<PaymentIcon />}
@@ -276,6 +286,7 @@ function AdminServers() {
                     <GeoLocationSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <LocalStoreSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <SSHSection tab={tab} settings={settings} mutate={mutation.mutate} />
+                    <AnticheatSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <ExportsSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <DebugSection tab={tab} settings={settings} mutate={mutation.mutate} />
                 </Grid>
@@ -1983,6 +1994,262 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             }}
                         />
                     </Grid>
+                    <Grid xs={12}>
+                        <Subscribe
+                            selector={(state) => [state.canSubmit, state.isSubmitting]}
+                            children={([canSubmit, isSubmitting]) => (
+                                <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />
+                            )}
+                        />
+                    </Grid>
+                </ConfigContainer>
+            </form>
+        </TabSection>
+    );
+};
+
+const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutate({
+                ...settings,
+                anticheat: {
+                    enabled: Boolean(value.enabled),
+                    action: value.action as Action,
+                    duration: Number(value.duration),
+                    max_aim_snap: Number(value.max_aim_snap),
+                    max_psilent: Number(value.max_psilent),
+                    max_bhop: Number(value.max_bhop),
+                    max_fake_ang: Number(value.max_fake_ang),
+                    max_cmd_num: Number(value.max_cmd_num),
+                    max_too_many_connections: Number(value.max_too_many_connections),
+                    max_cheat_cvar: Number(value.max_cheat_cvar),
+                    max_oob_var: Number(value.max_oob_var),
+                    max_invalid_user_cmd: Number(value.max_invalid_user_cmd)
+                }
+            });
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            enabled: settings.anticheat.enabled,
+            action: settings.anticheat.action,
+            duration: String(settings.anticheat.duration),
+            max_aim_snap: String(settings.anticheat.max_aim_snap),
+            max_psilent: String(settings.anticheat.max_psilent),
+            max_bhop: String(settings.anticheat.max_bhop),
+            max_fake_ang: String(settings.anticheat.max_fake_ang),
+            max_cmd_num: String(settings.anticheat.max_cmd_num),
+            max_too_many_connections: String(settings.anticheat.max_too_many_connections),
+            max_cheat_cvar: String(settings.anticheat.max_cheat_cvar),
+            max_oob_var: String(settings.anticheat.max_oob_var),
+            max_invalid_user_cmd: String(settings.anticheat.max_invalid_user_cmd)
+        }
+    });
+
+    return (
+        <TabSection
+            tab={'anticheat'}
+            currentTab={tab}
+            label={'Anticheat Config'}
+            description={'Configure what it take to trigger an action and what happens when it does.'}
+        >
+            <Typography>
+                For an up to date description of these detections please see the{' '}
+                <Link href={'https://github.com/sapphonie/StAC-tf2/blob/master/cvars.md'}>original docs</Link>.
+            </Typography>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
+                <ConfigContainer>
+                    <Grid xs={12}>
+                        <SubHeading>
+                            Enable/Disable the feature. Note that SSH functionality is also required to be enabled for
+                            this to operate.
+                        </SubHeading>
+                        <Field
+                            name={'enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enabled/Disabled'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>Action to take when a user goes over a detection limit.</SubHeading>
+                        <Field
+                            name={'action'}
+                            validators={{
+                                onChange: z.nativeEnum(Action)
+                            }}
+                            children={(props) => {
+                                return (
+                                    <SelectFieldSimple
+                                        {...props}
+                                        label={'Duration'}
+                                        fullwidth={true}
+                                        items={ActionColl}
+                                        renderMenu={(du) => {
+                                            return (
+                                                <MenuItem value={du} key={`du-${du}`}>
+                                                    {du}
+                                                </MenuItem>
+                                            );
+                                        }}
+                                    />
+                                );
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>
+                            The duration of the action taken (in minutes). A value of 0 denotes a permanent action.
+                        </SubHeading>
+                        <Field
+                            name={'duration'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 100000000))
+                            }}
+                            children={(props) => {
+                                return (
+                                    <TextFieldSimple
+                                        {...props}
+                                        label={'How long until the action expires (minutes) (0 = forever)'}
+                                    />
+                                );
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>The maximum number of aimnap detections allowed.</SubHeading>
+                        <Field
+                            name={'max_aim_snap'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 100000000))
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Number of detections (default = 20)'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>The maximum number of psilent detections allowed.</SubHeading>
+                        <Field
+                            name={'max_psilent'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 100000000))
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Number of detections (default = 10)'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>The maximum number of consecutive bunny hop detections allowed.</SubHeading>
+                        <Field
+                            name={'max_bhop'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 100000000))
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Number of detections (default = 10)'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>The maximum number of fank angles/eyes detections allowed.</SubHeading>
+                        <Field
+                            name={'max_fake_ang'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 100000000))
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Number of detections (default = 5)'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>The maximum number of cmdnum spike detections allowed.</SubHeading>
+                        <Field
+                            name={'max_cmd_num'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 100000000))
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Number of detections (default = 20)'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>
+                            Triggered when the max number of concurrent connections is reached for a IP.
+                        </SubHeading>
+                        <Field
+                            name={'max_too_many_connections'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 100000000))
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Number of detections (default = 1)'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>
+                            Triggered when a cvar that is sv_cheats, or otherwise only possible by cheating, is detected
+                            on a client.
+                        </SubHeading>
+                        <Field
+                            name={'max_cheat_cvar'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 100000000))
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Number of detections (default = 1)'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>Max number of detections of cvars which contain out of bounds values.</SubHeading>
+                        <Field
+                            name={'max_oob_var'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 100000000))
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Number of detections (default = 1)'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <SubHeading>Detect if a user is using invalid user commands.</SubHeading>
+                        <Field
+                            name={'max_invalid_user_cmd'}
+                            validators={{
+                                onChange: z.string().transform(numberStringValidator(0, 100000000))
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Number of detections (default = 1)'} />;
+                            }}
+                        />
+                    </Grid>
+
                     <Grid xs={12}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}

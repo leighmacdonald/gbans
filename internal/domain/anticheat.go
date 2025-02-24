@@ -26,9 +26,10 @@ type AntiCheatRepository interface {
 type AntiCheatUsecase interface {
 	DetectionsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]logparse.StacEntry, error)
 	DetectionsByType(ctx context.Context, detectionType logparse.Detection) ([]logparse.StacEntry, error)
-	Import(ctx context.Context, fileName string, reader io.ReadCloser, serverID int) error
+	Import(ctx context.Context, fileName string, reader io.ReadCloser, serverID int) ([]logparse.StacEntry, error)
 	SyncDemoIDs(ctx context.Context, limit uint64) error
 	Query(ctx context.Context, query AnticheatQuery) ([]AnticheatEntry, error)
+	Handle(ctx context.Context, entries []logparse.StacEntry) error
 }
 
 type AnticheatQuery struct {
