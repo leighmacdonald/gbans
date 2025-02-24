@@ -2,6 +2,7 @@ package anticheat
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -147,7 +148,7 @@ func (a anticheatRepository) SaveEntries(ctx context.Context, entries []logparse
 				"server_id":  entry.ServerID,
 				"raw_log":    entry.RawLog,
 				"created_on": entry.CreatedOn.Truncate(time.Second),
-			})); err != nil {
+			})); err != nil && !errors.Is(err, domain.ErrDuplicate) {
 			return a.db.DBErr(err)
 		}
 	}

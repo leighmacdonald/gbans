@@ -56,7 +56,11 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 		       
 		       ssh_enabled, ssh_username, ssh_password, ssh_port, ssh_private_key_path, ssh_update_interval, ssh_timeout, ssh_demo_path_fmt, ssh_stac_path_fmt,
 		       
-		       exports_bd_enabled, exports_valve_enabled, exports_authorized_keys
+		       exports_bd_enabled, exports_valve_enabled, exports_authorized_keys,
+		       
+		       anticheat_enabled, anticheat_action, anticheat_duration, anticheat_max_aim_snap, anticheat_max_psilent, anticheat_max_bhop,
+		       anticheat_max_fake_ang, anticheat_max_cmd_num, anticheat_max_too_many_connections, anticheat_max_cheat_cvar, 
+		       anticheat_max_oob_var, anticheat_max_invalud_user_cmd
 		 FROM config`
 
 	var (
@@ -83,7 +87,11 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 			&cfg.LocalStore.PathRoot,
 			&cfg.SSH.Enabled, &cfg.SSH.Username, &cfg.SSH.Password, &cfg.SSH.Port, &cfg.SSH.PrivateKeyPath, &cfg.SSH.UpdateInterval,
 			&cfg.SSH.Timeout, &cfg.SSH.DemoPathFmt, &cfg.SSH.StacPathFmt,
-			&cfg.Exports.BDEnabled, &cfg.Exports.ValveEnabled, &authorizedKeys)
+			&cfg.Exports.BDEnabled, &cfg.Exports.ValveEnabled, &authorizedKeys,
+			&cfg.Anticheat.Enabled, &cfg.Anticheat.Action, &cfg.Anticheat.Duration, &cfg.Anticheat.MaxAimSnap, &cfg.Anticheat.MaxPsilent,
+			&cfg.Anticheat.MaxBhop, &cfg.Anticheat.MaxFakeAng, &cfg.Anticheat.MaxCmdNum, &cfg.Anticheat.MaxTooManyConnections,
+			&cfg.Anticheat.MaxCheatCvar, &cfg.Anticheat.MaxOOBVar, &cfg.Anticheat.MaxInvalidUserCmd,
+		)
 	if err != nil {
 		return cfg, c.db.DBErr(err)
 	}
@@ -202,5 +210,17 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"exports_bd_enabled":                  config.Exports.BDEnabled,
 			"exports_valve_enabled":               config.Exports.ValveEnabled,
 			"exports_authorized_keys":             strings.Split(config.Exports.AuthorizedKeys, ","),
+			"anticheat_enabled":                   config.Anticheat.Enabled,
+			"anticheat_action":                    config.Anticheat.Action,
+			"anticheat_duration":                  config.Anticheat.Duration,
+			"anticheat_max_aim_snap":              config.Anticheat.MaxAimSnap,
+			"anticheat_max_psilent":               config.Anticheat.MaxPsilent,
+			"anticheat_max_bhop":                  config.Anticheat.MaxBhop,
+			"anticheat_max_fake_ang":              config.Anticheat.MaxFakeAng,
+			"anticheat_max_cmd_num":               config.Anticheat.MaxCmdNum,
+			"anticheat_max_too_many_connections":  config.Anticheat.MaxTooManyConnections,
+			"anticheat_max_cheat_cvar":            config.Anticheat.MaxCheatCvar,
+			"anticheat_max_oob_var":               config.Anticheat.MaxOOBVar,
+			"anticheat_max_invalid_user_cmd":      config.Anticheat.MaxInvalidUserCmd,
 		})))
 }

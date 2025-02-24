@@ -21,6 +21,30 @@ export type Config = {
     local_store: LocalStore;
     ssh: SSH;
     exports: Exports;
+    anticheat: Anticheat;
+};
+
+export enum Action {
+    Ban = 'ban',
+    Kick = 'kick',
+    Gag = 'gag'
+}
+
+export const ActionColl = [Action.Ban, Action.Kick, Action.Gag];
+
+type Anticheat = {
+    enabled: boolean;
+    action: Action;
+    duration: number;
+    max_aim_snap: number;
+    max_psilent: number;
+    max_bhop: number;
+    max_fake_ang: number;
+    max_cmd_num: number;
+    max_too_many_connections: number;
+    max_cheat_cvar: number;
+    max_oob_var: number;
+    max_invalid_user_cmd: number;
 };
 
 type General = {

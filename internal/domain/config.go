@@ -58,6 +58,21 @@ func (s StaticConfig) Addr() string {
 	return net.JoinHostPort(s.HTTPHost, strconv.Itoa(int(s.HTTPPort)))
 }
 
+type ConfigAnticheat struct {
+	Enabled               bool         `mapstructure:"enabled" json:"enabled"`
+	Action                ConfigAction `mapstructure:"action" json:"action"`
+	Duration              int          `mapstructure:"duration" json:"duration"`
+	MaxAimSnap            int          `mapstructure:"max_aim_snap" json:"max_aim_snap"`
+	MaxPsilent            int          `mapstructure:"max_psilent" json:"max_psilent"`
+	MaxBhop               int          `mapstructure:"max_bhop" json:"max_bhop"`
+	MaxFakeAng            int          `mapstructure:"max_fake_ang" json:"max_fake_ang"`
+	MaxCmdNum             int          `mapstructure:"max_cmd_num" json:"max_cmd_num"`
+	MaxTooManyConnections int          `mapstructure:"max_too_many_connections" json:"max_too_many_connections"`
+	MaxCheatCvar          int          `mapstructure:"max_cheat_cvar" json:"max_cheat_cvar"`
+	MaxOOBVar             int          `mapstructure:"max_oob_var" json:"max_oob_var"`
+	MaxInvalidUserCmd     int          `mapstructure:"max_invalid_user_cmd" json:"max_invalid_user_cmd"`
+}
+
 // Config is the root config container.
 type Config struct {
 	StaticConfig
@@ -74,6 +89,7 @@ type Config struct {
 	LocalStore  ConfigLocalStore  `json:"local_store"`
 	Exports     ConfigExports     `json:"exports"`
 	Sentry      ConfigSentry      `json:"sentry"`
+	Anticheat   ConfigAnticheat   `json:"anticheat"`
 }
 
 func (c Config) ExtURLInstance(obj LinkablePath) *url.URL {

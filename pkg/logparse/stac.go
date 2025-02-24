@@ -69,7 +69,7 @@ func NewStacParser() StacParser {
 		reSummary: regexp.MustCompile(`\[StAC]\s+(.+?)$`),
 		rePlayer:  regexp.MustCompile(`Player: (?P<name>.+?)<(?P<pid>\d+)><(?P<sid>.+?)><(?P<team>(Unassigned|Red|Blue|Spectator|unknown))?>`),
 		reLogName: regexp.MustCompile(`^stac_(\d{2})(\d{2})(\d{2}).log$`),
-		reTime:    regexp.MustCompile(`^<(\d{2}):(\d{2}):(\d{2})>`),
+		reTime:    regexp.MustCompile(`^<(.+?)>`),
 		// <05:28:30> Demo file: stv_demos/active/20240512-052232-pl_badwater.dem. Demo tick: 23861
 		reDemo: regexp.MustCompile(`Demo file:.+?(\d+-\d+-.+?\.dem)\..+?Demo tick: (\d+)$`),
 		// <08:40:49> Server framerate stuttered. Expected: ~66.6, got 5.
@@ -114,9 +114,9 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 		}
 
 		if strings.Contains(line, "<") {
-			parsedTime, errTime := p.parseTime(line)
+			parsedTime, errTime := p.parseTime(line, current.CreatedOn)
 			if errTime == nil {
-				current.CreatedOn = current.CreatedOn.Add(parsedTime)
+				current.CreatedOn = parsedTime
 			}
 		}
 
@@ -232,30 +232,30 @@ func (p StacParser) parseFileName(logName string) (time.Time, error) {
 	return time.Date(2000+int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC), nil
 }
 
-// parseTime transforms a log timestamp (eg: <01:13:00>) into a time.Duration.
+// parseTime transforms a log timestamp (eg: <01:13:00>) into a time.Time.
 // This value is appended to the base date pulled from the filename to provide a unique identifier for the entry.
-func (p StacParser) parseTime(line string) (time.Duration, error) {
+func (p StacParser) parseTime(line string, startTime time.Time) (time.Time, error) {
 	match := p.reTime.FindStringSubmatch(line)
-	if len(match) != 4 {
-		return 0, ErrParseTime
+	if len(match) != 2 {
+		return time.Time{}, ErrParseTime
 	}
 
 	hour, errHour := strconv.ParseInt(match[1], 10, 32)
 	if errHour != nil {
-		return 0, errors.Join(errHour, ErrParseTime)
+		return time.Time{}, errors.Join(errHour, ErrParseTime)
 	}
 
 	minute, errMinute := strconv.ParseInt(match[2], 10, 32)
 	if errMinute != nil {
-		return 0, errors.Join(errMinute, ErrParseTime)
+		return time.Time{}, errors.Join(errMinute, ErrParseTime)
 	}
 
 	seconds, errSeconds := strconv.ParseInt(match[3], 10, 32)
 	if errSeconds != nil {
-		return 0, errors.Join(errSeconds, ErrParseTime)
+		return time.Time{}, errors.Join(errSeconds, ErrParseTime)
 	}
 
 	total := (time.Hour * time.Duration(hour)) + (time.Minute * time.Duration(minute)) + (time.Second * time.Duration(seconds))
 
-	return total, nil
+	return startTime.Add(total), nil
 }

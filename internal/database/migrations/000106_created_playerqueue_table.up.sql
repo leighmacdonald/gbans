@@ -19,8 +19,6 @@ ALTER TABLE config
 ALTER TABLE config
     ADD COLUMN IF NOT EXISTS discord_playerqueue_channel_id text not null default '';
 
-BEGIN;
-
 DO
 $$
     BEGIN

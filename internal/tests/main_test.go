@@ -173,7 +173,7 @@ func TestMain(m *testing.M) {
 	appealUC = appeal.NewAppealUsecase(appeal.NewAppealRepository(databaseConn), banSteamUC, personUC, notificationUC, configUC)
 	speedrunsUC = srcds.NewSpeedrunUsecase(srcds.NewSpeedrunRepository(databaseConn, personUC))
 	blocklistUC = blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(databaseConn), banSteamUC, banGroupUC)
-	anticheatUC = anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(databaseConn), personUC)
+	anticheatUC = anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(databaseConn), personUC, banSteamUC, configUC)
 
 	if internalDB {
 		server, errServer := serversUC.Save(context.Background(), domain.RequestServerUpdate{
