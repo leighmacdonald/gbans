@@ -105,6 +105,7 @@ type Discord = {
     link_id: string;
     token: string;
     guild_id: string;
+    anticheat_channel_id: string;
     log_channel_id: string;
     public_log_channel_enable: boolean;
     public_log_channel_id: string;

@@ -54,6 +54,8 @@ func (d discordUsecase) SendPayload(channel domain.DiscordChannel, embed *discor
 		channelID = conf.Discord.KickLogChannelID
 	case domain.ChannelPlayerqueue:
 		channelID = conf.Discord.PlayerqueueChannelID
+	case domain.ChannelAC:
+		channelID = conf.Discord.AnticheatChannelID
 	}
 
 	if channelID == "" {
