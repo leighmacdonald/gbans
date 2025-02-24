@@ -313,7 +313,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbConn))
 			authRepo := auth.NewAuthRepository(dbConn)
 			authUsecase := auth.NewAuthUsecase(authRepo, configUsecase, personUsecase, banUsecase, serversUC)
-			anticheatUsecase := anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(dbConn), personUsecase, banUsecase, configUsecase)
+			anticheatUsecase := anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(dbConn), personUsecase, banUsecase, configUsecase, notificationUsecase)
 
 			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), personUsecase, matchUsecase, notificationUsecase, configUsecase, eventBroadcaster)
 			go voteUsecase.Start(ctx)

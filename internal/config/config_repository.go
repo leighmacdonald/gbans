@@ -60,7 +60,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 		       
 		       anticheat_enabled, anticheat_action, anticheat_duration, anticheat_max_aim_snap, anticheat_max_psilent, anticheat_max_bhop,
 		       anticheat_max_fake_ang, anticheat_max_cmd_num, anticheat_max_too_many_connections, anticheat_max_cheat_cvar, 
-		       anticheat_max_oob_var, anticheat_max_invalud_user_cmd
+		       anticheat_max_oob_var, anticheat_max_invalid_user_cmd, discord_anticheat_channel_id
 		 FROM config`
 
 	var (
@@ -90,7 +90,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 			&cfg.Exports.BDEnabled, &cfg.Exports.ValveEnabled, &authorizedKeys,
 			&cfg.Anticheat.Enabled, &cfg.Anticheat.Action, &cfg.Anticheat.Duration, &cfg.Anticheat.MaxAimSnap, &cfg.Anticheat.MaxPsilent,
 			&cfg.Anticheat.MaxBhop, &cfg.Anticheat.MaxFakeAng, &cfg.Anticheat.MaxCmdNum, &cfg.Anticheat.MaxTooManyConnections,
-			&cfg.Anticheat.MaxCheatCvar, &cfg.Anticheat.MaxOOBVar, &cfg.Anticheat.MaxInvalidUserCmd,
+			&cfg.Anticheat.MaxCheatCvar, &cfg.Anticheat.MaxOOBVar, &cfg.Anticheat.MaxInvalidUserCmd, &cfg.Discord.AnticheatChannelID,
 		)
 	if err != nil {
 		return cfg, c.db.DBErr(err)
@@ -171,6 +171,7 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"discord_token":                       config.Discord.Token,
 			"discord_guild_id":                    config.Discord.GuildID,
 			"discord_log_channel_id":              config.Discord.LogChannelID,
+			"discord_anticheat_channel_id":        config.Discord.AnticheatChannelID,
 			"discord_public_log_channel_enabled":  config.Discord.PublicLogChannelEnable,
 			"discord_public_log_channel_id":       config.Discord.PublicLogChannelID,
 			"discord_public_match_log_channel_id": config.Discord.PublicMatchLogChannelID,

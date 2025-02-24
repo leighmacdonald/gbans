@@ -49,6 +49,9 @@ ALTER TABLE config
     ADD COLUMN IF NOT EXISTS anticheat_max_oob_var int not null DEFAULT 1;
 
 ALTER TABLE config
-    ADD COLUMN IF NOT EXISTS anticheat_max_invalud_user_cmd int not null DEFAULT 1;
+    ADD COLUMN IF NOT EXISTS anticheat_max_invalid_user_cmd int not null DEFAULT 1;
+
+ALTER TABLE config
+    ADD COLUMN IF NOT EXISTS discord_anticheat_channel_id text not null DEFAULT '';
 
 COMMIT;

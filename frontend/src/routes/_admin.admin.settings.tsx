@@ -1017,6 +1017,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             token: settings.discord.token,
             guild_id: settings.discord.guild_id,
             log_channel_id: settings.discord.log_channel_id,
+            anticheat_channel_id: settings.discord.anticheat_channel_id,
             public_log_channel_enable: settings.discord.public_log_channel_enable,
             public_log_channel_id: settings.discord.public_log_channel_id,
             public_match_log_channel_id: settings.discord.public_match_log_channel_id,
@@ -1311,6 +1312,20 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Playerqueue log channel ID'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid xs={12}>
+                        <SubHeading>
+                            A channel which relays notifications for when anticheat actions are triggered.
+                        </SubHeading>
+                        <Field
+                            name={'anticheat_channel_id'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Anticheat action log channel ID'} />;
                             }}
                         />
                     </Grid>

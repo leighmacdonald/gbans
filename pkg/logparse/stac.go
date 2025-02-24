@@ -98,6 +98,10 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 
 	lines := strings.Split(string(bodyBytes), "\n")
 	for _, line := range lines {
+		if strings.Contains(line, "hings will break") {
+			continue
+		}
+
 		if line == splitMarker {
 			if current.Summary != "" {
 				if !current.SteamID.Valid() {
@@ -164,7 +168,7 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 			}
 		}
 
-		if line != "" {
+		if line != "" && !strings.Contains(line, "hings will break") {
 			current.RawLog += line + "\n"
 		}
 	}

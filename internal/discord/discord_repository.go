@@ -611,6 +611,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        string(domain.CmdACPlayer),
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Query a players anticheat logs by steam id",
 					Options: []*discordgo.ApplicationCommandOption{
 						optUserID,

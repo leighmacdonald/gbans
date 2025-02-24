@@ -23,7 +23,9 @@ ALTER TABLE config
 ALTER TABLE config
     DROP COLUMN IF EXISTS anticheat_max_oob_var;
 ALTER TABLE config
-    DROP COLUMN IF EXISTS anticheat_max_invalud_user_cmd;
+    DROP COLUMN IF EXISTS anticheat_max_invalid_user_cmd;
+ALTER TABLE config
+    DROP COLUMN IF EXISTS discord_anticheat_channel_id;
 
 DROP TYPE IF EXISTS config_action;
 

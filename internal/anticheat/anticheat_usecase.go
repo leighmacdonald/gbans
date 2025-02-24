@@ -2,6 +2,8 @@ package anticheat
 
 import (
 	"context"
+	"fmt"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"io"
 	"log/slog"
 	"slices"
@@ -14,20 +16,22 @@ import (
 )
 
 type antiCheatUsecase struct {
-	parser logparse.StacParser
-	repo   domain.AntiCheatRepository
-	person domain.PersonUsecase
-	ban    domain.BanSteamUsecase
-	config domain.ConfigUsecase
+	parser        logparse.StacParser
+	repo          domain.AntiCheatRepository
+	person        domain.PersonUsecase
+	ban           domain.BanSteamUsecase
+	config        domain.ConfigUsecase
+	notifications domain.NotificationUsecase
 }
 
-func NewAntiCheatUsecase(repo domain.AntiCheatRepository, person domain.PersonUsecase, ban domain.BanSteamUsecase, config domain.ConfigUsecase) domain.AntiCheatUsecase {
+func NewAntiCheatUsecase(repo domain.AntiCheatRepository, person domain.PersonUsecase, ban domain.BanSteamUsecase, config domain.ConfigUsecase, notif domain.NotificationUsecase) domain.AntiCheatUsecase {
 	return &antiCheatUsecase{
-		parser: logparse.NewStacParser(),
-		repo:   repo,
-		person: person,
-		ban:    ban,
-		config: config,
+		parser:        logparse.NewStacParser(),
+		repo:          repo,
+		person:        person,
+		ban:           ban,
+		config:        config,
+		notifications: notif,
 	}
 }
 
@@ -90,10 +94,15 @@ func (a antiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 			continue
 		}
 
+		duration := "0"
+		if conf.Anticheat.Duration > 0 {
+			duration = fmt.Sprintf("%dm", conf.Anticheat.Duration)
+		}
+
 		ban, err := a.ban.Ban(ctx, owner.ToUserProfile(), domain.System, domain.RequestBanSteamCreate{
 			SourceIDField:  domain.SourceIDField{SourceID: owner.SteamID.String()},
 			TargetIDField:  domain.TargetIDField{TargetID: entry.SteamID.String()},
-			Duration:       "0",
+			Duration:       duration,
 			ValidUntil:     time.Now().AddDate(10, 0, 0),
 			BanType:        domain.Banned,
 			Reason:         domain.Cheating,
@@ -113,6 +122,9 @@ func (a antiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 				slog.Int64("steam_id", entry.SteamID.Int64()))
 			hasBeenBanned = append(hasBeenBanned, entry.SteamID)
 		}
+
+		a.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.NewEmbed("").
+			Message()))
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package discord
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"io"
 	"net"
 	"sort"
@@ -894,18 +895,29 @@ func ACPlayerLogs(person domain.PersonInfo, entries []domain.AnticheatEntry) *di
 }
 
 func makeACLogTable(entries []domain.AnticheatEntry) string {
+	e := map[logparse.Detection]int{}
+	s := map[string]int{}
+
+	for _, entry := range entries {
+		if _, ok := e[entry.Detection]; !ok {
+			e[entry.Detection] = 0
+		}
+
+		e[entry.Detection]++
+
+		if _, ok := s[entry.ServerName]; !ok {
+			s[entry.ServerName] = 0
+		}
+
+		s[entry.ServerName]++
+	}
+
 	writer := &strings.Builder{}
 	table := defaultTable(writer)
-	table.SetHeader([]string{"Srv", "Time", "Name", "Cnt", "Summary"})
+	table.SetHeader([]string{"Detection", "Count"})
 
-	for _, player := range entries {
-		table.Append([]string{
-			player.ServerName,
-			player.CreatedOn.Format(time.DateTime),
-			player.Name,
-			string(player.Detection),
-			player.Summary,
-		})
+	for detection, count := range e {
+		table.Append([]string{string(detection), strconv.Itoa(count)})
 	}
 
 	table.Render()

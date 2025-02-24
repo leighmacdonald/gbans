@@ -245,6 +245,7 @@ type ConfigDiscord struct {
 	PlayerqueueChannelID    string `json:"playerqueue_channel_id"`
 	ModPingRoleID           string `json:"mod_ping_role_id"`
 	UnregisterOnStart       bool   `json:"unregister_on_start"`
+	AnticheatChannelID      string `json:"anticheat_channel_id"`
 }
 
 type ConfigSentry struct {
