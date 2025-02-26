@@ -54,4 +54,7 @@ ALTER TABLE config
 ALTER TABLE config
     ADD COLUMN IF NOT EXISTS discord_anticheat_channel_id text not null DEFAULT '';
 
+ALTER TABLE config
+    DROP COLUMN IF EXISTS discord_unregister_on_start;
+
 COMMIT;
