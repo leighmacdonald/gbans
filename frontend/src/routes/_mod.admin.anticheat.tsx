@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Button from '@mui/material/Button';
@@ -12,13 +11,22 @@ import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
+import {
+    createColumnHelper,
+    getCoreRowModel,
+    getPaginationRowModel,
+    OnChangeFn,
+    PaginationState,
+    TableOptions,
+    useReactTable
+} from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetAnticheatLogs, apiGetServers, Detection, Detections, ServerSimple, StacEntry } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { FullTable } from '../component/FullTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
+import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { Title } from '../component/Title';
@@ -26,7 +34,7 @@ import { Buttons } from '../component/field/Buttons.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { stringToColour } from '../util/colours.ts';
-import { initPagination, initSortOrder, makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
 const schema = z.object({
@@ -77,17 +85,6 @@ function AdminAnticheat() {
     const navigate = useNavigate({ from: Route.fullPath });
     const search = Route.useSearch();
     const { servers } = useLoaderData({ from: '/_mod/admin/anticheat' }) as { servers: ServerSimple[] };
-    const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
-    const [sorting] = useState<SortingState>(
-        initSortOrder(search.sortColumn, search.sortOrder, { id: 'created_on', desc: true })
-    );
-    //const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
-    const [columnVisibility] = useState({
-        server_id: true,
-        name: true,
-        personaname: false,
-        steam_id: false
-    });
 
     const { data: logs, isLoading } = useQuery({
         queryKey: ['anticheat', search],
@@ -130,85 +127,16 @@ function AdminAnticheat() {
         reset();
         await navigate({
             to: '/admin/anticheat',
-            search: (prev) => ({ ...prev })
+            search: (prev) => ({
+                ...prev,
+                server_id: undefined,
+                steam_id: undefined,
+                detection: undefined,
+                summary: undefined,
+                name: undefined
+            })
         });
     };
-
-    const theme = useTheme();
-    const columns = [
-        columnHelper.accessor('anticheat_id', {
-            header: 'ID',
-            size: 50,
-            cell: (info) => <Typography>{info.getValue()}</Typography>
-        }),
-        columnHelper.accessor('server_id', {
-            header: 'Server',
-            size: 100,
-            cell: (info) => {
-                return (
-                    <Button
-                        sx={{
-                            color: stringToColour(info.row.original.server_name, theme.palette.mode)
-                        }}
-                        onClick={async () => {
-                            await navigate({
-                                to: '/admin/anticheat',
-                                search: (prev) => ({ ...prev, server_id: info.getValue() as number })
-                            });
-                        }}
-                    >
-                        {info.row.original.server_name}
-                    </Button>
-                );
-            }
-        }),
-        columnHelper.accessor('name', {
-            header: 'Name',
-            enableHiding: false,
-            size: 300,
-            cell: (info) => (
-                <PersonCell
-                    showCopy={true}
-                    steam_id={info.row.original.steam_id}
-                    personaname={info.row.original.personaname}
-                    avatar_hash={info.row.original.avatar}
-                />
-            )
-        }),
-        columnHelper.accessor('personaname', {
-            enableHiding: true,
-            header: 'Personaname'
-        }),
-        columnHelper.accessor('steam_id', {
-            enableHiding: true,
-            header: 'Steam ID'
-        }),
-        columnHelper.accessor('created_on', {
-            header: 'Created',
-            size: 140,
-            cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
-        }),
-        columnHelper.accessor('demo_id', {
-            header: 'Demo',
-            size: 50,
-            cell: (info) => <Typography>{info.getValue()}</Typography>
-        }),
-        columnHelper.accessor('detection', {
-            header: 'Detection',
-            size: 130,
-            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
-        }),
-        columnHelper.accessor('triggered', {
-            header: 'Count',
-            size: 80,
-            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
-        }),
-        columnHelper.accessor('summary', {
-            header: 'Summary',
-            size: 400,
-            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
-        })
-    ];
 
     return (
         <Grid container spacing={2}>
@@ -334,19 +262,127 @@ function AdminAnticheat() {
             </Grid>
             <Grid xs={12}>
                 <ContainerWithHeaderAndButtons title={`Entries`} iconLeft={<FilterAltIcon />}>
-                    <FullTable<StacEntry>
-                        // columnFilters={columnFilters}
-                        pagination={pagination}
-                        setPagination={setPagination}
-                        data={logs ?? []}
-                        isLoading={isLoading}
-                        columns={columns}
-                        sorting={sorting}
-                        columnVisibility={columnVisibility}
-                        toOptions={{ from: Route.fullPath }}
+                    <AnticheatTable logs={logs ?? []} isLoading={isLoading} />
+                    <Paginator
+                        page={search.pageIndex ?? 0}
+                        rows={search.pageSize ?? defaultRows}
+                        path={'/admin/anticheat'}
+                        data={{ data: [], count: -1 }}
                     />
                 </ContainerWithHeaderAndButtons>
             </Grid>
         </Grid>
     );
 }
+
+const AnticheatTable = ({
+    logs,
+    isLoading,
+    manualPaging = true,
+    pagination,
+    setPagination
+}: {
+    logs: StacEntry[];
+    isLoading: boolean;
+    manualPaging?: boolean;
+    pagination?: PaginationState;
+    setPagination?: OnChangeFn<PaginationState>;
+}) => {
+    const navigate = useNavigate({ from: '/chatlogs' });
+    const theme = useTheme();
+
+    const columns = [
+        columnHelper.accessor('anticheat_id', {
+            header: 'ID',
+            size: 50,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('server_id', {
+            header: 'Server',
+            size: 100,
+            cell: (info) => {
+                return (
+                    <Button
+                        sx={{
+                            color: stringToColour(info.row.original.server_name, theme.palette.mode)
+                        }}
+                        onClick={async () => {
+                            await navigate({
+                                to: '/admin/anticheat',
+                                search: (prev) => ({ ...prev, server_id: info.getValue() as number })
+                            });
+                        }}
+                    >
+                        {info.row.original.server_name}
+                    </Button>
+                );
+            }
+        }),
+        columnHelper.accessor('name', {
+            header: 'Name',
+            enableHiding: false,
+            size: 300,
+            cell: (info) => (
+                <PersonCell
+                    showCopy={true}
+                    steam_id={info.row.original.steam_id}
+                    personaname={info.row.original.personaname}
+                    avatar_hash={info.row.original.avatar}
+                />
+            )
+        }),
+        columnHelper.accessor('personaname', {
+            enableHiding: true,
+            header: 'Personaname'
+        }),
+        columnHelper.accessor('steam_id', {
+            enableHiding: true,
+            header: 'Steam ID'
+        }),
+        columnHelper.accessor('created_on', {
+            header: 'Created',
+            size: 140,
+            cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
+        }),
+        columnHelper.accessor('demo_id', {
+            header: 'Demo',
+            size: 50,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('detection', {
+            header: 'Detection',
+            size: 130,
+            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
+        }),
+        columnHelper.accessor('triggered', {
+            header: 'Count',
+            size: 80,
+            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
+        }),
+        columnHelper.accessor('summary', {
+            header: 'Summary',
+            size: 400,
+            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
+        })
+    ];
+
+    const opts: TableOptions<StacEntry> = {
+        data: logs,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: manualPaging,
+        autoResetPageIndex: true,
+        ...(manualPaging
+            ? {}
+            : {
+                  manualPagination: false,
+                  onPaginationChange: setPagination,
+                  getPaginationRowModel: getPaginationRowModel(),
+                  state: { pagination }
+              })
+    };
+
+    const table = useReactTable(opts);
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};
