@@ -40,7 +40,6 @@ import { renderDateTime } from '../util/time.ts';
 const schema = z.object({
     ...makeCommonTableSearchSchema([
         'anticheat_id',
-        'name',
         'personaname',
         'summary',
         'detecton',
@@ -48,7 +47,6 @@ const schema = z.object({
         'created_on',
         'server_name'
     ]),
-    name: z.string().optional(),
     summary: z.string().optional(),
     server_id: z.number().optional(),
     detection: z.string().optional(),
@@ -92,7 +90,6 @@ function AdminAnticheat() {
             try {
                 return await apiGetAnticheatLogs({
                     server_id: search.server_id ?? 0,
-                    name: search.name ?? '',
                     summary: search.summary ?? '',
                     steam_id: search.steam_id ?? '',
                     detection: (search.detection ?? '') as Detection,
@@ -114,7 +111,6 @@ function AdminAnticheat() {
         },
         validatorAdapter: zodValidator,
         defaultValues: {
-            name: search.name ?? '',
             summary: search.summary ?? '',
             detection: search.detection ?? '',
             steam_id: search.steam_id ?? '',
@@ -132,8 +128,7 @@ function AdminAnticheat() {
                 server_id: undefined,
                 steam_id: undefined,
                 detection: undefined,
-                summary: undefined,
-                name: undefined
+                summary: undefined
             })
         });
     };
@@ -151,15 +146,7 @@ function AdminAnticheat() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={6} md={3}>
-                                <Field
-                                    name={'name'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Name'} />;
-                                    }}
-                                />
-                            </Grid>
-                            <Grid xs={6} md={3}>
+                            <Grid xs={6} md={4}>
                                 <Field
                                     name={'steam_id'}
                                     children={({ state, handleChange, handleBlur }) => {
@@ -175,7 +162,7 @@ function AdminAnticheat() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={3}>
+                            <Grid xs={6} md={4}>
                                 <Field
                                     name={'server_id'}
                                     children={({ state, handleChange, handleBlur }) => {
@@ -205,7 +192,7 @@ function AdminAnticheat() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6} md={3}>
+                            <Grid xs={6} md={4}>
                                 <Field
                                     name={'detection'}
                                     children={({ state, handleChange, handleBlur }) => {
@@ -334,10 +321,6 @@ const AnticheatTable = ({
         columnHelper.accessor('personaname', {
             enableHiding: true,
             header: 'Personaname'
-        }),
-        columnHelper.accessor('steam_id', {
-            enableHiding: true,
-            header: 'Steam ID'
         }),
         columnHelper.accessor('created_on', {
             header: 'Created',
