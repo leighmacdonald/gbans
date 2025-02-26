@@ -106,6 +106,10 @@ func (p UserProfile) GetName() string {
 }
 
 func (p UserProfile) GetAvatar() AvatarLinks {
+	if p.Avatarhash == "" {
+		return NewAvatarLinks("fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb")
+	}
+
 	return NewAvatarLinks(p.Avatarhash)
 }
 

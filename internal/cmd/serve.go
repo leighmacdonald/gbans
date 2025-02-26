@@ -243,7 +243,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return err
 			}
 
-			defer discordUsecase.Shutdown(conf.Discord.GuildID)
+			defer discordUsecase.Shutdown()
 
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbConn), configUsecase)
 

@@ -195,9 +195,11 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 			}
 		}
 
-		slog.Debug("Fetching anticheat logs", slog.String("server", server.ShortName))
-		if err := d.fetchStacLogs(ctx, d.configUsecase.Config().SSH.StacPathFmt, server, client); err != nil {
-			slog.Error("Failed to fetch stac logs", log.ErrAttr(err))
+		if config.Anticheat.Enabled {
+			slog.Debug("Fetching anticheat logs", slog.String("server", server.ShortName))
+			if err := d.fetchStacLogs(ctx, d.configUsecase.Config().SSH.StacPathFmt, server, client); err != nil {
+				slog.Error("Failed to fetch stac logs", log.ErrAttr(err))
+			}
 		}
 	}
 
@@ -222,6 +224,7 @@ type Downloader struct {
 	config  domain.ConfigUsecase
 }
 
+// Start begins the background task scheduler which peridodically will run the provided SCPExecer.Update function.
 func (d Downloader) Start(ctx context.Context) {
 	seconds := d.config.Config().SSH.UpdateInterval
 	interval := time.Duration(seconds) * time.Second
@@ -235,7 +238,8 @@ func (d Downloader) Start(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			conf := d.config.Config()
-			if !conf.SSH.Enabled /**|| !conf.General.DemosEnabled */ {
+			if !conf.SSH.Enabled || !(conf.General.DemosEnabled || conf.Anticheat.Enabled) {
+				// Only perform SSH connection if we actually have at least one task that requires it enabled.
 				continue
 			}
 

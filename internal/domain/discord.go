@@ -58,7 +58,7 @@ type SlashCommandHandler func(ctx context.Context, s *discordgo.Session, m *disc
 
 type DiscordRepository interface {
 	RegisterHandler(cmd Cmd, handler SlashCommandHandler) error
-	Shutdown(guildID string)
+	Shutdown()
 	Start() error
 	SendPayload(channelID string, payload *discordgo.MessageEmbed)
 }
@@ -82,7 +82,7 @@ const (
 
 type DiscordUsecase interface {
 	Start() error
-	Shutdown(guildID string)
+	Shutdown()
 	SendPayload(channelID DiscordChannel, embed *discordgo.MessageEmbed)
 	RegisterHandler(cmd Cmd, handler SlashCommandHandler) error
 }

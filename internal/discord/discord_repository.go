@@ -19,7 +19,7 @@ func (bot *nullDiscordRepository) RegisterHandler(_ domain.Cmd, _ domain.SlashCo
 	return nil
 }
 
-func (bot *nullDiscordRepository) Shutdown(_ string) {
+func (bot *nullDiscordRepository) Shutdown() {
 }
 
 func (bot *nullDiscordRepository) Start() error {
@@ -39,6 +39,7 @@ type discordRepository struct {
 	commandHandlers   map[domain.Cmd]domain.SlashCommandHandler
 	unregisterOnStart bool
 	conf              domain.Config
+	commands          []*discordgo.ApplicationCommand
 }
 
 func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) {
@@ -83,40 +84,16 @@ func (bot *discordRepository) RegisterHandler(cmd domain.Cmd, handler domain.Sla
 	return nil
 }
 
-func (bot *discordRepository) Shutdown(guildID string) {
+func (bot *discordRepository) Shutdown() {
 	if bot.session != nil {
 		defer log.Closer(bot.session)
-		bot.botUnregisterSlashCommands(guildID)
 	}
-}
-
-func (bot *discordRepository) botUnregisterSlashCommands(guildID string) {
-	registeredCommands, err := bot.session.ApplicationCommands(bot.session.State.User.ID, guildID)
-	if err != nil {
-		slog.Error("Could not fetch registered commands", log.ErrAttr(err))
-
-		return
-	}
-
-	for _, v := range registeredCommands {
-		if errDel := bot.session.ApplicationCommandDelete(bot.session.State.User.ID, guildID, v.ID); errDel != nil {
-			slog.Error("Cannot delete command", slog.String("name", v.Name), log.ErrAttr(err))
-
-			return
-		}
-	}
-
-	slog.Info("Unregistered discord commands", slog.Int("count", len(registeredCommands)))
 }
 
 func (bot *discordRepository) Start() error {
 	// Open a websocket connection to discord and begin listening.
 	if errSessionOpen := bot.session.Open(); errSessionOpen != nil {
 		return errors.Join(errSessionOpen, domain.ErrDiscordOpen)
-	}
-
-	if bot.unregisterOnStart {
-		bot.botUnregisterSlashCommands("")
 	}
 
 	return nil
@@ -676,10 +653,12 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		},
 	}
 
-	_, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, "", slashCommands)
+	commands, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, bot.conf.Discord.GuildID, slashCommands)
 	if errBulk != nil {
 		return errors.Join(errBulk, domain.ErrDiscordOverwriteCommands)
 	}
+
+	bot.commands = commands
 
 	slog.Debug("Registered discord commands", slog.Int("count", len(slashCommands)))
 

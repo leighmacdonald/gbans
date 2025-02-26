@@ -2,13 +2,14 @@ package anticheat
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"io"
 	"log/slog"
 	"slices"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -113,18 +114,17 @@ func (a antiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 			IncludeFriends: false,
 			EvadeOk:        false,
 		})
-
-		if err != nil {
+		if err != nil && !errors.Is(err, domain.ErrDuplicate) {
 			slog.Error("Failed to ban cheater", slog.String("detection", string(entry.Detection)),
 				slog.Int64("steam_id", entry.SteamID.Int64()), log.ErrAttr(err))
 		} else if ban.BanID > 0 {
 			slog.Info("Banned cheater", slog.String("detection", string(entry.Detection)),
 				slog.Int64("steam_id", entry.SteamID.Int64()))
 			hasBeenBanned = append(hasBeenBanned, entry.SteamID)
-		}
 
-		a.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.NewEmbed("").
-			Message()))
+			go a.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelAC,
+				discord.NewAnticheatTrigger(ban, conf, entry, results[entry.SteamID][entry.Detection])))
+		}
 	}
 
 	return nil

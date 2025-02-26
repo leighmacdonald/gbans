@@ -2,7 +2,6 @@ package discord
 
 import (
 	"fmt"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"io"
 	"net"
 	"sort"
@@ -14,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/olekukonko/tablewriter"
@@ -880,49 +880,57 @@ func FilterCheckMessage(matches []domain.Filter) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func ACPlayerLogs(person domain.PersonInfo, entries []domain.AnticheatEntry) *discordgo.MessageEmbed {
+func ACPlayerLogs(conf domain.ConfigUsecase, person domain.PersonInfo, entries []domain.AnticheatEntry) *discordgo.MessageEmbed {
 	sid := person.GetSteamID()
 	emb := NewEmbed()
-	emb.Embed().
-		SetTitle(fmt.Sprintf("Anticheat DetectionsStats: %s (%s)", person.GetName(), sid.String())).
-		SetColor(ColourSuccess)
 
-	emb.Embed().SetDescription(fmt.Sprintf("Logs ```%s```",
-		makeACLogTable(entries),
-	))
-
-	return emb.Embed().MessageEmbed
-}
-
-func makeACLogTable(entries []domain.AnticheatEntry) string {
-	e := map[logparse.Detection]int{}
-	s := map[string]int{}
+	total := 0
+	detections := map[logparse.Detection]int{}
 
 	for _, entry := range entries {
-		if _, ok := e[entry.Detection]; !ok {
-			e[entry.Detection] = 0
+		if _, ok := detections[entry.Detection]; !ok {
+			detections[entry.Detection] = 0
 		}
 
-		e[entry.Detection]++
+		detections[entry.Detection]++
+		total++
+	}
 
-		if _, ok := s[entry.ServerName]; !ok {
-			s[entry.ServerName] = 0
+	emb.Embed().
+		SetTitle(fmt.Sprintf("Anticheat Detections (count: %d)", total)).
+		SetColor(ColourSuccess).
+		SetAuthor(person.GetName(), person.GetAvatar().Small(), conf.ExtURL(person))
+
+	j := 0
+	for server, count := range detections {
+		emb.Embed().AddField("Detection: "+string(server), strconv.Itoa(count))
+		j++
+		if j < len(detections) {
+			emb.emb.MakeFieldInline()
+		}
+	}
+
+	servers := map[string]int{}
+
+	for _, entry := range entries {
+		if _, ok := servers[entry.ServerName]; !ok {
+			servers[entry.ServerName] = 0
 		}
 
-		s[entry.ServerName]++
+		servers[entry.ServerName]++
+	}
+	i := 0
+	for server, count := range servers {
+		emb.Embed().AddField("Server: "+server, strconv.Itoa(count))
+		i++
+		if i < len(servers) {
+			emb.emb.MakeFieldInline()
+		}
 	}
 
-	writer := &strings.Builder{}
-	table := defaultTable(writer)
-	table.SetHeader([]string{"Detection", "Count"})
+	emb.AddFieldsSteamID(sid)
 
-	for detection, count := range e {
-		table.Append([]string{string(detection), strconv.Itoa(count)})
-	}
-
-	table.Render()
-
-	return strings.Trim(writer.String(), "\n")
+	return emb.Embed().MessageEmbed
 }
 
 func StatsPlayerMessage(person domain.PersonInfo, url string, classStats domain.PlayerClassStatsCollection,
@@ -1343,4 +1351,26 @@ func NewPlayerqueuePurge(author domain.UserProfile, target domain.UserProfile, m
 		AddField("Name", target.GetName()).
 		AddField("SteamID", target.SteamID.String()).
 		MessageEmbed
+}
+
+func NewAnticheatTrigger(ban domain.BannedSteamPerson, config domain.Config, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
+	embed := NewEmbed("Player triggered anti-cheat response")
+	embed.Embed().
+		SetColor(ColourSuccess).
+		AddField("Detection", string(entry.Detection)).
+		AddField("Count", strconv.Itoa(count)).
+		AddField("Action", string(config.Anticheat.Action))
+
+	if entry.DemoName != "" {
+		embed.emb.AddField("Demo Name", entry.DemoName)
+		embed.emb.AddField("Demo Tick", strconv.Itoa(entry.DemoTick))
+	}
+
+	embed = embed.AddFieldsSteamID(entry.SteamID)
+
+	if ban.Note != "" {
+		embed.emb.Description = "```\n" + entry.RawLog + "\n```"
+	}
+
+	return embed.Embed().MessageEmbed
 }

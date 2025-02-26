@@ -542,7 +542,7 @@ func (h discordService) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 		return nil, errQuery
 	}
 
-	return ACPlayerLogs(person, logs), nil
+	return ACPlayerLogs(h.config, person, logs), nil
 }
 
 func (h discordService) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
