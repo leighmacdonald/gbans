@@ -919,6 +919,7 @@ func ACPlayerLogs(conf domain.ConfigUsecase, person domain.PersonInfo, entries [
 
 		servers[entry.ServerName]++
 	}
+
 	i := 0
 	for server, count := range servers {
 		emb.Embed().AddField("Server: "+server, strconv.Itoa(count))

@@ -14,8 +14,8 @@ func NewDiscordUsecase(repository domain.DiscordRepository, config domain.Config
 	return &discordUsecase{repository: repository, config: config}
 }
 
-func (d discordUsecase) Shutdown(guildID string) {
-	d.repository.Shutdown(guildID)
+func (d discordUsecase) Shutdown() {
+	d.repository.Shutdown()
 }
 
 func (d discordUsecase) RegisterHandler(cmd domain.Cmd, handler domain.SlashCommandHandler) error {
