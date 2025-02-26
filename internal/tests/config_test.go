@@ -69,7 +69,6 @@ func TestConfig(t *testing.T) {
 	config.Discord.WordFilterLogChannelID += "x"
 	config.Discord.KickLogChannelID += "x"
 	config.Discord.ModPingRoleID += "x"
-	config.Discord.UnregisterOnStart = !config.Discord.UnregisterOnStart
 
 	config.Sentry.SentryDSN += "x"
 	config.Sentry.SentryDSN += "x"

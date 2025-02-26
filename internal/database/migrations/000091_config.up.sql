@@ -43,7 +43,6 @@ CREATE TABLE config
     discord_public_log_channel_id       text   not null default '',
     discord_public_match_log_channel_id text   not null default '',
     discord_mod_ping_role_id            text   not null default '',
-    discord_unregister_on_start         bool   not null default false,
 
     logging_level                       text   not null default 'error' CHECK ( logging_level in ('debug', 'info', 'warn', 'error') ),
     logging_file                        text   not null default '',

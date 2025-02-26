@@ -34,12 +34,11 @@ func NewNullDiscordRepository() domain.DiscordRepository {
 }
 
 type discordRepository struct {
-	session           *discordgo.Session
-	isReady           atomic.Bool
-	commandHandlers   map[domain.Cmd]domain.SlashCommandHandler
-	unregisterOnStart bool
-	conf              domain.Config
-	commands          []*discordgo.ApplicationCommand
+	session         *discordgo.Session
+	isReady         atomic.Bool
+	commandHandlers map[domain.Cmd]domain.SlashCommandHandler
+	conf            domain.Config
+	commands        []*discordgo.ApplicationCommand
 }
 
 func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) {
@@ -58,11 +57,10 @@ func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) 
 	session.Identify.Intents |= discordgo.IntentMessageContent
 	session.Identify.Intents |= discordgo.IntentGuildMembers
 	bot := &discordRepository{
-		session:           session,
-		conf:              conf,
-		isReady:           atomic.Bool{},
-		unregisterOnStart: conf.Discord.UnregisterOnStart,
-		commandHandlers:   map[domain.Cmd]domain.SlashCommandHandler{},
+		session:         session,
+		conf:            conf,
+		isReady:         atomic.Bool{},
+		commandHandlers: map[domain.Cmd]domain.SlashCommandHandler{},
 	}
 
 	bot.session.AddHandler(bot.onReady)

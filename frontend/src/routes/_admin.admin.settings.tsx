@@ -1022,7 +1022,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             public_log_channel_id: settings.discord.public_log_channel_id,
             public_match_log_channel_id: settings.discord.public_match_log_channel_id,
             mod_ping_role_id: settings.discord.mod_ping_role_id,
-            unregister_on_start: settings.discord.unregister_on_start,
             vote_log_channel_id: settings.discord.vote_log_channel_id,
             appeal_log_channel_id: settings.discord.appeal_log_channel_id,
             ban_log_channel_id: settings.discord.ban_log_channel_id,
@@ -1326,26 +1325,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Anticheat action log channel ID'} />;
-                            }}
-                        />
-                    </Grid>
-                    <Grid xs={12}>
-                        <SubHeading>
-                            Do you want to unregister all existing slash commands on bot startup. This is normally not
-                            needed and its mostly useful when creating or modifying existing command.
-                        </SubHeading>
-                        <Field
-                            name={'unregister_on_start'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
-                                return (
-                                    <CheckboxSimple
-                                        {...props}
-                                        label={'Unregister existing discord slash commands on startup'}
-                                    />
-                                );
                             }}
                         />
                     </Grid>

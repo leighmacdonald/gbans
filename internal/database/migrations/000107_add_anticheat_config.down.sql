@@ -29,4 +29,7 @@ ALTER TABLE config
 
 DROP TYPE IF EXISTS config_action;
 
+ALTER TABLE config
+    ADD COLUMN IF NOT EXISTS discord_unregister_on_start bool not null default false;
+
 COMMIT;

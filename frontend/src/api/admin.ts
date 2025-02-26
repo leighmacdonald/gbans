@@ -111,7 +111,6 @@ type Discord = {
     public_log_channel_id: string;
     public_match_log_channel_id: string;
     mod_ping_role_id: string;
-    unregister_on_start: boolean;
     vote_log_channel_id: string;
     appeal_log_channel_id: string;
     ban_log_channel_id: string;
