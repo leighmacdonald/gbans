@@ -89,6 +89,7 @@ jobs:
           version: "~> v1"
           args: release --clean
         env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN_BACKEND }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           #          DISCORD_WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
           #          DISCORD_WEBHOOK_TOKEN: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
