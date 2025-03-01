@@ -5,7 +5,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
 import { apiCreateSMOverrides, apiSaveSMOverrides, hasSMFlag, OverrideType, SMOverrides } from '../../api';
@@ -53,7 +52,33 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 
             mutation.mutate({ name: value.name, type: value.type, flags });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                type: z.enum(['command', 'group']),
+                name: z.string(),
+                z: z.boolean(),
+                a: z.boolean(),
+                b: z.boolean(),
+                c: z.boolean(),
+                d: z.boolean(),
+                e: z.boolean(),
+                f: z.boolean(),
+                g: z.boolean(),
+                h: z.boolean(),
+                i: z.boolean(),
+                j: z.boolean(),
+                k: z.boolean(),
+                l: z.boolean(),
+                m: z.boolean(),
+                n: z.boolean(),
+                o: z.boolean(),
+                p: z.boolean(),
+                q: z.boolean(),
+                r: z.boolean(),
+                s: z.boolean(),
+                t: z.boolean()
+            })
+        },
         defaultValues: {
             type: override?.type ?? 'command',
             name: override?.name ?? '',

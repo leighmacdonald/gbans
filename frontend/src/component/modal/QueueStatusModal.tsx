@@ -5,7 +5,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiQueueSetUserStatus, ChatStatus } from '../../api';
 import { useQueueCtx } from '../../hooks/useQueueCtx.ts';
@@ -36,7 +35,12 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                chat_status: z.enum(['readwrite', 'readonly', 'noaccess']),
+                reason: z.string({ message: 'Reason' })
+            })
+        },
         defaultValues: {
             chat_status: chatStatus,
             reason: reason
@@ -60,9 +64,6 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
                         <Grid xs={2}>
                             <Field
                                 name={'chat_status'}
-                                validators={{
-                                    onChange: z.enum(['readwrite', 'readonly', 'noaccess'])
-                                }}
                                 children={(props) => {
                                     return (
                                         <SelectFieldSimple
@@ -86,9 +87,6 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
                         <Grid xs={10}>
                             <Field
                                 name={'reason'}
-                                validators={{
-                                    onChange: z.string({ message: 'Reason' })
-                                }}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'Reason for status change'} />;
                                 }}

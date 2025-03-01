@@ -1,16 +1,18 @@
-import TextField from '@mui/material/TextField';
+import TextField, { TextFieldProps } from '@mui/material/TextField';
 import { FieldProps } from './common.ts';
 
 export const TextFieldSimple = ({
     label,
-    state,
     handleChange,
     handleBlur,
     fullwidth = true,
     disabled = false,
     rows = 1,
+    value,
+    error,
+    helperText,
     placeholder = undefined
-}: FieldProps) => {
+}: FieldProps & TextFieldProps) => {
     return (
         <TextField
             multiline={rows > 1}
@@ -18,13 +20,13 @@ export const TextFieldSimple = ({
             disabled={disabled}
             fullWidth={fullwidth}
             label={label}
-            value={state.value}
+            value={value}
             placeholder={placeholder}
             onChange={(e) => handleChange(e.target.value)}
             onBlur={handleBlur}
             variant="outlined"
-            error={state.meta.touchedErrors.length > 0}
-            helperText={state.meta.touchedErrors}
+            error={error}
+            helperText={helperText}
         />
     );
 };

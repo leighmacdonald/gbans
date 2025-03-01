@@ -15,7 +15,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansSteam, BanReason, BanReasons, banReasonsCollection, SteamBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -34,6 +33,7 @@ import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const banSteamSearchSchema = z.object({
     ...makeCommonTableSearchSchema([
@@ -93,7 +93,15 @@ function AdminBanSteam() {
                 search: (prev) => ({ ...prev, ...value })
             });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                source_id: makeValidateSteamIDCallback(),
+                target_id: makeValidateSteamIDCallback(),
+                reason: z.nativeEnum(BanReason),
+                deleted: z.boolean()
+            })
+        },
         defaultValues: {
             source_id: search.source_id ?? '',
             target_id: search.target_id ?? '',
@@ -212,7 +220,13 @@ function AdminBanSteam() {
                                 <Field
                                     name={'deleted'}
                                     children={(props) => {
-                                        return <CheckboxSimple {...props} label={'Show deleted/expired'} />;
+                                        return (
+                                            <CheckboxSimple
+                                                {...props}
+                                                checked={props.state.value}
+                                                label={'Show deleted/expired'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>

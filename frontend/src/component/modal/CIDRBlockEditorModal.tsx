@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiCreateCIDRBlockSource, apiUpdateCIDRBlockSource, CIDRBlockSource } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -53,7 +52,14 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                cidr_block_source_id: z.number(),
+                name: z.string().min(2),
+                url: z.string().url(),
+                enabled: z.boolean()
+            })
+        },
         defaultValues: {
             cidr_block_source_id: source?.cidr_block_source_id ?? 0,
             name: source?.name ?? '',
@@ -79,9 +85,6 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                         <Grid xs={12}>
                             <Field
                                 name={'name'}
-                                validators={{
-                                    onChange: z.string().min(2)
-                                }}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'Source Name'} />;
                                 }}
@@ -89,9 +92,6 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                             <Grid xs={12}>
                                 <Field
                                     name={'url'}
-                                    validators={{
-                                        onChange: z.string().url()
-                                    }}
                                     children={(props) => {
                                         return <TextFieldSimple {...props} label={'Source URL'} />;
                                     }}
@@ -100,9 +100,6 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                             <Grid xs={12}>
                                 <Field
                                     name={'enabled'}
-                                    validators={{
-                                        onChange: z.boolean()
-                                    }}
                                     children={(props) => {
                                         return <CheckboxSimple {...props} label={'Enabled'} />;
                                     }}

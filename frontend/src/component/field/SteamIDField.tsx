@@ -4,37 +4,41 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import Avatar from '@mui/material/Avatar';
 import InputAdornment from '@mui/material/InputAdornment';
-import TextField from '@mui/material/TextField';
+import TextField, { TextFieldProps } from '@mui/material/TextField';
 import { defaultAvatarHash, PlayerProfile } from '../../api';
 import { avatarHashToURL } from '../../util/text.tsx';
 import { FieldProps } from './common.ts';
 
 export const SteamIDField = ({
-    state,
+    defaultValue,
     handleBlur,
     handleChange,
     fullwidth,
     profile,
+    error,
+    helperText,
+    isValidating,
+    isTouched,
     label = 'SteamID/Profile'
-}: FieldProps & { profile?: PlayerProfile }) => {
+}: FieldProps & { profile?: PlayerProfile } & TextFieldProps) => {
     return (
         <TextField
             fullWidth={fullwidth}
             label={label}
-            defaultValue={state.value}
+            defaultValue={defaultValue}
             onChange={(e) => handleChange(e.target.value)}
             onBlur={handleBlur}
             variant="outlined"
-            error={state.meta.touchedErrors.length > 0}
-            helperText={state.meta.touchedErrors}
+            error={error}
+            helperText={helperText}
             InputProps={{
                 startAdornment: (
                     <InputAdornment position="start">
-                        {state.meta.touchedErrors.length > 0 ? (
+                        {error ? (
                             <ErrorOutlineIcon color={'error'} sx={{ width: 40 }} />
-                        ) : state.meta.isValidating ? (
+                        ) : isValidating ? (
                             <HourglassBottomIcon color={'warning'} sx={{ width: 40 }} />
-                        ) : state.meta.isTouched ? (
+                        ) : isTouched ? (
                             profile ? (
                                 <Avatar
                                     src={avatarHashToURL(profile?.player.avatarhash ?? defaultAvatarHash)}

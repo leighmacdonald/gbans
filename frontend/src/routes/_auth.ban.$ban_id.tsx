@@ -20,7 +20,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiCreateBanMessage,
@@ -242,7 +241,11 @@ function BanPage() {
                 body_md: value.body_md
             });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                body_md: z.string().min(2, 'Message must be at least 2 characters.')
+            })
+        },
         defaultValues: {
             body_md: ''
         }
@@ -284,9 +287,6 @@ function BanPage() {
                                     <Grid xs={12}>
                                         <Field
                                             name={'body_md'}
-                                            validators={{
-                                                onChange: z.string().min(2)
-                                            }}
                                             children={(props) => {
                                                 return <MarkdownField {...props} label={'Message'} />;
                                             }}

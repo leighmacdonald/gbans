@@ -8,7 +8,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiGetReports,
@@ -28,7 +27,6 @@ import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { initColumnFilter, initPagination, initSortOrder, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
-import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const reportsSearchSchema = z.object({
     ...makeCommonTableSearchSchema([
@@ -82,9 +80,12 @@ function AdminReports() {
             );
             await navigate({ to: '/admin/reports', replace: true, search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: reportsSearchSchema
+            onChange: z.object({
+                source_id: z.string(),
+                target_id: z.string(),
+                report_status: z.nativeEnum(ReportStatus)
+            })
         },
         defaultValues: {
             source_id: search.source_id ?? '',
@@ -122,7 +123,6 @@ function AdminReports() {
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'source_id'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return (
                                             <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />
@@ -134,7 +134,6 @@ function AdminReports() {
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'target_id'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return (
                                             <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />

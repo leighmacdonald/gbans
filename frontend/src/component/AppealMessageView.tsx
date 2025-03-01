@@ -12,7 +12,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { formatDistance } from 'date-fns';
 import { z } from 'zod';
 import { apiUpdateBanMessage, BanAppealMessage } from '../api';
@@ -61,7 +60,6 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
                 body_md: value.body_md
             });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             body_md: message.message_md
         }

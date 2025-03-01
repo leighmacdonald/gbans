@@ -5,12 +5,11 @@ import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import { apiCreateBanGroup, apiUpdateBanGroup, Duration, DurationCollection, GroupBanRecord } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
+import { makeValidateSteamIDCallback } from '../../util/validator/makeValidateSteamIDCallback.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
@@ -72,7 +71,16 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                 note: value.note
             });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                target_id: makeValidateSteamIDCallback(),
+                group_id: z.string(),
+                duration: z.nativeEnum(Duration),
+                duration_custom: z.string(),
+                note: z.string()
+            })
+        },
         defaultValues: {
             target_id: existing ? existing.target_id : '',
             group_id: existing ? existing.group_id : '',
@@ -99,7 +107,6 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid xs={12}>
                             <Field
                                 name={'target_id'}
-                                validators={makeSteamidValidators()}
                                 children={(props) => {
                                     return (
                                         <SteamIDField

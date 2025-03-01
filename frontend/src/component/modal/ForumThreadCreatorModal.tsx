@@ -6,7 +6,6 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiCreateThread, Forum, ForumThread } from '../../api/forum.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -71,7 +70,14 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
         onSubmit: async ({ value }) => {
             mutation.mutate({ ...value });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                title: z.string().min(3),
+                body_md: z.string().min(10),
+                sticky: z.boolean(),
+                locked: z.boolean()
+            })
+        },
         defaultValues: {
             title: '',
             body_md: '',
@@ -101,9 +107,6 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                     <Grid container spacing={2}>
                         <Grid xs={12}>
                             <Field
-                                validators={{
-                                    onChange: z.string().min(3)
-                                }}
                                 name={'title'}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'Title'} />;
@@ -112,9 +115,6 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                         </Grid>
                         <Grid xs={12}>
                             <Field
-                                validators={{
-                                    onChange: z.string().min(10)
-                                }}
                                 name={'body_md'}
                                 children={(props) => {
                                     return <MarkdownField {...props} label={'Message'} />;

@@ -27,6 +27,7 @@ import { headingsPlugin } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import { TextFieldProps } from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import * as Sentry from '@sentry/react';
@@ -41,6 +42,7 @@ type MDBodyFieldProps = {
     fileUpload?: boolean;
     minHeight?: number;
     rows?: number;
+    // state?: unknown;
 } & FieldProps;
 
 const imageUploadHandler = async (media: File) => {
@@ -60,11 +62,8 @@ export const mdEditorRef = createRef<MDXEditorMethods>();
  *
  * To clear it after a successful submission: mdEditorRef.current?.setMarkdown('');
  *
- * @param state
- * @param handleChange
- * @constructor
  */
-export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
+export const MarkdownField = ({ defaultValue, handleChange, error, helperText }: MDBodyFieldProps & TextFieldProps) => {
     const { sendFlash } = useUserFlashCtx();
     const theme = useTheme();
 
@@ -82,14 +81,14 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
     }, [theme.mode]);
 
     const errInfo = useMemo(() => {
-        return state.meta.touchedErrors.length > 0 ? (
+        return error ? (
             <Typography padding={1} color={theme.palette.error.main}>
-                {state.meta.touchedErrors}
+                {helperText}
             </Typography>
         ) : (
             <></>
         );
-    }, [state.meta.touchedErrors, theme.palette.error.main]);
+    }, [error, theme.palette.error.main]);
 
     return (
         <Paper>
@@ -98,7 +97,7 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
                     contentEditableClassName={'md-content-editable'}
                     className={classes}
                     autoFocus={true}
-                    markdown={state.value}
+                    markdown={(defaultValue as string) ?? ''}
                     placeholder={'Message (Min length: 10 characters)'}
                     plugins={[
                         toolbarPlugin({

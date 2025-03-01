@@ -14,7 +14,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansASN, ASNBanRecord, BanReason, BanReasons } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -31,7 +30,7 @@ import { ModalBanASN, ModalUnbanASN } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
-import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const banASNSearchSchema = z.object({
     ...makeCommonTableSearchSchema([
@@ -77,9 +76,14 @@ function AdminBanASN() {
                 search: (prev) => ({ ...prev, ...value })
             });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: banASNSearchSchema
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                source_id: makeValidateSteamIDCallback(),
+                target_id: makeValidateSteamIDCallback(),
+                as_num: z.string(),
+                deleted: z.boolean()
+            })
         },
         defaultValues: {
             source_id: search.source_id ?? '',
@@ -146,7 +150,6 @@ function AdminBanASN() {
                                 <Grid xs={6} md={3}>
                                     <Field
                                         name={'source_id'}
-                                        validators={makeSteamidValidatorsOptional()}
                                         children={(props) => {
                                             return (
                                                 <TextFieldSimple
@@ -162,7 +165,6 @@ function AdminBanASN() {
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'target_id'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return (
                                             <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
@@ -184,7 +186,13 @@ function AdminBanASN() {
                                 <Field
                                     name={'deleted'}
                                     children={(props) => {
-                                        return <CheckboxSimple {...props} label={'Show Deleted'} />;
+                                        return (
+                                            <CheckboxSimple
+                                                {...props}
+                                                checked={props.state.value}
+                                                label={'Show Deleted'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>

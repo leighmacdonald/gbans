@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
 import { apiCreateSMGroup, apiSaveSMGroup, hasSMFlag, SMGroups } from '../../api';
@@ -46,7 +45,33 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                 }, '');
             edit.mutate({ name: value.name, immunity: Number(value.immunity), flags: flags });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                name: z.string(),
+                immunity: z.string(),
+                z: z.boolean(),
+                a: z.boolean(),
+                b: z.boolean(),
+                c: z.boolean(),
+                d: z.boolean(),
+                e: z.boolean(),
+                f: z.boolean(),
+                g: z.boolean(),
+                h: z.boolean(),
+                i: z.boolean(),
+                j: z.boolean(),
+                k: z.boolean(),
+                l: z.boolean(),
+                m: z.boolean(),
+                n: z.boolean(),
+                o: z.boolean(),
+                p: z.boolean(),
+                q: z.boolean(),
+                r: z.boolean(),
+                s: z.boolean(),
+                t: z.boolean()
+            })
+        },
         defaultValues: {
             name: group?.name ?? '',
             immunity: group?.immunity_level ? String(group.immunity_level) : '',

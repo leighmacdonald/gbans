@@ -20,7 +20,6 @@ import {
     TableOptions,
     useReactTable
 } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetAnticheatLogs, apiGetServers, Detection, Detections, ServerSimple, StacEntry } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -36,13 +35,14 @@ import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { stringToColour } from '../util/colours.ts';
 import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const schema = z.object({
     ...makeCommonTableSearchSchema([
         'anticheat_id',
         'personaname',
         'summary',
-        'detecton',
+        'detection',
         'steam_id',
         'created_on',
         'server_name'
@@ -109,7 +109,15 @@ function AdminAnticheat() {
             //setColumnFilters(initColumnFilter(value));
             await navigate({ to: '/admin/anticheat', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                steam_id: makeValidateSteamIDCallback(),
+                summary: z.string(),
+                detection: z.string(),
+                server_id: z.number({ coerce: true })
+            })
+        },
         defaultValues: {
             summary: search.summary ?? '',
             detection: search.detection ?? '',
@@ -149,15 +157,8 @@ function AdminAnticheat() {
                             <Grid xs={6} md={4}>
                                 <Field
                                     name={'steam_id'}
-                                    children={({ state, handleChange, handleBlur }) => {
-                                        return (
-                                            <SteamIDField
-                                                state={state}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
-                                                fullwidth={true}
-                                            />
-                                        );
+                                    children={(props) => {
+                                        return <SteamIDField {...props} fullwidth={true} />;
                                     }}
                                 />
                             </Grid>
