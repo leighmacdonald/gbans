@@ -212,7 +212,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			if app.SentryDSN != "" {
-				sentryClient, err := log.NewSentryClient(app.SentryDSN, true, 1.0, app.BuildVersion, string(conf.General.Mode))
+				sentryClient, err := log.NewSentryClient(app.SentryDSN, true, 0.25, app.BuildVersion, string(conf.General.Mode))
 				if err != nil {
 					slog.Error("Failed to setup sentry client")
 				} else {

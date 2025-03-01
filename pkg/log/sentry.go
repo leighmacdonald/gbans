@@ -4,11 +4,18 @@ import (
 	"errors"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/gin-gonic/gin"
 )
 
 var ErrClientInit = errors.New("failed to initialize sentry client")
 
 func NewSentryClient(dsn string, tracing bool, sampleRate float64, buildVersion string, environment string) (*sentry.Client, error) {
+	// We map these to the same environment values used for frontend/node to be consistent.
+	env := "production"
+	if environment != gin.ReleaseMode {
+		env = "development"
+	}
+
 	hub := sentry.CurrentHub()
 	client, errClient := sentry.NewClient(sentry.ClientOptions{
 		Dsn:           dsn,
@@ -20,7 +27,7 @@ func NewSentryClient(dsn string, tracing bool, sampleRate float64, buildVersion 
 		SendDefaultPII:   true,
 		SampleRate:       1.0,
 		Release:          buildVersion,
-		Environment:      "gbans@" + environment,
+		Environment:      env,
 	})
 
 	if errClient != nil {
