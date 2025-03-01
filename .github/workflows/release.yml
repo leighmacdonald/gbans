@@ -51,9 +51,14 @@ jobs:
         working-directory: ./frontend
         run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
-      - name: Prettier
+      - name: Build frontend
         working-directory: ./frontend
         run: pnpm build
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_URL: ${{ env.SENTRY_URL }}
+          VITE_BUILD_VERSION: ${{ inputs.version }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
 
       - name: Setup SourcePawn Compiler
         uses: rumblefrog/setup-sp@master
@@ -110,3 +115,14 @@ jobs:
         uses: akhilmhdh/contributors-readme-action@v2.3.10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: production
+          version: ${{ inputs.version }}
+          sourcemaps: frontend/dist/assets

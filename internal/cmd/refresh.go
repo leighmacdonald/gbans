@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -69,7 +70,7 @@ func refreshFiltersCmd() *cobra.Command {
 
 			conf := configUsecase.Config()
 
-			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
+			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level, app.SentryDSN != "")
 			defer logCloser()
 
 			if //goland:noinspection ALL

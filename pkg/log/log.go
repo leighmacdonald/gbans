@@ -8,6 +8,9 @@ import (
 	"runtime"
 
 	"github.com/dotse/slug"
+	sentryslog "github.com/getsentry/sentry-go/slog"
+	"github.com/leighmacdonald/gbans/internal/app"
+	slogmulti "github.com/samber/slog-multi"
 )
 
 type Level string
@@ -32,15 +35,21 @@ func ToSlogLevel(level Level) slog.Level {
 	}
 }
 
-func MustCreateLogger(debugLogPath string, level Level) func() {
-	var logHandler slog.Handler
-
+func MustCreateLogger(debugLogPath string, level Level, useSentry bool) func() {
 	closer := func() {}
 
 	opts := slug.HandlerOptions{
 		HandlerOptions: slog.HandlerOptions{
 			Level: ToSlogLevel(level),
 		},
+	}
+
+	var handlers []slog.Handler
+	if useSentry {
+		handlers = append(handlers, sentryslog.Option{
+			Level:     slog.LevelDebug,
+			AddSource: true,
+		}.NewSentryHandler())
 	}
 
 	if debugLogPath != "" {
@@ -55,12 +64,15 @@ func MustCreateLogger(debugLogPath string, level Level) func() {
 			}
 		}
 
-		logHandler = slug.NewHandler(opts, logFile)
+		handlers = append(handlers, slug.NewHandler(opts, logFile))
 	} else {
-		logHandler = slug.NewHandler(opts, os.Stdout)
+		handlers = append(handlers, slug.NewHandler(opts, os.Stdout))
 	}
 
-	slog.SetDefault(slog.New(logHandler))
+	defaultLogger := slog.New(slogmulti.Fanout(handlers...))
+	defaultLogger.With("release", app.BuildVersion)
+
+	slog.SetDefault(defaultLogger)
 
 	return closer
 }

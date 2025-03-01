@@ -46,8 +46,6 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 		       
 		       logging_level, logging_file, logging_http_enabled, logging_http_otel_enabled, logging_http_level,
 		       
-		       sentry_sentry_dsn, sentry_sentry_dsn_web, sentry_sentry_trace, sentry_sentry_sample_rate,
-		       
 		       ip2location_enabled, ip2location_cache_path, ip2location_token,
 		       
 		       debug_skip_open_id_validation, debug_add_rcon_log_address,
@@ -81,7 +79,6 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 			&cfg.Discord.BotEnabled, &cfg.Discord.IntegrationsEnabled, &cfg.Discord.VoteLogChannelID, &cfg.Discord.AppealLogChannelID,
 			&cfg.Discord.BanLogChannelID, &cfg.Discord.ForumLogChannelID, &cfg.Discord.WordFilterLogChannelID, &cfg.Discord.KickLogChannelID, &cfg.Discord.PlayerqueueChannelID,
 			&cfg.Log.Level, &cfg.Log.File, &cfg.Log.HTTPEnabled, &cfg.Log.HTTPOtelEnabled, &cfg.Log.HTTPLevel,
-			&cfg.Sentry.SentryDSN, &cfg.Sentry.SentryDSNWeb, &cfg.Sentry.SentryTrace, &cfg.Sentry.SentrySampleRate,
 			&cfg.GeoLocation.Enabled, &cfg.GeoLocation.CachePath, &cfg.GeoLocation.Token,
 			&cfg.Debug.SkipOpenIDValidation, &cfg.Debug.AddRCONLogAddress,
 			&cfg.LocalStore.PathRoot,
@@ -188,10 +185,6 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"logging_http_enabled":                config.Log.HTTPEnabled,
 			"logging_http_otel_enabled":           config.Log.HTTPOtelEnabled,
 			"logging_http_level":                  config.Log.HTTPLevel,
-			"sentry_sentry_dsn":                   config.Sentry.SentryDSN,
-			"sentry_sentry_dsn_web":               config.Sentry.SentryDSNWeb,
-			"sentry_sentry_trace":                 config.Sentry.SentryTrace,
-			"sentry_sentry_sample_rate":           config.Sentry.SentrySampleRate,
 			"ip2location_enabled":                 config.GeoLocation.Enabled,
 			"ip2location_cache_path":              config.GeoLocation.CachePath,
 			"ip2location_token":                   config.GeoLocation.Token,

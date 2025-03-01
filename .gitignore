@@ -51,3 +51,4 @@ parse_demo
 /frontend/stats.html
 .cache
 /assets/
+/frontend/.env.*

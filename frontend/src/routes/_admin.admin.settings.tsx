@@ -12,7 +12,6 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ShareIcon from '@mui/icons-material/Share';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
-import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
 import UpdateIcon from '@mui/icons-material/Update';
 import WebAssetIcon from '@mui/icons-material/WebAsset';
 import Button from '@mui/material/Button';
@@ -47,7 +46,6 @@ const settingsSchema = z.object({
             'patreon',
             'discord',
             'logging',
-            'sentry',
             'geo_location',
             'debug',
             'local_store',
@@ -79,7 +77,6 @@ type tabs =
     | 'patreon'
     | 'discord'
     | 'logging'
-    | 'sentry'
     | 'geo_location'
     | 'debug'
     | 'local_store'
@@ -215,13 +212,6 @@ function AdminServers() {
                                 label={'Logging'}
                             />
                             <TabButton
-                                tab={'sentry'}
-                                onClick={onTabClick}
-                                icon={<TroubleshootIcon />}
-                                currentTab={tab}
-                                label={'Sentry'}
-                            />
-                            <TabButton
                                 tab={'geo_location'}
                                 onClick={onTabClick}
                                 icon={<TravelExploreIcon />}
@@ -282,7 +272,6 @@ function AdminServers() {
                     <PatreonSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <DiscordSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <LoggingSection tab={tab} settings={settings} mutate={mutation.mutate} />
-                    <SentrySection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <GeoLocationSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <LocalStoreSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <SSHSection tab={tab} settings={settings} mutate={mutation.mutate} />
@@ -1473,130 +1462,6 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
     );
 };
 
-const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
-        onSubmit: async ({ value }) => {
-            mutate({ ...settings, sentry: value });
-        },
-        validatorAdapter: zodValidator,
-        defaultValues: {
-            sentry_dsn: settings.sentry.sentry_dsn,
-            sentry_dsn_web: settings.sentry.sentry_dsn_web,
-            sentry_trace: settings.sentry.sentry_trace,
-            sentry_sample_rate: settings.sentry.sentry_sample_rate
-        }
-    });
-
-    return (
-        <TabSection tab={'sentry'} currentTab={tab} label={'Sentry'} description={'Configure support for sentry'}>
-            <form
-                onSubmit={async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    await handleSubmit();
-                }}
-            >
-                <Grid container spacing={2}>
-                    <Grid xs={12}>
-                        Self-hosted and cloud-based application performance monitoring & error tracking. You can create
-                        a free account at <Link href={'https://sentry.io/'}>sentry.io</Link>. Otherwise you can follow
-                        the guide for settings up{' '}
-                        <Link href={'https://develop.sentry.dev/self-hosted/'}>self-hosted</Link> operation.
-                    </Grid>
-                    <Grid xs={12}>
-                        <SubHeading>The URL to your backend sentry application.</SubHeading>
-                        <Field
-                            name={'sentry_dsn'}
-                            validators={{
-                                onChange: z.string().refine(
-                                    (arg) => {
-                                        if (arg.length == 0) {
-                                            return true;
-                                        }
-
-                                        return z.string().url().safeParse(arg).success;
-                                    },
-                                    { message: 'Invalid URL' }
-                                )
-                            }}
-                            children={(props) => {
-                                return <TextFieldSimple {...props} label={'Backend sentry url'} />;
-                            }}
-                        />
-                    </Grid>
-                    <Grid xs={12}>
-                        <SubHeading>The URL to your frontend sentry application.</SubHeading>
-                        <Field
-                            name={'sentry_dsn_web'}
-                            validators={{
-                                onChange: z.string().refine(
-                                    (arg) => {
-                                        if (arg.length == 0) {
-                                            return true;
-                                        }
-
-                                        return z.string().url().safeParse(arg).success;
-                                    },
-                                    { message: 'Invalid URL' }
-                                )
-                            }}
-                            children={(props) => {
-                                return <TextFieldSimple {...props} label={'Frontend sentry url'} />;
-                            }}
-                        />
-                    </Grid>
-                    <Grid xs={12}>
-                        <SubHeading>
-                            Enable <Link href={'https://docs.sentry.io/concepts/key-terms/tracing/'}>tracing</Link>{' '}
-                            support.
-                        </SubHeading>
-                        <Field
-                            name={'sentry_trace'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable tracing'} />;
-                            }}
-                        />
-                    </Grid>
-
-                    <Grid xs={12}>
-                        <SubHeading>
-                            Configure the{' '}
-                            <Link
-                                href={
-                                    'https://docs.sentry.io/platforms/go/configuration/sampling/#sampling-error-events'
-                                }
-                            >
-                                sample rate
-                            </Link>
-                        </SubHeading>
-                        <Field
-                            name={'sentry_sample_rate'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 1))
-                            }}
-                            children={(props) => {
-                                return <TextFieldSimple {...props} label={'Sample rate'} />;
-                            }}
-                        />
-                    </Grid>
-
-                    <Grid xs={12}>
-                        <Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                            children={([canSubmit, isSubmitting]) => (
-                                <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />
-                            )}
-                        />
-                    </Grid>
-                </Grid>
-            </form>
-        </TabSection>
-    );
-};
-
 const GeoLocationSection = ({
     tab,
     settings,
@@ -2123,7 +1988,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                     </Grid>
 
                     <Grid xs={12}>
-                        <SubHeading>The maximum number of aimnap detections allowed.</SubHeading>
+                        <SubHeading>The maximum number of aimsnap detections allowed.</SubHeading>
                         <Field
                             name={'max_aim_snap'}
                             validators={{
@@ -2162,7 +2027,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                     </Grid>
 
                     <Grid xs={12}>
-                        <SubHeading>The maximum number of fank angles/eyes detections allowed.</SubHeading>
+                        <SubHeading>The maximum number of fake angles/eyes detections allowed.</SubHeading>
                         <Field
                             name={'max_fake_ang'}
                             validators={{

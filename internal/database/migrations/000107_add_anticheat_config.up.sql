@@ -57,4 +57,16 @@ ALTER TABLE config
 ALTER TABLE config
     DROP COLUMN IF EXISTS discord_unregister_on_start;
 
+ALTER TABLE config
+    DROP COLUMN IF EXISTS sentry_sentry_dsn;
+
+ALTER TABLE config
+    DROP COLUMN IF EXISTS sentry_sentry_dsn_web;
+
+ALTER TABLE config
+    DROP COLUMN IF EXISTS sentry_sentry_sample_rate;
+
+ALTER TABLE config
+    DROP COLUMN IF EXISTS sentry_sentry_trace;
+
 COMMIT;

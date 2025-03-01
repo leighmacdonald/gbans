@@ -1,15 +1,9 @@
 /// <reference types="vite/client" />
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import { TanStackRouterVite } from '@tanstack/router-vite-plugin';
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
-
-const CONFIG = {
-    __BUILD_VERSION__: 'v0.7.8'
-};
-
-const mapValues = (o: object, fn: (v: unknown) => unknown) =>
-    Object.fromEntries(Object.entries(o).map(([k, v]) => [k, fn(v)]));
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -17,7 +11,7 @@ export default defineConfig({
     publicDir: 'public',
     build: {
         copyPublicDir: true,
-        //sourcemap: true,
+        sourcemap: true,
         rollupOptions: {
             treeshake: 'recommended',
             output: {
@@ -30,9 +24,6 @@ export default defineConfig({
             }
         }
     },
-
-    // https://vitejs.dev/config/shared-options.html#define
-    define: mapValues(CONFIG, JSON.stringify),
 
     server: {
         open: true,
@@ -85,10 +76,13 @@ export default defineConfig({
         createHtmlPlugin({
             entry: './src/index.tsx',
             template: 'index.html',
-
-            inject: {
-                data: CONFIG
-            }
+            inject: {}
+        }),
+        sentryVitePlugin({
+            telemetry: false,
+            org: 'uncletopia',
+            project: 'frontend',
+            authToken: process.env.SENTRY_AUTH_TOKEN
         })
     ]
 });

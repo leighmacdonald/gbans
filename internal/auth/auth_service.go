@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"regexp"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -152,6 +153,13 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			true)
 
 		ctx.Redirect(302, parsedURL.String())
+
+		sentry.AddBreadcrumb(&sentry.Breadcrumb{
+			Category: "auth",
+			Message:  "User logged in " + person.SteamID.String(),
+			Level:    sentry.LevelWarning,
+		})
+
 		slog.Info("User logged in",
 			slog.String("sid64", sid.String()),
 			slog.String("name", person.PersonaName),
@@ -196,6 +204,16 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{})
+
+		sentry.AddBreadcrumb(&sentry.Breadcrumb{
+			Category: "auth",
+			Message:  "User logged out " + personAuth.SteamID.String(),
+			Level:    sentry.LevelWarning,
+		})
+
+		sentry.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetUser(sentry.User{})
+		})
 	}
 }
 

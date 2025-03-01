@@ -88,7 +88,6 @@ type Config struct {
 	SSH         ConfigSSH         `json:"ssh"`
 	LocalStore  ConfigLocalStore  `json:"local_store"`
 	Exports     ConfigExports     `json:"exports"`
-	Sentry      ConfigSentry      `json:"sentry"`
 	Anticheat   ConfigAnticheat   `json:"anticheat"`
 }
 
@@ -245,13 +244,6 @@ type ConfigDiscord struct {
 	PlayerqueueChannelID    string `json:"playerqueue_channel_id"`
 	ModPingRoleID           string `json:"mod_ping_role_id"`
 	AnticheatChannelID      string `json:"anticheat_channel_id"`
-}
-
-type ConfigSentry struct {
-	SentryDSN        string  `json:"sentry_dsn"`
-	SentryDSNWeb     string  `json:"sentry_dsn_web"`
-	SentryTrace      bool    `json:"sentry_trace"`
-	SentrySampleRate float64 `json:"sentry_sample_rate,string"`
 }
 
 type ConfigLog struct {

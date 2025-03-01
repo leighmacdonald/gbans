@@ -8,11 +8,13 @@ import (
 	"path/filepath"
 
 	"github.com/Depado/ginprom"
+	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/frontend"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	sloggin "github.com/samber/slog-gin"
@@ -45,8 +47,21 @@ func errorHandler() gin.HandlerFunc {
 			var apiError APIError
 			if errors.As(err, &apiError) {
 				abort(ctx, apiError)
+				if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+					hub.WithScope(func(scope *sentry.Scope) {
+						scope.SetExtra("title", apiError.Title)
+						scope.SetExtra("detail", apiError.Detail)
+						hub.CaptureException(apiError)
+					})
+				}
 			} else {
 				abort(ctx, NewAPIError(http.StatusInternalServerError, domain.ErrInternal))
+				if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+					hub.WithScope(func(scope *sentry.Scope) {
+						scope.SetLevel(sentry.LevelWarning)
+						hub.CaptureException(err)
+					})
+				}
 			}
 			args := []any{
 				slog.String("method", ctx.Request.Method),
@@ -185,7 +200,7 @@ func useSloggin(engine *gin.Engine, config domain.Config) {
 	engine.Use(sloggin.NewWithConfig(slog.Default(), logConfig))
 }
 
-func CreateRouter(conf domain.Config, version domain.BuildInfo) (*gin.Engine, error) {
+func CreateRouter(conf domain.Config, version app.BuildInfo) (*gin.Engine, error) {
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
 	engine.Use(recoveryHandler())
@@ -195,7 +210,7 @@ func CreateRouter(conf domain.Config, version domain.BuildInfo) (*gin.Engine, er
 		useSloggin(engine, conf)
 	}
 
-	if conf.Sentry.SentryDSN != "" {
+	if app.SentryDSN != "" {
 		useSentry(engine, version.BuildVersion)
 	}
 
