@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
@@ -14,7 +15,7 @@ type configHandler struct {
 	auth   domain.AuthUsecase
 }
 
-func NewHandler(engine *gin.Engine, cu domain.ConfigUsecase, auth domain.AuthUsecase, version domain.BuildInfo) {
+func NewHandler(engine *gin.Engine, cu domain.ConfigUsecase, auth domain.AuthUsecase, version app.BuildInfo) {
 	handler := configHandler{config: cu, auth: auth}
 	engine.GET("/api/info", handler.onAppInfo(version))
 	engine.GET("/api/changelog", handler.onChangelog())
@@ -51,7 +52,7 @@ func (c configHandler) onAPIPutConfig() gin.HandlerFunc {
 	}
 }
 
-func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
+func (c configHandler) onAppInfo(buildInfo app.BuildInfo) gin.HandlerFunc {
 	type appInfo struct {
 		SiteName           string `json:"site_name"`
 		AssetURL           string `json:"asset_url"`

@@ -204,16 +204,26 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			conf := configUsecase.Config()
 
-			if conf.Sentry.SentryDSN != "" {
-				sentryClient, err := log.NewSentryClient(conf.Sentry.SentryDSN, conf.Sentry.SentryTrace, conf.Sentry.SentrySampleRate, app.BuildVersion)
-				if err != nil {
-					slog.Error("Failed to setup sentry client")
-				} else {
-					defer sentryClient.Flush(2 * time.Second)
+			// This is normally set by build time flags, but can be overwritten by the env var.
+			if app.SentryDSN == "" {
+				if value, found := os.LookupEnv("SENTRY_DSN"); found && value != "" {
+					app.SentryDSN = value
 				}
 			}
 
-			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
+			if app.SentryDSN != "" {
+				sentryClient, err := log.NewSentryClient(app.SentryDSN, true, 1.0, app.BuildVersion, string(conf.General.Mode))
+				if err != nil {
+					slog.Error("Failed to setup sentry client")
+				} else {
+					slog.Info("Sentry.io support is enabled.")
+					defer sentryClient.Flush(2 * time.Second)
+				}
+			} else {
+				slog.Info("Sentry.io support is disabled. To enable at runtime, set SENTRY_DSN.")
+			}
+
+			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level, app.SentryDSN != "")
 			defer logCloser()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()

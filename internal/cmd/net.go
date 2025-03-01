@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -61,7 +62,7 @@ func netUpdateCmd() *cobra.Command {
 			}
 
 			conf := configUsecase.Config()
-			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
+			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level, app.SentryDSN != "")
 			defer logCloser()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()

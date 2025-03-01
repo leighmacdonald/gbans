@@ -238,7 +238,7 @@ func TestMain(m *testing.M) {
 }
 
 func testRouter() *gin.Engine {
-	router, errRouter := httphelper.CreateRouter(configUC.Config(), domain.BuildInfo{
+	router, errRouter := httphelper.CreateRouter(configUC.Config(), app.BuildInfo{
 		BuildVersion: "master",
 		Commit:       "",
 		Date:         time.Now().Format(time.DateTime),
@@ -474,6 +474,5 @@ func makeTestConfig(dsn string) domain.Config {
 		},
 		LocalStore: domain.ConfigLocalStore{},
 		Exports:    domain.ConfigExports{},
-		Sentry:     domain.ConfigSentry{},
 	}
 }

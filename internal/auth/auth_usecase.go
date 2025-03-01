@@ -14,6 +14,7 @@ import (
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -123,6 +124,14 @@ func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
+				sentry.ConfigureScope(func(scope *sentry.Scope) {
+					scope.SetUser(sentry.User{
+						ID:        loggedInPerson.SteamID.String(),
+						IPAddress: ctx.ClientIP(),
+						Username:  loggedInPerson.PersonaName,
+					})
+				})
+
 				if level > loggedInPerson.PermissionLevel {
 					ctx.AbortWithStatus(http.StatusForbidden)
 
@@ -152,7 +161,7 @@ func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
 
 				ctx.Set(ctxKeyUserProfile, profile)
 
-				if u.config.Config().Sentry.SentryDSN != "" {
+				if app.SentryDSN != "" {
 					if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 						hub.WithScope(func(scope *sentry.Scope) {
 							scope.SetUser(sentry.User{
@@ -246,7 +255,7 @@ func (u *auth) MiddlewareWS(level domain.Privilege) gin.HandlerFunc {
 
 				ctx.Set(ctxKeyUserProfile, profile)
 
-				if u.config.Config().Sentry.SentryDSN != "" {
+				if app.SentryDSN != "" {
 					if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 						hub.WithScope(func(scope *sentry.Scope) {
 							scope.SetUser(sentry.User{
@@ -302,7 +311,7 @@ func (u *auth) MiddlewareServer() gin.HandlerFunc {
 
 		ctx.Set("server_id", server.ServerID)
 
-		if u.config.Config().Sentry.SentryDSN != "" {
+		if app.SentryDSN != "" {
 			if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 				hub.WithScope(func(scope *sentry.Scope) {
 					scope.SetUser(sentry.User{

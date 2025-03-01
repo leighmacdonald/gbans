@@ -15,6 +15,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.8
 	github.com/getsentry/sentry-go v0.31.1
 	github.com/getsentry/sentry-go/gin v0.31.1
+	github.com/getsentry/sentry-go/slog v0.31.1
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-contrib/pprof v1.5.2
 	github.com/gin-contrib/static v1.1.3
@@ -48,6 +49,7 @@ require (
 	github.com/riverqueue/river/rivertype v0.15.0
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/samber/slog-gin v1.14.0
+	github.com/samber/slog-multi v1.4.0
 	github.com/sergi/go-diff v1.3.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
@@ -146,6 +148,7 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sagikazarmark/locafero v0.7.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
+	github.com/samber/lo v1.49.1 // indirect
 	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect

@@ -1,44 +1,13 @@
 import { PropsWithChildren, StrictMode, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { createRouter, RouterProvider } from '@tanstack/react-router';
+import { AnyRouter, RouterProvider } from '@tanstack/react-router';
 import { isBefore, parseISO } from 'date-fns';
 import { defaultAvatarHash, PermissionLevel } from './api';
 import { appInfoDetail, getAppInfo } from './api/app.ts';
 import { AuthProvider, profileKey } from './auth.tsx';
-import { ErrorDetails } from './component/ErrorDetails.tsx';
-import { LoadingPlaceholder } from './component/LoadingPlaceholder.tsx';
 import { UseAppInfoCtx } from './contexts/AppInfoCtx.ts';
-import { AppError, ErrorCode } from './error.tsx';
 import { useAuth } from './hooks/useAuth.ts';
-import { routeTree } from './routeTree.gen.ts';
 import { logErr } from './util/errors.ts';
-
-const queryClient = new QueryClient();
-
-// Create a new router instance
-const router = createRouter({
-    routeTree,
-    defaultPreload: 'intent',
-    context: {
-        auth: undefined!,
-        queryClient
-    },
-    defaultPendingComponent: LoadingPlaceholder,
-    defaultErrorComponent: () => {
-        return <ErrorDetails error={new AppError(ErrorCode.Unknown, 'Unexpected error')} />;
-    },
-    // Since we're using React Query, we don't want loader calls to ever be stale
-    // This will ensure that the loader is always called when the route is preloaded or visited
-    defaultPreloadStaleTime: 0
-});
-
-// Register the router instance for type safety
-declare module '@tanstack/react-router' {
-    // noinspection JSUnusedGlobalSymbols
-    interface Register {
-        router: typeof router;
-    }
-}
 
 const loadProfile = () => {
     const defaultProfile = {
@@ -65,7 +34,7 @@ const loadProfile = () => {
     }
 };
 
-export function App() {
+export function App({ queryClient, router }: { queryClient: QueryClient; router: AnyRouter }) {
     const [profile, setProfile] = useState(loadProfile());
 
     return (
@@ -73,7 +42,7 @@ export function App() {
             <QueryClientProvider client={queryClient}>
                 <AppInfoProvider>
                     <StrictMode>
-                        <InnerApp />
+                        <InnerApp router={router} />
                     </StrictMode>
                 </AppInfoProvider>
             </QueryClientProvider>
@@ -81,7 +50,7 @@ export function App() {
     );
 }
 
-const InnerApp = () => {
+const InnerApp = ({ router }: { router: AnyRouter }) => {
     const auth = useAuth();
 
     return <RouterProvider defaultPreload={'intent'} router={router} context={{ auth }} />;

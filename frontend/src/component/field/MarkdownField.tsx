@@ -29,10 +29,11 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
+import * as Sentry from '@sentry/react';
 import { apiSaveAsset, assetURL } from '../../api/media.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors.ts';
-import { ErrorBoundary } from '../ErrorBoundary.tsx';
+import { errorDialog } from '../ErrorBoundary.tsx';
 import './MarkdownField.css';
 import { FieldProps } from './common.ts';
 
@@ -55,7 +56,7 @@ const imageUploadHandler = async (media: File) => {
 export const mdEditorRef = createRef<MDXEditorMethods>();
 
 /**
- * Uses MDXEditor for markdown formatting wysiwyg editing. https://mdxeditor.dev/editor/docs/getting-started
+ * Uses MDXEditor for Markdown formatting wysiwyg editing. https://mdxeditor.dev/editor/docs/getting-started
  *
  * To clear it after a successful submission: mdEditorRef.current?.setMarkdown('');
  *
@@ -92,7 +93,7 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
 
     return (
         <Paper>
-            <ErrorBoundary>
+            <Sentry.ErrorBoundary showDialog={true} fallback={errorDialog}>
                 <MDXEditor
                     contentEditableClassName={'md-content-editable'}
                     className={classes}
@@ -133,7 +134,7 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
                     ref={mdEditorRef}
                 />
                 {errInfo}
-            </ErrorBoundary>
+            </Sentry.ErrorBoundary>
         </Paper>
     );
 };

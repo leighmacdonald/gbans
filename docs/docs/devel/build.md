@@ -24,8 +24,8 @@ under the `logging.sentry_dsn_web` key.
 For frontend integration you much also create a new auth token and save it under `frontend/.env.sentry-build-plugin` along
 with the `ORG` and `PROJECT` you have configured in sentry.
 ```shell
-SENTRY_ORG="<YOUR_ORG>"
-SENTRY_PROJECT="<YOUR_PROJECT>"
+SENTRY_ORG="<YOUR_ORG_SLUG>"
+SENTRY_PROJECT="<YOUR_PROJECT_SLUG>"
 SENTRY_AUTH_TOKEN=<YOUR_TOKEN>
 ```
 

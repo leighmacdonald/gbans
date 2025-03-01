@@ -70,11 +70,6 @@ func TestConfig(t *testing.T) {
 	config.Discord.KickLogChannelID += "x"
 	config.Discord.ModPingRoleID += "x"
 
-	config.Sentry.SentryDSN += "x"
-	config.Sentry.SentryDSN += "x"
-	config.Sentry.SentryTrace = !config.Sentry.SentryTrace
-	config.Sentry.SentrySampleRate *= 2
-
 	config.Filters.Enabled = !config.Filters.Enabled
 	config.Filters.WarningTimeout *= 2
 	config.Filters.WarningLimit *= 2
