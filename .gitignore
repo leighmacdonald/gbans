@@ -52,3 +52,4 @@ parse_demo
 .cache
 /assets/
 /frontend/.env.*
+/gbans

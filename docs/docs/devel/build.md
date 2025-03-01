@@ -12,24 +12,65 @@ easy to use web interface.
 We take the sentry recommended approach of splitting the backend and frontend components of 
 the project into distinct sentry projects.  
 
-### Backend
+If you do not set `SENTRY_DSN/SENTRY_AUTH_TOKEN` env vars when building, then support will be effectively disabled.
 
-TODO
+### Backend Configuration
 
-### Frontend
+When building you should set `SENTRY_DSN=<YOUR_SENTRY_DSN>` when calling goreleaser to embed the value into 
+the binary. If you prefer to instead set this at runtime you can also set the same env var when running the 
+gbans binary.
 
-After creating your backend project you can copy and paste the url shown into `gbans.yml`
-under the `logging.sentry_dsn_web` key.
+### Frontend Configuration
 
-For frontend integration you much also create a new auth token and save it under `frontend/.env.sentry-build-plugin` along
-with the `ORG` and `PROJECT` you have configured in sentry.
-```shell
-SENTRY_ORG="<YOUR_ORG_SLUG>"
-SENTRY_PROJECT="<YOUR_PROJECT_SLUG>"
-SENTRY_AUTH_TOKEN=<YOUR_TOKEN>
+For frontend integration you can add your `SENTRY_*` values to `frontend/.env.sentry-build-plugin` or otherwise
+set them when calling `make frontend`. This will embed them into the sentry plugin.
+
+```
+SENTRY_AUTH_TOKEN="<SENTRY_AUTH_TOKEN>"
+SENTRY_URL="<SENTRY_URL>"
+SENTRY_ORG="<SENTRY_ORG>"
+SENRTY_PROJECT="<YOUR_PROJECT_SLUG>"
 ```
 
-You can find out more details under their [webpack docs](https://docs.sentry.io/platforms/javascript/guides/react/sourcemaps/uploading/webpack/)
+You must also set the values which are embedded via vite, these must start with `VITE_*` to be embedded, they will
+otherwise be ignored. 
+
+```shell
+VITE_BUILD_VERSION="<VITE_BUILD_VERSION>"
+VITE_SENTRY_DSN="<VITE_SENTRY_DSN>"
+```
+
+## Building (Production)
+
+We use [goreleaser](https://goreleaser.com/) for building our releases, however this assumes some things such as 
+having a `GITHUB_TOKEN` via running under github-actions.
+
+    goreleaser release --clean
+    ./dist/gbans_linux_amd64_v1/gbans
+
+Alternatively you can manually build the components without goreleaser.
+
+    make frontend
+    go build -tags release -ldflags="-s -w \
+        -X 'github.com/leighmacdonald/gbans/internal/app.SentryDSN=master' \
+        -X 'github.com/leighmacdonald/gbans/internal/app.BuildVersion="master"' \
+        -X 'github.com/leighmacdonald/gbans/internal/app.BuildCommit="master"' \
+        -X 'github.com/leighmacdonald/gbans/internal/app.BuildDate=""' \
+        -X 'main.builtBy=""' "
+    ./gbans
+
+
+Production releases will embed the frontend assets into the binary so you need to ensure that you build that first.
+
+## Building (Development)
+
+The development build is exactly the same except we don't want to specify the `release` tag. It's also ok to simplify the
+build command to the standard:
+
+    go build
+
+This build does not serve any files unlike the production build and instead assumes you are using 
+the `pnpm run serve` command to start the vite live-reload development server (`vite --open`).
 
 
 ## Creating New Release
@@ -38,3 +79,4 @@ The `release.sh` script handles automating bumping version numbers, tagging the 
 
     ./release.sh 0.1.2 # What version to set for the release
 
+This is designed to be run from ci, like github-actions.
