@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiNewsCreate, apiNewsSave, NewsEntry } from '../../api/news.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -39,7 +38,13 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                title: z.string().min(5, 'Min length 5'),
+                body_md: z.string().min(10, 'Min length 10'),
+                is_published: z.boolean()
+            })
+        },
         defaultValues: {
             title: entry?.title ?? '',
             body_md: entry?.body_md ?? '',
@@ -72,9 +77,6 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
                         <Grid xs={12}>
                             <Field
                                 name={'body_md'}
-                                validators={{
-                                    onChange: z.string().min(10).default('')
-                                }}
                                 children={(props) => {
                                     return <MarkdownField {...props} label={'Body'} />;
                                 }}

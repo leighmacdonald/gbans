@@ -14,7 +14,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansGroups, BanReason, BanReasons, GroupBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -31,7 +30,7 @@ import { ModalBanGroup, ModalUnbanGroup } from '../component/modal';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
-import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const sourceIDValidator = z.string().optional();
 const targetIDValidator = z.string().optional();
@@ -44,6 +43,7 @@ const groupIDValidator = z
         }
         return arg?.match(/^\d+$/);
     }, 'Invalid group ID');
+
 const deletedValidator = z.boolean().optional();
 
 const banGroupSearchSchema = z.object({
@@ -82,9 +82,19 @@ function AdminBanGroup() {
             setColumnFilters(initColumnFilter(value));
             await navigate({ to: '/admin/ban/group', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: banGroupSearchSchema
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                source_id: makeValidateSteamIDCallback(),
+                target_id: makeValidateSteamIDCallback(),
+                group_id: z.string().refine((arg) => {
+                    if (emptyOrNullString(arg)) {
+                        return true;
+                    }
+                    return arg?.match(/^\d+$/);
+                }, 'Invalid group ID'),
+                deleted: z.boolean()
+            })
         },
         defaultValues: {
             source_id: search.source_id ?? '',
@@ -136,7 +146,6 @@ function AdminBanGroup() {
                                 <Grid xs={6} md={3}>
                                     <Field
                                         name={'source_id'}
-                                        validators={makeSteamidValidatorsOptional()}
                                         children={(props) => {
                                             return (
                                                 <TextFieldSimple
@@ -152,7 +161,6 @@ function AdminBanGroup() {
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'target_id'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return (
                                             <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
@@ -164,9 +172,6 @@ function AdminBanGroup() {
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'group_id'}
-                                    validators={{
-                                        onChange: groupIDValidator
-                                    }}
                                     children={(props) => {
                                         return <TextFieldSimple {...props} label={'Group ID'} fullwidth={true} />;
                                     }}

@@ -22,7 +22,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiDiscordLogout,
@@ -180,7 +179,11 @@ const GeneralSection = ({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                stats_hidden: z.boolean()
+            })
+        },
         defaultValues: {
             stats_hidden: settings.stats_hidden
         }
@@ -309,7 +312,11 @@ const GameplaySection = ({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                center_projectiles: z.boolean()
+            })
+        },
         defaultValues: {
             center_projectiles: settings.center_projectiles ?? false
         }
@@ -328,9 +335,6 @@ const GameplaySection = ({
                     <Grid xs={12}>
                         <Field
                             name={'center_projectiles'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(props) => {
                                 return <CheckboxSimple {...props} label={'Use center projectiles'} />;
                             }}
@@ -365,7 +369,12 @@ const ForumSection = ({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                forum_signature: z.string(),
+                forum_profile_messages: z.boolean()
+            })
+        },
         defaultValues: {
             forum_signature: settings.forum_signature,
             forum_profile_messages: settings.forum_profile_messages

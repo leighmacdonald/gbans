@@ -7,7 +7,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
+import { z } from 'zod';
 import { apiDeleteThread, apiUpdateThread, ForumThread } from '../../api/forum';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
@@ -65,7 +65,13 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
         onSubmit: async ({ value }) => {
             mutation.mutate({ ...value });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                title: z.string().min(5, 'Min length of 5'),
+                sticky: z.boolean(),
+                locked: z.boolean()
+            })
+        },
         defaultValues: {
             title: thread.title,
             sticky: thread.sticky,

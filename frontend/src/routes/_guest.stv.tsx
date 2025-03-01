@@ -16,7 +16,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetDemos, apiGetServers, DemoFile, ServerSimple } from '../api';
 import { ButtonLink } from '../component/ButtonLink.tsx';
@@ -30,7 +29,7 @@ import { ensureFeatureEnabled } from '../util/features.ts';
 import { initColumnFilter, initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
 import { humanFileSize } from '../util/text.tsx';
 import { renderDateTime } from '../util/time.ts';
-import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const demosSchema = z.object({
     ...makeCommonTableSearchSchema(['demo_id', 'server_id', 'created_on', 'map_name']),
@@ -85,9 +84,18 @@ function STV() {
             setColumnFilters(initColumnFilter(value));
             await navigate({ search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: demosSchema
+            onChange: z.object({
+                map_name: z.string(),
+                server_id: z.number({ coerce: true }),
+                stats: z.string()
+            }),
+            onChangeAsyncDebounceMs: 200,
+            onChangeAsync: z.object({
+                map_name: z.string(),
+                server_id: z.number({ coerce: true }),
+                stats: makeValidateSteamIDCallback()
+            })
         },
         defaultValues: {
             map_name: search.map_name ?? '',
@@ -259,7 +267,6 @@ function STV() {
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'stats'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return <TextFieldSimple {...props} label={'Steam ID'} fullwidth={true} />;
                                     }}

@@ -3,7 +3,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiDeleteCIDRBan } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -39,7 +38,11 @@ export const UnbanCIDRModal = NiceModal.create(
             onSubmit: async ({ value }) => {
                 mutation.mutate(value.unban_reason);
             },
-            validatorAdapter: zodValidator,
+            validators: {
+                onChange: z.object({
+                    unban_reason: z.string().min(5, 'Min length 5')
+                })
+            },
             defaultValues: {
                 unban_reason: ''
             }
@@ -61,9 +64,6 @@ export const UnbanCIDRModal = NiceModal.create(
                             <Grid xs={12}>
                                 <Field
                                     name={'unban_reason'}
-                                    validators={{
-                                        onChange: z.string().min(5)
-                                    }}
                                     children={(props) => {
                                         return <TextFieldSimple {...props} label={'Unban Reason'} />;
                                     }}

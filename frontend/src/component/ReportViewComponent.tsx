@@ -21,7 +21,6 @@ import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiCreateReportMessage,
@@ -129,7 +128,11 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
         onSubmit: async ({ value }) => {
             createMessageMutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                body_md: z.string().min(2)
+            })
+        },
         defaultValues: {
             body_md: ''
         }
@@ -312,9 +315,6 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                     <Grid xs={12}>
                                         <Field
                                             name={'body_md'}
-                                            validators={{
-                                                onChange: z.string().min(2)
-                                            }}
                                             children={(props) => {
                                                 return <MarkdownField {...props} label={'Message'} fullwidth={true} />;
                                             }}

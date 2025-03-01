@@ -101,7 +101,7 @@ function SpeedrunsOverall() {
                                     title={map_name}
                                     iconLeft={<EmojiEventsIcon />}
                                     buttons={[
-                                        <ButtonGroup key={'buttns'}>
+                                        <ButtonGroup key={'buttons'}>
                                             <ButtonLink
                                                 variant={'contained'}
                                                 color={'success'}

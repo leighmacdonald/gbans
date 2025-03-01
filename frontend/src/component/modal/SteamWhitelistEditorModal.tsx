@@ -4,10 +4,10 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
+import { z } from 'zod';
 import { apiCreateWhitelistSteam } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
+import { makeValidateSteamIDCallback } from '../../util/validator/makeValidateSteamIDCallback.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { SteamIDField } from '../field/SteamIDField.tsx';
@@ -36,7 +36,12 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                steam_id: makeValidateSteamIDCallback()
+            })
+        },
         defaultValues: {
             steam_id: ''
         }
@@ -58,7 +63,6 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
                         <Grid xs={12}>
                             <Field
                                 name={'steam_id'}
-                                validators={makeSteamidValidators()}
                                 children={(props) => {
                                     return <SteamIDField {...props} label={'Steam ID'} fullwidth />;
                                 }}

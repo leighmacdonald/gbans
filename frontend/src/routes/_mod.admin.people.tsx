@@ -10,7 +10,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { fromUnixTime } from 'date-fns';
 import { z } from 'zod';
 import { apiSearchPeople, communityVisibilityState, PermissionLevel, permissionLevelString, Person } from '../api';
@@ -27,14 +26,13 @@ import { ModalPersonEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate, renderDateTime } from '../util/time.ts';
-import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const peopleSearchSchema = z.object({
     ...commonTableSearchSchema,
     sortColumn: z.enum(['vac_bans', 'steam_id', 'timecreated', 'personaname', 'created_on']).optional(),
-    steam_id: z.string().optional(),
-    personaname: z.string().optional(),
-    staff_only: z.boolean().optional()
+    steam_id: z.string().catch(''),
+    personaname: z.string().catch(''),
+    staff_only: z.boolean().catch(false)
 });
 
 export const Route = createFileRoute('/_mod/admin/people')({
@@ -79,9 +77,12 @@ function AdminPeople() {
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/people', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: peopleSearchSchema
+            onChange: z.object({
+                steam_id: z.string(),
+                personaname: z.string(),
+                staff_only: z.boolean()
+            })
         },
         defaultValues: {
             steam_id: steam_id ?? '',
@@ -93,7 +94,7 @@ function AdminPeople() {
     const clear = async () => {
         await navigate({
             to: '/admin/people',
-            search: (prev) => ({ ...prev, steam_id: undefined, personaname: undefined })
+            search: (prev) => ({ ...prev, steam_id: '', personaname: '' })
         });
     };
 
@@ -113,7 +114,6 @@ function AdminPeople() {
                             <Grid xs={6} md={4}>
                                 <Field
                                     name={'steam_id'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return <SteamIDField {...props} label={'Steam ID'} fullwidth={true} />;
                                     }}

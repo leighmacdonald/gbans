@@ -43,15 +43,6 @@ const chatlogsSchema = z.object({
     autoRefresh: z.number().optional()
 });
 
-type chatLogForm = {
-    server_id: number;
-    persona_name: string;
-    body: string;
-    steam_id: string;
-    flagged_only: boolean;
-    autoRefresh: number;
-};
-
 export const Route = createFileRoute('/_auth/chatlogs')({
     component: ChatLogs,
     beforeLoad: () => {
@@ -102,7 +93,7 @@ function ChatLogs() {
         refetchInterval: search.autoRefresh
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm<chatLogForm>({
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             await navigate({ to: '/chatlogs', search: (prev) => ({ ...prev, ...value }) });
         },
@@ -158,15 +149,8 @@ function ChatLogs() {
                                 <Grid xs={6} md={3}>
                                     <Field
                                         name={'steam_id'}
-                                        children={({ state, handleChange, handleBlur }) => {
-                                            return (
-                                                <SteamIDField
-                                                    state={state}
-                                                    handleBlur={handleBlur}
-                                                    handleChange={handleChange}
-                                                    fullwidth={true}
-                                                />
-                                            );
+                                        children={(props) => {
+                                            return <SteamIDField {...props} fullwidth={true} />;
                                         }}
                                     />
                                 </Grid>

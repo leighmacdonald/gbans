@@ -30,6 +30,7 @@ import { ModalBanCIDR, ModalUnbanCIDR } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const banCIDRSearchSchema = z.object({
     ...makeCommonTableSearchSchema([
@@ -80,6 +81,15 @@ function AdminBanCIDR() {
         onSubmit: async ({ value }) => {
             setColumnFilters(initColumnFilter(value));
             await navigate({ to: '/admin/ban/cidr', search: (prev) => ({ ...prev, ...value }) });
+        },
+        validators: {
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                source_id: makeValidateSteamIDCallback(),
+                target_id: makeValidateSteamIDCallback(),
+                cidr: z.string(),
+                deleted: z.boolean()
+            })
         },
         defaultValues: {
             source_id: search.source_id ?? '',

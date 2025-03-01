@@ -5,7 +5,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import {
@@ -39,20 +38,6 @@ type ContestEditorFormValues = {
     min_permission_level: PermissionLevel;
     down_votes: boolean;
 };
-
-// const validationSchema = yup.object({
-//     title: minStringValidator('Title', 4),
-//     description: minStringValidator('Description', 1),
-//     public: boolDefinedValidator('Public'),
-//     date_start: dateDefinedValidator('date_start'),
-//     date_end: dateAfterValidator('date_start', 'End date'),
-//     max_submissions: numberValidator('Submissions'),
-//     media_types: mimeTypesValidator(),
-//     voting: boolDefinedValidator('Voting'),
-//     hide_submissions: boolDefinedValidator('Hide Submissions'),
-//     down_votes: boolDefinedValidator('Down votes'),
-//     min_permission_level: permissionValidator()
-// });
 
 export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest }) => {
     const modal = useModal();
@@ -91,7 +76,30 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                date_start: z.string(),
+                date_end: z.string(),
+                description: z.string().min(5),
+                hide_submissions: z.boolean(),
+                title: z.string().min(5),
+                voting: z.boolean(),
+                down_votes: z.boolean(),
+                max_submissions: z.string().transform(numberStringValidator(0, 100)),
+                media_types: z.string().refine((arg) => {
+                    if (arg == '') {
+                        return true;
+                    }
+
+                    const parts = arg?.split(',');
+                    const matches = parts.filter((p) => p.match(/^\S+\/\S+$/));
+                    return matches.length == parts.length;
+                }),
+                public: z.boolean(),
+                min_permission_level: z.nativeEnum(PermissionLevel),
+                deleted: z.boolean()
+            })
+        },
         defaultValues: {
             date_start: contest?.date_start.toISOString() ?? '',
             date_end: contest ? contest.date_end.toISOString() : '',
@@ -104,10 +112,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
             media_types: contest ? contest.media_types : '',
             public: contest ? contest.public : true,
             min_permission_level: contest ? contest.min_permission_level : PermissionLevel.User,
-            deleted: contest ? contest.deleted : false,
-            num_entries: 0,
-            updated_on: new Date(),
-            created_on: new Date()
+            deleted: contest ? contest.deleted : false
         }
     });
 
@@ -129,9 +134,6 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                         <Grid xs={12}>
                             <Field
                                 name={'title'}
-                                validators={{
-                                    onChange: z.string().min(5)
-                                }}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'Title'} />;
                                 }}
@@ -140,9 +142,6 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                         <Grid xs={12}>
                             <Field
                                 name={'description'}
-                                validators={{
-                                    onChange: z.string().min(5)
-                                }}
                                 children={(props) => {
                                     return (
                                         <MarkdownField {...props} label={'Description'} multiline={true} rows={10} />
@@ -153,9 +152,6 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                         <Grid xs={4}>
                             <Field
                                 name={'public'}
-                                validators={{
-                                    onChange: z.boolean()
-                                }}
                                 children={(props) => {
                                     return <CheckboxSimple {...props} label={'Public'} />;
                                 }}
@@ -164,9 +160,6 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                         <Grid xs={4}>
                             <Field
                                 name={'hide_submissions'}
-                                validators={{
-                                    onChange: z.boolean()
-                                }}
                                 children={(props) => {
                                     return <CheckboxSimple {...props} label={'Hide Submissions'} />;
                                 }}
@@ -208,9 +201,6 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                         <Grid xs={6}>
                             <Field
                                 name={'voting'}
-                                validators={{
-                                    onChange: z.boolean()
-                                }}
                                 children={(props) => {
                                     return <CheckboxSimple {...props} label={'Voting Enabled'} />;
                                 }}
@@ -219,11 +209,8 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                         <Grid xs={6}>
                             <Field
                                 name={'down_votes'}
-                                validators={{
-                                    onChange: z.boolean()
-                                }}
                                 children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Downvotes Enabled'} />;
+                                    return <CheckboxSimple {...props} label={'Down Votes Enabled'} />;
                                 }}
                             />
                         </Grid>
@@ -246,17 +233,6 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                         <Grid xs={6}>
                             <Field
                                 name={'media_types'}
-                                validators={{
-                                    onChange: z.string().refine((arg) => {
-                                        if (arg == '') {
-                                            return true;
-                                        }
-
-                                        const parts = arg?.split(',');
-                                        const matches = parts.filter((p) => p.match(/^\S+\/\S+$/));
-                                        return matches.length == parts.length;
-                                    })
-                                }}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'Allowed Mime Types'} />;
                                 }}

@@ -68,26 +68,6 @@ export const Buttons = ({
                         {...navigateOpts}
                         key={'clear-button'}
                         type="button"
-                        // onClick={async () => {
-                        //     if (onClear) {
-                        //         return await onClear();
-                        //     }
-                        //     await navigate({
-                        //         ...navigateOpts,
-                        //         search: (prev) => {
-                        //             return {
-                        //                 ...prev,
-                        //                 page: 0,
-                        //                 steam_id: '',
-                        //                 body: '',
-                        //                 persona_name: '',
-                        //                 server_id: 0
-                        //             };
-                        //         }
-                        //     });
-                        //     // TODO fix this hackjob
-                        //     window.location.reload();
-                        // }}
                         variant={'contained'}
                         color={'error'}
                         startIcon={<ClearIcon />}

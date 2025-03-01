@@ -6,10 +6,10 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiQueueMessagesDelete, ChatLog } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
@@ -38,7 +38,11 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                 count: Number(value.count)
             });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                count: z.string().transform(numberStringValidator(1, 10000))
+            })
+        },
         defaultValues: {
             count: '1'
         }
@@ -68,12 +72,6 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                             <Grid xs={8}>
                                 <Field
                                     name={'count'}
-                                    validators={{
-                                        onChange: z
-                                            .number({ coerce: true, message: 'Must enter positive number' })
-                                            .min(1)
-                                            .max(10000)
-                                    }}
                                     children={(props) => {
                                         return (
                                             <TextFieldSimple

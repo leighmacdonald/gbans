@@ -3,7 +3,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
+import { z } from 'zod';
 import { apiCreateForumCategory, apiSaveForumCategory, ForumCategory } from '../../api/forum.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Buttons } from '../field/Buttons.tsx';
@@ -52,7 +52,13 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
         onSubmit: async ({ value }) => {
             mutation.mutate({ ...value });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                title: z.string().min(1),
+                description: z.string().min(1),
+                ordering: z.string().min(1)
+            })
+        },
         defaultValues: {
             title: category?.title ?? '',
             description: category?.description ?? '',
