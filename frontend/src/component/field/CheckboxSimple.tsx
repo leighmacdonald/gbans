@@ -1,42 +1,16 @@
-import Checkbox from '@mui/material/Checkbox';
+import Checkbox, { CheckboxProps } from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
-import { Updater } from '@tanstack/react-form';
 
-type Props<T = boolean> = {
+type Props = {
     disabled?: boolean;
     readonly label?: string;
-    checked?: boolean;
-    handleChange: (updater: Updater<T>) => void;
-    handleBlur: () => void;
-    readonly fullwidth?: boolean;
-    onChange?: (value: T) => void;
-    multiline?: boolean;
-    rows?: number;
-    placeholder?: string;
-    isValidating?: boolean;
-    isTouched?: boolean;
 };
 
-export const CheckboxSimple = ({ handleBlur, handleChange, checked, label, onChange, disabled = false }: Props) => {
+export const CheckboxSimple = (props: Props & CheckboxProps) => {
     return (
         <FormGroup>
-            <FormControlLabel
-                disabled={disabled}
-                control={
-                    <Checkbox
-                        checked={checked}
-                        onBlur={handleBlur}
-                        onChange={(_, v) => {
-                            handleChange(v);
-                            if (onChange) {
-                                onChange(v);
-                            }
-                        }}
-                    />
-                }
-                label={label}
-            />
+            <FormControlLabel disabled={props.disabled} control={<Checkbox {...props} />} label={props.label} />
         </FormGroup>
     );
 };

@@ -13,4 +13,5 @@ export type FieldProps<T = string> = {
     placeholder?: string;
     isValidating?: boolean;
     isTouched?: boolean;
+    errorText?: string;
 };

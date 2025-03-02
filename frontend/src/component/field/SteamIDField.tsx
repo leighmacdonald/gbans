@@ -28,7 +28,7 @@ export const SteamIDField = ({
             defaultValue={defaultValue}
             onChange={(e) => handleChange(e.target.value)}
             onBlur={handleBlur}
-            variant="outlined"
+            variant="filled"
             error={error}
             helperText={helperText}
             InputProps={{

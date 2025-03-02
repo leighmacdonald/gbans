@@ -155,6 +155,7 @@ export const BanSteamModal = NiceModal.create(
                                         return (
                                             <SteamIDField
                                                 {...props}
+                                                defaultValue={props.state.value}
                                                 label={'Target Steam ID'}
                                                 fullwidth={true}
                                                 disabled={Boolean(existing?.ban_id)}
@@ -172,6 +173,7 @@ export const BanSteamModal = NiceModal.create(
                                                 {...props}
                                                 label={'Ban Action Type'}
                                                 fullwidth={true}
+                                                defaultValue={props.state.value}
                                                 items={BanTypeCollection}
                                                 renderMenu={(bt) => {
                                                     return (
@@ -194,6 +196,7 @@ export const BanSteamModal = NiceModal.create(
                                                 {...props}
                                                 label={'Reason'}
                                                 fullwidth={true}
+                                                defaultValue={props.state.value}
                                                 items={banReasonsCollection}
                                                 renderMenu={(br) => {
                                                     return (
@@ -210,31 +213,44 @@ export const BanSteamModal = NiceModal.create(
                             <Grid xs={12}>
                                 <Field
                                     name={'reason_text'}
-                                    validators={{}}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Custom Ban Reason'} />;
+                                        return (
+                                            <TextFieldSimple
+                                                {...props}
+                                                defaultValue={props.state.value}
+                                                label={'Custom Ban Reason'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
                             <Grid xs={6}>
                                 <Field
                                     name={'include_friends'}
-                                    validators={{
-                                        onChange: z.boolean()
-                                    }}
                                     children={(props) => {
-                                        return <CheckboxSimple {...props} label={'Include Friends'} />;
+                                        return (
+                                            <CheckboxSimple
+                                                onChange={(e) => props.handleChange(e.target.checked)}
+                                                onBlur={props.handleBlur}
+                                                checked={props.state.value}
+                                                label={'Include Friends'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
                             <Grid xs={6}>
                                 <Field
                                     name={'evade_ok'}
-                                    validators={{
-                                        onChange: z.boolean()
-                                    }}
                                     children={(props) => {
-                                        return <CheckboxSimple {...props} label={'IP Evading Allowed'} />;
+                                        return (
+                                            <CheckboxSimple
+                                                onChange={(e) => props.handleChange(e.target.checked)}
+                                                onBlur={props.handleBlur}
+                                                checked={props.state.value}
+                                                label={'IP Evading Allowed'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -242,9 +258,6 @@ export const BanSteamModal = NiceModal.create(
                             <Grid xs={6}>
                                 <Field
                                     name={'duration'}
-                                    validators={{
-                                        onChange: z.nativeEnum(Duration)
-                                    }}
                                     children={(props) => {
                                         return (
                                             <SelectFieldSimple
@@ -252,6 +265,7 @@ export const BanSteamModal = NiceModal.create(
                                                 label={'Duration'}
                                                 fullwidth={true}
                                                 items={DurationCollection}
+                                                defaultValue={props.state.value}
                                                 renderMenu={(du) => {
                                                     return (
                                                         <MenuItem value={du} key={`du-${du}`}>
@@ -269,7 +283,13 @@ export const BanSteamModal = NiceModal.create(
                                 <Field
                                     name={'duration_custom'}
                                     children={(props) => {
-                                        return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                        return (
+                                            <DateTimeSimple
+                                                {...props}
+                                                defaultValue={props.state.value}
+                                                label={'Custom Expire Date'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -277,12 +297,15 @@ export const BanSteamModal = NiceModal.create(
                             <Grid xs={12}>
                                 <Field
                                     name={'note'}
-                                    validators={{
-                                        onChange: z.string()
-                                    }}
                                     children={(props) => {
                                         return (
-                                            <MarkdownField {...props} multiline={true} rows={10} label={'Mod Notes'} />
+                                            <MarkdownField
+                                                {...props}
+                                                defaultValue={props.state.value}
+                                                multiline={true}
+                                                rows={10}
+                                                label={'Mod Notes'}
+                                            />
                                         );
                                     }}
                                 />
