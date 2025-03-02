@@ -278,8 +278,15 @@ const GeneralSection = ({
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Hide personal stats on profile'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        label={'Hide personal stats on profile'}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                    />
+                                );
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
@@ -335,8 +342,15 @@ const GameplaySection = ({
                     <Grid xs={12}>
                         <Field
                             name={'center_projectiles'}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Use center projectiles'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        label={'Use center projectiles'}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                    />
+                                );
                             }}
                         />
                         <SubHeading>Applies to all projectile weapons</SubHeading>
@@ -410,8 +424,15 @@ const ForumSection = ({
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable people to sign your profile.'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        label={'Enable people to sign your profile.'}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                    />
+                                );
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>

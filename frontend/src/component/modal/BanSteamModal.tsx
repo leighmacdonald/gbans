@@ -227,12 +227,12 @@ export const BanSteamModal = NiceModal.create(
                             <Grid xs={6}>
                                 <Field
                                     name={'include_friends'}
-                                    children={(props) => {
+                                    children={({ state, handleBlur, handleChange }) => {
                                         return (
                                             <CheckboxSimple
-                                                onChange={(e) => props.handleChange(e.target.checked)}
-                                                onBlur={props.handleBlur}
-                                                checked={props.state.value}
+                                                checked={state.value}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
                                                 label={'Include Friends'}
                                             />
                                         );
@@ -242,12 +242,12 @@ export const BanSteamModal = NiceModal.create(
                             <Grid xs={6}>
                                 <Field
                                     name={'evade_ok'}
-                                    children={(props) => {
+                                    children={({ state, handleBlur, handleChange }) => {
                                         return (
                                             <CheckboxSimple
-                                                onChange={(e) => props.handleChange(e.target.checked)}
-                                                onBlur={props.handleBlur}
-                                                checked={props.state.value}
+                                                checked={state.value}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
                                                 label={'IP Evading Allowed'}
                                             />
                                         );

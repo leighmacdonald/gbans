@@ -226,16 +226,30 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid xs={4}>
                             <Field
                                 name={'is_enabled'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Is Enabled'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Is Enabled'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={4}>
                             <Field
                                 name={'enabled_stats'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Stats Enabled'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Stats Enabled'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

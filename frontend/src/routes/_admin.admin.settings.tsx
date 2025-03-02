@@ -288,6 +288,27 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         onSubmit: async ({ value }) => {
             mutate({ ...settings, general: value });
         },
+        validators: {
+            onChange: z.object({
+                srcds_log_addr: z.string(),
+                file_serve_mode: z.enum(['local']),
+                mode: z.enum(['release', 'debug', 'test']),
+                site_name: z.string().min(1).max(32),
+                asset_url: z.string(),
+                default_route: z.string(),
+                news_enabled: z.boolean(),
+                forums_enabled: z.boolean(),
+                contests_enabled: z.boolean(),
+                wiki_enabled: z.boolean(),
+                stats_enabled: z.boolean(),
+                servers_enabled: z.boolean(),
+                reports_enabled: z.boolean(),
+                chatlogs_enabled: z.boolean(),
+                demos_enabled: z.boolean(),
+                speedruns_enabled: z.boolean(),
+                playerqueue_enabled: z.boolean()
+            })
+        },
         defaultValues: {
             srcds_log_addr: settings.general.srcds_log_addr,
             file_serve_mode: settings.general.file_serve_mode,
@@ -331,9 +352,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'site_name'}
-                            validators={{
-                                onChange: z.string().min(1).max(32)
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Global Site Name'} />;
                             }}
@@ -343,9 +361,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
                         <Field
                             name={'asset_url'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'URL path pointing to assets'} />;
                             }}
@@ -359,9 +374,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'srcds_log_addr'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'UDP Log Listen Address'} />;
                             }}
@@ -377,9 +389,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'default_route'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Default Index Route'} />;
                             }}
@@ -390,15 +399,13 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enable the news/blog functionality.</SubHeading>
                         <Field
                             name={'news_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
                                         label={'Enable news features.'}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                     />
                                 );
                             }}
@@ -409,9 +416,14 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enabled/disable the forums functionality.</SubHeading>
                         <Field
                             name={'forums_enabled'}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
-                                    <CheckboxSimple {...props} checked={props.state.value} label={'Enable forums'} />
+                                    <CheckboxSimple
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable forums'}
+                                    />
                                 );
                             }}
                         />
@@ -424,9 +436,14 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'contests_enabled'}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
-                                    <CheckboxSimple {...props} checked={props.state.value} label={'Enable contests'} />
+                                    <CheckboxSimple
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable contests'}
+                                    />
                                 );
                             }}
                         />
@@ -438,8 +455,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'wiki_enabled'}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} checked={props.state.value} label={'Enable Wiki'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable Wiki'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -447,11 +471,12 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Allows users to search and download demos.</SubHeading>
                         <Field
                             name={'demos_enabled'}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable Demo/STV Support'}
                                     />
                                 );
@@ -462,14 +487,12 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Process demos and calculate game stats.</SubHeading>
                         <Field
                             name={'stats_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable Game Stats'}
                                     />
                                 );
@@ -484,14 +507,12 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'servers_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable Servers Page'}
                                     />
                                 );
@@ -503,14 +524,12 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Allows users to report other users.</SubHeading>
                         <Field
                             name={'reports_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable User Reports'}
                                     />
                                 );
@@ -522,14 +541,12 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enable showing the searchable chatlogs.</SubHeading>
                         <Field
                             name={'chatlogs_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable public chatlogs'}
                                     />
                                 );
@@ -541,14 +558,12 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enables the 1000 uncles speedruns tracking support.</SubHeading>
                         <Field
                             name={'speedruns_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable Speedruns support'}
                                     />
                                 );
@@ -561,14 +576,12 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'playerqueue_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable Playerqueue support'}
                                     />
                                 );
@@ -593,6 +606,18 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, filters: value });
+        },
+        validators: {
+            onChange: z.object({
+                enabled: z.boolean(),
+                warning_timeout: z.string().transform(numberStringValidator(1, 1000000)),
+                warning_limit: z.string().transform(numberStringValidator(0, 1000)),
+                dry: z.boolean(),
+                ping_discord: z.boolean(),
+                max_weight: z.string().transform(numberStringValidator(1, 1000)),
+                check_timeout: z.string().transform(numberStringValidator(5, 300)),
+                match_timeout: z.string().transform(numberStringValidator(1, 10000))
+            })
         },
         defaultValues: {
             enabled: settings.filters.enabled,
@@ -628,14 +653,12 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enable/disable the feature</SubHeading>
                         <Field
                             name={'enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable Word Filters'}
                                     />
                                 );
@@ -646,9 +669,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>If a user gets a warning, it will expire after this duration of time.</SubHeading>
                         <Field
                             name={'warning_timeout'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(1, 1000000))
-                            }}
                             children={(props) => {
                                 return (
                                     <TextFieldSimple {...props} label={'How long until a warning expires (seconds)'} />
@@ -663,9 +683,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'warning_limit'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 1000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Maximum number of warnings allowed'} />;
                             }}
@@ -676,14 +693,12 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Run the chat filters, but do not actually punish users.</SubHeading>
                         <Field
                             name={'dry'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable dry run mode'}
                                     />
                                 );
@@ -694,14 +709,12 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>If discord is enabled, send filter match notices to the log channel.</SubHeading>
                         <Field
                             name={'ping_discord'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Send discord notices on match'}
                                     />
                                 );
@@ -715,9 +728,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'max_weight'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(1, 1000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Max Weight'} />;
                             }}
@@ -727,9 +737,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>How frequent warnings will be checked for users exceeding limits.</SubHeading>
                         <Field
                             name={'check_timeout'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(5, 300))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Check Frequency (seconds)'} />;
                             }}
@@ -740,9 +747,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>How long it takes for a users warning to expire after being matched.</SubHeading>
                         <Field
                             name={'match_timeout'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(1, 10000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Match Timeout'} />;
                             }}
@@ -832,11 +836,12 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         </SubHeading>
                         <Field
                             name={'demo_cleanup_enabled'}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable Scheduled Demo Cleanup'}
                                     />
                                 );
@@ -965,11 +970,12 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enabled/Disable patreon integrations</SubHeading>
                         <Field
                             name={'enabled'}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable Patreon Integration'}
                                     />
                                 );
@@ -982,11 +988,12 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'integrations_enabled'}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable website integrations'}
                                     />
                                 );
@@ -1055,7 +1062,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                 enabled: z.boolean(),
                 bot_enabled: z.boolean(),
                 integrations_enabled: z.boolean(),
-                app_id: z.string(),
+                app_id: z.string().refine((arg) => arg.length == 0 || arg.length == 18),
                 app_secret: z.string(),
                 link_id: z.string(),
                 token: z.string(),
@@ -1114,14 +1121,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enabled or disable all discord integration.</SubHeading>
                         <Field
                             name={'enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable discord integration'}
                                     />
                                 );
@@ -1136,11 +1141,15 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'bot_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} checked={props.state.value} label={'Discord Bot'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Discord Bot'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -1151,14 +1160,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'integrations_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable website integrations'}
                                     />
                                 );
@@ -1169,9 +1176,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Your discord application ID.</SubHeading>
                         <Field
                             name={'app_id'}
-                            validators={{
-                                onChange: z.string().refine((arg) => arg.length == 0 || arg.length == 18)
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Discord app ID'} />;
                             }}
@@ -1181,9 +1185,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Your discord app secret.</SubHeading>
                         <Field
                             name={'app_secret'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Discord bot app secret'} />;
                             }}
@@ -1197,9 +1198,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'link_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Invite link ID'} />;
                             }}
@@ -1209,9 +1207,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Bot authentication token.</SubHeading>
                         <Field
                             name={'token'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Discord Bot Token'} />;
                             }}
@@ -1224,9 +1219,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'guild_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Discord guild ID'} />;
                             }}
@@ -1239,9 +1231,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Log channel ID'} />;
                             }}
@@ -1250,14 +1239,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     <Grid xs={12}>
                         <Field
                             name={'public_log_channel_enable'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable public log channel'}
                                     />
                                 );
@@ -1269,9 +1256,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>What role to include when pinging for certain events being sent.</SubHeading>
                         <Field
                             name={'mod_ping_role_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Mod ping role ID'} />;
                             }}
@@ -1281,9 +1265,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Public log channel ID.</SubHeading>
                         <Field
                             name={'public_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Public log channel ID'} />;
                             }}
@@ -1296,9 +1277,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'public_match_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Public match log channel ID'} />;
                             }}
@@ -1312,9 +1290,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'vote_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Vote log channel ID'} />;
                             }}
@@ -1324,9 +1299,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>New appeals and appeal messages are shown here.</SubHeading>
                         <Field
                             name={'appeal_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Appeal changelog channel ID'} />;
                             }}
@@ -1339,9 +1311,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'ban_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'New ban log channel ID'} />;
                             }}
@@ -1353,9 +1322,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'forum_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Forum activity log channel ID'} />;
                             }}
@@ -1365,9 +1331,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>A channel to send notices to when a user triggers a word filter.</SubHeading>
                         <Field
                             name={'word_filter_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Word filter log channel ID'} />;
                             }}
@@ -1380,9 +1343,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'kick_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Kick log channel ID'} />;
                             }}
@@ -1392,9 +1352,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>A channel which relays the chat messages from the website chat lobby.</SubHeading>
                         <Field
                             name={'playerqueue_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Playerqueue log channel ID'} />;
                             }}
@@ -1406,9 +1363,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'anticheat_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Anticheat action log channel ID'} />;
                             }}
@@ -1498,11 +1452,12 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enables logging for incoming HTTP requests.</SubHeading>
                         <Field
                             name={'http_enabled'}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable HTTP request logs'}
                                     />
                                 );
@@ -1513,11 +1468,12 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enables OpenTelemetry support (span id/trace id).</SubHeading>
                         <Field
                             name={'http_otel_enabled'}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable OpenTelemetry Support'}
                                     />
                                 );
@@ -1630,14 +1586,12 @@ const GeoLocationSection = ({
                         <SubHeading>Enables the download and usage of geo location tools.</SubHeading>
                         <Field
                             name={'enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable geolocation services'}
                                     />
                                 );
@@ -1648,9 +1602,6 @@ const GeoLocationSection = ({
                         <SubHeading>Your ip2location API key.</SubHeading>
                         <Field
                             name={'token'}
-                            validators={{
-                                onChange: z.string().refine((arg) => arg.length == 0 || arg.length == 64)
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'API Key'} />;
                             }}
@@ -1660,9 +1611,6 @@ const GeoLocationSection = ({
                         <SubHeading>Path to store downloaded databases.</SubHeading>
                         <Field
                             name={'cache_path'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Database download cache path'} />;
                             }}
@@ -1720,14 +1668,12 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         </SubHeading>
                         <Field
                             name={'skip_open_id_validation'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Skip OpenID validation'}
                                     />
                                 );
@@ -1742,9 +1688,6 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         </SubHeading>
                         <Field
                             name={'add_rcon_log_address'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return (
                                     <TextFieldSimple
@@ -1804,9 +1747,6 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
                     <Grid xs={12}>
                         <Field
                             name={'path_root'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Path to store assets'} />;
                             }}
@@ -1878,14 +1818,12 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>Enable the use of SSH/SCP for downloading demos from a remote server.</SubHeading>
                         <Field
                             name={'enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable SSH downloader'}
                                     />
                                 );
@@ -1896,9 +1834,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>SSH username</SubHeading>
                         <Field
                             name={'username'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'SSH username'} />;
                             }}
@@ -1910,9 +1845,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         </SubHeading>
                         <Field
                             name={'port'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'SSH port'} />;
                             }}
@@ -1922,9 +1854,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>Path to your private key if using key based authentication.</SubHeading>
                         <Field
                             name={'private_key_path'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Path to private key'} />;
                             }}
@@ -1936,9 +1865,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         </SubHeading>
                         <Field
                             name={'password'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'SSH/Private key password'} />;
                             }}
@@ -1948,9 +1874,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>How often to connect to remove systems and check for demos.</SubHeading>
                         <Field
                             name={'update_interval'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Check frequency (seconds)'} />;
                             }}
@@ -1960,9 +1883,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>Connection timeout.</SubHeading>
                         <Field
                             name={'timeout'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Connection timeout (seconds)'} />;
                             }}
@@ -1975,9 +1895,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         </SubHeading>
                         <Field
                             name={'demo_path_fmt'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Path format for retrieving demos'} />;
                             }}
@@ -1990,9 +1907,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         </SubHeading>
                         <Field
                             name={'stac_path_fmt'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Path format for retrieving stac logs'} />;
                             }}
@@ -2037,16 +1951,16 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
             onChange: z.object({
                 enabled: z.boolean(),
                 action: z.nativeEnum(Action),
-                duration: z.string(),
-                max_aim_snap: z.string(),
-                max_psilent: z.string(),
-                max_bhop: z.string(),
-                max_fake_ang: z.string(),
-                max_cmd_num: z.string(),
-                max_too_many_connections: z.string(),
-                max_cheat_cvar: z.string(),
-                max_oob_var: z.string(),
-                max_invalid_user_cmd: z.string()
+                duration: z.string().transform(numberStringValidator(0, 100000000)),
+                max_aim_snap: z.string().transform(numberStringValidator(0, 100000000)),
+                max_psilent: z.string().transform(numberStringValidator(0, 100000000)),
+                max_bhop: z.string().transform(numberStringValidator(0, 100000000)),
+                max_fake_ang: z.string().transform(numberStringValidator(0, 100000000)),
+                max_cmd_num: z.string().transform(numberStringValidator(0, 100000000)),
+                max_too_many_connections: z.string().transform(numberStringValidator(0, 100000000)),
+                max_cheat_cvar: z.string().transform(numberStringValidator(0, 100000000)),
+                max_oob_var: z.string().transform(numberStringValidator(0, 100000000)),
+                max_invalid_user_cmd: z.string().transform(numberStringValidator(0, 100000000))
             })
         },
         defaultValues: {
@@ -2091,12 +2005,14 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         </SubHeading>
                         <Field
                             name={'enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
-                                    <CheckboxSimple {...props} checked={props.state.value} label={'Enabled/Disabled'} />
+                                    <CheckboxSimple
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enabled/Disabled'}
+                                    />
                                 );
                             }}
                         />
@@ -2106,9 +2022,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         <SubHeading>Action to take when a user goes over a detection limit.</SubHeading>
                         <Field
                             name={'action'}
-                            validators={{
-                                onChange: z.nativeEnum(Action)
-                            }}
                             children={(props) => {
                                 return (
                                     <SelectFieldSimple
@@ -2135,9 +2048,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         </SubHeading>
                         <Field
                             name={'duration'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000000))
-                            }}
                             children={(props) => {
                                 return (
                                     <TextFieldSimple
@@ -2153,9 +2063,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         <SubHeading>The maximum number of aimsnap detections allowed.</SubHeading>
                         <Field
                             name={'max_aim_snap'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Number of detections (default = 20)'} />;
                             }}
@@ -2166,9 +2073,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         <SubHeading>The maximum number of psilent detections allowed.</SubHeading>
                         <Field
                             name={'max_psilent'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Number of detections (default = 10)'} />;
                             }}
@@ -2179,9 +2083,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         <SubHeading>The maximum number of consecutive bunny hop detections allowed.</SubHeading>
                         <Field
                             name={'max_bhop'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Number of detections (default = 10)'} />;
                             }}
@@ -2192,9 +2093,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         <SubHeading>The maximum number of fake angles/eyes detections allowed.</SubHeading>
                         <Field
                             name={'max_fake_ang'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Number of detections (default = 5)'} />;
                             }}
@@ -2205,9 +2103,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         <SubHeading>The maximum number of cmdnum spike detections allowed.</SubHeading>
                         <Field
                             name={'max_cmd_num'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Number of detections (default = 20)'} />;
                             }}
@@ -2220,9 +2115,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         </SubHeading>
                         <Field
                             name={'max_too_many_connections'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Number of detections (default = 1)'} />;
                             }}
@@ -2236,9 +2128,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         </SubHeading>
                         <Field
                             name={'max_cheat_cvar'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Number of detections (default = 1)'} />;
                             }}
@@ -2249,9 +2138,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         <SubHeading>Max number of detections of cvars which contain out of bounds values.</SubHeading>
                         <Field
                             name={'max_oob_var'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Number of detections (default = 1)'} />;
                             }}
@@ -2262,9 +2148,6 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
                         <SubHeading>Detect if a user is using invalid user commands.</SubHeading>
                         <Field
                             name={'max_invalid_user_cmd'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000000))
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Number of detections (default = 1)'} />;
                             }}
@@ -2327,9 +2210,6 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'authorized_keys'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Authorized Keys (comma separated).'} />;
                             }}
@@ -2342,14 +2222,12 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'bd_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable tf2 bot detector compatible export'}
                                     />
                                 );
@@ -2363,14 +2241,12 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <Field
                             name={'valve_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        checked={props.state.value}
+                                        checked={state.value}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable srcds formatted ban list'}
                                     />
                                 );

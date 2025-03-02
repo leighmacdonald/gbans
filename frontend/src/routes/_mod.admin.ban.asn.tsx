@@ -185,12 +185,13 @@ function AdminBanASN() {
                             <Grid xs="auto">
                                 <Field
                                     name={'deleted'}
-                                    children={(props) => {
+                                    children={({ state, handleBlur, handleChange }) => {
                                         return (
                                             <CheckboxSimple
-                                                {...props}
-                                                checked={props.state.value}
                                                 label={'Show Deleted'}
+                                                checked={state.value}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
                                             />
                                         );
                                     }}

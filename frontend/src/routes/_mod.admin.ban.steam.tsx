@@ -219,12 +219,13 @@ function AdminBanSteam() {
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'deleted'}
-                                    children={(props) => {
+                                    children={({ state, handleBlur, handleChange }) => {
                                         return (
                                             <CheckboxSimple
-                                                {...props}
-                                                checked={props.state.value}
                                                 label={'Show deleted/expired'}
+                                                checked={state.value}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
                                             />
                                         );
                                     }}
