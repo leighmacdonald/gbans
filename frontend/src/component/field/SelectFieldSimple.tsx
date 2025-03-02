@@ -10,7 +10,7 @@ type SelectFieldProps<T> = {
 } & FieldProps<T>;
 
 export const SelectFieldSimple = <T,>({
-    value,
+    defaultValue,
     label,
     handleChange,
     handleBlur,
@@ -22,8 +22,9 @@ export const SelectFieldSimple = <T,>({
             <InputLabel id="server-select-label">{label}</InputLabel>
             <Select
                 fullWidth
-                value={value}
+                defaultValue={defaultValue}
                 label={label}
+                variant={'filled'}
                 onChange={(e: SelectChangeEvent<T>) => {
                     handleChange(e.target.value as T);
                 }}

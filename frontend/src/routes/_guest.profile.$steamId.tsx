@@ -127,7 +127,7 @@ function ProfilePage() {
                                     <Button
                                         fullWidth
                                         color={'secondary'}
-                                        variant={'contained'}
+                                        variant={'filled'}
                                         component={Link}
                                         href={l.url}
                                         key={l.url}

@@ -64,7 +64,17 @@ export const UnbanGroupModal = NiceModal.create(
                                 <Field
                                     name={'unban_reason'}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Unban Reason'} />;
+                                        return (
+                                            <TextFieldSimple
+                                                {...props}
+                                                error={props.state.meta.errors.length > 0}
+                                                errorText={props.state.meta.errors
+                                                    .map((e) => (e ? e.message : null))
+                                                    .filter((f) => f)
+                                                    .join(', ')}
+                                                label={'Unban Reason'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>

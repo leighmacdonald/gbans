@@ -154,7 +154,7 @@ function BanPage() {
                                 <FormControl fullWidth>
                                     <InputLabel id="appeal-status-label">Appeal Status</InputLabel>
                                     <Select<AppealState>
-                                        variant={'outlined'}
+                                        variant={'filled'}
                                         value={ban?.appeal_state}
                                         labelId={'appeal-status-label'}
                                         id={'appeal-status'}

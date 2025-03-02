@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import ChatIcon from '@mui/icons-material/Chat';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import Checkbox from '@mui/material/Checkbox';
@@ -12,7 +13,7 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod';
-import { apiGetMessages, apiGetServers, PermissionLevel, ServerSimple } from '../api';
+import { apiGetMessages, apiGetServers, PermissionLevel, PlayerProfile, ServerSimple } from '../api';
 import { ChatTable } from '../component/ChatTable.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Paginator } from '../component/Paginator.tsx';
@@ -22,6 +23,7 @@ import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const chatlogsSchema = z.object({
     ...makeCommonTableSearchSchema([
@@ -40,7 +42,7 @@ const chatlogsSchema = z.object({
     body: z.string().optional(),
     steam_id: z.string().optional(),
     flagged_only: z.boolean().optional(),
-    autoRefresh: z.number().optional()
+    auto_refresh: z.number().optional()
 });
 
 export const Route = createFileRoute('/_auth/chatlogs')({
@@ -73,6 +75,7 @@ function ChatLogs() {
     const search = Route.useSearch();
     const { hasPermission } = useRouteContext({ from: '/_auth/chatlogs' });
     const { servers } = useLoaderData({ from: '/_auth/chatlogs' }) as { servers: ServerSimple[] };
+    const [profile, setProfile] = useState<PlayerProfile>();
     const navigate = useNavigate({ from: Route.fullPath });
 
     const { data: messages, isLoading } = useQuery({
@@ -90,12 +93,23 @@ function ChatLogs() {
                 flagged_only: search.flagged_only ?? false
             });
         },
-        refetchInterval: search.autoRefresh
+        refetchInterval: search.auto_refresh
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             await navigate({ to: '/chatlogs', search: (prev) => ({ ...prev, ...value }) });
+        },
+        validators: {
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                body: z.string(),
+                persona_name: z.string(),
+                server_id: z.number({ coerce: true }),
+                steam_id: makeValidateSteamIDCallback(setProfile),
+                flagged_only: z.boolean(),
+                auto_refresh: z.number()
+            })
         },
         defaultValues: {
             body: search.body ?? '',
@@ -103,7 +117,7 @@ function ChatLogs() {
             server_id: search.server_id ?? 0,
             steam_id: search.steam_id ?? '',
             flagged_only: search.flagged_only ?? false,
-            autoRefresh: search.autoRefresh ?? 0
+            auto_refresh: search.auto_refresh ?? 0
         }
     });
 
@@ -150,7 +164,7 @@ function ChatLogs() {
                                     <Field
                                         name={'steam_id'}
                                         children={(props) => {
-                                            return <SteamIDField {...props} fullwidth={true} />;
+                                            return <SteamIDField {...props} profile={profile} fullwidth={true} />;
                                         }}
                                     />
                                 </Grid>
@@ -222,7 +236,7 @@ function ChatLogs() {
                                         </Grid>
                                         <Grid xs>
                                             <Field
-                                                name={'autoRefresh'}
+                                                name={'auto_refresh'}
                                                 children={({ state, handleChange, handleBlur }) => {
                                                     return (
                                                         <FormControl fullWidth>

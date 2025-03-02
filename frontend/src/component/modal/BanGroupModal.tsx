@@ -111,6 +111,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                                     return (
                                         <SteamIDField
                                             {...props}
+                                            defaultValue={props.state.value}
                                             label={'Target Steam ID'}
                                             fullwidth={true}
                                             disabled={Boolean(existing?.ban_group_id)}
@@ -122,11 +123,14 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid xs={12}>
                             <Field
                                 name={'group_id'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Steam Group ID'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Steam Group ID'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -142,6 +146,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                                             {...props}
                                             label={'Duration'}
                                             fullwidth={true}
+                                            defaultValue={props.state.value}
                                             items={DurationCollection}
                                             renderMenu={(du) => {
                                                 return (
@@ -160,7 +165,13 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                             <Field
                                 name={'duration_custom'}
                                 children={(props) => {
-                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                    return (
+                                        <DateTimeSimple
+                                            {...props}
+                                            defaultValue={props.state.value}
+                                            label={'Custom Expire Date'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -172,7 +183,15 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                                     onChange: z.string()
                                 }}
                                 children={(props) => {
-                                    return <MarkdownField {...props} multiline={true} rows={10} label={'Mod Notes'} />;
+                                    return (
+                                        <MarkdownField
+                                            {...props}
+                                            multiline={true}
+                                            rows={10}
+                                            defaultValue={props.state.value}
+                                            label={'Mod Notes'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
