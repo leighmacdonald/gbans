@@ -132,8 +132,15 @@ function AdminPeople() {
                             <Grid xs={6} md={4}>
                                 <Field
                                     name={'staff_only'}
-                                    children={(props) => {
-                                        return <CheckboxSimple {...props} label={'Staff Only'} fullwidth={true} />;
+                                    children={({ state, handleBlur, handleChange }) => {
+                                        return (
+                                            <CheckboxSimple
+                                                label={'Staff Only'}
+                                                checked={state.value}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>

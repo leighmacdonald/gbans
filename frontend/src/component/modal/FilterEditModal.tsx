@@ -127,8 +127,15 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                                 validators={{
                                     onSubmit: z.boolean()
                                 }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Is Regex Pattern'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Is Regex Pattern'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -182,8 +189,15 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                                 validators={{
                                     onSubmit: z.boolean()
                                 }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Is Enabled'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Is Enabled'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

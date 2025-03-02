@@ -152,16 +152,30 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                         <Grid xs={4}>
                             <Field
                                 name={'public'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Public'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Public'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={4}>
                             <Field
                                 name={'hide_submissions'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Hide Submissions'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Hide Submissions'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -201,16 +215,30 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                         <Grid xs={6}>
                             <Field
                                 name={'voting'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Voting Enabled'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Voting Enabled'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'down_votes'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Down Votes Enabled'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Down Votes Enabled'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

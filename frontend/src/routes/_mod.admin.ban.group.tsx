@@ -181,8 +181,15 @@ function AdminBanGroup() {
                             <Grid xs="auto">
                                 <Field
                                     name={'deleted'}
-                                    children={(props) => {
-                                        return <CheckboxSimple {...props} label={'Show Deleted'} />;
+                                    children={({ state, handleBlur, handleChange }) => {
+                                        return (
+                                            <CheckboxSimple
+                                                label={'Show Deleted'}
+                                                checked={state.value}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>

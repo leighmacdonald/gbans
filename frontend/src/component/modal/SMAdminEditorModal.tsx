@@ -191,57 +191,104 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid xs={6}>
                             <Field
                                 name={'z'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(z) Full Admin'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(z) Full Admin'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'a'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(a) Reserved Slot'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(a) Reserved Slot'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'b'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(b) Generic Admin'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(b) Generic Admin'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'c'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(c) Kick Players'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(c) Kick Players'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'d'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(d) Ban Players'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(d) Ban Players'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'e'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(e) Unban Players'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(e) Unban Players'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'f'}
-                                children={(props) => {
+                                children={({ state, handleBlur, handleChange }) => {
                                     return (
-                                        <CheckboxSimple {...props} label={'(f) Slay/Harm Players'} fullwidth={true} />
+                                        <CheckboxSimple
+                                            label={'(f) Slay/Harm Players'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
                                     );
                                 }}
                             />
@@ -249,36 +296,58 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid xs={6}>
                             <Field
                                 name={'g'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(g) Change Maps'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(g) Change Maps'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'h'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(h) Change CVARs'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(h) Change CVARs'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'i'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(i) Exec Configs'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(i) Exec Configs'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'j'}
-                                children={(props) => {
+                                children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            {...props}
                                             label={'(j) Special Chat Privileges'}
-                                            fullwidth={true}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
                                         />
                                     );
                                 }}
@@ -287,17 +356,29 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid xs={6}>
                             <Field
                                 name={'k'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(k) Start Votes'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(k) Start Votes'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'l'}
-                                children={(props) => {
+                                children={({ state, handleBlur, handleChange }) => {
                                     return (
-                                        <CheckboxSimple {...props} label={'(l) Set Server Password'} fullwidth={true} />
+                                        <CheckboxSimple
+                                            label={'(l) Set Server Password'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
                                     );
                                 }}
                             />
@@ -305,64 +386,120 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid xs={6}>
                             <Field
                                 name={'m'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(m) RCON Access'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(m) RCON Access'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'n'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(n) Enabled Cheats'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(n) Enabled Cheats'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'o'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(o) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(o) Custom Flag'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'p'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(p) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(p) Custom Flag'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'q'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(q) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(q) Custom Flag'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'r'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(r) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(r) Custom Flag'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'s'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(s) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(s) Custom Flag'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'t'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(t) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            label={'(t) Custom Flag'}
+                                            checked={state.value}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

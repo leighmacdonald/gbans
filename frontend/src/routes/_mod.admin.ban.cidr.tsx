@@ -172,8 +172,15 @@ function AdminBanCIDR() {
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'deleted'}
-                                    children={(props) => {
-                                        return <CheckboxSimple {...props} label={'Incl. Deleted'} />;
+                                    children={({ state, handleBlur, handleChange }) => {
+                                        return (
+                                            <CheckboxSimple
+                                                label={'Incl. Deleted'}
+                                                checked={state.value}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
