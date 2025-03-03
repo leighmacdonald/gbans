@@ -15,11 +15,66 @@ export default defineConfig({
         rollupOptions: {
             treeshake: 'recommended',
             output: {
-                esModule: false,
-                manualChunks: {
-                    leaflet: ['leaflet'],
-                    'react-leaflet': ['react-leaflet'],
-                    'date-fns': ['date-fns']
+                //esModule: false,
+                manualChunks(id) {
+                    const chunks = [
+                        'sentry',
+                        'react-leaflet',
+                        'icons-material',
+                        'leaflet',
+                        'nice-modal-react',
+                        'fontsource/roboto',
+                        'mdxeditor/editor',
+                        'prism-react-renderer',
+                        'mui-markdown',
+                        'date-fns',
+                        'mui/x-charts',
+                        'mui/x-date-pickers',
+                        'mui/lab',
+                        'emotion',
+                        'mui/material',
+                        'mui/system',
+                        'mui/utils',
+                        'tanstack/react-form',
+                        'tanstack/react-query',
+                        'tanstack/react-router',
+                        'tanstack/react-table',
+                        'core-js',
+                        'eslint',
+                        'markdown-to-jsx',
+                        'mui-markdown',
+                        'mui-image',
+                        'material-ui-popup-state',
+                        'minimatch',
+                        'zod',
+                        'video-react',
+                        'typescript',
+                        'steamid',
+                        'js-cookie',
+                        'file-type',
+                        'ip-cidr',
+                        'base64-js',
+                        'mui-nested-menu',
+                        'react',
+                        'react-modal-image',
+                        'react-scrollable-feed',
+                        'react-timer-hook',
+                        'react-use-websocket'
+                    ];
+
+                    if (id.includes('node_modules')) {
+                        return (chunks.find((c) => id.includes(c)) ?? 'vendor').replace('/', '-');
+                    }
+
+                    if (id.includes('modal')) {
+                        return 'modal';
+                    }
+
+                    if (id.includes('.png')) {
+                        return 'pngs';
+                    }
+
+                    return null;
                 }
             }
         }
