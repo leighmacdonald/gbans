@@ -4,22 +4,14 @@ import FormGroup from '@mui/material/FormGroup';
 
 type Props = {
     readonly label?: string;
-    handleChange: (v: boolean) => void;
-    handleBlur: () => void;
 } & CheckboxProps;
 
-export const CheckboxSimple = (props: Props) => {
+export const CheckboxSimple = ({ checked, onChange, onBlur, label }: Props) => {
     return (
         <FormGroup>
             <FormControlLabel
-                control={
-                    <Checkbox
-                        {...props}
-                        onChange={(e) => props.handleChange(e.target.checked)}
-                        onBlur={props.handleBlur}
-                    />
-                }
-                label={props.label}
+                control={<Checkbox onChange={(e, v) => onChange && onChange(e, v)} onBlur={onBlur} checked={checked} />}
+                label={label}
             />
         </FormGroup>
     );

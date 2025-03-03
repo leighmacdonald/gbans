@@ -231,8 +231,8 @@ export const BanSteamModal = NiceModal.create(
                                         return (
                                             <CheckboxSimple
                                                 checked={state.value}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                onChange={(_, v) => handleChange(v)}
+                                                onBlur={handleBlur}
                                                 label={'Include Friends'}
                                             />
                                         );
@@ -246,8 +246,8 @@ export const BanSteamModal = NiceModal.create(
                                         return (
                                             <CheckboxSimple
                                                 checked={state.value}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                onChange={(_, v) => handleChange(v)}
+                                                onBlur={handleBlur}
                                                 label={'IP Evading Allowed'}
                                             />
                                         );

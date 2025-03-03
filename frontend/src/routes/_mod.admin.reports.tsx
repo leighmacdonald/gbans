@@ -149,6 +149,7 @@ function AdminReports() {
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
+                                                defaultValue={ReportStatus.Any}
                                                 label={'Report Status'}
                                                 fullwidth={true}
                                                 items={ReportStatusCollection}
@@ -219,7 +220,7 @@ const makeColumns = () => {
             )
         }),
         columnHelper.accessor('report_status', {
-            size: 30,
+            size: 100,
             filterFn: (row, _, value: ReportStatus) => {
                 if (value == ReportStatus.Any) {
                     return true;

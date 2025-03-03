@@ -177,8 +177,8 @@ function AdminBanCIDR() {
                                             <CheckboxSimple
                                                 label={'Incl. Deleted'}
                                                 checked={state.value}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                onChange={(_, v) => handleChange(v)}
+                                                onBlur={handleBlur}
                                             />
                                         );
                                     }}

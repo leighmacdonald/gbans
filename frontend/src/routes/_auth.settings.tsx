@@ -283,8 +283,8 @@ const GeneralSection = ({
                                     <CheckboxSimple
                                         label={'Hide personal stats on profile'}
                                         checked={state.value}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        onChange={(_, v) => handleChange(v)}
+                                        onBlur={handleBlur}
                                     />
                                 );
                             }}
@@ -347,8 +347,8 @@ const GameplaySection = ({
                                     <CheckboxSimple
                                         label={'Use center projectiles'}
                                         checked={state.value}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        onChange={(_, v) => handleChange(v)}
+                                        onBlur={handleBlur}
                                     />
                                 );
                             }}
@@ -429,8 +429,8 @@ const ForumSection = ({
                                     <CheckboxSimple
                                         label={'Enable people to sign your profile.'}
                                         checked={state.value}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        onChange={(_, v) => handleChange(v)}
+                                        onBlur={handleBlur}
                                     />
                                 );
                             }}

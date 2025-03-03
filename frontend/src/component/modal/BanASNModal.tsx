@@ -18,6 +18,7 @@ import {
     DurationCollection
 } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { emptyOrNullString } from '../../util/types.ts';
 import { makeValidateSteamIDCallback } from '../../util/validator/makeValidateSteamIDCallback.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
@@ -39,7 +40,7 @@ type BanASNFormValues = {
 };
 
 export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRecord }) => {
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const modal = useModal();
 
     const mutation = useMutation({
@@ -61,7 +62,9 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                 const ban_record = await apiCreateBanASN({
                     note: values.note,
                     duration: values.duration,
-                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
+                    valid_until: !emptyOrNullString(values.duration_custom)
+                        ? parseISO(values.duration_custom)
+                        : undefined,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     target_id: values.target_id,
@@ -70,8 +73,17 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                 sendFlash('success', 'Created ASN ban successfully');
                 modal.resolve(ban_record);
             }
+        },
+        onSuccess: async (banRecord) => {
+            if (existing?.ban_asn_id) {
+                sendFlash('success', 'Updated asn ban successfully');
+            } else {
+                sendFlash('success', 'Created asn ban successfully');
+            }
+            modal.resolve(banRecord);
             await modal.hide();
-        }
+        },
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
@@ -131,6 +143,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                                     return (
                                         <SteamIDField
                                             {...props}
+                                            defaultValue={props.state.value}
                                             label={'Target Steam ID'}
                                             fullwidth={true}
                                             disabled={Boolean(existing?.ban_asn_id)}
@@ -143,7 +156,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                             <Field
                                 name={'as_num'}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'AS Number'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'AS Number'} />;
                                 }}
                             />
                         </Grid>
@@ -154,6 +167,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            defaultValue={props.state.value}
                                             label={'Reason'}
                                             fullwidth={true}
                                             items={banReasonsCollection}
@@ -173,7 +187,13 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                             <Field
                                 name={'reason_text'}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Custom Ban Reason'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            defaultValue={props.state.value}
+                                            label={'Custom Ban Reason'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -184,6 +204,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            defaultValue={props.state.value}
                                             label={'Duration'}
                                             fullwidth={true}
                                             items={DurationCollection}
@@ -204,7 +225,13 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                             <Field
                                 name={'duration_custom'}
                                 children={(props) => {
-                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                    return (
+                                        <DateTimeSimple
+                                            {...props}
+                                            defaultValue={props.state.value}
+                                            label={'Custom Expire Date'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -213,7 +240,15 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                             <Field
                                 name={'note'}
                                 children={(props) => {
-                                    return <MarkdownField {...props} multiline={true} rows={10} label={'Mod Notes'} />;
+                                    return (
+                                        <MarkdownField
+                                            {...props}
+                                            defaultValue={props.state.value}
+                                            multiline={true}
+                                            rows={10}
+                                            label={'Mod Notes'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

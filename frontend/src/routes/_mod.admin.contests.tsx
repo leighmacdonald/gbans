@@ -76,6 +76,7 @@ function AdminContests() {
             iconLeft={<EmojiEventsIcon />}
             buttons={[
                 <Button
+                    key={'add-button'}
                     startIcon={<AddIcon />}
                     variant={'contained'}
                     onClick={async () => {

@@ -196,8 +196,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(z) Full Admin'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -211,8 +211,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(a) Reserved Slot'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -226,8 +226,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(b) Generic Admin'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -241,8 +241,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(c) Kick Players'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -256,8 +256,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(d) Ban Players'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -271,8 +271,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(e) Unban Players'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -286,8 +286,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(f) Slay/Harm Players'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -301,8 +301,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(g) Change Maps'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -316,8 +316,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(h) Change CVARs'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -331,8 +331,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(i) Exec Configs'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -346,8 +346,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(j) Special Chat Privileges'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -361,8 +361,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(k) Start Votes'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -376,8 +376,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(l) Set Server Password'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -391,8 +391,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(m) RCON Access'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -406,8 +406,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(n) Enabled Cheats'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -421,8 +421,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(o) Custom Flag'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -436,8 +436,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(p) Custom Flag'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -451,8 +451,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(q) Custom Flag'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -466,8 +466,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(r) Custom Flag'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -481,8 +481,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(s) Custom Flag'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
@@ -496,8 +496,8 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                         <CheckboxSimple
                                             label={'(t) Custom Flag'}
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                         />
                                     );
                                 }}
