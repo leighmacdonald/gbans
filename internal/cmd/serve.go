@@ -237,11 +237,14 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			discordUsecase := discord.NewDiscordUsecase(discordRepository, configUsecase)
+			if conf.Discord.Enabled {
+				if err := discordUsecase.Start(); err != nil {
+					slog.Error("Failed to start discord", log.ErrAttr(err))
 
-			if err := discordUsecase.Start(); err != nil {
-				slog.Error("Failed to start discord", log.ErrAttr(err))
+					return err
+				}
 
-				return err
+				defer discordUsecase.Shutdown()
 			}
 
 			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbConn), discordUsecase)
@@ -252,8 +255,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 				return err
 			}
-
-			defer discordUsecase.Shutdown()
 
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbConn), configUsecase)
 
@@ -351,10 +352,12 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return err
 			}
 
-			discordHandler := discord.NewDiscordHandler(discordUsecase, personUsecase, banUsecase,
-				stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase,
-				banASNUsecase, anticheatUsecase)
-			discordHandler.Start(ctx)
+			if conf.Discord.Enabled {
+				discordHandler := discord.NewDiscordHandler(discordUsecase, personUsecase, banUsecase,
+					stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase,
+					banASNUsecase, anticheatUsecase)
+				discordHandler.Start(ctx)
+			}
 
 			anticheat.NewHandler(router, authUsecase, anticheatUsecase)
 			appeal.NewHandler(router, appeals, authUsecase)

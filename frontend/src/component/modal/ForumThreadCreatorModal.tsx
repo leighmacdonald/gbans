@@ -128,8 +128,8 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'Stickied'}
                                         />
                                     );
@@ -143,8 +143,8 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'Locked'}
                                         />
                                     );

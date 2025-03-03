@@ -137,8 +137,8 @@ function AdminPeople() {
                                             <CheckboxSimple
                                                 label={'Staff Only'}
                                                 checked={state.value}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                onChange={(_, v) => handleChange(v)}
+                                                onBlur={handleBlur}
                                             />
                                         );
                                     }}

@@ -9,7 +9,6 @@ export const Detections = [
     'interp',
     'bhop',
     'cmdnum_spike',
-    'cmdnum_spike',
     'eye_angles',
     'invalid_user_cmd',
     'oob_cvar',

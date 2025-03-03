@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import MenuItem from '@mui/material/MenuItem';
-import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
@@ -154,6 +153,7 @@ function AdminAppeals() {
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
+                                                defaultValue={AppealState.Any}
                                                 label={'Appeal Status'}
                                                 fullwidth={true}
                                                 items={AppealStateCollection}
@@ -243,11 +243,7 @@ const AppealsTable = ({
             header: 'Status',
             size: 85,
             cell: (info) => {
-                return (
-                    <TableCell>
-                        <Typography variant={'body1'}>{appealStateString(info.getValue())}</Typography>
-                    </TableCell>
-                );
+                return <Typography variant={'body1'}>{appealStateString(info.getValue())}</Typography>;
             }
         }),
         columnHelper.accessor('source_id', {

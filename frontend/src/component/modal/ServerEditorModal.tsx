@@ -230,8 +230,8 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'Is Enabled'}
                                         />
                                     );
@@ -245,8 +245,8 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'Stats Enabled'}
                                         />
                                     );

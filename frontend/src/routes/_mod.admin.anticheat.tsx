@@ -202,6 +202,7 @@ function AdminAnticheat() {
                                                 <FormControl fullWidth>
                                                     <InputLabel id="detection-select-label">Detection</InputLabel>
                                                     <Select
+                                                        defaultValue={''}
                                                         fullWidth
                                                         value={state.value}
                                                         label="Detection"

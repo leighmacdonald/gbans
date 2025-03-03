@@ -11,7 +11,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { z } from 'zod';
@@ -53,7 +53,10 @@ export const Route = createFileRoute('/_mod/admin/ban/asn')({
     validateSearch: (search) => banASNSearchSchema.parse(search)
 });
 
+const queryKey = ['asnBans'];
+
 function AdminBanASN() {
+    const queryClient = useQueryClient();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate({ from: Route.fullPath });
     const search = Route.useSearch();
@@ -62,7 +65,7 @@ function AdminBanASN() {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
 
     const { data: bans, isLoading } = useQuery({
-        queryKey: ['asnBans', { deleted: search.deleted }],
+        queryKey: queryKey,
         queryFn: async () => {
             return await apiGetBansASN({ deleted: search.deleted ?? false });
         }
@@ -119,19 +122,36 @@ function AdminBanASN() {
 
     const columns = useMemo(() => {
         const onUnban = async (ban: ASNBanRecord) => {
-            await NiceModal.show(ModalUnbanASN, {
-                banId: ban.ban_asn_id
-            });
+            try {
+                await NiceModal.show(ModalUnbanASN, {
+                    banId: ban.ban_asn_id
+                });
+                queryClient.setQueryData(
+                    queryKey,
+                    (bans ?? []).filter((b) => b.ban_asn_id != ban.ban_asn_id)
+                );
+                sendFlash('success', 'Unbanned player successfully');
+            } catch (e) {
+                sendFlash('error', `Error trying to unban: ${e}`);
+            }
         };
 
         const onEdit = async (ban: ASNBanRecord) => {
-            await NiceModal.show(ModalBanASN, {
-                banId: ban.ban_asn_id,
-                existing: ban
-            });
+            try {
+                const updated = await NiceModal.show<ASNBanRecord>(ModalBanASN, {
+                    banId: ban.ban_asn_id,
+                    existing: ban
+                });
+                queryClient.setQueryData(
+                    queryKey,
+                    (bans ?? []).map((b) => (b.ban_asn_id == updated.ban_asn_id ? updated : b))
+                );
+            } catch (e) {
+                sendFlash('error', `Error trying to edit ban: ${e}`);
+            }
         };
         return makeColumns(onEdit, onUnban);
-    }, []);
+    }, [bans, queryClient, sendFlash]);
 
     return (
         <Grid container spacing={2}>
@@ -190,8 +210,8 @@ function AdminBanASN() {
                                             <CheckboxSimple
                                                 label={'Show Deleted'}
                                                 checked={state.value}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                onChange={(_, v) => handleChange(v)}
+                                                onBlur={handleBlur}
                                             />
                                         );
                                     }}

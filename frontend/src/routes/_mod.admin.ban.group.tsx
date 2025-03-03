@@ -63,7 +63,7 @@ function AdminBanGroup() {
     const navigate = useNavigate({ from: Route.fullPath });
     const search = Route.useSearch();
     const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
-    const [sorting] = useState<SortingState>([{ id: 'ban_id', desc: true }]);
+    const [sorting] = useState<SortingState>([{ id: 'ban_group_id', desc: true }]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
 
     const { data: bans, isLoading } = useQuery({
@@ -181,13 +181,13 @@ function AdminBanGroup() {
                             <Grid xs="auto">
                                 <Field
                                     name={'deleted'}
-                                    children={({ state, handleBlur, handleChange }) => {
+                                    children={({ handleChange, handleBlur, state }) => {
                                         return (
                                             <CheckboxSimple
                                                 label={'Show Deleted'}
                                                 checked={state.value}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                onChange={(_, v) => handleChange(v)}
+                                                onBlur={handleBlur}
                                             />
                                         );
                                     }}

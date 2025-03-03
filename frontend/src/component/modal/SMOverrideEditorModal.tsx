@@ -159,8 +159,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(z) Full Admin'}
                                         />
                                     );
@@ -175,8 +175,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(a) Reserved Slot'}
                                         />
                                     );
@@ -191,8 +191,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(b) Generic Admin'}
                                         />
                                     );
@@ -207,8 +207,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(c) Kick Players'}
                                         />
                                     );
@@ -223,8 +223,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(d) Ban Players'}
                                         />
                                     );
@@ -239,8 +239,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(e) Unban Players'}
                                         />
                                     );
@@ -255,8 +255,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(f) Slay/Harm Players'}
                                         />
                                     );
@@ -271,8 +271,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(g) Change Maps'}
                                         />
                                     );
@@ -287,8 +287,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(h) Change CVARs'}
                                         />
                                     );
@@ -303,8 +303,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(i) Exec Configs'}
                                         />
                                     );
@@ -319,8 +319,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(j) Special Chat Privileges'}
                                         />
                                     );
@@ -335,8 +335,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(k) Start Votes'}
                                         />
                                     );
@@ -351,8 +351,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(l) Set Server Password'}
                                         />
                                     );
@@ -367,8 +367,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(m) RCON Access'}
                                         />
                                     );
@@ -383,8 +383,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(n) Enabled Cheats'}
                                         />
                                     );
@@ -399,8 +399,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(o) Custom Flag'}
                                         />
                                     );
@@ -415,8 +415,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(p) Custom Flag'}
                                         />
                                     );
@@ -431,8 +431,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(q) Custom Flag'}
                                         />
                                     );
@@ -447,8 +447,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(r) Custom Flag'}
                                         />
                                     );
@@ -463,8 +463,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(s) Custom Flag'}
                                         />
                                     );
@@ -479,8 +479,8 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                                     return (
                                         <CheckboxSimple
                                             checked={state.value}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(t) Custom Flag'}
                                         />
                                     );

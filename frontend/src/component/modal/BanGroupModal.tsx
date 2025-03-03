@@ -41,7 +41,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         target_id: values.target_id,
                         valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
                     });
-                    sendFlash('success', 'Updated CIDR ban successfully');
+                    sendFlash('success', 'Updated group ban successfully');
                     modal.resolve(ban_record);
                 } else {
                     const ban_record = await apiCreateBanGroup({
@@ -51,7 +51,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         target_id: values.target_id,
                         group_id: values.group_id
                     });
-                    sendFlash('success', 'Created CIDR ban successfully');
+                    sendFlash('success', 'Created group ban successfully');
                     modal.resolve(ban_record);
                 }
                 await modal.hide();
@@ -137,9 +137,6 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid xs={6}>
                             <Field
                                 name={'duration'}
-                                validators={{
-                                    onChange: z.nativeEnum(Duration)
-                                }}
                                 children={(props) => {
                                     return (
                                         <SelectFieldSimple
@@ -179,16 +176,13 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid xs={12}>
                             <Field
                                 name={'note'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(props) => {
                                     return (
                                         <MarkdownField
                                             {...props}
+                                            defaultValue={props.state.value}
                                             multiline={true}
                                             rows={10}
-                                            defaultValue={props.state.value}
                                             label={'Mod Notes'}
                                         />
                                     );
