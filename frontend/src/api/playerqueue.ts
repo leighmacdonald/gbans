@@ -103,7 +103,7 @@ export type ChatStatus = 'readwrite' | 'readonly' | 'noaccess';
 export const websocketURL = () => {
     let protocol = 'ws';
     if (location.protocol === 'https:') {
-        protocol = 'wss:';
+        protocol = 'wss';
     }
     return `${protocol}://${location.host}/ws`;
 };
