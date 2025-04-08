@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import MenuItem from '@mui/material/MenuItem';
-import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
@@ -17,7 +16,6 @@ import {
     SortingState,
     useReactTable
 } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiGetAppeals,
@@ -39,7 +37,7 @@ import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { TablePropsAll } from '../types/table.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
-import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const appealSearchSchema = z.object({
     ...commonTableSearchSchema,
@@ -85,9 +83,13 @@ function AdminAppeals() {
             );
             await navigate({ to: '/admin/appeals', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: appealSearchSchema
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                source_id: makeValidateSteamIDCallback(),
+                target_id: makeValidateSteamIDCallback(),
+                appeal_state: z.nativeEnum(AppealState)
+            })
         },
         defaultValues: {
             source_id: search.source_id ?? '',
@@ -125,7 +127,6 @@ function AdminAppeals() {
                             <Grid xs={6} md={4}>
                                 <Field
                                     name={'source_id'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return (
                                             <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />
@@ -137,7 +138,6 @@ function AdminAppeals() {
                             <Grid xs={6} md={4}>
                                 <Field
                                     name={'target_id'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return (
                                             <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
@@ -153,6 +153,7 @@ function AdminAppeals() {
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
+                                                defaultValue={AppealState.Any}
                                                 label={'Appeal Status'}
                                                 fullwidth={true}
                                                 items={AppealStateCollection}
@@ -242,11 +243,7 @@ const AppealsTable = ({
             header: 'Status',
             size: 85,
             cell: (info) => {
-                return (
-                    <TableCell>
-                        <Typography variant={'body1'}>{appealStateString(info.getValue())}</Typography>
-                    </TableCell>
-                );
+                return <Typography variant={'body1'}>{appealStateString(info.getValue())}</Typography>;
             }
         }),
         columnHelper.accessor('source_id', {

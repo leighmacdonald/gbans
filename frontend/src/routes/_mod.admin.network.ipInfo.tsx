@@ -13,7 +13,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'leaflet/dist/leaflet.css';
 import { z } from 'zod';
 import { apiGetNetworkDetails } from '../api';
@@ -74,9 +73,10 @@ function AdminNetworkInfo() {
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/network/ipInfo', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: ipInfoSearchSchema
+            onChange: z.object({
+                ip: z.string().ip({ version: 'v4' })
+            })
         },
         defaultValues: {
             ip: ip ?? ''
@@ -105,7 +105,6 @@ function AdminNetworkInfo() {
                             <Grid xs={12}>
                                 <Field
                                     name={'ip'}
-                                    validators={{ onChange: z.string().ip({ version: 'v4' }) }}
                                     children={(props) => {
                                         return <TextFieldSimple {...props} label={'IP Address'} />;
                                     }}

@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
 import { apiCreateSMGroup, apiSaveSMGroup, hasSMFlag, SMGroups } from '../../api';
@@ -46,7 +45,33 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                 }, '');
             edit.mutate({ name: value.name, immunity: Number(value.immunity), flags: flags });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                name: z.string(),
+                immunity: z.string(),
+                z: z.boolean(),
+                a: z.boolean(),
+                b: z.boolean(),
+                c: z.boolean(),
+                d: z.boolean(),
+                e: z.boolean(),
+                f: z.boolean(),
+                g: z.boolean(),
+                h: z.boolean(),
+                i: z.boolean(),
+                j: z.boolean(),
+                k: z.boolean(),
+                l: z.boolean(),
+                m: z.boolean(),
+                n: z.boolean(),
+                o: z.boolean(),
+                p: z.boolean(),
+                q: z.boolean(),
+                r: z.boolean(),
+                s: z.boolean(),
+                t: z.boolean()
+            })
+        },
         defaultValues: {
             name: group?.name ?? '',
             immunity: group?.immunity_level ? String(group.immunity_level) : '',
@@ -116,8 +141,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'z'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(z) Full Admin'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(z) Full Admin'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -125,8 +157,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'a'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(a) Reserved Slot'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(a) Reserved Slot'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -134,8 +173,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'b'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(b) Generic Admin'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(b) Generic Admin'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -143,8 +189,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'c'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(c) Kick Players'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(c) Kick Players'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -152,8 +205,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'d'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(d) Ban Players'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(d) Ban Players'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -161,8 +221,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'e'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(e) Unban Players'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(e) Unban Players'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -170,9 +237,14 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'f'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
+                                children={({ state, handleBlur, handleChange }) => {
                                     return (
-                                        <CheckboxSimple {...props} label={'(f) Slay/Harm Players'} fullwidth={true} />
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(f) Slay/Harm Players'}
+                                        />
                                     );
                                 }}
                             />
@@ -181,8 +253,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'g'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(g) Change Maps'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(g) Change Maps'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -190,8 +269,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'h'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(h) Change CVARs'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(h) Change CVARs'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -199,8 +285,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'i'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(i) Exec Configs'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(i) Exec Configs'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -208,12 +301,13 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'j'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
+                                children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            {...props}
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
                                             label={'(j) Special Chat Privileges'}
-                                            fullwidth={true}
                                         />
                                     );
                                 }}
@@ -223,8 +317,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'k'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(k) Start Votes'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(k) Start Votes'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -232,9 +333,14 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'l'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
+                                children={({ state, handleBlur, handleChange }) => {
                                     return (
-                                        <CheckboxSimple {...props} label={'(l) Set Server Password'} fullwidth={true} />
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(l) Set Server Password'}
+                                        />
                                     );
                                 }}
                             />
@@ -243,8 +349,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'m'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(m) RCON Access'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(m) RCON Access'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -252,8 +365,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'n'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(n) Enabled Cheats'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(n) Enabled Cheats'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -261,8 +381,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'o'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(o) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(o) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -270,8 +397,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'p'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(p) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(p) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -279,8 +413,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'q'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(q) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(q) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -288,8 +429,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'r'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(r) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(r) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -297,8 +445,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'s'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(s) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(s) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -306,8 +461,15 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             <Field
                                 name={'t'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(t) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            checked={state.value}
+                                            onChange={(_, v) => handleChange(v)}
+                                            onBlur={handleBlur}
+                                            label={'(t) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

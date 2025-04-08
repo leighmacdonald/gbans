@@ -5,7 +5,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import {
@@ -19,7 +18,8 @@ import {
     DurationCollection
 } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
+import { emptyOrNullString } from '../../util/types.ts';
+import { makeValidateSteamIDCallback } from '../../util/validator/makeValidateSteamIDCallback.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
@@ -40,7 +40,7 @@ type BanASNFormValues = {
 };
 
 export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRecord }) => {
-    const { sendFlash } = useUserFlashCtx();
+    const { sendFlash, sendError } = useUserFlashCtx();
     const modal = useModal();
 
     const mutation = useMutation({
@@ -62,7 +62,9 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                 const ban_record = await apiCreateBanASN({
                     note: values.note,
                     duration: values.duration,
-                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
+                    valid_until: !emptyOrNullString(values.duration_custom)
+                        ? parseISO(values.duration_custom)
+                        : undefined,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     target_id: values.target_id,
@@ -71,8 +73,17 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                 sendFlash('success', 'Created ASN ban successfully');
                 modal.resolve(ban_record);
             }
+        },
+        onSuccess: async (banRecord) => {
+            if (existing?.ban_asn_id) {
+                sendFlash('success', 'Updated asn ban successfully');
+            } else {
+                sendFlash('success', 'Created asn ban successfully');
+            }
+            modal.resolve(banRecord);
             await modal.hide();
-        }
+        },
+        onError: sendError
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
@@ -87,7 +98,18 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                 as_num: value.as_num
             });
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                target_id: makeValidateSteamIDCallback(),
+                reason: z.nativeEnum(BanReason),
+                reason_text: z.string(),
+                duration: z.nativeEnum(Duration),
+                duration_custom: z.string(),
+                note: z.string(),
+                as_num: z.string()
+            })
+        },
         defaultValues: {
             target_id: existing ? existing.target_id : '',
             reason: existing ? existing.reason : BanReason.Cheating,
@@ -95,7 +117,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
             duration: existing ? Duration.durCustom : Duration.dur2w,
             duration_custom: existing ? existing.valid_until.toISOString() : '',
             note: existing ? existing.note : '',
-            as_num: existing ? String(existing.as_num) : ''
+            as_num: existing ? String(existing.as_num) : '0'
         }
     });
 
@@ -117,11 +139,11 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid xs={12}>
                             <Field
                                 name={'target_id'}
-                                validators={makeSteamidValidators()}
                                 children={(props) => {
                                     return (
                                         <SteamIDField
                                             {...props}
+                                            defaultValue={props.state.value}
                                             label={'Target Steam ID'}
                                             fullwidth={true}
                                             disabled={Boolean(existing?.ban_asn_id)}
@@ -133,11 +155,8 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid xs={12}>
                             <Field
                                 name={'as_num'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'AS Number'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'AS Number'} />;
                                 }}
                             />
                         </Grid>
@@ -148,6 +167,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            defaultValue={props.state.value}
                                             label={'Reason'}
                                             fullwidth={true}
                                             items={banReasonsCollection}
@@ -166,37 +186,25 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid xs={12}>
                             <Field
                                 name={'reason_text'}
-                                validators={{
-                                    onSubmit: ({ value, fieldApi }) => {
-                                        if (fieldApi.form.getFieldValue('reason') != BanReason.Custom) {
-                                            if (value.length == 0) {
-                                                return undefined;
-                                            }
-                                            return 'Must use custom ban reason';
-                                        }
-                                        const result = z.string().min(5).safeParse(value);
-                                        if (!result.success) {
-                                            return result.error.errors.map((e) => e.message).join(',');
-                                        }
-
-                                        return undefined;
-                                    }
-                                }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Custom Ban Reason'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            defaultValue={props.state.value}
+                                            label={'Custom Ban Reason'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
                         <Grid xs={6}>
                             <Field
                                 name={'duration'}
-                                validators={{
-                                    onChange: z.nativeEnum(Duration)
-                                }}
                                 children={(props) => {
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            defaultValue={props.state.value}
                                             label={'Duration'}
                                             fullwidth={true}
                                             items={DurationCollection}
@@ -217,7 +225,13 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                             <Field
                                 name={'duration_custom'}
                                 children={(props) => {
-                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                    return (
+                                        <DateTimeSimple
+                                            {...props}
+                                            defaultValue={props.state.value}
+                                            label={'Custom Expire Date'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -225,11 +239,16 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid xs={12}>
                             <Field
                                 name={'note'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(props) => {
-                                    return <MarkdownField {...props} multiline={true} rows={10} label={'Mod Notes'} />;
+                                    return (
+                                        <MarkdownField
+                                            {...props}
+                                            defaultValue={props.state.value}
+                                            multiline={true}
+                                            rows={10}
+                                            label={'Mod Notes'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

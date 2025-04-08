@@ -7,7 +7,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, PaginationState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiVotesQuery, VoteResult } from '../api/votes.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -20,7 +19,6 @@ import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { initPagination, makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
-import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const votesSearchSchema = z.object({
     ...makeCommonTableSearchSchema(['target_id', 'source_id', 'success', 'created_on']),
@@ -59,9 +57,11 @@ function AdminVotes() {
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/votes', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: votesSearchSchema
+            onChange: z.object({
+                source_id: z.string(),
+                target_id: z.string()
+            })
         },
         defaultValues: {
             source_id: search.source_id ?? '',
@@ -97,7 +97,6 @@ function AdminVotes() {
                             <Grid xs={6} md={6}>
                                 <Field
                                     name={'source_id'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return (
                                             <TextFieldSimple {...props} label={'Initiator Steam ID'} fullwidth={true} />
@@ -109,7 +108,6 @@ function AdminVotes() {
                             <Grid xs={6} md={6}>
                                 <Field
                                     name={'target_id'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return (
                                             <TextFieldSimple {...props} label={'Target Steam ID'} fullwidth={true} />

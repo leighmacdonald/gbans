@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
-import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { apiGetWeaponsOverall, WeaponsOverallResult } from '../api';
@@ -10,7 +9,6 @@ import { ContainerWithHeader } from './ContainerWithHeader';
 import { DataTable } from './DataTable.tsx';
 import FmtWhenGt from './FmtWhenGT.tsx';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
-import { TableCellSmall } from './TableCellSmall.tsx';
 import { TextLink } from './TextLink.tsx';
 
 export const WeaponsStatListContainer = () => {
@@ -39,134 +37,72 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             header: 'Weapon',
             size: 350,
             cell: (info) => (
-                <TableCellSmall>
-                    <TextLink to={'/stats/weapon/$weapon_id'} params={{ weapon_id: String(info.getValue()) }}>
-                        {stats.data[info.row.index].name}
-                    </TextLink>
-                </TableCellSmall>
+                <TextLink to={'/stats/weapon/$weapon_id'} params={{ weapon_id: String(info.getValue()) }}>
+                    {stats.data[info.row.index].name}
+                </TextLink>
             )
         }),
 
         columnHelper.accessor('kills', {
             header: 'Kills',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), humanCount)
         }),
 
         columnHelper.accessor('kills_pct', {
             header: 'Kills%',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), defaultFloatFmtPct)
         }),
         columnHelper.accessor('shots', {
             header: 'Shots',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), humanCount)
         }),
         columnHelper.accessor('shots_pct', {
             header: 'Shots%',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmt)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), defaultFloatFmt)
         }),
         columnHelper.accessor('hits', {
             header: 'Hits',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), humanCount)
         }),
         columnHelper.accessor('hits_pct', {
             header: 'Hits%',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), defaultFloatFmtPct)
         }),
         columnHelper.accessor('accuracy', {
             header: 'Acc%',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), defaultFloatFmtPct)
         }),
         columnHelper.accessor('airshots', {
             header: 'As',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), humanCount)
         }),
         columnHelper.accessor('airshots_pct', {
             header: 'As%',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), defaultFloatFmtPct)
         }),
         columnHelper.accessor('backstabs', {
             header: 'Bs',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), humanCount)
         }),
         columnHelper.accessor('backstabs_pct', {
             header: 'Bs%',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), defaultFloatFmtPct)
         }),
         columnHelper.accessor('headshots', {
             header: 'Hs',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), humanCount)
         }),
         columnHelper.accessor('headshots_pct', {
             header: 'Hs%',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), defaultFloatFmtPct)
         }),
         columnHelper.accessor('damage', {
             header: 'Dmg',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), humanCount)
         }),
         columnHelper.accessor('damage_pct', {
             header: 'Dmg%',
-            cell: (info) => (
-                <TableCellSmall>
-                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
-                </TableCellSmall>
-            )
+            cell: (info) => FmtWhenGt(info.getValue(), defaultFloatFmtPct)
         })
     ];
 

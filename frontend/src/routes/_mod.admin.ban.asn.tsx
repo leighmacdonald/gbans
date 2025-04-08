@@ -11,10 +11,9 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansASN, ASNBanRecord, BanReason, BanReasons } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -31,7 +30,7 @@ import { ModalBanASN, ModalUnbanASN } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
-import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const banASNSearchSchema = z.object({
     ...makeCommonTableSearchSchema([
@@ -54,7 +53,10 @@ export const Route = createFileRoute('/_mod/admin/ban/asn')({
     validateSearch: (search) => banASNSearchSchema.parse(search)
 });
 
+const queryKey = ['asnBans'];
+
 function AdminBanASN() {
+    const queryClient = useQueryClient();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate({ from: Route.fullPath });
     const search = Route.useSearch();
@@ -63,7 +65,7 @@ function AdminBanASN() {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
 
     const { data: bans, isLoading } = useQuery({
-        queryKey: ['asnBans', { deleted: search.deleted }],
+        queryKey: queryKey,
         queryFn: async () => {
             return await apiGetBansASN({ deleted: search.deleted ?? false });
         }
@@ -77,9 +79,14 @@ function AdminBanASN() {
                 search: (prev) => ({ ...prev, ...value })
             });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: banASNSearchSchema
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                source_id: makeValidateSteamIDCallback(),
+                target_id: makeValidateSteamIDCallback(),
+                as_num: z.string(),
+                deleted: z.boolean()
+            })
         },
         defaultValues: {
             source_id: search.source_id ?? '',
@@ -115,19 +122,36 @@ function AdminBanASN() {
 
     const columns = useMemo(() => {
         const onUnban = async (ban: ASNBanRecord) => {
-            await NiceModal.show(ModalUnbanASN, {
-                banId: ban.ban_asn_id
-            });
+            try {
+                await NiceModal.show(ModalUnbanASN, {
+                    banId: ban.ban_asn_id
+                });
+                queryClient.setQueryData(
+                    queryKey,
+                    (bans ?? []).filter((b) => b.ban_asn_id != ban.ban_asn_id)
+                );
+                sendFlash('success', 'Unbanned player successfully');
+            } catch (e) {
+                sendFlash('error', `Error trying to unban: ${e}`);
+            }
         };
 
         const onEdit = async (ban: ASNBanRecord) => {
-            await NiceModal.show(ModalBanASN, {
-                banId: ban.ban_asn_id,
-                existing: ban
-            });
+            try {
+                const updated = await NiceModal.show<ASNBanRecord>(ModalBanASN, {
+                    banId: ban.ban_asn_id,
+                    existing: ban
+                });
+                queryClient.setQueryData(
+                    queryKey,
+                    (bans ?? []).map((b) => (b.ban_asn_id == updated.ban_asn_id ? updated : b))
+                );
+            } catch (e) {
+                sendFlash('error', `Error trying to edit ban: ${e}`);
+            }
         };
         return makeColumns(onEdit, onUnban);
-    }, []);
+    }, [bans, queryClient, sendFlash]);
 
     return (
         <Grid container spacing={2}>
@@ -146,7 +170,6 @@ function AdminBanASN() {
                                 <Grid xs={6} md={3}>
                                     <Field
                                         name={'source_id'}
-                                        validators={makeSteamidValidatorsOptional()}
                                         children={(props) => {
                                             return (
                                                 <TextFieldSimple
@@ -162,7 +185,6 @@ function AdminBanASN() {
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'target_id'}
-                                    validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return (
                                             <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
@@ -183,8 +205,15 @@ function AdminBanASN() {
                             <Grid xs="auto">
                                 <Field
                                     name={'deleted'}
-                                    children={(props) => {
-                                        return <CheckboxSimple {...props} label={'Show Deleted'} />;
+                                    children={({ state, handleBlur, handleChange }) => {
+                                        return (
+                                            <CheckboxSimple
+                                                label={'Show Deleted'}
+                                                checked={state.value}
+                                                onChange={(_, v) => handleChange(v)}
+                                                onBlur={handleBlur}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>

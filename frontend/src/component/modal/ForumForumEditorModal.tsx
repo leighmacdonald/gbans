@@ -5,7 +5,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { PermissionLevel, PermissionLevelCollection, permissionLevelString } from '../../api';
 import { apiCreateForum, apiSaveForum, Forum, ForumCategory } from '../../api/forum.ts';
@@ -65,7 +64,15 @@ export const ForumForumEditorModal = NiceModal.create(
             onSubmit: async ({ value }) => {
                 mutation.mutate({ ...value });
             },
-            validatorAdapter: zodValidator,
+            validators: {
+                onChange: z.object({
+                    forum_category_id: z.number(),
+                    title: z.string().min(1),
+                    description: z.string().min(1),
+                    ordering: z.string().min(1),
+                    permission_level: z.nativeEnum(PermissionLevel)
+                })
+            },
             defaultValues: {
                 forum_category_id: defaultCategory,
                 title: forum?.title ?? '',
@@ -118,9 +125,6 @@ export const ForumForumEditorModal = NiceModal.create(
                             <Grid xs={12}>
                                 <Field
                                     name={'title'}
-                                    validators={{
-                                        onChange: z.string().min(1)
-                                    }}
                                     children={(props) => {
                                         return <TextFieldSimple {...props} label={'Title'} />;
                                     }}
@@ -129,9 +133,6 @@ export const ForumForumEditorModal = NiceModal.create(
                             <Grid xs={12}>
                                 <Field
                                     name={'description'}
-                                    validators={{
-                                        onChange: z.string().min(1)
-                                    }}
                                     children={(props) => {
                                         return <TextFieldSimple {...props} label={'Description'} rows={5} />;
                                     }}
@@ -140,9 +141,6 @@ export const ForumForumEditorModal = NiceModal.create(
                             <Grid xs={12}>
                                 <Field
                                     name={'ordering'}
-                                    validators={{
-                                        onChange: z.string().min(1)
-                                    }}
                                     children={(props) => {
                                         return <TextFieldSimple {...props} label={'Order'} />;
                                     }}
@@ -151,9 +149,6 @@ export const ForumForumEditorModal = NiceModal.create(
                             <Grid xs={12}>
                                 <Field
                                     name={'permission_level'}
-                                    validators={{
-                                        onChange: z.nativeEnum(PermissionLevel)
-                                    }}
                                     children={(props) => {
                                         return (
                                             <SelectFieldSimple

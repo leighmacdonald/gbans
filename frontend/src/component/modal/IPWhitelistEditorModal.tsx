@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiCreateWhitelistIP, apiUpdateWhitelistIP, WhitelistIP } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -41,7 +40,16 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
+        validators: {
+            onChange: z.object({
+                address: z.string().refine((arg) => {
+                    const pieces = arg.split('/');
+                    const addr = pieces[0];
+                    const result = z.string().ip(addr).safeParse(addr);
+                    return result.success;
+                })
+            })
+        },
         defaultValues: {
             address: source?.address ?? ''
         }
@@ -63,14 +71,6 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
                         <Grid xs={12}>
                             <Field
                                 name={'address'}
-                                validators={{
-                                    onChange: z.string().refine((arg) => {
-                                        const pieces = arg.split('/');
-                                        const addr = pieces[0];
-                                        const result = z.string().ip(addr).safeParse(addr);
-                                        return result.success;
-                                    })
-                                }}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'IP Addr'} />;
                                 }}

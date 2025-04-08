@@ -7,7 +7,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetConnections, PersonConnection } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -47,41 +46,19 @@ function AdminNetworkPlayersByCIDR() {
                 offset: (pageIndex ?? 0) * (pageSize ?? defaultRows),
                 order_by: sortColumn ?? 'steam_id',
                 desc: sortOrder == 'desc',
-                cidr: cidr
+                cidr: cidr ?? ''
             });
         }
     });
-    // const [state, setState] = useUrlState({
-    //     page: undefined,
-    //     source_id: undefined,
-    //     asn: undefined,
-    //     cidr: undefined,
-    //     rows: undefined,
-    //     sortOrder: undefined,
-    //     sortColumn: undefined
-    // });
-    //
-    // const {
-    //     data: rows,
-    //     count,
-    //     loading
-    // } = useConnections({
-    //     limit: state.rows ?? RowsPerPage.TwentyFive,
-    //     offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
-    //     order_by: state.sortColumn ?? 'created_on',
-    //     desc: (state.sortOrder ?? 'desc') == 'desc',
-    //     source_id: state.source_id ?? '',
-    //     asn: 0,
-    //     cidr: state.cidr ?? ''
-    // });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/network/playersbyip', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: playersByIPSearchSchema
+            onChange: z.object({
+                cidr: z.string()
+            })
         },
         defaultValues: {
             cidr: cidr ?? ''

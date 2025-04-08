@@ -4,7 +4,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetConnections } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -14,7 +13,7 @@ import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
-import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const ipHistorySearchSchema = z.object({
     ...makeCommonTableSearchSchema(['person_connection_id', 'steam_id', 'created_on', 'server_id']),
@@ -46,9 +45,11 @@ function AdminNetworkPlayerIPHistory() {
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/network/iphist', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
-            onChange: ipHistorySearchSchema
+            onChangeAsyncDebounceMs: 500,
+            onChangeAsync: z.object({
+                steam_id: makeValidateSteamIDCallback()
+            })
         },
         defaultValues: {
             steam_id: steam_id ?? ''
@@ -78,16 +79,8 @@ function AdminNetworkPlayerIPHistory() {
                             <Grid xs={12}>
                                 <Field
                                     name={'steam_id'}
-                                    validators={makeSteamidValidators()}
-                                    children={({ state, handleChange, handleBlur }) => {
-                                        return (
-                                            <SteamIDField
-                                                state={state}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
-                                                fullwidth={true}
-                                            />
-                                        );
+                                    children={(props) => {
+                                        return <SteamIDField {...props} fullwidth={true} />;
                                     }}
                                 />
                             </Grid>
