@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"math/rand/v2"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
 )
 
 func srcdsTokens(server domain.Server) *authTokens {
@@ -27,7 +27,7 @@ func genSpeedrun(players int, bots int) domain.Speedrun {
 		PointCaptures: nil,
 		ServerID:      testServer.ServerID,
 		Players:       make([]domain.SpeedrunParticipant, players),
-		Duration:      time.Second * time.Duration(rand.Int31n(10000)),
+		Duration:      time.Second * time.Duration(rand.Int32N(10000)),
 		PlayerCount:   players,
 		BotCount:      bots,
 		CreatedOn:     time.Now(),
@@ -37,21 +37,21 @@ func genSpeedrun(players int, bots int) domain.Speedrun {
 	for player := range players {
 		run.Players[player] = domain.SpeedrunParticipant{
 			SteamID:  steamid.RandSID64(),
-			Duration: time.Second * time.Duration(rand.Int31n(5000)),
+			Duration: time.Second * time.Duration(rand.Int32N(5000)),
 		}
 	}
 
-	for round := range rand.Int31n(5) + 1 {
+	for round := range rand.Int32N(5) + 1 {
 		capture := domain.SpeedrunPointCaptures{
 			RoundID:  int(round) + 1,
 			Players:  nil,
-			Duration: time.Second * time.Duration(rand.Int31n(1000)),
+			Duration: time.Second * time.Duration(rand.Int32N(1000)),
 		}
 
-		for j := range rand.Int31n(5) + 1 {
+		for j := range rand.Int32N(5) + 1 {
 			capture.Players = append(capture.Players, domain.SpeedrunParticipant{
 				SteamID:  run.Players[j].SteamID,
-				Duration: time.Second * time.Duration(rand.Int31n(1000)),
+				Duration: time.Second * time.Duration(rand.Int32N(1000)),
 			})
 		}
 
