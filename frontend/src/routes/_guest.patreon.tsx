@@ -3,7 +3,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import SettingsInputComponentIcon from '@mui/icons-material/SettingsInputComponent';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';

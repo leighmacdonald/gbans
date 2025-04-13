@@ -3,7 +3,7 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';

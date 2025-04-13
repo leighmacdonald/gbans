@@ -8,7 +8,7 @@ import PublicOffIcon from '@mui/icons-material/PublicOff';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';

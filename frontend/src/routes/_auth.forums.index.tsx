@@ -7,7 +7,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';

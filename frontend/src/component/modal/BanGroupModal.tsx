@@ -1,7 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
@@ -9,7 +9,6 @@ import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import { apiCreateBanGroup, apiUpdateBanGroup, Duration, DurationCollection, GroupBanRecord } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
@@ -97,7 +96,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'target_id'}
-                                validators={makeSteamidValidators()}
+                                // validators={makeSteamidValidators()}
                                 children={(props) => {
                                     return (
                                         <SteamIDField

@@ -6,7 +6,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';

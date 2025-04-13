@@ -1,7 +1,7 @@
 import PregnantWomanIcon from '@mui/icons-material/PregnantWoman';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { format, fromUnixTime } from 'date-fns';

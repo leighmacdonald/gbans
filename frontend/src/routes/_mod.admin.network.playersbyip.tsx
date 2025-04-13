@@ -1,6 +1,6 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import WifiFindIcon from '@mui/icons-material/WifiFind';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import { useForm } from '@tanstack/react-form';

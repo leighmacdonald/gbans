@@ -4,7 +4,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import TimerIcon from '@mui/icons-material/Timer';
 import WallpaperIcon from '@mui/icons-material/Wallpaper';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';

@@ -1,5 +1,5 @@
 import PeopleIcon from '@mui/icons-material/People';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';

@@ -2,7 +2,7 @@ import { ReactNode, useMemo } from 'react';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 import CellTowerIcon from '@mui/icons-material/CellTower';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';

@@ -1,4 +1,4 @@
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { createFileRoute } from '@tanstack/react-router';
 import { HealersOverallContainer } from '../component/HealersOverallContainer.tsx';
 import { MapUsageContainer } from '../component/MapUsageContainer.tsx';

@@ -3,7 +3,7 @@ import NiceModal from '@ebay/nice-modal-react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import { useForm } from '@tanstack/react-form';

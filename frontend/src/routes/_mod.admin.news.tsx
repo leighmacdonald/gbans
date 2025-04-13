@@ -6,7 +6,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, SortingState } from '@tanstack/react-table';

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';

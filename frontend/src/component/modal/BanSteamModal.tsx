@@ -1,7 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
@@ -21,7 +21,6 @@ import {
     SteamBanRecord
 } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
@@ -136,7 +135,7 @@ export const BanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'target_id'}
-                                    validators={makeSteamidValidators()}
+                                    // validators={makeSteamidValidators()}
                                     children={(props) => {
                                         return (
                                             <SteamIDField
@@ -238,7 +237,12 @@ export const BanSteamModal = NiceModal.create(
                                         onChange: z.boolean()
                                     }}
                                     children={(props) => {
-                                        return <CheckboxSimple {...props} label={'IP Evading Allowed'} />;
+                                        return (
+                                            <CheckboxSimple
+                                                onChange={props.handleChange}
+                                                label={'IP Evading Allowed'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>

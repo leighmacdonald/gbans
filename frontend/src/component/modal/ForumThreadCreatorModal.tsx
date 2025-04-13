@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useForm } from '@tanstack/react-form';

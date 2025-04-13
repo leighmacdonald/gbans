@@ -9,7 +9,7 @@ import StorageIcon from '@mui/icons-material/Storage';
 import SupportIcon from '@mui/icons-material/Support';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import Button from '@mui/material/Button';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import { useNavigate, useRouteContext, createFileRoute } from '@tanstack/react-router';

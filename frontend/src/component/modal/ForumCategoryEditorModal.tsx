@@ -1,6 +1,6 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { apiCreateForumCategory, apiSaveForumCategory, ForumCategory } from '../../api/forum.ts';
