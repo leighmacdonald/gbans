@@ -13,9 +13,9 @@ require (
 	github.com/emersion/go-imap/v2 v2.0.0-beta.5
 	github.com/emersion/go-message v0.18.2
 	github.com/gabriel-vasile/mimetype v1.4.8
-	github.com/getsentry/sentry-go v0.31.1
-	github.com/getsentry/sentry-go/gin v0.31.1
-	github.com/getsentry/sentry-go/slog v0.31.1
+	github.com/getsentry/sentry-go v0.32.0
+	github.com/getsentry/sentry-go/gin v0.32.0
+	github.com/getsentry/sentry-go/slog v0.32.0
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-contrib/pprof v1.5.3
 	github.com/gin-contrib/static v1.1.5
@@ -41,12 +41,12 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.21.1
+	github.com/prometheus/client_golang v1.22.0
 	github.com/ricochet2200/go-disk-usage/du v0.0.0-20210707232629-ac9918953285
-	github.com/riverqueue/river v0.20.1
-	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.20.1
-	github.com/riverqueue/river/rivershared v0.20.1
-	github.com/riverqueue/river/rivertype v0.20.1
+	github.com/riverqueue/river v0.20.2
+	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.20.2
+	github.com/riverqueue/river/rivershared v0.20.2
+	github.com/riverqueue/river/rivertype v0.20.2
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/samber/slog-gin v1.15.0
 	github.com/samber/slog-multi v1.4.0
@@ -60,7 +60,7 @@ require (
 	github.com/yohcop/openid-go v1.0.1
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/crypto v0.37.0
-	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
+	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0
 	golang.org/x/oauth2 v0.29.0
 	golang.org/x/sync v0.13.0
 )
@@ -142,10 +142,10 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
-	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.16.0 // indirect
-	github.com/riverqueue/river/riverdriver v0.20.1 // indirect
+	github.com/riverqueue/river/riverdriver v0.20.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sagikazarmark/locafero v0.9.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
