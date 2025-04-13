@@ -15,7 +15,7 @@ export const DateTimeSimple = ({
         <DesktopDateTimePicker
             disabled={disabled}
             label={label}
-            value={parseISO(value as string)}
+            value={parseISO((value ?? new Date().toString()) as string)}
             formatDensity={'spacious'}
             minDate={new Date()}
             onChange={(e) => handleChange(e ? e.toISOString() : '')}

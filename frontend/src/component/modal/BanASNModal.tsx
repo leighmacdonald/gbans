@@ -1,7 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import LanIcon from '@mui/icons-material/Lan';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
@@ -18,7 +18,6 @@ import {
     DurationCollection
 } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
@@ -115,7 +114,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'target_id'}
-                                validators={makeSteamidValidators()}
+                                // validators={makeSteamidValidators()}
                                 children={(props) => {
                                     return (
                                         <SteamIDField

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {

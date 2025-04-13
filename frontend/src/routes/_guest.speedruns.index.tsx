@@ -4,7 +4,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import HistoryIcon from '@mui/icons-material/History';
 import PageviewIcon from '@mui/icons-material/Pageview';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';

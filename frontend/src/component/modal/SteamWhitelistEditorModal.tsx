@@ -1,12 +1,11 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { apiCreateWhitelistSteam } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { SteamIDField } from '../field/SteamIDField.tsx';
@@ -56,7 +55,7 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'steam_id'}
-                                validators={makeSteamidValidators()}
+                                // validators={makeSteamidValidators()}
                                 children={(props) => {
                                     return <SteamIDField {...props} label={'Steam ID'} fullwidth />;
                                 }}

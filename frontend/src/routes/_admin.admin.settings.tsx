@@ -15,7 +15,7 @@ import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
 import UpdateIcon from '@mui/icons-material/Update';
 import WebAssetIcon from '@mui/icons-material/WebAsset';
 import Button from '@mui/material/Button';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
@@ -476,7 +476,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Allows users to report other users.</SubHeading>
                         <Field
                             name={'reports_enabled'}
@@ -489,7 +489,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enable showing the searchable chatlogs.</SubHeading>
                         <Field
                             name={'chatlogs_enabled'}
@@ -502,7 +502,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enables the 1000 uncles speedruns tracking support.</SubHeading>
                         <Field
                             name={'speedruns_enabled'}
@@ -514,7 +514,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enables the functionality allowing players to queue up together using the website.
                         </SubHeading>
@@ -833,7 +833,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             This url should point to an instance of https://github.com/leighmacdonald/tf2_demostats.
                             This is used to pull stats & player steamids out of demos that are fetched.
@@ -997,7 +997,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             public_log_channel_id: settings.discord.public_log_channel_id,
             public_match_log_channel_id: settings.discord.public_match_log_channel_id,
             mod_ping_role_id: settings.discord.mod_ping_role_id,
-            unregister_on_start: settings.discord.unregister_on_start,
             vote_log_channel_id: settings.discord.vote_log_channel_id,
             appeal_log_channel_id: settings.discord.appeal_log_channel_id,
             ban_log_channel_id: settings.discord.ban_log_channel_id,
@@ -1278,7 +1277,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>A channel which relays the chat messages from the website chat lobby.</SubHeading>
                         <Field
                             name={'playerqueue_channel_id'}
@@ -1287,26 +1286,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Playerqueue log channel ID'} />;
-                            }}
-                        />
-                    </Grid>
-                    <Grid xs={12}>
-                        <SubHeading>
-                            Do you want to unregister all existing slash commands on bot startup. This is normally not
-                            needed and its mostly useful when creating or modifying existing command.
-                        </SubHeading>
-                        <Field
-                            name={'unregister_on_start'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={(props) => {
-                                return (
-                                    <CheckboxSimple
-                                        {...props}
-                                        label={'Unregister existing discord slash commands on startup'}
-                                    />
-                                );
                             }}
                         />
                     </Grid>
@@ -1354,7 +1333,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <Field
                             name={'level'}
                             validators={{
-                                onChange: z.string()
+                                onChange: z.enum([undefined, 'debug', 'info', 'warn', 'error'])
                             }}
                             children={(props) => {
                                 return (

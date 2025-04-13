@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import { useForm } from '@tanstack/react-form';

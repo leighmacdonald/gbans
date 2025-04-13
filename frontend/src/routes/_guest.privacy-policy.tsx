@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react';
 import PolicyIcon from '@mui/icons-material/Policy';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';

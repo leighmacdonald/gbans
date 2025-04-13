@@ -9,7 +9,7 @@ import MarkChatReadIcon from '@mui/icons-material/MarkChatRead';
 import RemoveIcon from '@mui/icons-material/Remove';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import Grid2 from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -174,8 +174,8 @@ function NotificationsPage() {
     return (
         <>
             <Title>{`Notifications (${newMessages})`}</Title>
-            <Grid2 container spacing={2}>
-                <Grid2 size={{ xs: 12 }}>
+            <Grid container spacing={2}>
+                <Grid size={{ xs: 12 }}>
                     <ContainerWithHeaderAndButtons
                         iconLeft={<EmailIcon />}
                         title={`Notifications  ${Object.values(rowSelection).length ? `(Selected: ${Object.values(rowSelection).length})` : ''}`}
@@ -250,8 +250,8 @@ function NotificationsPage() {
                             page={pagination.pageIndex}
                         />
                     </ContainerWithHeaderAndButtons>
-                </Grid2>
-            </Grid2>
+                </Grid>
+            </Grid>
         </>
     );
 }

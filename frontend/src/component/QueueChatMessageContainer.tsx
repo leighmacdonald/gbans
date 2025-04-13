@@ -3,7 +3,7 @@ import ScrollableFeed from 'react-scrollable-feed';
 import { useModal } from '@ebay/nice-modal-react';
 import BlockIcon from '@mui/icons-material/Block';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';

@@ -6,7 +6,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
 import List from '@mui/material/List';
@@ -57,7 +57,6 @@ import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
-import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
 
 const reportSchema = z.object({
     ...commonTableSearchSchema,
@@ -248,7 +247,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
 
 export const ReportCreateForm = (): JSX.Element => {
     const { demo_id, steam_id, person_message_id } = Route.useSearch();
-    const [validatedProfile, setValidatedProfile] = useState<PlayerProfile>();
+    const [validatedProfile] = useState<PlayerProfile>();
     const { sendFlash, sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
@@ -305,12 +304,10 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid size={{ xs: 12 }}>
                         <form.Field
                             name={'steam_id'}
-                            validators={makeSteamidValidators(setValidatedProfile)}
-                            children={({ state, handleChange, handleBlur }) => {
+                            children={({ handleChange, handleBlur }) => {
                                 return (
                                     <SteamIDField
                                         disabled={Boolean(steam_id)}
-                                        state={state}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         fullwidth={true}
@@ -340,7 +337,7 @@ export const ReportCreateForm = (): JSX.Element => {
                                                     handleChange(Number(e.target.value));
                                                 }}
                                                 onBlur={handleBlur}
-                                                error={state.meta.touchedErrors.length > 0}
+                                                error={state.meta.errors.length > 0}
                                             >
                                                 {banReasonsCollection.map((r) => (
                                                     <MenuItem value={r} key={`reason-${r}`}>
@@ -348,9 +345,7 @@ export const ReportCreateForm = (): JSX.Element => {
                                                     </MenuItem>
                                                 ))}
                                             </Select>
-                                            {state.meta.touchedErrors.length > 0 && (
-                                                <FormHelperText>Error</FormHelperText>
-                                            )}
+                                            {state.meta.errors.length > 0 && <FormHelperText>Error</FormHelperText>}
                                         </FormControl>
                                     </>
                                 );
@@ -410,7 +405,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             </Grid>
                             <Grid size={{ xs: 6 }}>
                                 <form.Field
-                                    validators={{ onChange: z.number({ coerce: true }).min(0).optional() }}
+                                    // validators={{ onChange: z.number({ coerce: true }).min(0).optional() }}
                                     name={'demo_tick'}
                                     children={({ state, handleChange, handleBlur }) => {
                                         return (

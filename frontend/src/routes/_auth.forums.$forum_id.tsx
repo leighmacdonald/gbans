@@ -8,7 +8,7 @@ import PushPinIcon from '@mui/icons-material/PushPin';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { FetchQueryOptions, useQueryClient } from '@tanstack/react-query';

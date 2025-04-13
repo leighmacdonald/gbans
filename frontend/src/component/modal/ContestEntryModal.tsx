@@ -6,7 +6,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { apiContest } from '../../api';

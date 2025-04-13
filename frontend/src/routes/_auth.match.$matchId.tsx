@@ -5,7 +5,7 @@ import MasksIcon from '@mui/icons-material/Masks';
 import SportsIcon from '@mui/icons-material/Sports';
 import { Popover } from '@mui/material';
 import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
