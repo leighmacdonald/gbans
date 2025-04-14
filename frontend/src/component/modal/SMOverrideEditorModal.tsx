@@ -128,8 +128,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'z'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(z) Full Admin'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(z) Full Admin'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -137,8 +144,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'a'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(a) Reserved Slot'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(a) Reserved Slot'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -146,8 +160,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'b'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(b) Generic Admin'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(b) Generic Admin'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -155,8 +176,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'c'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(c) Kick Players'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(c) Kick Players'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -164,8 +192,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'d'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(d) Ban Players'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(d) Ban Players'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -173,8 +208,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'e'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(e) Unban Players'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(e) Unban Players'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -182,9 +224,14 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'f'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
+                                children={({ state, handleBlur, handleChange }) => {
                                     return (
-                                        <CheckboxSimple {...props} label={'(f) Slay/Harm Players'} fullwidth={true} />
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(f) Slay/Harm Players'}
+                                        />
                                     );
                                 }}
                             />
@@ -193,8 +240,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'g'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(g) Change Maps'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(g) Change Maps'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -202,8 +256,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'h'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(h) Change CVARs'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(h) Change CVARs'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -211,8 +272,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'i'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(i) Exec Configs'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(i) Exec Configs'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -220,12 +288,13 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'j'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
+                                children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            {...props}
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
                                             label={'(j) Special Chat Privileges'}
-                                            fullwidth={true}
                                         />
                                     );
                                 }}
@@ -235,8 +304,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'k'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(k) Start Votes'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(k) Start Votes'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -244,9 +320,14 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'l'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
+                                children={({ state, handleBlur, handleChange }) => {
                                     return (
-                                        <CheckboxSimple {...props} label={'(l) Set Server Password'} fullwidth={true} />
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(l) Set Server Password'}
+                                        />
                                     );
                                 }}
                             />
@@ -255,8 +336,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'m'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(m) RCON Access'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(m) RCON Access'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -264,8 +352,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'n'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(n) Enabled Cheats'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(n) Enabled Cheats'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -273,8 +368,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'o'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(o) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(o) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -282,8 +384,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'p'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(p) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(p) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -291,8 +400,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'q'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(q) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(q) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -300,8 +416,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'r'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(r) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(r) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -309,8 +432,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'s'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(s) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(s) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -318,8 +448,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             <Field
                                 name={'t'}
                                 validators={{ onChange: z.boolean() }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'(t) Custom Flag'} fullwidth={true} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'(t) Custom Flag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

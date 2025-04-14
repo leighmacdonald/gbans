@@ -144,7 +144,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={8}>
+                        <Grid size={{ xs: 8 }}>
                             <Field
                                 name={'address_internal'}
                                 validators={{
@@ -249,8 +249,15 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Is Enabled'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Is Enabled'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -260,8 +267,15 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Stats Enabled'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Stats Enabled'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

@@ -81,7 +81,7 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
                             />
                         </Grid>
 
-                        <Grid xs={10}>
+                        <Grid size={{ xs: 10 }}>
                             <Field
                                 name={'reason'}
                                 validators={{
@@ -96,7 +96,7 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
                 </DialogContent>
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

@@ -1,7 +1,7 @@
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { formatDistanceStrict } from 'date-fns';
-import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
+import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 
 interface DataTableRelativeDateFieldProps {
     date: Date;

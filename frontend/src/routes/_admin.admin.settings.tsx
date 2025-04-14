@@ -387,8 +387,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable news features.'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable news features.'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -400,8 +407,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable forums'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable forums'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -416,8 +430,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable contests'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable contests'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -431,8 +452,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable Wiki'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable Wiki'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -443,8 +471,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable Demo/STV Support'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable Demo/STV Support'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -455,8 +490,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable Game Stats'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable Game Stats'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -470,8 +512,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable Servers Page'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable Servers Page'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -483,8 +532,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable User Reports'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable User Reports'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -496,8 +552,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable public chatlogs'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable public chatlogs'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -509,8 +572,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable Speedruns support'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable Speedruns support'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -523,8 +593,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable Playerqueue support'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable Playerqueue support'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -584,8 +661,15 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable Word Filters'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable Word Filters'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -626,8 +710,15 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable dry run mode'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable dry run mode'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -638,8 +729,15 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Send discord notices on match'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Send discord notices on match'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -760,8 +858,15 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable Scheduled Demo Cleanup'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable Scheduled Demo Cleanup'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -770,7 +875,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         <Field
                             name={'demo_cleanup_strategy'}
                             validators={{
-                                onChange: z.string()
+                                onChange: z.enum(['pctfree', 'count'])
                             }}
                             children={(props) => {
                                 return (
@@ -895,8 +1000,15 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable Patreon Integration'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable Patreon Integration'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -909,8 +1021,15 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable website integrations'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable website integrations'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -1003,7 +1122,8 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             forum_log_channel_id: settings.discord.forum_log_channel_id,
             word_filter_log_channel_id: settings.discord.word_filter_log_channel_id,
             kick_log_channel_id: settings.discord.kick_log_channel_id,
-            playerqueue_channel_id: settings.discord.playerqueue_channel_id
+            playerqueue_channel_id: settings.discord.playerqueue_channel_id,
+            anticheat_channel_id: settings.discord.anticheat_channel_id
         }
     });
 
@@ -1024,8 +1144,15 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable discord integration'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable discord integration'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -1040,8 +1167,15 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Discord Bot'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Discord Bot'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -1055,8 +1189,15 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable website integrations'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable website integrations'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -1127,7 +1268,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             This should be a private channel. Its the default log channel and is used as the default for
                             other channels if their id is empty.
@@ -1148,8 +1289,15 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable public log channel'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable public log channel'}
+                                    />
+                                );
                             }}
                         />
                         <SubHeading>Whether or not to enable public notices for less sensitive log events.</SubHeading>
@@ -1236,7 +1384,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Show new forum activity. This includes threads, new messages, message deletions.
                         </SubHeading>
@@ -1333,7 +1481,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <Field
                             name={'level'}
                             validators={{
-                                onChange: z.enum([undefined, 'debug', 'info', 'warn', 'error'])
+                                onChange: z.enum(['debug', 'info', 'warn', 'error'])
                             }}
                             children={(props) => {
                                 return (
@@ -1373,8 +1521,15 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable HTTP request logs'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable HTTP request logs'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -1385,8 +1540,15 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable OpenTelemetry Support'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable OpenTelemetry Support'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -1514,8 +1676,15 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable tracing'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable tracing'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -1620,8 +1789,15 @@ const GeoLocationSection = ({
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable geolocation services'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable geolocation services'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -1698,8 +1874,15 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Skip OpenID validation'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Skip OpenID validation'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -1832,8 +2015,15 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable SSH downloader'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable SSH downloader'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -2010,9 +2200,14 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
-                                    <CheckboxSimple {...props} label={'Enable tf2 bot detector compatible export'} />
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable tf2 bot detector compatible export'}
+                                    />
                                 );
                             }}
                         />
@@ -2027,8 +2222,15 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable srcds formatted ban list'} />;
+                            children={({ state, handleBlur, handleChange }) => {
+                                return (
+                                    <CheckboxSimple
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        label={'Enable srcds formatted ban list'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
