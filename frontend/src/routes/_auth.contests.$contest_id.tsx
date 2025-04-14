@@ -15,7 +15,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useRouteContext } from '@tanstack/react-router';
 import { format } from 'date-fns';
-import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
+import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { isAfter } from 'date-fns/fp';
 import { apiContest, apiContestEntries, apiContestEntryVote, ContestEntry, PermissionLevel } from '../api';
 import { Asset, mediaType, MediaTypes } from '../api/media.ts';

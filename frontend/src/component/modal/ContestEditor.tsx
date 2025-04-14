@@ -154,8 +154,15 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Public'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Public'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -165,8 +172,15 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Hide Submissions'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Hide Submissions'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -209,8 +223,15 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Voting Enabled'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Voting Enabled'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -220,8 +241,15 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Downvotes Enabled'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Downvotes Enabled'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

@@ -81,8 +81,15 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'is_published'}
-                                children={(props) => {
-                                    return <CheckboxSimple {...props} label={'Is Published'} />;
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Is Published'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

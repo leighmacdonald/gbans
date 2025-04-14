@@ -101,8 +101,15 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                                     validators={{
                                         onChange: z.boolean()
                                     }}
-                                    children={(props) => {
-                                        return <CheckboxSimple {...props} label={'Enabled'} />;
+                                    children={({ state, handleBlur, handleChange }) => {
+                                        return (
+                                            <CheckboxSimple
+                                                state={state}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
+                                                label={'Enabled'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>

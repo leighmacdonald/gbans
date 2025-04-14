@@ -175,7 +175,7 @@ const GeneralSection = ({
         return 'Notification' in window;
     }, []);
 
-    const { Field, Subscribe, handleSubmit, reset, state } = useForm({
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
@@ -275,11 +275,12 @@ const GeneralSection = ({
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        state={state.values.stats_hidden}
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Hide personal stats on profile'}
                                     />
                                 );
@@ -311,7 +312,7 @@ const GameplaySection = ({
     settings: PersonSettings;
     mutate: (s: PersonSettings) => void;
 }) => {
-    const { Field, Subscribe, handleSubmit, reset, state } = useForm({
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
@@ -336,11 +337,12 @@ const GameplaySection = ({
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        state={state.values.center_projectiles}
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Use center projectiles'}
                                     />
                                 );
@@ -372,7 +374,7 @@ const ForumSection = ({
     settings: PersonSettings;
     mutate: (s: PersonSettings) => void;
 }) => {
-    const { Field, Subscribe, handleSubmit, reset, state } = useForm({
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
@@ -399,14 +401,7 @@ const ForumSection = ({
                                 onChange: z.string()
                             }}
                             children={(props) => {
-                                return (
-                                    <MarkdownField
-                                        {...props}
-                                        state={state.values.forum_signature}
-                                        label={'Your forum signature'}
-                                        rows={10}
-                                    />
-                                );
+                                return <MarkdownField {...props} label={'Your forum signature'} rows={10} />;
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
@@ -418,11 +413,12 @@ const ForumSection = ({
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={(props) => {
+                            children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        {...props}
-                                        state={state.values.forum_profile_messages}
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         label={'Enable people to sign your profile.'}
                                     />
                                 );

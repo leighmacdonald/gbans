@@ -1,10 +1,9 @@
 import { ElementType, PropsWithChildren } from 'react';
+import { TypographyVariant } from '@mui/material';
 import Typography from '@mui/material/Typography';
-// eslint-disable-next-line no-restricted-imports
-import { Variant } from '@mui/material/styles/createTypography';
 
 interface TextProps {
-    variant?: Variant;
+    variant?: TypographyVariant;
     component?: ElementType;
     onClick?: () => void;
 }

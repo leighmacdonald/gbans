@@ -87,7 +87,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                 </DialogContent>
                 <DialogActions>
                     <Grid container>
-                        <Grid size={{ xs: 12 }} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

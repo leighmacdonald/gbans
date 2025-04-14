@@ -135,7 +135,7 @@ export const BanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'target_id'}
-                                    // validators={makeSteamidValidators()}
+                                    //validators={makeSteamidValidators()}
                                     children={(props) => {
                                         return (
                                             <SteamIDField
@@ -225,8 +225,15 @@ export const BanSteamModal = NiceModal.create(
                                     validators={{
                                         onChange: z.boolean()
                                     }}
-                                    children={(props) => {
-                                        return <CheckboxSimple {...props} label={'Include Friends'} />;
+                                    children={({ state, handleBlur, handleChange }) => {
+                                        return (
+                                            <CheckboxSimple
+                                                state={state}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
+                                                label={'Include Friends'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -236,10 +243,12 @@ export const BanSteamModal = NiceModal.create(
                                     validators={{
                                         onChange: z.boolean()
                                     }}
-                                    children={(props) => {
+                                    children={({ state, handleBlur, handleChange }) => {
                                         return (
                                             <CheckboxSimple
-                                                onChange={props.handleChange}
+                                                state={state}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
                                                 label={'IP Evading Allowed'}
                                             />
                                         );
