@@ -1,0 +1,8 @@
+BEGIN;
+
+DROP INDEX IF EXISTS match_demo_id;
+
+ALTER TABLE match
+    DROP COLUMN IF EXISTS demo_id;
+
+COMMIT;
