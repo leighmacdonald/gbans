@@ -11,7 +11,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 	"os"
@@ -27,6 +26,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/ricochet2200/go-disk-usage/du"
 )
 
@@ -35,12 +35,13 @@ type demoUsecase struct {
 	asset       domain.AssetUsecase
 	config      domain.ConfigUsecase
 	servers     domain.ServersUsecase
+	matches     domain.MatchUsecase
 	bucket      domain.Bucket
 	cleanupChan chan any
 }
 
 func NewDemoUsecase(bucket domain.Bucket, repository domain.DemoRepository, assets domain.AssetUsecase,
-	config domain.ConfigUsecase, servers domain.ServersUsecase,
+	config domain.ConfigUsecase, servers domain.ServersUsecase, matches domain.MatchUsecase,
 ) domain.DemoUsecase {
 	return &demoUsecase{
 		bucket:      bucket,
@@ -48,6 +49,7 @@ func NewDemoUsecase(bucket domain.Bucket, repository domain.DemoRepository, asse
 		asset:       assets,
 		config:      config,
 		servers:     servers,
+		matches:     matches,
 		cleanupChan: make(chan any),
 	}
 }
@@ -300,11 +302,22 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 
 	demoDetail, errDetail := demoparse.Submit(ctx, d.config.Config().Demo.DemoParserURL, asset.LocalPath)
 	if errDetail != nil {
+		slog.Error("Failed to submit demo", "error", errDetail)
 		return nil, errDetail
 	}
 
-	for key := range demoDetail.State.Users {
-		intStats[strconv.Itoa(key)] = gin.H{}
+	for _, p := range demoDetail.Players {
+		if p.SteamID == "BOT" {
+			continue
+		}
+		id := steamid.New(p.SteamID)
+
+		if !id.Valid() {
+			slog.Warn("Could not parse steamid", slog.String("id", p.SteamID))
+			continue
+		}
+
+		intStats[id.String()] = gin.H{}
 	}
 
 	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])
@@ -327,6 +340,10 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 
 	if errSave := d.repository.SaveDemo(ctx, &newDemo); errSave != nil {
 		return nil, errSave
+	}
+
+	if _, errMatch := d.matches.CreateFromDemo(ctx, serverID, *demoDetail); errMatch != nil {
+		return nil, errMatch
 	}
 
 	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", newDemo.DemoID), slog.String("title", newDemo.Title))

@@ -41,7 +41,7 @@ func NewMatchUsecase(repository domain.MatchRepository, state domain.StateUsecas
 	}
 }
 
-func (m matchUsecase) CreateFromDemo(_ context.Context, serverID int, details demoparse.Demo) (domain.MatchResult, error) {
+func (m matchUsecase) CreateFromDemo(_ context.Context, serverID int, demo demoparse.Demo) (domain.MatchResult, error) {
 	server, errServer := m.servers.Server(context.Background(), serverID)
 	if errServer != nil {
 		return domain.MatchResult{}, errServer
@@ -52,18 +52,18 @@ func (m matchUsecase) CreateFromDemo(_ context.Context, serverID int, details de
 	}
 
 	endTime := time.Now()
-	startTime := endTime.Add(-time.Duration(int(math.Ceil(details.Duration))))
+	startTime := endTime.Add(-time.Duration(int(math.Ceil(demo.Duration))))
 	result := domain.MatchResult{
 		MatchID:  newID,
 		ServerID: server.ServerID,
-		Title:    details.Server,
-		MapName:  details.Map,
-		TeamScores: logparse.TeamScores{
-			Red:     details.State.Results.ScoreRed,
-			RedTime: details.State.Results.RedTime,
-			Blu:     details.State.Results.ScoreBlu,
-			BluTime: details.State.Results.BluTime,
-		},
+		Title:    demo.Server,
+		MapName:  demo.Map,
+		// 		TeamScores: logparse.TeamScores{
+		// 			Red:     demo.Rounds.ScoreRed,
+		// 			RedTime: demo.Rounds.RedTime,
+		// 			Blu:     demo.Rounds.Results.ScoreBlu,
+		// 			BluTime: demo.Rounds.Results.BluTime,
+		// 		},
 		TimeStart: startTime,
 		TimeEnd:   endTime,
 		Winner:    logparse.BLU,
@@ -71,7 +71,7 @@ func (m matchUsecase) CreateFromDemo(_ context.Context, serverID int, details de
 		Chat:      nil,
 	}
 
-	for _, chat := range details.State.Chat {
+	for _, chat := range demo.Chat {
 		result.Chat = append(result.Chat, domain.MatchChat{
 			SteamID:     steamid.New(chat.SteamID),
 			PersonaName: chat.PersonaName,
@@ -80,12 +80,11 @@ func (m matchUsecase) CreateFromDemo(_ context.Context, serverID int, details de
 		})
 	}
 
-	for uid, player := range details.State.Players {
-		user := details.State.Users[uid]
+	for _, player := range demo.Players {
 		matchPlayer := domain.MatchPlayer{
 			CommonPlayerStats: domain.CommonPlayerStats{
-				SteamID:           steamid.New(user.SteamID),
-				Name:              user.Name,
+				SteamID:           steamid.New(player.SteamID),
+				Name:              player.Name,
 				Kills:             player.Kills,
 				Assists:           player.Assists,
 				Deaths:            player.Deaths,
@@ -93,13 +92,13 @@ func (m matchUsecase) CreateFromDemo(_ context.Context, serverID int, details de
 				Dominations:       player.Dominations,
 				Dominated:         0,
 				Revenges:          player.Revenges,
-				Damage:            player.DamageDealt,
+				Damage:            player.Damage,
 				DamageTaken:       player.DamageTaken,
 				HealingTaken:      player.HealingTaken,
-				HealthPacks:       player.HealthPacks,
-				HealingPacks:      player.HealingPacks,
+				HealthPacks:       player.HealthPacksCount,
+				HealingPacks:      player.HealingFromPacks,
 				Captures:          player.Captures,
-				CapturesBlocked:   player.Defenses,
+				CapturesBlocked:   player.CapturesBlocked,
 				Extinguishes:      player.Extinguishes,
 				BuildingBuilt:     player.BuildingBuilt,
 				BuildingDestroyed: player.BuildingDestroyed,
@@ -109,7 +108,7 @@ func (m matchUsecase) CreateFromDemo(_ context.Context, serverID int, details de
 				Shots:             player.Shots,
 				Hits:              player.Hits,
 			},
-			Team:        user.Team,
+			Team:        logparse.UNASSIGNED,
 			TimeStart:   time.Time{},
 			TimeEnd:     time.Time{},
 			MedicStats:  nil,

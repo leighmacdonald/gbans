@@ -271,19 +271,12 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			assets := asset.NewAssetUsecase(assetRepository)
 			serversUC := servers.NewServersUsecase(servers.NewServersRepository(dbConn))
-			demos := demo.NewDemoUsecase(domain.BucketDemo, demo.NewDemoRepository(dbConn), assets, configUsecase, serversUC)
-
-			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbConn), notificationUsecase, configUsecase, personUsecase, demos)
 
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUC)), configUsecase, serversUC)
 
-			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase)
-
 			banGroupRepo := steamgroup.NewSteamGroupRepository(dbConn)
 			banGroupUsecase := steamgroup.NewBanGroupUsecase(banGroupRepo, personUsecase, notificationUsecase, configUsecase)
-
-			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase, banGroupUsecase)
 
 			go func() {
 				if err := stateUsecase.Start(ctx); err != nil {
@@ -296,8 +289,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			discordOAuthUsecase := discord.NewDiscordOAuthUsecase(discord.NewDiscordOAuthRepository(dbConn), configUsecase)
 
-			appeals := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbConn), banUsecase, personUsecase, notificationUsecase, configUsecase)
-
 			matchRepo := match.NewMatchRepository(eventBroadcaster, dbConn, personUsecase, serversUC, notificationUsecase, stateUsecase, weaponsMap)
 
 			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUC, notificationUsecase)
@@ -305,6 +296,13 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			if errWeapons := matchUsecase.LoadWeapons(ctx, weaponsMap); errWeapons != nil {
 				slog.Error("Failed to import weapons", log.ErrAttr(errWeapons))
 			}
+
+			demos := demo.NewDemoUsecase(domain.BucketDemo, demo.NewDemoRepository(dbConn), assets, configUsecase, serversUC, matchUsecase)
+
+			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbConn), notificationUsecase, configUsecase, personUsecase, demos)
+			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase)
+			appeals := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbConn), banUsecase, personUsecase, notificationUsecase, configUsecase)
+			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase, banGroupUsecase)
 
 			chatRepository := chat.NewChatRepository(dbConn, personUsecase, wordFilterUsecase, matchUsecase, eventBroadcaster)
 			go chatRepository.Start(ctx)
@@ -487,7 +485,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			httpServer := httphelper.NewServer(conf.Addr(), router)
 
-			demoDownloader := demo.NewDownloader(configUsecase, dbConn, serversUC, assets, demos, anticheatUsecase)
+			demoDownloader := demo.NewDownloader(configUsecase, dbConn, serversUC, assets, demos, matchUsecase, anticheatUsecase)
 			go demoDownloader.Start(ctx)
 
 			go func() {
