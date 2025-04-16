@@ -655,12 +655,15 @@ func (h discordService) makeOnLogs() func(context.Context, *discordgo.Session, *
 
 		for _, match := range matches {
 			status := ":x:"
-			if match.IsWinner {
-				status = ":white_check_mark:"
+
+			for _, player := range match.Players {
+				if player.SteamID == author.SteamID && match.Winner == player.Team {
+					status = ":white_check_mark:"
+				}
 			}
 
 			_, _ = matchesWriter.WriteString(fmt.Sprintf("%s [%s](%s) `%s` `%s`\n",
-				status, match.Title, h.config.ExtURL(match), match.MapName, match.TimeStart.Format(time.DateOnly)))
+				status, match.Title, h.config.ExtURLRaw("/match/%s", match.MatchID.String()), match.MapName, match.TimeStart.Format(time.DateOnly)))
 		}
 
 		return LogsMessage(count, matchesWriter.String()), nil
