@@ -109,5 +109,4 @@ func TestMatchFromDemo(t *testing.T) {
 	require.Equal(t, match.MapName, demoDetails.Header.Map)
 
 	require.NoError(t, matchUC.MatchSave(t.Context(), &match))
-
 }

@@ -34,12 +34,13 @@ type Fetcher struct {
 	configUsecase  domain.ConfigUsecase
 	assetUsecase   domain.AssetUsecase
 	demoUsecase    domain.DemoUsecase
+	matchUsecase   domain.MatchUsecase
 	demoChan       chan UploadedDemo
 	parserMu       *sync.Mutex
 }
 
 func NewFetcher(database database.Database, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
-	assetUsecase domain.AssetUsecase, demoUsecase domain.DemoUsecase, anticheat domain.AntiCheatUsecase,
+	assetUsecase domain.AssetUsecase, demoUsecase domain.DemoUsecase, matchUsecase domain.MatchUsecase, anticheat domain.AntiCheatUsecase,
 ) *Fetcher {
 	return &Fetcher{
 		database:       database,
@@ -47,6 +48,7 @@ func NewFetcher(database database.Database, configUsecase domain.ConfigUsecase, 
 		serversUsecase: serversUsecase,
 		assetUsecase:   assetUsecase,
 		demoUsecase:    demoUsecase,
+		matchUsecase:   matchUsecase,
 		anticheat:      anticheat,
 		demoChan:       make(chan UploadedDemo),
 		parserMu:       &sync.Mutex{},
@@ -69,10 +71,13 @@ func (d Fetcher) OnDemoReceived(ctx context.Context, demo UploadedDemo) error {
 
 	_, errDemo := d.demoUsecase.CreateFromAsset(ctx, demoAsset, demo.Server.ServerID)
 	if errDemo != nil {
+		//_, errMatch := d.matchUsecase.CreateFromDemo(ctx, demo.Server.ServerID, demo)
+		//		if errMatch != nil {
 		// Cleanup the asset not attached to a demo
 		if _, errDelete := d.assetUsecase.Delete(ctx, demoAsset.AssetID); errDelete != nil {
 			return errors.Join(errDelete, errDelete)
 		}
+		//		}
 
 		return errDemo
 	}
@@ -207,9 +212,9 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 }
 
 func NewDownloader(config domain.ConfigUsecase, dbConn database.Database, servers domain.ServersUsecase,
-	assets domain.AssetUsecase, demos domain.DemoUsecase, anticheat domain.AntiCheatUsecase,
+	assets domain.AssetUsecase, demos domain.DemoUsecase, matchUsecase domain.MatchUsecase, anticheat domain.AntiCheatUsecase,
 ) Downloader {
-	fetcher := NewFetcher(dbConn, config, servers, assets, demos, anticheat)
+	fetcher := NewFetcher(dbConn, config, servers, assets, demos, matchUsecase, anticheat)
 
 	return Downloader{
 		fetcher: fetcher,
@@ -230,7 +235,7 @@ func (d Downloader) Start(ctx context.Context) {
 	interval := time.Duration(seconds) * time.Second
 	if interval < time.Minute*5 {
 		slog.Warn("Interval is too short, overriding to 5 minutes", slog.Duration("interval", interval))
-		interval = time.Minute * 5
+		//		interval = time.Minute * 5
 	}
 
 	ticker := time.NewTicker(interval)
