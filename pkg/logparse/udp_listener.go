@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net"
+	"net/netip"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,13 +29,18 @@ type LogEventHandler func(EventType, ServerEvent)
 type UDPLogListener struct {
 	*sync.RWMutex
 
-	udpAddr       *net.UDPAddr
-	secretMap     map[int]ServerIDMap // index = logsecret key
-	logAddrString string
-	onEvent       func(EventType, ServerEvent)
+	udpAddr   *net.UDPAddr
+	secretMap map[int]ServerIDMap // index = logsecret key
+	serverMap map[netip.Addr]bool // index = server ip address
+	onEvent   func(EventType, ServerEvent)
 }
 
-var ErrResolve = errors.New("failed to resolve UDP address")
+var (
+	ErrResolve    = errors.New("failed to resolve UDP address")
+	ErrRateLimit  = errors.New("rate limited")
+	ErrUnknownIP  = errors.New("unknown source ip")
+	ErrSecretAuth = errors.New("failed secret auth")
+)
 
 func NewUDPLogListener(logAddr string, onEvent LogEventHandler) (*UDPLogListener, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
@@ -43,11 +49,11 @@ func NewUDPLogListener(logAddr string, onEvent LogEventHandler) (*UDPLogListener
 	}
 
 	return &UDPLogListener{
-		RWMutex:       &sync.RWMutex{},
-		onEvent:       onEvent,
-		udpAddr:       udpAddr,
-		secretMap:     map[int]ServerIDMap{},
-		logAddrString: logAddr,
+		RWMutex:   &sync.RWMutex{},
+		onEvent:   onEvent,
+		udpAddr:   udpAddr,
+		secretMap: map[int]ServerIDMap{},
+		serverMap: map[netip.Addr]bool{},
 	}, nil
 }
 
@@ -56,6 +62,13 @@ func (remoteSrc *UDPLogListener) SetSecrets(secrets map[int]ServerIDMap) {
 	defer remoteSrc.Unlock()
 
 	remoteSrc.secretMap = secrets
+}
+
+func (remoteSrc *UDPLogListener) SetServers(servers map[netip.Addr]bool) {
+	remoteSrc.Lock()
+	defer remoteSrc.Unlock()
+
+	remoteSrc.serverMap = servers
 }
 
 type ServerIDMap struct {
@@ -92,6 +105,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 		count          = uint64(0)
 		insecureCount  = uint64(0)
 		errCount       = uint64(0)
+		rejectsIP      = map[string]time.Time{} // IP -> last reject time
 		msgIngressChan = make(chan newMsg)
 	)
 
@@ -105,15 +119,35 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 			default:
 				buffer := make([]byte, 1024)
 
-				readLen, _, errReadUDP := connection.ReadFromUDP(buffer)
+				readLen, remoteAddr, errReadUDP := connection.ReadFromUDP(buffer)
 				if errReadUDP != nil {
 					slog.Warn("UDP log read error", log.ErrAttr(errReadUDP))
 
 					continue
 				}
 
+				// IP Check: Ensure the packet originates from a known server IP
+				knownIP := false
+				if addr, addrOk := netip.AddrFromSlice(remoteAddr.IP); addrOk {
+					remoteSrc.RLock()
+					_, knownIP = remoteSrc.serverMap[addr]
+					remoteSrc.RUnlock()
+				}
+
+				if !knownIP {
+					lastTime, rejected := rejectsIP[remoteAddr.IP.String()]
+					if !rejected || time.Since(lastTime) > time.Minute*5 {
+						slog.Warn("Rejecting UDP packet from unknown source IP",
+							slog.String("ip", remoteAddr.IP.String()),
+							log.ErrAttr(ErrUnknownIP))
+						rejectsIP[remoteAddr.IP.String()] = time.Now()
+					}
+
+					continue // Discard packet
+				}
+
 				switch srcdsPacket(buffer[4]) {
-				case s2aLogString:
+				case s2aLogString: // Legacy/insecure format (no secret)
 					if insecureCount%10000 == 0 {
 						slog.Error("Using unsupported log packet type 0x52",
 							slog.Int64("count", int64(insecureCount+1))) // nolint:gosec
@@ -121,7 +155,8 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 
 					insecureCount++
 					errCount++
-				case s2aLogString2:
+
+				case s2aLogString2: // Secure format (with secret)
 					line := string(buffer)
 
 					idx := strings.Index(line, "L ")

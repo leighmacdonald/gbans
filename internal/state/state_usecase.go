@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/netip"
 	"strings"
 	"sync"
 	"time"
@@ -58,18 +59,19 @@ func (s *stateUsecase) Start(ctx context.Context) error {
 
 	go s.state.Start(ctx)
 
-	s.updateSrcdsLogSecrets(ctx)
+	s.updateSrcdsLogServers(ctx)
 
 	// TODO run on server Config changes
-	s.updateSrcdsLogSecrets(ctx)
+	s.updateSrcdsLogServers(ctx)
 
 	s.logListener.Start(ctx)
 
 	return nil
 }
 
-func (s *stateUsecase) updateSrcdsLogSecrets(ctx context.Context) {
+func (s *stateUsecase) updateSrcdsLogServers(ctx context.Context) {
 	newSecrets := map[int]logparse.ServerIDMap{}
+	newServers := map[netip.Addr]bool{}
 	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*5)
 
 	defer cancelServers()
@@ -89,9 +91,30 @@ func (s *stateUsecase) updateSrcdsLogSecrets(ctx context.Context) {
 			ServerID:   server.ServerID,
 			ServerName: server.ShortName,
 		}
+
+		if ip, errIP := server.IP(ctx); errIP == nil {
+			if addr, addrOk := netip.AddrFromSlice(ip); addrOk {
+				newServers[addr] = true
+			} else {
+				slog.Error("Failed to convert ip", slog.String("address", ip.String()))
+			}
+		} else {
+			slog.Error("Failed to resolve server ip", log.ErrAttr(errIP))
+		}
+
+		if internalIP, errIP := server.IPInternal(ctx); errIP == nil {
+			if addr, addrOk := netip.AddrFromSlice(internalIP); addrOk {
+				newServers[addr] = true
+			} else {
+				slog.Error("Failed to convert internal ip", slog.String("address", internalIP.String()))
+			}
+		} else {
+			slog.Error("Failed to resolve internal server ip", log.ErrAttr(errIP))
+		}
 	}
 
 	s.logListener.SetSecrets(newSecrets)
+	s.logListener.SetServers(newServers)
 }
 
 func (s *stateUsecase) Current() []domain.ServerState {
