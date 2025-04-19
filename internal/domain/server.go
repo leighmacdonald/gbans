@@ -130,6 +130,21 @@ func (s Server) IP(ctx context.Context) (net.IP, error) {
 	return ips[0], nil
 }
 
+func (s Server) IPInternal(ctx context.Context) (net.IP, error) {
+	parsedIP := net.ParseIP(s.AddressInternal)
+	if parsedIP != nil {
+		// We already have an ip
+		return parsedIP, nil
+	}
+	// TODO proper timeout for ctx
+	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", s.Address)
+	if errResolve != nil || len(ips) == 0 {
+		return nil, errors.Join(errResolve, ErrResolveIP)
+	}
+
+	return ips[0], nil
+}
+
 func (s Server) Addr() string {
 	return fmt.Sprintf("%s:%d", s.Address, s.Port)
 }
