@@ -276,7 +276,7 @@ const AdminServersTable = ({
                                     await onEdit(info.row.original);
                                 }}
                             >
-                                <Tooltip title={'Edit Ban'}>
+                                <Tooltip title={'Edit Server'}>
                                     <EditIcon />
                                 </Tooltip>
                             </IconButton>
