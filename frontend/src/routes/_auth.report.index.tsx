@@ -57,6 +57,7 @@ import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
+import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const reportSchema = z.object({
     ...commonTableSearchSchema,
@@ -91,8 +92,9 @@ function ReportCreate() {
             <Title>Create Report</Title>
             <Grid size={{ xs: 12, md: 8 }}>
                 <Stack spacing={2}>
-                    {canReport && <ReportCreateForm />}
-                    {!canReport && (
+                    {canReport ? (
+                        <ReportCreateForm />
+                    ) : (
                         <ContainerWithHeader title={'Permission Denied'}>
                             <Typography variant={'body1'} padding={2}>
                                 You are unable to report players while you are currently banned/muted.
@@ -247,7 +249,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
 
 export const ReportCreateForm = (): JSX.Element => {
     const { demo_id, steam_id, person_message_id } = Route.useSearch();
-    const [validatedProfile] = useState<PlayerProfile>();
+    const [validatedProfile, setValidatedProfile] = useState<PlayerProfile>();
     const { sendFlash, sendError } = useUserFlashCtx();
 
     const mutation = useMutation({
@@ -266,25 +268,39 @@ export const ReportCreateForm = (): JSX.Element => {
 
     const form = useForm({
         onSubmit: ({ value }) => {
+            const target = steam_id ?? validatedProfile?.player.steam_id;
+            if (!target) {
+                throw 'Invalid target steam id';
+            }
             mutation.mutate({
-                demo_id: value.demo_id ?? 0,
-                target_id: steam_id ?? validatedProfile?.player.steam_id ?? '',
-                demo_tick: value.demo_tick,
+                demo_id: Number(value.demo_id ?? 0),
+                target_id: target,
+                demo_tick: Number(value.demo_tick),
                 reason: value.reason,
                 reason_text: value.reason_text,
                 description: value.body_md,
-                person_message_id: value.person_message_id
+                person_message_id: Number(value.person_message_id)
             });
         },
-        // validators: {
-        //     onChange: validationSchema
-        // },
+        validators: {
+            onSubmitAsync: z.object({
+                body_md: z.string().min(10),
+                demo_id: z.string(),
+                demo_tick: z.string(),
+                person_message_id: z.string(),
+                target_id: makeValidateSteamIDCallback((profile) => {
+                    setValidatedProfile(profile);
+                }),
+                reason: z.nativeEnum(BanReason),
+                reason_text: z.string()
+            })
+        },
         defaultValues: {
             body_md: '',
-            demo_id: demo_id ?? undefined,
-            demo_tick: 0,
-            person_message_id: person_message_id ?? 0,
-            steam_id: steam_id ?? '',
+            demo_id: String(demo_id ?? ''),
+            demo_tick: String(0),
+            person_message_id: String(person_message_id ?? '0'),
+            target_id: steam_id ?? '',
             reason: person_message_id ? BanReason.Language : BanReason.Cheating,
             reason_text: ''
         }
@@ -303,14 +319,15 @@ export const ReportCreateForm = (): JSX.Element => {
                 <Grid container spacing={2}>
                     <Grid size={{ xs: 12 }}>
                         <form.Field
-                            name={'steam_id'}
-                            children={({ handleChange, handleBlur }) => {
+                            name={'target_id'}
+                            children={({ handleChange, handleBlur, state }) => {
                                 return (
                                     <SteamIDField
                                         disabled={Boolean(steam_id)}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         fullwidth={true}
+                                        value={state.value}
                                         label={'SteamID'}
                                     />
                                 );
@@ -387,7 +404,6 @@ export const ReportCreateForm = (): JSX.Element => {
                             <Grid size={{ xs: 6 }}>
                                 <form.Field
                                     name={'demo_id'}
-                                    validators={{ onChange: z.number({ coerce: true }).optional() }}
                                     children={({ state, handleChange, handleBlur }) => {
                                         return (
                                             <TextField
@@ -395,7 +411,7 @@ export const ReportCreateForm = (): JSX.Element => {
                                                 fullWidth
                                                 label="Demo ID"
                                                 value={state.value}
-                                                onChange={(e) => handleChange(Number(e.target.value))}
+                                                onChange={(e) => handleChange(e.target.value)}
                                                 onBlur={handleBlur}
                                                 variant="outlined"
                                             />
@@ -414,7 +430,7 @@ export const ReportCreateForm = (): JSX.Element => {
                                                 fullWidth
                                                 label="Demo Tick"
                                                 value={state.value}
-                                                onChange={(e) => handleChange(Number(e.target.value))}
+                                                onChange={(e) => handleChange(e.target.value)}
                                                 onBlur={handleBlur}
                                                 variant="outlined"
                                             />
