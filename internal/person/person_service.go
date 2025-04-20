@@ -138,6 +138,12 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 		response, err := h.persons.QueryProfile(requestCtx, req.Query)
 		if err != nil {
+			if errors.Is(err, domain.ErrInvalidSID) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrInvalidSID))
+
+				return
+			}
+
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
