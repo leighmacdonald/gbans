@@ -31,27 +31,29 @@ export const SteamIDField = ({
             variant="filled"
             error={error}
             helperText={helperText}
-            InputProps={{
-                startAdornment: (
-                    <InputAdornment position="start">
-                        {error ? (
-                            <ErrorOutlineIcon color={'error'} sx={{ width: 40 }} />
-                        ) : isValidating ? (
-                            <HourglassBottomIcon color={'warning'} sx={{ width: 40 }} />
-                        ) : isTouched ? (
-                            profile ? (
-                                <Avatar
-                                    src={avatarHashToURL(profile?.player.avatarhash ?? defaultAvatarHash)}
-                                    variant={'square'}
-                                />
+            slotProps={{
+                input: {
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            {error ? (
+                                <ErrorOutlineIcon color={'error'} sx={{ width: 40 }} />
+                            ) : isValidating ? (
+                                <HourglassBottomIcon color={'warning'} sx={{ width: 40 }} />
+                            ) : isTouched ? (
+                                profile ? (
+                                    <Avatar
+                                        src={avatarHashToURL(profile?.player.avatarhash ?? defaultAvatarHash)}
+                                        variant={'square'}
+                                    />
+                                ) : (
+                                    <CheckIcon color={'success'} />
+                                )
                             ) : (
-                                <CheckIcon color={'success'} />
-                            )
-                        ) : (
-                            <QuestionMark color={'secondary'} />
-                        )}
-                    </InputAdornment>
-                )
+                                <QuestionMark color={'secondary'} />
+                            )}
+                        </InputAdornment>
+                    )
+                }
             }}
         />
     );
