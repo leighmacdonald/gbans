@@ -107,7 +107,13 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().min(1)
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Short Name/Tag'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Short Name/Tag'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -118,7 +124,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().min(1)
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Long Name'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Long Name'} />;
                                 }}
                             />
                         </Grid>
@@ -129,7 +135,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().min(1)
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Address'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Address'} />;
                                 }}
                             />
                         </Grid>
@@ -140,7 +146,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().transform(numberStringValidator(1024, 65535))
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Port'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Port'} />;
                                 }}
                             />
                         </Grid>
@@ -151,7 +157,13 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string()
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Address Internal'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Address Internal'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -162,7 +174,13 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().length(20)
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Server Auth Key'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Server Auth Key'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -173,7 +191,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().min(6)
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'RCON Password'} />;
+                                    return (
+                                        <TextFieldSimple {...props} value={props.state.value} label={'RCON Password'} />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -184,7 +204,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().transform(numberStringValidator(100000000, 999999999))
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Log Secret'} />;
+                                    return (
+                                        <TextFieldSimple {...props} value={props.state.value} label={'Log Secret'} />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -195,7 +217,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().min(1)
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Region'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Region'} />;
                                 }}
                             />
                         </Grid>
@@ -206,7 +228,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().length(2)
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Country Code'} />;
+                                    return (
+                                        <TextFieldSimple {...props} value={props.state.value} label={'Country Code'} />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -217,7 +241,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().transform(numberStringValidator(-99, 99))
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Latitude'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Latitude'} />;
                                 }}
                             />
                         </Grid>
@@ -228,7 +252,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().transform(numberStringValidator(-180, 180))
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Longitude'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Longitude'} />;
                                 }}
                             />
                         </Grid>
@@ -239,7 +263,13 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string()
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Reserved Slots'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Reserved Slots'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -252,9 +282,11 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
                                             label={'Is Enabled'}
                                         />
                                     );
@@ -270,9 +302,11 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
                                             label={'Stats Enabled'}
                                         />
                                     );

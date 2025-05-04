@@ -66,7 +66,13 @@ export const UnbanSteamModal = NiceModal.create(
                                         onChange: z.string().min(5)
                                     }}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Unban Reason'} />;
+                                        return (
+                                            <TextFieldSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Unban Reason'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>

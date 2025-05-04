@@ -12,7 +12,7 @@ export const readableFonts = {
 
 export const tf2Fonts = {
     fontFamily: ['"TF2 Build"', ...baseFontSet].join(','),
-    letterSpacing: '1px'
+    letterSpacing: '0.10rem'
 };
 
 declare module '@mui/material/styles' {

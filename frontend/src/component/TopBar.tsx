@@ -1,4 +1,4 @@
-import { JSX, MouseEvent, useMemo, useState } from 'react';
+import { JSX, MouseEvent, useCallback, useMemo, useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -330,19 +330,22 @@ export const TopBar = () => {
         };
     }, [colourOpts, navigate]);
 
-    const renderLinkedMenuItem = (text: string, route: string, icon: JSX.Element) => (
-        <MenuItem
-            component={RouterLink}
-            to={route}
-            onClick={() => {
-                setAnchorElNav(null);
-                setAnchorElUser(null);
-            }}
-            key={route + text}
-        >
-            <ListItemIcon>{icon}</ListItemIcon>
-            <ListItemText disableTypography primary={text} sx={tf2Fonts} />
-        </MenuItem>
+    const renderLinkedMenuItem = useCallback(
+        (text: string, route: string, icon: JSX.Element) => (
+            <MenuItem
+                component={RouterLink}
+                to={route}
+                onClick={() => {
+                    setAnchorElNav(null);
+                    setAnchorElUser(null);
+                }}
+                key={route + text}
+            >
+                <ListItemIcon>{icon}</ListItemIcon>
+                <ListItemText disableTypography primary={text} sx={tf2Fonts} />
+            </MenuItem>
+        ),
+        [setAnchorElNav, setAnchorElUser]
     );
 
     const themeIcon = useMemo(() => {
@@ -353,9 +356,9 @@ export const TopBar = () => {
         );
     }, [theme.palette.mode]);
 
-    const handleToggleChat = () => {
+    const handleToggleChat = useCallback(() => {
         setShowChat(!showChat);
-    };
+    }, [setShowChat, showChat]);
 
     return (
         <>
