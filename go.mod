@@ -12,7 +12,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emersion/go-imap/v2 v2.0.0-beta.5
 	github.com/emersion/go-message v0.18.2
-	github.com/gabriel-vasile/mimetype v1.4.8
+	github.com/gabriel-vasile/mimetype v1.4.9
 	github.com/getsentry/sentry-go v0.32.0
 	github.com/getsentry/sentry-go/gin v0.32.0
 	github.com/getsentry/sentry-go/slog v0.32.0
@@ -22,7 +22,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/golang-jwt/jwt/v5 v5.2.2
-	github.com/golang-migrate/migrate/v4 v4.18.2
+	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
 	github.com/google/go-querystring v1.1.0
 	github.com/gorilla/schema v1.4.1
@@ -43,10 +43,10 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.22.0
 	github.com/ricochet2200/go-disk-usage/du v0.0.0-20210707232629-ac9918953285
-	github.com/riverqueue/river v0.20.2
-	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.20.2
-	github.com/riverqueue/river/rivershared v0.20.2
-	github.com/riverqueue/river/rivertype v0.20.2
+	github.com/riverqueue/river v0.21.0
+	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.21.0
+	github.com/riverqueue/river/rivershared v0.21.0
+	github.com/riverqueue/river/rivertype v0.21.0
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/samber/slog-gin v1.15.0
 	github.com/samber/slog-multi v1.4.0
@@ -56,7 +56,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.34.0
 	github.com/unrolled/secure v1.17.0
-	github.com/viant/afs v1.25.1
+	github.com/viant/afs v1.26.2
 	github.com/yohcop/openid-go v1.0.1
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/crypto v0.37.0
@@ -104,7 +104,6 @@ require (
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.14.3 // indirect
@@ -144,18 +143,17 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
-	github.com/prometheus/procfs v0.16.0 // indirect
-	github.com/riverqueue/river/riverdriver v0.20.2 // indirect
+	github.com/prometheus/procfs v0.16.1 // indirect
+	github.com/riverqueue/river/riverdriver v0.21.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sagikazarmark/locafero v0.9.0 // indirect
-	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
-	github.com/samber/lo v1.49.1 // indirect
+	github.com/samber/lo v1.50.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.24.5 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
-	github.com/spf13/cast v1.7.1 // indirect
+	github.com/spf13/cast v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
@@ -181,6 +179,5 @@ require (
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
-	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
