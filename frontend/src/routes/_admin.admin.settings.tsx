@@ -382,7 +382,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable news features.'}
@@ -402,7 +402,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable forums'}
@@ -425,7 +425,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable contests'}
@@ -447,7 +447,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable Wiki'}
@@ -466,7 +466,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable Demo/STV Support'}
@@ -485,7 +485,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable Game Stats'}
@@ -507,7 +507,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable Servers Page'}
@@ -527,7 +527,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable User Reports'}
@@ -547,7 +547,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable public chatlogs'}
@@ -567,7 +567,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable Speedruns support'}
@@ -588,7 +588,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable Playerqueue support'}
@@ -656,7 +656,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable Word Filters'}
@@ -705,7 +705,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable dry run mode'}
@@ -724,7 +724,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Send discord notices on match'}
@@ -798,7 +798,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
         },
         defaultValues: {
             demo_cleanup_enabled: settings.demo.demo_cleanup_enabled,
-            demo_cleanup_strategy: settings.demo.demo_cleanup_strategy,
+            demo_cleanup_strategy: settings.demo.demo_cleanup_strategy ?? 'pctfree',
             demo_cleanup_min_pct: settings.demo.demo_cleanup_min_pct,
             demo_cleanup_mount: settings.demo.demo_cleanup_mount,
             demo_count_limit: settings.demo.demo_count_limit,
@@ -806,7 +806,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
         }
     });
 
-    const onCleanup = async () => {
+    const onCleanup = useCallback(async () => {
         try {
             await queryClient.fetchQuery({ queryKey: ['demoCleanup'], queryFn: apiGetDemoCleanup });
             sendFlash('success', 'Cleanup started');
@@ -814,7 +814,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
             logErr(e);
             sendFlash('error', 'Cleanup failed to start');
         }
-    };
+    }, []);
 
     return (
         <TabSection
@@ -853,9 +853,11 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        value={state.value}
+                                        onBlur={handleBlur}
+                                        onChange={(_, v) => {
+                                            handleChange(v);
+                                        }}
                                         label={'Enable Scheduled Demo Cleanup'}
                                     />
                                 );
@@ -873,6 +875,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                                 return (
                                     <SelectFieldSimple
                                         {...props}
+                                        value={props.state.value}
                                         label={'Cleanup Strategy'}
                                         items={['pctfree', 'count']}
                                         renderMenu={(item) => {
@@ -995,9 +998,11 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        value={state.value}
+                                        onBlur={handleBlur}
+                                        onChange={(_, v) => {
+                                            handleChange(v);
+                                        }}
                                         label={'Enable Patreon Integration'}
                                     />
                                 );
@@ -1016,9 +1021,11 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        value={state.value}
+                                        onBlur={handleBlur}
+                                        onChange={(_, v) => {
+                                            handleChange(v);
+                                        }}
                                         label={'Enable website integrations'}
                                     />
                                 );
@@ -1139,9 +1146,11 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        value={state.value}
+                                        onBlur={handleBlur}
+                                        onChange={(_, v) => {
+                                            handleChange(v);
+                                        }}
                                         label={'Enable discord integration'}
                                     />
                                 );
@@ -1162,9 +1171,11 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        value={state.value}
+                                        onBlur={handleBlur}
+                                        onChange={(_, v) => {
+                                            handleChange(v);
+                                        }}
                                         label={'Discord Bot'}
                                     />
                                 );
@@ -1184,9 +1195,11 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        value={state.value}
+                                        onBlur={handleBlur}
+                                        onChange={(_, v) => {
+                                            handleChange(v);
+                                        }}
                                         label={'Enable website integrations'}
                                     />
                                 );
@@ -1284,9 +1297,11 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        value={state.value}
+                                        onBlur={handleBlur}
+                                        onChange={(_, v) => {
+                                            handleChange(v);
+                                        }}
                                         label={'Enable public log channel'}
                                     />
                                 );
@@ -1450,7 +1465,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             mutate({ ...settings, log: value });
         },
         defaultValues: {
-            level: settings.log.level,
+            level: settings.log.level ?? 'info',
             file: settings.log.file,
             http_enabled: settings.log.http_enabled,
             http_otel_enabled: settings.log.http_otel_enabled,
@@ -1479,6 +1494,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return (
                                     <SelectFieldSimple
                                         {...props}
+                                        value={props.state.value}
                                         label={'Log Level'}
                                         items={['debug', 'info', 'warn', 'error']}
                                         renderMenu={(item) => {
@@ -1516,9 +1532,11 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        value={state.value}
+                                        onBlur={handleBlur}
+                                        onChange={(_, v) => {
+                                            handleChange(v);
+                                        }}
                                         label={'Enable HTTP request logs'}
                                     />
                                 );
@@ -1535,9 +1553,11 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
+                                        value={state.value}
+                                        onBlur={handleBlur}
+                                        onChange={(_, v) => {
+                                            handleChange(v);
+                                        }}
                                         label={'Enable OpenTelemetry Support'}
                                     />
                                 );
@@ -1654,7 +1674,7 @@ const GeoLocationSection = ({
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable geolocation services'}
@@ -1739,7 +1759,7 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Skip OpenID validation'}
@@ -1880,7 +1900,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable SSH downloader'}
@@ -2065,7 +2085,7 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable tf2 bot detector compatible export'}
@@ -2087,7 +2107,7 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable srcds formatted ban list'}

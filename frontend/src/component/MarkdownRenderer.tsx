@@ -1,11 +1,11 @@
 import { JSX, useMemo } from 'react';
-import ModalImage from 'react-modal-image';
 import { PaletteMode } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { getOverrides, MuiMarkdown } from 'mui-markdown';
 import { Highlight, themes } from 'prism-react-renderer';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
+import { ImageBox } from './ImageBox.tsx';
 import RouterLink from './RouterLink.tsx';
 
 const renderLinks = (body_md: string, asset_url: string): string => {
@@ -23,7 +23,7 @@ interface MDImgProps {
 }
 
 const MDImg = ({ src, alt }: MDImgProps) => {
-    return <ModalImage small={src} large={src} alt={alt} />;
+    return <ImageBox src={src} alt={alt} key={alt} />;
 };
 
 interface MDLnkProps {

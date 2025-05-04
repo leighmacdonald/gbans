@@ -104,7 +104,13 @@ export const ThreadMessageContainer = ({
                                         onChange: z.string().min(4)
                                     }}
                                     children={(props) => {
-                                        return <MarkdownField {...props} label={'Message (Markdown)'} />;
+                                        return (
+                                            <MarkdownField
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Message (Markdown)'}
+                                            />
+                                        );
                                     }}
                                 />
                                 <form.Subscribe

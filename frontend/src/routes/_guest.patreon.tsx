@@ -10,10 +10,10 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { createFileRoute, Navigate } from '@tanstack/react-router';
-import Image from 'mui-image';
 import { z } from 'zod';
 import { apiGetPatreonLogin, apiGetPatreonCampaigns } from '../api/patreon.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
+import { ImageBox } from '../component/ImageBox.tsx';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
@@ -79,7 +79,7 @@ function Patreon() {
                         <Grid size={{ xs: 12 }}>
                             <Stack spacing={1}>
                                 <Paper>
-                                    <Image
+                                    <ImageBox
                                         height={'100%'}
                                         width={'100%'}
                                         alt={'Campaign background'}

@@ -205,6 +205,7 @@ function ForumThreadPage() {
                                             return (
                                                 <MarkdownField
                                                     {...props}
+                                                    value={props.state.value}
                                                     label={'Message'}
                                                     fullwidth={true}
                                                     minHeight={400}

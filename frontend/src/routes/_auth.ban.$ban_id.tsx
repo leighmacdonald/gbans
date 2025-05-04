@@ -286,7 +286,13 @@ function BanPage() {
                                                 onChange: z.string().min(2)
                                             }}
                                             children={(props) => {
-                                                return <MarkdownField {...props} label={'Message'} />;
+                                                return (
+                                                    <MarkdownField
+                                                        {...props}
+                                                        value={props.state.value}
+                                                        label={'Message'}
+                                                    />
+                                                );
                                             }}
                                         />
                                     </Grid>
