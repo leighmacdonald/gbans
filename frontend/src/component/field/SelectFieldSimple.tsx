@@ -10,19 +10,19 @@ type SelectFieldProps<T> = {
 } & FieldProps<T>;
 
 export const SelectFieldSimple = <T,>({
-    defaultValue,
     label,
     handleChange,
     handleBlur,
     items,
-    renderMenu
+    renderMenu,
+    value
 }: SelectFieldProps<T> & SelectProps<T>) => {
     return (
         <FormControl fullWidth>
             <InputLabel id="server-select-label">{label}</InputLabel>
             <Select
+                value={value}
                 fullWidth
-                defaultValue={defaultValue}
                 label={label}
                 variant={'filled'}
                 onChange={(e: SelectChangeEvent<T>) => {

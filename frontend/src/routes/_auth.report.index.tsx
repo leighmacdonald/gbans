@@ -450,7 +450,9 @@ export const ReportCreateForm = (): JSX.Element => {
                             name={'body_md'}
                             validators={{ onChange: z.string().min(10, 'Message must be at least 10 characters.') }}
                             children={(props) => {
-                                return <MarkdownField {...props} label={'Message (Markdown)'} />;
+                                return (
+                                    <MarkdownField {...props} value={props.state.value} label={'Message (Markdown)'} />
+                                );
                             }}
                         />
                     </Grid>

@@ -77,6 +77,12 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
+        validators: {
+            onChange: z.object({
+                permission_level: z.nativeEnum(PermissionLevel),
+                body_md: z.string()
+            })
+        },
         defaultValues: {
             permission_level: page?.permission_level ?? PermissionLevel.Guest,
             body_md: page?.body_md ?? ''
@@ -97,13 +103,11 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'permission_level'}
-                                validators={{
-                                    onChange: z.nativeEnum(PermissionLevel)
-                                }}
                                 children={(props) => {
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            value={props.state.value ?? ''}
                                             label={'Permissions'}
                                             fullwidth={true}
                                             items={PermissionLevelCollection}
@@ -124,7 +128,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                             <Field
                                 name={'body_md'}
                                 children={(props) => {
-                                    return <MarkdownField {...props} label={'Region'} />;
+                                    return <MarkdownField {...props} value={props.state.value} label={'Region'} />;
                                 }}
                             />
                         </Grid>

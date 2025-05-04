@@ -79,7 +79,7 @@ export const FullTable = <T,>({
                         });
                         await navigate({ ...toOptions, search: (search) => ({ ...search, pageIndex: page }) });
                     }}
-                    count={infinitePage ? -1 : table.getRowCount()}
+                    count={infinitePage ? -1 : table.getRowCount() || 1}
                     rows={pagination.pageSize}
                     page={pagination.pageIndex}
                 />

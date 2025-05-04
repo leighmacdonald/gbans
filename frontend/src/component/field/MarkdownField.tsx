@@ -42,7 +42,7 @@ type MDBodyFieldProps = {
     fileUpload?: boolean;
     minHeight?: number;
     rows?: number;
-    // state?: unknown;
+    value: string;
 } & FieldProps;
 
 const imageUploadHandler = async (media: File) => {
@@ -63,7 +63,13 @@ export const mdEditorRef = createRef<MDXEditorMethods>();
  * To clear it after a successful submission: mdEditorRef.current?.setMarkdown('');
  *
  */
-export const MarkdownField = ({ defaultValue, handleChange, error, helperText }: MDBodyFieldProps & TextFieldProps) => {
+export const MarkdownField = ({
+    handleChange,
+    handleBlur,
+    error,
+    helperText,
+    value
+}: MDBodyFieldProps & TextFieldProps) => {
     const { sendFlash } = useUserFlashCtx();
     const theme = useTheme();
 
@@ -97,7 +103,7 @@ export const MarkdownField = ({ defaultValue, handleChange, error, helperText }:
                     contentEditableClassName={'md-content-editable'}
                     className={classes}
                     autoFocus={true}
-                    markdown={(defaultValue as string) ?? ''}
+                    markdown={(value as string) ?? ''}
                     placeholder={'Message (Min length: 10 characters)'}
                     plugins={[
                         toolbarPlugin({
@@ -130,6 +136,7 @@ export const MarkdownField = ({ defaultValue, handleChange, error, helperText }:
                     ]}
                     onError={onError}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     ref={mdEditorRef}
                 />
                 {errInfo}
