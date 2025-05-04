@@ -42,17 +42,13 @@ const MapUseChart = ({ details }: MapUseChartProps) => {
 
     return (
         <PieChart
-            height={600}
-            width={600}
-            slotProps={{ legend: { hidden: true } }}
+            height={350}
+            width={350}
+            hideLegend={true}
             series={[
                 {
                     data: merged,
-                    highlightScope: { faded: 'global', highlighted: 'item' },
-                    faded: { innerRadius: 30, additionalRadius: -30 },
-                    valueFormatter: (value) => {
-                        return `${value.value.toFixed(2)}%`;
-                    }
+                    faded: { innerRadius: 30, additionalRadius: -30 }
                 }
             ]}
         />
