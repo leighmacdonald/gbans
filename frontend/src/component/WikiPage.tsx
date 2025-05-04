@@ -107,7 +107,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                                     return (
                                         <SelectFieldSimple
                                             {...props}
-                                            value={props.state.value ?? ''}
+                                            value={props.state.value}
                                             label={'Permissions'}
                                             fullwidth={true}
                                             items={PermissionLevelCollection}

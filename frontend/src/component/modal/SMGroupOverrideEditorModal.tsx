@@ -74,7 +74,14 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
                                 <Field
                                     name={'name'}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Name'} fullwidth={true} />;
+                                        return (
+                                            <TextFieldSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Name'}
+                                                fullwidth={true}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -85,6 +92,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
+                                                value={props.state.value}
                                                 label={'Override Type'}
                                                 fullwidth={true}
                                                 items={['command', 'group']}

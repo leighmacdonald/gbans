@@ -51,6 +51,7 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGrou
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            value={props.state.value}
                                             label={'Group'}
                                             fullwidth={true}
                                             items={groups}

@@ -61,6 +61,7 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            value={props.state.value}
                                             label={'Group'}
                                             fullwidth={true}
                                             items={groups}
@@ -86,6 +87,7 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            value={props.state.value}
                                             label={'Immunity From'}
                                             fullwidth={true}
                                             items={groups}
