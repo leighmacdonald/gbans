@@ -131,7 +131,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                     onChange: z.string().min(5)
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Title'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Title'} />;
                                 }}
                             />
                         </Grid>
@@ -143,7 +143,13 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                                 children={(props) => {
                                     return (
-                                        <MarkdownField {...props} label={'Description'} multiline={true} rows={10} />
+                                        <MarkdownField
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Description'}
+                                            multiline={true}
+                                            rows={10}
+                                        />
                                     );
                                 }}
                             />
@@ -157,9 +163,11 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
                                             label={'Public'}
                                         />
                                     );
@@ -175,9 +183,11 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
                                             label={'Hide Submissions'}
                                         />
                                     );
@@ -191,7 +201,13 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                     onChange: z.string().transform(numberStringValidator(1, 10))
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Max Submissions'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Max Submissions'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -202,6 +218,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            value={props.state.value}
                                             label={'Min Permissions'}
                                             fullwidth={true}
                                             items={PermissionLevelCollection}
@@ -226,9 +243,11 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
                                             label={'Voting Enabled'}
                                         />
                                     );
@@ -244,9 +263,11 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
                                             label={'Downvotes Enabled'}
                                         />
                                     );
@@ -257,7 +278,13 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                             <Field
                                 name={'date_start'}
                                 children={(props) => {
-                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                    return (
+                                        <DateTimeSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Custom Expire Date'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -265,7 +292,13 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                             <Field
                                 name={'date_end'}
                                 children={(props) => {
-                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                    return (
+                                        <DateTimeSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Custom Expire Date'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -284,7 +317,13 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                     })
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Allowed Mime Types'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Allowed Mime Types'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

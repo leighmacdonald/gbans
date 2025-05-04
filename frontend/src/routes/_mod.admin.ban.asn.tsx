@@ -209,9 +209,11 @@ function AdminBanASN() {
                                         return (
                                             <CheckboxSimple
                                                 label={'Show Deleted'}
-                                                state={state}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                value={state.value}
+                                                onBlur={handleBlur}
+                                                onChange={(_, v) => {
+                                                    handleChange(v);
+                                                }}
                                             />
                                         );
                                     }}

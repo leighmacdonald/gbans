@@ -189,6 +189,7 @@ function AdminBanSteam() {
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
+                                                value={props.state.value}
                                                 label={'Ban Reason'}
                                                 items={banReasonsCollection}
                                                 renderMenu={(i) => {
@@ -212,9 +213,9 @@ function AdminBanSteam() {
                                     children={({ state, handleBlur, handleChange }) => {
                                         return (
                                             <CheckboxSimple
-                                                state={state}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                value={state.value}
+                                                onBlur={handleBlur}
+                                                onChange={(_, v) => handleChange(v)}
                                                 label={'Show deleted/expired'}
                                             />
                                         );

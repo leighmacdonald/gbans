@@ -70,7 +70,7 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
                                     })
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'IP Addr'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'IP Addr'} />;
                                 }}
                             />
                         </Grid>

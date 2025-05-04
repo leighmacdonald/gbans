@@ -20,6 +20,7 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { Title } from '../component/Title';
@@ -176,9 +177,11 @@ function AdminBanCIDR() {
                                         return (
                                             <CheckboxSimple
                                                 label={'Incl. Deleted'}
-                                                state={state}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                value={state.value}
+                                                onBlur={handleBlur}
+                                                onChange={(_, v) => {
+                                                    handleChange(v);
+                                                }}
                                             />
                                         );
                                     }}
@@ -303,6 +306,11 @@ const makeColumns = (onEdit: (ban: CIDRBanRecord) => Promise<void>, onUnban: (ba
                 />
             );
         }
+    }),
+    columnHelper.accessor('deleted', {
+        header: 'D',
+        size: 32,
+        cell: (info) => <TableCellBool enabled={info.getValue()} />
     }),
     columnHelper.display({
         id: 'edit',

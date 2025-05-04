@@ -81,7 +81,7 @@ function AdminReports() {
             await navigate({ to: '/admin/reports', replace: true, search: (prev) => ({ ...prev, ...value }) });
         },
         validators: {
-            onChange: z.object({
+            onSubmit: z.object({
                 source_id: z.string(),
                 target_id: z.string(),
                 report_status: z.nativeEnum(ReportStatus)
@@ -125,7 +125,12 @@ function AdminReports() {
                                     name={'source_id'}
                                     children={(props) => {
                                         return (
-                                            <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />
+                                            <TextFieldSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Author Steam ID'}
+                                                fullwidth={true}
+                                            />
                                         );
                                     }}
                                 />
@@ -136,7 +141,12 @@ function AdminReports() {
                                     name={'target_id'}
                                     children={(props) => {
                                         return (
-                                            <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
+                                            <TextFieldSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Subject Steam ID'}
+                                                fullwidth={true}
+                                            />
                                         );
                                     }}
                                 />
@@ -149,7 +159,7 @@ function AdminReports() {
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
-                                                defaultValue={ReportStatus.Any}
+                                                value={props.state.value}
                                                 label={'Report Status'}
                                                 fullwidth={true}
                                                 items={ReportStatusCollection}

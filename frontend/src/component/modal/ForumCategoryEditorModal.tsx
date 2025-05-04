@@ -75,7 +75,7 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
                             <Field
                                 name={'title'}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Title'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Title'} />;
                                 }}
                             />
                         </Grid>
@@ -83,7 +83,14 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
                             <Field
                                 name={'description'}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Description'} rows={5} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Description'}
+                                            rows={5}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -91,7 +98,7 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
                             <Field
                                 name={'ordering'}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Order'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Order'} />;
                                 }}
                             />
                         </Grid>

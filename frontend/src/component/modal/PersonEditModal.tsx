@@ -66,6 +66,7 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            value={props.state.value}
                                             label={'Permissions'}
                                             fullwidth={true}
                                             items={PermissionLevelCollection}

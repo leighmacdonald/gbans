@@ -89,7 +89,14 @@ function AdminNetworkPlayersByCIDR() {
                                 <Field
                                     name={'cidr'}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} fullwidth={true} label={'CIDR/IP'} />;
+                                        return (
+                                            <TextFieldSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                fullwidth={true}
+                                                label={'CIDR/IP'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>

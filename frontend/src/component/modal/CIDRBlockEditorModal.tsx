@@ -53,10 +53,16 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
             mutation.mutate(value);
         },
         defaultValues: {
-            cidr_block_source_id: source?.cidr_block_source_id ?? 0,
             name: source?.name ?? '',
             url: source?.url ?? '',
             enabled: source?.enabled ?? true
+        },
+        validators: {
+            onSubmit: z.object({
+                name: z.string().min(2),
+                url: z.string().url(),
+                enabled: z.boolean()
+            })
         }
     });
 
@@ -77,42 +83,39 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'name'}
-                                validators={{
-                                    onChange: z.string().min(2)
-                                }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Source Name'} />;
+                                    return (
+                                        <TextFieldSimple {...props} value={props.state.value} label={'Source Name'} />
+                                    );
                                 }}
                             />
-                            <Grid size={{ xs: 12 }}>
-                                <Field
-                                    name={'url'}
-                                    validators={{
-                                        onChange: z.string().url()
-                                    }}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Source URL'} />;
-                                    }}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12 }}>
-                                <Field
-                                    name={'enabled'}
-                                    validators={{
-                                        onChange: z.boolean()
-                                    }}
-                                    children={({ state, handleBlur, handleChange }) => {
-                                        return (
-                                            <CheckboxSimple
-                                                state={state}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
-                                                label={'Enabled'}
-                                            />
-                                        );
-                                    }}
-                                />
-                            </Grid>
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                            <Field
+                                name={'url'}
+                                children={(props) => {
+                                    return (
+                                        <TextFieldSimple {...props} value={props.state.value} label={'Source URL'} />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
+                            <Field
+                                name={'enabled'}
+                                children={({ state, handleBlur, handleChange }) => {
+                                    return (
+                                        <CheckboxSimple
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
+                                            label={'Enabled'}
+                                        />
+                                    );
+                                }}
+                            />
                         </Grid>
                     </Grid>
                 </DialogContent>

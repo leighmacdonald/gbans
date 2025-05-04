@@ -42,6 +42,13 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
             title: entry?.title ?? '',
             body_md: entry?.body_md ?? '',
             is_published: entry?.is_published ?? false
+        },
+        validators: {
+            onSubmit: z.object({
+                body_md: z.string().min(10),
+                title: z.string().min(4),
+                is_published: z.boolean()
+            })
         }
     });
 
@@ -63,18 +70,15 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
                             <Field
                                 name={'title'}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Title'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Title'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'body_md'}
-                                validators={{
-                                    onChange: z.string().min(10).default('')
-                                }}
                                 children={(props) => {
-                                    return <MarkdownField {...props} label={'Body'} />;
+                                    return <MarkdownField {...props} value={props.state.value} label={'Body'} />;
                                 }}
                             />
                         </Grid>
@@ -84,9 +88,9 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => handleChange(v)}
                                             label={'Is Published'}
                                         />
                                     );

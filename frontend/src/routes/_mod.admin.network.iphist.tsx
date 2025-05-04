@@ -46,8 +46,7 @@ function AdminNetworkPlayerIPHistory() {
             await navigate({ to: '/admin/network/iphist', search: (prev) => ({ ...prev, ...value }) });
         },
         validators: {
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
+            onSubmitAsync: z.object({
                 steam_id: makeValidateSteamIDCallback()
             })
         },
@@ -80,7 +79,7 @@ function AdminNetworkPlayerIPHistory() {
                                 <Field
                                     name={'steam_id'}
                                     children={(props) => {
-                                        return <SteamIDField {...props} fullwidth={true} />;
+                                        return <SteamIDField {...props} value={props.state.value} fullwidth={true} />;
                                     }}
                                 />
                             </Grid>

@@ -88,7 +88,7 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
                             <Field
                                 name={'title'}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Title'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Title'} />;
                                 }}
                             />
                         </Grid>
@@ -98,9 +98,9 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => handleChange(v)}
                                             label={'Stickied'}
                                         />
                                     );
@@ -113,9 +113,9 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => handleChange(v)}
                                             label={'Locked'}
                                         />
                                     );

@@ -68,7 +68,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                                     name={'count'}
                                     validators={{
                                         onChange: z
-                                            .number({ coerce: true, message: 'Must enter positive number' })
+                                            .string({ coerce: true, message: 'Must enter positive number' })
                                             .min(1)
                                             .max(10000)
                                     }}
@@ -76,6 +76,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                                         return (
                                             <TextFieldSimple
                                                 {...props}
+                                                value={props.state.value}
                                                 label={'How many messages to delete / purge.'}
                                             />
                                         );

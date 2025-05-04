@@ -87,7 +87,7 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
                                 }}
                                 name={'body_md'}
                                 children={(props) => {
-                                    return <MarkdownField {...props} label={'Message'} />;
+                                    return <MarkdownField {...props} value={props.state.value} label={'Message'} />;
                                 }}
                             />
                         </Grid>
