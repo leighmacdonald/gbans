@@ -79,7 +79,7 @@ export const QueueChat = () => {
     return (
         <Collapse in={showChat && chatStatus != 'noaccess'}>
             <Grid container spacing={1} sx={{ marginBottom: 3 }}>
-                <Grid {...mq}>
+                <Grid size={mq}>
                     <ContainerWithHeaderAndButtons
                         title={'Queue Lobby Chat'}
                         iconLeft={<ChatBubbleIcon />}

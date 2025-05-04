@@ -1,11 +1,11 @@
-import { LoadingButton } from '@mui/lab';
+import Button from '@mui/material/Button';
 import { useTheme } from '@mui/material/styles';
 import { LoadingIcon } from './LoadingIcon';
 
 export const LoadingSpinner = () => {
     const theme = useTheme();
     return (
-        <LoadingButton
+        <Button
             title={'Loading...'}
             loading
             loadingIndicator={<LoadingIcon />}
@@ -14,6 +14,6 @@ export const LoadingSpinner = () => {
             sx={{ color: theme.palette.text.primary }}
         >
             Loading...
-        </LoadingButton>
+        </Button>
     );
 };

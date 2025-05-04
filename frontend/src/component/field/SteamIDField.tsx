@@ -10,7 +10,6 @@ import { avatarHashToURL } from '../../util/text.tsx';
 import { FieldProps } from './common.ts';
 
 export const SteamIDField = ({
-    defaultValue,
     handleBlur,
     handleChange,
     fullwidth,
@@ -19,13 +18,14 @@ export const SteamIDField = ({
     helperText,
     isValidating,
     isTouched,
+    value,
     label = 'SteamID/Profile'
 }: FieldProps & { profile?: PlayerProfile } & TextFieldProps) => {
     return (
         <TextField
             fullWidth={fullwidth}
             label={label}
-            defaultValue={defaultValue}
+            value={value}
             onChange={(e) => handleChange(e.target.value)}
             onBlur={handleBlur}
             variant="filled"
