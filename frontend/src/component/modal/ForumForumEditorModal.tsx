@@ -97,6 +97,7 @@ export const ForumForumEditorModal = NiceModal.create(
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
+                                                value={props.state.value}
                                                 label={'Category'}
                                                 fullwidth={true}
                                                 items={catIds}
@@ -120,7 +121,7 @@ export const ForumForumEditorModal = NiceModal.create(
                                         onChange: z.string().min(1)
                                     }}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Title'} />;
+                                        return <TextFieldSimple {...props} value={props.state.value} label={'Title'} />;
                                     }}
                                 />
                             </Grid>
@@ -131,7 +132,14 @@ export const ForumForumEditorModal = NiceModal.create(
                                         onChange: z.string().min(1)
                                     }}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Description'} rows={5} />;
+                                        return (
+                                            <TextFieldSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Description'}
+                                                rows={5}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -142,7 +150,7 @@ export const ForumForumEditorModal = NiceModal.create(
                                         onChange: z.string().min(1)
                                     }}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Order'} />;
+                                        return <TextFieldSimple {...props} value={props.state.value} label={'Order'} />;
                                     }}
                                 />
                             </Grid>
@@ -156,6 +164,7 @@ export const ForumForumEditorModal = NiceModal.create(
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
+                                                value={props.state.value}
                                                 label={'Permissions Required'}
                                                 fullwidth={true}
                                                 items={PermissionLevelCollection}

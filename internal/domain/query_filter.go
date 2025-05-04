@@ -109,10 +109,10 @@ func (f ChatHistoryQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
 type ConnectionHistoryQuery struct {
 	QueryFilter
 	SourceIDField
-	CIDR    string `json:"cidr"`
-	ASN     int    `json:"asn"`
-	Sid64   int64
-	Network string
+	CIDR    string `json:"cidr,omitempty"`
+	ASN     int    `json:"asn,omitempty"`
+	Sid64   int64  `json:"sid64,omitempty"`
+	Network string `json:"network,omitempty"`
 }
 
 type PlayerQuery struct {

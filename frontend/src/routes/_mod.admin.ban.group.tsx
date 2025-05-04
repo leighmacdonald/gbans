@@ -142,28 +142,32 @@ function AdminBanGroup() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid size={{ xs: 4 }}>
-                                <Grid size={{ xs: 6, md: 3 }}>
-                                    <Field
-                                        name={'source_id'}
-                                        children={(props) => {
-                                            return (
-                                                <TextFieldSimple
-                                                    {...props}
-                                                    label={'Author Steam ID'}
-                                                    fullwidth={true}
-                                                />
-                                            );
-                                        }}
-                                    />
-                                </Grid>
+                            <Grid size={{ xs: 6, md: 3 }}>
+                                <Field
+                                    name={'source_id'}
+                                    children={(props) => {
+                                        return (
+                                            <TextFieldSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Author Steam ID'}
+                                                fullwidth={true}
+                                            />
+                                        );
+                                    }}
+                                />
                             </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'target_id'}
                                     children={(props) => {
                                         return (
-                                            <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
+                                            <TextFieldSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Subject Steam ID'}
+                                                fullwidth={true}
+                                            />
                                         );
                                     }}
                                 />
@@ -173,7 +177,14 @@ function AdminBanGroup() {
                                 <Field
                                     name={'group_id'}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Group ID'} fullwidth={true} />;
+                                        return (
+                                            <TextFieldSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Group ID'}
+                                                fullwidth={true}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -185,9 +196,11 @@ function AdminBanGroup() {
                                         return (
                                             <CheckboxSimple
                                                 label={'Show Deleted'}
-                                                state={state}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                value={state.value}
+                                                onBlur={handleBlur}
+                                                onChange={(_, v) => {
+                                                    handleChange(v);
+                                                }}
                                             />
                                         );
                                     }}

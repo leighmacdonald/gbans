@@ -65,6 +65,7 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            value={props.state.value}
                                             label={'Chat Status'}
                                             fullwidth={true}
                                             items={['readwrite', 'readonly', 'noaccess']}
@@ -88,7 +89,13 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
                                     onChange: z.string({ message: 'Reason' })
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Reason for status change'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Reason for status change'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

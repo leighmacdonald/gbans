@@ -140,6 +140,7 @@ export const BanSteamModal = NiceModal.create(
                                         return (
                                             <SteamIDField
                                                 {...props}
+                                                value={props.state.value}
                                                 label={'Target Steam ID'}
                                                 fullwidth={true}
                                                 disabled={Boolean(existing?.ban_id)}
@@ -158,6 +159,7 @@ export const BanSteamModal = NiceModal.create(
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
+                                                value={props.state.value}
                                                 label={'Ban Action Type'}
                                                 fullwidth={true}
                                                 items={BanTypeCollection}
@@ -180,6 +182,7 @@ export const BanSteamModal = NiceModal.create(
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
+                                                value={props.state.value}
                                                 label={'Reason'}
                                                 fullwidth={true}
                                                 items={banReasonsCollection}
@@ -215,7 +218,13 @@ export const BanSteamModal = NiceModal.create(
                                         }
                                     }}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Custom Ban Reason'} />;
+                                        return (
+                                            <TextFieldSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Custom Ban Reason'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -228,9 +237,11 @@ export const BanSteamModal = NiceModal.create(
                                     children={({ state, handleBlur, handleChange }) => {
                                         return (
                                             <CheckboxSimple
-                                                state={state}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                value={state.value}
+                                                onBlur={handleBlur}
+                                                onChange={(_, checked) => {
+                                                    handleChange(checked);
+                                                }}
                                                 label={'Include Friends'}
                                             />
                                         );
@@ -246,9 +257,11 @@ export const BanSteamModal = NiceModal.create(
                                     children={({ state, handleBlur, handleChange }) => {
                                         return (
                                             <CheckboxSimple
-                                                state={state}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
+                                                value={state.value}
+                                                onBlur={handleBlur}
+                                                onChange={(_, value) => {
+                                                    handleChange(value);
+                                                }}
                                                 label={'IP Evading Allowed'}
                                             />
                                         );
@@ -266,6 +279,7 @@ export const BanSteamModal = NiceModal.create(
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
+                                                value={props.state.value}
                                                 label={'Duration'}
                                                 fullwidth={true}
                                                 items={DurationCollection}
@@ -286,7 +300,13 @@ export const BanSteamModal = NiceModal.create(
                                 <Field
                                     name={'duration_custom'}
                                     children={(props) => {
-                                        return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                        return (
+                                            <DateTimeSimple
+                                                {...props}
+                                                value={props.state.value}
+                                                label={'Custom Expire Date'}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -299,7 +319,13 @@ export const BanSteamModal = NiceModal.create(
                                     }}
                                     children={(props) => {
                                         return (
-                                            <MarkdownField {...props} multiline={true} rows={10} label={'Mod Notes'} />
+                                            <MarkdownField
+                                                {...props}
+                                                value={props.state.value}
+                                                multiline={true}
+                                                rows={10}
+                                                label={'Mod Notes'}
+                                            />
                                         );
                                     }}
                                 />

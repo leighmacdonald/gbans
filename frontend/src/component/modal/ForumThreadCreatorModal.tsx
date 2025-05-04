@@ -104,7 +104,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                                 }}
                                 name={'title'}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Title'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Title'} />;
                                 }}
                             />
                         </Grid>
@@ -115,7 +115,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                                 }}
                                 name={'body_md'}
                                 children={(props) => {
-                                    return <MarkdownField {...props} label={'Message'} />;
+                                    return <MarkdownField {...props} value={props.state.value} label={'Message'} />;
                                 }}
                             />
                         </Grid>
@@ -125,9 +125,11 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
                                             label={'Stickied'}
                                         />
                                     );
@@ -140,9 +142,11 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
                                             label={'Locked'}
                                         />
                                     );

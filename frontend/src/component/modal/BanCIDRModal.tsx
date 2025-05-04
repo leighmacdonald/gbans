@@ -118,6 +118,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                     return (
                                         <SteamIDField
                                             {...props}
+                                            value={props.state.value}
                                             label={'Target Steam ID'}
                                             fullwidth={true}
                                             disabled={Boolean(existing?.net_id)}
@@ -133,7 +134,9 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                     onChange: z.string()
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'IP/CIDR Range'} />;
+                                    return (
+                                        <TextFieldSimple {...props} value={props.state.value} label={'IP/CIDR Range'} />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -144,6 +147,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            value={props.state.value}
                                             label={'Reason'}
                                             fullwidth={true}
                                             items={banReasonsCollection}
@@ -179,7 +183,13 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                     }
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Custom Ban Reason'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Custom Ban Reason'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -193,6 +203,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            value={props.state.value}
                                             label={'Duration'}
                                             fullwidth={true}
                                             items={DurationCollection}
@@ -213,7 +224,13 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                             <Field
                                 name={'duration_custom'}
                                 children={(props) => {
-                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                    return (
+                                        <DateTimeSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Custom Expire Date'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -225,7 +242,15 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                     onChange: z.string()
                                 }}
                                 children={(props) => {
-                                    return <MarkdownField {...props} multiline={true} rows={10} label={'Mod Notes'} />;
+                                    return (
+                                        <MarkdownField
+                                            {...props}
+                                            value={props.state.value}
+                                            multiline={true}
+                                            rows={10}
+                                            label={'Mod Notes'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

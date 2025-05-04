@@ -82,6 +82,16 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
             action: filter?.action ?? FilterAction.Kick,
             duration: filter?.duration ?? '1w',
             weight: filter ? String(filter.weight) : '1'
+        },
+        validators: {
+            onSubmit: z.object({
+                pattern: z.string({ message: 'Must entry pattern' }).min(2),
+                is_regex: z.boolean(),
+                action: z.nativeEnum(FilterAction, { message: 'Must select an action' }),
+                duration: z.string({ message: 'Must provide a duration' }),
+                weight: z.string(),
+                is_enabled: z.boolean()
+            })
         }
     });
 
@@ -102,26 +112,22 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                         <Grid size={{ xs: 8 }}>
                             <Field
                                 name={'pattern'}
-                                validators={{
-                                    onChange: z.string({ message: 'Must entry pattern' }).min(2)
-                                }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Pattern'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Pattern'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'is_regex'}
-                                validators={{
-                                    onSubmit: z.boolean()
-                                }}
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
                                             label={'Is Regex Pattern'}
                                         />
                                     );
@@ -131,13 +137,11 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'action'}
-                                validators={{
-                                    onSubmit: z.nativeEnum(FilterAction, { message: 'Must select an action' })
-                                }}
                                 children={(props) => {
                                     return (
                                         <SelectFieldSimple
                                             {...props}
+                                            value={props.state.value}
                                             label={'Action'}
                                             items={FilterActionCollection}
                                             renderMenu={(fa) => {
@@ -155,22 +159,22 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'duration'}
-                                validators={{
-                                    onChange: z.string({ message: 'Must provide a duration' })
-                                }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Duration'} />;
+                                    return <TextFieldSimple {...props} value={props.state.value} label={'Duration'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'weight'}
-                                validators={{
-                                    onChange: z.number({ coerce: true }).min(1).max(100)
-                                }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Weight (1-100)'} />;
+                                    return (
+                                        <TextFieldSimple
+                                            {...props}
+                                            value={props.state.value}
+                                            label={'Weight (1-100)'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -184,9 +188,11 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                                 children={({ state, handleBlur, handleChange }) => {
                                     return (
                                         <CheckboxSimple
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
+                                            value={state.value}
+                                            onBlur={handleBlur}
+                                            onChange={(_, v) => {
+                                                handleChange(v);
+                                            }}
                                             label={'Is Enabled'}
                                         />
                                     );
