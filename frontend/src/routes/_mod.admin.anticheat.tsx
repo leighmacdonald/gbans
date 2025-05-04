@@ -34,7 +34,7 @@ const schema = z.object({
         'name',
         'personaname',
         'summary',
-        'detecton',
+        'detection',
         'steam_id',
         'created_on',
         'server_name'
@@ -235,7 +235,7 @@ function AdminAnticheat() {
                                     children={({ state, handleChange, handleBlur }) => {
                                         return (
                                             <SteamIDField
-                                                state={state}
+                                                value={state.value}
                                                 handleBlur={handleBlur}
                                                 handleChange={handleChange}
                                                 fullwidth={true}

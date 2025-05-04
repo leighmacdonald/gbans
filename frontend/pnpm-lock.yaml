@@ -83,9 +83,6 @@ importers:
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^5.2.2
         version: 5.2.2(prettier@3.5.3)
-      '@types/eslint__js':
-        specifier: ^9.14.0
-        version: 9.14.0
       '@types/jquery':
         specifier: ^3.5.32
         version: 3.5.32
@@ -188,9 +185,6 @@ importers:
       minimatch:
         specifier: ^10.0.1
         version: 10.0.1
-      mui-image:
-        specifier: ^1.0.7
-        version: 1.0.7(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@mui/material@7.0.2(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(prop-types@15.8.1)(react@18.3.1)
       mui-markdown:
         specifier: ^1.2.6
         version: 1.2.6(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@mui/material@7.0.2(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(markdown-to-jsx@7.7.4(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -218,9 +212,6 @@ importers:
       react-leaflet:
         specifier: ^4.2.1
         version: 4.2.1(leaflet@1.9.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react-modal-image:
-        specifier: ^2.6.0
-        version: 2.6.0
       react-scrollable-feed:
         specifier: ^2.0.2
         version: 2.0.2(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -2133,10 +2124,6 @@ packages:
   '@types/eslint@9.6.1':
     resolution: {integrity: sha512-FXx2pKgId/WyYo2jXw63kk7/+TY7u7AziEJxJAnSFzHlqTAS3Ync6SvgYAN/k4/PQpnnVuzoMuVnByKK2qp0ag==}
 
-  '@types/eslint__js@9.14.0':
-    resolution: {integrity: sha512-s0jepCjOJWB/GKcuba4jISaVpBudw3ClXJ3fUK4tugChUMQsp6kSwuA8Dcx6wFd/JsJqcY8n4rEpa5RTHs5ypA==}
-    deprecated: This is a stub types definition. @eslint/js provides its own type definitions, so you do not need this installed.
-
   '@types/estree-jsx@1.0.5':
     resolution: {integrity: sha512-52CcUVNFyfb1A2ALocQw/Dd1BQFNmSdkuC3BkZ6iqhdMfQz7JWOFRuJFloOzjk+6WijU56m9oKXFAXc7o3Towg==}
 
@@ -3689,15 +3676,6 @@ packages:
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
-  mui-image@1.0.7:
-    resolution: {integrity: sha512-U79TWMKMfMC1ZiGnv/M+SaVJeUpubEjXOdy7w53RsvidUAMZ+4nW+QmDG9yg5fgWeYy6YJgLHyI9BHSDw76iIg==}
-    peerDependencies:
-      '@emotion/react': ^11.4.1
-      '@emotion/styled': ^11.3.0
-      '@mui/material': ^5.0.1
-      prop-types: ^15.7.2
-      react: ^17.0.2 || ^18.0.0
-
   mui-markdown@1.2.6:
     resolution: {integrity: sha512-GR3+CVLDS4eSri8d4QFkcrBtdBNUCRbWeyXuf3v/t0qZoWDta1U5Wm/MHsYsWSR4HBy6BVoyxlZ0fMNGOCScyQ==}
     peerDependencies:
@@ -3958,9 +3936,6 @@ packages:
       leaflet: ^1.9.0
       react: ^18.0.0
       react-dom: ^18.0.0
-
-  react-modal-image@2.6.0:
-    resolution: {integrity: sha512-NNc1xPKzFAn0VsNMdJ8NXt6c54aL/z0fcoYmw9qn4SBUONdGl+8LOQ0sTfo0wtdzcjLiby/ncloHcAL+UI+wIA==}
 
   react-remove-scroll-bar@2.3.6:
     resolution: {integrity: sha512-DtSYaao4mBmX+HDo5YWYdBWQwYIQQshUV/dVxFxK+KM26Wjwp1gZ6rv6OC3oujI6Bfu6Xyg3TwK533AQutsn/g==}
@@ -6891,10 +6866,6 @@ snapshots:
       '@types/json-schema': 7.0.15
     optional: true
 
-  '@types/eslint__js@9.14.0':
-    dependencies:
-      '@eslint/js': 9.24.0
-
   '@types/estree-jsx@1.0.5':
     dependencies:
       '@types/estree': 1.0.5
@@ -8875,14 +8846,6 @@ snapshots:
 
   ms@2.1.3: {}
 
-  mui-image@1.0.7(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@mui/material@7.0.2(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(prop-types@15.8.1)(react@18.3.1):
-    dependencies:
-      '@emotion/react': 11.14.0(@types/react@18.3.20)(react@18.3.1)
-      '@emotion/styled': 11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1)
-      '@mui/material': 7.0.2(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      prop-types: 15.8.1
-      react: 18.3.1
-
   mui-markdown@1.2.6(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@mui/material@7.0.2(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(markdown-to-jsx@7.7.4(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@emotion/react': 11.14.0(@types/react@18.3.20)(react@18.3.1)
@@ -9125,8 +9088,6 @@ snapshots:
       leaflet: 1.9.4
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-
-  react-modal-image@2.6.0: {}
 
   react-remove-scroll-bar@2.3.6(@types/react@18.3.20)(react@18.3.1):
     dependencies:

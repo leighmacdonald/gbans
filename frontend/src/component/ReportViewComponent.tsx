@@ -314,7 +314,14 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                                 onChange: z.string().min(2)
                                             }}
                                             children={(props) => {
-                                                return <MarkdownField {...props} label={'Message'} fullwidth={true} />;
+                                                return (
+                                                    <MarkdownField
+                                                        {...props}
+                                                        value={props.state.value}
+                                                        label={'Message'}
+                                                        fullwidth={true}
+                                                    />
+                                                );
                                             }}
                                         />
                                     </Grid>

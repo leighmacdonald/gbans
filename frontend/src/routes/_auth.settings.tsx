@@ -278,7 +278,7 @@ const GeneralSection = ({
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Hide personal stats on profile'}
@@ -340,7 +340,7 @@ const GameplaySection = ({
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Use center projectiles'}
@@ -401,7 +401,14 @@ const ForumSection = ({
                                 onChange: z.string()
                             }}
                             children={(props) => {
-                                return <MarkdownField {...props} label={'Your forum signature'} rows={10} />;
+                                return (
+                                    <MarkdownField
+                                        {...props}
+                                        value={props.state.value}
+                                        label={'Your forum signature'}
+                                        rows={10}
+                                    />
+                                );
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
@@ -416,7 +423,7 @@ const ForumSection = ({
                             children={({ state, handleBlur, handleChange }) => {
                                 return (
                                     <CheckboxSimple
-                                        state={state}
+                                        value={state.value}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
                                         label={'Enable people to sign your profile.'}
