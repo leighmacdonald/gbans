@@ -5,7 +5,6 @@ import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { noop } from 'lodash-es';
 
 interface BasicStatCardProps {
     title: string;
@@ -39,7 +38,7 @@ export const BasicStatCard = ({ title, value, desc, actionLabel, onAction, icon 
         </CardContent>
         {actionLabel && (
             <CardActions>
-                <Button size="small" onClick={onAction ?? noop}>
+                <Button size="small" onClick={onAction}>
                     {actionLabel}
                 </Button>
             </CardActions>
