@@ -36,7 +36,9 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.UserUploadedFile
 
-		if !httphelper.Bind(ctx, &req) {
+		if err := ctx.Bind(&req); err != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, err))
+
 			return
 		}
 
