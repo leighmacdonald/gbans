@@ -1,5 +1,4 @@
 import { JSX, useMemo } from 'react';
-import { PaletteMode } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { getOverrides, MuiMarkdown } from 'mui-markdown';
@@ -23,7 +22,7 @@ interface MDImgProps {
 }
 
 const MDImg = ({ src, alt }: MDImgProps) => {
-    return <ImageBox src={src} alt={alt} key={alt} />;
+    return <ImageBox src={src} alt={alt} key={alt} maxWidth={'100%'} maxHeight={'100%'} />;
 };
 
 interface MDLnkProps {
@@ -51,8 +50,39 @@ const MDLink = ({ children, href, title }: MDLnkProps) => {
     );
 };
 
+const mdRenderOpts = {
+    disableParsingRawHTML: false,
+    overrides: {
+        ...getOverrides({
+            Highlight,
+            themes,
+            theme: themes.vsDark
+        }),
+        a: {
+            component: MDLink
+        },
+        img: {
+            component: MDImg
+        },
+        h1: {
+            props: {
+                variant: 'h3'
+            }
+        },
+        h2: {
+            props: {
+                variant: 'h3'
+            }
+        },
+        h3: {
+            props: {
+                variant: 'h3'
+            }
+        }
+    }
+};
+
 export const MarkDownRenderer = ({ body_md, minHeight }: { body_md: string; minHeight?: number }) => {
-    const theme = (localStorage.getItem('theme') as PaletteMode) || 'dark';
     const { appInfo } = useAppInfoCtx();
 
     const links = useMemo(() => {
@@ -61,41 +91,7 @@ export const MarkDownRenderer = ({ body_md, minHeight }: { body_md: string; minH
 
     return (
         <Box padding={2} maxWidth={'100%'} minHeight={minHeight}>
-            <MuiMarkdown
-                options={{
-                    disableParsingRawHTML: false,
-                    overrides: {
-                        ...getOverrides({
-                            Highlight,
-                            themes,
-                            theme: theme == 'dark' ? themes.vsDark : themes.vsLight
-                        }),
-                        a: {
-                            component: MDLink
-                        },
-                        img: {
-                            component: MDImg
-                        },
-                        h1: {
-                            props: {
-                                variant: 'h3'
-                            }
-                        },
-                        h2: {
-                            props: {
-                                variant: 'h3'
-                            }
-                        },
-                        h3: {
-                            props: {
-                                variant: 'h3'
-                            }
-                        }
-                    }
-                }}
-            >
-                {links}
-            </MuiMarkdown>
+            <MuiMarkdown options={mdRenderOpts}>{links}</MuiMarkdown>
         </Box>
     );
 };
