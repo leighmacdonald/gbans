@@ -32,7 +32,7 @@ func TestBansSteamgroup(t *testing.T) {
 	var fetchedBan domain.BannedGroupPerson
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/group/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
-	require.Equal(t, banReq.TargetIDField.TargetID, fetchedBan.TargetID.String())
+	require.Equal(t, banReq.TargetID, fetchedBan.TargetID.String())
 	require.True(t, fetchedBan.ValidUntil.After(time.Now()))
 	require.Equal(t, banReq.Note, fetchedBan.Note)
 	require.Equal(t, banReq.GroupID, fetchedBan.GroupID.String())

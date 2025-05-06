@@ -34,7 +34,7 @@ func TestBansCIDR(t *testing.T) {
 	var fetchedBan domain.BannedCIDRPerson
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/cidr/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
-	require.Equal(t, banReq.TargetIDField.TargetID, fetchedBan.TargetID.String())
+	require.Equal(t, banReq.TargetID, fetchedBan.TargetID.String())
 	require.True(t, fetchedBan.ValidUntil.After(time.Now()))
 	require.Equal(t, banReq.Reason, fetchedBan.Reason)
 	require.Equal(t, banReq.ReasonText, fetchedBan.ReasonText)

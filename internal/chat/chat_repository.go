@@ -124,7 +124,7 @@ func (r chatRepository) Start(ctx context.Context) {
 					continue
 				}
 
-				connectMsg := "Player connected with username: " + connectEvent.SourcePlayer.Name
+				connectMsg := "Player connected with username: " + connectEvent.Name
 
 				r.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, false, connectEvent.CreatedOn, domain.Username)
 			case logparse.Say:

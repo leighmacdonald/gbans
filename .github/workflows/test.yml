@@ -72,7 +72,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 'stable'
-      - run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - run: make static
 
   backend-test:

@@ -105,7 +105,7 @@ func (c Config) ExtURL(obj LinkablePath) string {
 }
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
-	return strings.TrimRight(c.StaticConfig.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
+	return strings.TrimRight(c.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
 }
 
 type ConfigSSH struct {

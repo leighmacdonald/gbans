@@ -146,8 +146,8 @@ func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.
 		opts.Sid64 = sid.Int64()
 	}
 
-	if opts.QueryFilter.Limit > 1000 {
-		opts.QueryFilter.Limit = 1000
+	if opts.Limit > 1000 {
+		opts.Limit = 1000
 	}
 
 	if opts.CIDR != "" {
@@ -165,7 +165,7 @@ func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.
 		opts.Network = network.String()
 	}
 
-	if !(opts.Sid64 > 0 || opts.Network != "") {
+	if opts.Sid64 <= 0 || opts.Network == "" {
 		return nil, 0, domain.ErrMissingParam
 	}
 

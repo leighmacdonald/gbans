@@ -167,8 +167,8 @@ func (r banASNRepository) Get(ctx context.Context, filter domain.ASNBansQueryFil
 			Scan(&ban.BanASNId, &ban.ASNum, &ban.Origin, &sourceID, &targetID, &ban.ReasonText, &ban.ValidUntil,
 				&ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.Reason, &ban.IsEnabled,
 				&ban.UnbanReasonText, &ban.AppealState,
-				&ban.SourceTarget.SourcePersonaname, &ban.SourceTarget.SourceAvatarhash,
-				&ban.SourceTarget.TargetPersonaname, &ban.SourceTarget.TargetAvatarhash,
+				&ban.SourcePersonaname, &ban.SourceAvatarhash,
+				&ban.TargetPersonaname, &ban.TargetAvatarhash,
 				&ban.CommunityBanned, &ban.VacBans, &ban.GameBans); errScan != nil {
 			return nil, r.db.DBErr(errScan)
 		}

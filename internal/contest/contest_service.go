@@ -393,7 +393,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		}
 
 		// Only >=moderators or the entry author are allowed to delete entries.
-		if !(user.PermissionLevel >= domain.PModerator || user.SteamID == entry.SteamID) {
+		if user.PermissionLevel < domain.PModerator || user.SteamID != entry.SteamID {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
 
 			return

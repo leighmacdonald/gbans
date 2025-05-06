@@ -88,7 +88,7 @@ func testLogLine(t *testing.T, line string, expected any) {
 	parser := logparse.NewLogParser()
 	value1, err := parser.Parse(line)
 	require.NoError(t, err, "Failed to parse log line: %s", line)
-	require.EqualValues(t, expected, value1.Event, "Value mismatch")
+	require.Equal(t, expected, value1.Event, "Value mismatch")
 }
 
 func TestParseLogStartEvt(t *testing.T) {
@@ -279,7 +279,7 @@ func TestParsePointCapturedEvt(t *testing.T) {
 		{SourcePlayer: logparse.SourcePlayer{Name: "El Sur", PID: 35, SID: steamid.New("[U:1:423376881]"), Team: logparse.RED}, Pos: logparse.Pos{X: -95, Y: 152, Z: -767}},
 	}
 
-	require.EqualValues(t, expectedPlayers, evt.Players())
+	require.Equal(t, expectedPlayers, evt.Players())
 }
 
 func TestParseConnectedEvt(t *testing.T) {

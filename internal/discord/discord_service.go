@@ -324,7 +324,7 @@ func (h discordService) onUnbanASN(ctx context.Context, _ *discordgo.Session, in
 }
 
 func (h discordService) getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCreate) (domain.Person, error) {
-	author, errPersonByDiscordID := h.persons.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID)
+	author, errPersonByDiscordID := h.persons.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
 	if errPersonByDiscordID != nil {
 		if errors.Is(errPersonByDiscordID, domain.ErrNoResult) {
 			return author, domain.ErrSteamUnset
@@ -659,8 +659,12 @@ func (h discordService) makeOnLogs() func(context.Context, *discordgo.Session, *
 				status = ":white_check_mark:"
 			}
 
-			_, _ = matchesWriter.WriteString(fmt.Sprintf("%s [%s](%s) `%s` `%s`\n",
-				status, match.Title, h.config.ExtURL(match), match.MapName, match.TimeStart.Format(time.DateOnly)))
+			if _, err := fmt.Fprintf(matchesWriter, "%s [%s](%s) `%s` `%s`\n",
+				status, match.Title, h.config.ExtURL(match), match.MapName, match.TimeStart.Format(time.DateOnly)); err != nil {
+				slog.Error("Failed to write match line", log.ErrAttr(err))
+
+				continue
+			}
 		}
 
 		return LogsMessage(count, matchesWriter.String()), nil
@@ -773,7 +777,7 @@ func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 ) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	author, errGetPersonByDiscordID := h.persons.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID)
+	author, errGetPersonByDiscordID := h.persons.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
 	if errGetPersonByDiscordID != nil {
 		if errors.Is(errGetPersonByDiscordID, domain.ErrNoResult) {
 			return nil, domain.ErrSteamUnset
@@ -828,7 +832,7 @@ func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 
 	modNote := opts[domain.OptNote].StringValue()
 
-	author, errGetPerson := h.persons.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID)
+	author, errGetPerson := h.persons.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
 	if errGetPerson != nil {
 		if errors.Is(errGetPerson, domain.ErrNoResult) {
 			return nil, domain.ErrSteamUnset

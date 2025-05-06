@@ -41,8 +41,8 @@ func TestBansSteam(t *testing.T) {
 	var fetchedBan domain.BannedSteamPerson
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/steam/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
-	require.Equal(t, banReq.SourceIDField.SourceID, fetchedBan.SourceID.String())
-	require.Equal(t, banReq.TargetIDField.TargetID, fetchedBan.TargetID.String())
+	require.Equal(t, banReq.SourceID, fetchedBan.SourceID.String())
+	require.Equal(t, banReq.TargetID, fetchedBan.TargetID.String())
 	require.True(t, fetchedBan.ValidUntil.After(time.Now()))
 	require.Equal(t, banReq.BanType, fetchedBan.BanType)
 	require.Equal(t, banReq.Reason, fetchedBan.Reason)

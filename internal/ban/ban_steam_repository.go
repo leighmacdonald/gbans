@@ -139,8 +139,8 @@ func (r banSteamRepository) getBanByColumn(ctx context.Context, column string, i
 			&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
 			&person.UpdatedOn, &person.IncludeFriends, &person.EvadeOk, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
 			&person.IsEnabled, &person.AppealState, &person.LastIP,
-			&person.SourceTarget.SourcePersonaname, &person.SourceTarget.SourceAvatarhash,
-			&person.SourceTarget.TargetPersonaname, &person.SourceTarget.TargetAvatarhash,
+			&person.SourcePersonaname, &person.SourceAvatarhash,
+			&person.TargetPersonaname, &person.TargetAvatarhash,
 			&person.CommunityBanned, &person.VacBans, &person.GameBans,
 		); errScan != nil {
 		return person, r.db.DBErr(errScan)
@@ -341,8 +341,8 @@ func (r banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQuer
 				&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
 				&person.UpdatedOn, &person.IncludeFriends, &person.EvadeOk, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
 				&person.IsEnabled, &person.AppealState,
-				&person.SourceTarget.SourcePersonaname, &person.SourceTarget.SourceAvatarhash,
-				&person.SourceTarget.TargetPersonaname, &person.SourceTarget.TargetAvatarhash,
+				&person.SourcePersonaname, &person.SourceAvatarhash,
+				&person.TargetPersonaname, &person.TargetAvatarhash,
 				&person.CommunityBanned, &person.VacBans, &person.GameBans); errScan != nil {
 			return nil, r.db.DBErr(errScan)
 		}
