@@ -337,9 +337,6 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid size={{ xs: 6 }}>
                         <form.Field
                             name={'reason'}
-                            validators={{
-                                onChange: z.nativeEnum(BanReason, { message: 'Invalid ban reason' })
-                            }}
                             children={({ state, handleChange, handleBlur }) => {
                                 return (
                                     <>

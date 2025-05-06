@@ -27,6 +27,13 @@ import { logErr } from '../util/errors.ts';
 import { transformCreatedOnDate } from '../util/time.ts';
 import { ModalQueueJoin } from './modal';
 
+/**
+ * QueueProvider provides a high level context for server queueing. The intention is to allow users to
+ * queue up for a particular server and be able to fill it once some minimum threshold is reached.
+ *
+ * @param children
+ * @constructor
+ */
 export const QueueProvider = ({ children }: { children: ReactNode }) => {
     const [isReady, setIsReady] = useState(false);
     const [users, setUsers] = useState<QueueMember[]>([]);
@@ -99,12 +106,17 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
 
             case Operation.Message: {
                 setMessages((prev) => {
-                    const messages = (request.payload as MessagePayload).messages.map(transformCreatedOnDate);
-                    let all = [...prev, ...messages];
-                    if (all.length > 100) {
-                        all = all.slice(all.length - 100, 100);
+                    try {
+                        const messages = (request.payload as MessagePayload).messages.map(transformCreatedOnDate);
+                        let all = [...prev, ...messages];
+                        if (all.length > 100) {
+                            all = all.slice(all.length - 100, 100);
+                        }
+                        return all;
+                    } catch (e) {
+                        logErr(e);
+                        return prev;
                     }
-                    return all;
                 });
                 break;
             }

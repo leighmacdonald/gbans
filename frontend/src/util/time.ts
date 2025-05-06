@@ -29,7 +29,11 @@ export const durationString = (d: Duration) => {
     return hours + ':' + minutes + ':' + seconds;
 };
 
-export const parseDateTime = (t: string): Date => {
+export const parseDateTime = (t: string | Date): Date => {
+    if (t instanceof Date) {
+        return t;
+    }
+
     return parseISO(t);
 };
 
@@ -79,6 +83,8 @@ export interface TimeStamped {
     updated_on: Date;
     valid_until?: Date;
 }
+
+// These transform functions are used because for
 
 export const transformCreatedOnDate = <T>(item: T & { created_on: Date }) => {
     item.created_on = parseDateTime(item.created_on as unknown as string);

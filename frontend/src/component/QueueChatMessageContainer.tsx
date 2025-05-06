@@ -1,4 +1,4 @@
-import { useState, MouseEvent } from 'react';
+import { useState, MouseEvent, useCallback } from 'react';
 import ScrollableFeed from 'react-scrollable-feed';
 import { useModal } from '@ebay/nice-modal-react';
 import BlockIcon from '@mui/icons-material/Block';
@@ -44,23 +44,26 @@ const QueueChatMessage = ({ message, showControls }: { message: ChatLog; showCon
     const purgeModal = useModal(QueuePurgeModal);
     const statusModal = useModal(QueueStatusModal);
 
-    const handleClick = (event: MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
+    const handleClick = useCallback(
+        (event: MouseEvent<HTMLElement>) => {
+            setAnchorEl(event.currentTarget);
+        },
+        [setAnchorEl]
+    );
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         setAnchorEl(null);
-    };
+    }, [setAnchorEl]);
 
-    const showPurge = async () => {
+    const showPurge = useCallback(async () => {
         await purgeModal.show({ message });
         handleClose();
-    };
+    }, [purgeModal, handleClose, message]);
 
-    const showBan = async () => {
+    const showBan = useCallback(async () => {
         await statusModal.show({ steam_id: message.steam_id });
         handleClose();
-    };
+    }, [statusModal, handleClose, message.steam_id]);
 
     return (
         <Grid container key={`queuemsg-${message.message_id}-id`} spacing={1}>
