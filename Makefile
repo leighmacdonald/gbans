@@ -66,19 +66,13 @@ test-go-cover:
 	@go test $(GO_FLAGS) -race -coverprofile coverage.out ./...
 	@go tool cover -html=coverage.out
 
-install_deps:
-	go install github.com/daixiang0/gci@v0.13.5
-	go install mvdan.cc/gofumpt@v0.7.0
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.5
-	go install honnef.co/go/tools/cmd/staticcheck@v0.6.0
-
 check: lint_golangci static lint_ts typecheck_ts
 
 lint_golangci:
-	golangci-lint run --timeout 3m ./...
+	go tool golangci-lint run --timeout 3m ./...
 
 fix: fmt
-	golangci-lint run --fix
+	go tool golangci-lint run --fix
 
 lint_ts:
 	make -C frontend lint
@@ -87,7 +81,7 @@ typecheck_ts:
 	make -C frontend typecheck
 
 static:
-	staticcheck -go 1.24 ./...
+	go tool staticcheck -go 1.24 ./...
 
 clean:
 	@go clean $(GO_FLAGS) -i
