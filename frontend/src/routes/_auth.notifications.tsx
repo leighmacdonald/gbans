@@ -10,8 +10,11 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import {
@@ -53,6 +56,8 @@ function NotificationsPage() {
     const queryClient = useQueryClient();
     const { sendError, sendFlash } = useUserFlashCtx();
     const [rowSelection, setRowSelection] = useState({});
+    const theme = useTheme();
+    const breakMatched = useMediaQuery(theme.breakpoints.up('md'));
 
     // const { page, rows, sortOrder, sortColumn } = Route.useSearch();
     const [pagination, setPagination] = useState({
@@ -171,6 +176,108 @@ function NotificationsPage() {
         return notifications?.filter((n) => !n.read).length;
     }, [notifications]);
 
+    const buttons = useMemo(() => {
+        if (breakMatched) {
+            return (
+                <ButtonGroup variant="contained" key={'hdr-buttons'}>
+                    <Button
+                        startIcon={<DoneIcon />}
+                        color={'success'}
+                        key={'mark-selected'}
+                        onClick={() => {
+                            const ids = selectedToIds();
+                            if (ids?.length == 0) {
+                                return;
+                            }
+                            onMarkSelected.mutate(ids);
+                        }}
+                        disabled={Object.values(rowSelection).length == 0}
+                    >
+                        Mark Selected Read
+                    </Button>
+                    <Button
+                        startIcon={<DoneAllIcon />}
+                        color={'success'}
+                        key={'mark-all'}
+                        onClick={() => onMarkAllRead.mutate()}
+                        disabled={(notifications ?? [])?.length == 0}
+                    >
+                        Mark All Read
+                    </Button>
+                    <Button
+                        startIcon={<RemoveIcon />}
+                        color={'error'}
+                        key={'delete-selected'}
+                        onClick={onConfirmDeleteSelected}
+                        disabled={Object.values(rowSelection).length == 0}
+                    >
+                        Delete Selected
+                    </Button>
+                    <Button
+                        startIcon={<ClearAllIcon />}
+                        color={'error'}
+                        key={'delete-all'}
+                        onClick={onConfirmDeleteAll}
+                        disabled={(notifications ?? [])?.length == 0}
+                    >
+                        Delete All
+                    </Button>
+                </ButtonGroup>
+            );
+        } else {
+            return (
+                <ButtonGroup variant="contained" key={'hdr-buttons'}>
+                    <Tooltip title="Mark Selected Read">
+                        <IconButton
+                            color={'success'}
+                            key={'mark-selected'}
+                            onClick={() => {
+                                const ids = selectedToIds();
+                                if (ids?.length == 0) {
+                                    return;
+                                }
+                                onMarkSelected.mutate(ids);
+                            }}
+                            disabled={Object.values(rowSelection).length == 0}
+                        >
+                            <DoneIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Mark All Read">
+                        <IconButton
+                            color={'success'}
+                            key={'mark-all'}
+                            onClick={() => onMarkAllRead.mutate()}
+                            disabled={(notifications ?? [])?.length == 0}
+                        >
+                            <DoneAllIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete Selected">
+                        <IconButton
+                            color={'error'}
+                            key={'delete-selected'}
+                            onClick={onConfirmDeleteSelected}
+                            disabled={Object.values(rowSelection).length == 0}
+                        >
+                            <RemoveIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete All">
+                        <IconButton
+                            color={'error'}
+                            key={'delete-all'}
+                            onClick={onConfirmDeleteAll}
+                            disabled={(notifications ?? [])?.length == 0}
+                        >
+                            <ClearAllIcon />
+                        </IconButton>
+                    </Tooltip>
+                </ButtonGroup>
+            );
+        }
+    }, [breakMatched, onConfirmDeleteAll, onConfirmDeleteSelected, rowSelection]);
+
     return (
         <>
             <Title>{`Notifications (${newMessages})`}</Title>
@@ -179,52 +286,7 @@ function NotificationsPage() {
                     <ContainerWithHeaderAndButtons
                         iconLeft={<EmailIcon />}
                         title={`Notifications  ${Object.values(rowSelection).length ? `(Selected: ${Object.values(rowSelection).length})` : ''}`}
-                        buttons={[
-                            <ButtonGroup variant="contained" key={'hdr-buttons'}>
-                                <Button
-                                    startIcon={<DoneIcon />}
-                                    color={'success'}
-                                    key={'mark-selected'}
-                                    onClick={() => {
-                                        const ids = selectedToIds();
-                                        if (ids?.length == 0) {
-                                            return;
-                                        }
-                                        onMarkSelected.mutate(ids);
-                                    }}
-                                    disabled={Object.values(rowSelection).length == 0}
-                                >
-                                    Mark Selected Read
-                                </Button>
-                                <Button
-                                    startIcon={<DoneAllIcon />}
-                                    color={'success'}
-                                    key={'mark-all'}
-                                    onClick={() => onMarkAllRead.mutate()}
-                                    disabled={(notifications ?? [])?.length == 0}
-                                >
-                                    Mark All Read
-                                </Button>
-                                <Button
-                                    startIcon={<RemoveIcon />}
-                                    color={'error'}
-                                    key={'delete-selected'}
-                                    onClick={onConfirmDeleteSelected}
-                                    disabled={Object.values(rowSelection).length == 0}
-                                >
-                                    Delete Selected
-                                </Button>
-                                <Button
-                                    startIcon={<ClearAllIcon />}
-                                    color={'error'}
-                                    key={'delete-all'}
-                                    onClick={onConfirmDeleteAll}
-                                    disabled={(notifications ?? [])?.length == 0}
-                                >
-                                    Delete All
-                                </Button>
-                            </ButtonGroup>
-                        ]}
+                        buttons={[buttons]}
                     >
                         <NotificationsTable
                             notifications={notifications ?? []}
