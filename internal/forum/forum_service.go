@@ -372,7 +372,7 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if thread.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= domain.PModerator) {
+		if thread.SourceID != currentUser.SteamID && currentUser.PermissionLevel < domain.PModerator {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 				"You do not have access to edit this."))
 
@@ -472,7 +472,7 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if message.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= domain.PModerator) {
+		if message.SourceID != currentUser.SteamID && currentUser.PermissionLevel < domain.PModerator {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 				"You do not have permission to edit this message."))
 

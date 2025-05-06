@@ -220,20 +220,23 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.UserProfile, or
 		return ban, errors.Join(err, domain.ErrFetchPerson)
 	}
 
-	if banSteam.BanType == domain.Banned {
+	switch banSteam.BanType {
+	case domain.Banned:
 		if errKick := s.state.Kick(ctx, banSteam.TargetID, banSteam.Reason); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to kick player", log.ErrAttr(errKick),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		} else {
 			s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelKickLog, discord.KickPlayerEmbed(target)))
 		}
-	} else if banSteam.BanType == domain.NoComm {
+	case domain.NoComm:
 		if errSilence := s.state.Silence(ctx, banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		} else {
 			s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelKickLog, discord.MuteMessage(bannedPerson)))
 		}
+	default:
+		return ban, domain.ErrInvalidBanType
 	}
 
 	return s.GetByBanID(ctx, banSteam.BanID, false, true)
@@ -324,8 +327,8 @@ func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Us
 		return false, errDuration
 	}
 
-	existing.Note += " Previous expiry: " + existing.BanSteam.ValidUntil.Format(time.DateTime)
-	existing.BanSteam.ValidUntil = time.Now().Add(duration)
+	existing.Note += " Previous expiry: " + existing.ValidUntil.Format(time.DateTime)
+	existing.ValidUntil = time.Now().Add(duration)
 
 	if errSave := s.Save(ctx, &existing.BanSteam); errSave != nil {
 		slog.Error("Could not update previous ban.", log.ErrAttr(errSave))

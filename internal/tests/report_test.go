@@ -31,19 +31,19 @@ func TestReport(t *testing.T) {
 	}
 	var report domain.Report
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/report", req, http.StatusCreated, &authTokens{user: sourceCreds}, &report)
-	require.EqualValues(t, req.SourceID, report.SourceID)
-	require.EqualValues(t, req.TargetID, report.TargetID)
-	require.EqualValues(t, req.Description, report.Description)
-	require.EqualValues(t, req.Reason, report.Reason)
-	require.EqualValues(t, req.ReasonText, report.ReasonText)
-	require.EqualValues(t, req.DemoID, report.DemoID)
-	require.EqualValues(t, req.DemoTick, report.DemoTick)
-	require.EqualValues(t, req.PersonMessageID, report.PersonMessageID)
+	require.Equal(t, req.SourceID, report.SourceID)
+	require.Equal(t, req.TargetID, report.TargetID)
+	require.Equal(t, req.Description, report.Description)
+	require.Equal(t, req.Reason, report.Reason)
+	require.Equal(t, req.ReasonText, report.ReasonText)
+	require.Equal(t, req.DemoID, report.DemoID)
+	require.Equal(t, req.DemoTick, report.DemoTick)
+	require.Equal(t, req.PersonMessageID, report.PersonMessageID)
 
 	// Make sure we can query it
 	var fetched domain.Report
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d", report.ReportID), nil, http.StatusOK, &authTokens{user: sourceCreds}, &fetched)
-	require.EqualValues(t, report, fetched)
+	require.Equal(t, report, fetched)
 
 	// Make sure we can query all
 	var fetchedColl []domain.Report

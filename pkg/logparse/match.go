@@ -776,9 +776,10 @@ func (match *Match) damage(evt DamageEvt) {
 	}
 
 	if round := match.getRound(); round != nil {
-		if evt.Team == RED {
+		switch evt.Team {
+		case RED:
 			round.DamageRed += dmg
-		} else if evt.Team == BLU {
+		case BLU:
 			round.DamageBlu += dmg
 		}
 	}
@@ -834,9 +835,10 @@ func (match *Match) killed(evt KilledEvt) {
 	player := match.player(evt.CreatedOn, evt.SID)
 	player.addKill(evt.CreatedOn, evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
 
-	if evt.Team == BLU {
+	switch evt.Team {
+	case BLU:
 		match.getRound().KillsBlu++
-	} else if evt.Team == RED {
+	case RED:
 		match.getRound().KillsRed++
 	}
 }
@@ -917,9 +919,10 @@ func (match *Match) medicCharge(evt ChargeDeployedEvt) {
 			amount = 0.25
 		}
 
-		if evt.Team == RED {
+		switch evt.Team {
+		case RED:
 			round.UbersRed += amount
-		} else if evt.Team == BLU {
+		case BLU:
 			round.UbersBlu += amount
 		}
 	}
@@ -954,18 +957,20 @@ func (match *Match) roundLen(evt WRoundLenEvt) {
 func (match *Match) roundScore(evt WTeamScoreEvt) {
 	round := match.getRound()
 	if round != nil {
-		if evt.Team == RED {
+		switch evt.Team {
+		case RED:
 			round.Score.Red = evt.Score
-		} else if evt.Team == BLU {
+		case BLU:
 			round.Score.Blu = evt.Score
 		}
 	}
 }
 
 func (match *Match) finalScore(evt WTeamFinalScoreEvt) {
-	if evt.Team == RED {
+	switch evt.Team {
+	case RED:
 		match.TeamScores.Red = evt.Score
-	} else if evt.Team == BLU {
+	case BLU:
 		match.TeamScores.Blu = evt.Score
 	}
 }

@@ -241,8 +241,8 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 			&group.ValidUntil,
 			&group.AppealState,
 			&groupID,
-			&group.SourceTarget.SourcePersonaname, &group.SourceTarget.SourceAvatarhash,
-			&group.SourceTarget.TargetPersonaname, &group.SourceTarget.TargetAvatarhash,
+			&group.SourcePersonaname, &group.SourceAvatarhash,
+			&group.TargetPersonaname, &group.TargetAvatarhash,
 			&group.CommunityBanned, &group.VacBans, &group.GameBans,
 		); errScan != nil {
 			return nil, r.db.DBErr(errScan)

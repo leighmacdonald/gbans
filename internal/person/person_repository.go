@@ -98,12 +98,12 @@ func (r *personRepository) insertPerson(ctx context.Context, transaction pgx.Tx,
 			"realname", "timecreated", "loccountrycode", "locstatecode", "loccityid", "permission_level",
 			"discord_id", "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
 			"updated_on_steam", "muted", "playerqueue_chat_status", "playerqueue_chat_reason").
-		Values(person.CreatedOn, person.UpdatedOn, person.SteamID.Int64(), person.PlayerSummary.CommunityVisibilityState,
-			person.PlayerSummary.ProfileState, person.PlayerSummary.PersonaName, person.PlayerSummary.ProfileURL,
-			person.PlayerSummary.Avatar, person.PlayerSummary.AvatarMedium, person.PlayerSummary.AvatarFull,
-			person.PlayerSummary.AvatarHash, person.PlayerSummary.PersonaState, person.PlayerSummary.RealName,
-			person.PlayerSummary.TimeCreated, person.PlayerSummary.LocCountryCode, person.PlayerSummary.LocStateCode,
-			person.PlayerSummary.LocCityID, person.PermissionLevel, person.DiscordID, person.CommunityBanned,
+		Values(person.CreatedOn, person.UpdatedOn, person.SteamID.Int64(), person.CommunityVisibilityState,
+			person.ProfileState, person.PersonaName, person.ProfileURL,
+			person.Avatar, person.AvatarMedium, person.AvatarFull,
+			person.AvatarHash, person.PersonaState, person.RealName,
+			person.TimeCreated, person.LocCountryCode, person.LocStateCode,
+			person.LocCityID, person.PermissionLevel, person.DiscordID, person.CommunityBanned,
 			person.VACBans, person.GameBans, person.EconomyBan, person.DaysSinceLastBan, person.UpdatedOnSteam,
 			person.Muted, person.PlayerqueueChatStatus, person.PlayerqueueChatReason))
 	if errExec != nil {

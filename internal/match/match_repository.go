@@ -146,7 +146,7 @@ func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryO
 		countBuilder = countBuilder.Where(sq.Eq{"mp.steam_id": sid})
 	}
 
-	builder = opts.QueryFilter.ApplySafeOrder(builder, map[string][]string{
+	builder = opts.ApplySafeOrder(builder, map[string][]string{
 		"":   {"winner"},
 		"m.": {"match_id", "server_id", "map", "score_blu", "score_red", "time_start", "time_end"},
 	}, "match_id")
@@ -260,7 +260,7 @@ func (r *matchRepository) matchGetPlayerWeapons(ctx context.Context, matchID uui
 		)
 
 		if errScan := rows.
-			Scan(&steamID, &mpw.WeaponID, &mpw.Weapon.Name, &mpw.Weapon.Key, &mpw.Kills, &mpw.Damage, &mpw.Shots,
+			Scan(&steamID, &mpw.WeaponID, &mpw.Name, &mpw.Key, &mpw.Kills, &mpw.Damage, &mpw.Shots,
 				&mpw.Hits, &mpw.Backstabs, &mpw.Headshots, &mpw.Airshots); errScan != nil {
 			return nil, r.database.DBErr(errScan)
 		}

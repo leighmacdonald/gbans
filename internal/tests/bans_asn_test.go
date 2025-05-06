@@ -35,8 +35,8 @@ func TestBansASN(t *testing.T) {
 	var fetchedBan domain.BannedASNPerson
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/asn/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
-	require.Equal(t, banReq.SourceIDField.SourceID, fetchedBan.SourceID.String())
-	require.Equal(t, banReq.TargetIDField.TargetID, fetchedBan.TargetID.String())
+	require.Equal(t, banReq.SourceID, fetchedBan.SourceID.String())
+	require.Equal(t, banReq.TargetID, fetchedBan.TargetID.String())
 	require.True(t, fetchedBan.ValidUntil.After(time.Now()))
 	require.Equal(t, banReq.ASNum, fetchedBan.ASNum)
 	require.Equal(t, banReq.Reason, fetchedBan.Reason)

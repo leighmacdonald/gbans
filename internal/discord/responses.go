@@ -501,9 +501,10 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 	title := player.PersonaName
 
 	if ban.BanID > 0 {
-		if ban.BanType == domain.Banned {
+		switch ban.BanType {
+		case domain.Banned:
 			title += " (BANNED)"
-		} else if ban.BanType == domain.NoComm {
+		case domain.NoComm:
 			title += " (MUTED)"
 		}
 	}
@@ -1313,9 +1314,10 @@ func ForumSaved(message domain.Forum) *discordgo.MessageEmbed {
 
 func NewPlayerqueueChatStatus(author domain.UserProfile, target domain.UserProfile, status domain.ChatStatus, reason string) *discordgo.MessageEmbed {
 	colour := ColourError
-	if status == domain.Readwrite {
+	switch status {
+	case domain.Readwrite:
 		colour = ColourSuccess
-	} else if status == domain.Readonly {
+	case domain.Readonly:
 		colour = ColourWarn
 	}
 

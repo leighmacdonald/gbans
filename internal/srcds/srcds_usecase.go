@@ -431,19 +431,19 @@ func (h srcds) AddGroup(ctx context.Context, name string, flags string, immunity
 }
 
 func validateAuthIdentity(ctx context.Context, authType domain.AuthType, identity string, password string) (string, error) {
-	switch {
-	case authType == domain.AuthTypeSteam:
+	switch authType {
+	case domain.AuthTypeSteam:
 		steamID, errSteamID := steamid.Resolve(ctx, identity)
 		if errSteamID != nil {
 			return "", domain.ErrInvalidSID
 		}
 
 		identity = steamID.String()
-	case authType == domain.AuthTypeIP:
+	case domain.AuthTypeIP:
 		if ip := net.ParseIP(identity); ip == nil || ip.To4() != nil {
 			return "", domain.ErrInvalidIP
 		}
-	case authType == domain.AuthTypeName:
+	case domain.AuthTypeName:
 		if identity == "" {
 			return "", domain.ErrSMInvalidAuthName
 		}

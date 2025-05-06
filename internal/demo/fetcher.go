@@ -238,7 +238,7 @@ func (d Downloader) Start(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			conf := d.config.Config()
-			if !conf.SSH.Enabled || !(conf.General.DemosEnabled || conf.Anticheat.Enabled) {
+			if !conf.SSH.Enabled || !conf.General.DemosEnabled && !conf.Anticheat.Enabled {
 				// Only perform SSH connection if we actually have at least one task that requires it enabled.
 				continue
 			}

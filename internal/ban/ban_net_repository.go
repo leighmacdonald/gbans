@@ -119,8 +119,8 @@ func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFi
 				&ban.CreatedOn, &ban.UpdatedOn, &ban.Reason, &ban.ReasonText,
 				&ban.ValidUntil, &ban.Deleted, &ban.Note, &ban.UnbanReasonText,
 				&ban.IsEnabled, &targetID, &sourceID, &ban.AppealState,
-				&ban.SourceTarget.SourcePersonaname, &ban.SourceTarget.SourceAvatarhash,
-				&ban.SourceTarget.TargetPersonaname, &ban.SourceTarget.TargetAvatarhash,
+				&ban.SourcePersonaname, &ban.SourceAvatarhash,
+				&ban.TargetPersonaname, &ban.TargetAvatarhash,
 				&ban.CommunityBanned, &ban.VacBans, &ban.GameBans); errScan != nil {
 			return nil, r.db.DBErr(errScan)
 		}

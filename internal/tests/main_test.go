@@ -95,7 +95,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	slog.SetDefault(slog.New(slog.DiscardHandler))
 	var dsn string
 	testCtx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 	defer cancel()

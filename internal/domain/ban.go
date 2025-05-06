@@ -412,7 +412,7 @@ func newBaseBanOpts(source steamid.SteamID, target steamid.SteamID, duration tim
 		return ErrInvalidSID
 	}
 
-	if !(banType == Banned || banType == NoComm) {
+	if banType != Banned && banType != NoComm {
 		return ErrInvalidBanType
 	}
 
