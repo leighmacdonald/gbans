@@ -1,16 +1,6 @@
-issues:
-  exclude-dirs:
-    - pkg/msqp
-    - pkg/mm
-  exclude-files:
-    - internal/web/data.go
-
+version: "2"
 linters:
-  # Disable all linters.
-  # Default: false
-  disable-all: true
-  # Enable specific linter
-  # https://golangci-lint.run/usage/linters/#enabled-by-default
+  default: none
   enable:
     - asasalint
     - asciicheck
@@ -18,50 +8,30 @@ linters:
     - bodyclose
     - containedctx
     - copyloopvar
-    #- contextcheck
-    #- cyclop
     - decorder
-    #- depguard
     - dogsled
-    #- dupl
     - dupword
-    #- durationcheck
+    - err113
     - errcheck
     - errchkjson
     - errname
     - errorlint
-    #- exhaustive
-    #- exhaustruct
-    #- exportloopref
     - forbidigo
     - forcetypeassert
-    #- funlen
-    - gci
     - ginkgolinter
     - gocheckcompilerdirectives
     - gochecknoglobals
     - gochecknoinits
-    #- gocognit
-    - goconst
-    - gocritic
-    #- gocyclo
     - gochecksumtype
     - goconst
     - gocritic
     - godot
-    #- godox
-    - err113
-    - gofmt
-    - gofumpt
     - goheader
-    - goimports
-    #- gomnd
     - gomoddirectives
     - gomodguard
     - goprintffuncname
     - gosec
     - gosmopolitan
-    - gosimple
     - govet
     - grouper
     - importas
@@ -69,8 +39,6 @@ linters:
     - ineffassign
     - interfacebloat
     - intrange
-    #- ireturn
-    #- lll
     - loggercheck
     - maintidx
     - makezero
@@ -78,15 +46,12 @@ linters:
     - misspell
     - musttag
     - nakedret
-    #- nestif
     - nilerr
     - nilnil
     - nlreturn
     - noctx
-    #- nolintlint
     - nonamedreturns
     - nosprintfhostport
-    #- paralleltest
     - perfsprint
     - prealloc
     - predeclared
@@ -94,19 +59,15 @@ linters:
     - reassign
     - revive
     - rowserrcheck
-    - sqlclosecheck
     - sloglint
     - spancheck
-    #- staticcheck
-    - stylecheck
-    #- tagalign
+    - sqlclosecheck
+    - staticcheck
     - tagliatelle
     - testableexamples
     - testifylint
     - testpackage
     - thelper
-    #- tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
@@ -116,76 +77,67 @@ linters:
     - wastedassign
     - whitespace
     - wrapcheck
-    #- wsl
-
-linters-settings:
-  wrapcheck:
-    # An array of strings that specify substrings of signatures to ignore.
-    # If this set, it will override the default set of ignored signatures.
-    # See https://github.com/tomarrell/wrapcheck#configuration for more information.
-    # Default: [".Errorf(", "errors.New(", "errors.Unwrap(", "errors.Join(", ".Wrap(", ".Wrapf(", ".WithMessage(", ".WithMessagef(", ".WithStack("]
-    ignoreSigs:
-      - .Errorf(
-      - errors.New(
-      - errors.Unwrap(
-      - errors.Join(
-      - .Wrap(
-      - .Wrapf(
-      - .WithMessage(
-      - .WithMessagef(
-      - .WithStack(
-      - river.JobCancel(
-    # An array of strings that specify regular expressions of signatures to ignore.
-    # Default: []
-    #ignoreSigRegexps:
-    #  - \.New.*Error\(
-    # An array of strings that specify globs of packages to ignore.
-    # Default: []
-    ignorePackageGlobs:
-    #  - encoding/*
-      - github.com/leighmacdonald/gbans/pkg/*
-      - github.com/leighmacdonald/gbans/internal/*
-    # An array of strings that specify regular expressions of interfaces to ignore.
-    # Default: []
-    #ignoreInterfaceRegexps:
-    #  - ^(?i)c(?-i)ach(ing|e)
-  interfacebloat:
-    max: 26
-  tagliatelle:
-    case:
-      use-field-name: true
+  settings:
+    depguard:
       rules:
-        json: snake
-        yaml: snake
-  depguard:
-    # Rules to apply.
-    #
-    # Variables:
-    # - File Variables
-    #   you can still use and exclamation mark ! in front of a variable to say not to use it.
-    #   Example !$test will match any file that is not a go test file.
-    #
-    #   `$all` - matches all go files
-    #   `$test` - matches all go test files
-    #
-    # - Package Variables
-    #
-    #  `$gostd` - matches all of go's standard library (Pulled from `GOROOT`)
-    #
-    # Default: Only allow $gostd in all files.
-    rules:
-      errors:
-        deny:
-          - pkg: "github.com/pkg/errors"
-            desc: Should be replaced by standard lib errors package
-          - pkg: "go.uber.org/zap"
-            desc: Replaced with log/slog
-  funlen:
-    # Checks the number of lines in a function.
-    # If lower than 0, disable the check.
-    # Default: 60
-    lines: 100
-    # Checks the number of statements in a function.
-    # If lower than 0, disable the check.
-    # Default: 40
-    statements: -1
+        errors:
+          deny:
+            - pkg: github.com/pkg/errors
+              desc: Should be replaced by standard lib errors package
+            - pkg: go.uber.org/zap
+              desc: Replaced with log/slog
+    funlen:
+      lines: 100
+      statements: -1
+    interfacebloat:
+      max: 26
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+          yaml: snake
+        use-field-name: true
+    wrapcheck:
+      ignore-sigs:
+        - .Errorf(
+        - errors.New(
+        - errors.Unwrap(
+        - errors.Join(
+        - .Wrap(
+        - .Wrapf(
+        - .WithMessage(
+        - .WithMessagef(
+        - .WithStack(
+        - river.JobCancel(
+      ignore-package-globs:
+        - github.com/leighmacdonald/gbans/pkg/*
+        - github.com/leighmacdonald/gbans/internal/*
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - internal/web/data.go
+      - pkg/msqp
+      - pkg/mm
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - internal/web/data.go
+      - pkg/msqp
+      - pkg/mm
+      - third_party$
+      - builtin$
+      - examples$
