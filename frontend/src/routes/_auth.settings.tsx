@@ -19,7 +19,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
+import { createFormHook } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -36,14 +36,27 @@ import {
 import { apiGetPatreonLogin, apiGetPatreonLogout } from '../api/patreon.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Title } from '../component/Title.tsx';
-import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
+import { SubmitButton } from '../component/field/SubmitButton.tsx';
 import { ModalConfirm } from '../component/modal';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
+import { fieldContext, formContext } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { SubHeading, TabButton, TabSection } from './_admin.admin.settings.tsx';
+
+const { useAppForm } = createFormHook({
+    fieldContext,
+    formContext,
+    fieldComponents: {
+        CheckboxSimple,
+        MarkdownField
+    },
+    formComponents: {
+        SubmitButton
+    }
+});
 
 const settingsSchema = z.object({
     section: z.enum(['general', 'forums', 'connections', 'game']).optional().default('general')
@@ -160,6 +173,10 @@ function ProfileSettings() {
     );
 }
 
+type GeneralProps = {
+    stats_hidden: boolean;
+};
+
 const GeneralSection = ({
     tab,
     settings,
@@ -175,13 +192,13 @@ const GeneralSection = ({
         return 'Notification' in window;
     }, []);
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
         defaultValues: {
             stats_hidden: settings.stats_hidden
-        }
+        } as GeneralProps
     });
 
     const togglePerms = async () => {
@@ -199,7 +216,7 @@ const GeneralSection = ({
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <Grid container spacing={2}>
@@ -270,37 +287,31 @@ const GeneralSection = ({
                         </Grid>
                     )}
                     <Grid size={{ xs: 12 }}>
-                        <Field
+                        <form.AppField
                             name={'stats_hidden'}
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={({ state, handleBlur, handleChange }) => {
-                                return (
-                                    <CheckboxSimple
-                                        value={state.value}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
-                                        label={'Hide personal stats on profile'}
-                                    />
-                                );
+                            children={(field) => {
+                                return <field.CheckboxSimple label={'Hide personal stats on profile'} />;
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                        <Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                            children={([canSubmit, isSubmitting]) => (
-                                <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />
-                            )}
-                        />
+                        <form.AppForm>
+                            <form.SubmitButton />
+                        </form.AppForm>
                     </Grid>
                 </Grid>
             </form>
         </TabSection>
     );
+};
+
+type GamePlayFormValues = {
+    center_projectiles: boolean;
 };
 
 const GameplaySection = ({
@@ -312,13 +323,13 @@ const GameplaySection = ({
     settings: PersonSettings;
     mutate: (s: PersonSettings) => void;
 }) => {
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
         defaultValues: {
             center_projectiles: settings.center_projectiles ?? false
-        }
+        } as GamePlayFormValues
     });
 
     return (
@@ -327,37 +338,24 @@ const GameplaySection = ({
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <Grid container spacing={2}>
                     <Grid size={{ xs: 12 }}>
-                        <Field
+                        <form.AppField
                             name={'center_projectiles'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
-                            children={({ state, handleBlur, handleChange }) => {
-                                return (
-                                    <CheckboxSimple
-                                        value={state.value}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
-                                        label={'Use center projectiles'}
-                                    />
-                                );
+                            children={(field) => {
+                                return <field.CheckboxSimple label={'Use center projectiles'} />;
                             }}
                         />
                         <SubHeading>Applies to all projectile weapons</SubHeading>
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                        <Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                            children={([canSubmit, isSubmitting]) => (
-                                <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />
-                            )}
-                        />
+                        <form.AppForm>
+                            <form.SubmitButton />
+                        </form.AppForm>
                     </Grid>
                 </Grid>
             </form>
@@ -374,7 +372,7 @@ const ForumSection = ({
     settings: PersonSettings;
     mutate: (s: PersonSettings) => void;
 }) => {
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
@@ -390,21 +388,21 @@ const ForumSection = ({
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <Grid container spacing={2}>
                     <Grid size={{ xs: 12 }}>
-                        <Field
+                        <form.AppField
                             name={'forum_signature'}
                             validators={{
                                 onChange: z.string()
                             }}
-                            children={(props) => {
+                            children={(field) => {
                                 return (
-                                    <MarkdownField
-                                        {...props}
-                                        value={props.state.value}
+                                    <field.MarkdownField
+                                        {...field}
+                                        value={field.state.value}
                                         label={'Your forum signature'}
                                         rows={10}
                                     />
@@ -415,32 +413,22 @@ const ForumSection = ({
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                        <Field
+                        <form.AppField
                             name={'forum_profile_messages'}
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={({ state, handleBlur, handleChange }) => {
-                                return (
-                                    <CheckboxSimple
-                                        value={state.value}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
-                                        label={'Enable people to sign your profile.'}
-                                    />
-                                );
+                            children={(field) => {
+                                return <field.CheckboxSimple label={'Enable people to sign your profile.'} />;
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                        <Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                            children={([canSubmit, isSubmitting]) => (
-                                <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />
-                            )}
-                        />
+                        <form.AppForm>
+                            <form.SubmitButton />
+                        </form.AppForm>
                     </Grid>
                 </Grid>
             </form>
