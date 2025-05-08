@@ -1,26 +1,21 @@
 import { ReactNode } from 'react';
-import { FormHelperText } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select, { SelectProps } from '@mui/material/Select';
-import { useStore } from '@tanstack/react-form';
-import { useFieldContext } from '../../../contexts/formContext.tsx';
-import { renderHelpText } from './renderHelpText.ts';
+import { useFieldContext } from '../../contexts/formContext.tsx';
 
 type Props<TData> = {
     label?: string;
     labelLoading?: string;
     items: TData[];
-    renderItem: (item: TData) => ReactNode;
-    helperText?: ReactNode;
+    renderMenu: (item: TData) => ReactNode;
 } & SelectProps;
 
 export const SelectField = <TData,>(props: Props<TData>) => {
     const field = useFieldContext<TData>();
-    const errors = useStore(field.store, (state) => state.meta.errors);
 
     return (
-        <FormControl fullWidth error={errors.length > 0}>
+        <FormControl fullWidth>
             <InputLabel id={`select-label-${props.name}`}>{props.label}</InputLabel>
             <Select
                 {...props}
@@ -31,11 +26,8 @@ export const SelectField = <TData,>(props: Props<TData>) => {
                     field.handleChange(event.target.value as TData);
                 }}
             >
-                {props?.items.map((i) => {
-                    return props.renderItem(i);
-                })}
+                {props.items.map(props.renderMenu)}
             </Select>
-            <FormHelperText>{renderHelpText(errors, props.helperText)}</FormHelperText>
         </FormControl>
     );
 };
