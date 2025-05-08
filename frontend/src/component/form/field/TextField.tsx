@@ -1,26 +1,23 @@
+import FormHelperText from '@mui/material/FormHelperText';
 import * as MUITextField from '@mui/material/TextField';
 import { TextFieldProps } from '@mui/material/TextField';
-import { useStore } from '@tanstack/react-form';
-import { useFieldContext } from '../../../contexts/formContext.tsx';
-import { renderHelpText } from './renderHelpText.ts';
+import { useFieldContext } from '../../contexts/formContext.tsx';
 
 type Props = {
-    label: string; // Make it required
+    label: string;
 } & TextFieldProps;
 
-export const TextField = <TData = string,>(props: Props) => {
-    const field = useFieldContext<TData>();
-    const errors = useStore(field.store, (state) => state.meta.errors);
+export const TextField = (props: Props) => {
+    const field = useFieldContext<string>();
 
     return (
-        <MUITextField.default
-            {...props}
-            fullWidth
-            onChange={(e) => field.handleChange(e.target.value as TData)}
-            variant="filled"
-            defaultValue={field.state.value}
-            error={errors.length > 0}
-            helperText={renderHelpText(errors, props.helperText)}
-        />
+        <>
+            <MUITextField.default {...props} onChange={(e) => field.handleChange(e.target.value)} variant="filled" />
+            {props.error ? (
+                <FormHelperText role="alert" error={true}>
+                    {props.helperText}
+                </FormHelperText>
+            ) : null}
+        </>
     );
 };
