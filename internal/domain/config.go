@@ -111,10 +111,9 @@ func (c Config) ExtURLRaw(path string, args ...any) string {
 
 type ConfigNetwork struct {
 	SDREnabled    bool   `mapstructure:"sdr_enabled" json:"sdr_enabled"`
-	SDRDNSEnabled bool   `mapstructure:"sdr_dns_enabled" json:"sdr_dns_enabled"` // nolint:tagliatelle
+	SDRDNSEnabled bool   `mapstructure:"sdr_dns_enabled" json:"sdr_dns_enabled"`
 	CFKey         string `mapstructure:"cf_key" json:"cf_key"`
 	CFEmail       string `mapstructure:"cf_email" json:"cf_email"`
-	CFZoneID      string `mapstructure:"cf_zone_id" json:"cf_zone_id"`
 }
 
 type ConfigSSH struct {
