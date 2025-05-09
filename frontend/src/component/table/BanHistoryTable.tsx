@@ -8,11 +8,11 @@ import {
     TableOptions,
     useReactTable
 } from '@tanstack/react-table';
-import { BanReasons, SteamBanRecord } from '../api';
-import { RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/time.ts';
+import { BanReasons, SteamBanRecord } from '../../api';
+import { RowsPerPage } from '../../util/table.ts';
+import { renderDateTime } from '../../util/time.ts';
+import { PersonCell } from './../PersonCell.tsx';
 import { DataTable } from './DataTable.tsx';
-import { PersonCell } from './PersonCell.tsx';
 import { TableCellBool } from './TableCellBool.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
 

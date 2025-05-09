@@ -14,15 +14,15 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { PermissionLevel } from '../api';
-import { useAuth } from '../hooks/useAuth.ts';
-import { useQueueCtx } from '../hooks/useQueueCtx.ts';
-import { emptyOrNullString } from '../util/types.ts';
-import { ContainerWithHeader } from './ContainerWithHeader.tsx';
-import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
+import { PermissionLevel } from '../../api';
+import { useAuth } from '../../hooks/useAuth.ts';
+import { useQueueCtx } from '../../hooks/useQueueCtx.ts';
+import { emptyOrNullString } from '../../util/types.ts';
+import { ContainerWithHeader } from '../ContainerWithHeader.tsx';
+import { ContainerWithHeaderAndButtons } from '../ContainerWithHeaderAndButtons.tsx';
+import { VCenterBox } from '../VCenterBox.tsx';
 import { QueueChatMessageContainer } from './QueueChatMessageContainer.tsx';
 import { QueueChatName } from './QueueChatName.tsx';
-import { VCenterBox } from './VCenterBox.tsx';
 
 export const QueueChat = () => {
     const { isReady, sendMessage, showChat, users, chatStatus, reason } = useQueueCtx();

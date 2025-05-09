@@ -14,11 +14,11 @@ import { createFileRoute, useLoaderData, useRouteContext } from '@tanstack/react
 import { format, fromUnixTime } from 'date-fns';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { PlayerClassStatsTable } from '../component/PlayerClassStatsTable.tsx';
 import { PlayerStatsOverallContainer } from '../component/PlayerStatsOverallContainer.tsx';
 import { PlayerWeaponsStatListContainer } from '../component/PlayerWeaponsStatListContainer.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { Title } from '../component/Title';
+import { PlayerClassStatsTable } from '../component/table/PlayerClassStatsTable.tsx';
 import { createExternalLinks } from '../util/history.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 import { isValidSteamDate, renderDateTime } from '../util/time.ts';

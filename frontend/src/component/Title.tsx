@@ -16,7 +16,7 @@ interface TitleProps {
 // <Title>s!
 export const Title = ({ children }: TitleProps) => {
     const { appInfo } = useAppInfoCtx();
-    const originalTitle = useRef<string | undefined>();
+    const originalTitle = useRef<string | undefined>('');
 
     useEffect(() => {
         if (originalTitle.current === undefined) {

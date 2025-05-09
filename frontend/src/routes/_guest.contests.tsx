@@ -13,11 +13,11 @@ import {
 } from '@tanstack/react-table';
 import { apiContests, Contest } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { DataTable } from '../component/DataTable.tsx';
-import { TableCellSmall } from '../component/TableCellSmall.tsx';
-import { TableCellString } from '../component/TableCellString.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title.tsx';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
+import { TableCellString } from '../component/table/TableCellString.tsx';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';

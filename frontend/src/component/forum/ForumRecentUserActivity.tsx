@@ -3,10 +3,10 @@ import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
-import { apiForumActiveUsers } from '../api/forum.ts';
-import { ContainerWithHeader } from './ContainerWithHeader.tsx';
-import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
-import RouterLink from './RouterLink.tsx';
+import { apiForumActiveUsers } from '../../api/forum.ts';
+import { ContainerWithHeader } from '../ContainerWithHeader.tsx';
+import { LoadingPlaceholder } from '../LoadingPlaceholder.tsx';
+import RouterLink from '../RouterLink.tsx';
 
 export const ForumRecentUserActivity = () => {
     const { data: activity, isLoading } = useQuery({

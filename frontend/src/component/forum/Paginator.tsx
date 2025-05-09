@@ -1,6 +1,6 @@
 import { TablePagination } from '@mui/material';
 import { useNavigate } from '@tanstack/react-router';
-import { LazyResult } from '../util/table.ts';
+import { LazyResult } from '../../util/table.ts';
 
 export const Paginator = <T,>({
     data,

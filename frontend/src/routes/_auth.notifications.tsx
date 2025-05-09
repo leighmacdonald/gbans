@@ -36,15 +36,15 @@ import {
     UserNotification
 } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable } from '../component/DataTable.tsx';
 import { IndeterminateCheckbox } from '../component/IndeterminateCheckbox.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import { TableCellBool } from '../component/TableCellBool.tsx';
-import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
-import { TableCellString } from '../component/TableCellString.tsx';
 import { Title } from '../component/Title.tsx';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { ModalConfirm } from '../component/modal';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
+import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { RowsPerPage } from '../util/table.ts';
 

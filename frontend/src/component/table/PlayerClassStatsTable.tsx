@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { formatDistance } from 'date-fns';
-import { apiGetPlayerClassOverallStats, PlayerClassOverallResult } from '../api';
-import { defaultFloatFmt, humanCount } from '../util/text.tsx';
+import { apiGetPlayerClassOverallStats, PlayerClassOverallResult } from '../../api';
+import { defaultFloatFmt, humanCount } from '../../util/text.tsx';
+import FmtWhenGt from '../FmtWhenGT.tsx';
+import { PlayerClassImg } from '../PlayerClassImg';
 import { DataTable } from './DataTable.tsx';
-import FmtWhenGt from './FmtWhenGT.tsx';
-import { PlayerClassImg } from './PlayerClassImg';
 
 interface PlayerClassStatsContainerProps {
     steam_id: string;

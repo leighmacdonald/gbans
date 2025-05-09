@@ -18,12 +18,12 @@ import {
 import { z } from 'zod';
 import { apiContests, Contest, PermissionLevel, permissionLevelString } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable } from '../component/DataTable.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
-import { TableCellBool } from '../component/TableCellBool.tsx';
-import { TableCellString } from '../component/TableCellString.tsx';
 import { Title } from '../component/Title.tsx';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { ModalContestEditor } from '../component/modal';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { TableCellString } from '../component/table/TableCellString.tsx';
 import { logErr } from '../util/errors.ts';
 import { initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
