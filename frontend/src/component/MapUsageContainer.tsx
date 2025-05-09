@@ -13,10 +13,10 @@ import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTab
 import { apiGetMapUsage } from '../api';
 import { RowsPerPage } from '../util/table.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { DataTable } from './DataTable.tsx';
 import { LoadingSpinner } from './LoadingSpinner';
-import { PaginatorLocal } from './PaginatorLocal.tsx';
-import { TableCellSmall } from './TableCellSmall.tsx';
+import { PaginatorLocal } from './forum/PaginatorLocal.tsx';
+import { DataTable } from './table/DataTable.tsx';
+import { TableCellSmall } from './table/TableCellSmall.tsx';
 
 interface MapUseChartProps {
     details: SeriesData[];

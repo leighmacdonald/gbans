@@ -1,5 +1,5 @@
 import Typography from '@mui/material/Typography';
-import RouterLink from './RouterLink.tsx';
+import RouterLink from '../RouterLink.tsx';
 
 interface ForumRowLinkProps {
     label: string;

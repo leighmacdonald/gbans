@@ -2,11 +2,11 @@ import Stack from '@mui/material/Stack';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { apiGetSMAdmins, apiGetSMGroupImmunities, apiGetSMGroups, apiGetSMOverrides } from '../api';
-import { SMAdminsTable } from '../component/SMAdminsTable.tsx';
-import { SMGroupsTable } from '../component/SMGroupsTable.tsx';
-import { SMImmunityTable } from '../component/SMImmunityTable.tsx';
-import { SMOverridesTable } from '../component/SMOverridesTable.tsx';
 import { Title } from '../component/Title';
+import { SMAdminsTable } from '../component/table/SMAdminsTable.tsx';
+import { SMGroupsTable } from '../component/table/SMGroupsTable.tsx';
+import { SMImmunityTable } from '../component/table/SMImmunityTable.tsx';
+import { SMOverridesTable } from '../component/table/SMOverridesTable.tsx';
 
 export const Route = createFileRoute('/_admin/admin/game-admins')({
     component: AdminsEditor

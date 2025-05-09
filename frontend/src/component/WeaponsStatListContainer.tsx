@@ -6,10 +6,10 @@ import { apiGetWeaponsOverall, WeaponsOverallResult } from '../api';
 import { LazyResult, RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { DataTable } from './DataTable.tsx';
 import FmtWhenGt from './FmtWhenGT.tsx';
-import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { TextLink } from './TextLink.tsx';
+import { PaginatorLocal } from './forum/PaginatorLocal.tsx';
+import { DataTable } from './table/DataTable.tsx';
 
 export const WeaponsStatListContainer = () => {
     const { data, isLoading } = useQuery({

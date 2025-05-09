@@ -11,9 +11,9 @@ import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/re
 import { z } from 'zod';
 import { apiGetMatches, MatchSummary } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
+import { DataTable } from '../component/table/DataTable.tsx';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
