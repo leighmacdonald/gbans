@@ -15,7 +15,7 @@ import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer.tsx';
-import { mdEditorRef } from './field/MarkdownField.tsx';
+import { mdEditorRef } from './form/field/MarkdownField.tsx';
 
 interface WikiValues {
     body_md: string;

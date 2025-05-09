@@ -44,7 +44,7 @@ import { PlayerMessageContext } from './PlayerMessageContext';
 import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
-import { mdEditorRef } from './field/MarkdownField.tsx';
+import { mdEditorRef } from './form/field/MarkdownField.tsx';
 
 export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): JSX.Element => {
     const theme = useTheme();

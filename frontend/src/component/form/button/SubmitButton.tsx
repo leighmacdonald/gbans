@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import Button, { ButtonProps } from '@mui/material/Button';
-import { useFormContext } from '../../contexts/formContext.tsx';
+import { useFormContext } from '../../../contexts/formContext.tsx';
 
 type Props = {
     label?: string;
@@ -10,14 +10,14 @@ type Props = {
     endIcon?: ReactNode;
 } & ButtonProps;
 
-export const ResetButton = (props: Props) => {
+export const SubmitButton = (props: Props) => {
     const form = useFormContext();
 
     return (
         <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-                <Button {...props} type="reset">
-                    {isSubmitting ? (props.labelLoading ?? '...') : (props.label ?? 'Reset')}
+                <Button {...props} type="submit">
+                    {isSubmitting ? (props.labelLoading ?? '...') : (props.label ?? 'Submit')}
                 </Button>
             )}
         </form.Subscribe>

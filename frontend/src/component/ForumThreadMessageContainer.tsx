@@ -22,7 +22,7 @@ import { ForumAvatar } from './ForumAvatar.tsx';
 import { ForumRowLink } from './ForumRowLink.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer.tsx';
 import RouterLink from './RouterLink.tsx';
-import { mdEditorRef } from './field/MarkdownField.tsx';
+import { mdEditorRef } from './form/field/MarkdownField.tsx';
 
 export const ThreadMessageContainer = ({
     message,

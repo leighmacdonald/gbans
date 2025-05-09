@@ -17,7 +17,7 @@ import { apiUpdateBanMessage, BanAppealMessage } from '../api';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { avatarHashToURL } from '../util/text.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
-import { mdEditorRef } from './field/MarkdownField.tsx';
+import { mdEditorRef } from './form/field/MarkdownField.tsx';
 
 interface AppealMessageViewProps {
     message: BanAppealMessage;

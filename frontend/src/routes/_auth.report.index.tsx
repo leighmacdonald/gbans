@@ -46,7 +46,7 @@ import { PlayerMessageContext } from '../component/PlayerMessageContext.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
-import { mdEditorRef } from '../component/field/MarkdownField.tsx';
+import { mdEditorRef } from '../component/form/field/MarkdownField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';

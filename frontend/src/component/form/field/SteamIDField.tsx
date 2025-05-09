@@ -6,9 +6,9 @@ import Avatar from '@mui/material/Avatar';
 import InputAdornment from '@mui/material/InputAdornment';
 import TextField, { TextFieldProps } from '@mui/material/TextField';
 import { useStore } from '@tanstack/react-form';
-import { defaultAvatarHash, PlayerProfile } from '../../api';
-import { useFieldContext } from '../../contexts/formContext.tsx';
-import { avatarHashToURL } from '../../util/text.tsx';
+import { defaultAvatarHash, PlayerProfile } from '../../../api';
+import { useFieldContext } from '../../../contexts/formContext.tsx';
+import { avatarHashToURL } from '../../../util/text.tsx';
 
 type Props = {
     profile?: PlayerProfile;
