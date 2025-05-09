@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
@@ -11,13 +10,13 @@ import { apiCreateForum, apiSaveForum, Forum, ForumCategory } from '../../api/fo
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 
-const schema = z.object({
-    forum_category_id: z.number().min(1),
-    title: z.string().min(2),
-    description: z.string(),
-    ordering: z.number(),
-    permission_level: z.nativeEnum(PermissionLevel)
-});
+type ForumEditorValues = {
+    forum_category_id: number;
+    title: string;
+    description: string;
+    ordering: string;
+    permission_level: PermissionLevel;
+};
 
 export const ForumForumEditorModal = NiceModal.create(
     ({ forum, categories }: { forum?: Forum; categories: ForumCategory[] }) => {
@@ -26,7 +25,7 @@ export const ForumForumEditorModal = NiceModal.create(
 
         const mutation = useMutation({
             mutationKey: ['forumCategory'],
-            mutationFn: async (values: z.input<typeof schema>) => {
+            mutationFn: async (values: ForumEditorValues) => {
                 if (forum?.forum_id) {
                     return await apiSaveForum(
                         forum.forum_id,
@@ -66,11 +65,8 @@ export const ForumForumEditorModal = NiceModal.create(
                 forum_category_id: defaultCategory,
                 title: forum?.title ?? '',
                 description: forum?.description ?? '',
-                ordering: forum?.ordering ?? 0,
+                ordering: forum?.ordering ? String(forum?.ordering) : '0',
                 permission_level: forum?.permission_level ?? PermissionLevel.User
-            },
-            validators: {
-                onSubmit: schema
             }
         });
 
@@ -115,6 +111,9 @@ export const ForumForumEditorModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'title'}
+                                    validators={{
+                                        onChange: z.string().min(1)
+                                    }}
                                     children={(field) => {
                                         return <field.TextField label={'Title'} />;
                                     }}
@@ -123,6 +122,9 @@ export const ForumForumEditorModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'description'}
+                                    validators={{
+                                        onChange: z.string().min(1)
+                                    }}
                                     children={(field) => {
                                         return <field.TextField label={'Description'} rows={5} />;
                                     }}
@@ -131,6 +133,9 @@ export const ForumForumEditorModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'ordering'}
+                                    validators={{
+                                        onChange: z.string().min(1)
+                                    }}
                                     children={(field) => {
                                         return <field.TextField label={'Order'} />;
                                     }}
@@ -139,6 +144,9 @@ export const ForumForumEditorModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'permission_level'}
+                                    validators={{
+                                        onChange: z.nativeEnum(PermissionLevel)
+                                    }}
                                     children={(field) => {
                                         return (
                                             <field.SelectField
@@ -163,10 +171,8 @@ export const ForumForumEditorModal = NiceModal.create(
                         <Grid container>
                             <Grid size={{ xs: 12 }}>
                                 <form.AppForm>
-                                    <ButtonGroup>
-                                        <form.ResetButton />
-                                        <form.SubmitButton />
-                                    </ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
                                 </form.AppForm>
                             </Grid>
                         </Grid>

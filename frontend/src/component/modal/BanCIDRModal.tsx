@@ -1,10 +1,10 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import RouterIcon from '@mui/icons-material/Router';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
+import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import {
     apiCreateBanCIDR,
@@ -19,17 +19,17 @@ import {
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-import { SDRNotice } from '../SDRNotice.tsx';
 
-const schema = z.object({
-    target_id: z.string(),
-    reason: z.nativeEnum(BanReason),
-    reason_text: z.string(),
-    duration: z.nativeEnum(Duration),
-    duration_custom: z.date(),
-    note: z.string(),
-    cidr: z.string()
-});
+type BanCIDRFormValues = {
+    target_id: string;
+    cidr: string;
+    reason: BanReason;
+    reason_text: string;
+    duration: Duration;
+    duration_custom?: string;
+    note: string;
+    existing?: CIDRBanRecord;
+};
 
 export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBanRecord }) => {
     const { sendFlash } = useUserFlashCtx();
@@ -37,7 +37,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
 
     const mutation = useMutation({
         mutationKey: ['banCIDR'],
-        mutationFn: async (values: z.input<typeof schema>) => {
+        mutationFn: async (values: BanCIDRFormValues) => {
             if (existing?.net_id) {
                 const ban_record = apiUpdateBanCIDR(existing.net_id, {
                     note: values.note,
@@ -45,7 +45,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                     reason_text: values.reason_text,
                     cidr: values.cidr,
                     target_id: values.target_id,
-                    valid_until: values.duration_custom
+                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
                 });
                 sendFlash('success', 'Updated CIDR ban successfully');
                 modal.resolve(ban_record);
@@ -53,7 +53,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 const ban_record = await apiCreateBanCIDR({
                     note: values.note,
                     duration: values.duration,
-                    valid_until: values.duration_custom,
+                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     target_id: values.target_id,
@@ -83,12 +83,9 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
             reason: existing ? existing.reason : BanReason.Cheating,
             reason_text: existing ? existing.reason_text : '',
             duration: existing ? Duration.durCustom : Duration.dur2w,
-            duration_custom: existing?.valid_until ?? new Date(),
+            duration_custom: existing ? existing.valid_until.toISOString() : '',
             note: existing ? existing.note : '',
             cidr: existing ? existing.cidr : ''
-        },
-        validators: {
-            onSubmit: schema
         }
     });
 
@@ -108,11 +105,9 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <SDRNotice />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'target_id'}
+                                // validators={makeSteamidValidators()}
                                 children={(field) => {
                                     return (
                                         <field.SteamIDField
@@ -126,6 +121,9 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'cidr'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'IP/CIDR Range'} />;
                                 }}
@@ -178,6 +176,9 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'duration'}
+                                validators={{
+                                    onChange: z.nativeEnum(Duration)
+                                }}
                                 children={(field) => {
                                     return (
                                         <field.SelectField
@@ -208,6 +209,9 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'note'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
                                 children={(field) => {
                                     return <field.MarkdownField multiline={true} rows={10} label={'Mod Notes'} />;
                                 }}
@@ -219,10 +223,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <ButtonGroup>
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
-                                </ButtonGroup>
+                                <form.SubmitButton />
                             </form.AppForm>
                         </Grid>
                     </Grid>

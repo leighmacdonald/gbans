@@ -37,16 +37,16 @@ import {
 } from '../api';
 import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { IconButtonLink } from '../component/IconButtonLink.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { PlayerMessageContext } from '../component/PlayerMessageContext.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
-import { mdEditorRef } from '../component/form/field/MarkdownField.tsx';
-import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
-import { DataTable } from '../component/table/DataTable.tsx';
+import { mdEditorRef } from '../component/field/MarkdownField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
@@ -312,7 +312,6 @@ export const ReportCreateForm = (): JSX.Element => {
                 <Grid container spacing={2}>
                     <Grid size={{ xs: 12 }}>
                         <form.AppField
-                            asyncDebounceMs={500}
                             name={'target_id'}
                             children={(field) => {
                                 return <field.SteamIDField disabled={Boolean(steam_id)} label={'SteamID'} />;
@@ -325,11 +324,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             children={(field) => {
                                 return (
                                     <field.SelectField
-                                        defaultValue={''}
-                                        label={'Ban Reason'}
-                                        helperText={
-                                            'Reason for being reported. Please try and use these categories as much as possible.'
-                                        }
+                                        label={'Override Type'}
                                         items={banReasonsCollection}
                                         renderItem={(r) => {
                                             return (
@@ -349,8 +344,8 @@ export const ReportCreateForm = (): JSX.Element => {
                             name={'reason_text'}
                             validators={{
                                 onChangeListenTo: ['reason'],
-                                onSubmit: ({ value }) => {
-                                    if (form.getFieldValue('reason') == BanReason.Custom) {
+                                onChange: ({ value, fieldApi }) => {
+                                    if (fieldApi.form.getFieldValue('reason') == BanReason.Custom) {
                                         return z.string().min(2, { message: 'Must enter custom reason' }).parse(value);
                                     }
 
@@ -358,16 +353,7 @@ export const ReportCreateForm = (): JSX.Element => {
                                 }
                             }}
                             children={(field) => {
-                                return (
-                                    <field.TextField
-                                        fullWidth
-                                        label="Custom Reason"
-                                        helperText={
-                                            'Choosing custom in the reason selector will allow you to enter your reason here.'
-                                        }
-                                        disabled={form.state.values.reason != BanReason.Custom}
-                                    />
-                                );
+                                return <field.TextField fullWidth label="Custom Reason" />;
                             }}
                         />
                     </Grid>
@@ -404,21 +390,14 @@ export const ReportCreateForm = (): JSX.Element => {
                             name={'body_md'}
                             validators={{ onChange: z.string().min(10, 'Message must be at least 10 characters.') }}
                             children={(field) => {
-                                return (
-                                    <field.MarkdownField
-                                        label={'Message (Markdown)'}
-                                        helperText={'A description of why you think this person is breaking the rules.'}
-                                    />
-                                );
+                                return <field.MarkdownField label={'Message (Markdown)'} />;
                             }}
                         />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <ButtonGroup>
-                                <form.ResetButton />
-                                <form.SubmitButton />
-                            </ButtonGroup>
+                            <form.ResetButton />
+                            <form.SubmitButton />
                         </form.AppForm>
                     </Grid>
                 </Grid>

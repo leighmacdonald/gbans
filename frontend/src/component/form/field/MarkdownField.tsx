@@ -25,23 +25,26 @@ import {
 } from '@mdxeditor/editor';
 import { headingsPlugin } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
-import { FormHelperText } from '@mui/material';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { TextFieldProps } from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import * as Sentry from '@sentry/react';
 import { useStore } from '@tanstack/react-form';
-import { apiSaveAsset, assetURL } from '../../../api/media.ts';
-import { useFieldContext } from '../../../contexts/formContext.tsx';
-import { useUserFlashCtx } from '../../../hooks/useUserFlashCtx.ts';
-import { logErr } from '../../../util/errors.ts';
-import { errorDialog } from '../../ErrorBoundary.tsx';
+import { apiSaveAsset, assetURL } from '../../api/media.ts';
+import { useFieldContext } from '../../contexts/formContext.tsx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { logErr } from '../../util/errors.ts';
+import { errorDialog } from '../ErrorBoundary.tsx';
 import './MarkdownField.css';
 
 export type MDBodyFieldProps = {
     fileUpload?: boolean;
+    minHeight?: number;
+    rows?: number;
     label: string;
+    placeholder?: string;
 } & TextFieldProps;
 
 const imageUploadHandler = async (media: File) => {
@@ -83,10 +86,12 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
     }, [theme.mode]);
 
     const errInfo = useMemo(() => {
-        return errors.length > 0 ? (
-            <FormHelperText error={true}>{errors.map((e) => e.message).join(', ')}</FormHelperText>
+        return errors ? (
+            <Typography padding={1} color={theme.palette.error.main}>
+                {errors.map(String).join(', ')}
+            </Typography>
         ) : (
-            <FormHelperText>{props.helperText}</FormHelperText>
+            <></>
         );
     }, [errors, theme.palette.error.main]);
 
@@ -129,13 +134,14 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
                         markdownShortcutPlugin()
                     ]}
                     onError={onError}
-                    // onChange={(c) => {
-                    //     field.setValue(c);
-                    // }}
-                    // onBlur={(v) => {
-                    //     alert('fix2');
-                    //     field.setValue()
-                    // }}
+                    onChange={() => {
+                        //props?.onChange(v);
+                        alert('fix');
+                    }}
+                    onBlur={() => {
+                        alert('fix2');
+                        //props.onBlur(true);
+                    }}
                     ref={mdEditorRef}
                 />
                 {errInfo}

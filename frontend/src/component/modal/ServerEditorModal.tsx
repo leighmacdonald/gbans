@@ -1,13 +1,12 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import RouterIcon from '@mui/icons-material/Router';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { apiCreateServer, apiSaveServer, SaveServerOpts, Server } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
-import { randomStringAlphaNum } from '../../util/strings.ts';
+import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
 
 type ServerEditValues = {
@@ -15,62 +14,21 @@ type ServerEditValues = {
     name: string;
     address: string;
     address_internal: string;
-    address_sdr: string;
-    port: number;
+    port: string;
     password: string;
     rcon: string;
     region: string;
     cc: string;
-    latitude: number;
-    longitude: number;
-    reserved_slots: number;
+    latitude: string;
+    longitude: string;
+    reserved_slots: string;
     is_enabled: boolean;
     enabled_stats: boolean;
-    log_secret: number;
+    log_secret: string;
 };
-
-const schema = z.object({
-    short_name: z
-        .string()
-        .min(3)
-        .regex(/\w{3,}/),
-    name: z.string().min(1),
-    address: z.string().min(1),
-    port: z.number({ coerce: true }).min(1024).max(65535).transform(Number),
-    password: z.string().length(20),
-    rcon: z.string().min(6),
-    region: z.string().min(1),
-    cc: z.string().length(2),
-    latitude: z.number({ coerce: true }).min(-90).max(99).transform(Number),
-    longitude: z.number({ coerce: true }).min(-180).max(180).transform(Number),
-    reserved_slots: z.number({ coerce: true }).min(0).max(100).transform(Number),
-    is_enabled: z.boolean(),
-    enabled_stats: z.boolean(),
-    log_secret: z.number({ coerce: true }).min(100000000).max(999999999).transform(Number),
-    address_internal: z.string(),
-    address_sdr: z.string()
-});
 
 export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server }) => {
     const modal = useModal();
-    const defaultValues: z.input<typeof schema> = {
-        short_name: server?.short_name ?? '',
-        name: server?.name ?? '',
-        address: server?.address ?? '',
-        port: server?.port ?? 27015,
-        password: server?.password ?? randomStringAlphaNum(20),
-        rcon: server?.rcon ?? '',
-        region: server?.region ?? '',
-        cc: server?.cc ?? '',
-        latitude: server?.latitude ?? 0,
-        longitude: server?.longitude ?? 0,
-        reserved_slots: server?.reserved_slots ?? 0,
-        is_enabled: server?.is_enabled ?? true,
-        enabled_stats: server?.enable_stats ?? true,
-        log_secret: server?.log_secret ?? Math.floor(Math.random() * 89999999 + 10000000),
-        address_internal: server?.address_internal ?? '',
-        address_sdr: server?.address_sdr ?? ''
-    };
 
     const mutation = useMutation({
         mutationKey: ['adminServer'],
@@ -79,19 +37,18 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 server_name_short: values.short_name,
                 server_name: values.name,
                 host: values.address,
-                port: values.port,
+                port: Number(values.port),
                 password: values.password,
                 rcon: values.rcon,
                 region: values.region,
                 cc: values.cc,
-                lat: values.latitude,
-                lon: values.longitude,
-                reserved_slots: values.reserved_slots,
+                lat: Number(values.latitude),
+                lon: Number(values.longitude),
+                reserved_slots: Number(values.reserved_slots),
                 is_enabled: values.is_enabled,
                 enable_stats: values.enabled_stats,
-                log_secret: values.log_secret,
-                address_internal: values.address_internal,
-                address_sdr: values.address_sdr
+                log_secret: Number(values.log_secret),
+                address_internal: values.address_internal
             };
             if (server?.server_id) {
                 modal.resolve(await apiSaveServer(server.server_id, opts));
@@ -104,11 +61,24 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 
     const form = useAppForm({
         onSubmit: async ({ value }) => {
-            mutation.mutate(schema.parse(value));
+            mutation.mutate(value);
         },
-        defaultValues,
-        validators: {
-            onSubmit: schema
+        defaultValues: {
+            short_name: server ? server.short_name : '',
+            name: server ? server.name : '',
+            address: server ? server.address : '',
+            port: server ? String(server.port) : '27015',
+            password: server ? server.password : '',
+            rcon: server ? server.rcon : '',
+            region: server ? server.region : '',
+            cc: server ? server.cc : '',
+            latitude: server ? String(server.latitude) : '',
+            longitude: server ? String(server.longitude) : '',
+            reserved_slots: server ? String(server.reserved_slots) : '0',
+            is_enabled: server ? server.is_enabled : true,
+            enabled_stats: server ? server.enable_stats : true,
+            log_secret: server ? String(server.log_secret) : '',
+            address_internal: server ? server.address_internal : ''
         }
     });
 
@@ -122,7 +92,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<RouterIcon />}>
-                    {server?.server_id ? 'Edit' : 'Create'} Server
+                    Server {server?.server_id ? 'Editor' : 'Creator'}
                 </DialogTitle>
 
                 <DialogContent>
@@ -130,19 +100,20 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'short_name'}
+                                validators={{
+                                    onChange: z.string().min(1)
+                                }}
                                 children={(field) => {
-                                    return (
-                                        <field.TextField
-                                            label={'Short Name/Tag'}
-                                            helperText={'A short, unique, identifier.'}
-                                        />
-                                    );
+                                    return <field.TextField label={'Short Name/Tag'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'name'}
+                                validators={{
+                                    onChange: z.string().min(1)
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Long Name'} />;
                                 }}
@@ -151,6 +122,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'address'}
+                                validators={{
+                                    onChange: z.string().min(1)
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Address'} />;
                                 }}
@@ -159,6 +133,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'port'}
+                                validators={{
+                                    onChange: z.string().transform(numberStringValidator(1024, 65535))
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Port'} />;
                                 }}
@@ -167,36 +144,20 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 8 }}>
                             <form.AppField
                                 name={'address_internal'}
-                                children={(field) => {
-                                    return (
-                                        <field.TextField
-                                            label={'Address Internal'}
-                                            helperText={
-                                                'A private network/VPN to access the host. Used for SSH. If empty the normal address is used.'
-                                            }
-                                        />
-                                    );
+                                validators={{
+                                    onChange: z.string()
                                 }}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 8 }}>
-                            <form.AppField
-                                name={'address_sdr'}
                                 children={(field) => {
-                                    return (
-                                        <field.TextField
-                                            label={'Address SDR'}
-                                            helperText={
-                                                'When using SDR, you can use this to give your servers dynamically updating DNS names.'
-                                            }
-                                        />
-                                    );
+                                    return <field.TextField label={'Address Internal'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'password'}
+                                validators={{
+                                    onChange: z.string().length(20)
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Server Auth Key'} />;
                                 }}
@@ -205,6 +166,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'rcon'}
+                                validators={{
+                                    onChange: z.string().min(6)
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'RCON Password'} />;
                                 }}
@@ -213,6 +177,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'log_secret'}
+                                validators={{
+                                    onChange: z.string().transform(numberStringValidator(100000000, 999999999))
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Log Secret'} />;
                                 }}
@@ -221,6 +188,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'region'}
+                                validators={{
+                                    onChange: z.string().min(1)
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Region'} />;
                                 }}
@@ -229,6 +199,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'cc'}
+                                validators={{
+                                    onChange: z.string().length(2)
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Country Code'} />;
                                 }}
@@ -237,6 +210,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'latitude'}
+                                validators={{
+                                    onChange: z.string().transform(numberStringValidator(-99, 99))
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Latitude'} />;
                                 }}
@@ -245,6 +221,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'longitude'}
+                                validators={{
+                                    onChange: z.string().transform(numberStringValidator(-180, 180))
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Longitude'} />;
                                 }}
@@ -253,6 +232,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'reserved_slots'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Reserved Slots'} />;
                                 }}
@@ -261,6 +243,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'is_enabled'}
+                                validators={{
+                                    onChange: z.boolean()
+                                }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'Is Enabled'} />;
                                 }}
@@ -269,6 +254,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'enabled_stats'}
+                                validators={{
+                                    onChange: z.boolean()
+                                }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'Stats Enabled'} />;
                                 }}
@@ -280,15 +268,13 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <ButtonGroup>
-                                    <form.CloseButton
-                                        onClick={async () => {
-                                            await modal.hide();
-                                        }}
-                                    />
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
-                                </ButtonGroup>
+                                <form.CloseButton
+                                    onClick={async () => {
+                                        await modal.hide();
+                                    }}
+                                />
+                                <form.ResetButton />
+                                <form.SubmitButton />
                             </form.AppForm>
                         </Grid>
                     </Grid>
