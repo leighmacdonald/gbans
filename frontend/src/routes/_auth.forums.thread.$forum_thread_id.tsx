@@ -23,13 +23,13 @@ import {
     ForumMessage,
     ForumThread
 } from '../api/forum.ts';
-import { ThreadMessageContainer } from '../component/ForumThreadMessageContainer.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { mdEditorRef } from '../component/form/field/MarkdownField.tsx';
+import { ThreadMessageContainer } from '../component/forum/ForumThreadMessageContainer.tsx';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';

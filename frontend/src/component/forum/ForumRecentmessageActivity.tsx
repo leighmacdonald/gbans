@@ -7,15 +7,15 @@ import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import { apiForumRecentActivity } from '../api/forum.ts';
-import { avatarHashToURL } from '../util/text.tsx';
-import { renderDateTime, renderTime } from '../util/time.ts';
-import { ContainerWithHeader } from './ContainerWithHeader.tsx';
+import { apiForumRecentActivity } from '../../api/forum.ts';
+import { avatarHashToURL } from '../../util/text.tsx';
+import { renderDateTime, renderTime } from '../../util/time.ts';
+import { ContainerWithHeader } from '../ContainerWithHeader.tsx';
+import { VCenteredElement } from '../Heading.tsx';
+import { LoadingPlaceholder } from '../LoadingPlaceholder.tsx';
+import RouterLink from '../RouterLink.tsx';
+import { VCenterBox } from '../VCenterBox.tsx';
 import { ForumRowLink } from './ForumRowLink.tsx';
-import { VCenteredElement } from './Heading.tsx';
-import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
-import RouterLink from './RouterLink.tsx';
-import { VCenterBox } from './VCenterBox.tsx';
 
 export const ForumRecentMessageActivity = () => {
     const { data: messages, isLoading } = useQuery({

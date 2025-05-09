@@ -17,10 +17,10 @@ import {
     ReportWithAuthor
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
+import { FullTable } from '../component/table/FullTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { initColumnFilter, initPagination, initSortOrder, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';

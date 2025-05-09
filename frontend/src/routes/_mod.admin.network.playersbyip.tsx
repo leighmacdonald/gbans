@@ -9,10 +9,10 @@ import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/re
 import { z } from 'zod';
 import { apiGetConnections, PersonConnection } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
-import { Paginator } from '../component/Paginator.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
+import { Paginator } from '../component/forum/Paginator.tsx';
+import { DataTable } from '../component/table/DataTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';

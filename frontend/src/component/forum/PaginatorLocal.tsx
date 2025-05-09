@@ -1,5 +1,5 @@
 import { TablePagination } from '@mui/material';
-import { RowsPerPage } from '../util/table.ts';
+import { RowsPerPage } from '../../util/table.ts';
 
 /**
  * A paginator for use when all data is available in the client, ie. no LazyTable

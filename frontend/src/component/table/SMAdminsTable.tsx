@@ -12,15 +12,15 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
-import { apiAddAdminToGroup, apiDelAdminFromGroup, apiDeleteSMAdmin, SMAdmin, SMGroups } from '../api';
-import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { Route } from '../routes/_admin.admin.game-admins.tsx';
-import { initPagination, RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/time.ts';
-import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
+import { apiAddAdminToGroup, apiDelAdminFromGroup, apiDeleteSMAdmin, SMAdmin, SMGroups } from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { Route } from '../../routes/_admin.admin.game-admins.tsx';
+import { initPagination, RowsPerPage } from '../../util/table.ts';
+import { renderDateTime } from '../../util/time.ts';
+import { ModalConfirm, ModalSMAdminEditor, ModalSMGroupSelect } from '../modal';
+import { ContainerWithHeaderAndButtons } from './../ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from './FullTable.tsx';
 import { TableCellString } from './TableCellString.tsx';
-import { ModalConfirm, ModalSMAdminEditor, ModalSMGroupSelect } from './modal';
 
 export const SMAdminsTable = ({
     admins,

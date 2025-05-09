@@ -22,13 +22,13 @@ import {
 import { z } from 'zod';
 import { apiGetServersAdmin, Server } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable } from '../component/DataTable.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
-import { TableCellBool } from '../component/TableCellBool.tsx';
-import { TableCellString } from '../component/TableCellString.tsx';
-import { TableCellStringHidden } from '../component/TableCellStringHidden.tsx';
 import { Title } from '../component/Title';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { ModalServerEditor } from '../component/modal';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { TableCellString } from '../component/table/TableCellString.tsx';
+import { TableCellStringHidden } from '../component/table/TableCellStringHidden.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';

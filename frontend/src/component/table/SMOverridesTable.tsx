@@ -9,16 +9,16 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
-import { apiDeleteSMOverride, SMOverrides } from '../api';
-import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { Route } from '../routes/_admin.admin.game-admins.tsx';
-import { logErr } from '../util/errors.ts';
-import { initPagination, RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/time.ts';
-import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
-import { FullTable } from './FullTable.tsx';
-import { TableCellString } from './TableCellString.tsx';
-import { ModalConfirm, ModalSMOverridesEditor } from './modal';
+import { apiDeleteSMOverride, SMOverrides } from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx';
+import { Route } from '../../routes/_admin.admin.game-admins.tsx';
+import { logErr } from '../../util/errors';
+import { initPagination, RowsPerPage } from '../../util/table';
+import { renderDateTime } from '../../util/time';
+import { ContainerWithHeaderAndButtons } from '../ContainerWithHeaderAndButtons';
+import { ModalConfirm, ModalSMOverridesEditor } from '../modal';
+import { FullTable } from './FullTable';
+import { TableCellString } from './TableCellString';
 
 export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverrides[]; isLoading: boolean }) => {
     const { sendFlash, sendError } = useUserFlashCtx();

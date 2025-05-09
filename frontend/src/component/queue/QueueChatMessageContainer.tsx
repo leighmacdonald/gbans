@@ -10,12 +10,12 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { ChatLog } from '../api';
-import { useQueueCtx } from '../hooks/useQueueCtx.ts';
-import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
+import { ChatLog } from '../../api';
+import { useQueueCtx } from '../../hooks/useQueueCtx.ts';
+import { LoadingPlaceholder } from '../LoadingPlaceholder.tsx';
+import { QueuePurgeModal } from '../modal/QueuePurgeModal.tsx';
+import { QueueStatusModal } from '../modal/QueueStatusModal.tsx';
 import { QueueChatName } from './QueueChatName.tsx';
-import { QueuePurgeModal } from './modal/QueuePurgeModal.tsx';
-import { QueueStatusModal } from './modal/QueueStatusModal.tsx';
 
 export const QueueChatMessageContainer = ({ showControls }: { showControls: boolean }) => {
     const { messages, isReady } = useQueueCtx();

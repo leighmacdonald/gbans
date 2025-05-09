@@ -7,12 +7,12 @@ import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { apiGetPlayerWeaponStats, PlayerWeaponStats, PlayerWeaponStatsResponse } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { DataTable } from '../component/DataTable.tsx';
 import FmtWhenGt from '../component/FmtWhenGT.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell';
-import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { Title } from '../component/Title';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
 import { RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 

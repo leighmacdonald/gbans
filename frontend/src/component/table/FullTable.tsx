@@ -12,9 +12,9 @@ import {
     useReactTable,
     VisibilityState
 } from '@tanstack/react-table';
+import { LoadingPlaceholder } from '../LoadingPlaceholder.tsx';
+import { PaginatorLocal } from '../forum/PaginatorLocal.tsx';
 import { DataTable } from './DataTable.tsx';
-import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
-import { PaginatorLocal } from './PaginatorLocal.tsx';
 
 type FullTableProps<T> = {
     data: T[];
