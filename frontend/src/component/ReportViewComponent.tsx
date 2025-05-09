@@ -33,18 +33,18 @@ import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { reportMessagesQueryOptions } from '../queries/reportMessages.ts';
 import { RowsPerPage } from '../util/table.ts';
-import { BanHistoryTable } from './BanHistoryTable.tsx';
-import { ChatTable } from './ChatTable.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
-import { IPHistoryTable } from './IPHistoryTable.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
-import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { PlayerMessageContext } from './PlayerMessageContext';
 import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
 import { mdEditorRef } from './form/field/MarkdownField.tsx';
+import { PaginatorLocal } from './forum/PaginatorLocal.tsx';
+import { BanHistoryTable } from './table/BanHistoryTable.tsx';
+import { ChatTable } from './table/ChatTable.tsx';
+import { IPHistoryTable } from './table/IPHistoryTable.tsx';
 
 export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): JSX.Element => {
     const theme = useTheme();
