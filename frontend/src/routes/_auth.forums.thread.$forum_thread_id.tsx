@@ -29,7 +29,7 @@ import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
-import { mdEditorRef } from '../component/field/MarkdownField.tsx';
+import { mdEditorRef } from '../component/form/field/MarkdownField.tsx';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
