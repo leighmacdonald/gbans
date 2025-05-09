@@ -37,16 +37,16 @@ import {
 } from '../api';
 import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
 import { IconButtonLink } from '../component/IconButtonLink.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { PlayerMessageContext } from '../component/PlayerMessageContext.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
 import { mdEditorRef } from '../component/form/field/MarkdownField.tsx';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
+import { DataTable } from '../component/table/DataTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
