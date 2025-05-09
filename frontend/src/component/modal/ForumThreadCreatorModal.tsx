@@ -10,7 +10,7 @@ import { apiCreateThread, Forum, ForumThread } from '../../api/forum.ts';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
-import { mdEditorRef } from '../field/MarkdownField.tsx';
+import { mdEditorRef } from '../form/field/MarkdownField.tsx';
 import { ModalConfirm, ModalForumThreadCreator } from './index';
 
 type ForumThreadEditorValues = {

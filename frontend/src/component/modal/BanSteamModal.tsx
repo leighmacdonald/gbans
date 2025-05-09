@@ -22,8 +22,8 @@ import {
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-import { DateTimeField } from '../field/DateTimeField.tsx';
-import { MarkdownField } from '../field/MarkdownField.tsx';
+import { DateTimeField } from '../form/field/DateTimeField.tsx';
+import { MarkdownField } from '../form/field/MarkdownField.tsx';
 
 type BanSteamFormValues = {
     report_id?: number;
