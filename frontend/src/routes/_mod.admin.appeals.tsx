@@ -25,11 +25,11 @@ import {
     SteamBanRecord
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { DataTable } from '../component/DataTable.tsx';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
-import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
-import { DataTable } from '../component/table/DataTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { TablePropsAll } from '../types/table.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from '../util/table.ts';

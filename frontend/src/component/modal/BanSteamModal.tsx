@@ -1,10 +1,10 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
+import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import {
     apiCreateBanSteam,
@@ -22,21 +22,21 @@ import {
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-import { DateTimeField } from '../form/field/DateTimeField.tsx';
-import { MarkdownField } from '../form/field/MarkdownField.tsx';
+import { DateTimeField } from '../field/DateTimeField.tsx';
+import { MarkdownField } from '../field/MarkdownField.tsx';
 
-const schema = z.object({
-    report_id: z.number(),
-    target_id: z.string(),
-    ban_type: z.nativeEnum(BanType),
-    reason: z.nativeEnum(BanReason),
-    reason_text: z.string(),
-    duration: z.nativeEnum(Duration),
-    duration_custom: z.date(),
-    note: z.string(),
-    include_friends: z.boolean(),
-    evade_ok: z.boolean()
-});
+type BanSteamFormValues = {
+    report_id?: number;
+    target_id: string;
+    ban_type: BanType;
+    reason: BanReason;
+    reason_text: string;
+    duration: Duration;
+    duration_custom?: string;
+    note: string;
+    include_friends: boolean;
+    evade_ok: boolean;
+};
 
 export const BanSteamModal = NiceModal.create(
     ({ existing, steamId = '' }: { existing?: SteamBanRecord; steamId?: string }) => {
@@ -45,7 +45,7 @@ export const BanSteamModal = NiceModal.create(
 
         const mutation = useMutation({
             mutationKey: ['banSteam'],
-            mutationFn: async (values: z.input<typeof schema>) => {
+            mutationFn: async (values: BanSteamFormValues) => {
                 if (existing?.ban_id) {
                     return await apiUpdateBanSteam(existing.ban_id, {
                         note: values.note,
@@ -54,14 +54,14 @@ export const BanSteamModal = NiceModal.create(
                         reason_text: values.reason_text,
                         include_friends: values.include_friends,
                         evade_ok: values.evade_ok,
-                        valid_until: values.duration_custom
+                        valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
                     });
                 } else {
                     return await apiCreateBanSteam({
                         note: values.note,
                         ban_type: values.ban_type,
                         duration: values.duration,
-                        valid_until: values.duration_custom,
+                        valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
                         reason: values.reason,
                         reason_text: values.reason_text,
                         report_id: values.report_id,
@@ -105,13 +105,10 @@ export const BanSteamModal = NiceModal.create(
                 reason: existing ? existing.reason : BanReason.Cheating,
                 reason_text: existing ? existing.reason_text : '',
                 duration: existing ? Duration.durCustom : Duration.dur2w,
-                duration_custom: existing?.valid_until ?? new Date(),
+                duration_custom: existing ? existing.valid_until.toISOString() : '',
                 note: existing ? existing.note : '',
                 include_friends: existing ? existing.include_friends : false,
                 evade_ok: existing ? existing.evade_ok : false
-            },
-            validators: {
-                onSubmit: schema
             }
         });
 
@@ -133,6 +130,7 @@ export const BanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'target_id'}
+                                    //validators={makeSteamidValidators()}
                                     children={(field) => {
                                         return (
                                             <field.SteamIDField
@@ -146,6 +144,9 @@ export const BanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'ban_type'}
+                                    validators={{
+                                        onChange: z.nativeEnum(BanType)
+                                    }}
                                     children={(field) => {
                                         return (
                                             <field.SelectField
@@ -186,6 +187,22 @@ export const BanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'reason_text'}
+                                    validators={{
+                                        onSubmit: ({ value, fieldApi }) => {
+                                            if (fieldApi.form.getFieldValue('reason') != BanReason.Custom) {
+                                                if (value.length == 0) {
+                                                    return undefined;
+                                                }
+                                                return 'Must use custom ban reason';
+                                            }
+                                            const result = z.string().min(5).safeParse(value);
+                                            if (!result.success) {
+                                                return result.error.errors.map((e) => e.message).join(',');
+                                            }
+
+                                            return undefined;
+                                        }
+                                    }}
                                     children={(field) => {
                                         return <field.TextField label={'Custom Ban Reason'} />;
                                     }}
@@ -194,6 +211,9 @@ export const BanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 6 }}>
                                 <form.AppField
                                     name={'include_friends'}
+                                    validators={{
+                                        onChange: z.boolean()
+                                    }}
                                     children={(field) => {
                                         return <field.CheckboxField label={'Include Friends'} />;
                                     }}
@@ -202,6 +222,9 @@ export const BanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 6 }}>
                                 <form.AppField
                                     name={'evade_ok'}
+                                    validators={{
+                                        onChange: z.boolean()
+                                    }}
                                     children={(field) => {
                                         return <field.CheckboxField label={'IP Evading Allowed'} />;
                                     }}
@@ -211,6 +234,9 @@ export const BanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 6 }}>
                                 <form.AppField
                                     name={'duration'}
+                                    validators={{
+                                        onChange: z.nativeEnum(Duration)
+                                    }}
                                     children={(field) => {
                                         return (
                                             <field.SelectField
@@ -241,6 +267,9 @@ export const BanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'note'}
+                                    validators={{
+                                        onChange: z.string()
+                                    }}
                                     children={(props) => {
                                         return (
                                             <MarkdownField
@@ -260,10 +289,8 @@ export const BanSteamModal = NiceModal.create(
                         <Grid container>
                             <Grid size={{ xs: 12 }}>
                                 <form.AppForm>
-                                    <ButtonGroup>
-                                        <form.ResetButton />
-                                        <form.SubmitButton />
-                                    </ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
                                 </form.AppForm>
                             </Grid>
                         </Grid>

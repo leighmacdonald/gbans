@@ -18,7 +18,7 @@ import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { reportMessagesQueryOptions } from '../queries/reportMessages.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
-import { mdEditorRef } from './form/field/MarkdownField.tsx';
+import { mdEditorRef } from './field/MarkdownField.tsx';
 
 export interface ReportMessageViewProps {
     message: ReportMessage;

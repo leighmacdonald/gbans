@@ -1,11 +1,9 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import PersonIcon from '@mui/icons-material/Person';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
 import {
     apiUpdatePlayerPermission,
     PermissionLevel,
@@ -15,10 +13,6 @@ import {
 } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { Heading } from '../Heading';
-
-const schema = z.object({
-    permission_level: z.nativeEnum(PermissionLevel)
-});
 
 export const PersonEditModal = NiceModal.create(({ person }: { person: Person }) => {
     const modal = useModal();
@@ -46,9 +40,6 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
         },
         defaultValues: {
             permission_level: person.permission_level
-        },
-        validators: {
-            onSubmit: schema
         }
     });
 
@@ -92,10 +83,8 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <ButtonGroup>
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
-                                </ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
                             </form.AppForm>
                         </Grid>
                     </Grid>

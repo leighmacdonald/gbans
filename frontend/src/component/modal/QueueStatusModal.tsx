@@ -1,7 +1,6 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
@@ -11,11 +10,6 @@ import { useAppForm } from '../../contexts/formContext.tsx';
 import { useQueueCtx } from '../../hooks/useQueueCtx.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-
-const schema = z.object({
-    chat_status: z.enum(['readwrite', 'readonly', 'noaccess']),
-    reason: z.string({ message: 'Reason' })
-});
 
 export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: string }) => {
     const modal = useModal();
@@ -41,9 +35,6 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
         defaultValues: {
             chat_status: chatStatus,
             reason: reason
-        },
-        validators: {
-            onSubmit: schema
         }
     });
 
@@ -64,6 +55,9 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
                         <Grid size={{ xs: 2 }}>
                             <form.AppField
                                 name={'chat_status'}
+                                validators={{
+                                    onChange: z.enum(['readwrite', 'readonly', 'noaccess'])
+                                }}
                                 children={(field) => {
                                     return (
                                         <field.SelectField
@@ -85,6 +79,9 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
                         <Grid size={{ xs: 10 }}>
                             <form.AppField
                                 name={'reason'}
+                                validators={{
+                                    onChange: z.string({ message: 'Reason' })
+                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Reason for status change'} />;
                                 }}
@@ -96,10 +93,8 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <ButtonGroup>
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
-                                </ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
                             </form.AppForm>
                         </Grid>
                     </Grid>

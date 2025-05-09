@@ -1,10 +1,10 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import LanIcon from '@mui/icons-material/Lan';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
+import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import {
     apiCreateBanASN,
@@ -19,32 +19,33 @@ import {
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-import { SDRNotice } from '../SDRNotice.tsx';
 
-const schema = z.object({
-    target_id: z.string(),
-    as_num: z.number().min(1),
-    reason: z.nativeEnum(BanReason),
-    reason_text: z.string(),
-    duration: z.nativeEnum(Duration),
-    duration_custom: z.date(),
-    note: z.string()
-});
+type BanASNFormValues = {
+    target_id: string;
+    ban_asn_id?: number;
+    as_num: string;
+    reason: BanReason;
+    reason_text: string;
+    duration: Duration;
+    duration_custom?: string;
+    note: string;
+};
+
 export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRecord }) => {
     const { sendFlash } = useUserFlashCtx();
     const modal = useModal();
 
     const mutation = useMutation({
         mutationKey: ['banASN'],
-        mutationFn: async (values: z.input<typeof schema>) => {
+        mutationFn: async (values: BanASNFormValues) => {
             if (existing?.ban_asn_id) {
                 const ban_record = apiUpdateBanASN(existing.ban_asn_id, {
                     note: values.note,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     target_id: values.target_id,
-                    as_num: values.as_num,
-                    valid_until: values.duration_custom
+                    as_num: Number(values.as_num),
+                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
                 });
 
                 sendFlash('success', 'Updated ASN ban successfully');
@@ -53,7 +54,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                 const ban_record = await apiCreateBanASN({
                     note: values.note,
                     duration: values.duration,
-                    valid_until: values.duration_custom,
+                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     target_id: values.target_id,
@@ -79,16 +80,13 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
             });
         },
         defaultValues: {
-            target_id: existing?.target_id ?? '',
-            reason: existing?.reason ?? BanReason.Cheating,
-            reason_text: existing?.reason_text ?? '',
+            target_id: existing ? existing.target_id : '',
+            reason: existing ? existing.reason : BanReason.Cheating,
+            reason_text: existing ? existing.reason_text : '',
             duration: existing ? Duration.durCustom : Duration.dur2w,
-            duration_custom: existing?.valid_until ?? new Date(),
-            note: existing?.note ?? '',
-            as_num: existing?.as_num ?? 0
-        },
-        validators: {
-            onSubmit: schema
+            duration_custom: existing ? existing.valid_until.toISOString() : '',
+            note: existing ? existing.note : '',
+            as_num: existing ? String(existing.as_num) : ''
         }
     });
 
@@ -108,11 +106,9 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <SDRNotice />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'target_id'}
+                                // validators={makeSteamidValidators()}
                                 children={(field) => {
                                     return (
                                         <field.SteamIDField
@@ -126,16 +122,11 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'as_num'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
                                 children={(field) => {
-                                    return (
-                                        <field.TextField
-                                            label={'AS Number'}
-                                            helperText={`An "AS number" refers to an Autonomous System Number (ASN), a 
-                                            unique identifier assigned to each Autonomous System (AS) on the internet. 
-                                            ASNs are used in the Border Gateway Protocol (BGP) to identify and route 
-                                            traffic between different ASes`}
-                                        />
-                                    );
+                                    return <field.TextField label={'AS Number'} />;
                                 }}
                             />
                         </Grid>
@@ -146,7 +137,6 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                                     return (
                                         <field.SelectField
                                             label={'Reason'}
-                                            helperText={'The reason for the ban.'}
                                             items={banReasonsCollection}
                                             renderItem={(br) => {
                                                 return (
@@ -180,14 +170,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                                     }
                                 }}
                                 children={(field) => {
-                                    return (
-                                        <field.TextField
-                                            label={'Custom Ban Reason'}
-                                            helperText={`If you chose a custom ban reason, you can enter the reason here. 
-                                            Please note that this is going to be shown to the player on kick and is therefore not 
-                                            considered safe for only internal use.`}
-                                        />
-                                    );
+                                    return <field.TextField label={'Custom Ban Reason'} />;
                                 }}
                             />
                         </Grid>
@@ -201,10 +184,6 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                                     return (
                                         <field.SelectField
                                             label={'Duration'}
-                                            helperText={
-                                                'The duration of the ban. A permanent ban is currently defined as ' +
-                                                '`10 years from the ban period`. This may be change in the future however.'
-                                            }
                                             items={DurationCollection}
                                             renderItem={(du) => {
                                                 return (
@@ -223,12 +202,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                             <form.AppField
                                 name={'duration_custom'}
                                 children={(field) => {
-                                    return (
-                                        <field.DateTimeField
-                                            label={'Custom Expire Date'}
-                                            helpText={'You can also select a custom ban duration.'}
-                                        />
-                                    );
+                                    return <field.DateTimeField label={'Custom Expire Date'} />;
                                 }}
                             />
                         </Grid>
@@ -240,15 +214,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                                     onChange: z.string()
                                 }}
                                 children={(field) => {
-                                    return (
-                                        <field.MarkdownField
-                                            label={'Mod Notes'}
-                                            helperText={
-                                                'These are internal notes that moderators can use to store any ' +
-                                                'extra info about the user. This information is never shown to the user.'
-                                            }
-                                        />
-                                    );
+                                    return <field.MarkdownField label={'Mod Notes'} />;
                                 }}
                             />
                         </Grid>
@@ -258,10 +224,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <ButtonGroup>
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
-                                </ButtonGroup>
+                                <form.SubmitButton />
                             </form.AppForm>
                         </Grid>
                     </Grid>

@@ -1,18 +1,24 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
 import { apiCreateForumCategory, apiSaveForumCategory, ForumCategory } from '../../api/forum.ts';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 
-const schema = z.object({
-    title: z.string().min(2),
-    description: z.string(),
-    ordering: z.number()
-});
+type ForumCategoryEditorValues = {
+    title: string;
+    description: string;
+    ordering: string;
+};
+
+// interface ForumCategoryEditorProps {
+//     initial_forum_category_id?: number;
+// }
+
+// const validationSchema = yup.object({
+//     title: titleFieldValidator
+// });
 
 export const ForumCategoryEditorModal = NiceModal.create(({ category }: { category?: ForumCategory }) => {
     const modal = useModal();
@@ -20,7 +26,7 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
 
     const mutation = useMutation({
         mutationKey: ['forumCategory'],
-        mutationFn: async (values: z.input<typeof schema>) => {
+        mutationFn: async (values: ForumCategoryEditorValues) => {
             if (category?.forum_category_id) {
                 return await apiSaveForumCategory(
                     category.forum_category_id,
@@ -46,10 +52,7 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
         defaultValues: {
             title: category?.title ?? '',
             description: category?.description ?? '',
-            ordering: category?.ordering ?? 1
-        },
-        validators: {
-            onSubmit: schema
+            ordering: category?.ordering ? String(category.ordering) : '1'
         }
     });
 
@@ -97,10 +100,8 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <ButtonGroup>
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
-                                </ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
                             </form.AppForm>
                         </Grid>
                     </Grid>
