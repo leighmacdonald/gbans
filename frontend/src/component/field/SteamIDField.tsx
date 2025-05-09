@@ -5,44 +5,40 @@ import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import Avatar from '@mui/material/Avatar';
 import InputAdornment from '@mui/material/InputAdornment';
 import TextField, { TextFieldProps } from '@mui/material/TextField';
+import { useStore } from '@tanstack/react-form';
 import { defaultAvatarHash, PlayerProfile } from '../../api';
+import { useFieldContext } from '../../contexts/formContext.tsx';
 import { avatarHashToURL } from '../../util/text.tsx';
-import { FieldProps } from './common.ts';
 
-export const SteamIDField = ({
-    handleBlur,
-    handleChange,
-    fullwidth,
-    profile,
-    error,
-    helperText,
-    isValidating,
-    isTouched,
-    value,
-    label = 'SteamID/Profile'
-}: FieldProps & { profile?: PlayerProfile } & TextFieldProps) => {
+type Props = {
+    profile?: PlayerProfile;
+} & TextFieldProps;
+
+export const SteamIDField = (props: Props) => {
+    const field = useFieldContext<string>();
+    const errors = useStore(field.store, (state) => state.meta.errors);
+
     return (
         <TextField
-            fullWidth={fullwidth}
-            label={label}
-            value={value}
-            onChange={(e) => handleChange(e.target.value)}
-            onBlur={handleBlur}
+            {...props}
+            value={field.state.value}
+            onChange={(e) => field.handleChange(e.target.value)}
+            onBlur={field.handleBlur}
             variant="filled"
-            error={error}
-            helperText={helperText}
+            error={Boolean(errors)}
+            helperText={errors ? errors.join(', ') : ''}
             slotProps={{
                 input: {
                     startAdornment: (
                         <InputAdornment position="start">
-                            {error ? (
+                            {errors ? (
                                 <ErrorOutlineIcon color={'error'} sx={{ width: 40 }} />
-                            ) : isValidating ? (
+                            ) : field.state.meta.isValidating ? (
                                 <HourglassBottomIcon color={'warning'} sx={{ width: 40 }} />
-                            ) : isTouched ? (
-                                profile ? (
+                            ) : field.state.meta.isTouched ? (
+                                props.profile ? (
                                     <Avatar
-                                        src={avatarHashToURL(profile?.player.avatarhash ?? defaultAvatarHash)}
+                                        src={avatarHashToURL(props.profile?.player.avatarhash ?? defaultAvatarHash)}
                                         variant={'square'}
                                     />
                                 ) : (

@@ -1,7 +1,6 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SensorOccupiedIcon from '@mui/icons-material/SensorOccupied';
 import Grid from '@mui/material/Grid';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -10,8 +9,7 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { IPHistoryTable } from '../component/IPHistoryTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { SteamIDField } from '../component/field/SteamIDField.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
@@ -41,7 +39,7 @@ function AdminNetworkPlayerIPHistory() {
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/network/iphist', search: (prev) => ({ ...prev, ...value }) });
         },
@@ -71,31 +69,25 @@ function AdminNetworkPlayerIPHistory() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 12 }}>
-                                <Field
+                                <form.AppField
                                     name={'steam_id'}
-                                    children={(props) => {
-                                        return <SteamIDField {...props} value={props.state.value} fullwidth={true} />;
+                                    children={(field) => {
+                                        return <field.SteamIDField />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <form.ClearButton onClick={clear} />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

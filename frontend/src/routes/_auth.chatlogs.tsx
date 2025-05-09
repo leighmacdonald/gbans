@@ -1,15 +1,8 @@
 import { useState } from 'react';
 import ChatIcon from '@mui/icons-material/Chat';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import Checkbox from '@mui/material/Checkbox';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
 import Grid from '@mui/material/Grid';
-import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -18,9 +11,7 @@ import { ChatTable } from '../component/ChatTable.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { Title } from '../component/Title.tsx';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { SteamIDField } from '../component/field/SteamIDField.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
@@ -96,7 +87,7 @@ function ChatLogs() {
         refetchInterval: search.auto_refresh
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             await navigate({ to: '/chatlogs', search: (prev) => ({ ...prev, ...value }) });
         },
@@ -122,7 +113,7 @@ function ChatLogs() {
     });
 
     const clear = async () => {
-        reset();
+        form.reset();
         await navigate({
             to: '/chatlogs',
             search: (prev) => ({
@@ -135,7 +126,7 @@ function ChatLogs() {
                 autoRefresh: undefined
             })
         });
-        await handleSubmit();
+        await form.handleSubmit();
     };
     return (
         <>
@@ -148,61 +139,51 @@ function ChatLogs() {
                             onSubmit={async (e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                await handleSubmit();
+                                await form.handleSubmit();
                             }}
                         >
                             <Grid container padding={2} spacing={2} justifyContent={'center'} alignItems={'center'}>
                                 <Grid size={{ xs: 6, md: 3 }}>
-                                    <Field
+                                    <form.AppField
                                         name={'persona_name'}
-                                        children={(props) => {
-                                            return <TextFieldSimple {...props} label={'Name'} />;
+                                        children={(field) => {
+                                            return <field.TextField label={'Name'} />;
                                         }}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 6, md: 3 }}>
-                                    <Field
+                                    <form.AppField
                                         name={'steam_id'}
-                                        children={(props) => {
-                                            return <SteamIDField {...props} profile={profile} fullwidth={true} />;
+                                        children={(field) => {
+                                            return <field.SteamIDField profile={profile} />;
                                         }}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 6, md: 3 }}>
-                                    <Field
+                                    <form.AppField
                                         name={'body'}
-                                        children={(props) => {
-                                            return <TextFieldSimple {...props} label={'Message'} />;
+                                        children={(field) => {
+                                            return <field.TextField label={'Message'} />;
                                         }}
                                     />
                                 </Grid>
 
                                 <Grid size={{ xs: 6, md: 3 }}>
-                                    <Field
+                                    <form.AppField
                                         name={'server_id'}
-                                        children={({ state, handleChange, handleBlur }) => {
+                                        children={(field) => {
                                             return (
-                                                <>
-                                                    <FormControl fullWidth>
-                                                        <InputLabel id="server-select-label">Servers</InputLabel>
-                                                        <Select
-                                                            fullWidth
-                                                            value={state.value}
-                                                            label="Servers"
-                                                            onChange={(e) => {
-                                                                handleChange(Number(e.target.value));
-                                                            }}
-                                                            onBlur={handleBlur}
-                                                        >
-                                                            <MenuItem value={0}>All</MenuItem>
-                                                            {servers.map((s) => (
-                                                                <MenuItem value={s.server_id} key={s.server_id}>
-                                                                    {s.server_name}
-                                                                </MenuItem>
-                                                            ))}
-                                                        </Select>
-                                                    </FormControl>
-                                                </>
+                                                <field.SelectField
+                                                    label={'Servers'}
+                                                    items={servers}
+                                                    renderItem={(s) => {
+                                                        return (
+                                                            <MenuItem value={s.server_id} key={s.server_id}>
+                                                                {s.server_name}
+                                                            </MenuItem>
+                                                        );
+                                                    }}
+                                                />
                                             );
                                         }}
                                     />
@@ -210,55 +191,29 @@ function ChatLogs() {
                                 {hasPermission(PermissionLevel.Moderator) && (
                                     <>
                                         <Grid size={{ xs: 'auto' }}>
-                                            <Field
+                                            <form.AppField
                                                 name={'flagged_only'}
-                                                children={({ state, handleChange, handleBlur }) => {
-                                                    return (
-                                                        <>
-                                                            <FormGroup>
-                                                                <FormControlLabel
-                                                                    control={
-                                                                        <Checkbox
-                                                                            checked={state.value}
-                                                                            onBlur={handleBlur}
-                                                                            onChange={(_, v) => {
-                                                                                handleChange(v);
-                                                                            }}
-                                                                        />
-                                                                    }
-                                                                    label="Flagged Only"
-                                                                />
-                                                            </FormGroup>
-                                                        </>
-                                                    );
+                                                children={(field) => {
+                                                    return <field.CheckboxField label={'Flagged Only'} />;
                                                 }}
                                             />
                                         </Grid>
                                         <Grid size={{ xs: 'auto' }}>
-                                            <Field
+                                            <form.AppField
                                                 name={'auto_refresh'}
-                                                children={({ state, handleChange, handleBlur }) => {
+                                                children={(field) => {
                                                     return (
-                                                        <FormControl fullWidth>
-                                                            <InputLabel id="server-select-label">
-                                                                Auto-Refresh
-                                                            </InputLabel>
-                                                            <Select
-                                                                fullWidth
-                                                                value={state.value}
-                                                                label="Auto Refresh"
-                                                                onChange={(e) => {
-                                                                    handleChange(Number(e.target.value));
-                                                                }}
-                                                                onBlur={handleBlur}
-                                                            >
-                                                                <MenuItem value={0}>Off</MenuItem>
-                                                                <MenuItem value={10000}>10sec</MenuItem>
-                                                                <MenuItem value={30000}>30sec</MenuItem>
-                                                                <MenuItem value={60000}>1min</MenuItem>
-                                                                <MenuItem value={300000}>5min</MenuItem>
-                                                            </Select>
-                                                        </FormControl>
+                                                        <field.SelectField
+                                                            label={'Action'}
+                                                            items={[0, 10000, 30000, 60000, 300000]}
+                                                            renderItem={(fa) => {
+                                                                return (
+                                                                    <MenuItem value={fa} key={`fa-${fa}`}>
+                                                                        {fa / 1000} secs
+                                                                    </MenuItem>
+                                                                );
+                                                            }}
+                                                        />
                                                     );
                                                 }}
                                             />
@@ -267,17 +222,11 @@ function ChatLogs() {
                                 )}
 
                                 <Grid size={{ xs: 12 }}>
-                                    <Subscribe
-                                        selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                        children={([canSubmit, isSubmitting]) => (
-                                            <Buttons
-                                                reset={reset}
-                                                canSubmit={canSubmit}
-                                                isSubmitting={isSubmitting}
-                                                onClear={clear}
-                                            />
-                                        )}
-                                    />
+                                    <form.AppForm>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </form.AppForm>
                                 </Grid>
                             </Grid>
                         </form>

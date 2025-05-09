@@ -4,16 +4,13 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Grid';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { apiCreateThread, Forum, ForumThread } from '../../api/forum.ts';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
-import { Buttons } from '../field/Buttons.tsx';
-import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
-import { MarkdownField, mdEditorRef } from '../field/MarkdownField.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
+import { mdEditorRef } from '../field/MarkdownField.tsx';
 import { ModalConfirm, ModalForumThreadCreator } from './index';
 
 type ForumThreadEditorValues = {
@@ -66,7 +63,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({ ...value });
         },
@@ -91,65 +88,47 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle>Create New Thread</DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 validators={{
                                     onChange: z.string().min(3)
                                 }}
                                 name={'title'}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Title'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Title'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 validators={{
                                     onChange: z.string().min(10)
                                 }}
                                 name={'body_md'}
-                                children={(props) => {
-                                    return <MarkdownField {...props} value={props.state.value} label={'Message'} />;
+                                children={(field) => {
+                                    return <field.MarkdownField label={'Message'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'sticky'}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Stickied'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Stickied'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'locked'}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Locked'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Locked'} />;
                                 }}
                             />
                         </Grid>
@@ -158,22 +137,10 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            clearLabel={'Delete Thread'}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

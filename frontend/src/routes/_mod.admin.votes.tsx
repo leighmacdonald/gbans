@@ -3,7 +3,6 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, PaginationState } from '@tanstack/react-table';
@@ -15,8 +14,7 @@ import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { initPagination, makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
@@ -53,7 +51,7 @@ function AdminVotes() {
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/votes', search: (prev) => ({ ...prev, ...value }) });
         },
@@ -70,7 +68,7 @@ function AdminVotes() {
     });
 
     const clear = async () => {
-        reset();
+        form.reset();
         await navigate({
             to: '/admin/votes',
             search: (prev) => ({ ...prev, source_id: undefined, target_id: undefined, success: undefined })
@@ -90,44 +88,34 @@ function AdminVotes() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 6, md: 6 }}>
-                                <Field
+                                <form.AppField
                                     name={'source_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple {...props} label={'Initiator Steam ID'} fullwidth={true} />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'Initiator Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 6 }}>
-                                <Field
+                                <form.AppField
                                     name={'target_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple {...props} label={'Target Steam ID'} fullwidth={true} />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'Target Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <form.ClearButton onClick={clear} />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

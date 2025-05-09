@@ -4,14 +4,12 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { apiQueueMessagesDelete, ChatLog } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog }) => {
     const modal = useModal();
@@ -31,7 +29,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             purge.mutate({
                 count: Number(value.count)
@@ -48,7 +46,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<FilterAltIcon />}>
@@ -64,7 +62,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                         </Typography>
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 8 }}>
-                                <Field
+                                <form.AppField
                                     name={'count'}
                                     validators={{
                                         onChange: z
@@ -72,14 +70,8 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                                             .min(1)
                                             .max(10000)
                                     }}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple
-                                                {...props}
-                                                value={props.state.value}
-                                                label={'How many messages to delete / purge.'}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'How many messages to delete / purge.'} />;
                                     }}
                                 />
                             </Grid>
@@ -89,12 +81,10 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />;
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

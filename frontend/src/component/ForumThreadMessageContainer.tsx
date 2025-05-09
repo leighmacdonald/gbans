@@ -8,13 +8,13 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
 import { isAfter } from 'date-fns/fp';
 import { z } from 'zod';
 import { PermissionLevel, permissionLevelString } from '../api';
 import { apiSaveThreadMessage, ForumMessage } from '../api/forum.ts';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 import { renderDateTime } from '../util/time.ts';
@@ -22,8 +22,7 @@ import { ForumAvatar } from './ForumAvatar.tsx';
 import { ForumRowLink } from './ForumRowLink.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer.tsx';
 import RouterLink from './RouterLink.tsx';
-import { Buttons } from './field/Buttons.tsx';
-import { MarkdownField, mdEditorRef } from './field/MarkdownField.tsx';
+import { mdEditorRef } from './field/MarkdownField.tsx';
 
 export const ThreadMessageContainer = ({
     message,
@@ -56,7 +55,7 @@ export const ThreadMessageContainer = ({
         onError: sendError
     });
 
-    const form = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({
                 body_md: value.body_md ?? ''
@@ -98,27 +97,19 @@ export const ThreadMessageContainer = ({
                             }}
                         >
                             <Stack padding={1}>
-                                <form.Field
+                                <form.AppField
                                     name={'body_md'}
                                     validators={{
                                         onChange: z.string().min(4)
                                     }}
-                                    children={(props) => {
-                                        return (
-                                            <MarkdownField
-                                                {...props}
-                                                value={props.state.value}
-                                                label={'Message (Markdown)'}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.MarkdownField label={'Message (Markdown)'} />;
                                     }}
                                 />
-                                <form.Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons canSubmit={canSubmit} isSubmitting={isSubmitting} reset={form.reset} />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </form.AppForm>
                             </Stack>
                         </form>
                     ) : (

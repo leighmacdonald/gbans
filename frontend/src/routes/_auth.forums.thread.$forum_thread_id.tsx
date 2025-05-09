@@ -11,7 +11,6 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -30,9 +29,9 @@ import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
+import { mdEditorRef } from '../component/field/MarkdownField.tsx';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { useScrollToLocation } from '../util/history.ts';
@@ -168,13 +167,13 @@ function ForumThreadPage() {
             const newMessages = [...(messages ?? []), message];
             queryClient.setQueryData(['threadMessages', { forum_thread_id }], newMessages);
             mdEditorRef.current?.setMarkdown('');
-            reset();
+            form.reset();
             sendFlash('success', `New message created (#${message.forum_message_id})`);
         },
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             createMessageMutation.mutate(value);
         },
@@ -194,38 +193,23 @@ function ForumThreadPage() {
                             onSubmit={async (e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                await handleSubmit();
+                                await form.handleSubmit();
                             }}
                         >
                             <Grid container spacing={2} justifyItems={'flex-end'}>
                                 <Grid size={{ xs: 12 }}>
-                                    <Field
+                                    <form.AppField
                                         name={'body_md'}
-                                        children={(props) => {
-                                            return (
-                                                <MarkdownField
-                                                    {...props}
-                                                    value={props.state.value}
-                                                    label={'Message'}
-                                                    fullwidth={true}
-                                                    minHeight={400}
-                                                />
-                                            );
+                                        children={(field) => {
+                                            return <field.MarkdownField label={'Message'} minHeight={400} />;
                                         }}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 4 }}>
-                                    <Subscribe
-                                        selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                        children={([canSubmit, isSubmitting]) => (
-                                            <Buttons
-                                                reset={reset}
-                                                canSubmit={canSubmit}
-                                                isSubmitting={isSubmitting}
-                                                submitLabel={'Reply'}
-                                            />
-                                        )}
-                                    />
+                                    <form.AppForm>
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </form.AppForm>
                                 </Grid>
                             </Grid>
                         </form>
@@ -235,7 +219,7 @@ function ForumThreadPage() {
         } else {
             return <></>;
         }
-    }, [permissionLevel, thread?.forum_thread_id, thread?.locked, Field, Subscribe, handleSubmit, reset]);
+    }, [permissionLevel, thread?.forum_thread_id, thread?.locked]);
 
     return (
         <Stack spacing={1}>
