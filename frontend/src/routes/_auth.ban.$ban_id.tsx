@@ -42,7 +42,7 @@ import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { SourceBansList } from '../component/SourceBansList.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { Title } from '../component/Title';
-import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from '../component/form/field/MarkdownField.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { AppError, ErrorCode } from '../error.tsx';

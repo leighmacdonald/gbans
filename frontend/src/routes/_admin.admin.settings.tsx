@@ -26,7 +26,7 @@ import { apiGetDemoCleanup, apiGetNetworkUpdateDB } from '../api';
 import { apiGetSettings, apiSaveSettings, Config } from '../api/admin.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { Title } from '../component/Title';
-import { CheckboxField } from '../component/field/CheckboxField.tsx';
+import { CheckboxField } from '../component/form/field/CheckboxField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
