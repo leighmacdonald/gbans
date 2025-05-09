@@ -35,7 +35,7 @@ import {
 import { apiGetPatreonLogin, apiGetPatreonLogout } from '../api/patreon.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Title } from '../component/Title.tsx';
-import { mdEditorRef } from '../component/field/MarkdownField.tsx';
+import { mdEditorRef } from '../component/form/field/MarkdownField.tsx';
 import { ModalConfirm } from '../component/modal';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { useAppForm } from '../contexts/formContext.tsx';
