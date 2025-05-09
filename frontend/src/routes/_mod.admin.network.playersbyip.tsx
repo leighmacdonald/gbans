@@ -3,7 +3,6 @@ import WifiFindIcon from '@mui/icons-material/WifiFind';
 import Grid from '@mui/material/Grid';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -14,8 +13,7 @@ import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
@@ -51,7 +49,7 @@ function AdminNetworkPlayersByCIDR() {
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/network/playersbyip', search: (prev) => ({ ...prev, ...value }) });
         },
@@ -81,38 +79,25 @@ function AdminNetworkPlayersByCIDR() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 12 }}>
-                                <Field
+                                <form.AppField
                                     name={'cidr'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple
-                                                {...props}
-                                                value={props.state.value}
-                                                fullwidth={true}
-                                                label={'CIDR/IP'}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'CIDR/IP'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <form.ClearButton onClick={clear} />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

@@ -3,19 +3,13 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import { apiCreateBanGroup, apiUpdateBanGroup, Duration, DurationCollection, GroupBanRecord } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
-import { MarkdownField } from '../field/MarkdownField.tsx';
-import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
-import { SteamIDField } from '../field/SteamIDField.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 type BanGroupFormValues = {
     ban_group_id?: number;
@@ -60,7 +54,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({
                 target_id: value.target_id,
@@ -84,7 +78,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<GroupsIcon />}>
@@ -94,16 +88,13 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'target_id'}
                                 // validators={makeSteamidValidators()}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SteamIDField
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SteamIDField
                                             label={'Target Steam ID'}
-                                            fullwidth={true}
                                             disabled={Boolean(existing?.ban_group_id)}
                                         />
                                     );
@@ -111,37 +102,28 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'group_id'}
                                 validators={{
                                     onChange: z.string()
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Steam Group ID'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Steam Group ID'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'duration'}
                                 validators={{
                                     onChange: z.nativeEnum(Duration)
                                 }}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Duration'}
-                                            fullwidth={true}
                                             items={DurationCollection}
-                                            renderMenu={(du) => {
+                                            renderItem={(du) => {
                                                 return (
                                                     <MenuItem value={du} key={`du-${du}`}>
                                                         {du}
@@ -155,36 +137,22 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         </Grid>
 
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'duration_custom'}
-                                children={(props) => {
-                                    return (
-                                        <DateTimeSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Custom Expire Date'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.DateTimeField label={'Custom Expire Date'} />;
                                 }}
                             />
                         </Grid>
 
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'note'}
                                 validators={{
                                     onChange: z.string()
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <MarkdownField
-                                            {...props}
-                                            value={props.state.value}
-                                            multiline={true}
-                                            rows={10}
-                                            label={'Mod Notes'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.MarkdownField multiline={true} rows={10} label={'Mod Notes'} />;
                                 }}
                             />
                         </Grid>
@@ -193,21 +161,9 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

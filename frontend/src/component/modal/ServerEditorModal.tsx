@@ -2,16 +2,12 @@ import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import RouterIcon from '@mui/icons-material/Router';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { apiCreateServer, apiSaveServer, SaveServerOpts, Server } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { randomStringAlphaNum } from '../../util/strings.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 type ServerEditValues = {
     short_name: string;
@@ -105,7 +101,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate(schema.parse(value));
         },
@@ -121,7 +117,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<RouterIcon />}>
@@ -131,20 +127,15 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'short_name'}
                                 children={(field) => {
-                                    return (
-                                        <field.TextField
-                                            label={'Short Name/Tag'}
-                                            helpText={'A short, unique, identifier.'}
-                                        />
-                                    );
+                                    return <field.TextField label={'Short Name/Tag'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'name'}
                                 children={(field) => {
                                     return <field.TextField label={'Long Name'} />;
@@ -152,7 +143,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'address'}
                                 children={(field) => {
                                     return <field.TextField label={'Address'} />;
@@ -160,7 +151,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'port'}
                                 children={(field) => {
                                     return <field.TextField label={'Port'} />;
@@ -168,15 +159,12 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 8 }}>
-                            <Field
+                            <form.AppField
                                 name={'address_internal'}
                                 children={(field) => {
                                     return (
                                         <field.TextField
                                             label={'Address Internal'}
-                                            helpText={
-                                                'A private network/VPN to access the host. Used for SSH. If empty the normal address is used.'
-                                            }
                                         />
                                     );
                                 }}
@@ -189,16 +177,13 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     return (
                                         <field.TextField
                                             label={'Address SDR'}
-                                            helpText={
-                                                'When using SDR, you can use this to give your servers dynamically updating DNS names.'
-                                            }
                                         />
                                     );
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'password'}
                                 children={(field) => {
                                     return <field.TextField label={'Server Auth Key'} />;
@@ -206,7 +191,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'rcon'}
                                 children={(field) => {
                                     return <field.TextField label={'RCON Password'} />;
@@ -214,7 +199,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'log_secret'}
                                 children={(field) => {
                                     return <field.TextField label={'Log Secret'} />;
@@ -222,7 +207,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'region'}
                                 children={(field) => {
                                     return <field.TextField label={'Region'} />;
@@ -230,7 +215,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'cc'}
                                 children={(field) => {
                                     return <field.TextField label={'Country Code'} />;
@@ -238,7 +223,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'latitude'}
                                 children={(field) => {
                                     return <field.TextField label={'Latitude'} />;
@@ -246,7 +231,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'longitude'}
                                 children={(field) => {
                                     return <field.TextField label={'Longitude'} />;
@@ -254,7 +239,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'reserved_slots'}
                                 children={(field) => {
                                     return <field.TextField label={'Reserved Slots'} />;
@@ -262,7 +247,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'is_enabled'}
                                 children={(field) => {
                                     return <field.CheckboxField label={'Is Enabled'} />;
@@ -270,7 +255,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'enabled_stats'}
                                 children={(field) => {
                                     return <field.CheckboxField label={'Stats Enabled'} />;
@@ -282,21 +267,15 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.CloseButton
+                                    onClick={async () => {
+                                        await modal.hide();
+                                    }}
+                                />
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

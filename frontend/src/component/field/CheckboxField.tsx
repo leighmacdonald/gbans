@@ -7,7 +7,7 @@ type Props = {
     readonly label?: string;
 };
 
-export const CheckboxSimple = ({ label }: Props) => {
+export const CheckboxField = ({ label }: Props) => {
     const field = useFieldContext<boolean>();
 
     return (

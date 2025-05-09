@@ -17,7 +17,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -43,9 +42,9 @@ import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { SourceBansList } from '../component/SourceBansList.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
 import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { AppError, ErrorCode } from '../error.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
@@ -231,11 +230,11 @@ function BanPage() {
             queryClient.setQueryData(['banMessages', { ban_id: ban.ban_id }], [...(messages ?? []), msg]);
             sendFlash('success', 'Created message successfully');
             mdEditorRef.current?.setMarkdown('');
-            reset();
+            form.reset();
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({
                 body_md: value.body_md
@@ -275,12 +274,12 @@ function BanPage() {
                                 onSubmit={async (e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    await handleSubmit();
+                                    await form.handleSubmit();
                                 }}
                             >
                                 <Grid container spacing={2} padding={1}>
                                     <Grid size={{ xs: 12 }}>
-                                        <Field
+                                        <form.AppField
                                             name={'body_md'}
                                             validators={{
                                                 onChange: z.string().min(2)
@@ -297,18 +296,10 @@ function BanPage() {
                                         />
                                     </Grid>
                                     <Grid size={{ xs: 12 }}>
-                                        <Subscribe
-                                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                            children={([canSubmit, isSubmitting]) => {
-                                                return (
-                                                    <Buttons
-                                                        reset={reset}
-                                                        canSubmit={canSubmit}
-                                                        isSubmitting={isSubmitting}
-                                                    />
-                                                );
-                                            }}
-                                        />
+                                        <form.AppForm>
+                                            <form.ResetButton />
+                                            <form.SubmitButton />
+                                        </form.AppForm>
                                     </Grid>
                                 </Grid>
                             </form>
