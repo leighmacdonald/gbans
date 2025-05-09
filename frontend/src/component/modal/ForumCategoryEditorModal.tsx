@@ -1,12 +1,10 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { apiCreateForumCategory, apiSaveForumCategory, ForumCategory } from '../../api/forum.ts';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { Buttons } from '../field/Buttons.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 type ForumCategoryEditorValues = {
     title: string;
@@ -47,7 +45,7 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({ ...value });
         },
@@ -64,7 +62,7 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle>Category Editor</DialogTitle>
@@ -72,33 +70,26 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'title'}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Title'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Title'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'description'}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Description'}
-                                            rows={5}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Description'} rows={5} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'ordering'}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Order'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Order'} />;
                                 }}
                             />
                         </Grid>
@@ -108,21 +99,10 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

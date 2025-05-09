@@ -3,17 +3,15 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import { useForm } from '@tanstack/react-form';
 import 'video-react/dist/video-react.css';
 import { SMGroups } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
 
 export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGroups[] }) => {
     const modal = useModal();
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             // TODO fix typing for select field and objects
             const group = groups.find((v) => v.group_id == (value.group as unknown as number));
@@ -35,7 +33,7 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGrou
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<GroupsIcon />}>
@@ -45,17 +43,14 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGrou
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'group'}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Group'}
-                                            fullwidth={true}
                                             items={groups}
-                                            renderMenu={(i) => {
+                                            renderItem={(i) => {
                                                 if (!i) {
                                                     return;
                                                 }
@@ -76,23 +71,15 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGrou
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            showReset={false}
-                                            submitLabel={'Select Group'}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.CloseButton
+                                    onClick={async () => {
+                                        await modal.hide();
+                                    }}
+                                />
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

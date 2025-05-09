@@ -18,7 +18,6 @@ import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -30,6 +29,7 @@ import {
     PermissionLevel,
     ReportWithAuthor
 } from '../api';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { reportMessagesQueryOptions } from '../queries/reportMessages.ts';
 import { RowsPerPage } from '../util/table.ts';
@@ -44,8 +44,7 @@ import { PlayerMessageContext } from './PlayerMessageContext';
 import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
-import { Buttons } from './field/Buttons.tsx';
-import { MarkdownField, mdEditorRef } from './field/MarkdownField.tsx';
+import { mdEditorRef } from './field/MarkdownField.tsx';
 
 export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): JSX.Element => {
     const theme = useTheme();
@@ -118,13 +117,13 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                 message
             ]);
             mdEditorRef.current?.setMarkdown('');
-            reset();
+            form.reset();
             sendFlash('success', 'Created message successfully');
         },
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             createMessageMutation.mutate(value);
         },
@@ -303,39 +302,26 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                 onSubmit={async (e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    await handleSubmit();
+                                    await form.handleSubmit();
                                 }}
                             >
                                 <Grid container spacing={2} padding={1}>
                                     <Grid size={{ xs: 12 }}>
-                                        <Field
+                                        <form.AppField
                                             name={'body_md'}
                                             validators={{
                                                 onChange: z.string().min(2)
                                             }}
-                                            children={(props) => {
-                                                return (
-                                                    <MarkdownField
-                                                        {...props}
-                                                        value={props.state.value}
-                                                        label={'Message'}
-                                                        fullwidth={true}
-                                                    />
-                                                );
+                                            children={(field) => {
+                                                return <field.MarkdownField label={'Message'} />;
                                             }}
                                         />
                                     </Grid>
                                     <Grid size={{ xs: 12 }}>
-                                        <Subscribe
-                                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                            children={([canSubmit, isSubmitting]) => (
-                                                <Buttons
-                                                    reset={reset}
-                                                    canSubmit={canSubmit}
-                                                    isSubmitting={isSubmitting}
-                                                />
-                                            )}
-                                        />
+                                        <form.AppForm>
+                                            <form.ResetButton />
+                                            <form.SubmitButton />
+                                        </form.AppForm>
                                     </Grid>
                                 </Grid>
                             </form>

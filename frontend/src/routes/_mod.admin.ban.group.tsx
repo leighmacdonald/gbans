@@ -10,7 +10,6 @@ import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
@@ -23,10 +22,8 @@ import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanGroup, ModalUnbanGroup } from '../component/modal';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
@@ -77,7 +74,7 @@ function AdminBanGroup() {
         await NiceModal.show(ModalBanGroup, {});
     };
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             setColumnFilters(initColumnFilter(value));
             await navigate({ to: '/admin/ban/group', search: (prev) => ({ ...prev, ...value }) });
@@ -105,7 +102,7 @@ function AdminBanGroup() {
     });
 
     const clear = async () => {
-        reset();
+        form.reset();
         setColumnFilters([]);
         await navigate({
             to: '/admin/ban/group',
@@ -138,87 +135,51 @@ function AdminBanGroup() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'source_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple
-                                                {...props}
-                                                value={props.state.value}
-                                                label={'Author Steam ID'}
-                                                fullwidth={true}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'Author Steam ID'} />;
                                     }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'target_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple
-                                                {...props}
-                                                value={props.state.value}
-                                                label={'Subject Steam ID'}
-                                                fullwidth={true}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'group_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple
-                                                {...props}
-                                                value={props.state.value}
-                                                label={'Group ID'}
-                                                fullwidth={true}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'Group ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid>
-                                <Field
+                                <form.AppField
                                     name={'deleted'}
-                                    children={({ handleChange, handleBlur, state }) => {
-                                        return (
-                                            <CheckboxSimple
-                                                label={'Show Deleted'}
-                                                value={state.value}
-                                                onBlur={handleBlur}
-                                                onChange={(_, v) => {
-                                                    handleChange(v);
-                                                }}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.CheckboxField label={'Show Deleted'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <form.ClearButton onClick={clear} />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

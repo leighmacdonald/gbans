@@ -2,15 +2,12 @@ import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import RouterIcon from '@mui/icons-material/Router';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { apiCreateServer, apiSaveServer, SaveServerOpts, Server } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 type ServerEditValues = {
     short_name: string;
@@ -62,7 +59,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
@@ -91,7 +88,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<RouterIcon />}>
@@ -101,215 +98,167 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'short_name'}
                                 validators={{
                                     onChange: z.string().min(1)
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Short Name/Tag'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Short Name/Tag'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'name'}
                                 validators={{
                                     onChange: z.string().min(1)
                                 }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Long Name'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Long Name'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'address'}
                                 validators={{
                                     onChange: z.string().min(1)
                                 }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Address'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Address'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'port'}
                                 validators={{
                                     onChange: z.string().transform(numberStringValidator(1024, 65535))
                                 }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Port'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Port'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 8 }}>
-                            <Field
+                            <form.AppField
                                 name={'address_internal'}
                                 validators={{
                                     onChange: z.string()
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Address Internal'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Address Internal'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'password'}
                                 validators={{
                                     onChange: z.string().length(20)
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Server Auth Key'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Server Auth Key'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'rcon'}
                                 validators={{
                                     onChange: z.string().min(6)
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} value={props.state.value} label={'RCON Password'} />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'RCON Password'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'log_secret'}
                                 validators={{
                                     onChange: z.string().transform(numberStringValidator(100000000, 999999999))
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} value={props.state.value} label={'Log Secret'} />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Log Secret'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'region'}
                                 validators={{
                                     onChange: z.string().min(1)
                                 }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Region'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Region'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'cc'}
                                 validators={{
                                     onChange: z.string().length(2)
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} value={props.state.value} label={'Country Code'} />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Country Code'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'latitude'}
                                 validators={{
                                     onChange: z.string().transform(numberStringValidator(-99, 99))
                                 }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Latitude'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Latitude'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'longitude'}
                                 validators={{
                                     onChange: z.string().transform(numberStringValidator(-180, 180))
                                 }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Longitude'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Longitude'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'reserved_slots'}
                                 validators={{
                                     onChange: z.string()
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Reserved Slots'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Reserved Slots'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'is_enabled'}
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Is Enabled'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Is Enabled'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'enabled_stats'}
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Stats Enabled'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Stats Enabled'} />;
                                 }}
                             />
                         </Grid>
@@ -318,21 +267,15 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.CloseButton
+                                    onClick={async () => {
+                                        await modal.hide();
+                                    }}
+                                />
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

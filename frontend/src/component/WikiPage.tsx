@@ -6,18 +6,16 @@ import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLoaderData, useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod';
 import { PermissionLevel, PermissionLevelCollection, permissionLevelString } from '../api';
 import { apiSaveWikiPage, Page } from '../api/wiki.ts';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer.tsx';
-import { Buttons } from './field/Buttons.tsx';
-import { MarkdownField, mdEditorRef } from './field/MarkdownField.tsx';
-import { SelectFieldSimple } from './field/SelectFieldSimple.tsx';
+import { mdEditorRef } from './field/MarkdownField.tsx';
 
 interface WikiValues {
     body_md: string;
@@ -73,7 +71,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
@@ -96,22 +94,19 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                     onSubmit={async (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        await handleSubmit();
+                        await form.handleSubmit();
                     }}
                 >
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'permission_level'}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Permissions'}
-                                            fullwidth={true}
                                             items={PermissionLevelCollection}
-                                            renderMenu={(pl) => {
+                                            renderItem={(pl) => {
                                                 return (
                                                     <MenuItem value={pl} key={`pl-${pl}`}>
                                                         {permissionLevelString(pl)}
@@ -125,30 +120,23 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                         </Grid>
 
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'body_md'}
-                                children={(props) => {
-                                    return <MarkdownField {...props} value={props.state.value} label={'Region'} />;
+                                children={(field) => {
+                                    return <field.MarkdownField label={'Region'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            closeLabel={'Cancel'}
-                                            onClose={async () => {
-                                                setEditMode(false);
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.CloseButton
+                                    onClick={async () => {
+                                        setEditMode(false);
+                                    }}
+                                />
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </form>

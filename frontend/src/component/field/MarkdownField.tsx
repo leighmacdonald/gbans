@@ -31,19 +31,21 @@ import { TextFieldProps } from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import * as Sentry from '@sentry/react';
+import { useStore } from '@tanstack/react-form';
 import { apiSaveAsset, assetURL } from '../../api/media.ts';
+import { useFieldContext } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors.ts';
 import { errorDialog } from '../ErrorBoundary.tsx';
 import './MarkdownField.css';
-import { FieldProps } from './common.ts';
 
-type MDBodyFieldProps = {
+export type MDBodyFieldProps = {
     fileUpload?: boolean;
     minHeight?: number;
     rows?: number;
-    value: string;
-} & FieldProps;
+    label: string;
+    placeholder?: string;
+} & TextFieldProps;
 
 const imageUploadHandler = async (media: File) => {
     const resp = await apiSaveAsset(media);
@@ -63,13 +65,10 @@ export const mdEditorRef = createRef<MDXEditorMethods>();
  * To clear it after a successful submission: mdEditorRef.current?.setMarkdown('');
  *
  */
-export const MarkdownField = ({
-    handleChange,
-    handleBlur,
-    error,
-    helperText,
-    value
-}: MDBodyFieldProps & TextFieldProps) => {
+export const MarkdownField = (props: MDBodyFieldProps) => {
+    const field = useFieldContext<string>();
+    const errors = useStore(field.store, (state) => state.meta.errors);
+
     const { sendFlash } = useUserFlashCtx();
     const theme = useTheme();
 
@@ -87,14 +86,14 @@ export const MarkdownField = ({
     }, [theme.mode]);
 
     const errInfo = useMemo(() => {
-        return error ? (
+        return errors ? (
             <Typography padding={1} color={theme.palette.error.main}>
-                {helperText}
+                {errors.map(String).join(', ')}
             </Typography>
         ) : (
             <></>
         );
-    }, [error, theme.palette.error.main]);
+    }, [errors, theme.palette.error.main]);
 
     return (
         <Paper>
@@ -103,8 +102,8 @@ export const MarkdownField = ({
                     contentEditableClassName={'md-content-editable'}
                     className={classes}
                     autoFocus={true}
-                    markdown={(value as string) ?? ''}
-                    placeholder={'Message (Min length: 10 characters)'}
+                    markdown={field.state.value}
+                    placeholder={props.placeholder ?? 'Message (Min length: 10 characters)'}
                     plugins={[
                         toolbarPlugin({
                             toolbarContents: () => (
@@ -135,8 +134,14 @@ export const MarkdownField = ({
                         markdownShortcutPlugin()
                     ]}
                     onError={onError}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
+                    onChange={() => {
+                        //props?.onChange(v);
+                        alert('fix');
+                    }}
+                    onBlur={() => {
+                        alert('fix2');
+                        //props.onBlur(true);
+                    }}
                     ref={mdEditorRef}
                 />
                 {errInfo}

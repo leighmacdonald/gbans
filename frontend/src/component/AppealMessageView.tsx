@@ -10,15 +10,14 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import { useTheme } from '@mui/material/styles';
-import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
 import { z } from 'zod';
 import { apiUpdateBanMessage, BanAppealMessage } from '../api';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { avatarHashToURL } from '../util/text.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
-import { Buttons } from './field/Buttons.tsx';
-import { MarkdownField, mdEditorRef } from './field/MarkdownField.tsx';
+import { mdEditorRef } from './field/MarkdownField.tsx';
 
 interface AppealMessageViewProps {
     message: BanAppealMessage;
@@ -54,7 +53,7 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({
                 body_md: value.body_md
@@ -76,28 +75,26 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
                     onSubmit={async (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        await handleSubmit();
+                        await form.handleSubmit();
                     }}
                 >
                     <Grid container spacing={2} padding={1}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 validators={{
                                     onChange: z.string().min(4)
                                 }}
                                 name={'body_md'}
-                                children={(props) => {
-                                    return <MarkdownField {...props} value={props.state.value} label={'Message'} />;
+                                children={(field) => {
+                                    return <field.MarkdownField label={'Message'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />;
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </form>
@@ -135,29 +132,31 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
                     open={open}
                     onClose={handleClose}
                     onClick={handleClose}
-                    PaperProps={{
-                        elevation: 0,
-                        sx: {
-                            overflow: 'visible',
-                            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-                            mt: 1.5,
-                            '& .MuiAvatar-root': {
-                                width: 32,
-                                height: 32,
-                                ml: -0.5,
-                                mr: 1
-                            },
-                            '&:before': {
-                                content: '""',
-                                display: 'block',
-                                position: 'absolute',
-                                top: 0,
-                                right: 14,
-                                width: 10,
-                                height: 10,
-                                bgcolor: 'background.paper',
-                                transform: 'translateY(-50%) rotate(45deg)',
-                                zIndex: 0
+                    slotProps={{
+                        paper: {
+                            elevation: 0,
+                            sx: {
+                                overflow: 'visible',
+                                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                                mt: 1.5,
+                                '& .MuiAvatar-root': {
+                                    width: 32,
+                                    height: 32,
+                                    ml: -0.5,
+                                    mr: 1
+                                },
+                                '&:before': {
+                                    content: '""',
+                                    display: 'block',
+                                    position: 'absolute',
+                                    top: 0,
+                                    right: 14,
+                                    width: 10,
+                                    height: 10,
+                                    bgcolor: 'background.paper',
+                                    transform: 'translateY(-50%) rotate(45deg)',
+                                    zIndex: 0
+                                }
                             }
                         }
                     }}

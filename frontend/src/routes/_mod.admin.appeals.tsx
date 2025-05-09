@@ -3,7 +3,6 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import {
@@ -31,9 +30,7 @@ import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { TablePropsAll } from '../types/table.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
@@ -72,7 +69,7 @@ function AdminAppeals() {
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset, setFieldValue } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             setColumnFilters(
                 initColumnFilter({
@@ -100,11 +97,11 @@ function AdminAppeals() {
 
     const clear = async () => {
         //reset();
-        setFieldValue('appeal_state', AppealState.Any);
-        setFieldValue('source_id', '');
-        setFieldValue('target_id', '');
+        form.setFieldValue('appeal_state', AppealState.Any);
+        form.setFieldValue('source_id', '');
+        form.setFieldValue('target_id', '');
 
-        await handleSubmit();
+        await form.handleSubmit();
         await navigate({
             to: '/admin/appeals',
             search: (prev) => ({ ...prev, source_id: undefined, target_id: undefined, appeal_state: undefined })
@@ -120,44 +117,37 @@ function AdminAppeals() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 6, md: 4 }}>
-                                <Field
+                                <form.AppField
                                     name={'source_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'Author Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 4 }}>
-                                <Field
+                                <form.AppField
                                     name={'target_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 4 }}>
-                                <Field
+                                <form.AppField
                                     name={'appeal_state'}
-                                    children={(props) => {
+                                    children={(field) => {
                                         return (
-                                            <SelectFieldSimple
-                                                {...props}
-                                                defaultValue={AppealState.Any}
+                                            <field.SelectField
                                                 label={'Appeal Status'}
-                                                fullwidth={true}
                                                 items={AppealStateCollection}
-                                                renderMenu={(item) => {
+                                                renderItem={(item) => {
                                                     return (
                                                         <MenuItem value={item} key={`rs-${item}`}>
                                                             {appealStateString(item as AppealState)}
@@ -170,17 +160,10 @@ function AdminAppeals() {
                                 />
                             </Grid>
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <form.ResetButton onClick={clear} />
+                                    <form.SubmitButton />
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

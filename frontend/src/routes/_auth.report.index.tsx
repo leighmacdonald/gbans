@@ -4,21 +4,15 @@ import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 import Grid from '@mui/material/Grid';
-import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import {
@@ -52,9 +46,8 @@ import { PlayerMessageContext } from '../component/PlayerMessageContext.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
-import { SteamIDField } from '../component/field/SteamIDField.tsx';
+import { mdEditorRef } from '../component/field/MarkdownField.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
@@ -266,7 +259,7 @@ export const ReportCreateForm = (): JSX.Element => {
 
     const navigate = useNavigate();
 
-    const form = useForm({
+    const form = useAppForm({
         onSubmit: ({ value }) => {
             const target = steam_id ?? validatedProfile?.player.steam_id;
             if (!target) {
@@ -318,57 +311,36 @@ export const ReportCreateForm = (): JSX.Element => {
             >
                 <Grid container spacing={2}>
                     <Grid size={{ xs: 12 }}>
-                        <form.Field
+                        <form.AppField
                             name={'target_id'}
-                            children={({ handleChange, handleBlur, state }) => {
-                                return (
-                                    <SteamIDField
-                                        disabled={Boolean(steam_id)}
-                                        handleBlur={handleBlur}
-                                        handleChange={handleChange}
-                                        fullwidth={true}
-                                        value={state.value}
-                                        label={'SteamID'}
-                                    />
-                                );
+                            children={(field) => {
+                                return <field.SteamIDField disabled={Boolean(steam_id)} label={'SteamID'} />;
                             }}
                         />
                     </Grid>
                     <Grid size={{ xs: 6 }}>
-                        <form.Field
+                        <form.AppField
                             name={'reason'}
-                            children={({ state, handleChange, handleBlur }) => {
+                            children={(field) => {
                                 return (
-                                    <>
-                                        <FormControl fullWidth>
-                                            <InputLabel id="serverSelectLabel">Reason</InputLabel>
-                                            <Select
-                                                variant={'outlined'}
-                                                fullWidth
-                                                value={state.value}
-                                                label="Servers"
-                                                onChange={(e) => {
-                                                    handleChange(Number(e.target.value));
-                                                }}
-                                                onBlur={handleBlur}
-                                                error={state.meta.errors.length > 0}
-                                            >
-                                                {banReasonsCollection.map((r) => (
-                                                    <MenuItem value={r} key={`reason-${r}`}>
-                                                        {BanReasons[r]}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                            {state.meta.errors.length > 0 && <FormHelperText>Error</FormHelperText>}
-                                        </FormControl>
-                                    </>
+                                    <field.SelectField
+                                        label={'Override Type'}
+                                        items={banReasonsCollection}
+                                        renderItem={(r) => {
+                                            return (
+                                                <MenuItem value={r} key={`reason-${r}`}>
+                                                    {BanReasons[r]}
+                                                </MenuItem>
+                                            );
+                                        }}
+                                    />
                                 );
                             }}
                         />
                     </Grid>
 
                     <Grid size={{ xs: 6 }}>
-                        <form.Field
+                        <form.AppField
                             name={'reason_text'}
                             validators={{
                                 onChangeListenTo: ['reason'],
@@ -380,57 +352,28 @@ export const ReportCreateForm = (): JSX.Element => {
                                     return z.string().parse(value);
                                 }
                             }}
-                            children={({ state, handleChange, handleBlur }) => {
-                                return (
-                                    <>
-                                        <TextField
-                                            fullWidth
-                                            label="Custom Reason"
-                                            value={state.value}
-                                            onChange={(e) => handleChange(e.target.value)}
-                                            onBlur={handleBlur}
-                                            variant="outlined"
-                                        />
-                                    </>
-                                );
+                            children={(field) => {
+                                return <field.TextField fullWidth label="Custom Reason" />;
                             }}
                         />
                     </Grid>
                     {Boolean(demo_id) && (
                         <>
                             <Grid size={{ xs: 6 }}>
-                                <form.Field
+                                <form.AppField
                                     name={'demo_id'}
-                                    children={({ state, handleChange, handleBlur }) => {
-                                        return (
-                                            <TextField
-                                                disabled={Boolean(demo_id)}
-                                                fullWidth
-                                                label="Demo ID"
-                                                value={state.value}
-                                                onChange={(e) => handleChange(e.target.value)}
-                                                onBlur={handleBlur}
-                                                variant="outlined"
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField disabled={Boolean(demo_id)} label="Demo ID" />;
                                     }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 6 }}>
-                                <form.Field
+                                <form.AppField
                                     // validators={{ onChange: z.number({ coerce: true }).min(0).optional() }}
                                     name={'demo_tick'}
-                                    children={({ state, handleChange, handleBlur }) => {
+                                    children={(field) => {
                                         return (
-                                            <TextField
-                                                disabled={!demo_id}
-                                                fullWidth
-                                                label="Demo Tick"
-                                                value={state.value}
-                                                onChange={(e) => handleChange(e.target.value)}
-                                                onBlur={handleBlur}
-                                                variant="outlined"
-                                            />
+                                            <field.TextField disabled={!demo_id} label="Demo Tick" variant="outlined" />
                                         );
                                     }}
                                 />
@@ -443,23 +386,19 @@ export const ReportCreateForm = (): JSX.Element => {
                         </Grid>
                     )}
                     <Grid size={{ xs: 12 }}>
-                        <form.Field
+                        <form.AppField
                             name={'body_md'}
                             validators={{ onChange: z.string().min(10, 'Message must be at least 10 characters.') }}
-                            children={(props) => {
-                                return (
-                                    <MarkdownField {...props} value={props.state.value} label={'Message (Markdown)'} />
-                                );
+                            children={(field) => {
+                                return <field.MarkdownField label={'Message (Markdown)'} />;
                             }}
                         />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                        <form.Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                            children={([canSubmit, isSubmitting]) => {
-                                return <Buttons canSubmit={canSubmit} isSubmitting={isSubmitting} reset={form.reset} />;
-                            }}
-                        />
+                        <form.AppForm>
+                            <form.ResetButton />
+                            <form.SubmitButton />
+                        </form.AppForm>
                     </Grid>
                 </Grid>
             </form>

@@ -8,7 +8,7 @@ type Props<TData> = {
     label?: string;
     labelLoading?: string;
     items: TData[];
-    renderMenu: (item: TData) => ReactNode;
+    renderItem: (item: TData) => ReactNode;
 } & SelectProps;
 
 export const SelectField = <TData,>(props: Props<TData>) => {
@@ -26,7 +26,7 @@ export const SelectField = <TData,>(props: Props<TData>) => {
                     field.handleChange(event.target.value as TData);
                 }}
             >
-                {props.items.map(props.renderMenu)}
+                {props.items.map(props.renderItem)}
             </Select>
         </FormControl>
     );

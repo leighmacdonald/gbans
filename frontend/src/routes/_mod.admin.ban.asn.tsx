@@ -10,7 +10,6 @@ import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
@@ -23,10 +22,8 @@ import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { Title } from '../component/Title.tsx';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanASN, ModalUnbanASN } from '../component/modal';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
@@ -71,7 +68,7 @@ function AdminBanASN() {
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             setColumnFilters(initColumnFilter(value));
             await navigate({
@@ -97,7 +94,7 @@ function AdminBanASN() {
     });
 
     const clear = async () => {
-        reset();
+        form.reset();
         setColumnFilters([]);
         await navigate({
             to: '/admin/ban/asn',
@@ -162,76 +159,51 @@ function AdminBanASN() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 4 }}>
                                 <Grid size={{ xs: 6, md: 3 }}>
-                                    <Field
+                                    <form.AppField
                                         name={'source_id'}
-                                        children={(props) => {
-                                            return (
-                                                <TextFieldSimple
-                                                    {...props}
-                                                    label={'Author Steam ID'}
-                                                    fullwidth={true}
-                                                />
-                                            );
+                                        children={(field) => {
+                                            return <field.TextField label={'Author Steam ID'} />;
                                         }}
                                     />
                                 </Grid>
                             </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'target_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'as_num'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'AS Number'} fullwidth={true} />;
+                                    children={(field) => {
+                                        return <field.TextField label={'AS Number'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid>
-                                <Field
+                                <form.AppField
                                     name={'deleted'}
-                                    children={({ state, handleBlur, handleChange }) => {
-                                        return (
-                                            <CheckboxSimple
-                                                label={'Show Deleted'}
-                                                value={state.value}
-                                                onBlur={handleBlur}
-                                                onChange={(_, v) => {
-                                                    handleChange(v);
-                                                }}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.CheckboxField label={'Show Deleted'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.ClearButton onClick={clear} />
+                                <form.ResetButton />
+                                <form.SubmitButton />
                             </Grid>
                         </Grid>
                     </form>

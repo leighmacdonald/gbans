@@ -3,17 +3,13 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
 import { apiCreateSMOverrides, apiSaveSMOverrides, hasSMFlag, OverrideType, SMOverrides } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
-import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 type mutateOverrideArgs = {
     name: string;
@@ -38,7 +34,7 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             const filteredKeys = ['name', 'type'];
             const flags = Object.entries(value)
@@ -85,7 +81,7 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<GroupsIcon />}>
@@ -95,32 +91,22 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'name'}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Name'}
-                                            fullwidth={true}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Name'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'type'}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Override Type'}
-                                            fullwidth={true}
                                             items={['command', 'group']}
-                                            renderMenu={(i) => {
+                                            renderItem={(i) => {
                                                 return (
                                                     <MenuItem value={i} key={i}>
                                                         {i}
@@ -133,380 +119,191 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'z'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(z) Full Admin'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(z) Full Admin'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'a'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(a) Reserved Slot'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(a) Reserved Slot'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'b'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(b) Generic Admin'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(b) Generic Admin'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'c'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(c) Kick Players'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(c) Kick Players'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'d'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(d) Ban Players'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(d) Ban Players'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'e'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(e) Unban Players'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(e) Unban Players'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'f'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(f) Slay/Harm Players'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(f) Slay/Harm Players'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'g'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(g) Change Maps'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(g) Change Maps'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'h'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(h) Change CVARs'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(h) Change CVARs'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'i'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(i) Exec Configs'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(i) Exec Configs'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'j'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(j) Special Chat Privileges'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(j) Special Chat Privileges'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'k'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(k) Start Votes'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(k) Start Votes'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'l'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(l) Set Server Password'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(l) Set Server Password'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'m'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(m) RCON Access'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(m) RCON Access'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'n'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(n) Enabled Cheats'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(n) Enabled Cheats'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'o'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(o) Custom Flag'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(o) Custom Flag'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'p'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(p) Custom Flag'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(p) Custom Flag'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'q'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(q) Custom Flag'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(q) Custom Flag'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'r'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(r) Custom Flag'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(r) Custom Flag'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'s'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(s) Custom Flag'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(s) Custom Flag'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'t'}
                                 validators={{ onChange: z.boolean() }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'(t) Custom Flag'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'(t) Custom Flag'} />;
                                 }}
                             />
                         </Grid>
@@ -516,22 +313,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            submitLabel={'Submit'}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.CloseButton
+                                    onClick={async () => {
+                                        await modal.hide();
+                                    }}
+                                />
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

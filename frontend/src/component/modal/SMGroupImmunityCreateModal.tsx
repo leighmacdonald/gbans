@@ -3,14 +3,12 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
 import { apiCreateSMGroupImmunity, SMGroups } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
 
 export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups: SMGroups[] }) => {
     const modal = useModal();
@@ -29,7 +27,7 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
@@ -45,7 +43,7 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<GroupsIcon />}>
@@ -55,17 +53,14 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'group'}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Group'}
-                                            fullwidth={true}
                                             items={groups}
-                                            renderMenu={(i) => {
+                                            renderItem={(i) => {
                                                 if (!i) {
                                                     return;
                                                 }
@@ -81,17 +76,14 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'other'}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Immunity From'}
-                                            fullwidth={true}
                                             items={groups}
-                                            renderMenu={(i) => {
+                                            renderItem={(i) => {
                                                 if (!i) {
                                                     return;
                                                 }
@@ -112,23 +104,15 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            showReset={false}
-                                            submitLabel={'Select Group'}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.CloseButton
+                                    onClick={async () => {
+                                        await modal.hide();
+                                    }}
+                                />
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

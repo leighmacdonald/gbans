@@ -12,7 +12,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
@@ -22,8 +21,7 @@ import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { FullTable } from '../component/FullTable.tsx';
 import { Title } from '../component/Title.tsx';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { stringToColour } from '../util/colours.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { initColumnFilter, initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
@@ -79,7 +77,7 @@ function STV() {
         queryFn: apiGetDemos
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             setColumnFilters(initColumnFilter(value));
             await navigate({ search: (prev) => ({ ...prev, ...value }) });
@@ -106,7 +104,7 @@ function STV() {
 
     const clear = async () => {
         setColumnFilters([]);
-        reset();
+        form.reset();
         await navigate({
             search: (prev) => ({
                 ...prev,
@@ -144,7 +142,7 @@ function STV() {
                                 await navigate({
                                     search: (prev) => ({ ...prev, server_id: info.row.original.server_id })
                                 });
-                                await handleSubmit();
+                                await form.handleSubmit();
                             }}
                         >
                             {info.row.original.server_name_short}
@@ -210,7 +208,7 @@ function STV() {
                 )
             })
         ];
-    }, [columnHelper, handleSubmit, isAuthenticated, navigate, theme.palette.mode]);
+    }, [columnHelper, form.handleSubmit, isAuthenticated, navigate, theme.palette.mode]);
 
     return (
         <Grid container spacing={2}>
@@ -221,12 +219,12 @@ function STV() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'server_id'}
                                     children={({ state, handleChange, handleBlur }) => {
                                         return (
@@ -257,18 +255,18 @@ function STV() {
                                 />
                             </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'map_name'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Map Name'} />;
+                                    children={(field) => {
+                                        return <field.TextField label={'Map Name'} />;
                                     }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'stats'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Steam ID'} fullwidth={true} />;
+                                    children={(field) => {
+                                        return <field.TextField label={'Steam ID'} />;
                                     }}
                                 />
                             </Grid>
@@ -280,24 +278,18 @@ function STV() {
                                     variant={'contained'}
                                     onClick={async () => {
                                         await navigate({ search: (prev) => ({ ...prev, stats: profile.steam_id }) });
-                                        await handleSubmit();
+                                        await form.handleSubmit();
                                     }}
                                 >
                                     My SteamID
                                 </Button>
                             </Grid>
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            reset={reset}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <form.ClearButton onClick={clear} />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

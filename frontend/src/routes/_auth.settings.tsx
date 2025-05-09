@@ -19,7 +19,6 @@ import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { createFormHook } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -36,27 +35,13 @@ import {
 import { apiGetPatreonLogin, apiGetPatreonLogout } from '../api/patreon.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Title } from '../component/Title.tsx';
-import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
-import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
-import { SubmitButton } from '../component/field/SubmitButton.tsx';
+import { mdEditorRef } from '../component/field/MarkdownField.tsx';
 import { ModalConfirm } from '../component/modal';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
-import { fieldContext, formContext } from '../contexts/formContext.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { SubHeading, TabButton, TabSection } from './_admin.admin.settings.tsx';
-
-const { useAppForm } = createFormHook({
-    fieldContext,
-    formContext,
-    fieldComponents: {
-        CheckboxSimple,
-        MarkdownField
-    },
-    formComponents: {
-        SubmitButton
-    }
-});
 
 const settingsSchema = z.object({
     section: z.enum(['general', 'forums', 'connections', 'game']).optional().default('general')
@@ -293,7 +278,7 @@ const GeneralSection = ({
                                 onChange: z.boolean()
                             }}
                             children={(field) => {
-                                return <field.CheckboxSimple label={'Hide personal stats on profile'} />;
+                                return <field.CheckboxField label={'Hide personal stats on profile'} />;
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
@@ -346,7 +331,7 @@ const GameplaySection = ({
                         <form.AppField
                             name={'center_projectiles'}
                             children={(field) => {
-                                return <field.CheckboxSimple label={'Use center projectiles'} />;
+                                return <field.CheckboxField label={'Use center projectiles'} />;
                             }}
                         />
                         <SubHeading>Applies to all projectile weapons</SubHeading>
@@ -419,7 +404,7 @@ const ForumSection = ({
                                 onChange: z.boolean()
                             }}
                             children={(field) => {
-                                return <field.CheckboxSimple label={'Enable people to sign your profile.'} />;
+                                return <field.CheckboxField label={'Enable people to sign your profile.'} />;
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
