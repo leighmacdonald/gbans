@@ -86,6 +86,7 @@ type Config struct {
 	Debug       ConfigDebug       `json:"debug"`
 	Patreon     ConfigPatreon     `json:"patreon"`
 	SSH         ConfigSSH         `json:"ssh"`
+	Network     ConfigNetwork     `json:"network"`
 	LocalStore  ConfigLocalStore  `json:"local_store"`
 	Exports     ConfigExports     `json:"exports"`
 	Anticheat   ConfigAnticheat   `json:"anticheat"`
@@ -106,6 +107,13 @@ func (c Config) ExtURL(obj LinkablePath) string {
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
 	return strings.TrimRight(c.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
+}
+
+type ConfigNetwork struct {
+	SDREnabled    bool   `mapstructure:"sdr_enabled" json:"sdr_enabled"`
+	SDRDNSEnabled bool   `mapstructure:"sdr_dns_enabled" json:"sdr_dns_enabled"`
+	CFKey         string `mapstructure:"cf_key" json:"cf_key"`
+	CFEmail       string `mapstructure:"cf_email" json:"cf_email"`
 }
 
 type ConfigSSH struct {

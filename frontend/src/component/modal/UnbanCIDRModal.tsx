@@ -1,13 +1,11 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { apiDeleteCIDRBan } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { Buttons } from '../field/Buttons.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 export const UnbanCIDRModal = NiceModal.create(
     ({
@@ -34,7 +32,7 @@ export const UnbanCIDRModal = NiceModal.create(
             }
         });
 
-        const { Field, Subscribe, handleSubmit, reset } = useForm({
+        const form = useAppForm({
             onSubmit: async ({ value }) => {
                 mutation.mutate(value.unban_reason);
             },
@@ -49,7 +47,7 @@ export const UnbanCIDRModal = NiceModal.create(
                     onSubmit={async (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        await handleSubmit();
+                        await form.handleSubmit();
                     }}
                 >
                     <DialogTitle>Unban CIDR (#{banId})</DialogTitle>
@@ -57,19 +55,13 @@ export const UnbanCIDRModal = NiceModal.create(
                     <DialogContent>
                         <Grid container>
                             <Grid size={{ xs: 12 }}>
-                                <Field
+                                <form.AppField
                                     name={'unban_reason'}
                                     validators={{
                                         onChange: z.string().min(5)
                                     }}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple
-                                                {...props}
-                                                value={props.state.value}
-                                                label={'Unban Reason'}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'Unban Reason'} />;
                                     }}
                                 />
                             </Grid>
@@ -79,21 +71,15 @@ export const UnbanCIDRModal = NiceModal.create(
                     <DialogActions>
                         <Grid container>
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => {
-                                        return (
-                                            <Buttons
-                                                reset={reset}
-                                                canSubmit={canSubmit}
-                                                isSubmitting={isSubmitting}
-                                                onClose={async () => {
-                                                    await modal.hide();
-                                                }}
-                                            />
-                                        );
-                                    }}
-                                />
+                                <form.AppForm>
+                                    <form.CloseButton
+                                        onClick={async () => {
+                                            await modal.hide();
+                                        }}
+                                    />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </DialogActions>

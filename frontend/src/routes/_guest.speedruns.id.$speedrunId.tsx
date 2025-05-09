@@ -18,11 +18,11 @@ import {
 } from '@tanstack/react-table';
 import { getSpeedrun, SpeedrunParticipant, SpeedrunPointCaptures } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { Title } from '../component/Title';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
+import { DataTable } from '../component/table/DataTable.tsx';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { durationString, renderDateTime } from '../util/time.ts';

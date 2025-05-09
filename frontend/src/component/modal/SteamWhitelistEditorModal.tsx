@@ -2,13 +2,11 @@ import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { apiCreateWhitelistSteam } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { SteamIDField } from '../field/SteamIDField.tsx';
 
 export const SteamWhitelistEditorModal = NiceModal.create(() => {
     const modal = useModal();
@@ -30,7 +28,7 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
@@ -44,7 +42,7 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<CloudDoneIcon />}>
@@ -53,18 +51,11 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'steam_id'}
                                 // validators={makeSteamidValidators()}
-                                children={(props) => {
-                                    return (
-                                        <SteamIDField
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Steam ID'}
-                                            fullwidth
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.SteamIDField label={'Steam ID'} />;
                                 }}
                             />
                         </Grid>
@@ -73,21 +64,15 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.CloseButton
+                                    onClick={async () => {
+                                        await modal.hide();
+                                    }}
+                                />
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

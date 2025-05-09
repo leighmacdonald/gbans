@@ -21,13 +21,13 @@ import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/re
 import { formatDistance } from 'date-fns';
 import { apiGetMatch, MatchHealer, MatchPlayer, MatchPlayerClass, MatchPlayerWeapon, Team } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
 import { Heading } from '../component/Heading.tsx';
 import { LoadingSpinner } from '../component/LoadingSpinner.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { PlayerClassImg } from '../component/PlayerClassImg.tsx';
-import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { Title } from '../component/Title';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';
 import { ensureFeatureEnabled } from '../util/features.ts';

@@ -29,7 +29,6 @@ import {
     apiDeleteWhitelistSteam
 } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable } from '../component/DataTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
@@ -39,6 +38,7 @@ import {
     ModalConfirm,
     ModalSteamWhitelistEditor
 } from '../component/modal';
+import { DataTable } from '../component/table/DataTable.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { renderDate } from '../util/time.ts';

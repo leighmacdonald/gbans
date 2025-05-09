@@ -3,7 +3,6 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { parseISO } from 'date-fns';
 import { z } from 'zod';
@@ -15,15 +14,10 @@ import {
     PermissionLevelCollection,
     permissionLevelString
 } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
-import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
-import { MarkdownField } from '../field/MarkdownField.tsx';
-import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 type ContestEditorFormValues = {
     title: string;
@@ -86,7 +80,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
@@ -115,7 +109,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<EmojiEventsIcon />}>
@@ -125,104 +119,69 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'title'}
                                 validators={{
                                     onChange: z.string().min(5)
                                 }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Title'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Title'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'description'}
                                 validators={{
                                     onChange: z.string().min(5)
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <MarkdownField
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Description'}
-                                            multiline={true}
-                                            rows={10}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.MarkdownField label={'Description'} rows={10} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'public'}
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Public'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Public'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'hide_submissions'}
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Hide Submissions'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Hide Submissions'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'max_submissions'}
                                 validators={{
                                     onChange: z.string().transform(numberStringValidator(1, 10))
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Max Submissions'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Max Submissions'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'min_permission_level'}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Min Permissions'}
-                                            fullwidth={true}
                                             items={PermissionLevelCollection}
-                                            renderMenu={(pl) => {
+                                            renderItem={(pl) => {
                                                 return (
                                                     <MenuItem value={pl} key={`pl-${pl}`}>
                                                         {permissionLevelString(pl)}
@@ -235,75 +194,45 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'voting'}
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Voting Enabled'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Voting Enabled'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'down_votes'}
                                 validators={{
                                     onChange: z.boolean()
                                 }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Downvotes Enabled'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Downvotes Enabled'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'date_start'}
-                                children={(props) => {
-                                    return (
-                                        <DateTimeSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Custom Expire Date'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.DateTimeField label={'Custom Expire Date'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'date_end'}
-                                children={(props) => {
-                                    return (
-                                        <DateTimeSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Custom Expire Date'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.DateTimeField label={'Custom Expire Date'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'media_types'}
                                 validators={{
                                     onChange: z.string().refine((arg) => {
@@ -316,14 +245,8 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                         return matches.length == parts.length;
                                     })
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Allowed Mime Types'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Allowed Mime Types'} />;
                                 }}
                             />
                         </Grid>
@@ -332,21 +255,9 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <form.SubmitButton />
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

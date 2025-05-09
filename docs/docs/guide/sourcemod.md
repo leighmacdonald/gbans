@@ -73,8 +73,12 @@ GRANT SELECT ON
 GRANT SELECT, INSERT, UPDATE, DELETE ON sm_cookie_cache, sm_cookies TO sourcemod;
 GRANT CREATE ON SCHEMA public TO sourcemod; -- extension will bail if not set it seems :(.
 GRANT USAGE, SELECT ON SEQUENCE sm_cookies_id_seq TO sourcemod;
+-- Required if you get "Failed to create function" errors
+-- ALTER FUNCTION add_or_update_cookie(in_player varchar, in_cookie integer, in_value varchar, in_time integer) OWNER TO sourcemod;
 GRANT EXECUTE ON FUNCTION check_ban TO sourcemod;
 ```
+
+
 
 Next you can setup your sourcemod databases.cfg with this user.
 
