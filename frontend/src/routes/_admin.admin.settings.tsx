@@ -611,6 +611,131 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
     );
 };
 
+const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const form = useAppForm({
+        onSubmit: async ({ value }) => {
+            mutate({ ...settings, network: value });
+        },
+        defaultValues: {
+            sdr_enabled: settings.network.sdr_enabled,
+            sdr_dns_enabled: settings.network.sdr_dns_enabled,
+            cf_key: settings.network.cf_key,
+            cf_email: settings.network.cf_email,
+            cf_zone_id: settings.network.cf_zone_id
+        },
+        validators: {
+            onChange: z.object({
+                sdr_enabled: z.boolean(),
+                sdr_dns_enabled: z.boolean(),
+                cf_key: z.string(),
+                cf_email: z.string().email(),
+                cf_zone_id: z.string()
+            })
+        }
+    });
+
+    return (
+        <TabSection
+            tab={'network'}
+            currentTab={tab}
+            label={'Network'}
+            description={'Advanced Networking Functionality'}
+        >
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await form.handleSubmit();
+                }}
+            >
+                <ConfigContainer>
+                    <Grid size={{ xs: 12 }}>
+                        <Typography variant={'h3'}>Steam Datagram Relay</Typography>
+                        <Typography variant={'body1'}>
+                            Steam Datagram Relay (SDR) is Valve's virtual private gaming network.
+                        </Typography>
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Enable SDR (Steam Data Relay)</SubHeading>
+                        <form.AppField
+                            name={'sdr_enabled'}
+                            children={() => {
+                                return <CheckboxField label={'Enable SDR networking mode'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
+                        <form.AppField
+                            name={'sdr_dns_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={() => {
+                                return <CheckboxField label={'Enable SDR DNS updates'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <Typography variant={'h3'}>Cloudflare</Typography>
+                        <Typography variant={'body1'}>
+                            Current cloudflare is the only supported DNS provider. If you want to see others added, feel
+                            free to open a github issue.
+                        </Typography>
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading></SubHeading>
+                        <form.AppField
+                            name={'cf_key'}
+                            children={(field) => {
+                                return (
+                                    <field.TextField
+                                        label={'API Key'}
+                                        type={'password'}
+                                        helpText={
+                                            'Your API key created on cloudflare. This key must have DNS editing privileges.'
+                                        }
+                                    />
+                                );
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Account Email Address</SubHeading>
+                        <form.AppField
+                            name={'cf_email'}
+                            children={(field) => {
+                                return <field.TextField label={'Email'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Zone ID for the domain.</SubHeading>
+                        <form.AppField
+                            name={'cf_zone_id'}
+                            children={(field) => {
+                                return <field.TextField label={'Email'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <form.AppForm>
+                            <form.ResetButton />
+                            <form.SubmitButton />
+                        </form.AppForm>
+                    </Grid>
+                </ConfigContainer>
+            </form>
+        </TabSection>
+    );
+};
+
 const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {

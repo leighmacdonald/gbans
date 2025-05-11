@@ -122,6 +122,20 @@ func (c *Collector) onStatusUpdate(conf domain.ServerConfig, newState Status, ma
 
 	server := c.serverState[conf.ServerID]
 	server.PlayerCount = newState.PlayersCount
+	if newState.IPInfo.SDR {
+		server.IP = newState.IPInfo.FakeIP
+		server.Port = uint16(newState.IPInfo.FakePort) //nolint:gosec
+		server.IPPublic = newState.IPInfo.PublicIP
+		server.PortPublic = uint16(newState.IPInfo.PublicPort) //nolint:gosec
+	} else {
+		server.IP = newState.IPInfo.PublicIP
+		server.Port = uint16(newState.IPInfo.PublicPort) //nolint:gosec
+		server.IPPublic = newState.IPInfo.PublicIP
+		server.PortPublic = uint16(newState.IPInfo.PublicPort) //nolint:gosec
+	}
+
+	server.STVIP = newState.IPInfo.SourceTVIP
+	server.STVPort = uint16(newState.IPInfo.SourceTVFPort) //nolint:gosec
 
 	if maxVisible >= 0 {
 		server.MaxPlayers = maxVisible
@@ -263,7 +277,6 @@ func (c *Collector) status(ctx context.Context, serverID int) (Status, error) {
 	}
 
 	status := Status{Status: pStatus}
-
 	matches := c.playersRx.FindStringSubmatch(statusResp)
 	if len(matches) > 0 {
 		players, errPlayers := strconv.Atoi(matches[1])
@@ -432,7 +445,7 @@ func (c *Collector) Start(ctx context.Context) {
 }
 
 func newServerConfig(serverID int, name string, defaultHostname string, address string,
-	port int, rconPassword string, reserved int, countryCode string, region string, lat float64, long float64,
+	port uint16, rconPassword string, reserved int, countryCode string, region string, lat float64, long float64,
 	enabled bool,
 ) domain.ServerConfig {
 	return domain.ServerConfig{

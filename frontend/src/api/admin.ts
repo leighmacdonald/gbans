@@ -14,6 +14,7 @@ export type Config = {
     demo: Demos;
     patreon: Patreon;
     discord: Discord;
+    network: Network;
     log: Logging;
     sentry: Sentry;
     geo_location: GeoLocation;
@@ -22,6 +23,14 @@ export type Config = {
     ssh: SSH;
     exports: Exports;
     anticheat: Anticheat;
+};
+
+type Network = {
+    sdr_enabled: boolean;
+    sdr_dns_enabled: boolean;
+    cf_key: string;
+    cf_email: string;
+    cf_zone_id: string;
 };
 
 export enum Action {

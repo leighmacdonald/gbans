@@ -30,6 +30,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/network/dns"
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/patreon"
@@ -178,7 +179,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			defer func() {
 				if errClose := dbConn.Close(); errClose != nil {
-					slog.Error("Failed to close database cleanly")
+					slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
 				}
 			}()
 
@@ -345,6 +346,15 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				gin.SetMode(gin.DebugMode)
 			}
 
+			conf.Network.SDREnabled = true
+			conf.Network.SDRDNSEnabled = true
+
+			// If we are using Valve SDR network, optionally enable the dynamic DNS update support to automatically
+			// update the A record when a change is detected with the new public SDR IP.
+			if conf.Network.SDREnabled && conf.Network.SDRDNSEnabled {
+				go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
+			}
+
 			router, err := httphelper.CreateRouter(conf, app.Version())
 			if err != nil {
 				slog.Error("Could not setup router", log.ErrAttr(err))
@@ -352,6 +362,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return err
 			}
 
+			// Start discord bot service
 			if conf.Discord.Enabled {
 				discordHandler := discord.NewDiscordHandler(discordUsecase, personUsecase, banUsecase,
 					stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase,
@@ -359,6 +370,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				discordHandler.Start(ctx)
 			}
 
+			// Register all our handlers with router
 			anticheat.NewHandler(router, authUsecase, anticheatUsecase)
 			appeal.NewHandler(router, appeals, authUsecase)
 			auth.NewHandler(router, authUsecase, configUsecase, personUsecase)

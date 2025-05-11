@@ -29,8 +29,7 @@ type stateUsecase struct {
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-// NewStateUsecase created a interface to interact with server state and exec rcon commands
-// TODO ensure started.
+// NewStateUsecase created a interface to interact with server state and exec rcon commands.
 func NewStateUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	repository domain.StateRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
 ) domain.StateUsecase {
@@ -58,8 +57,6 @@ func (s *stateUsecase) Start(ctx context.Context) error {
 	s.logListener = logSrc
 
 	go s.state.Start(ctx)
-
-	s.updateSrcdsLogServers(ctx)
 
 	// TODO run on server Config changes
 	s.updateSrcdsLogServers(ctx)
@@ -141,6 +138,7 @@ func (s *stateUsecase) Update(serverID int, update domain.PartialStateUpdate) er
 	return s.state.Update(serverID, update)
 }
 
+// Find searches the current server state for players matching at least one of the provided criteria.
 func (s *stateUsecase) Find(name string, steamID steamid.SteamID, addr net.IP, cidr *net.IPNet) []domain.PlayerServerInfo {
 	var found []domain.PlayerServerInfo
 

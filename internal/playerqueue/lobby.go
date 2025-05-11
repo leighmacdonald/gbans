@@ -12,7 +12,7 @@ type Lobby struct {
 	Title       string
 	ShortName   string
 	Hostname    string
-	Port        int
+	Port        uint16
 	CC          string
 	Members     []ClientQueueState
 }
