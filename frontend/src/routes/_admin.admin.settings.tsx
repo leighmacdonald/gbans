@@ -6,6 +6,7 @@ import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 import EmergencyRecordingIcon from '@mui/icons-material/EmergencyRecording';
 import GradingIcon from '@mui/icons-material/Grading';
 import HeadsetMicIcon from '@mui/icons-material/HeadsetMic';
+import HubIcon from '@mui/icons-material/Hub';
 import LanIcon from '@mui/icons-material/Lan';
 import PaymentIcon from '@mui/icons-material/Payment';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -44,6 +45,7 @@ const settingsSchema = z.object({
             'patreon',
             'discord',
             'logging',
+            'network',
             'geo_location',
             'debug',
             'local_store',
@@ -74,6 +76,7 @@ type tabs =
     | 'patreon'
     | 'discord'
     | 'logging'
+    | 'network'
     | 'geo_location'
     | 'debug'
     | 'local_store'
@@ -227,6 +230,13 @@ function AdminServers() {
                                 label={'Assets'}
                             />
                             <TabButton
+                                tab={'network'}
+                                onClick={onTabClick}
+                                icon={<HubIcon />}
+                                currentTab={tab}
+                                label={'Network'}
+                            />
+                            <TabButton
                                 tab={'ssh'}
                                 onClick={onTabClick}
                                 icon={<LanIcon />}
@@ -258,6 +268,7 @@ function AdminServers() {
                     <DemosSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <PatreonSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <DiscordSection tab={tab} settings={settings} mutate={mutation.mutate} />
+                    <NetworkSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <LoggingSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <GeoLocationSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <LocalStoreSection tab={tab} settings={settings} mutate={mutation.mutate} />
@@ -612,7 +623,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 };
 
 const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
-    const form = useAppForm({
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, network: value });
         },
@@ -645,7 +656,7 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await form.handleSubmit();
+                    await handleSubmit();
                 }}
             >
                 <ConfigContainer>
@@ -658,22 +669,36 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>Enable SDR (Steam Data Relay)</SubHeading>
-                        <form.AppField
+                        <Field
                             name={'sdr_enabled'}
-                            children={() => {
-                                return <CheckboxField label={'Enable SDR networking mode'} />;
+                            children={(props) => {
+                                return (
+                                    <CheckboxSimple
+                                        value={props.state.value}
+                                        handleBlur={props.handleBlur}
+                                        handleChange={props.handleChange}
+                                        label={'Enable SDR networking mode'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
-                        <form.AppField
+                        <Field
                             name={'sdr_dns_enabled'}
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={() => {
-                                return <CheckboxField label={'Enable SDR DNS updates'} />;
+                            children={(props) => {
+                                return (
+                                    <CheckboxSimple
+                                        value={props.state.value}
+                                        handleBlur={props.handleBlur}
+                                        handleChange={props.handleChange}
+                                        label={'Enable SDR DNS updates'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -688,47 +713,41 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
                     <Grid size={{ xs: 12 }}>
                         <SubHeading></SubHeading>
-                        <form.AppField
+                        <Field
                             name={'cf_key'}
-                            children={(field) => {
-                                return (
-                                    <field.TextField
-                                        label={'API Key'}
-                                        type={'password'}
-                                        helpText={
-                                            'Your API key created on cloudflare. This key must have DNS editing privileges.'
-                                        }
-                                    />
-                                );
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'API Key'} />;
                             }}
                         />
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>Account Email Address</SubHeading>
-                        <form.AppField
+                        <Field
                             name={'cf_email'}
-                            children={(field) => {
-                                return <field.TextField label={'Email'} />;
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Email'} />;
                             }}
                         />
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>Zone ID for the domain.</SubHeading>
-                        <form.AppField
+                        <Field
                             name={'cf_zone_id'}
-                            children={(field) => {
-                                return <field.TextField label={'Email'} />;
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Email'} />;
                             }}
                         />
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                        <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
-                        </form.AppForm>
+                        <Subscribe
+                            selector={(state) => [state.canSubmit, state.isSubmitting]}
+                            children={([canSubmit, isSubmitting]) => (
+                                <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />
+                            )}
+                        />
                     </Grid>
                 </ConfigContainer>
             </form>
