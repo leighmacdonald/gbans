@@ -130,7 +130,12 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                             <form.AppField
                                 name={'short_name'}
                                 children={(field) => {
-                                    return <field.TextField label={'Short Name/Tag'} />;
+                                    return (
+                                        <field.TextField
+                                            label={'Short Name/Tag'}
+                                            helpText={'A short, unique, identifier.'}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
@@ -165,6 +170,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     return (
                                         <field.TextField
                                             label={'Address Internal'}
+                                            helpText={
+                                                'A private network/VPN to access the host. Used for SSH. If empty the normal address is used.'
+                                            }
                                         />
                                     );
                                 }}
@@ -177,6 +185,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     return (
                                         <field.TextField
                                             label={'Address SDR'}
+                                            helpText={
+                                                'When using SDR, you can use this to give your servers dynamically updating DNS names.'
+                                            }
                                         />
                                     );
                                 }}
