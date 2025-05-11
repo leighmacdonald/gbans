@@ -30,6 +30,7 @@ type Network = {
     sdr_dns_enabled: boolean;
     cf_key: string;
     cf_email: string;
+    cf_zone_id: string;
 };
 
 export enum Action {

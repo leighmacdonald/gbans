@@ -156,7 +156,7 @@ export const ServerList = () => {
                         fullWidth
                         endIcon={<ChevronRightIcon />}
                         component={Link}
-                        href={`steam://connect/${selectedServers[info.row.index].ip}:${selectedServers[info.row.index].port}`}
+                        href={`steam://run/440//+connect ${selectedServers[info.row.index].ip}:${selectedServers[info.row.index].port}`}
                         variant={'contained'}
                         sx={{ minWidth: 100 }}
                     >

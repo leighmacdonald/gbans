@@ -58,7 +58,7 @@ type ServerConfig struct {
 	Tag             string
 	DefaultHostname string
 	Host            string
-	Port            int
+	Port            uint16
 	Enabled         bool
 	RconPassword    string
 	ReservedSlots   int
@@ -76,19 +76,25 @@ func (config *ServerConfig) Addr() string {
 // contains sensitive information and should only be used where needed
 // by admins.
 type ServerState struct {
-	ServerID  int    `json:"server_id"`
+	// Internal unique ID of the server
+	ServerID int `json:"server_id"`
+	// A shorthand unique identifier for the server.
 	NameShort string `json:"name_short"`
-	Name      string `json:"name"`
-	Host      string `json:"host"`
+	// A full hostname for the server. This is just the default value and will be
+	// updated dynamically from RCON.
+	Name string `json:"name"`
+	Host string `json:"host"`
 	// IP is a distinct entry vs host since steam no longer allows steam:// protocol handler links to use a fqdn
-	IP            string    `json:"ip"`
-	Port          int       `json:"port"`
+	IP         string `json:"ip"`
+	Port       uint16 `json:"port"`
+	IPPublic   string `json:"ip_public"`
+	PortPublic uint16 `json:"port_public"`
+
 	Enabled       bool      `json:"enabled"`
 	Region        string    `json:"region"`
 	CC            string    `json:"cc"`
 	Latitude      float64   `json:"latitude"`
 	Longitude     float64   `json:"longitude"`
-	Reserved      int       `json:"reserved"`
 	LastUpdate    time.Time `json:"last_update"`
 	ReservedSlots int       `json:"reserved_slots"`
 	Protocol      uint8     `json:"protocol"`
@@ -121,12 +127,18 @@ type ServerState struct {
 	// The server's 64-bit GameID. If this is present, a more accurate AppID is present in the low 24 bits.
 	// The earlier AppID could have been truncated as it was forced into 16-bit storage.
 	GameID uint64 `json:"game_id"` // Needed?
+	// STVIP is the public ip of the stv server
+	STVIP string `json:"stvip"`
 	// Spectator port number for SourceTV.
 	STVPort uint16 `json:"stv_port"`
 	// Name of the spectator server for SourceTV.
 	STVName string `json:"stv_name"`
-
+	// A collection of the comma delimited values of sv_tags
 	Tags    []string       `json:"tags"`
 	Players []extra.Player `json:"players"`
-	Humans  int            `json:"humans"`
+	// How many human players in the server
+	Humans int `json:"humans"`
+	// HasSynchronizedDNS tracks if the server has done its initial DNS update cycle. This is required
+	// for future change detection and updates.
+	HasSynchronizedDNS bool `json:"has_synchronized_dns"`
 }

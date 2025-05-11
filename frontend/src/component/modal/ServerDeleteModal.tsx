@@ -12,22 +12,23 @@ export interface DeleteServerModalProps extends ConfirmationModalProps<Server> {
 export const ServerDeleteModal = ({ onSuccess, server }: DeleteServerModalProps) => {
     const { sendError, sendFlash } = useUserFlashCtx();
 
-    const handleSubmit = useCallback(() => {
-        apiDeleteServer(server.server_id)
-            .then(() => {
-                sendFlash('success', `Deleted successfully`);
-                if (onSuccess) {
-                    onSuccess(server);
-                }
-            })
-            .catch(sendError);
+    const handleSubmit = useCallback(async () => {
+        try {
+            await apiDeleteServer(server.server_id);
+            sendFlash('success', `Deleted successfully`);
+            if (onSuccess) {
+                onSuccess(server);
+            }
+        } catch (error) {
+            sendError(error);
+        }
     }, [server, sendFlash, sendError, onSuccess]);
 
     return (
         <ConfirmationModal
             id={'modal-server-delete'}
-            onAccept={() => {
-                handleSubmit();
+            onAccept={async () => {
+                await handleSubmit();
             }}
             aria-labelledby="modal-title"
             aria-describedby="modal-description"

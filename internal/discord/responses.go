@@ -798,9 +798,9 @@ func ServersMessage(currentStateRegion map[string][]domain.ServerState, serversU
 				stats[region+"total"] = 0
 			}
 
-			maxPlayers := curState.MaxPlayers - curState.Reserved
+			maxPlayers := curState.MaxPlayers - curState.ReservedSlots
 			if maxPlayers <= 0 {
-				maxPlayers = 32 - curState.Reserved
+				maxPlayers = 32 - curState.ReservedSlots
 			}
 
 			stats[region] += float64(curState.PlayerCount)
