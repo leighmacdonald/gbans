@@ -17,7 +17,7 @@ type RequestServerUpdate struct {
 	ServerName      string  `json:"server_name"`
 	ServerNameShort string  `json:"server_name_short"`
 	Host            string  `json:"host"`
-	Port            int     `json:"port"`
+	Port            uint16  `json:"port"`
 	ReservedSlots   int     `json:"reserved_slots"`
 	Password        string  `json:"password"`
 	RCON            string  `json:"rcon"`
@@ -30,6 +30,7 @@ type RequestServerUpdate struct {
 	EnableStats     bool    `json:"enable_stats"`
 	LogSecret       int     `json:"log_secret"`
 	AddressInternal string  `json:"address_internal"`
+	AddressSDR      string  `json:"address_sdr"`
 }
 
 type ServerInfoSafe struct {
@@ -66,7 +67,7 @@ type ServerPermission struct {
 	Flags           string      `json:"flags"`
 }
 
-func NewServer(shortName string, address string, port int) Server {
+func NewServer(shortName string, address string, port uint16) Server {
 	return Server{
 		ShortName:      shortName,
 		Address:        address,
@@ -77,25 +78,28 @@ func NewServer(shortName string, address string, port int) Server {
 		IsEnabled:      true,
 		EnableStats:    true,
 		TokenCreatedOn: time.Unix(0, 0),
-		CreatedOn:      time.Now(),
-		UpdatedOn:      time.Now(),
+		TimeStamped:    NewTimeStamped(),
 	}
 }
 
 type Server struct {
+	TimeStamped
 	// Auto generated id
 	ServerID int `json:"server_id"`
 	// ShortName is a short reference name for the server eg: us-1
 	// This is used as a unique identifier for servers and is used for many different things such as paths,
-	// so its best to keep it short and without whitespace.
+	// so it's best to keep it short and without whitespace.
 	ShortName string `json:"short_name"`
 	Name      string `json:"name"`
 	// Address is the ip of the server
 	Address string `json:"address"`
-	// Internal/VPN network. When defined its used for things like pulling demos over ssh.
+	// Internal/VPN network. When defined it's used for things like pulling demos over ssh.
 	AddressInternal string `json:"address_internal"`
+	// When set to a non-empty value, will be used for the automatic DNS update system. This
+	// maps the assigned dynamic SDR address to a reasonably stable external DNS name.
+	AddressSDR string `json:"address_sdr"`
 	// Port is the port of the server
-	Port int `json:"port"`
+	Port uint16 `json:"port"`
 	// RCON is the RCON password for the server
 	RCON          string `json:"rcon"`
 	ReservedSlots int    `json:"reserved_slots"`
@@ -111,8 +115,6 @@ type Server struct {
 	EnableStats bool    `json:"enable_stats"`
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time `json:"token_created_on"`
-	CreatedOn      time.Time `json:"created_on"`
-	UpdatedOn      time.Time `json:"updated_on"`
 }
 
 func (s Server) IP(ctx context.Context) (net.IP, error) {
@@ -171,7 +173,7 @@ type ServerQueryFilter struct {
 type SafeServer struct {
 	ServerID   int      `json:"server_id"`
 	Host       string   `json:"host"`
-	Port       int      `json:"port"`
+	Port       uint16   `json:"port"`
 	IP         string   `json:"ip"`
 	Name       string   `json:"name"`
 	NameShort  string   `json:"name_short"`

@@ -1073,8 +1073,8 @@ github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89 h1:
 github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89/go.mod h1:CeSSZ6/97+4vqbT5y1+WbNqpNBASL2IFntAYUvrPM8M=
 github.com/leighmacdonald/rcon v1.0.10 h1:lTwFaYMwC1q+l2ULXuk05bZaSJpAU8o33klIZMl92B4=
 github.com/leighmacdonald/rcon v1.0.10/go.mod h1:RRkAjtBsT3VMheHl+pMfrxkA001LdtSArkU+tLvSKsk=
-github.com/leighmacdonald/steamid/v4 v4.0.4 h1:YtTi/uU8kKLaEH/oKGCesbkYw6tS0DPYucApNVQrKqg=
-github.com/leighmacdonald/steamid/v4 v4.0.4/go.mod h1:83dx4mX9QmrRSxfcKZY9+gqBTpJ7QAtBya20F3d84Fs=
+github.com/leighmacdonald/steamid/v4 v4.0.5 h1:2hElDS5w1IViMqyZHjux3XRBE8bMLWdek1rHbar65ZQ=
+github.com/leighmacdonald/steamid/v4 v4.0.5/go.mod h1:83dx4mX9QmrRSxfcKZY9+gqBTpJ7QAtBya20F3d84Fs=
 github.com/leighmacdonald/steamweb/v2 v2.3.1 h1:1a8sCJhkd1lQBaa6yPlx1zZp5gSrTYlX55pTdAYQMzg=
 github.com/leighmacdonald/steamweb/v2 v2.3.1/go.mod h1:NOB4H3/Z4m71fHfNcfOu8TGMLXr4qcHPEn8N+sqydts=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=

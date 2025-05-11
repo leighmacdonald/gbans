@@ -6,7 +6,8 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import { apiCreateServer, apiSaveServer, SaveServerOpts, Server } from '../../api';
-import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
+import { useAppForm } from '../../contexts/formContext.tsx';
+import { randomStringAlphaNum } from '../../util/strings.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
@@ -17,21 +18,62 @@ type ServerEditValues = {
     name: string;
     address: string;
     address_internal: string;
-    port: string;
+    address_sdr: string;
+    port: number;
     password: string;
     rcon: string;
     region: string;
     cc: string;
-    latitude: string;
-    longitude: string;
-    reserved_slots: string;
+    latitude: number;
+    longitude: number;
+    reserved_slots: number;
     is_enabled: boolean;
     enabled_stats: boolean;
-    log_secret: string;
+    log_secret: number;
 };
+
+const schema = z.object({
+    short_name: z
+        .string()
+        .min(3)
+        .regex(/\w{3,}/),
+    name: z.string().min(1),
+    address: z.string().min(1),
+    port: z.number({ coerce: true }).min(1024).max(65535).transform(Number),
+    password: z.string().length(20),
+    rcon: z.string().min(6),
+    region: z.string().min(1),
+    cc: z.string().length(2),
+    latitude: z.number({ coerce: true }).min(-90).max(99).transform(Number),
+    longitude: z.number({ coerce: true }).min(-180).max(180).transform(Number),
+    reserved_slots: z.number({ coerce: true }).min(0).max(100).transform(Number),
+    is_enabled: z.boolean(),
+    enabled_stats: z.boolean(),
+    log_secret: z.number({ coerce: true }).min(100000000).max(999999999).transform(Number),
+    address_internal: z.string(),
+    address_sdr: z.string()
+});
 
 export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server }) => {
     const modal = useModal();
+    const defaultValues: z.input<typeof schema> = {
+        short_name: server?.short_name ?? '',
+        name: server?.name ?? '',
+        address: server?.address ?? '',
+        port: server?.port ?? 27015,
+        password: server?.password ?? randomStringAlphaNum(20),
+        rcon: server?.rcon ?? '',
+        region: server?.region ?? '',
+        cc: server?.cc ?? '',
+        latitude: server?.latitude ?? 0,
+        longitude: server?.longitude ?? 0,
+        reserved_slots: server?.reserved_slots ?? 0,
+        is_enabled: server?.is_enabled ?? true,
+        enabled_stats: server?.enable_stats ?? true,
+        log_secret: server?.log_secret ?? Math.floor(Math.random() * 89999999 + 10000000),
+        address_internal: server?.address_internal ?? '',
+        address_sdr: server?.address_sdr ?? ''
+    };
 
     const mutation = useMutation({
         mutationKey: ['adminServer'],
@@ -40,18 +82,19 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 server_name_short: values.short_name,
                 server_name: values.name,
                 host: values.address,
-                port: Number(values.port),
+                port: values.port,
                 password: values.password,
                 rcon: values.rcon,
                 region: values.region,
                 cc: values.cc,
-                lat: Number(values.latitude),
-                lon: Number(values.longitude),
-                reserved_slots: Number(values.reserved_slots),
+                lat: values.latitude,
+                lon: values.longitude,
+                reserved_slots: values.reserved_slots,
                 is_enabled: values.is_enabled,
                 enable_stats: values.enabled_stats,
-                log_secret: Number(values.log_secret),
-                address_internal: values.address_internal
+                log_secret: values.log_secret,
+                address_internal: values.address_internal,
+                address_sdr: values.address_sdr
             };
             if (server?.server_id) {
                 modal.resolve(await apiSaveServer(server.server_id, opts));
@@ -64,24 +107,11 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
-            mutation.mutate(value);
+            mutation.mutate(schema.parse(value));
         },
-        defaultValues: {
-            short_name: server ? server.short_name : '',
-            name: server ? server.name : '',
-            address: server ? server.address : '',
-            port: server ? String(server.port) : '27015',
-            password: server ? server.password : '',
-            rcon: server ? server.rcon : '',
-            region: server ? server.region : '',
-            cc: server ? server.cc : '',
-            latitude: server ? String(server.latitude) : '',
-            longitude: server ? String(server.longitude) : '',
-            reserved_slots: server ? String(server.reserved_slots) : '0',
-            is_enabled: server ? server.is_enabled : true,
-            enabled_stats: server ? server.enable_stats : true,
-            log_secret: server ? String(server.log_secret) : '',
-            address_internal: server ? server.address_internal : ''
+        defaultValues,
+        validators: {
+            onSubmit: schema
         }
     });
 
@@ -95,7 +125,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<RouterIcon />}>
-                    Server {server?.server_id ? 'Editor' : 'Creator'}
+                    {server?.server_id ? 'Edit' : 'Create'} Server
                 </DialogTitle>
 
                 <DialogContent>
@@ -103,15 +133,11 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'short_name'}
-                                validators={{
-                                    onChange: z.string().min(1)
-                                }}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.TextField
                                             label={'Short Name/Tag'}
+                                            helpText={'A short, unique, identifier.'}
                                         />
                                     );
                                 }}
@@ -120,48 +146,52 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'name'}
-                                validators={{
-                                    onChange: z.string().min(1)
-                                }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Long Name'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Long Name'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'address'}
-                                validators={{
-                                    onChange: z.string().min(1)
-                                }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Address'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Address'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'port'}
-                                validators={{
-                                    onChange: z.string().transform(numberStringValidator(1024, 65535))
-                                }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Port'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Port'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 8 }}>
                             <Field
                                 name={'address_internal'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.TextField
                                             label={'Address Internal'}
+                                            helpText={
+                                                'A private network/VPN to access the host. Used for SSH. If empty the normal address is used.'
+                                            }
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 8 }}>
+                            <form.AppField
+                                name={'address_sdr'}
+                                children={(field) => {
+                                    return (
+                                        <field.TextField
+                                            label={'Address SDR'}
+                                            helpText={
+                                                'When using SDR, you can use this to give your servers dynamically updating DNS names.'
+                                            }
                                         />
                                     );
                                 }}
@@ -170,146 +200,80 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'password'}
-                                validators={{
-                                    onChange: z.string().length(20)
-                                }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Server Auth Key'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Server Auth Key'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'rcon'}
-                                validators={{
-                                    onChange: z.string().min(6)
-                                }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} value={props.state.value} label={'RCON Password'} />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'RCON Password'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'log_secret'}
-                                validators={{
-                                    onChange: z.string().transform(numberStringValidator(100000000, 999999999))
-                                }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} value={props.state.value} label={'Log Secret'} />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Log Secret'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'region'}
-                                validators={{
-                                    onChange: z.string().min(1)
-                                }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Region'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Region'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'cc'}
-                                validators={{
-                                    onChange: z.string().length(2)
-                                }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} value={props.state.value} label={'Country Code'} />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Country Code'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'latitude'}
-                                validators={{
-                                    onChange: z.string().transform(numberStringValidator(-99, 99))
-                                }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Latitude'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Latitude'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'longitude'}
-                                validators={{
-                                    onChange: z.string().transform(numberStringValidator(-180, 180))
-                                }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Longitude'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Longitude'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'reserved_slots'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Reserved Slots'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Reserved Slots'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'is_enabled'}
-                                validators={{
-                                    onChange: z.boolean()
-                                }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Is Enabled'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Is Enabled'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'enabled_stats'}
-                                validators={{
-                                    onChange: z.boolean()
-                                }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Stats Enabled'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Stats Enabled'} />;
                                 }}
                             />
                         </Grid>

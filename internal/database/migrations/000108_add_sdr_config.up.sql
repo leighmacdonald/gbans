@@ -12,4 +12,10 @@ ALTER TABLE config
 ALTER TABLE config
     ADD COLUMN IF NOT EXISTS network_cf_email text not null DEFAULT '';
 
+ALTER TABLE config
+    ADD COLUMN IF NOT EXISTS network_cf_zone_id text not null DEFAULT '';
+
+ALTER TABLE server
+    ADD COLUMN IF NOT EXISTS address_sdr text not null default '';
+
 COMMIT;
