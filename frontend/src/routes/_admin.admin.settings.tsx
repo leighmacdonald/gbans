@@ -555,7 +555,17 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             sdr_enabled: settings.network.sdr_enabled,
             sdr_dns_enabled: settings.network.sdr_dns_enabled,
             cf_key: settings.network.cf_key,
-            cf_email: settings.network.cf_email
+            cf_email: settings.network.cf_email,
+            cf_zone_id: settings.network.cf_zone_id
+        },
+        validators: {
+            onChange: z.object({
+                sdr_enabled: z.boolean(),
+                sdr_dns_enabled: z.boolean(),
+                cf_key: z.string(),
+                cf_email: z.string().email(),
+                cf_zone_id: z.string()
+            })
         }
     });
 
@@ -575,16 +585,16 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             >
                 <ConfigContainer>
                     <Grid size={{ xs: 12 }}>
-                        <Typography variant={'h3'}>Configure SDR Features</Typography>
+                        <Typography variant={'h3'}>Steam Datagram Relay</Typography>
+                        <Typography variant={'body1'}>
+                            Steam Datagram Relay (SDR) is Valve's virtual private gaming network.
+                        </Typography>
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>Enable SDR (Steam Data Relay)</SubHeading>
                         <form.AppField
                             name={'sdr_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={() => {
                                 return <CheckboxField label={'Enable SDR networking mode'} />;
                             }}
@@ -604,39 +614,45 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                        <Typography variant={'h3'}>Configure DNS Providers</Typography>
+                        <Typography variant={'h3'}>Cloudflare</Typography>
+                        <Typography variant={'body1'}>
+                            Current cloudflare is the only supported DNS provider. If you want to see others added, feel
+                            free to open a github issue.
+                        </Typography>
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                        <Typography variant={'h5'}>Configure DNS Providers</Typography>
-                    </Grid>
-
-                    <Grid size={{ xs: 12 }}>
-                        <SubHeading>
-                            Your API key created on cloudflare. This key must have DNS editing privileges.
-                        </SubHeading>
+                        <SubHeading></SubHeading>
                         <form.AppField
                             name={'cf_key'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
-                                return <field.TextField label={'API Key'} />;
+                                return (
+                                    <field.TextField
+                                        label={'API Key'}
+                                        type={'password'}
+                                        helpText={
+                                            'Your API key created on cloudflare. This key must have DNS editing privileges.'
+                                        }
+                                    />
+                                );
                             }}
                         />
                     </Grid>
 
-                    <Typography variant={'h5'}>Configure Toplevel Features</Typography>
-
                     <Grid size={{ xs: 12 }}>
-                        <SubHeading>
-                            Sets the default page to load when a user opens the root url <kbd>example.com/</kbd>.
-                        </SubHeading>
+                        <SubHeading>Account Email Address</SubHeading>
                         <form.AppField
                             name={'cf_email'}
-                            validators={{
-                                onChange: z.string()
+                            children={(field) => {
+                                return <field.TextField label={'Email'} />;
                             }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Zone ID for the domain.</SubHeading>
+                        <form.AppField
+                            name={'cf_zone_id'}
                             children={(field) => {
                                 return <field.TextField label={'Email'} />;
                             }}
