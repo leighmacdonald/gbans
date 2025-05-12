@@ -1,6 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
@@ -10,7 +11,6 @@ import { z } from 'zod';
 import { apiCreateSMAdmin, apiSaveSMAdmin, AuthType, hasSMFlag, SMAdmin, SMGroups } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
 
 type mutateAdminArgs = {
@@ -54,11 +54,11 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
             edit.mutate({ ...value, immunity: Number(value.immunity), flags: flags });
         },
         defaultValues: {
-            auth_type: admin?.auth_type ? admin.auth_type : 'steam',
+            auth_type: admin?.auth_type ?? 'steam',
             identity: admin?.identity ? admin.identity : '',
             password: admin?.password ? admin.password : '',
             name: admin?.name ?? '',
-            immunity: admin?.immunity ? String(admin.immunity) : '',
+            immunity: admin?.immunity ?? 0,
             z: hasSMFlag('z', admin),
             a: hasSMFlag('a', admin),
             b: hasSMFlag('b', admin),
@@ -80,6 +80,36 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
             r: hasSMFlag('r', admin),
             s: hasSMFlag('s', admin),
             t: hasSMFlag('t', admin)
+        },
+        validators: {
+            onSubmit: z.object({
+                auth_type: z.enum(['steam', 'name', 'ip']),
+                identity: z.string(),
+                password: z.string(),
+                name: z.string(),
+                immunity: z.number().min(0).max(99),
+                z: z.boolean(),
+                a: z.boolean(),
+                b: z.boolean(),
+                c: z.boolean(),
+                d: z.boolean(),
+                e: z.boolean(),
+                f: z.boolean(),
+                g: z.boolean(),
+                h: z.boolean(),
+                i: z.boolean(),
+                j: z.boolean(),
+                k: z.boolean(),
+                l: z.boolean(),
+                m: z.boolean(),
+                n: z.boolean(),
+                o: z.boolean(),
+                p: z.boolean(),
+                q: z.boolean(),
+                r: z.boolean(),
+                s: z.boolean(),
+                t: z.boolean()
+            })
         }
     });
 
@@ -101,9 +131,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'name'}
-                                validators={{
-                                    onChange: z.string().min(2)
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Alias'} />;
                                 }}
@@ -112,9 +139,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'password'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Password'} />;
                                 }}
@@ -123,9 +147,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'auth_type'}
-                                validators={{
-                                    onChange: z.enum(['steam', 'name', 'ip'])
-                                }}
                                 children={(field) => {
                                     return (
                                         <field.SelectField
@@ -146,11 +167,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'identity'}
-                                validators={{
-                                    // TODO use proper validation based on selected auth type
-                                    // Name requires password
-                                    onChange: z.string().min(1)
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Identity'} />;
                                 }}
@@ -160,9 +176,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'immunity'}
-                                validators={{
-                                    onChange: z.string().transform(numberStringValidator(0, 100))
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Immunity Level'} />;
                                 }}
@@ -172,7 +185,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'z'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(z) Full Admin'} />;
                                 }}
@@ -181,7 +193,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'a'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(a) Reserved Slot'} />;
                                 }}
@@ -190,7 +201,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'b'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(b) Generic Admin'} />;
                                 }}
@@ -199,7 +209,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'c'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(c) Kick Players'} />;
                                 }}
@@ -208,7 +217,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'d'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(d) Ban Players'} />;
                                 }}
@@ -217,7 +225,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'e'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(e) Unban Players'} />;
                                 }}
@@ -226,7 +233,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'f'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(f) Slay/Harm Players'} />;
                                 }}
@@ -235,7 +241,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'g'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(g) Change Maps'} />;
                                 }}
@@ -244,7 +249,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'h'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(h) Change CVARs'} />;
                                 }}
@@ -253,7 +257,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'i'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(i) Exec Configs'} />;
                                 }}
@@ -262,7 +265,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'j'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(j) Special Chat Privileges'} />;
                                 }}
@@ -271,7 +273,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'k'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(k) Start Votes'} />;
                                 }}
@@ -280,7 +281,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'l'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(l) Set Server Password'} />;
                                 }}
@@ -289,7 +289,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'m'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(m) RCON Access'} />;
                                 }}
@@ -298,7 +297,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'n'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(n) Enabled Cheats'} />;
                                 }}
@@ -307,7 +305,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'o'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(o) Custom Flag'} />;
                                 }}
@@ -316,7 +313,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'p'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(p) Custom Flag'} />;
                                 }}
@@ -325,7 +321,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'q'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(q) Custom Flag'} />;
                                 }}
@@ -334,7 +329,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'r'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(r) Custom Flag'} />;
                                 }}
@@ -343,7 +337,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'s'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(s) Custom Flag'} />;
                                 }}
@@ -352,7 +345,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'t'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(t) Custom Flag'} />;
                                 }}
@@ -370,13 +362,15 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.CloseButton
-                                    onClick={async () => {
-                                        await modal.hide();
-                                    }}
-                                />
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.CloseButton
+                                        onClick={async () => {
+                                            await modal.hide();
+                                        }}
+                                    />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>

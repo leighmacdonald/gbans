@@ -1,5 +1,7 @@
+import CheckIcon from '@mui/icons-material/Check';
 import Button, { ButtonProps } from '@mui/material/Button';
 import { useFormContext } from '../../../contexts/formContext.tsx';
+import { variant } from './index.ts';
 
 type Props = {
     label?: string;
@@ -12,7 +14,13 @@ export const SubmitButton = (props: Props) => {
     return (
         <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-                <Button {...props} type="submit" variant={'contained'}>
+                <Button
+                    {...props}
+                    type="submit"
+                    variant={variant}
+                    color={'success'}
+                    startIcon={props.startIcon ?? <CheckIcon />}
+                >
                     {isSubmitting ? (props.labelLoading ?? '...') : (props.label ?? 'Submit')}
                 </Button>
             )}

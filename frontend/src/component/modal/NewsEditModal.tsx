@@ -9,6 +9,12 @@ import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 
+const schema = z.object({
+    body_md: z.string().min(10),
+    title: z.string().min(4),
+    is_published: z.boolean()
+});
+
 export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry }) => {
     const modal = useModal();
     const { sendError, sendFlash } = useUserFlashCtx();
@@ -40,11 +46,7 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
             is_published: entry?.is_published ?? false
         },
         validators: {
-            onSubmit: z.object({
-                body_md: z.string().min(10),
-                title: z.string().min(4),
-                is_published: z.boolean()
-            })
+            onSubmit: schema
         }
     });
 

@@ -6,7 +6,6 @@ import { renderHelpText } from './renderHelpText.ts';
 
 type Props = {
     label: string; // Make it required
-    helpText?: string;
 } & TextFieldProps;
 
 export const TextField = <TData = string,>(props: Props) => {
@@ -21,7 +20,7 @@ export const TextField = <TData = string,>(props: Props) => {
             variant="filled"
             defaultValue={field.state.value}
             error={errors.length > 0}
-            helperText={renderHelpText(errors, props.helpText)}
+            helperText={renderHelpText(errors, props.helperText)}
         />
     );
 };

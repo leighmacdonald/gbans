@@ -9,6 +9,15 @@ import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 
+const schema = z.object({
+    address: z.string().refine((arg) => {
+        const pieces = arg.split('/');
+        const addr = pieces[0];
+        const result = z.string().ip(addr).safeParse(addr);
+        return result.success;
+    })
+});
+
 export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: WhitelistIP }) => {
     const modal = useModal();
     const { sendError } = useUserFlashCtx();
@@ -40,6 +49,9 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
         },
         defaultValues: {
             address: source?.address ?? ''
+        },
+        validators: {
+            onSubmit: schema
         }
     });
     return (
@@ -59,14 +71,6 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'address'}
-                                validators={{
-                                    onChange: z.string().refine((arg) => {
-                                        const pieces = arg.split('/');
-                                        const addr = pieces[0];
-                                        const result = z.string().ip(addr).safeParse(addr);
-                                        return result.success;
-                                    })
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'IP Addr'} />;
                                 }}

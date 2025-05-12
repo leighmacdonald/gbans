@@ -1,6 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
@@ -17,14 +18,14 @@ import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 
-type FilterEditFormValues = {
-    pattern: string;
-    is_regex: boolean;
-    is_enabled?: boolean;
-    action: FilterAction;
-    duration: string;
-    weight: string;
-};
+const schema = z.object({
+    is_enabled: z.boolean(),
+    is_regex: z.boolean(),
+    pattern: z.string().min(2),
+    action: z.nativeEnum(FilterAction),
+    duration: z.string(),
+    weight: z.number()
+});
 
 export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }) => {
     const modal = useModal();
@@ -32,7 +33,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 
     const mutation = useMutation({
         mutationKey: ['filters'],
-        mutationFn: async (values: FilterEditFormValues) => {
+        mutationFn: async (values: z.input<typeof schema>) => {
             if (filter?.filter_id) {
                 return await apiEditFilter(filter?.filter_id, {
                     is_enabled: values.is_enabled,
@@ -40,7 +41,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                     pattern: values.pattern,
                     action: values.action,
                     duration: values.duration,
-                    weight: Number(values.weight)
+                    weight: values.weight
                 });
             } else {
                 return await apiCreateFilter({
@@ -49,7 +50,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                     pattern: values.pattern,
                     action: values.action,
                     duration: values.duration,
-                    weight: Number(values.weight)
+                    weight: values.weight
                 });
             }
         },
@@ -72,22 +73,15 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
             });
         },
         defaultValues: {
-            pattern: filter ? String(filter.pattern) : '',
+            pattern: filter?.pattern ?? '',
             is_regex: filter?.is_regex ?? false,
             is_enabled: filter?.is_enabled ?? true,
             action: filter?.action ?? FilterAction.Kick,
             duration: filter?.duration ?? '1w',
-            weight: filter ? String(filter.weight) : '1'
+            weight: filter?.weight ?? 1
         },
         validators: {
-            onSubmit: z.object({
-                pattern: z.string({ message: 'Must entry pattern' }).min(2),
-                is_regex: z.boolean(),
-                action: z.nativeEnum(FilterAction, { message: 'Must select an action' }),
-                duration: z.string({ message: 'Must provide a duration' }),
-                weight: z.string(),
-                is_enabled: z.boolean()
-            })
+            onSubmit: schema
         }
     });
 
@@ -161,9 +155,6 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'is_enabled'}
-                                validators={{
-                                    onSubmit: z.boolean()
-                                }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'Is Enabled'} />;
                                 }}
@@ -175,8 +166,10 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>

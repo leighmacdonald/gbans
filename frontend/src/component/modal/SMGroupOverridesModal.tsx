@@ -180,7 +180,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
             <DialogActions>
                 <Grid container>
                     <Grid size={{ xs: 12 }}>
-                        <ButtonGroup variant={'contained'}>
+                        <ButtonGroup>
                             <Button startIcon={<AddIcon />} color={'success'} onClick={onCreate}>
                                 New
                             </Button>

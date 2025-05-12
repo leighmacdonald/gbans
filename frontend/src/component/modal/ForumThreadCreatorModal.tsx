@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -19,6 +20,13 @@ type ForumThreadEditorValues = {
     sticky: boolean;
     locked: boolean;
 };
+
+const schema = z.object({
+    title: z.string().min(2),
+    body_md: z.string().min(2),
+    sticky: z.boolean(),
+    locked: z.boolean()
+});
 
 export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: Forum }) => {
     const threadModal = useModal(ModalForumThreadCreator);
@@ -72,6 +80,9 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
             body_md: '',
             sticky: false,
             locked: false
+        },
+        validators: {
+            onSubmit: schema
         }
     });
 
@@ -96,9 +107,6 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
-                                validators={{
-                                    onChange: z.string().min(3)
-                                }}
                                 name={'title'}
                                 children={(field) => {
                                     return <field.TextField label={'Title'} />;
@@ -107,9 +115,6 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
-                                validators={{
-                                    onChange: z.string().min(10)
-                                }}
                                 name={'body_md'}
                                 children={(field) => {
                                     return <field.MarkdownField label={'Message'} />;
@@ -138,8 +143,10 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>
