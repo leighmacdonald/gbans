@@ -1,11 +1,13 @@
 import { useCallback } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
+import { z } from 'zod';
 import { apiDeleteThread, apiUpdateThread, ForumThread } from '../../api/forum';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -17,6 +19,12 @@ type ThreadEditValues = {
     sticky: boolean;
     locked: boolean;
 };
+
+const schema = z.object({
+    title: z.string().min(2),
+    sticky: z.boolean(),
+    locked: z.boolean()
+});
 
 export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: ForumThread }) => {
     const modal = useModal();
@@ -65,6 +73,9 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
             title: thread.title,
             sticky: thread.sticky,
             locked: thread.locked
+        },
+        validators: {
+            onSubmit: schema
         }
     });
 
@@ -112,9 +123,11 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.ClearButton onClick={onDelete} />
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.ClearButton onClick={onDelete} />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>

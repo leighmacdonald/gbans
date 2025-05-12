@@ -1,24 +1,23 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import { apiCreateBanGroup, apiUpdateBanGroup, Duration, DurationCollection, GroupBanRecord } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 
-type BanGroupFormValues = {
-    ban_group_id?: number;
-    target_id: string;
-    group_id: string;
-    duration: Duration;
-    duration_custom: string;
-    note: string;
-};
+const schema = z.object({
+    target_id: z.string(),
+    group_id: z.string(),
+    duration: z.nativeEnum(Duration),
+    duration_custom: z.date(),
+    note: z.string()
+});
 
 export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupBanRecord }) => {
     const modal = useModal();
@@ -26,13 +25,13 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
 
     const mutation = useMutation({
         mutationKey: ['banGroup'],
-        mutationFn: async (values: BanGroupFormValues) => {
+        mutationFn: async (values: z.input<typeof schema>) => {
             try {
                 if (existing?.ban_group_id) {
                     const ban_record = apiUpdateBanGroup(existing.ban_group_id, {
                         note: values.note,
                         target_id: values.target_id,
-                        valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
+                        valid_until: values.duration_custom
                     });
                     sendFlash('success', 'Updated CIDR ban successfully');
                     modal.resolve(ban_record);
@@ -40,7 +39,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                     const ban_record = await apiCreateBanGroup({
                         note: values.note,
                         duration: values.duration,
-                        valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
+                        valid_until: values.duration_custom,
                         target_id: values.target_id,
                         group_id: values.group_id
                     });
@@ -68,8 +67,11 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
             target_id: existing ? existing.target_id : '',
             group_id: existing ? existing.group_id : '',
             duration: existing ? Duration.durCustom : Duration.dur2w,
-            duration_custom: existing ? existing.valid_until.toISOString() : '',
+            duration_custom: existing?.valid_until ?? new Date(),
             note: existing ? existing.note : ''
+        },
+        validators: {
+            onSubmit: schema
         }
     });
     return (
@@ -90,7 +92,6 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'target_id'}
-                                // validators={makeSteamidValidators()}
                                 children={(field) => {
                                     return (
                                         <field.SteamIDField
@@ -104,9 +105,6 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'group_id'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Steam Group ID'} />;
                                 }}
@@ -115,9 +113,6 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'duration'}
-                                validators={{
-                                    onChange: z.nativeEnum(Duration)
-                                }}
                                 children={(field) => {
                                     return (
                                         <field.SelectField
@@ -148,9 +143,6 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'note'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(field) => {
                                     return <field.MarkdownField multiline={true} rows={10} label={'Mod Notes'} />;
                                 }}
@@ -162,7 +154,10 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>

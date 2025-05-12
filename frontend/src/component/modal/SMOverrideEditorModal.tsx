@@ -1,6 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
@@ -72,6 +73,33 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
             r: hasSMFlag('r', override),
             s: hasSMFlag('s', override),
             t: hasSMFlag('t', override)
+        },
+        validators: {
+            onSubmit: z.object({
+                type: z.enum(['command', 'group']),
+                name: z.string().min(2),
+                z: z.boolean(),
+                a: z.boolean(),
+                b: z.boolean(),
+                c: z.boolean(),
+                d: z.boolean(),
+                e: z.boolean(),
+                f: z.boolean(),
+                g: z.boolean(),
+                h: z.boolean(),
+                i: z.boolean(),
+                j: z.boolean(),
+                k: z.boolean(),
+                l: z.boolean(),
+                m: z.boolean(),
+                n: z.boolean(),
+                o: z.boolean(),
+                p: z.boolean(),
+                q: z.boolean(),
+                r: z.boolean(),
+                s: z.boolean(),
+                t: z.boolean()
+            })
         }
     });
 
@@ -121,7 +149,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'z'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(z) Full Admin'} />;
                                 }}
@@ -130,7 +157,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'a'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(a) Reserved Slot'} />;
                                 }}
@@ -139,7 +165,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'b'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(b) Generic Admin'} />;
                                 }}
@@ -148,7 +173,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'c'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(c) Kick Players'} />;
                                 }}
@@ -157,7 +181,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'d'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(d) Ban Players'} />;
                                 }}
@@ -166,7 +189,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'e'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(e) Unban Players'} />;
                                 }}
@@ -175,7 +197,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'f'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(f) Slay/Harm Players'} />;
                                 }}
@@ -184,7 +205,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'g'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(g) Change Maps'} />;
                                 }}
@@ -193,7 +213,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'h'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(h) Change CVARs'} />;
                                 }}
@@ -202,7 +221,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'i'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(i) Exec Configs'} />;
                                 }}
@@ -211,7 +229,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'j'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(j) Special Chat Privileges'} />;
                                 }}
@@ -220,7 +237,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'k'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(k) Start Votes'} />;
                                 }}
@@ -229,7 +245,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'l'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(l) Set Server Password'} />;
                                 }}
@@ -238,7 +253,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'m'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(m) RCON Access'} />;
                                 }}
@@ -247,7 +261,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'n'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(n) Enabled Cheats'} />;
                                 }}
@@ -256,7 +269,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'o'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(o) Custom Flag'} />;
                                 }}
@@ -265,7 +277,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'p'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(p) Custom Flag'} />;
                                 }}
@@ -274,7 +285,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'q'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(q) Custom Flag'} />;
                                 }}
@@ -283,7 +293,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'r'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(r) Custom Flag'} />;
                                 }}
@@ -292,7 +301,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'s'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(s) Custom Flag'} />;
                                 }}
@@ -301,7 +309,6 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'t'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(t) Custom Flag'} />;
                                 }}
@@ -314,13 +321,15 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.CloseButton
-                                    onClick={async () => {
-                                        await modal.hide();
-                                    }}
-                                />
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.CloseButton
+                                        onClick={async () => {
+                                            await modal.hide();
+                                        }}
+                                    />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>

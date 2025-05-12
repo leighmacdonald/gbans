@@ -312,6 +312,7 @@ export const ReportCreateForm = (): JSX.Element => {
                 <Grid container spacing={2}>
                     <Grid size={{ xs: 12 }}>
                         <form.AppField
+                            asyncDebounceMs={500}
                             name={'target_id'}
                             children={(field) => {
                                 return <field.SteamIDField disabled={Boolean(steam_id)} label={'SteamID'} />;
@@ -324,7 +325,11 @@ export const ReportCreateForm = (): JSX.Element => {
                             children={(field) => {
                                 return (
                                     <field.SelectField
-                                        label={'Override Type'}
+                                        defaultValue={''}
+                                        label={'Ban Reason'}
+                                        helperText={
+                                            'Reason for being reported. Please try and use these categories as much as possible.'
+                                        }
                                         items={banReasonsCollection}
                                         renderItem={(r) => {
                                             return (
@@ -344,8 +349,8 @@ export const ReportCreateForm = (): JSX.Element => {
                             name={'reason_text'}
                             validators={{
                                 onChangeListenTo: ['reason'],
-                                onChange: ({ value, fieldApi }) => {
-                                    if (fieldApi.form.getFieldValue('reason') == BanReason.Custom) {
+                                onSubmit: ({ value }) => {
+                                    if (form.getFieldValue('reason') == BanReason.Custom) {
                                         return z.string().min(2, { message: 'Must enter custom reason' }).parse(value);
                                     }
 
@@ -353,7 +358,16 @@ export const ReportCreateForm = (): JSX.Element => {
                                 }
                             }}
                             children={(field) => {
-                                return <field.TextField fullWidth label="Custom Reason" />;
+                                return (
+                                    <field.TextField
+                                        fullWidth
+                                        label="Custom Reason"
+                                        helperText={
+                                            'Choosing custom in the reason selector will allow you to enter your reason here.'
+                                        }
+                                        disabled={form.state.values.reason != BanReason.Custom}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -390,14 +404,21 @@ export const ReportCreateForm = (): JSX.Element => {
                             name={'body_md'}
                             validators={{ onChange: z.string().min(10, 'Message must be at least 10 characters.') }}
                             children={(field) => {
-                                return <field.MarkdownField label={'Message (Markdown)'} />;
+                                return (
+                                    <field.MarkdownField
+                                        label={'Message (Markdown)'}
+                                        helperText={'A description of why you think this person is breaking the rules.'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </Grid>

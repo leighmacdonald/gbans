@@ -1,8 +1,10 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
+import { z } from 'zod';
 import { apiCreateWhitelistSteam } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -34,6 +36,11 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
         },
         defaultValues: {
             steam_id: ''
+        },
+        validators: {
+            onSubmit: z.object({
+                steam_id: z.string()
+            })
         }
     });
     return (
@@ -53,7 +60,6 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'steam_id'}
-                                // validators={makeSteamidValidators()}
                                 children={(field) => {
                                     return <field.SteamIDField label={'Steam ID'} />;
                                 }}
@@ -65,13 +71,15 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.CloseButton
-                                    onClick={async () => {
-                                        await modal.hide();
-                                    }}
-                                />
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.CloseButton
+                                        onClick={async () => {
+                                            await modal.hide();
+                                        }}
+                                    />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>

@@ -1,6 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import BlockIcon from '@mui/icons-material/Block';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -9,11 +10,11 @@ import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 
-interface CIDRBlockEditorValues {
-    name: string;
-    url: string;
-    enabled: boolean;
-}
+const schema = z.object({
+    name: z.string().min(2),
+    url: z.string().url(),
+    enabled: z.boolean()
+});
 
 export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CIDRBlockSource }) => {
     const modal = useModal();
@@ -21,7 +22,7 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
 
     const mutation = useMutation({
         mutationKey: ['blockSource'],
-        mutationFn: async (values: CIDRBlockEditorValues) => {
+        mutationFn: async (values: z.input<typeof schema>) => {
             if (source?.cidr_block_source_id) {
                 const resp = await apiUpdateCIDRBlockSource(
                     source.cidr_block_source_id,
@@ -55,11 +56,7 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
             enabled: source?.enabled ?? true
         },
         validators: {
-            onSubmit: z.object({
-                name: z.string().min(2),
-                url: z.string().url(),
-                enabled: z.boolean()
-            })
+            onSubmit: schema
         }
     });
 
@@ -107,8 +104,10 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>
