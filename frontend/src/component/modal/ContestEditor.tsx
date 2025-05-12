@@ -192,7 +192,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                             <form.AppField
                                 name={'date_start'}
                                 children={(field) => {
-                                    return <field.DateTimeField label={'Custom Expire Date'} />;
+                                    return <field.DateTimeField label={'Start Date'} />;
                                 }}
                             />
                         </Grid>
@@ -200,7 +200,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                             <form.AppField
                                 name={'date_end'}
                                 children={(field) => {
-                                    return <field.DateTimeField label={'Custom Expire Date'} />;
+                                    return <field.DateTimeField label={'End Date'} />;
                                 }}
                             />
                         </Grid>
@@ -208,7 +208,14 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                             <form.AppField
                                 name={'media_types'}
                                 children={(field) => {
-                                    return <field.TextField label={'Allowed Mime Types'} />;
+                                    return (
+                                        <field.TextField
+                                            label={'Allowed Mime Types'}
+                                            helperText={
+                                                'A comma separated list of acceptable mime types. If empty, all types are allowed.'
+                                            }
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
