@@ -1,11 +1,14 @@
-import CloseIcon from '@mui/icons-material/Close';
+import { ReactNode } from 'react';
 import Button, { ButtonProps } from '@mui/material/Button';
 import { useFormContext } from '../../../contexts/formContext.tsx';
-import { variant } from './index.ts';
 
 type Props = {
     label?: string;
     labelLoading?: string;
+    disabled?: boolean;
+    startIcon?: ReactNode;
+    endIcon?: ReactNode;
+    onClick: () => void | Promise<void>;
 } & ButtonProps;
 
 export const CloseButton = (props: Props) => {
@@ -14,7 +17,7 @@ export const CloseButton = (props: Props) => {
     return (
         <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-                <Button {...props} type="button" variant={variant} startIcon={props.startIcon ?? <CloseIcon />}>
+                <Button {...props} type="button">
                     {isSubmitting ? (props.labelLoading ?? '...') : (props.label ?? 'Close')}
                 </Button>
             )}

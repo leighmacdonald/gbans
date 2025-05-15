@@ -6,7 +6,6 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -164,19 +163,21 @@ function AdminBanASN() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid size={{ xs: 6, md: 3 }}>
-                                <form.AppField
-                                    name={'source_id'}
-                                    children={(field) => {
-                                        return <field.SteamIDField label={'Author Steam ID'} />;
-                                    }}
-                                />
+                            <Grid size={{ xs: 4 }}>
+                                <Grid size={{ xs: 6, md: 3 }}>
+                                    <form.AppField
+                                        name={'source_id'}
+                                        children={(field) => {
+                                            return <field.TextField label={'Author Steam ID'} />;
+                                        }}
+                                    />
+                                </Grid>
                             </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
                                 <form.AppField
                                     name={'target_id'}
                                     children={(field) => {
-                                        return <field.SteamIDField label={'Subject Steam ID'} />;
+                                        return <field.TextField label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>
@@ -200,13 +201,9 @@ function AdminBanASN() {
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
-                                <form.AppForm>
-                                    <ButtonGroup>
-                                        <form.ClearButton onClick={clear} />
-                                        <form.ResetButton />
-                                        <form.SubmitButton />
-                                    </ButtonGroup>
-                                </form.AppForm>
+                                <form.ClearButton onClick={clear} />
+                                <form.ResetButton />
+                                <form.SubmitButton />
                             </Grid>
                         </Grid>
                     </form>

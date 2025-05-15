@@ -12,7 +12,7 @@ type Props<TData> = {
     labelLoading?: string;
     items: TData[];
     renderItem: (item: TData) => ReactNode;
-    helperText?: ReactNode;
+    helpText?: string;
 } & SelectProps;
 
 export const SelectField = <TData,>(props: Props<TData>) => {
@@ -31,11 +31,9 @@ export const SelectField = <TData,>(props: Props<TData>) => {
                     field.handleChange(event.target.value as TData);
                 }}
             >
-                {props?.items.map((i) => {
-                    return props.renderItem(i);
-                })}
+                {props.items.map(props.renderItem)}
             </Select>
-            <FormHelperText>{renderHelpText(errors, props.helperText)}</FormHelperText>
+            <FormHelperText>{renderHelpText(errors, props.helpText)}</FormHelperText>
         </FormControl>
     );
 };

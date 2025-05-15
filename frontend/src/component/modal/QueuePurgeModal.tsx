@@ -1,7 +1,6 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -11,10 +10,6 @@ import { apiQueueMessagesDelete, ChatLog } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-
-const schema = z.object({
-    count: z.number().min(1).max(10000)
-});
 
 export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog }) => {
     const modal = useModal();
@@ -41,10 +36,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
             });
         },
         defaultValues: {
-            count: 1
-        },
-        validators: {
-            onSubmit: schema
+            count: '1'
         }
     });
 
@@ -72,6 +64,12 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                             <Grid size={{ xs: 8 }}>
                                 <form.AppField
                                     name={'count'}
+                                    validators={{
+                                        onChange: z
+                                            .string({ coerce: true, message: 'Must enter positive number' })
+                                            .min(1)
+                                            .max(10000)
+                                    }}
                                     children={(field) => {
                                         return <field.TextField label={'How many messages to delete / purge.'} />;
                                     }}
@@ -84,10 +82,8 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <ButtonGroup>
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
-                                </ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
                             </form.AppForm>
                         </Grid>
                     </Grid>

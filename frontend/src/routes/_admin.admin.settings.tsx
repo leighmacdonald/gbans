@@ -6,7 +6,6 @@ import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 import EmergencyRecordingIcon from '@mui/icons-material/EmergencyRecording';
 import GradingIcon from '@mui/icons-material/Grading';
 import HeadsetMicIcon from '@mui/icons-material/HeadsetMic';
-import HubIcon from '@mui/icons-material/Hub';
 import LanIcon from '@mui/icons-material/Lan';
 import PaymentIcon from '@mui/icons-material/Payment';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -234,7 +233,7 @@ function AdminServers() {
                             <TabButton
                                 tab={'network'}
                                 onClick={onTabClick}
-                                icon={<HubIcon />}
+                                icon={<LanIcon />}
                                 currentTab={tab}
                                 label={'Network'}
                             />
@@ -270,7 +269,6 @@ function AdminServers() {
                     <DemosSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <PatreonSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <DiscordSection tab={tab} settings={settings} mutate={mutation.mutate} />
-                    <NetworkSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <LoggingSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <GeoLocationSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <LocalStoreSection tab={tab} settings={settings} mutate={mutation.mutate} />

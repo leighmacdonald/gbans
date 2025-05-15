@@ -1,7 +1,6 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import 'video-react/dist/video-react.css';
@@ -25,12 +24,6 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGrou
         },
         defaultValues: {
             group: groups[0]
-        },
-        validators: {
-            // TODO
-            // onSubmit: z.object({
-            //     group:
-            // })
         }
     });
 
@@ -79,15 +72,13 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGrou
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <ButtonGroup>
-                                    <form.CloseButton
-                                        onClick={async () => {
-                                            await modal.hide();
-                                        }}
-                                    />
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
-                                </ButtonGroup>
+                                <form.CloseButton
+                                    onClick={async () => {
+                                        await modal.hide();
+                                    }}
+                                />
+                                <form.ResetButton />
+                                <form.SubmitButton />
                             </form.AppForm>
                         </Grid>
                     </Grid>

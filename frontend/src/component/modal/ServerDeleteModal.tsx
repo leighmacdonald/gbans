@@ -11,7 +11,7 @@ export interface DeleteServerModalProps extends ConfirmationModalProps<Server> {
 
 export const ServerDeleteModal = ({ onSuccess, server }: DeleteServerModalProps) => {
     const { sendError, sendFlash } = useUserFlashCtx();
-    // TODO mutation
+
     const handleSubmit = useCallback(async () => {
         try {
             await apiDeleteServer(server.server_id);

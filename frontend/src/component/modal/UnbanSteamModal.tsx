@@ -1,6 +1,5 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -40,11 +39,6 @@ export const UnbanSteamModal = NiceModal.create(
             },
             defaultValues: {
                 unban_reason: ''
-            },
-            validators: {
-                onSubmit: z.object({
-                    unban_reason: z.string().min(5)
-                })
             }
         });
 
@@ -66,6 +60,9 @@ export const UnbanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'unban_reason'}
+                                    validators={{
+                                        onChange: z.string().min(5)
+                                    }}
                                     children={(field) => {
                                         return <field.TextField label={'Unban Reason'} />;
                                     }}
@@ -78,15 +75,13 @@ export const UnbanSteamModal = NiceModal.create(
                         <Grid container>
                             <Grid size={{ xs: 12 }}>
                                 <form.AppForm>
-                                    <ButtonGroup>
-                                        <form.CloseButton
-                                            onClick={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                        <form.ResetButton />
-                                        <form.SubmitButton />
-                                    </ButtonGroup>
+                                    <form.CloseButton
+                                        onClick={async () => {
+                                            await modal.hide();
+                                        }}
+                                    />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
                                 </form.AppForm>
                             </Grid>
                         </Grid>

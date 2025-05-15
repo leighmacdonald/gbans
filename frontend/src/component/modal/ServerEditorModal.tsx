@@ -1,7 +1,6 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import RouterIcon from '@mui/icons-material/Router';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -134,7 +133,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     return (
                                         <field.TextField
                                             label={'Short Name/Tag'}
-                                            helperText={'A short, unique, identifier.'}
+                                            helpText={'A short, unique, identifier.'}
                                         />
                                     );
                                 }}
@@ -171,7 +170,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     return (
                                         <field.TextField
                                             label={'Address Internal'}
-                                            helperText={
+                                            helpText={
                                                 'A private network/VPN to access the host. Used for SSH. If empty the normal address is used.'
                                             }
                                         />
@@ -186,7 +185,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     return (
                                         <field.TextField
                                             label={'Address SDR'}
-                                            helperText={
+                                            helpText={
                                                 'When using SDR, you can use this to give your servers dynamically updating DNS names.'
                                             }
                                         />
@@ -280,15 +279,13 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <ButtonGroup>
-                                    <form.CloseButton
-                                        onClick={async () => {
-                                            await modal.hide();
-                                        }}
-                                    />
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
-                                </ButtonGroup>
+                                <form.CloseButton
+                                    onClick={async () => {
+                                        await modal.hide();
+                                    }}
+                                />
+                                <form.ResetButton />
+                                <form.SubmitButton />
                             </form.AppForm>
                         </Grid>
                     </Grid>
