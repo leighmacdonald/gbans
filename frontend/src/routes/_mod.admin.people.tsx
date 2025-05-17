@@ -3,6 +3,7 @@ import NiceModal from '@ebay/nice-modal-react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -136,9 +137,11 @@ function AdminPeople() {
 
                             <Grid size={{ xs: 12 }}>
                                 <form.AppForm>
-                                    <form.ClearButton onClick={clear} />
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
+                                    <ButtonGroup>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
                                 </form.AppForm>
                             </Grid>
                         </Grid>

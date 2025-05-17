@@ -2,6 +2,7 @@ import { MouseEvent, useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import Grid from '@mui/material/Grid';
@@ -92,8 +93,10 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>

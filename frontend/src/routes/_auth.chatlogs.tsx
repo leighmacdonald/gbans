@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ChatIcon from '@mui/icons-material/Chat';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useQuery } from '@tanstack/react-query';
@@ -223,9 +224,11 @@ function ChatLogs() {
 
                                 <Grid size={{ xs: 12 }}>
                                     <form.AppForm>
-                                        <form.ClearButton onClick={clear} />
-                                        <form.ResetButton />
-                                        <form.SubmitButton />
+                                        <ButtonGroup>
+                                            <form.ClearButton onClick={clear} />
+                                            <form.ResetButton />
+                                            <form.SubmitButton />
+                                        </ButtonGroup>
                                     </form.AppForm>
                                 </Grid>
                             </Grid>

@@ -11,6 +11,7 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
@@ -319,8 +320,10 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                     </Grid>
                                     <Grid size={{ xs: 12 }}>
                                         <form.AppForm>
-                                            <form.ResetButton />
-                                            <form.SubmitButton />
+                                            <ButtonGroup>
+                                                <form.ResetButton />
+                                                <form.SubmitButton />
+                                            </ButtonGroup>
                                         </form.AppForm>
                                     </Grid>
                                 </Grid>
