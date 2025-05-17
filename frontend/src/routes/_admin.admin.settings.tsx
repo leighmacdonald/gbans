@@ -24,14 +24,29 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
 import { apiGetDemoCleanup, apiGetNetworkUpdateDB } from '../api';
-import { apiGetSettings, apiSaveSettings, Config } from '../api/admin.ts';
+import {
+    apiGetSettings,
+    apiSaveSettings,
+    Config,
+    schemaDebug,
+    schemaDemos,
+    schemaDiscord,
+    schemaExports,
+    schemaFilters,
+    schemaGeneral,
+    schemaGeo,
+    schemaLocalStore,
+    schemaLogging,
+    schemaNetwork,
+    schemaPatreon,
+    schemaSSH
+} from '../api/admin.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { Title } from '../component/Title';
 import { CheckboxField } from '../component/form/field/CheckboxField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
-import { numberStringValidator } from '../util/validator/numberStringValidator.ts';
 
 const settingsSchema = z.object({
     section: z
@@ -54,7 +69,7 @@ const settingsSchema = z.object({
 });
 
 export const Route = createFileRoute('/_admin/admin/settings')({
-    component: AdminServers,
+    component: AdminSettings,
     validateSearch: (search) => settingsSchema.parse(search),
     loader: ({ context }) => {
         return context.queryClient.fetchQuery({
@@ -141,7 +156,7 @@ export const SubHeading = ({ children }: PropsWithChildren) => (
     </Typography>
 );
 
-function AdminServers() {
+function AdminSettings() {
     const { sendFlash, sendError } = useUserFlashCtx();
     const settings = Route.useLoaderData();
     const { section } = Route.useSearch();
@@ -284,28 +299,14 @@ function AdminServers() {
 }
 
 const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaGeneral> = settings.general;
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, general: value });
         },
-        defaultValues: {
-            srcds_log_addr: settings.general.srcds_log_addr,
-            file_serve_mode: settings.general.file_serve_mode,
-            mode: settings.general.mode,
-            site_name: settings.general.site_name,
-            asset_url: settings.general.asset_url,
-            default_route: settings.general.default_route,
-            news_enabled: settings.general.news_enabled,
-            forums_enabled: settings.general.forums_enabled,
-            contests_enabled: settings.general.contests_enabled,
-            wiki_enabled: settings.general.wiki_enabled,
-            stats_enabled: settings.general.stats_enabled,
-            servers_enabled: settings.general.servers_enabled,
-            reports_enabled: settings.general.reports_enabled,
-            chatlogs_enabled: settings.general.chatlogs_enabled,
-            demos_enabled: settings.general.demos_enabled,
-            speedruns_enabled: settings.general.speedruns_enabled,
-            playerqueue_enabled: settings.general.playerqueue_enabled
+        defaultValues,
+        validators: {
+            onSubmit: schemaGeneral
         }
     });
 
@@ -314,7 +315,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             tab={'general'}
             currentTab={tab}
             label={'General'}
-            description={'Core settings that dont fit into a subcategory'}
+            description={'Core settings that do not fit into a subcategory'}
         >
             <form
                 onSubmit={async (e) => {
@@ -331,9 +332,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'site_name'}
-                            validators={{
-                                onChange: z.string().min(1).max(32)
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Global Site Name'} />;
                             }}
@@ -343,9 +341,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
                         <form.AppField
                             name={'asset_url'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'URL path pointing to assets'} />;
                             }}
@@ -359,9 +354,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'srcds_log_addr'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'UDP Log Listen Address'} />;
                             }}
@@ -376,9 +368,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'default_route'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Default Index Route'} />;
                             }}
@@ -389,9 +378,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enable the news/blog functionality.</SubHeading>
                         <form.AppField
                             name={'news_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable news features.'} />;
                             }}
@@ -402,9 +388,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enabled/disable the forums functionality.</SubHeading>
                         <form.AppField
                             name={'forums_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable forums'} />;
                             }}
@@ -418,9 +401,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'contests_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable contests'} />;
                             }}
@@ -433,9 +413,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'wiki_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable Wiki'} />;
                             }}
@@ -445,9 +422,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Allows users to search and download demos.</SubHeading>
                         <form.AppField
                             name={'demos_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable Demo/STV Support'} />;
                             }}
@@ -457,9 +431,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Process demos and calculate game stats.</SubHeading>
                         <form.AppField
                             name={'stats_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable Game Stats'} />;
                             }}
@@ -472,9 +443,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'servers_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable Servers Page'} />;
                             }}
@@ -485,9 +453,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Allows users to report other users.</SubHeading>
                         <form.AppField
                             name={'reports_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable User Reports'} />;
                             }}
@@ -498,9 +463,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enable showing the searchable chatlogs.</SubHeading>
                         <form.AppField
                             name={'chatlogs_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable public chatlogs'} />;
                             }}
@@ -511,9 +473,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enables the 1000 uncles speedruns tracking support.</SubHeading>
                         <form.AppField
                             name={'speedruns_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable Speedruns support'} />;
                             }}
@@ -525,9 +484,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'playerqueue_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable Playerqueue support'} />;
                             }}
@@ -548,25 +504,14 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 };
 
 const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaNetwork> = settings.network;
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, network: value });
         },
-        defaultValues: {
-            sdr_enabled: settings.network.sdr_enabled,
-            sdr_dns_enabled: settings.network.sdr_dns_enabled,
-            cf_key: settings.network.cf_key,
-            cf_email: settings.network.cf_email,
-            cf_zone_id: settings.network.cf_zone_id
-        },
+        defaultValues,
         validators: {
-            onChange: z.object({
-                sdr_enabled: z.boolean(),
-                sdr_dns_enabled: z.boolean(),
-                cf_key: z.string(),
-                cf_email: z.string().email(),
-                cf_zone_id: z.string()
-            })
+            onChange: schemaNetwork
         }
     });
 
@@ -605,9 +550,6 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
                         <form.AppField
                             name={'sdr_dns_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={() => {
                                 return <CheckboxField label={'Enable SDR DNS updates'} />;
                             }}
@@ -618,7 +560,7 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <Typography variant={'h3'}>Cloudflare</Typography>
                         <Typography variant={'body1'}>
                             Current cloudflare is the only supported DNS provider. If you want to see others added, feel
-                            free to open a github issue.
+                            free to open a Github issue.
                         </Typography>
                     </Grid>
 
@@ -675,19 +617,14 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 };
 
 const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaFilters> = settings.filters;
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, filters: value });
         },
-        defaultValues: {
-            enabled: settings.filters.enabled,
-            warning_timeout: settings.filters.warning_timeout,
-            warning_limit: settings.filters.warning_limit,
-            dry: settings.filters.dry,
-            ping_discord: settings.filters.ping_discord,
-            max_weight: settings.filters.max_weight,
-            check_timeout: settings.filters.check_timeout,
-            match_timeout: settings.filters.match_timeout
+        defaultValues,
+        validators: {
+            onSubmit: schemaFilters
         }
     });
 
@@ -713,9 +650,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enable/disable the feature</SubHeading>
                         <form.AppField
                             name={'enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable Word Filters'} />;
                             }}
@@ -725,9 +659,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>If a user gets a warning, it will expire after this duration of time.</SubHeading>
                         <form.AppField
                             name={'warning_timeout'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(1, 1000000))
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'How long until a warning expires (seconds)'} />;
                             }}
@@ -740,9 +671,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'warning_limit'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 1000))
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Maximum number of warnings allowed'} />;
                             }}
@@ -753,9 +681,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Run the chat filters, but do not actually punish users.</SubHeading>
                         <form.AppField
                             name={'dry'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable dry run mode'} />;
                             }}
@@ -765,9 +690,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>If discord is enabled, send filter match notices to the log channel.</SubHeading>
                         <form.AppField
                             name={'ping_discord'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Send discord notices on match'} />;
                             }}
@@ -780,9 +702,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'max_weight'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(1, 1000))
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Max Weight'} />;
                             }}
@@ -792,9 +711,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>How frequent warnings will be checked for users exceeding limits.</SubHeading>
                         <form.AppField
                             name={'check_timeout'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(5, 300))
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Check Frequency (seconds)'} />;
                             }}
@@ -805,9 +721,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>How long it takes for a users warning to expire after being matched.</SubHeading>
                         <form.AppField
                             name={'match_timeout'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(1, 10000))
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Match Timeout'} />;
                             }}
@@ -829,6 +742,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 };
 
 const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaDemos> = settings.demo;
     const queryClient = useQueryClient();
     const { sendFlash } = useUserFlashCtx();
 
@@ -836,13 +750,9 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
         onSubmit: async ({ value }) => {
             mutate({ ...settings, demo: value });
         },
-        defaultValues: {
-            demo_cleanup_enabled: settings.demo.demo_cleanup_enabled,
-            demo_cleanup_strategy: settings.demo.demo_cleanup_strategy ?? 'pctfree',
-            demo_cleanup_min_pct: settings.demo.demo_cleanup_min_pct,
-            demo_cleanup_mount: settings.demo.demo_cleanup_mount,
-            demo_count_limit: settings.demo.demo_count_limit,
-            demo_parser_url: settings.demo.demo_parser_url
+        defaultValues: defaultValues,
+        validators: {
+            onSubmit: schemaDemos
         }
     });
 
@@ -887,9 +797,6 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         </SubHeading>
                         <form.AppField
                             name={'demo_cleanup_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable Scheduled Demo Cleanup'} />;
                             }}
@@ -899,9 +806,6 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         <SubHeading>Method used to determine what demos to delete.</SubHeading>
                         <form.AppField
                             name={'demo_cleanup_strategy'}
-                            validators={{
-                                onChange: z.enum(['pctfree', 'count'])
-                            }}
                             children={(field) => {
                                 return (
                                     <field.SelectField
@@ -926,9 +830,6 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         </SubHeading>
                         <form.AppField
                             name={'demo_cleanup_min_pct'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100))
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Minimum percent free space to retain'} />;
                             }}
@@ -939,9 +840,6 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         <SubHeading>The mount point that demos are stored. Used to determine free space.</SubHeading>
                         <form.AppField
                             name={'demo_cleanup_mount'}
-                            validators={{
-                                onChange: z.string().startsWith('/')
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Mount point to check for free space'} />;
                             }}
@@ -953,9 +851,6 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         </SubHeading>
                         <form.AppField
                             name={'demo_count_limit'}
-                            validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100000))
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Max amount of demos to keep'} />;
                             }}
@@ -969,9 +864,6 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         </SubHeading>
                         <form.AppField
                             name={'demo_parser_url'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'URL for demo parsing submissions'} />;
                             }}
@@ -993,17 +885,14 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 };
 
 const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaPatreon> = settings.patreon;
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, patreon: value });
         },
-        defaultValues: {
-            enabled: settings.patreon.enabled,
-            integrations_enabled: settings.patreon.integrations_enabled,
-            client_id: settings.patreon.client_id,
-            client_secret: settings.patreon.client_secret,
-            creator_access_token: settings.patreon.creator_access_token,
-            creator_refresh_token: settings.patreon.creator_refresh_token
+        defaultValues,
+        validators: {
+            onSubmit: schemaPatreon
         }
     });
 
@@ -1021,9 +910,6 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enabled/Disable patreon integrations</SubHeading>
                         <form.AppField
                             name={'enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable Patreon Integration'} />;
                             }}
@@ -1035,9 +921,6 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'integrations_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable website integrations'} />;
                             }}
@@ -1047,9 +930,6 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Your patron client ID</SubHeading>
                         <form.AppField
                             name={'client_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Client ID'} />;
                             }}
@@ -1059,9 +939,6 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Patreon app client secret</SubHeading>
                         <form.AppField
                             name={'client_secret'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Client Secret'} />;
                             }}
@@ -1072,9 +949,6 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Access token</SubHeading>
                         <form.AppField
                             name={'creator_access_token'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Access Token'} />;
                             }}
@@ -1084,9 +958,6 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Refresh token</SubHeading>
                         <form.AppField
                             name={'creator_refresh_token'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Refresh Token'} />;
                             }}
@@ -1108,32 +979,14 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 };
 
 const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaDiscord> = settings.discord;
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, discord: value });
         },
-        defaultValues: {
-            enabled: settings.discord.enabled,
-            bot_enabled: settings.discord.bot_enabled,
-            integrations_enabled: settings.discord.integrations_enabled,
-            app_id: settings.discord.app_id,
-            app_secret: settings.discord.app_secret,
-            link_id: settings.discord.link_id,
-            token: settings.discord.token,
-            guild_id: settings.discord.guild_id,
-            log_channel_id: settings.discord.log_channel_id,
-            public_log_channel_enable: settings.discord.public_log_channel_enable,
-            public_log_channel_id: settings.discord.public_log_channel_id,
-            public_match_log_channel_id: settings.discord.public_match_log_channel_id,
-            mod_ping_role_id: settings.discord.mod_ping_role_id,
-            vote_log_channel_id: settings.discord.vote_log_channel_id,
-            appeal_log_channel_id: settings.discord.appeal_log_channel_id,
-            ban_log_channel_id: settings.discord.ban_log_channel_id,
-            forum_log_channel_id: settings.discord.forum_log_channel_id,
-            word_filter_log_channel_id: settings.discord.word_filter_log_channel_id,
-            kick_log_channel_id: settings.discord.kick_log_channel_id,
-            playerqueue_channel_id: settings.discord.playerqueue_channel_id,
-            anticheat_channel_id: settings.discord.anticheat_channel_id
+        defaultValues,
+        validators: {
+            onSubmit: schemaDiscord
         }
     });
 
@@ -1151,9 +1004,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enabled or disable all discord integration.</SubHeading>
                         <form.AppField
                             name={'enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable discord integration'} />;
                             }}
@@ -1161,15 +1011,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>
-                            Enabled the discord bot integration. This is self-hosted within the app. You must create a
+                            Enabled the discord bot integration. This is self-hosted within the app. You can create a
                             discord application{' '}
                             <Link href={'https://discord.com/developers/applications?new_application=true'}>here</Link>.
                         </SubHeading>
                         <form.AppField
                             name={'bot_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Discord Bot'} />;
                             }}
@@ -1182,9 +1029,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'integrations_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable website integrations'} />;
                             }}
@@ -1194,9 +1038,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Your discord application ID.</SubHeading>
                         <form.AppField
                             name={'app_id'}
-                            validators={{
-                                onChange: z.string().refine((arg) => arg.length == 0 || arg.length == 18)
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Discord app ID'} />;
                             }}
@@ -1206,9 +1047,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Your discord app secret.</SubHeading>
                         <form.AppField
                             name={'app_secret'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Discord bot app secret'} />;
                             }}
@@ -1218,13 +1056,10 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             The unique ID for your permanent discord link. This is only the unique string at the end if
-                            an invite url: https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
+                            a invite url: https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
                         </SubHeading>
                         <form.AppField
                             name={'link_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Invite link ID'} />;
                             }}
@@ -1234,9 +1069,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Bot authentication token.</SubHeading>
                         <form.AppField
                             name={'token'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Discord Bot Token'} />;
                             }}
@@ -1249,9 +1081,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'guild_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Discord guild ID'} />;
                             }}
@@ -1259,14 +1088,11 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>
-                            This should be a private channel. Its the default log channel and is used as the default for
-                            other channels if their id is empty.
+                            This should be a private channel. It's the default log channel and is used as the default
+                            for other channels if their id is empty.
                         </SubHeading>
                         <form.AppField
                             name={'log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Log channel ID'} />;
                             }}
@@ -1275,9 +1101,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     <Grid size={{ xs: 12 }}>
                         <form.AppField
                             name={'public_log_channel_enable'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable public log channel'} />;
                             }}
@@ -1288,9 +1111,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>What role to include when pinging for certain events being sent.</SubHeading>
                         <form.AppField
                             name={'mod_ping_role_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Mod ping role ID'} />;
                             }}
@@ -1300,9 +1120,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Public log channel ID.</SubHeading>
                         <form.AppField
                             name={'public_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Public log channel ID'} />;
                             }}
@@ -1310,14 +1127,11 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>
-                            A channel to send match logs to. This can be very large and spammy, so its generally best to
-                            use a separate channel, but not required.
+                            A channel to send match logs to. This can be very large and spammy, so it's generally best
+                            to use a separate channel, but not required.
                         </SubHeading>
                         <form.AppField
                             name={'public_match_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Public match log channel ID'} />;
                             }}
@@ -1326,14 +1140,11 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>
-                            A channel to send in-game kick voting. This can be very noisy, so its generally best to use
+                            A channel to send in-game kick voting. This can be very noisy, so it's generally best to use
                             a separate channel, but not required.
                         </SubHeading>
                         <form.AppField
                             name={'vote_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Vote log channel ID'} />;
                             }}
@@ -1343,9 +1154,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>New appeals and appeal messages are shown here.</SubHeading>
                         <form.AppField
                             name={'appeal_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Appeal changelog channel ID'} />;
                             }}
@@ -1353,14 +1161,11 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>
-                            A channel to send match logs to. This can be very large and spammy, so its generally best to
-                            use a separate channel, but not required. This only shows steam based bans.
+                            A channel to send match logs to. This can be very large and spammy, so it's generally best
+                            to use a separate channel, but not required. This only shows steam based bans.
                         </SubHeading>
                         <form.AppField
                             name={'ban_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'New ban log channel ID'} />;
                             }}
@@ -1372,9 +1177,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'forum_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Forum activity log channel ID'} />;
                             }}
@@ -1384,9 +1186,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>A channel to send notices to when a user triggers a word filter.</SubHeading>
                         <form.AppField
                             name={'word_filter_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Word filter log channel ID'} />;
                             }}
@@ -1399,9 +1198,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'kick_log_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Kick log channel ID'} />;
                             }}
@@ -1411,9 +1207,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>A channel which relays the chat messages from the website chat lobby.</SubHeading>
                         <form.AppField
                             name={'playerqueue_channel_id'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Playerqueue log channel ID'} />;
                             }}
@@ -1435,16 +1228,14 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 };
 
 const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaLogging> = settings.log;
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, log: value });
         },
-        defaultValues: {
-            level: settings.log.level ?? 'info',
-            file: settings.log.file,
-            http_enabled: settings.log.http_enabled,
-            http_otel_enabled: settings.log.http_otel_enabled,
-            http_level: settings.log.http_level
+        defaultValues,
+        validators: {
+            onSubmit: schemaLogging
         }
     });
 
@@ -1462,9 +1253,6 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>What logging level to use.</SubHeading>
                         <form.AppField
                             name={'level'}
-                            validators={{
-                                onChange: z.enum(['debug', 'info', 'warn', 'error'])
-                            }}
                             children={(field) => {
                                 return (
                                     <field.SelectField
@@ -1486,9 +1274,6 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>If supplied, save log output to this file as well as stdout.</SubHeading>
                         <form.AppField
                             name={'file'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Log file'} />;
                             }}
@@ -1499,9 +1284,6 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enables logging for incoming HTTP requests.</SubHeading>
                         <form.AppField
                             name={'http_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable HTTP request logs'} />;
                             }}
@@ -1511,9 +1293,6 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>Enables OpenTelemetry support (span id/trace id).</SubHeading>
                         <form.AppField
                             name={'http_otel_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable OpenTelemetry Support'} />;
                             }}
@@ -1524,11 +1303,6 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>What logging level to use for HTTP requests.</SubHeading>
                         <form.AppField
                             name={'http_level'}
-                            validators={
-                                {
-                                    //onChange: z.string()
-                                }
-                            }
                             children={(field) => {
                                 return (
                                     <field.SelectField
@@ -1570,15 +1344,15 @@ const GeoLocationSection = ({
     settings: Config;
     mutate: (s: Config) => void;
 }) => {
+    const defaultValues: z.input<typeof schemaGeo> = settings.geo_location;
     const { sendFlash } = useUserFlashCtx();
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, geo_location: value });
         },
-        defaultValues: {
-            enabled: settings.geo_location.enabled,
-            cache_path: settings.geo_location.cache_path,
-            token: settings.geo_location.token
+        defaultValues,
+        validators: {
+            onSubmit: schemaGeo
         }
     });
 
@@ -1619,12 +1393,9 @@ const GeoLocationSection = ({
                         </Button>
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                        <SubHeading>Enables the download and usage of geo location tools.</SubHeading>
+                        <SubHeading>Enables the download and usage of geolocation tools.</SubHeading>
                         <form.AppField
                             name={'enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable geolocation services'} />;
                             }}
@@ -1634,9 +1405,6 @@ const GeoLocationSection = ({
                         <SubHeading>Your ip2location API key.</SubHeading>
                         <form.AppField
                             name={'token'}
-                            validators={{
-                                onChange: z.string().refine((arg) => arg.length == 0 || arg.length == 64)
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'API Key'} />;
                             }}
@@ -1646,9 +1414,6 @@ const GeoLocationSection = ({
                         <SubHeading>Path to store downloaded databases.</SubHeading>
                         <form.AppField
                             name={'cache_path'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Database download cache path'} />;
                             }}
@@ -1669,13 +1434,14 @@ const GeoLocationSection = ({
 };
 
 const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaDebug> = settings.debug;
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, debug: value });
         },
-        defaultValues: {
-            skip_open_id_validation: settings.debug.skip_open_id_validation,
-            add_rcon_log_address: settings.debug.add_rcon_log_address
+        defaultValues,
+        validators: {
+            onSubmit: schemaDebug
         }
     });
 
@@ -1700,9 +1466,6 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         </SubHeading>
                         <form.AppField
                             name={'skip_open_id_validation'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Skip OpenID validation'} />;
                             }}
@@ -1712,13 +1475,10 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Add this additional address to all known servers to start receiving log events. Make sure
-                            you setup port forwarding.
+                            you set up port forwarding.
                         </SubHeading>
                         <form.AppField
                             name={'add_rcon_log_address'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Extra log_address'} placeholder={'127.0.0.1:27715'} />;
                             }}
@@ -1740,12 +1500,14 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 };
 
 const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaLocalStore> = settings.local_store;
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, local_store: value });
         },
-        defaultValues: {
-            path_root: settings.local_store.path_root
+        defaultValues,
+        validators: {
+            onSubmit: schemaLocalStore
         }
     });
 
@@ -1767,9 +1529,6 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
                     <Grid size={{ xs: 12 }}>
                         <form.AppField
                             name={'path_root'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Path to store assets'} />;
                             }}
@@ -1792,20 +1551,14 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
 };
 
 const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaSSH> = settings.ssh;
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ssh: value });
         },
-        defaultValues: {
-            enabled: settings.ssh.enabled,
-            username: settings.ssh.username,
-            port: settings.ssh.port,
-            private_key_path: settings.ssh.private_key_path,
-            password: settings.ssh.password,
-            update_interval: settings.ssh.update_interval,
-            timeout: settings.ssh.timeout,
-            demo_path_fmt: settings.ssh.demo_path_fmt,
-            stac_path_fmt: settings.ssh.stac_path_fmt
+        defaultValues,
+        validators: {
+            onSubmit: schemaSSH
         }
     });
 
@@ -1828,9 +1581,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>Enable the use of SSH/SCP for downloading demos from a remote server.</SubHeading>
                         <form.AppField
                             name={'enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable SSH downloader'} />;
                             }}
@@ -1840,9 +1590,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>SSH username</SubHeading>
                         <form.AppField
                             name={'username'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'SSH username'} />;
                             }}
@@ -1854,9 +1601,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         </SubHeading>
                         <form.AppField
                             name={'port'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'SSH port'} />;
                             }}
@@ -1866,9 +1610,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>Path to your private key if using key based authentication.</SubHeading>
                         <form.AppField
                             name={'private_key_path'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Path to private key'} />;
                             }}
@@ -1880,9 +1621,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         </SubHeading>
                         <form.AppField
                             name={'password'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'SSH/Private key password'} />;
                             }}
@@ -1892,9 +1630,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>How often to connect to remove systems and check for demos.</SubHeading>
                         <form.AppField
                             name={'update_interval'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Check frequency (seconds)'} />;
                             }}
@@ -1904,9 +1639,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         <SubHeading>Connection timeout.</SubHeading>
                         <form.AppField
                             name={'timeout'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Connection timeout (seconds)'} />;
                             }}
@@ -1919,9 +1651,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         </SubHeading>
                         <form.AppField
                             name={'demo_path_fmt'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Path format for retrieving demos'} />;
                             }}
@@ -1934,9 +1663,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                         </SubHeading>
                         <form.AppField
                             name={'stac_path_fmt'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Path format for retrieving stac logs'} />;
                             }}
@@ -1957,14 +1683,14 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 };
 
 const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaExports> = settings.exports;
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, exports: value });
         },
-        defaultValues: {
-            bd_enabled: settings.exports.bd_enabled,
-            valve_enabled: settings.exports.valve_enabled,
-            authorized_keys: settings.exports.authorized_keys
+        defaultValues,
+        validators: {
+            onSubmit: schemaExports
         }
     });
 
@@ -1991,9 +1717,6 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'authorized_keys'}
-                            validators={{
-                                onChange: z.string()
-                            }}
                             children={(field) => {
                                 return <field.TextField label={'Authorized Keys (comma separated).'} />;
                             }}
@@ -2006,9 +1729,6 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'bd_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable tf2 bot detector compatible export'} />;
                             }}
@@ -2021,9 +1741,6 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         </SubHeading>
                         <form.AppField
                             name={'valve_enabled'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
                             children={(field) => {
                                 return <field.CheckboxField label={'Enable srcds formatted ban list'} />;
                             }}
