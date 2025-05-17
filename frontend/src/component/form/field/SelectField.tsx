@@ -5,6 +5,7 @@ import InputLabel from '@mui/material/InputLabel';
 import Select, { SelectProps } from '@mui/material/Select';
 import { useStore } from '@tanstack/react-form';
 import { useFieldContext } from '../../../contexts/formContext.tsx';
+import { defaultFieldVariant } from '../../../theme.ts';
 import { renderHelpText } from './renderHelpText.ts';
 
 type Props<TData> = {
@@ -12,7 +13,7 @@ type Props<TData> = {
     labelLoading?: string;
     items: TData[];
     renderItem: (item: TData) => ReactNode;
-    helpText?: string;
+    helperText?: ReactNode | string;
 } & SelectProps;
 
 export const SelectField = <TData,>(props: Props<TData>) => {
@@ -26,14 +27,14 @@ export const SelectField = <TData,>(props: Props<TData>) => {
                 {...props}
                 id={`select-${props.name}`}
                 fullWidth
-                variant={'filled'}
+                variant={defaultFieldVariant}
                 onChange={(event) => {
                     field.handleChange(event.target.value as TData);
                 }}
             >
                 {props.items.map(props.renderItem)}
             </Select>
-            <FormHelperText>{renderHelpText(errors, props.helpText)}</FormHelperText>
+            <FormHelperText>{renderHelpText(errors, props.helperText)}</FormHelperText>
         </FormControl>
     );
 };

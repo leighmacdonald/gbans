@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
@@ -112,9 +113,11 @@ function AdminVotes() {
 
                             <Grid size={{ xs: 12 }}>
                                 <form.AppForm>
-                                    <form.ClearButton onClick={clear} />
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
+                                    <ButtonGroup>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
                                 </form.AppForm>
                             </Grid>
                         </Grid>

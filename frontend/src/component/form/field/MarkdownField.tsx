@@ -25,10 +25,9 @@ import {
 } from '@mdxeditor/editor';
 import { headingsPlugin } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
-import Paper from '@mui/material/Paper';
+import FormHelperText from '@mui/material/FormHelperText';
 import Stack from '@mui/material/Stack';
 import { TextFieldProps } from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import * as Sentry from '@sentry/react';
 import { useStore } from '@tanstack/react-form';
@@ -38,6 +37,7 @@ import { useUserFlashCtx } from '../../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../../util/errors.ts';
 import { errorDialog } from '../../ErrorBoundary.tsx';
 import './MarkdownField.css';
+import { renderHelpText } from './renderHelpText.ts';
 
 export type MDBodyFieldProps = {
     fileUpload?: boolean;
@@ -86,66 +86,57 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
     }, [theme.mode]);
 
     const errInfo = useMemo(() => {
-        return errors ? (
-            <Typography padding={1} color={theme.palette.error.main}>
-                {errors.map(String).join(', ')}
-            </Typography>
-        ) : (
-            <></>
+        return (
+            <FormHelperText error={errors.length > 0}>
+                {renderHelpText(errors, 'Editor supports markdown only, no bbcode or html tags.')}
+            </FormHelperText>
         );
-    }, [errors, theme.palette.error.main]);
+    }, [errors]);
 
     return (
-        <Paper>
-            <Sentry.ErrorBoundary showDialog={true} fallback={errorDialog}>
-                <MDXEditor
-                    contentEditableClassName={'md-content-editable'}
-                    className={classes}
-                    autoFocus={true}
-                    markdown={field.state.value}
-                    placeholder={props.placeholder ?? 'Message (Min length: 10 characters)'}
-                    plugins={[
-                        toolbarPlugin({
-                            toolbarContents: () => (
-                                <Stack direction={'row'}>
-                                    <UndoRedo />
-                                    <BoldItalicUnderlineToggles />
-                                    <CodeToggle />
-                                    <InsertImage />
-                                    <InsertTable />
-                                    <InsertThematicBreak />
-                                    <ListsToggle />
-                                </Stack>
-                            )
-                        }),
-                        listsPlugin(),
-                        quotePlugin(),
-                        headingsPlugin(),
-                        linkPlugin(),
-                        linkDialogPlugin(),
-                        imagePlugin({ imageUploadHandler }),
-                        tablePlugin(),
-                        thematicBreakPlugin(),
-                        frontmatterPlugin(),
-                        codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
-                        directivesPlugin({
-                            directiveDescriptors: [AdmonitionDirectiveDescriptor]
-                        }),
-                        markdownShortcutPlugin()
-                    ]}
-                    onError={onError}
-                    onChange={() => {
-                        //props?.onChange(v);
-                        alert('fix');
-                    }}
-                    onBlur={() => {
-                        alert('fix2');
-                        //props.onBlur(true);
-                    }}
-                    ref={mdEditorRef}
-                />
-                {errInfo}
-            </Sentry.ErrorBoundary>
-        </Paper>
+        <Sentry.ErrorBoundary showDialog={true} fallback={errorDialog}>
+            <MDXEditor
+                contentEditableClassName={'md-content-editable'}
+                className={classes}
+                autoFocus={true}
+                markdown={field.state.value}
+                placeholder={props.placeholder ?? 'Message (Min length: 10 characters)'}
+                plugins={[
+                    toolbarPlugin({
+                        toolbarContents: () => (
+                            <Stack direction={'row'}>
+                                <UndoRedo />
+                                <BoldItalicUnderlineToggles />
+                                <CodeToggle />
+                                <InsertImage />
+                                <InsertTable />
+                                <InsertThematicBreak />
+                                <ListsToggle />
+                            </Stack>
+                        )
+                    }),
+                    listsPlugin(),
+                    quotePlugin(),
+                    headingsPlugin(),
+                    linkPlugin(),
+                    linkDialogPlugin(),
+                    imagePlugin({ imageUploadHandler }),
+                    tablePlugin(),
+                    thematicBreakPlugin(),
+                    frontmatterPlugin(),
+                    codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
+                    directivesPlugin({
+                        directiveDescriptors: [AdmonitionDirectiveDescriptor]
+                    }),
+                    markdownShortcutPlugin()
+                ]}
+                onError={onError}
+                onChange={(v) => {
+                    field.setValue(v);
+                }}
+                ref={mdEditorRef}
+            />
+            {errInfo}
+        </Sentry.ErrorBoundary>
     );
 };

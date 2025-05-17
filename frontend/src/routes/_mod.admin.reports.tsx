@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
@@ -157,8 +158,10 @@ function AdminReports() {
                             </Grid>
                             <Grid size={{ xs: 12 }}>
                                 <form.AppForm>
-                                    <form.ResetButton onClick={clear} />
-                                    <form.SubmitButton />
+                                    <ButtonGroup>
+                                        <form.ResetButton onClick={clear} />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
                                 </form.AppForm>
                             </Grid>
                         </Grid>

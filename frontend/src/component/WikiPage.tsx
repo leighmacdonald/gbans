@@ -129,13 +129,11 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.CloseButton
-                                    onClick={async () => {
-                                        setEditMode(false);
-                                    }}
-                                />
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.CloseButton />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>

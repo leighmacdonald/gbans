@@ -342,16 +342,6 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid size={{ xs: 6 }}>
                         <form.AppField
                             name={'reason_text'}
-                            validators={{
-                                onChangeListenTo: ['reason'],
-                                onChange: ({ value, fieldApi }) => {
-                                    if (fieldApi.form.getFieldValue('reason') == BanReason.Custom) {
-                                        return z.string().min(2, { message: 'Must enter custom reason' }).parse(value);
-                                    }
-
-                                    return z.string().parse(value);
-                                }
-                            }}
                             children={(field) => {
                                 return <field.TextField fullWidth label="Custom Reason" />;
                             }}
@@ -396,8 +386,10 @@ export const ReportCreateForm = (): JSX.Element => {
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </Grid>

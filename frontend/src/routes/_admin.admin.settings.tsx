@@ -14,6 +14,7 @@ import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import UpdateIcon from '@mui/icons-material/Update';
 import WebAssetIcon from '@mui/icons-material/WebAsset';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
@@ -534,8 +535,10 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>
@@ -628,7 +631,7 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                     <field.TextField
                                         label={'API Key'}
                                         type={'password'}
-                                        helpText={
+                                        helperText={
                                             'Your API key created on cloudflare. This key must have DNS editing privileges.'
                                         }
                                     />
@@ -659,8 +662,10 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>
@@ -693,7 +698,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             label={'Word Filters'}
             description={
                 'Word filters are a form of auto-moderation that scans ' +
-                'incoming chat logs and user names for matching values and handles them accordingly'
+                'incoming chat logs and usernames for matching values and handles them accordingly'
             }
         >
             <form
@@ -811,8 +816,10 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>
@@ -973,8 +980,10 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>
@@ -1086,8 +1095,10 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </Grid>
@@ -1150,8 +1161,8 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>
-                            Enabled the discord bot integration. This is self-hosted within the app. You must can create
-                            a discord application{' '}
+                            Enabled the discord bot integration. This is self-hosted within the app. You must create a
+                            discord application{' '}
                             <Link href={'https://discord.com/developers/applications?new_application=true'}>here</Link>.
                         </SubHeading>
                         <form.AppField
@@ -1207,7 +1218,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             The unique ID for your permanent discord link. This is only the unique string at the end if
-                            a invite url: https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
+                            an invite url: https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
                         </SubHeading>
                         <form.AppField
                             name={'link_id'}
@@ -1411,8 +1422,10 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>
@@ -1536,8 +1549,10 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>
@@ -1641,8 +1656,10 @@ const GeoLocationSection = ({
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>
@@ -1710,8 +1727,10 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>
@@ -1760,8 +1779,10 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>
@@ -1923,8 +1944,10 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                     </Grid>
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>
@@ -2020,8 +2043,10 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.ResetButton />
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </ConfigContainer>

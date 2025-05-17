@@ -6,6 +6,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import Person2Icon from '@mui/icons-material/Person2';
 import { IconButton } from '@mui/material';
 import Box from '@mui/material/Box';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -207,8 +208,10 @@ function ForumThreadPage() {
                                 </Grid>
                                 <Grid size={{ xs: 4 }}>
                                     <form.AppForm>
-                                        <form.ResetButton />
-                                        <form.SubmitButton />
+                                        <ButtonGroup>
+                                            <form.ResetButton />
+                                            <form.SubmitButton />
+                                        </ButtonGroup>
                                     </form.AppForm>
                                 </Grid>
                             </Grid>
