@@ -12,6 +12,7 @@ import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import List from '@mui/material/List';
@@ -286,7 +287,9 @@ const GeneralSection = ({
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </Grid>
@@ -339,7 +342,10 @@ const GameplaySection = ({
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </Grid>
@@ -412,7 +418,10 @@ const ForumSection = ({
 
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
-                            <form.SubmitButton />
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
                         </form.AppForm>
                     </Grid>
                 </Grid>

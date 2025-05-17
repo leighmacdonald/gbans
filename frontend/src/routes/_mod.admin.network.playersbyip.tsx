@@ -1,5 +1,6 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import WifiFindIcon from '@mui/icons-material/WifiFind';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
@@ -94,9 +95,11 @@ function AdminNetworkPlayersByCIDR() {
 
                             <Grid size={{ xs: 12 }}>
                                 <form.AppForm>
-                                    <form.ClearButton onClick={clear} />
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
+                                    <ButtonGroup>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
                                 </form.AppForm>
                             </Grid>
                         </Grid>

@@ -6,6 +6,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -175,9 +176,11 @@ function AdminBanCIDR() {
 
                             <Grid size={{ xs: 12 }}>
                                 <form.AppForm>
-                                    <form.ClearButton onClick={clear} />
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
+                                    <ButtonGroup>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
                                 </form.AppForm>
                             </Grid>
                         </Grid>

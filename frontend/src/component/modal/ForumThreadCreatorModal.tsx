@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -138,8 +139,10 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>

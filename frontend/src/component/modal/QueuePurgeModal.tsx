@@ -1,6 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -82,8 +83,10 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
                             <form.AppForm>
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
                             </form.AppForm>
                         </Grid>
                     </Grid>

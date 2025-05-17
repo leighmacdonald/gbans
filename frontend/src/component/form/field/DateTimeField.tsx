@@ -1,6 +1,7 @@
 import { DesktopDateTimePicker, DesktopDateTimePickerProps } from '@mui/x-date-pickers';
 import { useStore } from '@tanstack/react-form';
 import { useFieldContext } from '../../../contexts/formContext.tsx';
+import { defaultFieldVariant } from '../../../theme.ts';
 import { renderHelpText } from './renderHelpText.ts';
 
 type Props = { helpText?: string } & DesktopDateTimePickerProps;
@@ -17,7 +18,7 @@ export const DateTimeField = (props: Props) => {
             minDate={props.minDate ?? new Date()}
             slotProps={{
                 textField: {
-                    variant: 'outlined',
+                    variant: defaultFieldVariant,
                     error: errors.length > 0,
                     helperText: renderHelpText(errors, props.helpText)
                 }

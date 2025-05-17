@@ -2,6 +2,7 @@ import { ReactNode, useMemo } from 'react';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 import CellTowerIcon from '@mui/icons-material/CellTower';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Table from '@mui/material/Table';
@@ -111,9 +112,11 @@ function AdminNetworkInfo() {
 
                             <Grid size={{ xs: 12 }}>
                                 <form.AppForm>
-                                    <form.ClearButton onClick={clear} />
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
+                                    <ButtonGroup>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
                                 </form.AppForm>
                             </Grid>
                         </Grid>
