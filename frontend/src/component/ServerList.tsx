@@ -15,9 +15,9 @@ import { useQueueCtx } from '../hooks/useQueueCtx.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
-import { DataTable } from './DataTable.tsx';
 import { Flag } from './Flag';
 import { StyledBadge } from './StyledBadge.tsx';
+import { DataTable } from './table/DataTable.tsx';
 
 type ServerRow = BaseServer & { copy: string; connect: string };
 

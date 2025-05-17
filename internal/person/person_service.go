@@ -21,6 +21,7 @@ func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, persons domain.
 	handler := &personHandler{persons: persons, config: config}
 
 	engine.GET("/api/profile", handler.onAPIProfile())
+	engine.GET("/api/steam/validate", handler.onSteamValidate())
 
 	// authed
 	authedGrp := engine.Group("/")
@@ -123,6 +124,42 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, profile)
+	}
+}
+func (h personHandler) onSteamValidate() gin.HandlerFunc {
+	type steamValidateResponse struct {
+		SteamID     string `json:"steam_id"`
+		Hash        string `json:"hash"`
+		Personaname string `json:"personaname"`
+	}
+
+	return func(ctx *gin.Context) {
+		requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
+		defer cancelRequest()
+
+		var req domain.RequestQuery
+		if !httphelper.BindQuery(ctx, &req) {
+			return
+		}
+
+		response, err := h.persons.QueryProfile(requestCtx, req.Query)
+		if err != nil {
+			if errors.Is(err, domain.ErrInvalidSID) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrInvalidSID))
+
+				return
+			}
+
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, steamValidateResponse{
+			SteamID:     response.Player.SteamID.String(),
+			Hash:        response.Player.AvatarHash,
+			Personaname: response.Player.PersonaName,
+		})
 	}
 }
 

@@ -6,12 +6,12 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
@@ -19,17 +19,14 @@ import { z } from 'zod';
 import { apiGetBansSteam, BanReason, BanReasons, banReasonsCollection, SteamBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import { TableCellBool } from '../component/TableCellBool.tsx';
-import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
-import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
+import { FullTable } from '../component/table/FullTable.tsx';
+import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
@@ -84,7 +81,7 @@ function AdminBanSteam() {
         }
     };
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             setColumnFilters(initColumnFilter(value));
             await navigate({
@@ -102,7 +99,7 @@ function AdminBanSteam() {
 
     const clear = async () => {
         setColumnFilters([]);
-        reset();
+        form.reset();
         await navigate({
             to: '/admin/ban/steam',
             search: (prev) => ({
@@ -160,39 +157,37 @@ function AdminBanSteam() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'source_id'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Author Steam ID'} />;
+                                    children={(field) => {
+                                        return <field.TextField label={'Author Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'target_id'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Subject Steam ID'} />;
+                                    children={(field) => {
+                                        return <field.TextField label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'reason'}
-                                    children={(props) => {
+                                    children={(field) => {
                                         return (
-                                            <SelectFieldSimple
-                                                {...props}
-                                                value={props.state.value}
+                                            <field.SelectField
                                                 label={'Ban Reason'}
                                                 items={banReasonsCollection}
-                                                renderMenu={(i) => {
+                                                renderItem={(i) => {
                                                     if (i == undefined) {
                                                         return null;
                                                     }
@@ -208,32 +203,21 @@ function AdminBanSteam() {
                                 />
                             </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'deleted'}
-                                    children={({ state, handleBlur, handleChange }) => {
-                                        return (
-                                            <CheckboxSimple
-                                                value={state.value}
-                                                onBlur={handleBlur}
-                                                onChange={(_, v) => handleChange(v)}
-                                                label={'Show deleted/expired'}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.CheckboxField label={'Show deleted/expired'} />;
                                     }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <ButtonGroup>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

@@ -18,15 +18,6 @@ import { Heading } from '../Heading';
 import { LinearProgressWithLabel } from '../LinearProgresWithLabel';
 import { LoadingSpinner } from '../LoadingSpinner';
 
-// interface ContestEntryFormValues {
-//     contest_id: string;
-//     body_md: string;
-// }
-//
-// const validationSchema = yup.object({
-//     body_md: minStringValidator('Description', 1)
-// });
-
 export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id: number }) => {
     const [userUpload, setUserUpload] = useState<Nullable<UserUploadedFile>>();
     const [submittedOnce, setSubmittedOnce] = useState(false);

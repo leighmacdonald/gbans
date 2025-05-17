@@ -76,6 +76,24 @@ export interface Person extends UserProfile {
     ip_addr: string;
 }
 
+export type SteamValidate = {
+    steam_id: string;
+    hash: string;
+    personaname: string;
+};
+
+export const apiGetSteamValidate = async (query: string) => {
+    try {
+        return await apiCall<SteamValidate>(`/api/steam/validate?query=${query}`);
+    } catch {
+        return {
+            hash: '',
+            personaname: '',
+            steam_id: ''
+        } as SteamValidate;
+    }
+};
+
 export interface PlayerProfile {
     player: Person;
     friends?: Person[];

@@ -1,9 +1,9 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
 import {
@@ -14,12 +14,9 @@ import {
     FilterActionCollection,
     filterActionString
 } from '../../api/filters.ts';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
-import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 type FilterEditFormValues = {
     pattern: string;
@@ -64,7 +61,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({
                 pattern: String(value.pattern),
@@ -101,7 +98,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<FilterAltIcon />}>
@@ -110,41 +107,30 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 8 }}>
-                            <Field
+                            <form.AppField
                                 name={'pattern'}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Pattern'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Pattern'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'is_regex'}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Is Regex Pattern'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Is Regex Pattern'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'action'}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Action'}
                                             items={FilterActionCollection}
-                                            renderMenu={(fa) => {
+                                            renderItem={(fa) => {
                                                 return (
                                                     <MenuItem value={fa} key={`fa-${fa}`}>
                                                         {filterActionString(fa)}
@@ -157,45 +143,30 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'duration'}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} value={props.state.value} label={'Duration'} />;
+                                children={(field) => {
+                                    return <field.TextField label={'Duration'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'weight'}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Weight (1-100)'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Weight (1-100)'} />;
                                 }}
                             />
                         </Grid>
 
                         <Grid size={{ xs: 4 }}>
-                            <Field
+                            <form.AppField
                                 name={'is_enabled'}
                                 validators={{
                                     onSubmit: z.boolean()
                                 }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Is Enabled'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Is Enabled'} />;
                                 }}
                             />
                         </Grid>
@@ -204,12 +175,12 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />;
-                                }}
-                            />
+                            <form.AppForm>
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

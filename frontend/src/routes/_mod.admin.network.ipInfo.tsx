@@ -2,6 +2,7 @@ import { ReactNode, useMemo } from 'react';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 import CellTowerIcon from '@mui/icons-material/CellTower';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import Table from '@mui/material/Table';
@@ -10,7 +11,6 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import 'leaflet/dist/leaflet.css';
@@ -19,8 +19,7 @@ import { apiGetNetworkDetails } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { getFlagEmoji } from '../util/emoji.ts';
 import { emptyOrNullString } from '../util/types.ts';
 
@@ -69,7 +68,7 @@ function AdminNetworkInfo() {
         };
     }, [data]);
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/network/ipInfo', search: (prev) => ({ ...prev, ...value }) });
         },
@@ -98,31 +97,27 @@ function AdminNetworkInfo() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 12 }}>
-                                <Field
+                                <form.AppField
                                     name={'ip'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'IP Address'} />;
+                                    children={(field) => {
+                                        return <field.TextField label={'IP Address'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <ButtonGroup>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>
