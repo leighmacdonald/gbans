@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PlayerProfile } from '../../api';
+import { PlayerProfile } from '../../schema/people.ts';
 import { emptyOrNullString } from '../types.ts';
 import { validateSteamID } from './validateSteamID.ts';
 

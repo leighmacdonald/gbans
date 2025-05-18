@@ -11,13 +11,14 @@ import {
     PaginationState,
     useReactTable
 } from '@tanstack/react-table';
-import { apiContests, Contest } from '../api';
+import { apiContests } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title.tsx';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
+import { Contest } from '../schema/contest.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';

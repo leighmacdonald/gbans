@@ -10,7 +10,7 @@ import {
     TableOptions,
     useReactTable
 } from '@tanstack/react-table';
-import { apiGetServers, getSpeedrunsTopMap, ServerSimple, SpeedrunMapOverview } from '../api';
+import { apiGetServers, getSpeedrunsTopMap } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
@@ -18,6 +18,8 @@ import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
+import { ServerSimple } from '../schema/sourcemod.ts';
+import { SpeedrunMapOverview } from '../schema/speedrun.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime, durationString } from '../util/time.ts';

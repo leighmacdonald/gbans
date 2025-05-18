@@ -24,18 +24,7 @@ import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import {
-    apiGetBanBySteam,
-    apiGetReport,
-    apiReportSetState,
-    appealStateString,
-    BanReasons,
-    BanType,
-    PermissionLevel,
-    ReportStatus,
-    reportStatusColour,
-    reportStatusString
-} from '../api';
+import { apiGetBanBySteam, apiGetReport, apiReportSetState, appealStateString } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { ReportViewComponent } from '../component/ReportViewComponent.tsx';
@@ -44,6 +33,9 @@ import { SteamIDList } from '../component/SteamIDList.tsx';
 import { Title } from '../component/Title';
 import { ModalBanSteam } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { BanReasons, BanType } from '../schema/bans.ts';
+import { PermissionLevel } from '../schema/people.ts';
+import { ReportStatus, reportStatusColour, ReportStatusEnum, reportStatusString } from '../schema/report.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 import { renderDateTime, renderTimeDistance } from '../util/time.ts';
 
@@ -54,8 +46,8 @@ export const Route = createFileRoute('/_auth/report/$reportId')({
 function ReportView() {
     const { reportId } = Route.useParams();
     const theme = useTheme();
-    const [stateAction, setStateAction] = useState(ReportStatus.Opened);
-    const [newStateAction, setNewStateAction] = useState(stateAction);
+    const [stateAction, setStateAction] = useState<ReportStatusEnum>(ReportStatus.Opened);
+    const [newStateAction, setNewStateAction] = useState<ReportStatusEnum>(stateAction);
     const { hasPermission } = useRouteContext({ from: '/_auth/report/$reportId' });
     const { sendFlash, sendError } = useUserFlashCtx();
     const navigate = useNavigate();
@@ -87,7 +79,7 @@ function ReportView() {
     });
 
     const handleReportStateChange = (event: SelectChangeEvent<number>) => {
-        setNewStateAction(event.target.value as ReportStatus);
+        setNewStateAction(event.target.value as ReportStatusEnum);
     };
 
     const stateMutation = useMutation({
@@ -145,10 +137,16 @@ function ReportView() {
                         <ListItemText primary={'Creation Date'} secondary={renderDateTime(ban.created_on)} />
                     </ListItem>
                     <ListItem>
-                        <ListItemText primary={'Valid Until Date'} secondary={renderDateTime(ban.valid_until)} />
+                        <ListItemText
+                            primary={'Valid Until Date'}
+                            secondary={renderDateTime(ban.valid_until as Date)}
+                        />
                     </ListItem>
                     <ListItem>
-                        <ListItemText primary={'Expires'} secondary={renderTimeDistance(ban.valid_until, new Date())} />
+                        <ListItemText
+                            primary={'Expires'}
+                            secondary={renderTimeDistance(ban.valid_until as Date, new Date())}
+                        />
                     </ListItem>
                     <ListItem>
                         <ListItemText
@@ -209,7 +207,7 @@ function ReportView() {
                         <Stack sx={{ width: '100%' }} spacing={2}>
                             <FormControl fullWidth>
                                 <InputLabel id="select-label">Action</InputLabel>
-                                <Select<ReportStatus>
+                                <Select
                                     labelId="select-label"
                                     id="simple-select"
                                     value={newStateAction}

@@ -1,12 +1,6 @@
-import { TimeStamped, transformTimeStampedDates, transformTimeStampedDatesList } from '../util/time.ts';
+import { NewsEntry } from '../schema/news.ts';
+import { transformTimeStampedDates, transformTimeStampedDatesList } from '../util/time.ts';
 import { apiCall } from './common';
-
-export interface NewsEntry extends TimeStamped {
-    news_id: number;
-    title: string;
-    body_md: string;
-    is_published: boolean;
-}
 
 export const apiGetNewsLatest = async (abortController?: AbortController) =>
     transformTimeStampedDatesList(await apiCall<NewsEntry[]>(`/api/news_latest`, 'POST', undefined, abortController));

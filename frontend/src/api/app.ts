@@ -1,3 +1,4 @@
+import { appInfoDetail } from '../schema/app.ts';
 import { transformCreatedAtDate } from '../util/time.ts';
 import { apiCall } from './common.ts';
 
@@ -75,29 +76,5 @@ export interface GithubRelease {
 }
 
 export const getChangelogs = async () => (await apiCall<GithubRelease[]>('/api/changelog')).map(transformCreatedAtDate);
-
-export interface appInfoDetail {
-    site_name: string;
-    app_version: string;
-    link_id: string;
-    sentry_dns_web: string;
-    asset_url: string;
-    patreon_client_id: string;
-    patreon_enabled: boolean;
-    discord_client_id: string;
-    discord_enabled: boolean;
-    default_route: string;
-    news_enabled: boolean;
-    forums_enabled: boolean;
-    contests_enabled: boolean;
-    wiki_enabled: boolean;
-    stats_enabled: boolean;
-    servers_enabled: boolean;
-    reports_enabled: boolean;
-    chatlogs_enabled: boolean;
-    demos_enabled: boolean;
-    speedruns_enabled: boolean;
-    playerqueue_enabled: boolean;
-}
 
 export const getAppInfo = async () => apiCall<appInfoDetail>('/api/info');

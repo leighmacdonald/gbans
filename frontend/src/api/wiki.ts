@@ -1,12 +1,5 @@
-import { TimeStamped } from '../util/time.ts';
-import { apiCall, PermissionLevel } from './common';
-
-export interface Page extends TimeStamped {
-    slug: string;
-    body_md: string;
-    permission_level: PermissionLevel;
-    revision?: number;
-}
+import { Page } from '../schema/wiki.ts';
+import { apiCall } from './common';
 
 export const apiGetWikiPage = async (slug: string, abortController?: AbortController) =>
     await apiCall<Page>(`/api/wiki/slug/${slug}`, 'GET', undefined, abortController);

@@ -25,14 +25,7 @@ import {
     useReactTable
 } from '@tanstack/react-table';
 import { z } from 'zod';
-import {
-    apiDeleteFilter,
-    apiGetFilters,
-    apiGetWarningState,
-    Filter,
-    filterActionString,
-    UserWarning
-} from '../api/filters.ts';
+import { apiDeleteFilter, apiGetFilters, apiGetWarningState } from '../api/filters.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { IndeterminateCheckbox } from '../component/IndeterminateCheckbox.tsx';
@@ -45,6 +38,7 @@ import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { Filter, filterActionString, UserWarning } from '../schema/filters.ts';
 import { findSelectedRow } from '../util/findSelectedRow.ts';
 import { findSelectedRows } from '../util/findSelectedRows.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
@@ -221,8 +215,8 @@ function AdminFilters() {
             <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'How it works'} iconLeft={<InfoIcon />}>
                     <Typography variant={'body1'}>
-                        The way the warning tracking works is that each time a user triggers a match, it gets a entry in
-                        the table based on the weight of the match. The individual match weight is determined by the
+                        The way the warning tracking works is that each time a user triggers a match, it gets an entry
+                        in the table based on the weight of the match. The individual match weight is determined by the
                         word filter defined above. Once the sum of their triggers exceeds the max weight the user will
                         have action taken against them automatically. Matched entries are ephemeral and are removed over
                         time based on the configured timeout value.
@@ -293,7 +287,7 @@ const FiltersTable = ({
             {
                 accessorKey: 'action',
                 size: 50,
-                meta: { tooltip: 'What action to take' },
+                meta: { tooltip: 'What action to take?' },
                 cell: (info) => {
                     return (
                         <TableCellString>

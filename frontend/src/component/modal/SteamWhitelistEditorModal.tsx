@@ -4,19 +4,29 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
+import { z } from 'zod';
 import { apiCreateWhitelistSteam } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 
+const schema = z.object({
+    steam_id: z.string()
+});
+
+type ValueType = z.infer<typeof schema>;
+
 export const SteamWhitelistEditorModal = NiceModal.create(() => {
     const modal = useModal();
     const { sendError } = useUserFlashCtx();
+    const defaultValues: z.input<typeof schema> = {
+        steam_id: ''
+    };
 
     const mutation = useMutation({
         mutationKey: ['blockSourceSteam'],
-        mutationFn: async (values: { steam_id: string }) => {
-            const resp = await apiCreateWhitelistSteam(values.steam_id);
+        mutationFn: async ({ steam_id }: ValueType) => {
+            const resp = await apiCreateWhitelistSteam(steam_id);
             modal.resolve(resp);
         },
         onSuccess: async () => {
@@ -33,8 +43,9 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        defaultValues: {
-            steam_id: ''
+        defaultValues,
+        validators: {
+            onSubmit: schema
         }
     });
     return (
@@ -54,7 +65,6 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'steam_id'}
-                                // validators={makeSteamidValidators()}
                                 children={(field) => {
                                     return <field.SteamIDField label={'Steam ID'} />;
                                 }}

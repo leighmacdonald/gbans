@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { PermissionLevel } from '../api';
+import { PermissionLevel } from '../schema/people.ts';
 
 export const Route = createFileRoute('/_admin')({
     beforeLoad: ({ context, location }) => {

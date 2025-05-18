@@ -1,31 +1,15 @@
-import { parseDateTime, TimeStamped, transformCreatedOnDate, transformTimeStampedDates } from '../util/time.ts';
-import { apiCall, PermissionLevel } from './common';
-
-export interface Forum extends TimeStamped {
-    forum_id: number;
-    forum_category_id: number;
-    last_thread_id: number;
-    title: string;
-    description: string;
-    ordering: number;
-    count_threads: number;
-    count_messages: number;
-    permission_level: PermissionLevel;
-    recent_forum_thread_id?: number;
-    recent_forum_title?: string;
-    recent_source_id?: string;
-    recent_avatarhash?: string;
-    recent_personaname?: string;
-    recent_created_on?: Date;
-}
-
-export interface ForumCategory extends TimeStamped {
-    forum_category_id: number;
-    title: string;
-    description: string;
-    ordering: number;
-    forums: Forum[];
-}
+import {
+    ActiveUser,
+    Forum,
+    ForumCategory,
+    ForumMessage,
+    ForumOverview,
+    ForumThread,
+    ThreadMessageQueryOpts
+} from '../schema/forum.ts';
+import { PermissionLevelEnum } from '../schema/people.ts';
+import { parseDateTime, transformCreatedOnDate, transformTimeStampedDates } from '../util/time.ts';
+import { apiCall } from './common';
 
 export const apiGetForumCategory = async (forumCategoryId: number, abortController?: AbortController) => {
     return transformTimeStampedDates(
@@ -69,7 +53,7 @@ export const apiCreateForum = async (
     title: string,
     description: string,
     ordering: number,
-    permission_level: PermissionLevel,
+    permission_level: PermissionLevelEnum,
     abortController?: AbortController
 ) => {
     return await apiCall<Forum>(
@@ -96,7 +80,7 @@ export const apiSaveForum = async (
     title: string,
     description: string,
     ordering: number,
-    permission_level: PermissionLevel,
+    permission_level: PermissionLevelEnum,
     abortController?: AbortController
 ) => {
     return await apiCall<Forum>(
@@ -112,10 +96,6 @@ export const apiSaveForum = async (
         abortController
     );
 };
-
-export interface ForumOverview {
-    categories: ForumCategory[];
-}
 
 export const apiGetForumOverview = async (abortController?: AbortController) => {
     const resp = await apiCall<ForumOverview>('/api/forum/overview', 'GET', undefined, abortController);
@@ -133,43 +113,6 @@ export const apiGetForumOverview = async (abortController?: AbortController) => 
 
     return resp;
 };
-
-export interface ForumMessage extends TimeStamped {
-    forum_message_id: number;
-    forum_thread_id: number;
-    source_id: string;
-    body_md: string;
-    personaname: string;
-    avatarhash: string;
-    online: boolean;
-    title: string;
-    permission_level: PermissionLevel;
-    signature: string;
-}
-
-export interface ForumThread extends TimeStamped {
-    forum_thread_id: number;
-    forum_id: number;
-    source_id: string;
-    title: string;
-    sticky: boolean;
-    locked: boolean;
-    views: number;
-    replies: number;
-    personaname: string;
-    avatarhash: string;
-    message?: ForumMessage;
-    recent_forum_message_id?: number;
-    recent_created_on: Date;
-    recent_steam_id: string;
-    recent_personaname: string;
-    recent_avatarhash: string;
-}
-
-export interface ThreadMessageQueryOpts {
-    forum_thread_id: number;
-    deleted?: boolean;
-}
 
 export const apiGetThreadMessages = async (opts: ThreadMessageQueryOpts, abortController?: AbortController) => {
     const resp = await apiCall<ForumMessage[]>(`/api/forum/messages`, 'POST', opts, abortController);
@@ -272,13 +215,6 @@ export const apiForumRecentActivity = async (abortController?: AbortController) 
         transformTimeStampedDates
     );
 };
-
-export interface ActiveUser {
-    steam_id: string;
-    personaname: string;
-    permission_level: PermissionLevel;
-    created_on: Date;
-}
 
 export const apiForumActiveUsers = async (abortController?: AbortController) => {
     const resp = await apiCall<ActiveUser[]>(`/api/forum/active_users`, 'GET', undefined, abortController);

@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { Action } from '../api/admin.ts';
+import { Action } from './asset.ts';
 
 export const schemaAnticheat = z.object({
     enabled: z.boolean(),
-    action: z.nativeEnum(Action),
+    action: Action,
     duration: z.number(),
     max_aim_snap: z.number(),
     max_psilent: z.number(),
@@ -143,3 +143,22 @@ export const schemaNetwork = z.object({
     cf_email: z.string().email(),
     cf_zone_id: z.string()
 });
+
+export const schemaConfig = z.object({
+    general: schemaGeneral,
+    filters: schemaFilters,
+    demo: schemaDemos,
+    patreon: schemaPatreon,
+    discord: schemaDiscord,
+    network: schemaNetwork,
+    log: schemaLogging,
+    sentry: schemaSentry,
+    geo_location: schemaGeo,
+    debug: schemaDebug,
+    local_store: schemaLocalStore,
+    ssh: schemaSSH,
+    exports: schemaExports,
+    anticheat: schemaAnticheat
+});
+
+export type Config = z.infer<typeof schemaConfig>;

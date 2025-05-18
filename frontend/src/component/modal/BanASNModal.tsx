@@ -5,7 +5,6 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import {
     apiCreateBanASN,
@@ -21,21 +20,30 @@ import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 
-type BanASNFormValues = {
-    target_id: string;
-    ban_asn_id?: number;
-    as_num: string;
-    reason: BanReason;
-    reason_text: string;
-    duration: Duration;
-    duration_custom?: string;
-    note: string;
-};
+const schema = z.object({
+    target_id: z.string(),
+    reason: z.nativeEnum(BanReason),
+    reason_text: z.string(),
+    duration: z.nativeEnum(Duration),
+    duration_custom: z.date(),
+    note: z.string(),
+    as_num: z.number().positive()
+});
+
+type BanASNFormValues = z.infer<typeof schema>;
 
 export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRecord }) => {
     const { sendFlash } = useUserFlashCtx();
     const modal = useModal();
-
+    const defaultValues: z.input<typeof schema> = {
+        target_id: existing?.target_id ?? '',
+        reason: existing?.reason ?? BanReason.Cheating,
+        reason_text: existing?.reason_text ?? '',
+        duration: existing ? Duration.durCustom : Duration.dur2w,
+        duration_custom: existing?.valid_until ?? new Date(),
+        note: existing?.note ?? '',
+        as_num: existing?.as_num ?? 0
+    };
     const mutation = useMutation({
         mutationKey: ['banASN'],
         mutationFn: async (values: BanASNFormValues) => {
@@ -46,7 +54,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                     reason_text: values.reason_text,
                     target_id: values.target_id,
                     as_num: Number(values.as_num),
-                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
+                    valid_until: values.duration_custom
                 });
 
                 sendFlash('success', 'Updated ASN ban successfully');
@@ -55,7 +63,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                 const ban_record = await apiCreateBanASN({
                     note: values.note,
                     duration: values.duration,
-                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
+                    valid_until: values.duration_custom,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     target_id: values.target_id,
@@ -80,14 +88,9 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                 as_num: value.as_num
             });
         },
-        defaultValues: {
-            target_id: existing ? existing.target_id : '',
-            reason: existing ? existing.reason : BanReason.Cheating,
-            reason_text: existing ? existing.reason_text : '',
-            duration: existing ? Duration.durCustom : Duration.dur2w,
-            duration_custom: existing ? existing.valid_until.toISOString() : '',
-            note: existing ? existing.note : '',
-            as_num: existing ? String(existing.as_num) : ''
+        defaultValues,
+        validators: {
+            onSubmit: schema
         }
     });
 
@@ -109,7 +112,6 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'target_id'}
-                                // validators={makeSteamidValidators()}
                                 children={(field) => {
                                     return (
                                         <field.SteamIDField
@@ -123,9 +125,6 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'as_num'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'AS Number'} />;
                                 }}
@@ -154,22 +153,6 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'reason_text'}
-                                validators={{
-                                    onSubmit: ({ value, fieldApi }) => {
-                                        if (fieldApi.form.getFieldValue('reason') != BanReason.Custom) {
-                                            if (value.length == 0) {
-                                                return undefined;
-                                            }
-                                            return 'Must use custom ban reason';
-                                        }
-                                        const result = z.string().min(5).safeParse(value);
-                                        if (!result.success) {
-                                            return result.error.errors.map((e) => e.message).join(',');
-                                        }
-
-                                        return undefined;
-                                    }
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Custom Ban Reason'} />;
                                 }}
@@ -178,9 +161,6 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'duration'}
-                                validators={{
-                                    onChange: z.nativeEnum(Duration)
-                                }}
                                 children={(field) => {
                                     return (
                                         <field.SelectField
@@ -211,9 +191,6 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'note'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(field) => {
                                     return <field.MarkdownField label={'Mod Notes'} />;
                                 }}

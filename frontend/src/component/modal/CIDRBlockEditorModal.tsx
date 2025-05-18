@@ -10,16 +10,21 @@ import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 
-interface CIDRBlockEditorValues {
-    name: string;
-    url: string;
-    enabled: boolean;
-}
+const schema = z.object({
+    name: z.string().min(2),
+    url: z.string().url(),
+    enabled: z.boolean()
+});
+type CIDRBlockEditorValues = z.infer<typeof schema>;
 
 export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CIDRBlockSource }) => {
     const modal = useModal();
     const { sendError } = useUserFlashCtx();
-
+    const defaultValues: z.infer<typeof schema> = {
+        name: source?.name ?? '',
+        url: source?.url ?? '',
+        enabled: source?.enabled ?? true
+    };
     const mutation = useMutation({
         mutationKey: ['blockSource'],
         mutationFn: async (values: CIDRBlockEditorValues) => {
@@ -50,17 +55,9 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        defaultValues: {
-            name: source?.name ?? '',
-            url: source?.url ?? '',
-            enabled: source?.enabled ?? true
-        },
+        defaultValues,
         validators: {
-            onSubmit: z.object({
-                name: z.string().min(2),
-                url: z.string().url(),
-                enabled: z.boolean()
-            })
+            onSubmit: schema
         }
     });
 
