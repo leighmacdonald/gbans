@@ -20,7 +20,7 @@ import {
     useReactTable
 } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiGetServersAdmin, Server } from '../api';
+import { apiGetServersAdmin } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { Title } from '../component/Title';
 import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
@@ -30,6 +30,7 @@ import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { TableCellStringHidden } from '../component/table/TableCellStringHidden.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { Server } from '../schema/server.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 

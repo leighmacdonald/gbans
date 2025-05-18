@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { ForumOverview } from '../api/forum.ts';
 import { schemaTimeStamped } from './chrono.ts';
 import { PermissionLevelEnum } from './people.ts';
 

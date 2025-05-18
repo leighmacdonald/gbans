@@ -41,11 +41,15 @@ import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { BanReason, BanReasons, banReasonsCollection } from '../schema/bans.ts';
 import { PlayerProfile } from '../schema/people.ts';
-import { CreateReportRequest, reportStatusString, ReportWithAuthor } from '../schema/report.ts';
+import {
+    CreateReportRequest,
+    reportStatusString,
+    ReportWithAuthor,
+    schemaCreateReportRequest
+} from '../schema/report.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
-const reportSchema = z.object({
+const searchSchemaReport = z.object({
     ...commonTableSearchSchema,
     rows: z.number().optional(),
     sortColumn: z.enum(['report_status', 'created_on']).optional(),
@@ -56,7 +60,7 @@ const reportSchema = z.object({
 
 export const Route = createFileRoute('/_auth/report/')({
     component: ReportCreate,
-    validateSearch: (search) => reportSchema.parse(search)
+    validateSearch: (search) => searchSchemaReport.parse(search)
 });
 
 function ReportCreate() {
@@ -235,8 +239,18 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
 
 export const ReportCreateForm = (): JSX.Element => {
     const { demo_id, steam_id, person_message_id } = Route.useSearch();
-    const [validatedProfile, setValidatedProfile] = useState<PlayerProfile>();
+    const [validatedProfile] = useState<PlayerProfile>();
     const { sendFlash, sendError } = useUserFlashCtx();
+
+    const defaultValues: z.input<typeof schemaCreateReportRequest> = {
+        description: '',
+        demo_id: demo_id ?? 0,
+        demo_tick: 0,
+        person_message_id: person_message_id ?? 0,
+        target_id: steam_id ?? '',
+        reason: person_message_id ? BanReason.Language : BanReason.Cheating,
+        reason_text: ''
+    };
 
     const mutation = useMutation({
         mutationFn: async (variables: CreateReportRequest) => {
@@ -259,37 +273,19 @@ export const ReportCreateForm = (): JSX.Element => {
                 throw 'Invalid target steam id';
             }
             mutation.mutate({
-                demo_id: Number(value.demo_id ?? 0),
+                demo_id: value?.demo_id ?? 0,
                 target_id: target,
-                demo_tick: Number(value.demo_tick),
+                demo_tick: value.demo_tick,
                 reason: value.reason,
                 reason_text: value.reason_text,
-                description: value.body_md,
-                person_message_id: Number(value.person_message_id)
+                description: value.description,
+                person_message_id: value.person_message_id
             });
         },
         validators: {
-            onSubmitAsync: z.object({
-                body_md: z.string().min(10),
-                demo_id: z.string(),
-                demo_tick: z.string(),
-                person_message_id: z.string(),
-                target_id: makeValidateSteamIDCallback((profile) => {
-                    setValidatedProfile(profile);
-                }),
-                reason: z.nativeEnum(BanReason),
-                reason_text: z.string()
-            })
+            onSubmitAsync: schemaCreateReportRequest
         },
-        defaultValues: {
-            body_md: '',
-            demo_id: String(demo_id ?? ''),
-            demo_tick: String(0),
-            person_message_id: String(person_message_id ?? '0'),
-            target_id: steam_id ?? '',
-            reason: person_message_id ? BanReason.Language : BanReason.Cheating,
-            reason_text: ''
-        }
+        defaultValues
     });
 
     return (
@@ -352,7 +348,6 @@ export const ReportCreateForm = (): JSX.Element => {
                             </Grid>
                             <Grid size={{ xs: 6 }}>
                                 <form.AppField
-                                    // validators={{ onChange: z.number({ coerce: true }).min(0).optional() }}
                                     name={'demo_tick'}
                                     children={(field) => {
                                         return (
@@ -370,8 +365,7 @@ export const ReportCreateForm = (): JSX.Element => {
                     )}
                     <Grid size={{ xs: 12 }}>
                         <form.AppField
-                            name={'body_md'}
-                            validators={{ onChange: z.string().min(10, 'Message must be at least 10 characters.') }}
+                            name={'description'}
                             children={(field) => {
                                 return <field.MarkdownField label={'Message (Markdown)'} />;
                             }}

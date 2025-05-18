@@ -1,6 +1,7 @@
 import { ReactNode, useCallback, useEffect } from 'react';
-import { apiGetCurrentProfile, defaultAvatarHash, PermissionLevel, UserProfile } from './api';
+import { apiGetCurrentProfile, defaultAvatarHash } from './api';
 import { AuthContext } from './contexts/AuthContext.tsx';
+import { PermissionLevel, PermissionLevelEnum, UserProfile } from './schema/people.ts';
 import { logoutFn } from './util/auth/logoutFn.ts';
 import { readAccessToken } from './util/auth/readAccessToken.ts';
 import { logErr } from './util/errors.ts';
@@ -58,7 +59,7 @@ export function AuthProvider({
         return profile?.permission_level ?? PermissionLevel.Guest;
     };
 
-    const hasPermission = (wantedLevel: PermissionLevel) => {
+    const hasPermission = (wantedLevel: PermissionLevelEnum) => {
         const currentLevel = permissionLevel();
         return currentLevel >= wantedLevel;
     };
@@ -99,6 +100,6 @@ export type AuthContextProps = {
     login: (profile: UserProfile) => void;
     logout: () => Promise<void>;
     isAuthenticated: () => boolean;
-    permissionLevel: () => PermissionLevel;
-    hasPermission: (level: PermissionLevel) => boolean;
+    permissionLevel: () => PermissionLevelEnum;
+    hasPermission: (level: PermissionLevelEnum) => boolean;
 };

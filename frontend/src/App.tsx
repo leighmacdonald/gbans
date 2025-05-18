@@ -2,11 +2,13 @@ import { PropsWithChildren, StrictMode, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { AnyRouter, RouterProvider } from '@tanstack/react-router';
 import { isBefore, parseISO } from 'date-fns';
-import { defaultAvatarHash, PermissionLevel } from './api';
-import { appInfoDetail, getAppInfo } from './api/app.ts';
+import { defaultAvatarHash } from './api';
+import { getAppInfo } from './api/app.ts';
 import { AuthProvider, profileKey } from './auth.tsx';
 import { UseAppInfoCtx } from './contexts/AppInfoCtx.ts';
 import { useAuth } from './hooks/useAuth.ts';
+import { appInfoDetail } from './schema/app.ts';
+import { PermissionLevel } from './schema/people.ts';
 import { logErr } from './util/errors.ts';
 
 const loadProfile = () => {
