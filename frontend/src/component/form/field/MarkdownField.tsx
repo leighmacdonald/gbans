@@ -120,7 +120,7 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
                     headingsPlugin(),
                     linkPlugin(),
                     linkDialogPlugin(),
-                    imagePlugin({ imageUploadHandler }),
+                    imagePlugin({ imageUploadHandler }), // TODO custom MUI image selector
                     tablePlugin(),
                     thematicBreakPlugin(),
                     frontmatterPlugin(),

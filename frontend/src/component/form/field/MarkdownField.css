@@ -76,9 +76,10 @@
 }
 
 .md-content-editable {
-    line-height: 1.5rem;
+    line-height: 1rem;
     min-height: 500px;
-    overflow: scroll;
+    overflow-y: auto;
+    overflow-x: auto;
 
     img {
         max-width: 100%;

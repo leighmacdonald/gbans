@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 import Button, { ButtonProps } from '@mui/material/Button';
 import { useFormContext } from '../../../contexts/formContext.tsx';
-import { defaultButtonVariant } from '../../../theme.ts';
 
 type Props = {
     label?: string;
@@ -17,7 +16,7 @@ export const ResetButton = (props: Props) => {
     return (
         <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-                <Button {...props} type="reset" color={'warning'} variant={defaultButtonVariant}>
+                <Button {...props} type="reset" color={'warning'}>
                     {isSubmitting ? (props.labelLoading ?? '...') : (props.label ?? 'Reset')}
                 </Button>
             )}
