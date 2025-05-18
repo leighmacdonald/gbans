@@ -313,7 +313,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             children={(field) => {
                                 return (
                                     <field.SelectField
-                                        label={'Override Type'}
+                                        label={'Ban Reason'}
                                         items={banReasonsCollection}
                                         renderItem={(r) => {
                                             return (

@@ -232,6 +232,7 @@ function AdminBanSteam() {
                     </form>
                 </ContainerWithHeader>
             </Grid>
+
             <Grid size={{ xs: 12 }}>
                 <ContainerWithHeaderAndButtons
                     title={'Steam Ban History'}

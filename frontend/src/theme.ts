@@ -24,9 +24,6 @@ declare module '@mui/material/styles' {
     }
 }
 
-export const defaultFieldVariant: 'outlined' | 'standard' | 'filled' = 'filled';
-export const defaultButtonVariant: 'text' | 'outlined' | 'contained' = 'contained';
-
 export const createThemeByMode = (mode: PaletteMode) => {
     const opts: PaletteOptions =
         mode == 'light'
@@ -115,6 +112,11 @@ export const createThemeByMode = (mode: PaletteMode) => {
                     }
                 },
                 MuiButton: {
+                    defaultProps: {
+                        variant: 'contained'
+                    }
+                },
+                MuiButtonGroup: {
                     defaultProps: {
                         variant: 'contained'
                     }
