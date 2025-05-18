@@ -243,7 +243,7 @@ export const schemaWeaponsOverallResult = z
 export type WeaponsOverallResult = z.infer<typeof schemaWeaponsOverallResult>;
 
 export const schemaGamePlayerClass = z.object({
-    player_class_id: z.number(),
+    player_class_id: PlayerClassEnum,
     class_name: z.string(),
     class_key: z.string()
 });

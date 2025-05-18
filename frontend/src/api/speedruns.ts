@@ -22,7 +22,7 @@ export const getSpeedrunsRecent = async (count: number = 5) => {
     );
 };
 
-export const getSpeedrun = async (speedrun_id: number) => {
+export const getSpeedrun = async (speedrun_id: number): Promise<SpeedrunResult> => {
     const r = transformCreatedOnDate(await apiCall<SpeedrunResult>(`/api/speedruns/byid/${speedrun_id}`, 'GET'));
     r.players = r.players.sort((a, b) => {
         return a.duration > b.duration ? 1 : -1;

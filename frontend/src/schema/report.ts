@@ -99,19 +99,21 @@ export const schemaReportMessage = z
         message_md: z.string(),
         deleted: z.boolean()
     })
-    .merge(schemaTimeStamped);
+    .merge(schemaTimeStamped)
+    .merge(schemaBasicUserInfo);
 
 export type ReportMessage = z.infer<typeof schemaReportMessage>;
 
 export const schemaCreateReportRequest = z.object({
     target_id: z.string(),
-    description: z.string(),
+    description: z.string().min(10),
     reason: BanReasonEnum,
     reason_text: z.string(),
     demo_id: z.number(),
     demo_tick: z.number(),
     person_message_id: z.number()
 });
+
 export type CreateReportRequest = z.infer<typeof schemaCreateReportRequest>;
 
 export const schemaReportWithAuthor = z

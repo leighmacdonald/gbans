@@ -37,7 +37,6 @@ export const Route = createFileRoute('/_guest/speedruns/id/$speedrunId')({
 
 function SpeedrunDetail() {
     const { speedrunId } = Route.useParams();
-    const title = `Speedruns: ${speedrunId}`;
 
     const { data: speedrun, isLoading } = useQuery({
         queryKey: ['speedrun', speedrunId],
@@ -56,7 +55,7 @@ function SpeedrunDetail() {
 
     return (
         <>
-            <Title>{title}</Title>
+            <Title>{`Speedruns: ${speedrunId}`}</Title>
             {isLoading && <LoadingPlaceholder height={400} />}
 
             {!isLoading && speedrun && (

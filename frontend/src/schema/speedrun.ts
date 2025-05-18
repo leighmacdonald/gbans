@@ -18,7 +18,7 @@ export const schemaSpeedrunParticipant = z.object({
     steam_id: z.string(),
     kills: z.number(),
     destructions: z.number(),
-    duration: DurationEnum,
+    duration: z.number(),
     persona_name: z.string(),
     avatar_hash: z.string()
 });
@@ -40,7 +40,7 @@ export const schemaSpeedrunResult = z.object({
     initial_rank: z.number(),
     map_detail: schemaMapDetail,
     point_captures: z.array(schemaSpeedrunPointCaptures),
-    players: z.array(schemaSpeedrunPointCaptures),
+    players: z.array(schemaSpeedrunParticipant),
     duration: z.number(),
     player_count: z.number(),
     bot_count: z.number(),

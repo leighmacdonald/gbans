@@ -10,6 +10,7 @@ export const schemaTimeStampedWithValidUntil = z
         valid_until: z.date()
     })
     .merge(schemaTimeStamped);
+export type TimeStampedWithValidUntil = z.infer<typeof schemaTimeStampedWithValidUntil>;
 
 export const schemaDateRange = z.object({
     date_start: z.date(),
