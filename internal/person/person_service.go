@@ -126,6 +126,7 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, profile)
 	}
 }
+
 func (h personHandler) onSteamValidate() gin.HandlerFunc {
 	type steamValidateResponse struct {
 		SteamID     string `json:"steam_id"`
