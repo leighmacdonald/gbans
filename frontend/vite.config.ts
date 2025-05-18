@@ -138,7 +138,7 @@ export default defineConfig({
             telemetry: false,
             org: 'uncletopia',
             project: 'frontend',
-            authToken: import.meta.env.SENTRY_AUTH_TOKEN
+            authToken: import.meta.env?.SENTRY_AUTH_TOKEN ?? ''
         })
     ]
 });
