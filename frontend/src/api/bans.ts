@@ -20,9 +20,10 @@ import {
     UpdateBanPayload,
     UpdateBanSteamPayload
 } from '../schema/bans.ts';
+import { TimeStampedWithValidUntil } from '../schema/chrono.ts';
 import { BanASNQueryFilter, BanCIDRQueryFilter, BanGroupQueryFilter, BanSteamQueryFilter } from '../schema/query.ts';
 import { BanAppealMessage } from '../schema/report.ts';
-import { parseDateTime, TimeStamped, transformTimeStampedDates, transformTimeStampedDatesList } from '../util/time.ts';
+import { parseDateTime, transformTimeStampedDates, transformTimeStampedDatesList } from '../util/time.ts';
 import { apiCall } from './common';
 
 export const appealStateString = (as: AppealStateEnum): string => {
@@ -73,7 +74,7 @@ export const apiGetBanBySteam = async (steamID: string, abortController?: AbortC
         await apiCall<SteamBanRecord>(`/api/bans/steamid/${steamID}`, 'GET', undefined, abortController)
     );
 
-export function applyDateTime<T>(row: T & TimeStamped) {
+export function applyDateTime<T>(row: T & TimeStampedWithValidUntil) {
     const record = {
         ...row,
         created_on: parseDateTime(row.created_on as unknown as string),

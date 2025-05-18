@@ -24,7 +24,7 @@ import { Title } from '../component/Title.tsx';
 import { FullTable } from '../component/table/FullTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { DemoFile } from '../schema/demo.ts';
-import { ServerSimple } from '../schema/sourcemod.ts';
+import { ServerSimple } from '../schema/server.ts';
 import { stringToColour } from '../util/colours.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { initColumnFilter, initPagination, makeCommonTableSearchSchema } from '../util/table.ts';

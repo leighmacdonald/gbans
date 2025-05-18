@@ -14,7 +14,7 @@ import { Paginator } from '../component/forum/Paginator.tsx';
 import { ChatTable } from '../component/table/ChatTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { PermissionLevel, PlayerProfile } from '../schema/people.ts';
-import { ServerSimple } from '../schema/sourcemod.ts';
+import { ServerSimple } from '../schema/server.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
