@@ -6,16 +6,10 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
-import {
-    apiCreateSMGroupOverrides,
-    apiSaveSMGroupOverrides,
-    OverrideAccess,
-    OverrideType,
-    SMGroupOverrides,
-    SMGroups
-} from '../../api';
+import { apiCreateSMGroupOverrides, apiSaveSMGroupOverrides } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { OverrideAccess, OverrideType, SMGroupOverrides, SMGroups } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
 
 type mutateOverrideArgs = {

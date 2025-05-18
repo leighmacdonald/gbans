@@ -8,7 +8,7 @@ import {
     TableOptions,
     useReactTable
 } from '@tanstack/react-table';
-import { PersonConnection } from '../../api';
+import { PersonConnection } from '../../schema/people.ts';
 import { LazyResult } from '../../util/table.ts';
 import { renderDateTime } from '../../util/time.ts';
 import { DataTable } from './DataTable.tsx';

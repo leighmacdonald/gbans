@@ -6,9 +6,10 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
-import { apiCreateSMGroupImmunity, SMGroups } from '../../api';
+import { apiCreateSMGroupImmunity } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { SMGroups } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
 
 export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups: SMGroups[] }) => {

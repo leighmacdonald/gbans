@@ -5,8 +5,9 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
-import { apiCreateServer, apiSaveServer, SaveServerOpts, Server } from '../../api';
+import { apiCreateServer, apiSaveServer } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
+import { SaveServerOpts, Server } from '../../schema/server.ts';
 import { randomStringAlphaNum } from '../../util/strings.ts';
 import { Heading } from '../Heading';
 

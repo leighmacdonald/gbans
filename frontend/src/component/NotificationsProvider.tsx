@@ -1,6 +1,6 @@
 import { JSX, useState } from 'react';
-import { UserNotification } from '../api';
 import { NotificationsCtx } from '../contexts/NotificationsCtx.tsx';
+import { UserNotification } from '../schema/people.ts';
 
 export const NotificationsProvider = ({ children }: { children: JSX.Element }) => {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);

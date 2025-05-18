@@ -8,7 +8,7 @@ import {
     TableOptions,
     useReactTable
 } from '@tanstack/react-table';
-import { BanReasons, SteamBanRecord } from '../../api';
+import { BanReasons, SteamBanRecord } from '../../schema/bans.ts';
 import { RowsPerPage } from '../../util/table.ts';
 import { renderDateTime } from '../../util/time.ts';
 import { PersonCell } from './../PersonCell.tsx';

@@ -5,9 +5,10 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
-import { apiNewsCreate, apiNewsSave, NewsEntry } from '../../api/news.ts';
+import { apiNewsCreate, apiNewsSave } from '../../api/news.ts';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { NewsEntry } from '../../schema/news.ts';
 import { Heading } from '../Heading';
 
 export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry }) => {

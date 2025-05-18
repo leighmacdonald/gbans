@@ -6,23 +6,23 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
+import { apiCreateFilter, apiEditFilter } from '../../api/filters.ts';
+import { useAppForm } from '../../contexts/formContext.tsx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import {
-    apiCreateFilter,
-    apiEditFilter,
     Filter,
     FilterAction,
     FilterActionCollection,
+    FilterActionEnum,
     filterActionString
-} from '../../api/filters.ts';
-import { useAppForm } from '../../contexts/formContext.tsx';
-import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+} from '../../schema/filters.ts';
 import { Heading } from '../Heading';
 
 type FilterEditFormValues = {
     pattern: string;
     is_regex: boolean;
     is_enabled?: boolean;
-    action: FilterAction;
+    action: FilterActionEnum;
     duration: string;
     weight: string;
 };

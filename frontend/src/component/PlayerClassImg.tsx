@@ -1,5 +1,4 @@
 import { MouseEventHandler } from 'react';
-import { PlayerClass, PlayerClassNames } from '../api';
 import demoClassImg from '../icons/class_demoman.png';
 import engineerClassImg from '../icons/class_engineer.png';
 import heavyClassImg from '../icons/class_heavy.png';
@@ -9,9 +8,10 @@ import scoutClassImg from '../icons/class_scout.png';
 import sniperClassImg from '../icons/class_sniper.png';
 import soldierClassImg from '../icons/class_soldier.png';
 import spyClassImg from '../icons/class_spy.png';
+import { PlayerClass, PlayerClassEnum, PlayerClassNames } from '../schema/stats.ts';
 
 export interface PlayerClassImgProps {
-    cls: PlayerClass;
+    cls: PlayerClassEnum;
     size?: number;
     onMouseEnter?: MouseEventHandler | undefined;
     onMouseLeave?: MouseEventHandler | undefined;

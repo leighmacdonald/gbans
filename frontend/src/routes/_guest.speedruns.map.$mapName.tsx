@@ -18,7 +18,7 @@ import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
-import { ServerSimple } from '../schema/sourcemod.ts';
+import { ServerSimple } from '../schema/server.ts';
 import { SpeedrunMapOverview } from '../schema/speedrun.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';

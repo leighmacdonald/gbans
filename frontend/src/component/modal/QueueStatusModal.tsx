@@ -6,10 +6,11 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
-import { apiQueueSetUserStatus, ChatStatus } from '../../api';
+import { apiQueueSetUserStatus } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useQueueCtx } from '../../hooks/useQueueCtx.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { ChatStatus } from '../../schema/playerqueue.ts';
 import { Heading } from '../Heading';
 
 export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: string }) => {

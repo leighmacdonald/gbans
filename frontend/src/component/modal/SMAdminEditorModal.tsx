@@ -8,10 +8,10 @@ import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
-import { apiCreateSMAdmin, apiSaveSMAdmin, AuthType, hasSMFlag, SMAdmin, SMGroups } from '../../api';
+import { apiCreateSMAdmin, apiSaveSMAdmin, hasSMFlag } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
+import { AuthType, SMAdmin, SMGroups } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
 
 type mutateAdminArgs = {
@@ -161,9 +161,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'immunity'}
-                                validators={{
-                                    onChange: z.string().transform(numberStringValidator(0, 100))
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Immunity Level'} />;
                                 }}

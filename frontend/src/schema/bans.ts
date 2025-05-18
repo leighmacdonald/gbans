@@ -171,7 +171,7 @@ export type SteamBanRecord = z.infer<typeof schemaSteamBanRecord>;
 export const schemaGroupBanRecord = z
     .object({
         ban_group_id: z.number(),
-        group_id: z.number(),
+        group_id: z.string(),
         group_name: z.string()
     })
     .merge(schemaBanBase);

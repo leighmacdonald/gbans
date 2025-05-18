@@ -9,17 +9,23 @@ import MenuItem from '@mui/material/MenuItem';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLoaderData, useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod';
-import { PermissionLevel, PermissionLevelCollection, permissionLevelString } from '../api';
-import { apiSaveWikiPage, Page } from '../api/wiki.ts';
+import { apiSaveWikiPage } from '../api/wiki.ts';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import {
+    PermissionLevel,
+    PermissionLevelCollection,
+    PermissionLevelEnum,
+    permissionLevelString
+} from '../schema/people.ts';
+import { Page } from '../schema/wiki.ts';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer.tsx';
 import { mdEditorRef } from './form/field/MarkdownField.tsx';
 
 interface WikiValues {
     body_md: string;
-    permission_level: PermissionLevel;
+    permission_level: PermissionLevelEnum;
 }
 
 export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest/wiki/' | '/_guest/wiki/$slug' }) => {

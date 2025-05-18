@@ -25,7 +25,7 @@ import { TableCellRelativeDateField } from '../component/table/TableCellRelative
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { ASNBanRecord, BanReasonEnum, BanReasons } from '../schema/bans.ts';
+import { AppealStateEnum, ASNBanRecord, BanReasonEnum, BanReasons } from '../schema/bans.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
@@ -65,7 +65,7 @@ function AdminBanASN() {
     const { data: bans, isLoading } = useQuery({
         queryKey: queryKey,
         queryFn: async () => {
-            return await apiGetBansASN({ deleted: search.deleted ?? false });
+            return await apiGetBansASN({ deleted: search.deleted ?? false, appeal_state: AppealStateEnum.enum.Any });
         }
     });
 

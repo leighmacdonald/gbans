@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import Stack from '@mui/material/Stack';
-import { apiDeleteServer, Server } from '../../api';
+import { apiDeleteServer } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { Server } from '../../schema/server.ts';
 import { Heading } from '../Heading';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 

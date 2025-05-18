@@ -1,27 +1,26 @@
 import { ReactNode, useEffect, useState } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useModal } from '@ebay/nice-modal-react';
-import {
-    ChatStatus,
-    ChatStatusChangePayload,
-    ClientStatePayload,
-    MessageCreatePayload,
-    GameStartPayload,
-    JoinPayload,
-    LeavePayload,
-    MessagePayload,
-    Operation,
-    PermissionLevel,
-    PurgePayload,
-    QueueMember,
-    QueueRequest,
-    ChatLog,
-    LobbyState,
-    websocketURL
-} from '../../api';
+import { QueueRequest, websocketURL } from '../../api';
 import { useAuth } from '../../hooks/useAuth.ts';
 import { QueueCtx } from '../../hooks/useQueueCtx.ts';
 import * as killsound from '../../icons/Killsound.mp3';
+import { PermissionLevel } from '../../schema/people.ts';
+import {
+    ChatLog,
+    ChatStatus,
+    ChatStatusChangePayload,
+    ClientStatePayload,
+    GameStartPayload,
+    JoinPayload,
+    LeavePayload,
+    LobbyState,
+    MessageCreatePayload,
+    MessagePayload,
+    Operation,
+    PurgePayload,
+    QueueMember
+} from '../../schema/playerqueue.ts';
 import { readAccessToken } from '../../util/auth/readAccessToken.ts';
 import { logErr } from '../../util/errors.ts';
 import { transformCreatedOnDate } from '../../util/time.ts';

@@ -7,9 +7,10 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
-import { apiDeleteThread, apiUpdateThread, ForumThread } from '../../api/forum';
+import { apiDeleteThread, apiUpdateThread } from '../../api/forum';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { ForumThread } from '../../schema/forum.ts';
 import { logErr } from '../../util/errors';
 import { ModalConfirm } from './index';
 

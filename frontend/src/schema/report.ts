@@ -86,7 +86,8 @@ export const schemaBanAppealMessage = z
         message_md: z.string(),
         deleted: z.boolean()
     })
-    .merge(schemaTimeStamped);
+    .merge(schemaTimeStamped)
+    .merge(schemaBasicUserInfo);
 
 export type BanAppealMessage = z.infer<typeof schemaBanAppealMessage>;
 

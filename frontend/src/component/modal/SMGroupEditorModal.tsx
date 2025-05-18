@@ -6,10 +6,10 @@ import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
-import { apiCreateSMGroup, apiSaveSMGroup, hasSMFlag, SMGroups } from '../../api';
+import { apiCreateSMGroup, apiSaveSMGroup, hasSMFlag } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
+import { SMGroups } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
 
 export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroups }) => {
@@ -99,9 +99,9 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'immunity'}
-                                validators={{
-                                    onChange: z.string().transform(numberStringValidator(0, 100))
-                                }}
+                                // validators={{
+                                //     onChange: z.string().transform(numberStringValidator(0, 100))
+                                // }}
                                 children={(field) => {
                                     return <field.TextField label={'Immunity Level'} />;
                                 }}

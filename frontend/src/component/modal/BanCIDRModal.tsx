@@ -6,18 +6,17 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
+import { apiCreateBanCIDR, apiUpdateBanCIDR } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import {
-    apiCreateBanCIDR,
-    apiUpdateBanCIDR,
     BanReason,
     BanReasons,
     banReasonsCollection,
     CIDRBanRecord,
     Duration,
     DurationCollection
-} from '../../api';
-import { useAppForm } from '../../contexts/formContext.tsx';
-import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+} from '../../schema/bans.ts';
 import { Heading } from '../Heading';
 
 const schema = z.object({
