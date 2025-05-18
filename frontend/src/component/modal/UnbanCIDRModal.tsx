@@ -8,6 +8,10 @@ import { apiDeleteCIDRBan } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 
+const schema = z.object({
+    unban_reason: z.string().min(5)
+});
+
 export const UnbanCIDRModal = NiceModal.create(
     ({
         banId
@@ -17,7 +21,9 @@ export const UnbanCIDRModal = NiceModal.create(
     }) => {
         const modal = useModal();
         const { sendError } = useUserFlashCtx();
-
+        const defaultValues: z.input<typeof schema> = {
+            unban_reason: ''
+        };
         const mutation = useMutation({
             mutationKey: ['deleteCIDRBan', { banId }],
             mutationFn: async (unban_reason: string) => {
@@ -37,8 +43,9 @@ export const UnbanCIDRModal = NiceModal.create(
             onSubmit: async ({ value }) => {
                 mutation.mutate(value.unban_reason);
             },
-            defaultValues: {
-                unban_reason: ''
+            defaultValues,
+            validators: {
+                onSubmit: schema
             }
         });
 
@@ -58,9 +65,6 @@ export const UnbanCIDRModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'unban_reason'}
-                                    validators={{
-                                        onChange: z.string().min(5)
-                                    }}
                                     children={(field) => {
                                         return <field.TextField label={'Unban Reason'} />;
                                     }}

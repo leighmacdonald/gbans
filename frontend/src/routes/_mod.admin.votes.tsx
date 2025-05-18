@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, PaginationState } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiVotesQuery, VoteResult } from '../api/votes.ts';
+import { apiVotesQuery } from '../api/votes.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
@@ -16,6 +16,7 @@ import { Title } from '../component/Title';
 import { FullTable } from '../component/table/FullTable.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
+import { VoteResult } from '../schema/votes.ts';
 import { initPagination, makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 

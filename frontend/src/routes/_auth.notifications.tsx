@@ -31,9 +31,7 @@ import {
     apiNotificationsDelete,
     apiNotificationsDeleteAll,
     apiNotificationsMarkAllRead,
-    apiNotificationsMarkRead,
-    NotificationSeverity,
-    UserNotification
+    apiNotificationsMarkRead
 } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { IndeterminateCheckbox } from '../component/IndeterminateCheckbox.tsx';
@@ -46,6 +44,7 @@ import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { NotificationSeverity, NotificationSeverityEnum, UserNotification } from '../schema/people.ts';
 import { RowsPerPage } from '../util/table.ts';
 
 export const Route = createFileRoute('/_auth/notifications')({
@@ -318,7 +317,7 @@ function NotificationsPage() {
     );
 }
 
-const TableCellSeverity = ({ severity }: { severity: NotificationSeverity }) => {
+const TableCellSeverity = ({ severity }: { severity: NotificationSeverityEnum }) => {
     const theme = useTheme();
 
     switch (severity) {
@@ -391,7 +390,7 @@ const NotificationsTable = ({
             {
                 accessorKey: 'severity',
                 header: () => 'level',
-                cell: (info) => <TableCellSeverity severity={info.getValue() as NotificationSeverity} />,
+                cell: (info) => <TableCellSeverity severity={info.getValue() as NotificationSeverityEnum} />,
                 size: 55,
                 enableResizing: false
             },

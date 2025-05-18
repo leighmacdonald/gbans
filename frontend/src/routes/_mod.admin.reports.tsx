@@ -9,20 +9,21 @@ import Typography from '@mui/material/Typography';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
 import { z } from 'zod';
-import {
-    apiGetReports,
-    BanReasons,
-    ReportStatus,
-    ReportStatusCollection,
-    reportStatusString,
-    ReportWithAuthor
-} from '../api';
+import { apiGetReports } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
 import { FullTable } from '../component/table/FullTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
+import { BanReasons } from '../schema/bans.ts';
+import {
+    ReportStatus,
+    ReportStatusCollection,
+    ReportStatusEnum,
+    reportStatusString,
+    ReportWithAuthor
+} from '../schema/report.ts';
 import { initColumnFilter, initPagination, initSortOrder, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
@@ -147,7 +148,7 @@ function AdminReports() {
                                                 renderItem={(item) => {
                                                     return (
                                                         <MenuItem value={item} key={`rs-${item}`}>
-                                                            {reportStatusString(item as ReportStatus)}
+                                                            {reportStatusString(item as ReportStatusEnum)}
                                                         </MenuItem>
                                                     );
                                                 }}
@@ -207,7 +208,7 @@ const makeColumns = () => {
         }),
         columnHelper.accessor('report_status', {
             size: 120,
-            filterFn: (row, _, value: ReportStatus) => {
+            filterFn: (row, _, value: ReportStatusEnum) => {
                 if (value == ReportStatus.Any) {
                     return true;
                 }

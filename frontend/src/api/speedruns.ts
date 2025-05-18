@@ -1,58 +1,6 @@
-import { Duration, TimeStamped, transformCreatedOnDate } from '../util/time.ts';
+import { SpeedrunMapOverview, SpeedrunResult } from '../schema/speedrun.ts';
+import { transformCreatedOnDate } from '../util/time.ts';
 import { apiCall } from './common.ts';
-import { UserProfile } from './profile.ts';
-
-export type MapDetail = {
-    map_id: number;
-    map_name: string;
-} & TimeStamped;
-
-export type SpeedrunPointCaptures = {
-    speedrun_id: number;
-    round_id: number;
-    players: SpeedrunParticipant[];
-    duration: Duration;
-    point_name: string;
-};
-export type SpeedrunParticipant = {
-    person: UserProfile;
-    round_id: number;
-    steam_id: string;
-    kills: number;
-    destructions: number;
-    duration: Duration;
-    persona_name: string;
-    avatar_hash: string;
-};
-
-export type SpeedrunResult = {
-    speedrun_id: number;
-    server_id: number;
-    rank: number;
-    initial_rank: number;
-    map_detail: MapDetail;
-    point_captures: SpeedrunPointCaptures[];
-    players: SpeedrunParticipant[];
-    duration: Duration;
-    player_count: number;
-    bot_count: number;
-    created_on: Date;
-    category: string;
-};
-
-export type SpeedrunMapOverview = {
-    speedrun_id: number;
-    server_id: number;
-    rank: number;
-    initial_rank: number;
-    map_detail: MapDetail;
-    duration: Duration;
-    player_count: number;
-    bot_count: number;
-    created_on: Date;
-    category: string;
-    total_players: number;
-};
 
 export const getSpeedrunsTopOverall = async (count: number = 5) => {
     const results = await apiCall<Record<string, SpeedrunResult[]>>(`/api/speedruns/overall/top?count=${count}`, 'GET');

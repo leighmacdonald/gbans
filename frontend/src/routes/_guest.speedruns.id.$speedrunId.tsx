@@ -16,13 +16,14 @@ import {
     TableOptions,
     useReactTable
 } from '@tanstack/react-table';
-import { getSpeedrun, SpeedrunParticipant, SpeedrunPointCaptures } from '../api';
+import { getSpeedrun } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { Title } from '../component/Title';
 import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { DataTable } from '../component/table/DataTable.tsx';
+import { SpeedrunParticipant, SpeedrunPointCaptures } from '../schema/speedrun.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { durationString, renderDateTime } from '../util/time.ts';

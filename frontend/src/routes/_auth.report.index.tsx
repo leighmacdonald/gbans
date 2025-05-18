@@ -24,17 +24,7 @@ import {
     useReactTable
 } from '@tanstack/react-table';
 import { z } from 'zod';
-import {
-    apiCreateReport,
-    apiGetUserReports,
-    BanReason,
-    BanReasons,
-    banReasonsCollection,
-    CreateReportRequest,
-    PlayerProfile,
-    reportStatusString,
-    ReportWithAuthor
-} from '../api';
+import { apiCreateReport, apiGetUserReports } from '../api';
 import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { IconButtonLink } from '../component/IconButtonLink.tsx';
@@ -49,6 +39,9 @@ import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { BanReason, BanReasons, banReasonsCollection } from '../schema/bans.ts';
+import { PlayerProfile } from '../schema/people.ts';
+import { CreateReportRequest, reportStatusString, ReportWithAuthor } from '../schema/report.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 

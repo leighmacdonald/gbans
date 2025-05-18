@@ -7,23 +7,77 @@ import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
-import { apiCreateSMOverrides, apiSaveSMOverrides, hasSMFlag, OverrideType, SMOverrides } from '../../api';
+import { apiCreateSMOverrides, apiSaveSMOverrides, hasSMFlag, SMOverrides } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 
-type mutateOverrideArgs = {
-    name: string;
-    type: OverrideType;
-    flags: string;
-};
+const schema = z.object({
+    name: z.string(),
+    type: z.enum(['command', 'group']),
+    a: z.boolean(),
+    b: z.boolean(),
+    c: z.boolean(),
+    d: z.boolean(),
+    e: z.boolean(),
+    f: z.boolean(),
+    g: z.boolean(),
+    h: z.boolean(),
+    i: z.boolean(),
+    j: z.boolean(),
+    k: z.boolean(),
+    l: z.boolean(),
+    m: z.boolean(),
+    n: z.boolean(),
+    o: z.boolean(),
+    p: z.boolean(),
+    q: z.boolean(),
+    r: z.boolean(),
+    s: z.boolean(),
+    t: z.boolean(),
+    z: z.boolean()
+});
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const schemaValues = z.object({
+    name: z.string(),
+    type: z.enum(['command', 'group']),
+    flags: z.string()
+});
+
+type Values = z.infer<typeof schemaValues>;
 
 export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?: SMOverrides }) => {
     const modal = useModal();
     const { sendError } = useUserFlashCtx();
+    const defaultValues: z.input<typeof schema> = {
+        type: override?.type ?? 'command',
+        name: override?.name ?? '',
+        z: hasSMFlag('z', override),
+        a: hasSMFlag('a', override),
+        b: hasSMFlag('b', override),
+        c: hasSMFlag('c', override),
+        d: hasSMFlag('d', override),
+        e: hasSMFlag('e', override),
+        f: hasSMFlag('f', override),
+        g: hasSMFlag('g', override),
+        h: hasSMFlag('h', override),
+        i: hasSMFlag('i', override),
+        j: hasSMFlag('j', override),
+        k: hasSMFlag('k', override),
+        l: hasSMFlag('l', override),
+        m: hasSMFlag('m', override),
+        n: hasSMFlag('n', override),
+        o: hasSMFlag('o', override),
+        p: hasSMFlag('p', override),
+        q: hasSMFlag('q', override),
+        r: hasSMFlag('r', override),
+        s: hasSMFlag('s', override),
+        t: hasSMFlag('t', override)
+    };
     const mutation = useMutation({
         mutationKey: ['adminSMOverride'],
-        mutationFn: async ({ name, type, flags }: mutateOverrideArgs) => {
+        mutationFn: async ({ name, type, flags }: Values) => {
             return override?.override_id
                 ? await apiSaveSMOverrides(override.override_id, name, type, flags)
                 : await apiCreateSMOverrides(name, type, flags);
@@ -49,30 +103,9 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 
             mutation.mutate({ name: value.name, type: value.type, flags });
         },
-        defaultValues: {
-            type: override?.type ?? 'command',
-            name: override?.name ?? '',
-            z: hasSMFlag('z', override),
-            a: hasSMFlag('a', override),
-            b: hasSMFlag('b', override),
-            c: hasSMFlag('c', override),
-            d: hasSMFlag('d', override),
-            e: hasSMFlag('e', override),
-            f: hasSMFlag('f', override),
-            g: hasSMFlag('g', override),
-            h: hasSMFlag('h', override),
-            i: hasSMFlag('i', override),
-            j: hasSMFlag('j', override),
-            k: hasSMFlag('k', override),
-            l: hasSMFlag('l', override),
-            m: hasSMFlag('m', override),
-            n: hasSMFlag('n', override),
-            o: hasSMFlag('o', override),
-            p: hasSMFlag('p', override),
-            q: hasSMFlag('q', override),
-            r: hasSMFlag('r', override),
-            s: hasSMFlag('s', override),
-            t: hasSMFlag('t', override)
+        defaultValues,
+        validators: {
+            onSubmit: schema
         }
     });
 

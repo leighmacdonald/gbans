@@ -11,7 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, SortingState } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiGetNewsAll, apiNewsDelete, NewsEntry } from '../api/news.ts';
+import { apiGetNewsAll, apiNewsDelete } from '../api/news.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { Title } from '../component/Title';
 import { ModalConfirm, ModalNewsEditor } from '../component/modal';
@@ -19,6 +19,7 @@ import { FullTable } from '../component/table/FullTable.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { NewsEntry } from '../schema/news.ts';
 import { initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 

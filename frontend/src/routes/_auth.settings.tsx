@@ -29,9 +29,7 @@ import {
     apiGetDiscordLogin,
     apiGetPersonSettings,
     apiSavePersonSettings,
-    discordAvatarURL,
-    PermissionLevel,
-    PersonSettings
+    discordAvatarURL
 } from '../api';
 import { apiGetPatreonLogin, apiGetPatreonLogout } from '../api/patreon.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -41,6 +39,7 @@ import { ModalConfirm } from '../component/modal';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { PermissionLevel, PersonSettings } from '../schema/people.ts';
 import { logErr } from '../util/errors.ts';
 import { SubHeading, TabButton, TabSection } from './_admin.admin.settings.tsx';
 
@@ -196,7 +195,7 @@ const GeneralSection = ({
             tab={'general'}
             currentTab={tab}
             label={'General'}
-            description={'Core settings that dont fit into a subcategory'}
+            description={"Core settings that don't fit into a subcategory"}
         >
             <form
                 onSubmit={async (e) => {
@@ -502,7 +501,7 @@ const ConnectionsSection = ({
             sendFlash('success', 'Logged out successfully');
         } catch (e) {
             logErr(e);
-            sendFlash('error', 'Could not logout fully');
+            sendFlash('error', 'Could not log out fully');
         }
     };
 

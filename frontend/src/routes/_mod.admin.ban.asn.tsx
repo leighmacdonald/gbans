@@ -14,7 +14,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiGetBansASN, ASNBanRecord, BanReason, BanReasons } from '../api';
+import { apiGetBansASN } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
@@ -25,6 +25,7 @@ import { TableCellRelativeDateField } from '../component/table/TableCellRelative
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { ASNBanRecord, BanReasonEnum, BanReasons } from '../schema/bans.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
@@ -290,7 +291,7 @@ const makeColumns = (onEdit: (ban: ASNBanRecord) => Promise<void>, onUnban: (ban
     columnHelper.accessor('reason', {
         size: 100,
         header: () => 'Reason',
-        cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
+        cell: (info) => <Typography>{BanReasons[info.getValue() as BanReasonEnum]}</Typography>
     }),
     columnHelper.accessor('created_on', {
         size: 100,

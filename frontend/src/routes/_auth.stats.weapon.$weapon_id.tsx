@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { apiGetPlayerWeaponStats, PlayerWeaponStats, PlayerWeaponStatsResponse } from '../api';
+import { apiGetPlayerWeaponStats, PlayerWeaponStatsResponse } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import FmtWhenGt from '../component/FmtWhenGT.tsx';
 import { PersonCell } from '../component/PersonCell';
@@ -13,6 +13,7 @@ import { Title } from '../component/Title';
 import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
+import { PlayerWeaponStats } from '../schema/stats.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 

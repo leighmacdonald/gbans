@@ -16,7 +16,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiGetBansSteam, BanReason, BanReasons, banReasonsCollection, SteamBanRecord } from '../api';
+import { apiGetBansSteam } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
@@ -28,6 +28,7 @@ import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { BanReason, BanReasonEnum, BanReasons, banReasonsCollection, SteamBanRecord } from '../schema/bans.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 
@@ -313,7 +314,7 @@ const makeColumns = (
             return filterValue == BanReason.Any || row.original.reason == filterValue;
         },
         header: 'Reason',
-        cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
+        cell: (info) => <Typography>{BanReasons[info.getValue() as BanReasonEnum]}</Typography>
     }),
     columnHelper.accessor('created_on', {
         header: 'Created',

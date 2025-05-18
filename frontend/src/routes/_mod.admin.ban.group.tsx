@@ -15,7 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiGetBansGroups, BanReason, BanReasons, GroupBanRecord } from '../api';
+import { apiGetBansGroups } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
@@ -25,6 +25,7 @@ import { FullTable } from '../component/table/FullTable.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
+import { BanReasonEnum, BanReasons, GroupBanRecord } from '../schema/bans.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
@@ -269,7 +270,7 @@ const makeColumns = (
     columnHelper.accessor('reason', {
         header: 'Reason',
         size: 100,
-        cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
+        cell: (info) => <Typography>{BanReasons[info.getValue() as BanReasonEnum]}</Typography>
     }),
     columnHelper.accessor('created_on', {
         header: 'Created',

@@ -12,7 +12,7 @@ import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-r
 import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { fromUnixTime } from 'date-fns';
 import { z } from 'zod';
-import { apiSearchPeople, communityVisibilityState, PermissionLevel, permissionLevelString, Person } from '../api';
+import { apiSearchPeople } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { Title } from '../component/Title';
@@ -21,6 +21,13 @@ import { ModalPersonEditor } from '../component/modal';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import {
+    communityVisibilityState,
+    PermissionLevel,
+    PermissionLevelEnum,
+    permissionLevelString,
+    Person
+} from '../schema/people.ts';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate, renderDateTime } from '../util/time.ts';
 
@@ -240,7 +247,7 @@ const PeopleTable = ({
                         {permissionLevelString(
                             info.row.original
                                 ? info.row.original.permission_level
-                                : (PermissionLevel.Guest as PermissionLevel)
+                                : (PermissionLevel.Guest as PermissionLevelEnum)
                         )}
                     </Typography>
                 )

@@ -1,6 +1,8 @@
 import { formatDistance, parseISO, parseJSON } from 'date-fns';
 import { format } from 'date-fns/format';
 import { isAfter } from 'date-fns/fp';
+import { z } from 'zod';
+import { schemaTimeStamped } from '../schema/chrono.ts';
 
 export type Duration = number;
 
@@ -66,11 +68,6 @@ export const renderTimeDistance = (t1: Date | string, t2?: Date | string): strin
     });
 };
 
-export interface DateRange {
-    date_start: Date;
-    date_end: Date;
-}
-
 export const transformDateRange = <T>(item: T & DateRange) => {
     item.date_end = parseDateTime(item.date_end as unknown as string);
     item.date_start = parseDateTime(item.date_start as unknown as string);
@@ -78,11 +75,7 @@ export const transformDateRange = <T>(item: T & DateRange) => {
     return item;
 };
 
-export interface TimeStamped {
-    created_on: Date;
-    updated_on: Date;
-    valid_until?: Date;
-}
+export type TimeStamped = z.infer<typeof schemaTimeStamped>;
 
 // These transform functions are used because for
 

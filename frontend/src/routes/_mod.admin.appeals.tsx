@@ -17,14 +17,7 @@ import {
     useReactTable
 } from '@tanstack/react-table';
 import { z } from 'zod';
-import {
-    apiGetAppeals,
-    AppealState,
-    AppealStateCollection,
-    appealStateString,
-    BanReasons,
-    SteamBanRecord
-} from '../api';
+import { apiGetAppeals, appealStateString } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TextLink } from '../component/TextLink.tsx';
@@ -32,6 +25,7 @@ import { Title } from '../component/Title';
 import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
+import { AppealState, AppealStateCollection, AppealStateEnum, BanReasons, SteamBanRecord } from '../schema/bans.ts';
 import { TablePropsAll } from '../types/table.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
@@ -151,7 +145,7 @@ function AdminAppeals() {
                                                 renderItem={(item) => {
                                                     return (
                                                         <MenuItem value={item} key={`rs-${item}`}>
-                                                            {appealStateString(item as AppealState)}
+                                                            {appealStateString(item as AppealStateEnum)}
                                                         </MenuItem>
                                                     );
                                                 }}
