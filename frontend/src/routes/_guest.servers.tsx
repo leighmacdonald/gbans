@@ -14,7 +14,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
 import { LatLngLiteral } from 'leaflet';
-import { apiGetServerStates, BaseServer, PermissionLevel } from '../api';
+import { apiGetServerStates } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { ServerFilters } from '../component/ServerFilters.tsx';
@@ -25,6 +25,8 @@ import { QueueHelp } from '../component/queue/QueueHelp.tsx';
 import { MapStateCtx } from '../contexts/MapStateCtx.tsx';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
+import { PermissionLevel } from '../schema/people.ts';
+import { BaseServer } from '../schema/sourcemod.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { sum } from '../util/lists.ts';
 

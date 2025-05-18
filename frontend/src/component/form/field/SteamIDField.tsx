@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { QuestionMark } from '@mui/icons-material';
 import CheckIcon from '@mui/icons-material/Check';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
@@ -19,6 +20,28 @@ export const SteamIDField = (props: Props) => {
     const field = useFieldContext<string>();
     const errors = useStore(field.store, (state) => state.meta.errors);
 
+    const adornment = useMemo(() => {
+        if (field.state.meta.isValidating) {
+            return <HourglassBottomIcon color={'warning'} sx={{ width: 40 }} />;
+        }
+        if (field.state.meta.isPristine) {
+            return <QuestionMark color={'secondary'} />;
+        }
+        if (field.state.meta.errors.length > 0) {
+            return <ErrorOutlineIcon color={'error'} sx={{ width: 40 }} />;
+        }
+        if (props.profile) {
+            return (
+                <Avatar
+                    src={avatarHashToURL(props.profile?.player.avatarhash ?? defaultAvatarHash)}
+                    variant={'square'}
+                />
+            );
+        }
+
+        return <CheckIcon color={'success'} />;
+    }, [field.state.meta.isPristine, field.state.meta.isValidating, props.profile, field.state.meta.errors]);
+
     return (
         <TextField
             {...props}
@@ -27,30 +50,11 @@ export const SteamIDField = (props: Props) => {
             onBlur={field.handleBlur}
             variant={defaultFieldVariant}
             fullWidth
-            error={Boolean(errors)}
+            error={errors.length > 0}
             helperText={errors ? errors.join(', ') : ''}
             slotProps={{
                 input: {
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            {errors ? (
-                                <ErrorOutlineIcon color={'error'} sx={{ width: 40 }} />
-                            ) : field.state.meta.isValidating ? (
-                                <HourglassBottomIcon color={'warning'} sx={{ width: 40 }} />
-                            ) : field.state.meta.isTouched ? (
-                                props.profile ? (
-                                    <Avatar
-                                        src={avatarHashToURL(props.profile?.player.avatarhash ?? defaultAvatarHash)}
-                                        variant={'square'}
-                                    />
-                                ) : (
-                                    <CheckIcon color={'success'} />
-                                )
-                            ) : (
-                                <QuestionMark color={'secondary'} />
-                            )}
-                        </InputAdornment>
-                    )
+                    startAdornment: <InputAdornment position={'end'}>{adornment}</InputAdornment>
                 }
             }}
         />

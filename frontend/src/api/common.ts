@@ -1,58 +1,12 @@
 import { ApiError } from '../error.tsx';
 import { readAccessToken } from '../util/auth/readAccessToken.ts';
 import { emptyOrNullString } from '../util/types';
-import { AppealState } from './bans';
-
-export enum PermissionLevel {
-    Banned = 0,
-    Guest = 1,
-    User = 10,
-    Reserved = 15,
-    Editor = 25,
-    Moderator = 50,
-    Admin = 100
-}
-
-export const PermissionLevelCollection = [
-    PermissionLevel.Banned,
-    PermissionLevel.Guest,
-    PermissionLevel.User,
-    PermissionLevel.Reserved,
-    PermissionLevel.Editor,
-    PermissionLevel.Moderator,
-    PermissionLevel.Admin
-];
-
-export const permissionLevelString = (level: PermissionLevel) => {
-    switch (level) {
-        case PermissionLevel.Admin:
-            return 'Admin';
-        case PermissionLevel.Editor:
-            return 'Editor';
-        case PermissionLevel.Banned:
-            return 'Banned';
-        case PermissionLevel.User:
-            return 'User';
-        case PermissionLevel.Moderator:
-            return 'Moderator';
-        case PermissionLevel.Reserved:
-            return 'VIP';
-        case PermissionLevel.Guest:
-            return 'Guest';
-        default:
-            return 'Unknown';
-    }
-};
 
 export interface DataCount {
     count: number;
 }
 
 export class EmptyBody {}
-
-export type CallbackLink = {
-    url: string;
-};
 
 export const apiRootURL = (): string => `${location.protocol}//${location.host}`;
 
@@ -119,39 +73,3 @@ export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Recor
 
     return (await response.json()) as TResponse;
 };
-
-export interface QueryFilter {
-    offset?: number;
-    limit?: number;
-    desc?: boolean;
-    query?: string;
-    order_by?: string;
-    deleted?: boolean;
-    flagged_only?: boolean;
-}
-
-export interface BanQueryCommon extends QueryFilter {
-    source_id?: string;
-    target_id?: string;
-    appeal_state?: AppealState;
-    deleted?: boolean;
-}
-
-export type BanSteamQueryFilter = BanQueryCommon;
-
-export interface BanCIDRQueryFilter extends BanQueryCommon {
-    ip?: string;
-}
-
-export interface BanGroupQueryFilter extends BanQueryCommon {
-    group_id?: string;
-}
-
-export interface BanASNQueryFilter extends BanQueryCommon {
-    as_num?: number;
-}
-
-export interface ReportQueryFilter {
-    deleted?: boolean;
-    source_id?: string;
-}

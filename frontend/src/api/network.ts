@@ -1,12 +1,6 @@
-import { TimeStamped, transformTimeStampedDates, transformTimeStampedDatesList } from '../util/time';
+import { CIDRBlockCheckResponse, CIDRBlockSource, WhitelistIP, WhitelistSteam } from '../schema/network.ts';
+import { transformTimeStampedDates, transformTimeStampedDatesList } from '../util/time';
 import { apiCall, EmptyBody } from './common';
-
-export interface CIDRBlockSource extends TimeStamped {
-    cidr_block_source_id: number;
-    name: string;
-    url: string;
-    enabled: boolean;
-}
 
 export const apiGetNetworkUpdateDB = async () => apiCall('/api/network/update_db');
 
@@ -68,17 +62,6 @@ export const apiDeleteCIDRBlockSource = async (cidr_block_source_id: number, abo
     );
 };
 
-export interface WhitelistIP extends TimeStamped {
-    cidr_block_whitelist_id: number;
-    address: string;
-}
-
-export interface WhitelistSteam extends TimeStamped {
-    steam_id: string;
-    personaname: string;
-    avatar_hash: string;
-}
-
 export const apiCreateWhitelistSteam = async (steam_id: string, abortController?: AbortController) => {
     const resp = await apiCall<WhitelistIP>(`/api/block_list/whitelist/steam`, 'POST', { steam_id }, abortController);
 
@@ -126,11 +109,6 @@ export const apiDeleteCIDRBlockWhitelist = async (
         abortController
     );
 };
-
-export interface CIDRBlockCheckResponse {
-    blocked: boolean;
-    source: string;
-}
 
 export const apiCIDRBlockCheck = async (address: string, abortController?: AbortController) => {
     return await apiCall<CIDRBlockCheckResponse>(`/api/block_list/checker`, 'POST', { address }, abortController);

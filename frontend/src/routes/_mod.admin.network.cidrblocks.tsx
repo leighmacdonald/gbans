@@ -22,10 +22,6 @@ import {
     apiGetCIDRBlockLists,
     apiGetCIDRBlockListsIPWhitelist,
     apiGetCIDRBlockListsSteamWhitelist,
-    CIDRBlockSource,
-    WhitelistIP,
-    WhitelistSteam,
-    PermissionLevel,
     apiDeleteWhitelistSteam
 } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
@@ -40,6 +36,8 @@ import {
 } from '../component/modal';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { CIDRBlockSource, WhitelistIP, WhitelistSteam } from '../schema/network.ts';
+import { PermissionLevel } from '../schema/people.ts';
 import { logErr } from '../util/errors.ts';
 import { renderDate } from '../util/time.ts';
 

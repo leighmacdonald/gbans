@@ -5,7 +5,6 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import {
     apiCreateBanCIDR,
@@ -21,21 +20,30 @@ import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Heading } from '../Heading';
 
-type BanCIDRFormValues = {
-    target_id: string;
-    cidr: string;
-    reason: BanReason;
-    reason_text: string;
-    duration: Duration;
-    duration_custom?: string;
-    note: string;
-    existing?: CIDRBanRecord;
-};
+const schema = z.object({
+    target_id: z.string(),
+    reason: z.nativeEnum(BanReason),
+    reason_text: z.string(),
+    duration: z.nativeEnum(Duration),
+    duration_custom: z.date(),
+    note: z.string(),
+    cidr: z.string().cidr({ version: 'v4' })
+});
+
+type BanCIDRFormValues = z.infer<typeof schema> & { existing?: CIDRBanRecord };
 
 export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBanRecord }) => {
     const { sendFlash } = useUserFlashCtx();
     const modal = useModal();
-
+    const defaultValues: z.input<typeof schema> = {
+        target_id: existing ? existing.target_id : '',
+        reason: existing ? existing.reason : BanReason.Cheating,
+        reason_text: existing ? existing.reason_text : '',
+        duration: existing ? Duration.durCustom : Duration.dur2w,
+        duration_custom: existing?.valid_until ?? new Date(),
+        note: existing?.note ?? '',
+        cidr: existing?.cidr ?? ''
+    };
     const mutation = useMutation({
         mutationKey: ['banCIDR'],
         mutationFn: async (values: BanCIDRFormValues) => {
@@ -46,7 +54,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                     reason_text: values.reason_text,
                     cidr: values.cidr,
                     target_id: values.target_id,
-                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
+                    valid_until: values.duration_custom
                 });
                 sendFlash('success', 'Updated CIDR ban successfully');
                 modal.resolve(ban_record);
@@ -54,7 +62,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 const ban_record = await apiCreateBanCIDR({
                     note: values.note,
                     duration: values.duration,
-                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
+                    valid_until: values.duration_custom,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     target_id: values.target_id,
@@ -79,14 +87,9 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 cidr: value.cidr
             });
         },
-        defaultValues: {
-            target_id: existing ? existing.target_id : '',
-            reason: existing ? existing.reason : BanReason.Cheating,
-            reason_text: existing ? existing.reason_text : '',
-            duration: existing ? Duration.durCustom : Duration.dur2w,
-            duration_custom: existing ? existing.valid_until.toISOString() : '',
-            note: existing ? existing.note : '',
-            cidr: existing ? existing.cidr : ''
+        defaultValues,
+        validators: {
+            onSubmit: schema
         }
     });
 
@@ -108,7 +111,6 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'target_id'}
-                                // validators={makeSteamidValidators()}
                                 children={(field) => {
                                     return (
                                         <field.SteamIDField
@@ -122,9 +124,6 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'cidr'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'IP/CIDR Range'} />;
                                 }}
@@ -153,22 +152,6 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'reason_text'}
-                                validators={{
-                                    onSubmit: ({ value, fieldApi }) => {
-                                        if (fieldApi.form.getFieldValue('reason') != BanReason.Custom) {
-                                            if (value.length == 0) {
-                                                return undefined;
-                                            }
-                                            return 'Must use custom ban reason';
-                                        }
-                                        const result = z.string().min(5).safeParse(value);
-                                        if (!result.success) {
-                                            return result.error.errors.map((e) => e.message).join(',');
-                                        }
-
-                                        return undefined;
-                                    }
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Custom Ban Reason'} />;
                                 }}
@@ -177,9 +160,6 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'duration'}
-                                validators={{
-                                    onChange: z.nativeEnum(Duration)
-                                }}
                                 children={(field) => {
                                     return (
                                         <field.SelectField
@@ -210,9 +190,6 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'note'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
                                 children={(field) => {
                                     return <field.MarkdownField multiline={true} rows={10} label={'Mod Notes'} />;
                                 }}

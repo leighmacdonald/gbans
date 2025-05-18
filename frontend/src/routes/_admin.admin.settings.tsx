@@ -24,9 +24,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
 import { apiGetDemoCleanup, apiGetNetworkUpdateDB } from '../api';
+import { apiGetSettings, apiSaveSettings } from '../api/admin.ts';
+import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
+import { Title } from '../component/Title';
+import { CheckboxField } from '../component/form/field/CheckboxField.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import {
-    apiGetSettings,
-    apiSaveSettings,
     Config,
     schemaDebug,
     schemaDemos,
@@ -40,12 +44,7 @@ import {
     schemaNetwork,
     schemaPatreon,
     schemaSSH
-} from '../api/admin.ts';
-import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { Title } from '../component/Title';
-import { CheckboxField } from '../component/form/field/CheckboxField.tsx';
-import { useAppForm } from '../contexts/formContext.tsx';
-import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+} from '../schema/config.ts';
 import { logErr } from '../util/errors.ts';
 
 const settingsSchema = z.object({
@@ -338,7 +337,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                        <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
+                        <SubHeading>If you have an asset under a different subdir you should change this.</SubHeading>
                         <form.AppField
                             name={'asset_url'}
                             children={(field) => {
@@ -547,7 +546,7 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                        <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
+                        <SubHeading>If you have an asset under a different subdir you should change this.</SubHeading>
                         <form.AppField
                             name={'sdr_dns_enabled'}
                             children={() => {
@@ -560,7 +559,7 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <Typography variant={'h3'}>Cloudflare</Typography>
                         <Typography variant={'body1'}>
                             Current cloudflare is the only supported DNS provider. If you want to see others added, feel
-                            free to open a Github issue.
+                            free to open a GitHub issue.
                         </Typography>
                     </Grid>
 
@@ -1056,7 +1055,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             The unique ID for your permanent discord link. This is only the unique string at the end if
-                            a invite url: https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
+                            an invitation url: https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
                         </SubHeading>
                         <form.AppField
                             name={'link_id'}

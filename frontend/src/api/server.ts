@@ -1,25 +1,19 @@
-import { parseDateTime, TimeStamped, transformCreatedOnDate, transformTimeStampedDates } from '../util/time.ts';
+import { SaveServerOpts, UserServers } from '../schema/server.ts';
+import {
+    AuthType,
+    Flags,
+    OverrideAccess,
+    OverrideType,
+    Server,
+    ServerSimple,
+    SMAdmin,
+    SMGroupImmunity,
+    SMGroupOverrides,
+    SMGroups,
+    SMOverrides
+} from '../schema/sourcemod.ts';
+import { parseDateTime, transformCreatedOnDate, transformTimeStampedDates } from '../util/time.ts';
 import { apiCall } from './common';
-
-export interface BaseServer {
-    server_id: number;
-    host: string;
-    port: number;
-    ip: string;
-    name: string;
-    name_short: string;
-    region: string;
-    cc: string;
-    players: number;
-    max_players: number;
-    bots: number;
-    humans: number;
-    map: string;
-    game_types: string[];
-    latitude: number;
-    longitude: number;
-    distance: number; // calculated on load
-}
 
 export const cleanMapName = (name: string): string => {
     if (!name.startsWith('workshop/')) {
@@ -36,68 +30,8 @@ export const cleanMapName = (name: string): string => {
     return b[0];
 };
 
-export interface ServerSimple {
-    server_id: number;
-    server_name: string;
-    server_name_long: string;
-    colour: string;
-}
-
-export interface Server extends TimeStamped {
-    server_id: number;
-    short_name: string;
-    name: string;
-    address: string;
-    port: number;
-    password: string;
-    rcon: string;
-    region: string;
-    cc: string;
-    latitude: number;
-    longitude: number;
-    default_map: string;
-    reserved_slots: number;
-    players_max: number;
-    is_enabled: boolean;
-    colour: string;
-    enable_stats: boolean;
-    log_secret: number;
-    token_created_on: Date;
-    address_internal: string;
-    address_sdr: string;
-}
-
-export interface Location {
-    latitude: number;
-    longitude: number;
-}
-
-interface UserServers {
-    servers: BaseServer[];
-    lat_long: Location;
-}
-
 export const apiGetServerStates = async (abortController?: AbortController) =>
     await apiCall<UserServers>(`/api/servers/state`, 'GET', undefined, abortController);
-
-export interface SaveServerOpts {
-    server_name_short: string;
-    server_name: string;
-    host: string;
-    port: number;
-    rcon: string;
-    password: string;
-    reserved_slots: number;
-    region: string;
-    cc: string;
-    lat: number;
-    lon: number;
-    is_enabled: boolean;
-    enable_stats: boolean;
-    log_secret: number;
-    address_internal: string;
-    address_sdr: string;
-}
 
 export const apiCreateServer = async (opts: SaveServerOpts) =>
     transformTimeStampedDates(await apiCall<Server, SaveServerOpts>(`/api/servers`, 'POST', opts));
@@ -122,84 +56,8 @@ export const apiGetServers = async () => apiCall<ServerSimple[]>(`/api/servers`,
 
 export const apiDeleteServer = async (server_id: number) => await apiCall(`/api/servers/${server_id}`, 'DELETE');
 
-export type AuthType = 'steam' | 'name' | 'ip';
-
-export type OverrideType = 'command' | 'group';
-
-export type OverrideAccess = 'allow' | 'deny';
-
-export type SMAdmin = {
-    admin_id: number;
-    steam_id: string;
-    auth_type: AuthType;
-    identity: string;
-    password: string;
-    flags: string;
-    name: string;
-    immunity: number;
-    groups: SMGroups[];
-} & TimeStamped;
-
-export type SMGroups = {
-    group_id: number;
-    flags: string;
-    name: string;
-    immunity_level: number;
-} & TimeStamped;
-
-type Flags =
-    | 'z'
-    | 'a'
-    | 'b'
-    | 'c'
-    | 'd'
-    | 'e'
-    | 'f'
-    | 'g'
-    | 'h'
-    | 'i'
-    | 'j'
-    | 'k'
-    | 'l'
-    | 'm'
-    | 'n'
-    | 'o'
-    | 'p'
-    | 'q'
-    | 'r'
-    | 's'
-    | 't';
-
 export const hasSMFlag = (flag: Flags, entity?: SMGroups | SMAdmin | SMOverrides) => {
     return entity?.flags.includes(flag) ?? false;
-};
-
-export type SMGroupImmunity = {
-    group_immunity_id: number;
-    group: SMGroups;
-    other: SMGroups;
-    created_on: Date;
-};
-
-export type SMOverrides = {
-    override_id: number;
-    type: OverrideType;
-    name: string;
-    flags: string;
-} & TimeStamped;
-
-export type SMGroupOverrides = {
-    group_override_id: number;
-    group_id: number;
-    type: OverrideType;
-    name: string;
-    access: OverrideAccess;
-} & TimeStamped;
-
-export type SMAdminGroups = {
-    admin_id: number;
-    group_id: number;
-    inherit_order: number;
 };
 
 export const apiGetSMGroupImmunities = async () =>

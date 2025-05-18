@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiGetAnticheatLogs, apiGetServers, Detection, Detections, ServerSimple, StacEntry } from '../api';
+import { apiGetAnticheatLogs, apiGetServers } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
@@ -22,6 +22,8 @@ import { Title } from '../component/Title';
 import { FullTable } from '../component/table/FullTable.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
+import { Detections, StacEntry } from '../schema/anticheat.ts';
+import { ServerSimple } from '../schema/sourcemod.ts';
 import { stringToColour } from '../util/colours.ts';
 import { initPagination, initSortOrder, makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
@@ -95,7 +97,7 @@ function AdminAnticheat() {
                     name: search.name ?? '',
                     summary: search.summary ?? '',
                     steam_id: search.steam_id ?? '',
-                    detection: (search.detection ?? '') as Detection,
+                    detection: (search.detection ?? 'unknown') as Detections,
                     limit: search.pageSize ?? defaultRows,
                     offset: (search.pageIndex ?? 0) * (search.pageSize ?? defaultRows),
                     order_by: 'created_on',

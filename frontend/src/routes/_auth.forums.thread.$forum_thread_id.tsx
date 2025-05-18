@@ -15,15 +15,7 @@ import { useTheme } from '@mui/material/styles';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod';
-import { PermissionLevel } from '../api';
-import {
-    apiCreateThreadReply,
-    apiDeleteMessage,
-    apiGetThread,
-    apiGetThreadMessages,
-    ForumMessage,
-    ForumThread
-} from '../api/forum.ts';
+import { apiCreateThreadReply, apiDeleteMessage, apiGetThread, apiGetThreadMessages } from '../api/forum.ts';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
@@ -34,6 +26,8 @@ import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { ForumMessage, ForumThread } from '../schema/forum.ts';
+import { PermissionLevel } from '../schema/people.ts';
 import { logErr } from '../util/errors.ts';
 import { useScrollToLocation } from '../util/history.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';

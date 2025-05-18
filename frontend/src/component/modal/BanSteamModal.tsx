@@ -5,39 +5,25 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import { parseISO } from 'date-fns';
 import { z } from 'zod';
+import { apiCreateBanSteam, apiUpdateBanSteam, banTypeString } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import {
-    apiCreateBanSteam,
-    apiUpdateBanSteam,
+    BanPayloadSteam,
     BanReason,
     BanReasons,
     banReasonsCollection,
     BanType,
     BanTypeCollection,
-    banTypeString,
     Duration,
     DurationCollection,
+    schemaBanPayloadSteam,
     SteamBanRecord
-} from '../../api';
-import { useAppForm } from '../../contexts/formContext.tsx';
-import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+} from '../../schema/bans.ts';
 import { Heading } from '../Heading';
 import { DateTimeField } from '../form/field/DateTimeField.tsx';
 import { MarkdownField } from '../form/field/MarkdownField.tsx';
-
-type BanSteamFormValues = {
-    report_id?: number;
-    target_id: string;
-    ban_type: BanType;
-    reason: BanReason;
-    reason_text: string;
-    duration: Duration;
-    duration_custom?: string;
-    note: string;
-    include_friends: boolean;
-    evade_ok: boolean;
-};
 
 export const BanSteamModal = NiceModal.create(
     ({ existing, steamId = '' }: { existing?: SteamBanRecord; steamId?: string }) => {
@@ -46,7 +32,7 @@ export const BanSteamModal = NiceModal.create(
 
         const mutation = useMutation({
             mutationKey: ['banSteam'],
-            mutationFn: async (values: BanSteamFormValues) => {
+            mutationFn: async (values: BanPayloadSteam) => {
                 if (existing?.ban_id) {
                     return await apiUpdateBanSteam(existing.ban_id, {
                         note: values.note,
@@ -55,14 +41,14 @@ export const BanSteamModal = NiceModal.create(
                         reason_text: values.reason_text,
                         include_friends: values.include_friends,
                         evade_ok: values.evade_ok,
-                        valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
+                        valid_until: values.duration_custom
                     });
                 } else {
                     return await apiCreateBanSteam({
                         note: values.note,
                         ban_type: values.ban_type,
                         duration: values.duration,
-                        valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
+                        valid_until: values.duration_custom,
                         reason: values.reason,
                         reason_text: values.reason_text,
                         report_id: values.report_id,
@@ -84,6 +70,19 @@ export const BanSteamModal = NiceModal.create(
             onError: sendError
         });
 
+        const defaultValues: z.infer<typeof schemaBanPayloadSteam> = {
+            report_id: existing ? existing.report_id : 0,
+            target_id: existing ? existing.target_id : steamId,
+            ban_type: existing ? existing.ban_type : BanType.Banned,
+            reason: existing ? existing.reason : BanReason.Cheating,
+            reason_text: existing ? existing.reason_text : '',
+            duration: existing ? Duration.durCustom : Duration.dur2w,
+            duration_custom: existing?.valid_until ?? new Date(),
+            note: existing?.note ?? '',
+            include_friends: existing?.include_friends ?? false,
+            evade_ok: existing?.evade_ok ?? false
+        };
+
         const form = useAppForm({
             onSubmit: async ({ value }) => {
                 mutation.mutate({
@@ -99,17 +98,9 @@ export const BanSteamModal = NiceModal.create(
                     report_id: value.report_id
                 });
             },
-            defaultValues: {
-                report_id: existing ? existing.report_id : 0,
-                target_id: existing ? existing.target_id : steamId,
-                ban_type: existing ? existing.ban_type : BanType.Banned,
-                reason: existing ? existing.reason : BanReason.Cheating,
-                reason_text: existing ? existing.reason_text : '',
-                duration: existing ? Duration.durCustom : Duration.dur2w,
-                duration_custom: existing ? existing.valid_until.toISOString() : '',
-                note: existing ? existing.note : '',
-                include_friends: existing ? existing.include_friends : false,
-                evade_ok: existing ? existing.evade_ok : false
+            defaultValues,
+            validators: {
+                onSubmit: schemaBanPayloadSteam
             }
         });
 

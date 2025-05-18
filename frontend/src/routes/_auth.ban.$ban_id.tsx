@@ -26,12 +26,8 @@ import {
     apiGetBanMessages,
     apiGetBanSteam,
     apiSetBanAppealState,
-    AppealState,
-    AppealStateCollection,
     appealStateString,
-    BanReasons,
-    banTypeString,
-    PermissionLevel
+    banTypeString
 } from '../api';
 import { AppealMessageView } from '../component/AppealMessageView.tsx';
 import { ButtonLink } from '../component/ButtonLink.tsx';
@@ -47,6 +43,8 @@ import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { AppError, ErrorCode } from '../error.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { AppealState, AppealStateCollection, AppealStateEnum, BanReasons } from '../schema/bans.ts';
+import { PermissionLevel } from '../schema/people.ts';
 import { logErr } from '../util/errors.ts';
 import { renderDateTime, renderTimeDistance } from '../util/time.ts';
 
@@ -71,7 +69,7 @@ export const Route = createFileRoute('/_auth/ban/$ban_id')({
 });
 
 function BanPage() {
-    const [appealState, setAppealState] = useState<AppealState>(AppealState.Open);
+    const [appealState, setAppealState] = useState<AppealStateEnum>(AppealState.Open);
     const { permissionLevel, profile } = useRouteContext({ from: '/_auth/ban/$ban_id' });
     const ban = Route.useLoaderData();
     const { sendFlash } = useUserFlashCtx();
@@ -152,14 +150,14 @@ function BanPage() {
                             <>
                                 <FormControl fullWidth>
                                     <InputLabel id="appeal-status-label">Appeal Status</InputLabel>
-                                    <Select<AppealState>
+                                    <Select
                                         variant={'outlined'}
                                         value={ban?.appeal_state}
                                         labelId={'appeal-status-label'}
                                         id={'appeal-status'}
                                         label={'Appeal Status'}
                                         onChange={(evt) => {
-                                            setAppealState(evt.target.value as AppealState);
+                                            setAppealState(evt.target.value as AppealStateEnum);
                                         }}
                                     >
                                         {AppealStateCollection.map((as) => {
@@ -338,10 +336,16 @@ function BanPage() {
                                 <ListItemText primary={'Created At'} secondary={renderDateTime(ban.created_on)} />
                             </ListItem>
                             <ListItem>
-                                <ListItemText primary={'Expires At'} secondary={renderDateTime(ban.valid_until)} />
+                                <ListItemText
+                                    primary={'Expires At'}
+                                    secondary={renderDateTime(ban.valid_until as Date)}
+                                />
                             </ListItem>
                             <ListItem>
-                                <ListItemText primary={'Expires'} secondary={renderTimeDistance(ban.valid_until)} />
+                                <ListItemText
+                                    primary={'Expires'}
+                                    secondary={renderTimeDistance(ban.valid_until as Date)}
+                                />
                             </ListItem>
                             {permissionLevel() >= PermissionLevel.Moderator && (
                                 <ListItem>

@@ -8,18 +8,20 @@ import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { ColumnDef, createColumnHelper, getCoreRowModel, TableOptions, useReactTable } from '@tanstack/react-table';
-import { BaseServer, cleanMapName, PermissionLevel } from '../api';
+import { z } from 'zod';
+import { cleanMapName, PermissionLevel } from '../api';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
 import { useQueueCtx } from '../hooks/useQueueCtx.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { schemaServerRow } from '../schema/server.ts';
 import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
 import { Flag } from './Flag';
 import { StyledBadge } from './StyledBadge.tsx';
 import { DataTable } from './table/DataTable.tsx';
 
-type ServerRow = BaseServer & { copy: string; connect: string };
+type ServerRow = z.infer<typeof schemaServerRow>;
 
 export const ServerList = () => {
     const { sendFlash } = useUserFlashCtx();
