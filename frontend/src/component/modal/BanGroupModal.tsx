@@ -6,9 +6,10 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
-import { apiCreateBanGroup, apiUpdateBanGroup, Duration, DurationCollection, GroupBanRecord } from '../../api';
+import { apiCreateBanGroup, apiUpdateBanGroup } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { Duration, DurationCollection, GroupBanRecord } from '../../schema/bans.ts';
 import { Heading } from '../Heading';
 
 const schema = z.object({

@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { appInfoDetail } from '../api/app.ts';
+import { appInfoDetail } from '../schema/app.ts';
 import { noop } from '../util/lists.ts';
 
 export type AppInfoCtx = {

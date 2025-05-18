@@ -27,6 +27,8 @@ export const schemaServer = z
     })
     .merge(schemaTimeStamped);
 
+export type Server = z.infer<typeof schemaServer>;
+
 export const schemaBaseServer = z.object({
     server_id: z.number(),
     host: z.string(),
@@ -47,12 +49,16 @@ export const schemaBaseServer = z.object({
     distance: z.number() // calculated on load
 });
 
+export type BaseServer = z.infer<typeof schemaBaseServer>;
+
 export const schemaServerSimple = z.object({
     server_id: z.number(),
     server_name: z.string(),
     server_name_long: z.string(),
     colour: z.string()
 });
+
+export type ServerSimple = z.infer<typeof schemaServerSimple>;
 
 export const schemaLocation = z.object({
     latitude: z.number(),
@@ -81,7 +87,7 @@ export const schemaSaveServerOpts = z.object({
 export type SaveServerOpts = z.infer<typeof schemaSaveServerOpts>;
 
 export const schemaUserServers = z.object({
-    servers: z.array(schemaServerSimple),
+    servers: z.array(schemaBaseServer),
     lat_long: schemaLocation
 });
 

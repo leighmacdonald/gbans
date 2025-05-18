@@ -1,4 +1,5 @@
-import { defaultAvatarHash, Person } from '../api';
+import { defaultAvatarHash } from '../api';
+import { Person } from '../schema/people.ts';
 
 export const filterPerson = (people: Person[], query: string): Person[] => {
     return people.filter((friend) => {

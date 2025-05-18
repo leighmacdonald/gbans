@@ -22,17 +22,12 @@ import { useTheme } from '@mui/material/styles';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod';
-import {
-    apiCreateReportMessage,
-    apiGetBansSteamBySteamID,
-    apiGetConnections,
-    apiGetMessages,
-    PermissionLevel,
-    ReportWithAuthor
-} from '../api';
+import { apiCreateReportMessage, apiGetBansSteamBySteamID, apiGetConnections, apiGetMessages } from '../api';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { reportMessagesQueryOptions } from '../queries/reportMessages.ts';
+import { PermissionLevel } from '../schema/people.ts';
+import { ReportWithAuthor } from '../schema/report.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';

@@ -27,7 +27,7 @@ import { TableCellRelativeDateField } from '../component/table/TableCellRelative
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { BanReasonEnum, BanReasons, CIDRBanRecord } from '../schema/bans.ts';
+import { AppealState, BanReasonEnum, BanReasons, CIDRBanRecord } from '../schema/bans.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
@@ -64,7 +64,7 @@ function AdminBanCIDR() {
     const { data: bans, isLoading } = useQuery({
         queryKey: ['cidrBans'],
         queryFn: async () => {
-            return await apiGetBansCIDR({ deleted: search.deleted ?? false });
+            return await apiGetBansCIDR({ deleted: search.deleted ?? false, appeal_state: AppealState.Any });
         }
     });
 

@@ -7,9 +7,10 @@ import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
-import { apiCreateSMOverrides, apiSaveSMOverrides, hasSMFlag, SMOverrides } from '../../api';
+import { apiCreateSMOverrides, apiSaveSMOverrides, hasSMFlag } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { SMOverrides } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
 
 const schema = z.object({

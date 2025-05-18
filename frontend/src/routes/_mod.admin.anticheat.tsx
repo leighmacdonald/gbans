@@ -22,8 +22,8 @@ import { Title } from '../component/Title';
 import { FullTable } from '../component/table/FullTable.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
-import { Detections, StacEntry } from '../schema/anticheat.ts';
-import { ServerSimple } from '../schema/sourcemod.ts';
+import { DetectionCollection, Detections, StacEntry } from '../schema/anticheat.ts';
+import { ServerSimple } from '../schema/server.ts';
 import { stringToColour } from '../util/colours.ts';
 import { initPagination, initSortOrder, makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
@@ -286,7 +286,7 @@ function AdminAnticheat() {
                                                         onBlur={handleBlur}
                                                     >
                                                         <MenuItem value={0}>All</MenuItem>
-                                                        {Detections.map((s) => (
+                                                        {DetectionCollection.map((s) => (
                                                             <MenuItem value={s} key={s}>
                                                                 {s}
                                                             </MenuItem>

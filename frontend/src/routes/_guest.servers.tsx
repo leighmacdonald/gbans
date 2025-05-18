@@ -26,7 +26,7 @@ import { MapStateCtx } from '../contexts/MapStateCtx.tsx';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
 import { PermissionLevel } from '../schema/people.ts';
-import { BaseServer } from '../schema/sourcemod.ts';
+import { BaseServer } from '../schema/server.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { sum } from '../util/lists.ts';
 

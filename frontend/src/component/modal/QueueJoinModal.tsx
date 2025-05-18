@@ -8,7 +8,7 @@ import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
-import { GameStartPayload } from '../../api';
+import { GameStartPayload } from '../../schema/playerqueue.ts';
 import { logErr } from '../../util/errors.ts';
 import { avatarHashToURL } from '../../util/text.tsx';
 import { ButtonLink } from '../ButtonLink.tsx';
