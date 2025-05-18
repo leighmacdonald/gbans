@@ -5,14 +5,9 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import {
-    apiUpdatePlayerPermission,
-    PermissionLevel,
-    PermissionLevelCollection,
-    permissionLevelString,
-    Person
-} from '../../api';
+import { apiUpdatePlayerPermission } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
+import { PermissionLevelCollection, PermissionLevelEnum, permissionLevelString, Person } from '../../schema/people.ts';
 import { Heading } from '../Heading';
 
 export const PersonEditModal = NiceModal.create(({ person }: { person: Person }) => {
@@ -20,7 +15,7 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
 
     const mutation = useMutation({
         mutationKey: ['banCIDR'],
-        mutationFn: async (values: { permission_level: PermissionLevel }) => {
+        mutationFn: async (values: { permission_level: PermissionLevelEnum }) => {
             try {
                 const updatedPerson = await apiUpdatePlayerPermission(person.steam_id, {
                     permission_level: values.permission_level

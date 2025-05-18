@@ -8,7 +8,8 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import { apiGetSourceBans, sbBanRecord } from '../api';
+import { apiGetSourceBans } from '../api';
+import { sbBanRecord } from '../schema/bans.ts';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
 
@@ -53,7 +54,7 @@ export const SourceBansList = ({ steam_id, is_reporter }: SourceBansListProps): 
                             {bans.map((ban) => {
                                 return (
                                     <TableRow key={`ban-${ban.ban_id}`} hover>
-                                        <TableCell>{ban.created_on}</TableCell>
+                                        <TableCell>{ban.created_on.toDateString()}</TableCell>
                                         <TableCell>{ban.site_name}</TableCell>
                                         <TableCell>{ban.persona_name}</TableCell>
                                         <TableCell>{ban.reason}</TableCell>

@@ -72,6 +72,7 @@ export const schemaMatchPlayerWeapon = z.object({
     headshots: z.number(),
     airshots: z.number()
 });
+export type MatchPlayerWeapon = z.infer<typeof schemaMatchPlayerWeapon>;
 
 export const schemaMatchPlayerClass = z.object({
     match_player_class_id: z.number(),

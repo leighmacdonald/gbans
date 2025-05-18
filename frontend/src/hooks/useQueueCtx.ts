@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import { ChatStatus, QueueMember, ChatLog, LobbyState } from '../api';
+import { ChatLog, ChatStatus, LobbyState, QueueMember } from '../schema/playerqueue.ts';
 import { noop } from '../util/lists.ts';
 
 type QueueCtxProps = {

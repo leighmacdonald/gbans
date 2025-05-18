@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { schemaTimeStamped } from './chrono.ts';
-import { schemaBaseServer, schemaLocation, schemaServer, schemaServerSimple } from './server.ts';
+import { schemaLocation } from './server.ts';
 
 export const AuthType = z.enum(['steam', 'name', 'ip']);
 export type AuthType = z.infer<typeof AuthType>;
@@ -98,7 +98,5 @@ export type SMOverrides = z.infer<typeof schemaSMOverrides>;
 export type SMAdmin = z.infer<typeof schemaSMAdmin>;
 export type SMGroups = z.infer<typeof schemaSMGroups>;
 export type SMGroupImmunity = z.infer<typeof schemaSMGroupImmunity>;
-export type BaseServer = z.infer<typeof schemaBaseServer>;
-export type ServerSimple = z.infer<typeof schemaServerSimple>;
-export type Server = z.infer<typeof schemaServer>;
+
 export type Location = z.infer<typeof schemaLocation>;

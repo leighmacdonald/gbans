@@ -28,7 +28,14 @@ import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { BanReason, BanReasonEnum, BanReasons, banReasonsCollection, SteamBanRecord } from '../schema/bans.ts';
+import {
+    AppealState,
+    BanReason,
+    BanReasonEnum,
+    BanReasons,
+    banReasonsCollection,
+    SteamBanRecord
+} from '../schema/bans.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 
@@ -68,7 +75,8 @@ function AdminBanSteam() {
         queryKey: queryKey,
         queryFn: async () => {
             return await apiGetBansSteam({
-                deleted: true
+                deleted: true,
+                appeal_state: AppealState.Any
             });
         }
     });
@@ -78,7 +86,7 @@ function AdminBanSteam() {
             const ban = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {});
             queryClient.setQueryData(queryKey, [...(bans ?? []), ban]);
         } catch (e) {
-            sendFlash('error', `Error trying to setup ban: ${e}`);
+            sendFlash('error', `Error trying to set up ban: ${e}`);
         }
     };
 

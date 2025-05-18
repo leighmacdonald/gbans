@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { formatDistance } from 'date-fns';
-import { apiGetPlayerClassOverallStats, PlayerClassOverallResult } from '../../api';
+import { apiGetPlayerClassOverallStats } from '../../api';
+import { PlayerClassOverallResult } from '../../schema/stats.ts';
 import { defaultFloatFmt, humanCount } from '../../util/text.tsx';
 import FmtWhenGt from '../FmtWhenGT.tsx';
 import { PlayerClassImg } from '../PlayerClassImg';

@@ -5,8 +5,8 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import 'video-react/dist/video-react.css';
-import { SMGroups } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
+import { SMGroups } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
 
 export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGroups[] }) => {

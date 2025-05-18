@@ -1,6 +1,9 @@
 import * as Sentry from '@sentry/react';
+import { z } from 'zod';
 
-export type runModeNames = 'development' | 'production';
+export const runModeNames = z.enum(['development', 'production']);
+export type runModeNames = z.infer<typeof runModeNames>;
+
 export const runMode: runModeNames = (process.env.NODE_ENV as runModeNames) || 'development';
 
 export enum Level {

@@ -1,5 +1,5 @@
 import { redirect } from '@tanstack/react-router';
-import { appInfoDetail } from '../api/app.ts';
+import { appInfoDetail } from '../schema/app.ts';
 import { logErr } from './errors.ts';
 
 export const ensureFeatureEnabled = (featureName: keyof appInfoDetail, redirectTo: string = '/') => {

@@ -7,9 +7,10 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
-import { apiQueueMessagesDelete, ChatLog } from '../../api';
+import { apiQueueMessagesDelete } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { ChatLog } from '../../schema/playerqueue.ts';
 import { Heading } from '../Heading';
 
 export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog }) => {

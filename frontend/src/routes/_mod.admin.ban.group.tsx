@@ -25,7 +25,7 @@ import { FullTable } from '../component/table/FullTable.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
-import { BanReasonEnum, BanReasons, GroupBanRecord } from '../schema/bans.ts';
+import { AppealState, BanReasonEnum, BanReasons, GroupBanRecord } from '../schema/bans.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
@@ -68,7 +68,7 @@ function AdminBanGroup() {
     const { data: bans, isLoading } = useQuery({
         queryKey: ['steamGroupBans'],
         queryFn: async () => {
-            return await apiGetBansGroups({ deleted: false });
+            return await apiGetBansGroups({ deleted: false, appeal_state: AppealState.Any });
         }
     });
 

@@ -18,6 +18,20 @@ const DetectionTypes = [
 export const Detections = z.enum(DetectionTypes);
 export type Detections = z.infer<typeof Detections>;
 
+export const DetectionCollection = [
+    Detections.enum.unknown,
+    Detections.enum.silent_aim,
+    Detections.enum.aim_snap,
+    Detections.enum.too_many_conn,
+    Detections.enum.interp,
+    Detections.enum.bhop,
+    Detections.enum.cmdnum_spike,
+    Detections.enum.eye_angles,
+    Detections.enum.invalid_user_cmd,
+    Detections.enum.oob_cvar,
+    Detections.enum.cheat_cvar
+];
+
 export const schemaStacEntry = z.object({
     anticheat_id: z.number(),
     steam_id: z.string(),

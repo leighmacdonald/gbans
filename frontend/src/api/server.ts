@@ -1,11 +1,9 @@
-import { SaveServerOpts, UserServers } from '../schema/server.ts';
+import { SaveServerOpts, Server, ServerSimple, UserServers } from '../schema/server.ts';
 import {
     AuthType,
     Flags,
     OverrideAccess,
     OverrideType,
-    Server,
-    ServerSimple,
     SMAdmin,
     SMGroupImmunity,
     SMGroupOverrides,

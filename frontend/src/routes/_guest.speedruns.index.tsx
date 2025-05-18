@@ -25,7 +25,7 @@ import { Title } from '../component/Title';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
-import { ServerSimple } from '../schema/sourcemod.ts';
+import { ServerSimple } from '../schema/server.ts';
 import { SpeedrunMapOverview, SpeedrunResult } from '../schema/speedrun.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime, durationString } from '../util/time.ts';

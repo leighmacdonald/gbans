@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 import { LatLngLiteral } from 'leaflet';
-import { BaseServer } from '../api';
+import { BaseServer } from '../schema/sourcemod.ts';
 import { noop } from '../util/lists';
 
 export type MapState = {

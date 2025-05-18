@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { UserNotification } from '../api';
 import * as engineer from '../icons/engineer_blu.jpg';
+import { UserNotification } from '../schema/people.ts';
 
 export const DesktopNotifications = ({
     notifications,

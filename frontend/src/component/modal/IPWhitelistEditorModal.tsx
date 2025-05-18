@@ -5,9 +5,10 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
-import { apiCreateWhitelistIP, apiUpdateWhitelistIP, WhitelistIP } from '../../api';
+import { apiCreateWhitelistIP, apiUpdateWhitelistIP } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { WhitelistIP } from '../../schema/network.ts';
 import { Heading } from '../Heading';
 
 export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: WhitelistIP }) => {

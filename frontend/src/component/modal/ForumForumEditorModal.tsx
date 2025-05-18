@@ -1,21 +1,28 @@
 import { useMemo } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
-import { PermissionLevel, PermissionLevelCollection, permissionLevelString } from '../../api';
-import { apiCreateForum, apiSaveForum, Forum, ForumCategory } from '../../api/forum.ts';
+import { apiCreateForum, apiSaveForum } from '../../api/forum.ts';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { Forum, ForumCategory } from '../../schema/forum.ts';
+import {
+    PermissionLevel,
+    PermissionLevelCollection,
+    PermissionLevelEnum,
+    permissionLevelString
+} from '../../schema/people.ts';
 
 type ForumEditorValues = {
     forum_category_id: number;
     title: string;
     description: string;
     ordering: string;
-    permission_level: PermissionLevel;
+    permission_level: PermissionLevelEnum;
 };
 
 export const ForumForumEditorModal = NiceModal.create(

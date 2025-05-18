@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useEffect } from 'react';
 import { apiGetCurrentProfile, defaultAvatarHash, PermissionLevel, UserProfile } from './api';
-import { AuthContext } from './component/AuthContext.tsx';
+import { AuthContext } from './contexts/AuthContext.tsx';
 import { logoutFn } from './util/auth/logoutFn.ts';
 import { readAccessToken } from './util/auth/readAccessToken.ts';
 import { logErr } from './util/errors.ts';

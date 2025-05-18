@@ -5,9 +5,10 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
-import { apiCreateCIDRBlockSource, apiUpdateCIDRBlockSource, CIDRBlockSource } from '../../api';
+import { apiCreateCIDRBlockSource, apiUpdateCIDRBlockSource } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { CIDRBlockSource } from '../../schema/network.ts';
 import { Heading } from '../Heading';
 
 const schema = z.object({

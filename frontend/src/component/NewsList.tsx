@@ -6,7 +6,8 @@ import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
-import { apiGetNewsAll, NewsEntry } from '../api/news';
+import { apiGetNewsAll } from '../api/news';
+import { NewsEntry } from '../schema/news.ts';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 
 interface NewsListProps {

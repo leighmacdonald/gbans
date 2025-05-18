@@ -7,17 +7,16 @@ import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import { parseISO } from 'date-fns';
 import { z } from 'zod';
-import {
-    apiContestSave,
-    Contest,
-    EmptyUUID,
-    PermissionLevel,
-    PermissionLevelCollection,
-    permissionLevelString
-} from '../../api';
+import { apiContestSave, EmptyUUID } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
+import { Contest } from '../../schema/contest.ts';
+import {
+    PermissionLevel,
+    PermissionLevelCollection,
+    PermissionLevelEnum,
+    permissionLevelString
+} from '../../schema/people.ts';
 import { Heading } from '../Heading';
 
 type ContestEditorFormValues = {
@@ -30,7 +29,7 @@ type ContestEditorFormValues = {
     max_submissions: string;
     media_types: string;
     voting: boolean;
-    min_permission_level: PermissionLevel;
+    min_permission_level: PermissionLevelEnum;
     down_votes: boolean;
 };
 
@@ -166,9 +165,6 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                         <Grid size={{ xs: 4 }}>
                             <form.AppField
                                 name={'max_submissions'}
-                                validators={{
-                                    onChange: z.string().transform(numberStringValidator(1, 10))
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Max Submissions'} />;
                                 }}

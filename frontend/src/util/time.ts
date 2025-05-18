@@ -2,7 +2,7 @@ import { formatDistance, parseISO, parseJSON } from 'date-fns';
 import { format } from 'date-fns/format';
 import { isAfter } from 'date-fns/fp';
 import { z } from 'zod';
-import { schemaTimeStamped } from '../schema/chrono.ts';
+import { DateRange, schemaTimeStamped } from '../schema/chrono.ts';
 
 export type Duration = number;
 
