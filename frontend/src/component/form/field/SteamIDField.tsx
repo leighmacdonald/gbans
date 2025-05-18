@@ -10,7 +10,6 @@ import { useStore } from '@tanstack/react-form';
 import { defaultAvatarHash } from '../../../api';
 import { useFieldContext } from '../../../contexts/formContext.tsx';
 import { PlayerProfile } from '../../../schema/people.ts';
-import { defaultFieldVariant } from '../../../theme.ts';
 import { avatarHashToURL } from '../../../util/text.tsx';
 
 type Props = {
@@ -49,13 +48,12 @@ export const SteamIDField = (props: Props) => {
             value={field.state.value}
             onChange={(e) => field.handleChange(e.target.value)}
             onBlur={field.handleBlur}
-            variant={defaultFieldVariant}
             fullWidth
             error={errors.length > 0}
             helperText={errors ? errors.join(', ') : ''}
             slotProps={{
                 input: {
-                    startAdornment: <InputAdornment position={'end'}>{adornment}</InputAdornment>
+                    endAdornment: <InputAdornment position={'end'}>{adornment}</InputAdornment>
                 }
             }}
         />

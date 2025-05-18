@@ -12,7 +12,7 @@ export const SubmitButton = (props: Props) => {
     return (
         <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-                <Button {...props} type="submit" variant={'contained'}>
+                <Button {...props} type="submit">
                     {isSubmitting ? (props.labelLoading ?? '...') : (props.label ?? 'Submit')}
                 </Button>
             )}

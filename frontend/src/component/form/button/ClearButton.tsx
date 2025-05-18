@@ -16,7 +16,7 @@ export const ClearButton = (props: Props) => {
     return (
         <form.Subscribe selector={(state) => state.isSubmitting}>
             {(isSubmitting) => (
-                <Button {...props} type="button">
+                <Button {...props} type="button" color={'secondary'}>
                     {isSubmitting ? (props.labelLoading ?? '...') : (props.label ?? 'Clear')}
                 </Button>
             )}
