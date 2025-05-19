@@ -1,56 +1,96 @@
-import { useMemo } from 'react';
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { QuestionMark } from '@mui/icons-material';
-import CheckIcon from '@mui/icons-material/Check';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import Avatar from '@mui/material/Avatar';
 import InputAdornment from '@mui/material/InputAdornment';
 import TextField, { TextFieldProps } from '@mui/material/TextField';
 import { useStore } from '@tanstack/react-form';
-import { defaultAvatarHash } from '../../../api';
+import { debounce } from '@tanstack/react-pacer/debouncer';
+import { apiGetSteamValidate, defaultAvatarHash } from '../../../api';
 import { useFieldContext } from '../../../contexts/formContext.tsx';
-import { PlayerProfile } from '../../../schema/people.ts';
+import { SteamValidate } from '../../../schema/people.ts';
 import { avatarHashToURL } from '../../../util/text.tsx';
+import { emptyOrNullString } from '../../../util/types.ts';
+import { GradientSpinner } from '../../GradientSpinner.tsx';
 
 type Props = {
-    profile?: PlayerProfile;
+    defaultProfile?: SteamValidate;
 } & TextFieldProps;
 
 export const SteamIDField = (props: Props) => {
     const field = useFieldContext<string>();
     const errors = useStore(field.store, (state) => state.meta.errors);
+    const [profile, setProfile] = useState<SteamValidate | undefined>(props.defaultProfile);
+    const [error, setError] = useState<string>();
+    const [loading, setLoading] = useState(false);
+
+    // An ugly function to validate the steamid provided.
+    const check = async () => {
+        if (!emptyOrNullString(field.state.value)) {
+            try {
+                setLoading(true);
+                const update = await apiGetSteamValidate(field.state.value);
+                setProfile(update);
+                field.setValue(update.steam_id);
+                setError(undefined);
+            } catch {
+                // Doesnt work?
+                field.setErrorMap({
+                    onChange: errors.map(() => 'Invalid steam ID / Profile link')
+                });
+                setError('Invalid steam ID / Profile link');
+                setProfile(undefined);
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            setProfile(undefined);
+        }
+    };
+
+    // Make sure we debounce the check callback
+    const setDebouncedQuery = useCallback(debounce(check, { wait: 500 }), []);
 
     const adornment = useMemo(() => {
+        if (loading) {
+            return <GradientSpinner />;
+        }
         if (field.state.meta.isValidating) {
             return <HourglassBottomIcon color={'warning'} sx={{ width: 40 }} />;
         }
         if (field.state.meta.isPristine) {
             return <QuestionMark color={'secondary'} />;
         }
-        if (field.state.meta.errors.length > 0) {
+        if (error || field.state.meta.errors.length > 0) {
             return <ErrorOutlineIcon color={'error'} sx={{ width: 40 }} />;
         }
-        if (props.profile) {
-            return (
-                <Avatar
-                    src={avatarHashToURL(props.profile?.player.avatarhash ?? defaultAvatarHash)}
-                    variant={'square'}
-                />
-            );
+        if (profile) {
+            return <Avatar src={avatarHashToURL(profile.hash ?? defaultAvatarHash)} variant={'square'} />;
         }
 
-        return <CheckIcon color={'success'} />;
-    }, [field.state.meta.isPristine, field.state.meta.isValidating, props.profile, field.state.meta.errors]);
+        return <QuestionMark color={'secondary'} />;
+    }, [field.state.meta.isPristine, field.state.meta.isValidating, profile, field.state.meta.errors]);
+
+    const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+        // Update the value immediately
+        field.handleChange(e.target.value);
+        setProfile(undefined);
+
+        // Trigger a debounced validation check
+        setDebouncedQuery();
+    };
 
     return (
         <TextField
             {...props}
             value={field.state.value}
-            onChange={(e) => field.handleChange(e.target.value)}
+            onChange={onChange}
             onBlur={field.handleBlur}
-            fullWidth
-            error={errors.length > 0}
-            helperText={errors ? errors.join(', ') : ''}
+            color={profile ? 'success' : 'primary'}
+            fullWidth={true}
+            error={Boolean(error)}
+            helperText={error ?? 'Any form of Steam ID or profile link.'}
             slotProps={{
                 input: {
                     endAdornment: <InputAdornment position={'end'}>{adornment}</InputAdornment>

@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import UndoIcon from '@mui/icons-material/Undo';
 import Button, { ButtonProps } from '@mui/material/Button';
 import { useFormContext } from '../../../contexts/formContext.tsx';
 
@@ -15,9 +16,17 @@ export const ResetButton = (props: Props) => {
 
     return (
         <form.Subscribe selector={(state) => state.isSubmitting}>
-            {(isSubmitting) => (
-                <Button {...props} type="reset" color={'warning'}>
-                    {isSubmitting ? (props.labelLoading ?? '...') : (props.label ?? 'Reset')}
+            {() => (
+                <Button
+                    {...props}
+                    onClick={() => {
+                        form.reset();
+                    }}
+                    type="reset"
+                    color={'warning'}
+                    startIcon={<UndoIcon />}
+                >
+                    {props.label ?? 'Reset'}
                 </Button>
             )}
         </form.Subscribe>

@@ -15,7 +15,7 @@ export const schemaBanQueryCommon = z
     .object({
         source_id: z.string().optional(),
         target_id: z.string().optional(),
-        appeal_state: AppealStateEnum,
+        appeal_state: AppealStateEnum.optional(),
         deleted: z.boolean().optional()
     })
     .merge(schemaQueryFilter);

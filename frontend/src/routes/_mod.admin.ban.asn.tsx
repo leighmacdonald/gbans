@@ -169,7 +169,7 @@ function AdminBanASN() {
                                     <form.AppField
                                         name={'source_id'}
                                         children={(field) => {
-                                            return <field.TextField label={'Author Steam ID'} />;
+                                            return <field.SteamIDField label={'Author Steam ID'} />;
                                         }}
                                     />
                                 </Grid>
@@ -178,7 +178,7 @@ function AdminBanASN() {
                                 <form.AppField
                                     name={'target_id'}
                                     children={(field) => {
-                                        return <field.TextField label={'Subject Steam ID'} />;
+                                        return <field.SteamIDField label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>

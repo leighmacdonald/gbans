@@ -20,15 +20,7 @@ import { parseDateTime, transformCreatedOnDate, transformTimeStampedDates } from
 import { apiCall } from './common';
 
 export const apiGetSteamValidate = async (query: string) => {
-    try {
-        return await apiCall<SteamValidate>(`/api/steam/validate?query=${query}`);
-    } catch {
-        return {
-            hash: '',
-            personaname: '',
-            steam_id: ''
-        } as SteamValidate;
-    }
+    return await apiCall<SteamValidate>(`/api/steam/validate?query=${query}`);
 };
 
 export const apiGetProfile = async (query: string, abortController?: AbortController) => {

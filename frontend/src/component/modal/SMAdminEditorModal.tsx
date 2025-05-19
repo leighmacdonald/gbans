@@ -13,6 +13,7 @@ import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { AuthType, SMAdmin, SMGroups } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
+import { schemaFlags } from './SMOverrideEditorModal.tsx';
 
 type mutateAdminArgs = {
     name: string;
@@ -23,10 +24,47 @@ type mutateAdminArgs = {
     password: string;
 };
 
+const schema = z
+    .object({
+        name: z.string().min(2),
+        password: z.string(),
+        auth_type: z.enum(['steam', 'name', 'ip']),
+        identity: z.string().min(1),
+        immunity: z.number().min(0).max(100)
+    })
+    .merge(schemaFlags);
+
 export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin; groups: SMGroups[] }) => {
     const modal = useModal();
     const { sendError } = useUserFlashCtx();
-
+    const defaultValues: z.input<typeof schema> = {
+        auth_type: admin?.auth_type ?? 'steam',
+        identity: admin?.identity ?? '',
+        password: admin?.password ?? '',
+        name: admin?.name ?? '',
+        immunity: admin?.immunity ?? 0,
+        z: hasSMFlag('z', admin),
+        a: hasSMFlag('a', admin),
+        b: hasSMFlag('b', admin),
+        c: hasSMFlag('c', admin),
+        d: hasSMFlag('d', admin),
+        e: hasSMFlag('e', admin),
+        f: hasSMFlag('f', admin),
+        g: hasSMFlag('g', admin),
+        h: hasSMFlag('h', admin),
+        i: hasSMFlag('i', admin),
+        j: hasSMFlag('j', admin),
+        k: hasSMFlag('k', admin),
+        l: hasSMFlag('l', admin),
+        m: hasSMFlag('m', admin),
+        n: hasSMFlag('n', admin),
+        o: hasSMFlag('o', admin),
+        p: hasSMFlag('p', admin),
+        q: hasSMFlag('q', admin),
+        r: hasSMFlag('r', admin),
+        s: hasSMFlag('s', admin),
+        t: hasSMFlag('t', admin)
+    };
     const edit = useMutation({
         mutationKey: ['adminSMAdmin'],
         mutationFn: async ({ name, immunity, flags, auth_type, identity, password }: mutateAdminArgs) => {
@@ -54,33 +92,9 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                 }, '');
             edit.mutate({ ...value, immunity: Number(value.immunity), flags: flags });
         },
-        defaultValues: {
-            auth_type: admin?.auth_type ? admin.auth_type : 'steam',
-            identity: admin?.identity ? admin.identity : '',
-            password: admin?.password ? admin.password : '',
-            name: admin?.name ?? '',
-            immunity: admin?.immunity ? String(admin.immunity) : '',
-            z: hasSMFlag('z', admin),
-            a: hasSMFlag('a', admin),
-            b: hasSMFlag('b', admin),
-            c: hasSMFlag('c', admin),
-            d: hasSMFlag('d', admin),
-            e: hasSMFlag('e', admin),
-            f: hasSMFlag('f', admin),
-            g: hasSMFlag('g', admin),
-            h: hasSMFlag('h', admin),
-            i: hasSMFlag('i', admin),
-            j: hasSMFlag('j', admin),
-            k: hasSMFlag('k', admin),
-            l: hasSMFlag('l', admin),
-            m: hasSMFlag('m', admin),
-            n: hasSMFlag('n', admin),
-            o: hasSMFlag('o', admin),
-            p: hasSMFlag('p', admin),
-            q: hasSMFlag('q', admin),
-            r: hasSMFlag('r', admin),
-            s: hasSMFlag('s', admin),
-            t: hasSMFlag('t', admin)
+        defaultValues,
+        validators: {
+            onChange: schema
         }
     });
 
@@ -102,9 +116,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'name'}
-                                validators={{
-                                    onChange: z.string().min(2)
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Alias'} />;
                                 }}
@@ -113,9 +124,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'password'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
+                                validators={{}}
                                 children={(field) => {
                                     return <field.TextField label={'Password'} />;
                                 }}
@@ -124,9 +133,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'auth_type'}
-                                validators={{
-                                    onChange: z.enum(['steam', 'name', 'ip'])
-                                }}
                                 children={(field) => {
                                     return (
                                         <field.SelectField
@@ -147,11 +153,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'identity'}
-                                validators={{
-                                    // TODO use proper validation based on selected auth type
-                                    // Name requires password
-                                    onChange: z.string().min(1)
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Identity'} />;
                                 }}

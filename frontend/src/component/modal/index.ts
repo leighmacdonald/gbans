@@ -18,7 +18,6 @@ import { IPWhitelistEditorModal } from './IPWhitelistEditorModal.tsx';
 import { NewsEditModal } from './NewsEditModal.tsx';
 import { PersonEditModal } from './PersonEditModal.tsx';
 import { QueueJoinModal } from './QueueJoinModal.tsx';
-import { QueuePurgeModal } from './QueuePurgeModal.tsx';
 import { QueueStatusModal } from './QueueStatusModal.tsx';
 import { SMAdminEditorModal } from './SMAdminEditorModal.tsx';
 import { SMGroupEditorModal } from './SMGroupEditorModal.tsx';
@@ -71,7 +70,7 @@ export const ModalQueueJoin = 'modal-queue-join';
 export const ModalQueuePurge = 'modal-queue-delete-messages';
 export const ModalQueueStatus = 'modal-queue-status';
 [
-    [ModalQueuePurge, QueuePurgeModal],
+    //[ModalQueuePurge, QueuePurgeModal],
     [ModalQueueStatus, QueueStatusModal],
     [ModalQueueJoin, QueueJoinModal],
     [ModalSMGroupImmunityEditor, SMGroupImmunityCreateModal],

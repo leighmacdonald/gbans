@@ -1,7 +1,9 @@
 import { ReactNode, useCallback } from 'react';
-import { useModal } from '@ebay/nice-modal-react';
+import NiceModal, { useModal } from '@ebay/nice-modal-react';
+import CloseIcon from '@mui/icons-material/Close';
 import Button, { ButtonProps } from '@mui/material/Button';
 import { useFormContext } from '../../../contexts/formContext.tsx';
+import { ModalConfirm } from '../../modal';
 
 type Props = {
     label?: string;
@@ -17,16 +19,28 @@ export const CloseButton = (props: Props) => {
     const modal = useModal();
 
     const onClick = useCallback(async () => {
-        if (modal) {
-            await modal.hide();
+        if (form.state.isDirty) {
+            try {
+                const confirmed = await NiceModal.show(ModalConfirm, {
+                    title: `Are you sure you want to close? You have unsaved changes.`
+                });
+
+                if (!confirmed) {
+                    return;
+                }
+            } catch {
+                return;
+            }
         }
+
+        await modal.hide();
     }, [modal]);
 
     return (
         <form.Subscribe selector={(state) => state.isSubmitting}>
-            {(isSubmitting) => (
-                <Button {...props} onClick={props.onClick ?? onClick} type="button">
-                    {isSubmitting ? (props.labelLoading ?? '...') : (props.label ?? 'Close')}
+            {() => (
+                <Button {...props} onClick={props.onClick ?? onClick} type="button" startIcon={<CloseIcon />}>
+                    {props.label ?? 'Close'}
                 </Button>
             )}
         </form.Subscribe>

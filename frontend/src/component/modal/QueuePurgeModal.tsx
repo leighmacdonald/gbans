@@ -33,12 +33,10 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
 
     const form = useAppForm({
         onSubmit: async ({ value }) => {
-            purge.mutate({
-                count: Number(value.count)
-            });
+            purge.mutate({ count: value.count });
         },
         defaultValues: {
-            count: '1'
+            count: 1
         }
     });
 
@@ -67,10 +65,7 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
                                 <form.AppField
                                     name={'count'}
                                     validators={{
-                                        onChange: z
-                                            .string({ coerce: true, message: 'Must enter positive number' })
-                                            .min(1)
-                                            .max(10000)
+                                        onChange: z.number().min(1).max(10000)
                                     }}
                                     children={(field) => {
                                         return <field.TextField label={'How many messages to delete / purge.'} />;

@@ -28,7 +28,7 @@ import { stringToColour } from '../util/colours.ts';
 import { initPagination, initSortOrder, makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
-const schema = z.object({
+const searchSchema = z.object({
     ...makeCommonTableSearchSchema([
         'anticheat_id',
         'name',
@@ -42,14 +42,14 @@ const schema = z.object({
     name: z.string().optional(),
     summary: z.string().optional(),
     server_id: z.number().optional(),
-    detection: z.string().optional(),
+    detection: Detections.optional(),
     steam_id: z.string().optional(),
     personaname: z.string().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/anticheat')({
     component: AdminAnticheat,
-    validateSearch: (search) => schema.parse(search),
+    validateSearch: (search) => searchSchema.parse(search),
     loader: async ({ context }) => {
         const unsorted = await context.queryClient.ensureQueryData({
             queryKey: ['serversSimple'],
@@ -71,6 +71,14 @@ export const Route = createFileRoute('/_mod/admin/anticheat')({
 
 const columnHelper = createColumnHelper<StacEntry>();
 
+const schema = z.object({
+    name: z.string(),
+    summary: z.string(),
+    detection: Detections.optional(),
+    steam_id: z.string(),
+    server_id: z.number()
+});
+
 function AdminAnticheat() {
     const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
@@ -87,6 +95,14 @@ function AdminAnticheat() {
         personaname: false,
         steam_id: false
     });
+
+    const defaultValues: z.input<typeof schema> = {
+        name: search.name ?? '',
+        summary: search.summary ?? '',
+        detection: search.detection,
+        steam_id: search.steam_id ?? '',
+        server_id: search.server_id ?? 0
+    };
 
     const { data: logs, isLoading } = useQuery({
         queryKey: ['anticheat', search],
@@ -114,12 +130,9 @@ function AdminAnticheat() {
             //setColumnFilters(initColumnFilter(value));
             await navigate({ to: '/admin/anticheat', search: (prev) => ({ ...prev, ...value }) });
         },
-        defaultValues: {
-            name: search.name ?? '',
-            summary: search.summary ?? '',
-            detection: search.detection ?? '',
-            steam_id: search.steam_id ?? '',
-            server_id: search.server_id ?? 0
+        defaultValues,
+        validators: {
+            onChange: schema
         }
     });
 

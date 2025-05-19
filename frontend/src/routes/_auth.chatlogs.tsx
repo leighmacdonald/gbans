@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import ChatIcon from '@mui/icons-material/Chat';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -13,11 +12,10 @@ import { Title } from '../component/Title.tsx';
 import { Paginator } from '../component/forum/Paginator.tsx';
 import { ChatTable } from '../component/table/ChatTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
-import { PermissionLevel, PlayerProfile } from '../schema/people.ts';
+import { PermissionLevel } from '../schema/people.ts';
 import { ServerSimple } from '../schema/server.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const chatlogsSchema = z.object({
     ...makeCommonTableSearchSchema([
@@ -69,7 +67,6 @@ function ChatLogs() {
     const search = Route.useSearch();
     const { hasPermission } = useRouteContext({ from: '/_auth/chatlogs' });
     const { servers } = useLoaderData({ from: '/_auth/chatlogs' }) as { servers: ServerSimple[] };
-    const [profile, setProfile] = useState<PlayerProfile>();
     const navigate = useNavigate({ from: Route.fullPath });
 
     const { data: messages, isLoading } = useQuery({
@@ -100,7 +97,7 @@ function ChatLogs() {
                 body: z.string(),
                 persona_name: z.string(),
                 server_id: z.number({ coerce: true }),
-                steam_id: makeValidateSteamIDCallback(setProfile),
+                steam_id: z.string(),
                 flagged_only: z.boolean(),
                 auto_refresh: z.number()
             })
@@ -158,7 +155,7 @@ function ChatLogs() {
                                     <form.AppField
                                         name={'steam_id'}
                                         children={(field) => {
-                                            return <field.SteamIDField profile={profile} />;
+                                            return <field.SteamIDField />;
                                         }}
                                     />
                                 </Grid>

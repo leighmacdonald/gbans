@@ -103,6 +103,22 @@ export const banReasonsCollection = [
     BanReason.Username
 ];
 
+export const banReasonsReportCollection = [
+    BanReason.Cheating,
+    BanReason.Racism,
+    BanReason.Harassment,
+    BanReason.Exploiting,
+    BanReason.WarningsExceeded,
+    BanReason.Spam,
+    BanReason.Language,
+    BanReason.Profile,
+    BanReason.ItemDescriptions,
+    BanReason.External,
+    BanReason.Custom,
+    BanReason.BotHost,
+    BanReason.Evading,
+    BanReason.Username
+];
 export const BanType = {
     Unknown: -1,
     OK: 0,

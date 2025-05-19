@@ -24,11 +24,18 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, showCo
     const { sendFlash } = useUserFlashCtx();
 
     return (
-        <Stack minWidth={200} direction={'row'} alignItems={'center'} overflow={'hidden'}>
+        <Stack
+            minWidth={200}
+            direction={'row'}
+            alignItems={'center'}
+            overflow={'hidden'}
+            paddingLeft={1}
+            paddingRight={1}
+        >
             {showCopy && (
                 <Tooltip title={'Copy Steamid'}>
                     <IconButton
-                        color={'warning'}
+                        color={'primary'}
                         onClick={async (event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -46,21 +53,23 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, showCo
                 params={{ steamId: steam_id }}
                 onClick={onClick ?? undefined}
                 sx={{
+                    backgroundColor: theme.palette.background.default,
                     '&:hover': {
                         cursor: 'pointer',
-                        backgroundColor: theme.palette.background.default
+                        backgroundColor: theme.palette.primary.main
                     }
                 }}
+                fullWidth
                 startIcon={
                     <Avatar
                         alt={personaname}
                         src={avatarHashToURL(avatar_hash, 'small')}
-                        variant={'square'}
+                        variant={'rounded'}
                         sx={{ height: '32px', width: '32px' }}
                     />
                 }
             >
-                <Typography fontWeight={'bold'} color={theme.palette.text.primary} variant={'body1'}>
+                <Typography fontWeight={'bold'} variant={'body1'} sx={{ width: '100%' }}>
                     {personaname != '' ? personaname : steam_id}
                 </Typography>
             </ButtonLink>
