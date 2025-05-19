@@ -28,14 +28,7 @@ import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import {
-    AppealState,
-    BanReason,
-    BanReasonEnum,
-    BanReasons,
-    banReasonsCollection,
-    SteamBanRecord
-} from '../schema/bans.ts';
+import { BanReason, BanReasonEnum, BanReasons, banReasonsCollection, SteamBanRecord } from '../schema/bans.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 
@@ -75,8 +68,7 @@ function AdminBanSteam() {
         queryKey: queryKey,
         queryFn: async () => {
             return await apiGetBansSteam({
-                deleted: true,
-                appeal_state: AppealState.Any
+                deleted: false
             });
         }
     });
@@ -174,7 +166,7 @@ function AdminBanSteam() {
                                 <form.AppField
                                     name={'source_id'}
                                     children={(field) => {
-                                        return <field.TextField label={'Author Steam ID'} />;
+                                        return <field.SteamIDField label={'Author Steam ID'} />;
                                     }}
                                 />
                             </Grid>
@@ -183,7 +175,7 @@ function AdminBanSteam() {
                                 <form.AppField
                                     name={'target_id'}
                                     children={(field) => {
-                                        return <field.TextField label={'Subject Steam ID'} />;
+                                        return <field.SteamIDField label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>

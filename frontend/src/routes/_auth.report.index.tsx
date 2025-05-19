@@ -39,8 +39,7 @@ import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { BanReason, BanReasons, banReasonsCollection } from '../schema/bans.ts';
-import { PlayerProfile } from '../schema/people.ts';
+import { BanReason, BanReasons, banReasonsReportCollection } from '../schema/bans.ts';
 import {
     CreateReportRequest,
     reportStatusString,
@@ -48,6 +47,7 @@ import {
     schemaCreateReportRequest
 } from '../schema/report.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
+import { emptyOrNullString } from '../util/types.ts';
 
 const searchSchemaReport = z.object({
     ...commonTableSearchSchema,
@@ -239,8 +239,8 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
 
 export const ReportCreateForm = (): JSX.Element => {
     const { demo_id, steam_id, person_message_id } = Route.useSearch();
-    const [validatedProfile] = useState<PlayerProfile>();
     const { sendFlash, sendError } = useUserFlashCtx();
+    const [isCustom, setIsCustom] = useState(false);
 
     const defaultValues: z.input<typeof schemaCreateReportRequest> = {
         description: '',
@@ -268,13 +268,9 @@ export const ReportCreateForm = (): JSX.Element => {
 
     const form = useAppForm({
         onSubmit: ({ value }) => {
-            const target = steam_id ?? validatedProfile?.player.steam_id;
-            if (!target) {
-                throw 'Invalid target steam id';
-            }
             mutation.mutate({
                 demo_id: value?.demo_id ?? 0,
-                target_id: target,
+                target_id: value.target_id,
                 demo_tick: value.demo_tick,
                 reason: value.reason,
                 reason_text: value.reason_text,
@@ -283,7 +279,7 @@ export const ReportCreateForm = (): JSX.Element => {
             });
         },
         validators: {
-            onSubmitAsync: schemaCreateReportRequest
+            onSubmit: schemaCreateReportRequest
         },
         defaultValues
     });
@@ -314,7 +310,11 @@ export const ReportCreateForm = (): JSX.Element => {
                                 return (
                                     <field.SelectField
                                         label={'Ban Reason'}
-                                        items={banReasonsCollection}
+                                        items={banReasonsReportCollection}
+                                        handleChange={(value) => {
+                                            setIsCustom(value == BanReason.Custom);
+                                            field.handleChange(value);
+                                        }}
                                         renderItem={(r) => {
                                             return (
                                                 <MenuItem value={r} key={`reason-${r}`}>
@@ -331,8 +331,29 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid size={{ xs: 6 }}>
                         <form.AppField
                             name={'reason_text'}
+                            validators={{
+                                onChangeListenTo: ['reason', 'reason_text'],
+                                onChange: ({ value, fieldApi }) => {
+                                    if (!emptyOrNullString(value)) {
+                                        if (BanReason.Custom !== fieldApi.form.getFieldValue('reason')) {
+                                            return 'Reason must be set to custom';
+                                        }
+                                        fieldApi.form.setFieldValue('reason', () => {
+                                            return BanReason.Custom;
+                                        });
+                                        return undefined;
+                                    }
+                                }
+                            }}
                             children={(field) => {
-                                return <field.TextField fullWidth label="Custom Reason" />;
+                                return (
+                                    <field.TextField
+                                        fullWidth
+                                        disabled={!isCustom}
+                                        label="Custom Reason"
+                                        helperText={'You must set the reason to Custom to use this field'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>

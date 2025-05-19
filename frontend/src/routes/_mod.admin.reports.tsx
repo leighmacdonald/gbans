@@ -106,6 +106,8 @@ function AdminReports() {
         return makeColumns();
     }, []);
 
+    console.log(reports);
+
     return (
         <Grid container spacing={2}>
             <Title>Reports</Title>
@@ -119,31 +121,32 @@ function AdminReports() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid size={{ xs: 6, md: 3 }}>
+                            <Grid size={{ xs: 6, md: 4 }}>
                                 <form.AppField
                                     name={'source_id'}
                                     children={(field) => {
-                                        return <field.TextField label={'Author Steam ID'} />;
+                                        return <field.SteamIDField label={'Author Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
-                            <Grid size={{ xs: 6, md: 3 }}>
+                            <Grid size={{ xs: 6, md: 4 }}>
                                 <form.AppField
                                     name={'target_id'}
                                     children={(field) => {
-                                        return <field.TextField label={'Subject Steam ID'} />;
+                                        return <field.SteamIDField label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
-                            <Grid size={{ xs: 6, md: 3 }}>
+                            <Grid size={{ xs: 6, md: 4 }}>
                                 <form.AppField
                                     name={'report_status'}
                                     children={(field) => {
                                         return (
                                             <field.SelectField
                                                 label={'Report Status'}
+                                                fullWidth
                                                 items={ReportStatusCollection}
                                                 renderItem={(item) => {
                                                     return (
@@ -172,7 +175,7 @@ function AdminReports() {
             <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Current User Reports'} iconLeft={<ReportIcon />}>
                     <FullTable
-                        data={reports ?? []}
+                        data={reports}
                         isLoading={false}
                         columns={columns}
                         sorting={sorting}

@@ -28,7 +28,7 @@ export const schemaGeneral = z.object({
     mode: z.enum(['release', 'debug', 'test']),
     srcds_log_addr: z.string(),
     default_route: z.string(),
-    asset_url: z.string().url(),
+    asset_url: z.string(),
     contests_enabled: z.boolean(),
     news_enabled: z.boolean(),
     forums_enabled: z.boolean(),

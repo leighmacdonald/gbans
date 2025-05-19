@@ -59,7 +59,7 @@ export const initColumnFilter = (filters: Record<string, unknown>): ColumnFilter
 };
 
 export const initPagination = (pageIndex?: number, pageSize?: number): PaginationState => {
-    return { pageIndex: pageIndex ?? 1, pageSize: pageSize ?? RowsPerPage.TwentyFive };
+    return { pageIndex: pageIndex ?? 0, pageSize: pageSize ?? RowsPerPage.TwentyFive };
 };
 
 const commonPropNames = ['page', 'rows', 'sortOrder', 'sortDesc', 'pageIndex', 'pageSize'];
