@@ -1,5 +1,7 @@
 import { ReactNode, useMemo } from 'react';
-import { MapContainer, Marker, TileLayer } from 'react-leaflet';
+import { MapContainer } from 'react-leaflet/MapContainer';
+import { Marker } from 'react-leaflet/Marker';
+import { TileLayer } from 'react-leaflet/TileLayer';
 import CellTowerIcon from '@mui/icons-material/CellTower';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -18,18 +20,22 @@ import { z } from 'zod';
 import { apiGetNetworkDetails } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
-import { Title } from '../component/Title';
+import { Title } from '../component/Title.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { getFlagEmoji } from '../util/emoji.ts';
 import { emptyOrNullString } from '../util/types.ts';
 
-const ipInfoSearchSchema = z.object({
-    ip: z.string().optional()
+const searchSchema = z.object({
+    ip: z.string().ip({ version: 'v4' }).optional()
+});
+
+const schema = z.object({
+    ip: z.string().ip({ version: 'v4' })
 });
 
 export const Route = createFileRoute('/_mod/admin/network/ipInfo')({
     component: AdminNetworkInfo,
-    validateSearch: (search) => ipInfoSearchSchema.parse(search)
+    validateSearch: (search) => searchSchema.parse(search)
 });
 
 const InfoRow = ({ label, children }: { label: string; children: ReactNode }) => {
@@ -58,6 +64,10 @@ function AdminNetworkInfo() {
         }
     });
 
+    const defaultValues: z.input<typeof searchSchema> = {
+        ip: ip ?? ''
+    };
+
     const pos = useMemo(() => {
         if (!data || data?.location.lat_long.latitude == 0) {
             return { lat: 50, lng: 50 };
@@ -73,13 +83,9 @@ function AdminNetworkInfo() {
             await navigate({ to: '/admin/network/ipInfo', search: (prev) => ({ ...prev, ...value }) });
         },
         validators: {
-            onChange: z.object({
-                ip: z.string().ip({ version: 'v4' })
-            })
+            onChange: schema
         },
-        defaultValues: {
-            ip: ip ?? ''
-        }
+        defaultValues
     });
 
     const clear = async () => {

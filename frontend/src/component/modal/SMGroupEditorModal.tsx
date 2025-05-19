@@ -11,11 +11,43 @@ import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { SMGroups } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
+import { schemaFlags } from './SMOverrideEditorModal.tsx';
+
+const schema = z
+    .object({
+        name: z.string().min(2),
+        immunity: z.number({ coerce: true }).min(0).max(100)
+    })
+    .merge(schemaFlags);
 
 export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroups }) => {
     const modal = useModal();
     const { sendError } = useUserFlashCtx();
-
+    const defaultValues: z.input<typeof schema> = {
+        name: group?.name ?? '',
+        immunity: group?.immunity_level ?? 0,
+        z: hasSMFlag('z', group),
+        a: hasSMFlag('a', group),
+        b: hasSMFlag('b', group),
+        c: hasSMFlag('c', group),
+        d: hasSMFlag('d', group),
+        e: hasSMFlag('e', group),
+        f: hasSMFlag('f', group),
+        g: hasSMFlag('g', group),
+        h: hasSMFlag('h', group),
+        i: hasSMFlag('i', group),
+        j: hasSMFlag('j', group),
+        k: hasSMFlag('k', group),
+        l: hasSMFlag('l', group),
+        m: hasSMFlag('m', group),
+        n: hasSMFlag('n', group),
+        o: hasSMFlag('o', group),
+        p: hasSMFlag('p', group),
+        q: hasSMFlag('q', group),
+        r: hasSMFlag('r', group),
+        s: hasSMFlag('s', group),
+        t: hasSMFlag('t', group)
+    };
     const edit = useMutation({
         mutationKey: ['adminSMGroup'],
         mutationFn: async ({ name, immunity, flags }: { name: string; immunity: number; flags: string }) => {
@@ -43,31 +75,10 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                 }, '');
             edit.mutate({ name: value.name, immunity: Number(value.immunity), flags: flags });
         },
-        defaultValues: {
-            name: group?.name ?? '',
-            immunity: group?.immunity_level ? String(group.immunity_level) : '',
-            z: hasSMFlag('z', group),
-            a: hasSMFlag('a', group),
-            b: hasSMFlag('b', group),
-            c: hasSMFlag('c', group),
-            d: hasSMFlag('d', group),
-            e: hasSMFlag('e', group),
-            f: hasSMFlag('f', group),
-            g: hasSMFlag('g', group),
-            h: hasSMFlag('h', group),
-            i: hasSMFlag('i', group),
-            j: hasSMFlag('j', group),
-            k: hasSMFlag('k', group),
-            l: hasSMFlag('l', group),
-            m: hasSMFlag('m', group),
-            n: hasSMFlag('n', group),
-            o: hasSMFlag('o', group),
-            p: hasSMFlag('p', group),
-            q: hasSMFlag('q', group),
-            r: hasSMFlag('r', group),
-            s: hasSMFlag('s', group),
-            t: hasSMFlag('t', group)
-        }
+        validators: {
+            onSubmit: schema
+        },
+        defaultValues
     });
 
     return (
@@ -88,9 +99,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'name'}
-                                validators={{
-                                    onChange: z.string().min(2)
-                                }}
                                 children={(field) => {
                                     return <field.TextField label={'Group Name'} />;
                                 }}
@@ -99,9 +107,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'immunity'}
-                                // validators={{
-                                //     onChange: z.string().transform(numberStringValidator(0, 100))
-                                // }}
                                 children={(field) => {
                                     return <field.TextField label={'Immunity Level'} />;
                                 }}
@@ -111,7 +116,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'z'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(z) Full Admin'} />;
                                 }}
@@ -120,7 +124,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'a'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(a) Reserved Slot'} />;
                                 }}
@@ -129,7 +132,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'b'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(b) Generic Admin'} />;
                                 }}
@@ -138,7 +140,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'c'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(c) Kick Players'} />;
                                 }}
@@ -147,7 +148,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'d'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(d) Ban Players'} />;
                                 }}
@@ -156,7 +156,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'e'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(e) Unban Players'} />;
                                 }}
@@ -165,7 +164,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'f'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(f) Slay/Harm Players'} />;
                                 }}
@@ -174,7 +172,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'g'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(g) Change Maps'} />;
                                 }}
@@ -183,7 +180,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'h'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(h) Change CVARs'} />;
                                 }}
@@ -192,7 +188,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'i'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(i) Exec Configs'} />;
                                 }}
@@ -201,7 +196,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'j'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(j) Special Chat Privileges'} />;
                                 }}
@@ -210,7 +204,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'k'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(k) Start Votes'} />;
                                 }}
@@ -219,7 +212,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'l'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(l) Set Server Password'} />;
                                 }}
@@ -228,7 +220,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'m'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(m) RCON Access'} />;
                                 }}
@@ -237,7 +228,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'n'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(n) Enabled Cheats'} />;
                                 }}
@@ -246,7 +236,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'o'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(o) Custom Flag'} />;
                                 }}
@@ -255,7 +244,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'p'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(p) Custom Flag'} />;
                                 }}
@@ -264,7 +252,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'q'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(q) Custom Flag'} />;
                                 }}
@@ -273,7 +260,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'r'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(r) Custom Flag'} />;
                                 }}
@@ -282,7 +268,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'s'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(s) Custom Flag'} />;
                                 }}
@@ -291,7 +276,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'t'}
-                                validators={{ onChange: z.boolean() }}
                                 children={(field) => {
                                     return <field.CheckboxField label={'(t) Custom Flag'} />;
                                 }}

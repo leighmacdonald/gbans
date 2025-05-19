@@ -98,7 +98,7 @@ function AdminVotes() {
                                 <form.AppField
                                     name={'source_id'}
                                     children={(field) => {
-                                        return <field.TextField label={'Initiator Steam ID'} />;
+                                        return <field.SteamIDField label={'Initiator Steam ID'} />;
                                     }}
                                 />
                             </Grid>
@@ -107,7 +107,7 @@ function AdminVotes() {
                                 <form.AppField
                                     name={'target_id'}
                                     children={(field) => {
-                                        return <field.TextField label={'Target Steam ID'} />;
+                                        return <field.SteamIDField label={'Target Steam ID'} />;
                                     }}
                                 />
                             </Grid>

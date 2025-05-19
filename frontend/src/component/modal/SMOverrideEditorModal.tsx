@@ -13,9 +13,7 @@ import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { SMOverrides } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
 
-const schema = z.object({
-    name: z.string(),
-    type: z.enum(['command', 'group']),
+export const schemaFlags = z.object({
     a: z.boolean(),
     b: z.boolean(),
     c: z.boolean(),
@@ -38,6 +36,12 @@ const schema = z.object({
     t: z.boolean(),
     z: z.boolean()
 });
+const schema = z
+    .object({
+        name: z.string(),
+        type: z.enum(['command', 'group'])
+    })
+    .merge(schemaFlags);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const schemaValues = z.object({

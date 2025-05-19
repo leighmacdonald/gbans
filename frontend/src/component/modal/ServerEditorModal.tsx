@@ -37,17 +37,17 @@ const schema = z.object({
         .regex(/\w{3,}/),
     name: z.string().min(1),
     address: z.string().min(1),
-    port: z.number({ coerce: true }).min(1024).max(65535).transform(Number),
+    port: z.number({ coerce: true }).min(1024).max(65535),
     password: z.string().length(20),
     rcon: z.string().min(6),
     region: z.string().min(1),
     cc: z.string().length(2),
-    latitude: z.number({ coerce: true }).min(-90).max(99).transform(Number),
-    longitude: z.number({ coerce: true }).min(-180).max(180).transform(Number),
-    reserved_slots: z.number({ coerce: true }).min(0).max(100).transform(Number),
+    latitude: z.number({ coerce: true }).min(-90).max(99),
+    longitude: z.number({ coerce: true }).min(-180).max(180),
+    reserved_slots: z.number({ coerce: true }).min(0).max(100),
     is_enabled: z.boolean(),
     enabled_stats: z.boolean(),
-    log_secret: z.number({ coerce: true }).min(100000000).max(999999999).transform(Number),
+    log_secret: z.number({ coerce: true }).min(100000).max(999999999),
     address_internal: z.string(),
     address_sdr: z.string()
 });
@@ -203,7 +203,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid size={{ xs: 4 }}>
+                        <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'rcon'}
                                 children={(field) => {
@@ -211,7 +211,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid size={{ xs: 4 }}>
+                        <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'log_secret'}
                                 children={(field) => {
