@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { AppealStateEnum } from './bans.ts';
 
 export const schemaQueryFilter = z.object({
@@ -26,7 +26,7 @@ export type BanSteamQueryFilter = BanQueryCommon;
 
 export const schemaBanCIDRQueryFilter = z
     .object({
-        ip: z.string().ip({ version: 'v4' }).optional()
+        ip: z.ipv4().optional()
     })
     .merge(schemaBanQueryCommon);
 

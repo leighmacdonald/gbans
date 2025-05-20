@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetBansASN } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
@@ -26,20 +26,14 @@ import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { AppealStateEnum, ASNBanRecord, BanReasonEnum, BanReasons } from '../schema/bans.ts';
-import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
+import { commonTableSearchSchema, initColumnFilter, initPagination, isPermanentBan } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
-const banASNSearchSchema = z.object({
-    ...makeCommonTableSearchSchema([
-        'ban_asn_id',
-        'source_id',
-        'target_id',
-        'deleted',
-        'reason',
-        'as_num',
-        'valid_until'
-    ]),
+const banASNSearchSchema = commonTableSearchSchema.extend({
+    sortColumn: z
+        .enum(['ban_asn_id', 'source_id', 'target_id', 'deleted', 'reason', 'as_num', 'valid_until'])
+        .optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     as_num: z.string().optional(),

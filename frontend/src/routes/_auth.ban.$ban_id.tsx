@@ -19,7 +19,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import {
     apiCreateBanMessage,
     apiDeleteBanMessage,

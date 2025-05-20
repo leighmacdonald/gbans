@@ -16,7 +16,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import 'leaflet/dist/leaflet.css';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetNetworkDetails } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
@@ -26,11 +26,11 @@ import { getFlagEmoji } from '../util/emoji.ts';
 import { emptyOrNullString } from '../util/types.ts';
 
 const searchSchema = z.object({
-    ip: z.string().ip({ version: 'v4' }).optional()
+    ip: z.ipv4().optional()
 });
 
 const schema = z.object({
-    ip: z.string().ip({ version: 'v4' })
+    ip: z.ipv4()
 });
 
 export const Route = createFileRoute('/_mod/admin/network/ipInfo')({

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const Action = z.enum(['ban', 'kick', 'gag']);
 
@@ -24,7 +24,7 @@ export const MediaTypes = {
     other: 2
 } as const;
 
-export const MediaTypesEnum = z.nativeEnum(MediaTypes);
+export const MediaTypesEnum = z.enum(MediaTypes);
 export type MediaTypesEnum = z.infer<typeof MediaTypesEnum>;
 
 export const mediaType = (mime_type: string): MediaTypesEnum => {

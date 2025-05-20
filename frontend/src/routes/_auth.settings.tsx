@@ -22,7 +22,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import {
     apiDiscordLogout,
     apiDiscordUser,

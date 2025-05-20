@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { BanReasonEnum } from './bans.ts';
 
 export const FilterAction = {

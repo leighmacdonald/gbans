@@ -6,7 +6,7 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import { parseISO } from 'date-fns';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiContestSave, EmptyUUID } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';

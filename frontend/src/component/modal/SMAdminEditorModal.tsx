@@ -7,13 +7,12 @@ import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateSMAdmin, apiSaveSMAdmin, hasSMFlag } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { AuthType, SMAdmin, SMGroups } from '../../schema/sourcemod.ts';
+import { AuthType, schemaFlags, SMAdmin, SMGroups } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
-import { schemaFlags } from './SMOverrideEditorModal.tsx';
 
 type mutateAdminArgs = {
     name: string;
@@ -24,15 +23,13 @@ type mutateAdminArgs = {
     password: string;
 };
 
-const schema = z
-    .object({
-        name: z.string().min(2),
-        password: z.string(),
-        auth_type: z.enum(['steam', 'name', 'ip']),
-        identity: z.string().min(1),
-        immunity: z.number().min(0).max(100)
-    })
-    .merge(schemaFlags);
+const schema = schemaFlags.extend({
+    name: z.string().min(2),
+    password: z.string(),
+    auth_type: z.enum(['steam', 'name', 'ip']),
+    identity: z.string().min(1),
+    immunity: z.number().min(0).max(100)
+});
 
 export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin; groups: SMGroups[] }) => {
     const modal = useModal();

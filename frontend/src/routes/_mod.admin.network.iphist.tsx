@@ -4,18 +4,18 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetConnections } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { Title } from '../component/Title';
 import { Paginator } from '../component/forum/Paginator.tsx';
 import { IPHistoryTable } from '../component/table/IPHistoryTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
-import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
-const ipHistorySearchSchema = z.object({
-    ...makeCommonTableSearchSchema(['person_connection_id', 'steam_id', 'created_on', 'server_id']),
+const ipHistorySearchSchema = commonTableSearchSchema.extend({
+    sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'server_id']).optional(),
     steam_id: z.string().optional()
 });
 

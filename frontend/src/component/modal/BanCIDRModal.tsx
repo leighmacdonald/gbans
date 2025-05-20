@@ -5,7 +5,7 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateBanCIDR, apiUpdateBanCIDR } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -21,12 +21,12 @@ import { Heading } from '../Heading';
 
 const schema = z.object({
     target_id: z.string(),
-    reason: z.nativeEnum(BanReason),
+    reason: z.enum(BanReason),
     reason_text: z.string(),
-    duration: z.nativeEnum(Duration),
+    duration: z.enum(Duration),
     duration_custom: z.date(),
     note: z.string(),
-    cidr: z.string().cidr({ version: 'v4' })
+    cidr: z.cidrv4()
 });
 
 type BanCIDRFormValues = z.infer<typeof schema> & { existing?: CIDRBanRecord };
@@ -35,7 +35,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
     const { sendFlash } = useUserFlashCtx();
     const modal = useModal();
     const defaultValues: z.input<typeof schema> = {
-        target_id: existing ? existing.target_id : '',
+        target_id: existing?.target_id ?? '',
         reason: existing ? existing.reason : BanReason.Cheating,
         reason_text: existing ? existing.reason_text : '',
         duration: existing ? Duration.durCustom : Duration.dur2w,
@@ -76,15 +76,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
 
     const form = useAppForm({
         onSubmit: async ({ value }) => {
-            mutation.mutate({
-                target_id: value.target_id,
-                reason: value.reason,
-                reason_text: value.reason_text,
-                duration: value.duration,
-                duration_custom: value.duration_custom,
-                note: value.note,
-                cidr: value.cidr
-            });
+            mutation.mutate(value);
         },
         defaultValues,
         validators: {

@@ -4,7 +4,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateCIDRBlockSource, apiUpdateCIDRBlockSource } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -16,7 +16,6 @@ const schema = z.object({
     url: z.string().url(),
     enabled: z.boolean()
 });
-type CIDRBlockEditorValues = z.infer<typeof schema>;
 
 export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CIDRBlockSource }) => {
     const modal = useModal();
@@ -28,7 +27,7 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
     };
     const mutation = useMutation({
         mutationKey: ['blockSource'],
-        mutationFn: async (values: CIDRBlockEditorValues) => {
+        mutationFn: async (values: z.infer<typeof schema>) => {
             if (source?.cidr_block_source_id) {
                 const resp = await apiUpdateCIDRBlockSource(
                     source.cidr_block_source_id,

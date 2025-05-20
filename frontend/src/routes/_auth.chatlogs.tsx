@@ -5,7 +5,7 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetMessages, apiGetServers } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Title } from '../component/Title.tsx';
@@ -15,20 +15,22 @@ import { useAppForm } from '../contexts/formContext.tsx';
 import { PermissionLevel } from '../schema/people.ts';
 import { ServerSimple } from '../schema/server.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
-import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 
-const chatlogsSchema = z.object({
-    ...makeCommonTableSearchSchema([
-        'person_message_id',
-        'steam_id',
-        'persona_name',
-        'server_name',
-        'server_id',
-        'team',
-        'created_on',
-        'pattern',
-        'auto_filter_flagged'
-    ]),
+const chatlogsSchema = commonTableSearchSchema.extend({
+    sortColumn: z
+        .enum([
+            'person_message_id',
+            'steam_id',
+            'persona_name',
+            'server_name',
+            'server_id',
+            'team',
+            'created_on',
+            'pattern',
+            'auto_filter_flagged'
+        ])
+        .optional(),
     server_id: z.number().optional(),
     persona_name: z.string().optional(),
     body: z.string().optional(),
@@ -96,7 +98,7 @@ function ChatLogs() {
             onChangeAsync: z.object({
                 body: z.string(),
                 persona_name: z.string(),
-                server_id: z.number({ coerce: true }),
+                server_id: z.number(),
                 steam_id: z.string(),
                 flagged_only: z.boolean(),
                 auto_refresh: z.number()

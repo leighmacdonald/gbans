@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetBansCIDR } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
@@ -28,20 +28,14 @@ import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { AppealState, BanReasonEnum, BanReasons, CIDRBanRecord } from '../schema/bans.ts';
-import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
+import { commonTableSearchSchema, initColumnFilter, initPagination, isPermanentBan } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
-const banCIDRSearchSchema = z.object({
-    ...makeCommonTableSearchSchema([
-        'net_id',
-        'source_id',
-        'target_id',
-        'deleted',
-        'reason',
-        'created_on',
-        'valid_until'
-    ]),
+const banCIDRSearchSchema = commonTableSearchSchema.extend({
+    sortColumn: z
+        .enum(['net_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until'])
+        .optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     cidr: z.string().optional(),

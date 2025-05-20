@@ -6,42 +6,17 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateSMOverrides, apiSaveSMOverrides, hasSMFlag } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { SMOverrides } from '../../schema/sourcemod.ts';
+import { schemaFlags, SMOverrides } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
 
-export const schemaFlags = z.object({
-    a: z.boolean(),
-    b: z.boolean(),
-    c: z.boolean(),
-    d: z.boolean(),
-    e: z.boolean(),
-    f: z.boolean(),
-    g: z.boolean(),
-    h: z.boolean(),
-    i: z.boolean(),
-    j: z.boolean(),
-    k: z.boolean(),
-    l: z.boolean(),
-    m: z.boolean(),
-    n: z.boolean(),
-    o: z.boolean(),
-    p: z.boolean(),
-    q: z.boolean(),
-    r: z.boolean(),
-    s: z.boolean(),
-    t: z.boolean(),
-    z: z.boolean()
+const schema = schemaFlags.extend({
+    name: z.string(),
+    type: z.enum(['command', 'group'])
 });
-const schema = z
-    .object({
-        name: z.string(),
-        type: z.enum(['command', 'group'])
-    })
-    .merge(schemaFlags);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const schemaValues = z.object({
