@@ -52,11 +52,13 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, showCo
                 to={'/profile/$steamId'}
                 params={{ steamId: steam_id }}
                 onClick={onClick ?? undefined}
+                variant={'text'}
                 sx={{
                     backgroundColor: theme.palette.background.default,
                     '&:hover': {
                         cursor: 'pointer',
-                        backgroundColor: theme.palette.primary.main
+                        textDecoration: 'underline',
+                        backgroundColor: theme.palette.background.default
                     }
                 }}
                 fullWidth
