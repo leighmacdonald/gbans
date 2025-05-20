@@ -1,4 +1,4 @@
-import { JSX } from 'react';
+import { PropsWithChildren } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -7,19 +7,14 @@ import { Breakpoint } from '@mui/material';
 import Button from '@mui/material/Button';
 import { ModalConfirm } from './index.ts';
 
-export interface ConfirmationModalProps<T> {
-    initialValue?: T;
-    children?: JSX.Element;
-    onSuccess?: (resp: T) => void;
-    onCancel?: () => void;
-    onAccept?: () => void;
+export interface ConfirmationModalProps {
     title?: string;
     size?: Breakpoint;
     fullWidth?: boolean;
 }
 
 export const ConfirmationModal = NiceModal.create(
-    ({ children, title, size, fullWidth }: ConfirmationModalProps<boolean>) => {
+    ({ children, title, size, fullWidth }: ConfirmationModalProps & PropsWithChildren) => {
         const modal = useModal(ModalConfirm);
 
         const accept = async () => {

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { PlayerProfile } from '../../schema/people.ts';
 import { emptyOrNullString } from '../types.ts';
 import { validateSteamID } from './validateSteamID.ts';

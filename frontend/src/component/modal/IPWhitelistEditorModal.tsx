@@ -4,7 +4,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateWhitelistIP, apiUpdateWhitelistIP } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -65,7 +65,7 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
                                     onChange: z.string().refine((arg) => {
                                         const pieces = arg.split('/');
                                         const addr = pieces[0];
-                                        const result = z.string().ip(addr).safeParse(addr);
+                                        const result = z.ipv4().safeParse(addr);
                                         return result.success;
                                     })
                                 }}

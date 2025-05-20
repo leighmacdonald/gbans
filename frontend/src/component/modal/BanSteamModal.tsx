@@ -5,7 +5,7 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateBanSteam, apiUpdateBanSteam, banTypeString } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -85,18 +85,7 @@ export const BanSteamModal = NiceModal.create(
 
         const form = useAppForm({
             onSubmit: async ({ value }) => {
-                mutation.mutate({
-                    target_id: value.target_id,
-                    ban_type: value.ban_type,
-                    reason: value.reason,
-                    reason_text: value.reason_text,
-                    duration: value.duration,
-                    duration_custom: value.duration_custom,
-                    evade_ok: value.evade_ok,
-                    include_friends: value.include_friends,
-                    note: value.note,
-                    report_id: value.report_id
-                });
+                mutation.mutate(value);
             },
             defaultValues,
             validators: {
@@ -137,7 +126,7 @@ export const BanSteamModal = NiceModal.create(
                                 <form.AppField
                                     name={'ban_type'}
                                     validators={{
-                                        onChange: z.nativeEnum(BanType)
+                                        onChange: z.enum(BanType)
                                     }}
                                     children={(field) => {
                                         return (
@@ -189,7 +178,7 @@ export const BanSteamModal = NiceModal.create(
                                             }
                                             const result = z.string().min(5).safeParse(value);
                                             if (!result.success) {
-                                                return result.error.errors.map((e) => e.message).join(',');
+                                                return result.error.message;
                                             }
 
                                             return undefined;

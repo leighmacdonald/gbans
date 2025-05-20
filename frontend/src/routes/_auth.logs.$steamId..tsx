@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetMatches } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { TextLink } from '../component/TextLink.tsx';

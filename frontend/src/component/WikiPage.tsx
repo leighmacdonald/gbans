@@ -8,7 +8,7 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLoaderData, useRouteContext } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiSaveWikiPage } from '../api/wiki.ts';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';

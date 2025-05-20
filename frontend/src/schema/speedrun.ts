@@ -1,14 +1,12 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { DurationEnum } from './bans.ts';
 import { schemaTimeStamped } from './chrono.ts';
 import { schemaUserProfile } from './people.ts';
 
-export const schemaMapDetail = z
-    .object({
-        map_id: z.number(),
-        map_name: z.string()
-    })
-    .merge(schemaTimeStamped);
+export const schemaMapDetail = schemaTimeStamped.extend({
+    map_id: z.number(),
+    map_name: z.string()
+});
 
 export type MapDetail = z.infer<typeof schemaMapDetail>;
 

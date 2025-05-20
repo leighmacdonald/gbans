@@ -10,7 +10,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { createFileRoute, Navigate } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetPatreonLogin, apiGetPatreonCampaigns } from '../api/patreon.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { ImageBox } from '../component/ImageBox.tsx';

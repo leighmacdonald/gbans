@@ -23,7 +23,7 @@ import {
     SortingState,
     useReactTable
 } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateReport, apiGetUserReports } from '../api';
 import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -49,12 +49,11 @@ import {
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
 import { emptyOrNullString } from '../util/types.ts';
 
-const searchSchemaReport = z.object({
-    ...commonTableSearchSchema,
+const searchSchemaReport = commonTableSearchSchema.extend({
     rows: z.number().optional(),
     sortColumn: z.enum(['report_status', 'created_on']).optional(),
     steam_id: z.string().optional(),
-    demo_id: z.number({ coerce: true }).optional(),
+    demo_id: z.number().optional(),
     person_message_id: z.number().optional()
 });
 
@@ -165,6 +164,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
             cell: (info) => {
                 return (
                     <Stack direction={'row'} spacing={1}>
+                        v
                         <ReportStatusIcon reportStatus={info.getValue()} />
                         <Typography variant={'body1'}>{reportStatusString(info.getValue())}</Typography>
                     </Stack>
@@ -242,7 +242,7 @@ export const ReportCreateForm = (): JSX.Element => {
     const { sendFlash, sendError } = useUserFlashCtx();
     const [isCustom, setIsCustom] = useState(false);
 
-    const defaultValues: z.input<typeof schemaCreateReportRequest> = {
+    const defaultValues: z.infer<typeof schemaCreateReportRequest> = {
         description: '',
         demo_id: demo_id ?? 0,
         demo_tick: 0,
@@ -269,7 +269,7 @@ export const ReportCreateForm = (): JSX.Element => {
     const form = useAppForm({
         onSubmit: ({ value }) => {
             mutation.mutate({
-                demo_id: value?.demo_id ?? 0,
+                demo_id: value.demo_id ?? 0,
                 target_id: value.target_id,
                 demo_tick: value.demo_tick,
                 reason: value.reason,

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { schemaTimeStamped } from './chrono.ts';
 
 export const schemaCIDRBlockSource = z
@@ -15,7 +15,7 @@ export type CIDRBlockSource = z.infer<typeof schemaCIDRBlockSource>;
 export const schemaWhitelistIP = z
     .object({
         cidr_block_whitelist_id: z.number(),
-        address: z.string().cidr({ version: 'v4' })
+        address: z.cidrv4()
     })
     .merge(schemaTimeStamped);
 

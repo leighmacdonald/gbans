@@ -15,7 +15,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/';
 import { apiGetBansSteam } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
@@ -29,28 +29,20 @@ import { TableCellRelativeDateField } from '../component/table/TableCellRelative
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { BanReason, BanReasonEnum, BanReasons, banReasonsCollection, SteamBanRecord } from '../schema/bans.ts';
-import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
+import { commonTableSearchSchema, initColumnFilter, initPagination, isPermanentBan } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 
-const banSteamSearchSchema = z.object({
-    ...makeCommonTableSearchSchema([
-        'ban_id',
-        'source_id',
-        'target_id',
-        'as_num',
-        'reason',
-        'created_on',
-        'updated_on'
-    ]),
+const searchSchema = commonTableSearchSchema.extend({
+    sortColumn: z.enum(['ban_id', 'source_id', 'target_id', 'as_num', 'reason', 'created_on', 'updated_on']).optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
-    reason: z.nativeEnum(BanReason).optional(),
+    reason: BanReasonEnum.optional(),
     deleted: z.boolean().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/ban/steam')({
     component: AdminBanSteam,
-    validateSearch: (search) => banSteamSearchSchema.parse(search)
+    validateSearch: (search) => searchSchema.parse(search)
 });
 
 const queryKey = ['steamBans'];

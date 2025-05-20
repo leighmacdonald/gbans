@@ -12,7 +12,7 @@ import { useTheme } from '@mui/material/styles';
 import { useMutation } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
 import { isAfter } from 'date-fns/fp';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiSaveThreadMessage } from '../../api/forum.ts';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';

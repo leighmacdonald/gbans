@@ -24,7 +24,7 @@ import {
     RowSelectionState,
     useReactTable
 } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiDeleteFilter, apiGetFilters, apiGetWarningState } from '../api/filters.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';

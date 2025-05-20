@@ -4,7 +4,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateServer, apiSaveServer } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { SaveServerOpts, Server } from '../../schema/server.ts';
@@ -37,17 +37,17 @@ const schema = z.object({
         .regex(/\w{3,}/),
     name: z.string().min(1),
     address: z.string().min(1),
-    port: z.number({ coerce: true }).min(1024).max(65535),
+    port: z.number().min(1024).max(65535),
     password: z.string().length(20),
     rcon: z.string().min(6),
     region: z.string().min(1),
     cc: z.string().length(2),
-    latitude: z.number({ coerce: true }).min(-90).max(99),
-    longitude: z.number({ coerce: true }).min(-180).max(180),
-    reserved_slots: z.number({ coerce: true }).min(0).max(100),
+    latitude: z.number().min(-90).max(99),
+    longitude: z.number().min(-180).max(180),
+    reserved_slots: z.number().min(0).max(100),
     is_enabled: z.boolean(),
     enabled_stats: z.boolean(),
-    log_secret: z.number({ coerce: true }).min(100000).max(999999999),
+    log_secret: z.number().min(100000).max(999999999),
     address_internal: z.string(),
     address_sdr: z.string()
 });

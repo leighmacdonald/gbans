@@ -13,7 +13,7 @@ import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetAnticheatLogs, apiGetServers } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
@@ -25,20 +25,13 @@ import { useAppForm } from '../contexts/formContext.tsx';
 import { DetectionCollection, Detections, StacEntry } from '../schema/anticheat.ts';
 import { ServerSimple } from '../schema/server.ts';
 import { stringToColour } from '../util/colours.ts';
-import { initPagination, initSortOrder, makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { commonTableSearchSchema, initPagination, initSortOrder, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
-const searchSchema = z.object({
-    ...makeCommonTableSearchSchema([
-        'anticheat_id',
-        'name',
-        'personaname',
-        'summary',
-        'detection',
-        'steam_id',
-        'created_on',
-        'server_name'
-    ]),
+const searchSchema = commonTableSearchSchema.extend({
+    sortColumn: z
+        .enum(['anticheat_id', 'name', 'personaname', 'summary', 'detection', 'steam_id', 'created_on', 'server_name'])
+        .optional(),
     name: z.string().optional(),
     summary: z.string().optional(),
     server_id: z.number().optional(),

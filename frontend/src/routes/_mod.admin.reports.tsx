@@ -8,7 +8,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetReports } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { PersonCell } from '../component/PersonCell.tsx';
@@ -24,23 +24,17 @@ import {
     reportStatusString,
     ReportWithAuthor
 } from '../schema/report.ts';
-import { initColumnFilter, initPagination, initSortOrder, makeCommonTableSearchSchema } from '../util/table.ts';
+import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
-const reportsSearchSchema = z.object({
-    ...makeCommonTableSearchSchema([
-        'report_id',
-        'source_id',
-        'target_id',
-        'report_status',
-        'reason',
-        'created_on',
-        'updated_on'
-    ]),
+const reportsSearchSchema = commonTableSearchSchema.extend({
+    sortColumn: z
+        .enum(['report_id', 'source_id', 'target_id', 'report_status', 'reason', 'created_on', 'updated_on'])
+        .optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     deleted: z.boolean().optional(),
-    report_status: z.nativeEnum(ReportStatus).optional()
+    report_status: z.enum(ReportStatus).optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/reports')({
@@ -83,7 +77,7 @@ function AdminReports() {
             onSubmit: z.object({
                 source_id: z.string(),
                 target_id: z.string(),
-                report_status: z.nativeEnum(ReportStatus)
+                report_status: z.enum(ReportStatus)
             })
         },
         defaultValues: {
@@ -105,8 +99,6 @@ function AdminReports() {
     const columns = useMemo(() => {
         return makeColumns();
     }, []);
-
-    console.log(reports);
 
     return (
         <Grid container spacing={2}>

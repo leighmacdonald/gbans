@@ -15,7 +15,7 @@ import {
     PaginationState,
     useReactTable
 } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiContests } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { Title } from '../component/Title.tsx';
@@ -27,11 +27,11 @@ import { TableCellString } from '../component/table/TableCellString.tsx';
 import { Contest } from '../schema/contest.ts';
 import { PermissionLevelEnum, permissionLevelString } from '../schema/people.ts';
 import { logErr } from '../util/errors.ts';
-import { initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
+import { commonTableSearchSchema, initPagination } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
-const contestsSearchSchema = z.object({
-    ...makeCommonTableSearchSchema(['contest_id', 'deleted']),
+const contestsSearchSchema = commonTableSearchSchema.extend({
+    sortColumn: z.enum(['contest_id', 'deleted']).optional(),
     deleted: z.boolean().catch(false)
 });
 

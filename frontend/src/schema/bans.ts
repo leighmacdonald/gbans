@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { schemaTimeStamped } from './chrono.ts';
 
 export const Origin = {
@@ -8,7 +8,7 @@ export const Origin = {
     InGame: 3
 } as const;
 
-export const OriginEnum = z.nativeEnum(Origin);
+export const OriginEnum = z.enum(Origin);
 export type OriginEnum = z.infer<typeof OriginEnum>;
 
 export const BanReason = {
@@ -29,7 +29,7 @@ export const BanReason = {
     Username: 14
 } as const;
 
-export const BanReasonEnum = z.nativeEnum(BanReason);
+export const BanReasonEnum = z.enum(BanReason);
 export type BanReasonEnum = z.infer<typeof BanReasonEnum>;
 
 export const Duration = {
@@ -48,7 +48,7 @@ export const Duration = {
     durCustom: 'custom'
 } as const;
 
-export const DurationEnum = z.nativeEnum(Duration);
+export const DurationEnum = z.enum(Duration);
 export type DurationEnum = z.infer<typeof DurationEnum>;
 
 export const DurationCollection = [
@@ -197,7 +197,7 @@ export type GroupBanRecord = z.infer<typeof schemaGroupBanRecord>;
 export const schemaCIDRBanRecord = z
     .object({
         net_id: z.number(),
-        cidr: z.string().cidr({ version: 'v4' })
+        cidr: z.cidrv4()
     })
     .merge(schemaBanBase);
 
@@ -219,53 +219,43 @@ export const schemaUnbanPayload = z.object({
 export type UnbanPayload = z.infer<typeof schemaUnbanPayload>;
 
 const schemaBanBasePayload = z.object({
+    reason: BanReasonEnum,
+    reason_text: z.string(),
     target_id: z.string(),
     duration: DurationEnum,
     valid_until: z.date().optional(),
     note: z.string()
 });
 
-const schemBanReasonPayload = z.object({
-    reason: BanReasonEnum,
-    reason_text: z.string()
+export const schemaBanPayloadSteam = schemaBanBasePayload.extend({
+    report_id: z.number().optional(),
+    include_friends: z.boolean(),
+    evade_ok: z.boolean(),
+    ban_type: BanTypeEnum,
+    duration_custom: z.date().optional()
 });
-
-export const schemaBanPayloadSteam = z
-    .object({
-        report_id: z.number().optional(),
-        include_friends: z.boolean(),
-        evade_ok: z.boolean(),
-        ban_type: BanTypeEnum,
-        duration_custom: z.date().optional()
-    })
-    .merge(schemaBanBasePayload)
-    .merge(schemBanReasonPayload);
 
 export type BanPayloadSteam = z.infer<typeof schemaBanPayloadSteam>;
 
-export const schemaBanPayloadCIDR = z
-    .object({
-        cidr: z.string().cidr({ version: 'v4' })
-    })
-    .merge(schemaBanBasePayload)
-    .merge(schemBanReasonPayload);
+export const schemaBanPayloadCIDR = schemaBanBasePayload.extend({
+    cidr: z.cidrv4()
+});
 
 export type BanPayloadCIDR = z.infer<typeof schemaBanPayloadCIDR>;
 
-export const schemaBanPayloadASN = z
-    .object({
-        as_num: z.number()
-    })
-    .merge(schemaBanBasePayload)
-    .merge(schemBanReasonPayload);
+export const schemaBanPayloadASN = schemaBanBasePayload.extend({
+    as_num: z.number()
+});
 
 export type BanPayloadASN = z.infer<typeof schemaBanPayloadASN>;
 
-export const schemaBanPayloadGroup = z
-    .object({
-        group_id: z.string()
-    })
-    .merge(schemaBanBasePayload);
+export const schemaBanPayloadGroup = z.object({
+    target_id: z.string(),
+    duration: DurationEnum,
+    valid_until: z.date().optional(),
+    note: z.string(),
+    group_id: z.string()
+});
 
 export type BanPayloadGroup = z.infer<typeof schemaBanPayloadGroup>;
 

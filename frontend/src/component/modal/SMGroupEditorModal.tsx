@@ -5,20 +5,17 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateSMGroup, apiSaveSMGroup, hasSMFlag } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { SMGroups } from '../../schema/sourcemod.ts';
+import { schemaFlags, SMGroups } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
-import { schemaFlags } from './SMOverrideEditorModal.tsx';
 
-const schema = z
-    .object({
-        name: z.string().min(2),
-        immunity: z.number({ coerce: true }).min(0).max(100)
-    })
-    .merge(schemaFlags);
+const schema = schemaFlags.extend({
+    name: z.string().min(2),
+    immunity: z.number().min(0).max(100)
+});
 
 export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroups }) => {
     const modal = useModal();

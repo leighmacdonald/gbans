@@ -26,7 +26,6 @@ import { SMGroupOverrideEditorModal } from './SMGroupOverrideEditorModal.tsx';
 import { SMGroupOverridesModal } from './SMGroupOverridesModal.tsx';
 import { SMGroupSelectModal } from './SMGroupSelectModal.tsx';
 import { SMOverrideEditorModal } from './SMOverrideEditorModal.tsx';
-import { ServerDeleteModal } from './ServerDeleteModal.tsx';
 import { ServerEditorModal } from './ServerEditorModal.tsx';
 import { SteamWhitelistEditorModal } from './SteamWhitelistEditorModal.tsx';
 import { UnbanASNModal } from './UnbanASNModal.tsx';
@@ -58,7 +57,6 @@ export const ModalUnbanASN = 'modal-unban-asn';
 export const ModalUnbanCIDR = 'modal-unban-cidr';
 export const ModalUnbanGroup = 'modal-unban-group';
 export const ModalServerEditor = 'modal-server-editor';
-export const ModalServerDelete = 'modal-server-delete';
 export const ModalFilterEditor = 'modal-filter-editor';
 export const ModalPersonEditor = 'modal-person-editor';
 export const ModalForumCategoryEditor = 'modal-forum-category-editor';
@@ -93,7 +91,6 @@ export const ModalQueueStatus = 'modal-queue-status';
     [ModalAssetViewer, AssetViewer],
     [ModalConfirm, ConfirmationModal],
     [ModalServerEditor, ServerEditorModal],
-    [ModalServerDelete, ServerDeleteModal],
     [ModalPersonEditor, PersonEditModal],
     [ModalFilterEditor, FilterEditModal],
     [ModalBanSteam, BanSteamModal],

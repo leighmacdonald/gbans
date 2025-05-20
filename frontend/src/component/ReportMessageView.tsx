@@ -12,7 +12,7 @@ import Paper from '@mui/material/Paper';
 import { useTheme } from '@mui/material/styles';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiDeleteReportMessage, apiUpdateReportMessage } from '../api';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';

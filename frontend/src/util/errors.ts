@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const runModeNames = z.enum(['development', 'production']);
 export type runModeNames = z.infer<typeof runModeNames>;

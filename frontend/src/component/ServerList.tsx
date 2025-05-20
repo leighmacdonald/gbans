@@ -8,7 +8,7 @@ import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { ColumnDef, createColumnHelper, getCoreRowModel, TableOptions, useReactTable } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { cleanMapName } from '../api';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';

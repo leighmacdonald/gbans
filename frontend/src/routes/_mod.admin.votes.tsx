@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, PaginationState } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiVotesQuery } from '../api/votes.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
@@ -17,11 +17,11 @@ import { FullTable } from '../component/table/FullTable.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { VoteResult } from '../schema/votes.ts';
-import { initPagination, makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
-const votesSearchSchema = z.object({
-    ...makeCommonTableSearchSchema(['target_id', 'source_id', 'success', 'created_on']),
+const votesSearchSchema = commonTableSearchSchema.extend({
+    sortColumn: z.enum(['target_id', 'source_id', 'success', 'created_on']).optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     success: z.number().optional()

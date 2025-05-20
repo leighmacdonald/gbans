@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { schemaAsset } from './asset.ts';
 import { schemaDateRange, schemaTimeStamped } from './chrono.ts';
 import { PermissionLevelEnum } from './people.ts';

@@ -14,7 +14,6 @@ import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { z } from 'zod';
 import { apiCreateThreadReply, apiDeleteMessage, apiGetThread, apiGetThreadMessages } from '../api/forum.ts';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import RouterLink from '../component/RouterLink.tsx';
@@ -34,9 +33,7 @@ import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 import { LoginPage } from './_guest.login.index.tsx';
 
-const forumThreadSearchSchema = z.object({
-    ...commonTableSearchSchema
-});
+const forumThreadSearchSchema = commonTableSearchSchema;
 
 export const Route = createFileRoute('/_auth/forums/thread/$forum_thread_id')({
     component: ForumThreadPage,
