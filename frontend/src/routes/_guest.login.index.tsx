@@ -5,7 +5,7 @@ import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { createFileRoute, useRouteContext } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import steamLogo from '../icons/steam_login_lg.png';
 import { generateOIDCLink } from '../util/auth/generateOIDCLink.ts';

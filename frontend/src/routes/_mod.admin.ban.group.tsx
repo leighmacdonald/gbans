@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetBansGroups } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
@@ -26,7 +26,7 @@ import { TableCellRelativeDateField } from '../component/table/TableCellRelative
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { AppealState, BanReasonEnum, BanReasons, GroupBanRecord } from '../schema/bans.ts';
-import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
+import { commonTableSearchSchema, initColumnFilter, initPagination, isPermanentBan } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
@@ -45,8 +45,8 @@ const groupIDValidator = z
 
 const deletedValidator = z.boolean().optional();
 
-const banGroupSearchSchema = z.object({
-    ...makeCommonTableSearchSchema(['ban_group_id', 'source_id', 'target_id', 'deleted', 'reason', 'valid_until']),
+const searchSchema = commonTableSearchSchema.extend({
+    sortColumn: z.enum(['ban_group_id', 'source_id', 'target_id', 'deleted', 'reason', 'valid_until']).optional(),
     source_id: sourceIDValidator,
     target_id: targetIDValidator,
     group_id: groupIDValidator,
@@ -55,7 +55,7 @@ const banGroupSearchSchema = z.object({
 
 export const Route = createFileRoute('/_mod/admin/ban/group')({
     component: AdminBanGroup,
-    validateSearch: (search) => banGroupSearchSchema.parse(search)
+    validateSearch: (search) => searchSchema.parse(search)
 });
 
 function AdminBanGroup() {

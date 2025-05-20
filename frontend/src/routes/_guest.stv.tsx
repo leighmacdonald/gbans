@@ -16,7 +16,7 @@ import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetDemos, apiGetServers } from '../api';
 import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -27,13 +27,12 @@ import { DemoFile } from '../schema/demo.ts';
 import { ServerSimple } from '../schema/server.ts';
 import { stringToColour } from '../util/colours.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
-import { initColumnFilter, initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
+import { commonTableSearchSchema, initColumnFilter, initPagination } from '../util/table.ts';
 import { humanFileSize } from '../util/text.tsx';
 import { renderDateTime } from '../util/time.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
-const demosSchema = z.object({
-    ...makeCommonTableSearchSchema(['demo_id', 'server_id', 'created_on', 'map_name']),
+const demosSchema = commonTableSearchSchema.extend({
+    sortColumn: z.enum(['demo_id', 'server_id', 'created_on', 'map_name']).optional(),
     map_name: z.string().optional(),
     server_id: z.number().optional(),
     stats: z.string().optional()
@@ -65,6 +64,12 @@ export const Route = createFileRoute('/_guest/stv')({
     }
 });
 
+const schema = z.object({
+    map_name: z.string(),
+    server_id: z.number(),
+    stats: z.string()
+});
+
 function STV() {
     const navigate = useNavigate({ from: Route.fullPath });
     const search = Route.useSearch();
@@ -74,6 +79,12 @@ function STV() {
     const [sorting] = useState<SortingState>([{ id: 'demo_id', desc: true }]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
     const theme = useTheme();
+
+    const defaultValues: z.infer<typeof schema> = {
+        map_name: search.map_name ?? '',
+        server_id: search.server_id ?? 0,
+        stats: search.stats ?? ''
+    };
 
     const { data: demos, isLoading } = useQuery({
         queryKey: ['demos'],
@@ -86,23 +97,9 @@ function STV() {
             await navigate({ search: (prev) => ({ ...prev, ...value }) });
         },
         validators: {
-            onChange: z.object({
-                map_name: z.string(),
-                server_id: z.number({ coerce: true }),
-                stats: z.string()
-            }),
-            onChangeAsyncDebounceMs: 200,
-            onChangeAsync: z.object({
-                map_name: z.string(),
-                server_id: z.number({ coerce: true }),
-                stats: makeValidateSteamIDCallback()
-            })
+            onChange: schema
         },
-        defaultValues: {
-            map_name: search.map_name ?? '',
-            server_id: search.server_id ?? 0,
-            stats: search.stats ?? ''
-        }
+        defaultValues
     });
 
     const clear = async () => {

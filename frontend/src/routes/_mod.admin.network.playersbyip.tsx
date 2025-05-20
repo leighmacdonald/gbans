@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetConnections } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { TextLink } from '../component/TextLink.tsx';
@@ -20,8 +20,7 @@ import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.
 import { renderDateTime } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
 
-const playersByIPSearchSchema = z.object({
-    ...commonTableSearchSchema,
+const playersByIPSearchSchema = commonTableSearchSchema.extend({
     sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'ip_addr', 'server_id']).optional(),
     cidr: z.string().optional()
 });

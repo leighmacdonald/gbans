@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { schemaTimeStamped } from './chrono.ts';
 import { schemaQueryFilter } from './query.ts';
 
@@ -12,7 +12,7 @@ export const PermissionLevel = {
     Admin: 100
 } as const;
 
-export const PermissionLevelEnum = z.nativeEnum(PermissionLevel);
+export const PermissionLevelEnum = z.enum(PermissionLevel);
 export type PermissionLevelEnum = z.infer<typeof PermissionLevelEnum>;
 
 export const PermissionLevelCollection = [
@@ -51,7 +51,7 @@ export const profileState = {
     Setup: 1
 } as const;
 
-export const profileStateEnum = z.nativeEnum(profileState);
+export const profileStateEnum = z.enum(profileState);
 export type profileStateEnum = z.infer<typeof profileStateEnum>;
 
 export const communityVisibilityState = {
@@ -60,7 +60,7 @@ export const communityVisibilityState = {
     Public: 3
 } as const;
 
-export const communityVisibilityStateEnum = z.nativeEnum(communityVisibilityState);
+export const communityVisibilityStateEnum = z.enum(communityVisibilityState);
 export type communityVisibilityStateEnum = z.infer<typeof communityVisibilityStateEnum>;
 
 export const NotificationSeverity = {
@@ -69,7 +69,7 @@ export const NotificationSeverity = {
     SeverityError: 2
 } as const;
 
-export const NotificationSeverityEnum = z.nativeEnum(NotificationSeverity);
+export const NotificationSeverityEnum = z.enum(NotificationSeverity);
 export type NotificationSeverityEnum = z.infer<typeof NotificationSeverityEnum>;
 
 export const schemaUserProfile = z
@@ -239,7 +239,7 @@ export type MessageQuery = z.infer<typeof schemaMessageQuery>;
 
 export const schemaConnectionQuery = z
     .object({
-        cidr: z.string().cidr({ version: 'v4' }).optional(),
+        cidr: z.cidrv4().optional(),
         source_id: z.string().optional(),
         server_id: z.number().optional(),
         asn: z.number().optional()
@@ -249,7 +249,7 @@ export const schemaConnectionQuery = z
 export type ConnectionQuery = z.infer<typeof schemaConnectionQuery>;
 
 export const schemaIPQuery = z.object({
-    ip: z.string().ip({ version: 'v4' })
+    ip: z.ipv4()
 });
 export type IPQuery = z.infer<typeof schemaIPQuery>;
 

@@ -5,17 +5,17 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateBanGroup, apiUpdateBanGroup } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { Duration, DurationCollection, GroupBanRecord } from '../../schema/bans.ts';
+import { Duration, DurationCollection, DurationEnum, GroupBanRecord } from '../../schema/bans.ts';
 import { Heading } from '../Heading';
 
 const schema = z.object({
     target_id: z.string(),
     group_id: z.string(),
-    duration: z.nativeEnum(Duration),
+    duration: DurationEnum,
     duration_custom: z.date(),
     note: z.string()
 });
@@ -66,13 +66,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
 
     const form = useAppForm({
         onSubmit: async ({ value }) => {
-            mutation.mutate({
-                target_id: value.target_id,
-                group_id: value.group_id,
-                duration: value.duration,
-                duration_custom: value.duration_custom,
-                note: value.note
-            });
+            mutation.mutate(value);
         },
         defaultValues,
         validators: {

@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { fromUnixTime } from 'date-fns';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiSearchPeople } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
@@ -31,8 +31,7 @@ import {
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate, renderDateTime } from '../util/time.ts';
 
-const peopleSearchSchema = z.object({
-    ...commonTableSearchSchema,
+const peopleSearchSchema = commonTableSearchSchema.extend({
     sortColumn: z.enum(['vac_bans', 'steam_id', 'timecreated', 'personaname', 'created_on']).optional(),
     steam_id: z.string().catch(''),
     personaname: z.string().catch(''),

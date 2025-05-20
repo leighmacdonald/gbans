@@ -15,7 +15,7 @@ import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useRouteContext } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import {
     apiDeleteCIDRBlockSource,
     apiDeleteCIDRBlockWhitelist,

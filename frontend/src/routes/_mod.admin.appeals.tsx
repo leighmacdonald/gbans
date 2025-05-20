@@ -16,7 +16,7 @@ import {
     SortingState,
     useReactTable
 } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetAppeals, appealStateString } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
@@ -29,16 +29,20 @@ import { AppealState, AppealStateCollection, AppealStateEnum, BanReasons, SteamB
 import { TablePropsAll } from '../types/table.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
-const appealSearchSchema = z.object({
-    ...commonTableSearchSchema,
+const appealSearchSchema = commonTableSearchSchema.extend({
     sortColumn: z
         .enum(['report_id', 'source_id', 'target_id', 'appeal_state', 'reason', 'created_on', 'updated_on'])
         .optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
-    appeal_state: z.nativeEnum(AppealState).optional()
+    appeal_state: z.enum(AppealState).optional()
+});
+
+const schema = z.object({
+    source_id: z.string(),
+    target_id: z.string(),
+    appeal_state: z.enum(AppealState)
 });
 
 export const Route = createFileRoute('/_mod/admin/appeals')({
@@ -56,6 +60,11 @@ function AdminAppeals() {
             desc: true
         })
     );
+    const defaultValues: z.infer<typeof schema> = {
+        source_id: search.source_id ?? '',
+        target_id: search.target_id ?? '',
+        appeal_state: search.appeal_state ?? AppealState.Any
+    };
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
     const { data: appeals, isLoading } = useQuery({
         queryKey: ['appeals'],
@@ -76,18 +85,9 @@ function AdminAppeals() {
             await navigate({ to: '/admin/appeals', search: (prev) => ({ ...prev, ...value }) });
         },
         validators: {
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
-                source_id: makeValidateSteamIDCallback(),
-                target_id: makeValidateSteamIDCallback(),
-                appeal_state: z.nativeEnum(AppealState)
-            })
+            onChange: schema
         },
-        defaultValues: {
-            source_id: search.source_id ?? '',
-            target_id: search.target_id ?? '',
-            appeal_state: search.appeal_state ?? AppealState.Any
-        }
+        defaultValues
     });
 
     const clear = async () => {

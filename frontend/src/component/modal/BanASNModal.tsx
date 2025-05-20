@@ -5,31 +5,31 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateBanASN, apiUpdateBanASN } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import {
     ASNBanRecord,
     BanReason,
+    BanReasonEnum,
     BanReasons,
     banReasonsCollection,
     Duration,
-    DurationCollection
+    DurationCollection,
+    DurationEnum
 } from '../../schema/bans.ts';
 import { Heading } from '../Heading';
 
 const schema = z.object({
     target_id: z.string(),
-    reason: z.nativeEnum(BanReason),
+    reason: BanReasonEnum,
     reason_text: z.string(),
-    duration: z.nativeEnum(Duration),
+    duration: DurationEnum,
     duration_custom: z.date(),
     note: z.string(),
     as_num: z.number().positive()
 });
-
-type BanASNFormValues = z.infer<typeof schema>;
 
 export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRecord }) => {
     const { sendFlash } = useUserFlashCtx();
@@ -45,14 +45,14 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
     };
     const mutation = useMutation({
         mutationKey: ['banASN'],
-        mutationFn: async (values: BanASNFormValues) => {
+        mutationFn: async (values: z.infer<typeof schema>) => {
             if (existing?.ban_asn_id) {
                 const ban_record = apiUpdateBanASN(existing.ban_asn_id, {
                     note: values.note,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     target_id: values.target_id,
-                    as_num: Number(values.as_num),
+                    as_num: values.as_num,
                     valid_until: values.duration_custom
                 });
 
@@ -66,7 +66,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                     reason: values.reason,
                     reason_text: values.reason_text,
                     target_id: values.target_id,
-                    as_num: Number(values.as_num)
+                    as_num: values.as_num
                 });
                 sendFlash('success', 'Created ASN ban successfully');
                 modal.resolve(ban_record);
@@ -77,15 +77,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
 
     const form = useAppForm({
         onSubmit: async ({ value }) => {
-            mutation.mutate({
-                target_id: value.target_id,
-                reason: value.reason,
-                reason_text: value.reason_text,
-                duration: value.duration,
-                duration_custom: value.duration_custom,
-                note: value.note,
-                as_num: value.as_num
-            });
+            mutation.mutate(value);
         },
         defaultValues,
         validators: {

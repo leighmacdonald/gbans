@@ -1,6 +1,6 @@
 import { ColumnFilter, ColumnSort, PaginationState } from '@tanstack/react-table';
 import { intervalToDuration } from 'date-fns';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { DataCount } from '../api';
 import { emptyOrNullString } from './types.ts';
 
@@ -20,15 +20,11 @@ export const isPermanentBan = (start: Date, end: Date): boolean => {
     return years != null && years > 5;
 };
 
-export const commonTableSearchSchema = {
+export const commonTableSearchSchema = z.object({
     pageIndex: z.number().optional().catch(0),
     pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
     sortOrder: z.enum(['desc', 'asc']).optional().catch('desc')
-};
-
-export const makeCommonTableSearchSchema = (sortColumns: readonly [string, ...string[]]) => {
-    return { ...commonTableSearchSchema, sortColumn: z.enum(sortColumns).optional() };
-};
+});
 
 export type Order = 'asc' | 'desc';
 

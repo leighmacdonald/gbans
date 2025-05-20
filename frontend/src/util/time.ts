@@ -1,7 +1,7 @@
 import { formatDistance, parseISO, parseJSON } from 'date-fns';
 import { format } from 'date-fns/format';
 import { isAfter } from 'date-fns/fp';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { DateRange, schemaTimeStamped, TimeStampedWithValidUntil } from '../schema/chrono.ts';
 
 export const durationToMs = (d: number) => d / 1000;

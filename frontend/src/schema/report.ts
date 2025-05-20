@@ -1,5 +1,5 @@
 import { Theme } from '@mui/material';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { BanReasonEnum } from './bans.ts';
 import { schemaTimeStamped } from './chrono.ts';
 import { schemaDemoFile } from './demo.ts';
@@ -13,7 +13,7 @@ export const ReportStatus = {
     ClosedWithAction: 3
 } as const;
 
-export const ReportStatusEnum = z.nativeEnum(ReportStatus);
+export const ReportStatusEnum = z.enum(ReportStatus);
 export type ReportStatusEnum = z.infer<typeof ReportStatusEnum>;
 
 export const ReportStatusCollection = [
@@ -52,22 +52,20 @@ export const reportStatusColour = (rs: ReportStatusEnum, theme: Theme): string =
     }
 };
 
-export const schemaReport = z
-    .object({
-        report_id: z.number(),
-        source_id: z.string(),
-        target_id: z.string(),
-        description: z.string(),
-        report_status: ReportStatusEnum,
-        deleted: z.boolean(),
-        reason: BanReasonEnum,
-        reason_text: z.string(),
-        demo_name: z.string(),
-        demo_tick: z.number(),
-        demo_id: z.number(),
-        person_message_id: z.number()
-    })
-    .merge(schemaTimeStamped);
+export const schemaReport = schemaTimeStamped.extend({
+    report_id: z.number(),
+    source_id: z.string(),
+    target_id: z.string(),
+    description: z.string(),
+    report_status: ReportStatusEnum,
+    deleted: z.boolean(),
+    reason: BanReasonEnum,
+    reason_text: z.string(),
+    demo_name: z.string(),
+    demo_tick: z.number(),
+    demo_id: z.number(),
+    person_message_id: z.number()
+});
 
 export type Report = z.infer<typeof schemaReport>;
 
@@ -76,31 +74,30 @@ export const schemaBasicUserInfo = z.object({
     personaname: z.string(),
     avatarhash: z.string()
 });
-export type BasicUserInfo = z.infer<typeof schemaBasicUserInfo>;
 
-export const schemaBanAppealMessage = z
-    .object({
-        ban_id: z.number(),
-        ban_message_id: z.number(),
-        author_id: z.string(),
-        message_md: z.string(),
-        deleted: z.boolean()
-    })
-    .merge(schemaTimeStamped)
-    .merge(schemaBasicUserInfo);
+export const schemaBanAppealMessage = schemaTimeStamped.extend({
+    ban_id: z.number(),
+    ban_message_id: z.number(),
+    author_id: z.string(),
+    message_md: z.string(),
+    deleted: z.boolean(),
+    steam_id: z.string(),
+    personaname: z.string(),
+    avatarhash: z.string()
+});
 
 export type BanAppealMessage = z.infer<typeof schemaBanAppealMessage>;
 
-export const schemaReportMessage = z
-    .object({
-        report_id: z.number(),
-        report_message_id: z.number(),
-        author_id: z.string(),
-        message_md: z.string(),
-        deleted: z.boolean()
-    })
-    .merge(schemaTimeStamped)
-    .merge(schemaBasicUserInfo);
+export const schemaReportMessage = schemaTimeStamped.extend({
+    report_id: z.number(),
+    report_message_id: z.number(),
+    author_id: z.string(),
+    message_md: z.string(),
+    deleted: z.boolean(),
+    steam_id: z.string(),
+    personaname: z.string(),
+    avatarhash: z.string()
+});
 
 export type ReportMessage = z.infer<typeof schemaReportMessage>;
 
@@ -116,13 +113,11 @@ export const schemaCreateReportRequest = z.object({
 
 export type CreateReportRequest = z.infer<typeof schemaCreateReportRequest>;
 
-export const schemaReportWithAuthor = z
-    .object({
-        author: schemaPerson,
-        subject: schemaPerson,
-        demo: schemaDemoFile
-    })
-    .merge(schemaReport);
+export const schemaReportWithAuthor = schemaReport.extend({
+    author: schemaPerson,
+    subject: schemaPerson,
+    demo: schemaDemoFile
+});
 
 export type ReportWithAuthor = z.infer<typeof schemaReportWithAuthor>;
 

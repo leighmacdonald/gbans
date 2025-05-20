@@ -5,7 +5,7 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateFilter, apiEditFilter } from '../../api/filters.ts';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -27,10 +27,26 @@ type FilterEditFormValues = {
     weight: string;
 };
 
+const schema = z.object({
+    pattern: z.string({ message: 'Must entry pattern' }).min(2),
+    is_regex: z.boolean(),
+    action: FilterActionEnum,
+    duration: z.string({ message: 'Must provide a duration' }),
+    weight: z.string(),
+    is_enabled: z.boolean()
+});
+
 export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }) => {
     const modal = useModal();
     const { sendError } = useUserFlashCtx();
-
+    const defaultValues: z.input<typeof schema> = {
+        pattern: filter ? String(filter.pattern) : '',
+        is_regex: filter?.is_regex ?? false,
+        is_enabled: filter?.is_enabled ?? true,
+        action: filter?.action ?? FilterAction.Kick,
+        duration: filter?.duration ?? '1w',
+        weight: filter ? String(filter.weight) : '1'
+    };
     const mutation = useMutation({
         mutationKey: ['filters'],
         mutationFn: async (values: FilterEditFormValues) => {
@@ -63,32 +79,11 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 
     const form = useAppForm({
         onSubmit: async ({ value }) => {
-            mutation.mutate({
-                pattern: String(value.pattern),
-                action: value.action,
-                duration: value.duration,
-                weight: value.weight,
-                is_enabled: value.is_enabled,
-                is_regex: value.is_regex
-            });
+            mutation.mutate(value);
         },
-        defaultValues: {
-            pattern: filter ? String(filter.pattern) : '',
-            is_regex: filter?.is_regex ?? false,
-            is_enabled: filter?.is_enabled ?? true,
-            action: filter?.action ?? FilterAction.Kick,
-            duration: filter?.duration ?? '1w',
-            weight: filter ? String(filter.weight) : '1'
-        },
+        defaultValues,
         validators: {
-            onSubmit: z.object({
-                pattern: z.string({ message: 'Must entry pattern' }).min(2),
-                is_regex: z.boolean(),
-                action: z.nativeEnum(FilterAction, { message: 'Must select an action' }),
-                duration: z.string({ message: 'Must provide a duration' }),
-                weight: z.string(),
-                is_enabled: z.boolean()
-            })
+            onSubmit: schema
         }
     });
 

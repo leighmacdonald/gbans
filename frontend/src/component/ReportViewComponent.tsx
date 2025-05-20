@@ -21,7 +21,7 @@ import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiCreateReportMessage, apiGetBansSteamBySteamID, apiGetConnections, apiGetMessages } from '../api';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';

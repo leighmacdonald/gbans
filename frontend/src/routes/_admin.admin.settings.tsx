@@ -22,7 +22,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetDemoCleanup, apiGetNetworkUpdateDB } from '../api';
 import { apiGetSettings, apiSaveSettings } from '../api/admin.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
