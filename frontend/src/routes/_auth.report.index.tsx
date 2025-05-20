@@ -164,7 +164,6 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
             cell: (info) => {
                 return (
                     <Stack direction={'row'} spacing={1}>
-                        v
                         <ReportStatusIcon reportStatus={info.getValue()} />
                         <Typography variant={'body1'}>{reportStatusString(info.getValue())}</Typography>
                     </Stack>
@@ -185,7 +184,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
             header: 'View',
             size: 30,
             cell: (info) => (
-                <ButtonGroup>
+                <ButtonGroup variant={'text'}>
                     <IconButtonLink
                         color={'primary'}
                         to={`/report/$reportId`}
