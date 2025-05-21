@@ -31,11 +31,13 @@ import { TableCellString } from '../component/table/TableCellString.tsx';
 import { TableCellStringHidden } from '../component/table/TableCellStringHidden.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { Server } from '../schema/server.ts';
-import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
 const serversSearchSchema = z.object({
-    ...commonTableSearchSchema,
+    pageIndex: z.number().optional().catch(0),
+    pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
+    sortOrder: z.enum(['desc', 'asc']).optional().catch('desc'),
     sortColumn: z
         .enum(['server_id', 'short_name', 'name', 'address', 'port', 'region', 'cc', 'enable_stats', 'is_enabled'])
         .optional()
@@ -270,7 +272,7 @@ const AdminServersTable = ({
                 size: 30,
                 cell: (info) => {
                     return (
-                        <ButtonGroup fullWidth>
+                        <ButtonGroup fullWidth variant={'text'}>
                             <IconButton
                                 color={'warning'}
                                 onClick={async () => {
