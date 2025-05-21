@@ -615,15 +615,40 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
     );
 };
 
+const schemaFiltersFIXME = schemaFilters.extend({
+    warning_timeout: z.string(),
+    warning_limit: z.string(),
+    max_weight: z.string(),
+    check_timeout: z.string(),
+    match_timeout: z.string()
+});
+
 const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
-    const defaultValues: z.input<typeof schemaFilters> = settings.filters;
+    const defaultValues: z.input<typeof schemaFiltersFIXME> = {
+        ...settings.filters,
+        warning_timeout: String(settings.filters.warning_limit),
+        warning_limit: String(settings.filters.warning_limit),
+        max_weight: String(settings.filters.max_weight),
+        check_timeout: String(settings.filters.check_timeout),
+        match_timeout: String(settings.filters.match_timeout)
+    };
     const form = useAppForm({
         onSubmit: async ({ value }) => {
-            mutate({ ...settings, filters: value });
+            mutate({
+                ...settings,
+                filters: {
+                    ...value,
+                    warning_timeout: Number(value.warning_limit),
+                    warning_limit: Number(value.warning_limit),
+                    max_weight: Number(value.max_weight),
+                    check_timeout: Number(value.check_timeout),
+                    match_timeout: Number(value.match_timeout)
+                }
+            });
         },
         defaultValues,
         validators: {
-            onSubmit: schemaFilters
+            onSubmit: schemaFiltersFIXME
         }
     });
 
@@ -1549,15 +1574,36 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
     );
 };
 
+// How do you coerce numbers properly from the form w/o defining a secondary schema?
+// z.coerce.number() does not seem to work for text input fields
+const schemaSSHFIXME = schemaSSH.extend({
+    port: z.string(),
+    update_interval: z.string(),
+    timeout: z.string()
+});
+
 const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
-    const defaultValues: z.input<typeof schemaSSH> = settings.ssh;
+    const defaultValues: z.infer<typeof schemaSSHFIXME> = {
+        ...settings.ssh,
+        port: String(settings.ssh.port),
+        timeout: String(settings.ssh.timeout),
+        update_interval: String(settings.ssh.update_interval)
+    };
     const form = useAppForm({
         onSubmit: async ({ value }) => {
-            mutate({ ...settings, ssh: value });
+            mutate({
+                ...settings,
+                ssh: {
+                    ...value,
+                    port: Number(value.port),
+                    timeout: Number(value.timeout),
+                    update_interval: Number(value.update_interval)
+                }
+            });
         },
         defaultValues,
         validators: {
-            onSubmit: schemaSSH
+            onSubmit: schemaSSHFIXME
         }
     });
 
