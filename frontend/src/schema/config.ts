@@ -1,6 +1,8 @@
 import { z } from 'zod/v4';
 import { Action } from './asset.ts';
 
+const coercedNumber = z.string().transform(Number);
+
 export const schemaAnticheat = z.object({
     enabled: z.boolean(),
     action: Action,
@@ -59,7 +61,7 @@ export const schemaDemos = z.object({
     demo_cleanup_min_pct: z.number().min(0).max(100),
     demo_cleanup_mount: z.string().startsWith('/'), // windows?
     demo_count_limit: z.number(),
-    demo_parser_url: z.string().url()
+    demo_parser_url: z.string()
 });
 
 export const schemaPatreon = z.object({
@@ -121,11 +123,11 @@ export const schemaLocalStore = z.object({
 export const schemaSSH = z.object({
     enabled: z.boolean(),
     username: z.string(),
-    port: z.number().min(1).max(65535),
+    port: coercedNumber.pipe(z.number().min(1).max(65535)),
     private_key_path: z.string(),
     password: z.string(),
-    update_interval: z.number().positive(),
-    timeout: z.number().positive(),
+    update_interval: coercedNumber.pipe(z.number().positive()),
+    timeout: coercedNumber.pipe(z.number().positive()),
     demo_path_fmt: z.string(),
     stac_path_fmt: z.string()
 });
@@ -140,7 +142,7 @@ export const schemaNetwork = z.object({
     sdr_enabled: z.boolean(),
     sdr_dns_enabled: z.boolean(),
     cf_key: z.string(),
-    cf_email: z.string().email(),
+    cf_email: z.string(),
     cf_zone_id: z.string()
 });
 

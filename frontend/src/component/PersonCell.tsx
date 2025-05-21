@@ -55,9 +55,11 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, showCo
                 variant={'text'}
                 sx={{
                     backgroundColor: theme.palette.background.default,
+                    color: theme.palette.primary.contrastText,
                     '&:hover': {
                         cursor: 'pointer',
                         textDecoration: 'underline',
+                        // color: theme.palette.getContrastText(theme.palette.background.default),
                         backgroundColor: theme.palette.background.default
                     }
                 }}
