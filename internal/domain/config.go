@@ -44,13 +44,13 @@ type StaticConfig struct {
 	HTTPStaticPath      string   `mapstructure:"http_static_path" json:"-"`
 	HTTPCookieKey       string   `mapstructure:"http_cookie_key" json:"-"`
 	HTTPClientTimeout   int      `mapstructure:"http_client_timeout" json:"-"`
-	HTTPCORSEnabled     bool     `mapstructure:"http_cors_enabled"`
+	HTTPCORSEnabled     bool     `mapstructure:"http_cors_enabled"  json:"-"`
 	HTTPCorsOrigins     []string `mapstructure:"http_cors_origins" json:"-"`
 	DatabaseDSN         string   `mapstructure:"database_dsn" json:"-"`
 	DatabaseAutoMigrate bool     `mapstructure:"database_auto_migrate" json:"-"`
 	DatabaseLogQueries  bool     `mapstructure:"database_log_queries" json:"-"`
-	PrometheusEnabled   bool     `mapstructure:"prometheus_enabled"`
-	PProfEnabled        bool     `mapstructure:"pprof_enabled"`
+	PrometheusEnabled   bool     `mapstructure:"prometheus_enabled" json:"-"`
+	PProfEnabled        bool     `mapstructure:"pprof_enabled" json:"-"`
 }
 
 // Addr returns the address in host:port format.
@@ -120,11 +120,11 @@ type ConfigNetwork struct {
 type ConfigSSH struct {
 	Enabled        bool   `json:"enabled"`
 	Username       string `json:"username"`
-	Port           int    `json:"port,string"`
+	Port           int    `json:"port"`
 	PrivateKeyPath string `json:"private_key_path"`
 	Password       string `json:"password"`
-	UpdateInterval int    `json:"update_interval,string"`
-	Timeout        int    `json:"timeout,string"`
+	UpdateInterval int    `json:"update_interval"`
+	Timeout        int    `json:"timeout"`
 	DemoPathFmt    string `json:"demo_path_fmt"`
 	StacPathFmt    string `json:"stac_path_fmt"`
 	// TODO configurable handling of host keys
@@ -138,13 +138,13 @@ type ConfigExports struct {
 
 type ConfigFilter struct {
 	Enabled        bool `json:"enabled"`
-	WarningTimeout int  `json:"warning_timeout,string"`
-	WarningLimit   int  `json:"warning_limit,string"`
+	WarningTimeout int  `json:"warning_timeout"`
+	WarningLimit   int  `json:"warning_limit"`
 	Dry            bool `json:"dry"`
 	PingDiscord    bool `json:"ping_discord"`
-	MaxWeight      int  `json:"max_weight,string"`
-	CheckTimeout   int  `json:"check_timeout,string"`
-	MatchTimeout   int  `json:"match_timeout,string"`
+	MaxWeight      int  `json:"max_weight"`
+	CheckTimeout   int  `json:"check_timeout"`
+	MatchTimeout   int  `json:"match_timeout"`
 }
 
 type ConfigLocalStore struct {
@@ -225,9 +225,9 @@ type ConfigGeneral struct {
 type ConfigDemo struct {
 	DemoCleanupEnabled  bool         `json:"demo_cleanup_enabled"`
 	DemoCleanupStrategy DemoStrategy `json:"demo_cleanup_strategy"`
-	DemoCleanupMinPct   float32      `json:"demo_cleanup_min_pct,string"`
+	DemoCleanupMinPct   float32      `json:"demo_cleanup_min_pct"`
 	DemoCleanupMount    string       `json:"demo_cleanup_mount"`
-	DemoCountLimit      uint64       `json:"demo_count_limit,string"`
+	DemoCountLimit      uint64       `json:"demo_count_limit"`
 	DemoParserURL       string       `json:"demo_parser_url"`
 }
 
