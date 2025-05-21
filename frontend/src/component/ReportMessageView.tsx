@@ -1,6 +1,7 @@
 import { MouseEvent, useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Avatar from '@mui/material/Avatar';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import Grid from '@mui/material/Grid';
@@ -9,17 +10,17 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import { useTheme } from '@mui/material/styles';
-import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistance } from 'date-fns';
-import { z } from 'zod';
-import { apiDeleteReportMessage, apiUpdateReportMessage, ReportMessage } from '../api';
+import { z } from 'zod/v4';
+import { apiDeleteReportMessage, apiUpdateReportMessage } from '../api';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { reportMessagesQueryOptions } from '../queries/reportMessages.ts';
+import { ReportMessage } from '../schema/report.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
-import { Buttons } from './field/Buttons.tsx';
-import { MarkdownField, mdEditorRef } from './field/MarkdownField.tsx';
+import { mdEditorRef } from './form/field/MarkdownField.tsx';
 
 export interface ReportMessageViewProps {
     message: ReportMessage;
@@ -74,7 +75,7 @@ export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({
                 body_md: value.body_md
@@ -103,46 +104,29 @@ export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <Paper>
                     <Grid container spacing={2} padding={1}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'body_md'}
                                 validators={{
                                     onChange: z.string().min(3)
                                 }}
-                                children={(props) => {
-                                    return (
-                                        <MarkdownField
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Message'}
-                                            fullwidth={true}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.MarkdownField label={'Message'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            closeLabel={'Cancel'}
-                                            onClose={async () => {
-                                                setEditing(false);
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </Paper>

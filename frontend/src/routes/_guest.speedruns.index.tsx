@@ -16,22 +16,17 @@ import {
     TableOptions,
     useReactTable
 } from '@tanstack/react-table';
-import {
-    apiGetServers,
-    getSpeedrunsRecent,
-    getSpeedrunsTopOverall,
-    ServerSimple,
-    SpeedrunMapOverview,
-    SpeedrunResult
-} from '../api';
+import { apiGetServers, getSpeedrunsRecent, getSpeedrunsTopOverall } from '../api';
 import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable } from '../component/DataTable.tsx';
-import { TableCellSmall } from '../component/TableCellSmall.tsx';
-import { TableCellString } from '../component/TableCellString.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
+import { TableCellString } from '../component/table/TableCellString.tsx';
+import { ServerSimple } from '../schema/server.ts';
+import { SpeedrunMapOverview, SpeedrunResult } from '../schema/speedrun.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime, durationString } from '../util/time.ts';
 

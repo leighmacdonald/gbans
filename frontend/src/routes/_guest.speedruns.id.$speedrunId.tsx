@@ -16,13 +16,14 @@ import {
     TableOptions,
     useReactTable
 } from '@tanstack/react-table';
-import { getSpeedrun, SpeedrunParticipant, SpeedrunPointCaptures } from '../api';
+import { getSpeedrun } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { Title } from '../component/Title';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { SpeedrunParticipant, SpeedrunPointCaptures } from '../schema/speedrun.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { durationString, renderDateTime } from '../util/time.ts';
@@ -36,7 +37,6 @@ export const Route = createFileRoute('/_guest/speedruns/id/$speedrunId')({
 
 function SpeedrunDetail() {
     const { speedrunId } = Route.useParams();
-    const title = `Speedruns: ${speedrunId}`;
 
     const { data: speedrun, isLoading } = useQuery({
         queryKey: ['speedrun', speedrunId],
@@ -55,7 +55,7 @@ function SpeedrunDetail() {
 
     return (
         <>
-            <Title>{title}</Title>
+            <Title>{`Speedruns: ${speedrunId}`}</Title>
             {isLoading && <LoadingPlaceholder height={400} />}
 
             {!isLoading && speedrun && (

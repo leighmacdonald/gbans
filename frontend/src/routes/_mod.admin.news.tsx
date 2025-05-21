@@ -10,20 +10,21 @@ import Grid from '@mui/material/Grid';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, SortingState } from '@tanstack/react-table';
-import { z } from 'zod';
-import { apiGetNewsAll, apiNewsDelete, NewsEntry } from '../api/news.ts';
+import { z } from 'zod/v4';
+import { apiGetNewsAll, apiNewsDelete } from '../api/news.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { FullTable } from '../component/FullTable.tsx';
-import { TableCellBool } from '../component/TableCellBool.tsx';
-import { TableCellString } from '../component/TableCellString.tsx';
 import { Title } from '../component/Title';
 import { ModalConfirm, ModalNewsEditor } from '../component/modal';
+import { FullTable } from '../component/table/FullTable.tsx';
+import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
+import { NewsEntry } from '../schema/news.ts';
+import { commonTableSearchSchema, initPagination } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
-const newsSchema = z.object({
-    ...makeCommonTableSearchSchema(['news_id', 'title', 'created_on', 'updated_on']),
+const newsSchema = commonTableSearchSchema.extend({
+    sortColumn: z.enum(['news_id', 'title', 'created_on', 'updated_on']).optional(),
     published: z.boolean().optional()
 });
 

@@ -1,22 +1,21 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SensorOccupiedIcon from '@mui/icons-material/SensorOccupied';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetConnections } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { IPHistoryTable } from '../component/IPHistoryTable.tsx';
-import { Paginator } from '../component/Paginator.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { SteamIDField } from '../component/field/SteamIDField.tsx';
-import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { Paginator } from '../component/forum/Paginator.tsx';
+import { IPHistoryTable } from '../component/table/IPHistoryTable.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
+import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
-const ipHistorySearchSchema = z.object({
-    ...makeCommonTableSearchSchema(['person_connection_id', 'steam_id', 'created_on', 'server_id']),
+const ipHistorySearchSchema = commonTableSearchSchema.extend({
+    sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'server_id']).optional(),
     steam_id: z.string().optional()
 });
 
@@ -41,7 +40,7 @@ function AdminNetworkPlayerIPHistory() {
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/network/iphist', search: (prev) => ({ ...prev, ...value }) });
         },
@@ -71,31 +70,27 @@ function AdminNetworkPlayerIPHistory() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 12 }}>
-                                <Field
+                                <form.AppField
                                     name={'steam_id'}
-                                    children={(props) => {
-                                        return <SteamIDField {...props} value={props.state.value} fullwidth={true} />;
+                                    children={(field) => {
+                                        return <field.SteamIDField />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <ButtonGroup>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

@@ -3,13 +3,13 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import NewReleasesIcon from '@mui/icons-material/NewReleases';
 import QuizIcon from '@mui/icons-material/Quiz';
 import Tooltip from '@mui/material/Tooltip';
-import { ReportStatus } from '../api';
+import { ReportStatus, ReportStatusEnum } from '../schema/report.ts';
 
 interface ReportStatusIconProps {
-    reportStatus: ReportStatus;
+    reportStatus: ReportStatusEnum;
 }
 
-export const ReportStatusIcon = ({ reportStatus }: ReportStatusIconProps): JSX.Element => {
+export const ReportStatusIcon = ({ reportStatus }: ReportStatusIconProps) => {
     switch (reportStatus) {
         case ReportStatus.NeedMoreInfo:
             return (

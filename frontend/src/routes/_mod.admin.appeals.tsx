@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import {
@@ -16,37 +16,33 @@ import {
     SortingState,
     useReactTable
 } from '@tanstack/react-table';
-import { z } from 'zod';
-import {
-    apiGetAppeals,
-    AppealState,
-    AppealStateCollection,
-    appealStateString,
-    BanReasons,
-    SteamBanRecord
-} from '../api';
+import { z } from 'zod/v4';
+import { apiGetAppeals, appealStateString } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
+import { AppealState, AppealStateCollection, AppealStateEnum, BanReasons, SteamBanRecord } from '../schema/bans.ts';
 import { TablePropsAll } from '../types/table.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
-const appealSearchSchema = z.object({
-    ...commonTableSearchSchema,
+const appealSearchSchema = commonTableSearchSchema.extend({
     sortColumn: z
         .enum(['report_id', 'source_id', 'target_id', 'appeal_state', 'reason', 'created_on', 'updated_on'])
         .optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
-    appeal_state: z.nativeEnum(AppealState).optional()
+    appeal_state: z.enum(AppealState).optional()
+});
+
+const schema = z.object({
+    source_id: z.string(),
+    target_id: z.string(),
+    appeal_state: z.enum(AppealState)
 });
 
 export const Route = createFileRoute('/_mod/admin/appeals')({
@@ -64,6 +60,11 @@ function AdminAppeals() {
             desc: true
         })
     );
+    const defaultValues: z.infer<typeof schema> = {
+        source_id: search.source_id ?? '',
+        target_id: search.target_id ?? '',
+        appeal_state: search.appeal_state ?? AppealState.Any
+    };
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
     const { data: appeals, isLoading } = useQuery({
         queryKey: ['appeals'],
@@ -72,7 +73,7 @@ function AdminAppeals() {
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset, setFieldValue } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             setColumnFilters(
                 initColumnFilter({
@@ -84,27 +85,18 @@ function AdminAppeals() {
             await navigate({ to: '/admin/appeals', search: (prev) => ({ ...prev, ...value }) });
         },
         validators: {
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
-                source_id: makeValidateSteamIDCallback(),
-                target_id: makeValidateSteamIDCallback(),
-                appeal_state: z.nativeEnum(AppealState)
-            })
+            onChange: schema
         },
-        defaultValues: {
-            source_id: search.source_id ?? '',
-            target_id: search.target_id ?? '',
-            appeal_state: search.appeal_state ?? AppealState.Any
-        }
+        defaultValues
     });
 
     const clear = async () => {
         //reset();
-        setFieldValue('appeal_state', AppealState.Any);
-        setFieldValue('source_id', '');
-        setFieldValue('target_id', '');
+        form.setFieldValue('appeal_state', AppealState.Any);
+        form.setFieldValue('source_id', '');
+        form.setFieldValue('target_id', '');
 
-        await handleSubmit();
+        await form.handleSubmit();
         await navigate({
             to: '/admin/appeals',
             search: (prev) => ({ ...prev, source_id: undefined, target_id: undefined, appeal_state: undefined })
@@ -120,47 +112,40 @@ function AdminAppeals() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 6, md: 4 }}>
-                                <Field
+                                <form.AppField
                                     name={'source_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />
-                                        );
+                                    children={(field) => {
+                                        return <field.SteamIDField label={'Author Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 4 }}>
-                                <Field
+                                <form.AppField
                                     name={'target_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
-                                        );
+                                    children={(field) => {
+                                        return <field.SteamIDField label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 4 }}>
-                                <Field
+                                <form.AppField
                                     name={'appeal_state'}
-                                    children={(props) => {
+                                    children={(field) => {
                                         return (
-                                            <SelectFieldSimple
-                                                {...props}
-                                                defaultValue={AppealState.Any}
+                                            <field.SelectField
                                                 label={'Appeal Status'}
-                                                fullwidth={true}
                                                 items={AppealStateCollection}
-                                                renderMenu={(item) => {
+                                                renderItem={(item) => {
                                                     return (
                                                         <MenuItem value={item} key={`rs-${item}`}>
-                                                            {appealStateString(item as AppealState)}
+                                                            {appealStateString(item as AppealStateEnum)}
                                                         </MenuItem>
                                                     );
                                                 }}
@@ -170,17 +155,12 @@ function AdminAppeals() {
                                 />
                             </Grid>
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <ButtonGroup>
+                                        <form.ResetButton onClick={clear} />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

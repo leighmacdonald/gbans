@@ -2,6 +2,7 @@ import { useState } from 'react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControl from '@mui/material/FormControl';
 import Grid from '@mui/material/Grid';
 import InputLabel from '@mui/material/InputLabel';
@@ -9,47 +10,39 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { z } from 'zod';
-import { apiGetAnticheatLogs, apiGetServers, Detection, Detections, ServerSimple, StacEntry } from '../api';
+import { z } from 'zod/v4';
+import { apiGetAnticheatLogs, apiGetServers } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import { TableCellString } from '../component/TableCellString.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { SteamIDField } from '../component/field/SteamIDField.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { FullTable } from '../component/table/FullTable.tsx';
+import { TableCellString } from '../component/table/TableCellString.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
+import { DetectionCollection, Detections, StacEntry } from '../schema/anticheat.ts';
+import { ServerSimple } from '../schema/server.ts';
 import { stringToColour } from '../util/colours.ts';
-import { initPagination, initSortOrder, makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { commonTableSearchSchema, initPagination, initSortOrder, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
-const schema = z.object({
-    ...makeCommonTableSearchSchema([
-        'anticheat_id',
-        'name',
-        'personaname',
-        'summary',
-        'detection',
-        'steam_id',
-        'created_on',
-        'server_name'
-    ]),
+const searchSchema = commonTableSearchSchema.extend({
+    sortColumn: z
+        .enum(['anticheat_id', 'name', 'personaname', 'summary', 'detection', 'steam_id', 'created_on', 'server_name'])
+        .optional(),
     name: z.string().optional(),
     summary: z.string().optional(),
     server_id: z.number().optional(),
-    detection: z.string().optional(),
+    detection: Detections.optional(),
     steam_id: z.string().optional(),
     personaname: z.string().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/anticheat')({
     component: AdminAnticheat,
-    validateSearch: (search) => schema.parse(search),
+    validateSearch: (search) => searchSchema.parse(search),
     loader: async ({ context }) => {
         const unsorted = await context.queryClient.ensureQueryData({
             queryKey: ['serversSimple'],
@@ -71,6 +64,14 @@ export const Route = createFileRoute('/_mod/admin/anticheat')({
 
 const columnHelper = createColumnHelper<StacEntry>();
 
+const schema = z.object({
+    name: z.string(),
+    summary: z.string(),
+    detection: Detections,
+    steam_id: z.string(),
+    server_id: z.number()
+});
+
 function AdminAnticheat() {
     const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
@@ -88,6 +89,14 @@ function AdminAnticheat() {
         steam_id: false
     });
 
+    const defaultValues: z.input<typeof schema> = {
+        name: search.name ?? '',
+        summary: search.summary ?? '',
+        detection: search.detection ?? 'unknown',
+        steam_id: search.steam_id ?? '',
+        server_id: search.server_id ?? 0
+    };
+
     const { data: logs, isLoading } = useQuery({
         queryKey: ['anticheat', search],
         queryFn: async () => {
@@ -97,7 +106,7 @@ function AdminAnticheat() {
                     name: search.name ?? '',
                     summary: search.summary ?? '',
                     steam_id: search.steam_id ?? '',
-                    detection: (search.detection ?? '') as Detection,
+                    detection: (search.detection ?? 'unknown') as Detections,
                     limit: search.pageSize ?? defaultRows,
                     offset: (search.pageIndex ?? 0) * (search.pageSize ?? defaultRows),
                     order_by: 'created_on',
@@ -109,23 +118,20 @@ function AdminAnticheat() {
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             //setColumnFilters(initColumnFilter(value));
             await navigate({ to: '/admin/anticheat', search: (prev) => ({ ...prev, ...value }) });
         },
-        defaultValues: {
-            name: search.name ?? '',
-            summary: search.summary ?? '',
-            detection: search.detection ?? '',
-            steam_id: search.steam_id ?? '',
-            server_id: search.server_id ?? 0
+        defaultValues,
+        validators: {
+            onChange: schema
         }
     });
 
     const clear = async () => {
         //setColumnFilters([]);
-        reset();
+        form.reset();
         await navigate({
             to: '/admin/anticheat',
             search: (prev) => ({ ...prev })
@@ -217,36 +223,29 @@ function AdminAnticheat() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'name'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Name'} />;
+                                    children={(field) => {
+                                        return <field.TextField label={'Name'} />;
                                     }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'steam_id'}
-                                    children={({ state, handleChange, handleBlur }) => {
-                                        return (
-                                            <SteamIDField
-                                                value={state.value}
-                                                handleBlur={handleBlur}
-                                                handleChange={handleChange}
-                                                fullwidth={true}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.SteamIDField />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'server_id'}
                                     children={({ state, handleChange, handleBlur }) => {
                                         return (
@@ -276,55 +275,42 @@ function AdminAnticheat() {
                                 />
                             </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                                <form.AppField
                                     name={'detection'}
-                                    children={({ state, handleChange, handleBlur }) => {
+                                    children={(field) => {
                                         return (
-                                            <>
-                                                <FormControl fullWidth>
-                                                    <InputLabel id="detection-select-label">Detection</InputLabel>
-                                                    <Select
-                                                        fullWidth
-                                                        value={state.value}
-                                                        label="Detection"
-                                                        onChange={(e) => {
-                                                            handleChange(e.target.value);
-                                                        }}
-                                                        onBlur={handleBlur}
-                                                    >
-                                                        <MenuItem value={0}>All</MenuItem>
-                                                        {Detections.map((s) => (
-                                                            <MenuItem value={s} key={s}>
-                                                                {s}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                            </>
+                                            <field.SelectField
+                                                label={'Detection'}
+                                                items={DetectionCollection}
+                                                value={field.state.value}
+                                                renderItem={(i) => {
+                                                    return (
+                                                        <MenuItem value={i} key={i}>
+                                                            {i}
+                                                        </MenuItem>
+                                                    );
+                                                }}
+                                            />
                                         );
                                     }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 12 }}>
-                                <Field
+                                <form.AppField
                                     name={'summary'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Message'} />;
+                                    children={(field) => {
+                                        return <field.TextField label={'Message'} />;
                                     }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <ButtonGroup>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

@@ -12,7 +12,8 @@ type Props<TData> = {
     labelLoading?: string;
     items: TData[];
     renderItem: (item: TData) => ReactNode;
-    helpText?: string;
+    helperText?: ReactNode | string;
+    handleChange?: (item: TData) => void;
 } & SelectProps;
 
 export const SelectField = <TData,>(props: Props<TData>) => {
@@ -23,17 +24,25 @@ export const SelectField = <TData,>(props: Props<TData>) => {
         <FormControl fullWidth error={errors.length > 0}>
             <InputLabel id={`select-label-${props.name}`}>{props.label}</InputLabel>
             <Select
-                {...props}
+                disabled={props.disabled}
+                color={field.state.meta.isValid ? 'success' : props.color}
+                onClick={props.onClick}
+                value={field.state.value}
                 id={`select-${props.name}`}
                 fullWidth
-                variant={'filled'}
                 onChange={(event) => {
-                    field.handleChange(event.target.value as TData);
+                    if (props.handleChange) {
+                        props.handleChange(event.target.value as TData);
+                    } else {
+                        field.handleChange(event.target.value as TData);
+                    }
                 }}
             >
-                {props.items.map(props.renderItem)}
+                {props.items.map((i) => {
+                    return props.renderItem(i);
+                })}
             </Select>
-            <FormHelperText>{renderHelpText(errors, props.helpText)}</FormHelperText>
+            <FormHelperText>{renderHelpText(errors, props.helperText)}</FormHelperText>
         </FormControl>
     );
 };

@@ -1,27 +1,21 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import PersonIcon from '@mui/icons-material/Person';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import {
-    apiUpdatePlayerPermission,
-    PermissionLevel,
-    PermissionLevelCollection,
-    permissionLevelString,
-    Person
-} from '../../api';
+import { apiUpdatePlayerPermission } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
+import { PermissionLevelCollection, PermissionLevelEnum, permissionLevelString, Person } from '../../schema/people.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
 
 export const PersonEditModal = NiceModal.create(({ person }: { person: Person }) => {
     const modal = useModal();
 
     const mutation = useMutation({
         mutationKey: ['banCIDR'],
-        mutationFn: async (values: { permission_level: PermissionLevel }) => {
+        mutationFn: async (values: { permission_level: PermissionLevelEnum }) => {
             try {
                 const updatedPerson = await apiUpdatePlayerPermission(person.steam_id, {
                     permission_level: values.permission_level
@@ -34,7 +28,7 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({
                 permission_level: value.permission_level
@@ -51,7 +45,7 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<PersonIcon />}>
@@ -60,17 +54,14 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'permission_level'}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Permissions'}
-                                            fullwidth={true}
                                             items={PermissionLevelCollection}
-                                            renderMenu={(pl) => {
+                                            renderItem={(pl) => {
                                                 return (
                                                     <MenuItem value={pl} key={`pl-${pl}`}>
                                                         {permissionLevelString(pl)}
@@ -87,21 +78,12 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

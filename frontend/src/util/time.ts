@@ -1,14 +1,14 @@
 import { formatDistance, parseISO, parseJSON } from 'date-fns';
 import { format } from 'date-fns/format';
 import { isAfter } from 'date-fns/fp';
+import { z } from 'zod/v4';
+import { DateRange, schemaTimeStamped, TimeStampedWithValidUntil } from '../schema/chrono.ts';
 
-export type Duration = number;
+export const durationToMs = (d: number) => d / 1000;
 
-export const durationToMs = (d: Duration) => d / 1000;
+export const durationToSec = (d: number) => d / 1000 / 1000;
 
-export const durationToSec = (d: Duration) => d / 1000 / 1000;
-
-export const durationString = (d: Duration) => {
+export const durationString = (d: number) => {
     const secs = durationToSec(d);
     let hours: number | string = Math.floor(secs / 3600);
     let minutes: number | string = Math.floor((secs - hours * 3600) / 60);
@@ -66,11 +66,6 @@ export const renderTimeDistance = (t1: Date | string, t2?: Date | string): strin
     });
 };
 
-export interface DateRange {
-    date_start: Date;
-    date_end: Date;
-}
-
 export const transformDateRange = <T>(item: T & DateRange) => {
     item.date_end = parseDateTime(item.date_end as unknown as string);
     item.date_start = parseDateTime(item.date_start as unknown as string);
@@ -78,11 +73,7 @@ export const transformDateRange = <T>(item: T & DateRange) => {
     return item;
 };
 
-export interface TimeStamped {
-    created_on: Date;
-    updated_on: Date;
-    valid_until?: Date;
-}
+export type TimeStamped = z.infer<typeof schemaTimeStamped>;
 
 // These transform functions are used because for
 
@@ -99,12 +90,17 @@ export const transformCreatedAtDate = <T>(item: T & { created_at: Date }) => {
 export const transformTimeStampedDates = <T>(item: T & TimeStamped) => {
     item.created_on = parseDateTime(item.created_on as unknown as string);
     item.updated_on = parseDateTime(item.updated_on as unknown as string);
-    if (item.valid_until != undefined) {
-        item.valid_until = parseDateTime(item.valid_until as unknown as string);
-    }
+
     return item;
 };
 
+export const transformTimeStampedDatesWithValidUntil = <T>(item: T & TimeStampedWithValidUntil) => {
+    item.created_on = parseDateTime(item.created_on as unknown as string);
+    item.updated_on = parseDateTime(item.updated_on as unknown as string);
+    item.valid_until = parseDateTime(item.valid_until as unknown as string);
+
+    return item;
+};
 export const transformTimeStampedDatesList = <T>(items: (T & TimeStamped)[]) => {
     return items ? items.map(transformTimeStampedDates) : items;
 };

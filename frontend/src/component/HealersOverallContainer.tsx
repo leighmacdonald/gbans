@@ -3,15 +3,16 @@ import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { apiGetHealersOverall, HealingOverallResult } from '../api';
+import { apiGetHealersOverall } from '../api';
+import { HealingOverallResult } from '../schema/stats.ts';
 import { LazyResult, RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { DataTable } from './DataTable.tsx';
 import FmtWhenGt from './FmtWhenGT.tsx';
-import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { PersonCell } from './PersonCell';
-import { TableCellSmall } from './TableCellSmall.tsx';
+import { PaginatorLocal } from './forum/PaginatorLocal.tsx';
+import { DataTable } from './table/DataTable.tsx';
+import { TableCellSmall } from './table/TableCellSmall.tsx';
 
 export const HealersOverallContainer = () => {
     const { data, isLoading } = useQuery({

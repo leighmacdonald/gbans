@@ -1,24 +1,16 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
-import {
-    apiCreateSMGroupOverrides,
-    apiSaveSMGroupOverrides,
-    OverrideAccess,
-    OverrideType,
-    SMGroupOverrides,
-    SMGroups
-} from '../../api';
+import { apiCreateSMGroupOverrides, apiSaveSMGroupOverrides } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { OverrideAccess, OverrideType, SMGroupOverrides, SMGroups } from '../../schema/sourcemod.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 type mutateOverrideArgs = {
     name: string;
@@ -44,7 +36,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
             onError: sendError
         });
 
-        const { Field, Subscribe, handleSubmit, reset } = useForm({
+        const form = useAppForm({
             onSubmit: async ({ value }) => {
                 mutation.mutate(value);
             },
@@ -61,7 +53,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
                     onSubmit={async (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        await handleSubmit();
+                        await form.handleSubmit();
                     }}
                 >
                     <DialogTitle component={Heading} iconLeft={<GroupsIcon />}>
@@ -71,32 +63,22 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
                     <DialogContent>
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 6 }}>
-                                <Field
+                                <form.AppField
                                     name={'name'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple
-                                                {...props}
-                                                value={props.state.value}
-                                                label={'Name'}
-                                                fullwidth={true}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.TextField label={'Name'} />;
                                     }}
                                 />
                             </Grid>
                             <Grid size={{ xs: 6 }}>
-                                <Field
+                                <form.AppField
                                     name={'type'}
-                                    children={(props) => {
+                                    children={(field) => {
                                         return (
-                                            <SelectFieldSimple
-                                                {...props}
-                                                value={props.state.value}
+                                            <field.SelectField
                                                 label={'Override Type'}
-                                                fullwidth={true}
                                                 items={['command', 'group']}
-                                                renderMenu={(i) => {
+                                                renderItem={(i) => {
                                                     return (
                                                         <MenuItem value={i} key={i}>
                                                             {i}
@@ -110,16 +92,14 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
                             </Grid>
 
                             <Grid size={{ xs: 6 }}>
-                                <Field
+                                <form.AppField
                                     name={'access'}
-                                    children={(props) => {
+                                    children={(field) => {
                                         return (
-                                            <SelectFieldSimple
-                                                {...props}
+                                            <field.SelectField
                                                 label={'Access Type'}
-                                                fullwidth={true}
                                                 items={['allow', 'deny']}
-                                                renderMenu={(i) => {
+                                                renderItem={(i) => {
                                                     return (
                                                         <MenuItem value={i} key={i}>
                                                             {i}
@@ -137,22 +117,13 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
                     <DialogActions>
                         <Grid container>
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => {
-                                        return (
-                                            <Buttons
-                                                reset={reset}
-                                                canSubmit={canSubmit}
-                                                submitLabel={'Submit'}
-                                                isSubmitting={isSubmitting}
-                                                onClose={async () => {
-                                                    await modal.hide();
-                                                }}
-                                            />
-                                        );
-                                    }}
-                                />
+                                <form.AppForm>
+                                    <ButtonGroup>
+                                        <form.CloseButton />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </DialogActions>

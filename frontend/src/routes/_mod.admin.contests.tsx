@@ -15,21 +15,23 @@ import {
     PaginationState,
     useReactTable
 } from '@tanstack/react-table';
-import { z } from 'zod';
-import { apiContests, Contest, PermissionLevel, permissionLevelString } from '../api';
+import { z } from 'zod/v4';
+import { apiContests } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable } from '../component/DataTable.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
-import { TableCellBool } from '../component/TableCellBool.tsx';
-import { TableCellString } from '../component/TableCellString.tsx';
 import { Title } from '../component/Title.tsx';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { ModalContestEditor } from '../component/modal';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { TableCellString } from '../component/table/TableCellString.tsx';
+import { Contest } from '../schema/contest.ts';
+import { PermissionLevelEnum, permissionLevelString } from '../schema/people.ts';
 import { logErr } from '../util/errors.ts';
-import { initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
+import { commonTableSearchSchema, initPagination } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
-const contestsSearchSchema = z.object({
-    ...makeCommonTableSearchSchema(['contest_id', 'deleted']),
+const contestsSearchSchema = commonTableSearchSchema.extend({
+    sortColumn: z.enum(['contest_id', 'deleted']).optional(),
     deleted: z.boolean().catch(false)
 });
 
@@ -177,7 +179,7 @@ const ContestTable = ({
                 header: 'Min. Perms',
                 size: 100,
                 cell: (info) => (
-                    <TableCellString>{permissionLevelString(info.getValue() as PermissionLevel)}</TableCellString>
+                    <TableCellString>{permissionLevelString(info.getValue() as PermissionLevelEnum)}</TableCellString>
                 )
             },
             {

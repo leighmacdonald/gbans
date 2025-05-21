@@ -6,7 +6,8 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import { apiGetStats, DatabaseStats } from '../api';
+import { apiGetStats } from '../api';
+import { DatabaseStats } from '../schema/stats.ts';
 import { logErr } from '../util/errors';
 
 export const StatsPanel = () => {

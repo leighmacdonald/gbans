@@ -10,22 +10,14 @@ import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { apiContest } from '../../api';
-import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';
+import { apiSaveContestEntryMedia } from '../../api/media';
 import { AppError } from '../../error.tsx';
+import { UserUploadedFile } from '../../schema/asset.ts';
 import { logErr } from '../../util/errors';
 import { Nullable } from '../../util/types';
 import { Heading } from '../Heading';
 import { LinearProgressWithLabel } from '../LinearProgresWithLabel';
 import { LoadingSpinner } from '../LoadingSpinner';
-
-// interface ContestEntryFormValues {
-//     contest_id: string;
-//     body_md: string;
-// }
-//
-// const validationSchema = yup.object({
-//     body_md: minStringValidator('Description', 1)
-// });
 
 export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id: number }) => {
     const [userUpload, setUserUpload] = useState<Nullable<UserUploadedFile>>();

@@ -6,7 +6,8 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import { Player } from 'video-react';
 import 'video-react/dist/video-react.css';
-import { Asset, assetURL, mediaType, MediaTypes } from '../../api/media';
+import { assetURL } from '../../api/media';
+import { Asset, mediaType, MediaTypes } from '../../schema/asset';
 import { Heading } from '../Heading';
 
 const VideoAsset = ({ asset }: AssetViewerProps) => (

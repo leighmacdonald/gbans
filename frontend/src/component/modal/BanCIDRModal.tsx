@@ -1,46 +1,48 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import RouterIcon from '@mui/icons-material/Router';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { parseISO } from 'date-fns';
-import { z } from 'zod';
+import { z } from 'zod/v4';
+import { apiCreateBanCIDR, apiUpdateBanCIDR } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import {
-    apiCreateBanCIDR,
-    apiUpdateBanCIDR,
     BanReason,
     BanReasons,
     banReasonsCollection,
     CIDRBanRecord,
     Duration,
     DurationCollection
-} from '../../api';
-import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+} from '../../schema/bans.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
-import { MarkdownField } from '../field/MarkdownField.tsx';
-import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
-import { SteamIDField } from '../field/SteamIDField.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-type BanCIDRFormValues = {
-    target_id: string;
-    cidr: string;
-    reason: BanReason;
-    reason_text: string;
-    duration: Duration;
-    duration_custom?: string;
-    note: string;
-    existing?: CIDRBanRecord;
-};
+const schema = z.object({
+    target_id: z.string(),
+    reason: z.enum(BanReason),
+    reason_text: z.string(),
+    duration: z.enum(Duration),
+    duration_custom: z.date(),
+    note: z.string(),
+    cidr: z.cidrv4()
+});
+
+type BanCIDRFormValues = z.infer<typeof schema> & { existing?: CIDRBanRecord };
 
 export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBanRecord }) => {
     const { sendFlash } = useUserFlashCtx();
     const modal = useModal();
-
+    const defaultValues: z.input<typeof schema> = {
+        target_id: existing?.target_id ?? '',
+        reason: existing ? existing.reason : BanReason.Cheating,
+        reason_text: existing ? existing.reason_text : '',
+        duration: existing ? Duration.durCustom : Duration.dur2w,
+        duration_custom: existing?.valid_until ?? new Date(),
+        note: existing?.note ?? '',
+        cidr: existing?.cidr ?? ''
+    };
     const mutation = useMutation({
         mutationKey: ['banCIDR'],
         mutationFn: async (values: BanCIDRFormValues) => {
@@ -51,7 +53,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                     reason_text: values.reason_text,
                     cidr: values.cidr,
                     target_id: values.target_id,
-                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
+                    valid_until: values.duration_custom
                 });
                 sendFlash('success', 'Updated CIDR ban successfully');
                 modal.resolve(ban_record);
@@ -59,7 +61,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 const ban_record = await apiCreateBanCIDR({
                     note: values.note,
                     duration: values.duration,
-                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
+                    valid_until: values.duration_custom,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     target_id: values.target_id,
@@ -72,26 +74,13 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
-            mutation.mutate({
-                target_id: value.target_id,
-                reason: value.reason,
-                reason_text: value.reason_text,
-                duration: value.duration,
-                duration_custom: value.duration_custom,
-                note: value.note,
-                cidr: value.cidr
-            });
+            mutation.mutate(value);
         },
-        defaultValues: {
-            target_id: existing ? existing.target_id : '',
-            reason: existing ? existing.reason : BanReason.Cheating,
-            reason_text: existing ? existing.reason_text : '',
-            duration: existing ? Duration.durCustom : Duration.dur2w,
-            duration_custom: existing ? existing.valid_until.toISOString() : '',
-            note: existing ? existing.note : '',
-            cidr: existing ? existing.cidr : ''
+        defaultValues,
+        validators: {
+            onSubmit: schema
         }
     });
 
@@ -101,7 +90,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<RouterIcon />}>
@@ -111,16 +100,12 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'target_id'}
-                                // validators={makeSteamidValidators()}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SteamIDField
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SteamIDField
                                             label={'Target Steam ID'}
-                                            fullwidth={true}
                                             disabled={Boolean(existing?.net_id)}
                                         />
                                     );
@@ -128,30 +113,22 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'cidr'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} value={props.state.value} label={'IP/CIDR Range'} />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'IP/CIDR Range'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'reason'}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Reason'}
-                                            fullwidth={true}
                                             items={banReasonsCollection}
-                                            renderMenu={(br) => {
+                                            renderItem={(br) => {
                                                 return (
                                                     <MenuItem value={br} key={`br-${br}`}>
                                                         {BanReasons[br]}
@@ -164,50 +141,22 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'reason_text'}
-                                validators={{
-                                    onSubmit: ({ value, fieldApi }) => {
-                                        if (fieldApi.form.getFieldValue('reason') != BanReason.Custom) {
-                                            if (value.length == 0) {
-                                                return undefined;
-                                            }
-                                            return 'Must use custom ban reason';
-                                        }
-                                        const result = z.string().min(5).safeParse(value);
-                                        if (!result.success) {
-                                            return result.error.errors.map((e) => e.message).join(',');
-                                        }
-
-                                        return undefined;
-                                    }
-                                }}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Custom Ban Reason'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Custom Ban Reason'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'duration'}
-                                validators={{
-                                    onChange: z.nativeEnum(Duration)
-                                }}
-                                children={(props) => {
+                                children={(field) => {
                                     return (
-                                        <SelectFieldSimple
-                                            {...props}
-                                            value={props.state.value}
+                                        <field.SelectField
                                             label={'Duration'}
-                                            fullwidth={true}
                                             items={DurationCollection}
-                                            renderMenu={(du) => {
+                                            renderItem={(du) => {
                                                 return (
                                                     <MenuItem value={du} key={`du-${du}`}>
                                                         {du}
@@ -221,36 +170,19 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         </Grid>
 
                         <Grid size={{ xs: 6 }}>
-                            <Field
+                            <form.AppField
                                 name={'duration_custom'}
-                                children={(props) => {
-                                    return (
-                                        <DateTimeSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Custom Expire Date'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.DateTimeField label={'Custom Expire Date'} />;
                                 }}
                             />
                         </Grid>
 
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'note'}
-                                validators={{
-                                    onChange: z.string()
-                                }}
-                                children={(props) => {
-                                    return (
-                                        <MarkdownField
-                                            {...props}
-                                            value={props.state.value}
-                                            multiline={true}
-                                            rows={10}
-                                            label={'Mod Notes'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.MarkdownField multiline={true} rows={10} label={'Mod Notes'} />;
                                 }}
                             />
                         </Grid>
@@ -259,21 +191,12 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

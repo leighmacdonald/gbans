@@ -1,4 +1,5 @@
-import { apiCall, CallbackLink } from './common.ts';
+import { CallbackLink } from '../schema/query.ts';
+import { apiCall } from './common.ts';
 
 // export interface Relationships {}
 

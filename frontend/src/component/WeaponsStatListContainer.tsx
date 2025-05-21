@@ -2,14 +2,15 @@ import { useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { apiGetWeaponsOverall, WeaponsOverallResult } from '../api';
+import { apiGetWeaponsOverall } from '../api';
+import { WeaponsOverallResult } from '../schema/stats.ts';
 import { LazyResult, RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { DataTable } from './DataTable.tsx';
 import FmtWhenGt from './FmtWhenGT.tsx';
-import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { TextLink } from './TextLink.tsx';
+import { PaginatorLocal } from './forum/PaginatorLocal.tsx';
+import { DataTable } from './table/DataTable.tsx';
 
 export const WeaponsStatListContainer = () => {
     const { data, isLoading } = useQuery({

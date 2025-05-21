@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLayoutEffect, useRouter } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { apiGetCurrentProfile } from '../api';
 import { writeAccessToken } from '../util/auth/writeAccessToken.ts';
 

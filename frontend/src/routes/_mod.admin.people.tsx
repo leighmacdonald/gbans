@@ -3,32 +3,35 @@ import NiceModal from '@ebay/nice-modal-react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { fromUnixTime } from 'date-fns';
-import { z } from 'zod';
-import { apiSearchPeople, communityVisibilityState, PermissionLevel, permissionLevelString, Person } from '../api';
+import { z } from 'zod/v4';
+import { apiSearchPeople } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
-import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
-import { SteamIDField } from '../component/field/SteamIDField.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { Paginator } from '../component/forum/Paginator.tsx';
 import { ModalPersonEditor } from '../component/modal';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import {
+    communityVisibilityState,
+    PermissionLevel,
+    PermissionLevelEnum,
+    permissionLevelString,
+    Person
+} from '../schema/people.ts';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate, renderDateTime } from '../util/time.ts';
 
-const peopleSearchSchema = z.object({
-    ...commonTableSearchSchema,
+const peopleSearchSchema = commonTableSearchSchema.extend({
     sortColumn: z.enum(['vac_bans', 'steam_id', 'timecreated', 'personaname', 'created_on']).optional(),
     steam_id: z.string().catch(''),
     personaname: z.string().catch(''),
@@ -73,7 +76,7 @@ function AdminPeople() {
         }
     };
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/people', search: (prev) => ({ ...prev, ...value }) });
         },
@@ -107,58 +110,45 @@ function AdminPeople() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
                             <Grid size={{ xs: 6, md: 4 }}>
-                                <Field
+                                <form.AppField
                                     name={'steam_id'}
-                                    children={(props) => {
-                                        return <SteamIDField {...props} label={'Steam ID'} fullwidth={true} />;
+                                    children={(field) => {
+                                        return <field.SteamIDField label={'Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 4 }}>
-                                <Field
+                                <form.AppField
                                     name={'personaname'}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Name'} fullwidth={true} />;
+                                    children={(field) => {
+                                        return <field.TextField label={'Name'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 6, md: 4 }}>
-                                <Field
+                                <form.AppField
                                     name={'staff_only'}
-                                    children={({ state, handleBlur, handleChange }) => {
-                                        return (
-                                            <CheckboxSimple
-                                                label={'Staff Only'}
-                                                value={state.value}
-                                                onBlur={handleBlur}
-                                                onChange={(_, v) => {
-                                                    handleChange(v);
-                                                }}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.CheckboxField label={'Staff Only'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <ButtonGroup>
+                                        <form.ClearButton onClick={clear} />
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>
@@ -256,7 +246,7 @@ const PeopleTable = ({
                         {permissionLevelString(
                             info.row.original
                                 ? info.row.original.permission_level
-                                : (PermissionLevel.Guest as PermissionLevel)
+                                : (PermissionLevel.Guest as PermissionLevelEnum)
                         )}
                     </Typography>
                 )

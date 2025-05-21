@@ -1,30 +1,33 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import BlockIcon from '@mui/icons-material/Block';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
-import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
-import { apiCreateCIDRBlockSource, apiUpdateCIDRBlockSource, CIDRBlockSource } from '../../api';
+import { z } from 'zod/v4';
+import { apiCreateCIDRBlockSource, apiUpdateCIDRBlockSource } from '../../api';
+import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { CIDRBlockSource } from '../../schema/network.ts';
 import { Heading } from '../Heading';
-import { Buttons } from '../field/Buttons.tsx';
-import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
-import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-interface CIDRBlockEditorValues {
-    name: string;
-    url: string;
-    enabled: boolean;
-}
+const schema = z.object({
+    name: z.string().min(2),
+    url: z.string().url(),
+    enabled: z.boolean()
+});
 
 export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CIDRBlockSource }) => {
     const modal = useModal();
     const { sendError } = useUserFlashCtx();
-
+    const defaultValues: z.infer<typeof schema> = {
+        name: source?.name ?? '',
+        url: source?.url ?? '',
+        enabled: source?.enabled ?? true
+    };
     const mutation = useMutation({
         mutationKey: ['blockSource'],
-        mutationFn: async (values: CIDRBlockEditorValues) => {
+        mutationFn: async (values: z.infer<typeof schema>) => {
             if (source?.cidr_block_source_id) {
                 const resp = await apiUpdateCIDRBlockSource(
                     source.cidr_block_source_id,
@@ -48,21 +51,13 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        defaultValues: {
-            name: source?.name ?? '',
-            url: source?.url ?? '',
-            enabled: source?.enabled ?? true
-        },
+        defaultValues,
         validators: {
-            onSubmit: z.object({
-                name: z.string().min(2),
-                url: z.string().url(),
-                enabled: z.boolean()
-            })
+            onSubmit: schema
         }
     });
 
@@ -72,7 +67,7 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    await handleSubmit();
+                    await form.handleSubmit();
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<BlockIcon />}>
@@ -81,39 +76,26 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'name'}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} value={props.state.value} label={'Source Name'} />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Source Name'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'url'}
-                                children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} value={props.state.value} label={'Source URL'} />
-                                    );
+                                children={(field) => {
+                                    return <field.TextField label={'Source URL'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
-                            <Field
+                            <form.AppField
                                 name={'enabled'}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            value={state.value}
-                                            onBlur={handleBlur}
-                                            onChange={(_, v) => {
-                                                handleChange(v);
-                                            }}
-                                            label={'Enabled'}
-                                        />
-                                    );
+                                children={(field) => {
+                                    return <field.CheckboxField label={'Enabled'} />;
                                 }}
                             />
                         </Grid>
@@ -122,21 +104,12 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                 <DialogActions>
                     <Grid container>
                         <Grid size={{ xs: 12 }}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                            <form.AppForm>
+                                <ButtonGroup>
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </ButtonGroup>
+                            </form.AppForm>
                         </Grid>
                     </Grid>
                 </DialogActions>

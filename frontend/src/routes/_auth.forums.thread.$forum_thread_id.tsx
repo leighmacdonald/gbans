@@ -6,43 +6,34 @@ import LockIcon from '@mui/icons-material/Lock';
 import Person2Icon from '@mui/icons-material/Person2';
 import { IconButton } from '@mui/material';
 import Box from '@mui/material/Box';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { z } from 'zod';
-import { PermissionLevel } from '../api';
-import {
-    apiCreateThreadReply,
-    apiDeleteMessage,
-    apiGetThread,
-    apiGetThreadMessages,
-    ForumMessage,
-    ForumThread
-} from '../api/forum.ts';
-import { ThreadMessageContainer } from '../component/ForumThreadMessageContainer.tsx';
+import { apiCreateThreadReply, apiDeleteMessage, apiGetThread, apiGetThreadMessages } from '../api/forum.ts';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
+import { mdEditorRef } from '../component/form/field/MarkdownField.tsx';
+import { ThreadMessageContainer } from '../component/forum/ForumThreadMessageContainer.tsx';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { ForumMessage, ForumThread } from '../schema/forum.ts';
+import { PermissionLevel } from '../schema/people.ts';
 import { logErr } from '../util/errors.ts';
 import { useScrollToLocation } from '../util/history.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 import { LoginPage } from './_guest.login.index.tsx';
 
-const forumThreadSearchSchema = z.object({
-    ...commonTableSearchSchema
-});
+const forumThreadSearchSchema = commonTableSearchSchema;
 
 export const Route = createFileRoute('/_auth/forums/thread/$forum_thread_id')({
     component: ForumThreadPage,
@@ -168,13 +159,13 @@ function ForumThreadPage() {
             const newMessages = [...(messages ?? []), message];
             queryClient.setQueryData(['threadMessages', { forum_thread_id }], newMessages);
             mdEditorRef.current?.setMarkdown('');
-            reset();
+            form.reset();
             sendFlash('success', `New message created (#${message.forum_message_id})`);
         },
         onError: sendError
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             createMessageMutation.mutate(value);
         },
@@ -194,38 +185,25 @@ function ForumThreadPage() {
                             onSubmit={async (e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                await handleSubmit();
+                                await form.handleSubmit();
                             }}
                         >
                             <Grid container spacing={2} justifyItems={'flex-end'}>
                                 <Grid size={{ xs: 12 }}>
-                                    <Field
+                                    <form.AppField
                                         name={'body_md'}
-                                        children={(props) => {
-                                            return (
-                                                <MarkdownField
-                                                    {...props}
-                                                    value={props.state.value}
-                                                    label={'Message'}
-                                                    fullwidth={true}
-                                                    minHeight={400}
-                                                />
-                                            );
+                                        children={(field) => {
+                                            return <field.MarkdownField label={'Message'} minHeight={400} />;
                                         }}
                                     />
                                 </Grid>
                                 <Grid size={{ xs: 4 }}>
-                                    <Subscribe
-                                        selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                        children={([canSubmit, isSubmitting]) => (
-                                            <Buttons
-                                                reset={reset}
-                                                canSubmit={canSubmit}
-                                                isSubmitting={isSubmitting}
-                                                submitLabel={'Reply'}
-                                            />
-                                        )}
-                                    />
+                                    <form.AppForm>
+                                        <ButtonGroup>
+                                            <form.ResetButton />
+                                            <form.SubmitButton />
+                                        </ButtonGroup>
+                                    </form.AppForm>
                                 </Grid>
                             </Grid>
                         </form>
@@ -235,7 +213,7 @@ function ForumThreadPage() {
         } else {
             return <></>;
         }
-    }, [permissionLevel, thread?.forum_thread_id, thread?.locked, Field, Subscribe, handleSubmit, reset]);
+    }, [permissionLevel, thread?.forum_thread_id, thread?.locked]);
 
     return (
         <Stack spacing={1}>

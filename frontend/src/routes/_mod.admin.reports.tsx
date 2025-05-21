@@ -1,47 +1,40 @@
 import { useMemo, useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
-import { z } from 'zod';
-import {
-    apiGetReports,
-    BanReasons,
-    ReportStatus,
-    ReportStatusCollection,
-    reportStatusString,
-    ReportWithAuthor
-} from '../api';
+import { z } from 'zod/v4';
+import { apiGetReports } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
-import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { initColumnFilter, initPagination, initSortOrder, makeCommonTableSearchSchema } from '../util/table.ts';
+import { FullTable } from '../component/table/FullTable.tsx';
+import { useAppForm } from '../contexts/formContext.tsx';
+import { BanReasons } from '../schema/bans.ts';
+import {
+    ReportStatus,
+    ReportStatusCollection,
+    ReportStatusEnum,
+    reportStatusString,
+    ReportWithAuthor
+} from '../schema/report.ts';
+import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
-const reportsSearchSchema = z.object({
-    ...makeCommonTableSearchSchema([
-        'report_id',
-        'source_id',
-        'target_id',
-        'report_status',
-        'reason',
-        'created_on',
-        'updated_on'
-    ]),
+const reportsSearchSchema = commonTableSearchSchema.extend({
+    sortColumn: z
+        .enum(['report_id', 'source_id', 'target_id', 'report_status', 'reason', 'created_on', 'updated_on'])
+        .optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     deleted: z.boolean().optional(),
-    report_status: z.nativeEnum(ReportStatus).optional()
+    report_status: z.enum(ReportStatus).optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/reports')({
@@ -69,7 +62,7 @@ function AdminReports() {
     );
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             setColumnFilters(
                 initColumnFilter({
@@ -84,7 +77,7 @@ function AdminReports() {
             onSubmit: z.object({
                 source_id: z.string(),
                 target_id: z.string(),
-                report_status: z.nativeEnum(ReportStatus)
+                report_status: z.enum(ReportStatus)
             })
         },
         defaultValues: {
@@ -95,7 +88,7 @@ function AdminReports() {
     });
 
     const clear = async () => {
-        reset();
+        form.reset();
         setColumnFilters([]);
         await navigate({
             to: '/admin/reports',
@@ -116,57 +109,41 @@ function AdminReports() {
                         onSubmit={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            await handleSubmit();
+                            await form.handleSubmit();
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                            <Grid size={{ xs: 6, md: 4 }}>
+                                <form.AppField
                                     name={'source_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple
-                                                {...props}
-                                                value={props.state.value}
-                                                label={'Author Steam ID'}
-                                                fullwidth={true}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.SteamIDField label={'Author Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
-                            <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                            <Grid size={{ xs: 6, md: 4 }}>
+                                <form.AppField
                                     name={'target_id'}
-                                    children={(props) => {
-                                        return (
-                                            <TextFieldSimple
-                                                {...props}
-                                                value={props.state.value}
-                                                label={'Subject Steam ID'}
-                                                fullwidth={true}
-                                            />
-                                        );
+                                    children={(field) => {
+                                        return <field.SteamIDField label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
-                            <Grid size={{ xs: 6, md: 3 }}>
-                                <Field
+                            <Grid size={{ xs: 6, md: 4 }}>
+                                <form.AppField
                                     name={'report_status'}
-                                    children={(props) => {
+                                    children={(field) => {
                                         return (
-                                            <SelectFieldSimple
-                                                {...props}
-                                                value={props.state.value}
+                                            <field.SelectField
                                                 label={'Report Status'}
-                                                fullwidth={true}
+                                                fullWidth
                                                 items={ReportStatusCollection}
-                                                renderMenu={(item) => {
+                                                renderItem={(item) => {
                                                     return (
                                                         <MenuItem value={item} key={`rs-${item}`}>
-                                                            {reportStatusString(item as ReportStatus)}
+                                                            {reportStatusString(item as ReportStatusEnum)}
                                                         </MenuItem>
                                                     );
                                                 }}
@@ -176,17 +153,12 @@ function AdminReports() {
                                 />
                             </Grid>
                             <Grid size={{ xs: 12 }}>
-                                <Subscribe
-                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                    children={([canSubmit, isSubmitting]) => (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClear={clear}
-                                        />
-                                    )}
-                                />
+                                <form.AppForm>
+                                    <ButtonGroup>
+                                        <form.ResetButton onClick={clear} />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>
@@ -195,7 +167,7 @@ function AdminReports() {
             <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Current User Reports'} iconLeft={<ReportIcon />}>
                     <FullTable
-                        data={reports ?? []}
+                        data={reports}
                         isLoading={false}
                         columns={columns}
                         sorting={sorting}
@@ -231,7 +203,7 @@ const makeColumns = () => {
         }),
         columnHelper.accessor('report_status', {
             size: 120,
-            filterFn: (row, _, value: ReportStatus) => {
+            filterFn: (row, _, value: ReportStatusEnum) => {
                 if (value == ReportStatus.Any) {
                     return true;
                 }

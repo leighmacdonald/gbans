@@ -1,9 +1,10 @@
 import { queryOptions } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { PermissionLevel } from '../api';
-import { apiGetWikiPage, Page } from '../api/wiki.ts';
+import { apiGetWikiPage } from '../api/wiki.ts';
 import { Title } from '../component/Title.tsx';
 import { WikiPage } from '../component/WikiPage.tsx';
+import { PermissionLevel } from '../schema/people.ts';
+import { Page } from '../schema/wiki.ts';
 import { logErr } from '../util/errors.ts';
 
 export const Route = createFileRoute('/_guest/wiki/')({

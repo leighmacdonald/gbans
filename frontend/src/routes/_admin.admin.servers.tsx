@@ -19,22 +19,25 @@ import {
     PaginationState,
     useReactTable
 } from '@tanstack/react-table';
-import { z } from 'zod';
-import { apiGetServersAdmin, Server } from '../api';
+import { z } from 'zod/v4';
+import { apiGetServersAdmin } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable } from '../component/DataTable.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
-import { TableCellBool } from '../component/TableCellBool.tsx';
-import { TableCellString } from '../component/TableCellString.tsx';
 import { Title } from '../component/Title';
-import { TableCellStringHidden } from '../component/field/TableCellStringHidden.tsx';
+import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { ModalServerEditor } from '../component/modal';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { TableCellString } from '../component/table/TableCellString.tsx';
+import { TableCellStringHidden } from '../component/table/TableCellStringHidden.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { Server } from '../schema/server.ts';
+import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
 const serversSearchSchema = z.object({
-    ...commonTableSearchSchema,
+    pageIndex: z.number().optional().catch(0),
+    pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
+    sortOrder: z.enum(['desc', 'asc']).optional().catch('desc'),
     sortColumn: z
         .enum(['server_id', 'short_name', 'name', 'address', 'port', 'region', 'cc', 'enable_stats', 'is_enabled'])
         .optional()
@@ -269,7 +272,7 @@ const AdminServersTable = ({
                 size: 30,
                 cell: (info) => {
                     return (
-                        <ButtonGroup fullWidth>
+                        <ButtonGroup fullWidth variant={'text'}>
                             <IconButton
                                 color={'warning'}
                                 onClick={async () => {

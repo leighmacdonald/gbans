@@ -2,13 +2,14 @@ import { useState } from 'react';
 import Link from '@mui/material/Link';
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { apiGetPlayerWeaponsOverall, WeaponsOverallResult } from '../api';
+import { apiGetPlayerWeaponsOverall } from '../api';
+import { WeaponsOverallResult } from '../schema/stats.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text.tsx';
-import { DataTable } from './DataTable.tsx';
 import FmtWhenGt from './FmtWhenGT.tsx';
-import { PaginatorLocal } from './PaginatorLocal.tsx';
 import RouterLink from './RouterLink.tsx';
+import { PaginatorLocal } from './forum/PaginatorLocal.tsx';
+import { DataTable } from './table/DataTable.tsx';
 
 const columnHelper = createColumnHelper<WeaponsOverallResult>();
 

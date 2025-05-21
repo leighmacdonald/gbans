@@ -1,5 +1,5 @@
 import { createContext, Dispatch, SetStateAction } from 'react';
-import { UserNotification } from '../api';
+import { UserNotification } from '../schema/people.ts';
 import { noop } from '../util/lists.ts';
 
 export type NotificationState = {

@@ -1,4 +1,4 @@
-import { createTheme, PaletteMode, PaletteOptions } from '@mui/material';
+import { createTheme, PaletteMode, PaletteOptions, responsiveFontSizes } from '@mui/material';
 import darkScrollbar from '@mui/material/darkScrollbar';
 
 export const blu = '#547d8c';
@@ -66,78 +66,92 @@ export const createThemeByMode = (mode: PaletteMode) => {
                   divider: '#452c22'
               };
 
-    return createTheme({
-        components: {
-            MuiTableCell: {
-                styleOverrides: {
-                    root: {
-                        borderLeft: '0px solid #9d312f',
-                        borderBottom: 'none',
-                        borderRight: '0px solid  #9d312f'
-                        // paddingLeft: '6px',
-                        // paddingRight: '6px'
+    return responsiveFontSizes(
+        createTheme({
+            components: {
+                MuiTableCell: {
+                    styleOverrides: {
+                        root: {
+                            borderLeft: '0px solid #9d312f',
+                            borderBottom: 'none',
+                            borderRight: '0px solid  #9d312f'
+                            // paddingLeft: '6px',
+                            // paddingRight: '6px'
+                        }
+                    }
+                },
+                MuiTabs: {
+                    styleOverrides: {
+                        root: {
+                            minHeight: 36,
+                            height: 36
+                        }
+                    }
+                },
+                MuiTab: {
+                    styleOverrides: {
+                        root: {
+                            minHeight: 36,
+                            height: 36
+                        }
+                    }
+                },
+                MuiCssBaseline: {
+                    styleOverrides: {
+                        body: darkScrollbar()
+                    }
+                },
+                MuiTextField: {
+                    defaultProps: {
+                        variant: 'filled'
+                    }
+                },
+                MuiSelect: {
+                    defaultProps: {
+                        variant: 'filled'
+                    }
+                },
+                MuiButton: {
+                    defaultProps: {
+                        variant: 'contained'
+                    }
+                },
+                MuiButtonGroup: {
+                    defaultProps: {
+                        variant: 'contained'
                     }
                 }
             },
-            MuiTabs: {
-                styleOverrides: {
-                    root: {
-                        minHeight: 36,
-                        height: 36
-                    }
+            typography: {
+                fontFamily: ['"Helvetica Neue"', 'Helvetica', 'Roboto', 'Arial', 'sans-serif'].join(','),
+                // allVariants: {
+                //     color: mode === 'dark' ? '#34302d' : '#f5e7de'
+                // },
+                body1: {
+                    ...readableFonts
+                },
+                fontSize: 12,
+                h1: {
+                    fontSize: 36
+                },
+                h2: {
+                    fontSize: 32
+                },
+                h3: {
+                    fontSize: 28
+                },
+                h4: {
+                    fontSize: 24
+                },
+                h5: {
+                    fontSize: 20
+                },
+                h6: {
+                    fontSize: 16
                 }
             },
-            MuiTab: {
-                styleOverrides: {
-                    root: {
-                        minHeight: 36,
-                        height: 36
-                    }
-                }
-            },
-            MuiCssBaseline: {
-                styleOverrides: {
-                    body: darkScrollbar()
-                }
-            },
-            MuiButton: {
-                variants: [
-                    {
-                        props: { variant: 'contained' },
-                        style: readableFonts
-                    }
-                ]
-            }
-        },
-        typography: {
-            fontFamily: ['"Helvetica Neue"', 'Helvetica', 'Roboto', 'Arial', 'sans-serif'].join(','),
-            // allVariants: {
-            //     color: mode === 'dark' ? '#34302d' : '#f5e7de'
-            // },
-            body1: {
-                ...readableFonts
-            },
-            fontSize: 12,
-            h1: {
-                fontSize: 36
-            },
-            h2: {
-                fontSize: 32
-            },
-            h3: {
-                fontSize: 28
-            },
-            h4: {
-                fontSize: 24
-            },
-            h5: {
-                fontSize: 20
-            },
-            h6: {
-                fontSize: 16
-            }
-        },
-        palette: opts,
-        mode: mode
-    });
+            palette: opts,
+            mode: mode
+        })
+    );
 };

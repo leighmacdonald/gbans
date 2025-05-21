@@ -19,17 +19,18 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { formatDistance } from 'date-fns';
-import { apiGetMatch, MatchHealer, MatchPlayer, MatchPlayerClass, MatchPlayerWeapon, Team } from '../api';
+import { apiGetMatch } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
 import { Heading } from '../component/Heading.tsx';
 import { LoadingSpinner } from '../component/LoadingSpinner.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { PlayerClassImg } from '../component/PlayerClassImg.tsx';
-import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { Title } from '../component/Title';
+import { DataTable } from '../component/table/DataTable.tsx';
+import { TableCellSmall } from '../component/table/TableCellSmall.tsx';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';
+import { MatchPlayer, MatchPlayerClass, MatchPlayerWeapon, MedicRow, Team } from '../schema/stats.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { PageNotFound } from './_auth.page-not-found.tsx';
 
@@ -132,6 +133,7 @@ const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
         </Box>
     );
 };
+
 interface WeaponStatRowProps {
     weaponStat: MatchPlayerWeapon;
 }
@@ -479,15 +481,6 @@ const MatchPlayersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
 
     return <DataTable table={table} isLoading={isLoading} />;
 };
-
-interface MedicRow extends MatchHealer {
-    steam_id: string;
-    team: Team;
-    name: string;
-    avatar_hash: string;
-    time_start: Date;
-    time_end: Date;
-}
 
 const MatchHealersTable = ({ players, isLoading }: { players: MatchPlayer[]; isLoading: boolean }) => {
     const medics = useMemo(() => {

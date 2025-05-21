@@ -17,7 +17,8 @@ export const DateTimeField = (props: Props) => {
             minDate={props.minDate ?? new Date()}
             slotProps={{
                 textField: {
-                    variant: 'outlined',
+                    fullWidth: true,
+                    variant: 'filled',
                     error: errors.length > 0,
                     helperText: renderHelpText(errors, props.helpText)
                 }

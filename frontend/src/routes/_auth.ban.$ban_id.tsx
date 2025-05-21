@@ -17,22 +17,17 @@ import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import {
     apiCreateBanMessage,
     apiDeleteBanMessage,
     apiGetBanMessages,
     apiGetBanSteam,
     apiSetBanAppealState,
-    AppealState,
-    AppealStateCollection,
     appealStateString,
-    BanReasons,
-    banTypeString,
-    PermissionLevel
+    banTypeString
 } from '../api';
 import { AppealMessageView } from '../component/AppealMessageView.tsx';
 import { ButtonLink } from '../component/ButtonLink.tsx';
@@ -43,11 +38,13 @@ import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { SourceBansList } from '../component/SourceBansList.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { Title } from '../component/Title';
-import { Buttons } from '../component/field/Buttons.tsx';
-import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from '../component/form/field/MarkdownField.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
+import { useAppForm } from '../contexts/formContext.tsx';
 import { AppError, ErrorCode } from '../error.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { AppealState, AppealStateCollection, AppealStateEnum, BanReasons } from '../schema/bans.ts';
+import { PermissionLevel } from '../schema/people.ts';
 import { logErr } from '../util/errors.ts';
 import { renderDateTime, renderTimeDistance } from '../util/time.ts';
 
@@ -72,7 +69,7 @@ export const Route = createFileRoute('/_auth/ban/$ban_id')({
 });
 
 function BanPage() {
-    const [appealState, setAppealState] = useState<AppealState>(AppealState.Open);
+    const [appealState, setAppealState] = useState<AppealStateEnum>(AppealState.Open);
     const { permissionLevel, profile } = useRouteContext({ from: '/_auth/ban/$ban_id' });
     const ban = Route.useLoaderData();
     const { sendFlash } = useUserFlashCtx();
@@ -153,14 +150,14 @@ function BanPage() {
                             <>
                                 <FormControl fullWidth>
                                     <InputLabel id="appeal-status-label">Appeal Status</InputLabel>
-                                    <Select<AppealState>
+                                    <Select
                                         variant={'outlined'}
                                         value={ban?.appeal_state}
                                         labelId={'appeal-status-label'}
                                         id={'appeal-status'}
                                         label={'Appeal Status'}
                                         onChange={(evt) => {
-                                            setAppealState(evt.target.value as AppealState);
+                                            setAppealState(evt.target.value as AppealStateEnum);
                                         }}
                                     >
                                         {AppealStateCollection.map((as) => {
@@ -231,11 +228,11 @@ function BanPage() {
             queryClient.setQueryData(['banMessages', { ban_id: ban.ban_id }], [...(messages ?? []), msg]);
             sendFlash('success', 'Created message successfully');
             mdEditorRef.current?.setMarkdown('');
-            reset();
+            form.reset();
         }
     });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const form = useAppForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({
                 body_md: value.body_md
@@ -275,12 +272,12 @@ function BanPage() {
                                 onSubmit={async (e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    await handleSubmit();
+                                    await form.handleSubmit();
                                 }}
                             >
                                 <Grid container spacing={2} padding={1}>
                                     <Grid size={{ xs: 12 }}>
-                                        <Field
+                                        <form.AppField
                                             name={'body_md'}
                                             validators={{
                                                 onChange: z.string().min(2)
@@ -297,18 +294,12 @@ function BanPage() {
                                         />
                                     </Grid>
                                     <Grid size={{ xs: 12 }}>
-                                        <Subscribe
-                                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                            children={([canSubmit, isSubmitting]) => {
-                                                return (
-                                                    <Buttons
-                                                        reset={reset}
-                                                        canSubmit={canSubmit}
-                                                        isSubmitting={isSubmitting}
-                                                    />
-                                                );
-                                            }}
-                                        />
+                                        <form.AppForm>
+                                            <ButtonGroup>
+                                                <form.ResetButton />
+                                                <form.SubmitButton />
+                                            </ButtonGroup>
+                                        </form.AppForm>
                                     </Grid>
                                 </Grid>
                             </form>
@@ -345,10 +336,16 @@ function BanPage() {
                                 <ListItemText primary={'Created At'} secondary={renderDateTime(ban.created_on)} />
                             </ListItem>
                             <ListItem>
-                                <ListItemText primary={'Expires At'} secondary={renderDateTime(ban.valid_until)} />
+                                <ListItemText
+                                    primary={'Expires At'}
+                                    secondary={renderDateTime(ban.valid_until as Date)}
+                                />
                             </ListItem>
                             <ListItem>
-                                <ListItemText primary={'Expires'} secondary={renderTimeDistance(ban.valid_until)} />
+                                <ListItemText
+                                    primary={'Expires'}
+                                    secondary={renderTimeDistance(ban.valid_until as Date)}
+                                />
                             </ListItem>
                             {permissionLevel() >= PermissionLevel.Moderator && (
                                 <ListItem>
