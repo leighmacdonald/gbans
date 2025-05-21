@@ -67,7 +67,7 @@ const columnHelper = createColumnHelper<StacEntry>();
 const schema = z.object({
     name: z.string(),
     summary: z.string(),
-    detection: Detections.optional(),
+    detection: Detections,
     steam_id: z.string(),
     server_id: z.number()
 });
@@ -92,7 +92,7 @@ function AdminAnticheat() {
     const defaultValues: z.input<typeof schema> = {
         name: search.name ?? '',
         summary: search.summary ?? '',
-        detection: search.detection,
+        detection: search.detection ?? 'unknown',
         steam_id: search.steam_id ?? '',
         server_id: search.server_id ?? 0
     };
@@ -277,29 +277,20 @@ function AdminAnticheat() {
                             <Grid size={{ xs: 6, md: 3 }}>
                                 <form.AppField
                                     name={'detection'}
-                                    children={({ state, handleChange, handleBlur }) => {
+                                    children={(field) => {
                                         return (
-                                            <>
-                                                <FormControl fullWidth>
-                                                    <InputLabel id="detection-select-label">Detection</InputLabel>
-                                                    <Select
-                                                        fullWidth
-                                                        value={state.value}
-                                                        label="Detection"
-                                                        onChange={(e) => {
-                                                            handleChange(e.target.value);
-                                                        }}
-                                                        onBlur={handleBlur}
-                                                    >
-                                                        <MenuItem value={0}>All</MenuItem>
-                                                        {DetectionCollection.map((s) => (
-                                                            <MenuItem value={s} key={s}>
-                                                                {s}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
-                                            </>
+                                            <field.SelectField
+                                                label={'Detection'}
+                                                items={DetectionCollection}
+                                                value={field.state.value}
+                                                renderItem={(i) => {
+                                                    return (
+                                                        <MenuItem value={i} key={i}>
+                                                            {i}
+                                                        </MenuItem>
+                                                    );
+                                                }}
+                                            />
                                         );
                                     }}
                                 />
