@@ -25,11 +25,10 @@ import { FullTable } from '../component/table/FullTable.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
-import { AppealState, BanReasonEnum, BanReasons, GroupBanRecord } from '../schema/bans.ts';
+import { BanReasonEnum, BanReasons, GroupBanRecord } from '../schema/bans.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, isPermanentBan } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const sourceIDValidator = z.string().optional();
 const targetIDValidator = z.string().optional();
@@ -58,6 +57,17 @@ export const Route = createFileRoute('/_mod/admin/ban/group')({
     validateSearch: (search) => searchSchema.parse(search)
 });
 
+const schema = z.object({
+    source_id: z.string(),
+    target_id: z.string(),
+    group_id: z.string().refine((arg) => {
+        if (emptyOrNullString(arg)) {
+            return true;
+        }
+        return arg?.match(/^\d+$/);
+    }, 'Invalid group ID'),
+    deleted: z.boolean()
+});
 function AdminBanGroup() {
     const navigate = useNavigate({ from: Route.fullPath });
     const search = Route.useSearch();
@@ -68,7 +78,7 @@ function AdminBanGroup() {
     const { data: bans, isLoading } = useQuery({
         queryKey: ['steamGroupBans'],
         queryFn: async () => {
-            return await apiGetBansGroups({ deleted: false, appeal_state: AppealState.Any });
+            return await apiGetBansGroups({ deleted: false });
         }
     });
 
@@ -82,18 +92,7 @@ function AdminBanGroup() {
             await navigate({ to: '/admin/ban/group', search: (prev) => ({ ...prev, ...value }) });
         },
         validators: {
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
-                source_id: makeValidateSteamIDCallback(),
-                target_id: makeValidateSteamIDCallback(),
-                group_id: z.string().refine((arg) => {
-                    if (emptyOrNullString(arg)) {
-                        return true;
-                    }
-                    return arg?.match(/^\d+$/);
-                }, 'Invalid group ID'),
-                deleted: z.boolean()
-            })
+            onChange: schema
         },
         defaultValues: {
             source_id: search.source_id ?? '',

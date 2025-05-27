@@ -237,14 +237,14 @@ export const schemaMessageQuery = z
 
 export type MessageQuery = z.infer<typeof schemaMessageQuery>;
 
-export const schemaConnectionQuery = z
-    .object({
-        cidr: z.cidrv4().optional(),
-        source_id: z.string().optional(),
-        server_id: z.number().optional(),
-        asn: z.number().optional()
-    })
-    .merge(schemaQueryFilter);
+export const schemaConnectionQuery = schemaQueryFilter.extend({
+    cidr: z.cidrv4().optional(),
+    source_id: z.string().optional(),
+    server_id: z.number().optional(),
+    asn: z.number().optional(),
+    network: z.string().optional(),
+    sid64: z.string().optional()
+});
 
 export type ConnectionQuery = z.infer<typeof schemaConnectionQuery>;
 

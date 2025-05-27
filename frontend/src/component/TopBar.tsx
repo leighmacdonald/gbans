@@ -478,7 +478,12 @@ export const TopBar = () => {
 
                                 {!isAuthenticated() && (
                                     <Tooltip title="Steam Login">
-                                        <Button component={Link} href={generateOIDCLink(window.location.pathname)}>
+                                        <Button
+                                            component={Link}
+                                            href={generateOIDCLink(window.location.pathname)}
+                                            variant={'text'}
+                                            sx={{ backgroundColor: 'inherit' }}
+                                        >
                                             <img src={steamLogo} alt={'Steam Login'} />
                                         </Button>
                                     </Tooltip>

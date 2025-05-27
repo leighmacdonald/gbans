@@ -111,7 +111,7 @@ type ConnectionHistoryQuery struct {
 	SourceIDField
 	CIDR    string `json:"cidr,omitempty"`
 	ASN     int    `json:"asn,omitempty"`
-	Sid64   int64  `json:"sid64,omitempty"`
+	Sid64   string `json:"sid64,omitempty"`
 	Network string `json:"network,omitempty"`
 }
 
@@ -177,7 +177,7 @@ type BansQueryFilter struct {
 }
 
 type CIDRBansQueryFilter struct {
-	Deleted bool `json:"deleted"`
+	Deleted bool `schema:"deleted"`
 }
 
 type ASNBansQueryFilter struct {
@@ -185,7 +185,7 @@ type ASNBansQueryFilter struct {
 }
 
 type GroupBansQueryFilter struct {
-	Deleted bool `json:"deleted"`
+	Deleted bool `schema:"deleted"`
 }
 
 type SteamBansQueryFilter struct {

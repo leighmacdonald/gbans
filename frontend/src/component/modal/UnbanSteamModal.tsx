@@ -8,7 +8,7 @@ import { apiDeleteBan } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 
-const schema = z.object({
+const onSubmit = z.object({
     unban_reason: z.string().min(5)
 });
 
@@ -22,9 +22,11 @@ export const UnbanSteamModal = NiceModal.create(
     }) => {
         const modal = useModal();
         const { sendError } = useUserFlashCtx();
-        const defaultValues: z.input<typeof schema> = {
+
+        const defaultValues: z.input<typeof onSubmit> = {
             unban_reason: ''
         };
+
         const mutation = useMutation({
             mutationKey: ['deleteSteamBan', { banId }],
             mutationFn: async (unban_reason: string) => {
@@ -45,9 +47,7 @@ export const UnbanSteamModal = NiceModal.create(
                 mutation.mutate(value.unban_reason);
             },
             defaultValues,
-            validators: {
-                onSubmit: schema
-            }
+            validators: { onSubmit }
         });
 
         return (

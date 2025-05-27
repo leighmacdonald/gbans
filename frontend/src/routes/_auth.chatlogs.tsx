@@ -17,7 +17,7 @@ import { ServerSimple } from '../schema/server.ts';
 import { ensureFeatureEnabled } from '../util/features.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 
-const chatlogsSchema = commonTableSearchSchema.extend({
+const searchSchema = commonTableSearchSchema.extend({
     sortColumn: z
         .enum([
             'person_message_id',
@@ -44,7 +44,7 @@ export const Route = createFileRoute('/_auth/chatlogs')({
     beforeLoad: () => {
         ensureFeatureEnabled('chatlogs_enabled');
     },
-    validateSearch: (search) => chatlogsSchema.parse(search),
+    validateSearch: (search) => searchSchema.parse(search),
     loader: async ({ context }) => {
         const unsorted = await context.queryClient.ensureQueryData({
             queryKey: ['serversSimple'],
@@ -64,12 +64,30 @@ export const Route = createFileRoute('/_auth/chatlogs')({
     }
 });
 
+const schema = z.object({
+    server_id: z.number(),
+    persona_name: z.string(),
+    body: z.string(),
+    steam_id: z.string(),
+    flagged_only: z.boolean(),
+    auto_refresh: z.number()
+});
+
 function ChatLogs() {
     const defaultRows = RowsPerPage.TwentyFive;
     const search = Route.useSearch();
     const { hasPermission } = useRouteContext({ from: '/_auth/chatlogs' });
     const { servers } = useLoaderData({ from: '/_auth/chatlogs' }) as { servers: ServerSimple[] };
     const navigate = useNavigate({ from: Route.fullPath });
+
+    const defaultValues: z.input<typeof schema> = {
+        body: search.body ?? '',
+        persona_name: search.persona_name ?? '',
+        server_id: search.server_id ?? 0,
+        steam_id: search.steam_id ?? '',
+        flagged_only: search.flagged_only ?? false,
+        auto_refresh: search.auto_refresh ?? 0
+    };
 
     const { data: messages, isLoading } = useQuery({
         queryKey: ['chatlogs', { search }],
@@ -94,24 +112,11 @@ function ChatLogs() {
             await navigate({ to: '/chatlogs', search: (prev) => ({ ...prev, ...value }) });
         },
         validators: {
+            onMount: schema,
             onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
-                body: z.string(),
-                persona_name: z.string(),
-                server_id: z.number(),
-                steam_id: z.string(),
-                flagged_only: z.boolean(),
-                auto_refresh: z.number()
-            })
+            onChangeAsync: schema
         },
-        defaultValues: {
-            body: search.body ?? '',
-            persona_name: search.persona_name ?? '',
-            server_id: search.server_id ?? 0,
-            steam_id: search.steam_id ?? '',
-            flagged_only: search.flagged_only ?? false,
-            auto_refresh: search.auto_refresh ?? 0
-        }
+        defaultValues
     });
 
     const clear = async () => {
