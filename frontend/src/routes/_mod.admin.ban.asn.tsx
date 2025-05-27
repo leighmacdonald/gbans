@@ -25,10 +25,9 @@ import { TableCellRelativeDateField } from '../component/table/TableCellRelative
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { AppealStateEnum, ASNBanRecord, BanReasonEnum, BanReasons } from '../schema/bans.ts';
+import { ASNBanRecord, BanReasonEnum, BanReasons } from '../schema/bans.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, isPermanentBan } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const banASNSearchSchema = commonTableSearchSchema.extend({
     sortColumn: z
@@ -47,6 +46,13 @@ export const Route = createFileRoute('/_mod/admin/ban/asn')({
 
 const queryKey = ['asnBans'];
 
+const schema = z.object({
+    source_id: z.string(),
+    target_id: z.string(),
+    as_num: z.string(),
+    deleted: z.boolean()
+});
+
 function AdminBanASN() {
     const queryClient = useQueryClient();
     const { sendFlash } = useUserFlashCtx();
@@ -59,7 +65,7 @@ function AdminBanASN() {
     const { data: bans, isLoading } = useQuery({
         queryKey: queryKey,
         queryFn: async () => {
-            return await apiGetBansASN({ deleted: search.deleted ?? false, appeal_state: AppealStateEnum.enum.Any });
+            return await apiGetBansASN({ deleted: search.deleted ?? false });
         }
     });
 
@@ -72,13 +78,7 @@ function AdminBanASN() {
             });
         },
         validators: {
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
-                source_id: makeValidateSteamIDCallback(),
-                target_id: makeValidateSteamIDCallback(),
-                as_num: z.string(),
-                deleted: z.boolean()
-            })
+            onChange: schema
         },
         defaultValues: {
             source_id: search.source_id ?? '',
@@ -196,9 +196,11 @@ function AdminBanASN() {
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
-                                <form.ClearButton onClick={clear} />
-                                <form.ResetButton />
-                                <form.SubmitButton />
+                                <form.AppForm>
+                                    <form.ClearButton onClick={clear} />
+                                    <form.ResetButton />
+                                    <form.SubmitButton />
+                                </form.AppForm>
                             </Grid>
                         </Grid>
                     </form>

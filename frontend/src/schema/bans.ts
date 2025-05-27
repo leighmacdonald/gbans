@@ -126,7 +126,7 @@ export const BanType = {
     Banned: 2
 } as const;
 
-export const BanTypeEnum = z.nativeEnum(BanType);
+export const BanTypeEnum = z.enum(BanType);
 export type BanTypeEnum = z.infer<typeof BanTypeEnum>;
 
 export const BanTypeCollection = [BanType.OK, BanType.NoComm, BanType.Banned];
@@ -140,7 +140,7 @@ export const AppealState = {
     NoAppeal: 4
 } as const;
 
-export const AppealStateEnum = z.nativeEnum(AppealState);
+export const AppealStateEnum = z.enum(AppealState);
 export type AppealStateEnum = z.infer<typeof AppealStateEnum>;
 
 export const AppealStateCollection = [
@@ -152,63 +152,53 @@ export const AppealStateCollection = [
     AppealState.NoAppeal
 ];
 
-const schemaBanBase = z
-    .object({
-        valid_until: z.date(),
-        reason: BanReasonEnum,
-        ban_type: BanTypeEnum,
-        reason_text: z.string(),
-        source_id: z.string(),
-        target_id: z.string(),
-        deleted: z.boolean(),
-        unban_reason_text: z.string(),
-        note: z.string(),
-        origin: OriginEnum,
-        appeal_state: AppealStateEnum,
-        source_personaname: z.string(),
-        source_avatarhash: z.string(),
-        target_personaname: z.string(),
-        target_avatarhash: z.string()
-    })
-    .merge(schemaTimeStamped);
+const schemaBanBase = schemaTimeStamped.extend({
+    valid_until: z.date(),
+    reason: BanReasonEnum,
+    ban_type: BanTypeEnum,
+    reason_text: z.string(),
+    source_id: z.string(),
+    target_id: z.string(),
+    deleted: z.boolean(),
+    unban_reason_text: z.string(),
+    note: z.string(),
+    origin: OriginEnum,
+    appeal_state: AppealStateEnum,
+    source_personaname: z.string(),
+    source_avatarhash: z.string(),
+    target_personaname: z.string(),
+    target_avatarhash: z.string()
+});
 
-export const schemaSteamBanRecord = z
-    .object({
-        ban_id: z.number(),
-        report_id: z.number(),
-        ban_type: BanTypeEnum,
-        include_friends: z.boolean(),
-        evade_ok: z.boolean()
-    })
-    .merge(schemaBanBase);
+export const schemaSteamBanRecord = schemaBanBase.extend({
+    ban_id: z.number(),
+    report_id: z.number(),
+    ban_type: BanTypeEnum,
+    include_friends: z.boolean(),
+    evade_ok: z.boolean()
+});
 
 export type SteamBanRecord = z.infer<typeof schemaSteamBanRecord>;
 
-export const schemaGroupBanRecord = z
-    .object({
-        ban_group_id: z.number(),
-        group_id: z.string(),
-        group_name: z.string()
-    })
-    .merge(schemaBanBase);
+export const schemaGroupBanRecord = schemaBanBase.extend({
+    ban_group_id: z.number(),
+    group_id: z.string(),
+    group_name: z.string()
+});
 
 export type GroupBanRecord = z.infer<typeof schemaGroupBanRecord>;
 
-export const schemaCIDRBanRecord = z
-    .object({
-        net_id: z.number(),
-        cidr: z.cidrv4()
-    })
-    .merge(schemaBanBase);
+export const schemaCIDRBanRecord = schemaBanBase.extend({
+    net_id: z.number(),
+    cidr: z.cidrv4()
+});
 
 export type CIDRBanRecord = z.infer<typeof schemaCIDRBanRecord>;
 
-export const schemaASNBanRecord = z
-    .object({
-        ban_asn_id: z.number(),
-        as_num: z.number().positive()
-    })
-    .merge(schemaBanBase);
+export const schemaASNBanRecord = schemaBanBase.extend({
+    ban_asn_id: z.number(),
+    as_num: z.number().positive()
+});
 
 export type ASNBanRecord = z.infer<typeof schemaASNBanRecord>;
 

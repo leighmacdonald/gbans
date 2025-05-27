@@ -14,6 +14,9 @@ export const DateTimeField = (props: Props) => {
             {...props}
             value={field.state.value}
             formatDensity={'spacious'}
+            onChange={(value) => {
+                field.handleChange(value as Date);
+            }}
             minDate={props.minDate ?? new Date()}
             slotProps={{
                 textField: {

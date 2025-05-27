@@ -12,11 +12,11 @@ import { Paginator } from '../component/forum/Paginator.tsx';
 import { IPHistoryTable } from '../component/table/IPHistoryTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
+import { emptyOrNullString } from '../util/types.ts';
 
 const ipHistorySearchSchema = commonTableSearchSchema.extend({
     sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'server_id']).optional(),
-    steam_id: z.string().optional()
+    steam_id: z.string().optional().default('')
 });
 
 export const Route = createFileRoute('/_mod/admin/network/iphist')({
@@ -24,18 +24,29 @@ export const Route = createFileRoute('/_mod/admin/network/iphist')({
     validateSearch: (search) => ipHistorySearchSchema.parse(search)
 });
 
+const schema = z.object({
+    steam_id: z.string()
+});
+
 function AdminNetworkPlayerIPHistory() {
     const navigate = useNavigate({ from: Route.fullPath });
     const { pageIndex, pageSize, sortOrder, sortColumn, steam_id } = Route.useSearch();
+    const defaultValues: z.input<typeof schema> = {
+        steam_id: steam_id ?? ''
+    };
+
     const { data: connections, isLoading } = useQuery({
         queryKey: ['connectionHist', { pageIndex, pageSize, sortOrder, sortColumn, steam_id }],
         queryFn: async () => {
+            if (emptyOrNullString(steam_id)) {
+                return { data: [], count: 0 };
+            }
             return await apiGetConnections({
                 limit: pageSize,
                 offset: (pageIndex ?? 0) * (pageSize ?? RowsPerPage.TwentyFive),
                 order_by: sortColumn ?? 'steam_id',
                 desc: (sortOrder ?? 'desc') == 'desc',
-                source_id: steam_id
+                sid64: steam_id
             });
         }
     });
@@ -45,13 +56,9 @@ function AdminNetworkPlayerIPHistory() {
             await navigate({ to: '/admin/network/iphist', search: (prev) => ({ ...prev, ...value }) });
         },
         validators: {
-            onSubmitAsync: z.object({
-                steam_id: makeValidateSteamIDCallback()
-            })
+            onSubmit: schema
         },
-        defaultValues: {
-            steam_id: steam_id ?? ''
-        }
+        defaultValues
     });
 
     const clear = async () => {

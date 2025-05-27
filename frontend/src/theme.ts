@@ -120,6 +120,17 @@ export const createThemeByMode = (mode: PaletteMode) => {
                     defaultProps: {
                         variant: 'contained'
                     }
+                },
+                MuiDialogActions: {
+                    styleOverrides: {
+                        root: {
+                            paddingTop: 12,
+                            paddingLeft: 24,
+                            paddingRight: 24,
+                            paddingBottom: 24,
+                            backgroundColor: opts.background?.paper
+                        }
+                    }
                 }
             },
             typography: {

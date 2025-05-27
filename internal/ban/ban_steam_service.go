@@ -217,7 +217,8 @@ func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
 
 		records, errRecords := thirdparty.BDSourceBans(ctx, steamID)
 		if errRecords != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errRecords, domain.ErrInternal)))
+			ctx.JSON(http.StatusOK, []thirdparty.BDSourceBansRecord{})
+			slog.Error("Failed to query tf-api", log.ErrAttr(errors.Join(errRecords, domain.ErrInternal)))
 
 			return
 		}
@@ -456,7 +457,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson, banErr := h.bansSteam.GetByBanID(ctx, banID, false, true)
+		bannedPerson, banErr := h.bansSteam.GetByBanID(ctx, banID, true, true)
 		if banErr != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNotFound,
 				"Failed to find existing ban with id: %d", banID))

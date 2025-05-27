@@ -537,7 +537,6 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     </Grid>
 
                     <Grid size={{ xs: 12 }}>
-                        <SubHeading>Enable SDR (Steam Data Relay)</SubHeading>
                         <form.AppField
                             name={'sdr_enabled'}
                             children={() => {
@@ -546,7 +545,6 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
-                        <SubHeading>If you have an asset under a different subdir you should change this.</SubHeading>
                         <form.AppField
                             name={'sdr_dns_enabled'}
                             children={() => {

@@ -41,11 +41,13 @@ import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { Filter, filterActionString, UserWarning } from '../schema/filters.ts';
 import { findSelectedRow } from '../util/findSelectedRow.ts';
 import { findSelectedRows } from '../util/findSelectedRows.ts';
-import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
 const filterSearchSchema = z.object({
-    ...commonTableSearchSchema,
+    pageIndex: z.number().optional().catch(0),
+    pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
+    sortOrder: z.enum(['desc', 'asc']).optional().catch('desc'),
     sortColumn: z.enum(['filter_id', 'is_regex', 'is_enabled', 'weight', 'trigger_count']).optional()
 });
 

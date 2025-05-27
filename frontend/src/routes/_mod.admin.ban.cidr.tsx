@@ -27,10 +27,9 @@ import { TableCellRelativeDateField } from '../component/table/TableCellRelative
 import { TableCellString } from '../component/table/TableCellString.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { AppealState, BanReasonEnum, BanReasons, CIDRBanRecord } from '../schema/bans.ts';
+import { BanReasonEnum, BanReasons, CIDRBanRecord } from '../schema/bans.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, isPermanentBan } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const banCIDRSearchSchema = commonTableSearchSchema.extend({
     sortColumn: z
@@ -47,6 +46,13 @@ export const Route = createFileRoute('/_mod/admin/ban/cidr')({
     validateSearch: (search) => banCIDRSearchSchema.parse(search)
 });
 
+const schema = z.object({
+    source_id: z.string(),
+    target_id: z.string(),
+    cidr: z.string(),
+    deleted: z.boolean()
+});
+
 function AdminBanCIDR() {
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate({ from: Route.fullPath });
@@ -54,11 +60,16 @@ function AdminBanCIDR() {
     const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
     const [sorting] = useState<SortingState>([{ id: 'net_id', desc: true }]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
-
+    const defaultValues: z.input<typeof schema> = {
+        source_id: search.source_id ?? '',
+        target_id: search.target_id ?? '',
+        cidr: search.cidr ?? '',
+        deleted: search.deleted ?? false
+    };
     const { data: bans, isLoading } = useQuery({
         queryKey: ['cidrBans'],
         queryFn: async () => {
-            return await apiGetBansCIDR({ deleted: search.deleted ?? false, appeal_state: AppealState.Any });
+            return await apiGetBansCIDR({ deleted: search.deleted ?? false });
         }
     });
 
@@ -77,20 +88,9 @@ function AdminBanCIDR() {
             await navigate({ to: '/admin/ban/cidr', search: (prev) => ({ ...prev, ...value }) });
         },
         validators: {
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
-                source_id: makeValidateSteamIDCallback(),
-                target_id: makeValidateSteamIDCallback(),
-                cidr: z.string(),
-                deleted: z.boolean()
-            })
+            onSubmit: schema
         },
-        defaultValues: {
-            source_id: search.source_id ?? '',
-            target_id: search.target_id ?? '',
-            cidr: search.cidr ?? '',
-            deleted: search.deleted ?? false
-        }
+        defaultValues
     });
 
     const clear = async () => {

@@ -143,7 +143,7 @@ func (u networkUsecase) GetPlayerMostRecentIP(ctx context.Context, steamID steam
 
 func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error) {
 	if sid, ok := opts.SourceSteamID(ctx); ok {
-		opts.Sid64 = sid.Int64()
+		opts.Sid64 = sid.String()
 	}
 
 	if opts.Limit > 1000 {
@@ -165,7 +165,7 @@ func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.
 		opts.Network = network.String()
 	}
 
-	if opts.Sid64 <= 0 || opts.Network == "" {
+	if opts.Sid64 == "" && opts.Network == "" {
 		return nil, 0, domain.ErrMissingParam
 	}
 

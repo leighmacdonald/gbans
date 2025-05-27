@@ -28,8 +28,13 @@ func NewNetworkRepository(db database.Database) domain.NetworkRepository {
 func (r networkRepository) QueryConnections(ctx context.Context, opts domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error) {
 	var constraints sq.And
 
-	if opts.Sid64 > 0 {
-		constraints = append(constraints, sq.Eq{"steam_id": opts.Sid64})
+	if opts.Sid64 != "" {
+		sid := steamid.New(opts.Sid64)
+		if !sid.Valid() {
+			return nil, 0, domain.ErrInvalidSID
+		}
+
+		constraints = append(constraints, sq.Eq{"steam_id": sid.Int64()})
 	}
 
 	if opts.Network != "" {
