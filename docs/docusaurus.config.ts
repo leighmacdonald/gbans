@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'gbans',
-  tagline: 'Game management and community for Calves source games',
+  tagline: 'Game server management and community functions for Team Fortress 2',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
@@ -77,8 +77,16 @@ const config: Config = {
           title: 'Docs',
           items: [
             {
-              label: 'Tutorial',
+              label: 'Intro',
               to: '/docs/intro',
+            },
+            {
+              label: 'Guide',
+              to: '/docs/category/usage-guide',
+            },
+            {
+              label: 'Development',
+              to: '/docs/category/development-guide',
             },
           ],
         },
@@ -87,11 +95,11 @@ const config: Config = {
           items: [
             {
               label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+              href: 'https://stackoverflow.com/questions/tagged/gbans',
             },
             {
               label: 'Discord',
-              href: 'https://discordapp.com/invite/YEWed3wY3F',
+              href: 'https://discord.gg/YEWed3wY3F',
             }
           ],
         },
@@ -99,8 +107,8 @@ const config: Config = {
           title: 'More',
           items: [
             {
-              label: 'Blog',
-              to: '/blog',
+              label: 'Uncletopia',
+              href: 'https://uncletopia.com',
             },
             {
               label: 'GitHub',
@@ -109,7 +117,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Leigh MacDonald`,
     },
     prism: {
       theme: prismThemes.github,

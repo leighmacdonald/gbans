@@ -6,13 +6,7 @@ sidebar_position: 1
 
 Basic installation overview of the gbans server and sourcemod plugin.
 
-:::warning
 
-Keep in mind, while we do use this software in production, it's still undergoing pretty heavy development, with a 
-number of unstable parts and not entirely complete features sets. This means there is effectively no stability 
-guarentee yet. Version 1.0 is our target for a very complete and more seamless user experience.
-
-:::
 
 ## System & Performance Considerations
 
