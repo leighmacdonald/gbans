@@ -11,6 +11,7 @@ the same directory as the binary. Configure it as desired.
 
 This is your core configuration file. These values cannot be changed without changing this file and restarting
 the service. Most other configuration is handled via the webapp admin interface.
+
 ```yaml
 owner: 76561197960287930
 external_url: "http://example.com"

@@ -6,7 +6,15 @@ sidebar_position: 1
 
 Basic installation overview of the gbans server and sourcemod plugin.
 
-## System Considerations
+:::warning
+
+Keep in mind, while we do use this software in production, it's still undergoing pretty heavy development, with a 
+number of unstable parts and not entirely complete features sets. This means there is effectively no stability 
+guarentee yet. Version 1.0 is our target for a very complete and more seamless user experience.
+
+:::
+
+## System & Performance Considerations
 
 Gbans is lightweight and can handle a small to moderately sized community with a dual-core CPU and 4GB of memory.
 
@@ -22,10 +30,17 @@ increase the ram allocated to postgres.
 
 If you are hosting game servers and gbans on the same host, you will likely want to
 specify [GOMAXPROCS](https://pkg.go.dev/runtime#hdr-Environment_Variables)
-when starting gbans so that you can set processor affinity/cpuset properly to ensure they are not fighting each other
-for resources.
+when starting gbans. This allows you to set processor affinity/cpuset properly to ensure they are not fighting each other
+for resources. 
 
-IP2Location updates are a fairly intensive process, so considerations should be taken as far as how and when to update
+:::note
+
+There is currently a [golang issue](https://github.com/golang/go/issues/33803) related to docker containers
+and setting `GOMAXPROCS` properly.
+
+:::
+
+[IP2Location](https://lite.ip2location.com/) updates are a fairly intensive process, so considerations should be taken as far as how and when to update
 the database
 to ensure it doesn't impact other things on the system.
 
@@ -57,7 +72,7 @@ Precompiled binaries will be provided once the project is in a more stable state
 images as they are currently the only tested usecase.
 
 - [make](https://www.gnu.org/software/make/) Not strictly required but provides predefined build commands
-- [golang 1.23+](https://golang.org/) Version >=1.23 is required.
+- [golang 1.24+](https://golang.org/) Version >=1.23 is required.
 - [PostgreSQL](https://www.postgresql.org/) Version 16 is the only version currently tested against. All non-EOL
   versions should be supported.
     - [PostGIS](https://postgis.net/) Provides some basic GIS functionality.
@@ -98,7 +113,7 @@ docker run -d --restart unless-stopped \
     --dns=1.1.1.1 \
     -v /home/ubuntu/gbans/gbans.yml:/app/gbans.yml:ro \
     --name gbans \
-    ghcr.io/leighmacdonald/gbans:v0.6.6
+    ghcr.io/leighmacdonald/gbans:latest
 ```
 
 Substitute `/home/ubuntu/gbans/gbans.yml` with the location of your config.
