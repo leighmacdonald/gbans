@@ -4,7 +4,7 @@
 owner:
 
 # Your steam API key
-#
+# See: https://steamcommunity.com/dev/apikey
 steam_key:
 
 # The URL people will use to access the site. Be sure to check the schema!
@@ -15,7 +15,7 @@ external_url: "https://example.com"
 #
 #http_host: 127.0.0.1
 
-# Listen on this
+# Listen on this port
 #
 # http_port: 6006
 

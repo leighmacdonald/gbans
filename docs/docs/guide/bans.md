@@ -18,7 +18,7 @@ to be able to play, then be sure to enable this.
 
 This type of ban is the only one that allows `muting` players.
 
-## CIDR bans
+## IP/CIDR bans
 
 Similar to steam bans, except they also match against a [cidr](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing) range.
 
@@ -27,10 +27,21 @@ from `50.60.70.0 - 50.60.70.255`.
 
 ## ASN Bans
 
-[ANS](https://en.wikipedia.org/wiki/Autonomous_system_(Internet)) bans are probably the least used option. They should 
-be used with care as they can be too broad in what they ban if you are not careful. If a user connects with a range that
+:::danger
+
+ASN bans should be used with care as they can be too broad in what they block if you are not careful. It's recommended to
+only block networks that belong to datacenters and not residential customers.
+:::
+
+[ASN](https://en.wikipedia.org/wiki/Autonomous_system_(Internet)) bans are probably the least used option. If a user connects with a range that
 the banned ASN owns, the user will be kicked. 
 
+:::warning
+
+This functionality relies on the IP2Location database to be installed and up to date. There is currently no system in place 
+to ensure this requirement has been satisfied, you must ensure its installed yourself.
+
+:::
 
 ## Steam Group Bans
 
