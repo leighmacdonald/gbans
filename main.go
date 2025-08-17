@@ -1,6 +1,4 @@
-/*
-Copyright © 2020-2023 Leigh MacDonald <leigh.macdonald@gmail.com>
-*/
+//go:generate go tool oapi-codegen -config .openapi.yaml https://tf-api.roto.lol/api/openapi/schema-3.0.json
 package main
 
 import (
