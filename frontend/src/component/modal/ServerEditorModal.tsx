@@ -16,7 +16,7 @@ type ServerEditValues = {
     name: string;
     address: string;
     address_internal: string;
-    address_sdr: string;
+    sdr_enabled: boolean;
     port: number;
     password: string;
     rcon: string;
@@ -49,7 +49,7 @@ const schema = z.object({
     enabled_stats: z.boolean(),
     log_secret: z.number().min(100000).max(999999999),
     address_internal: z.string(),
-    address_sdr: z.string()
+    sdr_enabled: z.boolean()
 });
 
 export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server }) => {
@@ -70,7 +70,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
         enabled_stats: server?.enable_stats ?? true,
         log_secret: server?.log_secret ?? Math.floor(Math.random() * 89999999 + 10000000),
         address_internal: server?.address_internal ?? '',
-        address_sdr: server?.address_sdr ?? ''
+        sdr_enabled: server?.sdr_enabled ?? false
     };
 
     const mutation = useMutation({
@@ -92,7 +92,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 enable_stats: values.enabled_stats,
                 log_secret: values.log_secret,
                 address_internal: values.address_internal,
-                address_sdr: values.address_sdr
+                sdr_enabled: values.sdr_enabled
             };
             if (server?.server_id) {
                 modal.resolve(await apiSaveServer(server.server_id, opts));
@@ -182,16 +182,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                         </Grid>
                         <Grid size={{ xs: 8 }}>
                             <form.AppField
-                                name={'address_sdr'}
+                                name={'sdr_enabled'}
                                 children={(field) => {
-                                    return (
-                                        <field.TextField
-                                            label={'Address SDR'}
-                                            helperText={
-                                                'When using SDR, you can use this to give your servers dynamically updating DNS names.'
-                                            }
-                                        />
-                                    );
+                                    return <field.CheckboxField label={'Enable SDR Support'} />;
                                 }}
                             />
                         </Grid>

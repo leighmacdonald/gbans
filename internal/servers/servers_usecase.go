@@ -92,7 +92,7 @@ func (s *serversUsecase) Save(ctx context.Context, req domain.RequestServerUpdat
 	server.LogSecret = req.LogSecret
 	server.EnableStats = req.EnableStats
 	server.AddressInternal = req.AddressInternal
-	server.AddressSDR = req.AddressSDR
+	server.SDREnabled = req.SDREnabled
 
 	if err := s.repository.SaveServer(ctx, &server); err != nil {
 		return domain.Server{}, err
