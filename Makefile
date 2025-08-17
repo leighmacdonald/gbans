@@ -25,6 +25,9 @@ builds: frontend
 watch:
 	make -C frontend watch
 
+generate:
+	go generate
+
 serve:
 	make -C frontend serve
 
