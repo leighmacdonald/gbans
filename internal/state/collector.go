@@ -162,7 +162,7 @@ func (c *Collector) onStatusUpdate(conf domain.ServerConfig, newState Status, ma
 	c.serverState[conf.ServerID] = server
 }
 
-func (c *Collector) setServerConfigs(configs []domain.ServerConfig) {
+func (c *Collector) setServerConfigs(ctx context.Context, configs []domain.ServerConfig) {
 	c.configMu.Lock()
 	defer c.configMu.Unlock()
 
@@ -197,7 +197,7 @@ func (c *Collector) setServerConfigs(configs []domain.ServerConfig) {
 				continue
 			}
 
-			addr, errResolve := ResolveIP(cfg.Host)
+			addr, errResolve := ResolveIP(ctx, cfg.Host)
 			if errResolve != nil {
 				slog.Warn("Failed to resolve server ip", slog.String("addr", addr), log.ErrAttr(errResolve))
 				addr = cfg.Host
@@ -424,7 +424,7 @@ func (c *Collector) updateServerConfigs(ctx context.Context) {
 		)
 	}
 
-	c.setServerConfigs(configs)
+	c.setServerConfigs(ctx, configs)
 }
 
 func (c *Collector) Start(ctx context.Context) {
@@ -464,13 +464,13 @@ func newServerConfig(serverID int, name string, defaultHostname string, address 
 	}
 }
 
-func ResolveIP(addr string) (string, error) {
+func ResolveIP(ctx context.Context, addr string) (string, error) {
 	ipAddr := net.ParseIP(addr)
 	if ipAddr != nil {
 		return ipAddr.String(), nil
 	}
 
-	ips, err := net.LookupIP(addr)
+	ips, err := net.DefaultResolver.LookupIPAddr(ctx, addr)
 	if err != nil || len(ips) == 0 {
 		return "", errors.Join(err, ErrDNSResolve)
 	}

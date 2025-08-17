@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -35,7 +36,7 @@ var (
 )
 
 // migrate database schema.
-func (db *postgresStore) migrate(action MigrationAction, dsn string) error {
+func (db *postgresStore) migrate(ctx context.Context, action MigrationAction, dsn string) error {
 	defer func() {
 		db.migrated = true
 	}()
@@ -45,7 +46,7 @@ func (db *postgresStore) migrate(action MigrationAction, dsn string) error {
 		return errors.Join(errOpen, ErrOpenDB)
 	}
 
-	if errPing := instance.Ping(); errPing != nil {
+	if errPing := instance.PingContext(ctx); errPing != nil {
 		return errors.Join(errPing, ErrPing)
 	}
 
