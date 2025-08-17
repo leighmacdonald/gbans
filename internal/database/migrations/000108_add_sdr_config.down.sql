@@ -10,6 +10,6 @@ ALTER TABLE config
 ALTER TABLE config
     DROP COLUMN IF EXISTS network_cf_zone_id;
 
-ALTER TABLE server DROP COLUMN IF EXISTS address_sdr;
+ALTER TABLE server DROP COLUMN IF EXISTS sdr_enabled;
 
 COMMIT;

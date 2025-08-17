@@ -30,7 +30,7 @@ type RequestServerUpdate struct {
 	EnableStats     bool    `json:"enable_stats"`
 	LogSecret       int     `json:"log_secret"`
 	AddressInternal string  `json:"address_internal"`
-	AddressSDR      string  `json:"address_sdr"`
+	SDREnabled      bool    `json:"sdr_enabled"`
 }
 
 type ServerInfoSafe struct {
@@ -95,9 +95,7 @@ type Server struct {
 	Address string `json:"address"`
 	// Internal/VPN network. When defined it's used for things like pulling demos over ssh.
 	AddressInternal string `json:"address_internal"`
-	// When set to a non-empty value, will be used for the automatic DNS update system. This
-	// maps the assigned dynamic SDR address to a reasonably stable external DNS name.
-	AddressSDR string `json:"address_sdr"`
+	SDREnabled      bool   `json:"sdr_enabled"`
 	// Port is the port of the server
 	Port uint16 `json:"port"`
 	// RCON is the RCON password for the server
@@ -166,9 +164,10 @@ func (s Server) Slots(statusSlots int) int {
 type ServerQueryFilter struct {
 	QueryFilter
 	IncludeDisabled bool `json:"include_disabled"`
+	SDROnly         bool `json:"sdr_only"`
 }
 
-// SafeServer provides a server struct stripped of any sensitive info suitable for public facing
+// SafeServer provides a server struct stripped of any sensitive info suitable for public-facing
 // services.
 type SafeServer struct {
 	ServerID   int      `json:"server_id"`

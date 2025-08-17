@@ -78,25 +78,21 @@ func (c *ChangeDetector) findIP(serverID int) net.IP {
 // sync takes care of checking if the SDR ip of the game servers changes, and if so, it updates the DNS with the
 // new ip.
 func (c *ChangeDetector) sync(ctx context.Context) error {
-	servers, _, errServers := c.servers.Servers(ctx, domain.ServerQueryFilter{})
+	servers, _, errServers := c.servers.Servers(ctx, domain.ServerQueryFilter{SDROnly: true})
 	if errServers != nil {
 		return errServers
 	}
 
 	for _, server := range servers {
-		if server.AddressSDR == "" {
-			continue
-		}
-
 		currentIP := c.findIP(server.ServerID)
 		if currentIP == nil {
 			continue
 		}
 
-		// Update on either the first invocation, or on changes only.
+		// Updated either on the first invocation, or on changes only.
 		curHostState, found := c.current[server.ServerID]
 		if !found || !curHostState.idAddr.Equal(currentIP) {
-			if err := c.provider.Update(ctx, currentIP, server.AddressSDR); err != nil && !errors.Is(err, errNoChange) {
+			if err := c.provider.Update(ctx, currentIP, server.Address); err != nil && !errors.Is(err, errNoChange) {
 				slog.Error("Failed to update DNS record", slog.Int("server_id", server.ServerID), log.ErrAttr(err))
 
 				continue
@@ -104,7 +100,7 @@ func (c *ChangeDetector) sync(ctx context.Context) error {
 
 			if !found {
 				c.current[server.ServerID] = hostState{
-					addressSDR: server.AddressSDR,
+					addressSDR: server.Address,
 					idAddr:     currentIP,
 					lastUpdate: time.Now(),
 				}
@@ -115,7 +111,7 @@ func (c *ChangeDetector) sync(ctx context.Context) error {
 				c.current[server.ServerID] = edit
 			}
 
-			slog.Info("Updated SDR DNS record", slog.String("ip", currentIP.String()), slog.String("dns", server.AddressSDR))
+			slog.Info("Updated SDR DNS record", slog.String("ip", currentIP.String()), slog.String("dns", server.Address))
 		}
 	}
 

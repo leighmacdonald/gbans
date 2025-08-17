@@ -1,31 +1,29 @@
 import { z } from 'zod/v4';
 import { schemaTimeStamped } from './chrono.ts';
 
-export const schemaServer = z
-    .object({
-        server_id: z.number(),
-        short_name: z.string(),
-        name: z.string(),
-        address: z.string(),
-        port: z.number(),
-        password: z.string(),
-        rcon: z.string(),
-        region: z.string(),
-        cc: z.string(),
-        latitude: z.number(),
-        longitude: z.number(),
-        default_map: z.string(),
-        reserved_slots: z.number(),
-        players_max: z.number(),
-        is_enabled: z.boolean(),
-        colour: z.string(),
-        enable_stats: z.boolean(),
-        log_secret: z.number(),
-        token_created_on: z.date(),
-        address_internal: z.string(),
-        address_sdr: z.string()
-    })
-    .merge(schemaTimeStamped);
+export const schemaServer = schemaTimeStamped.extend({
+    server_id: z.number(),
+    short_name: z.string(),
+    name: z.string(),
+    address: z.string(),
+    port: z.number(),
+    password: z.string(),
+    rcon: z.string(),
+    region: z.string(),
+    cc: z.string(),
+    latitude: z.number(),
+    longitude: z.number(),
+    default_map: z.string(),
+    reserved_slots: z.number(),
+    players_max: z.number(),
+    is_enabled: z.boolean(),
+    colour: z.string(),
+    enable_stats: z.boolean(),
+    log_secret: z.number(),
+    token_created_on: z.date(),
+    address_internal: z.string(),
+    sdr_enabled: z.boolean()
+});
 
 export type Server = z.infer<typeof schemaServer>;
 
@@ -81,7 +79,7 @@ export const schemaSaveServerOpts = z.object({
     enable_stats: z.boolean(),
     log_secret: z.number(),
     address_internal: z.string(),
-    address_sdr: z.string()
+    sdr_enabled: z.boolean()
 });
 
 export type SaveServerOpts = z.infer<typeof schemaSaveServerOpts>;
@@ -93,9 +91,7 @@ export const schemaUserServers = z.object({
 
 export type UserServers = z.infer<typeof schemaUserServers>;
 
-export const schemaServerRow = z
-    .object({
-        copy: z.string(),
-        connect: z.string()
-    })
-    .merge(schemaBaseServer);
+export const schemaServerRow = schemaBaseServer.extend({
+    copy: z.string(),
+    connect: z.string()
+});
