@@ -150,7 +150,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 	}
 
 	if db.autoMigrate && !db.migrated {
-		if errMigrate := db.migrate(MigrateUp, db.dsn); errMigrate != nil {
+		if errMigrate := db.migrate(ctx, MigrateUp, db.dsn); errMigrate != nil {
 			return fmt.Errorf("could not migrate schema: %w", errMigrate)
 		}
 
