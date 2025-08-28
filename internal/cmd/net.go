@@ -62,7 +62,7 @@ func netUpdateCmd() *cobra.Command {
 			}
 
 			conf := configUsecase.Config()
-			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level, app.SentryDSN != "")
+			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, app.SentryDSN != "")
 			defer logCloser()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()

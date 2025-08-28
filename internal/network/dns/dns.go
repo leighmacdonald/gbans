@@ -180,7 +180,7 @@ func (c *Cloudflare) Update(ctx context.Context, newIP net.IP, dnsAddr string) e
 
 	recordResponse, err := c.client.DNS.Records.Update(ctx, recordID, dns.RecordUpdateParams{
 		ZoneID: cloudflare.F(c.zoneID),
-		Record: dns.ARecordParam{
+		Body: dns.ARecordParam{
 			Content: cloudflare.F(newIP.String()),
 			Name:    cloudflare.F(dnsAddr),
 			Type:    cloudflare.F(dns.ARecordTypeA),
