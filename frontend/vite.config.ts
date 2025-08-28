@@ -85,7 +85,7 @@ export default defineConfig({
         port: 6007,
         cors: true,
         host: '0.0.0.0',
-        //allowedHosts: true, // WARN You should set __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS instead
+        allowedHosts: true, // WARN You should set __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS instead
         proxy: {
             '/discord/oauth': {
                 target: 'http://gbans.localhost:6006',

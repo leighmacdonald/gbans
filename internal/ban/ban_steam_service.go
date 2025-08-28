@@ -208,29 +208,53 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 	}
 }
 
+type BDSourceBansRecord struct {
+	BanID       int             `json:"ban_id"`
+	SiteName    string          `json:"site_name"`
+	SiteID      int             `json:"site_id"`
+	PersonaName string          `json:"persona_name"`
+	SteamID     steamid.SteamID `json:"steam_id"`
+	Reason      string          `json:"reason"`
+	Duration    time.Duration   `json:"duration"`
+	Permanent   bool            `json:"permanent"`
+	CreatedOn   time.Time       `json:"created_on"`
+}
+
 func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
+	client, errClient := thirdparty.NewClientWithResponses("https://tf-api.roto.lol")
+	if errClient != nil {
+		panic(errClient)
+	}
+
 	return func(ctx *gin.Context) {
 		steamID, idFound := httphelper.GetSID64Param(ctx, "steam_id")
 		if !idFound {
 			return
 		}
 
-		records, errRecords := thirdparty.BDSourceBans(ctx, steamID)
-		if errRecords != nil {
-			ctx.JSON(http.StatusOK, []thirdparty.BDSourceBansRecord{})
-			slog.Error("Failed to query tf-api", log.ErrAttr(errors.Join(errRecords, domain.ErrInternal)))
+		records := []BDSourceBansRecord{}
 
+		resp, errResp := client.BansSearchWithResponse(ctx, &thirdparty.BansSearchParams{Steamids: steamID.String()})
+		if errResp != nil {
 			return
 		}
 
-		userRecords, found := records[steamID.Int64()]
-		if !found {
-			ctx.JSON(http.StatusOK, []thirdparty.BDSourceBansRecord{})
-
-			return
+		if resp.JSON200 != nil {
+			for _, ban := range *resp.JSON200 {
+				records = append(records, BDSourceBansRecord{
+					SiteName:    ban.SiteName,
+					SiteID:      0,
+					PersonaName: ban.Name,
+					SteamID:     steamid.New(ban.SteamId),
+					Reason:      ban.Reason,
+					Duration:    ban.ExpiresOn.Sub(ban.CreatedOn),
+					Permanent:   ban.Permanent,
+					CreatedOn:   ban.CreatedOn,
+				})
+			}
 		}
 
-		ctx.JSON(http.StatusOK, userRecords)
+		ctx.JSON(http.StatusOK, records)
 	}
 }
 
