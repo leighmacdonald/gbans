@@ -15,7 +15,7 @@ jobs:
       - name: Setup SourcePawn Compiler
         uses: rumblefrog/setup-sp@master
         with:
-          version: "1.12.x"
+          version: "1.13.x"
 
       - name: Ensure plugin builds
         working-directory: ./sourcemod/scripting
@@ -36,9 +36,9 @@ jobs:
       - name: Setup nodejs
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
-          cache: 'pnpm'
-          cache-dependency-path: 'frontend/pnpm-lock.yaml'
+          node-version: "20.x"
+          cache: "pnpm"
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
 
       - name: Install modules
         working-directory: ./frontend
@@ -57,25 +57,16 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: 'stable'
+          go-version: "stable"
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          version: 'latest'
+          version: "latest"
           args: --timeout=10m
 
-  staticcheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: 'stable'
-      - run: make static
-
   backend-test:
-    needs: [lint-golangci, staticcheck]
+    needs: [lint-golangci]
     runs-on: ubuntu-latest
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
@@ -101,9 +92,9 @@ jobs:
       - name: Setup nodejs
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
-          cache: 'pnpm'
-          cache-dependency-path: 'frontend/pnpm-lock.yaml'
+          node-version: "20.x"
+          cache: "pnpm"
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
 
       - name: Install modules
         working-directory: ./frontend
