@@ -8,8 +8,7 @@ ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 all: frontend sourcemod buildp
 
 fmt:
-	go tool gci write . --skip-generated -s standard -s default
-	go tool gofumpt -l -w .
+	go tool golangci-lint fmt
 	make -C frontend fmt
 
 bump_deps:
@@ -34,18 +33,6 @@ serve:
 frontend:
 	make -C frontend
 
-dist: frontend buildp
-	zip -j gbans-`git describe --abbrev=0`-win64.zip build/win64/gbans.exe LICENSE README.md gbans_example.yml
-	zip -r gbans-`git describe --abbrev=0`-win64.zip docs/
-	zip -j gbans-`git describe --abbrev=0`-lin64.zip build/linux64/gbans LICENSE README.md gbans_example.yml
-	zip -r gbans-`git describe --abbrev=0`-lin64.zip docs/
-
-dist-master: frontend buildp
-	zip -j gbans-master-win64.zip build/win64/gbans.exe LICENSE README.md gbans_example.yml
-	zip -r gbans-master-win64.zip docs/
-	zip -j gbans-master-lin64.zip build/linux64/gbans LICENSE README.md gbans_example.yml
-	zip -r gbans-master-lin64.zip docs/
-
 run:
 	@go run $(GO_FLAGS) -race main.go
 
@@ -68,7 +55,7 @@ test-go-cover:
 	@go test $(GO_FLAGS) -race -coverprofile coverage.out ./...
 	@go tool cover -html=coverage.out
 
-check: lint_golangci static vulncheck lint_ts typecheck_ts
+check: lint_golangci vulncheck lint_ts typecheck_ts
 
 vulncheck:
 	go tool govulncheck
@@ -84,9 +71,6 @@ lint_ts:
 
 typecheck_ts:
 	make -C frontend typecheck
-
-static:
-	go tool staticcheck -go 1.24 ./...
 
 clean:
 	@go clean $(GO_FLAGS) -i
