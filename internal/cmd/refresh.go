@@ -70,7 +70,7 @@ func refreshFiltersCmd() *cobra.Command {
 
 			conf := configUsecase.Config()
 
-			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level, app.SentryDSN != "")
+			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, app.SentryDSN != "")
 			defer logCloser()
 
 			if //goland:noinspection ALL

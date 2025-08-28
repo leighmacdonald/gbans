@@ -224,7 +224,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				slog.Info("Sentry.io support is disabled. To enable at runtime, set SENTRY_DSN.")
 			}
 
-			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level, app.SentryDSN != "")
+			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, app.SentryDSN != "")
 			defer logCloser()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()

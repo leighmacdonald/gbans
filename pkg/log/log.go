@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log/slog"
@@ -35,7 +36,7 @@ func ToSlogLevel(level Level) slog.Level {
 	}
 }
 
-func MustCreateLogger(debugLogPath string, level Level, useSentry bool) func() {
+func MustCreateLogger(ctx context.Context, debugLogPath string, level Level, useSentry bool) func() {
 	closer := func() {}
 
 	opts := slug.HandlerOptions{
@@ -49,7 +50,7 @@ func MustCreateLogger(debugLogPath string, level Level, useSentry bool) func() {
 		handlers = append(handlers, sentryslog.Option{
 			Level:     slog.LevelDebug,
 			AddSource: true,
-		}.NewSentryHandler())
+		}.NewSentryHandler(ctx))
 	}
 
 	if debugLogPath != "" {
