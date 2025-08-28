@@ -9,6 +9,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { apiGetSourceBans } from '../api';
+import { sbBanRecord } from '../schema/bans.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { TableCellBool } from './table/TableCellBool.tsx';
 
@@ -45,7 +46,7 @@ export const SourceBansList = ({ steam_id, is_reporter }: SourceBansListProps) =
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {bans.map((ban) => {
+                            {bans.map((ban: sbBanRecord) => {
                                 return (
                                     <TableRow key={`ban-${ban.created_on.toDateString()}`} hover>
                                         <TableCell>{ban.created_on.toDateString()}</TableCell>
