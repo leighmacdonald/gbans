@@ -53,3 +53,4 @@ parse_demo
 /assets/
 /frontend/.env.*
 /gbans
+.zed

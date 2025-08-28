@@ -257,7 +257,7 @@ export const schemaSbBanRecord = z.object({
     steam_id: z.string(),
     reason: z.string(),
     duration: z.number(),
-    permanent: z.string(),
+    permanent: z.boolean(),
     created_on: z.date()
 });
 

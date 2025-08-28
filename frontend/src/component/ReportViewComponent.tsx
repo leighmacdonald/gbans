@@ -5,7 +5,6 @@ import LanIcon from '@mui/icons-material/Lan';
 import MessageIcon from '@mui/icons-material/Message';
 import QuickreplyIcon from '@mui/icons-material/Quickreply';
 import ReportIcon from '@mui/icons-material/Report';
-import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
@@ -22,7 +21,7 @@ import { useTheme } from '@mui/material/styles';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod/v4';
-import { apiCreateReportMessage, apiGetBansSteamBySteamID, apiGetConnections, apiGetMessages } from '../api';
+import { apiCreateReportMessage, apiGetConnections, apiGetMessages } from '../api';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { reportMessagesQueryOptions } from '../queries/reportMessages.ts';
@@ -38,7 +37,6 @@ import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
 import { mdEditorRef } from './form/field/MarkdownField.tsx';
 import { PaginatorLocal } from './forum/PaginatorLocal.tsx';
-import { BanHistoryTable } from './table/BanHistoryTable.tsx';
 import { ChatTable } from './table/ChatTable.tsx';
 import { IPHistoryTable } from './table/IPHistoryTable.tsx';
 
@@ -89,15 +87,6 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
     });
 
     const { data: messages, isLoading: isLoadingMessages } = useQuery(reportMessagesQueryOptions(report.report_id));
-
-    const { data: bans, isLoading: isLoadingBans } = useQuery({
-        queryKey: ['reportBanHistory', { steamId: report.target_id }],
-        queryFn: async () => {
-            const bans = await apiGetBansSteamBySteamID(report.target_id);
-
-            return bans.filter((b) => b.target_id == report.target_id);
-        }
-    });
 
     const handleChange = (_: SyntheticEvent, newValue: number) => {
         setValue(newValue);
@@ -157,13 +146,6 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                     )}
                                     {hasPermission(PermissionLevel.Moderator) && (
                                         <Tab label={`Connections`} icon={<LanIcon />} iconPosition={'start'} />
-                                    )}
-                                    {hasPermission(PermissionLevel.Moderator) && (
-                                        <Tab
-                                            label={`Ban History ${bans ? `(${bans.length})` : ''}`}
-                                            icon={<ReportGmailerrorredIcon />}
-                                            iconPosition={'start'}
-                                        />
                                     )}
                                 </TabList>
                             </Box>
@@ -226,16 +208,6 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                         rows={connectionPagination.pageSize}
                                         page={connectionPagination.pageIndex}
                                     />
-                                </Box>
-                            </TabPanel>
-                            <TabPanel value={value} index={3}>
-                                <Box
-                                    minHeight={300}
-                                    style={{
-                                        display: value == 3 ? 'block' : 'none'
-                                    }}
-                                >
-                                    <BanHistoryTable bans={bans ?? []} isLoading={isLoadingBans} />
                                 </Box>
                             </TabPanel>
                         </ContainerWithHeader>
