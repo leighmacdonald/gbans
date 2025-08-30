@@ -32,6 +32,7 @@ import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import {
     Config,
+    schemaAnticheat,
     schemaDebug,
     schemaDemos,
     schemaDiscord,
@@ -59,6 +60,7 @@ const settingsSchema = z.object({
             'geo_location',
             'debug',
             'local_store',
+            'anticheat',
             'network',
             'ssh',
             'exports'
@@ -89,6 +91,7 @@ type tabs =
     | 'logging'
     | 'geo_location'
     | 'debug'
+    | 'anticheat'
     | 'network'
     | 'local_store'
     | 'ssh'
@@ -253,6 +256,13 @@ function AdminSettings() {
                                 label={'Network'}
                             />
                             <TabButton
+                                tab={'anticheat'}
+                                onClick={onTabClick}
+                                icon={<LanIcon />}
+                                currentTab={tab}
+                                label={'Anticheat'}
+                            />
+                            <TabButton
                                 tab={'ssh'}
                                 onClick={onTabClick}
                                 icon={<LanIcon />}
@@ -288,6 +298,7 @@ function AdminSettings() {
                     <GeoLocationSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <LocalStoreSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <NetworkSection tab={tab} settings={settings} mutate={mutation.mutate} />
+                    <AnticheatSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <SSHSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <ExportsSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     <DebugSection tab={tab} settings={settings} mutate={mutation.mutate} />
@@ -502,6 +513,184 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
     );
 };
 
+const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const defaultValues: z.input<typeof schemaAnticheat> = settings.anticheat;
+    const form = useAppForm({
+        onSubmit: async ({ value }) => {
+            mutate({
+                ...settings,
+                anticheat: {
+                    action: value.action,
+                    duration: Number(value.duration),
+                    enabled: value.enabled,
+                    max_aim_snap: Number(value.max_aim_snap),
+                    max_psilent: Number(value.max_psilent),
+                    max_bhop: Number(value.max_bhop),
+                    max_fake_ang: Number(value.max_fake_ang),
+                    max_cmd_num: Number(value.max_cmd_num),
+                    max_too_many_connections: Number(value.max_too_many_connections),
+                    max_cheat_cvar: Number(value.max_cheat_cvar),
+                    max_oob_var: Number(value.max_oob_var),
+                    max_invalid_user_cmd: Number(value.max_invalid_user_cmd)
+                }
+            });
+        },
+        defaultValues,
+        validators: {
+            onSubmit: schemaAnticheat
+        }
+    });
+
+    return (
+        <TabSection tab={'anticheat'} currentTab={tab} label={'Anticheat'} description={'Stac configuration'}>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await form.handleSubmit();
+                }}
+            >
+                <ConfigContainer>
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>
+                            Enabled the downloading and parsing of{' '}
+                            <a href="https://github.com/sapphonie/StAC-tf2">StAC</a> logs.
+                        </SubHeading>
+                        <form.AppField
+                            name={'enabled'}
+                            children={(field) => {
+                                return <field.CheckboxField label={'Enable anticheat log downloading & features'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Action to take when a trigger occurs</SubHeading>
+                        <form.AppField
+                            name={'action'}
+                            children={(field) => {
+                                return (
+                                    <field.SelectField
+                                        label={'Punishment Strategy'}
+                                        items={['gag', 'kick', 'ban']}
+                                        renderItem={(item) => {
+                                            return (
+                                                <MenuItem key={item} value={item}>
+                                                    {item}
+                                                </MenuItem>
+                                            );
+                                        }}
+                                    />
+                                );
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Duration of the punishment</SubHeading>
+                        <form.AppField
+                            name={'duration'}
+                            children={(field) => {
+                                return <field.TextField label={'Duration'} />;
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Maximum number of silent aim detections</SubHeading>
+                        <form.AppField
+                            name={'max_aim_snap'}
+                            children={(field) => {
+                                return <field.TextField label={'max_aim_snap'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Maximum number of psilent detections</SubHeading>
+                        <form.AppField
+                            name={'max_psilent'}
+                            children={(field) => {
+                                return <field.TextField label={'max_psilent'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Maximum number of consectutive perfect bhop detections</SubHeading>
+                        <form.AppField
+                            name={'max_bhop'}
+                            children={(field) => {
+                                return <field.TextField label={'max_bhop'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Maximum number of fake angle detections</SubHeading>
+                        <form.AppField
+                            name={'max_fake_ang'}
+                            children={(field) => {
+                                return <field.TextField label={'max_fake_ang'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Maximum cmds spam</SubHeading>
+                        <form.AppField
+                            name={'max_cmd_num'}
+                            children={(field) => {
+                                return <field.TextField label={'max_cmd_num'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Maximum number of connections from the same ip.</SubHeading>
+                        <form.AppField
+                            name={'max_too_many_connections'}
+                            children={(field) => {
+                                return <field.TextField label={'max_too_many_connections'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Maximum number of cheat cvars</SubHeading>
+                        <form.AppField
+                            name={'max_cheat_cvar'}
+                            children={(field) => {
+                                return <field.TextField label={'max_cheat_cvar'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Maximum number of out-of-bounds vars</SubHeading>
+                        <form.AppField
+                            name={'max_oob_var'}
+                            children={(field) => {
+                                return <field.TextField label={'max_oob_var'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>Maximum number of invalid user commands.</SubHeading>
+                        <form.AppField
+                            name={'max_invalid_user_cmd'}
+                            children={(field) => {
+                                return <field.TextField label={'max_invalid_user_cmd'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                        <form.AppForm>
+                            <ButtonGroup>
+                                <form.ResetButton />
+                                <form.SubmitButton />
+                            </ButtonGroup>
+                        </form.AppForm>
+                    </Grid>
+                </ConfigContainer>
+            </form>
+        </TabSection>
+    );
+};
+
 const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
     const defaultValues: z.input<typeof schemaNetwork> = settings.network;
     const form = useAppForm({
@@ -594,7 +783,7 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <form.AppField
                             name={'cf_zone_id'}
                             children={(field) => {
-                                return <field.TextField label={'Email'} />;
+                                return <field.TextField label={'Zone ID'} />;
                             }}
                         />
                     </Grid>
