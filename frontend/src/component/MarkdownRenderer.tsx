@@ -1,8 +1,7 @@
 import { JSX, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { getOverrides, MuiMarkdown } from 'mui-markdown';
-import { Highlight, themes } from 'prism-react-renderer';
+import { MuiMarkdown } from 'mui-markdown';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { ImageBox } from './ImageBox.tsx';
 import RouterLink from './RouterLink.tsx';
@@ -53,11 +52,6 @@ const MDLink = ({ children, href, title }: MDLnkProps) => {
 const mdRenderOpts = {
     disableParsingRawHTML: false,
     overrides: {
-        ...getOverrides({
-            Highlight,
-            themes,
-            theme: themes.vsDark
-        }),
         a: {
             component: MDLink
         },

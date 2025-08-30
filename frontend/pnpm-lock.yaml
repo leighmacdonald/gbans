@@ -102,9 +102,6 @@ importers:
       '@types/node':
         specifier: ^22.18.0
         version: 22.18.0
-      '@types/prismjs':
-        specifier: ^1.26.5
-        version: 1.26.5
       '@types/react':
         specifier: ^19.1.12
         version: 19.1.12
@@ -198,12 +195,6 @@ importers:
       pretty-bytes:
         specifier: ^7.0.1
         version: 7.0.1
-      prism-react-renderer:
-        specifier: ^2.4.1
-        version: 2.4.1(react@19.1.1)
-      prismjs:
-        specifier: ^1.30.0
-        version: 1.30.0
       prop-types:
         specifier: ^15.8.1
         version: 15.8.1
@@ -7195,7 +7186,8 @@ snapshots:
 
   '@types/parse-json@4.0.2': {}
 
-  '@types/prismjs@1.26.5': {}
+  '@types/prismjs@1.26.5':
+    optional: true
 
   '@types/prop-types@15.7.14': {}
 
@@ -9395,6 +9387,7 @@ snapshots:
       '@types/prismjs': 1.26.5
       clsx: 2.1.1
       react: 19.1.1
+    optional: true
 
   prismjs@1.30.0: {}
 
