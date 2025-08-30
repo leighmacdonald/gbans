@@ -14,7 +14,6 @@ import {
     linkPlugin,
     listsPlugin,
     ListsToggle,
-    markdownShortcutPlugin,
     MDXEditor,
     MDXEditorMethods,
     quotePlugin,
@@ -127,8 +126,9 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
                     codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
                     directivesPlugin({
                         directiveDescriptors: [AdmonitionDirectiveDescriptor]
-                    }),
-                    markdownShortcutPlugin()
+                    })
+                    // https://github.com/mdx-editor/editor/issues/491
+                    // markdownShortcutPlugin()
                 ]}
                 onError={onError}
                 onChange={(v) => {

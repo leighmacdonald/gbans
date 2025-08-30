@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { sentryVitePlugin } from '@sentry/vite-plugin';
-import { TanStackRouterVite } from '@tanstack/router-vite-plugin';
+import { tanstackRouter } from '@tanstack/router-vite-plugin';
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
@@ -25,7 +25,6 @@ export default defineConfig({
                         'nice-modal-react',
                         'fontsource/roboto',
                         'mdxeditor/editor',
-                        'prism-react-renderer',
                         'mui-markdown',
                         'date-fns',
                         'mui/x-charts',
@@ -128,7 +127,7 @@ export default defineConfig({
 
     plugins: [
         react(),
-        TanStackRouterVite(),
+        tanstackRouter(),
         createHtmlPlugin({
             entry: './src/index.tsx',
             template: 'index.html',
