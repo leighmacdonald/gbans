@@ -21,4 +21,4 @@ sed -i "s/"${CURRENT_VERSION}"/"${NEXT_VERSION}"/g" sourcemod/scripting/gbans/gl
 sed -i "s/v${CURRENT_VERSION}"/v${NEXT_VERSION}"/g" frontend/package.json
 sed -i "s/v${CURRENT_VERSION}/v${NEXT_VERSION}/g" Makefile
 
-exit 0
+git commit -a -m "Bump version to ${NEXT_VERSION}"
