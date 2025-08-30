@@ -44,7 +44,7 @@ func (a anticheatRepository) Query(ctx context.Context, query domain.AnticheatQu
 	if query.Name != "" {
 		filters = append(filters, sq.Like{"a.name": "%" + strings.ToLower(query.Name) + "%"})
 	}
-	if query.Detection != "" {
+	if query.Detection != "" && string(query.Detection) != "any" {
 		filters = append(filters, sq.Eq{"a.detection": query.Detection})
 	}
 

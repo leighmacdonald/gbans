@@ -106,7 +106,7 @@ function AdminAnticheat() {
                     name: search.name ?? '',
                     summary: search.summary ?? '',
                     steam_id: search.steam_id ?? '',
-                    detection: (search.detection ?? 'unknown') as Detections,
+                    detection: (search.detection ?? 'any') as Detections,
                     limit: search.pageSize ?? defaultRows,
                     offset: (search.pageIndex ?? 0) * (search.pageSize ?? defaultRows),
                     order_by: 'created_on',

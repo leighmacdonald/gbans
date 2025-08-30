@@ -2,6 +2,7 @@ import { z } from 'zod/v4';
 import { schemaQueryFilter } from './query.ts';
 
 const DetectionTypes = [
+    'any',
     'unknown',
     'silent_aim',
     'aim_snap',
@@ -19,6 +20,7 @@ export const Detections = z.enum(DetectionTypes);
 export type Detections = z.infer<typeof Detections>;
 
 export const DetectionCollection = [
+    Detections.enum.any,
     Detections.enum.unknown,
     Detections.enum.silent_aim,
     Detections.enum.aim_snap,
