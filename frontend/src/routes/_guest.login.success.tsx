@@ -10,8 +10,7 @@ export const Route = createFileRoute('/_guest/login/success')({
     validateSearch: z.object({
         next_url: z.string().optional().catch(''),
         token: z.string()
-    })
-}).update({
+    }),
     component: LoginSteamSuccess
 });
 
