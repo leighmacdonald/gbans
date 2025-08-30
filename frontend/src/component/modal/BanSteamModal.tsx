@@ -18,7 +18,8 @@ import {
     BanTypeCollection,
     Duration,
     DurationCollection,
-    schemaBanPayloadSteam
+    schemaBanPayloadSteam,
+    SteamBanRecord
 } from '../../schema/bans.ts';
 import { ErrorDetails } from '../ErrorDetails.tsx';
 import { Heading } from '../Heading';
@@ -35,7 +36,11 @@ export const BanSteamModal = NiceModal.create(({ ban_id }: { ban_id?: number }) 
     } = useQuery({
         queryKey: ['ban', { ban_id }],
         queryFn: async () => {
-            return await apiGetBanSteam(Number(ban_id), true);
+            if (ban_id && ban_id > 0) {
+                return await apiGetBanSteam(Number(ban_id), true);
+            }
+
+            return {} as SteamBanRecord;
         }
     });
 
