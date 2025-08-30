@@ -1,6 +1,7 @@
 package logparse
 
 import (
+	"bufio"
 	"errors"
 	"io"
 	"log/slog"
@@ -87,18 +88,13 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 		return nil, errDate
 	}
 
-	bodyBytes, errBody := io.ReadAll(reader)
-	if errBody != nil {
-		return nil, errors.Join(errBody, ErrReadLog)
-	}
-
 	var (
 		entries []StacEntry
 		current = StacEntry{CreatedOn: date}
 	)
-
-	lines := strings.Split(string(bodyBytes), "\n")
-	for _, line := range lines {
+	scan := bufio.NewScanner(reader)
+	for scan.Scan() {
+		line := scan.Text()
 		if strings.Contains(line, "hings will break") {
 			continue
 		}
@@ -214,27 +210,12 @@ func (p StacParser) parseDetection(line string) Detection {
 
 // parseFileName transforms the log filename (eg: stac_052224.log) into a time.Time.
 func (p StacParser) parseFileName(logName string) (time.Time, error) {
-	match := p.reLogName.FindStringSubmatch(logName)
-	if len(match) != 4 || match[1] == "" {
-		return time.Time{}, ErrParseFileName
+	value, errParse := time.Parse("stac_010206.log", logName)
+	if errParse != nil {
+		return time.Time{}, errors.Join(errParse, ErrParseFileName)
 	}
 
-	month, errMonth := strconv.ParseInt(match[1], 10, 32)
-	if errMonth != nil {
-		return time.Time{}, errors.Join(errMonth, ErrParseFileName)
-	}
-
-	day, errDay := strconv.ParseInt(match[2], 10, 32)
-	if errDay != nil {
-		return time.Time{}, errors.Join(errDay, ErrParseFileName)
-	}
-
-	year, errYear := strconv.ParseInt(match[3], 10, 32)
-	if errYear != nil {
-		return time.Time{}, errors.Join(errYear, ErrParseFileName)
-	}
-
-	return time.Date(2000+int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC), nil
+	return value, nil
 }
 
 // parseTime transforms a log timestamp (eg: <01:13:00>) into a time.Time.
