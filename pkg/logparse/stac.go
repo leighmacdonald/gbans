@@ -56,6 +56,10 @@ type StacEntry struct {
 	CreatedOn   time.Time       `json:"created_on"`
 }
 
+// StacParser is responsible for parsing stac logs without going wild trying to parse everything
+// as the structure is all over the place.
+//
+// Log name must match the reLogName regex, stac_mmddyy.log.
 type StacParser struct {
 	reSummary      *regexp.Regexp
 	rePlayer       *regexp.Regexp
