@@ -1,15 +1,9 @@
 name: release
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'New version'
-        required: true
-
-#env:
-#  REGISTRY: ghcr.io
-#  IMAGE_NAME: ${{ github.repository }}
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 jobs:
   release:
@@ -24,28 +18,19 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: 'stable'
+          go-version: "stable"
 
       - uses: pnpm/action-setup@v4
         with:
           version: 9
           run_install: false
 
-      - name: Run release.sh
-        run: bash release.sh ${{ inputs.version }}
-
-      - name: commit version
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: v${{ inputs.version }} Release
-          tagging_message: v${{ inputs.version }}
-
       - name: Setup nodejs
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
-          cache: 'pnpm'
-          cache-dependency-path: 'frontend/pnpm-lock.yaml'
+          node-version: "20.x"
+          cache: "pnpm"
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
 
       - name: Install modules
         working-directory: ./frontend
@@ -67,7 +52,7 @@ jobs:
         with:
           version: "1.13.x"
 
-      - name: Ensure plugin builds
+      - name: Build sourcemod plugin
         working-directory: ./sourcemod/scripting
         run: spcomp -i"./include/" gbans.sp -o ../plugins/gbans.smx
 
@@ -78,17 +63,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: Import GPG key
-#        id: import_gpg
-#        uses: crazy-max/ghaction-import-gpg@v6
-#        with:
-#          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-#          passphrase: ${{ secrets.PASSPHRASE }}
+      #      - name: Import GPG key
+      #        id: import_gpg
+      #        uses: crazy-max/ghaction-import-gpg@v6
+      #        with:
+      #          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+      #          passphrase: ${{ secrets.PASSPHRASE }}
 
-      - uses: goreleaser/goreleaser-action@v5
+      - uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: "~> v1"
+          version: "~> v2"
           args: release --clean
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN_BACKEND }}
@@ -107,25 +92,18 @@ jobs:
           retention-days: 1
           overwrite: true
 
-      - name: Build & publish image
-        run: |
-          docker build . --tag ghcr.io/leighmacdonald/gbans:v${{ inputs.version }}
-          docker push ghcr.io/leighmacdonald/gbans:v${{ inputs.version }}
-          docker build . --tag ghcr.io/leighmacdonald/gbans:latest
-          docker push ghcr.io/leighmacdonald/gbans:latest
-
       - name: Update contributor list
         uses: akhilmhdh/contributors-readme-action@v2.3.10
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create Sentry release
-        uses: getsentry/action-release@v1
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-        with:
-          environment: production
-          version: ${{ inputs.version }}
-          sourcemaps: frontend/dist/assets
+      # - name: Create Sentry release
+      #   uses: getsentry/action-release@v3
+      #   env:
+      #     SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      #     SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      #     SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+      #   with:
+      #     environment: production
+      #     version: ${{ inputs.version }}
+      #     sourcemaps: frontend/dist/assets
