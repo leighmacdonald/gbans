@@ -26,6 +26,7 @@ const splitMarker = "----------"
 type Detection string
 
 const (
+	Any                Detection = "any"
 	Unknown            Detection = "unknown"
 	SilentAim          Detection = "silent_aim"       // [StAC] SilentAim detection of 1.70° on Name.
 	AimSnap            Detection = "aim_snap"         // [StAC] Aimsnap detection of 23.61° on Name.
