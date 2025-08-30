@@ -1,8 +1,24 @@
+version: 2
 project_name: gbans
 
 before:
   hooks:
-  - make frontend
+    - make frontend
+
+dockers:
+  - dockerfile: "docker/Dockerfile"
+    skip_push: false
+    ids: ["gbans"]
+    image_templates:
+      - "ghcr.io/leighmacdonald/gbans:latest"
+      - "ghcr.io/leighmacdonald/gbans:{{ .Tag }}"
+      - "ghcr.io/leighmacdonald/gbans:v{{ .Major }}"
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
 
 builds:
   - id: gbans
@@ -15,7 +31,12 @@ builds:
     tags:
       - release
     ldflags:
-      - -s -w -X github.com/leighmacdonald/gbans/internal/app.SentryDSN={{ .Env.SENTRY_DSN }} -X github.com/leighmacdonald/gbans/internal/app.BuildVersion={{.Version}} -X github.com/leighmacdonald/gbans/internal/app.BuildCommit={{.Commit}} -X github.com/leighmacdonald/gbans/internal/app.BuildDate={{.Date}} -X main.builtBy=releaser
+      - -s
+      - -w
+      #- -X github.com/leighmacdonald/gbans/internal/app.SentryDSN={{ .Env.SENTRY_DSN }}
+      - -X github.com/leighmacdonald/gbans/internal/app.BuildVersion={{.Version}}
+      - -X github.com/leighmacdonald/gbans/internal/app.BuildCommit={{.Commit}}
+      - -X github.com/leighmacdonald/gbans/internal/app.BuildDate={{.Date}}
 
 nfpms:
   - maintainer: Leigh MacDonald <leigh.macdonald@gmail.com>
@@ -28,41 +49,37 @@ nfpms:
       - apk
 
 archives:
-  - builds:
-      - gbans
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
+  - formats: ["tar.gz"]
     files:
       - LICENSE.md
       - README.md
       - gbans_example.yml
       - sourcemod/plugins/gbans.smx
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_{{- title .Os }}_{{- .Version }}-
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
     format_overrides:
       - goos: windows
-        format: zip
+        formats: ["zip"]
 
 checksum:
-  name_template: 'checksums.txt'
-
-snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  name_template: "checksums.txt"
 
 release:
   github:
     owner: leighmacdonald
     name: gbans
-  draft: true
+  draft: false
   replace_existing_draft: true
   prerelease: auto
 
 changelog:
   use: github-native
-
 #signs:
 #  - artifacts: checksum
 #    args:

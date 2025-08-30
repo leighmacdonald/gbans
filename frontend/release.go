@@ -16,7 +16,11 @@ import (
 var embedFS embed.FS
 
 func AddRoutes(engine *gin.Engine, _ string) error {
-	engine.Use(static.Serve("/", static.EmbedFolder(embedFS, "dist")))
+	embedFolder, errFolder := static.EmbedFolder(embedFS, "dist")
+	if errFolder != nil {
+		return errors.Join(errFolder, ErrContentRoot)
+	}
+	engine.Use(static.Serve("/", embedFolder))
 
 	engine.NoRoute(func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/")
