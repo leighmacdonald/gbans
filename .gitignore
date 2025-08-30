@@ -54,3 +54,4 @@ parse_demo
 /frontend/.env.*
 /gbans
 .zed
+frontend/.tanstack

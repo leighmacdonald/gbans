@@ -6,16 +6,16 @@ const coercedNumber = z.string().transform(Number);
 export const schemaAnticheat = z.object({
     enabled: z.boolean(),
     action: Action,
-    duration: z.number(),
-    max_aim_snap: z.number(),
-    max_psilent: z.number(),
-    max_bhop: z.number(),
-    max_fake_ang: z.number(),
-    max_cmd_num: z.number(),
-    max_too_many_connections: z.number(),
-    max_cheat_cvar: z.number(),
-    max_oob_var: z.number(),
-    max_invalid_user_cmd: z.number()
+    duration: z.coerce.number().int(),
+    max_aim_snap: z.coerce.number().int(),
+    max_psilent: z.coerce.number().int(),
+    max_bhop: z.coerce.number().int(),
+    max_fake_ang: z.coerce.number().int(),
+    max_cmd_num: z.coerce.number().int(),
+    max_too_many_connections: z.coerce.number().int(),
+    max_cheat_cvar: z.coerce.number().int(),
+    max_oob_var: z.coerce.number().int(),
+    max_invalid_user_cmd: z.coerce.number().int()
 });
 export const schemaSentry = z.object({
     sentry_dsn: z.string(),
