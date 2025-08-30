@@ -8,1048 +8,372 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as ModRouteImport } from './routes/_mod'
+import { Route as GuestRouteImport } from './routes/_guest'
+import { Route as AuthRouteImport } from './routes/_auth'
+import { Route as AdminRouteImport } from './routes/_admin'
+import { Route as GuestIndexRouteImport } from './routes/_guest.index'
+import { Route as GuestWikiRouteImport } from './routes/_guest.wiki'
+import { Route as GuestStvRouteImport } from './routes/_guest.stv'
+import { Route as GuestServersRouteImport } from './routes/_guest.servers'
+import { Route as GuestPrivacyPolicyRouteImport } from './routes/_guest.privacy-policy'
+import { Route as GuestPatreonRouteImport } from './routes/_guest.patreon'
+import { Route as GuestContestsRouteImport } from './routes/_guest.contests'
+import { Route as GuestChangelogRouteImport } from './routes/_guest.changelog'
+import { Route as AuthStatsRouteImport } from './routes/_auth.stats'
+import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
+import { Route as AuthReportRouteImport } from './routes/_auth.report'
+import { Route as AuthPermissionRouteImport } from './routes/_auth.permission'
+import { Route as AuthPageNotFoundRouteImport } from './routes/_auth.page-not-found'
+import { Route as AuthNotificationsRouteImport } from './routes/_auth.notifications'
+import { Route as AuthLogoutRouteImport } from './routes/_auth.logout'
+import { Route as AuthForumsRouteImport } from './routes/_auth.forums'
+import { Route as AuthChatlogsRouteImport } from './routes/_auth.chatlogs'
+import { Route as GuestWikiIndexRouteImport } from './routes/_guest.wiki.index'
+import { Route as GuestSpeedrunsIndexRouteImport } from './routes/_guest.speedruns.index'
+import { Route as GuestLoginIndexRouteImport } from './routes/_guest.login.index'
+import { Route as AuthStatsIndexRouteImport } from './routes/_auth.stats.index'
+import { Route as AuthReportIndexRouteImport } from './routes/_auth.report.index'
+import { Route as AuthForumsIndexRouteImport } from './routes/_auth.forums.index'
+import { Route as ModAdminVotesRouteImport } from './routes/_mod.admin.votes'
+import { Route as ModAdminReportsRouteImport } from './routes/_mod.admin.reports'
+import { Route as ModAdminPeopleRouteImport } from './routes/_mod.admin.people'
+import { Route as ModAdminNewsRouteImport } from './routes/_mod.admin.news'
+import { Route as ModAdminFiltersRouteImport } from './routes/_mod.admin.filters'
+import { Route as ModAdminContestsRouteImport } from './routes/_mod.admin.contests'
+import { Route as ModAdminAppealsRouteImport } from './routes/_mod.admin.appeals'
+import { Route as ModAdminAnticheatRouteImport } from './routes/_mod.admin.anticheat'
+import { Route as GuestWikiSlugRouteImport } from './routes/_guest.wiki.$slug'
+import { Route as GuestProfileSteamIdRouteImport } from './routes/_guest.profile.$steamId'
+import { Route as GuestLoginSuccessRouteImport } from './routes/_guest.login.success'
+import { Route as AuthReportReportIdRouteImport } from './routes/_auth.report.$reportId'
+import { Route as AuthMatchMatchIdRouteImport } from './routes/_auth.match.$matchId'
+import { Route as AuthForumsForum_idRouteImport } from './routes/_auth.forums.$forum_id'
+import { Route as AuthContestsContest_idRouteImport } from './routes/_auth.contests.$contest_id'
+import { Route as AuthBanBan_idRouteImport } from './routes/_auth.ban.$ban_id'
+import { Route as AdminAdminSettingsRouteImport } from './routes/_admin.admin.settings'
+import { Route as AdminAdminServersRouteImport } from './routes/_admin.admin.servers'
+import { Route as AdminAdminGameAdminsRouteImport } from './routes/_admin.admin.game-admins'
+import { Route as ModAdminNetworkIndexRouteImport } from './routes/_mod.admin.network.index'
+import { Route as ModAdminNetworkPlayersbyipRouteImport } from './routes/_mod.admin.network.playersbyip'
+import { Route as ModAdminNetworkIphistRouteImport } from './routes/_mod.admin.network.iphist'
+import { Route as ModAdminNetworkIpInfoRouteImport } from './routes/_mod.admin.network.ipInfo'
+import { Route as ModAdminNetworkCidrblocksRouteImport } from './routes/_mod.admin.network.cidrblocks'
+import { Route as ModAdminBanSteamRouteImport } from './routes/_mod.admin.ban.steam'
+import { Route as ModAdminBanGroupRouteImport } from './routes/_mod.admin.ban.group'
+import { Route as ModAdminBanCidrRouteImport } from './routes/_mod.admin.ban.cidr'
+import { Route as ModAdminBanAsnRouteImport } from './routes/_mod.admin.ban.asn'
+import { Route as GuestSpeedrunsMapMapNameRouteImport } from './routes/_guest.speedruns.map.$mapName'
+import { Route as GuestSpeedrunsIdSpeedrunIdRouteImport } from './routes/_guest.speedruns.id.$speedrunId'
+import { Route as AuthStatsWeaponWeapon_idRouteImport } from './routes/_auth.stats.weapon.$weapon_id'
+import { Route as AuthForumsThreadForum_thread_idRouteImport } from './routes/_auth.forums.thread.$forum_thread_id'
+import { Route as AuthLogsSteamIdRouteImport } from './routes/_auth.logs.$steamId.'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as ModImport } from './routes/_mod'
-import { Route as GuestImport } from './routes/_guest'
-import { Route as AuthImport } from './routes/_auth'
-import { Route as AdminImport } from './routes/_admin'
-import { Route as GuestIndexImport } from './routes/_guest.index'
-import { Route as GuestWikiImport } from './routes/_guest.wiki'
-import { Route as GuestStvImport } from './routes/_guest.stv'
-import { Route as GuestServersImport } from './routes/_guest.servers'
-import { Route as GuestPrivacyPolicyImport } from './routes/_guest.privacy-policy'
-import { Route as GuestPatreonImport } from './routes/_guest.patreon'
-import { Route as GuestContestsImport } from './routes/_guest.contests'
-import { Route as GuestChangelogImport } from './routes/_guest.changelog'
-import { Route as AuthStatsImport } from './routes/_auth.stats'
-import { Route as AuthSettingsImport } from './routes/_auth.settings'
-import { Route as AuthReportImport } from './routes/_auth.report'
-import { Route as AuthPermissionImport } from './routes/_auth.permission'
-import { Route as AuthPageNotFoundImport } from './routes/_auth.page-not-found'
-import { Route as AuthNotificationsImport } from './routes/_auth.notifications'
-import { Route as AuthLogoutImport } from './routes/_auth.logout'
-import { Route as AuthForumsImport } from './routes/_auth.forums'
-import { Route as AuthChatlogsImport } from './routes/_auth.chatlogs'
-import { Route as GuestWikiIndexImport } from './routes/_guest.wiki.index'
-import { Route as GuestSpeedrunsIndexImport } from './routes/_guest.speedruns.index'
-import { Route as GuestLoginIndexImport } from './routes/_guest.login.index'
-import { Route as AuthStatsIndexImport } from './routes/_auth.stats.index'
-import { Route as AuthReportIndexImport } from './routes/_auth.report.index'
-import { Route as AuthForumsIndexImport } from './routes/_auth.forums.index'
-import { Route as ModAdminVotesImport } from './routes/_mod.admin.votes'
-import { Route as ModAdminReportsImport } from './routes/_mod.admin.reports'
-import { Route as ModAdminPeopleImport } from './routes/_mod.admin.people'
-import { Route as ModAdminNewsImport } from './routes/_mod.admin.news'
-import { Route as ModAdminFiltersImport } from './routes/_mod.admin.filters'
-import { Route as ModAdminContestsImport } from './routes/_mod.admin.contests'
-import { Route as ModAdminAppealsImport } from './routes/_mod.admin.appeals'
-import { Route as ModAdminAnticheatImport } from './routes/_mod.admin.anticheat'
-import { Route as GuestWikiSlugImport } from './routes/_guest.wiki.$slug'
-import { Route as GuestProfileSteamIdImport } from './routes/_guest.profile.$steamId'
-import { Route as GuestLoginSuccessImport } from './routes/_guest.login.success'
-import { Route as AuthReportReportIdImport } from './routes/_auth.report.$reportId'
-import { Route as AuthMatchMatchIdImport } from './routes/_auth.match.$matchId'
-import { Route as AuthForumsForumidImport } from './routes/_auth.forums.$forum_id'
-import { Route as AuthContestsContestidImport } from './routes/_auth.contests.$contest_id'
-import { Route as AuthBanBanidImport } from './routes/_auth.ban.$ban_id'
-import { Route as AdminAdminSettingsImport } from './routes/_admin.admin.settings'
-import { Route as AdminAdminServersImport } from './routes/_admin.admin.servers'
-import { Route as AdminAdminGameAdminsImport } from './routes/_admin.admin.game-admins'
-import { Route as ModAdminNetworkIndexImport } from './routes/_mod.admin.network.index'
-import { Route as ModAdminNetworkPlayersbyipImport } from './routes/_mod.admin.network.playersbyip'
-import { Route as ModAdminNetworkIphistImport } from './routes/_mod.admin.network.iphist'
-import { Route as ModAdminNetworkIpInfoImport } from './routes/_mod.admin.network.ipInfo'
-import { Route as ModAdminNetworkCidrblocksImport } from './routes/_mod.admin.network.cidrblocks'
-import { Route as ModAdminBanSteamImport } from './routes/_mod.admin.ban.steam'
-import { Route as ModAdminBanGroupImport } from './routes/_mod.admin.ban.group'
-import { Route as ModAdminBanCidrImport } from './routes/_mod.admin.ban.cidr'
-import { Route as ModAdminBanAsnImport } from './routes/_mod.admin.ban.asn'
-import { Route as GuestSpeedrunsMapMapNameImport } from './routes/_guest.speedruns.map.$mapName'
-import { Route as GuestSpeedrunsIdSpeedrunIdImport } from './routes/_guest.speedruns.id.$speedrunId'
-import { Route as AuthStatsWeaponWeaponidImport } from './routes/_auth.stats.weapon.$weapon_id'
-import { Route as AuthForumsThreadForumthreadidImport } from './routes/_auth.forums.thread.$forum_thread_id'
-import { Route as AuthLogsSteamIdImport } from './routes/_auth.logs.$steamId.'
-
-// Create/Update Routes
-
-const ModRoute = ModImport.update({
+const ModRoute = ModRouteImport.update({
   id: '/_mod',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const GuestRoute = GuestImport.update({
+const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthRoute = AuthImport.update({
+const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AdminRoute = AdminImport.update({
+const AdminRoute = AdminRouteImport.update({
   id: '/_admin',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const GuestIndexRoute = GuestIndexImport.update({
+const GuestIndexRoute = GuestIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const GuestWikiRoute = GuestWikiImport.update({
+const GuestWikiRoute = GuestWikiRouteImport.update({
   id: '/wiki',
   path: '/wiki',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const GuestStvRoute = GuestStvImport.update({
+const GuestStvRoute = GuestStvRouteImport.update({
   id: '/stv',
   path: '/stv',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const GuestServersRoute = GuestServersImport.update({
+const GuestServersRoute = GuestServersRouteImport.update({
   id: '/servers',
   path: '/servers',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const GuestPrivacyPolicyRoute = GuestPrivacyPolicyImport.update({
+const GuestPrivacyPolicyRoute = GuestPrivacyPolicyRouteImport.update({
   id: '/privacy-policy',
   path: '/privacy-policy',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const GuestPatreonRoute = GuestPatreonImport.update({
+const GuestPatreonRoute = GuestPatreonRouteImport.update({
   id: '/patreon',
   path: '/patreon',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const GuestContestsRoute = GuestContestsImport.update({
+const GuestContestsRoute = GuestContestsRouteImport.update({
   id: '/contests',
   path: '/contests',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const GuestChangelogRoute = GuestChangelogImport.update({
+const GuestChangelogRoute = GuestChangelogRouteImport.update({
   id: '/changelog',
   path: '/changelog',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const AuthStatsRoute = AuthStatsImport.update({
+const AuthStatsRoute = AuthStatsRouteImport.update({
   id: '/stats',
   path: '/stats',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthSettingsRoute = AuthSettingsImport.update({
+const AuthSettingsRoute = AuthSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthReportRoute = AuthReportImport.update({
+const AuthReportRoute = AuthReportRouteImport.update({
   id: '/report',
   path: '/report',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthPermissionRoute = AuthPermissionImport.update({
+const AuthPermissionRoute = AuthPermissionRouteImport.update({
   id: '/permission',
   path: '/permission',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthPageNotFoundRoute = AuthPageNotFoundImport.update({
+const AuthPageNotFoundRoute = AuthPageNotFoundRouteImport.update({
   id: '/page-not-found',
   path: '/page-not-found',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthNotificationsRoute = AuthNotificationsImport.update({
+const AuthNotificationsRoute = AuthNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthLogoutRoute = AuthLogoutImport.update({
+const AuthLogoutRoute = AuthLogoutRouteImport.update({
   id: '/logout',
   path: '/logout',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthForumsRoute = AuthForumsImport.update({
+const AuthForumsRoute = AuthForumsRouteImport.update({
   id: '/forums',
   path: '/forums',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthChatlogsRoute = AuthChatlogsImport.update({
+const AuthChatlogsRoute = AuthChatlogsRouteImport.update({
   id: '/chatlogs',
   path: '/chatlogs',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const GuestWikiIndexRoute = GuestWikiIndexImport.update({
+const GuestWikiIndexRoute = GuestWikiIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => GuestWikiRoute,
 } as any)
-
-const GuestSpeedrunsIndexRoute = GuestSpeedrunsIndexImport.update({
+const GuestSpeedrunsIndexRoute = GuestSpeedrunsIndexRouteImport.update({
   id: '/speedruns/',
   path: '/speedruns/',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const GuestLoginIndexRoute = GuestLoginIndexImport.update({
+const GuestLoginIndexRoute = GuestLoginIndexRouteImport.update({
   id: '/login/',
   path: '/login/',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const AuthStatsIndexRoute = AuthStatsIndexImport.update({
+const AuthStatsIndexRoute = AuthStatsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthStatsRoute,
 } as any)
-
-const AuthReportIndexRoute = AuthReportIndexImport.update({
+const AuthReportIndexRoute = AuthReportIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthReportRoute,
 } as any)
-
-const AuthForumsIndexRoute = AuthForumsIndexImport.update({
+const AuthForumsIndexRoute = AuthForumsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthForumsRoute,
 } as any)
-
-const ModAdminVotesRoute = ModAdminVotesImport.update({
+const ModAdminVotesRoute = ModAdminVotesRouteImport.update({
   id: '/admin/votes',
   path: '/admin/votes',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminReportsRoute = ModAdminReportsImport.update({
+const ModAdminReportsRoute = ModAdminReportsRouteImport.update({
   id: '/admin/reports',
   path: '/admin/reports',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminPeopleRoute = ModAdminPeopleImport.update({
+const ModAdminPeopleRoute = ModAdminPeopleRouteImport.update({
   id: '/admin/people',
   path: '/admin/people',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminNewsRoute = ModAdminNewsImport.update({
+const ModAdminNewsRoute = ModAdminNewsRouteImport.update({
   id: '/admin/news',
   path: '/admin/news',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminFiltersRoute = ModAdminFiltersImport.update({
+const ModAdminFiltersRoute = ModAdminFiltersRouteImport.update({
   id: '/admin/filters',
   path: '/admin/filters',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminContestsRoute = ModAdminContestsImport.update({
+const ModAdminContestsRoute = ModAdminContestsRouteImport.update({
   id: '/admin/contests',
   path: '/admin/contests',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminAppealsRoute = ModAdminAppealsImport.update({
+const ModAdminAppealsRoute = ModAdminAppealsRouteImport.update({
   id: '/admin/appeals',
   path: '/admin/appeals',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminAnticheatRoute = ModAdminAnticheatImport.update({
+const ModAdminAnticheatRoute = ModAdminAnticheatRouteImport.update({
   id: '/admin/anticheat',
   path: '/admin/anticheat',
   getParentRoute: () => ModRoute,
 } as any)
-
-const GuestWikiSlugRoute = GuestWikiSlugImport.update({
+const GuestWikiSlugRoute = GuestWikiSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => GuestWikiRoute,
 } as any)
-
-const GuestProfileSteamIdRoute = GuestProfileSteamIdImport.update({
+const GuestProfileSteamIdRoute = GuestProfileSteamIdRouteImport.update({
   id: '/profile/$steamId',
   path: '/profile/$steamId',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const GuestLoginSuccessRoute = GuestLoginSuccessImport.update({
+const GuestLoginSuccessRoute = GuestLoginSuccessRouteImport.update({
   id: '/login/success',
   path: '/login/success',
   getParentRoute: () => GuestRoute,
 } as any)
-
-const AuthReportReportIdRoute = AuthReportReportIdImport.update({
+const AuthReportReportIdRoute = AuthReportReportIdRouteImport.update({
   id: '/$reportId',
   path: '/$reportId',
   getParentRoute: () => AuthReportRoute,
 } as any)
-
-const AuthMatchMatchIdRoute = AuthMatchMatchIdImport.update({
+const AuthMatchMatchIdRoute = AuthMatchMatchIdRouteImport.update({
   id: '/match/$matchId',
   path: '/match/$matchId',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthForumsForumidRoute = AuthForumsForumidImport.update({
+const AuthForumsForum_idRoute = AuthForumsForum_idRouteImport.update({
   id: '/$forum_id',
   path: '/$forum_id',
   getParentRoute: () => AuthForumsRoute,
 } as any)
-
-const AuthContestsContestidRoute = AuthContestsContestidImport.update({
+const AuthContestsContest_idRoute = AuthContestsContest_idRouteImport.update({
   id: '/contests/$contest_id',
   path: '/contests/$contest_id',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AuthBanBanidRoute = AuthBanBanidImport.update({
+const AuthBanBan_idRoute = AuthBanBan_idRouteImport.update({
   id: '/ban/$ban_id',
   path: '/ban/$ban_id',
   getParentRoute: () => AuthRoute,
 } as any)
-
-const AdminAdminSettingsRoute = AdminAdminSettingsImport.update({
+const AdminAdminSettingsRoute = AdminAdminSettingsRouteImport.update({
   id: '/admin/settings',
   path: '/admin/settings',
   getParentRoute: () => AdminRoute,
 } as any)
-
-const AdminAdminServersRoute = AdminAdminServersImport.update({
+const AdminAdminServersRoute = AdminAdminServersRouteImport.update({
   id: '/admin/servers',
   path: '/admin/servers',
   getParentRoute: () => AdminRoute,
 } as any)
-
-const AdminAdminGameAdminsRoute = AdminAdminGameAdminsImport.update({
+const AdminAdminGameAdminsRoute = AdminAdminGameAdminsRouteImport.update({
   id: '/admin/game-admins',
   path: '/admin/game-admins',
   getParentRoute: () => AdminRoute,
 } as any)
-
-const ModAdminNetworkIndexRoute = ModAdminNetworkIndexImport.update({
+const ModAdminNetworkIndexRoute = ModAdminNetworkIndexRouteImport.update({
   id: '/admin/network/',
   path: '/admin/network/',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminNetworkPlayersbyipRoute = ModAdminNetworkPlayersbyipImport.update(
-  {
+const ModAdminNetworkPlayersbyipRoute =
+  ModAdminNetworkPlayersbyipRouteImport.update({
     id: '/admin/network/playersbyip',
     path: '/admin/network/playersbyip',
     getParentRoute: () => ModRoute,
-  } as any,
-)
-
-const ModAdminNetworkIphistRoute = ModAdminNetworkIphistImport.update({
+  } as any)
+const ModAdminNetworkIphistRoute = ModAdminNetworkIphistRouteImport.update({
   id: '/admin/network/iphist',
   path: '/admin/network/iphist',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminNetworkIpInfoRoute = ModAdminNetworkIpInfoImport.update({
+const ModAdminNetworkIpInfoRoute = ModAdminNetworkIpInfoRouteImport.update({
   id: '/admin/network/ipInfo',
   path: '/admin/network/ipInfo',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminNetworkCidrblocksRoute = ModAdminNetworkCidrblocksImport.update({
-  id: '/admin/network/cidrblocks',
-  path: '/admin/network/cidrblocks',
-  getParentRoute: () => ModRoute,
-} as any)
-
-const ModAdminBanSteamRoute = ModAdminBanSteamImport.update({
+const ModAdminNetworkCidrblocksRoute =
+  ModAdminNetworkCidrblocksRouteImport.update({
+    id: '/admin/network/cidrblocks',
+    path: '/admin/network/cidrblocks',
+    getParentRoute: () => ModRoute,
+  } as any)
+const ModAdminBanSteamRoute = ModAdminBanSteamRouteImport.update({
   id: '/admin/ban/steam',
   path: '/admin/ban/steam',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminBanGroupRoute = ModAdminBanGroupImport.update({
+const ModAdminBanGroupRoute = ModAdminBanGroupRouteImport.update({
   id: '/admin/ban/group',
   path: '/admin/ban/group',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminBanCidrRoute = ModAdminBanCidrImport.update({
+const ModAdminBanCidrRoute = ModAdminBanCidrRouteImport.update({
   id: '/admin/ban/cidr',
   path: '/admin/ban/cidr',
   getParentRoute: () => ModRoute,
 } as any)
-
-const ModAdminBanAsnRoute = ModAdminBanAsnImport.update({
+const ModAdminBanAsnRoute = ModAdminBanAsnRouteImport.update({
   id: '/admin/ban/asn',
   path: '/admin/ban/asn',
   getParentRoute: () => ModRoute,
 } as any)
-
-const GuestSpeedrunsMapMapNameRoute = GuestSpeedrunsMapMapNameImport.update({
-  id: '/speedruns/map/$mapName',
-  path: '/speedruns/map/$mapName',
-  getParentRoute: () => GuestRoute,
-} as any)
-
-const GuestSpeedrunsIdSpeedrunIdRoute = GuestSpeedrunsIdSpeedrunIdImport.update(
-  {
+const GuestSpeedrunsMapMapNameRoute =
+  GuestSpeedrunsMapMapNameRouteImport.update({
+    id: '/speedruns/map/$mapName',
+    path: '/speedruns/map/$mapName',
+    getParentRoute: () => GuestRoute,
+  } as any)
+const GuestSpeedrunsIdSpeedrunIdRoute =
+  GuestSpeedrunsIdSpeedrunIdRouteImport.update({
     id: '/speedruns/id/$speedrunId',
     path: '/speedruns/id/$speedrunId',
     getParentRoute: () => GuestRoute,
-  } as any,
-)
-
-const AuthStatsWeaponWeaponidRoute = AuthStatsWeaponWeaponidImport.update({
-  id: '/weapon/$weapon_id',
-  path: '/weapon/$weapon_id',
-  getParentRoute: () => AuthStatsRoute,
-} as any)
-
-const AuthForumsThreadForumthreadidRoute =
-  AuthForumsThreadForumthreadidImport.update({
+  } as any)
+const AuthStatsWeaponWeapon_idRoute =
+  AuthStatsWeaponWeapon_idRouteImport.update({
+    id: '/weapon/$weapon_id',
+    path: '/weapon/$weapon_id',
+    getParentRoute: () => AuthStatsRoute,
+  } as any)
+const AuthForumsThreadForum_thread_idRoute =
+  AuthForumsThreadForum_thread_idRouteImport.update({
     id: '/thread/$forum_thread_id',
     path: '/thread/$forum_thread_id',
     getParentRoute: () => AuthForumsRoute,
   } as any)
-
-const AuthLogsSteamIdRoute = AuthLogsSteamIdImport.update({
+const AuthLogsSteamIdRoute = AuthLogsSteamIdRouteImport.update({
   id: '/logs/$steamId/',
   path: '/logs/$steamId/',
   getParentRoute: () => AuthRoute,
 } as any)
 
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/_admin': {
-      id: '/_admin'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AdminImport
-      parentRoute: typeof rootRoute
-    }
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthImport
-      parentRoute: typeof rootRoute
-    }
-    '/_guest': {
-      id: '/_guest'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof GuestImport
-      parentRoute: typeof rootRoute
-    }
-    '/_mod': {
-      id: '/_mod'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof ModImport
-      parentRoute: typeof rootRoute
-    }
-    '/_auth/chatlogs': {
-      id: '/_auth/chatlogs'
-      path: '/chatlogs'
-      fullPath: '/chatlogs'
-      preLoaderRoute: typeof AuthChatlogsImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/forums': {
-      id: '/_auth/forums'
-      path: '/forums'
-      fullPath: '/forums'
-      preLoaderRoute: typeof AuthForumsImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/logout': {
-      id: '/_auth/logout'
-      path: '/logout'
-      fullPath: '/logout'
-      preLoaderRoute: typeof AuthLogoutImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/notifications': {
-      id: '/_auth/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthNotificationsImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/page-not-found': {
-      id: '/_auth/page-not-found'
-      path: '/page-not-found'
-      fullPath: '/page-not-found'
-      preLoaderRoute: typeof AuthPageNotFoundImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/permission': {
-      id: '/_auth/permission'
-      path: '/permission'
-      fullPath: '/permission'
-      preLoaderRoute: typeof AuthPermissionImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/report': {
-      id: '/_auth/report'
-      path: '/report'
-      fullPath: '/report'
-      preLoaderRoute: typeof AuthReportImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/settings': {
-      id: '/_auth/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthSettingsImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/stats': {
-      id: '/_auth/stats'
-      path: '/stats'
-      fullPath: '/stats'
-      preLoaderRoute: typeof AuthStatsImport
-      parentRoute: typeof AuthImport
-    }
-    '/_guest/changelog': {
-      id: '/_guest/changelog'
-      path: '/changelog'
-      fullPath: '/changelog'
-      preLoaderRoute: typeof GuestChangelogImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/contests': {
-      id: '/_guest/contests'
-      path: '/contests'
-      fullPath: '/contests'
-      preLoaderRoute: typeof GuestContestsImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/patreon': {
-      id: '/_guest/patreon'
-      path: '/patreon'
-      fullPath: '/patreon'
-      preLoaderRoute: typeof GuestPatreonImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/privacy-policy': {
-      id: '/_guest/privacy-policy'
-      path: '/privacy-policy'
-      fullPath: '/privacy-policy'
-      preLoaderRoute: typeof GuestPrivacyPolicyImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/servers': {
-      id: '/_guest/servers'
-      path: '/servers'
-      fullPath: '/servers'
-      preLoaderRoute: typeof GuestServersImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/stv': {
-      id: '/_guest/stv'
-      path: '/stv'
-      fullPath: '/stv'
-      preLoaderRoute: typeof GuestStvImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/wiki': {
-      id: '/_guest/wiki'
-      path: '/wiki'
-      fullPath: '/wiki'
-      preLoaderRoute: typeof GuestWikiImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/': {
-      id: '/_guest/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof GuestIndexImport
-      parentRoute: typeof GuestImport
-    }
-    '/_admin/admin/game-admins': {
-      id: '/_admin/admin/game-admins'
-      path: '/admin/game-admins'
-      fullPath: '/admin/game-admins'
-      preLoaderRoute: typeof AdminAdminGameAdminsImport
-      parentRoute: typeof AdminImport
-    }
-    '/_admin/admin/servers': {
-      id: '/_admin/admin/servers'
-      path: '/admin/servers'
-      fullPath: '/admin/servers'
-      preLoaderRoute: typeof AdminAdminServersImport
-      parentRoute: typeof AdminImport
-    }
-    '/_admin/admin/settings': {
-      id: '/_admin/admin/settings'
-      path: '/admin/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AdminAdminSettingsImport
-      parentRoute: typeof AdminImport
-    }
-    '/_auth/ban/$ban_id': {
-      id: '/_auth/ban/$ban_id'
-      path: '/ban/$ban_id'
-      fullPath: '/ban/$ban_id'
-      preLoaderRoute: typeof AuthBanBanidImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/contests/$contest_id': {
-      id: '/_auth/contests/$contest_id'
-      path: '/contests/$contest_id'
-      fullPath: '/contests/$contest_id'
-      preLoaderRoute: typeof AuthContestsContestidImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/forums/$forum_id': {
-      id: '/_auth/forums/$forum_id'
-      path: '/$forum_id'
-      fullPath: '/forums/$forum_id'
-      preLoaderRoute: typeof AuthForumsForumidImport
-      parentRoute: typeof AuthForumsImport
-    }
-    '/_auth/match/$matchId': {
-      id: '/_auth/match/$matchId'
-      path: '/match/$matchId'
-      fullPath: '/match/$matchId'
-      preLoaderRoute: typeof AuthMatchMatchIdImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/report/$reportId': {
-      id: '/_auth/report/$reportId'
-      path: '/$reportId'
-      fullPath: '/report/$reportId'
-      preLoaderRoute: typeof AuthReportReportIdImport
-      parentRoute: typeof AuthReportImport
-    }
-    '/_guest/login/success': {
-      id: '/_guest/login/success'
-      path: '/login/success'
-      fullPath: '/login/success'
-      preLoaderRoute: typeof GuestLoginSuccessImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/profile/$steamId': {
-      id: '/_guest/profile/$steamId'
-      path: '/profile/$steamId'
-      fullPath: '/profile/$steamId'
-      preLoaderRoute: typeof GuestProfileSteamIdImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/wiki/$slug': {
-      id: '/_guest/wiki/$slug'
-      path: '/$slug'
-      fullPath: '/wiki/$slug'
-      preLoaderRoute: typeof GuestWikiSlugImport
-      parentRoute: typeof GuestWikiImport
-    }
-    '/_mod/admin/anticheat': {
-      id: '/_mod/admin/anticheat'
-      path: '/admin/anticheat'
-      fullPath: '/admin/anticheat'
-      preLoaderRoute: typeof ModAdminAnticheatImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/appeals': {
-      id: '/_mod/admin/appeals'
-      path: '/admin/appeals'
-      fullPath: '/admin/appeals'
-      preLoaderRoute: typeof ModAdminAppealsImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/contests': {
-      id: '/_mod/admin/contests'
-      path: '/admin/contests'
-      fullPath: '/admin/contests'
-      preLoaderRoute: typeof ModAdminContestsImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/filters': {
-      id: '/_mod/admin/filters'
-      path: '/admin/filters'
-      fullPath: '/admin/filters'
-      preLoaderRoute: typeof ModAdminFiltersImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/news': {
-      id: '/_mod/admin/news'
-      path: '/admin/news'
-      fullPath: '/admin/news'
-      preLoaderRoute: typeof ModAdminNewsImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/people': {
-      id: '/_mod/admin/people'
-      path: '/admin/people'
-      fullPath: '/admin/people'
-      preLoaderRoute: typeof ModAdminPeopleImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/reports': {
-      id: '/_mod/admin/reports'
-      path: '/admin/reports'
-      fullPath: '/admin/reports'
-      preLoaderRoute: typeof ModAdminReportsImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/votes': {
-      id: '/_mod/admin/votes'
-      path: '/admin/votes'
-      fullPath: '/admin/votes'
-      preLoaderRoute: typeof ModAdminVotesImport
-      parentRoute: typeof ModImport
-    }
-    '/_auth/forums/': {
-      id: '/_auth/forums/'
-      path: '/'
-      fullPath: '/forums/'
-      preLoaderRoute: typeof AuthForumsIndexImport
-      parentRoute: typeof AuthForumsImport
-    }
-    '/_auth/report/': {
-      id: '/_auth/report/'
-      path: '/'
-      fullPath: '/report/'
-      preLoaderRoute: typeof AuthReportIndexImport
-      parentRoute: typeof AuthReportImport
-    }
-    '/_auth/stats/': {
-      id: '/_auth/stats/'
-      path: '/'
-      fullPath: '/stats/'
-      preLoaderRoute: typeof AuthStatsIndexImport
-      parentRoute: typeof AuthStatsImport
-    }
-    '/_guest/login/': {
-      id: '/_guest/login/'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof GuestLoginIndexImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/speedruns/': {
-      id: '/_guest/speedruns/'
-      path: '/speedruns'
-      fullPath: '/speedruns'
-      preLoaderRoute: typeof GuestSpeedrunsIndexImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/wiki/': {
-      id: '/_guest/wiki/'
-      path: '/'
-      fullPath: '/wiki/'
-      preLoaderRoute: typeof GuestWikiIndexImport
-      parentRoute: typeof GuestWikiImport
-    }
-    '/_auth/logs/$steamId/': {
-      id: '/_auth/logs/$steamId/'
-      path: '/logs/$steamId'
-      fullPath: '/logs/$steamId'
-      preLoaderRoute: typeof AuthLogsSteamIdImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/forums/thread/$forum_thread_id': {
-      id: '/_auth/forums/thread/$forum_thread_id'
-      path: '/thread/$forum_thread_id'
-      fullPath: '/forums/thread/$forum_thread_id'
-      preLoaderRoute: typeof AuthForumsThreadForumthreadidImport
-      parentRoute: typeof AuthForumsImport
-    }
-    '/_auth/stats/weapon/$weapon_id': {
-      id: '/_auth/stats/weapon/$weapon_id'
-      path: '/weapon/$weapon_id'
-      fullPath: '/stats/weapon/$weapon_id'
-      preLoaderRoute: typeof AuthStatsWeaponWeaponidImport
-      parentRoute: typeof AuthStatsImport
-    }
-    '/_guest/speedruns/id/$speedrunId': {
-      id: '/_guest/speedruns/id/$speedrunId'
-      path: '/speedruns/id/$speedrunId'
-      fullPath: '/speedruns/id/$speedrunId'
-      preLoaderRoute: typeof GuestSpeedrunsIdSpeedrunIdImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/speedruns/map/$mapName': {
-      id: '/_guest/speedruns/map/$mapName'
-      path: '/speedruns/map/$mapName'
-      fullPath: '/speedruns/map/$mapName'
-      preLoaderRoute: typeof GuestSpeedrunsMapMapNameImport
-      parentRoute: typeof GuestImport
-    }
-    '/_mod/admin/ban/asn': {
-      id: '/_mod/admin/ban/asn'
-      path: '/admin/ban/asn'
-      fullPath: '/admin/ban/asn'
-      preLoaderRoute: typeof ModAdminBanAsnImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/ban/cidr': {
-      id: '/_mod/admin/ban/cidr'
-      path: '/admin/ban/cidr'
-      fullPath: '/admin/ban/cidr'
-      preLoaderRoute: typeof ModAdminBanCidrImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/ban/group': {
-      id: '/_mod/admin/ban/group'
-      path: '/admin/ban/group'
-      fullPath: '/admin/ban/group'
-      preLoaderRoute: typeof ModAdminBanGroupImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/ban/steam': {
-      id: '/_mod/admin/ban/steam'
-      path: '/admin/ban/steam'
-      fullPath: '/admin/ban/steam'
-      preLoaderRoute: typeof ModAdminBanSteamImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/network/cidrblocks': {
-      id: '/_mod/admin/network/cidrblocks'
-      path: '/admin/network/cidrblocks'
-      fullPath: '/admin/network/cidrblocks'
-      preLoaderRoute: typeof ModAdminNetworkCidrblocksImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/network/ipInfo': {
-      id: '/_mod/admin/network/ipInfo'
-      path: '/admin/network/ipInfo'
-      fullPath: '/admin/network/ipInfo'
-      preLoaderRoute: typeof ModAdminNetworkIpInfoImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/network/iphist': {
-      id: '/_mod/admin/network/iphist'
-      path: '/admin/network/iphist'
-      fullPath: '/admin/network/iphist'
-      preLoaderRoute: typeof ModAdminNetworkIphistImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/network/playersbyip': {
-      id: '/_mod/admin/network/playersbyip'
-      path: '/admin/network/playersbyip'
-      fullPath: '/admin/network/playersbyip'
-      preLoaderRoute: typeof ModAdminNetworkPlayersbyipImport
-      parentRoute: typeof ModImport
-    }
-    '/_mod/admin/network/': {
-      id: '/_mod/admin/network/'
-      path: '/admin/network'
-      fullPath: '/admin/network'
-      preLoaderRoute: typeof ModAdminNetworkIndexImport
-      parentRoute: typeof ModImport
-    }
-  }
-}
-
-// Create and export the route tree
-
-interface AdminRouteChildren {
-  AdminAdminGameAdminsRoute: typeof AdminAdminGameAdminsRoute
-  AdminAdminServersRoute: typeof AdminAdminServersRoute
-  AdminAdminSettingsRoute: typeof AdminAdminSettingsRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminAdminGameAdminsRoute: AdminAdminGameAdminsRoute,
-  AdminAdminServersRoute: AdminAdminServersRoute,
-  AdminAdminSettingsRoute: AdminAdminSettingsRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
-interface AuthForumsRouteChildren {
-  AuthForumsForumidRoute: typeof AuthForumsForumidRoute
-  AuthForumsIndexRoute: typeof AuthForumsIndexRoute
-  AuthForumsThreadForumthreadidRoute: typeof AuthForumsThreadForumthreadidRoute
-}
-
-const AuthForumsRouteChildren: AuthForumsRouteChildren = {
-  AuthForumsForumidRoute: AuthForumsForumidRoute,
-  AuthForumsIndexRoute: AuthForumsIndexRoute,
-  AuthForumsThreadForumthreadidRoute: AuthForumsThreadForumthreadidRoute,
-}
-
-const AuthForumsRouteWithChildren = AuthForumsRoute._addFileChildren(
-  AuthForumsRouteChildren,
-)
-
-interface AuthReportRouteChildren {
-  AuthReportReportIdRoute: typeof AuthReportReportIdRoute
-  AuthReportIndexRoute: typeof AuthReportIndexRoute
-}
-
-const AuthReportRouteChildren: AuthReportRouteChildren = {
-  AuthReportReportIdRoute: AuthReportReportIdRoute,
-  AuthReportIndexRoute: AuthReportIndexRoute,
-}
-
-const AuthReportRouteWithChildren = AuthReportRoute._addFileChildren(
-  AuthReportRouteChildren,
-)
-
-interface AuthStatsRouteChildren {
-  AuthStatsIndexRoute: typeof AuthStatsIndexRoute
-  AuthStatsWeaponWeaponidRoute: typeof AuthStatsWeaponWeaponidRoute
-}
-
-const AuthStatsRouteChildren: AuthStatsRouteChildren = {
-  AuthStatsIndexRoute: AuthStatsIndexRoute,
-  AuthStatsWeaponWeaponidRoute: AuthStatsWeaponWeaponidRoute,
-}
-
-const AuthStatsRouteWithChildren = AuthStatsRoute._addFileChildren(
-  AuthStatsRouteChildren,
-)
-
-interface AuthRouteChildren {
-  AuthChatlogsRoute: typeof AuthChatlogsRoute
-  AuthForumsRoute: typeof AuthForumsRouteWithChildren
-  AuthLogoutRoute: typeof AuthLogoutRoute
-  AuthNotificationsRoute: typeof AuthNotificationsRoute
-  AuthPageNotFoundRoute: typeof AuthPageNotFoundRoute
-  AuthPermissionRoute: typeof AuthPermissionRoute
-  AuthReportRoute: typeof AuthReportRouteWithChildren
-  AuthSettingsRoute: typeof AuthSettingsRoute
-  AuthStatsRoute: typeof AuthStatsRouteWithChildren
-  AuthBanBanidRoute: typeof AuthBanBanidRoute
-  AuthContestsContestidRoute: typeof AuthContestsContestidRoute
-  AuthMatchMatchIdRoute: typeof AuthMatchMatchIdRoute
-  AuthLogsSteamIdRoute: typeof AuthLogsSteamIdRoute
-}
-
-const AuthRouteChildren: AuthRouteChildren = {
-  AuthChatlogsRoute: AuthChatlogsRoute,
-  AuthForumsRoute: AuthForumsRouteWithChildren,
-  AuthLogoutRoute: AuthLogoutRoute,
-  AuthNotificationsRoute: AuthNotificationsRoute,
-  AuthPageNotFoundRoute: AuthPageNotFoundRoute,
-  AuthPermissionRoute: AuthPermissionRoute,
-  AuthReportRoute: AuthReportRouteWithChildren,
-  AuthSettingsRoute: AuthSettingsRoute,
-  AuthStatsRoute: AuthStatsRouteWithChildren,
-  AuthBanBanidRoute: AuthBanBanidRoute,
-  AuthContestsContestidRoute: AuthContestsContestidRoute,
-  AuthMatchMatchIdRoute: AuthMatchMatchIdRoute,
-  AuthLogsSteamIdRoute: AuthLogsSteamIdRoute,
-}
-
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
-
-interface GuestWikiRouteChildren {
-  GuestWikiSlugRoute: typeof GuestWikiSlugRoute
-  GuestWikiIndexRoute: typeof GuestWikiIndexRoute
-}
-
-const GuestWikiRouteChildren: GuestWikiRouteChildren = {
-  GuestWikiSlugRoute: GuestWikiSlugRoute,
-  GuestWikiIndexRoute: GuestWikiIndexRoute,
-}
-
-const GuestWikiRouteWithChildren = GuestWikiRoute._addFileChildren(
-  GuestWikiRouteChildren,
-)
-
-interface GuestRouteChildren {
-  GuestChangelogRoute: typeof GuestChangelogRoute
-  GuestContestsRoute: typeof GuestContestsRoute
-  GuestPatreonRoute: typeof GuestPatreonRoute
-  GuestPrivacyPolicyRoute: typeof GuestPrivacyPolicyRoute
-  GuestServersRoute: typeof GuestServersRoute
-  GuestStvRoute: typeof GuestStvRoute
-  GuestWikiRoute: typeof GuestWikiRouteWithChildren
-  GuestIndexRoute: typeof GuestIndexRoute
-  GuestLoginSuccessRoute: typeof GuestLoginSuccessRoute
-  GuestProfileSteamIdRoute: typeof GuestProfileSteamIdRoute
-  GuestLoginIndexRoute: typeof GuestLoginIndexRoute
-  GuestSpeedrunsIndexRoute: typeof GuestSpeedrunsIndexRoute
-  GuestSpeedrunsIdSpeedrunIdRoute: typeof GuestSpeedrunsIdSpeedrunIdRoute
-  GuestSpeedrunsMapMapNameRoute: typeof GuestSpeedrunsMapMapNameRoute
-}
-
-const GuestRouteChildren: GuestRouteChildren = {
-  GuestChangelogRoute: GuestChangelogRoute,
-  GuestContestsRoute: GuestContestsRoute,
-  GuestPatreonRoute: GuestPatreonRoute,
-  GuestPrivacyPolicyRoute: GuestPrivacyPolicyRoute,
-  GuestServersRoute: GuestServersRoute,
-  GuestStvRoute: GuestStvRoute,
-  GuestWikiRoute: GuestWikiRouteWithChildren,
-  GuestIndexRoute: GuestIndexRoute,
-  GuestLoginSuccessRoute: GuestLoginSuccessRoute,
-  GuestProfileSteamIdRoute: GuestProfileSteamIdRoute,
-  GuestLoginIndexRoute: GuestLoginIndexRoute,
-  GuestSpeedrunsIndexRoute: GuestSpeedrunsIndexRoute,
-  GuestSpeedrunsIdSpeedrunIdRoute: GuestSpeedrunsIdSpeedrunIdRoute,
-  GuestSpeedrunsMapMapNameRoute: GuestSpeedrunsMapMapNameRoute,
-}
-
-const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren)
-
-interface ModRouteChildren {
-  ModAdminAnticheatRoute: typeof ModAdminAnticheatRoute
-  ModAdminAppealsRoute: typeof ModAdminAppealsRoute
-  ModAdminContestsRoute: typeof ModAdminContestsRoute
-  ModAdminFiltersRoute: typeof ModAdminFiltersRoute
-  ModAdminNewsRoute: typeof ModAdminNewsRoute
-  ModAdminPeopleRoute: typeof ModAdminPeopleRoute
-  ModAdminReportsRoute: typeof ModAdminReportsRoute
-  ModAdminVotesRoute: typeof ModAdminVotesRoute
-  ModAdminBanAsnRoute: typeof ModAdminBanAsnRoute
-  ModAdminBanCidrRoute: typeof ModAdminBanCidrRoute
-  ModAdminBanGroupRoute: typeof ModAdminBanGroupRoute
-  ModAdminBanSteamRoute: typeof ModAdminBanSteamRoute
-  ModAdminNetworkCidrblocksRoute: typeof ModAdminNetworkCidrblocksRoute
-  ModAdminNetworkIpInfoRoute: typeof ModAdminNetworkIpInfoRoute
-  ModAdminNetworkIphistRoute: typeof ModAdminNetworkIphistRoute
-  ModAdminNetworkPlayersbyipRoute: typeof ModAdminNetworkPlayersbyipRoute
-  ModAdminNetworkIndexRoute: typeof ModAdminNetworkIndexRoute
-}
-
-const ModRouteChildren: ModRouteChildren = {
-  ModAdminAnticheatRoute: ModAdminAnticheatRoute,
-  ModAdminAppealsRoute: ModAdminAppealsRoute,
-  ModAdminContestsRoute: ModAdminContestsRoute,
-  ModAdminFiltersRoute: ModAdminFiltersRoute,
-  ModAdminNewsRoute: ModAdminNewsRoute,
-  ModAdminPeopleRoute: ModAdminPeopleRoute,
-  ModAdminReportsRoute: ModAdminReportsRoute,
-  ModAdminVotesRoute: ModAdminVotesRoute,
-  ModAdminBanAsnRoute: ModAdminBanAsnRoute,
-  ModAdminBanCidrRoute: ModAdminBanCidrRoute,
-  ModAdminBanGroupRoute: ModAdminBanGroupRoute,
-  ModAdminBanSteamRoute: ModAdminBanSteamRoute,
-  ModAdminNetworkCidrblocksRoute: ModAdminNetworkCidrblocksRoute,
-  ModAdminNetworkIpInfoRoute: ModAdminNetworkIpInfoRoute,
-  ModAdminNetworkIphistRoute: ModAdminNetworkIphistRoute,
-  ModAdminNetworkPlayersbyipRoute: ModAdminNetworkPlayersbyipRoute,
-  ModAdminNetworkIndexRoute: ModAdminNetworkIndexRoute,
-}
-
-const ModRouteWithChildren = ModRoute._addFileChildren(ModRouteChildren)
-
 export interface FileRoutesByFullPath {
-  '': typeof ModRouteWithChildren
   '/chatlogs': typeof AuthChatlogsRoute
   '/forums': typeof AuthForumsRouteWithChildren
   '/logout': typeof AuthLogoutRoute
@@ -1070,9 +394,9 @@ export interface FileRoutesByFullPath {
   '/admin/game-admins': typeof AdminAdminGameAdminsRoute
   '/admin/servers': typeof AdminAdminServersRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
-  '/ban/$ban_id': typeof AuthBanBanidRoute
-  '/contests/$contest_id': typeof AuthContestsContestidRoute
-  '/forums/$forum_id': typeof AuthForumsForumidRoute
+  '/ban/$ban_id': typeof AuthBanBan_idRoute
+  '/contests/$contest_id': typeof AuthContestsContest_idRoute
+  '/forums/$forum_id': typeof AuthForumsForum_idRoute
   '/match/$matchId': typeof AuthMatchMatchIdRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
   '/login/success': typeof GuestLoginSuccessRoute
@@ -1093,8 +417,8 @@ export interface FileRoutesByFullPath {
   '/speedruns': typeof GuestSpeedrunsIndexRoute
   '/wiki/': typeof GuestWikiIndexRoute
   '/logs/$steamId': typeof AuthLogsSteamIdRoute
-  '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForumthreadidRoute
-  '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeaponidRoute
+  '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForum_thread_idRoute
+  '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeapon_idRoute
   '/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
   '/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
   '/admin/ban/asn': typeof ModAdminBanAsnRoute
@@ -1107,9 +431,7 @@ export interface FileRoutesByFullPath {
   '/admin/network/playersbyip': typeof ModAdminNetworkPlayersbyipRoute
   '/admin/network': typeof ModAdminNetworkIndexRoute
 }
-
 export interface FileRoutesByTo {
-  '': typeof ModRouteWithChildren
   '/chatlogs': typeof AuthChatlogsRoute
   '/logout': typeof AuthLogoutRoute
   '/notifications': typeof AuthNotificationsRoute
@@ -1126,9 +448,9 @@ export interface FileRoutesByTo {
   '/admin/game-admins': typeof AdminAdminGameAdminsRoute
   '/admin/servers': typeof AdminAdminServersRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
-  '/ban/$ban_id': typeof AuthBanBanidRoute
-  '/contests/$contest_id': typeof AuthContestsContestidRoute
-  '/forums/$forum_id': typeof AuthForumsForumidRoute
+  '/ban/$ban_id': typeof AuthBanBan_idRoute
+  '/contests/$contest_id': typeof AuthContestsContest_idRoute
+  '/forums/$forum_id': typeof AuthForumsForum_idRoute
   '/match/$matchId': typeof AuthMatchMatchIdRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
   '/login/success': typeof GuestLoginSuccessRoute
@@ -1149,8 +471,8 @@ export interface FileRoutesByTo {
   '/speedruns': typeof GuestSpeedrunsIndexRoute
   '/wiki': typeof GuestWikiIndexRoute
   '/logs/$steamId': typeof AuthLogsSteamIdRoute
-  '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForumthreadidRoute
-  '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeaponidRoute
+  '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForum_thread_idRoute
+  '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeapon_idRoute
   '/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
   '/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
   '/admin/ban/asn': typeof ModAdminBanAsnRoute
@@ -1163,9 +485,8 @@ export interface FileRoutesByTo {
   '/admin/network/playersbyip': typeof ModAdminNetworkPlayersbyipRoute
   '/admin/network': typeof ModAdminNetworkIndexRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/_admin': typeof AdminRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
   '/_guest': typeof GuestRouteWithChildren
@@ -1190,9 +511,9 @@ export interface FileRoutesById {
   '/_admin/admin/game-admins': typeof AdminAdminGameAdminsRoute
   '/_admin/admin/servers': typeof AdminAdminServersRoute
   '/_admin/admin/settings': typeof AdminAdminSettingsRoute
-  '/_auth/ban/$ban_id': typeof AuthBanBanidRoute
-  '/_auth/contests/$contest_id': typeof AuthContestsContestidRoute
-  '/_auth/forums/$forum_id': typeof AuthForumsForumidRoute
+  '/_auth/ban/$ban_id': typeof AuthBanBan_idRoute
+  '/_auth/contests/$contest_id': typeof AuthContestsContest_idRoute
+  '/_auth/forums/$forum_id': typeof AuthForumsForum_idRoute
   '/_auth/match/$matchId': typeof AuthMatchMatchIdRoute
   '/_auth/report/$reportId': typeof AuthReportReportIdRoute
   '/_guest/login/success': typeof GuestLoginSuccessRoute
@@ -1213,8 +534,8 @@ export interface FileRoutesById {
   '/_guest/speedruns/': typeof GuestSpeedrunsIndexRoute
   '/_guest/wiki/': typeof GuestWikiIndexRoute
   '/_auth/logs/$steamId/': typeof AuthLogsSteamIdRoute
-  '/_auth/forums/thread/$forum_thread_id': typeof AuthForumsThreadForumthreadidRoute
-  '/_auth/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeaponidRoute
+  '/_auth/forums/thread/$forum_thread_id': typeof AuthForumsThreadForum_thread_idRoute
+  '/_auth/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeapon_idRoute
   '/_guest/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
   '/_guest/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
   '/_mod/admin/ban/asn': typeof ModAdminBanAsnRoute
@@ -1227,11 +548,9 @@ export interface FileRoutesById {
   '/_mod/admin/network/playersbyip': typeof ModAdminNetworkPlayersbyipRoute
   '/_mod/admin/network/': typeof ModAdminNetworkIndexRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | ''
     | '/chatlogs'
     | '/forums'
     | '/logout'
@@ -1290,7 +609,6 @@ export interface FileRouteTypes {
     | '/admin/network'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | ''
     | '/chatlogs'
     | '/logout'
     | '/notifications'
@@ -1407,7 +725,6 @@ export interface FileRouteTypes {
     | '/_mod/admin/network/'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
@@ -1415,337 +732,621 @@ export interface RootRouteChildren {
   ModRoute: typeof ModRouteWithChildren
 }
 
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/_mod': {
+      id: '/_mod'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof ModRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_guest': {
+      id: '/_guest'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof GuestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_admin': {
+      id: '/_admin'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_guest/': {
+      id: '/_guest/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof GuestIndexRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/wiki': {
+      id: '/_guest/wiki'
+      path: '/wiki'
+      fullPath: '/wiki'
+      preLoaderRoute: typeof GuestWikiRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/stv': {
+      id: '/_guest/stv'
+      path: '/stv'
+      fullPath: '/stv'
+      preLoaderRoute: typeof GuestStvRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/servers': {
+      id: '/_guest/servers'
+      path: '/servers'
+      fullPath: '/servers'
+      preLoaderRoute: typeof GuestServersRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/privacy-policy': {
+      id: '/_guest/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof GuestPrivacyPolicyRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/patreon': {
+      id: '/_guest/patreon'
+      path: '/patreon'
+      fullPath: '/patreon'
+      preLoaderRoute: typeof GuestPatreonRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/contests': {
+      id: '/_guest/contests'
+      path: '/contests'
+      fullPath: '/contests'
+      preLoaderRoute: typeof GuestContestsRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/changelog': {
+      id: '/_guest/changelog'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof GuestChangelogRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_auth/stats': {
+      id: '/_auth/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof AuthStatsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/settings': {
+      id: '/_auth/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthSettingsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/report': {
+      id: '/_auth/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof AuthReportRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/permission': {
+      id: '/_auth/permission'
+      path: '/permission'
+      fullPath: '/permission'
+      preLoaderRoute: typeof AuthPermissionRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/page-not-found': {
+      id: '/_auth/page-not-found'
+      path: '/page-not-found'
+      fullPath: '/page-not-found'
+      preLoaderRoute: typeof AuthPageNotFoundRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/notifications': {
+      id: '/_auth/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthNotificationsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/logout': {
+      id: '/_auth/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof AuthLogoutRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/forums': {
+      id: '/_auth/forums'
+      path: '/forums'
+      fullPath: '/forums'
+      preLoaderRoute: typeof AuthForumsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/chatlogs': {
+      id: '/_auth/chatlogs'
+      path: '/chatlogs'
+      fullPath: '/chatlogs'
+      preLoaderRoute: typeof AuthChatlogsRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_guest/wiki/': {
+      id: '/_guest/wiki/'
+      path: '/'
+      fullPath: '/wiki/'
+      preLoaderRoute: typeof GuestWikiIndexRouteImport
+      parentRoute: typeof GuestWikiRoute
+    }
+    '/_guest/speedruns/': {
+      id: '/_guest/speedruns/'
+      path: '/speedruns'
+      fullPath: '/speedruns'
+      preLoaderRoute: typeof GuestSpeedrunsIndexRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/login/': {
+      id: '/_guest/login/'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof GuestLoginIndexRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_auth/stats/': {
+      id: '/_auth/stats/'
+      path: '/'
+      fullPath: '/stats/'
+      preLoaderRoute: typeof AuthStatsIndexRouteImport
+      parentRoute: typeof AuthStatsRoute
+    }
+    '/_auth/report/': {
+      id: '/_auth/report/'
+      path: '/'
+      fullPath: '/report/'
+      preLoaderRoute: typeof AuthReportIndexRouteImport
+      parentRoute: typeof AuthReportRoute
+    }
+    '/_auth/forums/': {
+      id: '/_auth/forums/'
+      path: '/'
+      fullPath: '/forums/'
+      preLoaderRoute: typeof AuthForumsIndexRouteImport
+      parentRoute: typeof AuthForumsRoute
+    }
+    '/_mod/admin/votes': {
+      id: '/_mod/admin/votes'
+      path: '/admin/votes'
+      fullPath: '/admin/votes'
+      preLoaderRoute: typeof ModAdminVotesRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/reports': {
+      id: '/_mod/admin/reports'
+      path: '/admin/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof ModAdminReportsRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/people': {
+      id: '/_mod/admin/people'
+      path: '/admin/people'
+      fullPath: '/admin/people'
+      preLoaderRoute: typeof ModAdminPeopleRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/news': {
+      id: '/_mod/admin/news'
+      path: '/admin/news'
+      fullPath: '/admin/news'
+      preLoaderRoute: typeof ModAdminNewsRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/filters': {
+      id: '/_mod/admin/filters'
+      path: '/admin/filters'
+      fullPath: '/admin/filters'
+      preLoaderRoute: typeof ModAdminFiltersRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/contests': {
+      id: '/_mod/admin/contests'
+      path: '/admin/contests'
+      fullPath: '/admin/contests'
+      preLoaderRoute: typeof ModAdminContestsRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/appeals': {
+      id: '/_mod/admin/appeals'
+      path: '/admin/appeals'
+      fullPath: '/admin/appeals'
+      preLoaderRoute: typeof ModAdminAppealsRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/anticheat': {
+      id: '/_mod/admin/anticheat'
+      path: '/admin/anticheat'
+      fullPath: '/admin/anticheat'
+      preLoaderRoute: typeof ModAdminAnticheatRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_guest/wiki/$slug': {
+      id: '/_guest/wiki/$slug'
+      path: '/$slug'
+      fullPath: '/wiki/$slug'
+      preLoaderRoute: typeof GuestWikiSlugRouteImport
+      parentRoute: typeof GuestWikiRoute
+    }
+    '/_guest/profile/$steamId': {
+      id: '/_guest/profile/$steamId'
+      path: '/profile/$steamId'
+      fullPath: '/profile/$steamId'
+      preLoaderRoute: typeof GuestProfileSteamIdRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/login/success': {
+      id: '/_guest/login/success'
+      path: '/login/success'
+      fullPath: '/login/success'
+      preLoaderRoute: typeof GuestLoginSuccessRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_auth/report/$reportId': {
+      id: '/_auth/report/$reportId'
+      path: '/$reportId'
+      fullPath: '/report/$reportId'
+      preLoaderRoute: typeof AuthReportReportIdRouteImport
+      parentRoute: typeof AuthReportRoute
+    }
+    '/_auth/match/$matchId': {
+      id: '/_auth/match/$matchId'
+      path: '/match/$matchId'
+      fullPath: '/match/$matchId'
+      preLoaderRoute: typeof AuthMatchMatchIdRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/forums/$forum_id': {
+      id: '/_auth/forums/$forum_id'
+      path: '/$forum_id'
+      fullPath: '/forums/$forum_id'
+      preLoaderRoute: typeof AuthForumsForum_idRouteImport
+      parentRoute: typeof AuthForumsRoute
+    }
+    '/_auth/contests/$contest_id': {
+      id: '/_auth/contests/$contest_id'
+      path: '/contests/$contest_id'
+      fullPath: '/contests/$contest_id'
+      preLoaderRoute: typeof AuthContestsContest_idRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/ban/$ban_id': {
+      id: '/_auth/ban/$ban_id'
+      path: '/ban/$ban_id'
+      fullPath: '/ban/$ban_id'
+      preLoaderRoute: typeof AuthBanBan_idRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_admin/admin/settings': {
+      id: '/_admin/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminAdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/servers': {
+      id: '/_admin/admin/servers'
+      path: '/admin/servers'
+      fullPath: '/admin/servers'
+      preLoaderRoute: typeof AdminAdminServersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/game-admins': {
+      id: '/_admin/admin/game-admins'
+      path: '/admin/game-admins'
+      fullPath: '/admin/game-admins'
+      preLoaderRoute: typeof AdminAdminGameAdminsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_mod/admin/network/': {
+      id: '/_mod/admin/network/'
+      path: '/admin/network'
+      fullPath: '/admin/network'
+      preLoaderRoute: typeof ModAdminNetworkIndexRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/network/playersbyip': {
+      id: '/_mod/admin/network/playersbyip'
+      path: '/admin/network/playersbyip'
+      fullPath: '/admin/network/playersbyip'
+      preLoaderRoute: typeof ModAdminNetworkPlayersbyipRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/network/iphist': {
+      id: '/_mod/admin/network/iphist'
+      path: '/admin/network/iphist'
+      fullPath: '/admin/network/iphist'
+      preLoaderRoute: typeof ModAdminNetworkIphistRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/network/ipInfo': {
+      id: '/_mod/admin/network/ipInfo'
+      path: '/admin/network/ipInfo'
+      fullPath: '/admin/network/ipInfo'
+      preLoaderRoute: typeof ModAdminNetworkIpInfoRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/network/cidrblocks': {
+      id: '/_mod/admin/network/cidrblocks'
+      path: '/admin/network/cidrblocks'
+      fullPath: '/admin/network/cidrblocks'
+      preLoaderRoute: typeof ModAdminNetworkCidrblocksRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/ban/steam': {
+      id: '/_mod/admin/ban/steam'
+      path: '/admin/ban/steam'
+      fullPath: '/admin/ban/steam'
+      preLoaderRoute: typeof ModAdminBanSteamRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/ban/group': {
+      id: '/_mod/admin/ban/group'
+      path: '/admin/ban/group'
+      fullPath: '/admin/ban/group'
+      preLoaderRoute: typeof ModAdminBanGroupRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/ban/cidr': {
+      id: '/_mod/admin/ban/cidr'
+      path: '/admin/ban/cidr'
+      fullPath: '/admin/ban/cidr'
+      preLoaderRoute: typeof ModAdminBanCidrRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_mod/admin/ban/asn': {
+      id: '/_mod/admin/ban/asn'
+      path: '/admin/ban/asn'
+      fullPath: '/admin/ban/asn'
+      preLoaderRoute: typeof ModAdminBanAsnRouteImport
+      parentRoute: typeof ModRoute
+    }
+    '/_guest/speedruns/map/$mapName': {
+      id: '/_guest/speedruns/map/$mapName'
+      path: '/speedruns/map/$mapName'
+      fullPath: '/speedruns/map/$mapName'
+      preLoaderRoute: typeof GuestSpeedrunsMapMapNameRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/speedruns/id/$speedrunId': {
+      id: '/_guest/speedruns/id/$speedrunId'
+      path: '/speedruns/id/$speedrunId'
+      fullPath: '/speedruns/id/$speedrunId'
+      preLoaderRoute: typeof GuestSpeedrunsIdSpeedrunIdRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_auth/stats/weapon/$weapon_id': {
+      id: '/_auth/stats/weapon/$weapon_id'
+      path: '/weapon/$weapon_id'
+      fullPath: '/stats/weapon/$weapon_id'
+      preLoaderRoute: typeof AuthStatsWeaponWeapon_idRouteImport
+      parentRoute: typeof AuthStatsRoute
+    }
+    '/_auth/forums/thread/$forum_thread_id': {
+      id: '/_auth/forums/thread/$forum_thread_id'
+      path: '/thread/$forum_thread_id'
+      fullPath: '/forums/thread/$forum_thread_id'
+      preLoaderRoute: typeof AuthForumsThreadForum_thread_idRouteImport
+      parentRoute: typeof AuthForumsRoute
+    }
+    '/_auth/logs/$steamId/': {
+      id: '/_auth/logs/$steamId/'
+      path: '/logs/$steamId'
+      fullPath: '/logs/$steamId'
+      preLoaderRoute: typeof AuthLogsSteamIdRouteImport
+      parentRoute: typeof AuthRoute
+    }
+  }
+}
+
+interface AdminRouteChildren {
+  AdminAdminGameAdminsRoute: typeof AdminAdminGameAdminsRoute
+  AdminAdminServersRoute: typeof AdminAdminServersRoute
+  AdminAdminSettingsRoute: typeof AdminAdminSettingsRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAdminGameAdminsRoute: AdminAdminGameAdminsRoute,
+  AdminAdminServersRoute: AdminAdminServersRoute,
+  AdminAdminSettingsRoute: AdminAdminSettingsRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface AuthForumsRouteChildren {
+  AuthForumsForum_idRoute: typeof AuthForumsForum_idRoute
+  AuthForumsIndexRoute: typeof AuthForumsIndexRoute
+  AuthForumsThreadForum_thread_idRoute: typeof AuthForumsThreadForum_thread_idRoute
+}
+
+const AuthForumsRouteChildren: AuthForumsRouteChildren = {
+  AuthForumsForum_idRoute: AuthForumsForum_idRoute,
+  AuthForumsIndexRoute: AuthForumsIndexRoute,
+  AuthForumsThreadForum_thread_idRoute: AuthForumsThreadForum_thread_idRoute,
+}
+
+const AuthForumsRouteWithChildren = AuthForumsRoute._addFileChildren(
+  AuthForumsRouteChildren,
+)
+
+interface AuthReportRouteChildren {
+  AuthReportReportIdRoute: typeof AuthReportReportIdRoute
+  AuthReportIndexRoute: typeof AuthReportIndexRoute
+}
+
+const AuthReportRouteChildren: AuthReportRouteChildren = {
+  AuthReportReportIdRoute: AuthReportReportIdRoute,
+  AuthReportIndexRoute: AuthReportIndexRoute,
+}
+
+const AuthReportRouteWithChildren = AuthReportRoute._addFileChildren(
+  AuthReportRouteChildren,
+)
+
+interface AuthStatsRouteChildren {
+  AuthStatsIndexRoute: typeof AuthStatsIndexRoute
+  AuthStatsWeaponWeapon_idRoute: typeof AuthStatsWeaponWeapon_idRoute
+}
+
+const AuthStatsRouteChildren: AuthStatsRouteChildren = {
+  AuthStatsIndexRoute: AuthStatsIndexRoute,
+  AuthStatsWeaponWeapon_idRoute: AuthStatsWeaponWeapon_idRoute,
+}
+
+const AuthStatsRouteWithChildren = AuthStatsRoute._addFileChildren(
+  AuthStatsRouteChildren,
+)
+
+interface AuthRouteChildren {
+  AuthChatlogsRoute: typeof AuthChatlogsRoute
+  AuthForumsRoute: typeof AuthForumsRouteWithChildren
+  AuthLogoutRoute: typeof AuthLogoutRoute
+  AuthNotificationsRoute: typeof AuthNotificationsRoute
+  AuthPageNotFoundRoute: typeof AuthPageNotFoundRoute
+  AuthPermissionRoute: typeof AuthPermissionRoute
+  AuthReportRoute: typeof AuthReportRouteWithChildren
+  AuthSettingsRoute: typeof AuthSettingsRoute
+  AuthStatsRoute: typeof AuthStatsRouteWithChildren
+  AuthBanBan_idRoute: typeof AuthBanBan_idRoute
+  AuthContestsContest_idRoute: typeof AuthContestsContest_idRoute
+  AuthMatchMatchIdRoute: typeof AuthMatchMatchIdRoute
+  AuthLogsSteamIdRoute: typeof AuthLogsSteamIdRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthChatlogsRoute: AuthChatlogsRoute,
+  AuthForumsRoute: AuthForumsRouteWithChildren,
+  AuthLogoutRoute: AuthLogoutRoute,
+  AuthNotificationsRoute: AuthNotificationsRoute,
+  AuthPageNotFoundRoute: AuthPageNotFoundRoute,
+  AuthPermissionRoute: AuthPermissionRoute,
+  AuthReportRoute: AuthReportRouteWithChildren,
+  AuthSettingsRoute: AuthSettingsRoute,
+  AuthStatsRoute: AuthStatsRouteWithChildren,
+  AuthBanBan_idRoute: AuthBanBan_idRoute,
+  AuthContestsContest_idRoute: AuthContestsContest_idRoute,
+  AuthMatchMatchIdRoute: AuthMatchMatchIdRoute,
+  AuthLogsSteamIdRoute: AuthLogsSteamIdRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
+interface GuestWikiRouteChildren {
+  GuestWikiSlugRoute: typeof GuestWikiSlugRoute
+  GuestWikiIndexRoute: typeof GuestWikiIndexRoute
+}
+
+const GuestWikiRouteChildren: GuestWikiRouteChildren = {
+  GuestWikiSlugRoute: GuestWikiSlugRoute,
+  GuestWikiIndexRoute: GuestWikiIndexRoute,
+}
+
+const GuestWikiRouteWithChildren = GuestWikiRoute._addFileChildren(
+  GuestWikiRouteChildren,
+)
+
+interface GuestRouteChildren {
+  GuestChangelogRoute: typeof GuestChangelogRoute
+  GuestContestsRoute: typeof GuestContestsRoute
+  GuestPatreonRoute: typeof GuestPatreonRoute
+  GuestPrivacyPolicyRoute: typeof GuestPrivacyPolicyRoute
+  GuestServersRoute: typeof GuestServersRoute
+  GuestStvRoute: typeof GuestStvRoute
+  GuestWikiRoute: typeof GuestWikiRouteWithChildren
+  GuestIndexRoute: typeof GuestIndexRoute
+  GuestLoginSuccessRoute: typeof GuestLoginSuccessRoute
+  GuestProfileSteamIdRoute: typeof GuestProfileSteamIdRoute
+  GuestLoginIndexRoute: typeof GuestLoginIndexRoute
+  GuestSpeedrunsIndexRoute: typeof GuestSpeedrunsIndexRoute
+  GuestSpeedrunsIdSpeedrunIdRoute: typeof GuestSpeedrunsIdSpeedrunIdRoute
+  GuestSpeedrunsMapMapNameRoute: typeof GuestSpeedrunsMapMapNameRoute
+}
+
+const GuestRouteChildren: GuestRouteChildren = {
+  GuestChangelogRoute: GuestChangelogRoute,
+  GuestContestsRoute: GuestContestsRoute,
+  GuestPatreonRoute: GuestPatreonRoute,
+  GuestPrivacyPolicyRoute: GuestPrivacyPolicyRoute,
+  GuestServersRoute: GuestServersRoute,
+  GuestStvRoute: GuestStvRoute,
+  GuestWikiRoute: GuestWikiRouteWithChildren,
+  GuestIndexRoute: GuestIndexRoute,
+  GuestLoginSuccessRoute: GuestLoginSuccessRoute,
+  GuestProfileSteamIdRoute: GuestProfileSteamIdRoute,
+  GuestLoginIndexRoute: GuestLoginIndexRoute,
+  GuestSpeedrunsIndexRoute: GuestSpeedrunsIndexRoute,
+  GuestSpeedrunsIdSpeedrunIdRoute: GuestSpeedrunsIdSpeedrunIdRoute,
+  GuestSpeedrunsMapMapNameRoute: GuestSpeedrunsMapMapNameRoute,
+}
+
+const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren)
+
+interface ModRouteChildren {
+  ModAdminAnticheatRoute: typeof ModAdminAnticheatRoute
+  ModAdminAppealsRoute: typeof ModAdminAppealsRoute
+  ModAdminContestsRoute: typeof ModAdminContestsRoute
+  ModAdminFiltersRoute: typeof ModAdminFiltersRoute
+  ModAdminNewsRoute: typeof ModAdminNewsRoute
+  ModAdminPeopleRoute: typeof ModAdminPeopleRoute
+  ModAdminReportsRoute: typeof ModAdminReportsRoute
+  ModAdminVotesRoute: typeof ModAdminVotesRoute
+  ModAdminBanAsnRoute: typeof ModAdminBanAsnRoute
+  ModAdminBanCidrRoute: typeof ModAdminBanCidrRoute
+  ModAdminBanGroupRoute: typeof ModAdminBanGroupRoute
+  ModAdminBanSteamRoute: typeof ModAdminBanSteamRoute
+  ModAdminNetworkCidrblocksRoute: typeof ModAdminNetworkCidrblocksRoute
+  ModAdminNetworkIpInfoRoute: typeof ModAdminNetworkIpInfoRoute
+  ModAdminNetworkIphistRoute: typeof ModAdminNetworkIphistRoute
+  ModAdminNetworkPlayersbyipRoute: typeof ModAdminNetworkPlayersbyipRoute
+  ModAdminNetworkIndexRoute: typeof ModAdminNetworkIndexRoute
+}
+
+const ModRouteChildren: ModRouteChildren = {
+  ModAdminAnticheatRoute: ModAdminAnticheatRoute,
+  ModAdminAppealsRoute: ModAdminAppealsRoute,
+  ModAdminContestsRoute: ModAdminContestsRoute,
+  ModAdminFiltersRoute: ModAdminFiltersRoute,
+  ModAdminNewsRoute: ModAdminNewsRoute,
+  ModAdminPeopleRoute: ModAdminPeopleRoute,
+  ModAdminReportsRoute: ModAdminReportsRoute,
+  ModAdminVotesRoute: ModAdminVotesRoute,
+  ModAdminBanAsnRoute: ModAdminBanAsnRoute,
+  ModAdminBanCidrRoute: ModAdminBanCidrRoute,
+  ModAdminBanGroupRoute: ModAdminBanGroupRoute,
+  ModAdminBanSteamRoute: ModAdminBanSteamRoute,
+  ModAdminNetworkCidrblocksRoute: ModAdminNetworkCidrblocksRoute,
+  ModAdminNetworkIpInfoRoute: ModAdminNetworkIpInfoRoute,
+  ModAdminNetworkIphistRoute: ModAdminNetworkIphistRoute,
+  ModAdminNetworkPlayersbyipRoute: ModAdminNetworkPlayersbyipRoute,
+  ModAdminNetworkIndexRoute: ModAdminNetworkIndexRoute,
+}
+
+const ModRouteWithChildren = ModRoute._addFileChildren(ModRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   GuestRoute: GuestRouteWithChildren,
   ModRoute: ModRouteWithChildren,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/_admin",
-        "/_auth",
-        "/_guest",
-        "/_mod"
-      ]
-    },
-    "/_admin": {
-      "filePath": "_admin.tsx",
-      "children": [
-        "/_admin/admin/game-admins",
-        "/_admin/admin/servers",
-        "/_admin/admin/settings"
-      ]
-    },
-    "/_auth": {
-      "filePath": "_auth.tsx",
-      "children": [
-        "/_auth/chatlogs",
-        "/_auth/forums",
-        "/_auth/logout",
-        "/_auth/notifications",
-        "/_auth/page-not-found",
-        "/_auth/permission",
-        "/_auth/report",
-        "/_auth/settings",
-        "/_auth/stats",
-        "/_auth/ban/$ban_id",
-        "/_auth/contests/$contest_id",
-        "/_auth/match/$matchId",
-        "/_auth/logs/$steamId/"
-      ]
-    },
-    "/_guest": {
-      "filePath": "_guest.tsx",
-      "children": [
-        "/_guest/changelog",
-        "/_guest/contests",
-        "/_guest/patreon",
-        "/_guest/privacy-policy",
-        "/_guest/servers",
-        "/_guest/stv",
-        "/_guest/wiki",
-        "/_guest/",
-        "/_guest/login/success",
-        "/_guest/profile/$steamId",
-        "/_guest/login/",
-        "/_guest/speedruns/",
-        "/_guest/speedruns/id/$speedrunId",
-        "/_guest/speedruns/map/$mapName"
-      ]
-    },
-    "/_mod": {
-      "filePath": "_mod.tsx",
-      "children": [
-        "/_mod/admin/anticheat",
-        "/_mod/admin/appeals",
-        "/_mod/admin/contests",
-        "/_mod/admin/filters",
-        "/_mod/admin/news",
-        "/_mod/admin/people",
-        "/_mod/admin/reports",
-        "/_mod/admin/votes",
-        "/_mod/admin/ban/asn",
-        "/_mod/admin/ban/cidr",
-        "/_mod/admin/ban/group",
-        "/_mod/admin/ban/steam",
-        "/_mod/admin/network/cidrblocks",
-        "/_mod/admin/network/ipInfo",
-        "/_mod/admin/network/iphist",
-        "/_mod/admin/network/playersbyip",
-        "/_mod/admin/network/"
-      ]
-    },
-    "/_auth/chatlogs": {
-      "filePath": "_auth.chatlogs.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/forums": {
-      "filePath": "_auth.forums.tsx",
-      "parent": "/_auth",
-      "children": [
-        "/_auth/forums/$forum_id",
-        "/_auth/forums/",
-        "/_auth/forums/thread/$forum_thread_id"
-      ]
-    },
-    "/_auth/logout": {
-      "filePath": "_auth.logout.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/notifications": {
-      "filePath": "_auth.notifications.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/page-not-found": {
-      "filePath": "_auth.page-not-found.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/permission": {
-      "filePath": "_auth.permission.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/report": {
-      "filePath": "_auth.report.tsx",
-      "parent": "/_auth",
-      "children": [
-        "/_auth/report/$reportId",
-        "/_auth/report/"
-      ]
-    },
-    "/_auth/settings": {
-      "filePath": "_auth.settings.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/stats": {
-      "filePath": "_auth.stats.tsx",
-      "parent": "/_auth",
-      "children": [
-        "/_auth/stats/",
-        "/_auth/stats/weapon/$weapon_id"
-      ]
-    },
-    "/_guest/changelog": {
-      "filePath": "_guest.changelog.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/contests": {
-      "filePath": "_guest.contests.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/patreon": {
-      "filePath": "_guest.patreon.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/privacy-policy": {
-      "filePath": "_guest.privacy-policy.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/servers": {
-      "filePath": "_guest.servers.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/stv": {
-      "filePath": "_guest.stv.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/wiki": {
-      "filePath": "_guest.wiki.ts",
-      "parent": "/_guest",
-      "children": [
-        "/_guest/wiki/$slug",
-        "/_guest/wiki/"
-      ]
-    },
-    "/_guest/": {
-      "filePath": "_guest.index.tsx",
-      "parent": "/_guest"
-    },
-    "/_admin/admin/game-admins": {
-      "filePath": "_admin.admin.game-admins.tsx",
-      "parent": "/_admin"
-    },
-    "/_admin/admin/servers": {
-      "filePath": "_admin.admin.servers.tsx",
-      "parent": "/_admin"
-    },
-    "/_admin/admin/settings": {
-      "filePath": "_admin.admin.settings.tsx",
-      "parent": "/_admin"
-    },
-    "/_auth/ban/$ban_id": {
-      "filePath": "_auth.ban.$ban_id.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/contests/$contest_id": {
-      "filePath": "_auth.contests.$contest_id.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/forums/$forum_id": {
-      "filePath": "_auth.forums.$forum_id.tsx",
-      "parent": "/_auth/forums"
-    },
-    "/_auth/match/$matchId": {
-      "filePath": "_auth.match.$matchId.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/report/$reportId": {
-      "filePath": "_auth.report.$reportId.tsx",
-      "parent": "/_auth/report"
-    },
-    "/_guest/login/success": {
-      "filePath": "_guest.login.success.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/profile/$steamId": {
-      "filePath": "_guest.profile.$steamId.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/wiki/$slug": {
-      "filePath": "_guest.wiki.$slug.tsx",
-      "parent": "/_guest/wiki"
-    },
-    "/_mod/admin/anticheat": {
-      "filePath": "_mod.admin.anticheat.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/appeals": {
-      "filePath": "_mod.admin.appeals.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/contests": {
-      "filePath": "_mod.admin.contests.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/filters": {
-      "filePath": "_mod.admin.filters.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/news": {
-      "filePath": "_mod.admin.news.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/people": {
-      "filePath": "_mod.admin.people.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/reports": {
-      "filePath": "_mod.admin.reports.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/votes": {
-      "filePath": "_mod.admin.votes.tsx",
-      "parent": "/_mod"
-    },
-    "/_auth/forums/": {
-      "filePath": "_auth.forums.index.tsx",
-      "parent": "/_auth/forums"
-    },
-    "/_auth/report/": {
-      "filePath": "_auth.report.index.tsx",
-      "parent": "/_auth/report"
-    },
-    "/_auth/stats/": {
-      "filePath": "_auth.stats.index.tsx",
-      "parent": "/_auth/stats"
-    },
-    "/_guest/login/": {
-      "filePath": "_guest.login.index.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/speedruns/": {
-      "filePath": "_guest.speedruns.index.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/wiki/": {
-      "filePath": "_guest.wiki.index.tsx",
-      "parent": "/_guest/wiki"
-    },
-    "/_auth/logs/$steamId/": {
-      "filePath": "_auth.logs.$steamId..tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/forums/thread/$forum_thread_id": {
-      "filePath": "_auth.forums.thread.$forum_thread_id.tsx",
-      "parent": "/_auth/forums"
-    },
-    "/_auth/stats/weapon/$weapon_id": {
-      "filePath": "_auth.stats.weapon.$weapon_id.tsx",
-      "parent": "/_auth/stats"
-    },
-    "/_guest/speedruns/id/$speedrunId": {
-      "filePath": "_guest.speedruns.id.$speedrunId.tsx",
-      "parent": "/_guest"
-    },
-    "/_guest/speedruns/map/$mapName": {
-      "filePath": "_guest.speedruns.map.$mapName.tsx",
-      "parent": "/_guest"
-    },
-    "/_mod/admin/ban/asn": {
-      "filePath": "_mod.admin.ban.asn.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/ban/cidr": {
-      "filePath": "_mod.admin.ban.cidr.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/ban/group": {
-      "filePath": "_mod.admin.ban.group.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/ban/steam": {
-      "filePath": "_mod.admin.ban.steam.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/network/cidrblocks": {
-      "filePath": "_mod.admin.network.cidrblocks.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/network/ipInfo": {
-      "filePath": "_mod.admin.network.ipInfo.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/network/iphist": {
-      "filePath": "_mod.admin.network.iphist.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/network/playersbyip": {
-      "filePath": "_mod.admin.network.playersbyip.tsx",
-      "parent": "/_mod"
-    },
-    "/_mod/admin/network/": {
-      "filePath": "_mod.admin.network.index.tsx",
-      "parent": "/_mod"
-    }
-  }
-}
-ROUTE_MANIFEST_END */
