@@ -90,6 +90,7 @@
         "prettier": "^3.6.2",
         "pretty-bytes": "^7.0.1",
         "prism-react-renderer": "^2.4.1",
+        "prismjs": "^1.30.0",
         "prop-types": "^15.8.1",
         "react": "^19.1.1",
         "react-dom": "^19.1.1",

@@ -24,9 +24,9 @@ jobs:
       - name: Setup nodejs
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
-          cache: 'pnpm'
-          cache-dependency-path: 'docs/pnpm-lock.yaml'
+          node-version: "24.x"
+          cache: "pnpm"
+          cache-dependency-path: "docs/pnpm-lock.yaml"
 
       - name: Install modules
         working-directory: ./docs
