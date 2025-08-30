@@ -122,17 +122,17 @@ func (c *Collector) onStatusUpdate(conf domain.ServerConfig, newState Status, ma
 
 	server := c.serverState[conf.ServerID]
 	server.PlayerCount = newState.PlayersCount
-	if newState.IPInfo.SDR {
-		server.IP = newState.IPInfo.FakeIP
-		server.Port = uint16(newState.IPInfo.FakePort) //nolint:gosec
-		server.IPPublic = newState.IPInfo.PublicIP
-		server.PortPublic = uint16(newState.IPInfo.PublicPort) //nolint:gosec
-	} else {
-		server.IP = newState.IPInfo.PublicIP
-		server.Port = uint16(newState.IPInfo.PublicPort) //nolint:gosec
-		server.IPPublic = newState.IPInfo.PublicIP
-		server.PortPublic = uint16(newState.IPInfo.PublicPort) //nolint:gosec
-	}
+	// if newState.IPInfo.SDR {
+	// 	server.IP = newState.IPInfo.FakeIP
+	// 	server.Port = uint16(newState.IPInfo.FakePort) //nolint:gosec
+	// 	server.IPPublic = newState.IPInfo.PublicIP
+	// 	server.PortPublic = uint16(newState.IPInfo.PublicPort) //nolint:gosec
+	// } else {
+	// 	server.IP = newState.IPInfo.PublicIP
+	// 	server.Port = uint16(newState.IPInfo.PublicPort) //nolint:gosec
+	// 	server.IPPublic = newState.IPInfo.PublicIP
+	// 	server.PortPublic = uint16(newState.IPInfo.PublicPort) //nolint:gosec
+	// }
 
 	server.STVIP = newState.IPInfo.SourceTVIP
 	server.STVPort = uint16(newState.IPInfo.SourceTVFPort) //nolint:gosec
@@ -362,6 +362,8 @@ func (c *Collector) startStatus(ctx context.Context) {
 
 					status, errStatus := c.status(lCtx, conf.ServerID)
 					if errStatus != nil {
+						slog.Error("Failed to parse status", slog.String("error", errStatus.Error()))
+
 						return
 					}
 

@@ -254,7 +254,6 @@ func logToServerEvent(parser *LogParser, serverID int, serverName string, msg st
 	}
 
 	parseResult, errParse := parser.Parse(msg)
-
 	if errParse != nil {
 		return event, errors.Join(errParse, ErrLogParse)
 	}
