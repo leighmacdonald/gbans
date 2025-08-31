@@ -300,6 +300,9 @@ type LeaguePlayerTeamHistory struct {
 	// League League name
 	League string `json:"league"`
 
+	// LeagueId The user id of the user on the parent site
+	LeagueId int64 `json:"league_id,omitempty"`
+
 	// LeftTeam When they left the team
 	LeftTeam time.Time `json:"left_team"`
 
