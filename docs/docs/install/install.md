@@ -25,7 +25,7 @@ increase the ram allocated to postgres.
 If you are hosting game servers and gbans on the same host, you will likely want to
 specify [GOMAXPROCS](https://pkg.go.dev/runtime#hdr-Environment_Variables)
 when starting gbans. This allows you to set processor affinity/cpuset properly to ensure they are not fighting each other
-for resources. 
+for resources.
 
 :::note
 
@@ -94,7 +94,7 @@ Build the projects, replace SM_ROOT with the path to your sourcemod installation
 cfg folders inside).
 
 ```shell
-SM_ROOT=~/sourcemod make 
+SM_ROOT=~/sourcemod make
 ````
 
 You should now have a binary located at `./build/$platform/gbans`
@@ -125,13 +125,35 @@ directly.
 ### Caddy w/cloudflare
 
 ```
-  example.com {
-      reverse_proxy /* internal_host:6006
-      encode gzip
-      tls your@email.com {
-          dns cloudfalre your_api_token
-      }
-  }
+{
+        acme_ca https://acme.zerossl.com/v2/DV90
+        email yours@example.com
+}
+
+example.com {
+    # https://www.cloudflare.com/ips/
+    @cloudflare {
+        remote_ip 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+    }
+
+    tls {
+            dns cloudflare <token>
+    }
+
+    # Process requests from Cloudflare IPs
+    handle @cloudflare {
+        reverse_proxy localhost:8080 {
+            # Sets X-Forwarded-For as the value Cloudflare gives us for CF-Connecting-IP.
+            header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+        }
+    }
+
+    # Deny requests from non-Cloudflare IPs
+    handle {
+        respond "Access Denied" 403
+    }
+}
+
 ```
 
 ### Apache 2.4
@@ -151,7 +173,7 @@ Be sure to run `sudo a2enmod proxy_http ssl` first.
         #Can be disabled if wanted
         ErrorLog ${APACHE_LOG_DIR}/error.log
         CustomLog ${APACHE_LOG_DIR}/access.log combined
-        
+
 SSLCertificateFile /etc/cloudflare/example.com.pem
 SSLCertificateKeyFile /etc/cloudflare/example.com.key
 </VirtualHost>
