@@ -1,0 +1,15 @@
+BEGIN;
+
+ALTER TABLE person
+DROP COLUMN IF EXISTS avatar;
+
+ALTER TABLE person
+DROP COLUMN IF EXISTS avatarmedium;
+
+ALTER TABLE person
+DROP COLUMN IF EXISTS avatarfull;
+
+ALTER TABLE person
+DROP COLUMN IF EXISTS profileurl;
+
+COMMIT;

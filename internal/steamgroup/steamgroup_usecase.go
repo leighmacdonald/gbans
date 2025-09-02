@@ -10,9 +10,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/leighmacdonald/steamweb/v2"
 )
 
 type banGroupUsecase struct {
@@ -20,15 +20,17 @@ type banGroupUsecase struct {
 	persons       domain.PersonUsecase
 	notifications domain.NotificationUsecase
 	config        domain.ConfigUsecase
+	tfAPI         *thirdparty.TFAPI
 }
 
 func NewBanGroupUsecase(repository domain.BanGroupRepository, persons domain.PersonUsecase,
-	notifications domain.NotificationUsecase, config domain.ConfigUsecase,
+	notifications domain.NotificationUsecase, config domain.ConfigUsecase, tfAPI *thirdparty.TFAPI,
 ) domain.BanGroupUsecase {
 	return &banGroupUsecase{
 		repository:    repository,
 		persons:       persons,
 		notifications: notifications,
+		tfAPI:         tfAPI,
 		config:        config,
 	}
 }
@@ -170,19 +172,19 @@ func (s banGroupUsecase) Ban(ctx context.Context, req domain.RequestBanGroupCrea
 		return domain.BannedGroupPerson{}, errDuration
 	}
 
-	members, membersErr := steamweb.GetGroupMembers(ctx, httphelper.NewHTTPClient(), gid)
-	if membersErr != nil || len(members) == 0 {
-		return domain.BannedGroupPerson{}, errors.Join(membersErr, domain.ErrGroupValidate)
+	_, errGroup := s.tfAPI.SteamGroup(ctx, gid)
+	if errGroup != nil {
+		return domain.BannedGroupPerson{}, errGroup
 	}
 
 	author, errAuthor := s.persons.GetPersonBySteamID(ctx, nil, sid)
 	if errAuthor != nil {
-		return domain.BannedGroupPerson{}, errors.Join(membersErr, domain.ErrGetPerson)
+		return domain.BannedGroupPerson{}, errors.Join(errAuthor, domain.ErrGetPerson)
 	}
 
 	_, errTarget := s.persons.GetPersonBySteamID(ctx, nil, targetID)
 	if errTarget != nil {
-		return domain.BannedGroupPerson{}, errors.Join(membersErr, domain.ErrGetPerson)
+		return domain.BannedGroupPerson{}, errors.Join(errTarget, domain.ErrGetPerson)
 	}
 
 	var banGroup domain.BanGroup

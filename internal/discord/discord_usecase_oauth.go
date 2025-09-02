@@ -52,8 +52,7 @@ func (d discordOAuthUsecase) RefreshTokens(ctx context.Context) error {
 	for _, old := range entries {
 		newCreds, errRefresh := d.fetchRefresh(ctx, old)
 		if errRefresh != nil {
-			slog.Error("Failed to refresh token", log.ErrAttr(errRefresh))
-
+			// slog.Error("Failed to refresh token", log.ErrAttr(errRefresh))
 			continue
 		}
 

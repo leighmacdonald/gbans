@@ -1590,8 +1590,6 @@ github.com/leighmacdonald/rcon v1.0.10 h1:lTwFaYMwC1q+l2ULXuk05bZaSJpAU8o33klIZM
 github.com/leighmacdonald/rcon v1.0.10/go.mod h1:RRkAjtBsT3VMheHl+pMfrxkA001LdtSArkU+tLvSKsk=
 github.com/leighmacdonald/steamid/v4 v4.0.6 h1:oa3P64LEQalJ+YEGi0bChPi70uvL+dFc3KzTC8L/NCU=
 github.com/leighmacdonald/steamid/v4 v4.0.6/go.mod h1:QT5vYPh48vf4vhqd2CWMWjPlr4pypjWZaXHkZTKXnh4=
-github.com/leighmacdonald/steamweb/v2 v2.3.1 h1:1a8sCJhkd1lQBaa6yPlx1zZp5gSrTYlX55pTdAYQMzg=
-github.com/leighmacdonald/steamweb/v2 v2.3.1/go.mod h1:NOB4H3/Z4m71fHfNcfOu8TGMLXr4qcHPEn8N+sqydts=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=
 github.com/leodido/go-urn v1.4.0/go.mod h1:bvxc+MVxLKB4z00jd1z+Dvzr47oO32F/QSNjSBOlFxI=
 github.com/leonklingele/grouper v1.1.2 h1:o1ARBDLOmmasUaNDesWqWCIFH3u7hoFlM84YrjT3mIY=

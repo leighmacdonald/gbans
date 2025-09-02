@@ -12,6 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/queue"
+	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -25,10 +26,11 @@ type reportUsecase struct {
 	config        domain.ConfigUsecase
 	persons       domain.PersonUsecase
 	demos         domain.DemoUsecase
+	tfAPI         *thirdparty.TFAPI
 }
 
 func NewReportUsecase(repository domain.ReportRepository, notifications domain.NotificationUsecase,
-	config domain.ConfigUsecase, persons domain.PersonUsecase, demos domain.DemoUsecase,
+	config domain.ConfigUsecase, persons domain.PersonUsecase, demos domain.DemoUsecase, tfAPI *thirdparty.TFAPI,
 ) domain.ReportUsecase {
 	return &reportUsecase{
 		notifications: notifications,
@@ -36,6 +38,7 @@ func NewReportUsecase(repository domain.ReportRepository, notifications domain.N
 		config:        config,
 		persons:       persons,
 		demos:         demos,
+		tfAPI:         tfAPI,
 	}
 }
 
@@ -295,7 +298,7 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 	}
 
 	if personTarget.Expired() {
-		if err := thirdparty.UpdatePlayerSummary(ctx, &personTarget); err != nil {
+		if err := steam.UpdatePlayerSummary(ctx, &personTarget, r.tfAPI); err != nil {
 			slog.Error("Failed to update target player", log.ErrAttr(err))
 		} else {
 			if errSave := r.persons.SavePerson(ctx, nil, &personTarget); errSave != nil {

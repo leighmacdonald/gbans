@@ -17,7 +17,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
@@ -145,10 +144,6 @@ func applyGlobalConfig(config domain.Config) error {
 
 	if errSteam := steamid.SetKey(config.SteamKey); errSteam != nil {
 		return errors.Join(errSteam, domain.ErrSteamAPIKey)
-	}
-
-	if errSteamWeb := steamweb.SetKey(config.SteamKey); errSteamWeb != nil {
-		return errors.Join(errSteamWeb, domain.ErrSteamAPIKey)
 	}
 
 	return nil

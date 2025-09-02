@@ -42,6 +42,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/srcds"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/steamgroup"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/internal/wordfilter"
@@ -257,7 +258,12 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return err
 			}
 
-			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbConn), configUsecase)
+			tfapiClient, errClient := thirdparty.NewTFAPI("https://tf-api.roto.lol", &http.Client{Timeout: time.Second * 15})
+			if errClient != nil {
+				return errClient
+			}
+
+			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbConn), configUsecase, tfapiClient)
 
 			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbConn), personUsecase, configUsecase)
 			go networkUsecase.Start(ctx)
@@ -273,15 +279,15 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			serversUC := servers.NewServersUsecase(servers.NewServersRepository(dbConn))
 			demos := demo.NewDemoUsecase(domain.BucketDemo, demo.NewDemoRepository(dbConn), assets, configUsecase, serversUC)
 
-			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbConn), notificationUsecase, configUsecase, personUsecase, demos)
+			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbConn), notificationUsecase, configUsecase, personUsecase, demos, tfapiClient)
 
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUC)), configUsecase, serversUC)
 
-			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase)
+			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase, tfapiClient)
 
 			banGroupRepo := steamgroup.NewSteamGroupRepository(dbConn)
-			banGroupUsecase := steamgroup.NewBanGroupUsecase(banGroupRepo, personUsecase, notificationUsecase, configUsecase)
+			banGroupUsecase := steamgroup.NewBanGroupUsecase(banGroupRepo, personUsecase, notificationUsecase, configUsecase, tfapiClient)
 
 			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase, banGroupUsecase)
 
@@ -321,7 +327,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbConn))
 			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbConn), configUsecase)
-			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbConn), configUsecase, serversUC, personUsecase, reportUsecase, notificationUsecase, banUsecase)
+			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbConn), configUsecase, serversUC, personUsecase, reportUsecase, notificationUsecase, banUsecase, tfapiClient)
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbConn))
 			authRepo := auth.NewAuthRepository(dbConn)
 			authUsecase := auth.NewAuthUsecase(authRepo, configUsecase, personUsecase, banUsecase, serversUC)
@@ -366,14 +372,14 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			if conf.Discord.Enabled {
 				discordHandler := discord.NewDiscordHandler(discordUsecase, personUsecase, banUsecase,
 					stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase,
-					banASNUsecase, anticheatUsecase)
+					banASNUsecase, anticheatUsecase, tfapiClient)
 				discordHandler.Start(ctx)
 			}
 
 			// Register all our handlers with router
 			anticheat.NewHandler(router, authUsecase, anticheatUsecase)
 			appeal.NewHandler(router, appeals, authUsecase)
-			auth.NewHandler(router, authUsecase, configUsecase, personUsecase)
+			auth.NewHandler(router, authUsecase, configUsecase, personUsecase, tfapiClient)
 			ban.NewHandlerSteam(router, banUsecase, configUsecase, authUsecase)
 			ban.NewHandlerNet(router, banNetUsecase, authUsecase)
 			ban.NewASNHandlerASN(router, banASNUsecase, authUsecase)
@@ -419,7 +425,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				defer stateUsecase.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
 			}
 
-			memberships := steamgroup.NewMemberships(banGroupRepo)
+			memberships := steamgroup.NewMemberships(banGroupRepo, tfapiClient)
 			banExpirations := ban.NewExpirationMonitor(banUsecase, banNetUsecase, banASNUsecase, personUsecase, notificationUsecase, configUsecase)
 
 			go func() {
