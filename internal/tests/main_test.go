@@ -45,6 +45,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/srcds"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/steamgroup"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/internal/wordfilter"
@@ -140,6 +141,12 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	// TODO caching client?
+	tfapiClient, errClient := thirdparty.NewTFAPI("https://tf-api.roto.lol", &http.Client{Timeout: time.Second * 15})
+	if errClient != nil {
+		panic(errClient)
+	}
+
 	authRepo = auth.NewAuthRepository(databaseConn)
 
 	discordUC = discord.NewDiscordUsecase(discord.NewNullDiscordRepository(), configUC)
@@ -150,7 +157,7 @@ func TestMain(m *testing.M) {
 	wikiUC = wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseConn))
 	notificationUC = notification.NewNotificationUsecase(notification.NewNotificationRepository(databaseConn), discordUC)
 	patreonUC = patreon.NewPatreonUsecase(patreon.NewPatreonRepository(databaseConn), configUC)
-	personUC = person.NewPersonUsecase(person.NewPersonRepository(conf, databaseConn), configUC)
+	personUC = person.NewPersonUsecase(person.NewPersonRepository(conf, databaseConn), configUC, tfapiClient)
 	wordFilterUC = wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(databaseConn), notificationUC)
 	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn), notificationUC)
 
@@ -159,11 +166,11 @@ func TestMain(m *testing.M) {
 	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), personUC, configUC)
 	demoRepository = demo.NewDemoRepository(databaseConn)
 	demoUC = demo.NewDemoUsecase("demos", demoRepository, assetUC, configUC, serversUC)
-	reportUC = report.NewReportUsecase(report.NewReportRepository(databaseConn), notificationUC, configUC, personUC, demoUC)
-	banSteamUC = ban.NewBanSteamUsecase(ban.NewBanSteamRepository(databaseConn, personUC, networkUC), personUC, configUC, notificationUC, reportUC, stateUC)
+	reportUC = report.NewReportUsecase(report.NewReportRepository(databaseConn), notificationUC, configUC, personUC, demoUC, tfapiClient)
+	banSteamUC = ban.NewBanSteamUsecase(ban.NewBanSteamRepository(databaseConn, personUC, networkUC), personUC, configUC, notificationUC, reportUC, stateUC, tfapiClient)
 	authUC = auth.NewAuthUsecase(authRepo, configUC, personUC, banSteamUC, serversUC)
 	banASNUC = ban.NewBanASNUsecase(ban.NewBanASNRepository(databaseConn), notificationUC, networkUC, configUC, personUC)
-	banGroupUC = steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(databaseConn), personUC, notificationUC, configUC)
+	banGroupUC = steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(databaseConn), personUC, notificationUC, configUC, tfapiClient)
 	banNetUC = ban.NewBanNetUsecase(ban.NewBanNetRepository(databaseConn), personUC, configUC, notificationUC, stateUC)
 
 	matchUC = match.NewMatchUsecase(match.NewMatchRepository(eventBroadcaster, databaseConn, personUC, serversUC, notificationUC, stateUC, weaponsMap), stateUC, serversUC, notificationUC)

@@ -34,13 +34,14 @@ type discordService struct {
 	network     domain.NetworkUsecase
 	wordFilters domain.WordFilterUsecase
 	matches     domain.MatchUsecase
+	tfAPI       *thirdparty.TFAPI
 }
 
 func NewDiscordHandler(discordUsecase domain.DiscordUsecase, persons domain.PersonUsecase,
 	bansSteam domain.BanSteamUsecase, state domain.StateUsecase, servers domain.ServersUsecase,
 	config domain.ConfigUsecase, network domain.NetworkUsecase, wordFilters domain.WordFilterUsecase,
 	matches domain.MatchUsecase, bansNet domain.BanNetUsecase, bansASN domain.BanASNUsecase,
-	anticheat domain.AntiCheatUsecase,
+	anticheat domain.AntiCheatUsecase, tfAPI *thirdparty.TFAPI,
 ) domain.ServiceStarter {
 	handler := &discordService{
 		discord:     discordUsecase,
@@ -55,6 +56,7 @@ func NewDiscordHandler(discordUsecase domain.DiscordUsecase, persons domain.Pers
 		bansNet:     bansNet,
 		bansASN:     bansASN,
 		anticheat:   anticheat,
+		tfAPI:       tfAPI,
 	}
 
 	return handler
@@ -132,8 +134,6 @@ func (h discordService) makeOnFilter() func(_ context.Context, _ *discordgo.Sess
 	}
 }
 
-type BanStore interface{}
-
 func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
 	) (*discordgo.MessageEmbed, error) {
@@ -196,10 +196,9 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			banURL = conf.ExtURL(ban.BanSteam)
 		}
 
-		// TODO move elsewhere
-		logData, errLogs := thirdparty.LogsTFOverview(ctx, sid)
+		logData, errLogs := h.tfAPI.LogsTFSummary(ctx, sid)
 		if errLogs != nil {
-			slog.Warn("Failed to fetch logTF data", log.ErrAttr(errLogs))
+			slog.Info("Failed to query logstf summary", slog.String("error", errLogs.Error()))
 		}
 
 		network, errNetwork := h.network.QueryNetwork(ctx, player.IPAddr)

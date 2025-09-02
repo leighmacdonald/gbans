@@ -15,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/leighmacdonald/steamweb/v2"
 )
 
 type personRepository struct {
@@ -58,22 +57,18 @@ func (r *personRepository) updatePerson(ctx context.Context, transaction pgx.Tx,
 		ExecUpdateBuilder(ctx, transaction, r.db.
 			Builder().
 			Update("person").
-			SetMap(map[string]interface{}{
+			SetMap(map[string]any{
 				"updated_on":               person.UpdatedOn,
-				"communityvisibilitystate": person.CommunityVisibilityState,
+				"communityvisibilitystate": person.VisibilityState,
 				"profilestate":             person.ProfileState,
 				"personaname":              person.PersonaName,
-				"profileurl":               person.ProfileURL,
-				"avatar":                   person.PlayerSummary.Avatar,
-				"avatarmedium":             person.PlayerSummary.AvatarMedium,
-				"avatarfull":               person.PlayerSummary.AvatarFull,
-				"avatarhash":               person.PlayerSummary.AvatarHash,
-				"personastate":             person.PlayerSummary.PersonaState,
-				"realname":                 person.PlayerSummary.RealName,
+				"avatarhash":               person.AvatarHash,
+				"personastate":             person.PersonaState,
+				"realname":                 person.RealName,
 				"timecreated":              person.TimeCreated,
-				"loccountrycode":           person.PlayerSummary.LocCountryCode,
-				"locstatecode":             person.PlayerSummary.LocStateCode,
-				"loccityid":                person.PlayerSummary.LocCityID,
+				"loccountrycode":           person.LocCountryCode,
+				"locstatecode":             person.LocStateCode,
+				"loccityid":                person.LocCityID,
 				"permission_level":         person.PermissionLevel,
 				"discord_id":               person.DiscordID,
 				"community_banned":         person.CommunityBanned,
@@ -94,13 +89,12 @@ func (r *personRepository) insertPerson(ctx context.Context, transaction pgx.Tx,
 		Builder().
 		Insert("person").
 		Columns("created_on", "updated_on", "steam_id", "communityvisibilitystate", "profilestate",
-			"personaname", "profileurl", "avatar", "avatarmedium", "avatarfull", "avatarhash", "personastate",
+			"personaname", "avatarhash", "personastate",
 			"realname", "timecreated", "loccountrycode", "locstatecode", "loccityid", "permission_level",
 			"discord_id", "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
 			"updated_on_steam", "muted", "playerqueue_chat_status", "playerqueue_chat_reason").
-		Values(person.CreatedOn, person.UpdatedOn, person.SteamID.Int64(), person.CommunityVisibilityState,
-			person.ProfileState, person.PersonaName, person.ProfileURL,
-			person.Avatar, person.AvatarMedium, person.AvatarFull,
+		Values(person.CreatedOn, person.UpdatedOn, person.SteamID.Int64(), person.VisibilityState,
+			person.ProfileState, person.PersonaName,
 			person.AvatarHash, person.PersonaState, person.RealName,
 			person.TimeCreated, person.LocCountryCode, person.LocStateCode,
 			person.LocCityID, person.PermissionLevel, person.DiscordID, person.CommunityBanned,
@@ -118,11 +112,10 @@ func (r *personRepository) insertPerson(ctx context.Context, transaction pgx.Tx,
 // "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban".
 var profileColumns = []string{ //nolint:gochecknoglobals
 	"steam_id", "created_on", "updated_on",
-	"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
-	"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
-	"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id",
-	"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban", "updated_on_steam",
-	"muted", "playerqueue_chat_status", "playerqueue_chat_reason",
+	"communityvisibilitystate", "profilestate", "personaname", "avatarhash", "personastate",
+	"realname", "timecreated", "loccountrycode", "locstatecode", "loccityid", "permission_level",
+	"discord_id", "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
+	"updated_on_steam", "muted", "playerqueue_chat_status", "playerqueue_chat_reason",
 }
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
@@ -141,10 +134,6 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, transaction p
 			"p.communityvisibilitystate",
 			"p.profilestate",
 			"p.personaname",
-			"p.profileurl",
-			"p.avatar",
-			"p.avatarmedium",
-			"p.avatarfull",
 			"p.avatarhash",
 			"p.personastate",
 			"p.realname",
@@ -173,14 +162,11 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, transaction p
 	}
 
 	person.IsNew = false
-	person.PlayerSummary = &steamweb.PlayerSummary{
-		SteamID: sid64,
-	}
 	person.SteamID = sid64
 
 	if err := r.db.DBErr(row.Scan(&person.CreatedOn,
-		&person.UpdatedOn, &person.CommunityVisibilityState, &person.ProfileState, &person.PersonaName,
-		&person.ProfileURL, &person.Avatar, &person.AvatarMedium, &person.AvatarFull, &person.AvatarHash,
+		&person.UpdatedOn, &person.VisibilityState, &person.ProfileState, &person.PersonaName,
+		&person.AvatarHash,
 		&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 		&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 		&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam,
@@ -216,9 +202,8 @@ func (r *personRepository) GetPeopleBySteamID(ctx context.Context, transaction p
 			person  = domain.NewPerson(steamid.SteamID{})
 		)
 
-		if errScan := rows.Scan(&steamID, &person.CreatedOn, &person.UpdatedOn, &person.CommunityVisibilityState,
-			&person.ProfileState, &person.PersonaName, &person.ProfileURL, &person.Avatar, &person.AvatarMedium,
-			&person.AvatarFull, &person.AvatarHash, &person.PersonaState, &person.RealName, &person.TimeCreated,
+		if errScan := rows.Scan(&steamID, &person.CreatedOn, &person.UpdatedOn, &person.VisibilityState,
+			&person.ProfileState, &person.PersonaName, &person.AvatarHash, &person.PersonaState, &person.RealName, &person.TimeCreated,
 			&person.LocCountryCode, &person.LocStateCode, &person.LocCityID, &person.PermissionLevel, &person.DiscordID,
 			&person.CommunityBanned, &person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 			&person.UpdatedOnSteam, &person.Muted, &person.PlayerqueueChatStatus, &person.PlayerqueueChatReason); errScan != nil {
@@ -316,10 +301,9 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 	builder = filter.ApplySafeOrder(builder, map[string][]string{
 		"p.": {
 			"steam_id", "created_on", "updated_on",
-			"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
-			"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
-			"loccountrycode", "locstatecode", "loccityid", "p.permission_level", "discord_id",
-			"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
+			"communityvisibilitystate", "profilestate", "personaname", "avatarhash", "personastate",
+			"realname", "timecreated", "loccountrycode", "locstatecode", "loccityid", "p.permission_level",
+			"discord_id", "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
 			"updated_on_steam", "muted", "playerqueue_chat_status", "playerqueue_chat_reason",
 		},
 		"pt.": {"patreon_id"},
@@ -341,9 +325,8 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 		)
 
 		if errScan := rows.
-			Scan(&steamID, &person.CreatedOn, &person.UpdatedOn, &person.CommunityVisibilityState,
-				&person.ProfileState, &person.PersonaName, &person.ProfileURL, &person.Avatar,
-				&person.AvatarMedium, &person.AvatarFull, &person.AvatarHash, &person.PersonaState,
+			Scan(&steamID, &person.CreatedOn, &person.UpdatedOn, &person.VisibilityState,
+				&person.ProfileState, &person.PersonaName, &person.AvatarHash, &person.PersonaState,
 				&person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 				&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
@@ -377,7 +360,6 @@ func (r *personRepository) GetPersonByDiscordID(ctx context.Context, discordID s
 	)
 
 	person.IsNew = false
-	person.PlayerSummary = &steamweb.PlayerSummary{}
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
@@ -389,8 +371,8 @@ func (r *personRepository) GetPersonByDiscordID(ctx context.Context, discordID s
 	}
 
 	errQuery := row.Scan(&steamID, &person.CreatedOn,
-		&person.UpdatedOn, &person.CommunityVisibilityState, &person.ProfileState, &person.PersonaName,
-		&person.ProfileURL, &person.Avatar, &person.AvatarMedium, &person.AvatarFull, &person.AvatarHash,
+		&person.UpdatedOn, &person.VisibilityState, &person.ProfileState, &person.PersonaName,
+		&person.AvatarHash,
 		&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 		&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned, &person.VACBans,
 		&person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam, &person.Muted,
@@ -410,8 +392,7 @@ func (r *personRepository) GetExpiredProfiles(ctx context.Context, transaction p
 	rows, errQuery := r.db.QueryBuilder(ctx, transaction, r.db.
 		Builder().
 		Select("steam_id", "created_on", "updated_on",
-			"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
-			"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
+			"communityvisibilitystate", "profilestate", "personaname", "avatarhash", "personastate", "realname", "timecreated",
 			"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id",
 			"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban", "updated_on_steam",
 			"muted", "playerqueue_chat_status", "playerqueue_chat_reason").
@@ -431,9 +412,8 @@ func (r *personRepository) GetExpiredProfiles(ctx context.Context, transaction p
 			steamID int64
 		)
 
-		if errScan := rows.Scan(&steamID, &person.CreatedOn, &person.UpdatedOn, &person.CommunityVisibilityState,
-			&person.ProfileState, &person.PersonaName, &person.ProfileURL, &person.Avatar, &person.AvatarMedium,
-			&person.AvatarFull, &person.AvatarHash, &person.PersonaState, &person.RealName, &person.TimeCreated,
+		if errScan := rows.Scan(&steamID, &person.CreatedOn, &person.UpdatedOn, &person.VisibilityState,
+			&person.ProfileState, &person.PersonaName, &person.AvatarHash, &person.PersonaState, &person.RealName, &person.TimeCreated,
 			&person.LocCountryCode, &person.LocStateCode, &person.LocCityID, &person.PermissionLevel,
 			&person.DiscordID, &person.CommunityBanned, &person.VACBans, &person.GameBans,
 			&person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam, &person.Muted,
@@ -647,7 +627,7 @@ func (r *personRepository) SavePersonSettings(ctx context.Context, settings *dom
 		errSiteSettings = r.db.DBErr(r.db.ExecInsertBuilderWithReturnValue(ctx, nil, r.db.
 			Builder().
 			Insert("person_settings").
-			SetMap(map[string]interface{}{
+			SetMap(map[string]any{
 				"steam_id":               settings.SteamID.Int64(),
 				"forum_signature":        settings.ForumSignature,
 				"forum_profile_messages": settings.ForumProfileMessages,
@@ -661,7 +641,7 @@ func (r *personRepository) SavePersonSettings(ctx context.Context, settings *dom
 		errSiteSettings = r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 			Builder().
 			Update("person_settings").
-			SetMap(map[string]interface{}{
+			SetMap(map[string]any{
 				"forum_signature":        settings.ForumSignature,
 				"forum_profile_messages": settings.ForumProfileMessages,
 				"stats_hidden":           settings.StatsHidden,

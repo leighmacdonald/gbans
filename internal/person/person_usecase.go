@@ -9,24 +9,25 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/leighmacdonald/steamweb/v2"
 	"golang.org/x/sync/errgroup"
 )
 
 type personUsecase struct {
 	config domain.ConfigUsecase
 	repo   domain.PersonRepository
+	tfAPI  *thirdparty.TFAPI
 }
 
-func NewPersonUsecase(repository domain.PersonRepository, config domain.ConfigUsecase) domain.PersonUsecase {
+func NewPersonUsecase(repository domain.PersonRepository, config domain.ConfigUsecase, tfAPI *thirdparty.TFAPI) domain.PersonUsecase {
 	return &personUsecase{
 		repo:   repository,
 		config: config,
+		tfAPI:  tfAPI,
 	}
 }
 
@@ -58,7 +59,7 @@ func (u personUsecase) QueryProfile(ctx context.Context, query string) (domain.P
 	}
 
 	if person.Expired() {
-		if err := thirdparty.UpdatePlayerSummary(ctx, &person); err != nil {
+		if err := steam.UpdatePlayerSummary(ctx, &person, u.tfAPI); err != nil {
 			slog.Error("Failed to update player summary", log.ErrAttr(err))
 		} else {
 			if errSave := u.SavePerson(ctx, nil, &person); errSave != nil {
@@ -67,7 +68,7 @@ func (u personUsecase) QueryProfile(ctx context.Context, query string) (domain.P
 		}
 	}
 
-	friendList, errFetchFriends := steamweb.GetFriendList(ctx, httphelper.NewHTTPClient(), person.SteamID)
+	friendList, errFetchFriends := u.tfAPI.Friends(ctx, person.SteamID)
 	if errFetchFriends == nil {
 		resp.Friends = friendList
 	}
@@ -90,14 +91,14 @@ func (u personUsecase) UpdateProfiles(ctx context.Context, transaction pgx.Tx, p
 	}
 
 	var (
-		banStates           []steamweb.PlayerBanState
-		summaries           []steamweb.PlayerSummary
+		banStates           []thirdparty.SteamBan
+		summaries           []thirdparty.PlayerSummaryResponse
 		steamIDs            = people.ToSteamIDCollection()
 		errGroup, cancelCtx = errgroup.WithContext(ctx)
 	)
 
 	errGroup.Go(func() error {
-		newBanStates, errBans := thirdparty.FetchPlayerBans(cancelCtx, steamIDs)
+		newBanStates, errBans := steam.FetchPlayerBans(cancelCtx, u.tfAPI, steamIDs)
 		if errBans != nil {
 			return errors.Join(errBans, domain.ErrFetchSteamBans)
 		}
@@ -108,7 +109,7 @@ func (u personUsecase) UpdateProfiles(ctx context.Context, transaction pgx.Tx, p
 	})
 
 	errGroup.Go(func() error {
-		newSummaries, errSummaries := steamweb.PlayerSummaries(cancelCtx, httphelper.NewHTTPClient(), steamIDs)
+		newSummaries, errSummaries := u.tfAPI.Summaries(ctx, steamIDs)
 		if errSummaries != nil {
 			return errors.Join(errSummaries, domain.ErrSteamAPISummaries)
 		}
@@ -129,26 +130,40 @@ func (u personUsecase) UpdateProfiles(ctx context.Context, transaction pgx.Tx, p
 
 		for _, newSummary := range summaries {
 			summary := newSummary
-			if person.SteamID != summary.SteamID {
+			if person.SteamID.String() != summary.SteamId {
 				continue
 			}
 
-			person.PlayerSummary = &summary
+			person.AvatarHash = summary.AvatarHash
+			person.CommentPermission = summary.CommentPermission
+			person.LastLogoff = summary.LastLogoff
+			person.LocCityID = summary.LocCityId
+			person.LocCountryCode = summary.LocCountryCode
+			person.LocStateCode = summary.LocStateCode
+			person.PersonaName = summary.PersonaName
+			person.PersonaState = summary.PersonaState
+			person.PersonaStateFlags = summary.PersonaStateFlags
+			person.PrimaryClanID = summary.PrimaryClanId
+			person.ProfileState = summary.ProfileState
+			person.ProfileURL = summary.ProfileUrl
+			person.RealName = summary.RealName
+			person.TimeCreated = summary.TimeCreated
+			person.VisibilityState = summary.VisibilityState
 
 			break
 		}
 
 		for _, banState := range banStates {
-			if person.SteamID != banState.SteamID {
+			if person.SteamID.String() != banState.SteamId {
 				continue
 			}
 
 			person.CommunityBanned = banState.CommunityBanned
-			person.VACBans = banState.NumberOfVACBans
-			person.GameBans = banState.NumberOfGameBans
-			person.EconomyBan = banState.EconomyBan
+			person.VACBans = int(banState.NumberOfVacBans)
+			person.GameBans = int(banState.NumberOfGameBans)
+			person.EconomyBan = domain.EconBanState(banState.EconomyBan)
 			person.CommunityBanned = banState.CommunityBanned
-			person.DaysSinceLastBan = banState.DaysSinceLastBan
+			person.DaysSinceLastBan = int(banState.DaysSinceLastBan)
 		}
 
 		if errSavePerson := u.repo.SavePerson(ctx, transaction, &person); errSavePerson != nil {

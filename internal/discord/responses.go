@@ -494,7 +494,7 @@ func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BannedStea
 func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL string, author domain.Person,
 	oldBans []domain.BannedSteamPerson, bannedNets []domain.BanCIDR, asn domain.NetworkASN,
 	location domain.NetworkLocation,
-	proxy domain.NetworkProxy, logData *thirdparty.LogsTFResult,
+	proxy domain.NetworkProxy, logData thirdparty.LogsTFPlayerSummary,
 ) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed()
 
@@ -515,9 +515,9 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 		msgEmbed.Embed().AddField("Real Name", player.RealName)
 	}
 
-	cd := time.Unix(int64(player.TimeCreated), 0)
+	cd := time.Unix(player.TimeCreated, 0)
 	msgEmbed.Embed().AddField("Age", datetime.FmtDuration(cd))
-	msgEmbed.Embed().AddField("Private", strconv.FormatBool(player.CommunityVisibilityState == 1))
+	msgEmbed.Embed().AddField("Private", strconv.FormatBool(player.VisibilityState == 1))
 	msgEmbed.AddFieldsSteamID(player.SteamID)
 
 	if player.VACBans > 0 {
@@ -640,8 +640,8 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 		msgEmbed.Embed().AddField("Proxy", string(proxy.Threat)).MakeFieldInline()
 	}
 
-	if logData != nil && logData.Total > 0 {
-		msgEmbed.Embed().AddField("Logs.tf", strconv.Itoa(logData.Total)).MakeFieldInline()
+	if logData.Logs > 0 {
+		msgEmbed.Embed().AddField("Logs.tf", strconv.Itoa(int(logData.Logs))).MakeFieldInline()
 	}
 
 	if createdAt != "" {
@@ -649,10 +649,10 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 	}
 
 	return msgEmbed.Embed().
-		SetURL(player.ProfileURL).
+		SetURL(player.Profile()).
 		SetColor(color).
-		SetImage(player.AvatarFull).
-		SetThumbnail(player.Avatar).
+		SetImage(player.AvatarFull()).
+		SetThumbnail(player.Avatar()).
 		Truncate().MessageEmbed
 }
 

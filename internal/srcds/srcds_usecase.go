@@ -12,6 +12,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -27,10 +28,12 @@ type srcds struct {
 	reports       domain.ReportUsecase
 	notifications domain.NotificationUsecase
 	cookie        string
+	tfAPI         *thirdparty.TFAPI
 }
 
 func NewSrcdsUsecase(repository domain.SRCDSRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
 	persons domain.PersonUsecase, reports domain.ReportUsecase, notifications domain.NotificationUsecase, bans domain.BanSteamUsecase,
+	tfAPI *thirdparty.TFAPI,
 ) domain.SRCDSUsecase {
 	return &srcds{
 		config:        config,
@@ -41,6 +44,7 @@ func NewSrcdsUsecase(repository domain.SRCDSRepository, config domain.ConfigUsec
 		bans:          bans,
 		repository:    repository,
 		cookie:        config.Config().HTTPCookieKey,
+		tfAPI:         tfAPI,
 	}
 }
 
@@ -335,7 +339,7 @@ func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req d
 	}
 
 	if personTarget.Expired() {
-		if err := thirdparty.UpdatePlayerSummary(ctx, &personTarget); err != nil {
+		if err := steam.UpdatePlayerSummary(ctx, &personTarget, h.tfAPI); err != nil {
 			slog.Error("Failed to update target player", log.ErrAttr(err))
 		} else {
 			if errSave := h.persons.SavePerson(ctx, nil, &personTarget); errSave != nil {

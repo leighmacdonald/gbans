@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -21,15 +22,17 @@ type authHandler struct {
 	authUsecase   domain.AuthUsecase
 	configUsecase domain.ConfigUsecase
 	personUsecase domain.PersonUsecase
+	tfAPI         *thirdparty.TFAPI
 }
 
 func NewHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, configUsecase domain.ConfigUsecase,
-	personUsecase domain.PersonUsecase,
+	personUsecase domain.PersonUsecase, tfAPI *thirdparty.TFAPI,
 ) {
 	handler := &authHandler{
 		authUsecase:   authUsecase,
 		configUsecase: configUsecase,
 		personUsecase: personUsecase,
+		tfAPI:         tfAPI,
 	}
 
 	engine.GET("/auth/callback", handler.onSteamOIDCCallback())
@@ -104,7 +107,7 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		}
 
 		if person.Expired() {
-			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
+			if errGetProfile := steam.UpdatePlayerSummary(ctx, &person, h.tfAPI); errGetProfile != nil {
 				slog.Error("Failed to fetch user profile on login", log.ErrAttr(errGetProfile), handlerName)
 			} else {
 				if errSave := h.personUsecase.SavePerson(ctx, nil, &person); errSave != nil {

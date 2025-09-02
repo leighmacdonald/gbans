@@ -10,11 +10,10 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/leighmacdonald/steamweb/v2"
 )
 
 type banSteamUsecase struct {
@@ -24,10 +23,12 @@ type banSteamUsecase struct {
 	notifications domain.NotificationUsecase
 	state         domain.StateUsecase
 	reports       domain.ReportUsecase
+	tfAPI         *thirdparty.TFAPI
 }
 
 func NewBanSteamUsecase(repository domain.BanSteamRepository, person domain.PersonUsecase,
 	config domain.ConfigUsecase, notifications domain.NotificationUsecase, reports domain.ReportUsecase, state domain.StateUsecase,
+	tfAPI *thirdparty.TFAPI,
 ) domain.BanSteamUsecase {
 	return &banSteamUsecase{
 		banRepo:       repository,
@@ -36,6 +37,7 @@ func NewBanSteamUsecase(repository domain.BanSteamRepository, person domain.Pers
 		notifications: notifications,
 		reports:       reports,
 		state:         state,
+		tfAPI:         tfAPI,
 	}
 }
 
@@ -54,14 +56,15 @@ func (s banSteamUsecase) UpdateCache(ctx context.Context) error {
 			continue
 		}
 
-		friends, errFriends := steamweb.GetFriendList(ctx, httphelper.NewHTTPClient(), ban.TargetID)
+		friends, errFriends := s.tfAPI.Friends(ctx, ban.TargetID)
 		if errFriends != nil {
 			continue
 		}
 
 		var list []int64
 		for _, friend := range friends {
-			list = append(list, friend.SteamID.Int64())
+			sid := steamid.New(friend.SteamId)
+			list = append(list, sid.Int64())
 		}
 
 		if err := s.banRepo.InsertCache(ctx, ban.TargetID, list); err != nil {

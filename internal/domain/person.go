@@ -9,8 +9,8 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/leighmacdonald/steamweb/v2"
 )
 
 type SteamMember interface {
@@ -134,26 +134,68 @@ func NewUserProfile(sid64 steamid.SteamID) UserProfile {
 	}
 }
 
+// EconBanState  holds the users current economy ban status.
+type EconBanState string
+
+// EconBanState values
+//
+//goland:noinspection ALL
+const (
+	EconBanNone      EconBanState = "none"
+	EconBanProbation EconBanState = "probation"
+	EconBanBanned    EconBanState = "banned"
+)
+
 type Person struct {
 	// TODO merge use of steamid & steam_id
-	SteamID               steamid.SteamID       `db:"steam_id" json:"steam_id"`
-	CreatedOn             time.Time             `json:"created_on"`
-	UpdatedOn             time.Time             `json:"updated_on"`
-	PermissionLevel       Privilege             `json:"permission_level"`
-	Muted                 bool                  `json:"muted"`
-	IsNew                 bool                  `json:"-"`
-	DiscordID             string                `json:"discord_id"`
-	PatreonID             string                `json:"patreon_id"`
-	IPAddr                netip.Addr            `json:"-"` // TODO Allow json for admins endpoints
-	CommunityBanned       bool                  `json:"community_banned"`
-	VACBans               int                   `json:"vac_bans"`
-	GameBans              int                   `json:"game_bans"`
-	EconomyBan            steamweb.EconBanState `json:"economy_ban"`
-	DaysSinceLastBan      int                   `json:"days_since_last_ban"`
-	UpdatedOnSteam        time.Time             `json:"updated_on_steam"`
-	PlayerqueueChatStatus ChatStatus            `json:"playerqueue_chat_status"`
-	PlayerqueueChatReason string                `json:"playerqueue_chat_reason"`
-	*steamweb.PlayerSummary
+	SteamID               steamid.SteamID `json:"steam_id"`
+	CreatedOn             time.Time       `json:"created_on"`
+	UpdatedOn             time.Time       `json:"updated_on"`
+	PermissionLevel       Privilege       `json:"permission_level"`
+	Muted                 bool            `json:"muted"`
+	IsNew                 bool            `json:"-"`
+	DiscordID             string          `json:"discord_id"`
+	PatreonID             string          `json:"patreon_id"`
+	IPAddr                netip.Addr      `json:"-"` // TODO Allow json for admins endpoints
+	CommunityBanned       bool            `json:"community_banned"`
+	VACBans               int             `json:"vac_bans"`
+	GameBans              int             `json:"game_bans"`
+	EconomyBan            EconBanState    `json:"economy_ban"`
+	DaysSinceLastBan      int             `json:"days_since_last_ban"`
+	UpdatedOnSteam        time.Time       `json:"updated_on_steam"`
+	PlayerqueueChatStatus ChatStatus      `json:"playerqueue_chat_status"`
+	PlayerqueueChatReason string          `json:"playerqueue_chat_reason"`
+	AvatarHash            string          `json:"avatar_hash"`
+	CommentPermission     int64           `json:"comment_permission"`
+	LastLogoff            int64           `json:"last_logoff"`
+	LocCityID             int64           `json:"loc_city_id"`
+	LocCountryCode        string          `json:"loc_country_code"`
+	LocStateCode          string          `json:"loc_state_code"`
+	PersonaName           string          `json:"persona_name"`
+	PersonaState          int64           `json:"persona_state"`
+	PersonaStateFlags     int64           `json:"persona_state_flags"`
+	PrimaryClanID         string          `json:"primary_clan_id"`
+	ProfileState          int64           `json:"profile_state"`
+	ProfileURL            string          `json:"profile_url"`
+	RealName              string          `json:"real_name"`
+	TimeCreated           int64           `json:"time_created"`
+	VisibilityState       int64           `json:"visibility_state"`
+}
+
+func (p Person) Avatar() string {
+	return fmt.Sprintf(avatarURLSmallFormat, p.AvatarHash)
+}
+
+func (p Person) AvatarMedium() string {
+	return fmt.Sprintf(avatarURLMediumFormat, p.AvatarHash)
+}
+
+func (p Person) AvatarFull() string {
+	return fmt.Sprintf(avatarURLFullFormat, p.AvatarHash)
+}
+
+func (p Person) Profile() string {
+	return "https://steamcommunity.com/profiles/" + p.SteamID.String()
 }
 
 func (p Person) Expired() bool {
@@ -206,9 +248,9 @@ func (p Person) LoggedIn() bool {
 }
 
 type ProfileResponse struct {
-	Player   *Person           `json:"player"`
-	Friends  []steamweb.Friend `json:"friends"`
-	Settings PersonSettings    `json:"settings"`
+	Player   *Person                  `json:"player"`
+	Friends  []thirdparty.SteamFriend `json:"friends"`
+	Settings PersonSettings           `json:"settings"`
 }
 
 // NewPerson allocates a new default person instance.
@@ -230,9 +272,6 @@ func NewPerson(sid64 steamid.SteamID) Person {
 		DaysSinceLastBan:      0,
 		UpdatedOnSteam:        time.Unix(0, 0),
 		PlayerqueueChatStatus: "readwrite",
-		PlayerSummary: &steamweb.PlayerSummary{
-			SteamID: sid64,
-		},
 	}
 }
 
