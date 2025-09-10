@@ -8,6 +8,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -23,7 +24,7 @@ func NewRepository(database database.Database) domain.SRCDSRepository {
 
 func (r srcdsRepository) QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (domain.PlayerBanState, error) {
 	const query = `
-		SELECT b.out_ban_source, b.out_ban_id, b.out_ban_type, b.out_reason, b.out_evade_ok, b.out_valid_until, p.steam_id 
+		SELECT b.out_ban_source, b.out_ban_id, b.out_ban_type, b.out_reason, b.out_evade_ok, b.out_valid_until, p.steam_id
 		FROM check_ban($1, $2::text) b
 		LEFT JOIN ban sb ON sb.ban_id = b.out_ban_id
 		LEFT JOIN person p on p.steam_id = sb.target_id`
@@ -34,8 +35,8 @@ func (r srcdsRepository) QueryBanState(ctx context.Context, steamID steamid.Stea
 	var (
 		banSource  *domain.BanSource
 		banID      *int
-		banType    *domain.BanType
-		reason     *domain.Reason
+		banType    *ban.BanType
+		reason     *ban.Reason
 		evadeOK    *bool
 		validUntil *time.Time
 		banSteamID *int64
@@ -346,7 +347,7 @@ func (r srcdsRepository) GetAdminGroups(ctx context.Context, admin domain.SMAdmi
 
 func (r srcdsRepository) Admins(ctx context.Context) ([]domain.SMAdmin, error) {
 	groups, errGroups := r.Groups(ctx)
-	if errGroups != nil && !errors.Is(errGroups, domain.ErrNoResult) {
+	if errGroups != nil && !errors.Is(errGroups, database.ErrNoResult) {
 		return nil, errGroups
 	}
 
@@ -357,7 +358,7 @@ func (r srcdsRepository) Admins(ctx context.Context) ([]domain.SMAdmin, error) {
 		LeftJoin("sm_admins_groups sag on a.id = sag.admin_id").
 		GroupBy("a.id"))
 	if errRows != nil {
-		if errors.Is(errRows, domain.ErrNoResult) {
+		if errors.Is(errRows, database.ErrNoResult) {
 			return []domain.SMAdmin{}, nil
 		}
 
@@ -401,7 +402,7 @@ func (r srcdsRepository) Groups(ctx context.Context) ([]domain.SMGroups, error) 
 		Select("id", "flags", "name", "immunity_level", "created_on", "updated_on").
 		From("sm_groups"))
 	if errRows != nil {
-		if errors.Is(errRows, domain.ErrNoResult) {
+		if errors.Is(errRows, database.ErrNoResult) {
 			return []domain.SMGroups{}, nil
 		}
 
@@ -451,7 +452,7 @@ func (r srcdsRepository) GetAdminByID(ctx context.Context, adminID int) (domain.
 	}
 
 	groups, errGroup := r.GetAdminGroups(ctx, admin)
-	if errGroup != nil && !errors.Is(errGroup, domain.ErrNoResult) {
+	if errGroup != nil && !errors.Is(errGroup, database.ErrNoResult) {
 		return domain.SMAdmin{}, errGroup
 	}
 

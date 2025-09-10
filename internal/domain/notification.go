@@ -6,6 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/riverqueue/river"
 	"golang.org/x/exp/slices"
@@ -49,7 +50,7 @@ type NotificationPayload struct {
 	Types           []MessageType
 	Sids            steamid.Collection
 	Groups          []Privilege
-	DiscordChannels []DiscordChannel
+	DiscordChannels []discord.DiscordChannel
 	Severity        NotificationSeverity
 	Message         string
 	DiscordEmbed    *discordgo.MessageEmbed
@@ -73,12 +74,12 @@ func (payload NotificationPayload) ValidationError() error {
 	return nil
 }
 
-func NewDiscordNotification(channel DiscordChannel, embed *discordgo.MessageEmbed) NotificationPayload {
+func NewDiscordNotification(channel discord.DiscordChannel, embed *discordgo.MessageEmbed) NotificationPayload {
 	return NotificationPayload{
 		Types:           []MessageType{Discord},
 		Sids:            nil,
 		Groups:          nil,
-		DiscordChannels: []DiscordChannel{channel},
+		DiscordChannels: []discord.DiscordChannel{channel},
 		Severity:        SeverityInfo,
 		Message:         "",
 		DiscordEmbed:    embed,

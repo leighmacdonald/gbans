@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -13,13 +14,12 @@ import (
 	"github.com/riverqueue/river"
 )
 
-func NewNotificationUsecase(repository domain.NotificationRepository, discord domain.DiscordUsecase) domain.NotificationUsecase {
-	return &notificationUsecase{repository: repository, discord: discord}
+func NewNotificationUsecase(repository domain.NotificationRepository, discord discord.DiscordUsecase) domain.NotificationUsecase {
+	return &notificationUsecase{repository: repository}
 }
 
 type notificationUsecase struct {
 	repository  domain.NotificationRepository
-	discord     domain.DiscordUsecase
 	queueClient *river.Client[pgx.Tx]
 }
 

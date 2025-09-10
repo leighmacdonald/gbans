@@ -8,7 +8,16 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+)
+
+var (
+	ErrInvalidBanType     = errors.New("invalid ban type")
+	ErrInvalidBanDuration = errors.New("invalid ban duration")
+	ErrInvalidBanReason   = errors.New("custom reason cannot be empty")
+	ErrInvalidASN         = errors.New("invalid asn, out of range")
+	ErrInvalidCIDR        = errors.New("failed to parse CIDR address")
 )
 
 type QueryOpts struct {
@@ -151,7 +160,7 @@ type BanUsecase interface {
 	// GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (BannedPerson, error)
 	// GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (BannedPerson, error)
 	Save(ctx context.Context, ban *Ban) error
-	Ban(ctx context.Context, curUser UserProfile, origin Origin, req RequestBanCreate) (BannedPerson, error)
+	Ban(ctx context.Context, curUser UserProfile, origin Origin, req BanOpts) (BannedPerson, error)
 	Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author UserProfile) (bool, error)
 	Delete(ctx context.Context, ban *Ban, hardDelete bool) error
 	Expired(ctx context.Context) ([]Ban, error)
@@ -192,7 +201,7 @@ func (as AppealState) String() string {
 	}
 }
 
-type RequestBanCreate struct {
+type BanOpts struct {
 	SourceID       steamid.SteamID
 	TargetID       steamid.SteamID
 	Duration       string    `json:"duration"`
@@ -272,7 +281,7 @@ type Opts struct {
 
 func (opts Opts) Validate() error {
 	if !opts.SourceID.Valid() || !opts.TargetID.Valid() {
-		return ErrInvalidSID
+		return domain.ErrInvalidSID
 	}
 
 	if opts.BanType != Banned && opts.BanType != NoComm {

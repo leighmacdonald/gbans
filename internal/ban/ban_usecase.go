@@ -20,7 +20,7 @@ import (
 )
 
 type banUsecase struct {
-	banRepo       domain.BanRepository
+	banRepo       BanRepository
 	persons       domain.PersonUsecase
 	config        domain.ConfigUsecase
 	notifications domain.NotificationUsecase
@@ -29,10 +29,10 @@ type banUsecase struct {
 	tfAPI         *thirdparty.TFAPI
 }
 
-func NewBanUsecase(repository domain.BanRepository, person domain.PersonUsecase,
+func NewBanUsecase(repository BanRepository, person domain.PersonUsecase,
 	config domain.ConfigUsecase, notifications domain.NotificationUsecase, reports domain.ReportUsecase, state domain.StateUsecase,
 	tfAPI *thirdparty.TFAPI,
-) domain.BanUsecase {
+) BanUsecase {
 	return &banUsecase{
 		banRepo:       repository,
 		persons:       person,
@@ -45,7 +45,7 @@ func NewBanUsecase(repository domain.BanRepository, person domain.PersonUsecase,
 }
 
 func (s banUsecase) UpdateCache(ctx context.Context) error {
-	bans, errBans := s.banRepo.Query(ctx, domain.BansQueryOpts{})
+	bans, errBans := s.banRepo.Query(ctx, QueryOpts{})
 	if errBans != nil {
 		return errBans
 	}
@@ -82,10 +82,10 @@ func (s banUsecase) Stats(ctx context.Context, stats *domain.Stats) error {
 	return s.banRepo.Stats(ctx, stats)
 }
 
-func (s banUsecase) Save(ctx context.Context, ban *domain.Ban) error {
-	oldState := domain.Open
+func (s banUsecase) Save(ctx context.Context, ban *Ban) error {
+	oldState := Open
 	if ban.BanID > 0 {
-		existing, errExisting := s.banRepo.Query(ctx, domain.BansQueryOpts{
+		existing, errExisting := s.banRepo.Query(ctx, QueryOpts{
 			BanID:   ban.BanID,
 			EvadeOk: true,
 			Deleted: true,
@@ -122,9 +122,9 @@ func (s banUsecase) Save(ctx context.Context, ban *domain.Ban) error {
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of Config.DefaultExpiration() will be used.
-func (s banUsecase) Ban(ctx context.Context, curUser domain.UserProfile, origin domain.Origin, req domain.Opts) (domain.BannedPerson, error) {
+func (s banUsecase) Ban(ctx context.Context, curUser domain.UserProfile, origin Origin, req Opts) (BannedPerson, error) {
 	var (
-		ban domain.BannedPerson
+		ban BannedPerson
 		sid = curUser.GetSteamID()
 	)
 
@@ -139,7 +139,7 @@ func (s banUsecase) Ban(ctx context.Context, curUser domain.UserProfile, origin 
 
 	// srcds sourced bans provide a source_id to id the admin
 	if sourceID, ok := req.SourceSteamID(ctx); ok {
-		origin = domain.InGame
+		origin = InGame
 		sid = sourceID
 	}
 
@@ -228,14 +228,14 @@ func (s banUsecase) Ban(ctx context.Context, curUser domain.UserProfile, origin 
 	}
 
 	switch banSteam.BanType {
-	case domain.Banned:
+	case Banned:
 		if errKick := s.state.Kick(ctx, banSteam.TargetID, banSteam.Reason); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to kick player", log.ErrAttr(errKick),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		} else {
 			s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelKickLog, discord.KickPlayerEmbed(target)))
 		}
-	case domain.NoComm:
+	case NoComm:
 		if errSilence := s.state.Silence(ctx, banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))

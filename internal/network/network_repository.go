@@ -161,8 +161,8 @@ func (r networkRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid
 
 func (r networkRepository) AddConnectionHistory(ctx context.Context, conn *domain.PersonConnection) error {
 	const query = `
-		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on, server_id) 
-		VALUES ($1, $2, $3, $4, $5) 
+		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on, server_id)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING person_connection_id`
 
 	if errQuery := r.db.
@@ -183,7 +183,7 @@ func (r networkRepository) GetPlayerMostRecentIP(ctx context.Context, steamID st
 		OrderBy("c.created_on desc").
 		Limit(1))
 	if errRow != nil {
-		if errors.Is(errRow, domain.ErrNoResult) {
+		if errors.Is(errRow, database.ErrNoResult) {
 			return nil
 		}
 
@@ -229,9 +229,9 @@ func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) 
 
 func (r networkRepository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (domain.NetworkASN, error) {
 	const query = `
-		SELECT ip_range::text, as_num, as_name 
+		SELECT ip_range::text, as_num, as_name
 		FROM net_asn
-		WHERE ip_range >>= $1 
+		WHERE ip_range >>= $1
 		LIMIT 1`
 
 	var asnRecord domain.NetworkASN
@@ -247,8 +247,8 @@ func (r networkRepository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Ad
 
 func (r networkRepository) GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (domain.NetworkLocation, error) {
 	const query = `
-		SELECT ip_range::text, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
-		FROM net_location 
+		SELECT ip_range::text, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location)
+		FROM net_location
 		WHERE ip_range >>= $1`
 
 	var record domain.NetworkLocation
@@ -264,9 +264,9 @@ func (r networkRepository) GetLocationRecord(ctx context.Context, ipAddr netip.A
 
 func (r networkRepository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (domain.NetworkProxy, error) {
 	const query = `
-		SELECT ip_range::text, proxy_type, country_code, country_name, region_name, 
-       		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat 
-		FROM net_proxy 
+		SELECT ip_range::text, proxy_type, country_code, country_name, region_name,
+       		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat
+		FROM net_proxy
 		WHERE ip_range >>= $1`
 
 	var proxyRecord domain.NetworkProxy
@@ -290,7 +290,7 @@ func (r networkRepository) LoadASN(ctx context.Context, truncate bool, records [
 	}
 
 	const query = `
-		INSERT INTO net_asn (ip_range, cidr, as_num, as_name) 
+		INSERT INTO net_asn (ip_range, cidr, as_num, as_name)
 		VALUES($1, $2, $3, $4)`
 
 	batch := pgx.Batch{}

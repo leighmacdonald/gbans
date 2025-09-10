@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -82,7 +83,7 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 
 		report, errReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errReport != nil {
-			if errors.Is(errReport, domain.ErrNoResult) {
+			if errors.Is(errReport, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNotFound,
 					"Could not find a report with the id: %d", reportID))
 
@@ -163,8 +164,8 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 
 		report, errGetReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errGetReport != nil {
-			if errors.Is(errGetReport, domain.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+			if errors.Is(errGetReport, database.ErrNoResult) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
 
 				return
 			}

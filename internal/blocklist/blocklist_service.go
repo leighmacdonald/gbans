@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"net/netip"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
@@ -52,9 +54,10 @@ func NewHandler(engine *gin.Engine, bu domain.BlocklistUsecase, nu domain.Networ
 
 type (
 	CIDRBlockWhitelistExport struct {
-		CIDRBlockWhitelistID int    `json:"cidr_block_whitelist_id"`
-		Address              string `json:"address"`
-		domain.TimeStamped
+		CIDRBlockWhitelistID int       `json:"cidr_block_whitelist_id"`
+		Address              string    `json:"address"`
+		CreatedOn            time.Time `json:"created_on"`
+		UpdatedOn            time.Time `json:"updated_on"`
 	}
 )
 
@@ -133,7 +136,8 @@ func (b *blocklistHandler) onAPIWhitelistIPs() gin.HandlerFunc {
 			wlExported = append(wlExported, CIDRBlockWhitelistExport{
 				CIDRBlockWhitelistID: whitelist.CIDRBlockWhitelistID,
 				Address:              whitelist.Address.String(),
-				TimeStamped:          whitelist.TimeStamped,
+				CreatedOn:            whitelist.CreatedOn,
+				UpdatedOn:            whitelist.UpdatedOn,
 			})
 		}
 
@@ -239,7 +243,7 @@ func (b *blocklistHandler) onAPICreateWhitelistIP() gin.HandlerFunc {
 
 		whitelist, errSave := b.blocklists.CreateCIDRBlockWhitelist(ctx, req.Address)
 		if errSave != nil {
-			if errors.Is(errSave, domain.ErrInvalidCIDR) {
+			if errors.Is(errSave, ban.ErrInvalidCIDR) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest, "CIDR invalid"))
 			} else {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
@@ -251,7 +255,8 @@ func (b *blocklistHandler) onAPICreateWhitelistIP() gin.HandlerFunc {
 		ctx.JSON(http.StatusCreated, CIDRBlockWhitelistExport{
 			CIDRBlockWhitelistID: whitelist.CIDRBlockWhitelistID,
 			Address:              whitelist.Address.String(),
-			TimeStamped:          whitelist.TimeStamped,
+			CreatedOn:            whitelist.CreatedOn,
+			UpdatedOn:            whitelist.UpdatedOn,
 		})
 	}
 }
@@ -278,7 +283,7 @@ func (b *blocklistHandler) onAPIUpdateWhitelistIP() gin.HandlerFunc {
 
 		whiteList, errSave := b.blocklists.UpdateCIDRBlockWhitelist(ctx, whitelistID, req.Address)
 		if errSave != nil {
-			if errors.Is(errSave, domain.ErrInvalidCIDR) {
+			if errors.Is(errSave, ban.ErrInvalidCIDR) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest, "CIDR invalid"))
 			} else {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))

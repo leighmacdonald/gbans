@@ -70,7 +70,7 @@ func (r patreonRepository) GetPatreonAuth(ctx context.Context) (string, string, 
 		From("auth_patreon").
 		ToSql()
 	if errQuery != nil {
-		return "", "", errors.Join(errQuery, domain.ErrCreateQuery)
+		return "", "", errors.Join(errQuery, database.ErrCreateQuery)
 	}
 
 	var (

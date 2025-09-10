@@ -9,13 +9,14 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type nullDiscordRepository struct{}
 
-func (bot *nullDiscordRepository) RegisterHandler(_ domain.Cmd, _ domain.SlashCommandHandler) error {
+func (bot *nullDiscordRepository) RegisterHandler(_ Cmd, _ SlashCommandHandler) error {
 	return nil
 }
 
@@ -29,19 +30,19 @@ func (bot *nullDiscordRepository) Start() error {
 func (bot *nullDiscordRepository) SendPayload(_ string, _ *discordgo.MessageEmbed) {
 }
 
-func NewNullDiscordRepository() domain.DiscordRepository {
+func NewNullDiscordRepository() DiscordRepository {
 	return &nullDiscordRepository{}
 }
 
 type discordRepository struct {
 	session         *discordgo.Session
 	isReady         atomic.Bool
-	commandHandlers map[domain.Cmd]domain.SlashCommandHandler
+	commandHandlers map[Cmd]SlashCommandHandler
 	conf            domain.Config
 	commands        []*discordgo.ApplicationCommand
 }
 
-func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) {
+func NewDiscordRepository(conf domain.Config) (DiscordRepository, error) {
 	if !conf.Discord.Enabled || !conf.Discord.BotEnabled {
 		return &nullDiscordRepository{}, nil
 	}
@@ -49,7 +50,7 @@ func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) 
 	// Immediately connects
 	session, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
 	if errNewSession != nil {
-		return nil, errors.Join(errNewSession, domain.ErrDiscordCreate)
+		return nil, errors.Join(errNewSession, ErrDiscordCreate)
 	}
 
 	session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
@@ -60,7 +61,7 @@ func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) 
 		session:         session,
 		conf:            conf,
 		isReady:         atomic.Bool{},
-		commandHandlers: map[domain.Cmd]domain.SlashCommandHandler{},
+		commandHandlers: map[Cmd]SlashCommandHandler{},
 	}
 
 	bot.session.AddHandler(bot.onReady)
@@ -71,10 +72,10 @@ func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) 
 	return bot, nil
 }
 
-func (bot *discordRepository) RegisterHandler(cmd domain.Cmd, handler domain.SlashCommandHandler) error {
+func (bot *discordRepository) RegisterHandler(cmd Cmd, handler SlashCommandHandler) error {
 	_, found := bot.commandHandlers[cmd]
 	if found {
-		return domain.ErrDuplicateCommand
+		return ErrDuplicateCommand
 	}
 
 	bot.commandHandlers[cmd] = handler
@@ -91,7 +92,7 @@ func (bot *discordRepository) Shutdown() {
 func (bot *discordRepository) Start() error {
 	// Open a websocket connection to discord and begin listening.
 	if errSessionOpen := bot.session.Open(); errSessionOpen != nil {
-		return errors.Join(errSessionOpen, domain.ErrDiscordOpen)
+		return errors.Join(errSessionOpen, ErrDiscordOpen)
 	}
 
 	return nil
@@ -144,7 +145,7 @@ func (bot *discordRepository) onDisconnect(_ *discordgo.Session, _ *discordgo.Di
 func (bot *discordRepository) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	var (
 		data    = interaction.ApplicationCommandData()
-		command = domain.Cmd(data.Name)
+		command = Cmd(data.Name)
 	)
 
 	if handler, handlerFound := bot.commandHandlers[command]; handlerFound {
@@ -201,7 +202,7 @@ func (bot *discordRepository) sendInteractionResponse(session *discordgo.Session
 		if _, errResp := session.FollowupMessageCreate(interaction, true, &discordgo.WebhookParams{
 			Content: "Something went wrong",
 		}); errResp != nil {
-			return errors.Join(errResp, domain.ErrDiscordMessageSen)
+			return errors.Join(errResp, ErrDiscordMessageSen)
 		}
 
 		return nil
@@ -227,19 +228,19 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 	userPerms := int64(discordgo.PermissionViewChannel)
 	optUserID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        domain.OptUserIdentifier,
+		Name:        OptUserIdentifier,
 		Description: "SteamID in any format OR profile url",
 		Required:    true,
 	}
 	optUserIDOptional := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        domain.OptUserIdentifier,
+		Name:        OptUserIdentifier,
 		Description: "Optional SteamID in any format OR profile url to attach to a command",
 		Required:    true,
 	}
 	optServerID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        domain.OptServerIdentifier,
+		Name:        OptServerIdentifier,
 		Description: "Short server name",
 		Required:    true,
 	}
@@ -251,39 +252,39 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 	// }
 	optMessage := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        domain.OptMessage,
+		Name:        OptMessage,
 		Description: "Message to send",
 		Required:    true,
 	}
 	optDuration := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        domain.OptDuration,
+		Name:        OptDuration,
 		Description: "Duration [s,m,h,d,w,M,y]N|0",
 		Required:    true,
 	}
 	optAsn := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        domain.OptASN,
+		Name:        OptASN,
 		Description: "An Autonomous System (AS) is a group of one or more IP prefixes run by one or more network operators",
 		Required:    true,
 	}
 	optIPAddr := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        domain.OptIP,
+		Name:        OptIP,
 		Description: "IP address to check",
 		Required:    true,
 	}
 	optMatchID := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
-		Name:        domain.OptMatchID,
+		Name:        OptMatchID,
 		Description: "MatchID of any previously uploaded match",
 		Required:    true,
 	}
 
-	reasonCollection := []domain.Reason{
-		domain.External, domain.Cheating, domain.Racism, domain.Harassment, domain.Exploiting,
-		domain.WarningsExceeded, domain.Spam, domain.Language, domain.Profile, domain.ItemDescriptions,
-		domain.BotHost, domain.Evading, domain.Username, domain.Custom,
+	reasonCollection := []ban.Reason{
+		ban.External, ban.Cheating, ban.Racism, ban.Harassment, ban.Exploiting,
+		ban.WarningsExceeded, ban.Spam, ban.Language, ban.Profile, ban.ItemDescriptions,
+		ban.BotHost, ban.Evading, ban.Username, ban.Custom,
 	}
 
 	reasons := make([]*discordgo.ApplicationCommandOptionChoice, len(reasonCollection))
@@ -297,7 +298,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 
 	optBanReason := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionInteger,
-		Name:        domain.OptBanReason,
+		Name:        OptBanReason,
 		Description: "Reason for the ban/mute",
 		Required:    true,
 		Choices:     reasons,
@@ -305,19 +306,19 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 
 	slashCommands := []*discordgo.ApplicationCommand{
 		{
-			Name:        string(domain.CmdLog),
+			Name:        string(CmdLog),
 			Description: "Show a match log summary",
 			Options: []*discordgo.ApplicationCommandOption{
 				optMatchID,
 			},
 		},
 		{
-			Name:        string(domain.CmdLogs),
+			Name:        string(CmdLogs),
 			Description: "Show a list of your recent logs",
 			Options:     []*discordgo.ApplicationCommandOption{},
 		},
 		{
-			Name:                     string(domain.CmdFind),
+			Name:                     string(CmdFind),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Description:              "Find a user on any of the servers",
@@ -326,7 +327,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 			},
 		},
 		{
-			Name:                     string(domain.CmdMute),
+			Name:                     string(CmdMute),
 			Description:              "Mute a player",
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
@@ -336,7 +337,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 				optBanReason,
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        domain.OptNote,
+					Name:        OptNote,
 					Description: "Mod only notes for the mute reason",
 					Required:    true,
 				},
@@ -344,7 +345,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		},
 		{
 			ApplicationID:            appID,
-			Name:                     string(domain.CmdCheck),
+			Name:                     string(CmdCheck),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Description:              "Get ban status for a steam id",
@@ -354,7 +355,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		},
 		{
 			ApplicationID:            appID,
-			Name:                     string(domain.CmdCheckIP),
+			Name:                     string(CmdCheckIP),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Description:              "Check if a ip is banned",
@@ -363,7 +364,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 			},
 		},
 		{
-			Name:                     string(domain.CmdKick),
+			Name:                     string(CmdKick),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Description:              "Kick a user from any server they are playing on",
@@ -373,7 +374,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 			},
 		},
 		{
-			Name:                     string(domain.CmdPlayers),
+			Name:                     string(CmdPlayers),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Description:              "Show a table of the current players on the server",
@@ -382,7 +383,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 			},
 		},
 		{
-			Name:                     string(domain.CmdPSay),
+			Name:                     string(CmdPSay),
 			Description:              "Privately message a player",
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
@@ -392,14 +393,14 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 			},
 		},
 		{
-			Name:                     string(domain.CmdCSay),
+			Name:                     string(CmdCSay),
 			Description:              "Send a centered message to the whole server",
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        domain.OptServerIdentifier,
+					Name:        OptServerIdentifier,
 					Description: "Short server name or `*` for all",
 					Required:    true,
 				},
@@ -407,7 +408,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 			},
 		},
 		{
-			Name:                     string(domain.CmdSay),
+			Name:                     string(CmdSay),
 			Description:              "Send a console message to the whole server",
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
@@ -417,7 +418,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 			},
 		},
 		{
-			Name:                     string(domain.CmdServers),
+			Name:                     string(CmdServers),
 			Description:              "Show the high level status of all servers",
 			DefaultMemberPermissions: &userPerms,
 			Options: []*discordgo.ApplicationCommandOption{
@@ -430,13 +431,13 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		},
 		{
 			ApplicationID:            appID,
-			Name:                     string(domain.CmdHistory),
+			Name:                     string(CmdHistory),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Description:              "Query user history",
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        string(domain.CmdHistoryIP),
+					Name:        string(CmdHistoryIP),
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Get the ip history",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -444,7 +445,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 					},
 				},
 				{
-					Name:        string(domain.CmdHistoryChat),
+					Name:        string(CmdHistoryChat),
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Get the chat history of the user",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -455,13 +456,13 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		},
 		{
 			ApplicationID:            appID,
-			Name:                     domain.OptBan,
+			Name:                     OptBan,
 			Description:              "Manage steam, ip and ASN bans",
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        domain.OptSteam,
+					Name:        OptSteam,
 					Description: "Ban and kick a user from all servers",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
@@ -470,7 +471,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 						optBanReason,
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        domain.OptNote,
+							Name:        OptNote,
 							Description: "Mod only notes for the ban reason",
 							Required:    true,
 						},
@@ -487,7 +488,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 						optUserIDOptional,
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        domain.OptNote,
+							Name:        OptNote,
 							Description: "Mod only notes for the mute reason",
 							Required:    true,
 						},
@@ -500,7 +501,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        domain.OptCIDR,
+							Name:        OptCIDR,
 							Description: "Network range to block eg: 12.34.56.78/32 (1 host) | 12.34.56.0/24 (256 hosts)",
 							Required:    true,
 						},
@@ -509,7 +510,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 						optBanReason,
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        domain.OptNote,
+							Name:        OptNote,
 							Description: "Mod only notes for the mute reason",
 							Required:    true,
 						},
@@ -525,21 +526,21 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        domain.OptSteam,
+					Name:        OptSteam,
 					Description: "Unban a previously banned player",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
 						optUserID,
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        domain.OptUnbanReason,
+							Name:        OptUnbanReason,
 							Description: "Reason for unbanning",
 							Required:    true,
 						},
 					},
 				}, // TODO ip
 				{
-					Name:        domain.OptASN,
+					Name:        OptASN,
 					Description: "Unban a previously banned ASN",
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Options: []*discordgo.ApplicationCommandOption{
@@ -550,12 +551,12 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		},
 		{
 			ApplicationID:            appID,
-			Name:                     string(domain.CmdStats),
+			Name:                     string(CmdStats),
 			Description:              "Query stats",
 			DefaultMemberPermissions: &userPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        string(domain.CmdStatsPlayer),
+					Name:        string(CmdStatsPlayer),
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Get a players stats",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -580,12 +581,12 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		},
 		{
 			ApplicationID:            appID,
-			Name:                     string(domain.CmdAC),
+			Name:                     string(CmdAC),
 			Description:              "Query Anticheat Logs",
 			DefaultMemberPermissions: &modPerms,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        string(domain.CmdACPlayer),
+					Name:        string(CmdACPlayer),
 					Type:        discordgo.ApplicationCommandOptionSubCommand,
 					Description: "Query a players anticheat logs by steam id",
 					Options: []*discordgo.ApplicationCommandOption{
@@ -597,7 +598,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 
 		{
 			ApplicationID:            appID,
-			Name:                     string(domain.CmdFilter),
+			Name:                     string(CmdFilter),
 			Description:              "Manage and test global word filters",
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
@@ -609,13 +610,13 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionBoolean,
-							Name:        domain.OptIsRegex,
+							Name:        OptIsRegex,
 							Description: "Is the pattern a regular expression?",
 							Required:    true,
 						},
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        domain.OptPattern,
+							Name:        OptPattern,
 							Description: "Regular expression or word for matching",
 							Required:    true,
 						},
@@ -641,7 +642,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        domain.OptMessage,
+							Name:        OptMessage,
 							Description: "String to check filters against",
 							Required:    true,
 						},
@@ -653,7 +654,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 
 	commands, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, bot.conf.Discord.GuildID, slashCommands)
 	if errBulk != nil {
-		return errors.Join(errBulk, domain.ErrDiscordOverwriteCommands)
+		return errors.Join(errBulk, ErrDiscordOverwriteCommands)
 	}
 
 	bot.commands = commands

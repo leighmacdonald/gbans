@@ -1,10 +1,21 @@
-package domain
+package discord
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+)
+
+var (
+	ErrDuplicateCommand         = errors.New("duplicate command registration")
+	ErrDiscordCreate            = errors.New("failed to connect to discord")
+	ErrDiscordOpen              = errors.New("failed to open discord connection")
+	ErrCommandFailed            = errors.New("command failed")
+	ErrDiscordMessageSen        = errors.New("failed to send discord message")
+	ErrDiscordOverwriteCommands = errors.New("failed to bulk overwrite discord commands")
 )
 
 type DiscordCredential struct {
@@ -15,7 +26,8 @@ type DiscordCredential struct {
 	ExpiresIn    int             `json:"expires_in"`
 	Scope        string          `json:"scope"`
 	TokenType    string          `json:"token_type"`
-	TimeStamped
+	CreatedOn    time.Time       `json:"created_on"`
+	UpdatedOn    time.Time       `json:"updated_on"`
 }
 
 type DiscordUserDetail struct {
@@ -33,7 +45,8 @@ type DiscordUserDetail struct {
 	Locale           string          `json:"locale"`
 	MfaEnabled       bool            `json:"mfa_enabled"`
 	PremiumType      int             `json:"premium_type"`
-	TimeStamped
+	CreatedOn        time.Time       `json:"created_on"`
+	UpdatedOn        time.Time       `json:"updated_on"`
 }
 
 type DiscordOAuthUsecase interface {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -34,7 +35,7 @@ func (h antiCheatHandler) bySteamID() gin.HandlerFunc {
 		}
 
 		detections, errDetections := h.anticheat.DetectionsBySteamID(ctx, steamID)
-		if errDetections != nil && !errors.Is(errDetections, domain.ErrNoResult) {
+		if errDetections != nil && !errors.Is(errDetections, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDetections, domain.ErrInternal)))
 
 			return
@@ -70,7 +71,7 @@ func (h antiCheatHandler) query() gin.HandlerFunc {
 		}
 
 		entries, errEntries := h.anticheat.Query(ctx, query)
-		if errEntries != nil && !errors.Is(errEntries, domain.ErrNoResult) {
+		if errEntries != nil && !errors.Is(errEntries, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, domain.ErrInternal)))
 
 			return

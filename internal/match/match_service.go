@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
@@ -108,7 +109,7 @@ func (h matchHandler) onAPIPostMatchStart() gin.HandlerFunc {
 func (h matchHandler) onAPIGetStatsWeaponsOverall(ctx context.Context) gin.HandlerFunc {
 	updater := NewDataUpdater(time.Minute*10, func() ([]domain.WeaponsOverallResult, error) {
 		weaponStats, errUpdate := h.matches.WeaponsOverall(ctx)
-		if errUpdate != nil && !errors.Is(errUpdate, domain.ErrNoResult) {
+		if errUpdate != nil && !errors.Is(errUpdate, database.ErrNoResult) {
 			return nil, errors.Join(errUpdate, domain.ErrDataUpdate)
 		}
 
@@ -150,7 +151,7 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 		}
 
 		weaponStats, errChat := h.matches.WeaponsOverallTopPlayers(ctx, weaponID)
-		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
 
 			return
@@ -167,7 +168,7 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 func (h matchHandler) onAPIGetStatsPlayersOverall(ctx context.Context) gin.HandlerFunc {
 	updater := NewDataUpdater(time.Minute*10, func() ([]domain.PlayerWeaponResult, error) {
 		updatedStats, errChat := h.matches.PlayersOverallByKills(ctx, 1000)
-		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			return nil, errors.Join(errChat, domain.ErrDataUpdate)
 		}
 
@@ -185,7 +186,7 @@ func (h matchHandler) onAPIGetStatsPlayersOverall(ctx context.Context) gin.Handl
 func (h matchHandler) onAPIGetStatsHealersOverall(ctx context.Context) gin.HandlerFunc {
 	updater := NewDataUpdater(time.Minute*10, func() ([]domain.HealingOverallResult, error) {
 		updatedStats, errChat := h.matches.HealersOverallByHealing(ctx, 250)
-		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			return nil, errors.Join(errChat, domain.ErrDataUpdate)
 		}
 
@@ -208,7 +209,7 @@ func (h matchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
 		}
 
 		weaponStats, errChat := h.matches.WeaponsOverallByPlayer(ctx, steamID)
-		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
 
 			return
@@ -230,7 +231,7 @@ func (h matchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
 		}
 
 		classStats, errChat := h.matches.PlayerOverallClassStats(ctx, steamID)
-		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
 
 			return
@@ -252,7 +253,7 @@ func (h matchHandler) onAPIGetPlayerStatsOverall() gin.HandlerFunc {
 		}
 
 		var por domain.PlayerOverallResult
-		if errChat := h.matches.PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+		if errChat := h.matches.PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
 
 			return
@@ -287,7 +288,7 @@ func (h matchHandler) onAPIGetMatch() gin.HandlerFunc {
 		errMatch := h.matches.MatchGetByID(ctx, matchID, &match)
 
 		if errMatch != nil {
-			if errors.Is(errMatch, domain.ErrNoResult) {
+			if errors.Is(errMatch, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return

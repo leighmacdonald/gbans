@@ -78,12 +78,14 @@ func NewServer(shortName string, address string, port uint16) Server {
 		IsEnabled:      true,
 		EnableStats:    true,
 		TokenCreatedOn: time.Unix(0, 0),
-		TimeStamped:    NewTimeStamped(),
+		CreatedOn:      time.Now(),
+		UpdatedOn:      time.Now(),
 	}
 }
 
 type Server struct {
-	TimeStamped
+	CreatedOn time.Time `json:"created_on"`
+	UpdatedOn time.Time `json:"updated_on"`
 	// Auto generated id
 	ServerID int `json:"server_id"`
 	// ShortName is a short reference name for the server eg: us-1

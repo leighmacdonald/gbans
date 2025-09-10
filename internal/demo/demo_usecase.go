@@ -16,6 +16,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -51,7 +52,7 @@ func (d demoUsecase) oldest(ctx context.Context) (domain.DemoInfo, error) {
 	}
 
 	if len(demos) == 0 {
-		return domain.DemoInfo{}, domain.ErrNoResult
+		return domain.DemoInfo{}, database.ErrNoResult
 	}
 
 	return demos[0], nil
@@ -94,7 +95,7 @@ func (d demoUsecase) TruncateBySpace(ctx context.Context, root string, maxAllowe
 
 		oldestDemo, errOldest := d.oldest(ctx)
 		if errOldest != nil {
-			if errors.Is(errOldest, domain.ErrNoResult) {
+			if errors.Is(errOldest, database.ErrNoResult) {
 				return count, size, nil
 			}
 
@@ -119,7 +120,7 @@ func (d demoUsecase) TruncateByCount(ctx context.Context, maxCount uint64) (int,
 
 	expired, errExpired := d.repository.ExpiredDemos(ctx, maxCount)
 	if errExpired != nil {
-		if errors.Is(errExpired, domain.ErrNoResult) {
+		if errors.Is(errExpired, database.ErrNoResult) {
 			return count, size, nil
 		}
 
@@ -337,7 +338,7 @@ func (d demoUsecase) RemoveOrphans(ctx context.Context) error {
 		asset, _, errAsset := d.asset.Get(ctx, demo.AssetID)
 		if errAsset != nil {
 			// If it doesn't exist on disk we want to delete our internal references to it.
-			if errors.Is(errAsset, domain.ErrNoResult) || errors.Is(errAsset, domain.ErrOpenFile) {
+			if errors.Is(errAsset, database.ErrNoResult) || errors.Is(errAsset, domain.ErrOpenFile) {
 				remove = true
 			} else {
 				return errAsset

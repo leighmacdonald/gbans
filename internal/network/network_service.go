@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -81,7 +82,7 @@ func (h networkHandler) onAPIQueryConnections() gin.HandlerFunc {
 		}
 
 		ipHist, totalCount, errIPHist := h.networks.QueryConnectionHistory(ctx, req)
-		if errIPHist != nil && !errors.Is(errIPHist, domain.ErrNoResult) {
+		if errIPHist != nil && !errors.Is(errIPHist, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errIPHist, domain.ErrInternal)))
 
 			return

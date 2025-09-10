@@ -8,6 +8,8 @@ import (
 	"net/netip"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -24,14 +26,14 @@ type srcdsHandler struct {
 	config        domain.ConfigUsecase
 	reports       domain.ReportUsecase
 	assets        domain.AssetUsecase
-	bans          domain.BanUsecase
+	bans          ban.BanUsecase
 	network       domain.NetworkUsecase
 	blocklist     domain.BlocklistUsecase
 }
 
 func NewHandlerSRCDS(engine *gin.Engine, srcds domain.SRCDSUsecase, servers domain.ServersUsecase,
 	persons domain.PersonUsecase, assets domain.AssetUsecase, reports domain.ReportUsecase,
-	bans domain.BanUsecase, network domain.NetworkUsecase, auth domain.AuthUsecase,
+	bans ban.BanUsecase, network domain.NetworkUsecase, auth domain.AuthUsecase,
 	config domain.ConfigUsecase, notifications domain.NotificationUsecase, state domain.StateUsecase,
 	blocklist domain.BlocklistUsecase,
 ) {
@@ -113,9 +115,9 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 	}
 
 	type checkResponse struct {
-		ClientID int            `json:"client_id"`
-		BanType  domain.BanType `json:"ban_type"`
-		Msg      string         `json:"msg"`
+		ClientID int         `json:"client_id"`
+		BanType  ban.BanType `json:"ban_type"`
+		Msg      string      `json:"msg"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -132,7 +134,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 
 		defaultValue := checkResponse{
 			ClientID: req.ClientID,
-			BanType:  domain.OK,
+			BanType:  ban.OK,
 			Msg:      "",
 		}
 
@@ -174,7 +176,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 				if evadeBanned {
 					defaultValue = checkResponse{
 						ClientID: req.ClientID,
-						BanType:  domain.Banned,
+						BanType:  ban.Banned,
 						Msg:      "Evasion ban",
 					}
 
@@ -333,8 +335,8 @@ func (s *srcdsHandler) onSaveGroupOverride() gin.HandlerFunc {
 
 		override, errOverride := s.srcds.GetGroupOverride(ctx, groupOverrideID)
 		if errOverride != nil {
-			if errors.Is(errOverride, domain.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+			if errors.Is(errOverride, database.ErrNoResult) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
 
 				return
 			}
@@ -367,8 +369,8 @@ func (s *srcdsHandler) onDeleteGroupOverride() gin.HandlerFunc {
 		}
 
 		if err := s.srcds.DelGroupOverride(ctx, groupOverrideID); err != nil {
-			if errors.Is(err, domain.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+			if errors.Is(err, database.ErrNoResult) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
 
 				return
 			}
@@ -402,8 +404,8 @@ func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
 
 		override, errOverride := s.srcds.GetOverride(ctx, overrideID)
 		if errOverride != nil {
-			if errors.Is(errOverride, domain.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+			if errors.Is(errOverride, database.ErrNoResult) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
 
 				return
 			}
@@ -535,8 +537,8 @@ func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {
 
 		admin, errAdmin := s.srcds.GetAdminByID(ctx, adminID)
 		if errAdmin != nil {
-			if errors.Is(errAdmin, domain.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+			if errors.Is(errAdmin, database.ErrNoResult) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
 
 				return
 			}
@@ -621,8 +623,8 @@ func (s *srcdsHandler) onDeleteSMGroup() gin.HandlerFunc {
 		}
 
 		if err := s.srcds.DelGroup(ctx, groupID); err != nil {
-			if errors.Is(err, domain.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+			if errors.Is(err, database.ErrNoResult) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
 
 				return
 			}
@@ -651,8 +653,8 @@ func (s *srcdsHandler) onSaveSMGroup() gin.HandlerFunc {
 
 		group, errGroup := s.srcds.GetGroupByID(ctx, groupID)
 		if errGroup != nil {
-			if errors.Is(errGroup, domain.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNoResult))
+			if errors.Is(errGroup, database.ErrNoResult) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
 
 				return
 			}
@@ -780,10 +782,10 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			return
 		}
 
-		ban, errBan := s.bans.Ban(ctx, httphelper.CurrentUserProfile(ctx), domain.InGame, req)
+		ban, errBan := s.bans.Ban(ctx, httphelper.CurrentUserProfile(ctx), ban.InGame, req)
 		if errBan != nil {
-			if errors.Is(errBan, domain.ErrDuplicate) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, domain.ErrDuplicate,
+			if errors.Is(errBan, database.ErrDuplicate) {
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, database.ErrDuplicate,
 					"This user is already currently banned"))
 
 				return
@@ -847,14 +849,14 @@ func (s *srcdsHandler) onAPIGetServerGroups() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		groups, errGroups := s.srcds.Groups(ctx)
-		if errGroups != nil && !errors.Is(errGroups, domain.ErrNoResult) {
+		if errGroups != nil && !errors.Is(errGroups, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 			return
 		}
 
 		immunities, errImmunities := s.srcds.GetGroupImmunities(ctx)
-		if errImmunities != nil && !errors.Is(errImmunities, domain.ErrNoResult) {
+		if errImmunities != nil && !errors.Is(errImmunities, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errImmunities))
 
 			return

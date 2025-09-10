@@ -10,6 +10,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
@@ -42,7 +43,7 @@ func NewChatRepository(database database.Database, personUsecase domain.PersonUs
 	}
 }
 
-func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason domain.Reason) {
+func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason ban.Reason) {
 	if msg == "" {
 		slog.Warn("Empty message body, skipping")
 
@@ -50,7 +51,7 @@ func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 	}
 
 	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, nil, person.SID)
-	if errPerson != nil && !errors.Is(errPerson, domain.ErrDuplicate) {
+	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
 		slog.Error("Failed to handle message, could not get author", log.ErrAttr(errPerson), slog.String("message", msg))
 
 		return
@@ -126,7 +127,7 @@ func (r chatRepository) Start(ctx context.Context) {
 
 				connectMsg := "Player connected with username: " + connectEvent.Name
 
-				r.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, false, connectEvent.CreatedOn, domain.Username)
+				r.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, false, connectEvent.CreatedOn, ban.Username)
 			case logparse.Say:
 				fallthrough
 			case logparse.SayTeam:
@@ -135,7 +136,7 @@ func (r chatRepository) Start(ctx context.Context) {
 					continue
 				}
 
-				r.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.Team, sayEvent.CreatedOn, domain.Language)
+				r.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.Team, sayEvent.CreatedOn, ban.Language)
 			}
 		}
 	}

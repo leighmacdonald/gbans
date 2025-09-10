@@ -78,7 +78,7 @@ func (b *blocklistRepository) GetSteamBlockWhitelists(ctx context.Context) ([]do
 		LeftJoin("person p USING(steam_id)"))
 
 	if errRows != nil {
-		if errors.Is(errRows, domain.ErrNoResult) {
+		if errors.Is(errRows, database.ErrNoResult) {
 			return blocks, nil
 		}
 
@@ -122,7 +122,7 @@ func (b *blocklistRepository) GetCIDRBlockSources(ctx context.Context) ([]domain
 		Select("cidr_block_source_id", "name", "url", "enabled", "created_on", "updated_on").
 		From("cidr_block_source"))
 	if errRows != nil {
-		if errors.Is(errRows, domain.ErrNoResult) {
+		if errors.Is(errRows, database.ErrNoResult) {
 			return blocks, nil
 		}
 
@@ -208,7 +208,7 @@ func (b *blocklistRepository) GetCIDRBlockWhitelists(ctx context.Context) ([]dom
 		Select("cidr_block_whitelist_id", "address", "created_on", "updated_on").
 		From("cidr_block_whitelist"))
 	if errRows != nil {
-		if errors.Is(errRows, domain.ErrNoResult) {
+		if errors.Is(errRows, database.ErrNoResult) {
 			return whitelists, nil
 		}
 

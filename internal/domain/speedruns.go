@@ -40,9 +40,10 @@ const (
 )
 
 type MapDetail struct {
-	MapID   int    `json:"map_id"`
-	MapName string `json:"map_name"`
-	TimeStamped
+	MapID     int       `json:"map_id"`
+	MapName   string    `json:"map_name"`
+	CreatedOn time.Time `json:"created_on"`
+	UpdatedOn time.Time `json:"updated_on"`
 }
 
 type SpeedrunQuery struct {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
@@ -36,7 +37,7 @@ func NewHandler(engine *gin.Engine, notifications domain.NotificationUsecase, au
 
 func (h notificationHandler) onMarkAllRead() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if err := h.notifications.MarkAllRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, domain.ErrNoResult) {
+		if err := h.notifications.MarkAllRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
@@ -60,7 +61,7 @@ func (h notificationHandler) onMarkRead() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.notifications.MarkMessagesRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, domain.ErrNoResult) {
+		if err := h.notifications.MarkMessagesRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
@@ -72,7 +73,7 @@ func (h notificationHandler) onMarkRead() gin.HandlerFunc {
 
 func (h notificationHandler) onDeleteAll() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if err := h.notifications.DeleteAll(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, domain.ErrNoResult) {
+		if err := h.notifications.DeleteAll(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
@@ -96,7 +97,7 @@ func (h notificationHandler) onDelete() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.notifications.DeleteMessages(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, domain.ErrNoResult) {
+		if err := h.notifications.DeleteMessages(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
 
 			return
@@ -110,7 +111,7 @@ func (h notificationHandler) onNotifications() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		notifications, err := h.notifications.GetPersonNotifications(ctx, httphelper.CurrentUserProfile(ctx).SteamID)
 		if err != nil {
-			if errors.Is(err, domain.ErrNoResult) {
+			if errors.Is(err, database.ErrNoResult) {
 				ctx.JSON(http.StatusOK, []domain.UserNotification{})
 
 				return

@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
@@ -24,7 +25,7 @@ func NewWordFilterUsecase(repository domain.WordFilterRepository, notifications 
 
 func (w *wordFilterUsecase) Import(ctx context.Context) error {
 	filters, errFilters := w.repository.GetFilters(ctx)
-	if errFilters != nil && !errors.Is(errFilters, domain.ErrNoResult) {
+	if errFilters != nil && !errors.Is(errFilters, database.ErrNoResult) {
 		return errFilters
 	}
 
@@ -100,8 +101,8 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 	}
 
 	if errSave := w.repository.SaveFilter(ctx, &newFilter); errSave != nil {
-		if errors.Is(errSave, domain.ErrDuplicate) {
-			return domain.Filter{}, domain.ErrDuplicate
+		if errors.Is(errSave, database.ErrDuplicate) {
+			return domain.Filter{}, database.ErrDuplicate
 		}
 
 		return domain.Filter{}, errors.Join(errSave, domain.ErrSaveChanges)
@@ -111,7 +112,7 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 
 	w.wordFilters.Add(newFilter)
 
-	w.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelWordFilterLog, discord.FilterAddMessage(newFilter)))
+	w.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelWordFilterLog, discord.FilterAddMessage(newFilter)))
 
 	slog.Info("Created filter", slog.Int64("filter_id", newFilter.FilterID))
 
@@ -130,7 +131,7 @@ func (w *wordFilterUsecase) DropFilter(ctx context.Context, filterID int64) erro
 
 	w.wordFilters.Remove(filterID)
 
-	w.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelWordFilterLog, discord.FilterDelMessage(filter)))
+	w.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelWordFilterLog, discord.FilterDelMessage(filter)))
 
 	slog.Info("Deleted filter", slog.Int64("filter_id", filterID))
 

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"sync"
 
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -23,7 +24,7 @@ func NewExpirationMonitor(steam BanUsecase, person domain.PersonUsecase, notific
 }
 
 type ExpirationMonitor struct {
-	steam         domain.BanUsecase
+	steam         BanUsecase
 	person        domain.PersonUsecase
 	notifications domain.NotificationUsecase
 	config        domain.ConfigUsecase
@@ -37,7 +38,7 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 		defer waitGroup.Done()
 
 		expiredBans, errExpiredBans := monitor.steam.Expired(ctx)
-		if errExpiredBans != nil && !errors.Is(errExpiredBans, domain.ErrNoResult) {
+		if errExpiredBans != nil && !errors.Is(errExpiredBans, database.ErrNoResult) {
 			slog.Error("Failed to get expired expiredBans", log.ErrAttr(errExpiredBans))
 
 			return
@@ -63,7 +64,7 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 				name = person.SteamID.String()
 			}
 
-			monitor.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.BanExpiresMessage(ban, person, monitor.config.ExtURL(ban))))
+			monitor.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelBanLog, discord.BanExpiresMessage(ban, person, monitor.config.ExtURL(ban))))
 
 			monitor.notifications.Enqueue(ctx, domain.NewSiteUserNotification(
 				[]steamid.SteamID{person.SteamID},

@@ -171,7 +171,7 @@ func (u voteUsecase) Start(ctx context.Context) {
 				}
 
 				u.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-					domain.ChannelModVoteLog,
+					discord.ChannelModVoteLog,
 					discord.VoteResultMessage(u.config.Config(), result, source, target)))
 			}
 		}

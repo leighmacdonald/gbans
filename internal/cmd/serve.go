@@ -41,7 +41,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/srcds"
 	"github.com/leighmacdonald/gbans/internal/state"
-	"github.com/leighmacdonald/gbans/internal/steamgroup"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
@@ -286,9 +285,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			banUsecase := ban.NewBanUsecase(ban.NewBanRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase, tfapiClient)
 
-			banGroupRepo := steamgroup.NewSteamGroupRepository(dbConn)
-			banGroupUsecase := steamgroup.NewBanGroupUsecase(banGroupRepo, personUsecase, notificationUsecase, configUsecase, tfapiClient)
-
 			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase)
 
 			go func() {
@@ -379,7 +375,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			ban.NewHandlerSteam(router, banUsecase, configUsecase, authUsecase)
 			config.NewHandler(router, configUsecase, authUsecase, app.Version())
 			discord.NewHandler(router, authUsecase, configUsecase, personUsecase, discordOAuthUsecase)
-			steamgroup.NewHandler(router, banGroupUsecase, authUsecase)
 			blocklist.NewHandler(router, blocklistUsecase, networkUsecase, authUsecase)
 			chat.NewHandler(router, chatUsecase, authUsecase)
 			contest.NewHandler(router, contestUsecase, assets, authUsecase)
@@ -419,7 +414,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				defer stateUsecase.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
 			}
 
-			memberships := steamgroup.NewMemberships(banGroupRepo, tfapiClient)
+			memberships := ban.NewMemberships(banUsecase, tfapiClient)
 			banExpirations := ban.NewExpirationMonitor(banUsecase, personUsecase, notificationUsecase, configUsecase)
 
 			go func() {

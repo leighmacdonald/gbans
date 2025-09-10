@@ -3,10 +3,36 @@ package wordfilter
 import (
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"golang.org/x/exp/slices"
 )
+
+type UserWarning struct {
+	WarnReason    ban.Reason `json:"warn_reason"`
+	Message       string     `json:"message"`
+	Matched       string     `json:"matched"`
+	MatchedFilter Filter     `json:"matched_filter"`
+	CreatedOn     time.Time  `json:"created_on"`
+	Personaname   string     `json:"personaname"`
+	Avatar        string     `json:"avatar"`
+	ServerName    string     `json:"server_name"`
+	ServerID      int        `json:"server_id"`
+	SteamID       string     `json:"steam_id"`
+	CurrentTotal  int        `json:"current_total"`
+}
+
+type NewUserWarning struct {
+	UserMessage PersonMessage
+	PlayerID    int
+	UserWarning
+}
+
+type Warnings interface {
+	State() map[string][]UserWarning
+}
 
 type WordFilters struct {
 	*sync.RWMutex

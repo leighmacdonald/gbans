@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/gorilla/websocket"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -124,7 +125,7 @@ func (p playerqueueUsecase) Purge(ctx context.Context, authorID steamid.SteamID,
 	}
 
 	p.notif.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelPlayerqueue, discord.NewPlayerqueuePurge(author.ToUserProfile(), target.ToUserProfile(), message, count)))
+		discord.ChannelPlayerqueue, discord.NewPlayerqueuePurge(author.ToUserProfile(), target.ToUserProfile(), message, count)))
 
 	return nil
 }
@@ -161,7 +162,7 @@ func (p playerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.
 	}
 
 	if person.PlayerqueueChatStatus == status {
-		return domain.ErrDuplicate
+		return database.ErrDuplicate
 	}
 
 	previousStatus := person.PlayerqueueChatStatus
@@ -179,7 +180,7 @@ func (p playerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.
 	}
 
 	p.notif.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelPlayerqueue, discord.NewPlayerqueueChatStatus(author.ToUserProfile(), person.ToUserProfile(), status, reason)))
+		discord.ChannelPlayerqueue, discord.NewPlayerqueueChatStatus(author.ToUserProfile(), person.ToUserProfile(), status, reason)))
 
 	slog.Info("Set chat status", slog.String("steam_id", person.SteamID.String()), slog.String("status", string(status)))
 
@@ -233,7 +234,7 @@ func (p playerqueueUsecase) AddMessage(ctx context.Context, bodyMD string, user 
 	p.queue.Message(message)
 
 	p.notif.Enqueue(ctx,
-		domain.NewDiscordNotification(domain.ChannelPlayerqueue, discord.NewPlayerqueueMessage(user, bodyMD)))
+		domain.NewDiscordNotification(discord.ChannelPlayerqueue, discord.NewPlayerqueueMessage(user, bodyMD)))
 
 	return nil
 }

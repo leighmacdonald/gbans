@@ -97,7 +97,7 @@ func (r *matchRepository) onMatchComplete(ctx context.Context, matchContext *act
 	}
 
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelPublicMatchLog,
+		discord.ChannelPublicMatchLog,
 		discord.MatchMessage(result, "")))
 
 	return nil
@@ -187,7 +187,7 @@ func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryO
 
 func (r *matchRepository) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (map[steamid.SteamID][]domain.MatchPlayerClass, error) {
 	const query = `
-		SELECT mp.steam_id, c.match_player_class_id, c.match_player_id, c.player_class_id, c.kills, 
+		SELECT mp.steam_id, c.match_player_class_id, c.match_player_id, c.player_class_id, c.kills,
 		   c.assists, c.deaths, c.playtime, c.dominations, c.dominated, c.revenges, c.damage, c.damage_taken, c.healing_taken,
 		   c.captures, c.captures_blocked, c.buildings_destroyed
 		FROM match_player_class c
@@ -366,7 +366,7 @@ func (r *matchRepository) matchGetPlayers(ctx context.Context, matchID uuid.UUID
 			ORDER BY kills DESC
 		) w ON w.match_player_id = p.match_player_id
 		WHERE p.match_id = $1
-		GROUP BY 
+		GROUP BY
 			p.match_player_id, w.kills, w.damage, w.shots, w.hits, w.backstabs, w.headshots, w.airshots, pe.steam_id
 		ORDER BY w.kills DESC`
 
@@ -374,7 +374,7 @@ func (r *matchRepository) matchGetPlayers(ctx context.Context, matchID uuid.UUID
 
 	playerRows, errPlayer := r.database.Query(ctx, nil, queryPlayer, matchID)
 	if errPlayer != nil {
-		if errors.Is(errPlayer, domain.ErrNoResult) {
+		if errors.Is(errPlayer, database.ErrNoResult) {
 			return []*domain.MatchPlayer{}, nil
 		}
 
@@ -428,7 +428,7 @@ func (r *matchRepository) matchGetMedics(ctx context.Context, matchID uuid.UUID)
 
 	medicRows, errMedics := r.database.Query(ctx, nil, query, matchID)
 	if errMedics != nil {
-		if errors.Is(errMedics, domain.ErrNoResult) {
+		if errors.Is(errMedics, database.ErrNoResult) {
 			return medics, nil
 		}
 
@@ -475,7 +475,7 @@ func (r *matchRepository) matchGetChat(ctx context.Context, matchID uuid.UUID) (
 					 c.created_on,
 					 c.match_id
 			  FROM person_messages c
-		
+
 			  WHERE c.match_id = $1
 			  GROUP BY c.person_message_id) x
          LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id
@@ -485,7 +485,7 @@ func (r *matchRepository) matchGetChat(ctx context.Context, matchID uuid.UUID) (
 
 	chatRows, errQuery := r.database.Query(ctx, nil, query, matchID)
 	if errQuery != nil {
-		if errors.Is(errQuery, domain.ErrNoResult) {
+		if errors.Is(errQuery, database.ErrNoResult) {
 			return messages, nil
 		}
 
@@ -596,7 +596,7 @@ func (r *matchRepository) MatchGetByID(ctx context.Context, matchID uuid.UUID, m
 
 	chat, errChat := r.matchGetChat(ctx, matchID)
 
-	if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+	if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 		return errChat
 	}
 
@@ -626,8 +626,8 @@ func (r *matchRepository) MatchGetByID(ctx context.Context, matchID uuid.UUID, m
 func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	const (
 		query = `
-		INSERT INTO match (match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end, winner) 
-		VALUES ($1, $2, $3, $4, $5, $6,$7, $8, $9, $10, $11) 
+		INSERT INTO match (match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end, winner)
+		VALUES ($1, $2, $3, $4, $5, $6,$7, $8, $9, $10, $11)
 		RETURNING match_id`
 	)
 
@@ -718,7 +718,7 @@ func (r *matchRepository) saveMatchPlayerStats(ctx context.Context, transaction 
 		INSERT INTO match_player (
 			match_id, steam_id, team, time_start, time_end, health_packs, extinguishes, buildings
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING match_player_id`
 
 	endTime := stats.TimeEnd
@@ -741,9 +741,9 @@ func (r *matchRepository) saveMatchPlayerStats(ctx context.Context, transaction 
 func (r *matchRepository) saveMatchMedicStats(ctx context.Context, transaction pgx.Tx, matchPlayerID int64, stats *logparse.HealingStats) error {
 	const medicQuery = `
 		INSERT INTO match_medic (
-			match_player_id, healing, drops, near_full_charge_death, avg_uber_length,  major_adv_lost, biggest_adv_lost, 
+			match_player_id, healing, drops, near_full_charge_death, avg_uber_length,  major_adv_lost, biggest_adv_lost,
             charge_kritz, charge_quickfix, charge_uber, charge_vacc)
-        VALUES ($1, $2, $3, $4, $5,$6, $7, $8, $9, $10,$11) 
+        VALUES ($1, $2, $3, $4, $5,$6, $7, $8, $9, $10,$11)
 		RETURNING match_medic_id`
 
 	if errMedExec := transaction.
@@ -760,8 +760,8 @@ func (r *matchRepository) saveMatchMedicStats(ctx context.Context, transaction p
 
 func (r *matchRepository) saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	const query = `
-		INSERT INTO match_weapon (match_player_id, weapon_id, kills, damage, shots, hits, backstabs, headshots, airshots) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		INSERT INTO match_weapon (match_player_id, weapon_id, kills, damage, shots, hits, backstabs, headshots, airshots)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING player_weapon_id`
 
 	for weapon, info := range player.WeaponInfo {
@@ -784,8 +784,8 @@ func (r *matchRepository) saveMatchWeaponStats(ctx context.Context, transaction 
 func (r *matchRepository) saveMatchPlayerClassStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
 	const query = `
 		INSERT INTO match_player_class (
-			match_player_id, player_class_id, kills, assists, deaths, playtime, dominations, dominated, revenges, 
-		    damage, damage_taken, healing_taken, captures, captures_blocked, buildings_destroyed) 
+			match_player_id, player_class_id, kills, assists, deaths, playtime, dominations, dominated, revenges,
+		    damage, damage_taken, healing_taken, captures, captures_blocked, buildings_destroyed)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`
 
 	for class, stats := range player.Classes {
@@ -802,7 +802,7 @@ func (r *matchRepository) saveMatchPlayerClassStats(ctx context.Context, transac
 
 func (r *matchRepository) saveMatchKillstreakStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
 	const query = `
-		INSERT INTO match_player_killstreak (match_player_id, player_class_id, killstreak, duration) 
+		INSERT INTO match_player_killstreak (match_player_id, player_class_id, killstreak, duration)
 		VALUES ($1, $2, $3, $4)`
 
 	for class, stats := range player.KillStreaks {
@@ -1010,12 +1010,12 @@ func (r *matchRepository) PlayerStats(ctx context.Context, steamID steamid.Steam
 			   sum(mm.charge_kritz)         as                     charge_kritz,
 			   sum(mm.charge_quickfix)      as                     charge_quickfix,
 			   sum(mm.charge_vacc)          as                     charge_vacc
-		
+
 		FROM match_player mp
 				 LEFT JOIN match m on m.match_id = mp.match_id
 				 LEFT JOIN match_player_class mpc on mp.match_player_id = mpc.match_player_id
 				 LEFT JOIN match_medic mm on mp.match_player_id = mm.match_player_id
-		
+
 		WHERE mp.steam_id = $1 AND
 			  m.time_start BETWEEN LOCALTIMESTAMP - INTERVAL '1 DAY' and LOCALTIMESTAMP`
 
@@ -1036,8 +1036,8 @@ func (r *matchRepository) PlayerStats(ctx context.Context, steamID steamid.Steam
 
 func (r *matchRepository) WeaponsOverall(ctx context.Context) ([]domain.WeaponsOverallResult, error) {
 	const query = `
-		SELECT 
-		    s.weapon_id, s.name, s.key, 
+		SELECT
+		    s.weapon_id, s.name, s.key,
 		    s.kills, case t.kills_total WHEN 0 THEN 0 ELSE (s.kills::float / t.kills_total::float) * 100 END kills_pct,
 		    s.hs,  case t.headshots_total WHEN 0 THEN 0 ELSE (s.hs::float / t.headshots_total::float) * 100 END hs_pct,
 		    s.airshots, case t.airshots_total WHEN 0 THEN 0 ELSE (s.airshots::float / t.airshots_total::float) * 100 END airshots_pct,
@@ -1059,8 +1059,8 @@ func (r *matchRepository) WeaponsOverall(ctx context.Context) ([]domain.WeaponsO
     		LEFT JOIN public.weapon w on w.weapon_id = mw.weapon_id
       		GROUP BY w.weapon_id
 		) s CROSS JOIN (
-			SELECT 
-			    SUM(mw.kills) as kills_total, 
+			SELECT
+			    SUM(mw.kills) as kills_total,
 			    SUM(mw.damage) as damage_total,
 			    SUM(mw.shots) as shots_total,
 			    SUM(mw.hits) as hits_total,
@@ -1368,7 +1368,7 @@ func (r *matchRepository) HealersOverallByHealing(ctx context.Context, count int
 							FROM match m
 									 LEFT JOIN match_player mp on m.match_id = mp.match_id
 							GROUP BY mp.steam_id) mx ON mx.steam_id = p.steam_id
-		
+
 				 LEFT JOIN (SELECT mp.steam_id,
 								   mpc.player_class_id,
 								   SUM(mpc.assists)             as assists,
@@ -1590,7 +1590,7 @@ func (r *matchRepository) GetMapUsageStats(ctx context.Context) ([]domain.MapUse
 	const query = `SELECT m.map, m.playtime, (m.playtime::float / s.total::float) * 100 percent
 		FROM (
 			SELECT SUM(extract('epoch' from m.time_end - m.time_start)) as playtime, m.map FROM match m
-			    LEFT JOIN public.match_player mp on m.match_id = mp.match_id 
+			    LEFT JOIN public.match_player mp on m.match_id = mp.match_id
 			GROUP BY m.map
 		) m CROSS JOIN (
 			SELECT SUM(extract('epoch' from mt.time_end - mt.time_start)) total FROM match mt
@@ -1632,7 +1632,7 @@ func (r *matchRepository) LoadWeapons(ctx context.Context, weaponMap fp.MutexMap
 	for weapon, name := range logparse.NewWeaponParser().NameMap() {
 		var newWeapon domain.Weapon
 		if errWeapon := r.GetWeaponByKey(ctx, weapon, &newWeapon); errWeapon != nil {
-			if !errors.Is(errWeapon, domain.ErrNoResult) {
+			if !errors.Is(errWeapon, database.ErrNoResult) {
 				return errWeapon
 			}
 

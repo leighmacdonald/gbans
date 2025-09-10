@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -22,11 +23,11 @@ import (
 
 type blocklistUsecase struct {
 	repository domain.BlocklistRepository
-	bans       domain.BanUsecase
+	bans       ban.BanUsecase
 	cidrRx     *regexp.Regexp
 }
 
-func NewBlocklistUsecase(br domain.BlocklistRepository, banUsecase domain.BanUsecase) domain.BlocklistUsecase {
+func NewBlocklistUsecase(br domain.BlocklistRepository, banUsecase ban.BanUsecase) domain.BlocklistUsecase {
 	return &blocklistUsecase{
 		repository: br,
 		bans:       banUsecase,

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -223,7 +224,7 @@ func (u personUsecase) GetPeople(ctx context.Context, transaction pgx.Tx, filter
 
 func (u personUsecase) GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.Person, error) {
 	person, errGetPerson := u.repo.GetPersonBySteamID(ctx, transaction, sid64)
-	if errGetPerson != nil && errors.Is(errGetPerson, domain.ErrNoResult) {
+	if errGetPerson != nil && errors.Is(errGetPerson, database.ErrNoResult) {
 		person = domain.NewPerson(sid64)
 
 		if err := u.repo.SavePerson(ctx, transaction, &person); err != nil {

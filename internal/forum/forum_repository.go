@@ -332,11 +332,11 @@ func (f *forumRepository) ForumThreads(ctx context.Context, filter domain.Thread
 		From("forum_thread t").
 		LeftJoin("person p ON p.steam_id = t.source_id").
 		InnerJoin(`
-			LATERAL (SELECT m.*, p2.personaname, p2.avatarhash, p2.steam_id 
-					 FROM forum_message m 
-					 LEFT JOIN public.person p2 on m.source_id = p2.steam_id 
-                     WHERE m.forum_thread_id = t.forum_thread_id 
-			         ORDER BY m.forum_message_id DESC 
+			LATERAL (SELECT m.*, p2.personaname, p2.avatarhash, p2.steam_id
+					 FROM forum_message m
+					 LEFT JOIN public.person p2 on m.source_id = p2.steam_id
+                     WHERE m.forum_thread_id = t.forum_thread_id
+			         ORDER BY m.forum_message_id DESC
 			         LIMIT 1) a ON TRUE`).
 		InnerJoin(`
 			LATERAL (SELECT count(m.forum_message_id) as message_count
@@ -563,7 +563,7 @@ func (f *forumRepository) ForumMessageVoteApply(ctx context.Context, messageVote
 		From("forum_message_vote").
 		Where(sq.And{sq.Eq{"forum_message_id": messageVote.ForumMessageID}, sq.Eq{"source_id": messageVote.SourceID.Int64()}}))
 	if errRow != nil {
-		if !errors.Is(errRow, domain.ErrNoResult) {
+		if !errors.Is(errRow, database.ErrNoResult) {
 			return f.db.DBErr(errRow)
 		}
 	}
@@ -571,7 +571,7 @@ func (f *forumRepository) ForumMessageVoteApply(ctx context.Context, messageVote
 	errScan := f.db.DBErr(row.Scan(&existingVote.ForumMessageVoteID, &existingVote.ForumMessageID, &existingVote.SourceID,
 		&existingVote.Vote, &existingVote.CreatedOn, &existingVote.UpdatedOn))
 	if errScan != nil {
-		if !errors.Is(errScan, domain.ErrNoResult) {
+		if !errors.Is(errScan, database.ErrNoResult) {
 			return f.db.DBErr(errScan)
 		}
 	}

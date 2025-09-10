@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -83,7 +84,7 @@ func (r reportUsecase) GenerateMetaStats(ctx context.Context) error {
 	}
 
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelMod,
+		discord.ChannelMod,
 		discord.ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports"))))
 
 	return nil
@@ -122,7 +123,7 @@ func (r reportUsecase) SetReportStatus(ctx context.Context, reportID int64, user
 	}
 
 	if report.ReportStatus == status {
-		return report, domain.ErrDuplicate
+		return report, database.ErrDuplicate // TODO proper specific error
 	}
 
 	fromStatus := report.ReportStatus
@@ -134,7 +135,7 @@ func (r reportUsecase) SetReportStatus(ctx context.Context, reportID int64, user
 	}
 
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelMod,
+		discord.ChannelMod,
 		discord.ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report))))
 
 	r.notifications.Enqueue(ctx, domain.NewSiteGroupNotificationWithAuthor(
@@ -166,7 +167,7 @@ func (r reportUsecase) GetReportsBySteamID(ctx context.Context, steamID steamid.
 
 	reports, errReports := r.repository.GetReports(ctx, steamID)
 	if errReports != nil {
-		if errors.Is(errReports, domain.ErrNoResult) {
+		if errors.Is(errReports, database.ErrNoResult) {
 			return []domain.ReportWithAuthor{}, nil
 		}
 
@@ -179,7 +180,7 @@ func (r reportUsecase) GetReportsBySteamID(ctx context.Context, steamID steamid.
 func (r reportUsecase) GetReports(ctx context.Context) ([]domain.ReportWithAuthor, error) {
 	reports, errReports := r.repository.GetReports(ctx, steamid.SteamID{})
 	if errReports != nil {
-		if errors.Is(errReports, domain.ErrNoResult) {
+		if errors.Is(errReports, database.ErrNoResult) {
 			return []domain.ReportWithAuthor{}, nil
 		}
 
@@ -251,7 +252,7 @@ func (r reportUsecase) DropReportMessage(ctx context.Context, curUser domain.Per
 	}
 
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelModAppealLog,
+		discord.ChannelModAppealLog,
 		discord.DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser))))
 
 	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
@@ -310,7 +311,7 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 	// Ensure the user doesn't already have an open report against the user
 	existing, errReports := r.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
 	if errReports != nil {
-		if !errors.Is(errReports, domain.ErrNoResult) {
+		if !errors.Is(errReports, database.ErrNoResult) {
 			return domain.ReportWithAuthor{}, errReports
 		}
 	}
@@ -365,7 +366,7 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 	}
 
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelModAppealLog,
+		discord.ChannelModAppealLog,
 		discord.NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)))
 
 	r.notifications.Enqueue(ctx, domain.NewSiteGroupNotificationWithAuthor(
@@ -400,7 +401,7 @@ func (r reportUsecase) EditReportMessage(ctx context.Context, reportMessageID in
 	}
 
 	if req.BodyMD == existing.MessageMD {
-		return domain.ReportMessage{}, domain.ErrDuplicate
+		return domain.ReportMessage{}, database.ErrDuplicate // TODO replace
 	}
 
 	existing.MessageMD = req.BodyMD
@@ -412,7 +413,7 @@ func (r reportUsecase) EditReportMessage(ctx context.Context, reportMessageID in
 	conf := r.config.Config()
 
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelModAppealLog,
+		discord.ChannelModAppealLog,
 		discord.EditReportMessageResponse(req.BodyMD, existing.MessageMD,
 			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))))
 
@@ -447,7 +448,7 @@ func (r reportUsecase) CreateReportMessage(ctx context.Context, reportID int64, 
 	conf := r.config.Config()
 
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelModAppealLog,
+		discord.ChannelModAppealLog,
 		discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser))))
 
 	path := fmt.Sprintf("/report/%d", reportID)

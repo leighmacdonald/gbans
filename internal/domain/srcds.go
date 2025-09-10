@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -103,8 +104,8 @@ type PlayerBanState struct {
 	SteamID    steamid.SteamID `json:"steam_id"`
 	BanSource  BanSource       `json:"ban_source"`
 	BanID      int             `json:"ban_id"`
-	BanType    BanType         `json:"ban_type"`
-	Reason     Reason          `json:"reason"`
+	BanType    ban.BanType     `json:"ban_type"`
+	Reason     ban.Reason      `json:"reason"`
 	EvadeOK    bool            `json:"evade_ok"`
 	ValidUntil time.Time       `json:"valid_until"`
 }
@@ -132,24 +133,26 @@ const (
 )
 
 type SMAdmin struct {
-	AdminID  int             `json:"admin_id"`
-	SteamID  steamid.SteamID `json:"steam_id"`
-	AuthType AuthType        `json:"auth_type"` // steam | name |ip
-	Identity string          `json:"identity"`
-	Password string          `json:"password"`
-	Flags    string          `json:"flags"`
-	Name     string          `json:"name"`
-	Immunity int             `json:"immunity"`
-	Groups   []SMGroups      `json:"groups"`
-	TimeStamped
+	AdminID   int             `json:"admin_id"`
+	SteamID   steamid.SteamID `json:"steam_id"`
+	AuthType  AuthType        `json:"auth_type"` // steam | name |ip
+	Identity  string          `json:"identity"`
+	Password  string          `json:"password"`
+	Flags     string          `json:"flags"`
+	Name      string          `json:"name"`
+	Immunity  int             `json:"immunity"`
+	Groups    []SMGroups      `json:"groups"`
+	CreatedOn time.Time       `json:"created_on"`
+	UpdatedOn time.Time       `json:"updated_on"`
 }
 
 type SMGroups struct {
-	GroupID       int    `json:"group_id"`
-	Flags         string `json:"flags"`
-	Name          string `json:"name"`
-	ImmunityLevel int    `json:"immunity_level"`
-	TimeStamped
+	GroupID       int       `json:"group_id"`
+	Flags         string    `json:"flags"`
+	Name          string    `json:"name"`
+	ImmunityLevel int       `json:"immunity_level"`
+	CreatedOn     time.Time `json:"created_on"`
+	UpdatedOn     time.Time `json:"updated_on"`
 }
 
 type SMGroupImmunity struct {
@@ -165,7 +168,8 @@ type SMGroupOverrides struct {
 	Type            OverrideType   `json:"type"` // command | group
 	Name            string         `json:"name"`
 	Access          OverrideAccess `json:"access"` // allow | deny
-	TimeStamped
+	CreatedOn       time.Time      `json:"created_on"`
+	UpdatedOn       time.Time      `json:"updated_on"`
 }
 
 type SMOverrides struct {
@@ -173,14 +177,16 @@ type SMOverrides struct {
 	Type       OverrideType `json:"type"` // command | group
 	Name       string       `json:"name"`
 	Flags      string       `json:"flags"`
-	TimeStamped
+	CreatedOn  time.Time    `json:"created_on"`
+	UpdatedOn  time.Time    `json:"updated_on"`
 }
 
 type SMAdminGroups struct {
-	AdminID      int `json:"admin_id"`
-	GroupID      int `json:"group_id"`
-	InheritOrder int `json:"inherit_order"`
-	TimeStamped
+	AdminID      int       `json:"admin_id"`
+	GroupID      int       `json:"group_id"`
+	InheritOrder int       `json:"inherit_order"`
+	CreatedOn    time.Time `json:"created_on"`
+	UpdatedOn    time.Time `json:"updated_on"`
 }
 
 type SMConfig struct {

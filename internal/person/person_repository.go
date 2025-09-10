@@ -274,7 +274,7 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 
 		foundIDs, errFoundIDs := r.GetSteamsAtAddress(ctx, addr)
 		if errFoundIDs != nil {
-			if errors.Is(errFoundIDs, domain.ErrNoResult) {
+			if errors.Is(errFoundIDs, database.ErrNoResult) {
 				return domain.People{}, 0, nil
 			}
 
@@ -549,7 +549,7 @@ func (r *personRepository) GetPersonSettings(ctx context.Context, steamID steami
 
 	if errScan := row.Scan(&settings.PersonSettingsID, &settings.ForumSignature,
 		&settings.ForumProfileMessages, &settings.StatsHidden, &settings.CreatedOn, &settings.UpdatedOn); errScan != nil {
-		if errors.Is(r.db.DBErr(errScan), domain.ErrNoResult) {
+		if errors.Is(r.db.DBErr(errScan), database.ErrNoResult) {
 			settings.ForumProfileMessages = true
 
 			return settings, nil

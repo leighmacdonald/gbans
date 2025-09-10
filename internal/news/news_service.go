@@ -6,17 +6,18 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type newsHandler struct {
-	news          domain.NewsUsecase
+	news          NewsUsecase
 	notifications domain.NotificationUsecase
 }
 
-func NewHandler(engine *gin.Engine, news domain.NewsUsecase, notifications domain.NotificationUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, news NewsUsecase, notifications domain.NotificationUsecase, auth domain.AuthUsecase) {
 	handler := newsHandler{news: news, notifications: notifications}
 
 	engine.POST("/api/news_latest", handler.onAPIGetNewsLatest())
@@ -42,7 +43,7 @@ func (h newsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 		}
 
 		if newsLatest == nil {
-			newsLatest = []domain.NewsEntry{}
+			newsLatest = []NewsEntry{}
 		}
 
 		ctx.JSON(http.StatusOK, newsLatest)
@@ -62,7 +63,7 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 			return
 		}
 
-		entry := domain.NewsEntry{
+		entry := NewsEntry{
 			Title:       req.Title,
 			BodyMD:      req.BodyMD,
 			IsPublished: req.IsPublished,
@@ -79,7 +80,7 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 		ctx.JSON(http.StatusCreated, entry)
 
 		h.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-			domain.ChannelModLog,
+			discord.ChannelModLog,
 			discord.NewNewsMessage(req.BodyMD, req.Title)))
 	}
 }
@@ -91,9 +92,9 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var entry domain.NewsEntry
+		var entry NewsEntry
 		if errGet := h.news.GetNewsByID(ctx, newsID, &entry); errGet != nil {
-			if errors.Is(errGet, domain.ErrNoResult) {
+			if errors.Is(errGet, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return
@@ -123,7 +124,7 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 		ctx.JSON(http.StatusAccepted, entry)
 
 		h.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-			domain.ChannelModLog,
+			discord.ChannelModLog,
 			discord.EditNewsMessages(entry.Title, entry.BodyMD)))
 	}
 }
@@ -138,7 +139,7 @@ func (h newsHandler) onAPIGetNewsAll() gin.HandlerFunc {
 		}
 
 		if newsLatest == nil {
-			newsLatest = []domain.NewsEntry{}
+			newsLatest = []NewsEntry{}
 		}
 
 		ctx.JSON(http.StatusOK, newsLatest)
@@ -152,9 +153,9 @@ func (h newsHandler) onAPIPostNewsDelete() gin.HandlerFunc {
 			return
 		}
 
-		var entry domain.NewsEntry
+		var entry NewsEntry
 		if errGet := h.news.GetNewsByID(ctx, newsID, &entry); errGet != nil {
-			if errors.Is(errGet, domain.ErrNoResult) {
+			if errors.Is(errGet, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return

@@ -43,7 +43,8 @@ type ContestUsecase interface {
 }
 
 type Contest struct {
-	TimeStamped
+	CreatedOn       time.Time `json:"created_on"`
+	UpdatedOn       time.Time `json:"updated_on"`
 	ContestID       uuid.UUID `json:"contest_id"`
 	Title           string    `json:"title"`
 	Description     string    `json:"description"`
@@ -66,7 +67,8 @@ type Contest struct {
 }
 
 type ContestEntry struct {
-	TimeStamped
+	CreatedOn      time.Time       `json:"created_on"`
+	UpdatedOn      time.Time       `json:"updated_on"`
 	ContestEntryID uuid.UUID       `json:"contest_entry_id"`
 	ContestID      uuid.UUID       `json:"contest_id"`
 	SteamID        steamid.SteamID `json:"steam_id"`
@@ -85,7 +87,8 @@ type ContestEntryVote struct {
 	ContestEntryID uuid.UUID       `json:"contest_entry_id"`
 	SteamID        steamid.SteamID `json:"steam_id"`
 	Vote           int             `json:"vote"`
-	TimeStamped
+	CreatedOn      time.Time       `json:"created_on"`
+	UpdatedOn      time.Time       `json:"updated_on"`
 }
 
 func (c Contest) NewEntry(steamID steamid.SteamID, assetID uuid.UUID, description string) (ContestEntry, error) {

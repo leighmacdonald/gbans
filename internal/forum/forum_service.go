@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -97,8 +98,8 @@ func (f *forumHandler) onAPICreateForumCategory() gin.HandlerFunc {
 			Title:       stringutil.SanitizeUGC(req.Title),
 			Description: stringutil.SanitizeUGC(req.Description),
 			Ordering:    req.Ordering,
-			TimeStamped: domain.NewTimeStamped(),
-		}
+			CreatedOn:   time.Now(),
+			UpdatedOn:   time.Now()}
 
 		if errSave := f.forums.ForumCategorySave(ctx, &category); errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
@@ -185,7 +186,8 @@ func (f *forumHandler) onAPICreateForumForum() gin.HandlerFunc {
 			Description:     stringutil.SanitizeUGC(req.Description),
 			Ordering:        req.Ordering,
 			PermissionLevel: req.PermissionLevel,
-			TimeStamped:     domain.NewTimeStamped(),
+			CreatedOn:       time.Now(),
+			UpdatedOn:       time.Now(),
 		}
 
 		if errSave := f.forums.ForumSave(ctx, &forum); errSave != nil {
@@ -280,7 +282,7 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 		var forum domain.Forum
 		if errForum := f.forums.Forum(ctx, forumID, &forum); errForum != nil {
 			switch {
-			case errors.Is(errForum, domain.ErrNoResult):
+			case errors.Is(errForum, database.ErrNoResult):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errForum, domain.ErrInternal),
 					"The forum_id provided does not exist: %d", forumID))
 			default:
@@ -361,7 +363,7 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 
 		var thread domain.ForumThread
 		if errGet := f.forums.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
-			if errors.Is(errGet, domain.ErrNoResult) {
+			if errors.Is(errGet, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNotFound,
 					"Forum thread does not exist: %d", forumThreadID))
 			} else {
@@ -404,7 +406,7 @@ func (f *forumHandler) onAPIThreadDelete() gin.HandlerFunc {
 		var thread domain.ForumThread
 		if errGet := f.forums.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
 			switch {
-			case errors.Is(errGet, domain.ErrNoResult):
+			case errors.Is(errGet, database.ErrNoResult):
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal)))
@@ -462,7 +464,7 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 		var message domain.ForumMessage
 		if errMessage := f.forums.ForumMessage(ctx, forumMessageID, &message); errMessage != nil {
 			switch {
-			case errors.Is(errMessage, domain.ErrNoResult):
+			case errors.Is(errMessage, database.ErrNoResult):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, errors.Join(errMessage, domain.ErrNotFound),
 					"Message not found, cannot update."))
 			default:
@@ -510,7 +512,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 
 		var message domain.ForumMessage
 		if err := f.forums.ForumMessage(ctx, forumMessageID, &message); err != nil {
-			if errors.Is(err, domain.ErrNoResult) {
+			if errors.Is(err, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, domain.ErrNotFound, "Forum message does not exist"))
 			} else {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
@@ -521,7 +523,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 
 		var thread domain.ForumThread
 		if err := f.forums.ForumThread(ctx, message.ForumThreadID, &thread); err != nil {
-			if errors.Is(err, domain.ErrNoResult) {
+			if errors.Is(err, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrNotFound))
 			} else {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
@@ -749,7 +751,7 @@ func (f *forumHandler) onAPIForumThread() gin.HandlerFunc {
 
 		var thread domain.ForumThread
 		if errThreads := f.forums.ForumThread(ctx, forumThreadID, &thread); errThreads != nil {
-			if errors.Is(errThreads, domain.ErrNoResult) {
+			if errors.Is(errThreads, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 			} else {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errThreads, domain.ErrInternal)))

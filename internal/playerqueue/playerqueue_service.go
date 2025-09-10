@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -72,8 +73,8 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 				return
 			}
 
-			if errors.Is(err, domain.ErrDuplicate) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, domain.ErrDuplicate,
+			if errors.Is(err, database.ErrDuplicate) {
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, database.ErrDuplicate,
 					"Status must be different"))
 
 				return

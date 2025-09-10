@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -373,7 +374,7 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func (s *stateUsecase) Kick(ctx context.Context, target steamid.SteamID, reason domain.Reason) error {
+func (s *stateUsecase) Kick(ctx context.Context, target steamid.SteamID, reason ban.Reason) error {
 	if !target.Valid() {
 		return domain.ErrInvalidTargetSID
 	}
@@ -381,21 +382,21 @@ func (s *stateUsecase) Kick(ctx context.Context, target steamid.SteamID, reason 
 	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
 		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, reason.String())
 	}); errExec != nil {
-		return errors.Join(errExec, domain.ErrCommandFailed)
+		return errExec
 	}
 
 	return nil
 }
 
 // KickPlayerID will kick the steam id from whatever server it is connected to.
-func (s *stateUsecase) KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason domain.Reason) error {
+func (s *stateUsecase) KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason ban.Reason) error {
 	_, err := s.ExecServer(ctx, targetServerID, fmt.Sprintf("sm_kick #%d %s", targetPlayerID, reason.String()))
 
 	return err
 }
 
 // Silence will gag & mute a player.
-func (s *stateUsecase) Silence(ctx context.Context, target steamid.SteamID, reason domain.Reason,
+func (s *stateUsecase) Silence(ctx context.Context, target steamid.SteamID, reason ban.Reason,
 ) error {
 	if !target.Valid() {
 		return domain.ErrInvalidTargetSID
@@ -413,7 +414,7 @@ func (s *stateUsecase) Silence(ctx context.Context, target steamid.SteamID, reas
 
 		return fmt.Sprintf(`sm_silence "#%s" %s`, info.Player.SID.Steam(false), reason.String())
 	}); errExec != nil {
-		return errors.Join(errExec, fmt.Errorf("%w: sm_silence", domain.ErrCommandFailed))
+		return errors.Join(errExec, fmt.Errorf("%w: sm_silence", errExec))
 	}
 
 	return nil

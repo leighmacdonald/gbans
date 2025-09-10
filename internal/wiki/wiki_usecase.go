@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
@@ -46,7 +47,7 @@ func (w *wikiUsecase) SaveWikiPage(ctx context.Context, user domain.PersonInfo, 
 
 	page, errGetWikiSlug := w.GetWikiPageBySlug(ctx, user, slug)
 	if errGetWikiSlug != nil {
-		if errors.Is(errGetWikiSlug, domain.ErrNoResult) {
+		if errors.Is(errGetWikiSlug, database.ErrNoResult) {
 			page.CreatedOn = time.Now()
 			page.Revision++
 			page.Slug = slug

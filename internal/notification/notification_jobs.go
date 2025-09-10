@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -27,7 +29,7 @@ func (args SenderArgs) InsertOpts() river.InsertOpts {
 	}
 }
 
-func NewSenderWorker(people domain.PersonUsecase, notifications domain.NotificationUsecase, discord domain.DiscordUsecase) *SenderWorker {
+func NewSenderWorker(people domain.PersonUsecase, notifications domain.NotificationUsecase, discord discord.DiscordUsecase) *SenderWorker {
 	return &SenderWorker{
 		people:        people,
 		notifications: notifications,
@@ -37,7 +39,7 @@ func NewSenderWorker(people domain.PersonUsecase, notifications domain.Notificat
 
 type SenderWorker struct {
 	river.WorkerDefaults[SenderArgs]
-	discord       domain.DiscordUsecase
+	discord       discord.DiscordUsecase
 	people        domain.PersonUsecase
 	notifications domain.NotificationUsecase
 }
@@ -71,7 +73,7 @@ func (worker *SenderWorker) sendMessages(ctx context.Context, payload domain.Not
 
 	if len(payload.Groups) > 0 {
 		groupRecipients, errGroups := worker.people.GetSteamIDsByGroups(ctx, payload.Groups)
-		if errGroups != nil && !errors.Is(errGroups, domain.ErrNoResult) {
+		if errGroups != nil && !errors.Is(errGroups, database.ErrNoResult) {
 			return errGroups
 		}
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
@@ -103,7 +104,7 @@ func (s *speedrunHandler) getSpeedrun() gin.HandlerFunc {
 
 		speedrun, errSpeedrun := s.speedruns.ByID(ctx, speedrunID)
 		if errSpeedrun != nil {
-			if errors.Is(errSpeedrun, domain.ErrNoResult) {
+			if errors.Is(errSpeedrun, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return
