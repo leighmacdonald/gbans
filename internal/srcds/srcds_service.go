@@ -24,18 +24,14 @@ type srcdsHandler struct {
 	config        domain.ConfigUsecase
 	reports       domain.ReportUsecase
 	assets        domain.AssetUsecase
-	bans          domain.BanSteamUsecase
-	bansGroup     domain.BanGroupUsecase
-	bansASN       domain.BanASNUsecase
-	bansNet       domain.BanNetUsecase
+	bans          domain.BanUsecase
 	network       domain.NetworkUsecase
 	blocklist     domain.BlocklistUsecase
 }
 
 func NewHandlerSRCDS(engine *gin.Engine, srcds domain.SRCDSUsecase, servers domain.ServersUsecase,
 	persons domain.PersonUsecase, assets domain.AssetUsecase, reports domain.ReportUsecase,
-	bans domain.BanSteamUsecase, network domain.NetworkUsecase, bansGroup domain.BanGroupUsecase,
-	auth domain.AuthUsecase, bansASNU domain.BanASNUsecase, bansNet domain.BanNetUsecase,
+	bans domain.BanUsecase, network domain.NetworkUsecase, auth domain.AuthUsecase,
 	config domain.ConfigUsecase, notifications domain.NotificationUsecase, state domain.StateUsecase,
 	blocklist domain.BlocklistUsecase,
 ) {
@@ -47,9 +43,6 @@ func NewHandlerSRCDS(engine *gin.Engine, srcds domain.SRCDSUsecase, servers doma
 		bans:          bans,
 		assets:        assets,
 		network:       network,
-		bansGroup:     bansGroup,
-		bansASN:       bansASNU,
-		bansNet:       bansNet,
 		config:        config,
 		notifications: notifications,
 		state:         state,
@@ -782,7 +775,7 @@ func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.RequestBanSteamCreate
+		var req domain.RequestBanCreate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}

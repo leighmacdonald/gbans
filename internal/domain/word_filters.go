@@ -36,9 +36,9 @@ type RequestQuery struct {
 type FilterAction int
 
 const (
-	Kick FilterAction = iota
-	Mute
-	Ban
+	FilterActionKick FilterAction = iota
+	FilterActionMute
+	FilterActionBan
 )
 
 func NewFilter(author steamid.SteamID, pattern string, regex bool, action FilterAction, duration string, weight int) (Filter, error) {

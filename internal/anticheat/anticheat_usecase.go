@@ -20,12 +20,12 @@ type antiCheatUsecase struct {
 	parser        logparse.StacParser
 	repo          domain.AntiCheatRepository
 	person        domain.PersonUsecase
-	ban           domain.BanSteamUsecase
+	ban           domain.BanUsecase
 	config        domain.ConfigUsecase
 	notifications domain.NotificationUsecase
 }
 
-func NewAntiCheatUsecase(repo domain.AntiCheatRepository, person domain.PersonUsecase, ban domain.BanSteamUsecase, config domain.ConfigUsecase, notif domain.NotificationUsecase) domain.AntiCheatUsecase {
+func NewAntiCheatUsecase(repo domain.AntiCheatRepository, person domain.PersonUsecase, ban domain.BanUsecase, config domain.ConfigUsecase, notif domain.NotificationUsecase) domain.AntiCheatUsecase {
 	return &antiCheatUsecase{
 		parser:        logparse.NewStacParser(),
 		repo:          repo,
@@ -100,7 +100,7 @@ func (a antiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 			duration = fmt.Sprintf("%dm", conf.Anticheat.Duration)
 		}
 
-		ban, err := a.ban.Ban(ctx, owner.ToUserProfile(), domain.System, domain.RequestBanSteamCreate{
+		ban, err := a.ban.Ban(ctx, owner.ToUserProfile(), domain.System, domain.RequestBanCreate{
 			SourceIDField:  domain.SourceIDField{SourceID: owner.SteamID.String()},
 			TargetIDField:  domain.TargetIDField{TargetID: entry.SteamID.String()},
 			Duration:       duration,

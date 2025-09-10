@@ -284,21 +284,18 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUC)), configUsecase, serversUC)
 
-			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase, tfapiClient)
+			banUsecase := ban.NewBanUsecase(ban.NewBanRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase, tfapiClient)
 
 			banGroupRepo := steamgroup.NewSteamGroupRepository(dbConn)
 			banGroupUsecase := steamgroup.NewBanGroupUsecase(banGroupRepo, personUsecase, notificationUsecase, configUsecase, tfapiClient)
 
-			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase, banGroupUsecase)
+			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase)
 
 			go func() {
 				if err := stateUsecase.Start(ctx); err != nil {
 					slog.Error("Failed to start state tracker", log.ErrAttr(err))
 				}
 			}()
-
-			banASNUsecase := ban.NewBanASNUsecase(ban.NewBanASNRepository(dbConn), notificationUsecase, networkUsecase, configUsecase, personUsecase)
-			banNetUsecase := ban.NewBanNetUsecase(ban.NewBanNetRepository(dbConn), personUsecase, configUsecase, notificationUsecase, stateUsecase)
 
 			discordOAuthUsecase := discord.NewDiscordOAuthUsecase(discord.NewDiscordOAuthRepository(dbConn), configUsecase)
 
@@ -371,8 +368,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			// Start discord bot service
 			if conf.Discord.Enabled {
 				discordHandler := discord.NewDiscordHandler(discordUsecase, personUsecase, banUsecase,
-					stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase,
-					banASNUsecase, anticheatUsecase, tfapiClient)
+					stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, anticheatUsecase, tfapiClient)
 				discordHandler.Start(ctx)
 			}
 
@@ -381,8 +377,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			appeal.NewHandler(router, appeals, authUsecase)
 			auth.NewHandler(router, authUsecase, configUsecase, personUsecase, tfapiClient)
 			ban.NewHandlerSteam(router, banUsecase, configUsecase, authUsecase)
-			ban.NewHandlerNet(router, banNetUsecase, authUsecase)
-			ban.NewASNHandlerASN(router, banASNUsecase, authUsecase)
 			config.NewHandler(router, configUsecase, authUsecase, app.Version())
 			discord.NewHandler(router, authUsecase, configUsecase, personUsecase, discordOAuthUsecase)
 			steamgroup.NewHandler(router, banGroupUsecase, authUsecase)
@@ -403,7 +397,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			servers.NewHandler(router, serversUC, stateUsecase, authUsecase)
 			srcds.NewHandler(router, speedruns, authUsecase, configUsecase)
 			srcds.NewHandlerSRCDS(router, srcdsUsecase, serversUC, personUsecase, assets,
-				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, authUsecase, banASNUsecase, banNetUsecase,
+				reportUsecase, banUsecase, networkUsecase, authUsecase,
 				configUsecase, notificationUsecase, stateUsecase, blocklistUsecase)
 			votes.NewHandler(router, voteUsecase, authUsecase)
 			wiki.NewHandler(router, wikiUsecase, authUsecase)
@@ -426,7 +420,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			memberships := steamgroup.NewMemberships(banGroupRepo, tfapiClient)
-			banExpirations := ban.NewExpirationMonitor(banUsecase, banNetUsecase, banASNUsecase, personUsecase, notificationUsecase, configUsecase)
+			banExpirations := ban.NewExpirationMonitor(banUsecase, personUsecase, notificationUsecase, configUsecase)
 
 			go func() {
 				if errSync := anticheatUsecase.SyncDemoIDs(ctx, 100); errSync != nil {

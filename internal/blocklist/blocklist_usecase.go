@@ -22,16 +22,14 @@ import (
 
 type blocklistUsecase struct {
 	repository domain.BlocklistRepository
-	bans       domain.BanSteamUsecase
-	bansGroup  domain.BanGroupUsecase
+	bans       domain.BanUsecase
 	cidrRx     *regexp.Regexp
 }
 
-func NewBlocklistUsecase(br domain.BlocklistRepository, banUsecase domain.BanSteamUsecase, banGroupUsecase domain.BanGroupUsecase) domain.BlocklistUsecase {
+func NewBlocklistUsecase(br domain.BlocklistRepository, banUsecase domain.BanUsecase) domain.BlocklistUsecase {
 	return &blocklistUsecase{
 		repository: br,
 		bans:       banUsecase,
-		bansGroup:  banGroupUsecase,
 		cidrRx:     regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$`),
 	}
 }
@@ -44,7 +42,7 @@ func (b blocklistUsecase) Sync(ctx context.Context) {
 	go func() {
 		defer waitGroup.Done()
 
-		if err := b.bansGroup.UpdateCache(ctx); err != nil {
+		if err := b.bans.UpdateCache(ctx); err != nil {
 			slog.Error("failed to update banned group members", log.ErrAttr(err))
 
 			return

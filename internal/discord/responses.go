@@ -3,7 +3,6 @@ package discord
 import (
 	"fmt"
 	"io"
-	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -211,7 +210,7 @@ func SilenceEmbed(target domain.PersonInfo) *discordgo.MessageEmbed {
 	return msgEmbed.AddTargetPerson(target).Embed().MessageEmbed
 }
 
-func BanExpiresMessage(ban domain.BanSteam, person domain.PersonInfo, banURL string) *discordgo.MessageEmbed {
+func BanExpiresMessage(ban domain.Ban, person domain.PersonInfo, banURL string) *discordgo.MessageEmbed {
 	banType := "Ban"
 	if ban.BanType == domain.NoComm {
 		banType = "Mute"
@@ -235,7 +234,7 @@ func BanExpiresMessage(ban domain.BanSteam, person domain.PersonInfo, banURL str
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func BanSteamResponse(banSteam domain.BannedSteamPerson) *discordgo.MessageEmbed {
+func BanSteamResponse(banSteam domain.BannedPerson) *discordgo.MessageEmbed {
 	var (
 		title  string
 		colour int
@@ -276,24 +275,6 @@ func BanSteamResponse(banSteam domain.BannedSteamPerson) *discordgo.MessageEmbed
 	}
 
 	msgEmbed.emb.URL = "https://steamcommunity.com/profiles/" + banSteam.TargetID.String()
-
-	return msgEmbed.Embed().MessageEmbed
-}
-
-func BanCIDRResponse(cidr *net.IPNet, author domain.PersonInfo, authorURL string, target domain.PersonInfo, banNet *domain.BanCIDR) *discordgo.MessageEmbed {
-	msgEmbed := NewEmbed("IP Banned Successfully")
-	msgEmbed.Embed().
-		SetColor(ColourSuccess).
-		AddField("cidr", cidr.String()).
-		AddField("net_id", strconv.FormatInt(banNet.NetID, 10)).
-		AddField("Reason", banNet.Reason.String())
-
-	msgEmbed.AddTargetPerson(target)
-	msgEmbed.AddAuthorPersonInfo(author, authorURL)
-
-	if banNet.Note != "" {
-		msgEmbed.emb.Description = banNet.Note
-	}
 
 	return msgEmbed.Embed().MessageEmbed
 }
@@ -459,7 +440,7 @@ func ReportStatsMessage(meta domain.ReportMeta, url string) *discordgo.MessageEm
 		MessageEmbed
 }
 
-func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BannedSteamPerson) *discordgo.MessageEmbed {
+func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BannedPerson) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("Language Warning")
 	msgEmbed.Embed().
 		SetDescription(newWarning.UserWarning.Message).
@@ -491,9 +472,8 @@ func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BannedStea
 		MessageEmbed
 }
 
-func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL string, author domain.Person,
-	oldBans []domain.BannedSteamPerson, bannedNets []domain.BanCIDR, asn domain.NetworkASN,
-	location domain.NetworkLocation,
+func CheckMessage(player domain.Person, ban domain.BannedPerson, banURL string, author domain.Person,
+	oldBans []domain.BannedPerson, location domain.NetworkLocation,
 	proxy domain.NetworkProxy, logData thirdparty.LogsTFPlayerSummary,
 ) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed()
@@ -594,14 +574,14 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 		msgEmbed.AddAuthorPersonInfo(author, "")
 	}
 
-	if len(bannedNets) > 0 {
-		// ip = bannedNets[0].CIDR.String()
-		netReason := fmt.Sprintf("Banned from %d networks", len(bannedNets))
-		netExpiry := bannedNets[0].ValidUntil
-		msgEmbed.Embed().AddField("Network Bans", strconv.Itoa(len(bannedNets)))
-		msgEmbed.Embed().AddField("Network Reason", netReason)
-		msgEmbed.Embed().AddField("Network Expires", datetime.FmtDuration(netExpiry)).MakeFieldInline()
-	}
+	// if len(bannedNets) > 0 {
+	// 	// ip = bannedNets[0].CIDR.String()
+	// 	netReason := fmt.Sprintf("Banned from %d networks", len(bannedNets))
+	// 	netExpiry := bannedNets[0].ValidUntil
+	// 	msgEmbed.Embed().AddField("Network Bans", strconv.Itoa(len(bannedNets)))
+	// 	msgEmbed.Embed().AddField("Network Reason", netReason)
+	// 	msgEmbed.Embed().AddField("Network Expires", datetime.FmtDuration(netExpiry)).MakeFieldInline()
+	// }
 
 	banStateStr := "no"
 
@@ -623,9 +603,9 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 		msgEmbed.Embed().AddField("Last IP", player.IPAddr.String()).MakeFieldInline()
 	}
 
-	if asn.ASName != "" {
-		msgEmbed.Embed().AddField("ASN", fmt.Sprintf("(%d) %s", asn.ASNum, asn.ASName)).MakeFieldInline()
-	}
+	// if asn.ASName != "" {
+	// 	msgEmbed.Embed().AddField("ASN", fmt.Sprintf("(%d) %s", asn.ASNum, asn.ASName)).MakeFieldInline()
+	// }
 
 	if location.CountryCode != "" {
 		msgEmbed.Embed().AddField("City", location.CityName).MakeFieldInline()
@@ -1148,54 +1128,11 @@ func matchASCIITable(match domain.MatchResult) string {
 	return resp
 }
 
-func MuteMessage(banSteam domain.BannedSteamPerson) *discordgo.MessageEmbed {
+func MuteMessage(banSteam domain.BannedPerson) *discordgo.MessageEmbed {
 	embed := NewEmbed("Player muted successfully")
 	embed.AddFieldsSteamID(banSteam.TargetID)
 
 	return embed.Embed().SetColor(ColourSuccess).Truncate().MessageEmbed
-}
-
-func BanGroupMessage(ban domain.BanGroup, author domain.PersonInfo, config domain.Config) *discordgo.MessageEmbed {
-	embed := NewEmbed("Group Ban Created Successfully")
-	embed.Embed().
-		SetColor(ColourSuccess).
-		AddField("Steam ID", ban.GroupID.String()).
-		AddField("Reason", ban.Reason.String())
-
-	if ban.ReasonText != "" {
-		embed.Embed().AddField("reason_text", ban.ReasonText)
-	}
-
-	if ban.Note != "" {
-		embed.emb.Description = ban.Note
-	}
-
-	embed.emb.URL = "https://steamcommunity.com/gid/" + ban.GroupID.String()
-
-	embed.AddAuthorPersonInfo(author, config.ExtURL(author))
-
-	return embed.Embed().MessageEmbed
-}
-
-func BanASNMessage(ban domain.BannedASNPerson, config domain.Config) *discordgo.MessageEmbed {
-	embed := NewEmbed("ASN Ban Created Successfully")
-	embed.Embed().
-		SetColor(ColourSuccess).
-		AddField("ASNum", strconv.FormatInt(ban.ASNum, 10)).
-		AddField("reason", ban.Reason.String())
-
-	if ban.ReasonText != "" {
-		embed.Embed().AddField("reason_text", ban.ReasonText)
-	}
-
-	if ban.Note != "" {
-		embed.emb.Description = ban.Note
-	}
-
-	embed.Embed().SetAuthor(ban.SourcePersonaname, domain.NewAvatarLinks(ban.SourceAvatarhash).Full(),
-		config.ExtURLRaw("/profiles/"+ban.SourceID.String()))
-
-	return embed.Embed().MessageEmbed
 }
 
 func BanIPMessage() *discordgo.MessageEmbed {
@@ -1356,7 +1293,7 @@ func NewPlayerqueuePurge(author domain.UserProfile, target domain.UserProfile, m
 		MessageEmbed
 }
 
-func NewAnticheatTrigger(ban domain.BannedSteamPerson, config domain.Config, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
+func NewAnticheatTrigger(ban domain.BannedPerson, config domain.Config, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
 	embed := NewEmbed("Player triggered anti-cheat response")
 	embed.Embed().
 		SetColor(ColourSuccess).

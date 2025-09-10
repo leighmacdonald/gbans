@@ -5,10 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/netip"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -16,7 +14,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -25,9 +22,7 @@ type discordService struct {
 	anticheat   domain.AntiCheatUsecase
 	discord     domain.DiscordUsecase
 	persons     domain.PersonUsecase
-	bansSteam   domain.BanSteamUsecase
-	bansNet     domain.BanNetUsecase
-	bansASN     domain.BanASNUsecase
+	bans        domain.BanUsecase
 	state       domain.StateUsecase
 	servers     domain.ServersUsecase
 	config      domain.ConfigUsecase
@@ -38,23 +33,21 @@ type discordService struct {
 }
 
 func NewDiscordHandler(discordUsecase domain.DiscordUsecase, persons domain.PersonUsecase,
-	bansSteam domain.BanSteamUsecase, state domain.StateUsecase, servers domain.ServersUsecase,
+	bans domain.BanUsecase, state domain.StateUsecase, servers domain.ServersUsecase,
 	config domain.ConfigUsecase, network domain.NetworkUsecase, wordFilters domain.WordFilterUsecase,
-	matches domain.MatchUsecase, bansNet domain.BanNetUsecase, bansASN domain.BanASNUsecase,
+	matches domain.MatchUsecase,
 	anticheat domain.AntiCheatUsecase, tfAPI *thirdparty.TFAPI,
 ) domain.ServiceStarter {
 	handler := &discordService{
 		discord:     discordUsecase,
 		persons:     persons,
 		state:       state,
-		bansSteam:   bansSteam,
+		bans:        bans,
 		servers:     servers,
 		config:      config,
 		network:     network,
 		matches:     matches,
 		wordFilters: wordFilters,
-		bansNet:     bansNet,
-		bansASN:     bansASN,
 		anticheat:   anticheat,
 		tfAPI:       tfAPI,
 	}
@@ -97,10 +90,6 @@ func (h discordService) makeOnBan() func(_ context.Context, _ *discordgo.Session
 		switch name {
 		case "steam":
 			return h.onBanSteam(ctx, session, interaction)
-		case "ip":
-			return h.onBanIP(ctx, session, interaction)
-		case "asn":
-			return h.onBanASN(ctx, session, interaction)
 		default:
 			return nil, domain.ErrCommandFailed
 		}
@@ -112,11 +101,6 @@ func (h discordService) makeOnUnban() func(_ context.Context, _ *discordgo.Sessi
 		switch interaction.ApplicationCommandData().Options[0].Name {
 		case "steam":
 			return h.onUnbanSteam(ctx, session, interaction)
-		case "ip":
-			return nil, domain.ErrCommandFailed
-			// return discord.onUnbanIP(ctx, session, interaction, response)
-		case "asn":
-			return h.onUnbanASN(ctx, session, interaction)
 		default:
 			return nil, domain.ErrCommandFailed
 		}
@@ -149,7 +133,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			return nil, domain.ErrCommandFailed
 		}
 
-		ban, errGetBanBySID := h.bansSteam.GetBySteamID(ctx, sid, false, true)
+		ban, errGetBanBySID := h.bans.Query(ctx, domain.BansQueryOpts{EvadeOk: true, TargetID: sid})
 		if errGetBanBySID != nil {
 			if !errors.Is(errGetBanBySID, domain.ErrNoResult) {
 				slog.Error("Failed to get ban by steamid", log.ErrAttr(errGetBanBySID))
@@ -158,14 +142,14 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			}
 		}
 
-		oldBans, errOld := h.bansSteam.Get(ctx, domain.SteamBansQueryFilter{})
+		oldBans, errOld := h.bans.Query(ctx, domain.BansQueryOpts{})
 		if errOld != nil {
 			if !errors.Is(errOld, domain.ErrNoResult) {
 				slog.Error("Failed to fetch old bans", log.ErrAttr(errOld))
 			}
 		}
 
-		bannedNets, errGetBanNet := h.bansNet.GetByAddress(ctx, player.IPAddr)
+		bannedNets, errGetBanNet := h.bans.GetByAddress(ctx, player.IPAddr)
 		if errGetBanNet != nil {
 			if !errors.Is(errGetBanNet, domain.ErrNoResult) {
 				slog.Error("Failed to get ban nets by addr", log.ErrAttr(errGetBanNet))
@@ -193,7 +177,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 				}
 			}
 
-			banURL = conf.ExtURL(ban.BanSteam)
+			banURL = conf.ExtURL(ban.Ban)
 		}
 
 		logData, errLogs := h.tfAPI.LogsTFSummary(ctx, sid)
@@ -206,7 +190,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			slog.Error("Failed to query network details")
 		}
 
-		return CheckMessage(player, ban, banURL, authorProfile, oldBans, bannedNets, network.Asn, network.Location, network.Proxy, logData), nil
+		return CheckMessage(player, ban, banURL, authorProfile, oldBans, network.Location, network.Proxy, logData), nil
 	}
 }
 
@@ -280,7 +264,7 @@ func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, 
 		return nil, domain.ErrInvalidSID
 	}
 
-	found, errUnban := h.bansSteam.Unban(ctx, steamID, reason, author.ToUserProfile())
+	found, errUnban := h.bans.Unban(ctx, steamID, reason, author.ToUserProfile())
 	if errUnban != nil {
 		return nil, errUnban
 	}
@@ -295,31 +279,6 @@ func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, 
 	}
 
 	return UnbanMessage(h.config, user), nil
-}
-
-func (h discordService) onUnbanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	asNumStr := opts[domain.OptASN].StringValue()
-
-	banExisted, errUnbanASN := h.bansASN.Unban(ctx, asNumStr, "")
-	if errUnbanASN != nil {
-		if errors.Is(errUnbanASN, domain.ErrNoResult) {
-			return nil, domain.ErrBanDoesNotExist
-		}
-
-		return nil, domain.ErrCommandFailed
-	}
-
-	if !banExisted {
-		return nil, domain.ErrBanDoesNotExist
-	}
-
-	asNum, errConv := strconv.ParseInt(asNumStr, 10, 64)
-	if errConv != nil {
-		return nil, domain.ErrParseASN
-	}
-
-	return UnbanASNMessage(asNum), nil
 }
 
 func (h discordService) getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCreate) (domain.Person, error) {
@@ -754,7 +713,7 @@ func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *
 			return nil, errAuthor
 		}
 
-		banSteam, errBan := h.bansSteam.Ban(ctx, author.ToUserProfile(), domain.Bot, domain.RequestBanSteamCreate{
+		banSteam, errBan := h.bans.Ban(ctx, author.ToUserProfile(), domain.Bot, domain.RequestBanCreate{
 			SourceIDField: domain.SourceIDField{SourceID: author.SteamID.String()},
 			TargetIDField: domain.TargetIDField{TargetID: opts.String(domain.OptUserIdentifier)},
 			Duration:      opts[domain.OptDuration].StringValue(),
@@ -771,100 +730,6 @@ func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *
 	}
 }
 
-func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
-	interaction *discordgo.InteractionCreate,
-) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-
-	author, errGetPersonByDiscordID := h.persons.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
-	if errGetPersonByDiscordID != nil {
-		if errors.Is(errGetPersonByDiscordID, domain.ErrNoResult) {
-			return nil, domain.ErrSteamUnset
-		}
-
-		return nil, errors.Join(errGetPersonByDiscordID, domain.ErrFetchPerson)
-	}
-
-	req := domain.RequestBanASNCreate{
-		SourceIDField: domain.SourceIDField{SourceID: author.SteamID.String()},
-		TargetIDField: domain.TargetIDField{TargetID: opts[domain.OptUserIdentifier].StringValue()},
-		Note:          opts[domain.OptNote].StringValue(),
-		Reason:        domain.Reason(opts[domain.OptBanReason].IntValue()),
-		ReasonText:    "",
-		ASNum:         opts[domain.OptASN].IntValue(),
-		Duration:      opts[domain.OptDuration].StringValue(),
-	}
-
-	bannedPerson, errBanASN := h.bansASN.Ban(ctx, req)
-	if errBanASN != nil {
-		if errors.Is(errBanASN, domain.ErrDuplicate) {
-			return nil, domain.ErrDuplicateBan
-		}
-
-		return nil, domain.ErrCommandFailed
-	}
-
-	return BanASNMessage(bannedPerson, h.config.Config()), nil
-}
-
-func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
-	interaction *discordgo.InteractionCreate,
-) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	reason := domain.Reason(opts[domain.OptBanReason].IntValue())
-	cidr := opts[domain.OptCIDR].StringValue()
-
-	targetID, errTargetID := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
-	if errTargetID != nil || !targetID.Valid() {
-		return nil, domain.ErrInvalidSID
-	}
-
-	_, network, errParseCIDR := net.ParseCIDR(cidr)
-	if errParseCIDR != nil {
-		return nil, errors.Join(errParseCIDR, domain.ErrNetworkInvalidIP)
-	}
-
-	duration, errDuration := datetime.ParseDuration(opts[domain.OptDuration].StringValue())
-	if errDuration != nil {
-		return nil, errDuration
-	}
-
-	modNote := opts[domain.OptNote].StringValue()
-
-	author, errGetPerson := h.persons.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
-	if errGetPerson != nil {
-		if errors.Is(errGetPerson, domain.ErrNoResult) {
-			return nil, domain.ErrSteamUnset
-		}
-
-		return nil, domain.ErrFetchPerson
-	}
-
-	var banCIDR domain.BanCIDR
-	if errOpts := domain.NewBanCIDR(author.SteamID, targetID, duration, reason, reason.String(), modNote, domain.Bot,
-		cidr, domain.Banned, &banCIDR); errOpts != nil {
-		return nil, errOpts
-	}
-
-	if errBanNet := h.bansNet.Ban(ctx, &banCIDR); errBanNet != nil {
-		return nil, errBanNet
-	}
-
-	players := h.state.FindByCIDR(network)
-
-	if len(players) == 0 {
-		return nil, domain.ErrPlayerNotFound
-	}
-
-	for _, player := range players {
-		if errKick := h.state.Kick(ctx, player.Player.SID, reason); errKick != nil {
-			slog.Error("Failed to perform kick", log.ErrAttr(errKick))
-		}
-	}
-
-	return BanIPMessage(), nil
-}
-
 // onBanSteam !ban <id> <duration> [reason].
 func (h discordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
@@ -876,7 +741,7 @@ func (h discordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
 		return nil, errAuthor
 	}
 
-	banSteam, errBan := h.bansSteam.Ban(ctx, author.ToUserProfile(), domain.Bot, domain.RequestBanSteamCreate{
+	banSteam, errBan := h.bans.Ban(ctx, author.ToUserProfile(), domain.Bot, domain.RequestBanCreate{
 		SourceIDField: domain.SourceIDField{SourceID: author.SteamID.String()},
 		TargetIDField: domain.TargetIDField{TargetID: opts[domain.OptUserIdentifier].StringValue()},
 		Duration:      opts[domain.OptDuration].StringValue(),

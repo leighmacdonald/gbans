@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -24,15 +25,15 @@ type StateUsecase interface {
 	FindByIP(addr net.IP) []PlayerServerInfo
 	FindByName(name string) []PlayerServerInfo
 	FindBySteamID(steamID steamid.SteamID) []PlayerServerInfo
-	Kick(ctx context.Context, target steamid.SteamID, reason Reason) error
-	KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason Reason) error
+	Kick(ctx context.Context, target steamid.SteamID, reason ban.Reason) error
+	KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason ban.Reason) error
 	LogAddressAdd(ctx context.Context, logAddress string)
 	LogAddressDel(ctx context.Context, logAddress string)
 	OnFindExec(ctx context.Context, name string, steamID steamid.SteamID, ip net.IP, cidr *net.IPNet, onFoundCmd func(info PlayerServerInfo) string) error
 	PSay(ctx context.Context, target steamid.SteamID, message string) error
 	Say(ctx context.Context, serverID int, message string) error
 	ServerIDsByName(name string, wildcardOk bool) []int
-	Silence(ctx context.Context, target steamid.SteamID, reason Reason) error
+	Silence(ctx context.Context, target steamid.SteamID, reason ban.Reason) error
 	SortRegion() map[string][]ServerState
 	Update(serverID int, update PartialStateUpdate) error
 }
