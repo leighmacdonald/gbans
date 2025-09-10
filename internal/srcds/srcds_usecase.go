@@ -21,7 +21,7 @@ import (
 
 type srcds struct {
 	repository    domain.SRCDSRepository
-	bans          domain.BanSteamUsecase
+	bans          domain.BanUsecase
 	config        domain.ConfigUsecase
 	servers       domain.ServersUsecase
 	persons       domain.PersonUsecase
@@ -32,7 +32,7 @@ type srcds struct {
 }
 
 func NewSrcdsUsecase(repository domain.SRCDSRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
-	persons domain.PersonUsecase, reports domain.ReportUsecase, notifications domain.NotificationUsecase, bans domain.BanSteamUsecase,
+	persons domain.PersonUsecase, reports domain.ReportUsecase, notifications domain.NotificationUsecase, bans domain.BanUsecase,
 	tfAPI *thirdparty.TFAPI,
 ) domain.SRCDSUsecase {
 	return &srcds{

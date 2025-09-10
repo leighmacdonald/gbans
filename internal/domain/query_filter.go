@@ -173,24 +173,8 @@ type TargetIDProvider interface {
 }
 
 type BansQueryFilter struct {
-	Deleted bool `json:"deleted"`
-}
-
-type CIDRBansQueryFilter struct {
-	Deleted bool `schema:"deleted"`
-}
-
-type ASNBansQueryFilter struct {
-	Deleted bool `json:"deleted"`
-}
-
-type GroupBansQueryFilter struct {
-	Deleted bool `schema:"deleted"`
-}
-
-type SteamBansQueryFilter struct {
 	TargetIDField
-	Deleted bool `schema:"deleted"`
+	Deleted bool `json:"deleted"`
 }
 
 type ReportQueryFilter struct {

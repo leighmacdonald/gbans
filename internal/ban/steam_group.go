@@ -1,4 +1,4 @@
-package steamgroup
+package ban
 
 import (
 	"context"
@@ -21,12 +21,12 @@ var (
 type Memberships struct {
 	members map[steamid.SteamID]steamid.Collection
 	*sync.RWMutex
-	store      domain.BanGroupRepository
+	store      domain.BanRepository
 	updateFreq time.Duration
 	tfAPI      *thirdparty.TFAPI
 }
 
-func NewMemberships(db domain.BanGroupRepository, tfAPI *thirdparty.TFAPI) *Memberships {
+func NewMemberships(db domain.BanRepository, tfAPI *thirdparty.TFAPI) *Memberships {
 	return &Memberships{
 		RWMutex:    &sync.RWMutex{},
 		store:      db,

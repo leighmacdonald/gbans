@@ -44,7 +44,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/srcds"
 	"github.com/leighmacdonald/gbans/internal/state"
-	"github.com/leighmacdonald/gbans/internal/steamgroup"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
@@ -60,7 +59,7 @@ var (
 	dbContainer    *postgresContainer
 	tempDB         database.Database
 	testServer     domain.Server
-	testBan        domain.BannedSteamPerson
+	testBan        domain.BannedPerson
 	testTarget     domain.Person
 	blocklistUC    domain.BlocklistUsecase
 	configUC       domain.ConfigUsecase
@@ -69,10 +68,7 @@ var (
 	authRepo       domain.AuthRepository
 	authUC         domain.AuthUsecase
 	networkUC      domain.NetworkUsecase
-	banSteamUC     domain.BanSteamUsecase
-	banASNUC       domain.BanASNUsecase
-	banGroupUC     domain.BanGroupUsecase
-	banNetUC       domain.BanNetUsecase
+	bansUC         domain.BanUsecase
 	assetUC        domain.AssetUsecase
 	chatUC         domain.ChatUsecase
 	demoRepository domain.DemoRepository
@@ -167,20 +163,17 @@ func TestMain(m *testing.M) {
 	demoRepository = demo.NewDemoRepository(databaseConn)
 	demoUC = demo.NewDemoUsecase("demos", demoRepository, assetUC, configUC, serversUC)
 	reportUC = report.NewReportUsecase(report.NewReportRepository(databaseConn), notificationUC, configUC, personUC, demoUC, tfapiClient)
-	banSteamUC = ban.NewBanSteamUsecase(ban.NewBanSteamRepository(databaseConn, personUC, networkUC), personUC, configUC, notificationUC, reportUC, stateUC, tfapiClient)
-	authUC = auth.NewAuthUsecase(authRepo, configUC, personUC, banSteamUC, serversUC)
-	banASNUC = ban.NewBanASNUsecase(ban.NewBanASNRepository(databaseConn), notificationUC, networkUC, configUC, personUC)
-	banGroupUC = steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(databaseConn), personUC, notificationUC, configUC, tfapiClient)
-	banNetUC = ban.NewBanNetUsecase(ban.NewBanNetRepository(databaseConn), personUC, configUC, notificationUC, stateUC)
+	bansUC = ban.NewBanUsecase(ban.NewBanRepository(databaseConn, personUC, networkUC), personUC, configUC, notificationUC, reportUC, stateUC, tfapiClient)
+	authUC = auth.NewAuthUsecase(authRepo, configUC, personUC, bansUC, serversUC)
 
 	matchUC = match.NewMatchUsecase(match.NewMatchRepository(eventBroadcaster, databaseConn, personUC, serversUC, notificationUC, stateUC, weaponsMap), stateUC, serversUC, notificationUC)
-	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, banSteamUC, personUC, notificationUC)
+	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC, notificationUC)
 	votesRepo = votes.NewVoteRepository(databaseConn)
 	votesUC = votes.NewVoteUsecase(votesRepo, personUC, matchUC, notificationUC, configUC, eventBroadcaster)
-	appealUC = appeal.NewAppealUsecase(appeal.NewAppealRepository(databaseConn), banSteamUC, personUC, notificationUC, configUC)
+	appealUC = appeal.NewAppealUsecase(appeal.NewAppealRepository(databaseConn), bansUC, personUC, notificationUC, configUC)
 	speedrunsUC = srcds.NewSpeedrunUsecase(srcds.NewSpeedrunRepository(databaseConn, personUC))
-	blocklistUC = blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(databaseConn), banSteamUC, banGroupUC)
-	anticheatUC = anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(databaseConn), personUC, banSteamUC, configUC, notificationUC)
+	blocklistUC = blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(databaseConn), bansUC, banUC)
+	anticheatUC = anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(databaseConn), personUC, bansUC, configUC, notificationUC)
 
 	if internalDB {
 		server, errServer := serversUC.Save(context.Background(), domain.RequestServerUpdate{
@@ -218,7 +211,7 @@ func TestMain(m *testing.M) {
 	target := getUser()
 
 	// Create a valid ban_id
-	bannedPerson, errBan := banSteamUC.Ban(context.Background(), mod.ToUserProfile(), domain.System, domain.RequestBanSteamCreate{
+	bannedPerson, errBan := bansUC.Ban(context.Background(), mod.ToUserProfile(), domain.System, domain.RequestBanCreate{
 		SourceIDField:  domain.SourceIDField{SourceID: mod.SteamID.String()},
 		TargetIDField:  domain.TargetIDField{TargetID: target.SteamID.String()},
 		Duration:       "1d",
@@ -255,11 +248,8 @@ func testRouter() *gin.Engine {
 		panic(errRouter)
 	}
 
-	ban.NewHandlerSteam(router, banSteamUC, configUC, authUC)
-	ban.NewHandlerNet(router, banNetUC, authUC)
-	ban.NewASNHandlerASN(router, banASNUC, authUC)
+	ban.NewHandlerSteam(router, bansUC, configUC, authUC)
 	servers.NewHandler(router, serversUC, stateUC, authUC)
-	steamgroup.NewHandler(router, banGroupUC, authUC)
 	news.NewHandler(router, newsUC, notificationUC, authUC)
 	wiki.NewHandler(router, wikiUC, authUC)
 	votes.NewHandler(router, votesUC, authUC)
@@ -268,8 +258,8 @@ func testRouter() *gin.Engine {
 	appeal.NewHandler(router, appealUC, authUC)
 	wordfilter.NewHandler(router, configUC, wordFilterUC, chatUC, authUC)
 	person.NewHandler(router, configUC, personUC, authUC)
-	srcds.NewHandlerSRCDS(router, srcdsUC, serversUC, personUC, assetUC, reportUC, banSteamUC, networkUC, banGroupUC,
-		authUC, banASNUC, banNetUC, configUC, notificationUC, stateUC, blocklistUC)
+	srcds.NewHandlerSRCDS(router, srcdsUC, serversUC, personUC, assetUC, reportUC, bansUC, networkUC,
+		authUC, configUC, notificationUC, stateUC, blocklistUC)
 	blocklist.NewHandler(router, blocklistUC, networkUC, authUC)
 	srcds.NewHandler(router, speedrunsUC, authUC, configUC)
 

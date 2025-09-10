@@ -29,12 +29,12 @@ type auth struct {
 	auth    domain.AuthRepository
 	config  domain.ConfigUsecase
 	persons domain.PersonUsecase
-	bans    domain.BanSteamUsecase
+	bans    domain.BanUsecase
 	servers domain.ServersUsecase
 }
 
 func NewAuthUsecase(repository domain.AuthRepository, config domain.ConfigUsecase, persons domain.PersonUsecase,
-	bans domain.BanSteamUsecase, servers domain.ServersUsecase,
+	bans domain.BanUsecase, servers domain.ServersUsecase,
 ) domain.AuthUsecase {
 	return &auth{
 		auth:    repository,
@@ -138,7 +138,10 @@ func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson, errBan := u.bans.GetBySteamID(ctx, sid, false, true)
+				bannedPerson, errBan := u.bans.Query(ctx, domain.BansQueryOpts{
+					TargetID: sid,
+					EvadeOk:  true,
+				})
 				if errBan != nil {
 					if !errors.Is(errBan, domain.ErrNoResult) {
 						slog.Error("Failed to fetch authed user ban", log.ErrAttr(errBan))
@@ -233,7 +236,10 @@ func (u *auth) MiddlewareWS(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson, errBan := u.bans.GetBySteamID(ctx, sid, false, true)
+				bannedPerson, errBan := u.bans.Query(ctx, domain.BansQueryOpts{
+					TargetID: sid,
+					EvadeOk:  true,
+				})
 				if errBan != nil {
 					if !errors.Is(errBan, domain.ErrNoResult) {
 						slog.Error("Failed to fetch authed user ban", log.ErrAttr(errBan))

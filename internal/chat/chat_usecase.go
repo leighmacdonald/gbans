@@ -17,7 +17,7 @@ import (
 type chatUsecase struct {
 	repository    domain.ChatRepository
 	wordFilters   domain.WordFilterUsecase
-	bansSteam     domain.BanSteamUsecase
+	bans          domain.BanUsecase
 	persons       domain.PersonUsecase
 	notifications domain.NotificationUsecase
 	state         domain.StateUsecase
@@ -33,7 +33,7 @@ type chatUsecase struct {
 }
 
 func NewChatUsecase(config domain.ConfigUsecase, chatRepository domain.ChatRepository,
-	filters domain.WordFilterUsecase, stateUsecase domain.StateUsecase, bans domain.BanSteamUsecase,
+	filters domain.WordFilterUsecase, stateUsecase domain.StateUsecase, bans domain.BanUsecase,
 	persons domain.PersonUsecase, notifications domain.NotificationUsecase,
 ) domain.ChatUsecase {
 	conf := config.Config()
@@ -41,7 +41,7 @@ func NewChatUsecase(config domain.ConfigUsecase, chatRepository domain.ChatRepos
 	return &chatUsecase{
 		repository:    chatRepository,
 		wordFilters:   filters,
-		bansSteam:     bans,
+		bans:          bans,
 		persons:       persons,
 		notifications: notifications,
 		state:         stateUsecase,
@@ -58,13 +58,13 @@ func NewChatUsecase(config domain.ConfigUsecase, chatRepository domain.ChatRepos
 
 func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.NewUserWarning) error {
 	var (
-		ban    domain.BannedSteamPerson
+		ban    domain.BannedPerson
 		errBan error
-		req    domain.RequestBanSteamCreate
+		req    domain.RequestBanCreate
 	)
 
-	if newWarning.MatchedFilter.Action == domain.Ban || newWarning.MatchedFilter.Action == domain.Mute {
-		req = domain.RequestBanSteamCreate{
+	if newWarning.MatchedFilter.Action == domain.FilterActionBan || newWarning.MatchedFilter.Action == domain.FilterActionMute {
+		req = domain.RequestBanCreate{
 			SourceIDField: domain.SourceIDField{},
 			TargetIDField: domain.TargetIDField{TargetID: newWarning.UserMessage.SteamID.String()},
 			Duration:      newWarning.MatchedFilter.Duration,
@@ -80,13 +80,13 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 	}
 
 	switch newWarning.MatchedFilter.Action {
-	case domain.Mute:
+	case domain.FilterActionMute:
 		req.BanType = domain.NoComm
-		ban, errBan = u.bansSteam.Ban(ctx, admin.ToUserProfile(), domain.System, req)
-	case domain.Ban:
+		ban, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), domain.System, req)
+	case domain.FilterActionBan:
 		req.BanType = domain.Banned
-		ban, errBan = u.bansSteam.Ban(ctx, admin.ToUserProfile(), domain.System, req)
-	case domain.Kick:
+		ban, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), domain.System, req)
+	case domain.FilterActionKick:
 		// Kicks are temporary, so should be done by Player ID to avoid
 		// missing players who weren't in the latest state update
 		// (otherwise, kicking players very shortly after they connect
