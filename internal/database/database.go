@@ -13,13 +13,17 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
-// // ErrNoResult is returned on successful queries which return no rows.
-// ErrNoResult = errors.New("No results found")
-// // ErrDuplicate is returned when a duplicate row result is attempted to be inserted.
-// ErrDuplicate = errors.New("Duplicate entity")
+var (
+	// ErrNoResult is returned on successful queries which return no rows.
+	ErrNoResult = errors.New("no results found")
+	// ErrDuplicate is returned when a duplicate row result is attempted to be inserted.
+	ErrDuplicate = errors.New("entity already exists")
+
+	ErrPoolFailed  = errors.New("could not create store pool")
+	ErrCreateQuery = errors.New("failed to generate query")
+)
 
 //go:embed migrations
 var migrations embed.FS
@@ -111,7 +115,7 @@ func (db *postgresStore) DBErr(rootError error) error {
 	}
 
 	if errors.Is(rootError, pgx.ErrNoRows) {
-		return domain.ErrNoResult
+		return ErrNoResult
 	}
 
 	var pgErr *pgconn.PgError
@@ -119,7 +123,7 @@ func (db *postgresStore) DBErr(rootError error) error {
 	if errors.As(rootError, &pgErr) {
 		switch pgErr.Code {
 		case pgerrcode.UniqueViolation:
-			return domain.ErrDuplicate
+			return ErrDuplicate
 		default:
 			return rootError
 		}
@@ -159,7 +163,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 
 	dbConn, errConnectConfig := pgxpool.NewWithConfig(ctx, cfg)
 	if errConnectConfig != nil {
-		return errors.Join(errConnectConfig, domain.ErrPoolFailed)
+		return errors.Join(errConnectConfig, ErrPoolFailed)
 	}
 
 	db.conn = dbConn
@@ -299,7 +303,7 @@ func (db *postgresStore) Close() error {
 func (db *postgresStore) GetCount(ctx context.Context, transaction pgx.Tx, builder sq.SelectBuilder) (int64, error) {
 	countQuery, argsCount, errCountQuery := builder.ToSql()
 	if errCountQuery != nil {
-		return 0, errors.Join(errCountQuery, domain.ErrCreateQuery)
+		return 0, errors.Join(errCountQuery, ErrCreateQuery)
 	}
 
 	var count int64

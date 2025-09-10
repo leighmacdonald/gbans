@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/rcon/rcon"
@@ -401,7 +402,7 @@ func (c *Collector) updateServerConfigs(ctx context.Context) {
 		IncludeDisabled: false,
 	})
 
-	if errServers != nil && !errors.Is(errServers, domain.ErrNoResult) {
+	if errServers != nil && !errors.Is(errServers, database.ErrNoResult) {
 		slog.Error("Failed to fetch servers, cannot update State", log.ErrAttr(errServers))
 
 		return

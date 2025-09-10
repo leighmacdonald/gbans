@@ -7,18 +7,17 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
 type newsRepository struct {
 	db database.Database
 }
 
-func NewNewsRepository(database database.Database) domain.NewsRepository {
+func NewNewsRepository(database database.Database) NewsRepository {
 	return &newsRepository{db: database}
 }
 
-func (r newsRepository) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]domain.NewsEntry, error) {
+func (r newsRepository) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]NewsEntry, error) {
 	builder := r.db.
 		Builder().
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
@@ -38,10 +37,10 @@ func (r newsRepository) GetNewsLatest(ctx context.Context, limit int, includeUnp
 	defer rows.Close()
 
 	//goland:noinspection GoPreferNilSlice
-	articles := []domain.NewsEntry{}
+	articles := []NewsEntry{}
 
 	for rows.Next() {
-		var entry domain.NewsEntry
+		var entry NewsEntry
 		if errScan := rows.Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 			&entry.CreatedOn, &entry.UpdatedOn); errScan != nil {
 			return nil, r.db.DBErr(errScan)
@@ -53,7 +52,7 @@ func (r newsRepository) GetNewsLatest(ctx context.Context, limit int, includeUnp
 	return articles, nil
 }
 
-func (r newsRepository) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *domain.NewsEntry) error {
+func (r newsRepository) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *NewsEntry) error {
 	builder := r.db.
 		Builder().
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
@@ -75,7 +74,7 @@ func (r newsRepository) GetNewsLatestArticle(ctx context.Context, includeUnpubli
 	return nil
 }
 
-func (r newsRepository) GetNewsByID(ctx context.Context, newsID int, entry *domain.NewsEntry) error {
+func (r newsRepository) GetNewsByID(ctx context.Context, newsID int, entry *NewsEntry) error {
 	query, args, errQueryArgs := r.db.
 		Builder().
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
@@ -92,7 +91,7 @@ func (r newsRepository) GetNewsByID(ctx context.Context, newsID int, entry *doma
 	return nil
 }
 
-func (r newsRepository) Save(ctx context.Context, entry *domain.NewsEntry) error {
+func (r newsRepository) Save(ctx context.Context, entry *NewsEntry) error {
 	if entry.NewsID > 0 {
 		return r.updateNewsArticle(ctx, entry)
 	}
@@ -100,7 +99,7 @@ func (r newsRepository) Save(ctx context.Context, entry *domain.NewsEntry) error
 	return r.insertNewsArticle(ctx, entry)
 }
 
-func (r newsRepository) insertNewsArticle(ctx context.Context, entry *domain.NewsEntry) error {
+func (r newsRepository) insertNewsArticle(ctx context.Context, entry *NewsEntry) error {
 	query, args, errQueryArgs := r.db.
 		Builder().
 		Insert("news").
@@ -109,7 +108,7 @@ func (r newsRepository) insertNewsArticle(ctx context.Context, entry *domain.New
 		Suffix("RETURNING news_id").
 		ToSql()
 	if errQueryArgs != nil {
-		return errors.Join(errQueryArgs, domain.ErrCreateQuery)
+		return errors.Join(errQueryArgs, database.ErrCreateQuery)
 	}
 
 	errQueryRow := r.db.QueryRow(ctx, nil, query, args...).Scan(&entry.NewsID)
@@ -120,7 +119,7 @@ func (r newsRepository) insertNewsArticle(ctx context.Context, entry *domain.New
 	return nil
 }
 
-func (r newsRepository) updateNewsArticle(ctx context.Context, entry *domain.NewsEntry) error {
+func (r newsRepository) updateNewsArticle(ctx context.Context, entry *NewsEntry) error {
 	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 		Builder().
 		Update("news").

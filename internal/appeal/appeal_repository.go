@@ -19,7 +19,7 @@ func NewAppealRepository(database database.Database) domain.AppealRepository {
 	return &appealRepository{db: database}
 }
 
-func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]domain.AppealOverview, error) {
+func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]AppealOverview, error) {
 	constraints := sq.And{sq.Gt{"m.count": 0}}
 
 	if !opts.Deleted {
@@ -40,7 +40,7 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 		Where(constraints).
 		InnerJoin(`
 			LATERAL (
-				SELECT count(a.ban_message_id) as count 
+				SELECT count(a.ban_message_id) as count
 				FROM ban_appeal a
 				WHERE b.ban_id = a.ban_id
 			) m ON TRUE`).
@@ -54,11 +54,11 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 
 	defer rows.Close()
 
-	var overviews []domain.AppealOverview
+	var overviews []AppealOverview
 
 	for rows.Next() {
 		var (
-			overview      domain.AppealOverview
+			overview      AppealOverview
 			sourceID      int64
 			SourceSteamID int64
 			targetID      int64
@@ -83,7 +83,7 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 	}
 
 	if overviews == nil {
-		return []domain.AppealOverview{}, nil
+		return []AppealOverview{}, nil
 	}
 
 	return overviews, nil
@@ -154,7 +154,7 @@ func (r *appealRepository) GetBanMessages(ctx context.Context, banID int64) ([]d
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, query)
 	if errQuery != nil {
-		if errors.Is(r.db.DBErr(errQuery), domain.ErrNoResult) {
+		if errors.Is(r.db.DBErr(errQuery), database.ErrNoResult) {
 			return nil, nil
 		}
 	}

@@ -43,21 +43,24 @@ type NetworkRepository interface {
 }
 
 type CIDRBlockSource struct {
-	CIDRBlockSourceID int    `json:"cidr_block_source_id"`
-	Name              string `json:"name"`
-	URL               string `json:"url"`
-	Enabled           bool   `json:"enabled"`
-	TimeStamped
+	CIDRBlockSourceID int       `json:"cidr_block_source_id"`
+	Name              string    `json:"name"`
+	URL               string    `json:"url"`
+	Enabled           bool      `json:"enabled"`
+	CreatedOn         time.Time `json:"created_on"`
+	UpdatedOn         time.Time `json:"updated_on"`
 }
 
 type WhitelistIP struct {
 	CIDRBlockWhitelistID int        `json:"cidr_block_whitelist_id"`
 	Address              *net.IPNet `json:"address"`
-	TimeStamped
+	CreatedOn            time.Time  `json:"created_on"`
+	UpdatedOn            time.Time  `json:"updated_on"`
 }
 
 type WhitelistSteam struct {
-	TimeStamped
+	CreatedOn time.Time `json:"created_on"`
+	UpdatedOn time.Time `json:"updated_on"`
 	SteamIDField
 	Personaname string `json:"personaname"`
 	AvatarHash  string `json:"avatar_hash"`

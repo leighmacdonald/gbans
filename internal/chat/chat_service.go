@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
@@ -39,7 +40,7 @@ func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 		}
 
 		messages, errChat := h.chat.QueryChatHistory(ctx, httphelper.CurrentUserProfile(ctx), req)
-		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
 
 			return

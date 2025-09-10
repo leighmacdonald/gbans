@@ -119,7 +119,7 @@ func (r *demoRepository) GetDemos(ctx context.Context) ([]domain.DemoFile, error
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
 	if errQuery != nil {
-		if errors.Is(errQuery, domain.ErrNoResult) {
+		if errors.Is(errQuery, database.ErrNoResult) {
 			return demos, nil
 		}
 

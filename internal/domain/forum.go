@@ -69,12 +69,13 @@ func (activity ForumActivity) Expired() bool {
 }
 
 type ForumCategory struct {
-	ForumCategoryID int     `json:"forum_category_id"`
-	Title           string  `json:"title"`
-	Description     string  `json:"description"`
-	Ordering        int     `json:"ordering"`
-	Forums          []Forum `json:"forums"`
-	TimeStamped
+	ForumCategoryID int       `json:"forum_category_id"`
+	Title           string    `json:"title"`
+	Description     string    `json:"description"`
+	Ordering        int       `json:"ordering"`
+	Forums          []Forum   `json:"forums"`
+	CreatedOn       time.Time `json:"created_on"`
+	UpdatedOn       time.Time `json:"updated_on"`
 }
 
 func (category ForumCategory) NewForum(title string, description string) Forum {
@@ -105,7 +106,8 @@ type Forum struct {
 	RecentPersonaname   string          `json:"recent_personaname"`
 	RecentAvatarhash    string          `json:"recent_avatarhash"`
 	RecentCreatedOn     time.Time       `json:"recent_created_on"`
-	TimeStamped
+	CreatedOn           time.Time       `json:"created_on"`
+	UpdatedOn           time.Time       `json:"updated_on"`
 }
 
 func (forum Forum) NewThread(title string, sourceID steamid.SteamID) ForumThread {
@@ -127,7 +129,8 @@ type ForumThread struct {
 	Views         int64           `json:"views"`
 	Replies       int64           `json:"replies"`
 	SimplePerson
-	TimeStamped
+	CreatedOn time.Time `json:"created_on"`
+	UpdatedOn time.Time `json:"updated_on"`
 }
 
 func (thread ForumThread) NewMessage(sourceID steamid.SteamID, body string) ForumMessage {
@@ -149,7 +152,8 @@ type ForumMessage struct {
 	Online         bool            `json:"online"`
 	Signature      string          `json:"signature"`
 	SimplePerson
-	TimeStamped
+	CreatedOn time.Time `json:"created_on"`
+	UpdatedOn time.Time `json:"updated_on"`
 }
 
 func (message ForumMessage) NewVote(sourceID steamid.SteamID, vote Vote) ForumMessageVote {
@@ -166,7 +170,8 @@ type ForumMessageVote struct {
 	ForumMessageID     int64           `json:"forum_message_id"`
 	SourceID           steamid.SteamID `json:"source_id"`
 	Vote               Vote            `json:"vote"` // -1/+1
-	TimeStamped
+	CreatedOn          time.Time       `json:"created_on"`
+	UpdatedOn          time.Time       `json:"updated_on"`
 }
 
 type ThreadWithSource struct {

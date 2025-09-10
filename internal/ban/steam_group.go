@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -21,12 +21,12 @@ var (
 type Memberships struct {
 	members map[steamid.SteamID]steamid.Collection
 	*sync.RWMutex
-	store      domain.BanRepository
+	store      BanRepository
 	updateFreq time.Duration
 	tfAPI      *thirdparty.TFAPI
 }
 
-func NewMemberships(db domain.BanRepository, tfAPI *thirdparty.TFAPI) *Memberships {
+func NewMemberships(db BanRepository, tfAPI *thirdparty.TFAPI) *Memberships {
 	return &Memberships{
 		RWMutex:    &sync.RWMutex{},
 		store:      db,
@@ -82,9 +82,9 @@ func (g *Memberships) updateGroupBanMembers(ctx context.Context) (map[steamid.St
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()
 
-	groups, errGroups := g.store.Get(ctx, domain.GroupBansQueryFilter{})
+	groups, errGroups := g.store.Get(ctx, GroupBansQueryFilter{})
 	if errGroups != nil {
-		if errors.Is(errGroups, domain.ErrNoResult) {
+		if errors.Is(errGroups, database.ErrNoResult) {
 			return newMap, nil
 		}
 
@@ -107,9 +107,9 @@ func (g *Memberships) updateGroupBanMembers(ctx context.Context) (map[steamid.St
 		}
 
 		grpID := steamid.New(group.GroupId)
-		memberList := domain.NewMembersList(grpID.Int64(), members)
+		memberList := NewMembersList(grpID.Int64(), members)
 		if errQuery := g.store.GetMembersList(localCtx, grpID.Int64(), &memberList); errQuery != nil {
-			if !errors.Is(errQuery, domain.ErrNoResult) {
+			if !errors.Is(errQuery, database.ErrNoResult) {
 				return nil, errors.Join(errQuery, errLoadGroupBanMembersList)
 			}
 		}

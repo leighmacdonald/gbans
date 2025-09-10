@@ -15,6 +15,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -29,12 +31,12 @@ type auth struct {
 	auth    domain.AuthRepository
 	config  domain.ConfigUsecase
 	persons domain.PersonUsecase
-	bans    domain.BanUsecase
+	bans    ban.BanUsecase
 	servers domain.ServersUsecase
 }
 
 func NewAuthUsecase(repository domain.AuthRepository, config domain.ConfigUsecase, persons domain.PersonUsecase,
-	bans domain.BanUsecase, servers domain.ServersUsecase,
+	bans ban.BanUsecase, servers domain.ServersUsecase,
 ) domain.AuthUsecase {
 	return &auth{
 		auth:    repository,
@@ -138,12 +140,12 @@ func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson, errBan := u.bans.Query(ctx, domain.BansQueryOpts{
+				bannedPerson, errBan := u.bans.Query(ctx, ban.QueryOpts{
 					TargetID: sid,
 					EvadeOk:  true,
 				})
 				if errBan != nil {
-					if !errors.Is(errBan, domain.ErrNoResult) {
+					if !errors.Is(errBan, database.ErrNoResult) {
 						slog.Error("Failed to fetch authed user ban", log.ErrAttr(errBan))
 					}
 				}
@@ -236,12 +238,12 @@ func (u *auth) MiddlewareWS(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson, errBan := u.bans.Query(ctx, domain.BansQueryOpts{
+				bannedPerson, errBan := u.bans.Query(ctx, ban.QueryOpts{
 					TargetID: sid,
 					EvadeOk:  true,
 				})
 				if errBan != nil {
-					if !errors.Is(errBan, domain.ErrNoResult) {
+					if !errors.Is(errBan, database.ErrNoResult) {
 						slog.Error("Failed to fetch authed user ban", log.ErrAttr(errBan))
 					}
 				}
@@ -462,7 +464,7 @@ type CleanupWorker struct {
 }
 
 func (worker *CleanupWorker) Work(ctx context.Context, _ *river.Job[CleanupArgs]) error {
-	if err := worker.auth.PrunePersonAuth(ctx); err != nil && !errors.Is(err, domain.ErrNoResult) {
+	if err := worker.auth.PrunePersonAuth(ctx); err != nil && !errors.Is(err, database.ErrNoResult) {
 		slog.Error("Error pruning expired refresh tokens", log.ErrAttr(err))
 
 		return err

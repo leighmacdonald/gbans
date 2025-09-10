@@ -32,7 +32,7 @@ func (l localRepository) Put(ctx context.Context, asset domain.Asset, body io.Re
 		return existing, nil
 	}
 
-	if !errors.Is(errExisting, domain.ErrNoResult) {
+	if !errors.Is(errExisting, database.ErrNoResult) {
 		return domain.Asset{}, errExisting
 	}
 

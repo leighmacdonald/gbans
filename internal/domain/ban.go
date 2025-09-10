@@ -17,15 +17,6 @@ type SourceTarget struct {
 	TargetAvatarhash  string `json:"target_avatarhash"`
 }
 
-type AppealOverview struct {
-	//ban.Ban
-
-	SourcePersonaname string `json:"source_personaname"`
-	SourceAvatarhash  string `json:"source_avatarhash"`
-	TargetPersonaname string `json:"target_personaname"`
-	TargetAvatarhash  string `json:"target_avatarhash"`
-}
-
 type BanAppealMessage struct {
 	BanID        int64           `json:"ban_id"`
 	BanMessageID int64           `json:"ban_message_id"`

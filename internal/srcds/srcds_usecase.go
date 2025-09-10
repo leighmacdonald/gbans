@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/steam"
@@ -21,7 +23,7 @@ import (
 
 type srcds struct {
 	repository    domain.SRCDSRepository
-	bans          domain.BanUsecase
+	bans          ban.BanUsecase
 	config        domain.ConfigUsecase
 	servers       domain.ServersUsecase
 	persons       domain.PersonUsecase
@@ -32,7 +34,7 @@ type srcds struct {
 }
 
 func NewSrcdsUsecase(repository domain.SRCDSRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
-	persons domain.PersonUsecase, reports domain.ReportUsecase, notifications domain.NotificationUsecase, bans domain.BanUsecase,
+	persons domain.PersonUsecase, reports domain.ReportUsecase, notifications domain.NotificationUsecase, bans ban.BanUsecase,
 	tfAPI *thirdparty.TFAPI,
 ) domain.SRCDSUsecase {
 	return &srcds{
@@ -68,10 +70,10 @@ func (h srcds) GetBanState(ctx context.Context, steamID steamid.SteamID, ip neti
 		appealURL = h.config.ExtURLRaw("/appeal/%d", banState.BanID)
 	}
 
-	if banState.BanID > 0 && banState.BanType >= domain.NoComm {
+	if banState.BanID > 0 && banState.BanType >= ban.NoComm {
 		switch banState.BanSource {
 		case domain.BanSourceSteam:
-			if banState.BanType == domain.NoComm {
+			if banState.BanType == ban.NoComm {
 				msg = fmt.Sprintf("You are muted & gagged. Expires: %s. Appeal: %s", banState.ValidUntil.Format(time.DateTime), appealURL)
 			} else {
 				msg = fmt.Sprintf(format, banState.Reason.String(), "Steam", validUntil, appealURL)
@@ -252,7 +254,7 @@ func (h srcds) DelAdminGroup(ctx context.Context, adminID int, groupID int) (dom
 	}
 
 	existing, errExisting := h.GetAdminGroups(ctx, admin)
-	if errExisting != nil && !errors.Is(errExisting, domain.ErrNoResult) {
+	if errExisting != nil && !errors.Is(errExisting, database.ErrNoResult) {
 		return admin, errExisting
 	}
 
@@ -283,7 +285,7 @@ func (h srcds) AddAdminGroup(ctx context.Context, adminID int, groupID int) (dom
 	}
 
 	existing, errExisting := h.GetAdminGroups(ctx, admin)
-	if errExisting != nil && !errors.Is(errExisting, domain.ErrNoResult) {
+	if errExisting != nil && !errors.Is(errExisting, database.ErrNoResult) {
 		return admin, errExisting
 	}
 
@@ -351,7 +353,7 @@ func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req d
 	// Ensure the user doesn't already have an open report against the user
 	existing, errReports := h.reports.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
 	if errReports != nil {
-		if !errors.Is(errReports, domain.ErrNoResult) {
+		if !errors.Is(errReports, database.ErrNoResult) {
 			return domain.ReportWithAuthor{}, errReports
 		}
 	}
@@ -383,7 +385,7 @@ func (h srcds) SetAdminGroups(ctx context.Context, authType domain.AuthType, ide
 	}
 
 	// Delete existing groups.
-	if errDelete := h.repository.DeleteAdminGroups(ctx, admin); errDelete != nil && !errors.Is(errDelete, domain.ErrNoResult) {
+	if errDelete := h.repository.DeleteAdminGroups(ctx, admin); errDelete != nil && !errors.Is(errDelete, database.ErrNoResult) {
 		return errDelete
 	}
 
@@ -508,7 +510,7 @@ func (h srcds) AddAdmin(ctx context.Context, alias string, authType domain.AuthT
 	}
 
 	admin, errAdmin := h.repository.GetAdminByIdentity(ctx, authType, realIdentity)
-	if errAdmin != nil && !errors.Is(errAdmin, domain.ErrNoResult) {
+	if errAdmin != nil && !errors.Is(errAdmin, database.ErrNoResult) {
 		return domain.SMAdmin{}, errAdmin
 	}
 

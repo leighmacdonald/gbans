@@ -30,36 +30,36 @@ func (c *configRepository) Config() domain.Config {
 func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 	const query = `
 		SELECT general_site_name, general_mode, general_file_serve_mode, general_srcds_log_addr, general_asset_url,
-		       general_default_route, general_news_enabled, general_forums_enabled, general_contests_enabled, general_wiki_enabled, 
+		       general_default_route, general_news_enabled, general_forums_enabled, general_contests_enabled, general_wiki_enabled,
 		       general_stats_enabled, general_servers_enabled, general_reports_enabled,general_chatlogs_enabled, general_demos_enabled, general_speedruns_enabled, general_playerqueue_enabled,
-		       
+
 		       filters_enabled, filters_dry, filters_ping_discord, filters_max_weight, filters_warning_timeout, filters_check_timeout, filters_match_timeout,
-		       
+
 		       demo_cleanup_enabled, demo_cleanup_strategy, demo_cleanup_min_pct, demo_cleanup_mount, demo_count_limit, demo_parser_url,
-		       
+
 		       patreon_enabled, patreon_client_id, patreon_client_secret, patreon_creator_access_token, patreon_creator_refresh_token, patreon_integrations_enabled,
-		       
+
 		       discord_enabled, discord_app_id, discord_app_secret, discord_link_id, discord_token, discord_guild_id, discord_log_channel_id,
 		       discord_public_log_channel_enabled, discord_public_log_channel_id, discord_public_match_log_channel_id, discord_mod_ping_role_id,
 		       discord_bot_enabled, discord_integrations_enabled, discord_vote_log_channel_id ,discord_appeal_log_channel_id,
 		       discord_ban_log_channel_id, discord_forum_log_channel_id, discord_word_filter_log_channel_id, discord_kick_log_channel_id, discord_playerqueue_channel_id,
-		       
+
 		       logging_level, logging_file, logging_http_enabled, logging_http_otel_enabled, logging_http_level,
-		       
+
 		       ip2location_enabled, ip2location_cache_path, ip2location_token,
-		       
+
 		       debug_skip_open_id_validation, debug_add_rcon_log_address,
-		       
+
 		       local_store_path_root,
-		       
+
 		       ssh_enabled, ssh_username, ssh_password, ssh_port, ssh_private_key_path, ssh_update_interval, ssh_timeout, ssh_demo_path_fmt, ssh_stac_path_fmt,
-		       
+
 		       exports_bd_enabled, exports_valve_enabled, exports_authorized_keys,
-		       
+
 		       anticheat_enabled, anticheat_action, anticheat_duration, anticheat_max_aim_snap, anticheat_max_psilent, anticheat_max_bhop,
-		       anticheat_max_fake_ang, anticheat_max_cmd_num, anticheat_max_too_many_connections, anticheat_max_cheat_cvar, 
+		       anticheat_max_fake_ang, anticheat_max_cmd_num, anticheat_max_too_many_connections, anticheat_max_cheat_cvar,
 		       anticheat_max_oob_var, anticheat_max_invalid_user_cmd, discord_anticheat_channel_id,
-		       
+
 		       network_sdr_enabled, network_sdr_dns_enabled, network_cf_key, network_cf_email, network_cf_zone_id
 		 FROM config`
 
@@ -103,7 +103,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 
 func (c *configRepository) Init(ctx context.Context) error {
 	if _, errRead := c.Read(ctx); errRead != nil {
-		if errors.Is(errRead, domain.ErrNoResult) {
+		if errors.Is(errRead, database.ErrNoResult) {
 			// Insert a value so that the database will populate a row of defaults.
 			if err := c.db.ExecInsertBuilder(ctx, nil, c.db.Builder().
 				Insert("config").

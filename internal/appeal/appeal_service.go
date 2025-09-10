@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
@@ -107,8 +108,8 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 			case errors.Is(errSave, domain.ErrPermissionDenied):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 					"Not allowed to edit message."))
-			case errors.Is(errSave, domain.ErrDuplicate):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, domain.ErrDuplicate,
+			case errors.Is(errSave, database.ErrDuplicate):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, database.ErrDuplicate,
 					"Message cannot be the same."))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
@@ -143,8 +144,8 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 			case errors.Is(err, domain.ErrPermissionDenied):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 					"You are not allowed to delete this message."))
-			case errors.Is(err, domain.ErrNoResult):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNoResult,
+			case errors.Is(err, database.ErrNoResult):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, database.ErrNoResult,
 					"Message does not exist with id: %d", banMessageID))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal),

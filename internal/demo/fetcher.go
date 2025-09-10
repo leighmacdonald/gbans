@@ -169,7 +169,7 @@ func (d Fetcher) fetchStacLogs(ctx context.Context, stactPathFmt string, server 
 
 		slog.Debug("Importing stac log", slog.String("name", file.Name()), slog.String("server", server.ShortName))
 		entries, errImport := d.anticheat.Import(ctx, file.Name(), reader, server.ServerID)
-		if errImport != nil && !errors.Is(errImport, domain.ErrDuplicate) {
+		if errImport != nil && !errors.Is(errImport, database.ErrDuplicate) {
 			slog.Error("Failed to import stac logs", log.ErrAttr(errImport))
 		} else if len(entries) > 0 {
 			if errHandle := d.anticheat.Handle(ctx, entries); errHandle != nil {

@@ -8,26 +8,26 @@ import (
 )
 
 type newsUsecase struct {
-	repository domain.NewsRepository
+	repository NewsRepository
 }
 
-func NewNewsUsecase(repository domain.NewsRepository) domain.NewsUsecase {
+func NewNewsUsecase(repository NewsRepository) NewsUsecase {
 	return &newsUsecase{repository: repository}
 }
 
-func (u newsUsecase) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]domain.NewsEntry, error) {
+func (u newsUsecase) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]NewsEntry, error) {
 	return u.repository.GetNewsLatest(ctx, limit, includeUnpublished)
 }
 
-func (u newsUsecase) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *domain.NewsEntry) error {
+func (u newsUsecase) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *NewsEntry) error {
 	return u.repository.GetNewsLatestArticle(ctx, includeUnpublished, entry)
 }
 
-func (u newsUsecase) GetNewsByID(ctx context.Context, newsID int, entry *domain.NewsEntry) error {
+func (u newsUsecase) GetNewsByID(ctx context.Context, newsID int, entry *NewsEntry) error {
 	return u.repository.GetNewsByID(ctx, newsID, entry)
 }
 
-func (u newsUsecase) Save(ctx context.Context, entry *domain.NewsEntry) error {
+func (u newsUsecase) Save(ctx context.Context, entry *NewsEntry) error {
 	if entry.Title == "" {
 		return domain.ErrTooShort
 	}

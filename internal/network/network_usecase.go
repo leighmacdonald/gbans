@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
@@ -69,7 +71,7 @@ func (u networkUsecase) Start(ctx context.Context) {
 
 			// Maybe ignore these and wait for connect call to create?
 			_, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, nil, newServerEvent.SID)
-			if errPerson != nil && !errors.Is(errPerson, domain.ErrDuplicate) {
+			if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
 				slog.Error("Failed to fetch connecting person", slog.String("steam_id", newServerEvent.SID.String()), log.ErrAttr(errPerson))
 
 				continue
@@ -159,7 +161,7 @@ func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.
 		if errNetwork != nil {
 			slog.Error("Received malformed CIDR", log.ErrAttr(errNetwork))
 
-			return nil, 0, domain.ErrInvalidCIDR
+			return nil, 0, ban.ErrInvalidCIDR
 		}
 
 		opts.Network = network.String()
@@ -194,7 +196,7 @@ func (u networkUsecase) QueryNetwork(ctx context.Context, address netip.Addr) (d
 	details.Asn = asn
 
 	proxy, errProxy := u.repository.GetProxyRecord(ctx, address)
-	if errProxy != nil && !errors.Is(errProxy, domain.ErrNoResult) {
+	if errProxy != nil && !errors.Is(errProxy, database.ErrNoResult) {
 		return details, errors.Join(errProxy, domain.ErrNetworkProxyUnknown)
 	}
 

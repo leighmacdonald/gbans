@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
@@ -210,9 +211,9 @@ func SilenceEmbed(target domain.PersonInfo) *discordgo.MessageEmbed {
 	return msgEmbed.AddTargetPerson(target).Embed().MessageEmbed
 }
 
-func BanExpiresMessage(ban domain.Ban, person domain.PersonInfo, banURL string) *discordgo.MessageEmbed {
+func BanExpiresMessage(inBan ban.Ban, person domain.PersonInfo, banURL string) *discordgo.MessageEmbed {
 	banType := "Ban"
-	if ban.BanType == domain.NoComm {
+	if inBan.BanType == ban.NoComm {
 		banType = "Mute"
 	}
 
@@ -227,20 +228,20 @@ func BanExpiresMessage(ban domain.Ban, person domain.PersonInfo, banURL string) 
 
 	msgEmbed.AddFieldsSteamID(person.GetSteamID())
 
-	if ban.BanType == domain.NoComm {
+	if inBan.BanType == ban.NoComm {
 		msgEmbed.Embed().SetColor(ColourWarn)
 	}
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func BanSteamResponse(banSteam domain.BannedPerson) *discordgo.MessageEmbed {
+func BanSteamResponse(banSteam ban.BannedPerson) *discordgo.MessageEmbed {
 	var (
 		title  string
 		colour int
 	)
 
-	if banSteam.BanType == domain.NoComm {
+	if banSteam.BanType == ban.NoComm {
 		title = fmt.Sprintf("User Muted (#%d)", banSteam.BanID)
 		colour = ColourWarn
 	} else {
@@ -440,7 +441,7 @@ func ReportStatsMessage(meta domain.ReportMeta, url string) *discordgo.MessageEm
 		MessageEmbed
 }
 
-func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BannedPerson) *discordgo.MessageEmbed {
+func WarningMessage(newWarning domain.NewUserWarning, banSteam ban.BannedPerson) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("Language Warning")
 	msgEmbed.Embed().
 		SetDescription(newWarning.UserWarning.Message).

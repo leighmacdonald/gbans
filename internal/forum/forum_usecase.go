@@ -47,7 +47,7 @@ func (f forums) ForumCategorySave(ctx context.Context, category *domain.ForumCat
 		slog.Info("Forum category updated", slog.String("title", category.Title))
 	}
 
-	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelForumLog, discord.ForumCategorySave(*category)))
+	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelForumLog, discord.ForumCategorySave(*category)))
 
 	return nil
 }
@@ -61,7 +61,7 @@ func (f forums) ForumCategoryDelete(ctx context.Context, category domain.ForumCa
 		return err
 	}
 
-	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelForumLog, discord.ForumCategoryDelete(category)))
+	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelForumLog, discord.ForumCategoryDelete(category)))
 	slog.Info("Forum category deleted", slog.String("category", category.Title), slog.Int("forum_category_id", category.ForumCategoryID))
 
 	return nil
@@ -78,7 +78,7 @@ func (f forums) ForumSave(ctx context.Context, forum *domain.Forum) error {
 		return err
 	}
 
-	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelForumLog, discord.ForumSaved(*forum)))
+	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelForumLog, discord.ForumSaved(*forum)))
 
 	if isNew {
 		slog.Info("New forum created", slog.String("title", forum.Title))
@@ -152,7 +152,7 @@ func (f forums) ForumMessageSave(ctx context.Context, message *domain.ForumMessa
 		return err
 	}
 
-	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelForumLog, discord.ForumMessageSaved(*message)))
+	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelForumLog, discord.ForumMessageSaved(*message)))
 
 	if isNew {
 		slog.Info("Created new forum message", slog.Int64("forum_thread_id", message.ForumThreadID))

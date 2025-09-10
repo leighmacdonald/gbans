@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/state"
@@ -17,7 +18,7 @@ import (
 type chatUsecase struct {
 	repository    domain.ChatRepository
 	wordFilters   domain.WordFilterUsecase
-	bans          domain.BanUsecase
+	bans          ban.BanUsecase
 	persons       domain.PersonUsecase
 	notifications domain.NotificationUsecase
 	state         domain.StateUsecase
@@ -33,7 +34,7 @@ type chatUsecase struct {
 }
 
 func NewChatUsecase(config domain.ConfigUsecase, chatRepository domain.ChatRepository,
-	filters domain.WordFilterUsecase, stateUsecase domain.StateUsecase, bans domain.BanUsecase,
+	filters domain.WordFilterUsecase, stateUsecase domain.StateUsecase, bans ban.BanUsecase,
 	persons domain.PersonUsecase, notifications domain.NotificationUsecase,
 ) domain.ChatUsecase {
 	conf := config.Config()
@@ -58,19 +59,18 @@ func NewChatUsecase(config domain.ConfigUsecase, chatRepository domain.ChatRepos
 
 func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.NewUserWarning) error {
 	var (
-		ban    domain.BannedPerson
+		newBan ban.BannedPerson
 		errBan error
-		req    domain.RequestBanCreate
+		req    ban.BanOpts
 	)
 
 	if newWarning.MatchedFilter.Action == domain.FilterActionBan || newWarning.MatchedFilter.Action == domain.FilterActionMute {
-		req = domain.RequestBanCreate{
-			SourceIDField: domain.SourceIDField{},
-			TargetIDField: domain.TargetIDField{TargetID: newWarning.UserMessage.SteamID.String()},
-			Duration:      newWarning.MatchedFilter.Duration,
-			Reason:        newWarning.WarnReason,
-			ReasonText:    "",
-			Note:          "Automatic warning ban",
+		req = ban.BanOpts{
+			TargetID:   newWarning.UserMessage.SteamID,
+			Duration:   newWarning.MatchedFilter.Duration,
+			Reason:     newWarning.WarnReason,
+			ReasonText: "",
+			Note:       "Automatic warning ban",
 		}
 	}
 
@@ -81,11 +81,11 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 
 	switch newWarning.MatchedFilter.Action {
 	case domain.FilterActionMute:
-		req.BanType = domain.NoComm
-		ban, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), domain.System, req)
+		req.BanType = ban.NoComm
+		newBan, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), ban.System, req)
 	case domain.FilterActionBan:
-		req.BanType = domain.Banned
-		ban, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), domain.System, req)
+		req.BanType = ban.Banned
+		newBan, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), ban.System, req)
 	case domain.FilterActionKick:
 		// Kicks are temporary, so should be done by Player ID to avoid
 		// missing players who weren't in the latest state update
@@ -111,7 +111,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 
 	u.notifications.Enqueue(ctx, domain.NewDiscordNotification(
 		domain.ChannelWordFilterLog,
-		discord.WarningMessage(newWarning, ban)))
+		discord.WarningMessage(newWarning, newBan)))
 
 	return nil
 }

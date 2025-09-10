@@ -21,7 +21,7 @@ func NewReportRepository(database database.Database) domain.ReportRepository {
 
 func (r reportRepository) insertReport(ctx context.Context, report *domain.Report) error {
 	const query = `INSERT INTO report (
-		    author_id, reported_id, report_status, description, deleted, created_on, updated_on, reason, 
+		    author_id, reported_id, report_status, description, deleted, created_on, updated_on, reason,
             reason_text, demo_id, demo_tick, person_message_id
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -331,7 +331,7 @@ func (r reportRepository) GetReportMessages(ctx context.Context, reportID int64)
 		Where(sq.And{sq.And{sq.Eq{"s.deleted": false}, sq.Eq{"s.report_id": reportID}}}).
 		OrderBy("s.created_on"))
 	if errQuery != nil {
-		if errors.Is(r.db.DBErr(errQuery), domain.ErrNoResult) {
+		if errors.Is(r.db.DBErr(errQuery), database.ErrNoResult) {
 			return []domain.ReportMessage{}, nil
 		}
 	}

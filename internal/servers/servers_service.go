@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
@@ -214,7 +215,7 @@ func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 
 		if err := h.servers.Delete(ctx, serverID); err != nil {
 			switch {
-			case errors.Is(err, domain.ErrNoResult):
+			case errors.Is(err, database.ErrNoResult):
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, domain.ErrNotFound)))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))

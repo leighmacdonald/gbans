@@ -397,27 +397,3 @@ type PersonSettingsUpdate struct {
 	StatsHidden          bool   `json:"stats_hidden"`
 	CenterProjectiles    *bool  `json:"center_projectiles,omitempty"`
 }
-
-type UserWarning struct {
-	WarnReason    Reason    `json:"warn_reason"`
-	Message       string    `json:"message"`
-	Matched       string    `json:"matched"`
-	MatchedFilter Filter    `json:"matched_filter"`
-	CreatedOn     time.Time `json:"created_on"`
-	Personaname   string    `json:"personaname"`
-	Avatar        string    `json:"avatar"`
-	ServerName    string    `json:"server_name"`
-	ServerID      int       `json:"server_id"`
-	SteamID       string    `json:"steam_id"`
-	CurrentTotal  int       `json:"current_total"`
-}
-
-type NewUserWarning struct {
-	UserMessage PersonMessage
-	PlayerID    int
-	UserWarning
-}
-
-type Warnings interface {
-	State() map[string][]UserWarning
-}

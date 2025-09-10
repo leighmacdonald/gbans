@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
@@ -36,7 +36,7 @@ func (c *DataUpdater[T]) Data() T { //nolint:ireturn
 
 func (c *DataUpdater[T]) execUpdate() {
 	newData, errUpdate := c.update()
-	if errUpdate != nil && !errors.Is(errUpdate, domain.ErrNoResult) {
+	if errUpdate != nil && !errors.Is(errUpdate, database.ErrNoResult) {
 		slog.Error("Failed to update data source", log.ErrAttr(errUpdate))
 
 		return

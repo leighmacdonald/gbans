@@ -219,7 +219,7 @@ func (f SCPExecer) trustedHostKeyCallback(ctx context.Context) ssh.HostKeyCallba
 		slog.Debug("SSH Connect", slog.String("hostname", hostname), slog.String("addr", addr.String()))
 
 		trustedPubKeyString, errKey := getKey(addr.String())
-		if errKey != nil && !errors.Is(errKey, domain.ErrNoResult) {
+		if errKey != nil && !errors.Is(errKey, database.ErrNoResult) {
 			return errKey
 		}
 

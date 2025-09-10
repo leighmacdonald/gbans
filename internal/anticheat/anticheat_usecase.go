@@ -9,6 +9,8 @@ import (
 	"slices"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -20,12 +22,12 @@ type antiCheatUsecase struct {
 	parser        logparse.StacParser
 	repo          domain.AntiCheatRepository
 	person        domain.PersonUsecase
-	ban           domain.BanUsecase
+	ban           ban.BanUsecase
 	config        domain.ConfigUsecase
 	notifications domain.NotificationUsecase
 }
 
-func NewAntiCheatUsecase(repo domain.AntiCheatRepository, person domain.PersonUsecase, ban domain.BanUsecase, config domain.ConfigUsecase, notif domain.NotificationUsecase) domain.AntiCheatUsecase {
+func NewAntiCheatUsecase(repo domain.AntiCheatRepository, person domain.PersonUsecase, ban ban.BanUsecase, config domain.ConfigUsecase, notif domain.NotificationUsecase) domain.AntiCheatUsecase {
 	return &antiCheatUsecase{
 		parser:        logparse.NewStacParser(),
 		repo:          repo,
@@ -100,13 +102,13 @@ func (a antiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 			duration = fmt.Sprintf("%dm", conf.Anticheat.Duration)
 		}
 
-		ban, err := a.ban.Ban(ctx, owner.ToUserProfile(), domain.System, domain.RequestBanCreate{
-			SourceIDField:  domain.SourceIDField{SourceID: owner.SteamID.String()},
-			TargetIDField:  domain.TargetIDField{TargetID: entry.SteamID.String()},
+		newBan, err := a.ban.Ban(ctx, owner.ToUserProfile(), ban.System, ban.BanOpts{
+			SourceID:       owner.SteamID,
+			TargetID:       entry.SteamID,
 			Duration:       duration,
 			ValidUntil:     time.Now().AddDate(10, 0, 0),
-			BanType:        domain.Banned,
-			Reason:         domain.Cheating,
+			BanType:        ban.Banned,
+			Reason:         ban.Cheating,
 			ReasonText:     "",
 			Note:           entry.Summary + "\n\nRaw log:\n" + entry.RawLog,
 			DemoName:       entry.DemoName,
@@ -114,16 +116,16 @@ func (a antiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 			IncludeFriends: false,
 			EvadeOk:        false,
 		})
-		if err != nil && !errors.Is(err, domain.ErrDuplicate) {
+		if err != nil && !errors.Is(err, database.ErrDuplicate) {
 			slog.Error("Failed to ban cheater", slog.String("detection", string(entry.Detection)),
 				slog.Int64("steam_id", entry.SteamID.Int64()), log.ErrAttr(err))
-		} else if ban.BanID > 0 {
+		} else if newBan.BanID > 0 {
 			slog.Info("Banned cheater", slog.String("detection", string(entry.Detection)),
 				slog.Int64("steam_id", entry.SteamID.Int64()))
 			hasBeenBanned = append(hasBeenBanned, entry.SteamID)
 
-			go a.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelAC,
-				discord.NewAnticheatTrigger(ban, conf, entry, results[entry.SteamID][entry.Detection])))
+			go a.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelAC,
+				discord.NewAnticheatTrigger(newBan, conf, entry, results[entry.SteamID][entry.Detection])))
 		}
 	}
 
