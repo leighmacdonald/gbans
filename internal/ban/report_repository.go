@@ -1,4 +1,4 @@
-package report
+package ban
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type reportRepository struct {
 	db database.Database
 }
 
-func NewReportRepository(database database.Database) ReportRepository {
+func NewReportRepository(database database.Database) *reportRepository {
 	return &reportRepository{db: database}
 }
 

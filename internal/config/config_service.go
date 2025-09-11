@@ -6,43 +6,42 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/app"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
-type configHandler struct {
-	config domain.ConfigUsecase
-	auth   domain.AuthUsecase
+type ConfigHandler struct {
+	config *ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, cu domain.ConfigUsecase, auth domain.AuthUsecase, version app.BuildInfo) {
-	handler := configHandler{config: cu, auth: auth}
+func NewHandler(engine *gin.Engine, cu *ConfigUsecase, authUC httphelper.Authenticator, version app.BuildInfo) {
+	handler := ConfigHandler{config: cu}
 	engine.GET("/api/info", handler.onAppInfo(version))
 	engine.GET("/api/changelog", handler.onChangelog())
 
 	adminGroup := engine.Group("/")
 	{
-		admin := adminGroup.Use(auth.Middleware(domain.PAdmin))
+		admin := adminGroup.Use(authUC.Middleware(permission.PAdmin))
 		admin.GET("/api/config", handler.onAPIGetConfig())
 		admin.PUT("/api/config", handler.onAPIPutConfig())
 	}
 }
 
-func (c configHandler) onAPIGetConfig() gin.HandlerFunc {
+func (c ConfigHandler) onAPIGetConfig() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, c.config.Config())
 	}
 }
 
-func (c configHandler) onAPIPutConfig() gin.HandlerFunc {
+func (c ConfigHandler) onAPIPutConfig() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.Config
+		var req Config
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		if errSave := c.config.Write(ctx, req); errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal),
 				"Failed to write new config"))
 
 			return
@@ -52,7 +51,7 @@ func (c configHandler) onAPIPutConfig() gin.HandlerFunc {
 	}
 }
 
-func (c configHandler) onAppInfo(buildInfo app.BuildInfo) gin.HandlerFunc {
+func (c ConfigHandler) onAppInfo(buildInfo app.BuildInfo) gin.HandlerFunc {
 	type appInfo struct {
 		SiteName           string `json:"site_name"`
 		AssetURL           string `json:"asset_url"`
@@ -106,11 +105,11 @@ func (c configHandler) onAppInfo(buildInfo app.BuildInfo) gin.HandlerFunc {
 	}
 }
 
-func (c configHandler) onChangelog() gin.HandlerFunc {
+func (c ConfigHandler) onChangelog() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		releases, err := getGithubReleases(ctx)
 		if err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal),
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal),
 				"Failed to load changelog from github"))
 
 			return

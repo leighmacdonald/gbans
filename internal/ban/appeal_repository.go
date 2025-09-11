@@ -15,11 +15,11 @@ type appealRepository struct {
 	db database.Database
 }
 
-func NewAppealRepository(database database.Database) domain.AppealRepository {
+func NewAppealRepository(database database.Database) *appealRepository {
 	return &appealRepository{db: database}
 }
 
-func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]AppealOverview, error) {
+func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
 	constraints := sq.And{sq.Gt{"m.count": 0}}
 
 	if !opts.Deleted {
@@ -89,7 +89,7 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 	return overviews, nil
 }
 
-func (r *appealRepository) SaveBanMessage(ctx context.Context, message *domain.BanAppealMessage) error {
+func (r *appealRepository) SaveBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	var err error
 	if message.BanMessageID > 0 {
 		err = r.updateBanMessage(ctx, message)
@@ -100,7 +100,7 @@ func (r *appealRepository) SaveBanMessage(ctx context.Context, message *domain.B
 	return err
 }
 
-func (r *appealRepository) updateBanMessage(ctx context.Context, message *domain.BanAppealMessage) error {
+func (r *appealRepository) updateBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	message.UpdatedOn = time.Now()
 
 	query := r.db.
@@ -119,7 +119,7 @@ func (r *appealRepository) updateBanMessage(ctx context.Context, message *domain
 	return nil
 }
 
-func (r *appealRepository) insertBanMessage(ctx context.Context, message *domain.BanAppealMessage) error {
+func (r *appealRepository) insertBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	const query = `
 	INSERT INTO ban_appeal (
 		ban_id, author_id, message_md, deleted, created_on, updated_on
@@ -142,7 +142,7 @@ func (r *appealRepository) insertBanMessage(ctx context.Context, message *domain
 	return nil
 }
 
-func (r *appealRepository) GetBanMessages(ctx context.Context, banID int64) ([]domain.BanAppealMessage, error) {
+func (r *appealRepository) GetBanMessages(ctx context.Context, banID int64) ([]BanAppealMessage, error) {
 	query := r.db.
 		Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted",
@@ -161,11 +161,11 @@ func (r *appealRepository) GetBanMessages(ctx context.Context, banID int64) ([]d
 
 	defer rows.Close()
 
-	var messages []domain.BanAppealMessage
+	var messages []BanAppealMessage
 
 	for rows.Next() {
 		var (
-			msg      domain.BanAppealMessage
+			msg      BanAppealMessage
 			authorID int64
 		)
 
@@ -190,13 +190,13 @@ func (r *appealRepository) GetBanMessages(ctx context.Context, banID int64) ([]d
 	}
 
 	if messages == nil {
-		return []domain.BanAppealMessage{}, nil
+		return []BanAppealMessage{}, nil
 	}
 
 	return messages, nil
 }
 
-func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID int64) (domain.BanAppealMessage, error) {
+func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID int64) (BanAppealMessage, error) {
 	query := r.db.
 		Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted", "a.created_on",
@@ -207,7 +207,7 @@ func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID i
 
 	var (
 		authorID int64
-		message  domain.BanAppealMessage
+		message  BanAppealMessage
 	)
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, nil, query)
@@ -235,7 +235,7 @@ func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID i
 	return message, nil
 }
 
-func (r *appealRepository) DropBanMessage(ctx context.Context, message *domain.BanAppealMessage) error {
+func (r *appealRepository) DropBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	query := r.db.
 		Builder().
 		Update("ban_appeal").

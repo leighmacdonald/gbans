@@ -1,4 +1,4 @@
-package report
+package ban
 
 import (
 	"errors"
@@ -8,15 +8,17 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type reportHandler struct {
 	reports       ReportUsecase
-	notifications domain.NotificationUsecase
+	notifications notification.NotificationUsecase
 }
 
-func NewHandler(engine *gin.Engine, reports ReportUsecase, auth domain.AuthUsecase, notifications domain.NotificationUsecase) {
+func NewHandler(engine *gin.Engine, reports ReportUsecase, authUC httphelper.Authenticator, notifications notification.NotificationUsecase) {
 	handler := reportHandler{
 		reports:       reports,
 		notifications: notifications,
@@ -25,7 +27,7 @@ func NewHandler(engine *gin.Engine, reports ReportUsecase, auth domain.AuthUseca
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.Middleware(domain.PUser))
+		authed := authedGrp.Use(authUC.Middleware(permission.PUser))
 
 		// Reports
 		authed.POST("/api/report", handler.onAPIPostReportCreate())
@@ -42,7 +44,7 @@ func NewHandler(engine *gin.Engine, reports ReportUsecase, auth domain.AuthUseca
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.Middleware(domain.PModerator))
+		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
 		mod.POST("/api/reports", handler.onAPIGetAllReports())
 	}
 }
@@ -175,7 +177,7 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 			return
 		}
 
-		if !httphelper.HasPrivilege(httphelper.CurrentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, domain.PModerator) {
+		if !httphelper.HasPrivilege(httphelper.CurrentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, permission.PModerator) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
 
 			return

@@ -6,42 +6,42 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type chatHandler struct {
-	chat domain.ChatUsecase
+	chat ChatUsecase
 }
 
-func NewHandler(engine *gin.Engine, chat domain.ChatUsecase, authUsecase domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, chat ChatUsecase, authUsecase httphelper.Authenticator) {
 	handler := chatHandler{chat: chat}
 
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authUsecase.Middleware(domain.PUser))
+		authed := authedGrp.Use(authUsecase.Middleware(permission.PUser))
 		authed.POST("/api/messages", handler.onAPIQueryMessages())
 	}
 
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUsecase.Middleware(domain.PModerator))
+		mod := modGrp.Use(authUsecase.Middleware(permission.PModerator))
 		mod.GET("/api/message/:person_message_id/context/:padding", handler.onAPIQueryMessageContext())
 	}
 }
 
 func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.ChatHistoryQueryFilter
+		var req ChatHistoryQueryFilter
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		messages, errChat := h.chat.QueryChatHistory(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, httphelper.ErrInternal)))
 
 			return
 		}
@@ -64,7 +64,7 @@ func (h chatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
 
 		messages, errQuery := h.chat.GetPersonMessageContext(ctx, messageID, padding)
 		if errQuery != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errQuery, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errQuery, httphelper.ErrInternal)))
 
 			return
 		}

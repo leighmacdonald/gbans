@@ -5,10 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
@@ -16,12 +15,12 @@ type antiCheatHandler struct {
 	anticheat AntiCheatUsecase
 }
 
-func NewHandler(engine *gin.Engine, auth auth.AuthUsecase, anticheat AntiCheatUsecase) {
+func NewHandler(engine *gin.Engine, authUC httphelper.Authenticator, anticheat AntiCheatUsecase) {
 	handler := &antiCheatHandler{anticheat: anticheat}
 	// mod
 	modGrp := engine.Group("/api/anticheat")
 	{
-		mod := modGrp.Use(auth.Middleware(domain.PModerator))
+		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
 		mod.GET("/entries", handler.query())
 		mod.GET("/steamid/:steam_id", handler.bySteamID())
 		mod.GET("/detection/:detection_type", handler.byDetection())

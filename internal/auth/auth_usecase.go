@@ -16,9 +16,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/internal/queue"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -27,18 +31,18 @@ import (
 
 const ctxKeyUserProfile = "user_profile"
 
-type auth struct {
+type AuthUsecase struct {
 	auth    AuthRepository
-	config  domain.ConfigUsecase
-	persons domain.PersonUsecase
-	bans    ban.BanUsecase
-	servers domain.ServersUsecase
+	config  *config.ConfigUsecase
+	persons *person.PersonUsecase
+	bans    *ban.BanUsecase
+	servers servers.ServersUsecase
 }
 
-func NewAuthUsecase(repository AuthRepository, config domain.ConfigUsecase, persons domain.PersonUsecase,
-	bans ban.BanUsecase, servers domain.ServersUsecase,
-) AuthUsecase {
-	return &auth{
+func NewAuthUsecase(repository AuthRepository, config *config.ConfigUsecase, persons *person.PersonUsecase,
+	bans *ban.BanUsecase, servers servers.ServersUsecase,
+) *AuthUsecase {
+	return &AuthUsecase{
 		auth:    repository,
 		config:  config,
 		persons: persons,
@@ -47,17 +51,17 @@ func NewAuthUsecase(repository AuthRepository, config domain.ConfigUsecase, pers
 	}
 }
 
-func (u *auth) DeletePersonAuth(ctx context.Context, authID int64) error {
+func (u *AuthUsecase) DeletePersonAuth(ctx context.Context, authID int64) error {
 	return u.auth.DeletePersonAuth(ctx, authID)
 }
 
-func (u *auth) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error {
+func (u *AuthUsecase) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error {
 	return u.auth.GetPersonAuthByFingerprint(ctx, token, auth)
 }
 
 // MakeToken generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
-func (u *auth) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID) (UserTokens, error) {
+func (u *AuthUsecase) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID) (UserTokens, error) {
 	if cookieKey == "" {
 		return UserTokens{}, domain.ErrCookieKeyMissing
 	}
@@ -83,19 +87,19 @@ func (u *auth) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID
 	return UserTokens{Access: accessToken, Fingerprint: fingerprint}, nil
 }
 
-func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
+func (u *AuthUsecase) Middleware(level permission.Privilege) gin.HandlerFunc {
 	cookieKey := u.config.Config().HTTPCookieKey
 
 	return func(ctx *gin.Context) {
 		var token string
 
-		hdrToken, errToken := u.TokenFromHeader(ctx, level == domain.PGuest)
+		hdrToken, errToken := u.TokenFromHeader(ctx, level == permission.PGuest)
 		if errToken != nil || hdrToken == "" {
-			ctx.Set(ctxKeyUserProfile, domain.UserProfile{PermissionLevel: domain.PGuest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, person.UserProfile{PermissionLevel: permission.PGuest, Name: "Guest"})
 		} else {
 			token = hdrToken
 
-			if level >= domain.PGuest {
+			if level >= permission.PGuest {
 				fingerprint, errFingerprint := ctx.Cookie("fingerprint")
 				if errFingerprint != nil {
 					slog.Error("Failed to load fingerprint cookie", log.ErrAttr(errFingerprint))
@@ -150,7 +154,7 @@ func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
 					}
 				}
 
-				profile := domain.UserProfile{
+				profile := person.UserProfile{
 					SteamID:               loggedInPerson.SteamID,
 					CreatedOn:             loggedInPerson.CreatedOn,
 					UpdatedOn:             loggedInPerson.UpdatedOn,
@@ -178,7 +182,7 @@ func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
 					}
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, domain.UserProfile{PermissionLevel: domain.PGuest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, person.UserProfile{PermissionLevel: permission.PGuest, Name: "Guest"})
 			}
 		}
 
@@ -186,7 +190,7 @@ func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
 	}
 }
 
-func (u *auth) TokenFromQuery(ctx *gin.Context) (string, error) {
+func (u *AuthUsecase) TokenFromQuery(ctx *gin.Context) (string, error) {
 	token, found := ctx.GetQuery("token")
 	if !found || token == "" {
 		ctx.AbortWithStatus(http.StatusForbidden)
@@ -197,7 +201,7 @@ func (u *auth) TokenFromQuery(ctx *gin.Context) (string, error) {
 	return token, nil
 }
 
-func (u *auth) MiddlewareWS(level domain.Privilege) gin.HandlerFunc {
+func (u *AuthUsecase) MiddlewareWS(level permission.Privilege) gin.HandlerFunc {
 	cookieKey := u.config.Config().HTTPCookieKey
 
 	return func(ctx *gin.Context) {
@@ -205,11 +209,11 @@ func (u *auth) MiddlewareWS(level domain.Privilege) gin.HandlerFunc {
 
 		queryToken, errToken := u.TokenFromQuery(ctx)
 		if errToken != nil || queryToken == "" {
-			ctx.Set(ctxKeyUserProfile, domain.UserProfile{PermissionLevel: domain.PGuest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, person.UserProfile{PermissionLevel: permission.PGuest, Name: "Guest"})
 		} else {
 			token = queryToken
 
-			if level >= domain.PGuest {
+			if level >= permission.PGuest {
 				sid, errFromToken := u.Sid64FromJWTTokenNoFP(token, cookieKey)
 				if errFromToken != nil {
 					if errors.Is(errFromToken, domain.ErrExpired) {
@@ -248,7 +252,7 @@ func (u *auth) MiddlewareWS(level domain.Privilege) gin.HandlerFunc {
 					}
 				}
 
-				profile := domain.UserProfile{
+				profile := person.UserProfile{
 					SteamID:         loggedInPerson.SteamID,
 					CreatedOn:       loggedInPerson.CreatedOn,
 					UpdatedOn:       loggedInPerson.UpdatedOn,
@@ -275,7 +279,7 @@ func (u *auth) MiddlewareWS(level domain.Privilege) gin.HandlerFunc {
 					}
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, domain.UserProfile{PermissionLevel: domain.PGuest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, person.UserProfile{PermissionLevel: permission.PGuest, Name: "Guest"})
 			}
 		}
 
@@ -283,13 +287,13 @@ func (u *auth) MiddlewareWS(level domain.Privilege) gin.HandlerFunc {
 	}
 }
 
-func (u *auth) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
+func (u *AuthUsecase) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
 	return func(_ *jwt.Token) (any, error) {
 		return []byte(cookieKey), nil
 	}
 }
 
-func (u *auth) MiddlewareServer() gin.HandlerFunc {
+func (u *AuthUsecase) MiddlewareServer() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reqAuthHeader := ctx.GetHeader("Authorization")
 		if reqAuthHeader == "" {
@@ -309,7 +313,7 @@ func (u *auth) MiddlewareServer() gin.HandlerFunc {
 			reqAuthHeader = parts[1]
 		}
 
-		var server domain.Server
+		var server servers.Server
 		if errServer := u.servers.GetByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
 			slog.Error("Failed to load server during auth", log.ErrAttr(errServer), slog.String("token", reqAuthHeader), slog.String("IP", ctx.ClientIP()))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -335,7 +339,7 @@ func (u *auth) MiddlewareServer() gin.HandlerFunc {
 	}
 }
 
-func (u *auth) NewUserToken(steamID steamid.SteamID, cookieKey string, fingerPrint string, validDuration time.Duration) (string, error) {
+func (u *AuthUsecase) NewUserToken(steamID steamid.SteamID, cookieKey string, fingerPrint string, validDuration time.Duration) (string, error) {
 	nowTime := time.Now()
 	conf := u.config.Config()
 	claims := UserAuthClaims{
@@ -362,7 +366,7 @@ type authHeader struct {
 	Authorization string `header:"Authorization"`
 }
 
-func (u *auth) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
+func (u *AuthUsecase) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 	hdr := authHeader{}
 	if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
 		return "", errors.Join(errBind, domain.ErrAuthHeader)
@@ -382,7 +386,7 @@ func (u *auth) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 	return pcs[1], nil
 }
 
-func (u *auth) Sid64FromJWTToken(token string, cookieKey string, fingerprint string) (steamid.SteamID, error) {
+func (u *AuthUsecase) Sid64FromJWTToken(token string, cookieKey string, fingerprint string) (steamid.SteamID, error) {
 	claims := &UserAuthClaims{}
 
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))
@@ -416,7 +420,7 @@ func (u *auth) Sid64FromJWTToken(token string, cookieKey string, fingerprint str
 	return sid, nil
 }
 
-func (u *auth) Sid64FromJWTTokenNoFP(token string, cookieKey string) (steamid.SteamID, error) {
+func (u *AuthUsecase) Sid64FromJWTTokenNoFP(token string, cookieKey string) (steamid.SteamID, error) {
 	claims := &UserAuthClaims{}
 
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))

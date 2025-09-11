@@ -1,4 +1,4 @@
-package domain
+package servers
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -40,31 +42,12 @@ type ServerInfoSafe struct {
 	Colour         string `json:"colour"`
 }
 
-type ServersUsecase interface {
-	Server(ctx context.Context, serverID int) (Server, error)
-	ServerPermissions(ctx context.Context) ([]ServerPermission, error)
-	Servers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error)
-	GetByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
-	GetByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error
-	Save(ctx context.Context, req RequestServerUpdate) (Server, error)
-	Delete(ctx context.Context, serverID int) error
-}
-
-type ServersRepository interface {
-	GetServer(ctx context.Context, serverID int) (Server, error)
-	GetServerPermissions(ctx context.Context) ([]ServerPermission, error)
-	GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error)
-	GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
-	GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error
-	SaveServer(ctx context.Context, server *Server) error
-}
-
 var ErrResolveIP = errors.New("failed to resolve address")
 
 type ServerPermission struct {
-	SteamID         steamid.SID `json:"steam_id"`
-	PermissionLevel Privilege   `json:"permission_level"`
-	Flags           string      `json:"flags"`
+	SteamID         steamid.SID    `json:"steam_id"`
+	PermissionLevel auth.Privilege `json:"permission_level"`
+	Flags           string         `json:"flags"`
 }
 
 func NewServer(shortName string, address string, port uint16) Server {
@@ -164,7 +147,7 @@ func (s Server) Slots(statusSlots int) int {
 }
 
 type ServerQueryFilter struct {
-	QueryFilter
+	domain.QueryFilter
 	IncludeDisabled bool `json:"include_disabled"`
 	SDROnly         bool `json:"sdr_only"`
 }

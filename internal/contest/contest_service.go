@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"golang.org/x/exp/slices"
 )
 
@@ -22,8 +23,7 @@ type contestHandler struct {
 	assets   asset.AssetUsecase
 }
 
-func NewHandler(engine *gin.Engine, contests ContestUsecase,
-	assets asset.AssetUsecase, auth domain.AuthUsecase,
+func NewHandler(engine *gin.Engine, contests ContestUsecase, assets asset.AssetUsecase, authUC httphelper.Authenticator,
 ) {
 	handler := &contestHandler{
 		contests: contests,
@@ -33,7 +33,7 @@ func NewHandler(engine *gin.Engine, contests ContestUsecase,
 	// opt
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(auth.Middleware(domain.PGuest))
+		opt := optGrp.Use(authUC.Middleware(permission.PGuest))
 		opt.GET("/api/contests", handler.onAPIGetContests())
 		opt.GET("/api/contests/:contest_id", handler.onAPIGetContest())
 		opt.GET("/api/contests/:contest_id/entries", handler.onAPIGetContestEntries())
@@ -42,7 +42,7 @@ func NewHandler(engine *gin.Engine, contests ContestUsecase,
 	// auth
 	authGrp := engine.Group("/")
 	{
-		authed := authGrp.Use(auth.Middleware(domain.PUser))
+		authed := authGrp.Use(authUC.Middleware(permission.PUser))
 		authed.POST("/api/contests/:contest_id/upload", handler.onAPISaveContestEntryMedia())
 		authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", handler.onAPISaveContestEntryVote())
 		authed.POST("/api/contests/:contest_id/submit", handler.onAPISaveContestEntrySubmit())
@@ -52,7 +52,7 @@ func NewHandler(engine *gin.Engine, contests ContestUsecase,
 	// mods
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.Middleware(domain.PModerator))
+		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
 		mod.POST("/api/contests", handler.onAPIPostContest())
 		mod.DELETE("/api/contests/:contest_id", handler.onAPIDeleteContest())
 		mod.PUT("/api/contests/:contest_id", handler.onAPIUpdateContest())
@@ -78,7 +78,7 @@ func (c *contestHandler) contestFromCtx(ctx *gin.Context) (Contest, bool) {
 		return Contest{}, false
 	}
 
-	if !contest.Public && httphelper.CurrentUserProfile(ctx).PermissionLevel < domain.PModerator {
+	if !contest.Public && httphelper.CurrentUserProfile(ctx).PermissionLevel < permission.PModerator {
 		httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 			"You do not have permission to load this contest."))
 
@@ -395,7 +395,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		}
 
 		// Only >=moderators or the entry author are allowed to delete entries.
-		if user.PermissionLevel < domain.PModerator || user.SteamID != entry.SteamID {
+		if user.PermissionLevel < permission.PModerator || user.SteamID != entry.SteamID {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
 
 			return

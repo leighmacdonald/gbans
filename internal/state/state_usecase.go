@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -21,10 +23,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type stateUsecase struct {
+type StateUsecase struct {
 	state       StateRepository
-	config      domain.ConfigUsecase
-	servers     domain.ServersUsecase
+	config      *config.ConfigUsecase
+	servers     servers.ServersUsecase
 	logListener *logparse.UDPLogListener
 	logFileChan chan LogFilePayload
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
@@ -32,9 +34,9 @@ type stateUsecase struct {
 
 // NewStateUsecase created a interface to interact with server state and exec rcon commands.
 func NewStateUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository StateRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
-) StateUsecase {
-	return &stateUsecase{
+	repository StateRepository, config *config.ConfigUsecase, servers servers.ServersUsecase,
+) *StateUsecase {
+	return &StateUsecase{
 		state:       repository,
 		config:      config,
 		broadcaster: broadcaster,
@@ -43,7 +45,7 @@ func NewStateUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.Se
 	}
 }
 
-func (s *stateUsecase) Start(ctx context.Context) error {
+func (s *StateUsecase) Start(ctx context.Context) error {
 	conf := s.config.Config()
 
 	logSrc, errLogSrc := logparse.NewUDPLogListener(conf.General.SrcdsLogAddr,
@@ -67,14 +69,14 @@ func (s *stateUsecase) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *stateUsecase) updateSrcdsLogServers(ctx context.Context) {
+func (s *StateUsecase) updateSrcdsLogServers(ctx context.Context) {
 	newSecrets := map[int]logparse.ServerIDMap{}
 	newServers := map[netip.Addr]bool{}
 	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*5)
 
 	defer cancelServers()
 
-	servers, _, errServers := s.servers.Servers(serversCtx, domain.ServerQueryFilter{
+	servers, _, errServers := s.servers.Servers(serversCtx, servers.ServerQueryFilter{
 		IncludeDisabled: false,
 		QueryFilter:     domain.QueryFilter{Deleted: false},
 	})
@@ -115,33 +117,33 @@ func (s *stateUsecase) updateSrcdsLogServers(ctx context.Context) {
 	s.logListener.SetServers(newServers)
 }
 
-func (s *stateUsecase) Current() []ServerState {
+func (s *StateUsecase) Current() []ServerState {
 	return s.state.Current()
 }
 
-func (s *stateUsecase) FindByCIDR(cidr *net.IPNet) []domain.PlayerServerInfo {
+func (s *StateUsecase) FindByCIDR(cidr *net.IPNet) []servers.PlayerServerInfo {
 	return s.Find("", steamid.SteamID{}, nil, cidr)
 }
 
-func (s *stateUsecase) FindByIP(addr net.IP) []domain.PlayerServerInfo {
+func (s *StateUsecase) FindByIP(addr net.IP) []servers.PlayerServerInfo {
 	return s.Find("", steamid.SteamID{}, addr, nil)
 }
 
-func (s *stateUsecase) FindByName(name string) []domain.PlayerServerInfo {
+func (s *StateUsecase) FindByName(name string) []servers.PlayerServerInfo {
 	return s.Find(name, steamid.SteamID{}, nil, nil)
 }
 
-func (s *stateUsecase) FindBySteamID(steamID steamid.SteamID) []domain.PlayerServerInfo {
+func (s *StateUsecase) FindBySteamID(steamID steamid.SteamID) []servers.PlayerServerInfo {
 	return s.Find("", steamID, nil, nil)
 }
 
-func (s *stateUsecase) Update(serverID int, update domain.PartialStateUpdate) error {
+func (s *StateUsecase) Update(serverID int, update servers.PartialStateUpdate) error {
 	return s.state.Update(serverID, update)
 }
 
 // Find searches the current server state for players matching at least one of the provided criteria.
-func (s *stateUsecase) Find(name string, steamID steamid.SteamID, addr net.IP, cidr *net.IPNet) []domain.PlayerServerInfo {
-	var found []domain.PlayerServerInfo
+func (s *StateUsecase) Find(name string, steamID steamid.SteamID, addr net.IP, cidr *net.IPNet) []servers.PlayerServerInfo {
+	var found []servers.PlayerServerInfo
 
 	current := s.state.Current()
 
@@ -177,7 +179,7 @@ func (s *stateUsecase) Find(name string, steamID steamid.SteamID, addr net.IP, c
 			}
 
 			if matched {
-				found = append(found, domain.PlayerServerInfo{Player: player, ServerID: current[server].ServerID})
+				found = append(found, servers.PlayerServerInfo{Player: player, ServerID: current[server].ServerID})
 			}
 		}
 	}
@@ -185,7 +187,7 @@ func (s *stateUsecase) Find(name string, steamID steamid.SteamID, addr net.IP, c
 	return found
 }
 
-func (s *stateUsecase) SortRegion() map[string][]ServerState {
+func (s *StateUsecase) SortRegion() map[string][]ServerState {
 	serverMap := map[string][]ServerState{}
 	for _, server := range s.state.Current() {
 		_, exists := serverMap[server.Region]
@@ -199,7 +201,7 @@ func (s *stateUsecase) SortRegion() map[string][]ServerState {
 	return serverMap
 }
 
-func (s *stateUsecase) ByServerID(serverID int) (ServerState, bool) {
+func (s *StateUsecase) ByServerID(serverID int) (ServerState, bool) {
 	for _, server := range s.state.Current() {
 		if server.ServerID == serverID {
 			return server, true
@@ -209,7 +211,7 @@ func (s *stateUsecase) ByServerID(serverID int) (ServerState, bool) {
 	return ServerState{}, false
 }
 
-func (s *stateUsecase) ByName(name string, wildcardOk bool) []ServerState {
+func (s *StateUsecase) ByName(name string, wildcardOk bool) []ServerState {
 	var servers []ServerState
 
 	current := s.state.Current()
@@ -238,7 +240,7 @@ func (s *stateUsecase) ByName(name string, wildcardOk bool) []ServerState {
 	return servers
 }
 
-func (s *stateUsecase) ServerIDsByName(name string, wildcardOk bool) []int {
+func (s *StateUsecase) ServerIDsByName(name string, wildcardOk bool) []int {
 	var servers []int //nolint:prealloc
 	for _, server := range s.ByName(name, wildcardOk) {
 		servers = append(servers, server.ServerID)
@@ -247,7 +249,7 @@ func (s *stateUsecase) ServerIDsByName(name string, wildcardOk bool) []int {
 	return servers
 }
 
-func (s *stateUsecase) OnFindExec(ctx context.Context, name string, steamID steamid.SteamID, ip net.IP, cidr *net.IPNet, onFoundCmd func(info domain.PlayerServerInfo) string) error {
+func (s *StateUsecase) OnFindExec(ctx context.Context, name string, steamID steamid.SteamID, ip net.IP, cidr *net.IPNet, onFoundCmd func(info servers.PlayerServerInfo) string) error {
 	currentState := s.state.Current()
 	players := s.Find(name, steamID, ip, cidr)
 
@@ -271,7 +273,7 @@ func (s *stateUsecase) OnFindExec(ctx context.Context, name string, steamID stea
 	return err
 }
 
-func (s *stateUsecase) ExecServer(ctx context.Context, serverID int, cmd string) (string, error) {
+func (s *StateUsecase) ExecServer(ctx context.Context, serverID int, cmd string) (string, error) {
 	var conf ServerConfig
 
 	for _, server := range s.state.Configs() {
@@ -289,17 +291,17 @@ func (s *stateUsecase) ExecServer(ctx context.Context, serverID int, cmd string)
 	return s.ExecRaw(ctx, conf.Addr(), conf.RconPassword, cmd)
 }
 
-func (s *stateUsecase) ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error) {
+func (s *StateUsecase) ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error) {
 	return s.state.ExecRaw(ctx, addr, password, cmd)
 }
 
-func (s *stateUsecase) LogAddressAdd(ctx context.Context, logAddress string) {
+func (s *StateUsecase) LogAddressAdd(ctx context.Context, logAddress string) {
 	time.Sleep(20 * time.Second)
 	slog.Info("Enabling log forwarding", slog.String("host", logAddress))
 	s.Broadcast(ctx, nil, "logaddress_add "+logAddress)
 }
 
-func (s *stateUsecase) LogAddressDel(ctx context.Context, logAddress string) {
+func (s *StateUsecase) LogAddressDel(ctx context.Context, logAddress string) {
 	slog.Info("Disabling log forwarding for host", slog.String("host", logAddress))
 	s.Broadcast(ctx, nil, "logaddress_add "+logAddress)
 }
@@ -311,7 +313,7 @@ type broadcastResult struct {
 
 // Broadcast sends out rcon commands to all provided servers. If no servers are provided it will default to broadcasting
 // to every server.
-func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string {
+func (s *StateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string {
 	results := map[int]string{}
 	errGroup, egCtx := errgroup.WithContext(ctx)
 
@@ -374,12 +376,12 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func (s *stateUsecase) Kick(ctx context.Context, target steamid.SteamID, reason ban.Reason) error {
+func (s *StateUsecase) Kick(ctx context.Context, target steamid.SteamID, reason ban.Reason) error {
 	if !target.Valid() {
 		return domain.ErrInvalidTargetSID
 	}
 
-	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
+	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info servers.PlayerServerInfo) string {
 		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, reason.String())
 	}); errExec != nil {
 		return errExec
@@ -389,14 +391,14 @@ func (s *stateUsecase) Kick(ctx context.Context, target steamid.SteamID, reason 
 }
 
 // KickPlayerID will kick the steam id from whatever server it is connected to.
-func (s *stateUsecase) KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason ban.Reason) error {
+func (s *StateUsecase) KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason ban.Reason) error {
 	_, err := s.ExecServer(ctx, targetServerID, fmt.Sprintf("sm_kick #%d %s", targetPlayerID, reason.String()))
 
 	return err
 }
 
 // Silence will gag & mute a player.
-func (s *stateUsecase) Silence(ctx context.Context, target steamid.SteamID, reason ban.Reason,
+func (s *StateUsecase) Silence(ctx context.Context, target steamid.SteamID, reason ban.Reason,
 ) error {
 	if !target.Valid() {
 		return domain.ErrInvalidTargetSID
@@ -407,7 +409,7 @@ func (s *stateUsecase) Silence(ctx context.Context, target steamid.SteamID, reas
 		usersMu = &sync.RWMutex{}
 	)
 
-	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
+	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info servers.PlayerServerInfo) string {
 		usersMu.Lock()
 		users = append(users, info.Player.Name)
 		usersMu.Unlock()
@@ -421,26 +423,26 @@ func (s *stateUsecase) Silence(ctx context.Context, target steamid.SteamID, reas
 }
 
 // Say is used to send a message to the server via sm_say.
-func (s *stateUsecase) Say(ctx context.Context, serverID int, message string) error {
+func (s *StateUsecase) Say(ctx context.Context, serverID int, message string) error {
 	_, errExec := s.ExecServer(ctx, serverID, `sm_say `+message)
 
 	return errors.Join(errExec, fmt.Errorf("%w: sm_say", errExec))
 }
 
 // CSay is used to send a centered message to the server via sm_csay.
-func (s *stateUsecase) CSay(ctx context.Context, serverID int, message string) error {
+func (s *StateUsecase) CSay(ctx context.Context, serverID int, message string) error {
 	_, errExec := s.ExecServer(ctx, serverID, `sm_csay `+message)
 
 	return errors.Join(errExec, fmt.Errorf("%w: sm_csay", errExec))
 }
 
 // PSay is used to send a private message to a player.
-func (s *stateUsecase) PSay(ctx context.Context, target steamid.SteamID, message string) error {
+func (s *StateUsecase) PSay(ctx context.Context, target steamid.SteamID, message string) error {
 	if !target.Valid() {
 		return domain.ErrInvalidTargetSID
 	}
 
-	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(_ domain.PlayerServerInfo) string {
+	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(_ servers.PlayerServerInfo) string {
 		return fmt.Sprintf(`sm_psay "#%s" "%s"`, target.Steam(false), message)
 	}); errExec != nil {
 		return errors.Join(errExec, fmt.Errorf("%w: sm_psay", errExec))

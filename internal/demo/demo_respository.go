@@ -9,15 +9,15 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 )
 
-type demoRepository struct {
+type DemoRepository struct {
 	db database.Database
 }
 
-func NewDemoRepository(database database.Database) DemoRepository {
-	return &demoRepository{db: database}
+func NewDemoRepository(database database.Database) *DemoRepository {
+	return &DemoRepository{db: database}
 }
 
-func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {
+func (r *DemoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {
 	rows, errRow := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("d.demo_id", "d.title", "d.asset_id").
@@ -46,7 +46,7 @@ func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]Demo
 	return demos, nil
 }
 
-func (r *demoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
+func (r *DemoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
@@ -75,7 +75,7 @@ func (r *demoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile
 	return nil
 }
 
-func (r *demoRepository) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
+func (r *DemoRepository) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("r.demo_id", "r.server_id", "r.title", "r.created_on", "r.downloads",
@@ -104,7 +104,7 @@ func (r *demoRepository) GetDemoByName(ctx context.Context, demoName string, dem
 	return nil
 }
 
-func (r *demoRepository) GetDemos(ctx context.Context) ([]DemoFile, error) {
+func (r *DemoRepository) GetDemos(ctx context.Context) ([]DemoFile, error) {
 	var demos []DemoFile
 
 	builder := r.db.
@@ -153,7 +153,7 @@ func (r *demoRepository) GetDemos(ctx context.Context) ([]DemoFile, error) {
 	return demos, nil
 }
 
-func (r *demoRepository) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
+func (r *DemoRepository) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 	var err error
 	if demoFile.DemoID > 0 {
 		err = r.updateDemo(ctx, demoFile)
@@ -164,7 +164,7 @@ func (r *demoRepository) SaveDemo(ctx context.Context, demoFile *DemoFile) error
 	return r.db.DBErr(err)
 }
 
-func (r *demoRepository) insertDemo(ctx context.Context, demoFile *DemoFile) error {
+func (r *DemoRepository) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := r.db.
 		Builder().
 		Insert("demo").
@@ -185,7 +185,7 @@ func (r *demoRepository) insertDemo(ctx context.Context, demoFile *DemoFile) err
 	return nil
 }
 
-func (r *demoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) error {
+func (r *DemoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 	query := r.db.
 		Builder().
 		Update("demo").
@@ -204,7 +204,7 @@ func (r *demoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) err
 	return nil
 }
 
-func (r *demoRepository) Delete(ctx context.Context, demoID int64) error {
+func (r *DemoRepository) Delete(ctx context.Context, demoID int64) error {
 	const query = `DELETE FROM demo WHERE demo_id = $1`
 	if err := r.db.Exec(ctx, nil, query, demoID); err != nil {
 		return r.db.DBErr(err)

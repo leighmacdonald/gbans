@@ -5,28 +5,30 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/match"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
-type voteUsecase struct {
+type VoteUsecase struct {
 	repository    VoteRepository
-	persons       domain.PersonUsecase
+	persons       *person.PersonUsecase
 	matches       match.MatchUsecase
-	notifications domain.NotificationUsecase
-	config        domain.ConfigUsecase
+	notifications notification.NotificationUsecase
+	config        *config.ConfigUsecase
 
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewVoteUsecase(repository VoteRepository, persons domain.PersonUsecase, matched match.MatchUsecase,
-	notifications domain.NotificationUsecase, config domain.ConfigUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-) VoteUsecase {
-	return &voteUsecase{
+func NewVoteUsecase(repository VoteRepository, persons *person.PersonUsecase, matched match.MatchUsecase,
+	notifications notification.NotificationUsecase, config *config.ConfigUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+) *VoteUsecase {
+	return &VoteUsecase{
 		repository:    repository,
 		persons:       persons,
 		matches:       matched,
@@ -36,12 +38,12 @@ func NewVoteUsecase(repository VoteRepository, persons domain.PersonUsecase, mat
 	}
 }
 
-func (u voteUsecase) Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, int64, error) {
+func (u VoteUsecase) Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, int64, error) {
 	return u.repository.Query(ctx, filter)
 }
 
 // Start will begin ingesting vote events and record them to the database.
-func (u voteUsecase) Start(ctx context.Context) {
+func (u VoteUsecase) Start(ctx context.Context) {
 	type voteState struct {
 		name    string
 		success bool
@@ -171,8 +173,8 @@ func (u voteUsecase) Start(ctx context.Context) {
 					slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
 				}
 
-				u.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-					discord.ChannelModVoteLog,
+				u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+					u.config.Config().Discord.VoteLogChannelID,
 					discord.VoteResultMessage(u.config.Config(), result, source, target)))
 			}
 		}

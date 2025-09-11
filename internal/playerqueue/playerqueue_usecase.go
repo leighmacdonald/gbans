@@ -11,12 +11,16 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons domain.PersonUsecase, servers domain.ServersUsecase,
-	state domain.StateUsecase, chatLogs []ChatLog, notif domain.NotificationUsecase,
+func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons person.PersonUsecase, serversUC servers.ServersUsecase,
+	state state.StateUsecase, chatLogs []ChatLog, notif notification.NotificationUsecase,
 ) PlayerqueueUsecase {
 	return &playerqueueUsecase{
 		repo:    repo,
@@ -25,7 +29,7 @@ func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons domain.PersonUsec
 		queue: New(100, 2, chatLogs, func() ([]Lobby, error) {
 			currentState := state.Current()
 
-			srvs, _, errServers := servers.Servers(context.Background(), domain.ServerQueryFilter{
+			srvs, _, errServers := serversUC.Servers(context.Background(), servers.ServerQueryFilter{
 				QueryFilter:     domain.QueryFilter{},
 				IncludeDisabled: false,
 			})
@@ -59,8 +63,8 @@ func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons domain.PersonUsec
 
 type playerqueueUsecase struct {
 	repo    PlayerqueueRepository
-	persons domain.PersonUsecase
-	notif   domain.NotificationUsecase
+	persons person.PersonUsecase
+	notif   notification.NotificationUsecase
 	queue   *Coordinator
 }
 
@@ -89,7 +93,7 @@ func (p playerqueueUsecase) LeaveLobbies(client QueueClient, servers []int) erro
 	return p.queue.Leave(client, servers)
 }
 
-func (p playerqueueUsecase) Connect(ctx context.Context, user domain.UserProfile, conn *websocket.Conn) QueueClient {
+func (p playerqueueUsecase) Connect(ctx context.Context, user person.UserProfile, conn *websocket.Conn) QueueClient {
 	return p.queue.Connect(ctx, user.SteamID, user.GetName(), user.Avatarhash, conn)
 }
 
@@ -124,7 +128,7 @@ func (p playerqueueUsecase) Purge(ctx context.Context, authorID steamid.SteamID,
 		return errGetTarget
 	}
 
-	p.notif.Enqueue(ctx, domain.NewDiscordNotification(
+	p.notif.Enqueue(ctx, notification.NewDiscordNotification(
 		discord.ChannelPlayerqueue, discord.NewPlayerqueuePurge(author.ToUserProfile(), target.ToUserProfile(), message, count)))
 
 	return nil
@@ -179,7 +183,7 @@ func (p playerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.
 		return errGetProfile
 	}
 
-	p.notif.Enqueue(ctx, domain.NewDiscordNotification(
+	p.notif.Enqueue(ctx, notification.NewDiscordNotification(
 		discord.ChannelPlayerqueue, discord.NewPlayerqueueChatStatus(author.ToUserProfile(), person.ToUserProfile(), status, reason)))
 
 	slog.Info("Set chat status", slog.String("steam_id", person.SteamID.String()), slog.String("status", string(status)))
@@ -206,7 +210,7 @@ func removeNonPrintable(input string) string {
 	return out
 }
 
-func (p playerqueueUsecase) AddMessage(ctx context.Context, bodyMD string, user domain.UserProfile) error {
+func (p playerqueueUsecase) AddMessage(ctx context.Context, bodyMD string, user person.UserProfile) error {
 	bodyMD = sanitizeUserMessage(bodyMD)
 	if len(bodyMD) == 0 {
 		return ErrBadInput
@@ -234,7 +238,7 @@ func (p playerqueueUsecase) AddMessage(ctx context.Context, bodyMD string, user 
 	p.queue.Message(message)
 
 	p.notif.Enqueue(ctx,
-		domain.NewDiscordNotification(discord.ChannelPlayerqueue, discord.NewPlayerqueueMessage(user, bodyMD)))
+		notification.NewDiscordNotification(discord.ChannelPlayerqueue, discord.NewPlayerqueueMessage(user, bodyMD)))
 
 	return nil
 }

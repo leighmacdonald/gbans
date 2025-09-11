@@ -14,16 +14,16 @@ import (
 	"github.com/riverqueue/river"
 )
 
-func NewNotificationUsecase(repository domain.NotificationRepository, discord discord.DiscordUsecase) domain.NotificationUsecase {
+func NewNotificationUsecase(repository NotificationRepository, discord discord.DiscordUsecase) NotificationUsecase {
 	return &notificationUsecase{repository: repository}
 }
 
 type notificationUsecase struct {
-	repository  domain.NotificationRepository
+	repository  NotificationRepository
 	queueClient *river.Client[pgx.Tx]
 }
 
-func (n *notificationUsecase) Enqueue(ctx context.Context, payload domain.NotificationPayload) {
+func (n *notificationUsecase) Enqueue(ctx context.Context, payload NotificationPayload) {
 	if n.queueClient == nil {
 		return
 	}
@@ -36,7 +36,7 @@ func (n *notificationUsecase) Enqueue(ctx context.Context, payload domain.Notifi
 	slog.Debug("Job inserted", slog.Int64("id", res.Job.ID), slog.Bool("unique", res.UniqueSkippedAsDuplicate))
 }
 
-func (n *notificationUsecase) SendSite(ctx context.Context, targetIDs steamid.Collection, severity domain.NotificationSeverity, message string, link string, author *domain.UserProfile) error {
+func (n *notificationUsecase) SendSite(ctx context.Context, targetIDs steamid.Collection, severity NotificationSeverity, message string, link string, author *domain.UserProfile) error {
 	var authorID *int64
 	if author != nil {
 		sid64 := author.SteamID.Int64()

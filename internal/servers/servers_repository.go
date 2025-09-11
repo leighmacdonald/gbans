@@ -6,21 +6,22 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type serversRepository struct {
+type ServersRepository struct {
 	db database.Database
 }
 
-func NewServersRepository(database database.Database) domain.ServersRepository {
-	return &serversRepository{db: database}
+func NewServersRepository(database database.Database) *ServersRepository {
+	return &ServersRepository{db: database}
 }
 
-func (r *serversRepository) GetServer(ctx context.Context, serverID int) (domain.Server, error) {
-	var server domain.Server
+func (r *ServersRepository) GetServer(ctx context.Context, serverID int) (Server, error) {
+	var server Server
 
 	row, rowErr := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
@@ -50,11 +51,11 @@ func (r *serversRepository) GetServer(ctx context.Context, serverID int) (domain
 	return server, nil
 }
 
-func (r *serversRepository) GetServerPermissions(ctx context.Context) ([]domain.ServerPermission, error) {
+func (r *ServersRepository) GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
 	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("steam_id", "permission_level").From("person").
-		Where(sq.GtOrEq{"permission_level": domain.PReserved}).
+		Where(sq.GtOrEq{"permission_level": auth.PReserved}).
 		OrderBy("permission_level desc"))
 	if errRows != nil {
 		return nil, r.db.DBErr(errRows)
@@ -62,12 +63,12 @@ func (r *serversRepository) GetServerPermissions(ctx context.Context) ([]domain.
 
 	defer rows.Close()
 
-	var perms []domain.ServerPermission
+	var perms []ServerPermission
 
 	for rows.Next() {
 		var (
 			sid   steamid.SteamID
-			perm  domain.Privilege
+			perm  auth.Privilege
 			flags string
 		)
 
@@ -76,17 +77,17 @@ func (r *serversRepository) GetServerPermissions(ctx context.Context) ([]domain.
 		}
 
 		switch perm {
-		case domain.PReserved:
+		case auth.PReserved:
 			flags = "a"
-		case domain.PEditor:
+		case auth.PEditor:
 			flags = "aj"
-		case domain.PModerator:
+		case auth.PModerator:
 			flags = "abcdegjk"
-		case domain.PAdmin:
+		case auth.PAdmin:
 			flags = "z"
 		}
 
-		perms = append(perms, domain.ServerPermission{
+		perms = append(perms, ServerPermission{
 			SteamID:         sid.Steam(false),
 			PermissionLevel: perm,
 			Flags:           flags,
@@ -96,7 +97,7 @@ func (r *serversRepository) GetServerPermissions(ctx context.Context) ([]domain.
 	return perms, nil
 }
 
-func (r *serversRepository) GetServers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, int64, error) {
+func (r *ServersRepository) GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error) {
 	builder := r.db.
 		Builder().
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
@@ -130,17 +131,17 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 
 	rows, errQueryExec := r.db.QueryBuilder(ctx, nil, builder)
 	if errQueryExec != nil {
-		return []domain.Server{}, 0, r.db.DBErr(errQueryExec)
+		return []Server{}, 0, r.db.DBErr(errQueryExec)
 	}
 
 	defer rows.Close()
 
 	//goland:noinspection GoPreferNilSlice
-	servers := []domain.Server{}
+	servers := []Server{}
 
 	for rows.Next() {
 		var (
-			server    domain.Server
+			server    Server
 			tokenDate *time.Time
 		)
 
@@ -175,7 +176,7 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 	return servers, count, nil
 }
 
-func (r *serversRepository) GetServerByName(ctx context.Context, serverName string, server *domain.Server, disabledOk bool, deletedOk bool) error {
+func (r *ServersRepository) GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error {
 	and := sq.And{sq.Eq{"short_name": serverName}}
 	if !disabledOk {
 		and = append(and, sq.Eq{"is_enabled": true})
@@ -212,7 +213,7 @@ func (r *serversRepository) GetServerByName(ctx context.Context, serverName stri
 	return nil
 }
 
-func (r *serversRepository) GetServerByPassword(ctx context.Context, serverPassword string, server *domain.Server, disabledOk bool, deletedOk bool) error {
+func (r *ServersRepository) GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error {
 	and := sq.And{sq.Eq{"password": serverPassword}}
 	if !disabledOk {
 		and = append(and, sq.Eq{"is_enabled": true})
@@ -250,7 +251,7 @@ func (r *serversRepository) GetServerByPassword(ctx context.Context, serverPassw
 }
 
 // SaveServer updates or creates the server data in the database.
-func (r *serversRepository) SaveServer(ctx context.Context, server *domain.Server) error {
+func (r *ServersRepository) SaveServer(ctx context.Context, server *Server) error {
 	if server.ServerID > 0 {
 		return r.updateServer(ctx, server)
 	}
@@ -258,12 +259,12 @@ func (r *serversRepository) SaveServer(ctx context.Context, server *domain.Serve
 	return r.insertServer(ctx, server)
 }
 
-func (r *serversRepository) insertServer(ctx context.Context, server *domain.Server) error {
+func (r *ServersRepository) insertServer(ctx context.Context, server *Server) error {
 	const query = `
 		INSERT INTO server (
-		    short_name, name, address, port, rcon, token_created_on, 
-		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, latitude, longitude, 
-			deleted, log_secret, enable_stats, address_internal, sdr_enabled) 
+		    short_name, name, address, port, rcon, token_created_on,
+		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, latitude, longitude,
+			deleted, log_secret, enable_stats, address_internal, sdr_enabled)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
 		RETURNING server_id;`
 
@@ -279,7 +280,7 @@ func (r *serversRepository) insertServer(ctx context.Context, server *domain.Ser
 	return nil
 }
 
-func (r *serversRepository) updateServer(ctx context.Context, server *domain.Server) error {
+func (r *ServersRepository) updateServer(ctx context.Context, server *Server) error {
 	server.UpdatedOn = time.Now()
 
 	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.

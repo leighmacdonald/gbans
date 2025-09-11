@@ -7,27 +7,26 @@ import (
 	"sync"
 
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
-type configRepository struct {
+type ConfigRepository struct {
 	db   database.Database
-	conf domain.Config
+	conf Config
 	mu   sync.RWMutex
 }
 
-func NewConfigRepository(db database.Database) domain.ConfigRepository {
-	return &configRepository{db: db, conf: domain.Config{}}
+func NewConfigRepository(db database.Database) *ConfigRepository {
+	return &ConfigRepository{db: db, conf: Config{}}
 }
 
-func (c *configRepository) Config() domain.Config {
+func (c *ConfigRepository) Config() Config {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	return c.conf
 }
 
-func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
+func (c *ConfigRepository) Read(ctx context.Context) (Config, error) {
 	const query = `
 		SELECT general_site_name, general_mode, general_file_serve_mode, general_srcds_log_addr, general_asset_url,
 		       general_default_route, general_news_enabled, general_forums_enabled, general_contests_enabled, general_wiki_enabled,
@@ -64,7 +63,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 		 FROM config`
 
 	var (
-		cfg            domain.Config
+		cfg            Config
 		authorizedKeys []string
 	)
 
@@ -101,7 +100,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 	return cfg, nil
 }
 
-func (c *configRepository) Init(ctx context.Context) error {
+func (c *ConfigRepository) Init(ctx context.Context) error {
 	if _, errRead := c.Read(ctx); errRead != nil {
 		if errors.Is(errRead, database.ErrNoResult) {
 			// Insert a value so that the database will populate a row of defaults.
@@ -122,7 +121,7 @@ func (c *configRepository) Init(ctx context.Context) error {
 	return nil
 }
 
-func (c *configRepository) Write(ctx context.Context, config domain.Config) error {
+func (c *ConfigRepository) Write(ctx context.Context, config Config) error {
 	return c.db.DBErr(c.db.ExecUpdateBuilder(ctx, nil, c.db.Builder().
 		Update("config").
 		SetMap(map[string]interface{}{

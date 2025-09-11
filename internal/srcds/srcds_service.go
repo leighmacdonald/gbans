@@ -8,34 +8,43 @@ import (
 	"net/netip"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/blocklist"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
+	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type srcdsHandler struct {
-	srcds         domain.SRCDSUsecase
-	servers       domain.ServersUsecase
-	persons       domain.PersonUsecase
-	state         domain.StateUsecase
-	notifications domain.NotificationUsecase
-	config        domain.ConfigUsecase
-	reports       domain.ReportUsecase
-	assets        domain.AssetUsecase
+	srcds         *SRCDSUsecase
+	servers       servers.ServersUsecase
+	persons       person.PersonUsecase
+	state         state.StateUsecase
+	notifications notification.NotificationUsecase
+	config        *config.ConfigUsecase
+	reports       ban.ReportUsecase
+	assets        asset.AssetUsecase
 	bans          ban.BanUsecase
-	network       domain.NetworkUsecase
-	blocklist     domain.BlocklistUsecase
+	network       network.NetworkUsecase
+	blocklist     blocklist.BlocklistUsecase
 }
 
-func NewHandlerSRCDS(engine *gin.Engine, srcds domain.SRCDSUsecase, servers domain.ServersUsecase,
-	persons domain.PersonUsecase, assets domain.AssetUsecase, reports domain.ReportUsecase,
-	bans ban.BanUsecase, network domain.NetworkUsecase, auth domain.AuthUsecase,
-	config domain.ConfigUsecase, notifications domain.NotificationUsecase, state domain.StateUsecase,
-	blocklist domain.BlocklistUsecase,
+func NewHandlerSRCDS(engine *gin.Engine, srcds *SRCDSUsecase, servers servers.ServersUsecase,
+	persons person.PersonUsecase, assets asset.AssetUsecase, reports ban.ReportUsecase,
+	bans ban.BanUsecase, network network.NetworkUsecase, auth httphelper.Authenticator,
+	config *config.ConfigUsecase, notifications notification.NotificationUsecase, state state.StateUsecase,
+	blocklist blocklist.BlocklistUsecase,
 ) {
 	handler := srcdsHandler{
 		srcds:         srcds,
@@ -53,7 +62,7 @@ func NewHandlerSRCDS(engine *gin.Engine, srcds domain.SRCDSUsecase, servers doma
 
 	adminGroup := engine.Group("/")
 	{
-		admin := adminGroup.Use(auth.Middleware(domain.PAdmin))
+		admin := adminGroup.Use(auth.Middleware(permission.PAdmin))
 		// Groups
 		admin.GET("/api/smadmin/groups", handler.onAPISMGroups())
 		admin.POST("/api/smadmin/groups", handler.onCreateSMGroup())
@@ -219,7 +228,7 @@ func (s *srcdsHandler) onGetGroupImmunities() gin.HandlerFunc {
 		}
 
 		if immunities == nil {
-			immunities = []domain.SMGroupImmunity{}
+			immunities = []SMGroupImmunity{}
 		}
 
 		ctx.JSON(http.StatusOK, immunities)
@@ -285,7 +294,7 @@ func (s *srcdsHandler) onGroupOverrides() gin.HandlerFunc {
 		}
 
 		if overrides == nil {
-			overrides = []domain.SMGroupOverrides{}
+			overrides = []SMGroupOverrides{}
 		}
 
 		ctx.JSON(http.StatusOK, overrides)
@@ -293,9 +302,9 @@ func (s *srcdsHandler) onGroupOverrides() gin.HandlerFunc {
 }
 
 type groupOverrideRequest struct {
-	Name   string                `json:"name"`
-	Type   domain.OverrideType   `json:"type"`
-	Access domain.OverrideAccess `json:"access"`
+	Name   string         `json:"name"`
+	Type   OverrideType   `json:"type"`
+	Access OverrideAccess `json:"access"`
 }
 
 func (s *srcdsHandler) onCreateGroupOverride() gin.HandlerFunc {
@@ -385,9 +394,9 @@ func (s *srcdsHandler) onDeleteGroupOverride() gin.HandlerFunc {
 }
 
 type overrideRequest struct {
-	Name  string              `json:"name"`
-	Type  domain.OverrideType `json:"type"`
-	Flags string              `json:"flags"`
+	Name  string       `json:"name"`
+	Type  OverrideType `json:"type"`
+	Flags string       `json:"flags"`
 }
 
 func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
@@ -475,7 +484,7 @@ func (s *srcdsHandler) onGetOverrides() gin.HandlerFunc {
 		}
 
 		if overrides == nil {
-			overrides = []domain.SMOverrides{}
+			overrides = []SMOverrides{}
 		}
 
 		ctx.JSON(http.StatusOK, overrides)
@@ -589,12 +598,12 @@ func (s *srcdsHandler) onDeleteSMAdmin() gin.HandlerFunc {
 }
 
 type smAdminRequest struct {
-	AuthType domain.AuthType `json:"auth_type"`
-	Identity string          `json:"identity"`
-	Password string          `json:"password"`
-	Flags    string          `json:"flags"`
-	Name     string          `json:"name"`
-	Immunity int             `json:"immunity"`
+	AuthType AuthType `json:"auth_type"`
+	Identity string   `json:"identity"`
+	Password string   `json:"password"`
+	Flags    string   `json:"flags"`
+	Name     string   `json:"name"`
+	Immunity int      `json:"immunity"`
 }
 
 func (s *srcdsHandler) onCreateSMAdmin() gin.HandlerFunc {
@@ -725,7 +734,7 @@ func (s *srcdsHandler) onGetSMAdmins() gin.HandlerFunc {
 		}
 
 		if admins == nil {
-			admins = []domain.SMAdmin{}
+			admins = []SMAdmin{}
 		}
 
 		ctx.JSON(http.StatusOK, admins)
@@ -758,7 +767,7 @@ func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
-		var req domain.RequestReportCreate
+		var req ban.RequestReportCreate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -803,9 +812,9 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 
 func (s *srcdsHandler) onAPIGetServerOverrides() gin.HandlerFunc {
 	type smOverride struct {
-		Type  domain.OverrideType `json:"type"`
-		Name  string              `json:"name"`
-		Flags string              `json:"flags"`
+		Type  OverrideType `json:"type"`
+		Name  string       `json:"name"`
+		Flags string       `json:"flags"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -890,13 +899,13 @@ func (s *srcdsHandler) onAPIGetServerGroups() gin.HandlerFunc {
 
 func (s *srcdsHandler) onAPIGetServerUsers() gin.HandlerFunc {
 	type smUser struct {
-		ID       int             `json:"id"`
-		Authtype domain.AuthType `json:"authtype"`
-		Identity string          `json:"identity"`
-		Password string          `json:"password"`
-		Flags    string          `json:"flags"`
-		Name     string          `json:"name"`
-		Immunity int             `json:"immunity"`
+		ID       int      `json:"id"`
+		Authtype AuthType `json:"authtype"`
+		Identity string   `json:"identity"`
+		Password string   `json:"password"`
+		Flags    string   `json:"flags"`
+		Name     string   `json:"name"`
+		Immunity int      `json:"immunity"`
 	}
 
 	type smUserGroup struct {
@@ -963,8 +972,8 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 		conf := s.config.Config()
 		players := s.state.FindBySteamID(req.SteamID)
 
-		if len(players) == 0 && conf.General.Mode != domain.TestMode {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrInternal))
+		if len(players) == 0 && conf.General.Mode != config.TestMode {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, httphelper.ErrInternal))
 
 			return
 		}
@@ -993,7 +1002,7 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 			connect = fmt.Sprintf("steam://connect/%s:%d", addr.String(), server.Port)
 		}
 
-		s.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		s.notifications.Enqueue(ctx, notification.NewDiscordNotification(
 			domain.ChannelMod,
 			discord.PingModMessage(author, conf.ExtURL(author), req.Reason, server, conf.Discord.ModPingRoleID, connect)))
 

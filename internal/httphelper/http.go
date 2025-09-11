@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	sloggin "github.com/samber/slog-gin"
@@ -55,7 +56,7 @@ func errorHandler() gin.HandlerFunc {
 					})
 				}
 			} else {
-				abort(ctx, NewAPIError(http.StatusInternalServerError, domain.ErrInternal))
+				abort(ctx, NewAPIError(http.StatusInternalServerError, ErrInternal))
 				if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 					hub.WithScope(func(scope *sentry.Scope) {
 						scope.SetLevel(sentry.LevelWarning)
@@ -79,7 +80,7 @@ func errorHandler() gin.HandlerFunc {
 	}
 }
 
-func useSecure(mode domain.RunMode, cspOrigin string) gin.HandlerFunc {
+func useSecure(mode config.RunMode, cspOrigin string) gin.HandlerFunc {
 	defaultSrc := []string{"'self'"}
 	if cspOrigin != "" {
 		defaultSrc = append(defaultSrc, cspOrigin)
@@ -101,7 +102,7 @@ func useSecure(mode domain.RunMode, cspOrigin string) gin.HandlerFunc {
 		FrameDeny:             false,
 		ContentTypeNosniff:    true,
 		ContentSecurityPolicy: cspBuilder.MustBuild(),
-		IsDevelopment:         mode != domain.ReleaseMode,
+		IsDevelopment:         mode != config.ReleaseMode,
 	})
 
 	secureFunc := func(ctx *gin.Context) {
@@ -132,7 +133,7 @@ func useSentry(engine *gin.Engine, version string) {
 	})
 }
 
-func useCors(engine *gin.Engine, conf domain.Config) {
+func useCors(engine *gin.Engine, conf config.Config) {
 	engine.Use(useSecure(conf.General.Mode, ""))
 
 	if len(conf.HTTPCorsOrigins) > 0 {
@@ -157,7 +158,7 @@ func usePrometheus(engine *gin.Engine) {
 	engine.Use(prom.Instrument())
 }
 
-func useFrontend(engine *gin.Engine, conf domain.Config) error {
+func useFrontend(engine *gin.Engine, conf config.Config) error {
 	staticPath := conf.HTTPStaticPath
 	if staticPath == "" {
 		staticPath = "./frontend/dist"
@@ -175,7 +176,7 @@ func useFrontend(engine *gin.Engine, conf domain.Config) error {
 	return nil
 }
 
-func useSloggin(engine *gin.Engine, config domain.Config) {
+func useSloggin(engine *gin.Engine, config config.Config) {
 	logLevel := slog.LevelError
 	switch config.Log.Level {
 	case "error":
@@ -200,7 +201,7 @@ func useSloggin(engine *gin.Engine, config domain.Config) {
 	engine.Use(sloggin.NewWithConfig(slog.Default(), logConfig))
 }
 
-func CreateRouter(conf domain.Config, version app.BuildInfo) (*gin.Engine, error) {
+func CreateRouter(conf config.Config, version app.BuildInfo) (*gin.Engine, error) {
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
 	engine.Use(recoveryHandler())
@@ -218,7 +219,7 @@ func CreateRouter(conf domain.Config, version app.BuildInfo) (*gin.Engine, error
 		pprof.Register(engine)
 	}
 
-	if conf.HTTPCORSEnabled && conf.General.Mode != domain.TestMode {
+	if conf.HTTPCORSEnabled && conf.General.Mode != config.TestMode {
 		useCors(engine, conf)
 	}
 
@@ -226,7 +227,7 @@ func CreateRouter(conf domain.Config, version app.BuildInfo) (*gin.Engine, error
 		usePrometheus(engine)
 	}
 
-	if conf.General.Mode != domain.TestMode {
+	if conf.General.Mode != config.TestMode {
 		if err := useFrontend(engine, conf); err != nil {
 			return nil, err
 		}

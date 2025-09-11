@@ -1,43 +1,13 @@
-package report
+package ban
 
 import (
-	"context"
 	"fmt"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/demo"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
-
-type ReportRepository interface {
-	GetReports(ctx context.Context, steamID steamid.SteamID) ([]Report, error)
-	GetReport(ctx context.Context, reportID int64) (Report, error)
-	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
-	GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error)
-	DropReportMessage(ctx context.Context, message *ReportMessage) error
-	DropReport(ctx context.Context, report *Report) error
-	SaveReport(ctx context.Context, report *Report) error
-	SaveReportMessage(ctx context.Context, message *ReportMessage) error
-	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
-}
-
-type ReportUsecase interface {
-	GenerateMetaStats(ctx context.Context) error
-	GetReportsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]ReportWithAuthor, error)
-	GetReports(ctx context.Context) ([]ReportWithAuthor, error)
-	GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (ReportWithAuthor, error)
-	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
-	GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error)
-	DropReportMessage(ctx context.Context, curUser domain.PersonInfo, reportMessageID int64) error
-	DropReport(ctx context.Context, report *Report) error
-	SaveReport(ctx context.Context, currentUser domain.UserProfile, req RequestReportCreate) (ReportWithAuthor, error)
-	CreateReportMessage(ctx context.Context, reportID int64, curUser domain.UserProfile, req RequestMessageBodyMD) (ReportMessage, error)
-	EditReportMessage(ctx context.Context, reportMessageID int64, curUser domain.PersonInfo, req RequestMessageBodyMD) (ReportMessage, error)
-	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
-	SetReportStatus(ctx context.Context, reportID int64, user domain.UserProfile, status ReportStatus) (ReportWithAuthor, error)
-}
 
 type RequestMessageBodyMD struct {
 	BodyMD string `json:"body_md"`
@@ -51,7 +21,7 @@ type RequestReportCreate struct {
 	SourceID        steamid.SteamID `json:"source_id"`
 	TargetID        steamid.SteamID `json:"target_id"`
 	Description     string          `json:"description"`
-	Reason          ban.Reason      `json:"reason"`
+	Reason          Reason          `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
 	DemoID          int64           `json:"demo_id"`
 	DemoTick        int             `json:"demo_tick"`
@@ -87,7 +57,7 @@ type Report struct {
 	TargetID        steamid.SteamID `json:"target_id"`
 	Description     string          `json:"description"`
 	ReportStatus    ReportStatus    `json:"report_status"`
-	Reason          ban.Reason      `json:"reason"`
+	Reason          Reason          `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
 	Deleted         bool            `json:"deleted"`
 	DemoTick        int             `json:"demo_tick"`
@@ -115,8 +85,8 @@ func NewReport() Report {
 }
 
 type ReportWithAuthor struct {
-	Author  Person        `json:"author"`
-	Subject Person        `json:"subject"`
+	Author  person.Person `json:"author"`
+	Subject person.Person `json:"subject"`
 	Demo    demo.DemoFile `json:"demo"`
 	Report
 }
@@ -129,7 +99,7 @@ type ReportMessage struct {
 	Deleted         bool            `json:"deleted"`
 	CreatedOn       time.Time       `json:"created_on"`
 	UpdatedOn       time.Time       `json:"updated_on"`
-	SimplePerson
+	person.SimplePerson
 }
 
 func NewReportMessage(reportID int64, authorID steamid.SteamID, messageMD string) ReportMessage {
@@ -142,7 +112,7 @@ func NewReportMessage(reportID int64, authorID steamid.SteamID, messageMD string
 		Deleted:      false,
 		CreatedOn:    now,
 		UpdatedOn:    now,
-		SimplePerson: SimplePerson{},
+		SimplePerson: person.SimplePerson{},
 	}
 }
 

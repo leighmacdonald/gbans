@@ -6,17 +6,20 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type patreonHandler struct {
-	patreon domain.PatreonUsecase
-	config  domain.ConfigUsecase
+	patreon PatreonUsecase
+	config  *config.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, patreon domain.PatreonUsecase, auth domain.AuthUsecase, config domain.ConfigUsecase) {
+func NewHandler(engine *gin.Engine, patreon PatreonUsecase, auth auth.AuthUsecase, config *config.ConfigUsecase) {
 	handler := patreonHandler{
 		patreon: patreon,
 		config:  config,
@@ -27,7 +30,7 @@ func NewHandler(engine *gin.Engine, patreon domain.PatreonUsecase, auth domain.A
 
 	authGrp := engine.Group("/")
 	{
-		authed := authGrp.Use(auth.Middleware(domain.PUser))
+		authed := authGrp.Use(auth.Middleware(permission.PUser))
 		authed.GET("/api/patreon/login", handler.onLogin())
 		authed.GET("/api/patreon/logout", handler.onLogout())
 	}
@@ -35,7 +38,7 @@ func NewHandler(engine *gin.Engine, patreon domain.PatreonUsecase, auth domain.A
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.Middleware(domain.PModerator))
+		mod := modGrp.Use(auth.Middleware(permission.PModerator))
 		mod.GET("/api/patreon/pledges", handler.onAPIGetPatreonPledges())
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
 )
 
 type Tracker struct {
@@ -19,7 +19,7 @@ func NewTracker() *Tracker {
 	}
 }
 
-func (tracker *Tracker) Touch(person domain.UserProfile) {
+func (tracker *Tracker) Touch(person person.UserProfile) {
 	if !person.SteamID.Valid() {
 		return
 	}

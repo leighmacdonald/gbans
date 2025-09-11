@@ -22,22 +22,22 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type configUsecase struct {
-	repository    domain.ConfigRepository
-	static        domain.StaticConfig
+type ConfigUsecase struct {
+	repository    *ConfigRepository
+	static        StaticConfig
 	configMu      sync.RWMutex
-	currentConfig domain.Config
+	currentConfig Config
 }
 
-func NewConfigUsecase(static domain.StaticConfig, repository domain.ConfigRepository) domain.ConfigUsecase {
-	return &configUsecase{static: static, repository: repository}
+func NewConfigUsecase(static StaticConfig, repository *ConfigRepository) *ConfigUsecase {
+	return &ConfigUsecase{static: static, repository: repository}
 }
 
-func (c *configUsecase) Init(ctx context.Context) error {
+func (c *ConfigUsecase) Init(ctx context.Context) error {
 	return c.repository.Init(ctx)
 }
 
-func (c *configUsecase) Write(ctx context.Context, config domain.Config) error {
+func (c *ConfigUsecase) Write(ctx context.Context, config Config) error {
 	if err := c.repository.Write(ctx, config); err != nil {
 		slog.Error("Failed to write new config", log.ErrAttr(err))
 
@@ -53,26 +53,26 @@ func (c *configUsecase) Write(ctx context.Context, config domain.Config) error {
 	return nil
 }
 
-func (c *configUsecase) ExtURLInstance(obj domain.LinkablePath) *url.URL {
+func (c *ConfigUsecase) ExtURLInstance(obj LinkablePath) *url.URL {
 	return c.Config().ExtURLInstance(obj)
 }
 
-func (c *configUsecase) ExtURL(obj domain.LinkablePath) string {
+func (c *ConfigUsecase) ExtURL(obj LinkablePath) string {
 	return c.Config().ExtURL(obj)
 }
 
-func (c *configUsecase) ExtURLRaw(path string, args ...any) string {
+func (c *ConfigUsecase) ExtURLRaw(path string, args ...any) string {
 	return c.Config().ExtURLRaw(path, args...)
 }
 
-func (c *configUsecase) Config() domain.Config {
+func (c *ConfigUsecase) Config() Config {
 	c.configMu.RLock()
 	defer c.configMu.RUnlock()
 
 	return c.currentConfig
 }
 
-func (c *configUsecase) Reload(ctx context.Context) error {
+func (c *ConfigUsecase) Reload(ctx context.Context) error {
 	config, errConfig := c.repository.Read(ctx)
 	if errConfig != nil {
 		return errConfig
@@ -91,10 +91,10 @@ func (c *configUsecase) Reload(ctx context.Context) error {
 	return nil
 }
 
-func ReadStaticConfig() (domain.StaticConfig, error) {
+func ReadStaticConfig() (StaticConfig, error) {
 	setDefaultConfigValues()
 
-	var config domain.StaticConfig
+	var config StaticConfig
 	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil {
 		return config, errors.Join(errReadConfig, domain.ErrReadConfig)
 	}
@@ -139,7 +139,7 @@ func ReadStaticConfig() (domain.StaticConfig, error) {
 	return config, nil
 }
 
-func applyGlobalConfig(config domain.Config) error {
+func applyGlobalConfig(config Config) error {
 	gin.SetMode(config.General.Mode.String())
 
 	if errSteam := steamid.SetKey(config.SteamKey); errSteam != nil {

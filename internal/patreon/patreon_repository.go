@@ -14,11 +14,11 @@ type patreonRepository struct {
 	db database.Database
 }
 
-func NewPatreonRepository(database database.Database) domain.PatreonRepository {
+func NewPatreonRepository(database database.Database) PatreonRepository {
 	return &patreonRepository{db: database}
 }
 
-func (r patreonRepository) OldAuths(ctx context.Context) ([]domain.PatreonCredential, error) {
+func (r patreonRepository) OldAuths(ctx context.Context) ([]PatreonCredential, error) {
 	const query = `SELECT steam_id, patreon_id, access_token,  refresh_token,
                           expires_in, scope, token_type, version, created_on, updated_on FROM auth_patreon
 					WHERE to_timestamp(extract(epoch from updated_on) + expires_in) < (now() + interval '7 days');`
@@ -28,10 +28,10 @@ func (r patreonRepository) OldAuths(ctx context.Context) ([]domain.PatreonCreden
 		return nil, r.db.DBErr(errRows)
 	}
 
-	var credentials []domain.PatreonCredential
+	var credentials []PatreonCredential
 
 	for rows.Next() {
-		var creds domain.PatreonCredential
+		var creds PatreonCredential
 		if errScan := rows.Scan(&creds.SteamID, &creds.PatreonID, &creds.AccessToken, &creds.RefreshToken, &creds.ExpiresIn,
 			&creds.Scope, &creds.TokenType, &creds.Version, &creds.CreatedOn, &creds.UpdatedOn); errScan != nil {
 			return credentials, r.db.DBErr(errScan)
@@ -87,7 +87,7 @@ func (r patreonRepository) GetPatreonAuth(ctx context.Context) (string, string, 
 	return creatorAccessToken, creatorRefreshToken, nil
 }
 
-func (r patreonRepository) SaveTokens(ctx context.Context, creds domain.PatreonCredential) error {
+func (r patreonRepository) SaveTokens(ctx context.Context, creds PatreonCredential) error {
 	const query = `INSERT INTO auth_patreon (
                           steam_id, patreon_id, access_token, refresh_token,
                           expires_in, scope, token_type, version, created_on, updated_on)
@@ -102,23 +102,23 @@ func (r patreonRepository) SaveTokens(ctx context.Context, creds domain.PatreonC
 	))
 }
 
-func (r patreonRepository) GetTokens(ctx context.Context, steamID steamid.SteamID) (domain.PatreonCredential, error) {
+func (r patreonRepository) GetTokens(ctx context.Context, steamID steamid.SteamID) (PatreonCredential, error) {
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.Builder().
 		Select("patreon_id", "access_token", "refresh_token",
 			"expires_in", "scope", "token_type", "version", "created_on", "updated_on").
 		From("auth_patreon").
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
 	if errRow != nil {
-		return domain.PatreonCredential{}, r.db.DBErr(errRow)
+		return PatreonCredential{}, r.db.DBErr(errRow)
 	}
 
-	var creds domain.PatreonCredential
+	var creds PatreonCredential
 
 	creds.SteamID = steamID
 
 	if err := row.Scan(&creds.PatreonID, &creds.AccessToken, &creds.RefreshToken, &creds.ExpiresIn, &creds.Scope, &creds.TokenType,
 		&creds.Version, &creds.CreatedOn, &creds.UpdatedOn); err != nil {
-		return domain.PatreonCredential{}, r.db.DBErr(errRow)
+		return PatreonCredential{}, r.db.DBErr(errRow)
 	}
 
 	return creds, nil

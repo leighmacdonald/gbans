@@ -1,9 +1,7 @@
 package srcds
 
 import (
-	"context"
 	"errors"
-	"net/netip"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
@@ -20,73 +18,6 @@ var (
 	ErrSMRequirePassword   = errors.New("name auth type requires password")
 	ErrInsufficientDetails = errors.New("insufficient details")
 )
-
-type SRCDSRepository interface { //nolint:interfacebloat
-	AddAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error)
-	SaveAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error)
-	DelAdmin(ctx context.Context, admin SMAdmin) error
-	AddGroup(ctx context.Context, group SMGroups) (SMGroups, error)
-	DeleteGroup(ctx context.Context, group SMGroups) error
-	DeleteAdminGroups(ctx context.Context, admin SMAdmin) error
-	DeleteAdminGroup(ctx context.Context, admin SMAdmin, group SMGroups) error
-	InsertAdminGroup(ctx context.Context, admin SMAdmin, group SMGroups, inheritOrder int) error
-	GetGroupByID(ctx context.Context, groupID int) (SMGroups, error)
-	GetGroupByName(ctx context.Context, groupName string) (SMGroups, error)
-	GetAdminByID(ctx context.Context, adminID int) (SMAdmin, error)
-	GetAdminByIdentity(ctx context.Context, authType AuthType, identity string) (SMAdmin, error)
-	SaveGroup(ctx context.Context, group SMGroups) (SMGroups, error)
-	GetAdminGroups(ctx context.Context, admin SMAdmin) ([]SMGroups, error)
-	Admins(ctx context.Context) ([]SMAdmin, error)
-	Groups(ctx context.Context) ([]SMGroups, error)
-	AddOverride(ctx context.Context, overrides SMOverrides) (SMOverrides, error)
-	Overrides(ctx context.Context) ([]SMOverrides, error)
-	DelOverride(ctx context.Context, override SMOverrides) error
-	GetOverride(ctx context.Context, overrideID int) (SMOverrides, error)
-	SaveOverride(ctx context.Context, override SMOverrides) (SMOverrides, error)
-	GroupOverrides(ctx context.Context, group SMGroups) ([]SMGroupOverrides, error)
-	AddGroupOverride(ctx context.Context, override SMGroupOverrides) (SMGroupOverrides, error)
-	DelGroupOverride(ctx context.Context, override SMGroupOverrides) error
-	GetGroupOverride(ctx context.Context, overrideID int) (SMGroupOverrides, error)
-	SaveGroupOverride(ctx context.Context, override SMGroupOverrides) (SMGroupOverrides, error)
-	GetGroupImmunities(ctx context.Context) ([]SMGroupImmunity, error)
-	GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (SMGroupImmunity, error)
-	AddGroupImmunity(ctx context.Context, group SMGroups, other SMGroups) (SMGroupImmunity, error)
-	DelGroupImmunity(ctx context.Context, groupImmunity SMGroupImmunity) error
-	QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (PlayerBanState, error)
-}
-
-type SRCDSUsecase interface { //nolint:interfacebloat
-	GetBanState(ctx context.Context, steamID steamid.SteamID, ip netip.Addr) (PlayerBanState, string, error)
-	Report(ctx context.Context, currentUser UserProfile, req RequestReportCreate) (ReportWithAuthor, error)
-	GetAdminByID(ctx context.Context, adminID int) (SMAdmin, error)
-	AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int, password string) (SMAdmin, error)
-	DelAdmin(ctx context.Context, adminID int) error
-	Admins(ctx context.Context) ([]SMAdmin, error)
-	SaveAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error)
-	AddGroup(ctx context.Context, name string, flags string, immunityLevel int) (SMGroups, error)
-	DelGroup(ctx context.Context, groupID int) error
-	GetGroupByID(ctx context.Context, groupID int) (SMGroups, error)
-	Groups(ctx context.Context) ([]SMGroups, error)
-	SaveGroup(ctx context.Context, group SMGroups) (SMGroups, error)
-	GetAdminGroups(ctx context.Context, admin SMAdmin) ([]SMGroups, error)
-	SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...SMGroups) error
-	AddAdminGroup(ctx context.Context, adminID int, groupID int) (SMAdmin, error)
-	DelAdminGroup(ctx context.Context, adminID int, groupID int) (SMAdmin, error)
-	GroupOverrides(ctx context.Context, groupID int) ([]SMGroupOverrides, error)
-	Overrides(ctx context.Context) ([]SMOverrides, error)
-	AddOverride(ctx context.Context, name string, overrideType OverrideType, flags string) (SMOverrides, error)
-	DelOverride(ctx context.Context, overrideID int) error
-	GetOverride(ctx context.Context, overrideID int) (SMOverrides, error)
-	SaveOverride(ctx context.Context, override SMOverrides) (SMOverrides, error)
-	AddGroupOverride(ctx context.Context, groupID int, name string, overrideType OverrideType, access OverrideAccess) (SMGroupOverrides, error)
-	DelGroupOverride(ctx context.Context, groupOverrideID int) error
-	GetGroupOverride(ctx context.Context, groupOverrideID int) (SMGroupOverrides, error)
-	SaveGroupOverride(ctx context.Context, override SMGroupOverrides) (SMGroupOverrides, error)
-	GetGroupImmunities(ctx context.Context) ([]SMGroupImmunity, error)
-	GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (SMGroupImmunity, error)
-	AddGroupImmunity(ctx context.Context, groupID int, otherID int) (SMGroupImmunity, error)
-	DelGroupImmunity(ctx context.Context, groupImmunityID int) error
-}
 
 type BanSource string
 

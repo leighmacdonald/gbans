@@ -21,11 +21,11 @@ type networkRepository struct {
 	db database.Database
 }
 
-func NewNetworkRepository(db database.Database) domain.NetworkRepository {
+func NewNetworkRepository(db database.Database) networkRepository {
 	return networkRepository{db: db}
 }
 
-func (r networkRepository) QueryConnections(ctx context.Context, opts domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error) {
+func (r networkRepository) QueryConnections(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error) {
 	var constraints sq.And
 
 	if opts.Sid64 != "" {
@@ -57,7 +57,7 @@ func (r networkRepository) QueryConnections(ctx context.Context, opts domain.Con
 		"x.": {"steam_id", "ip_addr", "persona_name", "created_on", "short_name", "name"},
 	}, "created_on")
 
-	var messages []domain.PersonConnection
+	var messages []PersonConnection
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errQuery != nil {
@@ -68,7 +68,7 @@ func (r networkRepository) QueryConnections(ctx context.Context, opts domain.Con
 
 	for rows.Next() {
 		var (
-			connHistory domain.PersonConnection
+			connHistory PersonConnection
 			steamID     int64
 			serverID    *int
 			shortName   *string
@@ -98,7 +98,7 @@ func (r networkRepository) QueryConnections(ctx context.Context, opts domain.Con
 	}
 
 	if messages == nil {
-		return []domain.PersonConnection{}, 0, nil
+		return []PersonConnection{}, 0, nil
 	}
 
 	count, errCount := r.db.GetCount(ctx, nil, r.db.
@@ -114,7 +114,7 @@ func (r networkRepository) QueryConnections(ctx context.Context, opts domain.Con
 	return messages, count, nil
 }
 
-func (r networkRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (domain.PersonConnections, error) {
+func (r networkRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error) {
 	builder := r.db.
 		Builder().
 		Select(
@@ -138,11 +138,11 @@ func (r networkRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid
 
 	defer rows.Close()
 
-	var connections domain.PersonConnections
+	var connections PersonConnections
 
 	for rows.Next() {
 		var (
-			conn    domain.PersonConnection
+			conn    PersonConnection
 			steamID int64
 		)
 
@@ -159,7 +159,7 @@ func (r networkRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid
 	return connections, nil
 }
 
-func (r networkRepository) AddConnectionHistory(ctx context.Context, conn *domain.PersonConnection) error {
+func (r networkRepository) AddConnectionHistory(ctx context.Context, conn *PersonConnection) error {
 	const query = `
 		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on, server_id)
 		VALUES ($1, $2, $3, $4, $5)
@@ -198,7 +198,7 @@ func (r networkRepository) GetPlayerMostRecentIP(ctx context.Context, steamID st
 	return addr
 }
 
-func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]domain.NetworkASN, error) {
+func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]NetworkASN, error) {
 	query := r.db.
 		Builder().
 		Select("cidr::text", "as_num", "as_name").
@@ -212,10 +212,10 @@ func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) 
 
 	defer rows.Close()
 
-	var records []domain.NetworkASN
+	var records []NetworkASN
 
 	for rows.Next() {
-		var asnRecord domain.NetworkASN
+		var asnRecord NetworkASN
 		if errScan := rows.
 			Scan(&asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errScan != nil {
 			return nil, r.db.DBErr(errScan)
@@ -227,14 +227,14 @@ func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) 
 	return records, nil
 }
 
-func (r networkRepository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (domain.NetworkASN, error) {
+func (r networkRepository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (NetworkASN, error) {
 	const query = `
 		SELECT ip_range::text, as_num, as_name
 		FROM net_asn
 		WHERE ip_range >>= $1
 		LIMIT 1`
 
-	var asnRecord domain.NetworkASN
+	var asnRecord NetworkASN
 
 	if errQuery := r.db.
 		QueryRow(ctx, nil, query, ipAddr.String()).
@@ -245,13 +245,13 @@ func (r networkRepository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Ad
 	return asnRecord, nil
 }
 
-func (r networkRepository) GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (domain.NetworkLocation, error) {
+func (r networkRepository) GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (NetworkLocation, error) {
 	const query = `
 		SELECT ip_range::text, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location)
 		FROM net_location
 		WHERE ip_range >>= $1`
 
-	var record domain.NetworkLocation
+	var record NetworkLocation
 
 	if errQuery := r.db.QueryRow(ctx, nil, query, ipAddr.String()).
 		Scan(&record.CIDR, &record.CountryCode, &record.CountryName, &record.RegionName,
@@ -262,14 +262,14 @@ func (r networkRepository) GetLocationRecord(ctx context.Context, ipAddr netip.A
 	return record, nil
 }
 
-func (r networkRepository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (domain.NetworkProxy, error) {
+func (r networkRepository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (NetworkProxy, error) {
 	const query = `
 		SELECT ip_range::text, proxy_type, country_code, country_name, region_name,
        		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat
 		FROM net_proxy
 		WHERE ip_range >>= $1`
 
-	var proxyRecord domain.NetworkProxy
+	var proxyRecord NetworkProxy
 
 	if errQuery := r.db.QueryRow(ctx, nil, query, ipAddr.String()).
 		Scan(&proxyRecord.CIDR, &proxyRecord.ProxyType, &proxyRecord.CountryCode, &proxyRecord.CountryName, &proxyRecord.RegionName, &proxyRecord.CityName, &proxyRecord.ISP,

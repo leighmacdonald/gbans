@@ -3,37 +3,37 @@ package state
 import (
 	"context"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/servers"
 )
 
-type stateRepository struct {
+type StateRepository struct {
 	collector *Collector
 }
 
-func NewStateRepository(collector *Collector) StateRepository {
-	return &stateRepository{collector: collector}
+func NewStateRepository(collector *Collector) *StateRepository {
+	return &StateRepository{collector: collector}
 }
 
-func (s *stateRepository) Start(ctx context.Context) {
+func (s *StateRepository) Start(ctx context.Context) {
 	s.collector.Start(ctx)
 }
 
-func (s *stateRepository) GetServer(serverID int) (ServerConfig, error) {
+func (s *StateRepository) GetServer(serverID int) (ServerConfig, error) {
 	return s.collector.GetServer(serverID)
 }
 
-func (s *stateRepository) Configs() []ServerConfig {
+func (s *StateRepository) Configs() []ServerConfig {
 	return s.collector.Configs()
 }
 
-func (s *stateRepository) ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error) {
+func (s *StateRepository) ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error) {
 	return s.collector.ExecRaw(ctx, addr, password, cmd)
 }
 
-func (s *stateRepository) Update(serverID int, update domain.PartialStateUpdate) error {
+func (s *StateRepository) Update(serverID int, update servers.PartialStateUpdate) error {
 	return s.collector.Update(serverID, update)
 }
 
-func (s *stateRepository) Current() []ServerState {
+func (s *StateRepository) Current() []ServerState {
 	return s.collector.Current()
 }

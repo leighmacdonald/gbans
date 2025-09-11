@@ -13,14 +13,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/report"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/internal/wordfilter"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -92,7 +90,7 @@ func refreshFiltersCmd() *cobra.Command {
 
 			// discordUsecase := discord.NewDiscordUsecase(discord.NewDiscordRepository(conf), configUsecase)
 
-			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase), nil)
+			wordFilterUsecase := chat.NewWordFilterUsecase(chat.NewWordFilterRepository(dbUsecase), nil)
 			if errImport := wordFilterUsecase.Import(ctx); errImport != nil {
 				slog.Error("Failed to load filters")
 			}
@@ -116,7 +114,7 @@ func refreshFiltersCmd() *cobra.Command {
 			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase,
 				personUsecase, nil)
 
-			var query domain.ChatHistoryQueryFilter
+			var query chat.ChatHistoryQueryFilter
 			query.DontCalcTotal = true
 			query.OrderBy = "created_on"
 			query.Desc = false

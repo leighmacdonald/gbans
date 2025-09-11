@@ -5,28 +5,27 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type speedrunHandler struct {
 	speedruns SpeedrunUsecase
-	auth      auth.AuthUsecase
-	config    domain.ConfigUsecase
+	config    *config.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, speedruns SpeedrunUsecase, auth auth.AuthUsecase, config domain.ConfigUsecase) {
+func NewHandler(engine *gin.Engine, speedruns SpeedrunUsecase, auth httphelper.Authenticator, config *config.ConfigUsecase) {
 	handler := speedrunHandler{
 		speedruns: speedruns,
-		auth:      auth,
 		config:    config,
 	}
 
 	guestGroup := engine.Group("/")
 	{
-		guest := guestGroup.Use(auth.Middleware(domain.PGuest))
+		guest := guestGroup.Use(auth.Middleware(permission.PGuest))
 		// Groups
 		// guest.GET("/api/speedruns/overall", handler.getOverall())
 		guest.GET("/api/speedruns/map", handler.getByMap())

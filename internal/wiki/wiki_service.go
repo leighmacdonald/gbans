@@ -5,30 +5,30 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type wikiHandler struct {
 	wiki WikiUsecase
 }
 
-func NewHandler(engine *gin.Engine, wiki WikiUsecase, ath auth.AuthUsecase) {
+func NewHandler(engine *gin.Engine, wiki WikiUsecase, ath httphelper.Authenticator) {
 	handler := &wikiHandler{wiki: wiki}
 
 	// optional
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(ath.Middleware(domain.PGuest))
+		opt := optGrp.Use(ath.Middleware(permission.PGuest))
 		opt.GET("/api/wiki/slug/*slug", handler.onAPIGetWikiSlug())
 	}
 
 	// editor
 	editorGrp := engine.Group("/")
 	{
-		editor := editorGrp.Use(ath.Middleware(domain.PEditor))
+		editor := editorGrp.Use(ath.Middleware(permission.PEditor))
 		// TODO use PUT and slug param
 		editor.POST("/api/wiki/slug", handler.onAPISaveWikiSlug())
 	}

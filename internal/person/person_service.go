@@ -8,16 +8,18 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type personHandler struct {
-	persons domain.PersonUsecase
-	config  domain.ConfigUsecase
+	persons *PersonUsecase
+	config  *config.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, persons domain.PersonUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, config *config.ConfigUsecase, persons *PersonUsecase, authUC httphelper.Authenticator) {
 	handler := &personHandler{persons: persons, config: config}
 
 	engine.GET("/api/profile", handler.onAPIProfile())
@@ -26,7 +28,7 @@ func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, persons domain.
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.Middleware(domain.PUser))
+		authed := authedGrp.Use(authUC.Middleware(permission.PUser))
 		authed.GET("/api/current_profile", handler.onAPICurrentProfile())
 		authed.GET("/api/current_profile/settings", handler.onAPIGetPersonSettings())
 		authed.POST("/api/current_profile/settings", handler.onAPIPostPersonSettings())
@@ -35,14 +37,14 @@ func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, persons domain.
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.Middleware(domain.PModerator))
+		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
 		mod.POST("/api/players", handler.searchPlayers())
 	}
 
 	// admin
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(auth.Middleware(domain.PAdmin))
+		admin := adminGrp.Use(authUC.Middleware(permission.PAdmin))
 		admin.PUT("/api/player/:steam_id/permissions", handler.onAPIPutPlayerPermission())
 	}
 }
@@ -54,20 +56,20 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.RequestPermissionLevelUpdate
+		var req RequestPermissionLevelUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		if err := h.persons.SetPermissionLevel(ctx, nil, steamID, req.PermissionLevel); err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
 
 		person, errPerson := h.persons.GetPersonBySteamID(ctx, nil, steamID)
 		if errPerson != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errPerson, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errPerson, httphelper.ErrInternal)))
 
 			return
 		}
@@ -86,7 +88,7 @@ func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 
 		settings, err := h.persons.GetPersonSettings(ctx, user.SteamID)
 		if err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
@@ -97,7 +99,7 @@ func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 
 func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.PersonSettingsUpdate
+		var req PersonSettingsUpdate
 
 		if !httphelper.Bind(ctx, &req) {
 			return
@@ -105,7 +107,7 @@ func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 
 		settings, err := h.persons.SavePersonSettings(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
@@ -151,7 +153,7 @@ func (h personHandler) onSteamValidate() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
@@ -182,7 +184,7 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
@@ -193,14 +195,14 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 func (h personHandler) searchPlayers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var query domain.PlayerQuery
+		var query PlayerQuery
 		if !httphelper.Bind(ctx, &query) {
 			return
 		}
 
 		people, count, errGetPeople := h.persons.GetPeople(ctx, nil, query)
 		if errGetPeople != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetPeople, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetPeople, httphelper.ErrInternal)))
 
 			return
 		}

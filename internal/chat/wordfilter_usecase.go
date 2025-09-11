@@ -10,20 +10,22 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 )
 
-type wordFilterUsecase struct {
+type WordFilterUsecase struct {
 	repository    WordFilterRepository
 	wordFilters   *WordFilters
-	notifications domain.NotificationUsecase
+	notifications notification.NotificationUsecase
 }
 
-func NewWordFilterUsecase(repository WordFilterRepository, notifications domain.NotificationUsecase) WordFilterUsecase {
-	return &wordFilterUsecase{repository: repository, wordFilters: NewWordFilters(), notifications: notifications}
+func NewWordFilterUsecase(repository WordFilterRepository, notifications notification.NotificationUsecase) *WordFilterUsecase {
+	return &WordFilterUsecase{repository: repository, wordFilters: NewWordFilters(), notifications: notifications}
 }
 
-func (w *wordFilterUsecase) Import(ctx context.Context) error {
+func (w *WordFilterUsecase) Import(ctx context.Context) error {
 	filters, errFilters := w.repository.GetFilters(ctx)
 	if errFilters != nil && !errors.Is(errFilters, database.ErrNoResult) {
 		return errFilters
@@ -34,11 +36,11 @@ func (w *wordFilterUsecase) Import(ctx context.Context) error {
 	return nil
 }
 
-func (w *wordFilterUsecase) Check(query string) []Filter {
+func (w *WordFilterUsecase) Check(query string) []Filter {
 	return w.wordFilters.Check(query)
 }
 
-func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, filterID int64, filter Filter) (Filter, error) {
+func (w *WordFilterUsecase) Edit(ctx context.Context, user person.PersonInfo, filterID int64, filter Filter) (Filter, error) {
 	existingFilter, errGet := w.repository.GetFilterByID(ctx, filterID)
 	if errGet != nil {
 		return Filter{}, errGet
@@ -65,7 +67,7 @@ func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, fi
 	return existingFilter, nil
 }
 
-func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, opts Filter) (Filter, error) {
+func (w *WordFilterUsecase) Create(ctx context.Context, user person.PersonInfo, opts Filter) (Filter, error) {
 	if opts.Pattern == "" {
 		return Filter{}, domain.ErrInvalidPattern
 	}
@@ -112,14 +114,14 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 
 	w.wordFilters.Add(newFilter)
 
-	w.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelWordFilterLog, discord.FilterAddMessage(newFilter)))
+	w.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelWordFilterLog, discord.FilterAddMessage(newFilter)))
 
 	slog.Info("Created filter", slog.Int64("filter_id", newFilter.FilterID))
 
 	return newFilter, nil
 }
 
-func (w *wordFilterUsecase) DropFilter(ctx context.Context, filterID int64) error {
+func (w *WordFilterUsecase) DropFilter(ctx context.Context, filterID int64) error {
 	filter, errGet := w.GetFilterByID(ctx, filterID)
 	if errGet != nil {
 		return errGet
@@ -138,14 +140,14 @@ func (w *wordFilterUsecase) DropFilter(ctx context.Context, filterID int64) erro
 	return nil
 }
 
-func (w *wordFilterUsecase) GetFilterByID(ctx context.Context, filterID int64) (Filter, error) {
+func (w *WordFilterUsecase) GetFilterByID(ctx context.Context, filterID int64) (Filter, error) {
 	return w.repository.GetFilterByID(ctx, filterID)
 }
 
-func (w *wordFilterUsecase) GetFilters(ctx context.Context) ([]Filter, error) {
+func (w *WordFilterUsecase) GetFilters(ctx context.Context) ([]Filter, error) {
 	return w.repository.GetFilters(ctx)
 }
 
-func (w *wordFilterUsecase) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
+func (w *WordFilterUsecase) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
 	return w.repository.AddMessageFilterMatch(ctx, messageID, filterID)
 }

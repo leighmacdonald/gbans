@@ -5,36 +5,38 @@ import (
 	"log/slog"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
-type forums struct {
+type ForumUsecase struct {
 	repo          ForumRepository
 	tracker       *Tracker
-	notifications domain.NotificationUsecase
+	notifications notification.NotificationUsecase
 }
 
-func NewForumUsecase(repository ForumRepository, notifications domain.NotificationUsecase) ForumUsecase {
-	return &forums{repo: repository, notifications: notifications, tracker: NewTracker()}
+func NewForumUsecase(repository ForumRepository, notifications notification.NotificationUsecase) *ForumUsecase {
+	return &ForumUsecase{repo: repository, notifications: notifications, tracker: NewTracker()}
 }
 
-func (f forums) Start(ctx context.Context) {
+func (f ForumUsecase) Start(ctx context.Context) {
 	f.tracker.Start(ctx)
 }
 
-func (f forums) Touch(up domain.UserProfile) {
+func (f ForumUsecase) Touch(up person.UserProfile) {
 	f.tracker.Touch(up)
 }
 
-func (f forums) Current() []ForumActivity {
+func (f ForumUsecase) Current() []ForumActivity {
 	return f.tracker.Current()
 }
 
-func (f forums) ForumCategories(ctx context.Context) ([]ForumCategory, error) {
+func (f ForumUsecase) ForumCategories(ctx context.Context) ([]ForumCategory, error) {
 	return f.repo.ForumCategories(ctx)
 }
 
-func (f forums) ForumCategorySave(ctx context.Context, category *ForumCategory) error {
+func (f ForumUsecase) ForumCategorySave(ctx context.Context, category *ForumCategory) error {
 	isNew := category.ForumCategoryID == 0
 
 	if err := f.repo.ForumCategorySave(ctx, category); err != nil {
@@ -47,38 +49,38 @@ func (f forums) ForumCategorySave(ctx context.Context, category *ForumCategory) 
 		slog.Info("Forum category updated", slog.String("title", category.Title))
 	}
 
-	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelForumLog, discord.ForumCategorySave(*category)))
+	f.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelForumLog, discord.ForumCategorySave(*category)))
 
 	return nil
 }
 
-func (f forums) ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error {
+func (f ForumUsecase) ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error {
 	return f.repo.ForumCategory(ctx, categoryID, category)
 }
 
-func (f forums) ForumCategoryDelete(ctx context.Context, category ForumCategory) error {
+func (f ForumUsecase) ForumCategoryDelete(ctx context.Context, category ForumCategory) error {
 	if err := f.repo.ForumCategoryDelete(ctx, category.ForumCategoryID); err != nil {
 		return err
 	}
 
-	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelForumLog, discord.ForumCategoryDelete(category)))
+	f.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelForumLog, discord.ForumCategoryDelete(category)))
 	slog.Info("Forum category deleted", slog.String("category", category.Title), slog.Int("forum_category_id", category.ForumCategoryID))
 
 	return nil
 }
 
-func (f forums) Forums(ctx context.Context) ([]Forum, error) {
+func (f ForumUsecase) Forums(ctx context.Context) ([]Forum, error) {
 	return f.repo.Forums(ctx)
 }
 
-func (f forums) ForumSave(ctx context.Context, forum *Forum) error {
+func (f ForumUsecase) ForumSave(ctx context.Context, forum *Forum) error {
 	isNew := forum.ForumID == 0
 
 	if err := f.repo.ForumSave(ctx, forum); err != nil {
 		return err
 	}
 
-	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelForumLog, discord.ForumSaved(*forum)))
+	f.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelForumLog, discord.ForumSaved(*forum)))
 
 	if isNew {
 		slog.Info("New forum created", slog.String("title", forum.Title))
@@ -89,11 +91,11 @@ func (f forums) ForumSave(ctx context.Context, forum *Forum) error {
 	return nil
 }
 
-func (f forums) Forum(ctx context.Context, forumID int, forum *Forum) error {
+func (f ForumUsecase) Forum(ctx context.Context, forumID int, forum *Forum) error {
 	return f.repo.Forum(ctx, forumID, forum)
 }
 
-func (f forums) ForumDelete(ctx context.Context, forumID int) error {
+func (f ForumUsecase) ForumDelete(ctx context.Context, forumID int) error {
 	if err := f.repo.ForumDelete(ctx, forumID); err != nil {
 		return err
 	}
@@ -103,7 +105,7 @@ func (f forums) ForumDelete(ctx context.Context, forumID int) error {
 	return nil
 }
 
-func (f forums) ForumThreadSave(ctx context.Context, thread *ForumThread) error {
+func (f ForumUsecase) ForumThreadSave(ctx context.Context, thread *ForumThread) error {
 	isNew := thread.ForumThreadID == 0
 
 	if err := f.repo.ForumThreadSave(ctx, thread); err != nil {
@@ -119,15 +121,15 @@ func (f forums) ForumThreadSave(ctx context.Context, thread *ForumThread) error 
 	return nil
 }
 
-func (f forums) ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error {
+func (f ForumUsecase) ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error {
 	return f.repo.ForumThread(ctx, forumThreadID, thread)
 }
 
-func (f forums) ForumThreadIncrView(ctx context.Context, forumThreadID int64) error {
+func (f ForumUsecase) ForumThreadIncrView(ctx context.Context, forumThreadID int64) error {
 	return f.repo.ForumThreadIncrView(ctx, forumThreadID)
 }
 
-func (f forums) ForumThreadDelete(ctx context.Context, forumThreadID int64) error {
+func (f ForumUsecase) ForumThreadDelete(ctx context.Context, forumThreadID int64) error {
 	if err := f.repo.ForumThreadDelete(ctx, forumThreadID); err != nil {
 		return err
 	}
@@ -137,22 +139,22 @@ func (f forums) ForumThreadDelete(ctx context.Context, forumThreadID int64) erro
 	return nil
 }
 
-func (f forums) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, error) {
+func (f ForumUsecase) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, error) {
 	return f.repo.ForumThreads(ctx, filter)
 }
 
-func (f forums) ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error {
+func (f ForumUsecase) ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error {
 	return f.repo.ForumIncrMessageCount(ctx, forumID, incr)
 }
 
-func (f forums) ForumMessageSave(ctx context.Context, message *ForumMessage) error {
+func (f ForumUsecase) ForumMessageSave(ctx context.Context, message *ForumMessage) error {
 	isNew := message.ForumMessageID == 0
 
 	if err := f.repo.ForumMessageSave(ctx, message); err != nil {
 		return err
 	}
 
-	f.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelForumLog, discord.ForumMessageSaved(*message)))
+	f.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelForumLog, discord.ForumMessageSaved(*message)))
 
 	if isNew {
 		slog.Info("Created new forum message", slog.Int64("forum_thread_id", message.ForumThreadID))
@@ -163,19 +165,19 @@ func (f forums) ForumMessageSave(ctx context.Context, message *ForumMessage) err
 	return nil
 }
 
-func (f forums) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel domain.Privilege) ([]ForumMessage, error) {
+func (f ForumUsecase) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel permission.Privilege) ([]ForumMessage, error) {
 	return f.repo.ForumRecentActivity(ctx, limit, permissionLevel)
 }
 
-func (f forums) ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error {
+func (f ForumUsecase) ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error {
 	return f.repo.ForumMessage(ctx, messageID, forumMessage)
 }
 
-func (f forums) ForumMessages(ctx context.Context, filters ThreadMessagesQuery) ([]ForumMessage, error) {
+func (f ForumUsecase) ForumMessages(ctx context.Context, filters ThreadMessagesQuery) ([]ForumMessage, error) {
 	return f.repo.ForumMessages(ctx, filters)
 }
 
-func (f forums) ForumMessageDelete(ctx context.Context, messageID int64) error {
+func (f ForumUsecase) ForumMessageDelete(ctx context.Context, messageID int64) error {
 	if err := f.repo.ForumMessageDelete(ctx, messageID); err != nil {
 		return err
 	}
@@ -185,10 +187,10 @@ func (f forums) ForumMessageDelete(ctx context.Context, messageID int64) error {
 	return nil
 }
 
-func (f forums) ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error {
+func (f ForumUsecase) ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error {
 	return f.repo.ForumMessageVoteApply(ctx, messageVote)
 }
 
-func (f forums) ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error {
+func (f ForumUsecase) ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error {
 	return f.repo.ForumMessageVoteByID(ctx, messageVoteID, messageVote)
 }

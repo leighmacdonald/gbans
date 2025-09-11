@@ -12,7 +12,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewAntiCheatRepository(database database.Database) AntiCheatRepository {
+func NewAntiCheatRepository(database database.Database) *anticheatRepository {
 	return &anticheatRepository{db: database}
 }
 

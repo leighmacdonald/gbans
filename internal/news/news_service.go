@@ -10,14 +10,16 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type newsHandler struct {
 	news          NewsUsecase
-	notifications domain.NotificationUsecase
+	notifications notification.NotificationUsecase
 }
 
-func NewHandler(engine *gin.Engine, news NewsUsecase, notifications domain.NotificationUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, news NewsUsecase, notifications notification.NotificationUsecase, auth httphelper.Authenticator) {
 	handler := newsHandler{news: news, notifications: notifications}
 
 	engine.POST("/api/news_latest", handler.onAPIGetNewsLatest())
@@ -25,7 +27,7 @@ func NewHandler(engine *gin.Engine, news NewsUsecase, notifications domain.Notif
 	// editor
 	editorGrp := engine.Group("/")
 	{
-		editor := editorGrp.Use(auth.Middleware(domain.PEditor))
+		editor := editorGrp.Use(auth.Middleware(permission.PEditor))
 		editor.POST("/api/news", handler.onAPIPostNewsCreate())
 		editor.POST("/api/news/:news_id", handler.onAPIPostNewsUpdate())
 		editor.DELETE("/api/news/:news_id", handler.onAPIPostNewsDelete())
@@ -79,7 +81,7 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, entry)
 
-		h.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
 			discord.ChannelModLog,
 			discord.NewNewsMessage(req.BodyMD, req.Title)))
 	}
@@ -123,7 +125,7 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusAccepted, entry)
 
-		h.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
 			discord.ChannelModLog,
 			discord.EditNewsMessages(entry.Title, entry.BodyMD)))
 	}

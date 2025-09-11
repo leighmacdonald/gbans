@@ -1,34 +1,36 @@
 package wiki
 
 import (
-	"context"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/parser"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
+	"github.com/microcosm-cc/bluemonday"
 )
 
-type WikiRepository interface {
-	GetWikiPageBySlug(ctx context.Context, slug string) (Page, error)
-	DeleteWikiPageBySlug(ctx context.Context, slug string) error
-	SaveWikiPage(ctx context.Context, page *Page) error
+func Render(page Page) []byte {
+	unsafeHTML := markdown.ToHTML([]byte(page.BodyMD), NewParser(), nil)
+
+	return bluemonday.UGCPolicy().SanitizeBytes(unsafeHTML)
 }
 
-type WikiUsecase interface {
-	GetWikiPageBySlug(ctx context.Context, user domain.PersonInfo, slug string) (Page, error)
-	DeleteWikiPageBySlug(ctx context.Context, slug string) error
-	SaveWikiPage(ctx context.Context, user domain.PersonInfo, slug string, body string, level domain.Privilege) (Page, error)
+func NewParser() *parser.Parser {
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.Tables
+
+	return parser.NewWithExtensions(extensions)
 }
 
 // RootSlug is the top-most (index) page of the wiki.
 const RootSlug = "home"
 
 type Page struct {
-	Slug            string           `json:"slug"`
-	BodyMD          string           `json:"body_md"`
-	Revision        int              `json:"revision"`
-	PermissionLevel domain.Privilege `json:"permission_level"`
-	CreatedOn       time.Time        `json:"created_on"`
-	UpdatedOn       time.Time        `json:"updated_on"`
+	Slug            string               `json:"slug"`
+	BodyMD          string               `json:"body_md"`
+	Revision        int                  `json:"revision"`
+	PermissionLevel permission.Privilege `json:"permission_level"`
+	CreatedOn       time.Time            `json:"created_on"`
+	UpdatedOn       time.Time            `json:"updated_on"`
 }
 
 func (page *Page) NewRevision() Page {
@@ -48,7 +50,7 @@ func NewPage(slug string, body string) Page {
 		Slug:            slug,
 		BodyMD:          body,
 		Revision:        0,
-		PermissionLevel: domain.PGuest,
+		PermissionLevel: permission.PGuest,
 		CreatedOn:       now,
 		UpdatedOn:       now,
 	}

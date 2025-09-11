@@ -11,8 +11,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/mitchellh/go-homedir"
 	"github.com/viant/afs/scp"
@@ -31,20 +32,20 @@ var (
 )
 
 // OnClientConnect is called once a successful ssh connection is established.
-type OnClientConnect func(ctx context.Context, client storage.Storager, server []domain.Server) error
+type OnClientConnect func(ctx context.Context, client storage.Storager, server []servers.Server) error
 
 // SCPExecer can be used to execute scp (ssh) operations on a remote host. It connects to all configured active
 // servers and will execute the provided OnClientConnect function once connected. It's up to the caller
 // to implement this function and handle any required functionality within it. Caller does not need to close the
 // connection.
 type SCPExecer struct {
-	servers   domain.ServersUsecase
+	servers   servers.ServersUsecase
 	database  database.Database
-	config    domain.ConfigUsecase
+	config    *config.ConfigUsecase
 	onConnect OnClientConnect
 }
 
-func NewSCPExecer(database database.Database, config domain.ConfigUsecase, servers domain.ServersUsecase, onConnect OnClientConnect) SCPExecer {
+func NewSCPExecer(database database.Database, config *config.ConfigUsecase, servers servers.ServersUsecase, onConnect OnClientConnect) SCPExecer {
 	return SCPExecer{
 		database:  database,
 		config:    config,
@@ -54,20 +55,20 @@ func NewSCPExecer(database database.Database, config domain.ConfigUsecase, serve
 }
 
 func (f SCPExecer) Update(ctx context.Context) error {
-	servers, _, errServers := f.servers.Servers(ctx, domain.ServerQueryFilter{IncludeDisabled: false})
+	fetchedServers, _, errServers := f.servers.Servers(ctx, servers.ServerQueryFilter{IncludeDisabled: false})
 	if errServers != nil {
 		return errServers
 	}
 
 	// Since multiple instances can exist on a single host we map common servers to a single host address and
 	// perform all operations using a single connection to the host.
-	mappedServers := map[string][]domain.Server{}
+	mappedServers := map[string][]servers.Server{}
 
-	for _, server := range servers {
+	for _, server := range fetchedServers {
 		actualAddr := server.AddrInternalOrDefault()
 		_, ok := mappedServers[actualAddr]
 		if !ok {
-			mappedServers[actualAddr] = []domain.Server{}
+			mappedServers[actualAddr] = []servers.Server{}
 		}
 
 		mappedServers[actualAddr] = append(mappedServers[actualAddr], server)
@@ -88,7 +89,7 @@ func (f SCPExecer) Update(ctx context.Context) error {
 	return nil
 }
 
-func (f SCPExecer) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []domain.Server, sshConfig domain.ConfigSSH) {
+func (f SCPExecer) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []servers.Server, sshConfig config.ConfigSSH) {
 	defer waitGroup.Done()
 
 	scpClient, errClient := f.configAndDialClient(ctx, sshConfig, net.JoinHostPort(addr, strconv.Itoa(sshConfig.Port)))
@@ -110,7 +111,7 @@ func (f SCPExecer) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, 
 }
 
 // configAndDialClient connects to the remote server with the config. client.Close must be called.
-func (f SCPExecer) configAndDialClient(ctx context.Context, sshConfig domain.ConfigSSH, address string) (storage.Storager, error) {
+func (f SCPExecer) configAndDialClient(ctx context.Context, sshConfig config.ConfigSSH, address string) (storage.Storager, error) {
 	clientConfig, errConfig := f.createConfig(ctx, sshConfig)
 	if errConfig != nil {
 		return nil, errConfig
@@ -124,7 +125,7 @@ func (f SCPExecer) configAndDialClient(ctx context.Context, sshConfig domain.Con
 	return client, nil
 }
 
-func (f SCPExecer) createConfig(ctx context.Context, config domain.ConfigSSH) (*ssh.ClientConfig, error) {
+func (f SCPExecer) createConfig(ctx context.Context, config config.ConfigSSH) (*ssh.ClientConfig, error) {
 	if config.Username == "" {
 		return nil, errUsername
 	}
@@ -155,7 +156,7 @@ func (f SCPExecer) createConfig(ctx context.Context, config domain.ConfigSSH) (*
 	return sshClientConfig, nil
 }
 
-func (f SCPExecer) createSignerFromKey(config domain.ConfigSSH) (ssh.Signer, error) {
+func (f SCPExecer) createSignerFromKey(config config.ConfigSSH) (ssh.Signer, error) {
 	fullPath, errPath := homedir.Expand(config.PrivateKeyPath)
 	if errPath != nil {
 		return nil, errors.Join(errPath, errHomeDir)

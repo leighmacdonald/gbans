@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type messagesRequest struct {
@@ -15,10 +16,10 @@ type messagesRequest struct {
 }
 
 type notificationHandler struct {
-	notifications domain.NotificationUsecase
+	notifications NotificationUsecase
 }
 
-func NewHandler(engine *gin.Engine, notifications domain.NotificationUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, notifications NotificationUsecase, auth httphelper.Authenticator) {
 	handler := notificationHandler{
 		notifications: notifications,
 	}
@@ -26,7 +27,7 @@ func NewHandler(engine *gin.Engine, notifications domain.NotificationUsecase, au
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.Middleware(domain.PUser))
+		authed := authedGrp.Use(auth.Middleware(permission.PUser))
 		authed.GET("/api/notifications", handler.onNotifications())
 		authed.POST("/api/notifications/all", handler.onMarkAllRead())
 		authed.POST("/api/notifications", handler.onMarkRead())
@@ -38,7 +39,7 @@ func NewHandler(engine *gin.Engine, notifications domain.NotificationUsecase, au
 func (h notificationHandler) onMarkAllRead() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if err := h.notifications.MarkAllRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
@@ -55,14 +56,14 @@ func (h notificationHandler) onMarkRead() gin.HandlerFunc {
 		}
 
 		if len(request.MessageIDs) == 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 				"No message_ids value provided"))
 
 			return
 		}
 
 		if err := h.notifications.MarkMessagesRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
@@ -74,7 +75,7 @@ func (h notificationHandler) onMarkRead() gin.HandlerFunc {
 func (h notificationHandler) onDeleteAll() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if err := h.notifications.DeleteAll(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
@@ -91,14 +92,14 @@ func (h notificationHandler) onDelete() gin.HandlerFunc {
 		}
 
 		if len(request.MessageIDs) == 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 				"message_ids cannot be empty."))
 
 			return
 		}
 
 		if err := h.notifications.DeleteMessages(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
@@ -117,7 +118,7 @@ func (h notificationHandler) onNotifications() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}

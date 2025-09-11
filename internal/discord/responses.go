@@ -9,9 +9,19 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/forum"
+	"github.com/leighmacdonald/gbans/internal/match"
+	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -41,7 +51,7 @@ func defaultTable(writer io.Writer) *tablewriter.Table {
 	return tbl
 }
 
-func makeClassStatsTable(classes domain.PlayerClassStatsCollection) string {
+func makeClassStatsTable(classes match.PlayerClassStatsCollection) string {
 	writer := &strings.Builder{}
 	table := defaultTable(writer)
 	table.SetHeader([]string{"Class", "K", "A", "D", "KD", "KAD", "DA", "DT", "Dom", "Time"})
@@ -89,7 +99,7 @@ func makeClassStatsTable(classes domain.PlayerClassStatsCollection) string {
 	return strings.Trim(writer.String(), "\n")
 }
 
-func makeWeaponStatsTable(weapons []domain.PlayerWeaponStats) string {
+func makeWeaponStatsTable(weapons []match.PlayerWeaponStats) string {
 	writer := &strings.Builder{}
 	table := defaultTable(writer)
 	table.SetHeader([]string{"Weapon", "K", "Dmg", "Sh", "Hi", "Acc", "B", "H", "A"})
@@ -121,7 +131,7 @@ func makeWeaponStatsTable(weapons []domain.PlayerWeaponStats) string {
 	return writer.String()
 }
 
-func makeKillstreakStatsTable(killstreaks []domain.PlayerKillstreakStats) string {
+func makeKillstreakStatsTable(killstreaks []match.PlayerKillstreakStats) string {
 	writer := &strings.Builder{}
 	table := defaultTable(writer)
 	table.SetHeader([]string{"Ks", "Class", "Dur", "Date"})
@@ -148,7 +158,7 @@ func makeKillstreakStatsTable(killstreaks []domain.PlayerKillstreakStats) string
 	return writer.String()
 }
 
-func makeMedicStatsTable(stats []domain.PlayerMedicStats) string {
+func makeMedicStatsTable(stats []match.PlayerMedicStats) string {
 	writer := &strings.Builder{}
 	table := defaultTable(writer)
 	table.SetHeader([]string{"Healing", "Drop", "NearFull", "AvgLen", "U", "K", "V", "Q"})
@@ -186,14 +196,14 @@ func ErrorMessage(command string, err error) *discordgo.MessageEmbed {
 		SetDescription(err.Error()).MessageEmbed
 }
 
-func KickPlayerEmbed(target domain.PersonInfo) *discordgo.MessageEmbed {
+func KickPlayerEmbed(target person.PersonInfo) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User Kicked Successfully")
 	msgEmbed.Embed().SetColor(ColourSuccess)
 
 	return msgEmbed.AddTargetPerson(target).Embed().MessageEmbed
 }
 
-func KickPlayerOnConnectEmbed(steamID steamid.SteamID, name string, target domain.PersonInfo, banSource domain.BanSource) *discordgo.MessageEmbed {
+func KickPlayerOnConnectEmbed(steamID steamid.SteamID, name string, target person.PersonInfo, banSource domain.BanSource) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User Kicked Successfully")
 	msgEmbed.Embed().SetColor(ColourWarn)
 	msgEmbed.AddTargetPerson(target)
@@ -204,14 +214,14 @@ func KickPlayerOnConnectEmbed(steamID steamid.SteamID, name string, target domai
 	return msgEmbed.AddFieldsSteamID(steamID).Embed().MessageEmbed
 }
 
-func SilenceEmbed(target domain.PersonInfo) *discordgo.MessageEmbed {
+func SilenceEmbed(target person.PersonInfo) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User Silenced Successfully")
 	msgEmbed.Embed().SetColor(ColourSuccess)
 
 	return msgEmbed.AddTargetPerson(target).Embed().MessageEmbed
 }
 
-func BanExpiresMessage(inBan ban.Ban, person domain.PersonInfo, banURL string) *discordgo.MessageEmbed {
+func BanExpiresMessage(inBan ban.Ban, person person.PersonInfo, banURL string) *discordgo.MessageEmbed {
 	banType := "Ban"
 	if inBan.BanType == ban.NoComm {
 		banType = "Mute"
@@ -256,7 +266,7 @@ func BanSteamResponse(banSteam ban.BannedPerson) *discordgo.MessageEmbed {
 
 	msgEmbed.AddFieldsSteamID(banSteam.TargetID)
 
-	msgEmbed.Embed().SetAuthor(banSteam.SourcePersonaname, domain.NewAvatarLinks(banSteam.SourceAvatarhash).Full(), "https://steamcommunity.com/profiles/"+banSteam.SourceID.String())
+	msgEmbed.Embed().SetAuthor(banSteam.SourcePersonaname, person.NewAvatarLinks(banSteam.SourceAvatarhash).Full(), "https://steamcommunity.com/profiles/"+banSteam.SourceID.String())
 
 	expIn := "Permanent"
 	expAt := "Permanent"
@@ -280,7 +290,7 @@ func BanSteamResponse(banSteam ban.BannedPerson) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().MessageEmbed
 }
 
-func DeleteReportMessage(existing domain.ReportMessage, user domain.PersonInfo, userURL string) *discordgo.MessageEmbed {
+func DeleteReportMessage(existing ban.ReportMessage, user person.PersonInfo, userURL string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User report message deleted")
 	msgEmbed.
 		Embed().
@@ -290,7 +300,7 @@ func DeleteReportMessage(existing domain.ReportMessage, user domain.PersonInfo, 
 	return msgEmbed.AddAuthorPersonInfo(user, userURL).Embed().Truncate().MessageEmbed
 }
 
-func NewInGameReportResponse(report domain.ReportWithAuthor, reportURL string, author domain.PersonInfo, authorURL string, _ string) *discordgo.MessageEmbed {
+func NewInGameReportResponse(report ban.ReportWithAuthor, reportURL string, author person.PersonInfo, authorURL string, _ string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("New User Report Created")
 	msgEmbed.
 		Embed().
@@ -318,7 +328,7 @@ func NewInGameReportResponse(report domain.ReportWithAuthor, reportURL string, a
 	return msgEmbed.AddFieldsSteamID(report.TargetID).Embed().Truncate().MessageEmbed
 }
 
-func NewReportMessageResponse(message string, link string, author domain.PersonInfo, authorURL string) *discordgo.MessageEmbed {
+func NewReportMessageResponse(message string, link string, author person.PersonInfo, authorURL string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("New report message posted")
 	msgEmbed.
 		Embed().
@@ -329,7 +339,7 @@ func NewReportMessageResponse(message string, link string, author domain.PersonI
 	return msgEmbed.AddAuthorPersonInfo(author, authorURL).Embed().Truncate().MessageEmbed
 }
 
-func EditReportMessageResponse(body string, oldBody string, link string, author domain.PersonInfo, authorURL string) *discordgo.MessageEmbed {
+func EditReportMessageResponse(body string, oldBody string, link string, author person.PersonInfo, authorURL string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("New report message edited")
 	msgEmbed.
 		Embed().
@@ -341,7 +351,7 @@ func EditReportMessageResponse(body string, oldBody string, link string, author 
 	return msgEmbed.AddAuthorPersonInfo(author, authorURL).Embed().Truncate().MessageEmbed
 }
 
-func NewAppealMessage(msg string, link string, author domain.PersonInfo, authorURL string) *discordgo.MessageEmbed {
+func NewAppealMessage(msg string, link string, author person.PersonInfo, authorURL string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("New ban appeal message posted")
 	msgEmbed.
 		Embed().
@@ -353,7 +363,7 @@ func NewAppealMessage(msg string, link string, author domain.PersonInfo, authorU
 	return msgEmbed.AddAuthorPersonInfo(author, authorURL).Embed().Truncate().MessageEmbed
 }
 
-func EditAppealMessage(existing domain.BanAppealMessage, body string, author domain.PersonInfo, authorURL string) *discordgo.MessageEmbed {
+func EditAppealMessage(existing ban.BanAppealMessage, body string, author person.PersonInfo, authorURL string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("Ban appeal message edited")
 	msgEmbed.
 		Embed().
@@ -367,7 +377,7 @@ func EditAppealMessage(existing domain.BanAppealMessage, body string, author dom
 		MessageEmbed
 }
 
-func DeleteAppealMessage(existing *domain.BanAppealMessage, user domain.PersonInfo, userURL string) *discordgo.MessageEmbed {
+func DeleteAppealMessage(existing *ban.BanAppealMessage, user person.PersonInfo, userURL string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User appeal message deleted")
 	msgEmbed.
 		Embed().
@@ -399,7 +409,7 @@ func EditBanAppealStatusMessage() *discordgo.MessageEmbed {
 	return NewEmbed("Ban state updates").Embed().MessageEmbed
 }
 
-func PingModMessage(author domain.PersonInfo, authorURL string, reason string, server domain.Server, roleID string, connect string) *discordgo.MessageEmbed {
+func PingModMessage(author person.PersonInfo, authorURL string, reason string, server servers.Server, roleID string, connect string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("New User In-Game Report")
 	msgEmbed.
 		Embed().
@@ -415,7 +425,7 @@ func PingModMessage(author domain.PersonInfo, authorURL string, reason string, s
 	return msgEmbed.Embed().MessageEmbed
 }
 
-func ReportStatsMessage(meta domain.ReportMeta, url string) *discordgo.MessageEmbed {
+func ReportStatsMessage(meta ban.ReportMeta, url string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User Report Stats")
 	msgEmbed.
 		Embed().
@@ -441,7 +451,7 @@ func ReportStatsMessage(meta domain.ReportMeta, url string) *discordgo.MessageEm
 		MessageEmbed
 }
 
-func WarningMessage(newWarning domain.NewUserWarning, banSteam ban.BannedPerson) *discordgo.MessageEmbed {
+func WarningMessage(newWarning chat.NewUserWarning, banSteam ban.BannedPerson) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("Language Warning")
 	msgEmbed.Embed().
 		SetDescription(newWarning.UserWarning.Message).
@@ -473,19 +483,19 @@ func WarningMessage(newWarning domain.NewUserWarning, banSteam ban.BannedPerson)
 		MessageEmbed
 }
 
-func CheckMessage(player domain.Person, ban domain.BannedPerson, banURL string, author domain.Person,
-	oldBans []domain.BannedPerson, location domain.NetworkLocation,
-	proxy domain.NetworkProxy, logData thirdparty.LogsTFPlayerSummary,
+func CheckMessage(player person.Person, banPerson ban.BannedPerson, banURL string, author person.Person,
+	oldBans []ban.BannedPerson, location network.NetworkLocation,
+	proxy network.NetworkProxy, logData thirdparty.LogsTFPlayerSummary,
 ) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed()
 
 	title := player.PersonaName
 
-	if ban.BanID > 0 {
-		switch ban.BanType {
-		case domain.Banned:
+	if banPerson.BanID > 0 {
+		switch banPerson.BanType {
+		case ban.Banned:
 			title += " (BANNED)"
-		case domain.NoComm:
+		case ban.NoComm:
 			title += " (MUTED)"
 		}
 	}
@@ -521,7 +531,7 @@ func CheckMessage(player domain.Person, ban domain.BannedPerson, banURL string, 
 		numMutes, numBans := 0, 0
 
 		for _, oldBan := range oldBans {
-			if oldBan.BanType == domain.Banned {
+			if oldBan.BanType == ban.Banned {
 				numBans++
 			} else {
 				numMutes++
@@ -542,10 +552,10 @@ func CheckMessage(player domain.Person, ban domain.BannedPerson, banURL string, 
 		expiry    time.Time
 	)
 
-	if ban.BanID > 0 {
-		banned = ban.BanType == domain.Banned
-		muted = ban.BanType == domain.NoComm
-		reason := ban.ReasonText
+	if banPerson.BanID > 0 {
+		banned = banPerson.BanType == ban.Banned
+		muted = banPerson.BanType == ban.NoComm
+		reason := banPerson.ReasonText
 
 		if len(reason) == 0 {
 			// in case authorProfile ban without authorProfile reason ever makes its way here, we make sure
@@ -553,12 +563,12 @@ func CheckMessage(player domain.Person, ban domain.BannedPerson, banURL string, 
 			reason = "none"
 		}
 
-		expiry = ban.ValidUntil
-		createdAt = ban.CreatedOn.Format(time.RFC3339)
+		expiry = banPerson.ValidUntil
+		createdAt = banPerson.CreatedOn.Format(time.RFC3339)
 
 		msgEmbed.Embed().SetURL(banURL)
 		msgEmbed.Embed().AddField("Reason", reason)
-		msgEmbed.Embed().AddField("Created", datetime.FmtTimeShort(ban.CreatedOn)).MakeFieldInline()
+		msgEmbed.Embed().AddField("Created", datetime.FmtTimeShort(banPerson.CreatedOn)).MakeFieldInline()
 
 		if time.Until(expiry) > time.Hour*24*365*5 {
 			msgEmbed.Embed().AddField("Expires", "Permanent").MakeFieldInline()
@@ -568,8 +578,8 @@ func CheckMessage(player domain.Person, ban domain.BannedPerson, banURL string, 
 
 		msgEmbed.Embed().AddField("Author", fmt.Sprintf("<@%s>", author.DiscordID)).MakeFieldInline()
 
-		if ban.Note != "" {
-			msgEmbed.Embed().AddField("Mod Note", ban.Note).MakeFieldInline()
+		if banPerson.Note != "" {
+			msgEmbed.Embed().AddField("Mod Note", banPerson.Note).MakeFieldInline()
 		}
 
 		msgEmbed.AddAuthorPersonInfo(author, "")
@@ -637,7 +647,7 @@ func CheckMessage(player domain.Person, ban domain.BannedPerson, banURL string, 
 		Truncate().MessageEmbed
 }
 
-func HistoryMessage(person domain.PersonInfo) *discordgo.MessageEmbed {
+func HistoryMessage(person person.PersonInfo) *discordgo.MessageEmbed {
 	return NewEmbed("IP History of: " + person.GetName()).Embed().
 		SetDescription("IP history (20 max)").
 		Truncate().MessageEmbed
@@ -672,7 +682,7 @@ func HistoryMessage(person domain.PersonInfo) *discordgo.MessageEmbed {
 //	return msgEmbed.Embed().Truncate().MessageEmbed
 // }
 
-func UnbanMessage(cu domain.ConfigUsecase, person domain.PersonInfo) *discordgo.MessageEmbed {
+func UnbanMessage(cu *config.ConfigUsecase, person person.PersonInfo) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User Unbanned Successfully")
 	msgEmbed.Embed().
 		SetColor(ColourSuccess).
@@ -691,7 +701,7 @@ func UnbanASNMessage(asn int64) *discordgo.MessageEmbed {
 		Truncate().MessageEmbed
 }
 
-func KickMessage(players []domain.PlayerServerInfo) *discordgo.MessageEmbed {
+func KickMessage(players []servers.PlayerServerInfo) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("Users Kicked")
 	for _, player := range players {
 		msgEmbed.Embed().AddField("Name", player.Player.Name)
@@ -749,7 +759,7 @@ func mapRegion(region string) string {
 	}
 }
 
-func ServersMessage(currentStateRegion map[string][]domain.ServerState, serversURL string) *discordgo.MessageEmbed {
+func ServersMessage(currentStateRegion map[string][]state.ServerState, serversURL string) *discordgo.MessageEmbed {
 	var (
 		stats       = map[string]float64{}
 		used, total = 0, 0
@@ -828,7 +838,7 @@ func PlayersMessage(rows []string, maxPlayers int, serverName string) *discordgo
 	return msgEmbed.Embed().MessageEmbed
 }
 
-func FilterAddMessage(filter domain.Filter) *discordgo.MessageEmbed {
+func FilterAddMessage(filter chat.Filter) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("Filter Created Successfully").Embed().
 		SetColor(ColourSuccess).
 		AddField("pattern", filter.Pattern).
@@ -837,7 +847,7 @@ func FilterAddMessage(filter domain.Filter) *discordgo.MessageEmbed {
 	return msgEmbed.MessageEmbed
 }
 
-func FilterDelMessage(filter domain.Filter) *discordgo.MessageEmbed {
+func FilterDelMessage(filter chat.Filter) *discordgo.MessageEmbed {
 	return NewEmbed("Filter Deleted Successfully").
 		Embed().
 		SetColor(ColourSuccess).
@@ -845,7 +855,7 @@ func FilterDelMessage(filter domain.Filter) *discordgo.MessageEmbed {
 		Truncate().MessageEmbed
 }
 
-func FilterCheckMessage(matches []domain.Filter) *discordgo.MessageEmbed {
+func FilterCheckMessage(matches []chat.Filter) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed()
 	if len(matches) == 0 {
 		msgEmbed.Embed().SetTitle("No Matches Found")
@@ -862,7 +872,7 @@ func FilterCheckMessage(matches []domain.Filter) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func ACPlayerLogs(conf domain.ConfigUsecase, person domain.PersonInfo, entries []domain.AnticheatEntry) *discordgo.MessageEmbed {
+func ACPlayerLogs(conf *config.ConfigUsecase, person person.PersonInfo, entries []anticheat.AnticheatEntry) *discordgo.MessageEmbed {
 	sid := person.GetSteamID()
 	emb := NewEmbed()
 
@@ -916,8 +926,8 @@ func ACPlayerLogs(conf domain.ConfigUsecase, person domain.PersonInfo, entries [
 	return emb.Embed().MessageEmbed
 }
 
-func StatsPlayerMessage(person domain.PersonInfo, url string, classStats domain.PlayerClassStatsCollection,
-	medicStats []domain.PlayerMedicStats, weaponStats []domain.PlayerWeaponStats, killstreakStats []domain.PlayerKillstreakStats,
+func StatsPlayerMessage(person person.PersonInfo, url string, classStats match.PlayerClassStatsCollection,
+	medicStats []match.PlayerMedicStats, weaponStats []match.PlayerWeaponStats, killstreakStats []match.PlayerKillstreakStats,
 ) *discordgo.MessageEmbed {
 	emb := NewEmbed()
 	emb.Embed().
@@ -940,7 +950,7 @@ func LogsMessage(count int64, matches string) *discordgo.MessageEmbed {
 		SetDescription(matches).MessageEmbed
 }
 
-func FindMessage(found []domain.FoundPlayer) *discordgo.MessageEmbed {
+func FindMessage(found []FoundPlayer) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("Player(s) Found")
 	for _, info := range found {
 		msgEmbed.Embed().
@@ -953,7 +963,7 @@ func FindMessage(found []domain.FoundPlayer) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func MatchMessage(match domain.MatchResult, link string) *discordgo.MessageEmbed {
+func MatchMessage(match match.MatchResult, link string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed(strings.Join([]string{match.Title, match.MapName}, " | "))
 	msgEmbed.Embed().
 		SetColor(ColourSuccess).
@@ -1015,12 +1025,12 @@ func infString(f float64) string {
 
 const tableNameLen = 13
 
-func matchASCIITable(match domain.MatchResult) string {
+func matchASCIITable(matchResult match.MatchResult) string {
 	writerPlayers := &strings.Builder{}
 	tablePlayers := defaultTable(writerPlayers)
 	tablePlayers.SetHeader([]string{"T", "Name", "K", "A", "D", "KD", "KAD", "DA", "B/H/A/C"})
 
-	players := match.TopPlayers()
+	players := matchResult.TopPlayers()
 
 	for i, player := range players {
 		if i == tableNameLen {
@@ -1055,8 +1065,8 @@ func matchASCIITable(match domain.MatchResult) string {
 	tableHealers := defaultTable(writerPlayers)
 	tableHealers.SetHeader([]string{" ", "Name", "A", "D", "Heal", "H/M", "Dr", "U/K/Q/V", "AUL"})
 
-	for _, player := range match.Healers() {
-		if player.MedicStats.Healing < domain.MinMedicHealing {
+	for _, player := range matchResult.Healers() {
+		if player.MedicStats.Healing < match.MinMedicHealing {
 			continue
 		}
 
@@ -1088,7 +1098,7 @@ func matchASCIITable(match domain.MatchResult) string {
 
 	var topKs string
 
-	topKillstreaks := match.TopKillstreaks(3)
+	topKillstreaks := matchResult.TopKillstreaks(3)
 
 	if len(topKillstreaks) > 0 {
 		writerKillstreak := &strings.Builder{}
@@ -1129,7 +1139,7 @@ func matchASCIITable(match domain.MatchResult) string {
 	return resp
 }
 
-func MuteMessage(banSteam domain.BannedPerson) *discordgo.MessageEmbed {
+func MuteMessage(banSteam ban.BannedPerson) *discordgo.MessageEmbed {
 	embed := NewEmbed("Player muted successfully")
 	embed.AddFieldsSteamID(banSteam.TargetID)
 
@@ -1152,7 +1162,7 @@ func NotificationMessage(message string, link string) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func ReportStatusChangeMessage(report domain.ReportWithAuthor, fromStatus domain.ReportStatus, link string) *discordgo.MessageEmbed {
+func ReportStatusChangeMessage(report ban.ReportWithAuthor, fromStatus ban.ReportStatus, link string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed(
 		"Report status changed",
 		fmt.Sprintf("Changed from %s to %s", fromStatus.String(), report.ReportStatus.String()),
@@ -1166,9 +1176,9 @@ func ReportStatusChangeMessage(report domain.ReportWithAuthor, fromStatus domain
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func VoteResultMessage(conf domain.Config, result domain.VoteResult, source domain.Person, target domain.Person) *discordgo.MessageEmbed {
-	avatarSource := domain.NewAvatarLinks(source.AvatarHash)
-	avatarTarget := domain.NewAvatarLinks(target.AvatarHash)
+func VoteResultMessage(conf *config.Config, result votes.VoteResult, source person.Person, target person.Person) *discordgo.MessageEmbed {
+	avatarSource := person.NewAvatarLinks(source.AvatarHash)
+	avatarTarget := person.NewAvatarLinks(target.AvatarHash)
 
 	msgEmbed := NewEmbed("Vote Result")
 	if result.Success {
@@ -1199,7 +1209,7 @@ func VoteResultMessage(conf domain.Config, result domain.VoteResult, source doma
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func ForumCategorySave(category domain.ForumCategory) *discordgo.MessageEmbed {
+func ForumCategorySave(category forum.ForumCategory) *discordgo.MessageEmbed {
 	embed := NewEmbed("Forum Category Saved")
 	embed.Embed().AddField("Category", category.Title)
 	embed.Embed().AddField("ID", strconv.Itoa(category.ForumCategoryID))
@@ -1211,7 +1221,7 @@ func ForumCategorySave(category domain.ForumCategory) *discordgo.MessageEmbed {
 	return embed.Embed().MessageEmbed
 }
 
-func ForumCategoryDelete(category domain.ForumCategory) *discordgo.MessageEmbed {
+func ForumCategoryDelete(category forum.ForumCategory) *discordgo.MessageEmbed {
 	embed := NewEmbed("Forum Category Deleted")
 	embed.Embed().AddField("Category", category.Title)
 	embed.Embed().AddField("ID", strconv.Itoa(category.ForumCategoryID))
@@ -1223,14 +1233,14 @@ func ForumCategoryDelete(category domain.ForumCategory) *discordgo.MessageEmbed 
 	return embed.Embed().MessageEmbed
 }
 
-func ForumMessageSaved(message domain.ForumMessage) *discordgo.MessageEmbed {
+func ForumMessageSaved(message forum.ForumMessage) *discordgo.MessageEmbed {
 	embed := NewEmbed("Forum Message Created/Edited", message.BodyMD)
 	embed.Embed().
 		AddField("Category", message.Title)
 
 	if message.Personaname != "" {
 		embed.Embed().Author = &discordgo.MessageEmbedAuthor{
-			IconURL: domain.NewAvatarLinks(message.Avatarhash).Medium(),
+			IconURL: person.NewAvatarLinks(message.Avatarhash).Medium(),
 			Name:    message.Personaname,
 		}
 	}
@@ -1238,7 +1248,7 @@ func ForumMessageSaved(message domain.ForumMessage) *discordgo.MessageEmbed {
 	return embed.Embed().MessageEmbed
 }
 
-func ForumSaved(message domain.Forum) *discordgo.MessageEmbed {
+func ForumSaved(message forum.Forum) *discordgo.MessageEmbed {
 	embed := NewEmbed("Forum Created/Edited")
 	embed.Embed().
 		AddField("Forum", message.Title)
@@ -1250,7 +1260,7 @@ func ForumSaved(message domain.Forum) *discordgo.MessageEmbed {
 	return embed.Embed().MessageEmbed
 }
 
-func NewPlayerqueueChatStatus(author domain.UserProfile, target domain.UserProfile, status domain.ChatStatus, reason string) *discordgo.MessageEmbed {
+func NewPlayerqueueChatStatus(author person.UserProfile, target person.UserProfile, status person.ChatStatus, reason string) *discordgo.MessageEmbed {
 	colour := ColourError
 	switch status {
 	case domain.Readwrite:
@@ -1273,7 +1283,7 @@ func NewPlayerqueueChatStatus(author domain.UserProfile, target domain.UserProfi
 		MessageEmbed
 }
 
-func NewPlayerqueueMessage(author domain.UserProfile, msg string) *discordgo.MessageEmbed {
+func NewPlayerqueueMessage(author person.UserProfile, msg string) *discordgo.MessageEmbed {
 	return NewEmbed().
 		Embed().
 		SetColor(ColourInfo).
@@ -1281,7 +1291,7 @@ func NewPlayerqueueMessage(author domain.UserProfile, msg string) *discordgo.Mes
 		SetDescription(msg).MessageEmbed
 }
 
-func NewPlayerqueuePurge(author domain.UserProfile, target domain.UserProfile, message domain.ChatLog, count int) *discordgo.MessageEmbed {
+func NewPlayerqueuePurge(author person.UserProfile, target person.UserProfile, message domain.ChatLog, count int) *discordgo.MessageEmbed {
 	return NewEmbed().
 		Embed().
 		SetColor(ColourInfo).
@@ -1294,7 +1304,7 @@ func NewPlayerqueuePurge(author domain.UserProfile, target domain.UserProfile, m
 		MessageEmbed
 }
 
-func NewAnticheatTrigger(ban domain.BannedPerson, config domain.Config, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
+func NewAnticheatTrigger(ban ban.BannedPerson, config *config.Config, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
 	embed := NewEmbed("Player triggered anti-cheat response")
 	embed.Embed().
 		SetColor(ColourSuccess).

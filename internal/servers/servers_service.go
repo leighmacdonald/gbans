@@ -7,19 +7,21 @@ import (
 	"sort"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/maruel/natural"
 )
 
 type serversHandler struct {
-	servers domain.ServersUsecase
-	state   domain.StateUsecase
+	servers ServersUsecase
+	state   state.StateUsecase
 }
 
-func NewHandler(engine *gin.Engine, serversUsecase domain.ServersUsecase, stateUsecase domain.StateUsecase, ath domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, serversUsecase ServersUsecase, stateUsecase state.StateUsecase, ath auth.AuthUsecase) {
 	handler := &serversHandler{
 		servers: serversUsecase,
 		state:   stateUsecase,
@@ -31,7 +33,7 @@ func NewHandler(engine *gin.Engine, serversUsecase domain.ServersUsecase, stateU
 	// admin
 	srvGrp := engine.Group("/")
 	{
-		admin := srvGrp.Use(ath.Middleware(domain.PAdmin))
+		admin := srvGrp.Use(ath.Middleware(auth.PAdmin))
 		admin.POST("/api/servers", handler.onAPIPostServer())
 		admin.POST("/api/servers/:server_id", handler.onAPIPostServerUpdate())
 		admin.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())
@@ -41,16 +43,16 @@ func NewHandler(engine *gin.Engine, serversUsecase domain.ServersUsecase, stateU
 
 func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		fullServers, _, errServers := h.servers.Servers(ctx, domain.ServerQueryFilter{})
+		fullServers, _, errServers := h.servers.Servers(ctx, ServerQueryFilter{})
 		if errServers != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServers, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServers, httphelper.ErrInternal)))
 
 			return
 		}
 
-		var servers []domain.ServerInfoSafe
+		var servers []ServerInfoSafe
 		for _, server := range fullServers {
-			servers = append(servers, domain.ServerInfoSafe{
+			servers = append(servers, ServerInfoSafe{
 				ServerNameLong: server.Name,
 				ServerName:     server.ShortName,
 				ServerID:       server.ServerID,
@@ -64,7 +66,7 @@ func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 	type UserServers struct {
-		Servers []domain.SafeServer `json:"servers"`
+		Servers []SafeServer        `json:"servers"`
 		LatLong ip2location.LatLong `json:"lat_long"`
 	}
 
@@ -93,11 +95,11 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 			lon = httphelper.GetDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 			// region := ctx.GetHeader("cf-region-code")
 			curState = h.state.Current()
-			servers  []domain.SafeServer
+			servers  []SafeServer
 		)
 
 		for _, srv := range curState {
-			servers = append(servers, domain.SafeServer{
+			servers = append(servers, SafeServer{
 				Host:       srv.Host,
 				Port:       srv.Port,
 				IP:         srv.IP,
@@ -123,7 +125,7 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 		})
 
 		if servers == nil {
-			servers = []domain.SafeServer{}
+			servers = []SafeServer{}
 		}
 
 		ctx.JSON(http.StatusOK, UserServers{
@@ -138,14 +140,14 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.RequestServerUpdate
+		var req RequestServerUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		server, errSave := h.servers.Save(ctx, req)
 		if errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
 			return
 		}
@@ -161,7 +163,7 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.RequestServerUpdate
+		var req RequestServerUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -170,7 +172,7 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 
 		server, errSave := h.servers.Save(ctx, req)
 		if errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
 			return
 		}
@@ -181,19 +183,19 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		filter := domain.ServerQueryFilter{
+		filter := ServerQueryFilter{
 			IncludeDisabled: true,
 		}
 
 		servers, _, errServers := h.servers.Servers(ctx, filter)
 		if errServers != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServers, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServers, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if servers == nil {
-			servers = []domain.Server{}
+			servers = []Server{}
 		}
 
 		ctx.JSON(http.StatusOK, servers)
@@ -208,7 +210,7 @@ func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 		}
 
 		if serverID == 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
 
 			return
 		}
@@ -218,7 +220,7 @@ func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 			case errors.Is(err, database.ErrNoResult):
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, domain.ErrNotFound)))
 			default:
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 			}
 
 			return

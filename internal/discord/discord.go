@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -76,33 +77,33 @@ type DiscordRepository interface {
 	SendPayload(channelID string, payload *discordgo.MessageEmbed)
 }
 
-type DiscordChannel int
+// type DiscordChannel int
 
-const (
-	ChannelMod DiscordChannel = iota
-	ChannelModLog
-	ChannelPublicLog
-	ChannelPublicMatchLog
-	ChannelModAppealLog
-	ChannelModVoteLog
-	ChannelBanLog
-	ChannelForumLog
-	ChannelWordFilterLog
-	ChannelKickLog
-	ChannelPlayerqueue
-	ChannelAC
-)
+// const (
+// 	ChannelMod DiscordChannel = iota
+// 	ChannelModLog
+// 	ChannelPublicLog
+// 	ChannelPublicMatchLog
+// 	ChannelModAppealLog
+// 	ChannelModVoteLog
+// 	ChannelBanLog
+// 	ChannelForumLog
+// 	ChannelWordFilterLog
+// 	ChannelKickLog
+// 	ChannelPlayerqueue
+// 	ChannelAC
+// )
 
 type DiscordUsecase interface {
 	Start() error
 	Shutdown()
-	SendPayload(channelID DiscordChannel, embed *discordgo.MessageEmbed)
+	SendPayload(channelID string, embed *discordgo.MessageEmbed)
 	RegisterHandler(cmd Cmd, handler SlashCommandHandler) error
 }
 
 type FoundPlayer struct {
-	Player PlayerServerInfo
-	Server Server
+	Player servers.PlayerServerInfo
+	Server servers.Server
 }
 
 type Cmd string

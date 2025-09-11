@@ -8,15 +8,15 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type voteRepository struct {
+type VoteRepository struct {
 	db database.Database
 }
 
-func NewVoteRepository(database database.Database) VoteRepository {
-	return &voteRepository{db: database}
+func NewVoteRepository(database database.Database) *VoteRepository {
+	return &VoteRepository{db: database}
 }
 
-func (r voteRepository) Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, int64, error) {
+func (r VoteRepository) Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, int64, error) {
 	var constraints sq.And
 
 	if sid, ok := filter.SourceSteamID(ctx); ok {
@@ -97,7 +97,7 @@ func (r voteRepository) Query(ctx context.Context, filter VoteQueryFilter) ([]Vo
 	return results, count, nil
 }
 
-func (r voteRepository) AddResult(ctx context.Context, voteResult VoteResult) error {
+func (r VoteRepository) AddResult(ctx context.Context, voteResult VoteResult) error {
 	return r.db.DBErr(r.db.ExecInsertBuilder(ctx, nil, r.db.Builder().
 		Insert("vote_result").
 		SetMap(map[string]interface{}{

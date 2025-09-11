@@ -1,7 +1,6 @@
 package votes
 
 import (
-	"context"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -17,16 +16,6 @@ type VoteQueryFilter struct {
 	Name     string `json:"name"`
 	Success  int    `json:"success"` // -1 = any, 0 = false, 1 = true
 	Code     bool   `json:"code"`
-}
-
-type VoteRepository interface {
-	Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, int64, error)
-	AddResult(ctx context.Context, voteResult VoteResult) error
-}
-
-type VoteUsecase interface {
-	Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, int64, error)
-	Start(ctx context.Context)
 }
 
 type VoteResult struct {

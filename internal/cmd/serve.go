@@ -43,7 +43,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
-	"github.com/leighmacdonald/gbans/internal/wordfilter"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -52,8 +51,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, newsUC news.NewsUsecase,
-	wikiUC wiki.WikiUsecase, conf domain.Config,
+func firstTimeSetup(ctx context.Context, persons person.PersonUsecase, newsUC news.NewsUsecase,
+	wikiUC wiki.WikiUsecase, conf config.Config,
 ) error {
 	_, errRootUser := persons.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
 	if errRootUser == nil {
@@ -64,8 +63,8 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, newsUC ne
 		return errRootUser
 	}
 
-	newOwner := domain.NewPerson(steamid.New(conf.Owner))
-	newOwner.PermissionLevel = domain.PAdmin
+	newOwner := person.NewPerson(steamid.New(conf.Owner))
+	newOwner.PermissionLevel = auth.PAdmin
 
 	if errSave := persons.SavePerson(ctx, nil, &newOwner); errSave != nil {
 		slog.Error("Failed create new owner", log.ErrAttr(errSave))
@@ -99,9 +98,9 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, newsUC ne
 	return nil
 }
 
-func createQueueWorkers(people domain.PersonUsecase, notifications domain.NotificationUsecase,
-	discordUC domain.DiscordUsecase, authRepo domain.AuthRepository,
-	patreonUC domain.PatreonUsecase, reports domain.ReportUsecase, discordOAuth domain.DiscordOAuthUsecase,
+func createQueueWorkers(people person.PersonUsecase, notifications notification.NotificationPayload,
+	discordUC discord.DiscordUsecase, authRepo auth.AuthRepository,
+	patreonUC patreon.PatreonCredential, reports report.ReportUsecase, discordOAuth discord.DiscordOAuthUsecase,
 ) *river.Workers {
 	workers := river.NewWorkers()
 
@@ -249,7 +248,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbConn), discordUsecase)
 
-			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbConn), notificationUsecase)
+			wordFilterUsecase := chat.NewWordFilterUsecase(chat.NewWordFilterRepository(dbConn), notificationUsecase)
 			if err := wordFilterUsecase.Import(ctx); err != nil {
 				slog.Error("Failed to load word filters", log.ErrAttr(err))
 
@@ -339,7 +338,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return err
 			}
 
-			if conf.General.Mode == domain.ReleaseMode {
+			if conf.General.Mode == config.ReleaseMode {
 				gin.SetMode(gin.ReleaseMode)
 			} else {
 				gin.SetMode(gin.DebugMode)
@@ -396,14 +395,14 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				configUsecase, notificationUsecase, stateUsecase, blocklistUsecase)
 			votes.NewHandler(router, voteUsecase, authUsecase)
 			wiki.NewHandler(router, wikiUsecase, authUsecase)
-			wordfilter.NewHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
+			chat.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
 
 			playerqueueRepo := playerqueue.NewPlayerqueueRepository(dbConn, personUsecase)
 			// Pre-load some messages into queue message cache
-			chatlogs, errChatlogs := playerqueueRepo.Query(ctx, domain.PlayerqueueQueryOpts{QueryFilter: domain.QueryFilter{Limit: 100}})
+			chatlogs, errChatlogs := playerqueueRepo.Query(ctx, playerqueue.PlayerqueueQueryOpts{QueryFilter: domain.QueryFilter{Limit: 100}})
 			if errChatlogs != nil {
 				slog.Error("Failed to warm playerqueue chatlogs", log.ErrAttr(err))
-				chatlogs = []domain.ChatLog{}
+				chatlogs = []playerqueue.ChatLog{}
 			}
 			playerqueueUC := playerqueue.NewPlayerqueueUsecase(playerqueueRepo, personUsecase, serversUC, stateUsecase, chatlogs, notificationUsecase)
 			go playerqueueUC.Start(ctx)
