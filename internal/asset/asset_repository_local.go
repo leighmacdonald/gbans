@@ -11,6 +11,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -19,14 +20,14 @@ import (
 
 type localRepository struct {
 	db database.Database
-	cu domain.ConfigUsecase
+	cu *config.ConfigUsecase
 }
 
-func NewLocalRepository(database database.Database, configUsecase domain.ConfigUsecase) AssetRepository {
+func NewLocalRepository(database database.Database, configUsecase *config.ConfigUsecase) AssetRepository {
 	return &localRepository{db: database, cu: configUsecase}
 }
 
-func (l localRepository) Put(ctx context.Context, asset Asset, body io.ReadSeeker) (Asset, error) {
+func (l *localRepository) Put(ctx context.Context, asset Asset, body io.ReadSeeker) (Asset, error) {
 	existing, errExisting := l.getAssetByHash(ctx, asset.Hash)
 	if errExisting == nil {
 		return existing, nil

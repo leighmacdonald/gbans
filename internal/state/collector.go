@@ -14,6 +14,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v4/extra"
@@ -34,10 +35,10 @@ type Collector struct {
 	configMu         *sync.RWMutex
 	maxPlayersRx     *regexp.Regexp
 	playersRx        *regexp.Regexp
-	serverUsecase    domain.ServersUsecase
+	serverUsecase    servers.ServersUsecase
 }
 
-func NewCollector(serverUsecase domain.ServersUsecase) *Collector {
+func NewCollector(serverUsecase servers.ServersUsecase) *Collector {
 	const (
 		statusUpdateFreq = time.Second * 20
 		updateTimeout    = time.Second * 5
@@ -225,7 +226,7 @@ func (c *Collector) setServerConfigs(ctx context.Context, configs []ServerConfig
 	c.configs = configs
 }
 
-func (c *Collector) Update(serverID int, update domain.PartialStateUpdate) error {
+func (c *Collector) Update(serverID int, update servers.PartialStateUpdate) error {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
 
@@ -397,7 +398,7 @@ func (c *Collector) startStatus(ctx context.Context) {
 }
 
 func (c *Collector) updateServerConfigs(ctx context.Context) {
-	servers, _, errServers := c.serverUsecase.Servers(ctx, domain.ServerQueryFilter{
+	servers, _, errServers := c.serverUsecase.Servers(ctx, servers.ServerQueryFilter{
 		QueryFilter:     domain.QueryFilter{Deleted: false},
 		IncludeDisabled: false,
 	})

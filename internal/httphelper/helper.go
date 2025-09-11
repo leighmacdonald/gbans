@@ -12,9 +12,15 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/schema"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/convert"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+type Authenticator interface {
+	Middleware(level permission.Privilege) gin.HandlerFunc
+}
 
 func recoveryHandler() gin.HandlerFunc {
 	return gin.CustomRecoveryWithWriter(nil, func(c *gin.Context, err interface{}) {
@@ -28,7 +34,7 @@ func recoveryHandler() gin.HandlerFunc {
 
 func Bind(ctx *gin.Context, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
-		SetError(ctx, NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+		SetError(ctx, NewAPIError(http.StatusBadRequest, ErrBadRequest))
 
 		return false
 	}
@@ -44,7 +50,7 @@ func BindQuery(ctx *gin.Context, target any) bool {
 	if errBind := decoder.Decode(target, ctx.Request.URL.Query()); errBind != nil {
 		SetError(ctx,
 			NewAPIErrorf(http.StatusInternalServerError,
-				errors.Join(errBind, domain.ErrBadRequest),
+				errors.Join(errBind, ErrBadRequest),
 				"Could not decode query params"))
 
 		return false
@@ -53,18 +59,18 @@ func BindQuery(ctx *gin.Context, target any) bool {
 	return true
 }
 
-func CurrentUserProfile(ctx *gin.Context) domain.UserProfile {
+func CurrentUserProfile(ctx *gin.Context) person.UserProfile {
 	maybePerson, found := ctx.Get(ctxKeyUserProfile)
 	if !found {
-		return domain.NewUserProfile(steamid.SteamID{})
+		return person.NewUserProfile(steamid.SteamID{})
 	}
 
-	person, ok := maybePerson.(domain.UserProfile)
+	profile, ok := maybePerson.(person.UserProfile)
 	if !ok {
-		return domain.NewUserProfile(steamid.SteamID{})
+		return person.NewUserProfile(steamid.SteamID{})
 	}
 
-	return person
+	return profile
 }
 
 func GetSID64Param(ctx *gin.Context, key string) (steamid.SteamID, bool) {
@@ -170,7 +176,7 @@ func GetDefaultFloat64(s string, def float64) float64 {
 // HasPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
 // if the user has appropriate privilege levels.
 // Error responses are handled by this function, no further action needs to take place in the handlers.
-func HasPrivilege(person domain.PersonInfo, allowedSteamIDs steamid.Collection, minPrivilege domain.Privilege) bool {
+func HasPrivilege(person person.PersonInfo, allowedSteamIDs steamid.Collection, minPrivilege permission.Privilege) bool {
 	for _, steamID := range allowedSteamIDs {
 		if steamID == person.GetSteamID() {
 			return true
@@ -205,4 +211,8 @@ func Referral(ctx *gin.Context) string {
 	}
 
 	return referralURL
+}
+
+type RequestQuery struct {
+	Query string `json:"query" url:"query"`
 }

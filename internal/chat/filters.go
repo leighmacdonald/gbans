@@ -1,42 +1,17 @@
 package chat
 
 import (
-	"context"
 	"errors"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 var (
 	ErrInvalidRegex = errors.New("invalid regex format")
 )
-
-type WordFilterRepository interface {
-	SaveFilter(ctx context.Context, filter *Filter) error
-	DropFilter(ctx context.Context, filter Filter) error
-	GetFilterByID(ctx context.Context, filterID int64) (Filter, error)
-	GetFilters(ctx context.Context) ([]Filter, error)
-	AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error
-}
-
-type WordFilterUsecase interface {
-	Edit(ctx context.Context, user domain.PersonInfo, filterID int64, filter Filter) (Filter, error)
-	Create(ctx context.Context, user domain.PersonInfo, filter Filter) (Filter, error)
-	DropFilter(ctx context.Context, filterID int64) error
-	GetFilterByID(ctx context.Context, filterID int64) (Filter, error)
-	GetFilters(ctx context.Context) ([]Filter, error)
-	Check(query string) []Filter
-	Import(ctx context.Context) error
-	AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error
-}
-
-type RequestQuery struct {
-	Query string `json:"query" url:"query"`
-}
 
 type FilterAction int
 

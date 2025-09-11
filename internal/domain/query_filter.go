@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"strings"
-	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -77,25 +76,6 @@ func (qf QueryFilter) ApplyLimitOffset(builder sq.SelectBuilder, maxLimit uint64
 	return builder
 }
 
-type NotificationQuery struct {
-	QueryFilter
-	SteamID string `json:"steam_id"`
-}
-
-func (f NotificationQuery) SourceSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SteamID)
-
-	return sid, sid.Valid()
-}
-
-type PlayerQuery struct {
-	QueryFilter
-	TargetIDField
-	Personaname string `json:"personaname"`
-	IP          string `json:"ip"`
-	StaffOnly   bool   `json:"staff_only"`
-}
-
 type DemoFilter struct {
 	QueryFilter
 	SteamID   string `json:"steam_id"`
@@ -113,21 +93,6 @@ type FiltersQueryFilter struct {
 	QueryFilter
 }
 
-type MatchesQueryOpts struct {
-	QueryFilter
-	SteamID   string     `json:"steam_id"`
-	ServerID  int        `json:"server_id"`
-	Map       string     `json:"map"`
-	TimeStart *time.Time `json:"time_start,omitempty"`
-	TimeEnd   *time.Time `json:"time_end,omitempty"`
-}
-
-func (mqf MatchesQueryOpts) TargetSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(mqf.SteamID)
-
-	return sid, sid.Valid()
-}
-
 type SourceIDProvider interface {
 	SourceSteamID(ctx context.Context) (steamid.SteamID, bool)
 }
@@ -136,17 +101,8 @@ type TargetIDProvider interface {
 	TargetSteamID(ctx context.Context) (steamid.SteamID, bool)
 }
 
-type BansQueryFilter struct {
-	TargetIDField
-	Deleted bool `json:"deleted"`
-}
-
 type ReportQueryFilter struct {
 	SourceIDField
-	Deleted bool `json:"deleted"`
-}
-
-type AppealQueryFilter struct {
 	Deleted bool `json:"deleted"`
 }
 

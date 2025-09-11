@@ -1,64 +1,13 @@
 package forum
 
 import (
-	"context"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
-
-type ForumRepository interface {
-	ForumCategories(ctx context.Context) ([]ForumCategory, error)
-	ForumCategorySave(ctx context.Context, category *ForumCategory) error
-	ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error
-	ForumCategoryDelete(ctx context.Context, categoryID int) error
-	Forums(ctx context.Context) ([]Forum, error)
-	ForumSave(ctx context.Context, forum *Forum) error
-	Forum(ctx context.Context, forumID int, forum *Forum) error
-	ForumDelete(ctx context.Context, forumID int) error
-	ForumThreadSave(ctx context.Context, thread *ForumThread) error
-	ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error
-	ForumThreadIncrView(ctx context.Context, forumThreadID int64) error
-	ForumThreadDelete(ctx context.Context, forumThreadID int64) error
-	ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, error)
-	ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error
-	ForumMessageSave(ctx context.Context, message *ForumMessage) error
-	ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel domain.Privilege) ([]ForumMessage, error)
-	ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error
-	ForumMessages(ctx context.Context, filters ThreadMessagesQuery) ([]ForumMessage, error)
-	ForumMessageDelete(ctx context.Context, messageID int64) error
-	ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error
-	ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error
-}
-
-type ForumUsecase interface {
-	Current() []ForumActivity
-	Touch(up domain.UserProfile)
-	Start(ctx context.Context)
-	ForumCategories(ctx context.Context) ([]ForumCategory, error)
-	ForumCategorySave(ctx context.Context, category *ForumCategory) error
-	ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error
-	ForumCategoryDelete(ctx context.Context, categoryI ForumCategory) error
-	Forums(ctx context.Context) ([]Forum, error)
-	ForumSave(ctx context.Context, forum *Forum) error
-	Forum(ctx context.Context, forumID int, forum *Forum) error
-	ForumDelete(ctx context.Context, forumID int) error
-	ForumThreadSave(ctx context.Context, thread *ForumThread) error
-	ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error
-	ForumThreadIncrView(ctx context.Context, forumThreadID int64) error
-	ForumThreadDelete(ctx context.Context, forumThreadID int64) error
-	ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, error)
-	ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error
-	ForumMessageSave(ctx context.Context, message *ForumMessage) error
-	ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel domain.Privilege) ([]ForumMessage, error)
-	ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error
-	ForumMessages(ctx context.Context, filters ThreadMessagesQuery) ([]ForumMessage, error)
-	ForumMessageDelete(ctx context.Context, messageID int64) error
-	ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error
-	ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error
-}
 
 type ThreadMessagesQuery struct {
 	Deleted       bool  `json:"deleted,omitempty" uri:"deleted"`
@@ -70,7 +19,7 @@ type ThreadQueryFilter struct {
 }
 
 type ForumActivity struct {
-	Person       domain.UserProfile
+	Person       person.UserProfile
 	LastActivity time.Time
 }
 
@@ -102,23 +51,23 @@ func (category ForumCategory) NewForum(title string, description string) Forum {
 }
 
 type Forum struct {
-	ForumID             int              `json:"forum_id"`
-	ForumCategoryID     int              `json:"forum_category_id"`
-	LastThreadID        int64            `json:"last_thread_id"`
-	Title               string           `json:"title"`
-	Description         string           `json:"description"`
-	Ordering            int              `json:"ordering"`
-	CountThreads        int64            `json:"count_threads"`
-	CountMessages       int64            `json:"count_messages"`
-	PermissionLevel     domain.Privilege `json:"permission_level"`
-	RecentForumThreadID int64            `json:"recent_forum_thread_id"`
-	RecentForumTitle    string           `json:"recent_forum_title"`
-	RecentSourceID      steamid.SteamID  `json:"recent_source_id"`
-	RecentPersonaname   string           `json:"recent_personaname"`
-	RecentAvatarhash    string           `json:"recent_avatarhash"`
-	RecentCreatedOn     time.Time        `json:"recent_created_on"`
-	CreatedOn           time.Time        `json:"created_on"`
-	UpdatedOn           time.Time        `json:"updated_on"`
+	ForumID             int                  `json:"forum_id"`
+	ForumCategoryID     int                  `json:"forum_category_id"`
+	LastThreadID        int64                `json:"last_thread_id"`
+	Title               string               `json:"title"`
+	Description         string               `json:"description"`
+	Ordering            int                  `json:"ordering"`
+	CountThreads        int64                `json:"count_threads"`
+	CountMessages       int64                `json:"count_messages"`
+	PermissionLevel     permission.Privilege `json:"permission_level"`
+	RecentForumThreadID int64                `json:"recent_forum_thread_id"`
+	RecentForumTitle    string               `json:"recent_forum_title"`
+	RecentSourceID      steamid.SteamID      `json:"recent_source_id"`
+	RecentPersonaname   string               `json:"recent_personaname"`
+	RecentAvatarhash    string               `json:"recent_avatarhash"`
+	RecentCreatedOn     time.Time            `json:"recent_created_on"`
+	CreatedOn           time.Time            `json:"created_on"`
+	UpdatedOn           time.Time            `json:"updated_on"`
 }
 
 func (forum Forum) NewThread(title string, sourceID steamid.SteamID) ForumThread {
@@ -140,7 +89,7 @@ type ForumThread struct {
 	Locked        bool            `json:"locked"`
 	Views         int64           `json:"views"`
 	Replies       int64           `json:"replies"`
-	domain.SimplePerson
+	person.SimplePerson
 	CreatedOn time.Time `json:"created_on"`
 	UpdatedOn time.Time `json:"updated_on"`
 }
@@ -164,7 +113,7 @@ type ForumMessage struct {
 	Title          string          `json:"title"`
 	Online         bool            `json:"online"`
 	Signature      string          `json:"signature"`
-	domain.SimplePerson
+	person.SimplePerson
 	CreatedOn time.Time `json:"created_on"`
 	UpdatedOn time.Time `json:"updated_on"`
 }
@@ -190,7 +139,7 @@ type ForumMessageVote struct {
 
 type ThreadWithSource struct {
 	ForumThread
-	domain.SimplePerson
+	person.SimplePerson
 	RecentForumMessageID int64     `json:"recent_forum_message_id"`
 	RecentCreatedOn      time.Time `json:"recent_created_on"`
 	RecentSteamID        string    `json:"recent_steam_id"`

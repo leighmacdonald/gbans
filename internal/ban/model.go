@@ -1,14 +1,13 @@
 package ban
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net"
-	"net/netip"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -33,7 +32,7 @@ type BanAppealMessage struct {
 	Deleted      bool            `json:"deleted"`
 	CreatedOn    time.Time       `json:"created_on"`
 	UpdatedOn    time.Time       `json:"updated_on"`
-	domain.SimplePerson
+	person.SimplePerson
 }
 
 func NewBanAppealMessage(banID int64, authorID steamid.SteamID, message string) BanAppealMessage {
@@ -169,41 +168,6 @@ func (s Origin) String() string {
 	default:
 		return "Unknown"
 	}
-}
-
-type BanRepository interface {
-	Save(ctx context.Context, ban *Ban) error
-	Query(ctx context.Context, opts QueryOpts) ([]BannedPerson, error)
-	// GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (BannedPerson, error)
-	// GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (BannedPerson, error)
-	Delete(ctx context.Context, ban *Ban, hardDelete bool) error
-	// ExpiredBans(ctx context.Context) ([]Ban, error)
-	// GetOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]Ban, error)
-	//Stats(ctx context.Context, stats *Stats) error
-	TruncateCache(ctx context.Context) error
-	InsertCache(ctx context.Context, steamID steamid.SteamID, entries []int64) error
-	// GetByAddress(ctx context.Context, ipAddr netip.Addr) ([]Ban, error)
-	// GetByID(ctx context.Context, netID int64, banNet *Ban) error
-	GetMembersList(ctx context.Context, parentID int64, list *MembersList) error
-	SaveMembersList(ctx context.Context, list *MembersList) error
-}
-
-type BanUsecase interface {
-	CheckEvadeStatus(ctx context.Context, curUser domain.UserProfile, steamID steamid.SteamID, address netip.Addr) (bool, error)
-	Query(ctx context.Context, opts QueryOpts) (BannedPerson, error)
-	QueryMany(ctx context.Context, opts QueryOpts) ([]BannedPerson, error)
-	// GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (BannedPerson, error)
-	// GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (BannedPerson, error)
-	Save(ctx context.Context, ban *Ban) error
-	Ban(ctx context.Context, curUser domain.UserProfile, origin Origin, req BanOpts) (BannedPerson, error)
-	Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author domain.UserProfile) (bool, error)
-	Delete(ctx context.Context, ban *Ban, hardDelete bool) error
-	Expired(ctx context.Context) ([]Ban, error)
-	GetOlderThan(ctx context.Context, filter domain.QueryFilter, since time.Time) ([]Ban, error)
-	Stats(ctx context.Context, stats *Stats) error
-	UpdateCache(ctx context.Context) error
-	GetMembersList(ctx context.Context, parentID int64, list *MembersList) error
-	SaveMembersList(ctx context.Context, list *MembersList) error
 }
 
 type AppealState int

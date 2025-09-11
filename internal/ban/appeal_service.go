@@ -8,13 +8,14 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type appealHandler struct {
-	appealUsecase domain.AppealUsecase
+	appealUsecase AppealsUsecase
 }
 
-func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, authUsecase domain.AuthUsecase) {
+func NewAppealHandler(engine *gin.Engine, appealUsecase AppealsUsecase, authUsecase httphelper.Authenticator) {
 	handler := &appealHandler{
 		appealUsecase: appealUsecase,
 	}
@@ -22,7 +23,7 @@ func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, au
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authUsecase.Middleware(domain.PUser))
+		authed := authedGrp.Use(authUsecase.Middleware(permission.PUser))
 		authed.GET("/api/bans/:ban_id/messages", handler.onAPIGetBanMessages())
 		authed.POST("/api/bans/:ban_id/messages", handler.createBanMessage())
 		authed.POST("/api/bans/message/:ban_message_id", handler.editBanMessage())
@@ -32,7 +33,7 @@ func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, au
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUsecase.Middleware(domain.PModerator))
+		mod := modGrp.Use(authUsecase.Middleware(permission.PModerator))
 		mod.POST("/api/appeals", handler.onAPIGetAppeals())
 	}
 }
@@ -46,13 +47,17 @@ func (h *appealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 
 		banMessages, errGetBanMessages := h.appealUsecase.GetBanMessages(ctx, httphelper.CurrentUserProfile(ctx), banID)
 		if errGetBanMessages != nil && !errors.Is(errGetBanMessages, domain.ErrNotFound) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetBanMessages, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetBanMessages, httphelper.ErrInternal)))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, banMessages)
 	}
+}
+
+type RequestBanMessage struct {
+	BodyMD string `json:"body_md"`
 }
 
 func (h *appealHandler) createBanMessage() gin.HandlerFunc {
@@ -62,14 +67,14 @@ func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.RequestMessageBodyMD
+		var req RequestBanMessage
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		msg, errSave := h.appealUsecase.CreateBanMessage(ctx, httphelper.CurrentUserProfile(ctx), banID, req.BodyMD)
 		if errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
 			return
 		}
@@ -86,13 +91,13 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 		}
 
 		if reportMessageID <= 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 				"ban_message_id cannot be <= 0"))
 
 			return
 		}
 
-		var req domain.RequestMessageBodyMD
+		var req RequestBanMessage
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -103,7 +108,7 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 		if errSave != nil {
 			switch {
 			case errors.Is(errSave, domain.ErrParamInvalid):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Invalid message body"))
 			case errors.Is(errSave, domain.ErrPermissionDenied):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
@@ -112,7 +117,7 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, database.ErrDuplicate,
 					"Message cannot be the same."))
 			default:
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal),
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal),
 					"Could not edit ban message"))
 			}
 
@@ -133,7 +138,7 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 		}
 
 		if banMessageID == 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 				"ban_message_id cannot be <= 0"))
 
 			return
@@ -148,7 +153,7 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, database.ErrNoResult,
 					"Message does not exist with id: %d", banMessageID))
 			default:
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal),
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal),
 					"Could not delete message with id: %d", banMessageID))
 			}
 
@@ -161,14 +166,14 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 
 func (h *appealHandler) onAPIGetAppeals() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.AppealQueryFilter
+		var req AppealQueryFilter
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		bans, errBans := h.appealUsecase.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
 
 			return
 		}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -18,12 +19,12 @@ type PlayerqueueRepository interface {
 }
 
 type PlayerqueueUsecase interface {
-	AddMessage(ctx context.Context, bodyMD string, user domain.UserProfile) error
+	AddMessage(ctx context.Context, bodyMD string, user person.UserProfile) error
 	Recent(ctx context.Context, limit uint64) ([]ChatLog, error)
 	SetChatStatus(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID, status ChatStatus, reason string) error
 	Purge(ctx context.Context, authorID steamid.SteamID, messageID int64, count int) error
 	Message(ctx context.Context, messageID int64) (ChatLog, error)
-	Connect(ctx context.Context, user domain.UserProfile, conn *websocket.Conn) QueueClient
+	Connect(ctx context.Context, user person.UserProfile, conn *websocket.Conn) QueueClient
 	Disconnect(client QueueClient)
 	JoinLobbies(client QueueClient, servers []int) error
 	LeaveLobbies(client QueueClient, servers []int) error

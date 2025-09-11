@@ -5,17 +5,17 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewPlayerqueueRepository(db database.Database, persons domain.PersonUsecase) PlayerqueueRepository {
+func NewPlayerqueueRepository(db database.Database, persons *person.PersonUsecase) PlayerqueueRepository {
 	return playerqueueRepository{db: db, persons: persons}
 }
 
 type playerqueueRepository struct {
 	db      database.Database
-	persons domain.PersonUsecase
+	persons *person.PersonUsecase
 }
 
 func (r playerqueueRepository) Message(ctx context.Context, messageID int64) (ChatLog, error) {

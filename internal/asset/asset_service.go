@@ -6,29 +6,30 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type mediaHandler struct {
 	assets AssetUsecase
-	config domain.ConfigUsecase
+	config *config.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, assets AssetUsecase, auth auth.AuthUsecase) {
+func NewHandler(engine *gin.Engine, config *config.ConfigUsecase, assets AssetUsecase, authUC httphelper.Authenticator) {
 	handler := mediaHandler{config: config, assets: assets}
 
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(auth.Middleware(domain.PGuest))
+		opt := optGrp.Use(authUC.Middleware(permission.PGuest))
 		opt.GET("/asset/:asset_id", handler.onGetByUUID())
 	}
 
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.Middleware(domain.PUser))
+		authed := authedGrp.Use(authUC.Middleware(permission.PUser))
 		authed.POST("/api/asset", handler.onAPISaveMedia())
 	}
 }
@@ -87,7 +88,7 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 
 		if asset.IsPrivate {
 			user := httphelper.CurrentUserProfile(ctx)
-			if !user.SteamID.Valid() && (user.SteamID == asset.AuthorID || user.HasPermission(domain.PModerator)) {
+			if !user.SteamID.Valid() && (user.SteamID == asset.AuthorID || user.HasPermission(permission.PModerator)) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 					"You do not have permission to access this asset."))
 

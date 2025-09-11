@@ -10,25 +10,28 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type antiCheatUsecase struct {
+type AntiCheatUsecase struct {
 	parser        logparse.StacParser
-	repo          AntiCheatRepository
-	person        domain.PersonUsecase
-	ban           ban.BanUsecase
-	config        domain.ConfigUsecase
-	notifications domain.NotificationUsecase
+	repo          anticheatRepository
+	person        *person.PersonUsecase
+	ban           *ban.BanUsecase
+	config        *config.ConfigUsecase
+	notifications notification.NotificationUsecase
 }
 
-func NewAntiCheatUsecase(repo AntiCheatRepository, person domain.PersonUsecase, ban ban.BanUsecase, config domain.ConfigUsecase, notif domain.NotificationUsecase) AntiCheatUsecase {
-	return &antiCheatUsecase{
+func NewAntiCheatUsecase(repo anticheatRepository, person *person.PersonUsecase, ban *ban.BanUsecase, config *config.ConfigUsecase, notif notification.NotificationUsecase) *AntiCheatUsecase {
+	return &AntiCheatUsecase{
 		parser:        logparse.NewStacParser(),
 		repo:          repo,
 		person:        person,
@@ -38,7 +41,7 @@ func NewAntiCheatUsecase(repo AntiCheatRepository, person domain.PersonUsecase, 
 	}
 }
 
-func (a antiCheatUsecase) DetectionsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]logparse.StacEntry, error) {
+func (a AntiCheatUsecase) DetectionsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]logparse.StacEntry, error) {
 	if !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
@@ -46,7 +49,7 @@ func (a antiCheatUsecase) DetectionsBySteamID(ctx context.Context, steamID steam
 	return a.repo.DetectionsBySteamID(ctx, steamID)
 }
 
-func (a antiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEntry) error {
+func (a AntiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEntry) error {
 	results := map[steamid.SteamID]map[logparse.Detection]int{}
 	conf := a.config.Config()
 
@@ -102,7 +105,7 @@ func (a antiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 			duration = fmt.Sprintf("%dm", conf.Anticheat.Duration)
 		}
 
-		newBan, err := a.ban.Ban(ctx, owner.ToUserProfile(), ban.System, ban.BanOpts{
+		newBan, err := a.ban.Ban(ctx, owner.ToUserProfile(), ban.System, ban.Opts{
 			SourceID:       owner.SteamID,
 			TargetID:       entry.SteamID,
 			Duration:       duration,
@@ -124,7 +127,7 @@ func (a antiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 				slog.Int64("steam_id", entry.SteamID.Int64()))
 			hasBeenBanned = append(hasBeenBanned, entry.SteamID)
 
-			go a.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelAC,
+			go a.notifications.Enqueue(ctx, notification.NewDiscordNotification(a.config.Config().Discord.AnticheatChannelID,
 				discord.NewAnticheatTrigger(newBan, conf, entry, results[entry.SteamID][entry.Detection])))
 		}
 	}
@@ -132,11 +135,11 @@ func (a antiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 	return nil
 }
 
-func (a antiCheatUsecase) DetectionsByType(ctx context.Context, detectionType logparse.Detection) ([]logparse.StacEntry, error) {
+func (a AntiCheatUsecase) DetectionsByType(ctx context.Context, detectionType logparse.Detection) ([]logparse.StacEntry, error) {
 	return a.repo.DetectionsByType(ctx, detectionType)
 }
 
-func (a antiCheatUsecase) Import(ctx context.Context, fileName string, reader io.ReadCloser, serverID int) ([]logparse.StacEntry, error) {
+func (a AntiCheatUsecase) Import(ctx context.Context, fileName string, reader io.ReadCloser, serverID int) ([]logparse.StacEntry, error) {
 	entries, errEntries := a.parser.Parse(fileName, reader)
 	if errEntries != nil {
 		return nil, errEntries
@@ -170,7 +173,7 @@ func (a antiCheatUsecase) Import(ctx context.Context, fileName string, reader io
 	return entries, nil
 }
 
-func (a antiCheatUsecase) SyncDemoIDs(ctx context.Context, limit uint64) error {
+func (a AntiCheatUsecase) SyncDemoIDs(ctx context.Context, limit uint64) error {
 	if limit == 0 {
 		limit = 100
 	}
@@ -178,7 +181,7 @@ func (a antiCheatUsecase) SyncDemoIDs(ctx context.Context, limit uint64) error {
 	return a.repo.SyncDemoIDs(ctx, limit)
 }
 
-func (a antiCheatUsecase) Query(ctx context.Context, query AnticheatQuery) ([]AnticheatEntry, error) {
+func (a AntiCheatUsecase) Query(ctx context.Context, query AnticheatQuery) ([]AnticheatEntry, error) {
 	if query.SteamID != "" {
 		sid := steamid.New(query.SteamID)
 		if !sid.Valid() {

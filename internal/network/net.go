@@ -1,7 +1,6 @@
 package network
 
 import (
-	"context"
 	"errors"
 	"net"
 	"net/netip"
@@ -18,30 +17,30 @@ var (
 	ErrNetworkInvalidProxyRecord    = errors.New("invalid proxy record")
 )
 
-type NetworkUsecase interface {
-	GetASNRecordsByNum(ctx context.Context, asNum int64) ([]NetworkASN, error)
-	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
-	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
-	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error)
-	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
-	Start(ctx context.Context)
-	QueryNetwork(ctx context.Context, ip netip.Addr) (NetworkDetails, error)
-	RefreshLocationData(ctx context.Context) error
-}
+// type NetworkUsecase interface {
+// 	GetASNRecordsByNum(ctx context.Context, asNum int64) ([]NetworkASN, error)
+// 	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
+// 	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
+// 	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error)
+// 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
+// 	Start(ctx context.Context)
+// 	QueryNetwork(ctx context.Context, ip netip.Addr) (NetworkDetails, error)
+// 	RefreshLocationData(ctx context.Context) error
+// }
 
-type NetworkRepository interface {
-	QueryConnections(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error)
-	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
-	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
-	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
-	GetASNRecordsByNum(ctx context.Context, asNum int64) ([]NetworkASN, error)
-	GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (NetworkASN, error)
-	GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (NetworkLocation, error)
-	GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (NetworkProxy, error)
-	LoadASN(ctx context.Context, truncate bool, records []ip2location.ASNRecord) error
-	LoadLocation(ctx context.Context, truncate bool, records []ip2location.LocationRecord) error
-	LoadProxies(ctx context.Context, truncate bool, records []ip2location.ProxyRecord) error
-}
+// type NetworkRepository interface {
+// 	QueryConnections(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error)
+// 	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
+// 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
+// 	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
+// 	GetASNRecordsByNum(ctx context.Context, asNum int64) ([]NetworkASN, error)
+// 	GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (NetworkASN, error)
+// 	GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (NetworkLocation, error)
+// 	GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (NetworkProxy, error)
+// 	LoadASN(ctx context.Context, truncate bool, records []ip2location.ASNRecord) error
+// 	LoadLocation(ctx context.Context, truncate bool, records []ip2location.LocationRecord) error
+// 	LoadProxies(ctx context.Context, truncate bool, records []ip2location.ProxyRecord) error
+// }
 
 // PersonIPRecord holds a composite result of the more relevant ip2location results.
 type PersonIPRecord struct {

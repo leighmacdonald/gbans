@@ -10,9 +10,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
@@ -20,12 +23,12 @@ type serverQueueHandler struct {
 	queue PlayerqueueUsecase
 }
 
-func NewPlayerqueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase,
+func NewPlayerqueueHandler(engine *gin.Engine, auth httphelper.Authenticator, configUC *config.ConfigUsecase,
 	playerQueue PlayerqueueUsecase,
 ) {
-	conf := config.Config()
+	conf := configUC.Config()
 	var origins []string
-	if conf.General.Mode == domain.ReleaseMode {
+	if conf.General.Mode == config.ReleaseMode {
 		origins = []string{conf.ExternalURL}
 	}
 
@@ -35,14 +38,14 @@ func NewPlayerqueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config d
 
 	authedGroup := engine.Group("/api/playerqueue")
 	{
-		mod := authedGroup.Use(auth.Middleware(domain.PModerator))
+		mod := authedGroup.Use(auth.Middleware(permission.PModerator))
 		mod.PUT("/status/:steam_id", handler.status())
 		mod.DELETE("/messages/:message_id/:count", handler.purge())
 	}
 
 	authedGroupWS := engine.Group("/")
 	{
-		mod := authedGroupWS.Use(auth.MiddlewareWS(domain.PUser))
+		mod := authedGroupWS.Use(auth.MiddlewareWS(permission.PUser))
 		mod.GET("/ws", handler.start(origins))
 	}
 }
@@ -138,7 +141,7 @@ func (h *serverQueueHandler) handleWSMessage(client QueueClient) (Request, error
 	return payloadInbound, nil
 }
 
-func (h *serverQueueHandler) handleRequest(ctx context.Context, client QueueClient, payloadInbound Request, user domain.UserProfile) error {
+func (h *serverQueueHandler) handleRequest(ctx context.Context, client QueueClient, payloadInbound Request, user person.UserProfile) error {
 	var err error
 	switch payloadInbound.Op {
 	case JoinQueue:

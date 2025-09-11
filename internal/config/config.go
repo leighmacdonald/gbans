@@ -1,7 +1,6 @@
-package domain
+package config
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"net"
@@ -15,22 +14,6 @@ import (
 type LinkablePath interface {
 	// Path returns the HTTP path that is represented by the instance.
 	Path() string
-}
-
-type ConfigRepository interface {
-	Read(ctx context.Context) (Config, error)
-	Write(ctx context.Context, config Config) error
-	Init(ctx context.Context) error
-}
-
-type ConfigUsecase interface {
-	Config() Config
-	ExtURL(obj LinkablePath) string
-	ExtURLInstance(obj LinkablePath) *url.URL
-	ExtURLRaw(path string, args ...any) string
-	Reload(ctx context.Context) error
-	Write(ctx context.Context, config Config) error
-	Init(ctx context.Context) error
 }
 
 // StaticConfig defines non-dynamic config values that cannot be changed during runtime. These

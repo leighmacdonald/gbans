@@ -5,19 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/chat"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type wordFilterHandler struct {
 	filters WordFilterUsecase
 	chat    chat.ChatUsecase
-	config  domain.ConfigUsecase
+	config  *config.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, wordFilters WordFilterUsecase, chat chat.ChatUsecase, auth auth.AuthUsecase) {
+func NewWordFilterHandler(engine *gin.Engine, config *config.ConfigUsecase, wordFilters WordFilterUsecase, chat chat.ChatUsecase, auth httphelper.Authenticator) {
 	handler := wordFilterHandler{
 		config:  config,
 		filters: wordFilters,
@@ -27,7 +27,7 @@ func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, wordFilters Wor
 	// editor
 	modGroup := engine.Group("/")
 	{
-		mod := modGroup.Use(auth.Middleware(domain.PModerator))
+		mod := modGroup.Use(auth.Middleware(permission.PModerator))
 		mod.GET("/api/filters", handler.queryFilters())
 		mod.GET("/api/filters/state", handler.filterStates())
 		mod.POST("/api/filters", handler.createFilter())

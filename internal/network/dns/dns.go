@@ -10,7 +10,9 @@ import (
 	"github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/dns"
 	"github.com/cloudflare/cloudflare-go/v4/option"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
@@ -27,14 +29,14 @@ type Provider interface {
 }
 
 type StateProvider interface {
-	Current() []domain.ServerState
+	Current() []state.ServerState
 }
 
 type ServerProvider interface {
-	Servers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, int64, error)
+	Servers(ctx context.Context, filter servers.ServerQueryFilter) ([]servers.Server, int64, error)
 }
 
-func MonitorChanges(ctx context.Context, conf domain.Config, state StateProvider, server ServerProvider) {
+func MonitorChanges(ctx context.Context, conf config.Config, state StateProvider, server ServerProvider) {
 	if conf.Network.CFKey == "" || conf.Network.CFEmail == "" || conf.Network.CFZoneID == "" {
 		slog.Warn("Cloudflare DNS configuration is missing, unable to update DNS records")
 
@@ -55,7 +57,7 @@ type hostState struct {
 type ChangeDetector struct {
 	provider     Provider
 	state        StateProvider
-	currentState []domain.ServerState
+	currentState []state.ServerState
 	servers      ServerProvider
 	current      map[int]hostState
 	started      bool
@@ -78,7 +80,7 @@ func (c *ChangeDetector) findIP(serverID int) net.IP {
 // sync takes care of checking if the SDR ip of the game servers changes, and if so, it updates the DNS with the
 // new ip.
 func (c *ChangeDetector) sync(ctx context.Context) error {
-	servers, _, errServers := c.servers.Servers(ctx, domain.ServerQueryFilter{SDROnly: true})
+	servers, _, errServers := c.servers.Servers(ctx, servers.ServerQueryFilter{SDROnly: true})
 	if errServers != nil {
 		return errServers
 	}

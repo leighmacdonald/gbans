@@ -12,22 +12,24 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type personRepository struct {
-	conf domain.Config
+type PersonRepository struct {
+	conf config.Config
 	db   database.Database
 }
 
-func NewPersonRepository(conf domain.Config, database database.Database) domain.PersonRepository {
-	return &personRepository{conf: conf, db: database}
+func NewPersonRepository(conf config.Config, database database.Database) *PersonRepository {
+	return &PersonRepository{conf: conf, db: database}
 }
 
-func (r *personRepository) DropPerson(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID) error {
+func (r *PersonRepository) DropPerson(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID) error {
 	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, transaction, r.db.
 		Builder().
 		Delete("person").
@@ -35,7 +37,7 @@ func (r *personRepository) DropPerson(ctx context.Context, transaction pgx.Tx, s
 }
 
 // SavePerson will insert or update the person record.
-func (r *personRepository) SavePerson(ctx context.Context, transaction pgx.Tx, person *domain.Person) error {
+func (r *PersonRepository) SavePerson(ctx context.Context, transaction pgx.Tx, person *Person) error {
 	person.UpdatedOn = time.Now()
 	// FIXME
 	if person.PermissionLevel == 0 {
@@ -51,7 +53,7 @@ func (r *personRepository) SavePerson(ctx context.Context, transaction pgx.Tx, p
 	return r.insertPerson(ctx, transaction, person)
 }
 
-func (r *personRepository) updatePerson(ctx context.Context, transaction pgx.Tx, person *domain.Person) error {
+func (r *PersonRepository) updatePerson(ctx context.Context, transaction pgx.Tx, person *Person) error {
 	person.UpdatedOn = time.Now()
 
 	return r.db.DBErr(r.db.
@@ -85,7 +87,7 @@ func (r *personRepository) updatePerson(ctx context.Context, transaction pgx.Tx,
 			Where(sq.Eq{"steam_id": person.SteamID.Int64()})))
 }
 
-func (r *personRepository) insertPerson(ctx context.Context, transaction pgx.Tx, person *domain.Person) error {
+func (r *PersonRepository) insertPerson(ctx context.Context, transaction pgx.Tx, person *Person) error {
 	errExec := r.db.ExecInsertBuilder(ctx, transaction, r.db.
 		Builder().
 		Insert("person").
@@ -121,8 +123,8 @@ var profileColumns = []string{ //nolint:gochecknoglobals
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
-func (r *personRepository) GetPersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.Person, error) {
-	var person domain.Person
+func (r *PersonRepository) GetPersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (Person, error) {
+	var person Person
 
 	if !sid64.Valid() {
 		return person, domain.ErrInvalidSID
@@ -178,13 +180,13 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, transaction p
 	return person, nil
 }
 
-func (r *personRepository) GetPeopleBySteamID(ctx context.Context, transaction pgx.Tx, steamIDs steamid.Collection) (domain.People, error) {
+func (r *PersonRepository) GetPeopleBySteamID(ctx context.Context, transaction pgx.Tx, steamIDs steamid.Collection) (People, error) {
 	var ids []int64 //nolint:prealloc
 	for _, sid := range fp.Uniq[steamid.SteamID](steamIDs) {
 		ids = append(ids, sid.Int64())
 	}
 
-	var people domain.People
+	var people People
 
 	rows, errQuery := r.db.QueryBuilder(ctx, transaction, r.db.
 		Builder().
@@ -200,7 +202,7 @@ func (r *personRepository) GetPeopleBySteamID(ctx context.Context, transaction p
 	for rows.Next() {
 		var (
 			steamID int64
-			person  = domain.NewPerson(steamid.SteamID{})
+			person  = NewPerson(steamid.SteamID{})
 		)
 
 		if errScan := rows.Scan(&steamID, &person.CreatedOn, &person.UpdatedOn, &person.VisibilityState,
@@ -225,7 +227,7 @@ func normalizeStringLikeQuery(input string) string {
 	return fmt.Sprintf("%%%s%%", strings.ToLower(strings.Trim(space.ReplaceAllString(input, "%"), "%")))
 }
 
-func (r *personRepository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
+func (r *PersonRepository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
 	var ids steamid.Collection
 
 	// TODO
@@ -252,7 +254,7 @@ func (r *personRepository) GetSteamsAtAddress(ctx context.Context, addr net.IP) 
 	return ids, nil
 }
 
-func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, filter domain.PlayerQuery) (domain.People, int64, error) {
+func (r *PersonRepository) GetPeople(ctx context.Context, transaction pgx.Tx, filter PlayerQuery) (People, int64, error) {
 	builder := r.db.
 		Builder().
 		Select("p.steam_id", "p.created_on", "p.updated_on",
@@ -276,7 +278,7 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 		foundIDs, errFoundIDs := r.GetSteamsAtAddress(ctx, addr)
 		if errFoundIDs != nil {
 			if errors.Is(errFoundIDs, database.ErrNoResult) {
-				return domain.People{}, 0, nil
+				return People{}, 0, nil
 			}
 
 			return nil, 0, r.db.DBErr(errFoundIDs)
@@ -295,7 +297,7 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 	}
 
 	if filter.StaffOnly {
-		conditions = append(conditions, sq.Gt{"p.permission_level": domain.PUser})
+		conditions = append(conditions, sq.Gt{"p.permission_level": permission.PUser})
 	}
 
 	builder = filter.ApplyLimitOffsetDefault(builder)
@@ -310,7 +312,7 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 		"pt.": {"patreon_id"},
 	}, "steam_id")
 
-	var people domain.People
+	var people People
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder.Where(conditions))
 	if errQuery != nil {
@@ -321,7 +323,7 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 
 	for rows.Next() {
 		var (
-			person  = domain.NewPerson(steamid.SteamID{})
+			person  = NewPerson(steamid.SteamID{})
 			steamID int64
 		)
 
@@ -354,10 +356,10 @@ func (r *personRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 }
 
 // GetPersonByDiscordID returns a person by their discord_id.
-func (r *personRepository) GetPersonByDiscordID(ctx context.Context, discordID string) (domain.Person, error) {
+func (r *PersonRepository) GetPersonByDiscordID(ctx context.Context, discordID string) (Person, error) {
 	var (
 		steamID int64
-		person  domain.Person
+		person  Person
 	)
 
 	person.IsNew = false
@@ -387,8 +389,8 @@ func (r *personRepository) GetPersonByDiscordID(ctx context.Context, discordID s
 	return person, nil
 }
 
-func (r *personRepository) GetExpiredProfiles(ctx context.Context, transaction pgx.Tx, limit uint64) ([]domain.Person, error) {
-	var people []domain.Person
+func (r *PersonRepository) GetExpiredProfiles(ctx context.Context, transaction pgx.Tx, limit uint64) ([]Person, error) {
+	var people []Person
 
 	rows, errQuery := r.db.QueryBuilder(ctx, transaction, r.db.
 		Builder().
@@ -409,7 +411,7 @@ func (r *personRepository) GetExpiredProfiles(ctx context.Context, transaction p
 
 	for rows.Next() {
 		var (
-			person  = domain.NewPerson(steamid.SteamID{})
+			person  = NewPerson(steamid.SteamID{})
 			steamID int64
 		)
 
@@ -430,7 +432,7 @@ func (r *personRepository) GetExpiredProfiles(ctx context.Context, transaction p
 	return people, nil
 }
 
-func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessageID int64) (chat.PersonMessage, error) {
+func (r *PersonRepository) GetPersonMessageByID(ctx context.Context, personMessageID int64) (chat.PersonMessage, error) {
 	var msg chat.PersonMessage
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
@@ -480,7 +482,7 @@ func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessa
 //		Where(sq.Eq{"person_notification_id": notificationIds})))
 //}
 
-func (r *personRepository) GetSteamIDsAbove(ctx context.Context, privilege domain.Privilege) (steamid.Collection, error) {
+func (r *PersonRepository) GetSteamIDsAbove(ctx context.Context, privilege permission.Privilege) (steamid.Collection, error) {
 	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("steam_id").
@@ -506,7 +508,7 @@ func (r *personRepository) GetSteamIDsAbove(ctx context.Context, privilege domai
 	return ids, nil
 }
 
-func (r *personRepository) GetSteamIDsByGroups(ctx context.Context, privileges []domain.Privilege) (steamid.Collection, error) {
+func (r *PersonRepository) GetSteamIDsByGroups(ctx context.Context, privileges []permission.Privilege) (steamid.Collection, error) {
 	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("steam_id").
@@ -532,8 +534,8 @@ func (r *personRepository) GetSteamIDsByGroups(ctx context.Context, privileges [
 	return ids, nil
 }
 
-func (r *personRepository) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (domain.PersonSettings, error) {
-	var settings domain.PersonSettings
+func (r *PersonRepository) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (PersonSettings, error) {
+	var settings PersonSettings
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
@@ -604,7 +606,7 @@ func boolToStringDigit(b bool) string {
 	return "0"
 }
 
-func (r *personRepository) SavePersonSettings(ctx context.Context, settings *domain.PersonSettings) error {
+func (r *PersonRepository) SavePersonSettings(ctx context.Context, settings *PersonSettings) error {
 	const (
 		query = `
     INSERT INTO sm_cookie_cache (player, cookie_id, value, timestamp)

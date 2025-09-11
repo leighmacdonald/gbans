@@ -14,9 +14,11 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/viant/afs/option"
@@ -25,22 +27,22 @@ import (
 
 type UploadedDemo struct {
 	Name    string
-	Server  domain.Server
+	Server  servers.Server
 	Content []byte
 }
 
 type Fetcher struct {
 	database       database.Database
 	anticheat      anticheat.AntiCheatUsecase
-	serversUsecase domain.ServersUsecase
-	configUsecase  domain.ConfigUsecase
+	serversUsecase servers.ServersUsecase
+	configUsecase  *config.ConfigUsecase
 	assetUsecase   asset.AssetUsecase
 	demoUsecase    DemoUsecase
 	demoChan       chan UploadedDemo
 	parserMu       *sync.Mutex
 }
 
-func NewFetcher(database database.Database, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
+func NewFetcher(database database.Database, configUsecase *config.ConfigUsecase, serversUsecase servers.ServersUsecase,
 	assetUsecase asset.AssetUsecase, demoUsecase DemoUsecase, anticheat anticheat.AntiCheatUsecase,
 ) *Fetcher {
 	return &Fetcher{
@@ -89,7 +91,7 @@ var (
 	errCloseReader    = errors.New("failed to close file reader")
 )
 
-func (d Fetcher) fetchDemos(ctx context.Context, demoPathFmt string, server domain.Server, client storage.Storager) error {
+func (d Fetcher) fetchDemos(ctx context.Context, demoPathFmt string, server servers.Server, client storage.Storager) error {
 	demoDir := fmt.Sprintf(demoPathFmt, server.ShortName)
 
 	filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
@@ -146,7 +148,7 @@ func (d Fetcher) fetchDemos(ctx context.Context, demoPathFmt string, server doma
 	return nil
 }
 
-func (d Fetcher) fetchStacLogs(ctx context.Context, stactPathFmt string, server domain.Server, client storage.Storager) error {
+func (d Fetcher) fetchStacLogs(ctx context.Context, stactPathFmt string, server servers.Server, client storage.Storager) error {
 	logDir := fmt.Sprintf(stactPathFmt, server.ShortName)
 
 	filelist, errFilelist := client.List(ctx, logDir, option.NewPage(0, 1))
@@ -187,7 +189,7 @@ func (d Fetcher) fetchStacLogs(ctx context.Context, stactPathFmt string, server 
 	return nil
 }
 
-func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, servers []domain.Server) error {
+func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, servers []servers.Server) error {
 	config := d.configUsecase.Config()
 	for _, server := range servers {
 		if config.General.DemosEnabled {
@@ -208,7 +210,7 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 	return nil
 }
 
-func NewDownloader(config domain.ConfigUsecase, dbConn database.Database, servers domain.ServersUsecase,
+func NewDownloader(config *config.ConfigUsecase, dbConn database.Database, servers servers.ServersUsecase,
 	assets asset.AssetUsecase, demos DemoUsecase, anticheat anticheat.AntiCheatUsecase,
 ) Downloader {
 	fetcher := NewFetcher(dbConn, config, servers, assets, demos, anticheat)
@@ -223,7 +225,7 @@ func NewDownloader(config domain.ConfigUsecase, dbConn database.Database, server
 type Downloader struct {
 	fetcher *Fetcher
 	scpExec network.SCPExecer
-	config  domain.ConfigUsecase
+	config  *config.ConfigUsecase
 }
 
 // Start begins the background task scheduler which peridodically will run the provided SCPExecer.Update function.

@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/match"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -21,20 +22,20 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type chatRepository struct {
+type ChatRepository struct {
 	db          database.Database
-	persons     domain.PersonUsecase
+	persons     *person.PersonUsecase
 	wordFilters WordFilterUsecase
 	matches     match.MatchUsecase
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	WarningChan chan NewUserWarning
 }
 
-func NewChatRepository(database database.Database, personUsecase domain.PersonUsecase, wordFilterUsecase WordFilterUsecase,
+func NewChatRepository(database database.Database, personUsecase *person.PersonUsecase, wordFilterUsecase WordFilterUsecase,
 	matchUsecase match.MatchUsecase,
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-) ChatRepository {
-	return &chatRepository{
+) *ChatRepository {
+	return &ChatRepository{
 		db:          database,
 		persons:     personUsecase,
 		wordFilters: wordFilterUsecase,
@@ -44,7 +45,7 @@ func NewChatRepository(database database.Database, personUsecase domain.PersonUs
 	}
 }
 
-func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason ban.Reason) {
+func (r ChatRepository) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason ban.Reason) {
 	if msg == "" {
 		slog.Warn("Empty message body, skipping")
 
@@ -106,7 +107,7 @@ func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 	}(personMsg)
 }
 
-func (r chatRepository) Start(ctx context.Context) {
+func (r ChatRepository) Start(ctx context.Context) {
 	eventChan := make(chan logparse.ServerEvent)
 	if errRegister := r.broadcaster.Consume(eventChan, logparse.Connected, logparse.Say, logparse.SayTeam); errRegister != nil {
 		slog.Warn("logWriter Tried to register duplicate reader channel", log.ErrAttr(errRegister))
@@ -143,11 +144,11 @@ func (r chatRepository) Start(ctx context.Context) {
 	}
 }
 
-func (r chatRepository) GetWarningChan() chan NewUserWarning {
+func (r ChatRepository) GetWarningChan() chan NewUserWarning {
 	return r.WarningChan
 }
 
-func (r chatRepository) TopChatters(ctx context.Context, count uint64) ([]TopChatterResult, error) {
+func (r ChatRepository) TopChatters(ctx context.Context, count uint64) ([]TopChatterResult, error) {
 	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("p.personaname", "p.steam_id", "count(person_message_id) as total").
@@ -183,7 +184,7 @@ func (r chatRepository) TopChatters(ctx context.Context, count uint64) ([]TopCha
 
 const minQueryLen = 2
 
-func (r chatRepository) AddChatHistory(ctx context.Context, message *PersonMessage) error {
+func (r ChatRepository) AddChatHistory(ctx context.Context, message *PersonMessage) error {
 	const query = `INSERT INTO person_messages
     		(steam_id, server_id, body, team, created_on, persona_name, match_id)
 			VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -199,7 +200,7 @@ func (r chatRepository) AddChatHistory(ctx context.Context, message *PersonMessa
 	return nil
 }
 
-func (r chatRepository) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error) { //nolint:maintidx
+func (r ChatRepository) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
 		return nil, fmt.Errorf("%w: query", domain.ErrTooShort)
 	}
@@ -327,7 +328,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters ChatHistor
 	return messages, nil
 }
 
-func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (QueryChatHistoryResult, error) {
+func (r ChatRepository) GetPersonMessage(ctx context.Context, messageID int64) (QueryChatHistoryResult, error) {
 	const query = `
 		SELECT x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name, x.match_id, s.short_name, COALESCE(f.person_message_filter_id, 0) as flagged
 		FROM (
@@ -354,7 +355,7 @@ func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (
 	return msg, nil
 }
 
-func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error) {
+func (r ChatRepository) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error) {
 	const query = `
 		SELECT x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name, x.match_id, s.short_name, COALESCE(f.person_message_filter_id, 0) as flagged
 		FROM ((SELECT m.person_message_id,

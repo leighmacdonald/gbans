@@ -5,21 +5,20 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type voteHandler struct {
 	votes VoteUsecase
 }
 
-func NewHandler(engine *gin.Engine, votes VoteUsecase, auth auth.AuthUsecase) {
+func NewHandler(engine *gin.Engine, votes VoteUsecase, authUC httphelper.Authenticator) {
 	handler := voteHandler{votes: votes}
 
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.Middleware(domain.PModerator))
+		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
 		mod.POST("/api/votes", handler.onVotes())
 	}
 }

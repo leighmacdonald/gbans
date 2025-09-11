@@ -8,33 +8,33 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
-type networkHandler struct {
-	networks domain.NetworkUsecase
+type NetworkHandler struct {
+	networks *NetworkUsecase
 }
 
-func NewHandler(engine *gin.Engine, networks domain.NetworkUsecase, auth domain.AuthUsecase) {
-	handler := networkHandler{networks: networks}
+func NewHandler(engine *gin.Engine, networks *NetworkUsecase, authUC httphelper.Authenticator) {
+	handler := NetworkHandler{networks: networks}
 
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.Middleware(domain.PModerator))
+		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
 		mod.POST("/api/connections", handler.onAPIQueryConnections())
 		mod.POST("/api/network", handler.onAPIQueryNetwork())
 	}
 
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(auth.Middleware(domain.PAdmin))
+		admin := adminGrp.Use(authUC.Middleware(permission.PAdmin))
 		admin.GET("/api/network/update_db", handler.onAPIGetUpdateDB())
 	}
 }
 
-func (h networkHandler) onAPIGetUpdateDB() gin.HandlerFunc {
+func (h NetworkHandler) onAPIGetUpdateDB() gin.HandlerFunc {
 	updateInProgress := atomic.Bool{}
 
 	return func(ctx *gin.Context) {
@@ -56,16 +56,16 @@ func (h networkHandler) onAPIGetUpdateDB() gin.HandlerFunc {
 	}
 }
 
-func (h networkHandler) onAPIQueryNetwork() gin.HandlerFunc {
+func (h NetworkHandler) onAPIQueryNetwork() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.NetworkDetailsQuery
+		var req NetworkDetailsQuery
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		details, err := h.networks.QueryNetwork(ctx, req.IP)
 		if err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
@@ -74,16 +74,16 @@ func (h networkHandler) onAPIQueryNetwork() gin.HandlerFunc {
 	}
 }
 
-func (h networkHandler) onAPIQueryConnections() gin.HandlerFunc {
+func (h NetworkHandler) onAPIQueryConnections() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.ConnectionHistoryQuery
+		var req ConnectionHistoryQuery
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		ipHist, totalCount, errIPHist := h.networks.QueryConnectionHistory(ctx, req)
 		if errIPHist != nil && !errors.Is(errIPHist, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errIPHist, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errIPHist, httphelper.ErrInternal)))
 
 			return
 		}

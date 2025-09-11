@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/sync/errgroup"
@@ -70,11 +70,11 @@ var (
 	ErrSteamBans       = errors.New("failed to fetch player bans")
 )
 
-func UpdatePlayerSummary(ctx context.Context, person *domain.Person, tfAPI *thirdparty.TFAPI) error {
+func UpdatePlayerSummary(ctx context.Context, personUpdate *person.Person, tfAPI *thirdparty.TFAPI) error {
 	errGroup, errCtx := errgroup.WithContext(ctx)
 
 	errGroup.Go(func() error {
-		summaries, errSummaries := tfAPI.Summaries(errCtx, steamid.Collection{person.SteamID})
+		summaries, errSummaries := tfAPI.Summaries(errCtx, steamid.Collection{personUpdate.SteamID})
 		if errSummaries != nil {
 			return errors.Join(errSummaries, ErrPlayerAPIFailed)
 		}
@@ -82,38 +82,38 @@ func UpdatePlayerSummary(ctx context.Context, person *domain.Person, tfAPI *thir
 		if len(summaries) == 0 {
 			return ErrInvalidResult
 		}
-		person.AvatarHash = summaries[0].AvatarHash
-		person.CommentPermission = summaries[0].CommentPermission
-		person.LastLogoff = summaries[0].LastLogoff
-		person.LocCityID = summaries[0].LocCityId
-		person.LocCountryCode = summaries[0].LocCountryCode
-		person.LocStateCode = summaries[0].LocStateCode
-		person.PersonaName = summaries[0].PersonaName
-		person.PersonaState = summaries[0].PersonaState
-		person.PersonaStateFlags = summaries[0].PersonaStateFlags
-		person.PrimaryClanID = summaries[0].PrimaryClanId
-		person.ProfileState = summaries[0].ProfileState
-		person.ProfileURL = summaries[0].ProfileUrl
-		person.RealName = summaries[0].RealName
-		person.TimeCreated = summaries[0].TimeCreated
-		person.VisibilityState = summaries[0].VisibilityState
+		personUpdate.AvatarHash = summaries[0].AvatarHash
+		personUpdate.CommentPermission = summaries[0].CommentPermission
+		personUpdate.LastLogoff = summaries[0].LastLogoff
+		personUpdate.LocCityID = summaries[0].LocCityId
+		personUpdate.LocCountryCode = summaries[0].LocCountryCode
+		personUpdate.LocStateCode = summaries[0].LocStateCode
+		personUpdate.PersonaName = summaries[0].PersonaName
+		personUpdate.PersonaState = summaries[0].PersonaState
+		personUpdate.PersonaStateFlags = summaries[0].PersonaStateFlags
+		personUpdate.PrimaryClanID = summaries[0].PrimaryClanId
+		personUpdate.ProfileState = summaries[0].ProfileState
+		personUpdate.ProfileURL = summaries[0].ProfileUrl
+		personUpdate.RealName = summaries[0].RealName
+		personUpdate.TimeCreated = summaries[0].TimeCreated
+		personUpdate.VisibilityState = summaries[0].VisibilityState
 
 		return nil
 	})
 
 	errGroup.Go(func() error {
-		vac, errBans := FetchPlayerBans(errCtx, tfAPI, steamid.Collection{person.SteamID})
+		vac, errBans := FetchPlayerBans(errCtx, tfAPI, steamid.Collection{personUpdate.SteamID})
 		if errBans != nil || len(vac) != 1 {
 			return errBans
 		}
 
-		person.CommunityBanned = vac[0].CommunityBanned
-		person.VACBans = int(vac[0].NumberOfVacBans)
-		person.GameBans = int(vac[0].NumberOfGameBans)
-		person.EconomyBan = domain.EconBanState(vac[0].EconomyBan)
-		person.CommunityBanned = vac[0].CommunityBanned
-		person.DaysSinceLastBan = int(vac[0].DaysSinceLastBan)
-		person.UpdatedOnSteam = time.Now()
+		personUpdate.CommunityBanned = vac[0].CommunityBanned
+		personUpdate.VACBans = int(vac[0].NumberOfVacBans)
+		personUpdate.GameBans = int(vac[0].NumberOfGameBans)
+		personUpdate.EconomyBan = person.EconBanState(vac[0].EconomyBan)
+		personUpdate.CommunityBanned = vac[0].CommunityBanned
+		personUpdate.DaysSinceLastBan = int(vac[0].DaysSinceLastBan)
+		personUpdate.UpdatedOnSteam = time.Now()
 
 		return nil
 	})

@@ -10,9 +10,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -21,11 +24,11 @@ import (
 
 type banHandler struct {
 	bans   BanUsecase
-	config domain.ConfigUsecase
+	config *config.ConfigUsecase
 }
 
 func NewHandlerSteam(engine *gin.Engine, bans BanUsecase,
-	config domain.ConfigUsecase, auth domain.AuthUsecase,
+	config *config.ConfigUsecase, authUC httphelper.Authenticator,
 ) {
 	handler := banHandler{bans: bans, config: config}
 
@@ -40,14 +43,14 @@ func NewHandlerSteam(engine *gin.Engine, bans BanUsecase,
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.Middleware(domain.PUser))
+		authed := authedGrp.Use(authUC.Middleware(permission.PUser))
 		authed.GET("/api/bans/steam/:ban_id", handler.onAPIGetBanByID())
 	}
 
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.Middleware(domain.PModerator))
+		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
 
 		mod.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
 		mod.GET("/api/stats", handler.onAPIGetStats())
@@ -85,7 +88,7 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 		}
 
 		if bannedPerson.AppealState == req.AppealState {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, domain.ErrBadRequest,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, httphelper.ErrBadRequest,
 				"New state must be different than previous state"))
 
 			return
@@ -97,18 +100,18 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 		if errSave := h.bans.Save(ctx, &bannedPerson.Ban); errSave != nil {
 			switch {
 			case errors.Is(errSave, domain.ErrPersonTarget):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Ban target steam_id invalid"))
 			case errors.Is(errSave, domain.ErrPersonSource):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Ban author steam_id invalid"))
 			case errors.Is(errSave, database.ErrDuplicate):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, domain.ErrBadRequest,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, httphelper.ErrBadRequest,
 					"Ban typ (nocomm/ban/network) cannot be the same as existng ban"))
 			case errors.Is(errSave, domain.ErrGetBan):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNotFound, "Could not load ban to update"))
 			default:
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 			}
 
 			return
@@ -116,7 +119,7 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 
 		if req.AppealState == Accepted {
 			if _, err := h.bans.Unban(ctx, bannedPerson.TargetID, "Appeal accepted", httphelper.CurrentUserProfile(ctx)); err != nil {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal),
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal),
 					"Could not perform unban request"))
 
 				return
@@ -146,7 +149,7 @@ func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, database.ErrDuplicate,
 					"Ban already active for steam_id: %s", req.TargetID))
 			default:
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBan, domain.ErrInternal)))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBan, httphelper.ErrInternal)))
 			}
 
 			return
@@ -167,7 +170,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 		}
 
 		if banID == 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 				"Ban ID must be > 0"))
 
 			return
@@ -196,12 +199,12 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, httphelper.ErrInternal)))
 
 			return
 		}
 
-		if !httphelper.HasPrivilege(curUser, steamid.Collection{bannedPerson.TargetID}, domain.PModerator) {
+		if !httphelper.HasPrivilege(curUser, steamid.Collection{bannedPerson.TargetID}, auth.PModerator) {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 				"You do not have permission to access this ban."))
 
@@ -264,9 +267,9 @@ func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
 
 func (h banHandler) onAPIGetStats() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var stats domain.Stats
+		var stats Stats
 		if errGetStats := h.bans.Stats(ctx, &stats); errGetStats != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetStats, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetStats, httphelper.ErrInternal)))
 
 			return
 		}
@@ -294,7 +297,7 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 		// TODO limit to perm?
 		bans, errBans := h.bans.QueryMany(ctx, QueryOpts{})
 		if errBans != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
 
 			return
 		}
@@ -330,7 +333,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 
 		bans, errBans := h.bans.QueryMany(ctx, QueryOpts{})
 		if errBans != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
 
 			return
 		}
@@ -384,7 +387,7 @@ func (h banHandler) onAPIGetBansSteam() gin.HandlerFunc {
 			Deleted: params.Deleted,
 		})
 		if errBans != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
 
 			return
 		}
@@ -402,7 +405,7 @@ func (h banHandler) onAPIGetBansSteamBySteamID() gin.HandlerFunc {
 
 		bans, errBans := h.bans.QueryMany(ctx, QueryOpts{TargetID: sid, Deleted: true})
 		if errBans != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
 
 			return
 		}
@@ -418,7 +421,7 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.RequestUnban
+		var req RequestUnban
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -431,14 +434,14 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBan, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBan, httphelper.ErrInternal)))
 
 			return
 		}
 
 		changed, errSave := h.bans.Unban(ctx, bannedPerson.TargetID, req.UnbanReasonText, httphelper.CurrentUserProfile(ctx))
 		if errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
 			return
 		}
@@ -477,7 +480,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 		}
 
 		if time.Since(req.ValidUntil) > 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 				"Valid until date cannot be in the past."))
 
 			return
@@ -493,7 +496,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 
 		if req.Reason == Custom {
 			if req.ReasonText == "" {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Reason cannot be empty."))
 
 				return

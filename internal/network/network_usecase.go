@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -20,17 +22,17 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type networkUsecase struct {
-	repository domain.NetworkRepository
-	persons    domain.PersonUsecase
-	config     domain.ConfigUsecase
+type NetworkUsecase struct {
+	repository networkRepository
+	persons    *person.PersonUsecase
+	config     *config.ConfigUsecase
 	eb         *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 func NewNetworkUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository domain.NetworkRepository, persons domain.PersonUsecase, config domain.ConfigUsecase,
-) domain.NetworkUsecase {
-	return networkUsecase{
+	repository networkRepository, persons *person.PersonUsecase, config *config.ConfigUsecase,
+) *NetworkUsecase {
+	return &NetworkUsecase{
 		repository: repository,
 		eb:         broadcaster,
 		persons:    persons,
@@ -38,7 +40,7 @@ func NewNetworkUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.
 	}
 }
 
-func (u networkUsecase) Start(ctx context.Context) {
+func (u NetworkUsecase) Start(ctx context.Context) {
 	serverEventChan := make(chan logparse.ServerEvent)
 	if errRegister := u.eb.Consume(serverEventChan, logparse.Connected); errRegister != nil {
 		slog.Warn("logWriter Tried to register duplicate reader channel", log.ErrAttr(errRegister))
@@ -77,7 +79,7 @@ func (u networkUsecase) Start(ctx context.Context) {
 				continue
 			}
 
-			conn := domain.PersonConnection{
+			conn := PersonConnection{
 				IPAddr:      parsedAddr,
 				SteamID:     newServerEvent.SID,
 				PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
@@ -95,15 +97,15 @@ func (u networkUsecase) Start(ctx context.Context) {
 	}
 }
 
-func (u networkUsecase) AddConnectionHistory(ctx context.Context, conn *domain.PersonConnection) error {
+func (u NetworkUsecase) AddConnectionHistory(ctx context.Context, conn *PersonConnection) error {
 	return u.repository.AddConnectionHistory(ctx, conn)
 }
 
-func (u networkUsecase) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]domain.NetworkASN, error) {
+func (u NetworkUsecase) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]NetworkASN, error) {
 	return u.repository.GetASNRecordsByNum(ctx, asNum)
 }
 
-func (u networkUsecase) importDatabase(ctx context.Context, dbName ip2location.DatabaseFile) error {
+func (u NetworkUsecase) importDatabase(ctx context.Context, dbName ip2location.DatabaseFile) error {
 	conf := u.config.Config()
 	filePath := path.Join(conf.GeoLocation.CachePath, string(dbName))
 
@@ -119,7 +121,7 @@ func (u networkUsecase) importDatabase(ctx context.Context, dbName ip2location.D
 	}
 }
 
-func (u networkUsecase) RefreshLocationData(ctx context.Context) error {
+func (u NetworkUsecase) RefreshLocationData(ctx context.Context) error {
 	conf := u.config.Config()
 
 	if errUpdate := ip2location.Update(ctx, conf.GeoLocation.CachePath, conf.GeoLocation.Token); errUpdate != nil {
@@ -135,15 +137,15 @@ func (u networkUsecase) RefreshLocationData(ctx context.Context) error {
 	return nil
 }
 
-func (u networkUsecase) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (domain.PersonConnections, error) {
+func (u NetworkUsecase) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error) {
 	return u.repository.GetPersonIPHistory(ctx, sid64, limit)
 }
 
-func (u networkUsecase) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP {
+func (u NetworkUsecase) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP {
 	return u.repository.GetPlayerMostRecentIP(ctx, steamID)
 }
 
-func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error) {
+func (u NetworkUsecase) QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error) {
 	if sid, ok := opts.SourceSteamID(ctx); ok {
 		opts.Sid64 = sid.String()
 	}
@@ -174,8 +176,8 @@ func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.
 	return u.repository.QueryConnections(ctx, opts)
 }
 
-func (u networkUsecase) QueryNetwork(ctx context.Context, address netip.Addr) (domain.NetworkDetails, error) {
-	var details domain.NetworkDetails
+func (u NetworkUsecase) QueryNetwork(ctx context.Context, address netip.Addr) (NetworkDetails, error) {
+	var details NetworkDetails
 
 	if !address.IsValid() {
 		return details, domain.ErrNetworkInvalidIP

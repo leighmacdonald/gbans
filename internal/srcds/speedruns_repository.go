@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -15,7 +16,7 @@ func NewSpeedrunRepository(database database.Database, people domain.PersonUseca
 
 type speedrunRepository struct {
 	db     database.Database
-	people domain.PersonUsecase
+	people person.PersonUsecase
 }
 
 func (r *speedrunRepository) LoadOrCreateMap(ctx context.Context, transaction pgx.Tx, mapName string) (MapDetail, error) {

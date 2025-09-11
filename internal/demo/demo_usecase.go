@@ -17,26 +17,28 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/ricochet2200/go-disk-usage/du"
 )
 
-type demoUsecase struct {
+type DemoUsecase struct {
 	repository  DemoRepository
 	asset       asset.AssetUsecase
-	config      domain.ConfigUsecase
-	servers     domain.ServersUsecase
+	config      *config.ConfigUsecase
+	servers     servers.ServersUsecase
 	bucket      asset.Bucket
 	cleanupChan chan any
 }
 
 func NewDemoUsecase(bucket asset.Bucket, repository DemoRepository, assets asset.AssetUsecase,
-	config domain.ConfigUsecase, servers domain.ServersUsecase,
-) DemoUsecase {
-	return &demoUsecase{
+	config *config.ConfigUsecase, servers servers.ServersUsecase,
+) *DemoUsecase {
+	return &DemoUsecase{
 		bucket:      bucket,
 		repository:  repository,
 		asset:       assets,
@@ -46,7 +48,7 @@ func NewDemoUsecase(bucket asset.Bucket, repository DemoRepository, assets asset
 	}
 }
 
-func (d demoUsecase) oldest(ctx context.Context) (DemoInfo, error) {
+func (d DemoUsecase) oldest(ctx context.Context) (DemoInfo, error) {
 	demos, errDemos := d.repository.ExpiredDemos(ctx, 1)
 	if errDemos != nil {
 		return DemoInfo{}, errDemos
@@ -59,7 +61,7 @@ func (d demoUsecase) oldest(ctx context.Context) (DemoInfo, error) {
 	return demos[0], nil
 }
 
-func (d demoUsecase) MarkArchived(ctx context.Context, demo *DemoFile) error {
+func (d DemoUsecase) MarkArchived(ctx context.Context, demo *DemoFile) error {
 	demo.Archive = true
 
 	if err := d.repository.SaveDemo(ctx, demo); err != nil {
@@ -77,7 +79,7 @@ func diskPercentageUsed(path string) float32 {
 	return info.Usage() * 100
 }
 
-func (d demoUsecase) TruncateBySpace(ctx context.Context, root string, maxAllowedPctUsed float32) (int, int64, error) {
+func (d DemoUsecase) TruncateBySpace(ctx context.Context, root string, maxAllowedPctUsed float32) (int, int64, error) {
 	var (
 		count int
 		size  int64
@@ -113,7 +115,7 @@ func (d demoUsecase) TruncateBySpace(ctx context.Context, root string, maxAllowe
 	}
 }
 
-func (d demoUsecase) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64, error) {
+func (d DemoUsecase) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64, error) {
 	var (
 		count int
 		size  int64
@@ -158,7 +160,7 @@ func (d demoUsecase) TruncateByCount(ctx context.Context, maxCount uint64) (int,
 	return count, size, nil
 }
 
-func (d demoUsecase) Cleanup(ctx context.Context) {
+func (d DemoUsecase) Cleanup(ctx context.Context) {
 	conf := d.config.Config()
 
 	if !conf.Demo.DemoCleanupEnabled {
@@ -174,9 +176,9 @@ func (d demoUsecase) Cleanup(ctx context.Context) {
 	)
 
 	switch conf.Demo.DemoCleanupStrategy {
-	case domain.DemoStrategyPctFree:
+	case config.DemoStrategyPctFree:
 		count, size, err = d.TruncateBySpace(ctx, conf.Demo.DemoCleanupMount, conf.Demo.DemoCleanupMinPct)
-	case domain.DemoStrategyCount:
+	case config.DemoStrategyCount:
 		count, size, err = d.TruncateByCount(ctx, conf.Demo.DemoCountLimit)
 	}
 
@@ -191,23 +193,23 @@ func (d demoUsecase) Cleanup(ctx context.Context) {
 	}
 }
 
-func (d demoUsecase) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {
+func (d DemoUsecase) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {
 	return d.repository.ExpiredDemos(ctx, limit)
 }
 
-func (d demoUsecase) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
+func (d DemoUsecase) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
 	return d.repository.GetDemoByID(ctx, demoID, demoFile)
 }
 
-func (d demoUsecase) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
+func (d DemoUsecase) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
 	return d.repository.GetDemoByName(ctx, demoName, demoFile)
 }
 
-func (d demoUsecase) GetDemos(ctx context.Context) ([]DemoFile, error) {
+func (d DemoUsecase) GetDemos(ctx context.Context) ([]DemoFile, error) {
 	return d.repository.GetDemos(ctx)
 }
 
-func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails, error) {
+func (d DemoUsecase) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails, error) {
 	fileHandle, errDF := os.Open(path)
 	if errDF != nil {
 		return nil, errors.Join(errDF, domain.ErrDemoLoad)
@@ -270,7 +272,7 @@ func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*DemoDe
 	return &demo, nil
 }
 
-func (d demoUsecase) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID int) (*DemoFile, error) {
+func (d DemoUsecase) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID int) (*DemoFile, error) {
 	_, errGetServer := d.servers.Server(ctx, serverID)
 	if errGetServer != nil {
 		return nil, domain.ErrGetServer
@@ -328,7 +330,7 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset asset.Asset, ser
 	return &newDemo, nil
 }
 
-func (d demoUsecase) RemoveOrphans(ctx context.Context) error {
+func (d DemoUsecase) RemoveOrphans(ctx context.Context) error {
 	demos, errDemos := d.GetDemos(ctx)
 	if errDemos != nil {
 		return errDemos

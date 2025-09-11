@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/austinbspencer/patreon-go-wrapper"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/queue"
@@ -21,13 +22,13 @@ import (
 )
 
 type patreonUsecase struct {
-	repository   domain.PatreonRepository
+	repository   PatreonRepository
 	manager      *Manager
 	stateTracker *oauth.LoginStateTracker
-	cu           domain.ConfigUsecase
+	cu           *config.ConfigUsecase
 }
 
-func NewPatreonUsecase(repository domain.PatreonRepository, configUsecase domain.ConfigUsecase) domain.PatreonUsecase {
+func NewPatreonUsecase(repository PatreonRepository, configUsecase *config.ConfigUsecase) PatreonUsecase {
 	return &patreonUsecase{
 		repository:   repository,
 		cu:           configUsecase,
@@ -60,7 +61,7 @@ func (p patreonUsecase) checkAuths(ctx context.Context) {
 	}
 }
 
-func (p patreonUsecase) refreshToken(ctx context.Context, auth domain.PatreonCredential) error {
+func (p patreonUsecase) refreshToken(ctx context.Context, auth PatreonCredential) error {
 	conf := p.cu.Config()
 
 	form := url.Values{}
@@ -89,7 +90,7 @@ func (p patreonUsecase) refreshToken(ctx context.Context, auth domain.PatreonCre
 		}
 	}()
 
-	var creds domain.PatreonCredential
+	var creds PatreonCredential
 
 	decoder := json.NewDecoder(resp.Body)
 	if errDec := decoder.Decode(&creds); err != nil {
@@ -176,7 +177,7 @@ func (p patreonUsecase) OnOauthLogin(ctx context.Context, state string, code str
 		}
 	}()
 
-	var creds domain.PatreonCredential
+	var creds PatreonCredential
 
 	decoder := json.NewDecoder(resp.Body)
 	if errDec := decoder.Decode(&creds); err != nil {
@@ -216,13 +217,13 @@ func (args AuthUpdateArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour}}
 }
 
-func NewSyncWorker(patreon domain.PatreonUsecase) *SyncWorker {
+func NewSyncWorker(patreon PatreonUsecase) *SyncWorker {
 	return &SyncWorker{patreon: patreon}
 }
 
 type SyncWorker struct {
 	river.WorkerDefaults[AuthUpdateArgs]
-	patreon domain.PatreonUsecase
+	patreon PatreonUsecase
 }
 
 func (worker *SyncWorker) Work(ctx context.Context, _ *river.Job[AuthUpdateArgs]) error {

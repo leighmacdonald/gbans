@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -20,7 +20,7 @@ type forumHandler struct {
 	forums ForumUsecase
 }
 
-func NewHandler(engine *gin.Engine, forums ForumUsecase, auth auth.AuthUsecase) {
+func NewHandler(engine *gin.Engine, forums ForumUsecase, authUC httphelper.Authenticator) {
 	handler := &forumHandler{
 		forums: forums,
 	}
@@ -30,7 +30,7 @@ func NewHandler(engine *gin.Engine, forums ForumUsecase, auth auth.AuthUsecase) 
 	// opt
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(auth.Middleware(domain.PGuest))
+		opt := optGrp.Use(authUC.Middleware(permission.PGuest))
 		opt.GET("/api/forum/overview", handler.onAPIForumOverview())
 		opt.GET("/api/forum/messages/recent", handler.onAPIForumMessagesRecent())
 		opt.POST("/api/forum/threads", handler.onAPIForumThreads())
@@ -42,7 +42,7 @@ func NewHandler(engine *gin.Engine, forums ForumUsecase, auth auth.AuthUsecase) 
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.Middleware(domain.PUser))
+		authed := authedGrp.Use(authUC.Middleware(permission.PUser))
 		authed.POST("/api/forum/forum/:forum_id/thread", handler.onAPIThreadCreate())
 		authed.POST("/api/forum/thread/:forum_thread_id/message", handler.onAPIThreadCreateReply())
 		authed.POST("/api/forum/message/:forum_message_id", handler.onAPIThreadMessageUpdate())
@@ -53,7 +53,7 @@ func NewHandler(engine *gin.Engine, forums ForumUsecase, auth auth.AuthUsecase) 
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.Middleware(domain.PModerator))
+		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
 		mod.POST("/api/forum/category", handler.onAPICreateForumCategory())
 		mod.GET("/api/forum/category/:forum_category_id", handler.onAPIForumCategory())
 		mod.POST("/api/forum/category/:forum_category_id", handler.onAPIUpdateForumCategory())
@@ -71,7 +71,6 @@ type CategoryRequest struct {
 func (f *forumHandler) onAPIForumMessagesRecent() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
-
 		messages, errThreads := f.forums.ForumRecentActivity(ctx, 5, user.PermissionLevel)
 		if errThreads != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errThreads, httphelper.ErrInternal),
@@ -169,8 +168,8 @@ func (f *forumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
 }
 
 type CreateForumRequest struct {
-	ForumCategoryID int              `json:"forum_category_id"`
-	PermissionLevel domain.Privilege `json:"permission_level"`
+	ForumCategoryID int                  `json:"forum_category_id"`
+	PermissionLevel permission.Privilege `json:"permission_level"`
 	CategoryRequest
 }
 
@@ -375,7 +374,7 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if thread.SourceID != currentUser.SteamID && currentUser.PermissionLevel < domain.PModerator {
+		if thread.SourceID != currentUser.SteamID && currentUser.PermissionLevel < permission.PModerator {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 				"You do not have access to edit this."))
 
@@ -475,7 +474,7 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if message.SourceID != currentUser.SteamID && currentUser.PermissionLevel < domain.PModerator {
+		if message.SourceID != currentUser.SteamID && currentUser.PermissionLevel < permission.PModerator {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 				"You do not have permission to edit this message."))
 
@@ -606,7 +605,7 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 			return
 		}
 
-		if thread.Locked && currentUser.PermissionLevel < domain.PEditor {
+		if thread.Locked && currentUser.PermissionLevel < permission.PEditor {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrThreadLocked))
 
 			return
@@ -828,10 +827,10 @@ func (f *forumHandler) onAPIForumMessages() gin.HandlerFunc {
 
 func (f *forumHandler) onAPIActiveUsers() gin.HandlerFunc {
 	type userActivity struct {
-		SteamID         steamid.SteamID  `json:"steam_id"`
-		Personaname     string           `json:"personaname"`
-		PermissionLevel domain.Privilege `json:"permission_level"`
-		CreatedOn       time.Time        `json:"created_on"`
+		SteamID         steamid.SteamID      `json:"steam_id"`
+		Personaname     string               `json:"personaname"`
+		PermissionLevel permission.Privilege `json:"permission_level"`
+		CreatedOn       time.Time            `json:"created_on"`
 	}
 
 	return func(ctx *gin.Context) {

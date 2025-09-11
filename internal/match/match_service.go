@@ -8,20 +8,23 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
+	"github.com/leighmacdonald/gbans/internal/servers"
 )
 
 type matchHandler struct {
-	matches domain.MatchUsecase
-	servers domain.ServersUsecase
-	config  domain.ConfigUsecase
+	matches MatchUsecase
+	servers servers.ServersUsecase
+	config  *config.ConfigUsecase
 }
 
 // todo move data updaters to repository.
-func NewHandler(ctx context.Context, engine *gin.Engine, matches domain.MatchUsecase, servers domain.ServersUsecase,
-	auth domain.AuthUsecase, config domain.ConfigUsecase,
+func NewHandler(ctx context.Context, engine *gin.Engine, matches MatchUsecase, servers servers.ServersUsecase,
+	authUC httphelper.Authenticator, config *config.ConfigUsecase,
 ) {
 	handler := matchHandler{matches: matches, servers: servers, config: config}
 
@@ -30,7 +33,7 @@ func NewHandler(ctx context.Context, engine *gin.Engine, matches domain.MatchUse
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.Middleware(domain.PUser))
+		authed := authedGrp.Use(authUC.Middleware(permission.PUser))
 		authed.POST("/api/logs", handler.onAPIGetMatches())
 		authed.GET("/api/log/:match_id", handler.onAPIGetMatch())
 		authed.GET("/api/stats/weapons", handler.onAPIGetStatsWeaponsOverall(ctx))
@@ -90,14 +93,14 @@ func (h matchHandler) onAPIPostMatchStart() gin.HandlerFunc {
 
 		server, errServer := h.servers.Server(ctx, serverID)
 		if errServer != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServer, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServer, httphelper.ErrInternal)))
 
 			return
 		}
 
 		matchUUID, errMatch := h.matches.StartMatch(server, req.MapName, req.DemoName)
 		if errMatch != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMatch, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMatch, httphelper.ErrInternal)))
 
 			return
 		}
@@ -107,14 +110,14 @@ func (h matchHandler) onAPIPostMatchStart() gin.HandlerFunc {
 }
 
 func (h matchHandler) onAPIGetStatsWeaponsOverall(ctx context.Context) gin.HandlerFunc {
-	updater := NewDataUpdater(time.Minute*10, func() ([]domain.WeaponsOverallResult, error) {
+	updater := NewDataUpdater(time.Minute*10, func() ([]WeaponsOverallResult, error) {
 		weaponStats, errUpdate := h.matches.WeaponsOverall(ctx)
 		if errUpdate != nil && !errors.Is(errUpdate, database.ErrNoResult) {
 			return nil, errors.Join(errUpdate, domain.ErrDataUpdate)
 		}
 
 		if weaponStats == nil {
-			weaponStats = []domain.WeaponsOverallResult{}
+			weaponStats = []WeaponsOverallResult{}
 		}
 
 		return weaponStats, nil
@@ -132,7 +135,7 @@ func (h matchHandler) onAPIGetStatsWeaponsOverall(ctx context.Context) gin.Handl
 func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 	type resp struct {
 		httphelper.LazyResult
-		Weapon domain.Weapon `json:"weapon"`
+		Weapon Weapon `json:"weapon"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -141,7 +144,7 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 			return
 		}
 
-		var weapon domain.Weapon
+		var weapon Weapon
 
 		errWeapon := h.matches.GetWeaponByID(ctx, weaponID, &weapon)
 		if errWeapon != nil {
@@ -152,13 +155,13 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 
 		weaponStats, errChat := h.matches.WeaponsOverallTopPlayers(ctx, weaponID)
 		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if weaponStats == nil {
-			weaponStats = []domain.PlayerWeaponResult{}
+			weaponStats = []PlayerWeaponResult{}
 		}
 
 		ctx.JSON(http.StatusOK, resp{LazyResult: httphelper.NewLazyResult(int64(len(weaponStats)), weaponStats), Weapon: weapon})
@@ -166,7 +169,7 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 }
 
 func (h matchHandler) onAPIGetStatsPlayersOverall(ctx context.Context) gin.HandlerFunc {
-	updater := NewDataUpdater(time.Minute*10, func() ([]domain.PlayerWeaponResult, error) {
+	updater := NewDataUpdater(time.Minute*10, func() ([]PlayerWeaponResult, error) {
 		updatedStats, errChat := h.matches.PlayersOverallByKills(ctx, 1000)
 		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			return nil, errors.Join(errChat, domain.ErrDataUpdate)
@@ -184,7 +187,7 @@ func (h matchHandler) onAPIGetStatsPlayersOverall(ctx context.Context) gin.Handl
 }
 
 func (h matchHandler) onAPIGetStatsHealersOverall(ctx context.Context) gin.HandlerFunc {
-	updater := NewDataUpdater(time.Minute*10, func() ([]domain.HealingOverallResult, error) {
+	updater := NewDataUpdater(time.Minute*10, func() ([]HealingOverallResult, error) {
 		updatedStats, errChat := h.matches.HealersOverallByHealing(ctx, 250)
 		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			return nil, errors.Join(errChat, domain.ErrDataUpdate)
@@ -210,13 +213,13 @@ func (h matchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
 
 		weaponStats, errChat := h.matches.WeaponsOverallByPlayer(ctx, steamID)
 		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if weaponStats == nil {
-			weaponStats = []domain.WeaponsOverallResult{}
+			weaponStats = []WeaponsOverallResult{}
 		}
 
 		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(int64(len(weaponStats)), weaponStats))
@@ -232,13 +235,13 @@ func (h matchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
 
 		classStats, errChat := h.matches.PlayerOverallClassStats(ctx, steamID)
 		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if classStats == nil {
-			classStats = []domain.PlayerClassOverallResult{}
+			classStats = []PlayerClassOverallResult{}
 		}
 
 		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(int64(len(classStats)), classStats))
@@ -252,9 +255,9 @@ func (h matchHandler) onAPIGetPlayerStatsOverall() gin.HandlerFunc {
 			return
 		}
 
-		var por domain.PlayerOverallResult
+		var por PlayerOverallResult
 		if errChat := h.matches.PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, httphelper.ErrInternal)))
 
 			return
 		}
@@ -267,7 +270,7 @@ func (h matchHandler) onAPIGetMapUsage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		mapUsages, errServers := h.matches.GetMapUsageStats(ctx)
 		if errServers != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServers, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServers, httphelper.ErrInternal)))
 
 			return
 		}
@@ -283,7 +286,7 @@ func (h matchHandler) onAPIGetMatch() gin.HandlerFunc {
 			return
 		}
 
-		var match domain.MatchResult
+		var match MatchResult
 
 		errMatch := h.matches.MatchGetByID(ctx, matchID, &match)
 
@@ -294,7 +297,7 @@ func (h matchHandler) onAPIGetMatch() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMatch, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMatch, httphelper.ErrInternal)))
 
 			return
 		}
@@ -305,17 +308,17 @@ func (h matchHandler) onAPIGetMatch() gin.HandlerFunc {
 
 func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.MatchesQueryOpts
+		var req MatchesQueryOpts
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		// Don't let normal users query anybody but themselves
 		user := httphelper.CurrentUserProfile(ctx)
-		if user.PermissionLevel <= domain.PUser {
+		if user.PermissionLevel <= permission.PUser {
 			targetID, ok := req.TargetSteamID()
 			if !ok {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
 
 				return
 			}
@@ -329,7 +332,7 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 
 		matches, totalCount, errMatches := h.matches.Matches(ctx, req)
 		if errMatches != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMatches, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMatches, httphelper.ErrInternal)))
 
 			return
 		}

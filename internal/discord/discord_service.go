@@ -12,6 +12,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -19,7 +20,7 @@ import (
 )
 
 type discordService struct {
-	anticheat   domain.AntiCheatUsecase
+	anticheat   anticheat.AntiCheatUsecase
 	discord     domain.DiscordUsecase
 	persons     domain.PersonUsecase
 	bans        domain.BanUsecase

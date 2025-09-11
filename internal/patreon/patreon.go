@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/austinbspencer/patreon-go-wrapper"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -48,10 +49,10 @@ type Manager struct {
 	// patreonClient    *patreon.Client
 	patreonMu        *sync.RWMutex
 	patreonCampaigns patreon.Campaign
-	configUsecase    domain.ConfigUsecase
+	configUsecase    *config.ConfigUsecase
 }
 
-func NewPatreonManager(configUsecase domain.ConfigUsecase) *Manager {
+func NewPatreonManager(configUsecase *config.ConfigUsecase) *Manager {
 	return &Manager{
 		patreonMu:     &sync.RWMutex{},
 		configUsecase: configUsecase,

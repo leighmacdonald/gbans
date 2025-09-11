@@ -9,8 +9,10 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -19,14 +21,14 @@ import (
 )
 
 type authHandler struct {
-	authUsecase   AuthUsecase
-	configUsecase domain.ConfigUsecase
-	personUsecase domain.PersonUsecase
+	authUsecase   *AuthUsecase
+	configUsecase *config.ConfigUsecase
+	personUsecase *person.PersonUsecase
 	tfAPI         *thirdparty.TFAPI
 }
 
-func NewHandler(engine *gin.Engine, authUsecase AuthUsecase, configUsecase domain.ConfigUsecase,
-	personUsecase domain.PersonUsecase, tfAPI *thirdparty.TFAPI,
+func NewHandler(engine *gin.Engine, authUsecase *AuthUsecase, configUsecase *config.ConfigUsecase,
+	personUsecase *person.PersonUsecase, tfAPI *thirdparty.TFAPI,
 ) {
 	handler := &authHandler{
 		authUsecase:   authUsecase,
@@ -40,7 +42,7 @@ func NewHandler(engine *gin.Engine, authUsecase AuthUsecase, configUsecase domai
 	authGrp := engine.Group("/")
 	{
 		// authed
-		env := authGrp.Use(authUsecase.Middleware(domain.PUser))
+		env := authGrp.Use(authUsecase.Middleware(permission.PUser))
 
 		env.GET("/api/auth/logout", handler.onAPILogout())
 	}
@@ -152,7 +154,7 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			int(AuthTokenDuration.Seconds()),
 			"/api",
 			parsedExternal.Hostname(),
-			conf.General.Mode == domain.ReleaseMode,
+			conf.General.Mode == config.ReleaseMode,
 			true)
 
 		ctx.Redirect(302, parsedURL.String())
@@ -191,7 +193,7 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 		}
 
 		ctx.SetCookie(FingerprintCookieName, "", -1, "/api",
-			parsedExternal.Hostname(), conf.General.Mode == domain.ReleaseMode, true)
+			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
 
 		personAuth := PersonAuth{}
 		if errGet := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {

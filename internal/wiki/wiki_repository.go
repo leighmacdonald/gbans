@@ -12,7 +12,7 @@ type wikiRepository struct {
 	db database.Database
 }
 
-func NewWikiRepository(database database.Database) WikiRepository {
+func NewWikiRepository(database database.Database) *wikiRepository {
 	return &wikiRepository{db: database}
 }
 

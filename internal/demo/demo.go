@@ -1,33 +1,11 @@
 package demo
 
 import (
-	"context"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/asset"
 )
-
-type DemoUsecase interface {
-	ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error)
-	GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error
-	MarkArchived(ctx context.Context, demo *DemoFile) error
-	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
-	GetDemos(ctx context.Context) ([]DemoFile, error)
-	CreateFromAsset(ctx context.Context, asset asset.Asset, serverID int) (*DemoFile, error)
-	Cleanup(ctx context.Context)
-	SendAndParseDemo(ctx context.Context, path string) (*DemoDetails, error)
-}
-
-type DemoRepository interface {
-	ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error)
-	GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error
-	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
-	GetDemos(ctx context.Context) ([]DemoFile, error)
-	SaveDemo(ctx context.Context, demoFile *DemoFile) error
-	Delete(ctx context.Context, demoID int64) error
-}
 
 type DemoPlayerStats struct {
 	Score      int `json:"score"`

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -18,14 +18,14 @@ type activeMatchContext struct {
 	match       logparse.Match
 	cancel      context.CancelFunc
 	finalScores int
-	server      domain.Server
+	server      servers.Server
 }
 
 type OnCompleteFn func(ctx context.Context, m *activeMatchContext) error
 
 type Summarizer struct {
 	uuidMap    fp.MutexMap[int, uuid.UUID]
-	triggers   chan domain.MatchTrigger
+	triggers   chan MatchTrigger
 	log        *slog.Logger
 	eventChan  chan logparse.ServerEvent
 	onComplete OnCompleteFn
@@ -34,7 +34,7 @@ type Summarizer struct {
 func newMatchSummarizer(eventChan chan logparse.ServerEvent, onComplete OnCompleteFn) *Summarizer {
 	return &Summarizer{
 		uuidMap:    fp.NewMutexMap[int, uuid.UUID](),
-		triggers:   make(chan domain.MatchTrigger),
+		triggers:   make(chan MatchTrigger),
 		eventChan:  eventChan,
 		onComplete: onComplete,
 	}
@@ -56,7 +56,7 @@ func (mh *Summarizer) Start(ctx context.Context) {
 		select {
 		case trigger := <-mh.triggers:
 			switch trigger.Type {
-			case domain.MatchTriggerStart:
+			case MatchTriggerStart:
 				match := logparse.NewMatch(trigger.Server.ServerID, trigger.Server.Name)
 				match.MapName = parseMapName(trigger.MapName)
 				match.DemoName = trigger.DemoName
@@ -69,7 +69,7 @@ func (mh *Summarizer) Start(ctx context.Context) {
 				mh.uuidMap.Set(trigger.Server.ServerID, trigger.UUID)
 
 				matches[trigger.Server.ServerID] = matchContext
-			case domain.MatchTriggerEnd:
+			case MatchTriggerEnd:
 				matchContext, exists := matches[trigger.Server.ServerID]
 				if !exists {
 					return

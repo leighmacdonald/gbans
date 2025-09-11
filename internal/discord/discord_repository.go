@@ -10,7 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
@@ -38,11 +38,11 @@ type discordRepository struct {
 	session         *discordgo.Session
 	isReady         atomic.Bool
 	commandHandlers map[Cmd]SlashCommandHandler
-	conf            domain.Config
+	conf            *config.Config
 	commands        []*discordgo.ApplicationCommand
 }
 
-func NewDiscordRepository(conf domain.Config) (DiscordRepository, error) {
+func NewDiscordRepository(conf *config.Config) (DiscordRepository, error) {
 	if !conf.Discord.Enabled || !conf.Discord.BotEnabled {
 		return &nullDiscordRepository{}, nil
 	}

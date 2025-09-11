@@ -8,18 +8,19 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type blocklistHandler struct {
 	blocklists BlocklistUsecase
-	networks   domain.NetworkUsecase
+	networks   *network.NetworkUsecase
 }
 
-func NewHandler(engine *gin.Engine, bu BlocklistUsecase, nu domain.NetworkUsecase, ath auth.AuthUsecase) {
+func NewHandler(engine *gin.Engine, bu BlocklistUsecase, nu *network.NetworkUsecase, ath httphelper.Authenticator) {
 	handler := blocklistHandler{
 		blocklists: bu,
 		networks:   nu,
@@ -28,7 +29,7 @@ func NewHandler(engine *gin.Engine, bu BlocklistUsecase, nu domain.NetworkUsecas
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(ath.Middleware(domain.PModerator))
+		mod := modGrp.Use(ath.Middleware(permission.PModerator))
 		mod.GET("/api/block_list/sources", handler.onAPIGetBlockListSources())
 
 		mod.GET("/api/block_list/whitelist/ip", handler.onAPIWhitelistIPs())
@@ -46,7 +47,7 @@ func NewHandler(engine *gin.Engine, bu BlocklistUsecase, nu domain.NetworkUsecas
 	// admin
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(ath.Middleware(domain.PAdmin))
+		admin := adminGrp.Use(ath.Middleware(permission.PAdmin))
 		admin.POST("/api/block_list/sources", handler.onAPIPostBlockListCreate())
 		admin.POST("/api/block_list/sources/:cidr_block_source_id", handler.onAPIPostBlockListUpdate())
 		admin.DELETE("/api/block_list/sources/:cidr_block_source_id", handler.onAPIDeleteBlockList())

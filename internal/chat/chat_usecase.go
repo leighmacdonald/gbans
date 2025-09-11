@@ -8,24 +8,29 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type chatUsecase struct {
-	repository    domain.ChatRepository
-	wordFilters   domain.WordFilterUsecase
+type ChatUsecase struct {
+	repository    chat.ChatRepository
+	wordFilters   chat.WordFilterUsecase
 	bans          ban.BanUsecase
-	persons       domain.PersonUsecase
-	notifications domain.NotificationUsecase
-	state         domain.StateUsecase
+	persons       person.PersonUsecase
+	notifications notification.NotificationUsecase
+	state         state.StateUsecase
 	warningMu     *sync.RWMutex
 	dry           bool
 	maxWeight     int
-	warnings      map[steamid.SteamID][]domain.UserWarning
+	warnings      map[steamid.SteamID][]UserWarning
 	owner         steamid.SteamID
 	matchTimeout  time.Duration
 	checkTimeout  time.Duration
@@ -33,13 +38,13 @@ type chatUsecase struct {
 	pingDiscord bool
 }
 
-func NewChatUsecase(config domain.ConfigUsecase, chatRepository domain.ChatRepository,
-	filters domain.WordFilterUsecase, stateUsecase domain.StateUsecase, bans ban.BanUsecase,
-	persons domain.PersonUsecase, notifications domain.NotificationUsecase,
-) domain.ChatUsecase {
+func NewChatUsecase(config *config.ConfigUsecase, chatRepository chat.ChatRepository,
+	filters chat.WordFilterUsecase, stateUsecase state.StateUsecase, bans ban.BanUsecase,
+	persons person.PersonUsecase, notifications notification.NotificationUsecase,
+) *ChatUsecase {
 	conf := config.Config()
 
-	return &chatUsecase{
+	return &ChatUsecase{
 		repository:    chatRepository,
 		wordFilters:   filters,
 		bans:          bans,
@@ -47,7 +52,7 @@ func NewChatUsecase(config domain.ConfigUsecase, chatRepository domain.ChatRepos
 		notifications: notifications,
 		state:         stateUsecase,
 		pingDiscord:   conf.Filters.PingDiscord,
-		warnings:      make(map[steamid.SteamID][]domain.UserWarning),
+		warnings:      make(map[steamid.SteamID][]UserWarning),
 		warningMu:     &sync.RWMutex{},
 		matchTimeout:  time.Duration(conf.Filters.MatchTimeout) * time.Second,
 		dry:           conf.Filters.Dry,
@@ -57,14 +62,14 @@ func NewChatUsecase(config domain.ConfigUsecase, chatRepository domain.ChatRepos
 	}
 }
 
-func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.NewUserWarning) error {
+func (u ChatUsecase) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) error {
 	var (
 		newBan ban.BannedPerson
 		errBan error
 		req    ban.BanOpts
 	)
 
-	if newWarning.MatchedFilter.Action == domain.FilterActionBan || newWarning.MatchedFilter.Action == domain.FilterActionMute {
+	if newWarning.MatchedFilter.Action == FilterActionBan || newWarning.MatchedFilter.Action == FilterActionMute {
 		req = ban.BanOpts{
 			TargetID:   newWarning.UserMessage.SteamID,
 			Duration:   newWarning.MatchedFilter.Duration,
@@ -80,13 +85,13 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 	}
 
 	switch newWarning.MatchedFilter.Action {
-	case domain.FilterActionMute:
+	case FilterActionMute:
 		req.BanType = ban.NoComm
 		newBan, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), ban.System, req)
-	case domain.FilterActionBan:
+	case FilterActionBan:
 		req.BanType = ban.Banned
 		newBan, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), ban.System, req)
-	case domain.FilterActionKick:
+	case FilterActionKick:
 		// Kicks are temporary, so should be done by Player ID to avoid
 		// missing players who weren't in the latest state update
 		// (otherwise, kicking players very shortly after they connect
@@ -109,14 +114,14 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 		return nil
 	}
 
-	u.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+	u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
 		discord.ChannelWordFilterLog,
 		discord.WarningMessage(newWarning, newBan)))
 
 	return nil
 }
 
-func (u chatUsecase) onWarningHandler(ctx context.Context, newWarning domain.NewUserWarning) error {
+func (u ChatUsecase) onWarningHandler(ctx context.Context, newWarning NewUserWarning) error {
 	msg := "[WARN] Please refrain from using slurs/toxicity (see: rules & MOTD). " +
 		"Further offenses will result in mutes/bans"
 
@@ -144,14 +149,14 @@ func (u chatUsecase) onWarningHandler(ctx context.Context, newWarning domain.New
 }
 
 // State returns a string key so its more easily portable to frontend js w/o using BigInt.
-func (u chatUsecase) State() map[string][]domain.UserWarning {
+func (u ChatUsecase) State() map[string][]UserWarning {
 	u.warningMu.RLock()
 	defer u.warningMu.RUnlock()
 
-	out := make(map[string][]domain.UserWarning)
+	out := make(map[string][]UserWarning)
 
 	for steamID, v := range u.warnings {
-		var warnings []domain.UserWarning
+		var warnings []UserWarning
 
 		warnings = append(warnings, v...)
 
@@ -161,7 +166,7 @@ func (u chatUsecase) State() map[string][]domain.UserWarning {
 	return out
 }
 
-func (u chatUsecase) check(now time.Time) {
+func (u ChatUsecase) check(now time.Time) {
 	u.warningMu.Lock()
 	defer u.warningMu.Unlock()
 
@@ -184,7 +189,7 @@ func (u chatUsecase) check(now time.Time) {
 	}
 }
 
-func (u chatUsecase) trigger(ctx context.Context, newWarn domain.NewUserWarning) {
+func (u ChatUsecase) trigger(ctx context.Context, newWarn NewUserWarning) {
 	if !newWarn.UserMessage.SteamID.Valid() {
 		return
 	}
@@ -197,7 +202,7 @@ func (u chatUsecase) trigger(ctx context.Context, newWarn domain.NewUserWarning)
 
 	_, found := u.warnings[newWarn.UserMessage.SteamID]
 	if !found {
-		u.warnings[newWarn.UserMessage.SteamID] = []domain.UserWarning{}
+		u.warnings[newWarn.UserMessage.SteamID] = []UserWarning{}
 	}
 
 	var (
@@ -232,7 +237,7 @@ func (u chatUsecase) trigger(ctx context.Context, newWarn domain.NewUserWarning)
 	}
 }
 
-func (u chatUsecase) Start(ctx context.Context) {
+func (u ChatUsecase) Start(ctx context.Context) {
 	ticker := time.NewTicker(u.checkTimeout)
 
 	for {
@@ -248,24 +253,24 @@ func (u chatUsecase) Start(ctx context.Context) {
 	}
 }
 
-func (u chatUsecase) WarningState() map[string][]domain.UserWarning {
+func (u ChatUsecase) WarningState() map[string][]UserWarning {
 	return u.State()
 }
 
-func (u chatUsecase) GetPersonMessage(ctx context.Context, messageID int64) (domain.QueryChatHistoryResult, error) {
+func (u ChatUsecase) GetPersonMessage(ctx context.Context, messageID int64) (QueryChatHistoryResult, error) {
 	return u.repository.GetPersonMessage(ctx, messageID)
 }
 
-func (u chatUsecase) AddChatHistory(ctx context.Context, message *domain.PersonMessage) error {
+func (u ChatUsecase) AddChatHistory(ctx context.Context, message *PersonMessage) error {
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u chatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInfo, req domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error) {
-	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(domain.PModerator)) {
+func (u ChatUsecase) QueryChatHistory(ctx context.Context, user person.PersonInfo, req ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error) {
+	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(permission.PModerator)) {
 		req.Limit = 100
 	}
 
-	if !user.HasPermission(domain.PModerator) {
+	if !user.HasPermission(permission.PModerator) {
 		req.Unrestricted = false
 	} else {
 		req.Unrestricted = true
@@ -274,7 +279,7 @@ func (u chatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInf
 	return u.repository.QueryChatHistory(ctx, req)
 }
 
-func (u chatUsecase) GetPersonMessageContext(ctx context.Context, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
+func (u ChatUsecase) GetPersonMessageContext(ctx context.Context, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error) {
 	if paddedMessageCount > 100 || paddedMessageCount <= 0 {
 		paddedMessageCount = 100
 	}
@@ -287,6 +292,6 @@ func (u chatUsecase) GetPersonMessageContext(ctx context.Context, messageID int6
 	return u.repository.GetPersonMessageContext(ctx, msg.ServerID, messageID, paddedMessageCount)
 }
 
-func (u chatUsecase) TopChatters(ctx context.Context, count uint64) ([]domain.TopChatterResult, error) {
+func (u ChatUsecase) TopChatters(ctx context.Context, count uint64) ([]TopChatterResult, error) {
 	return u.repository.TopChatters(ctx, count)
 }

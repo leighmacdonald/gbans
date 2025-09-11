@@ -9,15 +9,15 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type authRepository struct {
+type AuthRepository struct {
 	db database.Database
 }
 
-func NewAuthRepository(database database.Database) AuthRepository {
-	return &authRepository{db: database}
+func NewAuthRepository(database database.Database) *AuthRepository {
+	return &AuthRepository{db: database}
 }
 
-func (r authRepository) SavePersonAuth(ctx context.Context, auth *PersonAuth) error {
+func (r AuthRepository) SavePersonAuth(ctx context.Context, auth *PersonAuth) error {
 	query, args, errQuery := r.db.
 		Builder().
 		Insert("person_auth").
@@ -33,21 +33,21 @@ func (r authRepository) SavePersonAuth(ctx context.Context, auth *PersonAuth) er
 	return r.db.DBErr(r.db.QueryRow(ctx, nil, query, args...).Scan(&auth.PersonAuthID))
 }
 
-func (r authRepository) DeletePersonAuth(ctx context.Context, authID int64) error {
+func (r AuthRepository) DeletePersonAuth(ctx context.Context, authID int64) error {
 	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
 		Builder().
 		Delete("person_auth").
 		Where(sq.Eq{"person_auth_id": authID})))
 }
 
-func (r authRepository) PrunePersonAuth(ctx context.Context) error {
+func (r AuthRepository) PrunePersonAuth(ctx context.Context) error {
 	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
 		Builder().
 		Delete("person_auth").
 		Where(sq.Gt{"created_on + interval '1 month'": time.Now()})))
 }
 
-func (r authRepository) GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *PersonAuth) error {
+func (r AuthRepository) GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *PersonAuth) error {
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on").

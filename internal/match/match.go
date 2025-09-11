@@ -1,13 +1,13 @@
 package match
 
 import (
-	"context"
 	"math"
 	"sort"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
@@ -23,63 +23,24 @@ const (
 type MatchTrigger struct {
 	Type     MatchTriggerType
 	UUID     uuid.UUID
-	Server   Server
+	Server   servers.Server
 	MapName  string
 	DemoName string
 }
 
-type MatchRepository interface {
-	Start(ctx context.Context)
-	StartMatch(startTrigger MatchTrigger)
-	EndMatch(endTrigger MatchTrigger)
-	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
-	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
-	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
-	StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (PlayerClassStatsCollection, error)
-	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]PlayerWeaponStats, error)
-	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]PlayerKillstreakStats, error)
-	StatsPlayerMedic(ctx context.Context, sid64 steamid.SteamID) ([]PlayerMedicStats, error)
-	PlayerStats(ctx context.Context, steamID steamid.SteamID, stats *PlayerStats) error
-	WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, error)
-	GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error)
-	Weapons(ctx context.Context) ([]Weapon, error)
-	SaveWeapon(ctx context.Context, weapon *Weapon) error
-	GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *Weapon) error
-	GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon) error
-	LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.Weapon, int]) error
-	WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error)
-	WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SteamID) ([]WeaponsOverallResult, error)
-	PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error)
-	HealersOverallByHealing(ctx context.Context, count int) ([]HealingOverallResult, error)
-	PlayerOverallClassStats(ctx context.Context, steamID steamid.SteamID) ([]PlayerClassOverallResult, error)
-	PlayerOverallStats(ctx context.Context, steamID steamid.SteamID, por *PlayerOverallResult) error
-	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
+type MatchesQueryOpts struct {
+	domain.QueryFilter
+	SteamID   string     `json:"steam_id"`
+	ServerID  int        `json:"server_id"`
+	Map       string     `json:"map"`
+	TimeStart *time.Time `json:"time_start,omitempty"`
+	TimeEnd   *time.Time `json:"time_end,omitempty"`
 }
-type MatchUsecase interface {
-	StartMatch(server Server, mapName string, demoName string) (uuid.UUID, error)
-	EndMatch(ctx context.Context, serverID int) (uuid.UUID, error)
-	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
-	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
-	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
-	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
-	StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (PlayerClassStatsCollection, error)
-	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]PlayerWeaponStats, error)
-	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]PlayerKillstreakStats, error)
-	StatsPlayerMedic(ctx context.Context, sid64 steamid.SteamID) ([]PlayerMedicStats, error)
-	PlayerStats(ctx context.Context, steamID steamid.SteamID, stats *PlayerStats) error
-	WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, error)
-	GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error)
-	Weapons(ctx context.Context) ([]Weapon, error)
-	SaveWeapon(ctx context.Context, weapon *Weapon) error
-	GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *Weapon) error
-	GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon) error
-	LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.Weapon, int]) error
-	WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error)
-	WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SteamID) ([]WeaponsOverallResult, error)
-	PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error)
-	HealersOverallByHealing(ctx context.Context, count int) ([]HealingOverallResult, error)
-	PlayerOverallClassStats(ctx context.Context, steamID steamid.SteamID) ([]PlayerClassOverallResult, error)
-	PlayerOverallStats(ctx context.Context, steamID steamid.SteamID, por *PlayerOverallResult) error
+
+func (mqf MatchesQueryOpts) TargetSteamID() (steamid.SteamID, bool) {
+	sid := steamid.New(mqf.SteamID)
+
+	return sid, sid.Valid()
 }
 
 const MinMedicHealing = 500
@@ -196,7 +157,20 @@ type MatchResult struct {
 	TimeEnd    time.Time           `json:"time_end"`
 	Winner     logparse.Team       `json:"winner"`
 	Players    []*MatchPlayer      `json:"players"`
-	Chat       PersonMessages      `json:"chat"`
+	Chat       []PersonMessage     `json:"chat"`
+}
+type PersonMessage struct {
+	PersonMessageID   int64           `json:"person_message_id"`
+	MatchID           uuid.UUID       `json:"match_id"`
+	SteamID           steamid.SteamID `json:"steam_id"`
+	AvatarHash        string          `json:"avatar_hash"`
+	PersonaName       string          `json:"persona_name"`
+	ServerName        string          `json:"server_name"`
+	ServerID          int             `json:"server_id"`
+	Body              string          `json:"body"`
+	Team              bool            `json:"team"`
+	CreatedOn         time.Time       `json:"created_on"`
+	AutoFilterFlagged int64           `json:"auto_filter_flagged"`
 }
 
 func (match *MatchResult) TopPlayers() []*MatchPlayer {

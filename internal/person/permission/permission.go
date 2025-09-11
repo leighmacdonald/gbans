@@ -1,12 +1,4 @@
-package domain
-
-type NotificationSeverity int
-
-const (
-	SeverityInfo NotificationSeverity = iota
-	SeverityWarn
-	SeverityError
-)
+package permission
 
 type Privilege uint8
 

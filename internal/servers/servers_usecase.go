@@ -8,17 +8,17 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
-func NewServersUsecase(repository domain.ServersRepository) domain.ServersUsecase {
-	return &serversUsecase{repository: repository}
+func NewServersUsecase(repository ServersRepository) *ServersUsecase {
+	return &ServersUsecase{repository: repository}
 }
 
-type serversUsecase struct {
-	repository domain.ServersRepository
+type ServersUsecase struct {
+	repository ServersRepository
 }
 
 // Delete performs a soft delete of the server. We use soft deleted because we dont wand to delete all the relationships
 // that rely on this suchs a stats.
-func (s *serversUsecase) Delete(ctx context.Context, serverID int) error {
+func (s *ServersUsecase) Delete(ctx context.Context, serverID int) error {
 	if serverID <= 0 {
 		return domain.ErrInvalidParameter
 	}
@@ -39,42 +39,42 @@ func (s *serversUsecase) Delete(ctx context.Context, serverID int) error {
 	return nil
 }
 
-func (s *serversUsecase) Server(ctx context.Context, serverID int) (domain.Server, error) {
+func (s *ServersUsecase) Server(ctx context.Context, serverID int) (Server, error) {
 	if serverID <= 0 {
-		return domain.Server{}, domain.ErrGetServer
+		return Server{}, domain.ErrGetServer
 	}
 
 	return s.repository.GetServer(ctx, serverID)
 }
 
-func (s *serversUsecase) ServerPermissions(ctx context.Context) ([]domain.ServerPermission, error) {
+func (s *ServersUsecase) ServerPermissions(ctx context.Context) ([]ServerPermission, error) {
 	return s.repository.GetServerPermissions(ctx)
 }
 
-func (s *serversUsecase) Servers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, int64, error) {
+func (s *ServersUsecase) Servers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error) {
 	return s.repository.GetServers(ctx, filter)
 }
 
-func (s *serversUsecase) GetByName(ctx context.Context, serverName string, server *domain.Server, disabledOk bool, deletedOk bool) error {
+func (s *ServersUsecase) GetByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error {
 	return s.repository.GetServerByName(ctx, serverName, server, disabledOk, deletedOk)
 }
 
-func (s *serversUsecase) GetByPassword(ctx context.Context, serverPassword string, server *domain.Server, disabledOk bool, deletedOk bool) error {
+func (s *ServersUsecase) GetByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error {
 	return s.repository.GetServerByPassword(ctx, serverPassword, server, disabledOk, deletedOk)
 }
 
-func (s *serversUsecase) Save(ctx context.Context, req domain.RequestServerUpdate) (domain.Server, error) {
-	var server domain.Server
+func (s *ServersUsecase) Save(ctx context.Context, req RequestServerUpdate) (Server, error) {
+	var server Server
 
 	if req.ServerID > 0 {
 		existingServer, errServer := s.Server(ctx, req.ServerID)
 		if errServer != nil {
-			return domain.Server{}, errServer
+			return Server{}, errServer
 		}
 		server = existingServer
 		server.UpdatedOn = time.Now()
 	} else {
-		server = domain.NewServer(req.ServerNameShort, req.Host, req.Port)
+		server = NewServer(req.ServerNameShort, req.Host, req.Port)
 	}
 
 	server.ShortName = req.ServerNameShort
@@ -95,7 +95,7 @@ func (s *serversUsecase) Save(ctx context.Context, req domain.RequestServerUpdat
 	server.SDREnabled = req.SDREnabled
 
 	if err := s.repository.SaveServer(ctx, &server); err != nil {
-		return domain.Server{}, err
+		return Server{}, err
 	}
 
 	if req.ServerID > 0 {
