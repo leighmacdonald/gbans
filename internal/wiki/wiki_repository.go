@@ -6,19 +6,18 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
 type wikiRepository struct {
 	db database.Database
 }
 
-func NewWikiRepository(database database.Database) domain.WikiRepository {
+func NewWikiRepository(database database.Database) WikiRepository {
 	return &wikiRepository{db: database}
 }
 
-func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string) (domain.WikiPage, error) {
-	var page domain.WikiPage
+func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string) (Page, error) {
+	var page Page
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
@@ -49,7 +48,7 @@ func (r *wikiRepository) DeleteWikiPageBySlug(ctx context.Context, slug string) 
 	return nil
 }
 
-func (r *wikiRepository) SaveWikiPage(ctx context.Context, page *domain.WikiPage) error {
+func (r *wikiRepository) SaveWikiPage(ctx context.Context, page *Page) error {
 	errQueryRow := r.db.ExecInsertBuilder(ctx, nil, r.db.
 		Builder().
 		Insert("wiki").

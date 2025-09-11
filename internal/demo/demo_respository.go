@@ -7,18 +7,17 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
 type demoRepository struct {
 	db database.Database
 }
 
-func NewDemoRepository(database database.Database) domain.DemoRepository {
+func NewDemoRepository(database database.Database) DemoRepository {
 	return &demoRepository{db: database}
 }
 
-func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]domain.DemoInfo, error) {
+func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {
 	rows, errRow := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("d.demo_id", "d.title", "d.asset_id").
@@ -33,10 +32,10 @@ func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]doma
 
 	defer rows.Close()
 
-	var demos []domain.DemoInfo
+	var demos []DemoInfo
 
 	for rows.Next() {
-		var demo domain.DemoInfo
+		var demo DemoInfo
 		if err := rows.Scan(&demo.DemoID, &demo.Title, &demo.AssetID); err != nil {
 			return nil, r.db.DBErr(err)
 		}
@@ -47,7 +46,7 @@ func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]doma
 	return demos, nil
 }
 
-func (r *demoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile *domain.DemoFile) error {
+func (r *demoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
@@ -76,7 +75,7 @@ func (r *demoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile
 	return nil
 }
 
-func (r *demoRepository) GetDemoByName(ctx context.Context, demoName string, demoFile *domain.DemoFile) error {
+func (r *demoRepository) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("r.demo_id", "r.server_id", "r.title", "r.created_on", "r.downloads",
@@ -105,8 +104,8 @@ func (r *demoRepository) GetDemoByName(ctx context.Context, demoName string, dem
 	return nil
 }
 
-func (r *demoRepository) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
-	var demos []domain.DemoFile
+func (r *demoRepository) GetDemos(ctx context.Context) ([]DemoFile, error) {
+	var demos []DemoFile
 
 	builder := r.db.
 		Builder().
@@ -130,7 +129,7 @@ func (r *demoRepository) GetDemos(ctx context.Context) ([]domain.DemoFile, error
 
 	for rows.Next() {
 		var (
-			demoFile domain.DemoFile
+			demoFile DemoFile
 			uuidScan *uuid.UUID // TODO remove this and make column not-null once migrations are complete
 		)
 
@@ -148,13 +147,13 @@ func (r *demoRepository) GetDemos(ctx context.Context) ([]domain.DemoFile, error
 	}
 
 	if demos == nil {
-		return []domain.DemoFile{}, nil
+		return []DemoFile{}, nil
 	}
 
 	return demos, nil
 }
 
-func (r *demoRepository) SaveDemo(ctx context.Context, demoFile *domain.DemoFile) error {
+func (r *demoRepository) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 	var err error
 	if demoFile.DemoID > 0 {
 		err = r.updateDemo(ctx, demoFile)
@@ -165,7 +164,7 @@ func (r *demoRepository) SaveDemo(ctx context.Context, demoFile *domain.DemoFile
 	return r.db.DBErr(err)
 }
 
-func (r *demoRepository) insertDemo(ctx context.Context, demoFile *domain.DemoFile) error {
+func (r *demoRepository) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := r.db.
 		Builder().
 		Insert("demo").
@@ -186,7 +185,7 @@ func (r *demoRepository) insertDemo(ctx context.Context, demoFile *domain.DemoFi
 	return nil
 }
 
-func (r *demoRepository) updateDemo(ctx context.Context, demoFile *domain.DemoFile) error {
+func (r *demoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 	query := r.db.
 		Builder().
 		Update("demo").

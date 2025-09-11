@@ -7,6 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -463,7 +464,7 @@ func (r *matchRepository) matchGetMedics(ctx context.Context, matchID uuid.UUID)
 	return medics, nil
 }
 
-func (r *matchRepository) matchGetChat(ctx context.Context, matchID uuid.UUID) (domain.PersonMessages, error) {
+func (r *matchRepository) matchGetChat(ctx context.Context, matchID uuid.UUID) (chat.PersonMessages, error) {
 	const query = `
 		SELECT x.*, coalesce(f.person_message_filter_id, 0)
 		FROM (SELECT c.person_message_id,
@@ -481,7 +482,7 @@ func (r *matchRepository) matchGetChat(ctx context.Context, matchID uuid.UUID) (
          LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id
 		`
 
-	messages := domain.PersonMessages{}
+	messages := chat.PersonMessages{}
 
 	chatRows, errQuery := r.database.Query(ctx, nil, query, matchID)
 	if errQuery != nil {
@@ -496,7 +497,7 @@ func (r *matchRepository) matchGetChat(ctx context.Context, matchID uuid.UUID) (
 
 	for chatRows.Next() {
 		var (
-			msg     domain.PersonMessage
+			msg     chat.PersonMessage
 			steamID int64
 		)
 
@@ -603,7 +604,7 @@ func (r *matchRepository) MatchGetByID(ctx context.Context, matchID uuid.UUID, m
 	match.Chat = chat
 
 	if match.Chat == nil {
-		match.Chat = domain.PersonMessages{}
+		match.Chat = PersonMessages{}
 	}
 
 	for _, player := range match.Players {

@@ -10,10 +10,10 @@ import (
 )
 
 type demoHandler struct {
-	demos domain.DemoUsecase
+	demos DemoUsecase
 }
 
-func NewHandler(engine *gin.Engine, du domain.DemoUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, du DemoUsecase, auth domain.AuthUsecase) {
 	handler := demoHandler{
 		demos: du,
 	}

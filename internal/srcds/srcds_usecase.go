@@ -14,6 +14,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/report"
 	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -22,21 +24,21 @@ import (
 )
 
 type srcds struct {
-	repository    domain.SRCDSRepository
+	repository    SRCDSRepository
 	bans          ban.BanUsecase
 	config        domain.ConfigUsecase
 	servers       domain.ServersUsecase
 	persons       domain.PersonUsecase
-	reports       domain.ReportUsecase
+	reports       report.ReportUsecase
 	notifications domain.NotificationUsecase
 	cookie        string
 	tfAPI         *thirdparty.TFAPI
 }
 
-func NewSrcdsUsecase(repository domain.SRCDSRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
-	persons domain.PersonUsecase, reports domain.ReportUsecase, notifications domain.NotificationUsecase, bans ban.BanUsecase,
+func NewSrcdsUsecase(repository SRCDSRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
+	persons domain.PersonUsecase, reports report.ReportUsecase, notifications domain.NotificationUsecase, bans ban.BanUsecase,
 	tfAPI *thirdparty.TFAPI,
-) domain.SRCDSUsecase {
+) SRCDSUsecase {
 	return &srcds{
 		config:        config,
 		servers:       servers,
@@ -50,7 +52,7 @@ func NewSrcdsUsecase(repository domain.SRCDSRepository, config domain.ConfigUsec
 	}
 }
 
-func (h srcds) GetBanState(ctx context.Context, steamID steamid.SteamID, ip netip.Addr) (domain.PlayerBanState, string, error) {
+func (h srcds) GetBanState(ctx context.Context, steamID steamid.SteamID, ip netip.Addr) (PlayerBanState, string, error) {
 	banState, errBanState := h.repository.QueryBanState(ctx, steamID, ip)
 	if errBanState != nil || banState.BanID == 0 {
 		return banState, "", errBanState
@@ -66,27 +68,27 @@ func (h srcds) GetBanState(ctx context.Context, steamID steamid.SteamID, ip neti
 	}
 
 	appealURL := "n/a"
-	if banState.BanSource == domain.BanSourceSteam {
+	if banState.BanSource == BanSourceSteam {
 		appealURL = h.config.ExtURLRaw("/appeal/%d", banState.BanID)
 	}
 
 	if banState.BanID > 0 && banState.BanType >= ban.NoComm {
 		switch banState.BanSource {
-		case domain.BanSourceSteam:
+		case BanSourceSteam:
 			if banState.BanType == ban.NoComm {
 				msg = fmt.Sprintf("You are muted & gagged. Expires: %s. Appeal: %s", banState.ValidUntil.Format(time.DateTime), appealURL)
 			} else {
 				msg = fmt.Sprintf(format, banState.Reason.String(), "Steam", validUntil, appealURL)
 			}
-		case domain.BanSourceASN:
+		case BanSourceASN:
 			msg = fmt.Sprintf(format, banState.Reason.String(), "ASN", "Permanent", appealURL)
-		case domain.BanSourceCIDR:
+		case BanSourceCIDR:
 			msg = "Blocked Network/VPN\nPlease disable your VPN if you are using one."
-		case domain.BanSourceSteamFriend:
+		case BanSourceSteamFriend:
 			msg = "Friend Network Ban"
-		case domain.BanSourceSteamGroup:
+		case BanSourceSteamGroup:
 			msg = "Blocked Steam Group"
-		case domain.BanSourceSteamNet:
+		case BanSourceSteamNet:
 			msg = fmt.Sprintf(format, banState.Reason.String(), "Steam Net", "Permanent", appealURL)
 		}
 	}
@@ -94,31 +96,31 @@ func (h srcds) GetBanState(ctx context.Context, steamID steamid.SteamID, ip neti
 	return banState, msg, nil
 }
 
-func (h srcds) GetOverride(ctx context.Context, overrideID int) (domain.SMOverrides, error) {
+func (h srcds) GetOverride(ctx context.Context, overrideID int) (SMOverrides, error) {
 	return h.repository.GetOverride(ctx, overrideID)
 }
 
-func (h srcds) GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (domain.SMGroupImmunity, error) {
+func (h srcds) GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (SMGroupImmunity, error) {
 	return h.repository.GetGroupImmunityByID(ctx, groupImmunityID)
 }
 
-func (h srcds) GetGroupImmunities(ctx context.Context) ([]domain.SMGroupImmunity, error) {
+func (h srcds) GetGroupImmunities(ctx context.Context) ([]SMGroupImmunity, error) {
 	return h.repository.GetGroupImmunities(ctx)
 }
 
-func (h srcds) AddGroupImmunity(ctx context.Context, groupID int, otherID int) (domain.SMGroupImmunity, error) {
+func (h srcds) AddGroupImmunity(ctx context.Context, groupID int, otherID int) (SMGroupImmunity, error) {
 	if groupID == otherID {
-		return domain.SMGroupImmunity{}, domain.ErrBadRequest
+		return SMGroupImmunity{}, httphelper.ErrBadRequest // TODO fix error
 	}
 
 	group, errGroup := h.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
-		return domain.SMGroupImmunity{}, errGroup
+		return SMGroupImmunity{}, errGroup
 	}
 
 	other, errOther := h.GetGroupByID(ctx, otherID)
 	if errOther != nil {
-		return domain.SMGroupImmunity{}, errOther
+		return SMGroupImmunity{}, errOther
 	}
 
 	return h.repository.AddGroupImmunity(ctx, group, other)
@@ -139,26 +141,24 @@ func (h srcds) DelGroupImmunity(ctx context.Context, groupImmunityID int) error 
 	return nil
 }
 
-func (h srcds) AddGroupOverride(ctx context.Context, groupID int, name string, overrideType domain.OverrideType, access domain.OverrideAccess) (domain.SMGroupOverrides, error) {
+func (h srcds) AddGroupOverride(ctx context.Context, groupID int, name string, overrideType OverrideType, access OverrideAccess) (SMGroupOverrides, error) {
 	if name == "" || overrideType == "" {
-		return domain.SMGroupOverrides{}, domain.ErrInvalidParameter
+		return SMGroupOverrides{}, domain.ErrInvalidParameter
 	}
 
-	if access != domain.OverrideAccessAllow && access != domain.OverrideAccessDeny {
-		return domain.SMGroupOverrides{}, domain.ErrInvalidParameter
+	if access != OverrideAccessAllow && access != OverrideAccessDeny {
+		return SMGroupOverrides{}, domain.ErrInvalidParameter
 	}
 
 	now := time.Now()
 
-	override, err := h.repository.AddGroupOverride(ctx, domain.SMGroupOverrides{
-		GroupID: groupID,
-		Type:    overrideType,
-		Name:    name,
-		Access:  access,
-		TimeStamped: domain.TimeStamped{
-			CreatedOn: now,
-			UpdatedOn: now,
-		},
+	override, err := h.repository.AddGroupOverride(ctx, SMGroupOverrides{
+		GroupID:   groupID,
+		Type:      overrideType,
+		Name:      name,
+		Access:    access,
+		CreatedOn: now,
+		UpdatedOn: now,
 	})
 	if err != nil {
 		return override, err
@@ -178,58 +178,56 @@ func (h srcds) DelGroupOverride(ctx context.Context, groupOverrideID int) error 
 	return h.repository.DelGroupOverride(ctx, override)
 }
 
-func (h srcds) GetGroupOverride(ctx context.Context, groupOverrideID int) (domain.SMGroupOverrides, error) {
+func (h srcds) GetGroupOverride(ctx context.Context, groupOverrideID int) (SMGroupOverrides, error) {
 	return h.repository.GetGroupOverride(ctx, groupOverrideID)
 }
 
-func (h srcds) SaveGroupOverride(ctx context.Context, override domain.SMGroupOverrides) (domain.SMGroupOverrides, error) {
+func (h srcds) SaveGroupOverride(ctx context.Context, override SMGroupOverrides) (SMGroupOverrides, error) {
 	if override.Name == "" || override.Type == "" {
-		return domain.SMGroupOverrides{}, domain.ErrInvalidParameter
+		return SMGroupOverrides{}, domain.ErrInvalidParameter
 	}
 
-	if override.Access != domain.OverrideAccessAllow && override.Access != domain.OverrideAccessDeny {
-		return domain.SMGroupOverrides{}, domain.ErrInvalidParameter
+	if override.Access != OverrideAccessAllow && override.Access != OverrideAccessDeny {
+		return SMGroupOverrides{}, domain.ErrInvalidParameter
 	}
 
 	return h.repository.SaveGroupOverride(ctx, override)
 }
 
-func (h srcds) GroupOverrides(ctx context.Context, groupID int) ([]domain.SMGroupOverrides, error) {
+func (h srcds) GroupOverrides(ctx context.Context, groupID int) ([]SMGroupOverrides, error) {
 	group, errGroup := h.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
-		return []domain.SMGroupOverrides{}, errGroup
+		return []SMGroupOverrides{}, errGroup
 	}
 
 	return h.repository.GroupOverrides(ctx, group)
 }
 
-func (h srcds) Overrides(ctx context.Context) ([]domain.SMOverrides, error) {
+func (h srcds) Overrides(ctx context.Context) ([]SMOverrides, error) {
 	return h.repository.Overrides(ctx)
 }
 
-func (h srcds) SaveOverride(ctx context.Context, override domain.SMOverrides) (domain.SMOverrides, error) {
-	if override.Name == "" || override.Flags == "" || override.Type != domain.OverrideTypeCommand && override.Type != domain.OverrideTypeGroup {
-		return domain.SMOverrides{}, domain.ErrInvalidParameter
+func (h srcds) SaveOverride(ctx context.Context, override SMOverrides) (SMOverrides, error) {
+	if override.Name == "" || override.Flags == "" || override.Type != OverrideTypeCommand && override.Type != OverrideTypeGroup {
+		return SMOverrides{}, domain.ErrInvalidParameter
 	}
 
 	return h.repository.SaveOverride(ctx, override)
 }
 
-func (h srcds) AddOverride(ctx context.Context, name string, overrideType domain.OverrideType, flags string) (domain.SMOverrides, error) {
-	if name == "" || flags == "" || overrideType != domain.OverrideTypeCommand && overrideType != domain.OverrideTypeGroup {
-		return domain.SMOverrides{}, domain.ErrInvalidParameter
+func (h srcds) AddOverride(ctx context.Context, name string, overrideType OverrideType, flags string) (SMOverrides, error) {
+	if name == "" || flags == "" || overrideType != OverrideTypeCommand && overrideType != OverrideTypeGroup {
+		return SMOverrides{}, domain.ErrInvalidParameter
 	}
 
 	now := time.Now()
 
-	return h.repository.AddOverride(ctx, domain.SMOverrides{
-		Type:  overrideType,
-		Name:  name,
-		Flags: flags,
-		TimeStamped: domain.TimeStamped{
-			CreatedOn: now,
-			UpdatedOn: now,
-		},
+	return h.repository.AddOverride(ctx, SMOverrides{
+		Type:      overrideType,
+		Name:      name,
+		Flags:     flags,
+		CreatedOn: now,
+		UpdatedOn: now,
 	})
 }
 
@@ -242,15 +240,15 @@ func (h srcds) DelOverride(ctx context.Context, overrideID int) error {
 	return h.repository.DelOverride(ctx, override)
 }
 
-func (h srcds) DelAdminGroup(ctx context.Context, adminID int, groupID int) (domain.SMAdmin, error) {
+func (h srcds) DelAdminGroup(ctx context.Context, adminID int, groupID int) (SMAdmin, error) {
 	admin, errAdmin := h.GetAdminByID(ctx, adminID)
 	if errAdmin != nil {
-		return domain.SMAdmin{}, errAdmin
+		return SMAdmin{}, errAdmin
 	}
 
 	group, errGroup := h.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
-		return domain.SMAdmin{}, errGroup
+		return SMAdmin{}, errGroup
 	}
 
 	existing, errExisting := h.GetAdminGroups(ctx, admin)
@@ -259,29 +257,29 @@ func (h srcds) DelAdminGroup(ctx context.Context, adminID int, groupID int) (dom
 	}
 
 	if !slices.Contains(existing, group) {
-		return admin, domain.ErrSMAdminGroupExists
+		return admin, ErrSMAdminGroupExists
 	}
 
 	if err := h.repository.DeleteAdminGroup(ctx, admin, group); err != nil {
-		return domain.SMAdmin{}, err
+		return SMAdmin{}, err
 	}
 
-	admin.Groups = slices.DeleteFunc(admin.Groups, func(g domain.SMGroups) bool {
+	admin.Groups = slices.DeleteFunc(admin.Groups, func(g SMGroups) bool {
 		return g.GroupID == groupID
 	})
 
 	return admin, nil
 }
 
-func (h srcds) AddAdminGroup(ctx context.Context, adminID int, groupID int) (domain.SMAdmin, error) {
+func (h srcds) AddAdminGroup(ctx context.Context, adminID int, groupID int) (SMAdmin, error) {
 	admin, errAdmin := h.GetAdminByID(ctx, adminID)
 	if errAdmin != nil {
-		return domain.SMAdmin{}, errAdmin
+		return SMAdmin{}, errAdmin
 	}
 
 	group, errGroup := h.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
-		return domain.SMAdmin{}, errGroup
+		return SMAdmin{}, errGroup
 	}
 
 	existing, errExisting := h.GetAdminGroups(ctx, admin)
@@ -290,11 +288,11 @@ func (h srcds) AddAdminGroup(ctx context.Context, adminID int, groupID int) (dom
 	}
 
 	if slices.Contains(existing, group) {
-		return admin, domain.ErrSMAdminGroupExists
+		return admin, ErrSMAdminGroupExists
 	}
 
 	if err := h.repository.InsertAdminGroup(ctx, admin, group, len(existing)+1); err != nil {
-		return domain.SMAdmin{}, err
+		return SMAdmin{}, err
 	}
 
 	admin.Groups = append(admin.Groups, group)
@@ -302,13 +300,13 @@ func (h srcds) AddAdminGroup(ctx context.Context, adminID int, groupID int) (dom
 	return admin, nil
 }
 
-func (h srcds) GetAdminGroups(ctx context.Context, admin domain.SMAdmin) ([]domain.SMGroups, error) {
+func (h srcds) GetAdminGroups(ctx context.Context, admin SMAdmin) ([]SMGroups, error) {
 	return h.repository.GetAdminGroups(ctx, admin)
 }
 
-func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req domain.RequestReportCreate) (domain.ReportWithAuthor, error) {
+func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req RequestReportCreate) (ReportWithAuthor, error) {
 	if req.Description == "" || len(req.Description) < 10 {
-		return domain.ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
+		return ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
 	}
 
 	// ServerStore initiated requests will have a sourceID set by the server
@@ -319,25 +317,25 @@ func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req d
 	}
 
 	if !req.SourceID.Valid() {
-		return domain.ReportWithAuthor{}, domain.ErrSourceID
+		return ReportWithAuthor{}, domain.ErrSourceID
 	}
 
 	if !req.TargetID.Valid() {
-		return domain.ReportWithAuthor{}, domain.ErrTargetID
+		return ReportWithAuthor{}, domain.ErrTargetID
 	}
 
 	if req.SourceID.Int64() == req.TargetID.Int64() {
-		return domain.ReportWithAuthor{}, domain.ErrSelfReport
+		return ReportWithAuthor{}, domain.ErrSelfReport
 	}
 
 	personSource, errCreateSource := h.persons.GetPersonBySteamID(ctx, nil, req.SourceID)
 	if errCreateSource != nil {
-		return domain.ReportWithAuthor{}, errCreateSource
+		return ReportWithAuthor{}, errCreateSource
 	}
 
 	personTarget, errCreateTarget := h.persons.GetOrCreatePersonBySteamID(ctx, nil, req.TargetID)
 	if errCreateTarget != nil {
-		return domain.ReportWithAuthor{}, errCreateTarget
+		return ReportWithAuthor{}, errCreateTarget
 	}
 
 	if personTarget.Expired() {
@@ -354,17 +352,17 @@ func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req d
 	existing, errReports := h.reports.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
 	if errReports != nil {
 		if !errors.Is(errReports, database.ErrNoResult) {
-			return domain.ReportWithAuthor{}, errReports
+			return ReportWithAuthor{}, errReports
 		}
 	}
 
 	if existing.ReportID > 0 {
-		return domain.ReportWithAuthor{}, domain.ErrReportExists
+		return ReportWithAuthor{}, domain.ErrReportExists
 	}
 
 	savedReport, errReportSave := h.reports.SaveReport(ctx, currentUser, req)
 	if errReportSave != nil {
-		return domain.ReportWithAuthor{}, errReportSave
+		return ReportWithAuthor{}, errReportSave
 	}
 
 	conf := h.config.Config()

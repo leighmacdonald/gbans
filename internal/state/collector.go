@@ -28,9 +28,9 @@ var (
 type Collector struct {
 	statusUpdateFreq time.Duration
 	updateTimeout    time.Duration
-	serverState      map[int]domain.ServerState
+	serverState      map[int]ServerState
 	stateMu          *sync.RWMutex
-	configs          []domain.ServerConfig
+	configs          []ServerConfig
 	configMu         *sync.RWMutex
 	maxPlayersRx     *regexp.Regexp
 	playersRx        *regexp.Regexp
@@ -46,7 +46,7 @@ func NewCollector(serverUsecase domain.ServersUsecase) *Collector {
 	return &Collector{
 		statusUpdateFreq: statusUpdateFreq,
 		updateTimeout:    updateTimeout,
-		serverState:      map[int]domain.ServerState{},
+		serverState:      map[int]ServerState{},
 		stateMu:          &sync.RWMutex{},
 		configMu:         &sync.RWMutex{},
 		maxPlayersRx:     regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`),
@@ -55,11 +55,11 @@ func NewCollector(serverUsecase domain.ServersUsecase) *Collector {
 	}
 }
 
-func (c *Collector) Configs() []domain.ServerConfig {
+func (c *Collector) Configs() []ServerConfig {
 	c.configMu.RLock()
 	defer c.configMu.RUnlock()
 
-	var conf []domain.ServerConfig
+	var conf []ServerConfig
 
 	conf = append(conf, c.configs...)
 
@@ -84,28 +84,28 @@ func (c *Collector) ExecRaw(ctx context.Context, addr string, password string, c
 	return resp, nil
 }
 
-func (c *Collector) GetServer(serverID int) (domain.ServerConfig, error) {
+func (c *Collector) GetServer(serverID int) (ServerConfig, error) {
 	c.configMu.RLock()
 	defer c.configMu.RUnlock()
 
 	configs := c.Configs()
 
-	serverIdx := slices.IndexFunc(configs, func(serverConfig domain.ServerConfig) bool {
+	serverIdx := slices.IndexFunc(configs, func(serverConfig ServerConfig) bool {
 		return serverConfig.ServerID == serverID
 	})
 
 	if serverIdx == -1 {
-		return domain.ServerConfig{}, domain.ErrUnknownServerID
+		return ServerConfig{}, domain.ErrUnknownServerID
 	}
 
 	return configs[serverIdx], nil
 }
 
-func (c *Collector) Current() []domain.ServerState {
+func (c *Collector) Current() []ServerState {
 	c.stateMu.RLock()
 	defer c.stateMu.RUnlock()
 
-	var curState []domain.ServerState //nolint:prealloc
+	var curState []ServerState //nolint:prealloc
 	for _, s := range c.serverState {
 		curState = append(curState, s)
 	}
@@ -117,7 +117,7 @@ func (c *Collector) Current() []domain.ServerState {
 	return curState
 }
 
-func (c *Collector) onStatusUpdate(conf domain.ServerConfig, newState Status, maxVisible int) {
+func (c *Collector) onStatusUpdate(conf ServerConfig, newState Status, maxVisible int) {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
 
@@ -163,11 +163,11 @@ func (c *Collector) onStatusUpdate(conf domain.ServerConfig, newState Status, ma
 	c.serverState[conf.ServerID] = server
 }
 
-func (c *Collector) setServerConfigs(ctx context.Context, configs []domain.ServerConfig) {
+func (c *Collector) setServerConfigs(ctx context.Context, configs []ServerConfig) {
 	c.configMu.Lock()
 	defer c.configMu.Unlock()
 
-	var gone []domain.ServerConfig
+	var gone []ServerConfig
 
 	for _, exist := range c.configs {
 		exists := false
@@ -204,7 +204,7 @@ func (c *Collector) setServerConfigs(ctx context.Context, configs []domain.Serve
 				addr = cfg.Host
 			}
 
-			c.serverState[cfg.ServerID] = domain.ServerState{
+			c.serverState[cfg.ServerID] = ServerState{
 				ServerID:      cfg.ServerID,
 				Name:          cfg.DefaultHostname,
 				NameShort:     cfg.Tag,
@@ -358,7 +358,7 @@ func (c *Collector) startStatus(ctx context.Context) {
 			for _, serverConfigInstance := range configs {
 				waitGroup.Add(1)
 
-				go func(lCtx context.Context, conf domain.ServerConfig) {
+				go func(lCtx context.Context, conf ServerConfig) {
 					defer waitGroup.Done()
 
 					status, errStatus := c.status(lCtx, conf.ServerID)
@@ -408,7 +408,7 @@ func (c *Collector) updateServerConfigs(ctx context.Context) {
 		return
 	}
 
-	configs := make([]domain.ServerConfig, len(servers))
+	configs := make([]ServerConfig, len(servers))
 
 	for i, server := range servers {
 		configs[i] = newServerConfig(
@@ -450,8 +450,8 @@ func (c *Collector) Start(ctx context.Context) {
 func newServerConfig(serverID int, name string, defaultHostname string, address string,
 	port uint16, rconPassword string, reserved int, countryCode string, region string, lat float64, long float64,
 	enabled bool,
-) domain.ServerConfig {
-	return domain.ServerConfig{
+) ServerConfig {
+	return ServerConfig{
 		ServerID:        serverID,
 		Tag:             name,
 		DefaultHostname: defaultHostname,

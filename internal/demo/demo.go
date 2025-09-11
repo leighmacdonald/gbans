@@ -1,4 +1,4 @@
-package domain
+package demo
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/asset"
 )
 
 type DemoUsecase interface {
@@ -14,7 +15,7 @@ type DemoUsecase interface {
 	MarkArchived(ctx context.Context, demo *DemoFile) error
 	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
 	GetDemos(ctx context.Context) ([]DemoFile, error)
-	CreateFromAsset(ctx context.Context, asset Asset, serverID int) (*DemoFile, error)
+	CreateFromAsset(ctx context.Context, asset asset.Asset, serverID int) (*DemoFile, error)
 	Cleanup(ctx context.Context)
 	SendAndParseDemo(ctx context.Context, path string) (*DemoDetails, error)
 }

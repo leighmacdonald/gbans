@@ -15,9 +15,9 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewPlayerqueueUsecase(repo domain.PlayerqueueRepository, persons domain.PersonUsecase, servers domain.ServersUsecase,
-	state domain.StateUsecase, chatLogs []domain.ChatLog, notif domain.NotificationUsecase,
-) domain.PlayerqueueUsecase {
+func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons domain.PersonUsecase, servers domain.ServersUsecase,
+	state domain.StateUsecase, chatLogs []ChatLog, notif domain.NotificationUsecase,
+) PlayerqueueUsecase {
 	return &playerqueueUsecase{
 		repo:    repo,
 		notif:   notif,
@@ -58,7 +58,7 @@ func NewPlayerqueueUsecase(repo domain.PlayerqueueRepository, persons domain.Per
 }
 
 type playerqueueUsecase struct {
-	repo    domain.PlayerqueueRepository
+	repo    PlayerqueueRepository
 	persons domain.PersonUsecase
 	notif   domain.NotificationUsecase
 	queue   *Coordinator
@@ -74,26 +74,26 @@ func (p playerqueueUsecase) Start(ctx context.Context) {
 		case <-refreshState.C:
 			p.queue.updateState()
 		case <-ctx.Done():
-			p.queue.broadcast(domain.Response{Op: domain.Bye, Payload: ByePayload{Message: "Server shutting down... run!!!"}})
+			p.queue.broadcast(Response{Op: Bye, Payload: ByePayload{Message: "Server shutting down... run!!!"}})
 
 			return
 		}
 	}
 }
 
-func (p playerqueueUsecase) JoinLobbies(client domain.QueueClient, servers []int) error {
+func (p playerqueueUsecase) JoinLobbies(client QueueClient, servers []int) error {
 	return p.queue.Join(client, servers)
 }
 
-func (p playerqueueUsecase) LeaveLobbies(client domain.QueueClient, servers []int) error {
+func (p playerqueueUsecase) LeaveLobbies(client QueueClient, servers []int) error {
 	return p.queue.Leave(client, servers)
 }
 
-func (p playerqueueUsecase) Connect(ctx context.Context, user domain.UserProfile, conn *websocket.Conn) domain.QueueClient {
+func (p playerqueueUsecase) Connect(ctx context.Context, user domain.UserProfile, conn *websocket.Conn) QueueClient {
 	return p.queue.Connect(ctx, user.SteamID, user.GetName(), user.Avatarhash, conn)
 }
 
-func (p playerqueueUsecase) Disconnect(client domain.QueueClient) {
+func (p playerqueueUsecase) Disconnect(client QueueClient) {
 	p.queue.Disconnect(client)
 }
 
@@ -130,7 +130,7 @@ func (p playerqueueUsecase) Purge(ctx context.Context, authorID steamid.SteamID,
 	return nil
 }
 
-func (p playerqueueUsecase) Message(ctx context.Context, messageID int64) (domain.ChatLog, error) {
+func (p playerqueueUsecase) Message(ctx context.Context, messageID int64) (ChatLog, error) {
 	return p.repo.Message(ctx, messageID)
 }
 
@@ -142,7 +142,7 @@ func (p playerqueueUsecase) Delete(ctx context.Context, messageID ...int64) erro
 	return p.repo.Delete(ctx, messageID...)
 }
 
-func (p playerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID, status domain.ChatStatus, reason string) error {
+func (p playerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID, status ChatStatus, reason string) error {
 	if !steamID.Valid() {
 		return domain.ErrInvalidSID
 	}
@@ -216,7 +216,7 @@ func (p playerqueueUsecase) AddMessage(ctx context.Context, bodyMD string, user 
 		return ErrBadInput
 	}
 
-	newMessage := domain.ChatLog{
+	newMessage := ChatLog{
 		SteamID:         user.SteamID,
 		CreatedOn:       time.Now(),
 		Personaname:     user.Name,
@@ -239,12 +239,12 @@ func (p playerqueueUsecase) AddMessage(ctx context.Context, bodyMD string, user 
 	return nil
 }
 
-func (p playerqueueUsecase) Recent(ctx context.Context, limit uint64) ([]domain.ChatLog, error) {
+func (p playerqueueUsecase) Recent(ctx context.Context, limit uint64) ([]ChatLog, error) {
 	if limit == 0 {
 		limit = 50
 	}
 
-	return p.repo.Query(ctx, domain.PlayerqueueQueryOpts{
+	return p.repo.Query(ctx, PlayerqueueQueryOpts{
 		QueryFilter: domain.QueryFilter{
 			Limit:   limit,
 			Desc:    true,

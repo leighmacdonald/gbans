@@ -10,7 +10,7 @@ type stateRepository struct {
 	collector *Collector
 }
 
-func NewStateRepository(collector *Collector) domain.StateRepository {
+func NewStateRepository(collector *Collector) StateRepository {
 	return &stateRepository{collector: collector}
 }
 
@@ -18,11 +18,11 @@ func (s *stateRepository) Start(ctx context.Context) {
 	s.collector.Start(ctx)
 }
 
-func (s *stateRepository) GetServer(serverID int) (domain.ServerConfig, error) {
+func (s *stateRepository) GetServer(serverID int) (ServerConfig, error) {
 	return s.collector.GetServer(serverID)
 }
 
-func (s *stateRepository) Configs() []domain.ServerConfig {
+func (s *stateRepository) Configs() []ServerConfig {
 	return s.collector.Configs()
 }
 
@@ -34,6 +34,6 @@ func (s *stateRepository) Update(serverID int, update domain.PartialStateUpdate)
 	return s.collector.Update(serverID, update)
 }
 
-func (s *stateRepository) Current() []domain.ServerState {
+func (s *stateRepository) Current() []ServerState {
 	return s.collector.Current()
 }

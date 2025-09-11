@@ -13,7 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/app"
-	"github.com/leighmacdonald/gbans/internal/appeal"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/ban"
@@ -53,15 +52,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news domain.NewsUsecase,
-	wiki domain.WikiUsecase, conf domain.Config,
+func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, newsUC news.NewsUsecase,
+	wikiUC wiki.WikiUsecase, conf domain.Config,
 ) error {
 	_, errRootUser := persons.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
 	if errRootUser == nil {
 		return nil
 	}
 
-	if !errors.Is(errRootUser, domain.ErrNoResult) {
+	if !errors.Is(errRootUser, database.ErrNoResult) {
 		return errRootUser
 	}
 
@@ -72,7 +71,7 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 		slog.Error("Failed create new owner", log.ErrAttr(errSave))
 	}
 
-	newsEntry := domain.NewsEntry{
+	newsEntry := news.NewsEntry{
 		Title:       "Welcome to gbans",
 		BodyMD:      "This is an *example* **news** entry.",
 		IsPublished: true,
@@ -80,19 +79,19 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 		UpdatedOn:   time.Now(),
 	}
 
-	if errSave := news.Save(ctx, &newsEntry); errSave != nil {
+	if errSave := newsUC.Save(ctx, &newsEntry); errSave != nil {
 		return errSave
 	}
 
-	page := domain.WikiPage{
-		Slug:      domain.RootSlug,
+	page := wiki.Page{
+		Slug:      wiki.RootSlug,
 		BodyMD:    "# Welcome to the wiki",
 		Revision:  1,
 		CreatedOn: time.Now(),
 		UpdatedOn: time.Now(),
 	}
 
-	_, errSave := wiki.SaveWikiPage(ctx, newOwner, page.Slug, page.BodyMD, page.PermissionLevel)
+	_, errSave := wikiUC.SaveWikiPage(ctx, newOwner, page.Slug, page.BodyMD, page.PermissionLevel)
 	if errSave != nil {
 		slog.Error("Failed save example wiki entry", log.ErrAttr(errSave))
 	}
@@ -276,14 +275,15 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			assets := asset.NewAssetUsecase(assetRepository)
 			serversUC := servers.NewServersUsecase(servers.NewServersRepository(dbConn))
-			demos := demo.NewDemoUsecase(domain.BucketDemo, demo.NewDemoRepository(dbConn), assets, configUsecase, serversUC)
+			demos := demo.NewDemoUsecase(asset.BucketDemo, demo.NewDemoRepository(dbConn), assets, configUsecase, serversUC)
 
 			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbConn), notificationUsecase, configUsecase, personUsecase, demos, tfapiClient)
 
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUC)), configUsecase, serversUC)
 
-			banUsecase := ban.NewBanUsecase(ban.NewBanRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase, tfapiClient)
+			banRepo := ban.NewBanRepository(dbConn, personUsecase, networkUsecase)
+			banUsecase := ban.NewBanUsecase(banRepo, personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase, tfapiClient)
 
 			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase)
 
@@ -295,7 +295,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			discordOAuthUsecase := discord.NewDiscordOAuthUsecase(discord.NewDiscordOAuthRepository(dbConn), configUsecase)
 
-			appeals := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbConn), banUsecase, personUsecase, notificationUsecase, configUsecase)
+			appeals := ban.NewAppealUsecase(ban.NewAppealRepository(dbConn), banUsecase, personUsecase, notificationUsecase, configUsecase)
 
 			matchRepo := match.NewMatchRepository(eventBroadcaster, dbConn, personUsecase, serversUC, notificationUsecase, stateUsecase, weaponsMap)
 			go matchRepo.Start(ctx)
@@ -370,7 +370,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			// Register all our handlers with router
 			anticheat.NewHandler(router, authUsecase, anticheatUsecase)
-			appeal.NewHandler(router, appeals, authUsecase)
+			ban.NewAppealHandler(router, appeals, authUsecase)
 			auth.NewHandler(router, authUsecase, configUsecase, personUsecase, tfapiClient)
 			ban.NewHandlerSteam(router, banUsecase, configUsecase, authUsecase)
 			config.NewHandler(router, configUsecase, authUsecase, app.Version())
@@ -414,7 +414,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				defer stateUsecase.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
 			}
 
-			memberships := ban.NewMemberships(banUsecase, tfapiClient)
+			memberships := ban.NewMemberships(banRepo, tfapiClient)
 			banExpirations := ban.NewExpirationMonitor(banUsecase, personUsecase, notificationUsecase, configUsecase)
 
 			go func() {

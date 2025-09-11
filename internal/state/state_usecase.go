@@ -22,24 +22,24 @@ import (
 )
 
 type stateUsecase struct {
-	state       domain.StateRepository
+	state       StateRepository
 	config      domain.ConfigUsecase
 	servers     domain.ServersUsecase
 	logListener *logparse.UDPLogListener
-	logFileChan chan domain.LogFilePayload
+	logFileChan chan LogFilePayload
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 // NewStateUsecase created a interface to interact with server state and exec rcon commands.
 func NewStateUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository domain.StateRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
-) domain.StateUsecase {
+	repository StateRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
+) StateUsecase {
 	return &stateUsecase{
 		state:       repository,
 		config:      config,
 		broadcaster: broadcaster,
 		servers:     servers,
-		logFileChan: make(chan domain.LogFilePayload),
+		logFileChan: make(chan LogFilePayload),
 	}
 }
 
@@ -115,7 +115,7 @@ func (s *stateUsecase) updateSrcdsLogServers(ctx context.Context) {
 	s.logListener.SetServers(newServers)
 }
 
-func (s *stateUsecase) Current() []domain.ServerState {
+func (s *stateUsecase) Current() []ServerState {
 	return s.state.Current()
 }
 
@@ -185,12 +185,12 @@ func (s *stateUsecase) Find(name string, steamID steamid.SteamID, addr net.IP, c
 	return found
 }
 
-func (s *stateUsecase) SortRegion() map[string][]domain.ServerState {
-	serverMap := map[string][]domain.ServerState{}
+func (s *stateUsecase) SortRegion() map[string][]ServerState {
+	serverMap := map[string][]ServerState{}
 	for _, server := range s.state.Current() {
 		_, exists := serverMap[server.Region]
 		if !exists {
-			serverMap[server.Region] = []domain.ServerState{}
+			serverMap[server.Region] = []ServerState{}
 		}
 
 		serverMap[server.Region] = append(serverMap[server.Region], server)
@@ -199,18 +199,18 @@ func (s *stateUsecase) SortRegion() map[string][]domain.ServerState {
 	return serverMap
 }
 
-func (s *stateUsecase) ByServerID(serverID int) (domain.ServerState, bool) {
+func (s *stateUsecase) ByServerID(serverID int) (ServerState, bool) {
 	for _, server := range s.state.Current() {
 		if server.ServerID == serverID {
 			return server, true
 		}
 	}
 
-	return domain.ServerState{}, false
+	return ServerState{}, false
 }
 
-func (s *stateUsecase) ByName(name string, wildcardOk bool) []domain.ServerState {
-	var servers []domain.ServerState
+func (s *stateUsecase) ByName(name string, wildcardOk bool) []ServerState {
+	var servers []ServerState
 
 	current := s.state.Current()
 
@@ -272,7 +272,7 @@ func (s *stateUsecase) OnFindExec(ctx context.Context, name string, steamID stea
 }
 
 func (s *stateUsecase) ExecServer(ctx context.Context, serverID int, cmd string) (string, error) {
-	var conf domain.ServerConfig
+	var conf ServerConfig
 
 	for _, server := range s.state.Configs() {
 		if server.ServerID == serverID {
@@ -424,14 +424,14 @@ func (s *stateUsecase) Silence(ctx context.Context, target steamid.SteamID, reas
 func (s *stateUsecase) Say(ctx context.Context, serverID int, message string) error {
 	_, errExec := s.ExecServer(ctx, serverID, `sm_say `+message)
 
-	return errors.Join(errExec, fmt.Errorf("%w: sm_say", domain.ErrCommandFailed))
+	return errors.Join(errExec, fmt.Errorf("%w: sm_say", errExec))
 }
 
 // CSay is used to send a centered message to the server via sm_csay.
 func (s *stateUsecase) CSay(ctx context.Context, serverID int, message string) error {
 	_, errExec := s.ExecServer(ctx, serverID, `sm_csay `+message)
 
-	return errors.Join(errExec, fmt.Errorf("%w: sm_csay", domain.ErrCommandFailed))
+	return errors.Join(errExec, fmt.Errorf("%w: sm_csay", errExec))
 }
 
 // PSay is used to send a private message to a player.
@@ -443,7 +443,7 @@ func (s *stateUsecase) PSay(ctx context.Context, target steamid.SteamID, message
 	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(_ domain.PlayerServerInfo) string {
 		return fmt.Sprintf(`sm_psay "#%s" "%s"`, target.Steam(false), message)
 	}); errExec != nil {
-		return errors.Join(errExec, fmt.Errorf("%w: sm_psay", domain.ErrCommandFailed))
+		return errors.Join(errExec, fmt.Errorf("%w: sm_psay", errExec))
 	}
 
 	return nil

@@ -7,7 +7,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -15,11 +14,11 @@ type reportRepository struct {
 	db database.Database
 }
 
-func NewReportRepository(database database.Database) domain.ReportRepository {
+func NewReportRepository(database database.Database) ReportRepository {
 	return &reportRepository{db: database}
 }
 
-func (r reportRepository) insertReport(ctx context.Context, report *domain.Report) error {
+func (r reportRepository) insertReport(ctx context.Context, report *Report) error {
 	const query = `INSERT INTO report (
 		    author_id, reported_id, report_status, description, deleted, created_on, updated_on, reason,
             reason_text, demo_id, demo_tick, person_message_id
@@ -53,7 +52,7 @@ func (r reportRepository) insertReport(ctx context.Context, report *domain.Repor
 	return nil
 }
 
-func (r reportRepository) updateReport(ctx context.Context, report *domain.Report) error {
+func (r reportRepository) updateReport(ctx context.Context, report *Report) error {
 	report.UpdatedOn = time.Now()
 
 	var msgID *int64
@@ -78,7 +77,7 @@ func (r reportRepository) updateReport(ctx context.Context, report *domain.Repor
 		Where(sq.Eq{"report_id": report.ReportID})))
 }
 
-func (r reportRepository) SaveReport(ctx context.Context, report *domain.Report) error {
+func (r reportRepository) SaveReport(ctx context.Context, report *Report) error {
 	if report.ReportID > 0 {
 		return r.updateReport(ctx, report)
 	}
@@ -86,7 +85,7 @@ func (r reportRepository) SaveReport(ctx context.Context, report *domain.Report)
 	return r.insertReport(ctx, report)
 }
 
-func (r reportRepository) SaveReportMessage(ctx context.Context, message *domain.ReportMessage) error {
+func (r reportRepository) SaveReportMessage(ctx context.Context, message *ReportMessage) error {
 	if message.ReportMessageID > 0 {
 		return r.updateReportMessage(ctx, message)
 	}
@@ -94,7 +93,7 @@ func (r reportRepository) SaveReportMessage(ctx context.Context, message *domain
 	return r.insertReportMessage(ctx, message)
 }
 
-func (r reportRepository) updateReportMessage(ctx context.Context, message *domain.ReportMessage) error {
+func (r reportRepository) updateReportMessage(ctx context.Context, message *ReportMessage) error {
 	message.UpdatedOn = time.Now()
 
 	if errQuery := r.db.ExecUpdateBuilder(ctx, nil, r.db.
@@ -111,7 +110,7 @@ func (r reportRepository) updateReportMessage(ctx context.Context, message *doma
 	return nil
 }
 
-func (r reportRepository) insertReportMessage(ctx context.Context, message *domain.ReportMessage) error {
+func (r reportRepository) insertReportMessage(ctx context.Context, message *ReportMessage) error {
 	const query = `
 		INSERT INTO report_message (
 		    report_id, author_id, message_md, deleted, created_on, updated_on
@@ -134,7 +133,7 @@ func (r reportRepository) insertReportMessage(ctx context.Context, message *doma
 	return nil
 }
 
-func (r reportRepository) DropReport(ctx context.Context, report *domain.Report) error {
+func (r reportRepository) DropReport(ctx context.Context, report *Report) error {
 	report.Deleted = true
 
 	if errExec := r.db.ExecUpdateBuilder(ctx, nil, r.db.
@@ -148,7 +147,7 @@ func (r reportRepository) DropReport(ctx context.Context, report *domain.Report)
 	return nil
 }
 
-func (r reportRepository) DropReportMessage(ctx context.Context, message *domain.ReportMessage) error {
+func (r reportRepository) DropReportMessage(ctx context.Context, message *ReportMessage) error {
 	message.Deleted = true
 
 	if errExec := r.db.ExecUpdateBuilder(ctx, nil, r.db.
@@ -162,7 +161,7 @@ func (r reportRepository) DropReportMessage(ctx context.Context, message *domain
 	return nil
 }
 
-func (r reportRepository) GetReports(ctx context.Context, steamID steamid.SteamID) ([]domain.Report, error) {
+func (r reportRepository) GetReports(ctx context.Context, steamID steamid.SteamID) ([]Report, error) {
 	constraints := sq.And{sq.Eq{"r.deleted": false}}
 	if steamID.Valid() {
 		constraints = append(constraints, sq.Eq{"r.author_id": steamID.Int64()})
@@ -184,11 +183,11 @@ func (r reportRepository) GetReports(ctx context.Context, steamID steamid.SteamI
 
 	defer rows.Close()
 
-	var reports []domain.Report
+	var reports []Report
 
 	for rows.Next() {
 		var (
-			report          domain.Report
+			report          Report
 			sourceID        int64
 			targetID        int64
 			personMessageID *int64
@@ -226,8 +225,8 @@ func (r reportRepository) GetReports(ctx context.Context, steamID steamid.SteamI
 }
 
 // GetReportBySteamID returns any open report for the user by the author.
-func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (domain.Report, error) {
-	var report domain.Report
+func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error) {
+	var report Report
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
@@ -239,7 +238,7 @@ func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 		Where(sq.And{
 			sq.Eq{"s.deleted": false},
 			sq.Eq{"s.reported_id": steamID},
-			sq.LtOrEq{"s.report_status": domain.NeedMoreInfo},
+			sq.LtOrEq{"s.report_status": NeedMoreInfo},
 			sq.Eq{"s.author_id": authorID},
 		}))
 
@@ -276,8 +275,8 @@ func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 	return report, nil
 }
 
-func (r reportRepository) GetReport(ctx context.Context, reportID int64) (domain.Report, error) {
-	var report domain.Report
+func (r reportRepository) GetReport(ctx context.Context, reportID int64) (Report, error) {
+	var report Report
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
@@ -321,7 +320,7 @@ func (r reportRepository) GetReport(ctx context.Context, reportID int64) (domain
 	return report, nil
 }
 
-func (r reportRepository) GetReportMessages(ctx context.Context, reportID int64) ([]domain.ReportMessage, error) {
+func (r reportRepository) GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error) {
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("s.report_message_id", "s.report_id", "s.author_id", "s.message_md", "s.deleted",
@@ -332,17 +331,17 @@ func (r reportRepository) GetReportMessages(ctx context.Context, reportID int64)
 		OrderBy("s.created_on"))
 	if errQuery != nil {
 		if errors.Is(r.db.DBErr(errQuery), database.ErrNoResult) {
-			return []domain.ReportMessage{}, nil
+			return []ReportMessage{}, nil
 		}
 	}
 
 	defer rows.Close()
 
-	var messages []domain.ReportMessage
+	var messages []ReportMessage
 
 	for rows.Next() {
 		var (
-			msg      domain.ReportMessage
+			msg      ReportMessage
 			authorID int64
 		)
 
@@ -369,8 +368,8 @@ func (r reportRepository) GetReportMessages(ctx context.Context, reportID int64)
 	return messages, nil
 }
 
-func (r reportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int64) (domain.ReportMessage, error) {
-	var message domain.ReportMessage
+func (r reportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error) {
+	var message ReportMessage
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().

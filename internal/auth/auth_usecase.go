@@ -28,16 +28,16 @@ import (
 const ctxKeyUserProfile = "user_profile"
 
 type auth struct {
-	auth    domain.AuthRepository
+	auth    AuthRepository
 	config  domain.ConfigUsecase
 	persons domain.PersonUsecase
 	bans    ban.BanUsecase
 	servers domain.ServersUsecase
 }
 
-func NewAuthUsecase(repository domain.AuthRepository, config domain.ConfigUsecase, persons domain.PersonUsecase,
+func NewAuthUsecase(repository AuthRepository, config domain.ConfigUsecase, persons domain.PersonUsecase,
 	bans ban.BanUsecase, servers domain.ServersUsecase,
-) domain.AuthUsecase {
+) AuthUsecase {
 	return &auth{
 		auth:    repository,
 		config:  config,
@@ -51,36 +51,36 @@ func (u *auth) DeletePersonAuth(ctx context.Context, authID int64) error {
 	return u.auth.DeletePersonAuth(ctx, authID)
 }
 
-func (u *auth) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *domain.PersonAuth) error {
+func (u *auth) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error {
 	return u.auth.GetPersonAuthByFingerprint(ctx, token, auth)
 }
 
 // MakeToken generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
-func (u *auth) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID) (domain.UserTokens, error) {
+func (u *auth) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID) (UserTokens, error) {
 	if cookieKey == "" {
-		return domain.UserTokens{}, domain.ErrCookieKeyMissing
+		return UserTokens{}, domain.ErrCookieKeyMissing
 	}
 
 	fingerprint := stringutil.SecureRandomString(40)
 
-	accessToken, errAccess := u.NewUserToken(sid, cookieKey, fingerprint, domain.AuthTokenDuration)
+	accessToken, errAccess := u.NewUserToken(sid, cookieKey, fingerprint, AuthTokenDuration)
 	if errAccess != nil {
-		return domain.UserTokens{}, errors.Join(errAccess, domain.ErrCreateToken)
+		return UserTokens{}, errors.Join(errAccess, domain.ErrCreateToken)
 	}
 
 	ipAddr := net.ParseIP(ctx.ClientIP())
 	if ipAddr == nil {
-		return domain.UserTokens{}, domain.ErrClientIP
+		return UserTokens{}, domain.ErrClientIP
 	}
 
-	personAuth := domain.NewPersonAuth(sid, ipAddr, accessToken)
+	personAuth := NewPersonAuth(sid, ipAddr, accessToken)
 
 	if saveErr := u.auth.SavePersonAuth(ctx, &personAuth); saveErr != nil {
-		return domain.UserTokens{}, errors.Join(saveErr, domain.ErrSaveToken)
+		return UserTokens{}, errors.Join(saveErr, domain.ErrSaveToken)
 	}
 
-	return domain.UserTokens{Access: accessToken, Fingerprint: fingerprint}, nil
+	return UserTokens{Access: accessToken, Fingerprint: fingerprint}, nil
 }
 
 func (u *auth) Middleware(level domain.Privilege) gin.HandlerFunc {
@@ -338,7 +338,7 @@ func (u *auth) MiddlewareServer() gin.HandlerFunc {
 func (u *auth) NewUserToken(steamID steamid.SteamID, cookieKey string, fingerPrint string, validDuration time.Duration) (string, error) {
 	nowTime := time.Now()
 	conf := u.config.Config()
-	claims := domain.UserAuthClaims{
+	claims := UserAuthClaims{
 		Fingerprint: FingerprintHash(fingerPrint),
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    conf.General.SiteName,
@@ -383,7 +383,7 @@ func (u *auth) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 }
 
 func (u *auth) Sid64FromJWTToken(token string, cookieKey string, fingerprint string) (steamid.SteamID, error) {
-	claims := &domain.UserAuthClaims{}
+	claims := &UserAuthClaims{}
 
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
@@ -417,7 +417,7 @@ func (u *auth) Sid64FromJWTToken(token string, cookieKey string, fingerprint str
 }
 
 func (u *auth) Sid64FromJWTTokenNoFP(token string, cookieKey string) (steamid.SteamID, error) {
-	claims := &domain.UserAuthClaims{}
+	claims := &UserAuthClaims{}
 
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
@@ -454,13 +454,13 @@ func (args CleanupArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 24}}
 }
 
-func NewCleanupWorker(auth domain.AuthRepository) *CleanupWorker {
+func NewCleanupWorker(auth AuthRepository) *CleanupWorker {
 	return &CleanupWorker{auth: auth}
 }
 
 type CleanupWorker struct {
 	river.WorkerDefaults[CleanupArgs]
-	auth domain.AuthRepository
+	auth AuthRepository
 }
 
 func (worker *CleanupWorker) Work(ctx context.Context, _ *river.Job[CleanupArgs]) error {

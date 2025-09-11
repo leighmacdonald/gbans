@@ -10,12 +10,12 @@ import (
 
 type Tracker struct {
 	activityMu sync.RWMutex
-	activity   []domain.ForumActivity
+	activity   []ForumActivity
 }
 
 func NewTracker() *Tracker {
 	return &Tracker{
-		activity: make([]domain.ForumActivity, 0),
+		activity: make([]ForumActivity, 0),
 	}
 }
 
@@ -24,7 +24,7 @@ func (tracker *Tracker) Touch(person domain.UserProfile) {
 		return
 	}
 
-	valid := []domain.ForumActivity{{LastActivity: time.Now(), Person: person}}
+	valid := []ForumActivity{{LastActivity: time.Now(), Person: person}}
 
 	tracker.activityMu.Lock()
 	defer tracker.activityMu.Unlock()
@@ -46,7 +46,7 @@ func (tracker *Tracker) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			var current []domain.ForumActivity
+			var current []ForumActivity
 
 			tracker.activityMu.Lock()
 
@@ -67,11 +67,11 @@ func (tracker *Tracker) Start(ctx context.Context) {
 	}
 }
 
-func (tracker *Tracker) Current() []domain.ForumActivity {
+func (tracker *Tracker) Current() []ForumActivity {
 	tracker.activityMu.RLock()
 	defer tracker.activityMu.RUnlock()
 
-	var activity []domain.ForumActivity
+	var activity []ForumActivity
 
 	activity = append(activity, tracker.activity...)
 

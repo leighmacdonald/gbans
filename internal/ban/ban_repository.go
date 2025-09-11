@@ -319,7 +319,7 @@ func (r banRepository) ExpiredBans(ctx context.Context) ([]Ban, error) {
 }
 
 // Get returns all bans that fit the filter criteria passed in.
-func (r banRepository) Get(ctx context.Context, filter BansQueryFilter) ([]BannedPerson, error) {
+func (r banRepository) Get(ctx context.Context, filter domain.BansQueryFilter) ([]BannedPerson, error) {
 	builder := r.db.
 		Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",

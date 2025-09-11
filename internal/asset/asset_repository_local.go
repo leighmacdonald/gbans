@@ -22,28 +22,28 @@ type localRepository struct {
 	cu domain.ConfigUsecase
 }
 
-func NewLocalRepository(database database.Database, configUsecase domain.ConfigUsecase) domain.AssetRepository {
+func NewLocalRepository(database database.Database, configUsecase domain.ConfigUsecase) AssetRepository {
 	return &localRepository{db: database, cu: configUsecase}
 }
 
-func (l localRepository) Put(ctx context.Context, asset domain.Asset, body io.ReadSeeker) (domain.Asset, error) {
+func (l localRepository) Put(ctx context.Context, asset Asset, body io.ReadSeeker) (Asset, error) {
 	existing, errExisting := l.getAssetByHash(ctx, asset.Hash)
 	if errExisting == nil {
 		return existing, nil
 	}
 
 	if !errors.Is(errExisting, database.ErrNoResult) {
-		return domain.Asset{}, errExisting
+		return Asset{}, errExisting
 	}
 
 	outPath, errOutPath := l.GenAssetPath(asset.HashString())
 	if errOutPath != nil {
-		return domain.Asset{}, errOutPath
+		return Asset{}, errOutPath
 	}
 
 	file, errFile := os.Create(outPath)
 	if errFile != nil {
-		return domain.Asset{}, errors.Join(errFile, domain.ErrCreateAddFile)
+		return Asset{}, errors.Join(errFile, domain.ErrCreateAddFile)
 	}
 
 	defer func() {
@@ -56,15 +56,15 @@ func (l localRepository) Put(ctx context.Context, asset domain.Asset, body io.Re
 
 	_, errWrite := io.Copy(file, body)
 	if errWrite != nil {
-		return domain.Asset{}, errors.Join(errWrite, domain.ErrCopyFileContent)
+		return Asset{}, errors.Join(errWrite, domain.ErrCopyFileContent)
 	}
 
 	if errSave := l.saveAssetToDB(ctx, asset); errSave != nil {
 		if errRemove := os.Remove(outPath); errRemove != nil {
-			return domain.Asset{}, errors.Join(errRemove, errSave)
+			return Asset{}, errors.Join(errRemove, errSave)
 		}
 
-		return domain.Asset{}, errSave
+		return Asset{}, errSave
 	}
 
 	asset.LocalPath = outPath
@@ -114,20 +114,20 @@ func (l localRepository) Init(_ context.Context) error {
 	return nil
 }
 
-func (l localRepository) Get(ctx context.Context, assetID uuid.UUID) (domain.Asset, io.ReadSeeker, error) {
+func (l localRepository) Get(ctx context.Context, assetID uuid.UUID) (Asset, io.ReadSeeker, error) {
 	asset, errAsset := l.getAssetByUUID(ctx, assetID)
 	if errAsset != nil {
-		return domain.Asset{}, nil, errAsset
+		return Asset{}, nil, errAsset
 	}
 
 	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
 	if errAssetPath != nil {
-		return domain.Asset{}, nil, errAssetPath
+		return Asset{}, nil, errAssetPath
 	}
 
 	reader, errReader := os.Open(assetPath)
 	if errReader != nil {
-		return domain.Asset{}, nil, errors.Join(errReader, domain.ErrOpenFile)
+		return Asset{}, nil, errors.Join(errReader, domain.ErrOpenFile)
 	}
 
 	return asset, reader, nil
@@ -151,32 +151,32 @@ func (l localRepository) GenAssetPath(hash string) (string, error) {
 	return path.Join(fullPath, hash), nil
 }
 
-func (l localRepository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) (domain.Asset, error) {
+func (l localRepository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) (Asset, error) {
 	query, args, errSQL := l.db.Builder().
 		Select("asset_id", "bucket", "author_id", "mime_type", "name", "size", "hash", "created_on", "updated_on").
 		From("asset").
 		Where(sq.Eq{"asset_id": assetID}).
 		ToSql()
 	if errSQL != nil {
-		return domain.Asset{}, l.db.DBErr(errSQL)
+		return Asset{}, l.db.DBErr(errSQL)
 	}
 
 	var (
-		asset    domain.Asset
+		asset    Asset
 		authorID int64
 	)
 
 	if errScan := l.db.QueryRow(ctx, nil, query, args...).
 		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
 			&asset.Size, &asset.Hash, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
-		return domain.Asset{}, l.db.DBErr(errScan)
+		return Asset{}, l.db.DBErr(errScan)
 	}
 
 	asset.AuthorID = steamid.New(authorID)
 
 	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
 	if errAssetPath != nil {
-		return domain.Asset{}, errAssetPath
+		return Asset{}, errAssetPath
 	}
 
 	asset.LocalPath = assetPath
@@ -184,32 +184,32 @@ func (l localRepository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) 
 	return asset, nil
 }
 
-func (l localRepository) getAssetByHash(ctx context.Context, hash []byte) (domain.Asset, error) {
+func (l localRepository) getAssetByHash(ctx context.Context, hash []byte) (Asset, error) {
 	query, args, errSQL := l.db.Builder().
 		Select("asset_id", "bucket", "author_id", "mime_type", "name", "size", "hash", "is_private", "created_on", "updated_on").
 		From("asset").
 		Where(sq.Eq{"hash": hash}).
 		ToSql()
 	if errSQL != nil {
-		return domain.Asset{}, l.db.DBErr(errSQL)
+		return Asset{}, l.db.DBErr(errSQL)
 	}
 
 	var (
-		asset    domain.Asset
+		asset    Asset
 		authorID int64
 	)
 
 	if errScan := l.db.QueryRow(ctx, nil, query, args...).
 		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
 			&asset.Size, &asset.Hash, &asset.IsPrivate, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
-		return domain.Asset{}, l.db.DBErr(errScan)
+		return Asset{}, l.db.DBErr(errScan)
 	}
 
 	asset.AuthorID = steamid.New(authorID)
 
 	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
 	if errAssetPath != nil {
-		return domain.Asset{}, errAssetPath
+		return Asset{}, errAssetPath
 	}
 
 	asset.LocalPath = assetPath
@@ -217,7 +217,7 @@ func (l localRepository) getAssetByHash(ctx context.Context, hash []byte) (domai
 	return asset, nil
 }
 
-func (l localRepository) saveAssetToDB(ctx context.Context, asset domain.Asset) error {
+func (l localRepository) saveAssetToDB(ctx context.Context, asset Asset) error {
 	query := l.db.Builder().Insert("asset").SetMap(map[string]interface{}{
 		"asset_id":   asset.AssetID,
 		"hash":       asset.Hash,

@@ -88,33 +88,6 @@ func (f NotificationQuery) SourceSteamID() (steamid.SteamID, bool) {
 	return sid, sid.Valid()
 }
 
-type ChatHistoryQueryFilter struct {
-	QueryFilter
-	SourceIDField
-	Personaname   string     `json:"personaname,omitempty"`
-	ServerID      int        `json:"server_id,omitempty"`
-	DateStart     *time.Time `json:"date_start,omitempty"`
-	DateEnd       *time.Time `json:"date_end,omitempty"`
-	Unrestricted  bool       `json:"-"`
-	DontCalcTotal bool       `json:"-"`
-	FlaggedOnly   bool       `json:"flagged_only"`
-}
-
-func (f ChatHistoryQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SourceID)
-
-	return sid, sid.Valid()
-}
-
-type ConnectionHistoryQuery struct {
-	QueryFilter
-	SourceIDField
-	CIDR    string `json:"cidr,omitempty"`
-	ASN     int    `json:"asn,omitempty"`
-	Sid64   string `json:"sid64,omitempty"`
-	Network string `json:"network,omitempty"`
-}
-
 type PlayerQuery struct {
 	QueryFilter
 	TargetIDField
@@ -138,15 +111,6 @@ func (f DemoFilter) SourceSteamID() (steamid.SteamID, bool) {
 
 type FiltersQueryFilter struct {
 	QueryFilter
-}
-
-type ThreadMessagesQuery struct {
-	Deleted       bool  `json:"deleted,omitempty" uri:"deleted"`
-	ForumThreadID int64 `json:"forum_thread_id"`
-}
-
-type ThreadQueryFilter struct {
-	ForumID int `json:"forum_id"`
 }
 
 type MatchesQueryOpts struct {

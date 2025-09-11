@@ -18,35 +18,35 @@ import (
 )
 
 type assets struct {
-	repository domain.AssetRepository
+	repository AssetRepository
 }
 
-func NewAssetUsecase(assetRepository domain.AssetRepository) domain.AssetUsecase {
+func NewAssetUsecase(assetRepository AssetRepository) AssetUsecase {
 	return &assets{repository: assetRepository}
 }
 
-func (s assets) Create(ctx context.Context, author steamid.SteamID, bucket domain.Bucket, fileName string, content io.ReadSeeker) (domain.Asset, error) {
+func (s assets) Create(ctx context.Context, author steamid.SteamID, bucket Bucket, fileName string, content io.ReadSeeker) (Asset, error) {
 	if bucket != "demos" && bucket != "media" {
-		return domain.Asset{}, domain.ErrBucketType
+		return Asset{}, domain.ErrBucketType
 	}
 
 	if fileName == "" {
-		return domain.Asset{}, domain.ErrAssetName
+		return Asset{}, domain.ErrAssetName
 	}
 
 	if bucket != "demos" && !author.Valid() {
 		// Non demo assets must have a real author
-		return domain.Asset{}, domain.ErrInvalidAuthorSID
+		return Asset{}, domain.ErrInvalidAuthorSID
 	}
 
 	asset, errAsset := NewAsset(author, fileName, bucket, content)
 	if errAsset != nil {
-		return domain.Asset{}, errAsset
+		return Asset{}, errAsset
 	}
 
 	newAsset, errPut := s.repository.Put(ctx, asset, content)
 	if errPut != nil {
-		return domain.Asset{}, errPut
+		return Asset{}, errPut
 	}
 
 	slog.Debug("Created new asset",
@@ -55,9 +55,9 @@ func (s assets) Create(ctx context.Context, author steamid.SteamID, bucket domai
 	return newAsset, nil
 }
 
-func (s assets) Get(ctx context.Context, uuid uuid.UUID) (domain.Asset, io.ReadSeeker, error) {
+func (s assets) Get(ctx context.Context, uuid uuid.UUID) (Asset, io.ReadSeeker, error) {
 	if uuid.IsNil() {
-		return domain.Asset{}, nil, domain.ErrUUIDInvalid
+		return Asset{}, nil, domain.ErrUUIDInvalid
 	}
 
 	asset, reader, errAsset := s.repository.Get(ctx, uuid)
@@ -101,42 +101,42 @@ const (
 	maxDemoFileSize  = 500000000
 )
 
-func NewAsset(author steamid.SteamID, name string, bucket domain.Bucket, contentReader io.ReadSeeker) (domain.Asset, error) {
+func NewAsset(author steamid.SteamID, name string, bucket Bucket, contentReader io.ReadSeeker) (Asset, error) {
 	mType, errMime := mimetype.DetectReader(contentReader)
 	if errMime != nil {
-		return domain.Asset{}, errors.Join(errMime, domain.ErrMimeTypeReadFailed)
+		return Asset{}, errors.Join(errMime, domain.ErrMimeTypeReadFailed)
 	}
 
 	_, _ = contentReader.Seek(0, 0)
 
 	size, errSize := io.Copy(io.Discard, contentReader)
 	if errSize != nil {
-		return domain.Asset{}, errors.Join(errSize, domain.ErrCopyFileContent)
+		return Asset{}, errors.Join(errSize, domain.ErrCopyFileContent)
 	}
 
-	if bucket == domain.BucketMedia && size > maxMediaFileSize || bucket == domain.BucketDemo && size > maxDemoFileSize {
-		return domain.Asset{}, domain.ErrAssetTooLarge
+	if bucket == BucketMedia && size > maxMediaFileSize || bucket == BucketDemo && size > maxDemoFileSize {
+		return Asset{}, domain.ErrAssetTooLarge
 	}
 
 	_, _ = contentReader.Seek(0, 0)
 
 	hash, errHash := generateFileHash(contentReader)
 	if errHash != nil {
-		return domain.Asset{}, errHash
+		return Asset{}, errHash
 	}
 
 	curTime := time.Now()
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return domain.Asset{}, errors.Join(errID, domain.ErrUUIDCreate)
+		return Asset{}, errors.Join(errID, domain.ErrUUIDCreate)
 	}
 
-	if name == domain.UnknownMediaTag {
+	if name == UnknownMediaTag {
 		name = fmt.Sprintf("%x%s", hash, mType.Extension())
 	}
 
-	asset := domain.Asset{
+	asset := Asset{
 		AssetID:   newID,
 		Bucket:    bucket,
 		AuthorID:  author,

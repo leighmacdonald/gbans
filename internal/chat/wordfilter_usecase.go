@@ -1,4 +1,4 @@
-package wordfilter
+package chat
 
 import (
 	"context"
@@ -14,12 +14,12 @@ import (
 )
 
 type wordFilterUsecase struct {
-	repository    domain.WordFilterRepository
+	repository    WordFilterRepository
 	wordFilters   *WordFilters
 	notifications domain.NotificationUsecase
 }
 
-func NewWordFilterUsecase(repository domain.WordFilterRepository, notifications domain.NotificationUsecase) domain.WordFilterUsecase {
+func NewWordFilterUsecase(repository WordFilterRepository, notifications domain.NotificationUsecase) WordFilterUsecase {
 	return &wordFilterUsecase{repository: repository, wordFilters: NewWordFilters(), notifications: notifications}
 }
 
@@ -34,14 +34,14 @@ func (w *wordFilterUsecase) Import(ctx context.Context) error {
 	return nil
 }
 
-func (w *wordFilterUsecase) Check(query string) []domain.Filter {
+func (w *wordFilterUsecase) Check(query string) []Filter {
 	return w.wordFilters.Check(query)
 }
 
-func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, filterID int64, filter domain.Filter) (domain.Filter, error) {
+func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, filterID int64, filter Filter) (Filter, error) {
 	existingFilter, errGet := w.repository.GetFilterByID(ctx, filterID)
 	if errGet != nil {
-		return domain.Filter{}, errGet
+		return Filter{}, errGet
 	}
 
 	existingFilter.AuthorID = user.GetSteamID()
@@ -54,7 +54,7 @@ func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, fi
 	existingFilter.Weight = filter.Weight
 
 	if errSave := w.repository.SaveFilter(ctx, &existingFilter); errSave != nil {
-		return domain.Filter{}, errSave
+		return Filter{}, errSave
 	}
 
 	w.wordFilters.Remove(filterID)
@@ -65,30 +65,30 @@ func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, fi
 	return existingFilter, nil
 }
 
-func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, opts domain.Filter) (domain.Filter, error) {
+func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, opts Filter) (Filter, error) {
 	if opts.Pattern == "" {
-		return domain.Filter{}, domain.ErrInvalidPattern
+		return Filter{}, domain.ErrInvalidPattern
 	}
 
 	_, errDur := datetime.ParseDuration(opts.Duration)
 	if errDur != nil {
-		return domain.Filter{}, datetime.ErrInvalidDuration
+		return Filter{}, datetime.ErrInvalidDuration
 	}
 
 	if opts.IsRegex {
 		_, compErr := regexp.Compile(opts.Pattern)
 		if compErr != nil {
-			return domain.Filter{}, domain.ErrInvalidRegex
+			return Filter{}, ErrInvalidRegex
 		}
 	}
 
 	if opts.Weight < 1 {
-		return domain.Filter{}, domain.ErrInvalidWeight
+		return Filter{}, domain.ErrInvalidWeight
 	}
 
 	now := time.Now()
 
-	newFilter := domain.Filter{
+	newFilter := Filter{
 		AuthorID:  user.GetSteamID(),
 		Pattern:   opts.Pattern,
 		Action:    opts.Action,
@@ -102,10 +102,10 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 
 	if errSave := w.repository.SaveFilter(ctx, &newFilter); errSave != nil {
 		if errors.Is(errSave, database.ErrDuplicate) {
-			return domain.Filter{}, database.ErrDuplicate
+			return Filter{}, database.ErrDuplicate
 		}
 
-		return domain.Filter{}, errors.Join(errSave, domain.ErrSaveChanges)
+		return Filter{}, errors.Join(errSave, domain.ErrSaveChanges)
 	}
 
 	newFilter.Init()
@@ -138,11 +138,11 @@ func (w *wordFilterUsecase) DropFilter(ctx context.Context, filterID int64) erro
 	return nil
 }
 
-func (w *wordFilterUsecase) GetFilterByID(ctx context.Context, filterID int64) (domain.Filter, error) {
+func (w *wordFilterUsecase) GetFilterByID(ctx context.Context, filterID int64) (Filter, error) {
 	return w.repository.GetFilterByID(ctx, filterID)
 }
 
-func (w *wordFilterUsecase) GetFilters(ctx context.Context) ([]domain.Filter, error) {
+func (w *wordFilterUsecase) GetFilters(ctx context.Context) ([]Filter, error) {
 	return w.repository.GetFilters(ctx)
 }
 

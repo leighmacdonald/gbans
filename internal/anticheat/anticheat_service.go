@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -12,10 +13,10 @@ import (
 )
 
 type antiCheatHandler struct {
-	anticheat domain.AntiCheatUsecase
+	anticheat AntiCheatUsecase
 }
 
-func NewHandler(engine *gin.Engine, auth domain.AuthUsecase, anticheat domain.AntiCheatUsecase) {
+func NewHandler(engine *gin.Engine, auth auth.AuthUsecase, anticheat AntiCheatUsecase) {
 	handler := &antiCheatHandler{anticheat: anticheat}
 	// mod
 	modGrp := engine.Group("/api/anticheat")
@@ -36,7 +37,7 @@ func (h antiCheatHandler) bySteamID() gin.HandlerFunc {
 
 		detections, errDetections := h.anticheat.DetectionsBySteamID(ctx, steamID)
 		if errDetections != nil && !errors.Is(errDetections, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDetections, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDetections, httphelper.ErrInternal)))
 
 			return
 		}
@@ -54,7 +55,7 @@ func (h antiCheatHandler) byDetection() gin.HandlerFunc {
 
 		detections, errDetections := h.anticheat.DetectionsByType(ctx, logparse.Detection(detectionType))
 		if errDetections != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDetections, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDetections, httphelper.ErrInternal)))
 
 			return
 		}
@@ -65,20 +66,20 @@ func (h antiCheatHandler) byDetection() gin.HandlerFunc {
 
 func (h antiCheatHandler) query() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var query domain.AnticheatQuery
+		var query AnticheatQuery
 		if !httphelper.BindQuery(ctx, &query) {
 			return
 		}
 
 		entries, errEntries := h.anticheat.Query(ctx, query)
 		if errEntries != nil && !errors.Is(errEntries, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if entries == nil {
-			entries = []domain.AnticheatEntry{}
+			entries = []AnticheatEntry{}
 		}
 
 		ctx.JSON(http.StatusOK, entries)

@@ -5,15 +5,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type voteHandler struct {
-	votes domain.VoteUsecase
+	votes VoteUsecase
 }
 
-func NewHandler(engine *gin.Engine, votes domain.VoteUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, votes VoteUsecase, auth auth.AuthUsecase) {
 	handler := voteHandler{votes: votes}
 
 	modGrp := engine.Group("/")
@@ -25,20 +26,20 @@ func NewHandler(engine *gin.Engine, votes domain.VoteUsecase, auth domain.AuthUs
 
 func (h voteHandler) onVotes() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.VoteQueryFilter
+		var req VoteQueryFilter
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		votes, count, errVotes := h.votes.Query(ctx, req)
 		if errVotes != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errVotes, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errVotes, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if votes == nil {
-			votes = []domain.VoteResult{}
+			votes = []VoteResult{}
 		}
 
 		ctx.JSON(http.StatusOK, httphelper.LazyResult{

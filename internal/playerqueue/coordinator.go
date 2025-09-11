@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
@@ -20,16 +19,16 @@ type Coordinator struct {
 	chatLogHistorySize int
 	minQueueSize       int
 	lobbies            []*Lobby
-	clients            []domain.QueueClient
-	chatLogs           []domain.ChatLog
+	clients            []QueueClient
+	chatLogs           []ChatLog
 	mu                 *sync.RWMutex
 	validLobbies       func() ([]Lobby, error)
 }
 
-func New(chatLogHistorySize int, minQueueSize int, chatlogs []domain.ChatLog, currentStateFunc func() ([]Lobby, error)) *Coordinator {
+func New(chatLogHistorySize int, minQueueSize int, chatlogs []ChatLog, currentStateFunc func() ([]Lobby, error)) *Coordinator {
 	return &Coordinator{
 		minQueueSize:       minQueueSize,
-		clients:            []domain.QueueClient{},
+		clients:            []QueueClient{},
 		chatLogs:           chatlogs,
 		lobbies:            []*Lobby{},
 		mu:                 &sync.RWMutex{},
@@ -86,10 +85,10 @@ func (q *Coordinator) updateClientStates(fullUpdate bool) {
 		update.Users = players
 	}
 
-	go q.broadcast(domain.Response{Op: domain.StateUpdate, Payload: update})
+	go q.broadcast(Response{Op: StateUpdate, Payload: update})
 }
 
-func (q *Coordinator) Leave(client domain.QueueClient, servers []int) error {
+func (q *Coordinator) Leave(client QueueClient, servers []int) error {
 	changed := false
 
 	q.mu.Lock()
@@ -121,7 +120,7 @@ func (q *Coordinator) Leave(client domain.QueueClient, servers []int) error {
 	return nil
 }
 
-func (q *Coordinator) Join(client domain.QueueClient, servers []int) error {
+func (q *Coordinator) Join(client QueueClient, servers []int) error {
 	changed := false
 	q.mu.Lock()
 
@@ -160,7 +159,7 @@ func (q *Coordinator) Join(client domain.QueueClient, servers []int) error {
 
 // Connect adds the user to the swarm. If a user exists with the same steamid exists, it will be replaced with
 // the new connection.
-func (q *Coordinator) Connect(ctx context.Context, steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) domain.QueueClient {
+func (q *Coordinator) Connect(ctx context.Context, steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) QueueClient {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -247,7 +246,7 @@ func (q *Coordinator) checkQueueCompat() error {
 
 func (q *Coordinator) initiateGame(serverID int) error {
 	q.mu.RLock()
-	var queuedClients []domain.QueueClient
+	var queuedClients []QueueClient
 
 	var currentLobby *Lobby
 
@@ -300,7 +299,7 @@ func (q *Coordinator) initiateGame(serverID int) error {
 		})
 	}
 
-	q.broadcast(domain.Response{Op: domain.StartGame, Payload: startPayload}, queuedClients...)
+	q.broadcast(Response{Op: StartGame, Payload: startPayload}, queuedClients...)
 	q.mu.RUnlock()
 
 	q.mu.Lock()
@@ -314,11 +313,11 @@ func (q *Coordinator) initiateGame(serverID int) error {
 	return nil
 }
 
-func (q *Coordinator) FindMessages(steamID steamid.SteamID, limit int) []domain.ChatLog {
+func (q *Coordinator) FindMessages(steamID steamid.SteamID, limit int) []ChatLog {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
-	var messages []domain.ChatLog
+	var messages []ChatLog
 	for i := len(q.chatLogs) - 1; i >= 0; i-- {
 		if q.chatLogs[i].SteamID == steamID {
 			messages = append(messages, q.chatLogs[i])
@@ -336,7 +335,7 @@ func (q *Coordinator) PurgeMessages(deletedIDs ...int64) {
 	defer q.mu.Unlock()
 
 	// Remove the purged messages from the local cache.
-	var valid []domain.ChatLog
+	var valid []ChatLog
 	for _, existing := range q.chatLogs {
 		if !slices.Contains(deletedIDs, existing.MessageID) {
 			valid = append(valid, existing)
@@ -344,12 +343,12 @@ func (q *Coordinator) PurgeMessages(deletedIDs ...int64) {
 	}
 	q.chatLogs = valid
 
-	q.broadcast(domain.Response{Op: domain.Purge, Payload: PurgePayload{MessageIDs: deletedIDs}})
+	q.broadcast(Response{Op: Purge, Payload: PurgePayload{MessageIDs: deletedIDs}})
 }
 
 // Disconnect removes a client from the coordinator entirely, leaving all its queues, closing the underlying client and broadcasting
 // the full state change to all clients.
-func (q *Coordinator) Disconnect(client domain.QueueClient) {
+func (q *Coordinator) Disconnect(client QueueClient) {
 	q.mu.RLock()
 
 	var serverIDs []int //nolint:prealloc
@@ -364,7 +363,7 @@ func (q *Coordinator) Disconnect(client domain.QueueClient) {
 	}
 
 	q.mu.Lock()
-	var valid []domain.QueueClient //nolint:prealloc
+	var valid []QueueClient //nolint:prealloc
 	for _, existing := range q.clients {
 		if existing.SteamID() == client.SteamID() {
 			continue
@@ -382,7 +381,7 @@ func (q *Coordinator) Disconnect(client domain.QueueClient) {
 }
 
 // Message adds a new chat log entry and broadcasts the entry to all eligible clients.
-func (q *Coordinator) Message(message domain.ChatLog) {
+func (q *Coordinator) Message(message ChatLog) {
 	q.mu.Lock()
 	q.chatLogs = append(q.chatLogs, message)
 	if len(q.chatLogs) > q.chatLogHistorySize {
@@ -391,10 +390,10 @@ func (q *Coordinator) Message(message domain.ChatLog) {
 	q.mu.Unlock()
 
 	q.mu.RLock()
-	q.broadcast(domain.Response{
-		Op: domain.Message,
+	q.broadcast(Response{
+		Op: Message,
 		Payload: MessagePayload{
-			Messages: []domain.ChatLog{message},
+			Messages: []ChatLog{message},
 		},
 	})
 	q.mu.RUnlock()
@@ -402,7 +401,7 @@ func (q *Coordinator) Message(message domain.ChatLog) {
 
 // broadcast sends a domain.Response payload to multiple clients. If no clients are specified, all
 // clients will receive the payload.
-func (q *Coordinator) broadcast(payload domain.Response, targetClients ...domain.QueueClient) {
+func (q *Coordinator) broadcast(payload Response, targetClients ...QueueClient) {
 	if len(targetClients) == 0 {
 		targetClients = q.clients
 	}
@@ -411,14 +410,14 @@ func (q *Coordinator) broadcast(payload domain.Response, targetClients ...domain
 		slog.Debug("Sending message to client", slog.Int("op", int(payload.Op)),
 			slog.String("client", client.ID()))
 		// Make sure we skip physically sending messages to clients without at least read access to the chat messages.
-		if payload.Op == domain.Message && !client.HasMessageAccess() {
+		if payload.Op == Message && !client.HasMessageAccess() {
 			continue
 		}
 		go client.Send(payload)
 	}
 }
 
-func (q *Coordinator) removeFromQueues(client domain.QueueClient) {
+func (q *Coordinator) removeFromQueues(client QueueClient) {
 	for _, srv := range q.lobbies {
 		var valid []ClientQueueState
 
@@ -433,23 +432,23 @@ func (q *Coordinator) removeFromQueues(client domain.QueueClient) {
 }
 
 // sendClientChatHistory sends the last N messages of the chatLogs history to the client provided.
-func (q *Coordinator) sendClientChatHistory(client domain.QueueClient) {
+func (q *Coordinator) sendClientChatHistory(client QueueClient) {
 	payload := MessagePayload{
-		Messages: []domain.ChatLog{},
+		Messages: []ChatLog{},
 	}
 
 	q.mu.RLock()
 	payload.Messages = append(payload.Messages, q.chatLogs...)
 	q.mu.RUnlock()
 
-	go client.Send(domain.Response{
-		Op:      domain.Message,
+	go client.Send(Response{
+		Op:      Message,
 		Payload: payload,
 	})
 }
 
 // UpdateChatStatus updates a client with their new ChatStatus.
-func (q *Coordinator) UpdateChatStatus(steamID steamid.SteamID, status domain.ChatStatus, reason string, previous domain.ChatStatus) {
+func (q *Coordinator) UpdateChatStatus(steamID steamid.SteamID, status ChatStatus, reason string, previous ChatStatus) {
 	q.mu.RLock()
 	defer q.mu.RUnlock()
 
@@ -458,12 +457,12 @@ func (q *Coordinator) UpdateChatStatus(steamID steamid.SteamID, status domain.Ch
 			continue
 		}
 
-		go client.Send(domain.Response{
-			Op:      domain.ChatStatusChange,
-			Payload: domain.ChatStatusChangePayload{Status: status, Reason: reason},
+		go client.Send(Response{
+			Op:      ChatStatusChange,
+			Payload: ChatStatusChangePayload{Status: status, Reason: reason},
 		})
 
-		if previous == domain.Noaccess {
+		if previous == Noaccess {
 			go q.sendClientChatHistory(client)
 		}
 

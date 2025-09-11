@@ -1,4 +1,4 @@
-package domain
+package network
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -42,32 +43,45 @@ type NetworkRepository interface {
 	LoadProxies(ctx context.Context, truncate bool, records []ip2location.ProxyRecord) error
 }
 
-type CIDRBlockSource struct {
-	CIDRBlockSourceID int       `json:"cidr_block_source_id"`
-	Name              string    `json:"name"`
-	URL               string    `json:"url"`
-	Enabled           bool      `json:"enabled"`
-	CreatedOn         time.Time `json:"created_on"`
-	UpdatedOn         time.Time `json:"updated_on"`
+// PersonIPRecord holds a composite result of the more relevant ip2location results.
+type PersonIPRecord struct {
+	IPAddr      net.IP
+	CreatedOn   time.Time
+	CityName    string
+	CountryName string
+	CountryCode string
+	ASName      string
+	ASNum       int
+	ISP         string
+	UsageType   string
+	Threat      string
+	DomainUsed  string
 }
 
-type WhitelistIP struct {
-	CIDRBlockWhitelistID int        `json:"cidr_block_whitelist_id"`
-	Address              *net.IPNet `json:"address"`
-	CreatedOn            time.Time  `json:"created_on"`
-	UpdatedOn            time.Time  `json:"updated_on"`
+type ConnectionHistoryQuery struct {
+	domain.QueryFilter
+	domain.SourceIDField
+	CIDR    string `json:"cidr,omitempty"`
+	ASN     int    `json:"asn,omitempty"`
+	Sid64   string `json:"sid64,omitempty"`
+	Network string `json:"network,omitempty"`
 }
 
-type WhitelistSteam struct {
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
-	SteamIDField
-	Personaname string `json:"personaname"`
-	AvatarHash  string `json:"avatar_hash"`
+type PersonConnection struct {
+	PersonConnectionID int64           `json:"person_connection_id"`
+	IPAddr             netip.Addr      `json:"ip_addr"`
+	SteamID            steamid.SteamID `json:"steam_id"`
+	PersonaName        string          `json:"persona_name"`
+	ServerID           int             `json:"server_id"`
+	CreatedOn          time.Time       `json:"created_on"`
+	ServerNameShort    string          `json:"server_name_short"`
+	ServerName         string          `json:"server_name"`
 }
+
+type PersonConnections []PersonConnection
 
 type NetworkDetailsQuery struct {
-	QueryFilter
+	domain.QueryFilter
 	IP netip.Addr `json:"ip"`
 }
 

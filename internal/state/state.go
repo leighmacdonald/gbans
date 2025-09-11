@@ -1,4 +1,4 @@
-package domain
+package state
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -20,28 +21,28 @@ type StateUsecase interface {
 	Current() []ServerState
 	ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error)
 	ExecServer(ctx context.Context, serverID int, cmd string) (string, error)
-	Find(name string, steamID steamid.SteamID, addr net.IP, cidr *net.IPNet) []PlayerServerInfo
-	FindByCIDR(cidr *net.IPNet) []PlayerServerInfo
-	FindByIP(addr net.IP) []PlayerServerInfo
-	FindByName(name string) []PlayerServerInfo
-	FindBySteamID(steamID steamid.SteamID) []PlayerServerInfo
+	Find(name string, steamID steamid.SteamID, addr net.IP, cidr *net.IPNet) []domain.PlayerServerInfo
+	FindByCIDR(cidr *net.IPNet) []domain.PlayerServerInfo
+	FindByIP(addr net.IP) []domain.PlayerServerInfo
+	FindByName(name string) []domain.PlayerServerInfo
+	FindBySteamID(steamID steamid.SteamID) []domain.PlayerServerInfo
 	Kick(ctx context.Context, target steamid.SteamID, reason ban.Reason) error
 	KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason ban.Reason) error
 	LogAddressAdd(ctx context.Context, logAddress string)
 	LogAddressDel(ctx context.Context, logAddress string)
-	OnFindExec(ctx context.Context, name string, steamID steamid.SteamID, ip net.IP, cidr *net.IPNet, onFoundCmd func(info PlayerServerInfo) string) error
+	OnFindExec(ctx context.Context, name string, steamID steamid.SteamID, ip net.IP, cidr *net.IPNet, onFoundCmd func(info domain.PlayerServerInfo) string) error
 	PSay(ctx context.Context, target steamid.SteamID, message string) error
 	Say(ctx context.Context, serverID int, message string) error
 	ServerIDsByName(name string, wildcardOk bool) []int
 	Silence(ctx context.Context, target steamid.SteamID, reason ban.Reason) error
 	SortRegion() map[string][]ServerState
-	Update(serverID int, update PartialStateUpdate) error
+	Update(serverID int, update domain.PartialStateUpdate) error
 }
 
 type StateRepository interface {
 	Start(ctx context.Context)
 	GetServer(serverID int) (ServerConfig, error)
-	Update(serverID int, update PartialStateUpdate) error
+	Update(serverID int, update domain.PartialStateUpdate) error
 	Current() []ServerState
 	Configs() []ServerConfig
 	ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error)

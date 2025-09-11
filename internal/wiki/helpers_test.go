@@ -3,13 +3,12 @@ package wiki_test
 import (
 	"testing"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRender(t *testing.T) {
-	root := domain.WikiPage{Slug: domain.RootSlug}
+	root := wiki.Page{Slug: wiki.RootSlug}
 	root.BodyMD = `
 # Title
 

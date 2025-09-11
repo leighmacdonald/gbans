@@ -6,7 +6,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -14,11 +13,11 @@ type authRepository struct {
 	db database.Database
 }
 
-func NewAuthRepository(database database.Database) domain.AuthRepository {
+func NewAuthRepository(database database.Database) AuthRepository {
 	return &authRepository{db: database}
 }
 
-func (r authRepository) SavePersonAuth(ctx context.Context, auth *domain.PersonAuth) error {
+func (r authRepository) SavePersonAuth(ctx context.Context, auth *PersonAuth) error {
 	query, args, errQuery := r.db.
 		Builder().
 		Insert("person_auth").
@@ -48,7 +47,7 @@ func (r authRepository) PrunePersonAuth(ctx context.Context) error {
 		Where(sq.Gt{"created_on + interval '1 month'": time.Now()})))
 }
 
-func (r authRepository) GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *domain.PersonAuth) error {
+func (r authRepository) GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *PersonAuth) error {
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on").

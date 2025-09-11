@@ -6,16 +6,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type mediaHandler struct {
-	assets domain.AssetUsecase
+	assets AssetUsecase
 	config domain.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, assets domain.AssetUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, assets AssetUsecase, auth auth.AuthUsecase) {
 	handler := mediaHandler{config: config, assets: assets}
 
 	optGrp := engine.Group("/")
@@ -34,7 +35,7 @@ func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, assets domain.A
 
 func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.UserUploadedFile
+		var req UserUploadedFile
 
 		if err := ctx.Bind(&req); err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, err))
@@ -44,7 +45,7 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 
 		mediaFile, errOpen := req.File.Open()
 		if errOpen != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errOpen, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errOpen, httphelper.ErrInternal)))
 
 			return
 		}
@@ -55,7 +56,7 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 
 		media, errMedia := h.assets.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID, "media", req.Name, mediaFile)
 		if errMedia != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMedia, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMedia, httphelper.ErrInternal)))
 
 			return
 		}
@@ -79,7 +80,7 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errors.Join(errGet, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errors.Join(errGet, httphelper.ErrInternal)))
 
 			return
 		}

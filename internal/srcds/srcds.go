@@ -1,4 +1,4 @@
-package domain
+package srcds
 
 import (
 	"context"

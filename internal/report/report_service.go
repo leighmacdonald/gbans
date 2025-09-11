@@ -12,11 +12,11 @@ import (
 )
 
 type reportHandler struct {
-	reports       domain.ReportUsecase
+	reports       ReportUsecase
 	notifications domain.NotificationUsecase
 }
 
-func NewHandler(engine *gin.Engine, reports domain.ReportUsecase, auth domain.AuthUsecase, notifications domain.NotificationUsecase) {
+func NewHandler(engine *gin.Engine, reports ReportUsecase, auth domain.AuthUsecase, notifications domain.NotificationUsecase) {
 	handler := reportHandler{
 		reports:       reports,
 		notifications: notifications,
@@ -51,7 +51,7 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
-		var req domain.RequestReportCreate
+		var req RequestReportCreate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -65,7 +65,7 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errReportSave, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errReportSave, httphelper.ErrInternal)))
 
 			return
 		}
@@ -89,7 +89,7 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 
 				return
 			}
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errReport, domain.ErrInternal),
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errReport, httphelper.ErrInternal),
 				"Could not load report with the id: %d", reportID))
 
 			return
@@ -105,7 +105,7 @@ func (h reportHandler) onAPIGetUserReports() gin.HandlerFunc {
 
 		reports, errReports := h.reports.GetReportsBySteamID(ctx, user.SteamID)
 		if errReports != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errReports, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errReports, httphelper.ErrInternal)))
 
 			return
 		}
@@ -123,7 +123,7 @@ func (h reportHandler) onAPIGetAllReports() gin.HandlerFunc {
 
 		reports, errReports := h.reports.GetReports(ctx)
 		if errReports != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errReports, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errReports, httphelper.ErrInternal)))
 
 			return
 		}
@@ -139,14 +139,14 @@ func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.RequestReportStatusUpdate
+		var req RequestReportStatusUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		_, err := h.reports.SetReportStatus(ctx, reportID, httphelper.CurrentUserProfile(ctx), req.Status)
 		if err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
@@ -170,7 +170,7 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetReport, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetReport, httphelper.ErrInternal)))
 
 			return
 		}
@@ -183,13 +183,13 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 
 		reportMessages, errGetReportMessages := h.reports.GetReportMessages(ctx, reportID)
 		if errGetReportMessages != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetReportMessages, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetReportMessages, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if reportMessages == nil {
-			reportMessages = []domain.ReportMessage{}
+			reportMessages = []ReportMessage{}
 		}
 
 		ctx.JSON(http.StatusOK, reportMessages)
@@ -204,12 +204,12 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 		}
 
 		if reportID == 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
 
 			return
 		}
 
-		var req domain.RequestMessageBodyMD
+		var req RequestMessageBodyMD
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -218,7 +218,7 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 
 		msg, errSave := h.reports.CreateReportMessage(ctx, reportID, curUser, req)
 		if errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
 			return
 		}
@@ -234,14 +234,14 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.RequestMessageBodyMD
+		var req RequestMessageBodyMD
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		msg, errMsg := h.reports.EditReportMessage(ctx, reportMessageID, httphelper.CurrentUserProfile(ctx), req)
 		if errMsg != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMsg, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMsg, httphelper.ErrInternal)))
 
 			return
 		}
@@ -257,7 +257,7 @@ func (h reportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 			return
 		}
 		if reportMessageID == 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
 
 			return
 		}

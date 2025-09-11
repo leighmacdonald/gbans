@@ -5,16 +5,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type wikiHandler struct {
-	wiki domain.WikiUsecase
+	wiki WikiUsecase
 }
 
-func NewHandler(engine *gin.Engine, wiki domain.WikiUsecase, ath domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, wiki WikiUsecase, ath auth.AuthUsecase) {
 	handler := &wikiHandler{wiki: wiki}
 
 	// optional
@@ -43,7 +44,7 @@ func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 			case errors.Is(err, domain.ErrPermissionDenied):
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, domain.ErrPermissionDenied)))
 			default:
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 			}
 
 			return
@@ -55,14 +56,14 @@ func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 
 func (w *wikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.WikiPage
+		var req Page
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		page, err := w.wiki.SaveWikiPage(ctx, httphelper.CurrentUserProfile(ctx), req.Slug, req.BodyMD, req.PermissionLevel)
 		if err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}

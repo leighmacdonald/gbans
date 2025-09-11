@@ -1,9 +1,10 @@
-package domain
+package anticheat
 
 import (
 	"context"
 	"io"
 
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -33,7 +34,7 @@ type AntiCheatUsecase interface {
 }
 
 type AnticheatQuery struct {
-	QueryFilter
+	domain.QueryFilter
 	Name      string             `json:"name" schema:"name"`
 	SteamID   string             `json:"steam_id" schema:"steam_id"`
 	ServerID  int                `json:"server_id" schema:"server_id"`

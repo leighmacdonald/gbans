@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -12,11 +11,11 @@ import (
 )
 
 type metricsUsecase struct {
-	collector *domain.MetricCollector
+	collector *MetricCollector
 	eb        *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewMetricsUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]) domain.MetricsUsecase {
+func NewMetricsUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]) MetricsUsecase {
 	collector := newMetricCollector()
 
 	return &metricsUsecase{
@@ -84,8 +83,8 @@ func (u metricsUsecase) Start(ctx context.Context) {
 	}
 }
 
-func newMetricCollector() *domain.MetricCollector {
-	collector := &domain.MetricCollector{
+func newMetricCollector() *MetricCollector {
+	collector := &MetricCollector{
 		LogEventCounter: prometheus.NewCounterVec(
 			prometheus.CounterOpts{Name: "gbans_game_log_events_total", Help: "Total log events ingested"},
 			[]string{"server_name"}),

@@ -1,4 +1,4 @@
-package domain
+package match
 
 import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -11,32 +11,10 @@ type MapUseDetail struct {
 	Percent  float64 `json:"percent"`
 }
 
-type Stats struct {
-	BansTotal     int `json:"bans_total"`
-	BansDay       int `json:"bans_day"`
-	BansWeek      int `json:"bans_week"`
-	BansMonth     int `json:"bans_month"`
-	Bans3Month    int `json:"bans3_month"`
-	Bans6Month    int `json:"bans6_month"`
-	BansYear      int `json:"bans_year"`
-	BansCIDRTotal int `json:"bans_cidr_total"`
-	AppealsOpen   int `json:"appeals_open"`
-	AppealsClosed int `json:"appeals_closed"`
-	FilteredWords int `json:"filtered_words"`
-	ServersAlive  int `json:"servers_alive"`
-	ServersTotal  int `json:"servers_total"`
-}
-
 type Weapon struct {
 	WeaponID int             `json:"weapon_id"`
 	Key      logparse.Weapon `json:"key"`
 	Name     string          `json:"name"`
-}
-
-type TopChatterResult struct {
-	Name    string
-	SteamID steamid.SteamID
-	Count   int
 }
 
 type RankedResult struct {

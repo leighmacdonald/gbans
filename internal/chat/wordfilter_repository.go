@@ -1,11 +1,10 @@
-package wordfilter
+package chat
 
 import (
 	"context"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -13,11 +12,11 @@ type wordFilterRepository struct {
 	db database.Database
 }
 
-func NewWordFilterRepository(database database.Database) domain.WordFilterRepository {
+func NewWordFilterRepository(database database.Database) WordFilterRepository {
 	return &wordFilterRepository{db: database}
 }
 
-func (r *wordFilterRepository) SaveFilter(ctx context.Context, filter *domain.Filter) error {
+func (r *wordFilterRepository) SaveFilter(ctx context.Context, filter *Filter) error {
 	if filter.FilterID > 0 {
 		return r.updateFilter(ctx, filter)
 	}
@@ -25,7 +24,7 @@ func (r *wordFilterRepository) SaveFilter(ctx context.Context, filter *domain.Fi
 	return r.insertFilter(ctx, filter)
 }
 
-func (r *wordFilterRepository) insertFilter(ctx context.Context, filter *domain.Filter) error {
+func (r *wordFilterRepository) insertFilter(ctx context.Context, filter *Filter) error {
 	const query = `
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on, action, duration, weight)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -40,7 +39,7 @@ func (r *wordFilterRepository) insertFilter(ctx context.Context, filter *domain.
 	return nil
 }
 
-func (r *wordFilterRepository) updateFilter(ctx context.Context, filter *domain.Filter) error {
+func (r *wordFilterRepository) updateFilter(ctx context.Context, filter *Filter) error {
 	query := r.db.
 		Builder().
 		Update("filtered_word").
@@ -63,7 +62,7 @@ func (r *wordFilterRepository) updateFilter(ctx context.Context, filter *domain.
 	return nil
 }
 
-func (r *wordFilterRepository) DropFilter(ctx context.Context, filter domain.Filter) error {
+func (r *wordFilterRepository) DropFilter(ctx context.Context, filter Filter) error {
 	query := r.db.
 		Builder().
 		Delete("filtered_word").
@@ -75,8 +74,8 @@ func (r *wordFilterRepository) DropFilter(ctx context.Context, filter domain.Fil
 	return nil
 }
 
-func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64) (domain.Filter, error) {
-	var filter domain.Filter
+func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64) (Filter, error) {
+	var filter Filter
 
 	query := r.db.
 		Builder().
@@ -105,7 +104,7 @@ func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64
 	return filter, nil
 }
 
-func (r *wordFilterRepository) GetFilters(ctx context.Context) ([]domain.Filter, error) {
+func (r *wordFilterRepository) GetFilters(ctx context.Context) ([]Filter, error) {
 	builder := r.db.
 		Builder().
 		Select("r.filter_id", "r.author_id", "r.pattern", "r.is_regex",
@@ -119,11 +118,11 @@ func (r *wordFilterRepository) GetFilters(ctx context.Context) ([]domain.Filter,
 
 	defer rows.Close()
 
-	var filters []domain.Filter
+	var filters []Filter
 
 	for rows.Next() {
 		var (
-			filter   domain.Filter
+			filter   Filter
 			authorID int64
 		)
 
