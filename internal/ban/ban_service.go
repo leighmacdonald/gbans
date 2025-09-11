@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -204,7 +203,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 			return
 		}
 
-		if !httphelper.HasPrivilege(curUser, steamid.Collection{bannedPerson.TargetID}, auth.PModerator) {
+		if !httphelper.HasPrivilege(curUser, steamid.Collection{bannedPerson.TargetID}, permission.PModerator) {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 				"You do not have permission to access this ban."))
 
@@ -378,7 +377,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 
 func (h banHandler) onAPIGetBansSteam() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var params domain.BansQueryFilter
+		var params BansQueryFilter
 		if !httphelper.BindQuery(ctx, &params) {
 			return
 		}

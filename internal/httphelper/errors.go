@@ -9,8 +9,10 @@ import (
 )
 
 var (
-	ErrBadRequest = errors.New("invalid request")
-	ErrInternal   = errors.New("internal server error")
+	ErrBadRequest       = errors.New("invalid request")
+	ErrInternal         = errors.New("internal server error")
+	ErrNotFound         = errors.New("entity not found")
+	ErrPermissionDenied = errors.New("permission denied")
 )
 
 func NewAPIErrorf(code int, err error, message string, args ...any) APIError {

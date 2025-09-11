@@ -11,7 +11,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -19,12 +18,12 @@ import (
 )
 
 type localRepository struct {
-	db database.Database
-	cu *config.ConfigUsecase
+	db       database.Database
+	rootPath string
 }
 
-func NewLocalRepository(database database.Database, configUsecase *config.ConfigUsecase) AssetRepository {
-	return &localRepository{db: database, cu: configUsecase}
+func NewLocalRepository(database database.Database, rootPath string) AssetRepository {
+	return &localRepository{db: database, rootPath: rootPath}
 }
 
 func (l *localRepository) Put(ctx context.Context, asset Asset, body io.ReadSeeker) (Asset, error) {
@@ -103,13 +102,12 @@ func (l localRepository) Delete(ctx context.Context, assetID uuid.UUID) (int64, 
 }
 
 func (l localRepository) Init(_ context.Context) error {
-	rootPath := l.cu.Config().LocalStore.PathRoot
-	if rootPath == "" {
+	if l.rootPath == "" {
 		return domain.ErrPathInvalid
 	}
 
-	if errDir := os.MkdirAll(rootPath, 0o770); errDir != nil {
-		return errors.Join(errDir, fmt.Errorf("%w: %s", domain.ErrCreateAssetPath, rootPath))
+	if errDir := os.MkdirAll(l.rootPath, 0o770); errDir != nil {
+		return errors.Join(errDir, fmt.Errorf("%w: %s", domain.ErrCreateAssetPath, l.rootPath))
 	}
 
 	return nil
@@ -141,9 +139,7 @@ func (l localRepository) GenAssetPath(hash string) (string, error) {
 
 	firstLevel := hash[0:2]
 	secondLevel := hash[2:4]
-	root := l.cu.Config().LocalStore.PathRoot
-
-	fullPath := path.Join(root, firstLevel, secondLevel)
+	fullPath := path.Join(l.rootPath, firstLevel, secondLevel)
 
 	if err := os.MkdirAll(fullPath, 0o770); err != nil {
 		return "", errors.Join(err, domain.ErrCreateAssetPath)

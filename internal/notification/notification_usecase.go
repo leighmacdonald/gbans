@@ -14,16 +14,16 @@ import (
 	"github.com/riverqueue/river"
 )
 
-func NewNotificationUsecase(repository NotificationRepository, discord discord.DiscordUsecase) NotificationUsecase {
-	return &notificationUsecase{repository: repository}
+func NewNotificationUsecase(repository NotificationRepository, discord discord.DiscordUsecase) *NotificationUsecase {
+	return &NotificationUsecase{repository: repository}
 }
 
-type notificationUsecase struct {
+type NotificationUsecase struct {
 	repository  NotificationRepository
 	queueClient *river.Client[pgx.Tx]
 }
 
-func (n *notificationUsecase) Enqueue(ctx context.Context, payload NotificationPayload) {
+func (n *NotificationUsecase) Enqueue(ctx context.Context, payload NotificationPayload) {
 	if n.queueClient == nil {
 		return
 	}
@@ -36,7 +36,7 @@ func (n *notificationUsecase) Enqueue(ctx context.Context, payload NotificationP
 	slog.Debug("Job inserted", slog.Int64("id", res.Job.ID), slog.Bool("unique", res.UniqueSkippedAsDuplicate))
 }
 
-func (n *notificationUsecase) SendSite(ctx context.Context, targetIDs steamid.Collection, severity NotificationSeverity, message string, link string, author *domain.UserProfile) error {
+func (n *NotificationUsecase) SendSite(ctx context.Context, targetIDs steamid.Collection, severity NotificationSeverity, message string, link string, author *domain.UserProfile) error {
 	var authorID *int64
 	if author != nil {
 		sid64 := author.SteamID.Int64()
@@ -46,19 +46,19 @@ func (n *notificationUsecase) SendSite(ctx context.Context, targetIDs steamid.Co
 	return n.repository.SendSite(ctx, fp.Uniq(targetIDs), severity, message, link, authorID)
 }
 
-func (n *notificationUsecase) SetQueueClient(queueClient *river.Client[pgx.Tx]) {
+func (n *NotificationUsecase) SetQueueClient(queueClient *river.Client[pgx.Tx]) {
 	n.queueClient = queueClient
 }
 
-func (n *notificationUsecase) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]domain.UserNotification, error) {
+func (n *NotificationUsecase) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]domain.UserNotification, error) {
 	return n.repository.GetPersonNotifications(ctx, steamID)
 }
 
-func (n *notificationUsecase) RegisterWorkers(workers *river.Workers) {
+func (n *NotificationUsecase) RegisterWorkers(workers *river.Workers) {
 	river.AddWorker[SenderArgs](workers, &SenderWorker{notifications: n})
 }
 
-func (n *notificationUsecase) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
+func (n *NotificationUsecase) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -66,11 +66,11 @@ func (n *notificationUsecase) MarkMessagesRead(ctx context.Context, steamID stea
 	return n.repository.MarkMessagesRead(ctx, steamID, ids)
 }
 
-func (n *notificationUsecase) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
+func (n *NotificationUsecase) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
 	return n.repository.MarkAllRead(ctx, steamID)
 }
 
-func (n *notificationUsecase) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
+func (n *NotificationUsecase) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -78,6 +78,6 @@ func (n *notificationUsecase) DeleteMessages(ctx context.Context, steamID steami
 	return n.repository.DeleteMessages(ctx, steamID, ids)
 }
 
-func (n *notificationUsecase) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
+func (n *NotificationUsecase) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
 	return n.repository.DeleteAll(ctx, steamID)
 }

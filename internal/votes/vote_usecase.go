@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -17,7 +16,6 @@ import (
 
 type VoteUsecase struct {
 	repository    VoteRepository
-	persons       *person.PersonUsecase
 	matches       match.MatchUsecase
 	notifications notification.NotificationUsecase
 	config        *config.ConfigUsecase
@@ -25,12 +23,11 @@ type VoteUsecase struct {
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewVoteUsecase(repository VoteRepository, persons *person.PersonUsecase, matched match.MatchUsecase,
+func NewVoteUsecase(repository VoteRepository, matched match.MatchUsecase,
 	notifications notification.NotificationUsecase, config *config.ConfigUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) *VoteUsecase {
 	return &VoteUsecase{
 		repository:    repository,
-		persons:       persons,
 		matches:       matched,
 		notifications: notifications,
 		config:        config,
@@ -175,7 +172,7 @@ func (u VoteUsecase) Start(ctx context.Context) {
 
 				u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
 					u.config.Config().Discord.VoteLogChannelID,
-					discord.VoteResultMessage(u.config.Config(), result, source, target)))
+					message.VoteResultMessage(u.config.Config(), result, source, target)))
 			}
 		}
 	}

@@ -1,17 +1,14 @@
 package notification
 
 import (
-	"context"
 	"errors"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/jackc/pgx/v5"
-	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/riverqueue/river"
 	"golang.org/x/exp/slices"
 )
 
@@ -22,27 +19,6 @@ const (
 	SeverityWarn
 	SeverityError
 )
-
-type NotificationRepository interface {
-	SendSite(ctx context.Context, targetID steamid.Collection, severity NotificationSeverity, message string, link string, authorID *int64) error
-	GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]person.UserNotification, error)
-	MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error
-	MarkAllRead(ctx context.Context, steamID steamid.SteamID) error
-	DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error
-	DeleteAll(ctx context.Context, steamID steamid.SteamID) error
-}
-
-type NotificationUsecase interface {
-	Enqueue(ctx context.Context, payload NotificationPayload)
-	GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]person.UserNotification, error)
-	SendSite(ctx context.Context, recipients steamid.Collection, severity NotificationSeverity, message string, link string, author *person.UserProfile) error
-	RegisterWorkers(workers *river.Workers)
-	SetQueueClient(queueClient *river.Client[pgx.Tx])
-	MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error
-	MarkAllRead(ctx context.Context, steamID steamid.SteamID) error
-	DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error
-	DeleteAll(ctx context.Context, steamID steamid.SteamID) error
-}
 
 type NotificationQuery struct {
 	domain.QueryFilter
@@ -71,7 +47,7 @@ var (
 type NotificationPayload struct {
 	Types           []MessageType
 	Sids            steamid.Collection
-	Groups          []auth.Privilege
+	Groups          []permission.Privilege
 	DiscordChannels []discord.DiscordChannel
 	Severity        NotificationSeverity
 	Message         string
@@ -122,14 +98,14 @@ func NewSiteUserNotification(recipients steamid.Collection, severity Notificatio
 	}
 }
 
-func NewSiteUserNotificationWithAuthor(groups []auth.Privilege, severity NotificationSeverity, message string, link string, author person.UserProfile) NotificationPayload {
+func NewSiteUserNotificationWithAuthor(groups []permission.Privilege, severity NotificationSeverity, message string, link string, author person.UserProfile) NotificationPayload {
 	payload := NewSiteGroupNotification(groups, severity, message, link)
 	payload.Author = &author
 
 	return payload
 }
 
-func NewSiteGroupNotification(groups []auth.Privilege, severity NotificationSeverity, message string, link string) NotificationPayload {
+func NewSiteGroupNotification(groups []permission.Privilege, severity NotificationSeverity, message string, link string) NotificationPayload {
 	return NotificationPayload{
 		Types:           []MessageType{User},
 		Sids:            nil,
@@ -142,7 +118,7 @@ func NewSiteGroupNotification(groups []auth.Privilege, severity NotificationSeve
 	}
 }
 
-func NewSiteGroupNotificationWithAuthor(groups []auth.Privilege, severity NotificationSeverity, message string, link string, author person.UserProfile) NotificationPayload {
+func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity NotificationSeverity, message string, link string, author person.UserProfile) NotificationPayload {
 	payload := NewSiteGroupNotification(groups, severity, message, link)
 	payload.Author = &author
 

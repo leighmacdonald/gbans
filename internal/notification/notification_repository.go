@@ -9,22 +9,23 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type notificationRepository struct {
+type NotificationRepository struct {
 	db database.Database
 }
 
-func NewNotificationRepository(db database.Database) domain.NotificationRepository {
-	return &notificationRepository{db: db}
+func NewNotificationRepository(db database.Database) *NotificationRepository {
+	return &NotificationRepository{db: db}
 }
 
-func (r *notificationRepository) SendSite(ctx context.Context, targetIDs steamid.Collection, severity domain.NotificationSeverity,
+func (r *NotificationRepository) SendSite(ctx context.Context, targetIDs steamid.Collection, severity NotificationSeverity,
 	message string, link string, authorID *int64,
 ) error {
 	const query = `
-		INSERT INTO person_notification (steam_id, severity, message, link, created_on, author_id) 
+		INSERT INTO person_notification (steam_id, severity, message, link, created_on, author_id)
 		VALUES ($1, $2, $3, $4, $5, $6)`
 
 	batch := &pgx.Batch{}
@@ -35,35 +36,35 @@ func (r *notificationRepository) SendSite(ctx context.Context, targetIDs steamid
 	return r.db.DBErr(r.db.SendBatch(ctx, nil, batch).Close())
 }
 
-func (r *notificationRepository) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
+func (r *NotificationRepository) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
 	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
-func (r *notificationRepository) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
+func (r *NotificationRepository) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
 	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
-func (r *notificationRepository) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
+func (r *NotificationRepository) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
 	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
-func (r *notificationRepository) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
+func (r *NotificationRepository) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
 	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
-func (r *notificationRepository) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]domain.UserNotification, error) {
+func (r *NotificationRepository) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]domain.UserNotification, error) {
 	builder := r.db.
 		Builder().
 		Select("r.person_notification_id", "r.steam_id", "r.read", "r.deleted", "r.severity",
@@ -88,7 +89,7 @@ func (r *notificationRepository) GetPersonNotifications(ctx context.Context, ste
 		var (
 			notif      domain.UserNotification
 			name       *string
-			pLevel     *domain.Privilege
+			pLevel     *permission.Privilege
 			authorID   *int64
 			discordID  *string
 			avatarHash *string

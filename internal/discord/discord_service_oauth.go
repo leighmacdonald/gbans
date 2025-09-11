@@ -6,24 +6,26 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type discordOAuthHandler struct {
-	auth    domain.AuthUsecase
-	config  domain.ConfigUsecase
-	persons domain.PersonUsecase
-	discord domain.DiscordOAuthUsecase
+	config  *config.ConfigUsecase
+	persons person.PersonUsecase
+	discord DiscordOAuthUsecase
 }
 
 // NewHandler provides handlers for authentication with discord connect.
-func NewHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase,
-	persons domain.PersonUsecase, discord domain.DiscordOAuthUsecase,
+func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, config *config.ConfigUsecase,
+	persons person.PersonUsecase, discord DiscordOAuthUsecase,
 ) {
 	handler := discordOAuthHandler{
-		auth:    auth,
 		config:  config,
 		persons: persons,
 		discord: discord,
@@ -34,7 +36,7 @@ func NewHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.Confi
 	authGrp := engine.Group("/")
 	{
 		// authed
-		authed := authGrp.Use(auth.Middleware(domain.PUser))
+		authed := authGrp.Use(auth.Middleware(permission.PUser))
 		authed.GET("/api/discord/login", handler.onLogin())
 		authed.GET("/api/discord/logout", handler.onLogout())
 		authed.GET("/api/discord/user", handler.onGetDiscordUser())
@@ -47,7 +49,7 @@ func (h discordOAuthHandler) onLogin() gin.HandlerFunc {
 
 		loginURL, errURL := h.discord.CreateStatefulLoginURL(currentUser.SteamID)
 		if errURL != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, errors.Join(errURL, domain.ErrBadRequest),
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, errors.Join(errURL, httphelper.ErrBadRequest),
 				"Could not construct oauth login URL"))
 
 			return
@@ -90,13 +92,13 @@ func (h discordOAuthHandler) onGetDiscordUser() gin.HandlerFunc {
 
 		discord, errUser := h.discord.GetUserDetail(ctx, user.SteamID)
 		if errUser != nil {
-			if errors.Is(errUser, domain.ErrNoResult) {
+			if errors.Is(errUser, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
 
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, domain.ErrInternal,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, httphelper.ErrInternal,
 				"Failed to fetch discord user details"))
 
 			return
@@ -112,13 +114,13 @@ func (h discordOAuthHandler) onLogout() gin.HandlerFunc {
 
 		errUser := h.discord.Logout(ctx, user.SteamID)
 		if errUser != nil {
-			if errors.Is(errUser, domain.ErrNoResult) {
+			if errors.Is(errUser, database.ErrNoResult) {
 				ctx.JSON(http.StatusOK, gin.H{})
 
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, domain.ErrInternal,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, httphelper.ErrInternal,
 				"Could not perform discord logout."))
 
 			return

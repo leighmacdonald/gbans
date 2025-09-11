@@ -7,8 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person/permission"
@@ -81,9 +79,9 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, entry)
 
-		h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-			discord.ChannelModLog,
-			discord.NewNewsMessage(req.BodyMD, req.Title)))
+		// h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+		// 	discord.ChannelModLog,
+		// 	message.NewNewsMessage(req.BodyMD, req.Title)))
 	}
 }
 
@@ -97,7 +95,7 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 		var entry NewsEntry
 		if errGet := h.news.GetNewsByID(ctx, newsID, &entry); errGet != nil {
 			if errors.Is(errGet, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
 
 				return
 			}
@@ -125,9 +123,9 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusAccepted, entry)
 
-		h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-			discord.ChannelModLog,
-			discord.EditNewsMessages(entry.Title, entry.BodyMD)))
+		// h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+		// 	discord.ChannelModLog,
+		// 	message.EditNewsMessages(entry.Title, entry.BodyMD)))
 	}
 }
 
@@ -158,7 +156,7 @@ func (h newsHandler) onAPIPostNewsDelete() gin.HandlerFunc {
 		var entry NewsEntry
 		if errGet := h.news.GetNewsByID(ctx, newsID, &entry); errGet != nil {
 			if errors.Is(errGet, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
 
 				return
 			}

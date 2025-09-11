@@ -92,7 +92,7 @@ func (g *Memberships) updateGroupBanMembers(ctx context.Context) (map[steamid.St
 	}
 
 	for _, bannedGroup := range groups {
-		group, errGroup := g.tfAPI.SteamGroup(localCtx, bannedGroup.GroupID)
+		group, errGroup := g.tfAPI.SteamGroup(localCtx, bannedGroup.TargetID)
 		if errGroup != nil {
 			return nil, errGroup
 		}

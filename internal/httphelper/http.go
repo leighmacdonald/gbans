@@ -80,7 +80,7 @@ func errorHandler() gin.HandlerFunc {
 	}
 }
 
-func useSecure(mode config.RunMode, cspOrigin string) gin.HandlerFunc {
+func useSecure(devMode bool, cspOrigin string) gin.HandlerFunc {
 	defaultSrc := []string{"'self'"}
 	if cspOrigin != "" {
 		defaultSrc = append(defaultSrc, cspOrigin)
@@ -102,7 +102,7 @@ func useSecure(mode config.RunMode, cspOrigin string) gin.HandlerFunc {
 		FrameDeny:             false,
 		ContentTypeNosniff:    true,
 		ContentSecurityPolicy: cspBuilder.MustBuild(),
-		IsDevelopment:         mode != config.ReleaseMode,
+		IsDevelopment:         devMode,
 	})
 
 	secureFunc := func(ctx *gin.Context) {
@@ -158,8 +158,7 @@ func usePrometheus(engine *gin.Engine) {
 	engine.Use(prom.Instrument())
 }
 
-func useFrontend(engine *gin.Engine, conf config.Config) error {
-	staticPath := conf.HTTPStaticPath
+func useFrontend(engine *gin.Engine, staticPath string) error {
 	if staticPath == "" {
 		staticPath = "./frontend/dist"
 	}
@@ -176,9 +175,9 @@ func useFrontend(engine *gin.Engine, conf config.Config) error {
 	return nil
 }
 
-func useSloggin(engine *gin.Engine, config config.Config) {
+func useSloggin(engine *gin.Engine, level string, otelEnabled bool) {
 	logLevel := slog.LevelError
-	switch config.Log.Level {
+	switch level {
 	case "error":
 		logLevel = slog.LevelError
 	case "debug":
@@ -193,7 +192,7 @@ func useSloggin(engine *gin.Engine, config config.Config) {
 		DefaultLevel: logLevel,
 	}
 
-	if config.Log.HTTPOtelEnabled {
+	if otelEnabled {
 		logConfig.WithSpanID = true
 		logConfig.WithTraceID = true
 	}
@@ -208,7 +207,7 @@ func CreateRouter(conf config.Config, version app.BuildInfo) (*gin.Engine, error
 	engine.Use(errorHandler())
 
 	if conf.Log.HTTPEnabled {
-		useSloggin(engine, conf)
+		useSloggin(engine, conf.Log.Level, conf.Log.HTTPOtelEnabled)
 	}
 
 	if app.SentryDSN != "" {

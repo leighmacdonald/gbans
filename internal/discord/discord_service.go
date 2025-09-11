@@ -13,32 +13,42 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
+	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/match"
+	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/quarckster/go-mpris-server/pkg/server"
 )
 
 type discordService struct {
 	anticheat   anticheat.AntiCheatUsecase
-	discord     domain.DiscordUsecase
-	persons     domain.PersonUsecase
-	bans        domain.BanUsecase
-	state       domain.StateUsecase
-	servers     domain.ServersUsecase
-	config      domain.ConfigUsecase
-	network     domain.NetworkUsecase
-	wordFilters domain.WordFilterUsecase
-	matches     domain.MatchUsecase
+	discord     DiscordUsecase
+	persons     person.PersonUsecase
+	bans        ban.BanUsecase
+	state       state.StateUsecase
+	servers     servers.ServersUsecase
+	config      *config.ConfigUsecase
+	network     network.NetworkUsecase
+	wordFilters chat.WordFilterUsecase
+	matches     match.MatchUsecase
 	tfAPI       *thirdparty.TFAPI
 }
 
-func NewDiscordHandler(discordUsecase domain.DiscordUsecase, persons domain.PersonUsecase,
-	bans domain.BanUsecase, state domain.StateUsecase, servers domain.ServersUsecase,
-	config domain.ConfigUsecase, network domain.NetworkUsecase, wordFilters domain.WordFilterUsecase,
-	matches domain.MatchUsecase,
-	anticheat domain.AntiCheatUsecase, tfAPI *thirdparty.TFAPI,
-) domain.ServiceStarter {
+func NewDiscordHandler(discordUsecase DiscordUsecase, persons person.PersonUsecase,
+	bans ban.BanUsecase, state state.StateUsecase, servers servers.ServersUsecase,
+	config *config.ConfigUsecase, network network.NetworkUsecase, wordFilters chat.WordFilterUsecase,
+	matches match.MatchUsecase,
+	anticheat anticheat.AntiCheatUsecase, tfAPI *thirdparty.TFAPI,
+) *discordService {
 	handler := &discordService{
 		discord:     discordUsecase,
 		persons:     persons,
@@ -58,24 +68,24 @@ func NewDiscordHandler(discordUsecase domain.DiscordUsecase, persons domain.Pers
 
 func (h discordService) Start(_ context.Context) {
 	cmdMap := map[domain.Cmd]func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error){
-		domain.CmdBan:     h.makeOnBan(),
-		domain.CmdCheck:   h.makeOnCheck(),
-		domain.CmdCSay:    h.makeOnCSay(),
-		domain.CmdFilter:  h.makeOnFilter(),
-		domain.CmdFind:    h.makeOnFind(),
-		domain.CmdHistory: h.makeOnHistory(),
-		domain.CmdKick:    h.makeOnKick(),
-		domain.CmdLog:     h.makeOnLog(),
-		domain.CmdLogs:    h.makeOnLogs(),
-		domain.CmdMute:    h.makeOnMute(),
+		CmdBan:     h.makeOnBan(),
+		CmdCheck:   h.makeOnCheck(),
+		CmdCSay:    h.makeOnCSay(),
+		CmdFilter:  h.makeOnFilter(),
+		CmdFind:    h.makeOnFind(),
+		CmdHistory: h.makeOnHistory(),
+		CmdKick:    h.makeOnKick(),
+		CmdLog:     h.makeOnLog(),
+		CmdLogs:    h.makeOnLogs(),
+		CmdMute:    h.makeOnMute(),
 		// domain.CmdCheckIP:  h.onCheckIp,
-		domain.CmdPlayers: h.makeOnPlayers(),
-		domain.CmdPSay:    h.makeOnPSay(),
-		domain.CmdSay:     h.makeOnSay(),
-		domain.CmdServers: h.makeOnServers(),
-		domain.CmdUnban:   h.makeOnUnban(),
-		domain.CmdStats:   h.makeOnStats(),
-		domain.CmdAC:      h.makeOnAC(),
+		CmdPlayers: h.makeOnPlayers(),
+		CmdPSay:    h.makeOnPSay(),
+		CmdSay:     h.makeOnSay(),
+		CmdServers: h.makeOnServers(),
+		CmdUnban:   h.makeOnUnban(),
+		CmdStats:   h.makeOnStats(),
+		CmdAC:      h.makeOnAC(),
 	}
 
 	for k, v := range cmdMap {
@@ -92,7 +102,7 @@ func (h discordService) makeOnBan() func(_ context.Context, _ *discordgo.Session
 		case "steam":
 			return h.onBanSteam(ctx, session, interaction)
 		default:
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 	}
 }
@@ -103,7 +113,7 @@ func (h discordService) makeOnUnban() func(_ context.Context, _ *discordgo.Sessi
 		case "steam":
 			return h.onUnbanSteam(ctx, session, interaction)
 		default:
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 	}
 }
@@ -114,7 +124,7 @@ func (h discordService) makeOnFilter() func(_ context.Context, _ *discordgo.Sess
 		case "check":
 			return h.onFilterCheck(ctx, session, interaction)
 		default:
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 	}
 }
@@ -122,8 +132,8 @@ func (h discordService) makeOnFilter() func(_ context.Context, _ *discordgo.Sess
 func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
 	) (*discordgo.MessageEmbed, error) {
-		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
-		sid, errResolveSID := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
+		opts := OptionMap(interaction.ApplicationCommandData().Options)
+		sid, errResolveSID := steamid.Resolve(ctx, opts[OptUserIdentifier].StringValue())
 
 		if errResolveSID != nil || !sid.Valid() {
 			return nil, domain.ErrInvalidSID
@@ -131,31 +141,31 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 
 		player, errGetPlayer := h.persons.GetOrCreatePersonBySteamID(ctx, nil, sid)
 		if errGetPlayer != nil {
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 
-		ban, errGetBanBySID := h.bans.Query(ctx, domain.BansQueryOpts{EvadeOk: true, TargetID: sid})
+		bans, errGetBanBySID := h.bans.Query(ctx, ban.QueryOpts{EvadeOk: true, TargetID: sid})
 		if errGetBanBySID != nil {
-			if !errors.Is(errGetBanBySID, domain.ErrNoResult) {
+			if !errors.Is(errGetBanBySID, database.ErrNoResult) {
 				slog.Error("Failed to get ban by steamid", log.ErrAttr(errGetBanBySID))
 
-				return nil, domain.ErrCommandFailed
+				return nil, ErrCommandFailed
 			}
 		}
 
-		oldBans, errOld := h.bans.Query(ctx, domain.BansQueryOpts{})
+		oldBans, errOld := h.bans.Query(ctx, ban.QueryOpts{})
 		if errOld != nil {
-			if !errors.Is(errOld, domain.ErrNoResult) {
+			if !errors.Is(errOld, database.ErrNoResult) {
 				slog.Error("Failed to fetch old bans", log.ErrAttr(errOld))
 			}
 		}
 
 		bannedNets, errGetBanNet := h.bans.GetByAddress(ctx, player.IPAddr)
 		if errGetBanNet != nil {
-			if !errors.Is(errGetBanNet, domain.ErrNoResult) {
+			if !errors.Is(errGetBanNet, database.ErrNoResult) {
 				slog.Error("Failed to get ban nets by addr", log.ErrAttr(errGetBanNet))
 
-				return nil, domain.ErrCommandFailed
+				return nil, ErrCommandFailed
 			}
 		}
 
@@ -164,13 +174,13 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 		var (
 			conf = h.config.Config()
 
-			authorProfile domain.Person
+			authorProfile person.Person
 		)
 
 		// TODO Show the longest remaining ban.
-		if ban.BanID > 0 {
+		if bans.BanID > 0 {
 			if ban.SourceID.Valid() {
-				ap, errGetProfile := h.persons.GetPersonBySteamID(ctx, nil, ban.SourceID)
+				ap, errGetProfile := h.persons.GetPersonBySteamID(ctx, nil, bans.SourceID)
 				if errGetProfile != nil {
 					slog.Error("Failed to load author for ban", log.ErrAttr(errGetProfile))
 				} else {
@@ -178,7 +188,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 				}
 			}
 
-			banURL = conf.ExtURL(ban.Ban)
+			banURL = conf.ExtURL(bans.Ban)
 		}
 
 		logData, errLogs := h.tfAPI.LogsTFSummary(ctx, sid)
@@ -198,26 +208,26 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 func (h discordService) makeOnHistory() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		switch interaction.ApplicationCommandData().Name {
-		case string(domain.CmdHistoryIP):
+		case string(CmdHistoryIP):
 			return h.onHistoryIP(ctx, session, interaction)
 		default:
 			// return discord.onHistoryChat(ctx, session, interaction, response)
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 	}
 }
 
 func (h discordService) onHistoryIP(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	steamID, errResolve := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
+	steamID, errResolve := steamid.Resolve(ctx, opts[OptUserIdentifier].StringValue())
 	if errResolve != nil || !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
 
 	person, errPersonBySID := h.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
 	if errPersonBySID != nil {
-		return nil, domain.ErrCommandFailed
+		return nil, ErrCommandFailed
 	}
 
 	// TODO actually show record
@@ -252,15 +262,15 @@ func (h discordService) onHistoryIP(ctx context.Context, _ *discordgo.Session, i
 // }
 
 func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	reason := opts[domain.OptUnbanReason].StringValue()
+	opts := OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	reason := opts[OptUnbanReason].StringValue()
 
 	author, err := h.getDiscordAuthor(ctx, interaction)
 	if err != nil {
 		return nil, err
 	}
 
-	steamID, errResolveSID := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
+	steamID, errResolveSID := steamid.Resolve(ctx, opts[OptUserIdentifier].StringValue())
 	if errResolveSID != nil || !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
@@ -282,10 +292,10 @@ func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, 
 	return UnbanMessage(h.config, user), nil
 }
 
-func (h discordService) getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCreate) (domain.Person, error) {
+func (h discordService) getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCreate) (person.Person, error) {
 	author, errPersonByDiscordID := h.persons.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
 	if errPersonByDiscordID != nil {
-		if errors.Is(errPersonByDiscordID, domain.ErrNoResult) {
+		if errors.Is(errPersonByDiscordID, database.ErrNoResult) {
 			return author, domain.ErrSteamUnset
 		}
 
@@ -298,11 +308,11 @@ func (h discordService) getDiscordAuthor(ctx context.Context, interaction *disco
 func (h discordService) makeOnKick() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		var (
-			opts   = domain.OptionMap(interaction.ApplicationCommandData().Options)
-			reason = domain.Reason(opts[domain.OptBanReason].IntValue())
+			opts   = OptionMap(interaction.ApplicationCommandData().Options)
+			reason = ban.Reason(opts[OptBanReason].IntValue())
 		)
 
-		target, errTarget := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
+		target, errTarget := steamid.Resolve(ctx, opts[OptUserIdentifier].StringValue())
 		if errTarget != nil || !target.Valid() {
 			return nil, domain.ErrInvalidSID
 		}
@@ -329,17 +339,17 @@ func (h discordService) makeOnKick() func(_ context.Context, _ *discordgo.Sessio
 
 func (h discordService) makeOnSay() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
-		serverName := opts[domain.OptServerIdentifier].StringValue()
-		msg := opts[domain.OptMessage].StringValue()
+		opts := OptionMap(interaction.ApplicationCommandData().Options)
+		serverName := opts[OptServerIdentifier].StringValue()
+		msg := opts[OptMessage].StringValue()
 
-		var server domain.Server
+		var server server.Server
 		if err := h.servers.GetByName(ctx, serverName, &server, false, false); err != nil {
 			return nil, domain.ErrUnknownServer
 		}
 
 		if errSay := h.state.Say(ctx, server.ServerID, msg); errSay != nil {
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 
 		return SayMessage(serverName, msg), nil
@@ -349,17 +359,17 @@ func (h discordService) makeOnSay() func(context.Context, *discordgo.Session, *d
 func (h discordService) makeOnCSay() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	) (*discordgo.MessageEmbed, error) {
-		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
-		serverName := opts[domain.OptServerIdentifier].StringValue()
-		msg := opts[domain.OptMessage].StringValue()
+		opts := OptionMap(interaction.ApplicationCommandData().Options)
+		serverName := opts[OptServerIdentifier].StringValue()
+		msg := opts[OptMessage].StringValue()
 
-		var server domain.Server
+		var server server.Server
 		if err := h.servers.GetByName(ctx, serverName, &server, false, false); err != nil {
 			return nil, domain.ErrUnknownServer
 		}
 
 		if errCSay := h.state.CSay(ctx, server.ServerID, msg); errCSay != nil {
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 
 		return CSayMessage(server.Name, msg), nil
@@ -368,16 +378,16 @@ func (h discordService) makeOnCSay() func(_ context.Context, _ *discordgo.Sessio
 
 func (h discordService) makeOnPSay() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
-		msg := opts[domain.OptMessage].StringValue()
+		opts := OptionMap(interaction.ApplicationCommandData().Options)
+		msg := opts[OptMessage].StringValue()
 
-		playerSid, errPlayerSid := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
+		playerSid, errPlayerSid := steamid.Resolve(ctx, opts[OptUserIdentifier].StringValue())
 		if errPlayerSid != nil || playerSid.Valid() {
 			return nil, errors.Join(errPlayerSid, domain.ErrInvalidSID)
 		}
 
 		if errPSay := h.state.PSay(ctx, playerSid, msg); errPSay != nil {
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 
 		return PSayMessage(playerSid, msg), nil
@@ -392,8 +402,8 @@ func (h discordService) makeOnServers() func(context.Context, *discordgo.Session
 
 func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
-		serverName := opts[domain.OptServerIdentifier].StringValue()
+		opts := OptionMap(interaction.ApplicationCommandData().Options)
+		serverName := opts[OptServerIdentifier].StringValue()
 
 		serverStates := h.state.ByName(serverName, false)
 
@@ -445,8 +455,8 @@ func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session
 }
 
 func (h discordService) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	message := opts[domain.OptMessage].StringValue()
+	opts := OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	message := opts[OptMessage].StringValue()
 
 	return FilterCheckMessage(h.wordFilters.Check(message)), nil
 }
@@ -462,7 +472,7 @@ func (h discordService) makeOnStats() func(context.Context, *discordgo.Session, 
 		// case string(cmdStatsServer):
 		//	return discord.onStatsServer(ctx, session, interaction, response)
 		default:
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 	}
 }
@@ -478,15 +488,15 @@ func (h discordService) makeOnAC() func(context.Context, *discordgo.Session, *di
 		// case string(cmdStatsServer):
 		//	return discord.onStatsServer(ctx, session, interaction, response)
 		default:
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 	}
 }
 
 func (h discordService) onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	steamID, errResolveSID := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
+	steamID, errResolveSID := steamid.Resolve(ctx, opts[OptUserIdentifier].StringValue())
 	if errResolveSID != nil || !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
@@ -496,7 +506,7 @@ func (h discordService) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 		return nil, errAuthor
 	}
 
-	logs, errQuery := h.anticheat.Query(ctx, domain.AnticheatQuery{SteamID: steamID.String()})
+	logs, errQuery := h.anticheat.Query(ctx, anticheat.AnticheatQuery{SteamID: steamID.String()})
 	if errQuery != nil {
 		return nil, errQuery
 	}
@@ -505,9 +515,9 @@ func (h discordService) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 }
 
 func (h discordService) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	steamID, errResolveSID := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
+	steamID, errResolveSID := steamid.Resolve(ctx, opts[OptUserIdentifier].StringValue())
 	if errResolveSID != nil || !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
@@ -601,13 +611,13 @@ func (h discordService) makeOnLogs() func(context.Context, *discordgo.Session, *
 			return nil, errAuthor
 		}
 
-		matches, count, errMatch := h.matches.Matches(ctx, domain.MatchesQueryOpts{
+		matches, count, errMatch := h.matches.Matches(ctx, match.MatchesQueryOpts{
 			SteamID:     author.SteamID.String(),
 			QueryFilter: domain.QueryFilter{Limit: 5},
 		})
 
 		if errMatch != nil {
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 
 		matchesWriter := &strings.Builder{}
@@ -632,19 +642,19 @@ func (h discordService) makeOnLogs() func(context.Context, *discordgo.Session, *
 
 func (h discordService) makeOnLog() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
+		opts := OptionMap(interaction.ApplicationCommandData().Options)
 
-		matchIDStr := opts[domain.OptMatchID].StringValue()
+		matchIDStr := opts[OptMatchID].StringValue()
 
 		matchID, errMatchID := uuid.FromString(matchIDStr)
 		if errMatchID != nil {
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 
-		var match domain.MatchResult
+		var match match.MatchResult
 
 		if errMatch := h.matches.MatchGetByID(ctx, matchID, &match); errMatch != nil {
-			return nil, domain.ErrCommandFailed
+			return nil, ErrCommandFailed
 		}
 
 		return MatchMessage(match, h.config.ExtURLRaw("/log/%s", match.MatchID.String())), nil
@@ -654,8 +664,8 @@ func (h discordService) makeOnLog() func(context.Context, *discordgo.Session, *d
 func (h discordService) makeOnFind() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionCreate,
 	) (*discordgo.MessageEmbed, error) {
-		opts := domain.OptionMap(i.ApplicationCommandData().Options)
-		userIdentifier := opts[domain.OptUserIdentifier].StringValue()
+		opts := OptionMap(i.ApplicationCommandData().Options)
+		userIdentifier := opts[OptUserIdentifier].StringValue()
 
 		var name string
 
@@ -671,7 +681,7 @@ func (h discordService) makeOnFind() func(context.Context, *discordgo.Session, *
 			return nil, domain.ErrUnknownID
 		}
 
-		var found []domain.FoundPlayer
+		var found []FoundPlayer
 
 		for _, player := range players {
 			server, errServer := h.servers.Server(ctx, player.ServerID)
@@ -684,7 +694,7 @@ func (h discordService) makeOnFind() func(context.Context, *discordgo.Session, *
 				return nil, errors.Join(errPerson, domain.ErrFetchPerson)
 			}
 
-			found = append(found, domain.FoundPlayer{
+			found = append(found, FoundPlayer{
 				Player: player,
 				Server: server,
 			})
@@ -697,14 +707,14 @@ func (h discordService) makeOnFind() func(context.Context, *discordgo.Session, *
 func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	) (*discordgo.MessageEmbed, error) {
-		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
+		opts := OptionMap(interaction.ApplicationCommandData().Options)
 
-		playerID, errPlayerID := steamid.Resolve(ctx, opts.String(domain.OptUserIdentifier))
+		playerID, errPlayerID := steamid.Resolve(ctx, opts.String(OptUserIdentifier))
 		if errPlayerID != nil || !playerID.Valid() {
 			return nil, domain.ErrInvalidSID
 		}
 
-		reasonValueOpt, ok := opts[domain.OptBanReason]
+		reasonValueOpt, ok := opts[OptBanReason]
 		if !ok {
 			return nil, domain.ErrReasonInvalid
 		}
@@ -714,14 +724,14 @@ func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *
 			return nil, errAuthor
 		}
 
-		banSteam, errBan := h.bans.Ban(ctx, author.ToUserProfile(), domain.Bot, domain.RequestBanCreate{
+		banSteam, errBan := h.bans.Ban(ctx, author.ToUserProfile(), ban.Bot, ban.BanOpts{
 			SourceIDField: domain.SourceIDField{SourceID: author.SteamID.String()},
-			TargetIDField: domain.TargetIDField{TargetID: opts.String(domain.OptUserIdentifier)},
-			Duration:      opts[domain.OptDuration].StringValue(),
-			BanType:       domain.NoComm,
-			Reason:        domain.Reason(reasonValueOpt.IntValue()),
+			TargetIDField: domain.TargetIDField{TargetID: opts.String(OptUserIdentifier)},
+			Duration:      opts[OptDuration].StringValue(),
+			BanType:       ban.NoComm,
+			Reason:        ban.Reason(reasonValueOpt.IntValue()),
 			ReasonText:    "",
-			Note:          opts[domain.OptNote].StringValue(),
+			Note:          opts[OptNote].StringValue(),
 		})
 		if errBan != nil {
 			return nil, errBan
@@ -735,28 +745,28 @@ func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *
 func (h discordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
 ) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
 	author, errAuthor := h.getDiscordAuthor(ctx, interaction)
 	if errAuthor != nil {
 		return nil, errAuthor
 	}
 
-	banSteam, errBan := h.bans.Ban(ctx, author.ToUserProfile(), domain.Bot, domain.RequestBanCreate{
+	banSteam, errBan := h.bans.Ban(ctx, author.ToUserProfile(), ban.Bot, ban.BanOpts{
 		SourceIDField: domain.SourceIDField{SourceID: author.SteamID.String()},
-		TargetIDField: domain.TargetIDField{TargetID: opts[domain.OptUserIdentifier].StringValue()},
-		Duration:      opts[domain.OptDuration].StringValue(),
-		BanType:       domain.Banned,
-		Reason:        domain.Reason(opts[domain.OptBanReason].IntValue()),
+		TargetIDField: domain.TargetIDField{TargetID: opts[OptUserIdentifier].StringValue()},
+		Duration:      opts[OptDuration].StringValue(),
+		BanType:       ban.Banned,
+		Reason:        ban.Reason(opts[OptBanReason].IntValue()),
 		ReasonText:    "",
-		Note:          opts[domain.OptNote].StringValue(),
+		Note:          opts[OptNote].StringValue(),
 	})
 	if errBan != nil {
-		if errors.Is(errBan, domain.ErrDuplicate) {
+		if errors.Is(errBan, database.ErrDuplicate) {
 			return nil, domain.ErrDuplicateBan
 		}
 
-		return nil, domain.ErrCommandFailed
+		return nil, ErrCommandFailed
 	}
 
 	return BanSteamResponse(banSteam), nil
