@@ -1,11 +1,10 @@
-package appeal
+package ban
 
 import (
 	"context"
 	"log/slog"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -15,13 +14,13 @@ import (
 
 type appeals struct {
 	repository    domain.AppealRepository
-	bans          ban.BanUsecase
+	bans          BanUsecase
 	persons       domain.PersonUsecase
 	notifications domain.NotificationUsecase
 	config        domain.ConfigUsecase
 }
 
-func NewAppealUsecase(ar domain.AppealRepository, bans ban.BanUsecase, persons domain.PersonUsecase,
+func NewAppealUsecase(ar domain.AppealRepository, bans BanUsecase, persons domain.PersonUsecase,
 	notifications domain.NotificationUsecase, config domain.ConfigUsecase,
 ) domain.AppealUsecase {
 	return &appeals{repository: ar, bans: bans, persons: persons, notifications: notifications, config: config}
@@ -37,7 +36,7 @@ func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile
 		return domain.BanAppealMessage{}, err
 	}
 
-	bannedPerson, errReport := u.bans.Query(ctx, ban.QueryOpts{
+	bannedPerson, errReport := u.bans.Query(ctx, QueryOpts{
 		BanID:   existing.BanID,
 		Deleted: true,
 		EvadeOk: true,
@@ -87,7 +86,7 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 		return domain.BanAppealMessage{}, domain.ErrInvalidParameter
 	}
 
-	bannedPerson, errReport := u.bans.Query(ctx, ban.QueryOpts{
+	bannedPerson, errReport := u.bans.Query(ctx, QueryOpts{
 		BanID:   banID,
 		Deleted: true,
 		EvadeOk: true,
@@ -96,7 +95,7 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 		return domain.BanAppealMessage{}, errReport
 	}
 
-	if bannedPerson.AppealState != ban.Open && curUser.PermissionLevel < domain.PModerator {
+	if bannedPerson.AppealState != Open && curUser.PermissionLevel < domain.PModerator {
 		return domain.BanAppealMessage{}, domain.ErrPermissionDenied
 	}
 
@@ -149,7 +148,7 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 }
 
 func (u *appeals) GetBanMessages(ctx context.Context, userProfile domain.UserProfile, banID int64) ([]domain.BanAppealMessage, error) {
-	banPerson, errGetBan := u.bans.Query(ctx, ban.QueryOpts{
+	banPerson, errGetBan := u.bans.Query(ctx, QueryOpts{
 		BanID:   banID,
 		Deleted: true,
 		EvadeOk: true,

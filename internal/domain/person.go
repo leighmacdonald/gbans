@@ -7,7 +7,6 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -307,73 +306,6 @@ type UserNotification struct {
 	Count                int                  `json:"count"`
 	Author               *UserProfile         `json:"author"`
 	CreatedOn            time.Time            `json:"created_on"`
-}
-
-// PersonIPRecord holds a composite result of the more relevant ip2location results.
-type PersonIPRecord struct {
-	IPAddr      net.IP
-	CreatedOn   time.Time
-	CityName    string
-	CountryName string
-	CountryCode string
-	ASName      string
-	ASNum       int
-	ISP         string
-	UsageType   string
-	Threat      string
-	DomainUsed  string
-}
-
-type PersonAuth struct {
-	PersonAuthID int64           `json:"person_auth_id"`
-	SteamID      steamid.SteamID `json:"steam_id"`
-	IPAddr       net.IP          `json:"ip_addr"`
-	AccessToken  string          `json:"access_token"`
-	CreatedOn    time.Time       `json:"created_on"`
-}
-
-func NewPersonAuth(sid64 steamid.SteamID, addr net.IP, accessToken string) PersonAuth {
-	return PersonAuth{
-		PersonAuthID: 0,
-		SteamID:      sid64,
-		IPAddr:       addr,
-		AccessToken:  accessToken,
-		CreatedOn:    time.Now(),
-	}
-}
-
-type PersonConnection struct {
-	PersonConnectionID int64           `json:"person_connection_id"`
-	IPAddr             netip.Addr      `json:"ip_addr"`
-	SteamID            steamid.SteamID `json:"steam_id"`
-	PersonaName        string          `json:"persona_name"`
-	ServerID           int             `json:"server_id"`
-	CreatedOn          time.Time       `json:"created_on"`
-	ServerNameShort    string          `json:"server_name_short"`
-	ServerName         string          `json:"server_name"`
-}
-
-type PersonConnections []PersonConnection
-
-type PersonMessage struct {
-	PersonMessageID   int64           `json:"person_message_id"`
-	MatchID           uuid.UUID       `json:"match_id"`
-	SteamID           steamid.SteamID `json:"steam_id"`
-	AvatarHash        string          `json:"avatar_hash"`
-	PersonaName       string          `json:"persona_name"`
-	ServerName        string          `json:"server_name"`
-	ServerID          int             `json:"server_id"`
-	Body              string          `json:"body"`
-	Team              bool            `json:"team"`
-	CreatedOn         time.Time       `json:"created_on"`
-	AutoFilterFlagged int64           `json:"auto_filter_flagged"`
-}
-
-type PersonMessages []PersonMessage
-
-type QueryChatHistoryResult struct {
-	PersonMessage
-	Pattern string `json:"pattern"`
 }
 
 type PersonSettings struct {

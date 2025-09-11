@@ -13,21 +13,27 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+var (
+	ErrInvalidCIDR = errors.New("failed to parse CIDR address")
+)
+
 type blocklistUsecase struct {
-	repository domain.BlocklistRepository
+	repository BlocklistRepository
 	bans       ban.BanUsecase
 	cidrRx     *regexp.Regexp
 }
 
-func NewBlocklistUsecase(br domain.BlocklistRepository, banUsecase ban.BanUsecase) domain.BlocklistUsecase {
+func NewBlocklistUsecase(br BlocklistRepository, banUsecase ban.BanUsecase) BlocklistUsecase {
 	return &blocklistUsecase{
 		repository: br,
 		bans:       banUsecase,
@@ -98,7 +104,7 @@ func (b blocklistUsecase) UpdateCache(ctx context.Context) error {
 	return nil
 }
 
-func (b blocklistUsecase) updateSource(ctx context.Context, list domain.CIDRBlockSource) error {
+func (b blocklistUsecase) updateSource(ctx context.Context, list CIDRBlockSource) error {
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, list.URL, nil)
 	if errReq != nil {
 		return errors.Join(errReq, domain.ErrRequestCreate)
@@ -153,10 +159,10 @@ func (b blocklistUsecase) updateSource(ctx context.Context, list domain.CIDRBloc
 	return nil
 }
 
-func (b blocklistUsecase) CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (domain.WhitelistSteam, error) {
+func (b blocklistUsecase) CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (WhitelistSteam, error) {
 	whitelist, err := b.repository.CreateSteamBlockWhitelists(ctx, steamID)
 	if err != nil {
-		return domain.WhitelistSteam{}, err
+		return WhitelistSteam{}, err
 	}
 
 	slog.Info("Created steam block whitelist", slog.String("steam_id", steamID.String()))
@@ -164,7 +170,7 @@ func (b blocklistUsecase) CreateSteamBlockWhitelists(ctx context.Context, steamI
 	return whitelist, nil
 }
 
-func (b blocklistUsecase) GetSteamBlockWhitelists(ctx context.Context) ([]domain.WhitelistSteam, error) {
+func (b blocklistUsecase) GetSteamBlockWhitelists(ctx context.Context) ([]WhitelistSteam, error) {
 	return b.repository.GetSteamBlockWhitelists(ctx)
 }
 
@@ -178,33 +184,34 @@ func (b blocklistUsecase) DeleteSteamBlockWhitelists(ctx context.Context, steamI
 	return nil
 }
 
-func (b blocklistUsecase) GetCIDRBlockSources(ctx context.Context) ([]domain.CIDRBlockSource, error) {
+func (b blocklistUsecase) GetCIDRBlockSources(ctx context.Context) ([]CIDRBlockSource, error) {
 	return b.repository.GetCIDRBlockSources(ctx)
 }
 
-func (b blocklistUsecase) GetCIDRBlockSource(ctx context.Context, sourceID int, block *domain.CIDRBlockSource) error {
+func (b blocklistUsecase) GetCIDRBlockSource(ctx context.Context, sourceID int, block *CIDRBlockSource) error {
 	return b.repository.GetCIDRBlockSource(ctx, sourceID, block)
 }
 
-func (b blocklistUsecase) CreateCIDRBlockSources(ctx context.Context, name string, listURL string, enabled bool) (domain.CIDRBlockSource, error) {
+func (b blocklistUsecase) CreateCIDRBlockSources(ctx context.Context, name string, listURL string, enabled bool) (CIDRBlockSource, error) {
 	if name == "" {
-		return domain.CIDRBlockSource{}, domain.ErrBadRequest
+		return CIDRBlockSource{}, httphelper.ErrBadRequest // TODO better error
 	}
 
 	parsedURL, errURL := url.Parse(listURL)
 	if errURL != nil {
-		return domain.CIDRBlockSource{}, domain.ErrBadRequest
+		return CIDRBlockSource{}, httphelper.ErrBadRequest
 	}
 
-	blockList := domain.CIDRBlockSource{
-		Name:        name,
-		URL:         parsedURL.String(),
-		Enabled:     enabled,
-		TimeStamped: domain.NewTimeStamped(),
+	blockList := CIDRBlockSource{
+		Name:      name,
+		URL:       parsedURL.String(),
+		Enabled:   enabled,
+		CreatedOn: time.Now(),
+		UpdatedOn: time.Now(),
 	}
 
 	if err := b.repository.SaveCIDRBlockSources(ctx, &blockList); err != nil {
-		return domain.CIDRBlockSource{}, domain.ErrInternal
+		return CIDRBlockSource{}, httphelper.ErrInternal
 	}
 
 	slog.Info("Created blocklist", slog.String("name", blockList.Name))
@@ -212,15 +219,15 @@ func (b blocklistUsecase) CreateCIDRBlockSources(ctx context.Context, name strin
 	return blockList, nil
 }
 
-func (b blocklistUsecase) UpdateCIDRBlockSource(ctx context.Context, sourceID int, name string, url string, enabled bool) (domain.CIDRBlockSource, error) {
-	var blockSource domain.CIDRBlockSource
+func (b blocklistUsecase) UpdateCIDRBlockSource(ctx context.Context, sourceID int, name string, url string, enabled bool) (CIDRBlockSource, error) {
+	var blockSource CIDRBlockSource
 
 	if errSource := b.GetCIDRBlockSource(ctx, sourceID, &blockSource); errSource != nil {
-		if errors.Is(errSource, domain.ErrNoResult) {
+		if errors.Is(errSource, database.ErrNoResult) {
 			return blockSource, domain.ErrNotFound
 		}
 
-		return blockSource, domain.ErrBadRequest
+		return blockSource, httphelper.ErrBadRequest // TODO better errro
 	}
 
 	blockSource.Enabled = enabled
@@ -246,31 +253,32 @@ func (b blocklistUsecase) DeleteCIDRBlockSources(ctx context.Context, blockSourc
 	return nil
 }
 
-func (b blocklistUsecase) GetCIDRBlockWhitelists(ctx context.Context) ([]domain.WhitelistIP, error) {
+func (b blocklistUsecase) GetCIDRBlockWhitelists(ctx context.Context) ([]WhitelistIP, error) {
 	return b.repository.GetCIDRBlockWhitelists(ctx)
 }
 
-func (b blocklistUsecase) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *domain.WhitelistIP) error {
+func (b blocklistUsecase) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *WhitelistIP) error {
 	return b.repository.GetCIDRBlockWhitelist(ctx, whitelistID, whitelist)
 }
 
-func (b blocklistUsecase) CreateCIDRBlockWhitelist(ctx context.Context, address string) (domain.WhitelistIP, error) {
+func (b blocklistUsecase) CreateCIDRBlockWhitelist(ctx context.Context, address string) (WhitelistIP, error) {
 	if !strings.Contains(address, "/") {
 		address += "/32"
 	}
 
 	_, cidr, errParse := net.ParseCIDR(address)
 	if errParse != nil {
-		return domain.WhitelistIP{}, domain.ErrInvalidCIDR
+		return WhitelistIP{}, ErrInvalidCIDR
 	}
 
-	whitelist := domain.WhitelistIP{
-		Address:     cidr,
-		TimeStamped: domain.NewTimeStamped(),
+	whitelist := WhitelistIP{
+		Address:   cidr,
+		CreatedOn: time.Now(),
+		UpdatedOn: time.Now(),
 	}
 
 	if errSave := b.repository.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
-		return domain.WhitelistIP{}, errSave
+		return WhitelistIP{}, errSave
 	}
 
 	slog.Info("Created ip whitelist", slog.String("addr", address))
@@ -278,21 +286,21 @@ func (b blocklistUsecase) CreateCIDRBlockWhitelist(ctx context.Context, address 
 	return whitelist, nil
 }
 
-func (b blocklistUsecase) UpdateCIDRBlockWhitelist(ctx context.Context, whitelistID int, address string) (domain.WhitelistIP, error) {
+func (b blocklistUsecase) UpdateCIDRBlockWhitelist(ctx context.Context, whitelistID int, address string) (WhitelistIP, error) {
 	_, cidr, errParse := net.ParseCIDR(address)
 	if errParse != nil {
-		return domain.WhitelistIP{}, domain.ErrInvalidCIDR
+		return WhitelistIP{}, ErrInvalidCIDR
 	}
 
-	var whitelist domain.WhitelistIP
+	var whitelist WhitelistIP
 	if errGet := b.GetCIDRBlockWhitelist(ctx, whitelistID, &whitelist); errGet != nil {
-		return domain.WhitelistIP{}, errGet
+		return WhitelistIP{}, errGet
 	}
 
 	whitelist.Address = cidr
 
 	if errSave := b.repository.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
-		return domain.WhitelistIP{}, errSave
+		return WhitelistIP{}, errSave
 	}
 
 	slog.Info("Updated ip whitelist", slog.String("addr", address), slog.Int("whitelist_id", whitelistID))

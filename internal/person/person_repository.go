@@ -11,6 +11,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -429,8 +430,8 @@ func (r *personRepository) GetExpiredProfiles(ctx context.Context, transaction p
 	return people, nil
 }
 
-func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessageID int64) (domain.PersonMessage, error) {
-	var msg domain.PersonMessage
+func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessageID int64) (chat.PersonMessage, error) {
+	var msg chat.PersonMessage
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().

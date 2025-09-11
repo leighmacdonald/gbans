@@ -7,24 +7,25 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
 type voteUsecase struct {
-	repository    domain.VoteRepository
+	repository    VoteRepository
 	persons       domain.PersonUsecase
-	matches       domain.MatchUsecase
+	matches       match.MatchUsecase
 	notifications domain.NotificationUsecase
 	config        domain.ConfigUsecase
 
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewVoteUsecase(repository domain.VoteRepository, persons domain.PersonUsecase, matched domain.MatchUsecase,
+func NewVoteUsecase(repository VoteRepository, persons domain.PersonUsecase, matched match.MatchUsecase,
 	notifications domain.NotificationUsecase, config domain.ConfigUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-) domain.VoteUsecase {
+) VoteUsecase {
 	return &voteUsecase{
 		repository:    repository,
 		persons:       persons,
@@ -35,7 +36,7 @@ func NewVoteUsecase(repository domain.VoteRepository, persons domain.PersonUseca
 	}
 }
 
-func (u voteUsecase) Query(ctx context.Context, filter domain.VoteQueryFilter) ([]domain.VoteResult, int64, error) {
+func (u voteUsecase) Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, int64, error) {
 	return u.repository.Query(ctx, filter)
 }
 
@@ -55,7 +56,7 @@ func (u voteUsecase) Start(ctx context.Context) {
 	}
 
 	// Track recent votes and reject duplicates. Sometimes vote results get logged twice
-	var recent []domain.VoteResult
+	var recent []VoteResult
 
 	active := map[int]voteState{}
 
@@ -67,7 +68,7 @@ func (u voteUsecase) Start(ctx context.Context) {
 			return
 		case <-cleanupTimer.C:
 			// Cleanup timed out results
-			var valid []domain.VoteResult
+			var valid []VoteResult
 
 			for _, result := range recent {
 				if time.Since(result.CreatedOn) > time.Second*20 {
@@ -121,7 +122,7 @@ func (u voteUsecase) Start(ctx context.Context) {
 					}
 				}
 
-				result := domain.VoteResult{
+				result := VoteResult{
 					ServerID:  evt.ServerID,
 					SourceID:  serverEvent.SID,
 					TargetID:  serverEvent.SID2,

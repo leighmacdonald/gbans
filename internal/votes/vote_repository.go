@@ -5,7 +5,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -13,11 +12,11 @@ type voteRepository struct {
 	db database.Database
 }
 
-func NewVoteRepository(database database.Database) domain.VoteRepository {
+func NewVoteRepository(database database.Database) VoteRepository {
 	return &voteRepository{db: database}
 }
 
-func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter) ([]domain.VoteResult, int64, error) {
+func (r voteRepository) Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, int64, error) {
 	var constraints sq.And
 
 	if sid, ok := filter.SourceSteamID(ctx); ok {
@@ -63,13 +62,13 @@ func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter
 	}
 	defer rows.Close()
 
-	var results []domain.VoteResult
+	var results []VoteResult
 
 	for rows.Next() {
 		var (
 			sourceID *int64
 			targetID *int64
-			result   domain.VoteResult
+			result   VoteResult
 		)
 
 		if errScan := rows.Scan(&result.VoteID, &result.ServerID,
@@ -98,7 +97,7 @@ func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter
 	return results, count, nil
 }
 
-func (r voteRepository) AddResult(ctx context.Context, voteResult domain.VoteResult) error {
+func (r voteRepository) AddResult(ctx context.Context, voteResult VoteResult) error {
 	return r.db.DBErr(r.db.ExecInsertBuilder(ctx, nil, r.db.Builder().
 		Insert("vote_result").
 		SetMap(map[string]interface{}{

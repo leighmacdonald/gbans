@@ -5,11 +5,10 @@ package wiki
 import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/microcosm-cc/bluemonday"
 )
 
-func Render(page domain.WikiPage) []byte {
+func Render(page Page) []byte {
 	unsafeHTML := markdown.ToHTML([]byte(page.BodyMD), NewParser(), nil)
 
 	return bluemonday.UGCPolicy().SanitizeBytes(unsafeHTML)

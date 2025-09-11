@@ -10,18 +10,20 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"golang.org/x/exp/slices"
 )
 
 type contestHandler struct {
-	contests domain.ContestUsecase
-	assets   domain.AssetUsecase
+	contests ContestUsecase
+	assets   asset.AssetUsecase
 }
 
-func NewHandler(engine *gin.Engine, contests domain.ContestUsecase,
-	assets domain.AssetUsecase, auth domain.AuthUsecase,
+func NewHandler(engine *gin.Engine, contests ContestUsecase,
+	assets asset.AssetUsecase, auth domain.AuthUsecase,
 ) {
 	handler := &contestHandler{
 		contests: contests,
@@ -57,30 +59,30 @@ func NewHandler(engine *gin.Engine, contests domain.ContestUsecase,
 	}
 }
 
-func (c *contestHandler) contestFromCtx(ctx *gin.Context) (domain.Contest, bool) {
+func (c *contestHandler) contestFromCtx(ctx *gin.Context) (Contest, bool) {
 	contestID, idFound := httphelper.GetUUIDParam(ctx, "contest_id")
 	if !idFound {
-		return domain.Contest{}, false
+		return Contest{}, false
 	}
 
-	var contest domain.Contest
+	var contest Contest
 	if errContests := c.contests.ContestByID(ctx, contestID, &contest); errContests != nil {
-		if errors.Is(errContests, domain.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNoResult,
+		if errors.Is(errContests, database.ErrNoResult) {
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, database.ErrNoResult,
 				"Contest does not exist."))
 		} else {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errContests, domain.ErrInternal),
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errContests, httphelper.ErrInternal),
 				"Failed to load contest by id: %s", contestID.String()))
 		}
 
-		return domain.Contest{}, false
+		return Contest{}, false
 	}
 
 	if !contest.Public && httphelper.CurrentUserProfile(ctx).PermissionLevel < domain.PModerator {
 		httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
 			"You do not have permission to load this contest."))
 
-		return domain.Contest{}, false
+		return Contest{}, false
 	}
 
 	return contest, true
@@ -90,13 +92,13 @@ func (c *contestHandler) onAPIGetContests() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		contests, errContests := c.contests.Contests(ctx, httphelper.CurrentUserProfile(ctx))
 		if errContests != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errContests, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errContests, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if contests == nil {
-			contests = []domain.Contest{}
+			contests = []Contest{}
 		}
 
 		ctx.JSON(http.StatusOK, contests)
@@ -123,7 +125,7 @@ func (c *contestHandler) onAPIGetContestEntries() gin.HandlerFunc {
 
 		entries, errEntries := c.contests.ContestEntries(ctx, contest.ContestID)
 		if errEntries != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, httphelper.ErrInternal)))
 
 			return
 		}
@@ -134,14 +136,14 @@ func (c *contestHandler) onAPIGetContestEntries() gin.HandlerFunc {
 
 func (c *contestHandler) onAPIPostContest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		newContest, _ := domain.NewContest("", "", time.Now(), time.Now(), false)
+		newContest, _ := NewContest("", "", time.Now(), time.Now(), false)
 		if !httphelper.Bind(ctx, &newContest) {
 			return
 		}
 
 		contest, errSave := c.contests.ContestSave(ctx, newContest)
 		if errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
 			return
 		}
@@ -157,21 +159,21 @@ func (c *contestHandler) onAPIDeleteContest() gin.HandlerFunc {
 			return
 		}
 
-		var contest domain.Contest
+		var contest Contest
 
 		if errContest := c.contests.ContestByID(ctx, contestID, &contest); errContest != nil {
 			switch {
-			case errors.Is(errContest, domain.ErrNoResult):
+			case errors.Is(errContest, database.ErrNoResult):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrUnknownID, "Contest does not exist"))
 			default:
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
 			}
 
 			return
 		}
 
 		if errDelete := c.contests.ContestDelete(ctx, contest.ContestID); errDelete != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errDelete, domain.ErrInternal),
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errDelete, httphelper.ErrInternal),
 				"Could not delete contest: %d", contestID))
 
 			return
@@ -187,14 +189,14 @@ func (c *contestHandler) onAPIUpdateContest() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.Contest
+		var req Contest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		contest, errSave := c.contests.ContestSave(ctx, req)
 		if errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
 			return
 		}
@@ -210,14 +212,14 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.UserUploadedFile
+		var req asset.UserUploadedFile
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		mediaFile, errOpen := req.File.Open()
 		if errOpen != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errOpen, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errOpen, httphelper.ErrInternal)))
 
 			return
 		}
@@ -243,7 +245,7 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 
 		asset, errCreate := c.assets.Create(ctx, authorID, "media", req.Name, mediaFile)
 		if errCreate != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCreate, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCreate, httphelper.ErrInternal)))
 
 			return
 		}
@@ -274,7 +276,7 @@ func (c *contestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 
 		direction := strings.ToLower(ctx.Param("direction"))
 		if direction != "up" && direction != "down" {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrBadRequest, "Direction must be one of 'up' or 'down'"))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest, "Direction must be one of 'up' or 'down'"))
 
 			return
 		}
@@ -286,7 +288,7 @@ func (c *contestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errVote, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errVote, httphelper.ErrInternal)))
 
 			return
 		}
@@ -315,8 +317,8 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 		}
 
 		existingEntries, errEntries := c.contests.ContestEntries(ctx, contest.ContestID)
-		if errEntries != nil && !errors.Is(errEntries, domain.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, domain.ErrInternal)))
+		if errEntries != nil && !errors.Is(errEntries, database.ErrNoResult) {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, httphelper.ErrInternal)))
 
 			return
 		}
@@ -340,7 +342,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 
 		asset, _, errAsset := c.assets.Get(ctx, req.AssetID)
 		if errAsset != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errAsset, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errAsset, httphelper.ErrInternal)))
 
 			return
 		}
@@ -353,13 +355,13 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 
 		entry, errEntry := contest.NewEntry(steamID, req.AssetID, req.Description)
 		if errEntry != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if errSave := c.contests.ContestEntrySave(ctx, entry); errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
 			return
 		}
@@ -379,14 +381,14 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 			return
 		}
 
-		var entry domain.ContestEntry
+		var entry ContestEntry
 
 		if errContest := c.contests.ContestEntry(ctx, contestEntryID, &entry); errContest != nil {
 			switch {
-			case errors.Is(errContest, domain.ErrNoResult):
+			case errors.Is(errContest, database.ErrNoResult):
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrUnknownID))
 			default:
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errContest, domain.ErrInternal)))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errContest, httphelper.ErrInternal)))
 			}
 
 			return
@@ -399,14 +401,14 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 			return
 		}
 
-		var contest domain.Contest
+		var contest Contest
 
 		if errContest := c.contests.ContestByID(ctx, entry.ContestID, &contest); errContest != nil {
 			switch {
-			case errors.Is(errContest, domain.ErrNoResult):
+			case errors.Is(errContest, database.ErrNoResult):
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrUnknownID))
 			default:
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errContest, domain.ErrInternal)))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errContest, httphelper.ErrInternal)))
 			}
 
 			return
@@ -420,7 +422,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		}
 
 		if errDelete := c.contests.ContestEntryDelete(ctx, entry.ContestEntryID); errDelete != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDelete, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDelete, httphelper.ErrInternal)))
 
 			return
 		}

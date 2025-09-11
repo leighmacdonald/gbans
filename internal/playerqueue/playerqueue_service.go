@@ -17,11 +17,11 @@ import (
 )
 
 type serverQueueHandler struct {
-	queue domain.PlayerqueueUsecase
+	queue PlayerqueueUsecase
 }
 
 func NewPlayerqueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase,
-	playerQueue domain.PlayerqueueUsecase,
+	playerQueue PlayerqueueUsecase,
 ) {
 	conf := config.Config()
 	var origins []string
@@ -49,8 +49,8 @@ func NewPlayerqueueHandler(engine *gin.Engine, auth domain.AuthUsecase, config d
 
 func (h *serverQueueHandler) status() gin.HandlerFunc {
 	type request struct {
-		Reason     string            `json:"reason"`
-		ChatStatus domain.ChatStatus `json:"chat_status"`
+		Reason     string     `json:"reason"`
+		ChatStatus ChatStatus `json:"chat_status"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -93,7 +93,7 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 		// Create ws connection
 		wsConn, errConn := newClientConn(ctx, validOrigins)
 		if errConn != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, errors.Join(errConn, domain.ErrBadRequest),
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, errors.Join(errConn, httphelper.ErrBadRequest),
 				"Cannot open ws connection"))
 
 			return
@@ -129,8 +129,8 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 	}
 }
 
-func (h *serverQueueHandler) handleWSMessage(client domain.QueueClient) (domain.Request, error) {
-	var payloadInbound domain.Request
+func (h *serverQueueHandler) handleWSMessage(client QueueClient) (Request, error) {
+	var payloadInbound Request
 	if errRead := client.Next(&payloadInbound); errRead != nil {
 		return payloadInbound, errors.Join(errRead, ErrQueueIO)
 	}
@@ -138,24 +138,24 @@ func (h *serverQueueHandler) handleWSMessage(client domain.QueueClient) (domain.
 	return payloadInbound, nil
 }
 
-func (h *serverQueueHandler) handleRequest(ctx context.Context, client domain.QueueClient, payloadInbound domain.Request, user domain.UserProfile) error {
+func (h *serverQueueHandler) handleRequest(ctx context.Context, client QueueClient, payloadInbound Request, user domain.UserProfile) error {
 	var err error
 	switch payloadInbound.Op {
-	case domain.JoinQueue:
+	case JoinQueue:
 		var p JoinPayload
 		if errUnmarshal := json.Unmarshal(payloadInbound.Payload, &p); errUnmarshal != nil {
 			return errors.Join(errUnmarshal, ErrQueueParseMessage)
 		}
 		err = h.queue.JoinLobbies(client, p.Servers)
 
-	case domain.LeaveQueue:
+	case LeaveQueue:
 		var p LeavePayload
 		if errUnmarshal := json.Unmarshal(payloadInbound.Payload, &p); errUnmarshal != nil {
 			return errors.Join(errUnmarshal, ErrQueueParseMessage)
 		}
 
 		err = h.queue.LeaveLobbies(client, p.Servers)
-	case domain.Message:
+	case Message:
 		client.Limit()
 		var p MessageCreatePayload
 		if errUnmarshal := json.Unmarshal(payloadInbound.Payload, &p); errUnmarshal != nil {
@@ -187,7 +187,7 @@ func (h *serverQueueHandler) purge() gin.HandlerFunc {
 			return
 		}
 		if count <= 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrBadRequest))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
 
 			return
 		}

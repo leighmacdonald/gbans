@@ -110,7 +110,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 	}
 
 	u.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelWordFilterLog,
+		discord.ChannelWordFilterLog,
 		discord.WarningMessage(newWarning, newBan)))
 
 	return nil

@@ -9,12 +9,12 @@ import (
 )
 
 type forums struct {
-	repo          domain.ForumRepository
+	repo          ForumRepository
 	tracker       *Tracker
 	notifications domain.NotificationUsecase
 }
 
-func NewForumUsecase(repository domain.ForumRepository, notifications domain.NotificationUsecase) domain.ForumUsecase {
+func NewForumUsecase(repository ForumRepository, notifications domain.NotificationUsecase) ForumUsecase {
 	return &forums{repo: repository, notifications: notifications, tracker: NewTracker()}
 }
 
@@ -26,15 +26,15 @@ func (f forums) Touch(up domain.UserProfile) {
 	f.tracker.Touch(up)
 }
 
-func (f forums) Current() []domain.ForumActivity {
+func (f forums) Current() []ForumActivity {
 	return f.tracker.Current()
 }
 
-func (f forums) ForumCategories(ctx context.Context) ([]domain.ForumCategory, error) {
+func (f forums) ForumCategories(ctx context.Context) ([]ForumCategory, error) {
 	return f.repo.ForumCategories(ctx)
 }
 
-func (f forums) ForumCategorySave(ctx context.Context, category *domain.ForumCategory) error {
+func (f forums) ForumCategorySave(ctx context.Context, category *ForumCategory) error {
 	isNew := category.ForumCategoryID == 0
 
 	if err := f.repo.ForumCategorySave(ctx, category); err != nil {
@@ -52,11 +52,11 @@ func (f forums) ForumCategorySave(ctx context.Context, category *domain.ForumCat
 	return nil
 }
 
-func (f forums) ForumCategory(ctx context.Context, categoryID int, category *domain.ForumCategory) error {
+func (f forums) ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error {
 	return f.repo.ForumCategory(ctx, categoryID, category)
 }
 
-func (f forums) ForumCategoryDelete(ctx context.Context, category domain.ForumCategory) error {
+func (f forums) ForumCategoryDelete(ctx context.Context, category ForumCategory) error {
 	if err := f.repo.ForumCategoryDelete(ctx, category.ForumCategoryID); err != nil {
 		return err
 	}
@@ -67,11 +67,11 @@ func (f forums) ForumCategoryDelete(ctx context.Context, category domain.ForumCa
 	return nil
 }
 
-func (f forums) Forums(ctx context.Context) ([]domain.Forum, error) {
+func (f forums) Forums(ctx context.Context) ([]Forum, error) {
 	return f.repo.Forums(ctx)
 }
 
-func (f forums) ForumSave(ctx context.Context, forum *domain.Forum) error {
+func (f forums) ForumSave(ctx context.Context, forum *Forum) error {
 	isNew := forum.ForumID == 0
 
 	if err := f.repo.ForumSave(ctx, forum); err != nil {
@@ -89,7 +89,7 @@ func (f forums) ForumSave(ctx context.Context, forum *domain.Forum) error {
 	return nil
 }
 
-func (f forums) Forum(ctx context.Context, forumID int, forum *domain.Forum) error {
+func (f forums) Forum(ctx context.Context, forumID int, forum *Forum) error {
 	return f.repo.Forum(ctx, forumID, forum)
 }
 
@@ -103,7 +103,7 @@ func (f forums) ForumDelete(ctx context.Context, forumID int) error {
 	return nil
 }
 
-func (f forums) ForumThreadSave(ctx context.Context, thread *domain.ForumThread) error {
+func (f forums) ForumThreadSave(ctx context.Context, thread *ForumThread) error {
 	isNew := thread.ForumThreadID == 0
 
 	if err := f.repo.ForumThreadSave(ctx, thread); err != nil {
@@ -119,7 +119,7 @@ func (f forums) ForumThreadSave(ctx context.Context, thread *domain.ForumThread)
 	return nil
 }
 
-func (f forums) ForumThread(ctx context.Context, forumThreadID int64, thread *domain.ForumThread) error {
+func (f forums) ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error {
 	return f.repo.ForumThread(ctx, forumThreadID, thread)
 }
 
@@ -137,7 +137,7 @@ func (f forums) ForumThreadDelete(ctx context.Context, forumThreadID int64) erro
 	return nil
 }
 
-func (f forums) ForumThreads(ctx context.Context, filter domain.ThreadQueryFilter) ([]domain.ThreadWithSource, error) {
+func (f forums) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, error) {
 	return f.repo.ForumThreads(ctx, filter)
 }
 
@@ -145,7 +145,7 @@ func (f forums) ForumIncrMessageCount(ctx context.Context, forumID int, incr boo
 	return f.repo.ForumIncrMessageCount(ctx, forumID, incr)
 }
 
-func (f forums) ForumMessageSave(ctx context.Context, message *domain.ForumMessage) error {
+func (f forums) ForumMessageSave(ctx context.Context, message *ForumMessage) error {
 	isNew := message.ForumMessageID == 0
 
 	if err := f.repo.ForumMessageSave(ctx, message); err != nil {
@@ -163,15 +163,15 @@ func (f forums) ForumMessageSave(ctx context.Context, message *domain.ForumMessa
 	return nil
 }
 
-func (f forums) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel domain.Privilege) ([]domain.ForumMessage, error) {
+func (f forums) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel domain.Privilege) ([]ForumMessage, error) {
 	return f.repo.ForumRecentActivity(ctx, limit, permissionLevel)
 }
 
-func (f forums) ForumMessage(ctx context.Context, messageID int64, forumMessage *domain.ForumMessage) error {
+func (f forums) ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error {
 	return f.repo.ForumMessage(ctx, messageID, forumMessage)
 }
 
-func (f forums) ForumMessages(ctx context.Context, filters domain.ThreadMessagesQuery) ([]domain.ForumMessage, error) {
+func (f forums) ForumMessages(ctx context.Context, filters ThreadMessagesQuery) ([]ForumMessage, error) {
 	return f.repo.ForumMessages(ctx, filters)
 }
 
@@ -185,10 +185,10 @@ func (f forums) ForumMessageDelete(ctx context.Context, messageID int64) error {
 	return nil
 }
 
-func (f forums) ForumMessageVoteApply(ctx context.Context, messageVote *domain.ForumMessageVote) error {
+func (f forums) ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error {
 	return f.repo.ForumMessageVoteApply(ctx, messageVote)
 }
 
-func (f forums) ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *domain.ForumMessageVote) error {
+func (f forums) ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error {
 	return f.repo.ForumMessageVoteByID(ctx, messageVoteID, messageVote)
 }

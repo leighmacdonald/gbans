@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -22,17 +23,17 @@ import (
 )
 
 type reportUsecase struct {
-	repository    domain.ReportRepository
+	repository    ReportRepository
 	notifications domain.NotificationUsecase
 	config        domain.ConfigUsecase
 	persons       domain.PersonUsecase
-	demos         domain.DemoUsecase
+	demos         demo.DemoUsecase
 	tfAPI         *thirdparty.TFAPI
 }
 
-func NewReportUsecase(repository domain.ReportRepository, notifications domain.NotificationUsecase,
-	config domain.ConfigUsecase, persons domain.PersonUsecase, demos domain.DemoUsecase, tfAPI *thirdparty.TFAPI,
-) domain.ReportUsecase {
+func NewReportUsecase(repository ReportRepository, notifications domain.NotificationUsecase,
+	config domain.ConfigUsecase, persons domain.PersonUsecase, demos demo.DemoUsecase, tfAPI *thirdparty.TFAPI,
+) ReportUsecase {
 	return &reportUsecase{
 		notifications: notifications,
 		repository:    repository,
@@ -53,11 +54,11 @@ func (r reportUsecase) GenerateMetaStats(ctx context.Context) error {
 
 	var (
 		now  = time.Now()
-		meta domain.ReportMeta
+		meta ReportMeta
 	)
 
 	for _, report := range reports {
-		if report.ReportStatus == domain.ClosedWithAction || report.ReportStatus == domain.ClosedWithoutAction {
+		if report.ReportStatus == ClosedWithAction || report.ReportStatus == ClosedWithoutAction {
 			meta.TotalClosed++
 
 			continue
@@ -65,7 +66,7 @@ func (r reportUsecase) GenerateMetaStats(ctx context.Context) error {
 
 		meta.TotalOpen++
 
-		if report.ReportStatus == domain.NeedMoreInfo {
+		if report.ReportStatus == NeedMoreInfo {
 			meta.NeedInfo++
 		} else {
 			meta.Open++
@@ -90,7 +91,7 @@ func (r reportUsecase) GenerateMetaStats(ctx context.Context) error {
 	return nil
 }
 
-func (r reportUsecase) addAuthorsToReports(ctx context.Context, reports []domain.Report) ([]domain.ReportWithAuthor, error) {
+func (r reportUsecase) addAuthorsToReports(ctx context.Context, reports []Report) ([]ReportWithAuthor, error) {
 	var peopleIDs steamid.Collection
 	for _, report := range reports {
 		peopleIDs = append(peopleIDs, report.SourceID, report.TargetID)
@@ -103,10 +104,10 @@ func (r reportUsecase) addAuthorsToReports(ctx context.Context, reports []domain
 
 	peopleMap := people.AsMap()
 
-	userReports := make([]domain.ReportWithAuthor, len(reports))
+	userReports := make([]ReportWithAuthor, len(reports))
 
 	for i, report := range reports {
-		userReports[i] = domain.ReportWithAuthor{
+		userReports[i] = ReportWithAuthor{
 			Author:  peopleMap[report.SourceID],
 			Report:  report,
 			Subject: peopleMap[report.TargetID],
@@ -116,7 +117,7 @@ func (r reportUsecase) addAuthorsToReports(ctx context.Context, reports []domain
 	return userReports, nil
 }
 
-func (r reportUsecase) SetReportStatus(ctx context.Context, reportID int64, user domain.UserProfile, status domain.ReportStatus) (domain.ReportWithAuthor, error) {
+func (r reportUsecase) SetReportStatus(ctx context.Context, reportID int64, user domain.UserProfile, status ReportStatus) (ReportWithAuthor, error) {
 	report, errGet := r.GetReport(ctx, user, reportID)
 	if errGet != nil {
 		return report, errGet
@@ -160,7 +161,7 @@ func (r reportUsecase) SetReportStatus(ctx context.Context, reportID int64, user
 	return report, nil
 }
 
-func (r reportUsecase) GetReportsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]domain.ReportWithAuthor, error) {
+func (r reportUsecase) GetReportsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]ReportWithAuthor, error) {
 	if !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
@@ -168,7 +169,7 @@ func (r reportUsecase) GetReportsBySteamID(ctx context.Context, steamID steamid.
 	reports, errReports := r.repository.GetReports(ctx, steamID)
 	if errReports != nil {
 		if errors.Is(errReports, database.ErrNoResult) {
-			return []domain.ReportWithAuthor{}, nil
+			return []ReportWithAuthor{}, nil
 		}
 
 		return nil, errReports
@@ -177,11 +178,11 @@ func (r reportUsecase) GetReportsBySteamID(ctx context.Context, steamID steamid.
 	return r.addAuthorsToReports(ctx, reports)
 }
 
-func (r reportUsecase) GetReports(ctx context.Context) ([]domain.ReportWithAuthor, error) {
+func (r reportUsecase) GetReports(ctx context.Context) ([]ReportWithAuthor, error) {
 	reports, errReports := r.repository.GetReports(ctx, steamid.SteamID{})
 	if errReports != nil {
 		if errors.Is(errReports, database.ErrNoResult) {
-			return []domain.ReportWithAuthor{}, nil
+			return []ReportWithAuthor{}, nil
 		}
 
 		return nil, errReports
@@ -190,34 +191,34 @@ func (r reportUsecase) GetReports(ctx context.Context) ([]domain.ReportWithAutho
 	return r.addAuthorsToReports(ctx, reports)
 }
 
-func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (domain.ReportWithAuthor, error) {
+func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (ReportWithAuthor, error) {
 	report, err := r.repository.GetReport(ctx, reportID)
 	if err != nil {
-		return domain.ReportWithAuthor{}, err
+		return ReportWithAuthor{}, err
 	}
 
 	author, errAuthor := r.persons.GetPersonBySteamID(ctx, nil, report.SourceID)
 	if errAuthor != nil {
-		return domain.ReportWithAuthor{}, errAuthor
+		return ReportWithAuthor{}, errAuthor
 	}
 
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{author.SteamID}, domain.PModerator) {
-		return domain.ReportWithAuthor{}, domain.ErrPermissionDenied
+		return ReportWithAuthor{}, domain.ErrPermissionDenied
 	}
 
 	target, errTarget := r.persons.GetPersonBySteamID(ctx, nil, report.TargetID)
 	if errTarget != nil {
-		return domain.ReportWithAuthor{}, errTarget
+		return ReportWithAuthor{}, errTarget
 	}
 
-	var demo domain.DemoFile
+	var demo demo.DemoFile
 	if report.DemoID > 0 {
 		if errDemo := r.demos.GetDemoByID(ctx, report.DemoID, &demo); errDemo != nil {
 			slog.Error("Failed to load report demo", slog.Int64("report_id", report.ReportID))
 		}
 	}
 
-	return domain.ReportWithAuthor{
+	return ReportWithAuthor{
 		Author:  author,
 		Subject: target,
 		Report:  report,
@@ -225,15 +226,15 @@ func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo,
 	}, nil
 }
 
-func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (domain.Report, error) {
+func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error) {
 	return r.repository.GetReportBySteamID(ctx, authorID, steamID)
 }
 
-func (r reportUsecase) GetReportMessages(ctx context.Context, reportID int64) ([]domain.ReportMessage, error) {
+func (r reportUsecase) GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error) {
 	return r.repository.GetReportMessages(ctx, reportID)
 }
 
-func (r reportUsecase) GetReportMessageByID(ctx context.Context, reportMessageID int64) (domain.ReportMessage, error) {
+func (r reportUsecase) GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error) {
 	return r.repository.GetReportMessageByID(ctx, reportMessageID)
 }
 
@@ -260,13 +261,13 @@ func (r reportUsecase) DropReportMessage(ctx context.Context, curUser domain.Per
 	return nil
 }
 
-func (r reportUsecase) DropReport(ctx context.Context, report *domain.Report) error {
+func (r reportUsecase) DropReport(ctx context.Context, report *Report) error {
 	return r.repository.DropReport(ctx, report)
 }
 
-func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserProfile, req domain.RequestReportCreate) (domain.ReportWithAuthor, error) {
+func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserProfile, req RequestReportCreate) (ReportWithAuthor, error) {
 	if req.Description == "" || len(req.Description) < 10 {
-		return domain.ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
+		return ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
 	}
 
 	// ServerStore initiated requests will have a sourceID set by the server
@@ -277,25 +278,25 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 	}
 
 	if !req.SourceID.Valid() {
-		return domain.ReportWithAuthor{}, fmt.Errorf("%w: source_id", domain.ErrParamInvalid)
+		return ReportWithAuthor{}, fmt.Errorf("%w: source_id", domain.ErrParamInvalid)
 	}
 
 	if !req.TargetID.Valid() {
-		return domain.ReportWithAuthor{}, fmt.Errorf("%w: target_id", domain.ErrParamInvalid)
+		return ReportWithAuthor{}, fmt.Errorf("%w: target_id", domain.ErrParamInvalid)
 	}
 
 	if req.SourceID.Int64() == req.TargetID.Int64() {
-		return domain.ReportWithAuthor{}, fmt.Errorf("%w: cannot report self", domain.ErrParamInvalid)
+		return ReportWithAuthor{}, fmt.Errorf("%w: cannot report self", domain.ErrParamInvalid)
 	}
 
 	personSource, errSource := r.persons.GetPersonBySteamID(ctx, nil, req.SourceID)
 	if errSource != nil {
-		return domain.ReportWithAuthor{}, errSource
+		return ReportWithAuthor{}, errSource
 	}
 
 	personTarget, errTarget := r.persons.GetOrCreatePersonBySteamID(ctx, nil, req.TargetID)
 	if errTarget != nil {
-		return domain.ReportWithAuthor{}, errTarget
+		return ReportWithAuthor{}, errTarget
 	}
 
 	if personTarget.Expired() {
@@ -312,26 +313,26 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 	existing, errReports := r.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
 	if errReports != nil {
 		if !errors.Is(errReports, database.ErrNoResult) {
-			return domain.ReportWithAuthor{}, errReports
+			return ReportWithAuthor{}, errReports
 		}
 	}
 
 	if existing.ReportID > 0 {
-		return domain.ReportWithAuthor{}, domain.ErrReportExists
+		return ReportWithAuthor{}, domain.ErrReportExists
 	}
 
-	var demo domain.DemoFile
+	var demo demo.DemoFile
 
 	if req.DemoID > 0 {
 		if errDemo := r.demos.GetDemoByID(ctx, req.DemoID, &demo); errDemo != nil {
-			return domain.ReportWithAuthor{}, errDemo
+			return ReportWithAuthor{}, errDemo
 		}
 	}
 
 	// TODO encapsulate all operations in single tx
-	report := domain.NewReport()
+	report := NewReport()
 	report.SourceID = req.SourceID
-	report.ReportStatus = domain.Opened
+	report.ReportStatus = Opened
 	report.Description = req.Description
 	report.TargetID = req.TargetID
 	report.Reason = req.Reason
@@ -341,7 +342,7 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 	report.PersonMessageID = req.PersonMessageID
 
 	if err := r.repository.SaveReport(ctx, &report); err != nil {
-		return domain.ReportWithAuthor{}, err
+		return ReportWithAuthor{}, err
 	}
 
 	slog.Info("New report created", slog.Int64("report_id", report.ReportID))
@@ -362,7 +363,7 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 
 	newReport, errReport := r.GetReport(ctx, currentUser, report.ReportID)
 	if errReport != nil {
-		return domain.ReportWithAuthor{}, errReport
+		return ReportWithAuthor{}, errReport
 	}
 
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
@@ -380,34 +381,34 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 	return newReport, nil
 }
 
-func (r reportUsecase) EditReportMessage(ctx context.Context, reportMessageID int64, curUser domain.PersonInfo, req domain.RequestMessageBodyMD) (domain.ReportMessage, error) {
+func (r reportUsecase) EditReportMessage(ctx context.Context, reportMessageID int64, curUser domain.PersonInfo, req RequestMessageBodyMD) (ReportMessage, error) {
 	if reportMessageID <= 0 {
-		return domain.ReportMessage{}, domain.ErrParamInvalid
+		return ReportMessage{}, domain.ErrParamInvalid
 	}
 
 	existing, errExist := r.GetReportMessageByID(ctx, reportMessageID)
 	if errExist != nil {
-		return domain.ReportMessage{}, errExist
+		return ReportMessage{}, errExist
 	}
 
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
-		return domain.ReportMessage{}, domain.ErrPermissionDenied
+		return ReportMessage{}, domain.ErrPermissionDenied
 	}
 
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
 
 	if req.BodyMD == "" {
-		return domain.ReportMessage{}, domain.ErrInvalidParameter
+		return ReportMessage{}, domain.ErrInvalidParameter
 	}
 
 	if req.BodyMD == existing.MessageMD {
-		return domain.ReportMessage{}, database.ErrDuplicate // TODO replace
+		return ReportMessage{}, database.ErrDuplicate // TODO replace
 	}
 
 	existing.MessageMD = req.BodyMD
 
 	if errSave := r.repository.SaveReportMessage(ctx, &existing); errSave != nil {
-		return domain.ReportMessage{}, errSave
+		return ReportMessage{}, errSave
 	}
 
 	conf := r.config.Config()
@@ -422,27 +423,27 @@ func (r reportUsecase) EditReportMessage(ctx context.Context, reportMessageID in
 	return r.GetReportMessageByID(ctx, reportMessageID)
 }
 
-func (r reportUsecase) CreateReportMessage(ctx context.Context, reportID int64, curUser domain.UserProfile, req domain.RequestMessageBodyMD) (domain.ReportMessage, error) {
+func (r reportUsecase) CreateReportMessage(ctx context.Context, reportID int64, curUser domain.UserProfile, req RequestMessageBodyMD) (ReportMessage, error) {
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
 
 	if req.BodyMD == "" {
-		return domain.ReportMessage{}, domain.ErrParamInvalid
+		return ReportMessage{}, domain.ErrParamInvalid
 	}
 
 	report, errReport := r.GetReport(ctx, curUser, reportID)
 	if errReport != nil {
-		return domain.ReportMessage{}, errReport
+		return ReportMessage{}, errReport
 	}
 
-	msg := domain.NewReportMessage(reportID, curUser.GetSteamID(), req.BodyMD)
+	msg := NewReportMessage(reportID, curUser.GetSteamID(), req.BodyMD)
 	if err := r.repository.SaveReportMessage(ctx, &msg); err != nil {
-		return domain.ReportMessage{}, err
+		return ReportMessage{}, err
 	}
 
 	report.UpdatedOn = time.Now()
 
 	if errSave := r.repository.SaveReport(ctx, &report.Report); errSave != nil {
-		return domain.ReportMessage{}, errSave
+		return ReportMessage{}, errSave
 	}
 
 	conf := r.config.Config()
@@ -486,13 +487,13 @@ func (args MetaInfoArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 24}}
 }
 
-func NewMetaInfoWorker(reports domain.ReportUsecase) *MetaInfoWorker {
+func NewMetaInfoWorker(reports ReportUsecase) *MetaInfoWorker {
 	return &MetaInfoWorker{reports: reports}
 }
 
 type MetaInfoWorker struct {
 	river.WorkerDefaults[MetaInfoArgs]
-	reports domain.ReportUsecase
+	reports ReportUsecase
 }
 
 func (worker *MetaInfoWorker) Work(ctx context.Context, _ *river.Job[MetaInfoArgs]) error {

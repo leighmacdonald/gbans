@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewPlayerqueueRepository(db database.Database, persons domain.PersonUsecase) domain.PlayerqueueRepository {
+func NewPlayerqueueRepository(db database.Database, persons domain.PersonUsecase) PlayerqueueRepository {
 	return playerqueueRepository{db: db, persons: persons}
 }
 
@@ -18,21 +18,21 @@ type playerqueueRepository struct {
 	persons domain.PersonUsecase
 }
 
-func (r playerqueueRepository) Message(ctx context.Context, messageID int64) (domain.ChatLog, error) {
+func (r playerqueueRepository) Message(ctx context.Context, messageID int64) (ChatLog, error) {
 	row, err := r.db.QueryRowBuilder(ctx, nil, r.db.Builder().
 		Select("m.message_id", "m.steam_id", "m.created_on", "m.personaname", "m.avatarhash", "p.permission_level", "m.body_md").
 		From("playerqueue_messages m").
 		LeftJoin("person p USING(steam_id)").
 		Where(sq.And{sq.Eq{"m.deleted": false}, sq.Eq{"m.message_id": messageID}}))
 	if err != nil {
-		return domain.ChatLog{}, r.db.DBErr(err)
+		return ChatLog{}, r.db.DBErr(err)
 	}
 
-	var message domain.ChatLog
+	var message ChatLog
 
 	if errScan := row.Scan(&message.MessageID, &message.SteamID, &message.CreatedOn, &message.Personaname,
 		&message.Avatarhash, &message.PermissionLevel, &message.BodyMD); errScan != nil {
-		return domain.ChatLog{}, r.db.DBErr(errScan)
+		return ChatLog{}, r.db.DBErr(errScan)
 	}
 
 	return message, nil
@@ -45,11 +45,11 @@ func (r playerqueueRepository) Delete(ctx context.Context, messageID ...int64) e
 		Where(sq.Eq{"message_id": messageID})))
 }
 
-func (r playerqueueRepository) Save(ctx context.Context, message domain.ChatLog) (domain.ChatLog, error) {
+func (r playerqueueRepository) Save(ctx context.Context, message ChatLog) (ChatLog, error) {
 	// Ensure player exists
 	_, errPlayer := r.persons.GetOrCreatePersonBySteamID(ctx, nil, steamid.New(message.SteamID))
 	if errPlayer != nil {
-		return domain.ChatLog{}, errPlayer
+		return ChatLog{}, errPlayer
 	}
 
 	query, args, errQuery := r.db.Builder().
@@ -64,7 +64,7 @@ func (r playerqueueRepository) Save(ctx context.Context, message domain.ChatLog)
 		Suffix("RETURNING message_id").
 		ToSql()
 	if errQuery != nil {
-		return domain.ChatLog{}, r.db.DBErr(errQuery)
+		return ChatLog{}, r.db.DBErr(errQuery)
 	}
 
 	if err := r.db.QueryRow(ctx, nil, query, args...).Scan(&message.MessageID); err != nil {
@@ -74,7 +74,7 @@ func (r playerqueueRepository) Save(ctx context.Context, message domain.ChatLog)
 	return message, nil
 }
 
-func (r playerqueueRepository) Query(ctx context.Context, query domain.PlayerqueueQueryOpts) ([]domain.ChatLog, error) {
+func (r playerqueueRepository) Query(ctx context.Context, query PlayerqueueQueryOpts) ([]ChatLog, error) {
 	builder := r.db.Builder().
 		Select("m.message_id", "m.steam_id", "m.created_on", "m.personaname", "m.avatarhash",
 			"p.permission_level", "m.body_md").
@@ -92,7 +92,7 @@ func (r playerqueueRepository) Query(ctx context.Context, query domain.Playerque
 		},
 	}, "steam_id")
 
-	var msgs []domain.ChatLog
+	var msgs []ChatLog
 
 	rows, errRows := r.db.QueryBuilder(ctx, nil, builder)
 	if errRows != nil {
@@ -102,7 +102,7 @@ func (r playerqueueRepository) Query(ctx context.Context, query domain.Playerque
 	defer rows.Close()
 
 	for rows.Next() {
-		var msg domain.ChatLog
+		var msg ChatLog
 		if errScan := rows.Scan(&msg.MessageID, &msg.SteamID, &msg.CreatedOn, &msg.Personaname,
 			&msg.Avatarhash, &msg.PermissionLevel, &msg.BodyMD); errScan != nil {
 			return nil, r.db.DBErr(errScan)

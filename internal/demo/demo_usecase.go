@@ -16,6 +16,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fs"
@@ -24,17 +25,17 @@ import (
 )
 
 type demoUsecase struct {
-	repository  domain.DemoRepository
-	asset       domain.AssetUsecase
+	repository  DemoRepository
+	asset       asset.AssetUsecase
 	config      domain.ConfigUsecase
 	servers     domain.ServersUsecase
-	bucket      domain.Bucket
+	bucket      asset.Bucket
 	cleanupChan chan any
 }
 
-func NewDemoUsecase(bucket domain.Bucket, repository domain.DemoRepository, assets domain.AssetUsecase,
+func NewDemoUsecase(bucket asset.Bucket, repository DemoRepository, assets asset.AssetUsecase,
 	config domain.ConfigUsecase, servers domain.ServersUsecase,
-) domain.DemoUsecase {
+) DemoUsecase {
 	return &demoUsecase{
 		bucket:      bucket,
 		repository:  repository,
@@ -45,20 +46,20 @@ func NewDemoUsecase(bucket domain.Bucket, repository domain.DemoRepository, asse
 	}
 }
 
-func (d demoUsecase) oldest(ctx context.Context) (domain.DemoInfo, error) {
+func (d demoUsecase) oldest(ctx context.Context) (DemoInfo, error) {
 	demos, errDemos := d.repository.ExpiredDemos(ctx, 1)
 	if errDemos != nil {
-		return domain.DemoInfo{}, errDemos
+		return DemoInfo{}, errDemos
 	}
 
 	if len(demos) == 0 {
-		return domain.DemoInfo{}, database.ErrNoResult
+		return DemoInfo{}, database.ErrNoResult
 	}
 
 	return demos[0], nil
 }
 
-func (d demoUsecase) MarkArchived(ctx context.Context, demo *domain.DemoFile) error {
+func (d demoUsecase) MarkArchived(ctx context.Context, demo *DemoFile) error {
 	demo.Archive = true
 
 	if err := d.repository.SaveDemo(ctx, demo); err != nil {
@@ -190,23 +191,23 @@ func (d demoUsecase) Cleanup(ctx context.Context) {
 	}
 }
 
-func (d demoUsecase) ExpiredDemos(ctx context.Context, limit uint64) ([]domain.DemoInfo, error) {
+func (d demoUsecase) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {
 	return d.repository.ExpiredDemos(ctx, limit)
 }
 
-func (d demoUsecase) GetDemoByID(ctx context.Context, demoID int64, demoFile *domain.DemoFile) error {
+func (d demoUsecase) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
 	return d.repository.GetDemoByID(ctx, demoID, demoFile)
 }
 
-func (d demoUsecase) GetDemoByName(ctx context.Context, demoName string, demoFile *domain.DemoFile) error {
+func (d demoUsecase) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
 	return d.repository.GetDemoByName(ctx, demoName, demoFile)
 }
 
-func (d demoUsecase) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
+func (d demoUsecase) GetDemos(ctx context.Context) ([]DemoFile, error) {
 	return d.repository.GetDemos(ctx)
 }
 
-func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain.DemoDetails, error) {
+func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails, error) {
 	fileHandle, errDF := os.Open(path)
 	if errDF != nil {
 		return nil, errors.Join(errDF, domain.ErrDemoLoad)
@@ -254,7 +255,7 @@ func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain
 
 	defer log.Closer(resp.Body)
 
-	var demo domain.DemoDetails
+	var demo DemoDetails
 
 	// TODO remove this extra copy once this feature doesnt have much need for debugging/inspection.
 	rawBody, errRead := io.ReadAll(resp.Body)
@@ -269,7 +270,7 @@ func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain
 	return &demo, nil
 }
 
-func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, serverID int) (*domain.DemoFile, error) {
+func (d demoUsecase) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID int) (*DemoFile, error) {
 	_, errGetServer := d.servers.Server(ctx, serverID)
 	if errGetServer != nil {
 		return nil, domain.ErrGetServer
@@ -309,7 +310,7 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 		createdTime = time.Now()
 	}
 
-	newDemo := domain.DemoFile{
+	newDemo := DemoFile{
 		ServerID:  serverID,
 		Title:     asset.Name,
 		CreatedOn: createdTime,

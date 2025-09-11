@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewSpeedrunRepository(database database.Database, people domain.PersonUsecase) domain.SpeedrunRepository {
+func NewSpeedrunRepository(database database.Database, people domain.PersonUsecase) SpeedrunRepository {
 	return &speedrunRepository{db: database, people: people}
 }
 
@@ -18,28 +18,28 @@ type speedrunRepository struct {
 	people domain.PersonUsecase
 }
 
-func (r *speedrunRepository) LoadOrCreateMap(ctx context.Context, transaction pgx.Tx, mapName string) (domain.MapDetail, error) {
+func (r *speedrunRepository) LoadOrCreateMap(ctx context.Context, transaction pgx.Tx, mapName string) (MapDetail, error) {
 	const query = `
 		WITH ins AS (
     		INSERT INTO map (map_id, map_name, updated_on, created_on) VALUES (DEFAULT, lower($1), now(),now())
     		ON CONFLICT (map_name) DO NOTHING RETURNING *
     	)
 		SELECT * FROM ins
-		UNION 
+		UNION
 		SELECT * FROM map
 		WHERE map_name = lower($1);
 		`
-	var mapDetail domain.MapDetail
+	var mapDetail MapDetail
 	if errQuery := r.db.
 		QueryRow(ctx, transaction, query, mapName).
 		Scan(&mapDetail.MapID, &mapDetail.MapName, &mapDetail.UpdatedOn, &mapDetail.CreatedOn); errQuery != nil {
-		return domain.MapDetail{}, r.db.DBErr(errQuery)
+		return MapDetail{}, r.db.DBErr(errQuery)
 	}
 
 	return mapDetail, nil
 }
 
-func (r *speedrunRepository) Save(ctx context.Context, details *domain.Speedrun) error {
+func (r *speedrunRepository) Save(ctx context.Context, details *Speedrun) error {
 	return r.db.WrapTx(ctx, func(transaction pgx.Tx) error {
 		mapDetail, mapErr := r.LoadOrCreateMap(ctx, transaction, details.MapDetail.MapName)
 		if mapErr != nil {
@@ -121,7 +121,7 @@ func (r *speedrunRepository) updateSpeedrunRank(ctx context.Context, transaction
 	return rank, nil
 }
 
-func (r *speedrunRepository) insertPlayers(ctx context.Context, transaction pgx.Tx, players []domain.SpeedrunParticipant) error {
+func (r *speedrunRepository) insertPlayers(ctx context.Context, transaction pgx.Tx, players []SpeedrunParticipant) error {
 	for _, player := range players {
 		if _, errPlayer := r.people.GetOrCreatePersonBySteamID(ctx, transaction, player.SteamID); errPlayer != nil {
 			return errPlayer
@@ -131,7 +131,7 @@ func (r *speedrunRepository) insertPlayers(ctx context.Context, transaction pgx.
 	return nil
 }
 
-func (r *speedrunRepository) insertRunners(ctx context.Context, transaction pgx.Tx, speedrunID int, players []domain.SpeedrunParticipant) error {
+func (r *speedrunRepository) insertRunners(ctx context.Context, transaction pgx.Tx, speedrunID int, players []SpeedrunParticipant) error {
 	// TODO use pgx.Batch
 	for _, runner := range players {
 		query, args, errQuery := r.db.Builder().
@@ -154,7 +154,7 @@ func (r *speedrunRepository) insertRunners(ctx context.Context, transaction pgx.
 	return nil
 }
 
-func (r *speedrunRepository) insertCaptures(ctx context.Context, transaction pgx.Tx, speedrunID int, rounds []domain.SpeedrunPointCaptures) error {
+func (r *speedrunRepository) insertCaptures(ctx context.Context, transaction pgx.Tx, speedrunID int, rounds []SpeedrunPointCaptures) error {
 	// TODO use pgx.Batch
 	for roundNum, round := range rounds {
 		query, args, errQuery := r.db.Builder().
@@ -183,7 +183,7 @@ func (r *speedrunRepository) insertCaptures(ctx context.Context, transaction pgx
 	return nil
 }
 
-func (r *speedrunRepository) insertCapturePlayers(ctx context.Context, transaction pgx.Tx, speedrunID int, roundID int, players []domain.SpeedrunParticipant) error {
+func (r *speedrunRepository) insertCapturePlayers(ctx context.Context, transaction pgx.Tx, speedrunID int, roundID int, players []SpeedrunParticipant) error {
 	// TODO use pgx.Batch
 	for _, runner := range players {
 		query, args, errQuery := r.db.Builder().
@@ -207,11 +207,11 @@ func (r *speedrunRepository) insertCapturePlayers(ctx context.Context, transacti
 	return nil
 }
 
-func (r *speedrunRepository) Query(_ context.Context, _ domain.SpeedrunQuery) ([]domain.Speedrun, error) {
-	return []domain.Speedrun{}, nil
+func (r *speedrunRepository) Query(_ context.Context, _ SpeedrunQuery) ([]Speedrun, error) {
+	return []Speedrun{}, nil
 }
 
-func (r *speedrunRepository) TopNOverall(ctx context.Context, count int) (map[string][]domain.Speedrun, error) {
+func (r *speedrunRepository) TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error) {
 	const query = `
 		SELECT
 			*
@@ -231,9 +231,9 @@ func (r *speedrunRepository) TopNOverall(ctx context.Context, count int) (map[st
 	}
 	defer rows.Next()
 
-	runs := map[string][]domain.Speedrun{}
+	runs := map[string][]Speedrun{}
 	for rows.Next() {
-		var run domain.Speedrun
+		var run Speedrun
 		if err := rows.Scan(
 			&run.SpeedrunID, &run.ServerID, &run.Category, &run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn,
 			&run.InitialRank, &run.Rank,
@@ -241,7 +241,7 @@ func (r *speedrunRepository) TopNOverall(ctx context.Context, count int) (map[st
 			return nil, r.db.DBErr(err)
 		}
 		if _, ok := runs[run.MapDetail.MapName]; !ok {
-			runs[run.MapDetail.MapName] = []domain.Speedrun{}
+			runs[run.MapDetail.MapName] = []Speedrun{}
 		}
 
 		runs[run.MapDetail.MapName] = append(runs[run.MapDetail.MapName], run)
@@ -267,7 +267,7 @@ func (r *speedrunRepository) TopNOverall(ctx context.Context, count int) (map[st
 	return runs, nil
 }
 
-func (r *speedrunRepository) ByID(ctx context.Context, speedrunID int) (domain.Speedrun, error) {
+func (r *speedrunRepository) ByID(ctx context.Context, speedrunID int) (Speedrun, error) {
 	const query = `
 		SELECT *
 		FROM (
@@ -279,12 +279,12 @@ func (r *speedrunRepository) ByID(ctx context.Context, speedrunID int) (domain.S
 		) s
 		WHERE speedrun_id =  $1`
 
-	var run domain.Speedrun
+	var run Speedrun
 	if err := r.db.
 		QueryRow(ctx, nil, query, speedrunID).
 		Scan(&run.SpeedrunID, &run.ServerID, &run.Category, &run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
 			&run.MapDetail.MapID, &run.MapDetail.MapName, &run.MapDetail.UpdatedOn, &run.MapDetail.CreatedOn, &run.Rank); err != nil {
-		return domain.Speedrun{}, r.db.DBErr(err)
+		return Speedrun{}, r.db.DBErr(err)
 	}
 
 	runners, errRunners := r.getRunners(ctx, speedrunID)
@@ -303,7 +303,7 @@ func (r *speedrunRepository) ByID(ctx context.Context, speedrunID int) (domain.S
 	return run, nil
 }
 
-func (r *speedrunRepository) Recent(ctx context.Context, limit int) ([]domain.SpeedrunMapOverview, error) {
+func (r *speedrunRepository) Recent(ctx context.Context, limit int) ([]SpeedrunMapOverview, error) {
 	const query = `
 		SELECT s.*,
 			   r.count,
@@ -331,13 +331,13 @@ func (r *speedrunRepository) Recent(ctx context.Context, limit int) ([]domain.Sp
 	}
 	defer rows.Close()
 
-	var smo []domain.SpeedrunMapOverview
+	var smo []SpeedrunMapOverview
 	for rows.Next() {
-		var run domain.SpeedrunMapOverview
+		var run SpeedrunMapOverview
 		if err := rows.Scan(&run.SpeedrunID, &run.MapDetail.MapID, &run.ServerID, &run.Category,
 			&run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
 			&run.Rank, &run.PlayerCount, &run.MapDetail.MapName); err != nil {
-			return []domain.SpeedrunMapOverview{}, r.db.DBErr(err)
+			return []SpeedrunMapOverview{}, r.db.DBErr(err)
 		}
 		smo = append(smo, run)
 	}
@@ -345,7 +345,7 @@ func (r *speedrunRepository) Recent(ctx context.Context, limit int) ([]domain.Sp
 	return smo, nil
 }
 
-func (r *speedrunRepository) ByMap(ctx context.Context, mapName string) ([]domain.SpeedrunMapOverview, error) {
+func (r *speedrunRepository) ByMap(ctx context.Context, mapName string) ([]SpeedrunMapOverview, error) {
 	const query = `
 		SELECT s.*,
 			   r.count,
@@ -373,13 +373,13 @@ func (r *speedrunRepository) ByMap(ctx context.Context, mapName string) ([]domai
 	}
 	defer rows.Close()
 
-	var smo []domain.SpeedrunMapOverview
+	var smo []SpeedrunMapOverview
 	for rows.Next() {
-		var run domain.SpeedrunMapOverview
+		var run SpeedrunMapOverview
 		if err := rows.Scan(&run.SpeedrunID, &run.MapDetail.MapID, &run.ServerID, &run.Category,
 			&run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
 			&run.Rank, &run.PlayerCount, &run.MapDetail.MapName); err != nil {
-			return []domain.SpeedrunMapOverview{}, r.db.DBErr(err)
+			return []SpeedrunMapOverview{}, r.db.DBErr(err)
 		}
 		smo = append(smo, run)
 	}
@@ -387,7 +387,7 @@ func (r *speedrunRepository) ByMap(ctx context.Context, mapName string) ([]domai
 	return smo, nil
 }
 
-func (r *speedrunRepository) getCapturedPoints(ctx context.Context, speedrunID int) ([]domain.SpeedrunPointCaptures, error) {
+func (r *speedrunRepository) getCapturedPoints(ctx context.Context, speedrunID int) ([]SpeedrunPointCaptures, error) {
 	const q = `
 		SELECT c.speedrun_id, c.round_id, c.duration, c.point_name
 		FROM speedrun_capture c
@@ -400,9 +400,9 @@ func (r *speedrunRepository) getCapturedPoints(ctx context.Context, speedrunID i
 
 	defer rows.Close()
 
-	var captures []domain.SpeedrunPointCaptures
+	var captures []SpeedrunPointCaptures
 	for rows.Next() {
-		var c domain.SpeedrunPointCaptures
+		var c SpeedrunPointCaptures
 		if err := rows.Scan(&c.SpeedrunID, &c.RoundID, &c.Duration, &c.PointName); err != nil {
 			return nil, r.db.DBErr(err)
 		}
@@ -413,7 +413,7 @@ func (r *speedrunRepository) getCapturedPoints(ctx context.Context, speedrunID i
 	return captures, nil
 }
 
-func (r *speedrunRepository) getCaptures(ctx context.Context, speedrunID int) ([]domain.SpeedrunPointCaptures, error) {
+func (r *speedrunRepository) getCaptures(ctx context.Context, speedrunID int) ([]SpeedrunPointCaptures, error) {
 	points, errPoints := r.getCapturedPoints(ctx, speedrunID)
 	if errPoints != nil {
 		return nil, errPoints
@@ -432,11 +432,11 @@ func (r *speedrunRepository) getCaptures(ctx context.Context, speedrunID int) ([
 
 	defer rows.Close()
 
-	var participants []domain.SpeedrunParticipant
+	var participants []SpeedrunParticipant
 
 	for rows.Next() {
 		var (
-			participant domain.SpeedrunParticipant
+			participant SpeedrunParticipant
 			sid         int64
 		)
 		if err := rows.Scan(&participant.RoundID, &sid, &participant.Duration, &participant.AvatarHash, &participant.PersonaName); err != nil {
@@ -459,7 +459,7 @@ func (r *speedrunRepository) getCaptures(ctx context.Context, speedrunID int) ([
 	return points, nil
 }
 
-func (r *speedrunRepository) getRunners(ctx context.Context, speedrunID int) ([]domain.SpeedrunParticipant, error) {
+func (r *speedrunRepository) getRunners(ctx context.Context, speedrunID int) ([]SpeedrunParticipant, error) {
 	const q = `
 		SELECT r.steam_id, r.duration, p.avatarhash, p.personaname
 		FROM speedrun_runners r
@@ -471,11 +471,11 @@ func (r *speedrunRepository) getRunners(ctx context.Context, speedrunID int) ([]
 	}
 	defer rows.Close()
 
-	var participants []domain.SpeedrunParticipant
+	var participants []SpeedrunParticipant
 
 	for rows.Next() {
 		var (
-			participant domain.SpeedrunParticipant
+			participant SpeedrunParticipant
 			sid         int64
 		)
 

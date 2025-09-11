@@ -20,14 +20,14 @@ import (
 
 type antiCheatUsecase struct {
 	parser        logparse.StacParser
-	repo          domain.AntiCheatRepository
+	repo          AntiCheatRepository
 	person        domain.PersonUsecase
 	ban           ban.BanUsecase
 	config        domain.ConfigUsecase
 	notifications domain.NotificationUsecase
 }
 
-func NewAntiCheatUsecase(repo domain.AntiCheatRepository, person domain.PersonUsecase, ban ban.BanUsecase, config domain.ConfigUsecase, notif domain.NotificationUsecase) domain.AntiCheatUsecase {
+func NewAntiCheatUsecase(repo AntiCheatRepository, person domain.PersonUsecase, ban ban.BanUsecase, config domain.ConfigUsecase, notif domain.NotificationUsecase) AntiCheatUsecase {
 	return &antiCheatUsecase{
 		parser:        logparse.NewStacParser(),
 		repo:          repo,
@@ -178,7 +178,7 @@ func (a antiCheatUsecase) SyncDemoIDs(ctx context.Context, limit uint64) error {
 	return a.repo.SyncDemoIDs(ctx, limit)
 }
 
-func (a antiCheatUsecase) Query(ctx context.Context, query domain.AnticheatQuery) ([]domain.AnticheatEntry, error) {
+func (a antiCheatUsecase) Query(ctx context.Context, query AnticheatQuery) ([]AnticheatEntry, error) {
 	if query.SteamID != "" {
 		sid := steamid.New(query.SteamID)
 		if !sid.Valid() {

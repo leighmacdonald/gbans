@@ -1,4 +1,4 @@
-package domain
+package report
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/demo"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -25,16 +27,16 @@ type ReportUsecase interface {
 	GenerateMetaStats(ctx context.Context) error
 	GetReportsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]ReportWithAuthor, error)
 	GetReports(ctx context.Context) ([]ReportWithAuthor, error)
-	GetReport(ctx context.Context, curUser PersonInfo, reportID int64) (ReportWithAuthor, error)
+	GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (ReportWithAuthor, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
 	GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error)
-	DropReportMessage(ctx context.Context, curUser PersonInfo, reportMessageID int64) error
+	DropReportMessage(ctx context.Context, curUser domain.PersonInfo, reportMessageID int64) error
 	DropReport(ctx context.Context, report *Report) error
-	SaveReport(ctx context.Context, currentUser UserProfile, req RequestReportCreate) (ReportWithAuthor, error)
-	CreateReportMessage(ctx context.Context, reportID int64, curUser UserProfile, req RequestMessageBodyMD) (ReportMessage, error)
-	EditReportMessage(ctx context.Context, reportMessageID int64, curUser PersonInfo, req RequestMessageBodyMD) (ReportMessage, error)
+	SaveReport(ctx context.Context, currentUser domain.UserProfile, req RequestReportCreate) (ReportWithAuthor, error)
+	CreateReportMessage(ctx context.Context, reportID int64, curUser domain.UserProfile, req RequestMessageBodyMD) (ReportMessage, error)
+	EditReportMessage(ctx context.Context, reportMessageID int64, curUser domain.PersonInfo, req RequestMessageBodyMD) (ReportMessage, error)
 	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
-	SetReportStatus(ctx context.Context, reportID int64, user UserProfile, status ReportStatus) (ReportWithAuthor, error)
+	SetReportStatus(ctx context.Context, reportID int64, user domain.UserProfile, status ReportStatus) (ReportWithAuthor, error)
 }
 
 type RequestMessageBodyMD struct {
@@ -113,9 +115,9 @@ func NewReport() Report {
 }
 
 type ReportWithAuthor struct {
-	Author  Person   `json:"author"`
-	Subject Person   `json:"subject"`
-	Demo    DemoFile `json:"demo"`
+	Author  Person        `json:"author"`
+	Subject Person        `json:"subject"`
+	Demo    demo.DemoFile `json:"demo"`
 	Report
 }
 

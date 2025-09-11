@@ -1,10 +1,16 @@
 package httphelper
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
+)
+
+var (
+	ErrBadRequest = errors.New("invalid request")
+	ErrInternal   = errors.New("internal server error")
 )
 
 func NewAPIErrorf(code int, err error, message string, args ...any) APIError {

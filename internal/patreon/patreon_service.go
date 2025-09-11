@@ -45,7 +45,7 @@ func (h patreonHandler) onLogout() gin.HandlerFunc {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
 		if err := h.patreon.Forget(ctx, currentUser.SteamID); err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errors.Join(err, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}

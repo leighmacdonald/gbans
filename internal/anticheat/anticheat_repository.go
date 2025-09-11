@@ -8,12 +8,11 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewAntiCheatRepository(database database.Database) domain.AntiCheatRepository {
+func NewAntiCheatRepository(database database.Database) AntiCheatRepository {
 	return &anticheatRepository{db: database}
 }
 
@@ -21,7 +20,7 @@ type anticheatRepository struct {
 	db database.Database
 }
 
-func (a anticheatRepository) Query(ctx context.Context, query domain.AnticheatQuery) ([]domain.AnticheatEntry, error) {
+func (a anticheatRepository) Query(ctx context.Context, query AnticheatQuery) ([]AnticheatEntry, error) {
 	builder := a.db.Builder().
 		Select("a.anticheat_id", "a.steam_id", "a.name", "a.detection", "a.summary", "a.demo_id", "a.demo_tick",
 			"a.server_id", "a.raw_log", "s.short_name", "p.personaname", "p.avatarhash", "a.created_on",
@@ -67,10 +66,10 @@ func (a anticheatRepository) Query(ctx context.Context, query domain.AnticheatQu
 
 	defer rows.Close()
 
-	var entries []domain.AnticheatEntry
+	var entries []AnticheatEntry
 
 	for rows.Next() {
-		var entry domain.AnticheatEntry
+		var entry AnticheatEntry
 		if err := rows.Scan(&entry.AnticheatID, &entry.SteamID, &entry.Personaname, &entry.Detection, &entry.Summary,
 			&entry.DemoID, &entry.DemoTick, &entry.ServerID, &entry.RawLog, &entry.ServerName, &entry.Personaname,
 			&entry.AvatarHash, &entry.CreatedOn, &entry.Triggered); err != nil {

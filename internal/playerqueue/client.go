@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"go.uber.org/ratelimit"
@@ -24,13 +23,13 @@ var (
 	ErrClosedConnection  = errors.New("closed connection")
 )
 
-func newClient(steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) domain.QueueClient {
+func newClient(steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) QueueClient {
 	client := &Client{
 		steamID:      steamID,
 		name:         name,
 		avatarhash:   avatarHash,
 		conn:         conn,
-		responseChan: make(chan domain.Response),
+		responseChan: make(chan Response),
 		rl:           ratelimit.New(1, ratelimit.Per(5*time.Second)),
 	}
 
@@ -42,8 +41,8 @@ type Client struct {
 	name         string
 	avatarhash   string
 	conn         *websocket.Conn
-	responseChan chan domain.Response
-	chatStatus   domain.ChatStatus
+	responseChan chan Response
+	chatStatus   ChatStatus
 	rl           ratelimit.Limiter
 }
 
@@ -52,10 +51,10 @@ func (c *Client) Limit() {
 }
 
 func (c *Client) HasMessageAccess() bool {
-	return c.chatStatus != domain.Noaccess
+	return c.chatStatus != Noaccess
 }
 
-func (c *Client) Send(response domain.Response) {
+func (c *Client) Send(response Response) {
 	c.responseChan <- response
 }
 
@@ -71,7 +70,7 @@ func (c *Client) Avatarhash() string {
 	return c.avatarhash
 }
 
-func (c *Client) Next(request *domain.Request) error {
+func (c *Client) Next(request *Request) error {
 	c.rl.Take()
 	if err := c.conn.ReadJSON(request); err != nil {
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {

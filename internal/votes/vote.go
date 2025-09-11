@@ -1,17 +1,18 @@
-package domain
+package votes
 
 import (
 	"context"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type VoteQueryFilter struct {
-	QueryFilter
-	SourceIDField
-	TargetIDField
+	domain.QueryFilter
+	domain.SourceIDField
+	domain.TargetIDField
 	ServerID int    `json:"server_id"`
 	Name     string `json:"name"`
 	Success  int    `json:"success"` // -1 = any, 0 = false, 1 = true

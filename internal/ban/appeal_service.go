@@ -1,4 +1,4 @@
-package appeal
+package ban
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ type appealHandler struct {
 	appealUsecase domain.AppealUsecase
 }
 
-func NewHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, authUsecase domain.AuthUsecase) {
+func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, authUsecase domain.AuthUsecase) {
 	handler := &appealHandler{
 		appealUsecase: appealUsecase,
 	}

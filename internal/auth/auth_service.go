@@ -19,13 +19,13 @@ import (
 )
 
 type authHandler struct {
-	authUsecase   domain.AuthUsecase
+	authUsecase   AuthUsecase
 	configUsecase domain.ConfigUsecase
 	personUsecase domain.PersonUsecase
 	tfAPI         *thirdparty.TFAPI
 }
 
-func NewHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, configUsecase domain.ConfigUsecase,
+func NewHandler(engine *gin.Engine, authUsecase AuthUsecase, configUsecase domain.ConfigUsecase,
 	personUsecase domain.PersonUsecase, tfAPI *thirdparty.TFAPI,
 ) {
 	handler := &authHandler{
@@ -147,9 +147,9 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		// TODO max age checks
 		ctx.SetSameSite(http.SameSiteStrictMode)
 		ctx.SetCookie(
-			domain.FingerprintCookieName,
+			FingerprintCookieName,
 			token.Fingerprint,
-			int(domain.AuthTokenDuration.Seconds()),
+			int(AuthTokenDuration.Seconds()),
 			"/api",
 			parsedExternal.Hostname(),
 			conf.General.Mode == domain.ReleaseMode,
@@ -174,34 +174,34 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 	conf := h.configUsecase.Config()
 
 	return func(ctx *gin.Context) {
-		fingerprint, errCookie := ctx.Cookie(domain.FingerprintCookieName)
+		fingerprint, errCookie := ctx.Cookie(FingerprintCookieName)
 		if errCookie != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errCookie, domain.ErrBadRequest),
-				"Failed to find fingerprint cookie: %s", domain.FingerprintCookieName))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errCookie, httphelper.ErrBadRequest),
+				"Failed to find fingerprint cookie: %s", FingerprintCookieName))
 
 			return
 		}
 
 		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errExternal, domain.ErrInternal),
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errExternal, httphelper.ErrInternal),
 				"Invalid external url: %s", conf.ExternalURL))
 
 			return
 		}
 
-		ctx.SetCookie(domain.FingerprintCookieName, "", -1, "/api",
+		ctx.SetCookie(FingerprintCookieName, "", -1, "/api",
 			parsedExternal.Hostname(), conf.General.Mode == domain.ReleaseMode, true)
 
-		personAuth := domain.PersonAuth{}
+		personAuth := PersonAuth{}
 		if errGet := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if errDelete := h.authUsecase.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDelete, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDelete, httphelper.ErrInternal)))
 
 			return
 		}

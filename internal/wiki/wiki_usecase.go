@@ -8,17 +8,18 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type wikiUsecase struct {
-	repository domain.WikiRepository
+	repository WikiRepository
 }
 
-func NewWikiUsecase(repository domain.WikiRepository) domain.WikiUsecase {
+func NewWikiUsecase(repository WikiRepository) WikiUsecase {
 	return &wikiUsecase{repository: repository}
 }
 
-func (w *wikiUsecase) GetWikiPageBySlug(ctx context.Context, user domain.PersonInfo, slug string) (domain.WikiPage, error) {
+func (w *wikiUsecase) GetWikiPageBySlug(ctx context.Context, user domain.PersonInfo, slug string) (Page, error) {
 	slug = strings.ToLower(slug)
 	if slug[0] == '/' {
 		slug = slug[1:]
@@ -40,9 +41,9 @@ func (w *wikiUsecase) DeleteWikiPageBySlug(ctx context.Context, slug string) err
 	return w.repository.DeleteWikiPageBySlug(ctx, slug)
 }
 
-func (w *wikiUsecase) SaveWikiPage(ctx context.Context, user domain.PersonInfo, slug string, body string, level domain.Privilege) (domain.WikiPage, error) {
+func (w *wikiUsecase) SaveWikiPage(ctx context.Context, user domain.PersonInfo, slug string, body string, level domain.Privilege) (Page, error) {
 	if slug == "" || body == "" {
-		return domain.WikiPage{}, domain.ErrInvalidParameter
+		return Page{}, domain.ErrInvalidParameter
 	}
 
 	page, errGetWikiSlug := w.GetWikiPageBySlug(ctx, user, slug)
@@ -52,7 +53,7 @@ func (w *wikiUsecase) SaveWikiPage(ctx context.Context, user domain.PersonInfo, 
 			page.Revision++
 			page.Slug = slug
 		} else {
-			return page, domain.ErrInternal
+			return page, httphelper.ErrInternal // TODO better error
 		}
 	} else {
 		page = page.NewRevision()

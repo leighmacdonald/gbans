@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/anticheat"
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -29,17 +31,17 @@ type UploadedDemo struct {
 
 type Fetcher struct {
 	database       database.Database
-	anticheat      domain.AntiCheatUsecase
+	anticheat      anticheat.AntiCheatUsecase
 	serversUsecase domain.ServersUsecase
 	configUsecase  domain.ConfigUsecase
-	assetUsecase   domain.AssetUsecase
-	demoUsecase    domain.DemoUsecase
+	assetUsecase   asset.AssetUsecase
+	demoUsecase    DemoUsecase
 	demoChan       chan UploadedDemo
 	parserMu       *sync.Mutex
 }
 
 func NewFetcher(database database.Database, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
-	assetUsecase domain.AssetUsecase, demoUsecase domain.DemoUsecase, anticheat domain.AntiCheatUsecase,
+	assetUsecase asset.AssetUsecase, demoUsecase DemoUsecase, anticheat anticheat.AntiCheatUsecase,
 ) *Fetcher {
 	return &Fetcher{
 		database:       database,
@@ -59,7 +61,7 @@ func (d Fetcher) OnDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		slog.String("name", demo.Name))
 
 	demoAsset, errNewAsset := d.assetUsecase.Create(ctx, steamid.New(d.configUsecase.Config().Owner),
-		domain.BucketDemo, demo.Name, bytes.NewReader(demo.Content))
+		asset.BucketDemo, demo.Name, bytes.NewReader(demo.Content))
 	if errNewAsset != nil {
 		return errNewAsset
 	}
@@ -207,7 +209,7 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 }
 
 func NewDownloader(config domain.ConfigUsecase, dbConn database.Database, servers domain.ServersUsecase,
-	assets domain.AssetUsecase, demos domain.DemoUsecase, anticheat domain.AntiCheatUsecase,
+	assets asset.AssetUsecase, demos DemoUsecase, anticheat anticheat.AntiCheatUsecase,
 ) Downloader {
 	fetcher := NewFetcher(dbConn, config, servers, assets, demos, anticheat)
 

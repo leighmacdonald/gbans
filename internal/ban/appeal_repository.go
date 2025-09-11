@@ -1,4 +1,4 @@
-package appeal
+package ban
 
 import (
 	"context"

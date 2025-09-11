@@ -5,18 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type speedrunHandler struct {
-	speedruns domain.SpeedrunUsecase
-	auth      domain.AuthUsecase
+	speedruns SpeedrunUsecase
+	auth      auth.AuthUsecase
 	config    domain.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, auth domain.AuthUsecase, config domain.ConfigUsecase) {
+func NewHandler(engine *gin.Engine, speedruns SpeedrunUsecase, auth auth.AuthUsecase, config domain.ConfigUsecase) {
 	handler := speedrunHandler{
 		speedruns: speedruns,
 		auth:      auth,
@@ -43,14 +44,14 @@ func NewHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, auth domai
 
 func (s *speedrunHandler) postSpeedrun() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var sr domain.Speedrun
+		var sr Speedrun
 		if !httphelper.Bind(ctx, &sr) {
 			return
 		}
 
 		speedrun, errSpeedrun := s.speedruns.Save(ctx, sr)
 		if errSpeedrun != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSpeedrun, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSpeedrun, httphelper.ErrInternal)))
 
 			return
 		}
@@ -86,7 +87,7 @@ func (s *speedrunHandler) getByMap() gin.HandlerFunc {
 
 		runs, errRuns := s.speedruns.ByMap(ctx, query.MapName)
 		if errRuns != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errRuns, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errRuns, httphelper.ErrInternal)))
 
 			return
 		}
@@ -110,7 +111,7 @@ func (s *speedrunHandler) getSpeedrun() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSpeedrun, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSpeedrun, httphelper.ErrInternal)))
 
 			return
 		}
@@ -137,7 +138,7 @@ func (s *speedrunHandler) getRecentChanges() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errTop, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errTop, httphelper.ErrInternal)))
 
 			return
 		}
@@ -164,7 +165,7 @@ func (s *speedrunHandler) getOverallTopN() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errTop, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errTop, httphelper.ErrInternal)))
 
 			return
 		}

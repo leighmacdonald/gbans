@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -23,23 +24,23 @@ import (
 type chatRepository struct {
 	db          database.Database
 	persons     domain.PersonUsecase
-	wordFilters domain.WordFilterUsecase
-	matches     domain.MatchUsecase
+	wordFilters WordFilterUsecase
+	matches     match.MatchUsecase
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	WarningChan chan domain.NewUserWarning
+	WarningChan chan NewUserWarning
 }
 
-func NewChatRepository(database database.Database, personUsecase domain.PersonUsecase, wordFilterUsecase domain.WordFilterUsecase,
-	matchUsecase domain.MatchUsecase,
+func NewChatRepository(database database.Database, personUsecase domain.PersonUsecase, wordFilterUsecase WordFilterUsecase,
+	matchUsecase match.MatchUsecase,
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-) domain.ChatRepository {
+) ChatRepository {
 	return &chatRepository{
 		db:          database,
 		persons:     personUsecase,
 		wordFilters: wordFilterUsecase,
 		matches:     matchUsecase,
 		broadcaster: broadcaster,
-		WarningChan: make(chan domain.NewUserWarning),
+		WarningChan: make(chan NewUserWarning),
 	}
 }
 
@@ -59,7 +60,7 @@ func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 
 	matchID, _ := r.matches.GetMatchIDFromServerID(evt.ServerID)
 
-	personMsg := domain.PersonMessage{
+	personMsg := PersonMessage{
 		SteamID:     person.SID,
 		PersonaName: strings.ToValidUTF8(person.Name, "_"),
 		ServerName:  evt.ServerName,
@@ -76,7 +77,7 @@ func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 		return
 	}
 
-	go func(userMsg domain.PersonMessage) {
+	go func(userMsg PersonMessage) {
 		matchedFilter := r.wordFilters.Check(userMsg.Body)
 		if len(matchedFilter) > 0 {
 			if errSaveMatch := r.wordFilters.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
@@ -84,10 +85,10 @@ func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 			}
 
 			matchResult := matchedFilter[0]
-			r.WarningChan <- domain.NewUserWarning{
+			r.WarningChan <- NewUserWarning{
 				UserMessage: userMsg,
 				PlayerID:    person.PID,
-				UserWarning: domain.UserWarning{
+				UserWarning: UserWarning{
 					WarnReason: reason,
 					Message:    userMsg.Body,
 					// todo
@@ -142,11 +143,11 @@ func (r chatRepository) Start(ctx context.Context) {
 	}
 }
 
-func (r chatRepository) GetWarningChan() chan domain.NewUserWarning {
+func (r chatRepository) GetWarningChan() chan NewUserWarning {
 	return r.WarningChan
 }
 
-func (r chatRepository) TopChatters(ctx context.Context, count uint64) ([]domain.TopChatterResult, error) {
+func (r chatRepository) TopChatters(ctx context.Context, count uint64) ([]TopChatterResult, error) {
 	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("p.personaname", "p.steam_id", "count(person_message_id) as total").
@@ -161,11 +162,11 @@ func (r chatRepository) TopChatters(ctx context.Context, count uint64) ([]domain
 
 	defer rows.Close()
 
-	var results []domain.TopChatterResult
+	var results []TopChatterResult
 
 	for rows.Next() {
 		var (
-			tcr     domain.TopChatterResult
+			tcr     TopChatterResult
 			steamID int64
 		)
 
@@ -182,7 +183,7 @@ func (r chatRepository) TopChatters(ctx context.Context, count uint64) ([]domain
 
 const minQueryLen = 2
 
-func (r chatRepository) AddChatHistory(ctx context.Context, message *domain.PersonMessage) error {
+func (r chatRepository) AddChatHistory(ctx context.Context, message *PersonMessage) error {
 	const query = `INSERT INTO person_messages
     		(steam_id, server_id, body, team, created_on, persona_name, match_id)
 			VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -198,7 +199,7 @@ func (r chatRepository) AddChatHistory(ctx context.Context, message *domain.Pers
 	return nil
 }
 
-func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error) { //nolint:maintidx
+func (r chatRepository) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
 		return nil, fmt.Errorf("%w: query", domain.ErrTooShort)
 	}
@@ -272,7 +273,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 		constraints = append(constraints, sq.Gt{"mf.person_message_filter_id": 0})
 	}
 
-	var messages []domain.QueryChatHistoryResult
+	var messages []QueryChatHistoryResult
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errQuery != nil {
@@ -283,7 +284,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 
 	for rows.Next() {
 		var (
-			message domain.QueryChatHistoryResult
+			message QueryChatHistoryResult
 			steamID int64
 			matchID []byte
 			flagged *int64
@@ -320,13 +321,13 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 
 	if messages == nil {
 		// Return empty list instead of null
-		messages = []domain.QueryChatHistoryResult{}
+		messages = []QueryChatHistoryResult{}
 	}
 
 	return messages, nil
 }
 
-func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (domain.QueryChatHistoryResult, error) {
+func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (QueryChatHistoryResult, error) {
 	const query = `
 		SELECT x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name, x.match_id, s.short_name, COALESCE(f.person_message_filter_id, 0) as flagged
 		FROM (
@@ -343,7 +344,7 @@ func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (
 		LEFT JOIN server s ON x.server_id = s.server_id
 		LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id`
 
-	var msg domain.QueryChatHistoryResult
+	var msg QueryChatHistoryResult
 
 	if err := r.db.DBErr(r.db.QueryRow(ctx, nil, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 		&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged)); err != nil {
@@ -353,7 +354,7 @@ func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (
 	return msg, nil
 }
 
-func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
+func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error) {
 	const query = `
 		SELECT x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name, x.match_id, s.short_name, COALESCE(f.person_message_filter_id, 0) as flagged
 		FROM ((SELECT m.person_message_id,
@@ -405,10 +406,10 @@ func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID in
 	}
 	defer rows.Close()
 
-	var messages []domain.QueryChatHistoryResult
+	var messages []QueryChatHistoryResult
 
 	for rows.Next() {
-		var msg domain.QueryChatHistoryResult
+		var msg QueryChatHistoryResult
 
 		if errScan := rows.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 			&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {

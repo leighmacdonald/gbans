@@ -1,4 +1,4 @@
-package domain
+package chat
 
 import (
 	"context"
@@ -7,7 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+)
+
+var (
+	ErrInvalidRegex = errors.New("invalid regex format")
 )
 
 type WordFilterRepository interface {
@@ -19,8 +24,8 @@ type WordFilterRepository interface {
 }
 
 type WordFilterUsecase interface {
-	Edit(ctx context.Context, user PersonInfo, filterID int64, filter Filter) (Filter, error)
-	Create(ctx context.Context, user PersonInfo, filter Filter) (Filter, error)
+	Edit(ctx context.Context, user domain.PersonInfo, filterID int64, filter Filter) (Filter, error)
+	Create(ctx context.Context, user domain.PersonInfo, filter Filter) (Filter, error)
 	DropFilter(ctx context.Context, filterID int64) error
 	GetFilterByID(ctx context.Context, filterID int64) (Filter, error)
 	GetFilters(ctx context.Context) ([]Filter, error)

@@ -1,21 +1,23 @@
-package wordfilter
+package chat
 
 import (
 	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type wordFilterHandler struct {
-	filters domain.WordFilterUsecase
-	chat    domain.ChatUsecase
+	filters WordFilterUsecase
+	chat    chat.ChatUsecase
 	config  domain.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, wordFilters domain.WordFilterUsecase, chat domain.ChatUsecase, auth domain.AuthUsecase) {
+func NewHandler(engine *gin.Engine, config domain.ConfigUsecase, wordFilters WordFilterUsecase, chat chat.ChatUsecase, auth auth.AuthUsecase) {
 	handler := wordFilterHandler{
 		config:  config,
 		filters: wordFilters,
@@ -39,13 +41,13 @@ func (h *wordFilterHandler) queryFilters() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		words, errGetFilters := h.filters.GetFilters(ctx)
 		if errGetFilters != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetFilters, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetFilters, httphelper.ErrInternal)))
 
 			return
 		}
 
 		if words == nil {
-			words = []domain.Filter{}
+			words = []Filter{}
 		}
 
 		ctx.JSON(http.StatusOK, words)
@@ -59,14 +61,14 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.Filter
+		var req Filter
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		wordFilter, errEdit := h.filters.Edit(ctx, httphelper.CurrentUserProfile(ctx), filterID, req)
 		if errEdit != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEdit, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEdit, httphelper.ErrInternal)))
 
 			return
 		}
@@ -77,14 +79,14 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 
 func (h *wordFilterHandler) createFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.Filter
+		var req Filter
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		wordFilter, errCreate := h.filters.Create(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errCreate != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCreate, domain.ErrInternal)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCreate, httphelper.ErrInternal)))
 
 			return
 		}
@@ -112,13 +114,13 @@ func (h *wordFilterHandler) deleteFilter() gin.HandlerFunc {
 
 func (h *wordFilterHandler) checkFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.RequestQuery
+		var req RequestQuery
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		if matches := h.filters.Check(req.Query); matches == nil {
-			ctx.JSON(http.StatusOK, []domain.Filter{})
+			ctx.JSON(http.StatusOK, []Filter{})
 		} else {
 			ctx.JSON(http.StatusOK, matches)
 		}
@@ -127,8 +129,8 @@ func (h *wordFilterHandler) checkFilter() gin.HandlerFunc {
 
 func (h *wordFilterHandler) filterStates() gin.HandlerFunc {
 	type warningState struct {
-		MaxWeight int                  `json:"max_weight"`
-		Current   []domain.UserWarning `json:"current"`
+		MaxWeight int           `json:"max_weight"`
+		Current   []UserWarning `json:"current"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -140,7 +142,7 @@ func (h *wordFilterHandler) filterStates() gin.HandlerFunc {
 		}
 
 		if outputState.Current == nil {
-			outputState.Current = []domain.UserWarning{}
+			outputState.Current = []UserWarning{}
 		}
 
 		ctx.JSON(http.StatusOK, outputState)

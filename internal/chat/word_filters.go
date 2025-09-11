@@ -1,4 +1,4 @@
-package wordfilter
+package chat
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"golang.org/x/exp/slices"
 )
 
@@ -25,7 +25,7 @@ type UserWarning struct {
 }
 
 type NewUserWarning struct {
-	UserMessage PersonMessage
+	UserMessage chat.PersonMessage
 	PlayerID    int
 	UserWarning
 }
@@ -36,7 +36,7 @@ type Warnings interface {
 
 type WordFilters struct {
 	*sync.RWMutex
-	wordFilters []domain.Filter
+	wordFilters []Filter
 }
 
 func NewWordFilters() *WordFilters {
@@ -46,13 +46,13 @@ func NewWordFilters() *WordFilters {
 }
 
 // Import loads the supplied word list into memory.
-func (f *WordFilters) Import(filters []domain.Filter) {
+func (f *WordFilters) Import(filters []Filter) {
 	f.Lock()
 	defer f.Unlock()
 	f.wordFilters = filters
 }
 
-func (f *WordFilters) Add(filter domain.Filter) {
+func (f *WordFilters) Add(filter Filter) {
 	f.Lock()
 	f.wordFilters = append(f.wordFilters, filter)
 	f.Unlock()
@@ -60,9 +60,9 @@ func (f *WordFilters) Add(filter domain.Filter) {
 
 // Match checks to see if the body of text contains a known filtered word
 // It will only return the first matched filter found.
-func (f *WordFilters) Match(body string) (string, domain.Filter, bool) {
+func (f *WordFilters) Match(body string) (string, Filter, bool) {
 	if body == "" {
-		return "", domain.Filter{}, false
+		return "", Filter{}, false
 	}
 
 	words := strings.Split(strings.ToLower(body), " ")
@@ -78,20 +78,20 @@ func (f *WordFilters) Match(body string) (string, domain.Filter, bool) {
 		}
 	}
 
-	return "", domain.Filter{}, false
+	return "", Filter{}, false
 }
 
 func (f *WordFilters) Remove(filterID int64) {
 	f.Lock()
 	defer f.Unlock()
 
-	f.wordFilters = slices.DeleteFunc(f.wordFilters, func(filter domain.Filter) bool {
+	f.wordFilters = slices.DeleteFunc(f.wordFilters, func(filter Filter) bool {
 		return filter.FilterID == filterID
 	})
 }
 
 // Check can be used to check if a phrase will match any filters.
-func (f *WordFilters) Check(message string) []domain.Filter {
+func (f *WordFilters) Check(message string) []Filter {
 	if message == "" {
 		return nil
 	}
@@ -101,7 +101,7 @@ func (f *WordFilters) Check(message string) []domain.Filter {
 	f.RLock()
 	defer f.RUnlock()
 
-	var found []domain.Filter
+	var found []Filter
 
 	for _, filter := range f.wordFilters {
 		for _, word := range words {

@@ -1,7 +1,6 @@
 package playerqueue
 
 import (
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -10,7 +9,7 @@ type ByePayload struct {
 }
 
 type MessagePayload struct {
-	Messages []domain.ChatLog `json:"messages"`
+	Messages []ChatLog `json:"messages"`
 }
 
 type JoinPayload struct {
