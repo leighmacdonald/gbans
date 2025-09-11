@@ -1,4 +1,4 @@
-package discord
+package message
 
 import (
 	"fmt"
@@ -13,11 +13,11 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -203,13 +203,13 @@ func KickPlayerEmbed(target person.PersonInfo) *discordgo.MessageEmbed {
 	return msgEmbed.AddTargetPerson(target).Embed().MessageEmbed
 }
 
-func KickPlayerOnConnectEmbed(steamID steamid.SteamID, name string, target person.PersonInfo, banSource domain.BanSource) *discordgo.MessageEmbed {
+func KickPlayerOnConnectEmbed(steamID steamid.SteamID, name string, target person.PersonInfo, banSource string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User Kicked Successfully")
 	msgEmbed.Embed().SetColor(ColourWarn)
 	msgEmbed.AddTargetPerson(target)
 	msgEmbed.Embed().
 		AddField("Connecting As", name).
-		AddField("Ban Source", string(banSource))
+		AddField("Ban Source", banSource)
 
 	return msgEmbed.AddFieldsSteamID(steamID).Embed().MessageEmbed
 }
@@ -1260,12 +1260,12 @@ func ForumSaved(message forum.Forum) *discordgo.MessageEmbed {
 	return embed.Embed().MessageEmbed
 }
 
-func NewPlayerqueueChatStatus(author person.UserProfile, target person.UserProfile, status person.ChatStatus, reason string) *discordgo.MessageEmbed {
+func NewPlayerqueueChatStatus(author person.UserProfile, target person.UserProfile, status playerqueue.ChatStatus, reason string) *discordgo.MessageEmbed {
 	colour := ColourError
 	switch status {
-	case domain.Readwrite:
+	case playerqueue.Readwrite:
 		colour = ColourSuccess
-	case domain.Readonly:
+	case playerqueue.Readonly:
 		colour = ColourWarn
 	}
 
@@ -1291,7 +1291,7 @@ func NewPlayerqueueMessage(author person.UserProfile, msg string) *discordgo.Mes
 		SetDescription(msg).MessageEmbed
 }
 
-func NewPlayerqueuePurge(author person.UserProfile, target person.UserProfile, message domain.ChatLog, count int) *discordgo.MessageEmbed {
+func NewPlayerqueuePurge(author person.UserProfile, target person.UserProfile, message playerqueue.ChatLog, count int) *discordgo.MessageEmbed {
 	return NewEmbed().
 		Embed().
 		SetColor(ColourInfo).

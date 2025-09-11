@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
@@ -40,9 +39,9 @@ func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 		if err != nil {
 			switch {
 			case errors.Is(err, database.ErrNoResult):
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, domain.ErrNotFound)))
-			case errors.Is(err, domain.ErrPermissionDenied):
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, domain.ErrPermissionDenied)))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, httphelper.ErrNotFound)))
+			case errors.Is(err, httphelper.ErrPermissionDenied):
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, httphelper.ErrPermissionDenied)))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 			}

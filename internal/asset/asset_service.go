@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person/permission"
@@ -14,11 +13,10 @@ import (
 
 type mediaHandler struct {
 	assets AssetUsecase
-	config *config.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, config *config.ConfigUsecase, assets AssetUsecase, authUC httphelper.Authenticator) {
-	handler := mediaHandler{config: config, assets: assets}
+func NewHandler(engine *gin.Engine, assets AssetUsecase, authUC httphelper.Authenticator) {
+	handler := mediaHandler{assets: assets}
 
 	optGrp := engine.Group("/")
 	{

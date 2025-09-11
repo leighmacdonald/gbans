@@ -10,7 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
@@ -38,17 +38,19 @@ type discordRepository struct {
 	session         *discordgo.Session
 	isReady         atomic.Bool
 	commandHandlers map[Cmd]SlashCommandHandler
-	conf            *config.Config
 	commands        []*discordgo.ApplicationCommand
+	appID           string
+	externalURL     string
+	guildID         string
 }
 
-func NewDiscordRepository(conf *config.Config) (DiscordRepository, error) {
-	if !conf.Discord.Enabled || !conf.Discord.BotEnabled {
+func NewDiscordRepository(discordEnabled bool, botEnabled bool, token string, appID string, guildID string, externalURL string) (DiscordRepository, error) {
+	if !discordEnabled || !botEnabled {
 		return &nullDiscordRepository{}, nil
 	}
 
 	// Immediately connects
-	session, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
+	session, errNewSession := discordgo.New("Bot " + token)
 	if errNewSession != nil {
 		return nil, errors.Join(errNewSession, ErrDiscordCreate)
 	}
@@ -59,9 +61,11 @@ func NewDiscordRepository(conf *config.Config) (DiscordRepository, error) {
 	session.Identify.Intents |= discordgo.IntentGuildMembers
 	bot := &discordRepository{
 		session:         session,
-		conf:            conf,
 		isReady:         atomic.Bool{},
 		commandHandlers: map[Cmd]SlashCommandHandler{},
+		appID:           appID,
+		externalURL:     externalURL,
+		guildID:         guildID,
 	}
 
 	bot.session.AddHandler(bot.onReady)
@@ -104,7 +108,7 @@ func (bot *discordRepository) onReady(session *discordgo.Session, _ *discordgo.R
 }
 
 func (bot *discordRepository) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
-	if errRegister := bot.botRegisterSlashCommands(bot.conf.Discord.AppID); errRegister != nil {
+	if errRegister := bot.botRegisterSlashCommands(bot.appID); errRegister != nil {
 		slog.Error("Failed to register discord slash commands", log.ErrAttr(errRegister))
 	}
 
@@ -114,7 +118,7 @@ func (bot *discordRepository) onConnect(_ *discordgo.Session, _ *discordgo.Conne
 			{
 				Name:     "Cheeseburgers",
 				Type:     discordgo.ActivityTypeListening,
-				URL:      bot.conf.ExternalURL,
+				URL:      bot.externalURL,
 				State:    "state field",
 				Details:  "Blah",
 				Instance: true,
@@ -175,7 +179,7 @@ func (bot *discordRepository) onInteractionCreate(session *discordgo.Session, in
 		response, errHandleCommand := handler(commandCtx, session, interaction)
 		if errHandleCommand != nil || response == nil {
 			if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
-				Embeds: []*discordgo.MessageEmbed{ErrorMessage(string(command), errHandleCommand)},
+				Embeds: []*discordgo.MessageEmbed{message.ErrorMessage(string(command), errHandleCommand)},
 			}); errFollow != nil {
 				slog.Error("Failed sending error response for interaction", log.ErrAttr(errFollow))
 			}
@@ -652,7 +656,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		},
 	}
 
-	commands, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, bot.conf.Discord.GuildID, slashCommands)
+	commands, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, bot.guildID, slashCommands)
 	if errBulk != nil {
 		return errors.Join(errBulk, ErrDiscordOverwriteCommands)
 	}

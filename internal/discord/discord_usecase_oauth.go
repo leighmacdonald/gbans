@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/queue"
@@ -20,12 +22,12 @@ import (
 )
 
 type discordOAuthUsecase struct {
-	config     domain.ConfigUsecase
+	config     *config.ConfigUsecase
 	state      *oauth.LoginStateTracker
-	repository domain.DiscordOAuthRepository
+	repository DiscordOAuthRepository
 }
 
-func NewDiscordOAuthUsecase(repository domain.DiscordOAuthRepository, config domain.ConfigUsecase) domain.DiscordOAuthUsecase {
+func NewDiscordOAuthUsecase(repository DiscordOAuthRepository, config *config.ConfigUsecase) DiscordOAuthUsecase {
 	return &discordOAuthUsecase{
 		repository: repository,
 		config:     config,
@@ -33,14 +35,14 @@ func NewDiscordOAuthUsecase(repository domain.DiscordOAuthRepository, config dom
 	}
 }
 
-func (d discordOAuthUsecase) GetUserDetail(ctx context.Context, steamID steamid.SteamID) (domain.DiscordUserDetail, error) {
+func (d discordOAuthUsecase) GetUserDetail(ctx context.Context, steamID steamid.SteamID) (DiscordUserDetail, error) {
 	return d.repository.GetUserDetail(ctx, steamID)
 }
 
 func (d discordOAuthUsecase) RefreshTokens(ctx context.Context) error {
 	entries, errOld := d.repository.OldAuths(ctx)
 	if errOld != nil {
-		if errors.Is(errOld, domain.ErrNoResult) {
+		if errors.Is(errOld, database.ErrNoResult) {
 			return nil
 		}
 
@@ -68,7 +70,7 @@ func (d discordOAuthUsecase) RefreshTokens(ctx context.Context) error {
 	return nil
 }
 
-func (d discordOAuthUsecase) fetchRefresh(ctx context.Context, credentials domain.DiscordCredential) (domain.DiscordCredential, error) {
+func (d discordOAuthUsecase) fetchRefresh(ctx context.Context, credentials DiscordCredential) (DiscordCredential, error) {
 	conf := d.config.Config()
 
 	form := url.Values{}
@@ -81,27 +83,27 @@ func (d discordOAuthUsecase) fetchRefresh(ctx context.Context, credentials domai
 		strings.NewReader(form.Encode()))
 
 	if errReq != nil {
-		return domain.DiscordCredential{}, errors.Join(errReq, domain.ErrRequestCreate)
+		return DiscordCredential{}, errors.Join(errReq, domain.ErrRequestCreate)
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, errResp := httphelper.NewHTTPClient().Do(req)
 	if errResp != nil {
-		return domain.DiscordCredential{}, errors.Join(errResp, domain.ErrRequestPerform)
+		return DiscordCredential{}, errors.Join(errResp, domain.ErrRequestPerform)
 	}
 
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 
-	var atr domain.DiscordCredential
+	var atr DiscordCredential
 	if errJSON := json.NewDecoder(resp.Body).Decode(&atr); errJSON != nil {
-		return domain.DiscordCredential{}, errors.Join(errJSON, domain.ErrRequestDecode)
+		return DiscordCredential{}, errors.Join(errJSON, domain.ErrRequestDecode)
 	}
 
 	if atr.AccessToken == "" {
-		return domain.DiscordCredential{}, domain.ErrEmptyToken
+		return DiscordCredential{}, domain.ErrEmptyToken
 	}
 
 	credentials.RefreshToken = atr.RefreshToken
@@ -123,7 +125,7 @@ func (d discordOAuthUsecase) Logout(ctx context.Context, steamID steamid.SteamID
 	}
 
 	token, errToken := d.repository.GetTokens(ctx, steamID)
-	if errToken != nil && !errors.Is(errToken, domain.ErrNotFound) {
+	if errToken != nil && !errors.Is(errToken, httphelper.ErrNotFound) {
 		return errToken
 	}
 
@@ -188,7 +190,7 @@ func (d discordOAuthUsecase) HandleOAuthCode(ctx context.Context, code string, s
 
 	steamID, found := d.state.Get(state)
 	if !found {
-		return domain.ErrNotFound
+		return httphelper.ErrNotFound
 	}
 
 	token, errToken := d.fetchToken(ctx, client, code)
@@ -224,8 +226,8 @@ func (d discordOAuthUsecase) HandleOAuthCode(ctx context.Context, code string, s
 	return nil
 }
 
-func (d discordOAuthUsecase) fetchDiscordUser(ctx context.Context, client *http.Client, accessToken string, steamID steamid.SteamID) (domain.DiscordUserDetail, error) {
-	var details domain.DiscordUserDetail
+func (d discordOAuthUsecase) fetchDiscordUser(ctx context.Context, client *http.Client, accessToken string, steamID steamid.SteamID) (DiscordUserDetail, error) {
+	var details DiscordUserDetail
 
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
 	if errReq != nil {
@@ -252,7 +254,7 @@ func (d discordOAuthUsecase) fetchDiscordUser(ctx context.Context, client *http.
 	return details, nil
 }
 
-func (d discordOAuthUsecase) fetchToken(ctx context.Context, client *http.Client, code string) (domain.DiscordCredential, error) {
+func (d discordOAuthUsecase) fetchToken(ctx context.Context, client *http.Client, code string) (DiscordCredential, error) {
 	conf := d.config.Config()
 
 	form := url.Values{}
@@ -266,27 +268,27 @@ func (d discordOAuthUsecase) fetchToken(ctx context.Context, client *http.Client
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "https://discord.com/api/oauth2/token", strings.NewReader(form.Encode()))
 
 	if errReq != nil {
-		return domain.DiscordCredential{}, errors.Join(errReq, domain.ErrRequestCreate)
+		return DiscordCredential{}, errors.Join(errReq, domain.ErrRequestCreate)
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {
-		return domain.DiscordCredential{}, errors.Join(errResp, domain.ErrRequestPerform)
+		return DiscordCredential{}, errors.Join(errResp, domain.ErrRequestPerform)
 	}
 
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 
-	var atr domain.DiscordCredential
+	var atr DiscordCredential
 	if errJSON := json.NewDecoder(resp.Body).Decode(&atr); errJSON != nil {
-		return domain.DiscordCredential{}, errors.Join(errJSON, domain.ErrRequestDecode)
+		return DiscordCredential{}, errors.Join(errJSON, domain.ErrRequestDecode)
 	}
 
 	if atr.AccessToken == "" {
-		return domain.DiscordCredential{}, domain.ErrEmptyToken
+		return DiscordCredential{}, domain.ErrEmptyToken
 	}
 
 	return atr, nil
@@ -302,13 +304,13 @@ func (args TokenRefreshArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 12}}
 }
 
-func NewTokenRefreshWorker(discordOAuth domain.DiscordOAuthUsecase) *TokenRefreshWorker {
+func NewTokenRefreshWorker(discordOAuth DiscordOAuthUsecase) *TokenRefreshWorker {
 	return &TokenRefreshWorker{discordOAuth: discordOAuth}
 }
 
 type TokenRefreshWorker struct {
 	river.WorkerDefaults[TokenRefreshArgs]
-	discordOAuth domain.DiscordOAuthUsecase
+	discordOAuth DiscordOAuthUsecase
 }
 
 func (worker *TokenRefreshWorker) Work(ctx context.Context, _ *river.Job[TokenRefreshArgs]) error {

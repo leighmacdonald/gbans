@@ -2,15 +2,16 @@ package discord
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
 type discordUsecase struct {
-	repository domain.DiscordRepository
-	config     domain.ConfigUsecase
+	repository DiscordRepository
+	config     *config.ConfigUsecase
 }
 
-func NewDiscordUsecase(repository domain.DiscordRepository, config domain.ConfigUsecase) domain.DiscordUsecase {
+func NewDiscordUsecase(repository DiscordRepository, config *config.ConfigUsecase) DiscordUsecase {
 	return &discordUsecase{repository: repository, config: config}
 }
 
@@ -18,7 +19,7 @@ func (d discordUsecase) Shutdown() {
 	d.repository.Shutdown()
 }
 
-func (d discordUsecase) RegisterHandler(cmd domain.Cmd, handler domain.SlashCommandHandler) error {
+func (d discordUsecase) RegisterHandler(cmd Cmd, handler SlashCommandHandler) error {
 	return d.repository.RegisterHandler(cmd, handler)
 }
 

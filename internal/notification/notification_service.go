@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
@@ -113,7 +112,7 @@ func (h notificationHandler) onNotifications() gin.HandlerFunc {
 		notifications, err := h.notifications.GetPersonNotifications(ctx, httphelper.CurrentUserProfile(ctx).SteamID)
 		if err != nil {
 			if errors.Is(err, database.ErrNoResult) {
-				ctx.JSON(http.StatusOK, []domain.UserNotification{})
+				ctx.JSON(http.StatusOK, []UserNotification{})
 
 				return
 			}
