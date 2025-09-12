@@ -7,6 +7,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +25,7 @@ func TestReport(t *testing.T) {
 		SourceID:        source.SteamID,
 		TargetID:        target.SteamID,
 		Description:     stringutil.SecureRandomString(100),
-		Reason:          ban.Cheating,
+		Reason:          banDomain.Cheating,
 		ReasonText:      "",
 		DemoID:          0,
 		DemoTick:        0,

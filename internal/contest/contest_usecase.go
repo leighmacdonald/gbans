@@ -6,10 +6,9 @@ import (
 	"log/slog"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -60,7 +59,7 @@ func (c *ContestUsecase) ContestEntryDelete(ctx context.Context, contestEntryID 
 	return c.repository.ContestEntryDelete(ctx, contestEntryID)
 }
 
-func (c *ContestUsecase) Contests(ctx context.Context, user person.PersonInfo) ([]Contest, error) {
+func (c *ContestUsecase) Contests(ctx context.Context, user domain.PersonInfo) ([]Contest, error) {
 	return c.repository.Contests(ctx, !user.HasPermission(permission.PModerator))
 }
 
@@ -80,14 +79,14 @@ func (c *ContestUsecase) ContestEntryVoteGet(ctx context.Context, contestEntryID
 	return c.repository.ContestEntryVoteGet(ctx, contestEntryID, steamID, record)
 }
 
-func (c *ContestUsecase) ContestEntryVote(ctx context.Context, contestID uuid.UUID, contestEntryID uuid.UUID, user person.PersonInfo, vote bool) error {
+func (c *ContestUsecase) ContestEntryVote(ctx context.Context, contestID uuid.UUID, contestEntryID uuid.UUID, user domain.PersonInfo, vote bool) error {
 	var contest Contest
 	if errContests := c.ContestByID(ctx, contestID, &contest); errContests != nil {
 		return errContests
 	}
 
 	if !contest.Public && !user.HasPermission(permission.PModerator) {
-		return domain.ErrPermissionDenied
+		return permission.ErrPermissionDenied
 	}
 
 	if !contest.Voting || !contest.DownVotes && !vote {

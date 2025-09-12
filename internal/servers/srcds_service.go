@@ -27,9 +27,9 @@ import (
 
 type srcdsHandler struct {
 	srcds         *SRCDSUsecase
-	servers       ServersUsecase
+	servers       *ServersUsecase
 	persons       person.PersonUsecase
-	state         StateUsecase
+	state         *StateUsecase
 	notifications notification.NotificationUsecase
 	config        *config.ConfigUsecase
 	reports       ban.ReportUsecase

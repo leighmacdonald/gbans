@@ -8,10 +8,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 )
 
@@ -40,7 +38,7 @@ func (w *WordFilterUsecase) Check(query string) []Filter {
 	return w.wordFilters.Check(query)
 }
 
-func (w *WordFilterUsecase) Edit(ctx context.Context, user person.PersonInfo, filterID int64, filter Filter) (Filter, error) {
+func (w *WordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, filterID int64, filter Filter) (Filter, error) {
 	existingFilter, errGet := w.repository.GetFilterByID(ctx, filterID)
 	if errGet != nil {
 		return Filter{}, errGet
@@ -67,7 +65,7 @@ func (w *WordFilterUsecase) Edit(ctx context.Context, user person.PersonInfo, fi
 	return existingFilter, nil
 }
 
-func (w *WordFilterUsecase) Create(ctx context.Context, user person.PersonInfo, opts Filter) (Filter, error) {
+func (w *WordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, opts Filter) (Filter, error) {
 	if opts.Pattern == "" {
 		return Filter{}, domain.ErrInvalidPattern
 	}
@@ -114,7 +112,7 @@ func (w *WordFilterUsecase) Create(ctx context.Context, user person.PersonInfo, 
 
 	w.wordFilters.Add(newFilter)
 
-	w.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelWordFilterLog, discord.FilterAddMessage(newFilter)))
+	// w.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelWordFilterLog, discord.FilterAddMessage(newFilter)))
 
 	slog.Info("Created filter", slog.Int64("filter_id", newFilter.FilterID))
 

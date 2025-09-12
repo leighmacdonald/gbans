@@ -1,16 +1,19 @@
 package news
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/discord/message"
+)
 
 func NewNewsMessage(body string, title string) *discordgo.MessageEmbed {
-	return NewEmbed("News Created").
+	return message.NewEmbed("News Created").
 		Embed().
 		SetDescription(body).
 		AddField("Title", title).MessageEmbed
 }
 
 func EditNewsMessages(title string, body string) *discordgo.MessageEmbed {
-	return NewEmbed("News Updated").
+	return message.NewEmbed("News Updated").
 		Embed().
 		AddField("Title", title).
 		SetDescription(body).

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
+	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,8 +27,8 @@ func TestBans(t *testing.T) {
 		SourceID:       mod.SteamID,
 		TargetID:       target.SteamID,
 		Duration:       time.Hour * 24,
-		BanType:        ban.Banned,
-		Reason:         ban.Cheating,
+		BanType:        banDomain.Banned,
+		Reason:         banDomain.Cheating,
 		ReasonText:     "",
 		Note:           "notes",
 		ReportID:       0,
@@ -58,8 +59,8 @@ func TestBans(t *testing.T) {
 
 	updateReq := ban.RequestBanSteamUpdate{
 		TargetID:       fetchedBan.TargetID,
-		BanType:        ban.NoComm,
-		Reason:         ban.Custom,
+		BanType:        banDomain.NoComm,
+		Reason:         banDomain.Custom,
 		ReasonText:     "blah",
 		Note:           "edited",
 		IncludeFriends: false,

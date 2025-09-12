@@ -8,33 +8,62 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/discord/helper"
+	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+var slashCommands = []*discordgo.ApplicationCommand{
+	{
+		//ApplicationID:            appID,
+		Name:                     "anticheat",
+		Description:              "Query Anticheat Logs",
+		DefaultMemberPermissions: &helper.ModPerms,
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "player",
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Description: "Query a players anticheat logs by steam id",
+				Options: []*discordgo.ApplicationCommandOption{
+					&discordgo.ApplicationCommandOption{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        helper.OptUserIdentifier,
+						Description: "SteamID in any format OR profile url",
+						Required:    true,
+					},
+				},
+			},
+		},
+	},
+}
+
 const CmdAC = "ac"
 
-func makeOnAC() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		name := interaction.ApplicationCommandData().Options[0].Name
-		switch name {
-		case "player":
-			return h.onACPlayer(ctx, session, interaction)
-		// case string(cmdStatsGlobal):
-		//	return discord.onStatsGlobal(ctx, session, interaction, response)
-		// case string(cmdStatsServer):
-		//	return discord.onStatsServer(ctx, session, interaction, response)
-		default:
-			return nil, ErrCommandFailed
-		}
+func RegisterDiscord() {
+	h := DiscordHandler{}
+
+}
+
+type DiscordHandler struct {
+	anticheat AntiCheatUsecase
+}
+
+func (h DiscordHandler) makeOnAC(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	name := interaction.ApplicationCommandData().Options[0].Name
+	switch name {
+	case "player":
+		return h.onACPlayer(ctx, session, interaction)
+	default:
+		return nil, helper.ErrCommandFailed
 	}
 }
 
-func onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+func (h DiscordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	steamID, errResolveSID := steamid.Resolve(ctx, opts[OptUserIdentifier].StringValue())
+	steamID, errResolveSID := steamid.Resolve(ctx, opts[helper.OptUserIdentifier].StringValue())
 	if errResolveSID != nil || !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
@@ -49,26 +78,26 @@ func onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordg
 		return nil, errQuery
 	}
 
-	return message.ACPlayerLogs(h.config, person, logs), nil
+	return ACPlayerLogs(h.config, person, logs), nil
 }
 
 func NewAnticheatTrigger(ban ban.BannedPerson, config *config.Config, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
-	embed := NewEmbed("Player triggered anti-cheat response")
+	embed := message.NewEmbed("Player triggered anti-cheat response")
 	embed.Embed().
-		SetColor(ColourSuccess).
+		SetColor(message.ColourSuccess).
 		AddField("Detection", string(entry.Detection)).
 		AddField("Count", strconv.Itoa(count)).
 		AddField("Action", string(config.Anticheat.Action))
 
 	if entry.DemoName != "" {
-		embed.emb.AddField("Demo Name", entry.DemoName)
-		embed.emb.AddField("Demo Tick", strconv.Itoa(entry.DemoTick))
+		embed.Emb.AddField("Demo Name", entry.DemoName)
+		embed.Emb.AddField("Demo Tick", strconv.Itoa(entry.DemoTick))
 	}
 
 	embed = embed.AddFieldsSteamID(entry.SteamID)
 
 	if ban.Note != "" {
-		embed.emb.Description = "```\n" + entry.RawLog + "\n```"
+		embed.Emb.Description = "```\n" + entry.RawLog + "\n```"
 	}
 
 	return embed.Embed().MessageEmbed
@@ -76,7 +105,7 @@ func NewAnticheatTrigger(ban ban.BannedPerson, config *config.Config, entry logp
 
 func ACPlayerLogs(conf *config.ConfigUsecase, person domain.PersonInfo, entries []AnticheatEntry) *discordgo.MessageEmbed {
 	sid := person.GetSteamID()
-	emb := NewEmbed()
+	emb := message.NewEmbed()
 
 	total := 0
 	detections := map[logparse.Detection]int{}
@@ -92,7 +121,7 @@ func ACPlayerLogs(conf *config.ConfigUsecase, person domain.PersonInfo, entries 
 
 	emb.Embed().
 		SetTitle(fmt.Sprintf("Anticheat Detections (count: %d)", total)).
-		SetColor(ColourSuccess).
+		SetColor(message.ColourSuccess).
 		SetAuthor(person.GetName(), person.GetAvatar().Small(), conf.ExtURL(person))
 
 	j := 0
@@ -100,7 +129,7 @@ func ACPlayerLogs(conf *config.ConfigUsecase, person domain.PersonInfo, entries 
 		emb.Embed().AddField("Detection: "+string(server), strconv.Itoa(count))
 		j++
 		if j < len(detections) {
-			emb.emb.MakeFieldInline()
+			emb.Emb.MakeFieldInline()
 		}
 	}
 
@@ -119,7 +148,7 @@ func ACPlayerLogs(conf *config.ConfigUsecase, person domain.PersonInfo, entries 
 		emb.Embed().AddField("Server: "+server, strconv.Itoa(count))
 		i++
 		if i < len(servers) {
-			emb.emb.MakeFieldInline()
+			emb.Emb.MakeFieldInline()
 		}
 	}
 

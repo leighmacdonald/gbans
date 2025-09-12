@@ -95,7 +95,7 @@ func (c *Collector) GetServer(serverID int) (ServerConfig, error) {
 	})
 
 	if serverIdx == -1 {
-		return ServerConfig{}, domain.ErrUnknownServerID
+		return ServerConfig{}, ErrUnknownServerID
 	}
 
 	return configs[serverIdx], nil
@@ -231,7 +231,7 @@ func (c *Collector) Update(serverID int, update PartialStateUpdate) error {
 
 	curState, ok := c.serverState[serverID]
 	if !ok {
-		return domain.ErrUnknownServer
+		return ErrUnknownServer
 	}
 
 	if update.Hostname != "" {

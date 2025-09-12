@@ -28,7 +28,7 @@ func NewEmbed(args ...string) *Embed {
 	}
 
 	return &Embed{
-		emb: newEmbed,
+		Emb: newEmbed,
 	}
 }
 
@@ -41,15 +41,15 @@ func (e *Embed) AddFieldsSteamID(steamID steamid.SteamID) *Embed {
 }
 
 type Embed struct {
-	emb *embed.Embed
+	Emb *embed.Embed
 }
 
 func (e *Embed) Embed() *embed.Embed {
-	return e.emb
+	return e.Emb
 }
 
 func (e *Embed) Message() *discordgo.MessageEmbed {
-	return e.emb.MessageEmbed
+	return e.Emb.MessageEmbed
 }
 
 func (e *Embed) AddTargetPerson(person domain.PersonInfo) *Embed {
@@ -58,7 +58,7 @@ func (e *Embed) AddTargetPerson(person domain.PersonInfo) *Embed {
 		name = fmt.Sprintf("<@%s> | ", person.GetDiscordID()) + name
 	}
 
-	e.emb.AddField("Name", name)
+	e.Emb.AddField("Name", name)
 	e.Embed().SetImage(person.GetAvatar().Full())
 
 	return e

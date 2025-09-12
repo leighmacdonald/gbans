@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type chatHandler struct {
@@ -39,7 +40,8 @@ func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 			return
 		}
 
-		messages, errChat := h.chat.QueryChatHistory(ctx, httphelper.CurrentUserProfile(ctx), req)
+		user, _ := session.CurrentUserProfile(ctx)
+		messages, errChat := h.chat.QueryChatHistory(ctx, user, req)
 		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, httphelper.ErrInternal)))
 

@@ -8,15 +8,72 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/discord/helper"
+	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 )
 
-func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	message := opts[OptMessage].StringValue()
+var slashCommands = []*discordgo.ApplicationCommand{
+	{
+		Name:                     "filter",
+		Description:              "Manage and test global word filters",
+		DMPermission:             &helper.DmPerms,
+		DefaultMemberPermissions: &helper.ModPerms,
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "add",
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Description: "Add a new filtered word",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionBoolean,
+						Name:        helper.OptIsRegex,
+						Description: "Is the pattern a regular expression?",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        helper.OptPattern,
+						Description: "Regular expression or word for matching",
+						Required:    true,
+					},
+				},
+			},
+			{
+				Name:        "del",
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Description: "Remove a filtered word",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionInteger,
+						Name:        "filter",
+						Description: "Filter ID",
+						Required:    true,
+					},
+				},
+			},
+			{
+				Name:        "check",
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Description: "Check if a string has a matching filter",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        helper.OptMessage,
+						Description: "String to check filters against",
+						Required:    true,
+					},
+				},
+			},
+		},
+	},
+}
 
-	return message.FilterCheckMessage(h.wordFilters.Check(message)), nil
+func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	message := opts[helper.OptMessage].StringValue()
+
+	return FilterCheckMessage(h.wordFilters.Check(message)), nil
 }
 
 func makeOnFilter() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
@@ -25,14 +82,14 @@ func makeOnFilter() func(_ context.Context, _ *discordgo.Session, _ *discordgo.I
 		case "check":
 			return h.onFilterCheck(ctx, session, interaction)
 		default:
-			return nil, ErrCommandFailed
+			return nil, helper.ErrCommandFailed
 		}
 	}
 }
 
 func FilterAddMessage(filter Filter) *discordgo.MessageEmbed {
-	msgEmbed := NewEmbed("Filter Created Successfully").Embed().
-		SetColor(ColourSuccess).
+	msgEmbed := message.NewEmbed("Filter Created Successfully").Embed().
+		SetColor(message.ColourSuccess).
 		AddField("pattern", filter.Pattern).
 		Truncate()
 
@@ -40,21 +97,21 @@ func FilterAddMessage(filter Filter) *discordgo.MessageEmbed {
 }
 
 func FilterDelMessage(filter Filter) *discordgo.MessageEmbed {
-	return NewEmbed("Filter Deleted Successfully").
+	return message.NewEmbed("Filter Deleted Successfully").
 		Embed().
-		SetColor(ColourSuccess).
+		SetColor(message.ColourSuccess).
 		AddField("filter", filter.Pattern).
 		Truncate().MessageEmbed
 }
 
 func FilterCheckMessage(matches []Filter) *discordgo.MessageEmbed {
-	msgEmbed := NewEmbed()
+	msgEmbed := message.NewEmbed()
 	if len(matches) == 0 {
 		msgEmbed.Embed().SetTitle("No Matches Found")
-		msgEmbed.Embed().SetColor(ColourSuccess)
+		msgEmbed.Embed().SetColor(message.ColourSuccess)
 	} else {
 		msgEmbed.Embed().SetTitle("Matched Found")
-		msgEmbed.Embed().SetColor(ColourWarn)
+		msgEmbed.Embed().SetColor(message.ColourWarn)
 
 		for _, match := range matches {
 			msgEmbed.Embed().AddField(fmt.Sprintf("Matched ID: %d", match.FilterID), match.Pattern)
@@ -64,11 +121,11 @@ func FilterCheckMessage(matches []Filter) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func WarningMessage(newWarning chat.NewUserWarning, banSteam ban.BannedPerson) *discordgo.MessageEmbed {
-	msgEmbed := NewEmbed("Language Warning")
+func WarningMessage(newWarning NewUserWarning, banSteam ban.BannedPerson) *discordgo.MessageEmbed {
+	msgEmbed := message.NewEmbed("Language Warning")
 	msgEmbed.Embed().
 		SetDescription(newWarning.UserWarning.Message).
-		SetColor(ColourWarn).
+		SetColor(message.ColourWarn).
 		AddField("Filter ID", strconv.FormatInt(newWarning.MatchedFilter.FilterID, 10)).
 		AddField("Matched", newWarning.Matched).
 		AddField("ServerStore", newWarning.UserMessage.ServerName).InlineAllFields().
