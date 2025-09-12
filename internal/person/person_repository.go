@@ -15,7 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
+	"github.com/leighmacdonald/gbans/internal/user/permission"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )

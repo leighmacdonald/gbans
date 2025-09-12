@@ -3,8 +3,8 @@ package forum
 import (
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -81,17 +81,19 @@ func (forum Forum) NewThread(title string, sourceID steamid.SteamID) ForumThread
 }
 
 type ForumThread struct {
-	ForumThreadID int64           `json:"forum_thread_id"`
-	ForumID       int             `json:"forum_id"`
-	SourceID      steamid.SteamID `json:"source_id"`
-	Title         string          `json:"title"`
-	Sticky        bool            `json:"sticky"`
-	Locked        bool            `json:"locked"`
-	Views         int64           `json:"views"`
-	Replies       int64           `json:"replies"`
-	person.SimplePerson
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
+	ForumThreadID   int64                `json:"forum_thread_id"`
+	ForumID         int                  `json:"forum_id"`
+	SourceID        steamid.SteamID      `json:"source_id"`
+	Title           string               `json:"title"`
+	Sticky          bool                 `json:"sticky"`
+	Locked          bool                 `json:"locked"`
+	Views           int64                `json:"views"`
+	Replies         int64                `json:"replies"`
+	Personaname     string               `json:"personaname"`
+	Avatarhash      string               `json:"avatarhash"`
+	PermissionLevel permission.Privilege `json:"permission_level"`
+	CreatedOn       time.Time            `json:"created_on"`
+	UpdatedOn       time.Time            `json:"updated_on"`
 }
 
 func (thread ForumThread) NewMessage(sourceID steamid.SteamID, body string) ForumMessage {
@@ -106,16 +108,18 @@ func (thread ForumThread) NewMessage(sourceID steamid.SteamID, body string) Foru
 }
 
 type ForumMessage struct {
-	ForumMessageID int64           `json:"forum_message_id"`
-	ForumThreadID  int64           `json:"forum_thread_id"`
-	SourceID       steamid.SteamID `json:"source_id"`
-	BodyMD         string          `json:"body_md"`
-	Title          string          `json:"title"`
-	Online         bool            `json:"online"`
-	Signature      string          `json:"signature"`
-	person.SimplePerson
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
+	ForumMessageID  int64                `json:"forum_message_id"`
+	ForumThreadID   int64                `json:"forum_thread_id"`
+	SourceID        steamid.SteamID      `json:"source_id"`
+	BodyMD          string               `json:"body_md"`
+	Title           string               `json:"title"`
+	Online          bool                 `json:"online"`
+	Signature       string               `json:"signature"`
+	Personaname     string               `json:"personaname"`
+	Avatarhash      string               `json:"avatarhash"`
+	PermissionLevel permission.Privilege `json:"permission_level"`
+	CreatedOn       time.Time            `json:"created_on"`
+	UpdatedOn       time.Time            `json:"updated_on"`
 }
 
 func (message ForumMessage) NewVote(sourceID steamid.SteamID, vote Vote) ForumMessageVote {
@@ -139,12 +143,14 @@ type ForumMessageVote struct {
 
 type ThreadWithSource struct {
 	ForumThread
-	person.SimplePerson
-	RecentForumMessageID int64     `json:"recent_forum_message_id"`
-	RecentCreatedOn      time.Time `json:"recent_created_on"`
-	RecentSteamID        string    `json:"recent_steam_id"`
-	RecentPersonaname    string    `json:"recent_personaname"`
-	RecentAvatarhash     string    `json:"recent_avatarhash"`
+	Personaname          string               `json:"personaname"`
+	Avatarhash           string               `json:"avatarhash"`
+	PermissionLevel      permission.Privilege `json:"permission_level"`
+	RecentForumMessageID int64                `json:"recent_forum_message_id"`
+	RecentCreatedOn      time.Time            `json:"recent_created_on"`
+	RecentSteamID        string               `json:"recent_steam_id"`
+	RecentPersonaname    string               `json:"recent_personaname"`
+	RecentAvatarhash     string               `json:"recent_avatarhash"`
 }
 
 type Vote int

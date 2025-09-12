@@ -8,6 +8,9 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/testcontainers/testcontainers-go"
@@ -81,12 +84,12 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 }
 
 type MockConfigRepository struct {
-	config domain.Config
+	config config.Config
 }
 
-func newConfigRepo(config domain.Config) domain.ConfigRepository {
+func newConfigRepo(conf config.Config) *config.ConfigRepository {
 	return &MockConfigRepository{
-		config: config,
+		config: conf,
 	}
 }
 
@@ -108,13 +111,13 @@ type permTestValues struct {
 	method string
 	code   int
 	path   string
-	levels []domain.Privilege
+	levels []permission.Privilege
 }
 
 var (
-	authed     = []domain.Privilege{domain.PGuest}                                  //nolint:gochecknoglobals
-	moderators = []domain.Privilege{domain.PGuest, domain.PUser}                    //nolint:gochecknoglobals
-	admin      = []domain.Privilege{domain.PGuest, domain.PUser, domain.PModerator} //nolint:gochecknoglobals
+	authed     = []permission.Privilege{permission.PGuest}                                          //nolint:gochecknoglobals
+	moderators = []permission.Privilege{permission.PGuest, permission.PUser}                        //nolint:gochecknoglobals
+	admin      = []permission.Privilege{permission.PGuest, permission.PUser, permission.PModerator} //nolint:gochecknoglobals
 )
 
 func testPermissions(t *testing.T, router *gin.Engine, testCases []permTestValues) {
@@ -122,12 +125,12 @@ func testPermissions(t *testing.T, router *gin.Engine, testCases []permTestValue
 
 	for _, testCase := range testCases {
 		for _, level := range testCase.levels {
-			var tokens *domain.UserTokens
+			var tokens *auth.UserTokens
 
 			switch level {
-			case domain.PUser:
+			case permission.PUser:
 				tokens = loginUser(getUser())
-			case domain.PModerator:
+			case permission.PModerator:
 				tokens = loginUser(getModerator())
 			}
 

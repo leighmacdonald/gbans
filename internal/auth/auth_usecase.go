@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,12 +14,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -144,7 +143,7 @@ func (u *AuthUsecase) Middleware(level permission.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson, errBan := u.bans.Query(ctx, ban.QueryOpts{
+				bannedPerson, errBan := u.bans.QueryOne(ctx, ban.QueryOpts{
 					TargetID: sid,
 					EvadeOk:  true,
 				})
@@ -242,7 +241,7 @@ func (u *AuthUsecase) MiddlewareWS(level permission.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson, errBan := u.bans.Query(ctx, ban.QueryOpts{
+				bannedPerson, errBan := u.bans.QueryOne(ctx, ban.QueryOpts{
 					TargetID: sid,
 					EvadeOk:  true,
 				})
@@ -290,52 +289,6 @@ func (u *AuthUsecase) MiddlewareWS(level permission.Privilege) gin.HandlerFunc {
 func (u *AuthUsecase) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
 	return func(_ *jwt.Token) (any, error) {
 		return []byte(cookieKey), nil
-	}
-}
-
-func (u *AuthUsecase) MiddlewareServer() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		reqAuthHeader := ctx.GetHeader("Authorization")
-		if reqAuthHeader == "" {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-
-			return
-		}
-
-		if strings.HasPrefix(reqAuthHeader, "Bearer ") {
-			parts := strings.Split(reqAuthHeader, " ")
-			if len(parts) != 2 {
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-
-				return
-			}
-
-			reqAuthHeader = parts[1]
-		}
-
-		var server servers.Server
-		if errServer := u.servers.GetByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
-			slog.Error("Failed to load server during auth", log.ErrAttr(errServer), slog.String("token", reqAuthHeader), slog.String("IP", ctx.ClientIP()))
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-
-			return
-		}
-
-		ctx.Set("server_id", server.ServerID)
-
-		if app.SentryDSN != "" {
-			if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
-				hub.WithScope(func(scope *sentry.Scope) {
-					scope.SetUser(sentry.User{
-						ID:        strconv.Itoa(server.ServerID),
-						IPAddress: server.Addr(),
-						Name:      server.ShortName,
-					})
-				})
-			}
-		}
-
-		ctx.Next()
 	}
 }
 

@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type wikiHandler struct {
@@ -35,7 +36,8 @@ func NewHandler(engine *gin.Engine, wiki WikiUsecase, ath httphelper.Authenticat
 
 func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		page, err := w.wiki.GetWikiPageBySlug(ctx, httphelper.CurrentUserProfile(ctx), ctx.Param("slug"))
+		user, _ := session.CurrentUserProfile(ctx)
+		page, err := w.wiki.GetWikiPageBySlug(ctx, user, ctx.Param("slug"))
 		if err != nil {
 			switch {
 			case errors.Is(err, database.ErrNoResult):
@@ -59,8 +61,8 @@ func (w *wikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
-
-		page, err := w.wiki.SaveWikiPage(ctx, httphelper.CurrentUserProfile(ctx), req.Slug, req.BodyMD, req.PermissionLevel)
+		user, _ := session.CurrentUserProfile(ctx)
+		page, err := w.wiki.SaveWikiPage(ctx, user, req.Slug, req.BodyMD, req.PermissionLevel)
 		if err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 

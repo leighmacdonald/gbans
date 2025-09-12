@@ -5,7 +5,7 @@ import (
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/microcosm-cc/bluemonday"
 )
 

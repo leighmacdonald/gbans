@@ -7,11 +7,16 @@ import (
 	"net"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+)
+
+var (
+	ErrUnknownServerID = errors.New("unknown server id")
+	ErrUnknownServer   = errors.New("unknown server")
 )
 
 type RequestServerUpdate struct {
@@ -45,9 +50,9 @@ type ServerInfoSafe struct {
 var ErrResolveIP = errors.New("failed to resolve address")
 
 type ServerPermission struct {
-	SteamID         steamid.SID    `json:"steam_id"`
-	PermissionLevel auth.Privilege `json:"permission_level"`
-	Flags           string         `json:"flags"`
+	SteamID         steamid.SID          `json:"steam_id"`
+	PermissionLevel permission.Privilege `json:"permission_level"`
+	Flags           string               `json:"flags"`
 }
 
 func NewServer(shortName string, address string, port uint16) Server {

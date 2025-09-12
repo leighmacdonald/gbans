@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/stretchr/testify/require"
 )
@@ -20,13 +20,13 @@ func TestVotes(t *testing.T) {
 	moderator := loginUser(getModerator())
 
 	var results httphelper.LazyResult
-	req := domain.VoteQueryFilter{
+	req := votes.VoteQueryFilter{
 		Success: -1,
 	}
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/votes", req, http.StatusOK, &authTokens{user: moderator}, &results)
 	require.Empty(t, results.Data)
 
-	require.NoError(t, votesRepo.AddResult(t.Context(), domain.VoteResult{
+	require.NoError(t, votesRepo.AddResult(t.Context(), votes.VoteResult{
 		SourceID:         source.SteamID,
 		SourceName:       source.PersonaName,
 		SourceAvatarHash: source.AvatarHash,

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ import (
 func TestNews(t *testing.T) {
 	router := testRouter()
 
-	entry := domain.NewsEntry{
+	entry := news.NewsEntry{
 		Title:       stringutil.SecureRandomString(10),
 		BodyMD:      stringutil.SecureRandomString(200),
 		IsPublished: true,
@@ -23,12 +23,12 @@ func TestNews(t *testing.T) {
 
 	testEndpoint(t, router, http.MethodPost, "/api/news", entry, http.StatusForbidden, &authTokens{user: loginUser(getUser())})
 
-	var newEntry domain.NewsEntry
+	var newEntry news.NewsEntry
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/news", entry, http.StatusCreated, &authTokens{user: loginUser(getModerator())}, &newEntry)
 
 	testEndpoint(t, router, http.MethodPost, "/api/news_all", entry, http.StatusForbidden, &authTokens{user: loginUser(getUser())})
 
-	var entries []domain.NewsEntry
+	var entries []news.NewsEntry
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/news_all", entry, http.StatusOK, &authTokens{user: loginUser(getModerator())}, &entries)
 	require.Len(t, entries, 1)
 	// edited := newEntry

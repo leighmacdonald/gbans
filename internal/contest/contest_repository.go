@@ -16,8 +16,8 @@ type ContestRepository struct {
 	db database.Database
 }
 
-func NewContestRepository(database database.Database) *ContestRepository {
-	return &ContestRepository{db: database}
+func NewContestRepository(database database.Database) ContestRepository {
+	return ContestRepository{db: database}
 }
 
 func (c *ContestRepository) ContestByID(ctx context.Context, contestID uuid.UUID, contest *Contest) error {

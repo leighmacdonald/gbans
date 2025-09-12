@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -102,7 +103,7 @@ func (r *MatchRepository) onMatchComplete(ctx context.Context, matchContext *act
 
 	r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
 		discord.ChannelPublicMatchLog,
-		discord.MatchMessage(result, "")))
+		message.MatchMessage(result, "")))
 
 	return nil
 }

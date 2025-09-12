@@ -15,8 +15,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/blocklist"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/contest"
@@ -25,7 +25,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/forum"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -36,9 +35,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/queue"
-	"github.com/leighmacdonald/gbans/internal/report"
-	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/gbans/internal/srcds"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
@@ -64,7 +60,7 @@ func firstTimeSetup(ctx context.Context, persons person.PersonUsecase, newsUC ne
 	}
 
 	newOwner := person.NewPerson(steamid.New(conf.Owner))
-	newOwner.PermissionLevel = auth.PAdmin
+	newOwner.PermissionLevel = permission.PAdmin
 
 	if errSave := persons.SavePerson(ctx, nil, &newOwner); errSave != nil {
 		slog.Error("Failed create new owner", log.ErrAttr(errSave))
@@ -100,14 +96,14 @@ func firstTimeSetup(ctx context.Context, persons person.PersonUsecase, newsUC ne
 
 func createQueueWorkers(people person.PersonUsecase, notifications notification.NotificationPayload,
 	discordUC discord.DiscordUsecase, authRepo auth.AuthRepository,
-	patreonUC patreon.PatreonCredential, reports report.ReportUsecase, discordOAuth discord.DiscordOAuthUsecase,
+	patreonUC patreon.PatreonCredential, reports ban.ReportUsecase, discordOAuth discord.DiscordOAuthUsecase,
 ) *river.Workers {
 	workers := river.NewWorkers()
 
 	river.AddWorker[notification.SenderArgs](workers, notification.NewSenderWorker(people, notifications, discordUC))
 	river.AddWorker[auth.CleanupArgs](workers, auth.NewCleanupWorker(authRepo))
 	river.AddWorker[patreon.AuthUpdateArgs](workers, patreon.NewSyncWorker(patreonUC))
-	river.AddWorker[report.MetaInfoArgs](workers, report.NewMetaInfoWorker(reports))
+	river.AddWorker[ban.MetaInfoArgs](workers, ban.NewMetaInfoWorker(reports))
 	river.AddWorker[discord.TokenRefreshArgs](workers, discord.NewTokenRefreshWorker(discordOAuth))
 
 	return workers
@@ -265,7 +261,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbConn), personUsecase, configUsecase)
 			go networkUsecase.Start(ctx)
 
-			assetRepository := asset.NewLocalRepository(dbConn, configUsecase)
+			assetRepository := asset.NewLocalRepository(dbConn, conf.LocalStore.PathRoot)
 			if err := assetRepository.Init(ctx); err != nil {
 				slog.Error("Failed to init local asset repo", log.ErrAttr(err))
 
@@ -276,7 +272,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			serversUC := servers.NewServersUsecase(servers.NewServersRepository(dbConn))
 			demos := demo.NewDemoUsecase(asset.BucketDemo, demo.NewDemoRepository(dbConn), assets, configUsecase, serversUC)
 
-			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbConn), notificationUsecase, configUsecase, personUsecase, demos, tfapiClient)
+			reportUsecase := ban.NewReportUsecase(ban.NewReportRepository(dbConn), notificationUsecase, configUsecase, personUsecase, demos, tfapiClient)
 
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUC)), configUsecase, serversUC)
@@ -284,7 +280,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			banRepo := ban.NewBanRepository(dbConn, personUsecase, networkUsecase)
 			banUsecase := ban.NewBanUsecase(banRepo, personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase, tfapiClient)
 
-			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase)
+			blocklistUsecase := network.NewBlocklistUsecase(network.NewBlocklistRepository(dbConn), banUsecase)
 
 			go func() {
 				if err := stateUsecase.Start(ctx); err != nil {

@@ -17,15 +17,15 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type assets struct {
-	repository AssetRepository
+type AssetUsecase struct {
+	repository *localRepository
 }
 
-func NewAssetUsecase(assetRepository AssetRepository) AssetUsecase {
-	return &assets{repository: assetRepository}
+func NewAssetUsecase(assetRepository *localRepository) *AssetUsecase {
+	return &AssetUsecase{repository: assetRepository}
 }
 
-func (s assets) Create(ctx context.Context, author steamid.SteamID, bucket Bucket, fileName string, content io.ReadSeeker) (Asset, error) {
+func (s AssetUsecase) Create(ctx context.Context, author steamid.SteamID, bucket Bucket, fileName string, content io.ReadSeeker) (Asset, error) {
 	if bucket != "demos" && bucket != "media" {
 		return Asset{}, domain.ErrBucketType
 	}
@@ -55,7 +55,7 @@ func (s assets) Create(ctx context.Context, author steamid.SteamID, bucket Bucke
 	return newAsset, nil
 }
 
-func (s assets) Get(ctx context.Context, uuid uuid.UUID) (Asset, io.ReadSeeker, error) {
+func (s AssetUsecase) Get(ctx context.Context, uuid uuid.UUID) (Asset, io.ReadSeeker, error) {
 	if uuid.IsNil() {
 		return Asset{}, nil, domain.ErrUUIDInvalid
 	}
@@ -68,7 +68,7 @@ func (s assets) Get(ctx context.Context, uuid uuid.UUID) (Asset, io.ReadSeeker, 
 	return asset, reader, nil
 }
 
-func (s assets) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
+func (s AssetUsecase) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
 	if assetID.IsNil() {
 		return 0, domain.ErrUUIDInvalid
 	}
@@ -83,7 +83,7 @@ func (s assets) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
 	return size, nil
 }
 
-func (s assets) GenAssetPath(hash string) (string, error) {
+func (s AssetUsecase) GenAssetPath(hash string) (string, error) {
 	return s.repository.GenAssetPath(hash)
 }
 

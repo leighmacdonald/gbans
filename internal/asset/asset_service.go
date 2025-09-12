@@ -6,28 +6,29 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type mediaHandler struct {
 	assets AssetUsecase
 }
 
-func NewHandler(engine *gin.Engine, assets AssetUsecase, authUC httphelper.Authenticator) {
+func NewHandler(engine *gin.Engine, assets AssetUsecase, authenticator httphelper.Authenticator) {
 	handler := mediaHandler{assets: assets}
 
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(authUC.Middleware(permission.PGuest))
+		opt := optGrp.Use(authenticator.Middleware(permission.PGuest))
 		opt.GET("/asset/:asset_id", handler.onGetByUUID())
 	}
 
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authUC.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
 		authed.POST("/api/asset", handler.onAPISaveMedia())
 	}
 }
@@ -52,8 +53,8 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 		if req.Name == "" {
 			req.Name = req.File.Filename
 		}
-
-		media, errMedia := h.assets.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID, "media", req.Name, mediaFile)
+		user, _ := session.CurrentUserProfile(ctx)
+		media, errMedia := h.assets.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile)
 		if errMedia != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMedia, httphelper.ErrInternal)))
 
@@ -73,8 +74,8 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 
 		asset, reader, errGet := h.assets.Get(ctx, mediaID)
 		if errGet != nil {
-			if errors.Is(errGet, domain.ErrNotFound) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNotFound, "Asset with this asset_id does not exist: %s", mediaID))
+			if errors.Is(errGet, domain.ErrOpenFile) {
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound, "Asset with this asset_id does not exist: %s", mediaID))
 
 				return
 			}
@@ -85,9 +86,10 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 		}
 
 		if asset.IsPrivate {
-			user := httphelper.CurrentUserProfile(ctx)
-			if !user.SteamID.Valid() && (user.SteamID == asset.AuthorID || user.HasPermission(permission.PModerator)) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
+			user, _ := session.CurrentUserProfile(ctx)
+			sid := user.GetSteamID()
+			if !sid.Valid() && (sid == asset.AuthorID || user.HasPermission(permission.PModerator)) {
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 					"You do not have permission to access this asset."))
 
 				return

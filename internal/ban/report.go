@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/demo"
+	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -22,7 +22,7 @@ type RequestReportCreate struct {
 	SourceID        steamid.SteamID `json:"source_id"`
 	TargetID        steamid.SteamID `json:"target_id"`
 	Description     string          `json:"description"`
-	Reason          Reason          `json:"reason"`
+	Reason          ban.Reason      `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
 	DemoID          int64           `json:"demo_id"`
 	DemoTick        int             `json:"demo_tick"`
@@ -58,7 +58,7 @@ type Report struct {
 	TargetID        steamid.SteamID `json:"target_id"`
 	Description     string          `json:"description"`
 	ReportStatus    ReportStatus    `json:"report_status"`
-	Reason          Reason          `json:"reason"`
+	Reason          ban.Reason      `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
 	Deleted         bool            `json:"deleted"`
 	DemoTick        int             `json:"demo_tick"`
@@ -88,7 +88,7 @@ func NewReport() Report {
 type ReportWithAuthor struct {
 	Author  person.Person `json:"author"`
 	Subject person.Person `json:"subject"`
-	Demo    demo.DemoFile `json:"demo"`
+	// TODO FIX Demo    demo.DemoFile `json:"demo"`
 	Report
 }
 

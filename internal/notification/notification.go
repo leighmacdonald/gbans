@@ -4,10 +4,10 @@ import (
 	"errors"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
 )
@@ -98,9 +98,9 @@ func NewSiteUserNotification(recipients steamid.Collection, severity Notificatio
 	}
 }
 
-func NewSiteUserNotificationWithAuthor(groups []permission.Privilege, severity NotificationSeverity, message string, link string, author person.UserProfile) NotificationPayload {
+func NewSiteUserNotificationWithAuthor(groups []permission.Privilege, severity NotificationSeverity, message string, link string, author domain.PersonInfo) NotificationPayload {
 	payload := NewSiteGroupNotification(groups, severity, message, link)
-	payload.Author = &author
+	//payload.Author = &author
 
 	return payload
 }
@@ -118,9 +118,9 @@ func NewSiteGroupNotification(groups []permission.Privilege, severity Notificati
 	}
 }
 
-func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity NotificationSeverity, message string, link string, author person.UserProfile) NotificationPayload {
+func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity NotificationSeverity, message string, link string, author domain.PersonInfo) NotificationPayload {
 	payload := NewSiteGroupNotification(groups, severity, message, link)
-	payload.Author = &author
+	//payload.Author = &author
 
 	return payload
 }

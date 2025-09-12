@@ -5,9 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord/message"
-	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -16,21 +13,17 @@ import (
 
 type VoteUsecase struct {
 	repository    VoteRepository
-	matches       match.MatchUsecase
 	notifications notification.NotificationUsecase
-	config        *config.ConfigUsecase
 
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewVoteUsecase(repository VoteRepository, matched match.MatchUsecase,
-	notifications notification.NotificationUsecase, config *config.ConfigUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+func NewVoteUsecase(repository VoteRepository,
+	notifications notification.NotificationUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) *VoteUsecase {
 	return &VoteUsecase{
 		repository:    repository,
-		matches:       matched,
 		notifications: notifications,
-		config:        config,
 		broadcaster:   broadcaster,
 	}
 }
@@ -159,20 +152,19 @@ func (u VoteUsecase) Start(ctx context.Context) {
 				recent = append(recent, result)
 
 				delete(active, evt.ServerID)
+				// source, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
+				// if errSource != nil {
+				// 	slog.Error("Failed to load vote source", log.ErrAttr(errSource), slog.String("steam_id", result.SourceID.String()))
+				// }
 
-				source, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
-				if errSource != nil {
-					slog.Error("Failed to load vote source", log.ErrAttr(errSource), slog.String("steam_id", result.SourceID.String()))
-				}
+				// target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
+				// if errTarget != nil {
+				// 	slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
+				// }
 
-				target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
-				if errTarget != nil {
-					slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
-				}
-
-				u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-					u.config.Config().Discord.VoteLogChannelID,
-					message.VoteResultMessage(u.config.Config(), result, source, target)))
+				// u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+				// 	u.config.Config().Discord.VoteLogChannelID,
+				// 	message.VoteResultMessage(u.config.Config(), result, source, target)))
 			}
 		}
 	}

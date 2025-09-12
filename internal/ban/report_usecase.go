@@ -8,17 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/demo"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/internal/queue"
-	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -27,7 +25,7 @@ import (
 )
 
 type ReportUsecase struct {
-	repository    reportRepository
+	repository    *ReportRepository
 	notifications notification.NotificationUsecase
 	config        *config.ConfigUsecase
 	persons       *person.PersonUsecase
@@ -35,7 +33,7 @@ type ReportUsecase struct {
 	tfAPI         *thirdparty.TFAPI
 }
 
-func NewReportUsecase(repository reportRepository, notifications notification.NotificationUsecase,
+func NewReportUsecase(repository *ReportRepository, notifications notification.NotificationUsecase,
 	config *config.ConfigUsecase, persons *person.PersonUsecase, demos demo.DemoUsecase, tfAPI *thirdparty.TFAPI,
 ) *ReportUsecase {
 	return &ReportUsecase{
@@ -88,9 +86,9 @@ func (r ReportUsecase) GenerateMetaStats(ctx context.Context) error {
 		}
 	}
 
-	r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		r.config.Config().Discord.LogChannelID,
-		discord.ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports"))))
+	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	r.config.Config().Discord.LogChannelID,
+	// 	discord.ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports"))))
 
 	return nil
 }
@@ -121,7 +119,7 @@ func (r ReportUsecase) addAuthorsToReports(ctx context.Context, reports []Report
 	return userReports, nil
 }
 
-func (r ReportUsecase) SetReportStatus(ctx context.Context, reportID int64, user person.UserProfile, status ReportStatus) (ReportWithAuthor, error) {
+func (r ReportUsecase) SetReportStatus(ctx context.Context, reportID int64, user domain.PersonInfo, status ReportStatus) (ReportWithAuthor, error) {
 	report, errGet := r.GetReport(ctx, user, reportID)
 	if errGet != nil {
 		return report, errGet
@@ -131,7 +129,7 @@ func (r ReportUsecase) SetReportStatus(ctx context.Context, reportID int64, user
 		return report, database.ErrDuplicate // TODO proper specific error
 	}
 
-	fromStatus := report.ReportStatus
+	// fromStatus := report.ReportStatus
 
 	report.ReportStatus = status
 
@@ -139,24 +137,24 @@ func (r ReportUsecase) SetReportStatus(ctx context.Context, reportID int64, user
 		return report, errSave
 	}
 
-	r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		r.config.Config().Discord.LogChannelID,
-		discord.ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report))))
+	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	r.config.Config().Discord.LogChannelID,
+	// 	discord.ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report))))
 
-	r.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
-		[]permission.Privilege{permission.PModerator, permission.PAdmin},
-		notification.SeverityInfo,
-		fmt.Sprintf("A report status has changed: %s -> %s", fromStatus, status),
-		report.Path(),
-		user,
-	))
+	// r.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
+	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
+	// 	notification.SeverityInfo,
+	// 	fmt.Sprintf("A report status has changed: %s -> %s", fromStatus, status),
+	// 	report.Path(),
+	// 	user,
+	// ))
 
-	r.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-		[]steamid.SteamID{report.Author.SteamID},
-		notification.SeverityInfo,
-		fmt.Sprintf("Your report status has changed: %s -> %s", fromStatus, status),
-		report.Path(),
-	))
+	// r.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
+	// 	[]steamid.SteamID{report.Author.SteamID},
+	// 	notification.SeverityInfo,
+	// 	fmt.Sprintf("Your report status has changed: %s -> %s", fromStatus, status),
+	// 	report.Path(),
+	// ))
 
 	slog.Info("Report status changed",
 		slog.Int64("report_id", report.ReportID),
@@ -195,7 +193,7 @@ func (r ReportUsecase) GetReports(ctx context.Context) ([]ReportWithAuthor, erro
 	return r.addAuthorsToReports(ctx, reports)
 }
 
-func (r ReportUsecase) GetReport(ctx context.Context, curUser person.PersonInfo, reportID int64) (ReportWithAuthor, error) {
+func (r ReportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (ReportWithAuthor, error) {
 	report, err := r.repository.GetReport(ctx, reportID)
 	if err != nil {
 		return ReportWithAuthor{}, err
@@ -207,7 +205,7 @@ func (r ReportUsecase) GetReport(ctx context.Context, curUser person.PersonInfo,
 	}
 
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{author.SteamID}, permission.PModerator) {
-		return ReportWithAuthor{}, domain.ErrPermissionDenied
+		return ReportWithAuthor{}, permission.ErrPermissionDenied
 	}
 
 	target, errTarget := r.persons.GetPersonBySteamID(ctx, nil, report.TargetID)
@@ -226,7 +224,7 @@ func (r ReportUsecase) GetReport(ctx context.Context, curUser person.PersonInfo,
 		Author:  author,
 		Subject: target,
 		Report:  report,
-		Demo:    demo,
+		// TODO FIX Demo:    demo,
 	}, nil
 }
 
@@ -242,23 +240,23 @@ func (r ReportUsecase) GetReportMessageByID(ctx context.Context, reportMessageID
 	return r.repository.GetReportMessageByID(ctx, reportMessageID)
 }
 
-func (r ReportUsecase) DropReportMessage(ctx context.Context, curUser person.PersonInfo, reportMessageID int64) error {
+func (r ReportUsecase) DropReportMessage(ctx context.Context, curUser domain.PersonInfo, reportMessageID int64) error {
 	existing, errExist := r.repository.GetReportMessageByID(ctx, reportMessageID)
 	if errExist != nil {
 		return errExist
 	}
 
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.PModerator) {
-		return domain.ErrPermissionDenied
+		return permission.ErrPermissionDenied
 	}
 
 	if err := r.repository.DropReportMessage(ctx, &existing); err != nil {
 		return err
 	}
 
-	r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		discord.ChannelModAppealLog,
-		discord.DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser))))
+	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	discord.ChannelModAppealLog,
+	// 	discord.DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser))))
 
 	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
 
@@ -269,7 +267,7 @@ func (r ReportUsecase) DropReport(ctx context.Context, report *Report) error {
 	return r.repository.DropReport(ctx, report)
 }
 
-func (r ReportUsecase) SaveReport(ctx context.Context, currentUser person.UserProfile, req RequestReportCreate) (ReportWithAuthor, error) {
+func (r ReportUsecase) SaveReport(ctx context.Context, currentUser domain.PersonInfo, req RequestReportCreate) (ReportWithAuthor, error) {
 	if req.Description == "" || len(req.Description) < 10 {
 		return ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
 	}
@@ -278,7 +276,7 @@ func (r ReportUsecase) SaveReport(ctx context.Context, currentUser person.UserPr
 	// Web based reports the source should not be set, the reporter will be taken from the
 	// current session information instead
 	if !req.SourceID.Valid() {
-		req.SourceID = currentUser.SteamID
+		req.SourceID = currentUser.GetSteamID()
 	}
 
 	if !req.SourceID.Valid() {
@@ -304,7 +302,7 @@ func (r ReportUsecase) SaveReport(ctx context.Context, currentUser person.UserPr
 	}
 
 	if personTarget.Expired() {
-		if err := steam.UpdatePlayerSummary(ctx, &personTarget, r.tfAPI); err != nil {
+		if err := person.UpdatePlayerSummary(ctx, &personTarget, r.tfAPI); err != nil {
 			slog.Error("Failed to update target player", log.ErrAttr(err))
 		} else {
 			if errSave := r.persons.SavePerson(ctx, nil, &personTarget); errSave != nil {
@@ -357,35 +355,31 @@ func (r ReportUsecase) SaveReport(ctx context.Context, currentUser person.UserPr
 		}
 	}
 
-	conf := r.config.Config()
-
-	demoURL := ""
-
-	if report.DemoID > 0 {
-		demoURL = conf.ExtURLRaw("/asset/%s", demo.AssetID.String())
-	}
-
 	newReport, errReport := r.GetReport(ctx, currentUser, report.ReportID)
 	if errReport != nil {
 		return ReportWithAuthor{}, errReport
 	}
 
-	r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		discord.ChannelModAppealLog,
-		discord.NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)))
-
-	r.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
-		[]permission.Privilege{permission.PModerator, permission.PAdmin},
-		notification.SeverityInfo,
-		fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.PersonaName),
-		newReport.Path(),
-		currentUser,
-	))
+	//	conf := r.config.Config()
+	// demoURL := ""
+	// if report.DemoID > 0 {
+	// 	demoURL = conf.ExtURLRaw("/asset/%s", demo.AssetID.String())
+	// }
+	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	discord.ChannelModAppealLog,
+	// 	discord.NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)))
+	// r.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
+	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
+	// 	notification.SeverityInfo,
+	// 	fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.PersonaName),
+	// 	newReport.Path(),
+	// 	currentUser,
+	// ))
 
 	return newReport, nil
 }
 
-func (r ReportUsecase) EditReportMessage(ctx context.Context, reportMessageID int64, curUser person.PersonInfo, req RequestMessageBodyMD) (ReportMessage, error) {
+func (r ReportUsecase) EditReportMessage(ctx context.Context, reportMessageID int64, curUser domain.PersonInfo, req RequestMessageBodyMD) (ReportMessage, error) {
 	if reportMessageID <= 0 {
 		return ReportMessage{}, domain.ErrParamInvalid
 	}
@@ -396,7 +390,7 @@ func (r ReportUsecase) EditReportMessage(ctx context.Context, reportMessageID in
 	}
 
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.PModerator) {
-		return ReportMessage{}, domain.ErrPermissionDenied
+		return ReportMessage{}, permission.ErrPermissionDenied
 	}
 
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
@@ -415,19 +409,19 @@ func (r ReportUsecase) EditReportMessage(ctx context.Context, reportMessageID in
 		return ReportMessage{}, errSave
 	}
 
-	conf := r.config.Config()
+	// conf := r.config.Config()
 
-	r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		discord.ChannelModAppealLog,
-		discord.EditReportMessageResponse(req.BodyMD, existing.MessageMD,
-			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))))
+	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	discord.ChannelModAppealLog,
+	// 	discord.EditReportMessageResponse(req.BodyMD, existing.MessageMD,
+	// 		conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))))
 
 	slog.Info("Report message edited", slog.Int64("report_message_id", reportMessageID))
 
 	return r.GetReportMessageByID(ctx, reportMessageID)
 }
 
-func (r ReportUsecase) CreateReportMessage(ctx context.Context, reportID int64, curUser person.UserProfile, req RequestMessageBodyMD) (ReportMessage, error) {
+func (r ReportUsecase) CreateReportMessage(ctx context.Context, reportID int64, curUser domain.PersonInfo, req RequestMessageBodyMD) (ReportMessage, error) {
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
 
 	if req.BodyMD == "" {
@@ -450,11 +444,11 @@ func (r ReportUsecase) CreateReportMessage(ctx context.Context, reportID int64, 
 		return ReportMessage{}, errSave
 	}
 
-	conf := r.config.Config()
+	// conf := r.config.Config()
 
-	r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		discord.ChannelModAppealLog,
-		discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser))))
+	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	discord.ChannelModAppealLog,
+	// 	discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser))))
 
 	path := fmt.Sprintf("/report/%d", reportID)
 
@@ -466,7 +460,7 @@ func (r ReportUsecase) CreateReportMessage(ctx context.Context, reportID int64, 
 		curUser,
 	))
 
-	if report.Author.SteamID != curUser.SteamID {
+	if report.Author.SteamID != curUser.GetSteamID() {
 		r.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
 			[]steamid.SteamID{report.Author.SteamID},
 			notification.SeverityInfo,
@@ -475,8 +469,9 @@ func (r ReportUsecase) CreateReportMessage(ctx context.Context, reportID int64, 
 		))
 	}
 
+	sid := curUser.GetSteamID()
 	slog.Info("New report message created",
-		slog.Int64("report_id", reportID), slog.String("steam_id", curUser.SteamID.String()))
+		slog.Int64("report_id", reportID), slog.String("steam_id", sid.String()))
 
 	return msg, nil
 }

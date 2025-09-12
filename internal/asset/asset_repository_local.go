@@ -22,7 +22,7 @@ type localRepository struct {
 	rootPath string
 }
 
-func NewLocalRepository(database database.Database, rootPath string) AssetRepository {
+func NewLocalRepository(database database.Database, rootPath string) *localRepository {
 	return &localRepository{db: database, rootPath: rootPath}
 }
 

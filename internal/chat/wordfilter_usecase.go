@@ -16,12 +16,12 @@ import (
 )
 
 type WordFilterUsecase struct {
-	repository    WordFilterRepository
+	repository    *WordFilterRepository
 	wordFilters   *WordFilters
-	notifications notification.NotificationUsecase
+	notifications *notification.NotificationUsecase
 }
 
-func NewWordFilterUsecase(repository WordFilterRepository, notifications notification.NotificationUsecase) *WordFilterUsecase {
+func NewWordFilterUsecase(repository *WordFilterRepository, notifications *notification.NotificationUsecase) *WordFilterUsecase {
 	return &WordFilterUsecase{repository: repository, wordFilters: NewWordFilters(), notifications: notifications}
 }
 
@@ -133,7 +133,7 @@ func (w *WordFilterUsecase) DropFilter(ctx context.Context, filterID int64) erro
 
 	w.wordFilters.Remove(filterID)
 
-	w.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelWordFilterLog, discord.FilterDelMessage(filter)))
+	// w.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelWordFilterLog, discord.FilterDelMessage(filter)))
 
 	slog.Info("Deleted filter", slog.Int64("filter_id", filterID))
 

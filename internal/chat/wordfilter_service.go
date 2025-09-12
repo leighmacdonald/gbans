@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -66,7 +67,8 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 			return
 		}
 
-		wordFilter, errEdit := h.filters.Edit(ctx, httphelper.CurrentUserProfile(ctx), filterID, req)
+		user, _ := session.CurrentUserProfile(ctx)
+		wordFilter, errEdit := h.filters.Edit(ctx, user, filterID, req)
 		if errEdit != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEdit, httphelper.ErrInternal)))
 
@@ -84,7 +86,8 @@ func (h *wordFilterHandler) createFilter() gin.HandlerFunc {
 			return
 		}
 
-		wordFilter, errCreate := h.filters.Create(ctx, httphelper.CurrentUserProfile(ctx), req)
+		user, _ := session.CurrentUserProfile(ctx)
+		wordFilter, errCreate := h.filters.Create(ctx, user, req)
 		if errCreate != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCreate, httphelper.ErrInternal)))
 
@@ -114,7 +117,7 @@ func (h *wordFilterHandler) deleteFilter() gin.HandlerFunc {
 
 func (h *wordFilterHandler) checkFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req RequestQuery
+		var req httphelper.RequestQuery
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}

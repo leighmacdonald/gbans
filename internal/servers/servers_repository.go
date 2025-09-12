@@ -6,7 +6,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -55,7 +55,7 @@ func (r *ServersRepository) GetServerPermissions(ctx context.Context) ([]ServerP
 	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("steam_id", "permission_level").From("person").
-		Where(sq.GtOrEq{"permission_level": auth.PReserved}).
+		Where(sq.GtOrEq{"permission_level": permission.PReserved}).
 		OrderBy("permission_level desc"))
 	if errRows != nil {
 		return nil, r.db.DBErr(errRows)
@@ -68,7 +68,7 @@ func (r *ServersRepository) GetServerPermissions(ctx context.Context) ([]ServerP
 	for rows.Next() {
 		var (
 			sid   steamid.SteamID
-			perm  auth.Privilege
+			perm  permission.Privilege
 			flags string
 		)
 
@@ -77,13 +77,13 @@ func (r *ServersRepository) GetServerPermissions(ctx context.Context) ([]ServerP
 		}
 
 		switch perm {
-		case auth.PReserved:
+		case permission.PReserved:
 			flags = "a"
-		case auth.PEditor:
+		case permission.PEditor:
 			flags = "aj"
-		case auth.PModerator:
+		case permission.PModerator:
 			flags = "abcdegjk"
-		case auth.PAdmin:
+		case permission.PAdmin:
 			flags = "z"
 		}
 

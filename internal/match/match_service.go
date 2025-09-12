@@ -8,11 +8,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/internal/servers"
 )
 
@@ -148,7 +149,7 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 
 		errWeapon := h.matches.GetWeaponByID(ctx, weaponID, &weapon)
 		if errWeapon != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
 
 			return
 		}
@@ -292,7 +293,7 @@ func (h matchHandler) onAPIGetMatch() gin.HandlerFunc {
 
 		if errMatch != nil {
 			if errors.Is(errMatch, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
 
 				return
 			}
@@ -314,8 +315,8 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 		}
 
 		// Don't let normal users query anybody but themselves
-		user := httphelper.CurrentUserProfile(ctx)
-		if user.PermissionLevel <= permission.PUser {
+		user, _ := session.CurrentUserProfile(ctx)
+		if !user.HasPermission(permission.PModerator) {
 			targetID, ok := req.TargetSteamID()
 			if !ok {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
@@ -323,8 +324,8 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 				return
 			}
 
-			if user.SteamID != targetID {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+			if user.GetSteamID() != targetID {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 				return
 			}

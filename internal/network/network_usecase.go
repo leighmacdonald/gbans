@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -163,7 +162,7 @@ func (u NetworkUsecase) QueryConnectionHistory(ctx context.Context, opts Connect
 		if errNetwork != nil {
 			slog.Error("Received malformed CIDR", log.ErrAttr(errNetwork))
 
-			return nil, 0, ban.ErrInvalidCIDR
+			return nil, 0, ErrInvalidCIDR
 		}
 
 		opts.Network = network.String()

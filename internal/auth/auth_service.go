@@ -9,11 +9,10 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
-	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -109,7 +108,7 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		}
 
 		if person.Expired() {
-			if errGetProfile := steam.UpdatePlayerSummary(ctx, &person, h.tfAPI); errGetProfile != nil {
+			if errGetProfile := person.UpdatePlayerSummary(ctx, &person, h.tfAPI); errGetProfile != nil {
 				slog.Error("Failed to fetch user profile on login", log.ErrAttr(errGetProfile), handlerName)
 			} else {
 				if errSave := h.personUsecase.SavePerson(ctx, nil, &person); errSave != nil {

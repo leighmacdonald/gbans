@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/person/permission"
-	"github.com/leighmacdonald/gbans/internal/steam"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -23,11 +22,11 @@ import (
 
 type PersonUsecase struct {
 	config *config.ConfigUsecase
-	repo   PersonRepository
+	repo   *PersonRepository
 	tfAPI  *thirdparty.TFAPI
 }
 
-func NewPersonUsecase(repository PersonRepository, config *config.ConfigUsecase, tfAPI *thirdparty.TFAPI) *PersonUsecase {
+func NewPersonUsecase(repository *PersonRepository, config *config.ConfigUsecase, tfAPI *thirdparty.TFAPI) *PersonUsecase {
 	return &PersonUsecase{
 		repo:   repository,
 		config: config,
@@ -63,7 +62,7 @@ func (u PersonUsecase) QueryProfile(ctx context.Context, query string) (ProfileR
 	}
 
 	if person.Expired() {
-		if err := steam.UpdatePlayerSummary(ctx, &person, u.tfAPI); err != nil {
+		if err := UpdatePlayerSummary(ctx, &person, u.tfAPI); err != nil {
 			slog.Error("Failed to update player summary", log.ErrAttr(err))
 		} else {
 			if errSave := u.SavePerson(ctx, nil, &person); errSave != nil {
@@ -102,7 +101,7 @@ func (u PersonUsecase) UpdateProfiles(ctx context.Context, transaction pgx.Tx, p
 	)
 
 	errGroup.Go(func() error {
-		newBanStates, errBans := steam.FetchPlayerBans(cancelCtx, u.tfAPI, steamIDs)
+		newBanStates, errBans := FetchPlayerBans(cancelCtx, u.tfAPI, steamIDs)
 		if errBans != nil {
 			return errors.Join(errBans, domain.ErrFetchSteamBans)
 		}
@@ -262,7 +261,7 @@ func (u PersonUsecase) GetPersonSettings(ctx context.Context, steamID steamid.St
 	return u.repo.GetPersonSettings(ctx, steamID)
 }
 
-func (u PersonUsecase) SavePersonSettings(ctx context.Context, user PersonInfo, update PersonSettingsUpdate) (PersonSettings, error) {
+func (u PersonUsecase) SavePersonSettings(ctx context.Context, user domain.PersonInfo, update PersonSettingsUpdate) (PersonSettings, error) {
 	settings, err := u.GetPersonSettings(ctx, user.GetSteamID())
 	if err != nil {
 		return settings, err
@@ -288,7 +287,7 @@ func (u PersonUsecase) SetPermissionLevel(ctx context.Context, transaction pgx.T
 
 	// Don't let admins un-admin themselves.
 	if steamID == steamid.New(u.config.Config().Owner) {
-		return domain.ErrPermissionDenied
+		return permission.ErrPermissionDenied
 	}
 
 	person.PermissionLevel = level

@@ -79,7 +79,7 @@ func (c *contestHandler) contestFromCtx(ctx *gin.Context) (Contest, bool) {
 	}
 
 	if !contest.Public && httphelper.CurrentUserProfile(ctx).PermissionLevel < permission.PModerator {
-		httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
+		httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 			"You do not have permission to load this contest."))
 
 		return Contest{}, false
@@ -348,7 +348,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 		}
 
 		if asset.AuthorID != steamID {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 			return
 		}
@@ -396,7 +396,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 
 		// Only >=moderators or the entry author are allowed to delete entries.
 		if user.PermissionLevel < permission.PModerator || user.SteamID != entry.SteamID {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 			return
 		}
@@ -416,7 +416,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 
 		// Only allow mods to delete entries from expired contests.
 		if user.SteamID == entry.SteamID && time.Since(contest.DateEnd) > 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 			return
 		}

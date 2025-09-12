@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
 )
@@ -21,9 +21,7 @@ func TestSaveWikiPageBySlugUnauthed(t *testing.T) {
 	t.Parallel()
 
 	router := testRouter()
-
-	page := domain.NewWikiPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
-
+	page := wiki.NewPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
 	testEndpoint(t, router, http.MethodPost, "/api/wiki/slug", page, http.StatusForbidden, nil)
 }
 
@@ -33,12 +31,12 @@ func TestSaveWikiPageBySlugAuthed(t *testing.T) {
 	router := testRouter()
 	tokens := loginUser(getModerator())
 
-	page := domain.NewWikiPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
+	page := wiki.NewPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
 
-	var createdPage domain.WikiPage
+	var createdPage wiki.Page
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/wiki/slug", page, http.StatusCreated, &authTokens{user: tokens}, &createdPage)
 
-	var receivedPage domain.WikiPage
+	var receivedPage wiki.Page
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/wiki/slug/"+page.Slug, page, http.StatusOK, &authTokens{user: tokens}, &receivedPage)
 	require.Equal(t, page.BodyMD, receivedPage.BodyMD)
 }

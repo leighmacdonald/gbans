@@ -10,12 +10,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
@@ -57,7 +57,7 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
 		var req request
 		if !httphelper.Bind(ctx, &req) {
@@ -69,9 +69,9 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.queue.SetChatStatus(ctx, currentUser.SteamID, steamID, req.ChatStatus, req.Reason); err != nil {
-			if errors.Is(err, domain.ErrPermissionDenied) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+		if err := h.queue.SetChatStatus(ctx, currentUser.GetSteamID(), steamID, req.ChatStatus, req.Reason); err != nil {
+			if errors.Is(err, httphelper.ErrPermissionDenied) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 				return
 			}
@@ -92,7 +92,7 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 
 func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 		// Create ws connection
 		wsConn, errConn := newClientConn(ctx, validOrigins)
 		if errConn != nil {
@@ -141,7 +141,7 @@ func (h *serverQueueHandler) handleWSMessage(client QueueClient) (Request, error
 	return payloadInbound, nil
 }
 
-func (h *serverQueueHandler) handleRequest(ctx context.Context, client QueueClient, payloadInbound Request, user person.UserProfile) error {
+func (h *serverQueueHandler) handleRequest(ctx context.Context, client QueueClient, payloadInbound Request, user domain.PersonInfo) error {
 	var err error
 	switch payloadInbound.Op {
 	case JoinQueue:
@@ -176,11 +176,11 @@ func (h *serverQueueHandler) handleRequest(ctx context.Context, client QueueClie
 
 func (h *serverQueueHandler) purge() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := httphelper.CurrentUserProfile(ctx)
+		user, _ := session.CurrentUserProfile(ctx)
 
 		messageID, idFound := httphelper.GetInt64Param(ctx, "message_id")
 		if !idFound {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
 
 			return
 		}
@@ -195,7 +195,7 @@ func (h *serverQueueHandler) purge() gin.HandlerFunc {
 			return
 		}
 
-		errPurge := h.queue.Purge(ctx, user.SteamID, messageID, count)
+		errPurge := h.queue.Purge(ctx, user.GetSteamID(), messageID, count)
 		if errPurge != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errPurge))
 

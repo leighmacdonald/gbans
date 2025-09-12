@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,20 +19,20 @@ func TestPerson(t *testing.T) {
 	modAuth := loginUser(getModerator())
 	adminAuth := loginUser(getOwner())
 
-	var prof domain.ProfileResponse
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/profile", domain.RequestQuery{Query: source.SteamID.String()}, http.StatusOK, nil, &prof)
+	var prof person.ProfileResponse
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/profile", httphelper.RequestQuery{Query: source.SteamID.String()}, http.StatusOK, nil, &prof)
 	require.Equal(t, source.SteamID, prof.Player.SteamID)
 	require.NotEmpty(t, prof.Player.AvatarHash)
 
-	var profile domain.UserProfile
+	var profile person.UserProfile
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/current_profile", nil, http.StatusOK, &authTokens{user: sourceAuth}, &profile)
 	require.Equal(t, source.SteamID, profile.SteamID)
 
-	var settings domain.PersonSettings
+	var settings person.PersonSettings
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/current_profile/settings", nil, http.StatusOK, &authTokens{user: sourceAuth}, &settings)
 
-	var updated domain.PersonSettings
-	update := domain.PersonSettingsUpdate{
+	var updated person.PersonSettings
+	update := person.PersonSettingsUpdate{
 		ForumSignature:       settings.ForumSignature + "x",
 		ForumProfileMessages: !settings.ForumProfileMessages,
 		StatsHidden:          !settings.StatsHidden,
@@ -42,14 +44,14 @@ func TestPerson(t *testing.T) {
 	require.Equal(t, update.ForumProfileMessages, updated.ForumProfileMessages)
 
 	var res httphelper.LazyResult
-	query := domain.PlayerQuery{
+	query := person.PlayerQuery{
 		TargetIDField: domain.TargetIDField{TargetID: source.SteamID.String()},
 	}
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/players", query, http.StatusOK, &authTokens{user: modAuth}, &res)
 	require.Len(t, res.Data, 1)
 
-	newPerms := domain.RequestPermissionLevelUpdate{PermissionLevel: domain.PModerator}
-	var newMod domain.Person
+	newPerms := person.RequestPermissionLevelUpdate{PermissionLevel: permission.PModerator}
+	var newMod person.Person
 	testEndpointWithReceiver(t, router, http.MethodPut, fmt.Sprintf("/api/player/%s/permissions", profile.SteamID.String()), newPerms, http.StatusOK, &authTokens{user: adminAuth}, &newMod)
 	require.Equal(t, newPerms.PermissionLevel, newMod.PermissionLevel)
 }
