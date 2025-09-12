@@ -12,12 +12,47 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+var slashCommands = []*discordgo.ApplicationCommand{
+	{
+		Name:        "log",
+		Description: "Show a match log summary",
+		Options: []*discordgo.ApplicationCommandOption{
+			&discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        helper.OptMatchID,
+				Description: "MatchID of any previously uploaded match",
+				Required:    true,
+			},
+		},
+	},
+	{
+		Name:        "logs",
+		Description: "Show a list of your recent logs",
+		Options:     []*discordgo.ApplicationCommandOption{},
+	},
+	{
+		Name:                     "find",
+		DMPermission:             &helper.DmPerms,
+		DefaultMemberPermissions: &helper.ModPerms,
+		Description:              "Find a user on any of the servers",
+		Options: []*discordgo.ApplicationCommandOption{
+			&discordgo.ApplicationCommandOption{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        helper.OptUserIdentifier,
+				Description: "SteamID in any format OR profile url",
+				Required:    true,
+			},
+		},
+	},
+}
 
 func makeOnStats() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
@@ -30,15 +65,15 @@ func makeOnStats() func(context.Context, *discordgo.Session, *discordgo.Interact
 		// case string(cmdStatsServer):
 		//	return discord.onStatsServer(ctx, session, interaction, response)
 		default:
-			return nil, ErrCommandFailed
+			return nil, helper.ErrCommandFailed
 		}
 	}
 }
 
 func onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	steamID, errResolveSID := steamid.Resolve(ctx, opts[OptUserIdentifier].StringValue())
+	steamID, errResolveSID := steamid.Resolve(ctx, opts[helper.OptUserIdentifier].StringValue())
 	if errResolveSID != nil || !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
@@ -74,7 +109,7 @@ func onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *disco
 		return nil, errors.Join(errMedicStats, domain.ErrFetchMedicStats)
 	}
 
-	return message.StatsPlayerMessage(person, h.config.ExtURL(person), classStats, medicStats, weaponStats, killstreakStats), nil
+	return StatsPlayerMessage(person, h.config.ExtURL(person), classStats, medicStats, weaponStats, killstreakStats), nil
 }
 
 //	func (discord *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {

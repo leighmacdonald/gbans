@@ -10,9 +10,9 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/datetime"

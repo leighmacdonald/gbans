@@ -283,7 +283,7 @@ func (s *StateUsecase) ExecServer(ctx context.Context, serverID int, cmd string)
 	}
 
 	if conf.ServerID == 0 {
-		return "", domain.ErrUnknownServerID
+		return "", ErrUnknownServerID
 	}
 
 	return s.ExecRaw(ctx, conf.Addr(), conf.RconPassword, cmd)

@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type ConfigHandler struct {

@@ -6,8 +6,8 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 

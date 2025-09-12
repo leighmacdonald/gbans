@@ -4,22 +4,23 @@ import (
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/discord/message"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/playerqueue"
 )
 
-func NewPlayerqueueChatStatus(author person.UserProfile, target person.UserProfile, status playerqueue.ChatStatus, reason string) *discordgo.MessageEmbed {
-	colour := ColourError
+func NewPlayerqueueChatStatus(author person.UserProfile, target person.UserProfile, status ChatStatus, reason string) *discordgo.MessageEmbed {
+	colour := message.ColourError
 	switch status {
-	case playerqueue.Readwrite:
-		colour = ColourSuccess
-	case playerqueue.Readonly:
-		colour = ColourWarn
+	case Readwrite:
+		colour = message.ColourSuccess
+	case Readonly:
+		colour = message.ColourWarn
 	}
 
 	sid := target.GetSteamID()
 
-	return NewEmbed("Updated chat status").
+	return message.NewEmbed("Updated chat status").
 		Embed().
 		SetColor(colour).
 		SetAuthor(author.GetName(), author.GetAvatar().Small()).
@@ -31,21 +32,21 @@ func NewPlayerqueueChatStatus(author person.UserProfile, target person.UserProfi
 		MessageEmbed
 }
 
-func NewPlayerqueueMessage(author person.UserProfile, msg string) *discordgo.MessageEmbed {
-	return NewEmbed().
+func NewPlayerqueueMessage(author domain.PersonInfo, msg string) *discordgo.MessageEmbed {
+	return message.NewEmbed().
 		Embed().
-		SetColor(ColourInfo).
+		SetColor(message.ColourInfo).
 		SetAuthor(author.GetName(), author.GetAvatar().Small()).
 		SetDescription(msg).MessageEmbed
 }
 
-func NewPlayerqueuePurge(author person.UserProfile, target person.UserProfile, message playerqueue.ChatLog, count int) *discordgo.MessageEmbed {
-	return NewEmbed().
+func NewPlayerqueuePurge(author domain.PersonInfo, target person.UserProfile, chatLog ChatLog, count int) *discordgo.MessageEmbed {
+	return message.NewEmbed().
 		Embed().
-		SetColor(ColourInfo).
+		SetColor(message.ColourInfo).
 		SetAuthor(author.GetName(), author.GetAvatar().Small()).
 		SetThumbnail(target.GetAvatar().Medium()).
-		AddField("Message", message.BodyMD).
+		AddField("Message", chatLog.BodyMD).
 		AddField("Count", strconv.Itoa(count)).
 		AddField("Name", target.GetName()).
 		AddField("SteamID", target.SteamID.String()).

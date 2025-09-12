@@ -10,6 +10,7 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
@@ -17,7 +18,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/datetime"

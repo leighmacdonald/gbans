@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/user/permission"
@@ -259,19 +258,6 @@ func (p People) AsMap() map[steamid.SteamID]Person {
 	}
 
 	return m
-}
-
-type UserNotification struct {
-	PersonNotificationID int64                             `json:"person_notification_id"`
-	SteamID              steamid.SteamID                   `json:"steam_id"`
-	Read                 bool                              `json:"read"`
-	Deleted              bool                              `json:"deleted"`
-	Severity             notification.NotificationSeverity `json:"severity"`
-	Message              string                            `json:"message"`
-	Link                 string                            `json:"link"`
-	Count                int                               `json:"count"`
-	Author               *UserProfile                      `json:"author"`
-	CreatedOn            time.Time                         `json:"created_on"`
 }
 
 type PersonSettings struct {

@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
 )

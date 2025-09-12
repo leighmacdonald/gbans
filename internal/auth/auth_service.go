@@ -101,17 +101,17 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			return
 		}
 
-		person, errPerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, nil, sid)
+		fetchedPerson, errPerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, nil, sid)
 		if errPerson != nil {
 			ctx.Redirect(302, referralURL)
 			slog.Error("Failed to create or load user profile", log.ErrAttr(errPerson), handlerName)
 		}
 
-		if person.Expired() {
-			if errGetProfile := person.UpdatePlayerSummary(ctx, &person, h.tfAPI); errGetProfile != nil {
+		if fetchedPerson.Expired() {
+			if errGetProfile := person.UpdatePlayerSummary(ctx, &fetchedPerson, h.tfAPI); errGetProfile != nil {
 				slog.Error("Failed to fetch user profile on login", log.ErrAttr(errGetProfile), handlerName)
 			} else {
-				if errSave := h.personUsecase.SavePerson(ctx, nil, &person); errSave != nil {
+				if errSave := h.personUsecase.SavePerson(ctx, nil, &fetchedPerson); errSave != nil {
 					slog.Error("Failed to save summary update", log.ErrAttr(errSave), handlerName)
 				}
 			}
@@ -160,14 +160,14 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 
 		sentry.AddBreadcrumb(&sentry.Breadcrumb{
 			Category: "auth",
-			Message:  "User logged in " + person.SteamID.String(),
+			Message:  "User logged in " + fetchedPerson.SteamID.String(),
 			Level:    sentry.LevelWarning,
 		})
 
 		slog.Info("User logged in",
 			slog.String("sid64", sid.String()),
-			slog.String("name", person.PersonaName),
-			slog.Int("permission_level", int(person.PermissionLevel)), handlerName)
+			slog.String("name", fetchedPerson.PersonaName),
+			slog.Int("permission_level", int(fetchedPerson.PermissionLevel)), handlerName)
 	}
 }
 

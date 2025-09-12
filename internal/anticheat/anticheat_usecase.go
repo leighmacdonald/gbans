@@ -13,8 +13,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -23,17 +23,15 @@ import (
 type AntiCheatUsecase struct {
 	parser        logparse.StacParser
 	repo          anticheatRepository
-	person        *person.PersonUsecase
 	ban           *ban.BanUsecase
 	config        *config.ConfigUsecase
 	notifications notification.NotificationUsecase
 }
 
-func NewAntiCheatUsecase(repo anticheatRepository, person *person.PersonUsecase, ban *ban.BanUsecase, config *config.ConfigUsecase, notif notification.NotificationUsecase) *AntiCheatUsecase {
+func NewAntiCheatUsecase(repo anticheatRepository, ban *ban.BanUsecase, config *config.ConfigUsecase, notif notification.NotificationUsecase) *AntiCheatUsecase {
 	return &AntiCheatUsecase{
 		parser:        logparse.NewStacParser(),
 		repo:          repo,
-		person:        person,
 		ban:           ban,
 		config:        config,
 		notifications: notif,
@@ -104,13 +102,13 @@ func (a AntiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 			duration = fmt.Sprintf("%dm", conf.Anticheat.Duration)
 		}
 
-		newBan, err := a.ban.Ban(ctx, owner.ToUserProfile(), ban.System, ban.BanOpts{
+		newBan, err := a.ban.Ban(ctx, owner.ToUserProfile(), banDomain.System, ban.BanOpts{
 			SourceID:       owner.SteamID,
 			TargetID:       entry.SteamID,
 			Duration:       duration,
 			ValidUntil:     time.Now().AddDate(10, 0, 0),
-			BanType:        ban.Banned,
-			Reason:         ban.Cheating,
+			BanType:        banDomain.Banned,
+			Reason:         banDomain.Cheating,
 			ReasonText:     "",
 			Note:           entry.Summary + "\n\nRaw log:\n" + entry.RawLog,
 			DemoName:       entry.DemoName,

@@ -2,6 +2,7 @@ package notification
 
 import (
 	"errors"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -19,6 +20,19 @@ const (
 	SeverityWarn
 	SeverityError
 )
+
+type UserNotification struct {
+	PersonNotificationID int64                `json:"person_notification_id"`
+	SteamID              steamid.SteamID      `json:"steam_id"`
+	Read                 bool                 `json:"read"`
+	Deleted              bool                 `json:"deleted"`
+	Severity             NotificationSeverity `json:"severity"`
+	Message              string               `json:"message"`
+	Link                 string               `json:"link"`
+	Count                int                  `json:"count"`
+	Author               domain.PersonInfo    `json:"author"`
+	CreatedOn            time.Time            `json:"created_on"`
+}
 
 type NotificationQuery struct {
 	domain.QueryFilter

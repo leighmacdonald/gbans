@@ -17,10 +17,7 @@ type appealHandler struct {
 }
 
 func NewAppealHandler(engine *gin.Engine, appealUsecase AppealsUsecase, authUsecase httphelper.Authenticator) {
-	handler := &appealHandler{
-		appealUsecase: appealUsecase,
-	}
-
+	handler := &appealHandler{appealUsecase: appealUsecase}
 	// authed
 	authedGrp := engine.Group("/")
 	{

@@ -7,22 +7,20 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type ChatUsecase struct {
-	repository    chat.ChatRepository
-	wordFilters   chat.WordFilterUsecase
+	repository    ChatRepository
+	wordFilters   WordFilterUsecase
 	bans          ban.BanUsecase
 	persons       person.PersonUsecase
 	notifications notification.NotificationUsecase
@@ -34,12 +32,11 @@ type ChatUsecase struct {
 	owner         steamid.SteamID
 	matchTimeout  time.Duration
 	checkTimeout  time.Duration
-
-	pingDiscord bool
+	pingDiscord   bool
 }
 
-func NewChatUsecase(config *config.ConfigUsecase, chatRepository chat.ChatRepository,
-	filters chat.WordFilterUsecase, stateUsecase state.StateUsecase, bans ban.BanUsecase,
+func NewChatUsecase(config *config.ConfigUsecase, chatRepository ChatRepository,
+	filters WordFilterUsecase, stateUsecase state.StateUsecase, bans ban.BanUsecase,
 	persons person.PersonUsecase, notifications notification.NotificationUsecase,
 ) *ChatUsecase {
 	conf := config.Config()
@@ -86,11 +83,11 @@ func (u ChatUsecase) onWarningExceeded(ctx context.Context, newWarning NewUserWa
 
 	switch newWarning.MatchedFilter.Action {
 	case FilterActionMute:
-		req.BanType = ban.NoComm
-		newBan, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), ban.System, req)
+		req.BanType = banDomain.NoComm
+		newBan, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), banDomain.System, req)
 	case FilterActionBan:
-		req.BanType = ban.Banned
-		newBan, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), ban.System, req)
+		req.BanType = banDomain.Banned
+		newBan, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), banDomain.System, req)
 	case FilterActionKick:
 		// Kicks are temporary, so should be done by Player ID to avoid
 		// missing players who weren't in the latest state update
@@ -114,9 +111,9 @@ func (u ChatUsecase) onWarningExceeded(ctx context.Context, newWarning NewUserWa
 		return nil
 	}
 
-	u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		discord.ChannelWordFilterLog,
-		discord.WarningMessage(newWarning, newBan)))
+	// u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	discord.ChannelWordFilterLog,
+	// 	discord.WarningMessage(newWarning, newBan)))
 
 	return nil
 }
@@ -142,7 +139,7 @@ func (u ChatUsecase) onWarningHandler(ctx context.Context, newWarning NewUserWar
 	}
 
 	if errPSay := u.state.PSay(ctx, newWarning.UserMessage.SteamID, msg); errPSay != nil {
-		return errors.Join(errPSay, state.ErrRCONCommand)
+		return errPSay
 	}
 
 	return nil
@@ -265,7 +262,7 @@ func (u ChatUsecase) AddChatHistory(ctx context.Context, message *PersonMessage)
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u ChatUsecase) QueryChatHistory(ctx context.Context, user person.PersonInfo, req ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error) {
+func (u ChatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInfo, req ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error) {
 	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(permission.PModerator)) {
 		req.Limit = 100
 	}

@@ -11,10 +11,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"golang.org/x/exp/slices"
 )
 
@@ -78,7 +79,8 @@ func (c *contestHandler) contestFromCtx(ctx *gin.Context) (Contest, bool) {
 		return Contest{}, false
 	}
 
-	if !contest.Public && httphelper.CurrentUserProfile(ctx).PermissionLevel < permission.PModerator {
+	user, _ := session.CurrentUserProfile(ctx)
+	if !contest.Public && !user.HasPermission(permission.PModerator) {
 		httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 			"You do not have permission to load this contest."))
 
@@ -90,7 +92,8 @@ func (c *contestHandler) contestFromCtx(ctx *gin.Context) (Contest, bool) {
 
 func (c *contestHandler) onAPIGetContests() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		contests, errContests := c.contests.Contests(ctx, httphelper.CurrentUserProfile(ctx))
+		user, _ := session.CurrentUserProfile(ctx)
+		contests, errContests := c.contests.Contests(ctx, user)
 		if errContests != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errContests, httphelper.ErrInternal)))
 
@@ -240,10 +243,8 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 				return
 			}
 		}
-
-		authorID := httphelper.CurrentUserProfile(ctx).SteamID
-
-		asset, errCreate := c.assets.Create(ctx, authorID, "media", req.Name, mediaFile)
+		user, _ := session.CurrentUserProfile(ctx)
+		asset, errCreate := c.assets.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile)
 		if errCreate != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCreate, httphelper.ErrInternal)))
 
@@ -281,7 +282,8 @@ func (c *contestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 			return
 		}
 
-		if errVote := c.contests.ContestEntryVote(ctx, contestID, contestEntryID, httphelper.CurrentUserProfile(ctx), direction == "up"); errVote != nil {
+		user, _ := session.CurrentUserProfile(ctx)
+		if errVote := c.contests.ContestEntryVote(ctx, contestID, contestEntryID, user, direction == "up"); errVote != nil {
 			if errors.Is(errVote, domain.ErrVoteDeleted) {
 				ctx.JSON(http.StatusOK, voteResult{""})
 
@@ -304,7 +306,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		user := httphelper.CurrentUserProfile(ctx)
+		user, _ := session.CurrentUserProfile(ctx)
 		contest, success := c.contestFromCtx(ctx)
 
 		if !success {
@@ -326,7 +328,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 		own := 0
 
 		for _, entry := range existingEntries {
-			if entry.SteamID == user.SteamID {
+			if entry.SteamID == user.GetSteamID() {
 				own++
 			}
 
@@ -338,8 +340,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 			}
 		}
 
-		steamID := httphelper.CurrentUserProfile(ctx).SteamID
-
+		curUser, _ := session.CurrentUserProfile(ctx)
 		asset, _, errAsset := c.assets.Get(ctx, req.AssetID)
 		if errAsset != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errAsset, httphelper.ErrInternal)))
@@ -347,13 +348,13 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 			return
 		}
 
-		if asset.AuthorID != steamID {
+		if asset.AuthorID != curUser.GetSteamID() {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 			return
 		}
 
-		entry, errEntry := contest.NewEntry(steamID, req.AssetID, req.Description)
+		entry, errEntry := contest.NewEntry(curUser.GetSteamID(), req.AssetID, req.Description)
 		if errEntry != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, httphelper.ErrInternal)))
 
@@ -374,8 +375,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 
 func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := httphelper.CurrentUserProfile(ctx)
-
+		user, _ := session.CurrentUserProfile(ctx)
 		contestEntryID, idFound := httphelper.GetUUIDParam(ctx, "contest_entry_id")
 		if !idFound {
 			return
@@ -395,7 +395,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		}
 
 		// Only >=moderators or the entry author are allowed to delete entries.
-		if user.PermissionLevel < permission.PModerator || user.SteamID != entry.SteamID {
+		if !user.HasPermission(permission.PModerator) || user.GetSteamID() != entry.SteamID {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 			return
@@ -415,7 +415,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		}
 
 		// Only allow mods to delete entries from expired contests.
-		if user.SteamID == entry.SteamID && time.Since(contest.DateEnd) > 0 {
+		if user.GetSteamID() == entry.SteamID && time.Since(contest.DateEnd) > 0 {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 			return

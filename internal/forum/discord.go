@@ -4,12 +4,12 @@ import (
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/forum"
 )
 
-func ForumCategorySave(category forum.ForumCategory) *discordgo.MessageEmbed {
-	embed := NewEmbed("Forum Category Saved")
+func ForumCategorySave(category ForumCategory) *discordgo.MessageEmbed {
+	embed := message.NewEmbed("Forum Category Saved")
 	embed.Embed().AddField("Category", category.Title)
 	embed.Embed().AddField("ID", strconv.Itoa(category.ForumCategoryID))
 
@@ -20,8 +20,8 @@ func ForumCategorySave(category forum.ForumCategory) *discordgo.MessageEmbed {
 	return embed.Embed().MessageEmbed
 }
 
-func ForumCategoryDelete(category forum.ForumCategory) *discordgo.MessageEmbed {
-	embed := NewEmbed("Forum Category Deleted")
+func ForumCategoryDelete(category ForumCategory) *discordgo.MessageEmbed {
+	embed := message.NewEmbed("Forum Category Deleted")
 	embed.Embed().AddField("Category", category.Title)
 	embed.Embed().AddField("ID", strconv.Itoa(category.ForumCategoryID))
 
@@ -32,28 +32,28 @@ func ForumCategoryDelete(category forum.ForumCategory) *discordgo.MessageEmbed {
 	return embed.Embed().MessageEmbed
 }
 
-func ForumMessageSaved(message forum.ForumMessage) *discordgo.MessageEmbed {
-	embed := NewEmbed("Forum Message Created/Edited", message.BodyMD)
+func ForumMessageSaved(forumMessage ForumMessage) *discordgo.MessageEmbed {
+	embed := message.NewEmbed("Forum Message Created/Edited", forumMessage.BodyMD)
 	embed.Embed().
-		AddField("Category", message.Title)
+		AddField("Category", forumMessage.Title)
 
-	if message.Personaname != "" {
+	if forumMessage.Personaname != "" {
 		embed.Embed().Author = &discordgo.MessageEmbedAuthor{
-			IconURL: domain.NewAvatar(message.Avatarhash).Medium(),
-			Name:    message.Personaname,
+			IconURL: domain.NewAvatar(forumMessage.Avatarhash).Medium(),
+			Name:    forumMessage.Personaname,
 		}
 	}
 
 	return embed.Embed().MessageEmbed
 }
 
-func ForumSaved(message forum.Forum) *discordgo.MessageEmbed {
-	embed := NewEmbed("Forum Created/Edited")
+func ForumSaved(forumMessage Forum) *discordgo.MessageEmbed {
+	embed := message.NewEmbed("Forum Created/Edited")
 	embed.Embed().
-		AddField("Forum", message.Title)
+		AddField("Forum", forumMessage.Title)
 
-	if message.Description != "" {
-		embed.Embed().AddField("Description", message.Description)
+	if forumMessage.Description != "" {
+		embed.Embed().AddField("Description", forumMessage.Description)
 	}
 
 	return embed.Embed().MessageEmbed

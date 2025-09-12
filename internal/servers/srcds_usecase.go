@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -73,10 +74,10 @@ func (h SRCDSUsecase) GetBanState(ctx context.Context, steamID steamid.SteamID, 
 		appealURL = h.config.ExtURLRaw("/appeal/%d", banState.BanID)
 	}
 
-	if banState.BanID > 0 && banState.BanType >= ban.NoComm {
+	if banState.BanID > 0 && banState.BanType >= banDomain.NoComm {
 		switch banState.BanSource {
 		case BanSourceSteam:
-			if banState.BanType == ban.NoComm {
+			if banState.BanType == banDomain.NoComm {
 				msg = fmt.Sprintf("You are muted & gagged. Expires: %s. Appeal: %s", banState.ValidUntil.Format(time.DateTime), appealURL)
 			} else {
 				msg = fmt.Sprintf(format, banState.Reason.String(), "Steam", validUntil, appealURL)
