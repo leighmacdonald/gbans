@@ -25,13 +25,13 @@ import (
 type ChatRepository struct {
 	db          database.Database
 	persons     *person.PersonUsecase
-	wordFilters WordFilterUsecase
+	wordFilters *WordFilterUsecase
 	matches     match.MatchUsecase
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	WarningChan chan NewUserWarning
 }
 
-func NewChatRepository(database database.Database, personUsecase *person.PersonUsecase, wordFilterUsecase WordFilterUsecase,
+func NewChatRepository(database database.Database, personUsecase *person.PersonUsecase, wordFilterUsecase *WordFilterUsecase,
 	matchUsecase match.MatchUsecase,
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) *ChatRepository {

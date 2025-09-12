@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -70,8 +71,8 @@ type CategoryRequest struct {
 
 func (f *forumHandler) onAPIForumMessagesRecent() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := httphelper.CurrentUserProfile(ctx)
-		messages, errThreads := f.forums.ForumRecentActivity(ctx, 5, user.PermissionLevel)
+		user, _ := session.CurrentUserProfile(ctx)
+		messages, errThreads := f.forums.ForumRecentActivity(ctx, 5, user.Permissions())
 		if errThreads != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errThreads, httphelper.ErrInternal),
 				"Could not load recent forum activity"))
@@ -251,7 +252,7 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		user := httphelper.CurrentUserProfile(ctx)
+		user, _ := session.CurrentUserProfile(ctx)
 
 		f.forums.Touch(user)
 
@@ -293,7 +294,7 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 			return
 		}
 
-		thread := forum.NewThread(req.Title, user.SteamID)
+		thread := forum.NewThread(req.Title, user.GetSteamID())
 		thread.Sticky = req.Sticky
 		thread.Locked = req.Locked
 
@@ -304,7 +305,7 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 			return
 		}
 
-		message := thread.NewMessage(user.SteamID, req.BodyMD)
+		message := thread.NewMessage(user.GetSteamID(), req.BodyMD)
 		if errSaveMessage := f.forums.ForumMessageSave(ctx, &message); errSaveMessage != nil {
 			// Drop created thread.
 			// TODO transaction
@@ -340,7 +341,7 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
 		forumThreadID, idFound := httphelper.GetInt64Param(ctx, "forum_thread_id")
 		if !idFound {
@@ -364,7 +365,7 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 		var thread ForumThread
 		if errGet := f.forums.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
 			if errors.Is(errGet, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNotFound,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound,
 					"Forum thread does not exist: %d", forumThreadID))
 			} else {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errGet, httphelper.ErrInternal),
@@ -374,8 +375,8 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if thread.SourceID != currentUser.SteamID && currentUser.PermissionLevel < permission.PModerator {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
+		if thread.SourceID != currentUser.GetSteamID() && !currentUser.HasPermission(permission.PModerator) {
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 				"You do not have access to edit this."))
 
 			return
@@ -407,7 +408,7 @@ func (f *forumHandler) onAPIThreadDelete() gin.HandlerFunc {
 		if errGet := f.forums.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
 			switch {
 			case errors.Is(errGet, database.ErrNoResult):
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, httphelper.ErrInternal)))
 			}
@@ -447,7 +448,7 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
 		f.forums.Touch(currentUser)
 
@@ -465,7 +466,7 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 		if errMessage := f.forums.ForumMessage(ctx, forumMessageID, &message); errMessage != nil {
 			switch {
 			case errors.Is(errMessage, database.ErrNoResult):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, errors.Join(errMessage, domain.ErrNotFound),
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, errors.Join(errMessage, httphelper.ErrNotFound),
 					"Message not found, cannot update."))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMessage, httphelper.ErrInternal)))
@@ -474,8 +475,8 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if message.SourceID != currentUser.SteamID && currentUser.PermissionLevel < permission.PModerator {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
+		if message.SourceID != currentUser.GetSteamID() && !currentUser.HasPermission(permission.PModerator) {
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 				"You do not have permission to edit this message."))
 
 			return
@@ -513,7 +514,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 		var message ForumMessage
 		if err := f.forums.ForumMessage(ctx, forumMessageID, &message); err != nil {
 			if errors.Is(err, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, domain.ErrNotFound, "Forum message does not exist"))
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, httphelper.ErrNotFound, "Forum message does not exist"))
 			} else {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 			}
@@ -524,7 +525,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 		var thread ForumThread
 		if err := f.forums.ForumThread(ctx, message.ForumThreadID, &thread); err != nil {
 			if errors.Is(err, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, httphelper.ErrNotFound))
 			} else {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 			}
@@ -589,7 +590,7 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
 		f.forums.Touch(currentUser)
 
@@ -605,7 +606,7 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 			return
 		}
 
-		if thread.Locked && currentUser.PermissionLevel < permission.PEditor {
+		if thread.Locked && !currentUser.HasPermission(permission.PEditor) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrThreadLocked))
 
 			return
@@ -625,7 +626,7 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 			return
 		}
 
-		newMessage := thread.NewMessage(currentUser.SteamID, req.BodyMD)
+		newMessage := thread.NewMessage(currentUser.GetSteamID(), req.BodyMD)
 		if errSave := f.forums.ForumMessageSave(ctx, &newMessage); errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
@@ -645,9 +646,9 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 			return
 		}
 
-		newMessage.Personaname = currentUser.Name
-		newMessage.Avatarhash = currentUser.Avatarhash
-		newMessage.PermissionLevel = currentUser.PermissionLevel
+		newMessage.Personaname = currentUser.GetName()
+		newMessage.Avatarhash = currentUser.GetAvatar().Hash()
+		newMessage.PermissionLevel = currentUser.Permissions()
 		newMessage.Online = true
 
 		ctx.JSON(http.StatusCreated, newMessage)
@@ -660,7 +661,7 @@ func (f *forumHandler) onAPIForumOverview() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
 		f.forums.Touch(currentUser)
 
@@ -680,7 +681,7 @@ func (f *forumHandler) onAPIForumOverview() gin.HandlerFunc {
 
 		for index := range categories {
 			for _, forum := range currentForums {
-				if currentUser.PermissionLevel < forum.PermissionLevel {
+				if !currentUser.HasPermission(forum.PermissionLevel) {
 					continue
 				}
 
@@ -704,7 +705,7 @@ func (f *forumHandler) onAPIForumOverview() gin.HandlerFunc {
 
 func (f *forumHandler) onAPIForumThreads() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
 		f.forums.Touch(currentUser)
 
@@ -727,8 +728,8 @@ func (f *forumHandler) onAPIForumThreads() gin.HandlerFunc {
 			return
 		}
 
-		if forum.PermissionLevel > currentUser.PermissionLevel {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrPermissionDenied,
+		if !currentUser.HasPermission(forum.PermissionLevel) {
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 				"You do not have permission to access this forum."))
 
 			return
@@ -740,7 +741,7 @@ func (f *forumHandler) onAPIForumThreads() gin.HandlerFunc {
 
 func (f *forumHandler) onAPIForumThread() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
 		f.forums.Touch(currentUser)
 
@@ -752,7 +753,7 @@ func (f *forumHandler) onAPIForumThread() gin.HandlerFunc {
 		var thread ForumThread
 		if errThreads := f.forums.ForumThread(ctx, forumThreadID, &thread); errThreads != nil {
 			if errors.Is(errThreads, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrNotFound))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
 			} else {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errThreads, httphelper.ErrInternal)))
 			}
@@ -770,7 +771,7 @@ func (f *forumHandler) onAPIForumThread() gin.HandlerFunc {
 
 func (f *forumHandler) onAPIForum() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
 		forumID, idFound := httphelper.GetIntParam(ctx, "forum_id")
 		if !idFound {
@@ -785,8 +786,8 @@ func (f *forumHandler) onAPIForum() gin.HandlerFunc {
 			return
 		}
 
-		if forum.PermissionLevel > currentUser.PermissionLevel {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+		if !currentUser.HasPermission(forum.PermissionLevel) {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 			return
 		}

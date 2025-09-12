@@ -215,7 +215,7 @@ func (r *BanRepository) Save(ctx context.Context, ban *Ban) error {
 	existing, errGetBan := r.GetBySteamID(ctx, ban.TargetID, false, true)
 	if errGetBan != nil {
 		if !errors.Is(errGetBan, database.ErrNoResult) {
-			return errors.Join(errGetBan, domain.ErrGetBan)
+			return errors.Join(errGetBan, ErrGetBan)
 		}
 	} else {
 		if ban.BanType <= existing.BanType {
@@ -325,7 +325,7 @@ func (r *BanRepository) ExpiredBans(ctx context.Context) ([]Ban, error) {
 }
 
 // Get returns all bans that fit the filter criteria passed in.
-func (r *BanRepository) Get(ctx context.Context, filter domain.BansQueryFilter) ([]BannedPerson, error) {
+func (r *BanRepository) Get(ctx context.Context, filter BansQueryFilter) ([]BannedPerson, error) {
 	builder := r.db.
 		Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",

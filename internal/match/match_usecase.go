@@ -23,8 +23,8 @@ type MatchUsecase struct {
 
 func NewMatchUsecase(repository *MatchRepository, state state.StateUsecase, servers servers.ServersUsecase,
 	notifications notification.NotificationUsecase,
-) *MatchUsecase {
-	return &MatchUsecase{
+) MatchUsecase {
+	return MatchUsecase{
 		repository:    repository,
 		state:         state,
 		servers:       servers,
@@ -59,7 +59,7 @@ func (m MatchUsecase) EndMatch(ctx context.Context, serverID int) (uuid.UUID, er
 
 	server, errServer := m.servers.Server(ctx, serverID)
 	if errServer != nil {
-		return matchID, errors.Join(errServer, domain.ErrUnknownServer)
+		return matchID, errors.Join(errServer, servers.ErrUnknownServer)
 	}
 
 	m.repository.EndMatch(MatchTrigger{

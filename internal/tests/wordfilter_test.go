@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,15 +16,15 @@ func TestWordFilter(t *testing.T) {
 	creds := loginUser(moderator)
 
 	// Shouldn't be filters already
-	var filters []domain.Filter
+	var filters []chat.Filter
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/filters", nil, http.StatusOK, &authTokens{user: creds}, &filters)
 	require.Empty(t, filters)
 
 	// Create a filter
-	req, errReq := domain.NewFilter(moderator.SteamID, "test", true, domain.Mute, "1d", 1)
+	req, errReq := chat.NewFilter(moderator.SteamID, "test", true, chat.FilterActionMute, "1d", 1)
 	require.NoError(t, errReq)
 
-	var created domain.Filter
+	var created chat.Filter
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filters", req, http.StatusOK, &authTokens{user: creds}, &created)
 	require.Positive(t, created.FilterID)
 
@@ -36,7 +37,7 @@ func TestWordFilter(t *testing.T) {
 	edit.Pattern = "blah"
 	edit.IsRegex = false
 
-	var edited domain.Filter
+	var edited chat.Filter
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/filters/%d", edit.FilterID), edit, http.StatusOK, &authTokens{user: creds}, &edited)
 	require.Equal(t, edit.FilterID, edited.FilterID)
 	require.Equal(t, edit.AuthorID, edited.AuthorID)
@@ -50,8 +51,8 @@ func TestWordFilter(t *testing.T) {
 	require.NotEqual(t, edit.UpdatedOn, edited.UpdatedOn)
 
 	// Match it
-	var matched []domain.Filter
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filter_match", domain.RequestQuery{Query: edited.Pattern}, http.StatusOK, &authTokens{user: creds}, &matched)
+	var matched []chat.Filter
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filter_match", httphelper.RequestQuery{Query: edited.Pattern}, http.StatusOK, &authTokens{user: creds}, &matched)
 	require.NotEmpty(t, matched)
 	require.Equal(t, matched[0].FilterID, edited.FilterID)
 
@@ -59,7 +60,7 @@ func TestWordFilter(t *testing.T) {
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/filters/%d", edit.FilterID), req, http.StatusOK, &authTokens{user: creds})
 
 	// Shouldn't match now
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filter_match", domain.RequestQuery{Query: edited.Pattern}, http.StatusOK, &authTokens{user: creds}, &matched)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filter_match", httphelper.RequestQuery{Query: edited.Pattern}, http.StatusOK, &authTokens{user: creds}, &matched)
 	require.Empty(t, matched)
 
 	// Make sure it was deleted

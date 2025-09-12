@@ -7,9 +7,9 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/internal/user/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -27,15 +27,6 @@ type PlayerQuery struct {
 
 type RequestPermissionLevelUpdate struct {
 	PermissionLevel permission.Privilege `json:"permission_level"`
-}
-
-type PersonInfo interface {
-	GetDiscordID() string
-	GetName() string
-	GetAvatar() AvatarLinks
-	GetSteamID() steamid.SteamID
-	Path() string // config.LinkablePath
-	HasPermission(permission permission.Privilege) bool
 }
 
 type SimplePerson struct {
@@ -75,12 +66,12 @@ func (p UserProfile) GetName() string {
 	return p.Name
 }
 
-func (p UserProfile) GetAvatar() AvatarLinks {
+func (p UserProfile) GetAvatar() domain.Avatar {
 	if p.Avatarhash == "" {
-		return NewAvatarLinks("fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb")
+		return domain.NewAvatar("fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb")
 	}
 
-	return NewAvatarLinks(p.Avatarhash)
+	return domain.NewAvatar(p.Avatarhash)
 }
 
 func (p UserProfile) GetSteamID() steamid.SteamID {
@@ -180,12 +171,16 @@ func (p Person) GetName() string {
 	return p.PersonaName
 }
 
+func (p Person) Permissions() permission.Privilege {
+	return p.PermissionLevel
+}
+
 func (p Person) HasPermission(privilege permission.Privilege) bool {
 	return p.PermissionLevel >= privilege
 }
 
-func (p Person) GetAvatar() AvatarLinks {
-	return NewAvatarLinks(p.AvatarHash)
+func (p Person) GetAvatar() domain.Avatar {
+	return domain.NewAvatar(p.AvatarHash)
 }
 
 func (p Person) GetSteamID() steamid.SteamID {

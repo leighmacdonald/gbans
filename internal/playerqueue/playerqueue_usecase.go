@@ -8,8 +8,8 @@ import (
 	"unicode"
 
 	"github.com/gorilla/websocket"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -21,8 +21,8 @@ import (
 
 func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons person.PersonUsecase, serversUC servers.ServersUsecase,
 	state state.StateUsecase, chatLogs []ChatLog, notif notification.NotificationUsecase,
-) PlayerqueueUsecase {
-	return &playerqueueUsecase{
+) *PlayerqueueUsecase {
+	return &PlayerqueueUsecase{
 		repo:    repo,
 		notif:   notif,
 		persons: persons,
@@ -61,14 +61,14 @@ func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons person.PersonUsec
 	}
 }
 
-type playerqueueUsecase struct {
+type PlayerqueueUsecase struct {
 	repo    PlayerqueueRepository
 	persons person.PersonUsecase
 	notif   notification.NotificationUsecase
 	queue   *Coordinator
 }
 
-func (p playerqueueUsecase) Start(ctx context.Context) {
+func (p PlayerqueueUsecase) Start(ctx context.Context) {
 	refreshState := time.NewTicker(time.Second * 2)
 
 	p.queue.updateState()
@@ -85,23 +85,23 @@ func (p playerqueueUsecase) Start(ctx context.Context) {
 	}
 }
 
-func (p playerqueueUsecase) JoinLobbies(client QueueClient, servers []int) error {
+func (p PlayerqueueUsecase) JoinLobbies(client QueueClient, servers []int) error {
 	return p.queue.Join(client, servers)
 }
 
-func (p playerqueueUsecase) LeaveLobbies(client QueueClient, servers []int) error {
+func (p PlayerqueueUsecase) LeaveLobbies(client QueueClient, servers []int) error {
 	return p.queue.Leave(client, servers)
 }
 
-func (p playerqueueUsecase) Connect(ctx context.Context, user person.UserProfile, conn *websocket.Conn) QueueClient {
-	return p.queue.Connect(ctx, user.SteamID, user.GetName(), user.Avatarhash, conn)
+func (p PlayerqueueUsecase) Connect(ctx context.Context, user domain.PersonInfo, conn *websocket.Conn) QueueClient {
+	return p.queue.Connect(ctx, user.GetSteamID(), user.GetName(), user.GetAvatar().Hash(), conn)
 }
 
-func (p playerqueueUsecase) Disconnect(client QueueClient) {
+func (p PlayerqueueUsecase) Disconnect(client QueueClient) {
 	p.queue.Disconnect(client)
 }
 
-func (p playerqueueUsecase) Purge(ctx context.Context, authorID steamid.SteamID, messageID int64, count int) error {
+func (p PlayerqueueUsecase) Purge(ctx context.Context, authorID steamid.SteamID, messageID int64, count int) error {
 	message, errMessage := p.repo.Message(ctx, messageID)
 	if errMessage != nil {
 		return errMessage
@@ -118,27 +118,27 @@ func (p playerqueueUsecase) Purge(ctx context.Context, authorID steamid.SteamID,
 
 	p.queue.PurgeMessages(messageIDs...)
 
-	author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
-	if errGetProfile != nil {
-		return errGetProfile
-	}
+	// author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
+	// if errGetProfile != nil {
+	// 	return errGetProfile
+	// }
 
-	target, errGetTarget := p.persons.GetOrCreatePersonBySteamID(ctx, nil, message.SteamID)
-	if errGetTarget != nil {
-		return errGetTarget
-	}
+	// target, errGetTarget := p.persons.GetOrCreatePersonBySteamID(ctx, nil, message.SteamID)
+	// if errGetTarget != nil {
+	// 	return errGetTarget
+	// }
 
-	p.notif.Enqueue(ctx, notification.NewDiscordNotification(
-		discord.ChannelPlayerqueue, discord.NewPlayerqueuePurge(author.ToUserProfile(), target.ToUserProfile(), message, count)))
+	// p.notif.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	discord.ChannelPlayerqueue, discord.NewPlayerqueuePurge(author.ToUserProfile(), target.ToUserProfile(), message, count)))
 
 	return nil
 }
 
-func (p playerqueueUsecase) Message(ctx context.Context, messageID int64) (ChatLog, error) {
+func (p PlayerqueueUsecase) Message(ctx context.Context, messageID int64) (ChatLog, error) {
 	return p.repo.Message(ctx, messageID)
 }
 
-func (p playerqueueUsecase) Delete(ctx context.Context, messageID ...int64) error {
+func (p PlayerqueueUsecase) Delete(ctx context.Context, messageID ...int64) error {
 	if len(messageID) == 0 {
 		return nil
 	}
@@ -146,7 +146,7 @@ func (p playerqueueUsecase) Delete(ctx context.Context, messageID ...int64) erro
 	return p.repo.Delete(ctx, messageID...)
 }
 
-func (p playerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID, status ChatStatus, reason string) error {
+func (p PlayerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID, status ChatStatus, reason string) error {
 	if !steamID.Valid() {
 		return domain.ErrInvalidSID
 	}
@@ -162,7 +162,7 @@ func (p playerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.
 	}
 
 	if !allowed {
-		return domain.ErrPermissionDenied
+		return permission.ErrPermissionDenied
 	}
 
 	if person.PlayerqueueChatStatus == status {
@@ -178,13 +178,13 @@ func (p playerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.
 
 	p.queue.UpdateChatStatus(steamID, status, reason, previousStatus)
 
-	author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
-	if errGetProfile != nil {
-		return errGetProfile
-	}
-
-	p.notif.Enqueue(ctx, notification.NewDiscordNotification(
-		discord.ChannelPlayerqueue, discord.NewPlayerqueueChatStatus(author.ToUserProfile(), person.ToUserProfile(), status, reason)))
+	// author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
+	// if errGetProfile != nil {
+	// 	return errGetProfile
+	// }
+	//
+	// p.notif.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	discord.ChannelPlayerqueue, discord.NewPlayerqueueChatStatus(author.ToUserProfile(), person.ToUserProfile(), status, reason)))
 
 	slog.Info("Set chat status", slog.String("steam_id", person.SteamID.String()), slog.String("status", string(status)))
 
@@ -210,22 +210,23 @@ func removeNonPrintable(input string) string {
 	return out
 }
 
-func (p playerqueueUsecase) AddMessage(ctx context.Context, bodyMD string, user person.UserProfile) error {
+func (p PlayerqueueUsecase) AddMessage(ctx context.Context, bodyMD string, user domain.PersonInfo) error {
 	bodyMD = sanitizeUserMessage(bodyMD)
 	if len(bodyMD) == 0 {
 		return ErrBadInput
 	}
 
-	if !user.SteamID.Valid() {
+	sid := user.GetSteamID()
+	if !sid.Valid() {
 		return ErrBadInput
 	}
 
 	newMessage := ChatLog{
-		SteamID:         user.SteamID,
+		SteamID:         user.GetSteamID(),
 		CreatedOn:       time.Now(),
-		Personaname:     user.Name,
-		Avatarhash:      user.Avatarhash,
-		PermissionLevel: int(user.PermissionLevel),
+		Personaname:     user.GetName(),
+		Avatarhash:      user.GetAvatar().Hash(),
+		PermissionLevel: int(user.Permissions()),
 		BodyMD:          bodyMD,
 		Deleted:         false,
 	}
@@ -237,13 +238,13 @@ func (p playerqueueUsecase) AddMessage(ctx context.Context, bodyMD string, user 
 
 	p.queue.Message(message)
 
-	p.notif.Enqueue(ctx,
-		notification.NewDiscordNotification(discord.ChannelPlayerqueue, discord.NewPlayerqueueMessage(user, bodyMD)))
+	// p.notif.Enqueue(ctx,
+	// 	notification.NewDiscordNotification(discord.ChannelPlayerqueue, discord.NewPlayerqueueMessage(user, bodyMD)))
 
 	return nil
 }
 
-func (p playerqueueUsecase) Recent(ctx context.Context, limit uint64) ([]ChatLog, error) {
+func (p PlayerqueueUsecase) Recent(ctx context.Context, limit uint64) ([]ChatLog, error) {
 	if limit == 0 {
 		limit = 50
 	}

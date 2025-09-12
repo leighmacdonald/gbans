@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/stretchr/testify/require"
 )
@@ -13,103 +13,103 @@ func TestConfig(t *testing.T) {
 	router := testRouter()
 	owner := loginUser(getOwner())
 
-	var config domain.Config
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/config", nil, http.StatusOK, &authTokens{user: owner}, &config)
-	config.StaticConfig = configUC.Config().StaticConfig
-	require.Equal(t, configUC.Config(), config)
+	var conf config.Config
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/config", nil, http.StatusOK, &authTokens{user: owner}, &conf)
+	conf.StaticConfig = configUC.Config().StaticConfig
+	require.Equal(t, configUC.Config(), conf)
 
-	config.General.SiteName += "x"
-	config.General.Mode = domain.TestMode
-	config.General.FileServeMode = "local"
-	config.General.SrcdsLogAddr += "x"
-	config.General.AssetURL += "x"
-	config.General.DefaultRoute = "/"
-	config.General.NewsEnabled = !config.General.NewsEnabled
-	config.General.ForumsEnabled = !config.General.ForumsEnabled
-	config.General.ContestsEnabled = !config.General.ContestsEnabled
-	config.General.WikiEnabled = !config.General.WikiEnabled
-	config.General.StatsEnabled = !config.General.StatsEnabled
-	config.General.ServersEnabled = !config.General.ServersEnabled
-	config.General.ReportsEnabled = !config.General.ReportsEnabled
-	config.General.ChatlogsEnabled = !config.General.ChatlogsEnabled
-	config.General.DemosEnabled = !config.General.DemosEnabled
+	conf.General.SiteName += "x"
+	conf.General.Mode = config.TestMode
+	conf.General.FileServeMode = "local"
+	conf.General.SrcdsLogAddr += "x"
+	conf.General.AssetURL += "x"
+	conf.General.DefaultRoute = "/"
+	conf.General.NewsEnabled = !conf.General.NewsEnabled
+	conf.General.ForumsEnabled = !conf.General.ForumsEnabled
+	conf.General.ContestsEnabled = !conf.General.ContestsEnabled
+	conf.General.WikiEnabled = !conf.General.WikiEnabled
+	conf.General.StatsEnabled = !conf.General.StatsEnabled
+	conf.General.ServersEnabled = !conf.General.ServersEnabled
+	conf.General.ReportsEnabled = !conf.General.ReportsEnabled
+	conf.General.ChatlogsEnabled = !conf.General.ChatlogsEnabled
+	conf.General.DemosEnabled = !conf.General.DemosEnabled
 
-	config.Debug.SkipOpenIDValidation = !config.Debug.SkipOpenIDValidation
-	config.Debug.AddRCONLogAddress = "1.2.3.4:27715"
+	conf.Debug.SkipOpenIDValidation = !conf.Debug.SkipOpenIDValidation
+	conf.Debug.AddRCONLogAddress = "1.2.3.4:27715"
 
-	config.Log.Level = log.Warn
-	config.Log.File += "x"
-	config.Log.HTTPLevel = log.Warn
-	config.Log.HTTPEnabled = !config.Log.HTTPEnabled
-	config.Log.HTTPOtelEnabled = !config.Log.HTTPOtelEnabled
+	conf.Log.Level = log.Warn
+	conf.Log.File += "x"
+	conf.Log.HTTPLevel = log.Warn
+	conf.Log.HTTPEnabled = !conf.Log.HTTPEnabled
+	conf.Log.HTTPOtelEnabled = !conf.Log.HTTPOtelEnabled
 
-	config.Patreon.ClientID += "x"
-	config.Patreon.ClientSecret += "x"
-	config.Patreon.IntegrationsEnabled = !config.Patreon.IntegrationsEnabled
-	config.Patreon.CreatorAccessToken += "x"
-	config.Patreon.CreatorRefreshToken += "x"
-	config.Patreon.CreatorAccessToken += "x"
+	conf.Patreon.ClientID += "x"
+	conf.Patreon.ClientSecret += "x"
+	conf.Patreon.IntegrationsEnabled = !conf.Patreon.IntegrationsEnabled
+	conf.Patreon.CreatorAccessToken += "x"
+	conf.Patreon.CreatorRefreshToken += "x"
+	conf.Patreon.CreatorAccessToken += "x"
 
-	config.Discord.Enabled = !config.Discord.Enabled
-	config.Discord.IntegrationsEnabled = !config.Discord.IntegrationsEnabled
-	config.Discord.BotEnabled = !config.Discord.BotEnabled
-	config.Discord.AppID += "x"
-	config.Discord.AppSecret += "x"
-	config.Discord.LinkID += "x"
-	config.Discord.Token += "x"
-	config.Discord.GuildID += "x"
-	config.Discord.LogChannelID += "x"
-	config.Discord.PublicLogChannelEnable = !config.Discord.PublicLogChannelEnable
-	config.Discord.PublicLogChannelID += "x"
-	config.Discord.PublicMatchLogChannelID += "x"
-	config.Discord.VoteLogChannelID += "x"
-	config.Discord.AppealLogChannelID += "x"
-	config.Discord.BanLogChannelID += "x"
-	config.Discord.ForumLogChannelID += "x"
-	config.Discord.WordFilterLogChannelID += "x"
-	config.Discord.KickLogChannelID += "x"
-	config.Discord.ModPingRoleID += "x"
+	conf.Discord.Enabled = !conf.Discord.Enabled
+	conf.Discord.IntegrationsEnabled = !conf.Discord.IntegrationsEnabled
+	conf.Discord.BotEnabled = !conf.Discord.BotEnabled
+	conf.Discord.AppID += "x"
+	conf.Discord.AppSecret += "x"
+	conf.Discord.LinkID += "x"
+	conf.Discord.Token += "x"
+	conf.Discord.GuildID += "x"
+	conf.Discord.LogChannelID += "x"
+	conf.Discord.PublicLogChannelEnable = !conf.Discord.PublicLogChannelEnable
+	conf.Discord.PublicLogChannelID += "x"
+	conf.Discord.PublicMatchLogChannelID += "x"
+	conf.Discord.VoteLogChannelID += "x"
+	conf.Discord.AppealLogChannelID += "x"
+	conf.Discord.BanLogChannelID += "x"
+	conf.Discord.ForumLogChannelID += "x"
+	conf.Discord.WordFilterLogChannelID += "x"
+	conf.Discord.KickLogChannelID += "x"
+	conf.Discord.ModPingRoleID += "x"
 
-	config.Filters.Enabled = !config.Filters.Enabled
-	config.Filters.WarningTimeout *= 2
-	config.Filters.WarningLimit *= 2
-	config.Filters.Dry = !config.Filters.Dry
-	config.Filters.PingDiscord = !config.Filters.PingDiscord
-	config.Filters.MaxWeight *= 2
-	config.Filters.CheckTimeout *= 2
-	config.Filters.MatchTimeout *= 2
+	conf.Filters.Enabled = !conf.Filters.Enabled
+	conf.Filters.WarningTimeout *= 2
+	conf.Filters.WarningLimit *= 2
+	conf.Filters.Dry = !conf.Filters.Dry
+	conf.Filters.PingDiscord = !conf.Filters.PingDiscord
+	conf.Filters.MaxWeight *= 2
+	conf.Filters.CheckTimeout *= 2
+	conf.Filters.MatchTimeout *= 2
 
-	config.GeoLocation.Enabled = !config.GeoLocation.Enabled
-	config.GeoLocation.CachePath += "x"
-	config.GeoLocation.Token += "x"
+	conf.GeoLocation.Enabled = !conf.GeoLocation.Enabled
+	conf.GeoLocation.CachePath += "x"
+	conf.GeoLocation.Token += "x"
 
-	config.Demo.DemoCleanupEnabled = !config.Demo.DemoCleanupEnabled
-	config.Demo.DemoCleanupStrategy = "count"
-	config.Demo.DemoCleanupMinPct *= 2
-	config.Demo.DemoCleanupMount += "/x"
-	config.Demo.DemoCountLimit *= 2
+	conf.Demo.DemoCleanupEnabled = !conf.Demo.DemoCleanupEnabled
+	conf.Demo.DemoCleanupStrategy = "count"
+	conf.Demo.DemoCleanupMinPct *= 2
+	conf.Demo.DemoCleanupMount += "/x"
+	conf.Demo.DemoCountLimit *= 2
 
-	config.Clientprefs.CenterProjectiles = !config.Clientprefs.CenterProjectiles
+	conf.Clientprefs.CenterProjectiles = !conf.Clientprefs.CenterProjectiles
 
-	config.LocalStore.PathRoot += "/x"
+	conf.LocalStore.PathRoot += "/x"
 
-	config.Exports.AuthorizedKeys += ",test-key"
-	config.Exports.BDEnabled = !config.Exports.BDEnabled
-	config.Exports.ValveEnabled = !config.Exports.ValveEnabled
+	conf.Exports.AuthorizedKeys += ",test-key"
+	conf.Exports.BDEnabled = !conf.Exports.BDEnabled
+	conf.Exports.ValveEnabled = !conf.Exports.ValveEnabled
 
-	config.SSH.Enabled = !config.SSH.Enabled
-	config.SSH.Username += "x"
-	config.SSH.Port += 2
-	config.SSH.PrivateKeyPath += "/x"
-	config.SSH.Password += "x"
-	config.SSH.UpdateInterval *= 2
-	config.SSH.Timeout *= 2
-	config.SSH.DemoPathFmt += "x"
+	conf.SSH.Enabled = !conf.SSH.Enabled
+	conf.SSH.Username += "x"
+	conf.SSH.Port += 2
+	conf.SSH.PrivateKeyPath += "/x"
+	conf.SSH.Password += "x"
+	conf.SSH.UpdateInterval *= 2
+	conf.SSH.Timeout *= 2
+	conf.SSH.DemoPathFmt += "x"
 
-	var updated domain.Config
-	testEndpointWithReceiver(t, router, http.MethodPut, "/api/config", config, http.StatusOK, &authTokens{user: owner}, &updated)
+	var updated config.Config
+	testEndpointWithReceiver(t, router, http.MethodPut, "/api/config", conf, http.StatusOK, &authTokens{user: owner}, &updated)
 	updated.StaticConfig = configUC.Config().StaticConfig
-	require.Equal(t, config, updated)
+	require.Equal(t, conf, updated)
 }
 
 func TestConfigPermissions(t *testing.T) {

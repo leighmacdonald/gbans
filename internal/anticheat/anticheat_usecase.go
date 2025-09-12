@@ -12,7 +12,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -105,7 +104,7 @@ func (a AntiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 			duration = fmt.Sprintf("%dm", conf.Anticheat.Duration)
 		}
 
-		newBan, err := a.ban.Ban(ctx, owner.ToUserProfile(), ban.System, ban.Opts{
+		newBan, err := a.ban.Ban(ctx, owner.ToUserProfile(), ban.System, ban.BanOpts{
 			SourceID:       owner.SteamID,
 			TargetID:       entry.SteamID,
 			Duration:       duration,
@@ -127,8 +126,8 @@ func (a AntiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 				slog.Int64("steam_id", entry.SteamID.Int64()))
 			hasBeenBanned = append(hasBeenBanned, entry.SteamID)
 
-			go a.notifications.Enqueue(ctx, notification.NewDiscordNotification(a.config.Config().Discord.AnticheatChannelID,
-				discord.NewAnticheatTrigger(newBan, conf, entry, results[entry.SteamID][entry.Detection])))
+			// go a.notifications.Enqueue(ctx, notification.NewDiscordNotification(a.config.Config().Discord.AnticheatChannelID,
+			// 	discord.NewAnticheatTrigger(newBan, conf, entry, results[entry.SteamID][entry.Detection])))
 		}
 	}
 

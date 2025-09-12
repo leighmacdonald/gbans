@@ -1,9 +1,7 @@
 package asset
 
 import (
-	"context"
 	"encoding/hex"
-	"io"
 	"mime/multipart"
 	"time"
 
@@ -19,21 +17,6 @@ const (
 	BucketDemo  Bucket = "demos"
 	BucketMedia Bucket = "media"
 )
-
-type AssetRepository interface {
-	Init(ctx context.Context) error
-	Get(ctx context.Context, uuid uuid.UUID) (Asset, io.ReadSeeker, error)
-	Put(ctx context.Context, asset Asset, body io.ReadSeeker) (Asset, error)
-	Delete(ctx context.Context, uuid uuid.UUID) (int64, error)
-	GenAssetPath(hash string) (string, error)
-}
-
-type AssetUsecase interface {
-	Create(ctx context.Context, author steamid.SteamID, bucket Bucket, fileName string, content io.ReadSeeker) (Asset, error)
-	Get(ctx context.Context, assetID uuid.UUID) (Asset, io.ReadSeeker, error)
-	Delete(ctx context.Context, assetID uuid.UUID) (int64, error)
-	GenAssetPath(hash string) (string, error)
-}
 
 type UserUploadedFile struct {
 	File *multipart.FileHeader `form:"file" binding:"required"`

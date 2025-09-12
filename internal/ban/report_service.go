@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -51,7 +52,7 @@ func NewHandler(engine *gin.Engine, reports ReportUsecase, authUC httphelper.Aut
 
 func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
 		var req RequestReportCreate
 		if !httphelper.Bind(ctx, &req) {
@@ -83,10 +84,11 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 			return
 		}
 
-		report, errReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		user, _ := session.CurrentUserProfile(ctx)
+		report, errReport := h.reports.GetReport(ctx, user, reportID)
 		if errReport != nil {
 			if errors.Is(errReport, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrNotFound,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound,
 					"Could not find a report with the id: %d", reportID))
 
 				return
@@ -103,9 +105,9 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 
 func (h reportHandler) onAPIGetUserReports() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := httphelper.CurrentUserProfile(ctx)
+		user, _ := session.CurrentUserProfile(ctx)
 
-		reports, errReports := h.reports.GetReportsBySteamID(ctx, user.SteamID)
+		reports, errReports := h.reports.GetReportsBySteamID(ctx, user.GetSteamID())
 		if errReports != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errReports, httphelper.ErrInternal)))
 
@@ -146,7 +148,8 @@ func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 			return
 		}
 
-		_, err := h.reports.SetReportStatus(ctx, reportID, httphelper.CurrentUserProfile(ctx), req.Status)
+		user, _ := session.CurrentUserProfile(ctx)
+		_, err := h.reports.SetReportStatus(ctx, reportID, user, req.Status)
 		if err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
@@ -164,7 +167,8 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 			return
 		}
 
-		report, errGetReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		user, _ := session.CurrentUserProfile(ctx)
+		report, errGetReport := h.reports.GetReport(ctx, user, reportID)
 		if errGetReport != nil {
 			if errors.Is(errGetReport, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
@@ -177,8 +181,8 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 			return
 		}
 
-		if !httphelper.HasPrivilege(httphelper.CurrentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, permission.PModerator) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrPermissionDenied))
+		if !httphelper.HasPrivilege(user, steamid.Collection{report.SourceID, report.TargetID}, permission.PModerator) {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrBadRequest))
 
 			return
 		}
@@ -216,8 +220,7 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 			return
 		}
 
-		curUser := httphelper.CurrentUserProfile(ctx)
-
+		curUser, _ := session.CurrentUserProfile(ctx)
 		msg, errSave := h.reports.CreateReportMessage(ctx, reportID, curUser, req)
 		if errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
@@ -241,7 +244,8 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 			return
 		}
 
-		msg, errMsg := h.reports.EditReportMessage(ctx, reportMessageID, httphelper.CurrentUserProfile(ctx), req)
+		user, _ := session.CurrentUserProfile(ctx)
+		msg, errMsg := h.reports.EditReportMessage(ctx, reportMessageID, user, req)
 		if errMsg != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMsg, httphelper.ErrInternal)))
 
@@ -264,7 +268,8 @@ func (h reportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.reports.DropReportMessage(ctx, httphelper.CurrentUserProfile(ctx), reportMessageID); err != nil {
+		user, _ := session.CurrentUserProfile(ctx)
+		if err := h.reports.DropReportMessage(ctx, user, reportMessageID); err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return

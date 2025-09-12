@@ -8,11 +8,9 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 func NewExpirationMonitor(steam BanUsecase, person *person.PersonUsecase, notifications notification.NotificationUsecase, config *config.ConfigUsecase,
@@ -66,13 +64,13 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 				name = person.SteamID.String()
 			}
 
-			monitor.notifications.Enqueue(ctx, notification.NewDiscordNotification(monitor.config.Config().Discord.BanLogChannelID, discord.BanExpiresMessage(ban, person, monitor.config.ExtURL(ban))))
+			// monitor.notifications.Enqueue(ctx, notification.NewDiscordNotification(monitor.config.Config().Discord.BanLogChannelID, discord.BanExpiresMessage(ban, person, monitor.config.ExtURL(ban))))
 
-			monitor.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-				[]steamid.SteamID{person.SteamID},
-				notification.SeverityInfo,
-				"Your mute/ban period has expired",
-				ban.Path()))
+			// monitor.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
+			// 	[]steamid.SteamID{person.SteamID},
+			// 	notification.SeverityInfo,
+			// 	"Your mute/ban period has expired",
+			// 	ban.Path()))
 
 			slog.Info("Ban expired",
 				slog.String("reason", ban.Reason.String()),

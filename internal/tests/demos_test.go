@@ -7,8 +7,8 @@ import (
 	"path"
 	"testing"
 
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/demo"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +19,7 @@ func TestDemosCleanup(t *testing.T) {
 	conf := configUC.Config()
 	conf.LocalStore.PathRoot = tempDir
 	conf.Demo.DemoCleanupEnabled = true
-	conf.Demo.DemoCleanupStrategy = domain.DemoStrategyCount
+	conf.Demo.DemoCleanupStrategy = config.DemoStrategyCount
 	conf.Demo.DemoCountLimit = 5
 
 	require.NoError(t, configUC.Write(t.Context(), conf))

@@ -5,14 +5,13 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -34,13 +33,13 @@ func (u *AppealsUsecase) GetAppealsByActivity(ctx context.Context, opts AppealQu
 	return u.repository.GetAppealsByActivity(ctx, opts)
 }
 
-func (u *AppealsUsecase) EditBanMessage(ctx context.Context, curUser person.UserProfile, banMessageID int64, newMsg string) (BanAppealMessage, error) {
+func (u *AppealsUsecase) EditBanMessage(ctx context.Context, curUser domain.PersonInfo, banMessageID int64, newMsg string) (BanAppealMessage, error) {
 	existing, err := u.GetBanMessageByID(ctx, banMessageID)
 	if err != nil {
 		return BanAppealMessage{}, err
 	}
 
-	bannedPerson, errReport := u.bans.Query(ctx, QueryOpts{
+	_, errReport := u.bans.QueryOne(ctx, QueryOpts{
 		BanID:   existing.BanID,
 		Deleted: true,
 		EvadeOk: true,
@@ -50,7 +49,7 @@ func (u *AppealsUsecase) EditBanMessage(ctx context.Context, curUser person.User
 	}
 
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.PModerator) {
-		return existing, domain.ErrPermissionDenied
+		return existing, permission.ErrPermissionDenied
 	}
 
 	if newMsg == "" {
@@ -67,23 +66,23 @@ func (u *AppealsUsecase) EditBanMessage(ctx context.Context, curUser person.User
 		return existing, errSave
 	}
 
-	conf := u.config.Config()
-
-	u.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelModAppealLog, discord.NewAppealMessage(existing.MessageMD,
-		conf.ExtURL(bannedPerson.Ban), curUser, conf.ExtURL(curUser))))
+	//conf := u.config.Config()
+	//
+	// u.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelModAppealLog, discord.NewAppealMessage(existing.MessageMD,
+	// 	conf.ExtURL(bannedPerson.Ban), curUser, conf.ExtURL(curUser))))
 
 	slog.Debug("Appeal message updated", slog.Int64("message_id", banMessageID))
 
 	return existing, nil
 }
 
-func (u *AppealsUsecase) CreateBanMessage(ctx context.Context, curUser person.UserProfile, banID int64, newMsg string) (BanAppealMessage, error) {
+func (u *AppealsUsecase) CreateBanMessage(ctx context.Context, curUser domain.PersonInfo, banID int64, newMsg string) (BanAppealMessage, error) {
 	if banID <= 0 {
 		return BanAppealMessage{}, domain.ErrInvalidParameter
 	}
 
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{curUser.GetSteamID()}, permission.PModerator) {
-		return BanAppealMessage{}, domain.ErrPermissionDenied
+		return BanAppealMessage{}, permission.ErrPermissionDenied
 	}
 
 	if newMsg == "" {
@@ -99,8 +98,8 @@ func (u *AppealsUsecase) CreateBanMessage(ctx context.Context, curUser person.Us
 		return BanAppealMessage{}, errReport
 	}
 
-	if bannedPerson.AppealState != Open && curUser.PermissionLevel < permission.PModerator {
-		return BanAppealMessage{}, domain.ErrPermissionDenied
+	if bannedPerson.AppealState != Open && !curUser.HasPermission(permission.PModerator) {
+		return BanAppealMessage{}, permission.ErrPermissionDenied
 	}
 
 	_, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, nil, bannedPerson.TargetID)
@@ -113,10 +112,10 @@ func (u *AppealsUsecase) CreateBanMessage(ctx context.Context, curUser person.Us
 		return BanAppealMessage{}, errSource
 	}
 
-	msg := NewBanAppealMessage(banID, curUser.SteamID, newMsg)
-	msg.PermissionLevel = curUser.PermissionLevel
-	msg.Personaname = curUser.Name
-	msg.Avatarhash = curUser.Avatarhash
+	msg := NewBanAppealMessage(banID, curUser.GetSteamID(), newMsg)
+	msg.PermissionLevel = curUser.Permissions()
+	msg.Personaname = curUser.GetName()
+	msg.Avatarhash = curUser.GetAvatar().Hash()
 
 	if errSave := u.repository.SaveBanMessage(ctx, &msg); errSave != nil {
 		return BanAppealMessage{}, errSave
@@ -128,30 +127,30 @@ func (u *AppealsUsecase) CreateBanMessage(ctx context.Context, curUser person.Us
 		return BanAppealMessage{}, errUpdate
 	}
 
-	conf := u.config.Config()
+	// conf := u.config.Config()
 
-	u.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelModAppealLog, discord.NewAppealMessage(msg.MessageMD,
-		conf.ExtURL(bannedPerson.Ban), curUser, conf.ExtURL(curUser))))
+	// u.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelModAppealLog, discord.NewAppealMessage(msg.MessageMD,
+	// 	conf.ExtURL(bannedPerson.Ban), curUser, conf.ExtURL(curUser))))
 
-	u.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
-		[]permission.Privilege{permission.PModerator, permission.PAdmin},
-		notification.SeverityInfo,
-		"A new ban appeal message",
-		bannedPerson.Path(),
-		curUser))
+	// u.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
+	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
+	// 	notification.SeverityInfo,
+	// 	"A new ban appeal message",
+	// 	bannedPerson.Path(),
+	// 	curUser))
 
-	if curUser.SteamID != bannedPerson.TargetID {
-		u.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-			[]steamid.SteamID{bannedPerson.TargetID},
-			notification.SeverityInfo,
-			"A new ban appeal message",
-			bannedPerson.Path()))
-	}
+	// if curUser.SteamID != bannedPerson.TargetID {
+	// 	u.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
+	// 		[]steamid.SteamID{bannedPerson.TargetID},
+	// 		notification.SeverityInfo,
+	// 		"A new ban appeal message",
+	// 		bannedPerson.Path()))
+	// }
 
 	return msg, nil
 }
 
-func (u *AppealsUsecase) GetBanMessages(ctx context.Context, userProfile person.UserProfile, banID int64) ([]BanAppealMessage, error) {
+func (u *AppealsUsecase) GetBanMessages(ctx context.Context, userProfile domain.PersonInfo, banID int64) ([]BanAppealMessage, error) {
 	banPerson, errGetBan := u.bans.Query(ctx, QueryOpts{
 		BanID:   banID,
 		Deleted: true,
@@ -162,7 +161,7 @@ func (u *AppealsUsecase) GetBanMessages(ctx context.Context, userProfile person.
 	}
 
 	if !httphelper.HasPrivilege(userProfile, steamid.Collection{banPerson.TargetID, banPerson.SourceID}, permission.PModerator) {
-		return nil, domain.ErrPermissionDenied
+		return nil, permission.ErrPermissionDenied
 	}
 
 	return u.repository.GetBanMessages(ctx, banID)
@@ -172,23 +171,23 @@ func (u *AppealsUsecase) GetBanMessageByID(ctx context.Context, banMessageID int
 	return u.repository.GetBanMessageByID(ctx, banMessageID)
 }
 
-func (u *AppealsUsecase) DropBanMessage(ctx context.Context, curUser person.UserProfile, banMessageID int64) error {
+func (u *AppealsUsecase) DropBanMessage(ctx context.Context, curUser domain.PersonInfo, banMessageID int64) error {
 	existing, errExist := u.GetBanMessageByID(ctx, banMessageID)
 	if errExist != nil {
 		return errExist
 	}
 
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.PModerator) {
-		return domain.ErrPermissionDenied
+		return permission.ErrPermissionDenied
 	}
 
 	if errDrop := u.repository.DropBanMessage(ctx, &existing); errDrop != nil {
 		return errDrop
 	}
 
-	u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		discord.ChannelModAppealLog,
-		discord.DeleteAppealMessage(&existing, curUser, u.config.ExtURL(curUser))))
+	// u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	discord.ChannelModAppealLog,
+	// 	discord.DeleteAppealMessage(&existing, curUser, u.config.ExtURL(curUser))))
 
 	slog.Info("Appeal message deleted", slog.Int64("ban_message_id", banMessageID))
 

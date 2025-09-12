@@ -10,15 +10,15 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type reportRepository struct {
+type ReportRepository struct {
 	db database.Database
 }
 
-func NewReportRepository(database database.Database) *reportRepository {
-	return &reportRepository{db: database}
+func NewReportRepository(database database.Database) *ReportRepository {
+	return &ReportRepository{db: database}
 }
 
-func (r reportRepository) insertReport(ctx context.Context, report *Report) error {
+func (r ReportRepository) insertReport(ctx context.Context, report *Report) error {
 	const query = `INSERT INTO report (
 		    author_id, reported_id, report_status, description, deleted, created_on, updated_on, reason,
             reason_text, demo_id, demo_tick, person_message_id
@@ -52,7 +52,7 @@ func (r reportRepository) insertReport(ctx context.Context, report *Report) erro
 	return nil
 }
 
-func (r reportRepository) updateReport(ctx context.Context, report *Report) error {
+func (r ReportRepository) updateReport(ctx context.Context, report *Report) error {
 	report.UpdatedOn = time.Now()
 
 	var msgID *int64
@@ -77,7 +77,7 @@ func (r reportRepository) updateReport(ctx context.Context, report *Report) erro
 		Where(sq.Eq{"report_id": report.ReportID})))
 }
 
-func (r reportRepository) SaveReport(ctx context.Context, report *Report) error {
+func (r ReportRepository) SaveReport(ctx context.Context, report *Report) error {
 	if report.ReportID > 0 {
 		return r.updateReport(ctx, report)
 	}
@@ -85,7 +85,7 @@ func (r reportRepository) SaveReport(ctx context.Context, report *Report) error 
 	return r.insertReport(ctx, report)
 }
 
-func (r reportRepository) SaveReportMessage(ctx context.Context, message *ReportMessage) error {
+func (r ReportRepository) SaveReportMessage(ctx context.Context, message *ReportMessage) error {
 	if message.ReportMessageID > 0 {
 		return r.updateReportMessage(ctx, message)
 	}
@@ -93,7 +93,7 @@ func (r reportRepository) SaveReportMessage(ctx context.Context, message *Report
 	return r.insertReportMessage(ctx, message)
 }
 
-func (r reportRepository) updateReportMessage(ctx context.Context, message *ReportMessage) error {
+func (r ReportRepository) updateReportMessage(ctx context.Context, message *ReportMessage) error {
 	message.UpdatedOn = time.Now()
 
 	if errQuery := r.db.ExecUpdateBuilder(ctx, nil, r.db.
@@ -110,7 +110,7 @@ func (r reportRepository) updateReportMessage(ctx context.Context, message *Repo
 	return nil
 }
 
-func (r reportRepository) insertReportMessage(ctx context.Context, message *ReportMessage) error {
+func (r ReportRepository) insertReportMessage(ctx context.Context, message *ReportMessage) error {
 	const query = `
 		INSERT INTO report_message (
 		    report_id, author_id, message_md, deleted, created_on, updated_on
@@ -133,7 +133,7 @@ func (r reportRepository) insertReportMessage(ctx context.Context, message *Repo
 	return nil
 }
 
-func (r reportRepository) DropReport(ctx context.Context, report *Report) error {
+func (r ReportRepository) DropReport(ctx context.Context, report *Report) error {
 	report.Deleted = true
 
 	if errExec := r.db.ExecUpdateBuilder(ctx, nil, r.db.
@@ -147,7 +147,7 @@ func (r reportRepository) DropReport(ctx context.Context, report *Report) error 
 	return nil
 }
 
-func (r reportRepository) DropReportMessage(ctx context.Context, message *ReportMessage) error {
+func (r ReportRepository) DropReportMessage(ctx context.Context, message *ReportMessage) error {
 	message.Deleted = true
 
 	if errExec := r.db.ExecUpdateBuilder(ctx, nil, r.db.
@@ -161,7 +161,7 @@ func (r reportRepository) DropReportMessage(ctx context.Context, message *Report
 	return nil
 }
 
-func (r reportRepository) GetReports(ctx context.Context, steamID steamid.SteamID) ([]Report, error) {
+func (r ReportRepository) GetReports(ctx context.Context, steamID steamid.SteamID) ([]Report, error) {
 	constraints := sq.And{sq.Eq{"r.deleted": false}}
 	if steamID.Valid() {
 		constraints = append(constraints, sq.Eq{"r.author_id": steamID.Int64()})
@@ -225,7 +225,7 @@ func (r reportRepository) GetReports(ctx context.Context, steamID steamid.SteamI
 }
 
 // GetReportBySteamID returns any open report for the user by the author.
-func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error) {
+func (r ReportRepository) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error) {
 	var report Report
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
@@ -275,7 +275,7 @@ func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 	return report, nil
 }
 
-func (r reportRepository) GetReport(ctx context.Context, reportID int64) (Report, error) {
+func (r ReportRepository) GetReport(ctx context.Context, reportID int64) (Report, error) {
 	var report Report
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
@@ -320,7 +320,7 @@ func (r reportRepository) GetReport(ctx context.Context, reportID int64) (Report
 	return report, nil
 }
 
-func (r reportRepository) GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error) {
+func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error) {
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("s.report_message_id", "s.report_id", "s.author_id", "s.message_md", "s.deleted",
@@ -368,7 +368,7 @@ func (r reportRepository) GetReportMessages(ctx context.Context, reportID int64)
 	return messages, nil
 }
 
-func (r reportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error) {
+func (r ReportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error) {
 	var message ReportMessage
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.

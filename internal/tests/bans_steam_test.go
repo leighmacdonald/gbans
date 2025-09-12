@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,17 +17,17 @@ func TestBans(t *testing.T) {
 	target := getUser()
 
 	// Ensure no bans exist
-	var bansEmpty []domain.Ban
+	var bansEmpty []ban.Ban
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/steam", nil, http.StatusOK, &authTokens{user: modCreds}, &bansEmpty)
 	require.Len(t, bansEmpty, 1)
 
 	// Create a ban
-	banReq := domain.RequestBanCreate{
-		SourceIDField:  domain.SourceIDField{SourceID: mod.SteamID.String()},
-		TargetIDField:  domain.TargetIDField{TargetID: target.SteamID.String()},
-		Duration:       "1d",
-		BanType:        domain.Banned,
-		Reason:         domain.Cheating,
+	banReq := ban.BanOpts{
+		SourceID:       mod.SteamID,
+		TargetID:       target.SteamID,
+		Duration:       time.Hour * 24,
+		BanType:        ban.Banned,
+		Reason:         ban.Cheating,
 		ReasonText:     "",
 		Note:           "notes",
 		ReportID:       0,
@@ -38,7 +37,7 @@ func TestBans(t *testing.T) {
 		EvadeOk:        true,
 	}
 
-	var fetchedBan domain.BannedPerson
+	var fetchedBan ban.BannedPerson
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/steam/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
 	require.Equal(t, banReq.SourceID, fetchedBan.SourceID.String())
@@ -53,14 +52,14 @@ func TestBans(t *testing.T) {
 	require.Equal(t, banReq.IncludeFriends, fetchedBan.IncludeFriends)
 
 	// Ensure it's in the ban collection
-	var bans []domain.Ban
+	var bans []ban.Ban
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/steam", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
 	require.Len(t, bans, 2)
 
 	updateReq := ban.RequestBanSteamUpdate{
 		TargetID:       fetchedBan.TargetID,
-		BanType:        domain.NoComm,
-		Reason:         domain.Custom,
+		BanType:        ban.NoComm,
+		Reason:         ban.Custom,
 		ReasonText:     "blah",
 		Note:           "edited",
 		IncludeFriends: false,
@@ -69,7 +68,7 @@ func TestBans(t *testing.T) {
 	}
 
 	// Update the ban
-	var updatedBan domain.BannedPerson
+	var updatedBan ban.BannedPerson
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/steam/%d", fetchedBan.BanID),
 		updateReq, http.StatusOK, &authTokens{user: modCreds}, &updatedBan)
 
@@ -83,20 +82,20 @@ func TestBans(t *testing.T) {
 	require.True(t, updatedBan.ValidUntil.After(fetchedBan.ValidUntil))
 
 	// Get the ban by ban_id
-	var banByBanID domain.BannedPerson
+	var banByBanID ban.BannedPerson
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steam/%d?deleted=true", updatedBan.BanID),
 		nil, http.StatusOK, &authTokens{user: modCreds}, &banByBanID)
 	require.EqualExportedValues(t, updatedBan, banByBanID)
 
 	// Get the same ban when querying a users active ban
-	var banBySteamID domain.BannedPerson
+	var banBySteamID ban.BannedPerson
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steamid/%d", target.SteamID.Int64()),
 		nil, http.StatusOK, &authTokens{user: modCreds}, &banBySteamID)
 	require.EqualExportedValues(t, updatedBan, banBySteamID)
 
 	// Delete the ban
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
-		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, &authTokens{user: modCreds})
+		ban.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, &authTokens{user: modCreds})
 
 	// Ensure it was deleted
 	testEndpoint(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
@@ -104,7 +103,7 @@ func TestBans(t *testing.T) {
 
 	// Try to delete non existent bam
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
-		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, &authTokens{user: modCreds})
+		ban.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, &authTokens{user: modCreds})
 }
 
 func TestBansSteamPermissions(t *testing.T) {

@@ -7,21 +7,19 @@ import (
 	"sort"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/maruel/natural"
 )
 
 type serversHandler struct {
 	servers ServersUsecase
-	state   state.StateUsecase
+	state   StateUsecase
 }
 
-func NewHandler(engine *gin.Engine, serversUsecase ServersUsecase, stateUsecase state.StateUsecase, ath auth.AuthUsecase) {
+func NewServersHandler(engine *gin.Engine, serversUsecase ServersUsecase, stateUsecase StateUsecase, authUC httphelper.Authenticator) {
 	handler := &serversHandler{
 		servers: serversUsecase,
 		state:   stateUsecase,
@@ -33,7 +31,7 @@ func NewHandler(engine *gin.Engine, serversUsecase ServersUsecase, stateUsecase 
 	// admin
 	srvGrp := engine.Group("/")
 	{
-		admin := srvGrp.Use(ath.Middleware(auth.PAdmin))
+		admin := srvGrp.Use(authUC.Middleware(permission.PAdmin))
 		admin.POST("/api/servers", handler.onAPIPostServer())
 		admin.POST("/api/servers/:server_id", handler.onAPIPostServerUpdate())
 		admin.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())
@@ -218,7 +216,7 @@ func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 		if err := h.servers.Delete(ctx, serverID); err != nil {
 			switch {
 			case errors.Is(err, database.ErrNoResult):
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, domain.ErrNotFound)))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, httphelper.ErrNotFound)))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 			}

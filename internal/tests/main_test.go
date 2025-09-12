@@ -21,11 +21,9 @@ import (
 	"github.com/google/go-querystring/query"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/app"
-	"github.com/leighmacdonald/gbans/internal/appeal"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/blocklist"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -43,7 +41,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/report"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/srcds"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
@@ -58,37 +55,37 @@ import (
 var (
 	dbContainer    *postgresContainer
 	tempDB         database.Database
-	testServer     domain.Server
-	testBan        domain.BannedPerson
-	testTarget     domain.Person
-	blocklistUC    domain.BlocklistUsecase
-	configUC       domain.ConfigUsecase
-	wikiUC         domain.WikiUsecase
-	personUC       domain.PersonUsecase
-	authRepo       domain.AuthRepository
-	authUC         domain.AuthUsecase
-	networkUC      domain.NetworkUsecase
-	bansUC         domain.BanUsecase
-	assetUC        domain.AssetUsecase
-	chatUC         domain.ChatUsecase
-	demoRepository domain.DemoRepository
-	demoUC         domain.DemoUsecase
-	discordUC      domain.DiscordUsecase
-	forumUC        domain.ForumUsecase
-	matchUC        domain.MatchUsecase
-	newsUC         domain.NewsUsecase
-	notificationUC domain.NotificationUsecase
-	patreonUC      domain.PatreonUsecase
-	reportUC       domain.ReportUsecase
-	serversUC      domain.ServersUsecase
-	speedrunsUC    domain.SpeedrunUsecase
-	srcdsUC        domain.SRCDSUsecase
-	stateUC        domain.StateUsecase
-	votesUC        domain.VoteUsecase
-	votesRepo      domain.VoteRepository
-	wordFilterUC   domain.WordFilterUsecase
-	appealUC       domain.AppealUsecase
-	anticheatUC    domain.AntiCheatUsecase
+	testServer     servers.Server
+	testBan        ban.BannedPerson
+	testTarget     person.Person
+	blocklistUC    network.BlocklistUsecase
+	configUC       *config.ConfigUsecase
+	wikiUC         *wiki.WikiUsecase
+	personUC       *person.PersonUsecase
+	authRepo       *auth.AuthRepository
+	authUC         auth.AuthUsecase
+	networkUC      network.NetworkUsecase
+	bansUC         ban.BanUsecase
+	assetUC        *asset.AssetUsecase
+	chatUC         chat.ChatUsecase
+	demoRepository demo.DemoRepository
+	demoUC         demo.DemoUsecase
+	discordUC      discord.DiscordUsecase
+	forumUC        *forum.ForumUsecase
+	matchUC        match.MatchUsecase
+	newsUC         news.NewsUsecase
+	notificationUC *notification.NotificationUsecase
+	patreonUC      *patreon.PatreonUsecase
+	reportUC       *ban.ReportUsecase
+	serversUC      *servers.ServersUsecase
+	speedrunsUC    *srcds.SpeedrunUsecase
+	srcdsUC        *srcds.SRCDSUsecase
+	stateUC        *servers.StateUsecase
+	votesUC        *votes.VoteUsecase
+	votesRepo      *votes.VoteRepository
+	wordFilterUC   *chat.WordFilterUsecase
+	appealUC       *ban.AppealsUsecase
+	anticheatUC    *anticheat.AntiCheatUsecase
 )
 
 func TestMain(m *testing.M) {
@@ -147,7 +144,7 @@ func TestMain(m *testing.M) {
 
 	discordUC = discord.NewDiscordUsecase(discord.NewNullDiscordRepository(), configUC)
 
-	assetUC = asset.NewAssetUsecase(asset.NewLocalRepository(databaseConn, configUC))
+	assetUC = asset.NewAssetUsecase(asset.NewLocalRepository(databaseConn, configUC.Config().LocalStore.PathRoot))
 	newsUC = news.NewNewsUsecase(news.NewNewsRepository(databaseConn))
 	serversUC = servers.NewServersUsecase(servers.NewServersRepository(databaseConn))
 	wikiUC = wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseConn))
@@ -157,7 +154,7 @@ func TestMain(m *testing.M) {
 	wordFilterUC = wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(databaseConn), notificationUC)
 	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn), notificationUC)
 
-	stateUC = state.NewStateUsecase(eventBroadcaster, state.NewStateRepository(state.NewCollector(serversUC)), configUC, serversUC)
+	stateUC = servers.NewStateUsecase.NewStateUsecase(eventBroadcaster, state.NewStateRepository(state.NewCollector(serversUC)), configUC, serversUC)
 
 	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), personUC, configUC)
 	demoRepository = demo.NewDemoRepository(databaseConn)

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
 )
@@ -19,13 +19,13 @@ func TestAppeal(t *testing.T) {
 	modAuth := loginUser(mod)
 
 	// Check for no messages
-	var banMessages []domain.BanAppealMessage
+	var banMessages []ban.BanAppealMessage
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), nil, http.StatusOK, &authTokens{user: targetAuth}, &banMessages)
 	require.Empty(t, banMessages)
 
 	// Create a message
-	newMessage := domain.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
-	var createdMessage domain.BanAppealMessage
+	newMessage := ban.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
+	var createdMessage ban.BanAppealMessage
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), newMessage, http.StatusCreated, &authTokens{user: targetAuth}, &createdMessage)
 	require.Equal(t, newMessage.BodyMD, createdMessage.MessageMD)
 
@@ -34,8 +34,8 @@ func TestAppeal(t *testing.T) {
 	// testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/%d/messages", bannedPerson.BanID), newMessage, http.StatusForbidden, loginUser(getUser()), &createdMessage)
 
 	// Get appeals
-	var appeals []domain.AppealOverview
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/appeals", domain.AppealQueryFilter{Deleted: false}, http.StatusOK, &authTokens{user: modAuth}, &appeals)
+	var appeals []ban.AppealOverview
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/appeals", ban.AppealQueryFilter{Deleted: false}, http.StatusOK, &authTokens{user: modAuth}, &appeals)
 	require.NotEmpty(t, appeals)
 
 	// Get messages
@@ -43,8 +43,8 @@ func TestAppeal(t *testing.T) {
 	require.NotEmpty(t, banMessages)
 
 	// Edit the message
-	editMessage := domain.RequestMessageBodyMD{BodyMD: createdMessage.MessageMD + "x"}
-	var editedMessage domain.BanAppealMessage
+	editMessage := ban.RequestMessageBodyMD{BodyMD: createdMessage.MessageMD + "x"}
+	var editedMessage ban.BanAppealMessage
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/message/%d", createdMessage.BanMessageID), editMessage, http.StatusOK, &authTokens{user: modAuth}, &editedMessage)
 	require.Equal(t, editMessage.BodyMD, editedMessage.MessageMD)
 

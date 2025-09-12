@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
@@ -19,17 +20,17 @@ func TestReport(t *testing.T) {
 	target := getUser()
 
 	// Create a report
-	req := domain.RequestReportCreate{
+	req := ban.RequestReportCreate{
 		SourceID:        source.SteamID,
 		TargetID:        target.SteamID,
 		Description:     stringutil.SecureRandomString(100),
-		Reason:          domain.Cheating,
+		Reason:          ban.Cheating,
 		ReasonText:      "",
 		DemoID:          0,
 		DemoTick:        0,
 		PersonMessageID: 0,
 	}
-	var report domain.Report
+	var report ban.Report
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/report", req, http.StatusCreated, &authTokens{user: sourceCreds}, &report)
 	require.Equal(t, req.SourceID, report.SourceID)
 	require.Equal(t, req.TargetID, report.TargetID)
@@ -41,16 +42,16 @@ func TestReport(t *testing.T) {
 	require.Equal(t, req.PersonMessageID, report.PersonMessageID)
 
 	// Make sure we can query it
-	var fetched domain.Report
+	var fetched ban.Report
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d", report.ReportID), nil, http.StatusOK, &authTokens{user: sourceCreds}, &fetched)
 	require.Equal(t, report, fetched)
 
 	// Make sure we can query all
-	var fetchedColl []domain.Report
+	var fetchedColl []ban.Report
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/reports/user", nil, http.StatusOK, &authTokens{user: sourceCreds}, &fetchedColl)
 	require.NotEmpty(t, fetchedColl)
 
-	var fetchedModColl []domain.Report
+	var fetchedModColl []ban.Report
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/reports", domain.ReportQueryFilter{Deleted: true}, http.StatusOK, &authTokens{user: mods}, &fetchedModColl)
 	require.NotEmpty(t, fetchedModColl)
 
@@ -59,20 +60,20 @@ func TestReport(t *testing.T) {
 	require.Empty(t, fetchedColl)
 
 	// Change the status
-	statusReq := domain.RequestReportStatusUpdate{Status: domain.ClosedWithAction}
+	statusReq := ban.RequestReportStatusUpdate{Status: ban.ClosedWithAction}
 	testEndpoint(t, router, http.MethodPost, fmt.Sprintf("/api/report_status/%d", report.ReportID), statusReq, http.StatusOK, &authTokens{user: sourceCreds})
 
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d", report.ReportID), nil, http.StatusOK, &authTokens{user: sourceCreds}, &fetched)
 	require.Equal(t, statusReq.Status, fetched.ReportStatus)
 
 	// Get empty child messages
-	var messages []domain.ReportMessage
+	var messages []ban.ReportMessage
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d/messages", report.ReportID), nil, http.StatusOK, &authTokens{user: sourceCreds}, &messages)
 	require.Empty(t, messages)
 
 	// Add a reply
-	var fetchedMsg domain.ReportMessage
-	msgReq := domain.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
+	var fetchedMsg ban.ReportMessage
+	msgReq := ban.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/report/%d/messages", report.ReportID), msgReq, http.StatusCreated, &authTokens{user: sourceCreds}, &fetchedMsg)
 	require.Equal(t, msgReq.BodyMD, fetchedMsg.MessageMD)
 
@@ -81,8 +82,8 @@ func TestReport(t *testing.T) {
 	require.NotEmpty(t, messages)
 
 	// Edit the reply
-	editMsgReq := domain.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
-	var edited domain.ReportMessage
+	editMsgReq := ban.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
+	var edited ban.ReportMessage
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/report/message/%d", report.ReportID), editMsgReq, http.StatusOK, &authTokens{user: sourceCreds}, &edited)
 	require.Equal(t, editMsgReq.BodyMD, edited.MessageMD)
 

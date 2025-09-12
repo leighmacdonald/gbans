@@ -6,11 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 )
 
 type WikiUsecase struct {
@@ -21,7 +20,7 @@ func NewWikiUsecase(repository wikiRepository) *WikiUsecase {
 	return &WikiUsecase{repository: repository}
 }
 
-func (w *WikiUsecase) GetWikiPageBySlug(ctx context.Context, user person.PersonInfo, slug string) (Page, error) {
+func (w *WikiUsecase) GetWikiPageBySlug(ctx context.Context, user domain.PersonInfo, slug string) (Page, error) {
 	slug = strings.ToLower(slug)
 	if slug[0] == '/' {
 		slug = slug[1:]
@@ -33,7 +32,7 @@ func (w *WikiUsecase) GetWikiPageBySlug(ctx context.Context, user person.PersonI
 	}
 
 	if !user.HasPermission(page.PermissionLevel) {
-		return page, domain.ErrPermissionDenied
+		return page, permission.ErrPermissionDenied
 	}
 
 	return page, nil
@@ -43,7 +42,7 @@ func (w *WikiUsecase) DeleteWikiPageBySlug(ctx context.Context, slug string) err
 	return w.repository.DeleteWikiPageBySlug(ctx, slug)
 }
 
-func (w *WikiUsecase) SaveWikiPage(ctx context.Context, user person.PersonInfo, slug string, body string, level permission.Privilege) (Page, error) {
+func (w *WikiUsecase) SaveWikiPage(ctx context.Context, user domain.PersonInfo, slug string, body string, level permission.Privilege) (Page, error) {
 	if slug == "" || body == "" {
 		return Page{}, domain.ErrInvalidParameter
 	}

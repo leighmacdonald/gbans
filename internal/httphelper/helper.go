@@ -2,34 +2,22 @@ package httphelper
 
 import (
 	"errors"
-	"fmt"
-	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/schema"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/convert"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type Authenticator interface {
 	Middleware(level permission.Privilege) gin.HandlerFunc
-}
-
-func recoveryHandler() gin.HandlerFunc {
-	return gin.CustomRecoveryWithWriter(nil, func(c *gin.Context, err interface{}) {
-		slog.Error("Recovery error:", slog.String("err", fmt.Sprintf("%v", err)))
-
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Something went wrong",
-		})
-	})
 }
 
 func Bind(ctx *gin.Context, target any) bool {
@@ -59,18 +47,13 @@ func BindQuery(ctx *gin.Context, target any) bool {
 	return true
 }
 
-func CurrentUserProfile(ctx *gin.Context) person.UserProfile {
-	maybePerson, found := ctx.Get(ctxKeyUserProfile)
-	if !found {
-		return person.NewUserProfile(steamid.SteamID{})
+// NewHTTPClient allocates a preconfigured *http.Client.
+func NewHTTPClient() *http.Client {
+	c := &http.Client{
+		Timeout: time.Second * 10,
 	}
 
-	profile, ok := maybePerson.(person.UserProfile)
-	if !ok {
-		return person.NewUserProfile(steamid.SteamID{})
-	}
-
-	return profile
+	return c
 }
 
 func GetSID64Param(ctx *gin.Context, key string) (steamid.SteamID, bool) {
@@ -176,11 +159,9 @@ func GetDefaultFloat64(s string, def float64) float64 {
 // HasPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
 // if the user has appropriate privilege levels.
 // Error responses are handled by this function, no further action needs to take place in the handlers.
-func HasPrivilege(person person.PersonInfo, allowedSteamIDs steamid.Collection, minPrivilege permission.Privilege) bool {
-	for _, steamID := range allowedSteamIDs {
-		if steamID == person.GetSteamID() {
-			return true
-		}
+func HasPrivilege(person domain.PersonInfo, allowedSteamIDs steamid.Collection, minPrivilege permission.Privilege) bool {
+	if slices.Contains(allowedSteamIDs, person.GetSteamID()) {
+		return true
 	}
 
 	return person.HasPermission(minPrivilege)

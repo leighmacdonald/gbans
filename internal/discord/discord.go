@@ -3,70 +3,19 @@ package discord
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 var (
 	ErrDuplicateCommand         = errors.New("duplicate command registration")
+	ErrDiscordConfig            = errors.New("invalid config")
 	ErrDiscordCreate            = errors.New("failed to connect to discord")
 	ErrDiscordOpen              = errors.New("failed to open discord connection")
 	ErrCommandFailed            = errors.New("command failed")
 	ErrDiscordMessageSen        = errors.New("failed to send discord message")
 	ErrDiscordOverwriteCommands = errors.New("failed to bulk overwrite discord commands")
 )
-
-type DiscordCredential struct {
-	SteamID      steamid.SteamID `json:"steam_id"`
-	DiscordID    string          `json:"discord_id"`
-	AccessToken  string          `json:"access_token"`
-	RefreshToken string          `json:"refresh_token"`
-	ExpiresIn    int             `json:"expires_in"`
-	Scope        string          `json:"scope"`
-	TokenType    string          `json:"token_type"`
-	CreatedOn    time.Time       `json:"created_on"`
-	UpdatedOn    time.Time       `json:"updated_on"`
-}
-
-type DiscordUserDetail struct {
-	SteamID          steamid.SteamID `json:"steam_id"`
-	ID               string          `json:"id"`
-	Username         string          `json:"username"`
-	Avatar           string          `json:"avatar"`
-	AvatarDecoration interface{}     `json:"avatar_decoration"`
-	Discriminator    string          `json:"discriminator"`
-	PublicFlags      int             `json:"public_flags"`
-	Flags            int             `json:"flags"`
-	Banner           interface{}     `json:"banner"`
-	BannerColor      interface{}     `json:"banner_color"`
-	AccentColor      interface{}     `json:"accent_color"`
-	Locale           string          `json:"locale"`
-	MfaEnabled       bool            `json:"mfa_enabled"`
-	PremiumType      int             `json:"premium_type"`
-	CreatedOn        time.Time       `json:"created_on"`
-	UpdatedOn        time.Time       `json:"updated_on"`
-}
-
-type DiscordOAuthUsecase interface {
-	CreateStatefulLoginURL(steamID steamid.SteamID) (string, error)
-	HandleOAuthCode(ctx context.Context, code string, state string) error
-	Logout(ctx context.Context, steamID steamid.SteamID) error
-	GetUserDetail(ctx context.Context, steamID steamid.SteamID) (DiscordUserDetail, error)
-	RefreshTokens(ctx context.Context) error
-}
-
-type DiscordOAuthRepository interface {
-	SaveTokens(ctx context.Context, creds DiscordCredential) error
-	GetTokens(ctx context.Context, steamID steamid.SteamID) (DiscordCredential, error)
-	DeleteTokens(ctx context.Context, steamID steamid.SteamID) error
-	OldAuths(ctx context.Context) ([]DiscordCredential, error)
-	SaveUserDetail(ctx context.Context, detail DiscordUserDetail) error
-	GetUserDetail(ctx context.Context, id steamid.SteamID) (DiscordUserDetail, error)
-	DeleteUserDetail(ctx context.Context, steamID steamid.SteamID) error
-}
 
 type SlashCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
@@ -94,22 +43,9 @@ type DiscordRepository interface {
 // 	ChannelAC
 // )
 
-type DiscordUsecase interface {
-	Start() error
-	Shutdown()
-	SendPayload(channelID string, embed *discordgo.MessageEmbed)
-	RegisterHandler(cmd Cmd, handler SlashCommandHandler) error
-}
-
-type FoundPlayer struct {
-	Player servers.PlayerServerInfo
-	Server servers.Server
-}
-
 type Cmd string
 
 const (
-	CmdAC          Cmd = "ac"
 	CmdACPlayer    Cmd = "player"
 	CmdBan         Cmd = "ban"
 	CmdFind        Cmd = "find"

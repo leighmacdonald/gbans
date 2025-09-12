@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -84,9 +85,9 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 
 func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := httphelper.CurrentUserProfile(ctx)
+		user, _ := session.CurrentUserProfile(ctx)
 
-		settings, err := h.persons.GetPersonSettings(ctx, user.SteamID)
+		settings, err := h.persons.GetPersonSettings(ctx, user.GetSteamID())
 		if err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
@@ -105,7 +106,8 @@ func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 			return
 		}
 
-		settings, err := h.persons.SavePersonSettings(ctx, httphelper.CurrentUserProfile(ctx), req)
+		user, _ := session.CurrentUserProfile(ctx)
+		settings, err := h.persons.SavePersonSettings(ctx, user, req)
 		if err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
@@ -118,14 +120,21 @@ func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 
 func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		profile := httphelper.CurrentUserProfile(ctx)
-		if !profile.SteamID.Valid() {
+		user, _ := session.CurrentUserProfile(ctx)
+		sid := user.GetSteamID()
+		if !sid.Valid() {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrInvalidSID))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, profile)
+		ctx.JSON(http.StatusOK, UserProfile{
+			SteamID:         user.GetSteamID(),
+			Name:            user.GetName(),
+			Avatarhash:      user.GetAvatar().Hash(),
+			PermissionLevel: user.Permissions(),
+			DiscordID:       user.GetDiscordID(),
+		})
 	}
 }
 
@@ -140,7 +149,7 @@ func (h personHandler) onSteamValidate() gin.HandlerFunc {
 		requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 		defer cancelRequest()
 
-		var req domain.RequestQuery
+		var req httphelper.RequestQuery
 		if !httphelper.BindQuery(ctx, &req) {
 			return
 		}
@@ -171,7 +180,7 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 		requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 		defer cancelRequest()
 
-		var req domain.RequestQuery
+		var req httphelper.RequestQuery
 		if !httphelper.BindQuery(ctx, &req) {
 			return
 		}

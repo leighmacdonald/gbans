@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
 )
@@ -15,15 +15,15 @@ func TestServers(t *testing.T) {
 	owner := loginUser(getOwner())
 	user := loginUser(getUser())
 
-	var servers []domain.Server
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers_admin", nil, http.StatusOK, &authTokens{user: owner}, &servers)
-	require.Len(t, servers, 1)
+	var serversSet []servers.Server
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers_admin", nil, http.StatusOK, &authTokens{user: owner}, &serversSet)
+	require.Len(t, serversSet, 1)
 
-	var safeServers []domain.ServerInfoSafe
+	var safeServers []servers.ServerInfoSafe
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers", nil, http.StatusOK, &authTokens{user: user}, &safeServers)
 	require.Len(t, safeServers, 1)
 
-	newServer := domain.RequestServerUpdate{
+	newServer := servers.RequestServerUpdate{
 		ServerName:      "test-1 long",
 		ServerNameShort: "test-1",
 		Host:            "1.2.3.4",
@@ -40,7 +40,7 @@ func TestServers(t *testing.T) {
 		LogSecret:       12345678,
 	}
 
-	var server domain.Server
+	var server servers.Server
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/servers", newServer, http.StatusOK, &authTokens{user: owner}, &server)
 
 	require.Equal(t, newServer.ServerNameShort, server.ShortName)
@@ -58,13 +58,13 @@ func TestServers(t *testing.T) {
 	require.Equal(t, newServer.EnableStats, server.EnableStats)
 	require.Equal(t, newServer.LogSecret, server.LogSecret)
 
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers_admin", nil, http.StatusOK, &authTokens{user: owner}, &servers)
-	require.Len(t, servers, 2)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers_admin", nil, http.StatusOK, &authTokens{user: owner}, &serversSet)
+	require.Len(t, serversSet, 2)
 
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers", nil, http.StatusOK, &authTokens{user: user}, &safeServers)
 	require.Len(t, safeServers, 2)
 
-	update := domain.RequestServerUpdate{
+	update := servers.RequestServerUpdate{
 		ServerName:      "test-2 long",
 		ServerNameShort: "test-2",
 		Host:            "2.3.4.5",
@@ -81,7 +81,7 @@ func TestServers(t *testing.T) {
 		LogSecret:       23456789,
 	}
 
-	var updated domain.Server
+	var updated servers.Server
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/servers/%d", server.ServerID), update, http.StatusOK, &authTokens{user: owner}, &updated)
 
 	require.Equal(t, update.ServerNameShort, updated.ShortName)

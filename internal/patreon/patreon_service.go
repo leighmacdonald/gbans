@@ -7,10 +7,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
@@ -45,25 +46,27 @@ func NewHandler(engine *gin.Engine, patreon PatreonUsecase, auth auth.AuthUsecas
 
 func (h patreonHandler) onLogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
-		if err := h.patreon.Forget(ctx, currentUser.SteamID); err != nil {
+		if err := h.patreon.Forget(ctx, currentUser.GetSteamID()); err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{"url": h.patreon.CreateOAuthRedirect(currentUser.SteamID)})
-		slog.Debug("User removed their patreon credentials", slog.String("sid", currentUser.SteamID.String()))
+		ctx.JSON(http.StatusOK, gin.H{"url": h.patreon.CreateOAuthRedirect(currentUser.GetSteamID())})
+		sid := currentUser.GetSteamID()
+		slog.Debug("User removed their patreon credentials", slog.String("sid", sid.String()))
 	}
 }
 
 func (h patreonHandler) onLogin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
+		currentUser, _ := session.CurrentUserProfile(ctx)
 
-		ctx.JSON(http.StatusOK, gin.H{"url": h.patreon.CreateOAuthRedirect(currentUser.SteamID)})
-		slog.Debug("User tried to connect patreon", slog.String("sid", currentUser.SteamID.String()))
+		ctx.JSON(http.StatusOK, gin.H{"url": h.patreon.CreateOAuthRedirect(currentUser.GetSteamID())})
+		sid := currentUser.GetSteamID()
+		slog.Debug("User tried to connect patreon", slog.String("sid", sid.String()))
 	}
 }
 
