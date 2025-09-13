@@ -12,8 +12,8 @@ type VoteRepository struct {
 	db database.Database
 }
 
-func NewVoteRepository(database database.Database) *VoteRepository {
-	return &VoteRepository{db: database}
+func NewVoteRepository(database database.Database) VoteRepository {
+	return VoteRepository{db: database}
 }
 
 func (r VoteRepository) Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, int64, error) {

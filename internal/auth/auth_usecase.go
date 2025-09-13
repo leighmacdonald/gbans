@@ -33,13 +33,13 @@ const ctxKeyUserProfile = "user_profile"
 type AuthUsecase struct {
 	auth    AuthRepository
 	config  *config.ConfigUsecase
-	persons *person.PersonUsecase
-	bans    *ban.BanUsecase
+	persons person.PersonUsecase
+	bans    ban.BanUsecase
 	servers servers.ServersUsecase
 }
 
-func NewAuthUsecase(repository AuthRepository, config *config.ConfigUsecase, persons *person.PersonUsecase,
-	bans *ban.BanUsecase, servers servers.ServersUsecase,
+func NewAuthUsecase(repository AuthRepository, config *config.ConfigUsecase, persons person.PersonUsecase,
+	bans ban.BanUsecase, servers servers.ServersUsecase,
 ) *AuthUsecase {
 	return &AuthUsecase{
 		auth:    repository,

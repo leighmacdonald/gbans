@@ -11,15 +11,15 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type appealRepository struct {
+type AppealRepository struct {
 	db database.Database
 }
 
-func NewAppealRepository(database database.Database) *appealRepository {
-	return &appealRepository{db: database}
+func NewAppealRepository(database database.Database) AppealRepository {
+	return AppealRepository{db: database}
 }
 
-func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
+func (r *AppealRepository) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
 	constraints := sq.And{sq.Gt{"m.count": 0}}
 
 	if !opts.Deleted {
@@ -89,7 +89,7 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts Appeal
 	return overviews, nil
 }
 
-func (r *appealRepository) SaveBanMessage(ctx context.Context, message *BanAppealMessage) error {
+func (r *AppealRepository) SaveBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	var err error
 	if message.BanMessageID > 0 {
 		err = r.updateBanMessage(ctx, message)
@@ -100,7 +100,7 @@ func (r *appealRepository) SaveBanMessage(ctx context.Context, message *BanAppea
 	return err
 }
 
-func (r *appealRepository) updateBanMessage(ctx context.Context, message *BanAppealMessage) error {
+func (r *AppealRepository) updateBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	message.UpdatedOn = time.Now()
 
 	query := r.db.
@@ -119,7 +119,7 @@ func (r *appealRepository) updateBanMessage(ctx context.Context, message *BanApp
 	return nil
 }
 
-func (r *appealRepository) insertBanMessage(ctx context.Context, message *BanAppealMessage) error {
+func (r *AppealRepository) insertBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	const query = `
 	INSERT INTO ban_appeal (
 		ban_id, author_id, message_md, deleted, created_on, updated_on
@@ -142,7 +142,7 @@ func (r *appealRepository) insertBanMessage(ctx context.Context, message *BanApp
 	return nil
 }
 
-func (r *appealRepository) GetBanMessages(ctx context.Context, banID int64) ([]BanAppealMessage, error) {
+func (r *AppealRepository) GetBanMessages(ctx context.Context, banID int64) ([]BanAppealMessage, error) {
 	query := r.db.
 		Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted",
@@ -196,7 +196,7 @@ func (r *appealRepository) GetBanMessages(ctx context.Context, banID int64) ([]B
 	return messages, nil
 }
 
-func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID int64) (BanAppealMessage, error) {
+func (r *AppealRepository) GetBanMessageByID(ctx context.Context, banMessageID int64) (BanAppealMessage, error) {
 	query := r.db.
 		Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted", "a.created_on",
@@ -235,7 +235,7 @@ func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID i
 	return message, nil
 }
 
-func (r *appealRepository) DropBanMessage(ctx context.Context, message *BanAppealMessage) error {
+func (r *AppealRepository) DropBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	query := r.db.
 		Builder().
 		Update("ban_appeal").

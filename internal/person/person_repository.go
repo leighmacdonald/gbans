@@ -25,8 +25,8 @@ type PersonRepository struct {
 	db   database.Database
 }
 
-func NewPersonRepository(conf config.Config, database database.Database) *PersonRepository {
-	return &PersonRepository{conf: conf, db: database}
+func NewPersonRepository(conf config.Config, database database.Database) PersonRepository {
+	return PersonRepository{conf: conf, db: database}
 }
 
 func (r *PersonRepository) DropPerson(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID) error {

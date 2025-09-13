@@ -13,11 +13,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/report"
 	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -82,15 +81,13 @@ func refreshFiltersCmd() *cobra.Command {
 			}
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
-
-			stateUsecase := state.NewStateUsecase(eventBroadcaster,
-				state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
+			stateUsecase := servers.NewStateUsecase(eventBroadcaster,
+				servers.NewStateRepository(servers.NewCollector(serversUsecase)), configUsecase, serversUsecase)
 
 			// discordUsecase := discord.NewDiscordUsecase(discord.NewDiscordRepository(conf), configUsecase)
 
-			wordFilterUsecase := chat.NewWordFilterUsecase(chat.NewWordFilterRepository(dbUsecase), nil)
+			wordFilterUsecase := chat.NewWordFilterUsecase(chat.NewWordFilterRepository(dbUsecase))
 			if errImport := wordFilterUsecase.Import(ctx); errImport != nil {
 				slog.Error("Failed to load filters")
 			}
@@ -103,15 +100,15 @@ func refreshFiltersCmd() *cobra.Command {
 			}
 
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase, tfapiClient)
-			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), nil, configUsecase, personUsecase, nil, tfapiClient)
+			reportUsecase := ban.NewReportUsecase(ban.NewReportRepository(dbUsecase), configUsecase, personUsecase, servers.DemoUsecase{}, tfapiClient)
 			// banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase), personUsecase)
 			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), configUsecase)
 			banUsecase := ban.NewBanUsecase(ban.NewBanRepository(dbUsecase, personUsecase, networkUsecase), personUsecase, configUsecase, reportUsecase, stateUsecase, tfapiClient)
 
 			// blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase), banUsecase)
 
-			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, nil, eventBroadcaster)
-			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase, nil)
+			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, match.MatchUsecase{}, eventBroadcaster)
+			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase)
 
 			var query chat.ChatHistoryQueryFilter
 			query.DontCalcTotal = true

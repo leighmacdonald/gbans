@@ -37,7 +37,7 @@ type srcdsHandler struct {
 	blocklist network.BlocklistUsecase
 }
 
-func NewHandlerSRCDS(engine *gin.Engine, srcds *SRCDSUsecase, servers ServersUsecase,
+func NewSRCDSHandler(engine *gin.Engine, srcds *SRCDSUsecase, servers ServersUsecase,
 	persons PersonProvider, assets asset.AssetUsecase,
 	evades EvadeCheck, network network.NetworkUsecase, auth httphelper.Authenticator,
 	config *config.ConfigUsecase, state *StateUsecase,

@@ -12,8 +12,8 @@ type WordFilterRepository struct {
 	db database.Database
 }
 
-func NewWordFilterRepository(database database.Database) *WordFilterRepository {
-	return &WordFilterRepository{db: database}
+func NewWordFilterRepository(database database.Database) WordFilterRepository {
+	return WordFilterRepository{db: database}
 }
 
 func (r *WordFilterRepository) SaveFilter(ctx context.Context, filter *Filter) error {

@@ -16,8 +16,8 @@ type ServersRepository struct {
 	db database.Database
 }
 
-func NewServersRepository(database database.Database) *ServersRepository {
-	return &ServersRepository{db: database}
+func NewServersRepository(database database.Database) ServersRepository {
+	return ServersRepository{db: database}
 }
 
 func (r *ServersRepository) GetServer(ctx context.Context, serverID int) (Server, error) {

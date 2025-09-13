@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -126,7 +127,16 @@ type BanOpts struct {
 	Note           string          `json:"note"`
 }
 
-func (opts BanOpts) Validate() error {
+func (opts *BanOpts) SetDuration(durString string) error {
+	duration, errDuration := datetime.CalcDuration(durString, opts.ValidUntil)
+	if errDuration != nil {
+		return errDuration
+	}
+	opts.Duration = duration
+	return nil
+}
+
+func (opts *BanOpts) Validate() error {
 	if !opts.SourceID.Valid() || !opts.TargetID.Valid() {
 		return domain.ErrInvalidSID
 	}
@@ -139,8 +149,8 @@ func (opts BanOpts) Validate() error {
 		return ErrInvalidBanDuration
 	}
 
-	if opts.Reason == ban.Custom && opts.ReasonText == "" {
-		return ErrInvalidBanReason
+	if opts.Reason == ban.Custom && len(opts.ReasonText) < 3 {
+		return fmt.Errorf("%w: Custom reason must be at least 3 characters", ErrBanOptsInvalid)
 	}
 
 	if opts.ReportID < 0 {
@@ -219,7 +229,8 @@ type Ban struct {
 }
 
 type QueryOpts struct {
-	SourceID      steamid.SteamID
+	SourceID steamid.SteamID
+	// TargetID can represent a SteamID or a group ID. They both use steamID formats, just in a different numberspace
 	TargetID      steamid.SteamID
 	GroupsOnly    bool
 	BanID         int64
@@ -227,7 +238,6 @@ type QueryOpts struct {
 	EvadeOk       bool
 	Personaname   string
 	CIDR          string
-	GroupOnly     bool
 	IncludeGroups bool
 	ASNum         bool
 	LatestOnly    bool

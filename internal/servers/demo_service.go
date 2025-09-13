@@ -13,7 +13,7 @@ type DemoHandler struct {
 	demos DemoUsecase
 }
 
-func NewHandler(engine *gin.Engine, du DemoUsecase, authUC httphelper.Authenticator) {
+func NewDemoHandler(engine *gin.Engine, du DemoUsecase, authUC httphelper.Authenticator) {
 	handler := DemoHandler{
 		demos: du,
 	}

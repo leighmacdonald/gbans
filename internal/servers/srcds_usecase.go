@@ -24,14 +24,14 @@ import (
 type SRCDSUsecase struct {
 	repository SRCDSRepository
 	config     *config.ConfigUsecase
-	servers    *ServersUsecase
+	servers    ServersUsecase
 	persons    PersonProvider
 
 	cookie string
 	tfAPI  *thirdparty.TFAPI
 }
 
-func NewSrcdsUsecase(repository SRCDSRepository, config *config.ConfigUsecase, servers *ServersUsecase, persons PersonProvider, tfAPI *thirdparty.TFAPI) *SRCDSUsecase {
+func NewSrcdsUsecase(repository SRCDSRepository, config *config.ConfigUsecase, servers ServersUsecase, persons PersonProvider, tfAPI *thirdparty.TFAPI) *SRCDSUsecase {
 	return &SRCDSUsecase{
 		config:     config,
 		servers:    servers,

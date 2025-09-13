@@ -59,12 +59,12 @@ var (
 	blocklistUC    network.BlocklistUsecase
 	configUC       *config.ConfigUsecase
 	wikiUC         *wiki.WikiUsecase
-	personUC       *person.PersonUsecase
-	authRepo       *auth.AuthRepository
+	personUC       person.PersonUsecase
+	authRepo       auth.AuthRepository
 	authUC         *auth.AuthUsecase
-	networkUC      *network.NetworkUsecase
-	bansUC         *ban.BanUsecase
-	assetUC        *asset.AssetUsecase
+	networkUC      network.NetworkUsecase
+	bansUC         ban.BanUsecase
+	assetUC        asset.AssetUsecase
 	chatUC         *chat.ChatUsecase
 	demoRepository demo.DemoRepository
 	demoUC         demo.DemoUsecase
@@ -72,17 +72,17 @@ var (
 	forumUC        *forum.ForumUsecase
 	matchUC        match.MatchUsecase
 	newsUC         news.NewsUsecase
-	notificationUC *notification.NotificationUsecase
+	notificationUC notification.NotificationUsecase
 	patreonUC      patreon.PatreonUsecase
-	reportUC       *ban.ReportUsecase
-	serversUC      *servers.ServersUsecase
+	reportUC       ban.ReportUsecase
+	serversUC      servers.ServersUsecase
 	speedrunsUC    *servers.SpeedrunUsecase
 	srcdsUC        *servers.SRCDSUsecase
 	stateUC        *servers.StateUsecase
-	votesUC        *votes.VoteUsecase
-	votesRepo      *votes.VoteRepository
-	wordFilterUC   *chat.WordFilterUsecase
-	appealUC       *ban.AppealsUsecase
+	votesUC        votes.VoteUsecase
+	votesRepo      votes.VoteRepository
+	wordFilterUC   chat.WordFilterUsecase
+	appealUC       ban.AppealsUsecase
 	anticheatUC    *anticheat.AntiCheatUsecase
 )
 
@@ -153,22 +153,22 @@ func TestMain(m *testing.M) {
 	notificationUC = notification.NewNotificationUsecase(notification.NewNotificationRepository(databaseConn), discordUC)
 	patreonUC = patreon.NewPatreonUsecase(patreon.NewPatreonRepository(databaseConn), configUC)
 	personUC = person.NewPersonUsecase(person.NewPersonRepository(conf, databaseConn), configUC, tfapiClient)
-	wordFilterUC = chat.NewWordFilterUsecase(chat.NewWordFilterRepository(databaseConn), notificationUC)
-	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn), notificationUC)
+	wordFilterUC = chat.NewWordFilterUsecase(chat.NewWordFilterRepository(databaseConn))
+	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn))
 
 	stateUC = servers.NewStateUsecase(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(serversUC)), configUC, serversUC)
 
 	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), configUC)
 	demoRepository = demo.NewDemoRepository(databaseConn)
 	demoUC = demo.NewDemoUsecase("demos", demoRepository, assetUC, configUC)
-	reportUC = ban.NewReportUsecase(ban.NewReportRepository(databaseConn), notificationUC, configUC, personUC, demoUC, tfapiClient)
-	bansUC = ban.NewBanUsecase(ban.NewBanRepository(databaseConn, personUC, networkUC), personUC, configUC, notificationUC, reportUC, stateUC, tfapiClient)
+	reportUC = ban.NewReportUsecase(ban.NewReportRepository(databaseConn), configUC, personUC, demoUC, tfapiClient)
+	bansUC = ban.NewBanUsecase(ban.NewBanRepository(databaseConn, personUC, networkUC), personUC, configUC, reportUC, stateUC, tfapiClient)
 	authUC = auth.NewAuthUsecase(authRepo, configUC, personUC, bansUC, serversUC)
 
-	matchUC = match.NewMatchUsecase(match.NewMatchRepository(eventBroadcaster, databaseConn, personUC, serversUC, notificationUC, stateUC, weaponsMap), stateUC, serversUC, notificationUC)
+	matchUC = match.NewMatchUsecase(match.NewMatchRepository(eventBroadcaster, databaseConn, personUC, serversUC, stateUC, weaponsMap), stateUC, serversUC, notificationUC)
 	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC, notificationUC)
 	votesRepo = votes.NewVoteRepository(databaseConn)
-	votesUC = votes.NewVoteUsecase(votesRepo, personUC, matchUC, notificationUC, configUC, eventBroadcaster)
+	votesUC = votes.NewVoteUsecase(votesRepo, eventBroadcaster)
 	appealUC = ban.NewAppealUsecase(ban.NewAppealRepository(databaseConn), bansUC, personUC, notificationUC, configUC)
 	speedrunsUC = servers.NewSpeedrunUsecase(servers.NewSpeedrunRepository(databaseConn, personUC))
 	blocklistUC = network.NewBlocklistUsecase(network.NewBlocklistRepository(databaseConn), bansUC, banUC)
@@ -248,19 +248,19 @@ func testRouter() *gin.Engine {
 	}
 
 	ban.NewHandlerSteam(router, bansUC, configUC, authUC)
-	servers.NewHandler(router, serversUC, stateUC, authUC)
+	servers.NewServersHandler(router, serversUC, stateUC, authUC)
 	news.NewHandler(router, newsUC, notificationUC, authUC)
 	wiki.NewHandler(router, wikiUC, authUC)
 	votes.NewHandler(router, votesUC, authUC)
 	config.NewHandler(router, configUC, authUC, app.Version())
-	report.NewHandler(router, reportUC, authUC, notificationUC)
-	appeal.NewHandler(router, appealUC, authUC)
-	wordfilter.NewHandler(router, configUC, wordFilterUC, chatUC, authUC)
+	ban.NewReportHandler(router, reportUC, authUC, notificationUC)
+	ban.NewAppealHandler(router, appealUC, authUC)
+	chat.NewHandler(router, configUC, wordFilterUC, chatUC, authUC)
 	person.NewHandler(router, configUC, personUC, authUC)
-	srcds.NewHandlerSRCDS(router, srcdsUC, serversUC, personUC, assetUC, reportUC, bansUC, networkUC,
+	servers.NewHandlerSRCDS(router, srcdsUC, serversUC, personUC, assetUC, reportUC, bansUC, networkUC,
 		authUC, configUC, notificationUC, stateUC, blocklistUC)
-	blocklist.NewHandler(router, blocklistUC, networkUC, authUC)
-	srcds.NewHandler(router, speedrunsUC, authUC, configUC)
+	network.NewBlocklistHandler(router, blocklistUC, networkUC, authUC)
+	servers.NewSRCDSHandler(router, speedrunsUC, authUC, configUC)
 
 	return router
 }

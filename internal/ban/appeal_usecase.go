@@ -10,19 +10,18 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type AppealsUsecase struct {
-	repository appealRepository
+	repository AppealRepository
 	bans       BanUsecase
-	persons    *person.PersonUsecase
+	persons    domain.PersonProvider
 	config     *config.ConfigUsecase
 }
 
-func NewAppealUsecase(ar appealRepository, bans BanUsecase, persons *person.PersonUsecase, config *config.ConfigUsecase) *AppealsUsecase {
-	return &AppealsUsecase{repository: ar, bans: bans, persons: persons, config: config}
+func NewAppealUsecase(ar AppealRepository, bans BanUsecase, persons domain.PersonProvider, config *config.ConfigUsecase) AppealsUsecase {
+	return AppealsUsecase{repository: ar, bans: bans, persons: persons, config: config}
 }
 
 func (u *AppealsUsecase) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
@@ -85,7 +84,7 @@ func (u *AppealsUsecase) CreateBanMessage(ctx context.Context, curUser domain.Pe
 		return BanAppealMessage{}, domain.ErrInvalidParameter
 	}
 
-	bannedPerson, errReport := u.bans.Query(ctx, QueryOpts{
+	bannedPerson, errReport := u.bans.QueryOne(ctx, QueryOpts{
 		BanID:   banID,
 		Deleted: true,
 		EvadeOk: true,
@@ -119,7 +118,7 @@ func (u *AppealsUsecase) CreateBanMessage(ctx context.Context, curUser domain.Pe
 
 	bannedPerson.UpdatedOn = time.Now()
 
-	if errUpdate := u.bans.Save(ctx, &bannedPerson.Ban); errUpdate != nil {
+	if errUpdate := u.bans.Save(ctx, &bannedPerson); errUpdate != nil {
 		return BanAppealMessage{}, errUpdate
 	}
 
@@ -147,7 +146,7 @@ func (u *AppealsUsecase) CreateBanMessage(ctx context.Context, curUser domain.Pe
 }
 
 func (u *AppealsUsecase) GetBanMessages(ctx context.Context, userProfile domain.PersonInfo, banID int64) ([]BanAppealMessage, error) {
-	banPerson, errGetBan := u.bans.Query(ctx, QueryOpts{
+	banPerson, errGetBan := u.bans.QueryOne(ctx, QueryOpts{
 		BanID:   banID,
 		Deleted: true,
 		EvadeOk: true,

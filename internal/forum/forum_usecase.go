@@ -6,17 +6,15 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/notification"
 )
 
 type ForumUsecase struct {
-	repo          *ForumRepository
-	tracker       *Tracker
-	notifications *notification.NotificationUsecase
+	repo    *ForumRepository
+	tracker *Tracker
 }
 
-func NewForumUsecase(repository *ForumRepository, notifications *notification.NotificationUsecase) *ForumUsecase {
-	return &ForumUsecase{repo: repository, notifications: notifications, tracker: NewTracker()}
+func NewForumUsecase(repository *ForumRepository) *ForumUsecase {
+	return &ForumUsecase{repo: repository, tracker: NewTracker()}
 }
 
 func (f ForumUsecase) Start(ctx context.Context) {

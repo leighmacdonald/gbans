@@ -13,11 +13,11 @@ import (
 
 type wordFilterHandler struct {
 	filters WordFilterUsecase
-	chat    ChatUsecase
+	chat    *ChatUsecase
 	config  *config.ConfigUsecase
 }
 
-func NewWordFilterHandler(engine *gin.Engine, config *config.ConfigUsecase, wordFilters WordFilterUsecase, chat ChatUsecase, auth httphelper.Authenticator) {
+func NewWordFilterHandler(engine *gin.Engine, config *config.ConfigUsecase, wordFilters WordFilterUsecase, chat *ChatUsecase, auth httphelper.Authenticator) {
 	handler := wordFilterHandler{
 		config:  config,
 		filters: wordFilters,

@@ -38,7 +38,7 @@ func TestBans(t *testing.T) {
 		EvadeOk:        true,
 	}
 
-	var fetchedBan ban.BannedPerson
+	var fetchedBan ban.Ban
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/steam/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
 	require.Equal(t, banReq.SourceID, fetchedBan.SourceID.String())
@@ -69,7 +69,7 @@ func TestBans(t *testing.T) {
 	}
 
 	// Update the ban
-	var updatedBan ban.BannedPerson
+	var updatedBan ban.Ban
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/steam/%d", fetchedBan.BanID),
 		updateReq, http.StatusOK, &authTokens{user: modCreds}, &updatedBan)
 
@@ -83,13 +83,13 @@ func TestBans(t *testing.T) {
 	require.True(t, updatedBan.ValidUntil.After(fetchedBan.ValidUntil))
 
 	// Get the ban by ban_id
-	var banByBanID ban.BannedPerson
+	var banByBanID ban.Ban
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steam/%d?deleted=true", updatedBan.BanID),
 		nil, http.StatusOK, &authTokens{user: modCreds}, &banByBanID)
 	require.EqualExportedValues(t, updatedBan, banByBanID)
 
 	// Get the same ban when querying a users active ban
-	var banBySteamID ban.BannedPerson
+	var banBySteamID ban.Ban
 	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steamid/%d", target.SteamID.Int64()),
 		nil, http.StatusOK, &authTokens{user: modCreds}, &banBySteamID)
 	require.EqualExportedValues(t, updatedBan, banBySteamID)

@@ -19,7 +19,7 @@ type reportHandler struct {
 	notifications notification.NotificationUsecase
 }
 
-func NewHandler(engine *gin.Engine, reports ReportUsecase, authUC httphelper.Authenticator, notifications notification.NotificationUsecase) {
+func NewReportHandler(engine *gin.Engine, reports ReportUsecase, authUC httphelper.Authenticator, notifications notification.NotificationUsecase) {
 	handler := reportHandler{
 		reports:       reports,
 		notifications: notifications,

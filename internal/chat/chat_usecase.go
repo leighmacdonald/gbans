@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -21,11 +20,11 @@ import (
 
 type ChatUsecase struct {
 	repository    *ChatRepository
-	wordFilters   *WordFilterUsecase
+	wordFilters   WordFilterUsecase
 	bans          ban.BanUsecase
-	persons       person.PersonUsecase
+	persons       domain.PersonProvider
 	notifications notification.NotificationUsecase
-	state         servers.StateUsecase
+	state         *servers.StateUsecase
 	warningMu     *sync.RWMutex
 	dry           bool
 	maxWeight     int
@@ -37,8 +36,8 @@ type ChatUsecase struct {
 }
 
 func NewChatUsecase(config *config.ConfigUsecase, chatRepository *ChatRepository,
-	filters *WordFilterUsecase, stateUsecase servers.StateUsecase, bans ban.BanUsecase,
-	persons person.PersonUsecase,
+	filters WordFilterUsecase, stateUsecase *servers.StateUsecase, bans ban.BanUsecase,
+	persons domain.PersonProvider,
 ) *ChatUsecase {
 	conf := config.Config()
 
@@ -68,14 +67,14 @@ func (u ChatUsecase) onWarningExceeded(ctx context.Context, newWarning NewUserWa
 	if newWarning.MatchedFilter.Action == FilterActionBan || newWarning.MatchedFilter.Action == FilterActionMute {
 		req = ban.BanOpts{
 			TargetID:   newWarning.UserMessage.SteamID,
-			Duration:   newWarning.MatchedFilter.Duration,
 			Reason:     newWarning.WarnReason,
 			ReasonText: "",
 			Note:       "Automatic warning ban",
 		}
+		req.SetDuration(newWarning.MatchedFilter.Duration)
 	}
 
-	admin, errAdmin := u.persons.GetPersonBySteamID(ctx, nil, u.owner)
+	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, nil, u.owner)
 	if errAdmin != nil {
 		return errAdmin
 	}
@@ -123,7 +122,7 @@ func (u ChatUsecase) onWarningHandler(ctx context.Context, newWarning NewUserWar
 
 	newWarning.MatchedFilter.TriggerCount++
 
-	admin, errAdmin := u.persons.GetPersonBySteamID(ctx, nil, u.owner)
+	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, nil, u.owner)
 	if errAdmin != nil {
 		return errAdmin
 	}

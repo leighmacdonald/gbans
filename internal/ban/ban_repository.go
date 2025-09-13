@@ -16,8 +16,8 @@ import (
 
 type BanRepository struct {
 	db      database.Database
-	persons *person.PersonUsecase
-	network *network.NetworkUsecase
+	persons person.PersonUsecase   // TODO remove
+	network network.NetworkUsecase // TODO remove
 }
 
 func (r *BanRepository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
@@ -76,7 +76,7 @@ func (r *BanRepository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error
 	return bans, nil
 }
 
-func NewBanRepository(database database.Database, persons *person.PersonUsecase, network *network.NetworkUsecase) *BanRepository {
+func NewBanRepository(database database.Database, persons person.PersonUsecase, network network.NetworkUsecase) *BanRepository {
 	return &BanRepository{db: database, persons: persons, network: network}
 }
 

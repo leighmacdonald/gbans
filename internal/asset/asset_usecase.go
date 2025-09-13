@@ -21,8 +21,8 @@ type AssetUsecase struct {
 	repository *localRepository
 }
 
-func NewAssetUsecase(assetRepository *localRepository) *AssetUsecase {
-	return &AssetUsecase{repository: assetRepository}
+func NewAssetUsecase(assetRepository *localRepository) AssetUsecase {
+	return AssetUsecase{repository: assetRepository}
 }
 
 func (s AssetUsecase) Create(ctx context.Context, author steamid.SteamID, bucket Bucket, fileName string, content io.ReadSeeker) (Asset, error) {

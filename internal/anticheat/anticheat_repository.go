@@ -12,8 +12,8 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewAntiCheatRepository(database database.Database) *anticheatRepository {
-	return &anticheatRepository{db: database}
+func NewAntiCheatRepository(database database.Database) anticheatRepository {
+	return anticheatRepository{db: database}
 }
 
 type anticheatRepository struct {
