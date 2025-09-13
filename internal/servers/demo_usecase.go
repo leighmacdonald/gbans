@@ -1,4 +1,4 @@
-package demo
+package servers
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -20,32 +21,117 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/ricochet2200/go-disk-usage/du"
+	"github.com/viant/afs/option"
+	"github.com/viant/afs/storage"
 )
+
+type UploadedDemo struct {
+	Name    string
+	Server  Server
+	Content []byte
+}
 
 type DemoUsecase struct {
 	repository  DemoRepository
-	asset       asset.AssetUsecase
+	asset       *asset.AssetUsecase
 	config      *config.ConfigUsecase
-	servers     servers.ServersUsecase
 	bucket      asset.Bucket
 	cleanupChan chan any
 }
 
-func NewDemoUsecase(bucket asset.Bucket, repository DemoRepository, assets asset.AssetUsecase,
-	config *config.ConfigUsecase, servers servers.ServersUsecase,
-) *DemoUsecase {
-	return &DemoUsecase{
+func NewDemoUsecase(bucket asset.Bucket, repository DemoRepository, assets *asset.AssetUsecase, config *config.ConfigUsecase) DemoUsecase {
+	return DemoUsecase{
 		bucket:      bucket,
 		repository:  repository,
 		asset:       assets,
 		config:      config,
-		servers:     servers,
 		cleanupChan: make(chan any),
 	}
+}
+
+func (d DemoUsecase) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
+	slog.Debug("Got new demo",
+		slog.String("server", demo.Server.ShortName),
+		slog.String("name", demo.Name))
+
+	demoAsset, errNewAsset := d.asset.Create(ctx, steamid.New(d.config.Config().Owner),
+		asset.BucketDemo, demo.Name, bytes.NewReader(demo.Content))
+	if errNewAsset != nil {
+		return errNewAsset
+	}
+
+	_, errDemo := d.CreateFromAsset(ctx, demoAsset, demo.Server.ServerID)
+	if errDemo != nil {
+		// Cleanup the asset not attached to a demo
+		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
+			return errors.Join(errDelete, errDelete)
+		}
+
+		return errDemo
+	}
+
+	return nil
+}
+
+func (d DemoUsecase) fetchDemos(ctx context.Context, demoPathFmt string, server Server, client storage.Storager) error {
+	demoDir := fmt.Sprintf(demoPathFmt, server.ShortName)
+
+	filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
+	if errFilelist != nil {
+		slog.Error("remote list dir failed", log.ErrAttr(domain.ErrFailedToList),
+			slog.String("server", server.ShortName), slog.String("path", demoDir))
+
+		return nil //nolint:nilerr
+	}
+
+	for _, file := range filelist {
+		if !strings.HasSuffix(file.Name(), ".dem") {
+			continue
+		}
+
+		demoPath := path.Join(demoDir, file.Name())
+
+		slog.Info("Downloading demo", slog.String("name", file.Name()), slog.String("server", server.ShortName))
+
+		reader, err := client.Open(ctx, demoPath)
+		if err != nil {
+			return errors.Join(err, domain.ErrFailedOpenFile)
+		}
+
+		data, errRead := io.ReadAll(reader)
+		if errRead != nil {
+			_ = reader.Close()
+
+			return errors.Join(errRead, domain.ErrFailedReadFile)
+		}
+
+		if errClose := reader.Close(); errClose != nil {
+			return errors.Join(errClose, domain.ErrCloseReader)
+		}
+
+		// need Seeker, but afs does not provide
+		demo := UploadedDemo{Name: file.Name(), Server: server, Content: data}
+
+		if errDemo := d.onDemoReceived(ctx, demo); errDemo != nil {
+			if !errors.Is(errDemo, domain.ErrAssetTooLarge) {
+				slog.Error("Failed to create new demo asset", log.ErrAttr(errDemo))
+
+				continue
+			}
+		}
+
+		if errDelete := client.Delete(ctx, demoPath); errDelete != nil {
+			slog.Error("Failed to cleanup demo", log.ErrAttr(errDelete), slog.String("path", demoPath))
+		}
+
+		slog.Info("Deleted demo on remote host", slog.String("path", demoPath))
+	}
+
+	return nil
 }
 
 func (d DemoUsecase) oldest(ctx context.Context) (DemoInfo, error) {
@@ -273,8 +359,7 @@ func (d DemoUsecase) SendAndParseDemo(ctx context.Context, path string) (*DemoDe
 }
 
 func (d DemoUsecase) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID int) (*DemoFile, error) {
-	_, errGetServer := d.servers.Server(ctx, serverID)
-	if errGetServer != nil {
+	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
 		return nil, domain.ErrGetServer
 	}
 

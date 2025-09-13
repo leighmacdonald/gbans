@@ -17,7 +17,6 @@ import (
 
 var slashCommands = []*discordgo.ApplicationCommand{
 	{
-		//ApplicationID:            appID,
 		Name:                     "anticheat",
 		Description:              "Query Anticheat Logs",
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -41,16 +40,19 @@ var slashCommands = []*discordgo.ApplicationCommand{
 
 const CmdAC = "ac"
 
-func RegisterDiscord() {
-	h := DiscordHandler{}
-
+func RegisterDiscord(config *config.ConfigUsecase, session *discordgo.Session) {
+	_ = DiscordHandler{
+		config: config,
+	}
 }
 
 type DiscordHandler struct {
 	anticheat AntiCheatUsecase
+	persons   domain.PersonProvider
+	config    *config.ConfigUsecase
 }
 
-func (h DiscordHandler) makeOnAC(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordHandler) onAC(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	name := interaction.ApplicationCommandData().Options[0].Name
 	switch name {
 	case "player":
@@ -68,7 +70,7 @@ func (h DiscordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 		return nil, domain.ErrInvalidSID
 	}
 
-	person, errAuthor := h.persons.GetPersonBySteamID(ctx, nil, steamID)
+	person, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
 	if errAuthor != nil {
 		return nil, errAuthor
 	}
@@ -81,7 +83,7 @@ func (h DiscordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 	return ACPlayerLogs(h.config, person, logs), nil
 }
 
-func NewAnticheatTrigger(ban ban.BannedPerson, config *config.Config, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
+func NewAnticheatTrigger(ban ban.Ban, config *config.Config, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
 	embed := message.NewEmbed("Player triggered anti-cheat response")
 	embed.Embed().
 		SetColor(message.ColourSuccess).

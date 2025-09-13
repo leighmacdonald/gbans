@@ -139,13 +139,17 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 
 func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req RequestCreate
+		var req BanOpts
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		user, _ := session.CurrentUserProfile(ctx)
-		ban, errBan := h.bans.Ban(ctx, user, ban.Web, req)
+		if !req.SourceID.Valid() {
+			req.SourceID = user.GetSteamID()
+		}
+
+		newBan, errBan := h.bans.Ban(ctx, req)
 		if errBan != nil {
 			switch {
 			case errors.Is(errBan, database.ErrDuplicate):
@@ -158,8 +162,8 @@ func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, ban)
-		slog.Info("New steam ban created", slog.Int64("ban_id", ban.BanID), slog.String("steam_id", ban.TargetID.String()))
+		ctx.JSON(http.StatusCreated, newBan)
+		slog.Info("New steam ban created", slog.Int64("ban_id", newBan.BanID), slog.String("steam_id", newBan.TargetID.String()))
 	}
 }
 
@@ -340,7 +344,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 			return
 		}
 
-		var filtered []BannedPerson
+		var filtered []Ban
 
 		for _, curBan := range bans {
 			if curBan.Reason != ban.Cheating || curBan.Deleted || !curBan.IsEnabled {
@@ -368,7 +372,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 				Attributes: []string{"cheater"},
 				Steamid:    ban.TargetID,
 				LastSeen: thirdparty.LastSeen{
-					PlayerName: ban.TargetPersonaname,
+					PlayerName: ban.TargetID.String(),
 					Time:       int(ban.UpdatedOn.Unix()),
 				},
 			})

@@ -105,14 +105,13 @@ func refreshFiltersCmd() *cobra.Command {
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase, tfapiClient)
 			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), nil, configUsecase, personUsecase, nil, tfapiClient)
 			// banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase), personUsecase)
-			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), personUsecase, configUsecase)
-			banUsecase := ban.NewBanUsecase(ban.NewBanRepository(dbUsecase, personUsecase, networkUsecase), personUsecase, configUsecase, nil, reportUsecase, stateUsecase, tfapiClient)
+			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), configUsecase)
+			banUsecase := ban.NewBanUsecase(ban.NewBanRepository(dbUsecase, personUsecase, networkUsecase), personUsecase, configUsecase, reportUsecase, stateUsecase, tfapiClient)
 
 			// blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase), banUsecase)
 
 			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, nil, eventBroadcaster)
-			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase,
-				personUsecase, nil)
+			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase, nil)
 
 			var query chat.ChatHistoryQueryFilter
 			query.DontCalcTotal = true

@@ -1,4 +1,4 @@
-package demo
+package servers
 
 import (
 	"context"
@@ -9,12 +9,28 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 )
 
+var ErrServerNotFound = errors.New("server not found")
+
 type DemoRepository struct {
 	db database.Database
 }
 
-func NewDemoRepository(database database.Database) *DemoRepository {
-	return &DemoRepository{db: database}
+func NewDemoRepository(database database.Database) DemoRepository {
+	return DemoRepository{db: database}
+}
+
+func (r *DemoRepository) ValidateServer(ctx context.Context, serverID int) error {
+	if serverID == 0 {
+		return ErrServerNotFound
+	}
+
+	row := r.db.QueryRow(ctx, nil, `SELECT server_id FROM server WHERE server_id = $1`, serverID)
+	var serverIDScan int
+	if errQuery := row.Scan(&serverIDScan); errQuery != nil {
+		return ErrServerNotFound
+	}
+
+	return nil
 }
 
 func (r *DemoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {

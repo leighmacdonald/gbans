@@ -10,15 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -26,31 +22,23 @@ import (
 )
 
 type SRCDSUsecase struct {
-	repository    SRCDSRepository
-	bans          ban.BanUsecase
-	config        *config.ConfigUsecase
-	servers       servers.ServersUsecase
-	persons       person.PersonUsecase
-	reports       ban.ReportUsecase
-	notifications notification.NotificationUsecase
-	cookie        string
-	tfAPI         *thirdparty.TFAPI
+	repository SRCDSRepository
+	config     *config.ConfigUsecase
+	servers    *ServersUsecase
+	persons    PersonProvider
+
+	cookie string
+	tfAPI  *thirdparty.TFAPI
 }
 
-func NewSrcdsUsecase(repository SRCDSRepository, config *config.ConfigUsecase, servers servers.ServersUsecase,
-	persons person.PersonUsecase, reports ban.ReportUsecase, notifications notification.NotificationUsecase, bans ban.BanUsecase,
-	tfAPI *thirdparty.TFAPI,
-) *SRCDSUsecase {
+func NewSrcdsUsecase(repository SRCDSRepository, config *config.ConfigUsecase, servers *ServersUsecase, persons PersonProvider, tfAPI *thirdparty.TFAPI) *SRCDSUsecase {
 	return &SRCDSUsecase{
-		config:        config,
-		servers:       servers,
-		persons:       persons,
-		reports:       reports,
-		notifications: notifications,
-		bans:          bans,
-		repository:    repository,
-		cookie:        config.Config().HTTPCookieKey,
-		tfAPI:         tfAPI,
+		config:     config,
+		servers:    servers,
+		persons:    persons,
+		repository: repository,
+		cookie:     config.Config().HTTPCookieKey,
+		tfAPI:      tfAPI,
 	}
 }
 
@@ -306,77 +294,77 @@ func (h SRCDSUsecase) GetAdminGroups(ctx context.Context, admin SMAdmin) ([]SMGr
 	return h.repository.GetAdminGroups(ctx, admin)
 }
 
-func (h SRCDSUsecase) Report(ctx context.Context, currentUser domain.PersonInfo, req ban.RequestReportCreate) (ban.ReportWithAuthor, error) {
-	if req.Description == "" || len(req.Description) < 10 {
-		return ban.ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
-	}
+// func (h SRCDSUsecase) Report(ctx context.Context, currentUser domain.PersonInfo, req ban.RequestReportCreate) (ban.ReportWithAuthor, error) {
+// 	if req.Description == "" || len(req.Description) < 10 {
+// 		return ban.ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
+// 	}
 
-	// ServerStore initiated requests will have a sourceID set by the server
-	// Web based reports the source should not be set, the reporter will be taken from the
-	// current session information instead
-	if !req.SourceID.Valid() {
-		req.SourceID = currentUser.GetSteamID()
-	}
+// 	// ServerStore initiated requests will have a sourceID set by the server
+// 	// Web based reports the source should not be set, the reporter will be taken from the
+// 	// current session information instead
+// 	if !req.SourceID.Valid() {
+// 		req.SourceID = currentUser.GetSteamID()
+// 	}
 
-	if !req.SourceID.Valid() {
-		return ban.ReportWithAuthor{}, domain.ErrSourceID
-	}
+// 	if !req.SourceID.Valid() {
+// 		return ban.ReportWithAuthor{}, domain.ErrSourceID
+// 	}
 
-	if !req.TargetID.Valid() {
-		return ban.ReportWithAuthor{}, domain.ErrTargetID
-	}
+// 	if !req.TargetID.Valid() {
+// 		return ban.ReportWithAuthor{}, domain.ErrTargetID
+// 	}
 
-	if req.SourceID.Int64() == req.TargetID.Int64() {
-		return ban.ReportWithAuthor{}, domain.ErrSelfReport
-	}
+// 	if req.SourceID.Int64() == req.TargetID.Int64() {
+// 		return ban.ReportWithAuthor{}, domain.ErrSelfReport
+// 	}
 
-	personSource, errCreateSource := h.persons.GetPersonBySteamID(ctx, nil, req.SourceID)
-	if errCreateSource != nil {
-		return ban.ReportWithAuthor{}, errCreateSource
-	}
+// 	personSource, errCreateSource := h.persons.GetPersonBySteamID(ctx, nil, req.SourceID)
+// 	if errCreateSource != nil {
+// 		return ban.ReportWithAuthor{}, errCreateSource
+// 	}
 
-	personTarget, errCreateTarget := h.persons.GetOrCreatePersonBySteamID(ctx, nil, req.TargetID)
-	if errCreateTarget != nil {
-		return ban.ReportWithAuthor{}, errCreateTarget
-	}
+// 	personTarget, errCreateTarget := h.persons.GetOrCreatePersonBySteamID(ctx, nil, req.TargetID)
+// 	if errCreateTarget != nil {
+// 		return ban.ReportWithAuthor{}, errCreateTarget
+// 	}
 
-	if personTarget.Expired() {
-		if err := person.UpdatePlayerSummary(ctx, &personTarget, h.tfAPI); err != nil {
-			slog.Error("Failed to update target player", log.ErrAttr(err))
-		} else {
-			if errSave := h.persons.SavePerson(ctx, nil, &personTarget); errSave != nil {
-				slog.Error("Failed to save target player update", log.ErrAttr(err))
-			}
-		}
-	}
+// 	if personTarget.Expired() {
+// 		if err := person.UpdatePlayerSummary(ctx, &personTarget, h.tfAPI); err != nil {
+// 			slog.Error("Failed to update target player", log.ErrAttr(err))
+// 		} else {
+// 			if errSave := h.persons.SavePerson(ctx, nil, &personTarget); errSave != nil {
+// 				slog.Error("Failed to save target player update", log.ErrAttr(err))
+// 			}
+// 		}
+// 	}
 
-	// Ensure the user doesn't already have an open report against the user
-	existing, errReports := h.reports.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
-	if errReports != nil {
-		if !errors.Is(errReports, database.ErrNoResult) {
-			return ban.ReportWithAuthor{}, errReports
-		}
-	}
+// 	// Ensure the user doesn't already have an open report against the user
+// 	existing, errReports := h.reports.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
+// 	if errReports != nil {
+// 		if !errors.Is(errReports, database.ErrNoResult) {
+// 			return ban.ReportWithAuthor{}, errReports
+// 		}
+// 	}
 
-	if existing.ReportID > 0 {
-		return ban.ReportWithAuthor{}, domain.ErrReportExists
-	}
+// 	if existing.ReportID > 0 {
+// 		return ban.ReportWithAuthor{}, domain.ErrReportExists
+// 	}
 
-	savedReport, errReportSave := h.reports.SaveReport(ctx, currentUser, req)
-	if errReportSave != nil {
-		return ban.ReportWithAuthor{}, errReportSave
-	}
+// 	savedReport, errReportSave := h.reports.SaveReport(ctx, currentUser, req)
+// 	if errReportSave != nil {
+// 		return ban.ReportWithAuthor{}, errReportSave
+// 	}
 
-	// conf := h.config.Config()
-	//
-	// demoURL := ""
-	//
-	// h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	discord.ChannelModLog,
-	// 	discord.NewInGameReportResponse(savedReport, conf.ExtURL(savedReport), currentUser, conf.ExtURL(currentUser), demoURL)))
+// 	// conf := h.config.Config()
+// 	//
+// 	// demoURL := ""
+// 	//
+// 	// h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+// 	// 	discord.ChannelModLog,
+// 	// 	discord.NewInGameReportResponse(savedReport, conf.ExtURL(savedReport), currentUser, conf.ExtURL(currentUser), demoURL)))
 
-	return savedReport, nil
-}
+// 	return savedReport, nil
+// }
 
 func (h SRCDSUsecase) SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...SMGroups) error {
 	admin, errAdmin := h.repository.GetAdminByIdentity(ctx, authType, identity)

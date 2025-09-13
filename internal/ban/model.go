@@ -69,25 +69,6 @@ type AppealOverview struct {
 	TargetAvatarhash  string `json:"target_avatarhash"`
 }
 
-func NewBannedPerson() BannedPerson {
-	banTime := time.Now()
-
-	return BannedPerson{
-		Ban: Ban{
-			CreatedOn: banTime,
-			UpdatedOn: banTime,
-		},
-	}
-}
-
-type BannedPerson struct {
-	Ban
-	SourcePersonaname string `json:"source_personaname"`
-	SourceAvatarhash  string `json:"source_avatarhash"`
-	TargetPersonaname string `json:"target_personaname"`
-	TargetAvatarhash  string `json:"target_avatarhash"`
-}
-
 type AppealState int
 
 const (
@@ -143,60 +124,6 @@ type BanOpts struct {
 	DemoTick       int             `json:"demo_tick"`
 	IncludeFriends bool            `json:"include_friends"`
 	Note           string          `json:"note"`
-}
-
-// BanBase provides a common struct shared between all ban types, it should not be used
-// directly.
-type Ban struct {
-	// SteamID is the steamID of the banned person
-	TargetID steamid.SteamID `json:"target_id"`
-	SourceID steamid.SteamID `json:"source_id"`
-
-	BanID           int64 `json:"ban_id"`
-	ReportID        int64 `json:"report_id"`
-	IncludeFriends  bool  `json:"include_friends"`
-	CommunityBanned bool  `json:"community_banned"`
-
-	LastIP  string `json:"last_ip"`
-	EvadeOk bool   `json:"evade_ok"`
-
-	// Reason defines the overall ban classification
-	BanType ban.BanType `json:"ban_type"`
-	// Reason defines the overall ban classification
-	Reason ban.Reason `json:"reason"`
-	// ReasonText is returned to the client when kicked trying to join the server
-	ReasonText      string `json:"reason_text"`
-	UnbanReasonText string `json:"unban_reason_text"`
-	// Note is a supplementary note added by admins that is hidden from normal view
-	Note        string      `json:"note"`
-	Origin      ban.Origin  `json:"origin"`
-	CIDR        string      `json:"cidr"`
-	ASNum       int64       `json:"as_num"`
-	Name        string      `json:"name"`
-	AppealState AppealState `json:"appeal_state"`
-
-	// Deleted is used for soft-deletes
-	Deleted   bool `json:"deleted"`
-	IsEnabled bool `json:"is_enabled"`
-	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
-	ValidUntil time.Time `json:"valid_until" `
-	CreatedOn  time.Time `json:"created_on"`
-	UpdatedOn  time.Time `json:"updated_on"`
-}
-
-type QueryOpts struct {
-	SourceID      steamid.SteamID
-	TargetID      steamid.SteamID
-	GroupsOnly    bool
-	BanID         int64
-	Deleted       bool
-	EvadeOk       bool
-	Personaname   string
-	CIDR          string
-	GroupOnly     bool
-	IncludeGroups bool
-	ASNum         bool
-	LatestOnly    bool
 }
 
 func (opts BanOpts) Validate() error {
@@ -255,6 +182,57 @@ func (opts BanOpts) Validate() error {
 	return nil
 }
 
+// BanBase provides a common struct shared between all ban types, it should not be used
+// directly.
+type Ban struct {
+	// SteamID is the steamID of the banned person
+	TargetID       steamid.SteamID `json:"target_id"`
+	SourceID       steamid.SteamID `json:"source_id"`
+	BanID          int64           `json:"ban_id"`
+	ReportID       int64           `json:"report_id"`
+	IncludeFriends bool            `json:"include_friends"`
+	LastIP         string          `json:"last_ip"`
+	EvadeOk        bool            `json:"evade_ok"`
+
+	// Reason defines the overall ban classification
+	BanType ban.BanType `json:"ban_type"`
+	// Reason defines the overall ban classification
+	Reason ban.Reason `json:"reason"`
+	// ReasonText is returned to the client when kicked trying to join the server
+	ReasonText      string `json:"reason_text"`
+	UnbanReasonText string `json:"unban_reason_text"`
+	// Note is a supplementary note added by admins that is hidden from normal view
+	Note        string      `json:"note"`
+	Origin      ban.Origin  `json:"origin"`
+	CIDR        string      `json:"cidr"`
+	ASNum       int64       `json:"as_num"`
+	Name        string      `json:"name"`
+	AppealState AppealState `json:"appeal_state"`
+
+	// Deleted is used for soft-deletes
+	Deleted   bool `json:"deleted"`
+	IsEnabled bool `json:"is_enabled"`
+	// ValidUntil is when the ban will be no longer valid. 0 denotes forever
+	ValidUntil time.Time `json:"valid_until" `
+	CreatedOn  time.Time `json:"created_on"`
+	UpdatedOn  time.Time `json:"updated_on"`
+}
+
+type QueryOpts struct {
+	SourceID      steamid.SteamID
+	TargetID      steamid.SteamID
+	GroupsOnly    bool
+	BanID         int64
+	Deleted       bool
+	EvadeOk       bool
+	Personaname   string
+	CIDR          string
+	GroupOnly     bool
+	IncludeGroups bool
+	ASNum         bool
+	LatestOnly    bool
+}
+
 //goland:noinspection ALL
 func (banSteam Ban) Path() string {
 	return fmt.Sprintf("/ban/%d", banSteam.BanID)
@@ -263,38 +241,6 @@ func (banSteam Ban) Path() string {
 //goland:noinspection ALL
 func (banSteam Ban) String() string {
 	return fmt.Sprintf("SID: %d Origin: %s Reason: %s Type: %v", banSteam.TargetID.Int64(), banSteam.Origin, banSteam.ReasonText, banSteam.BanType)
-}
-
-func NewBan(opts BanOpts) (Ban, error) {
-	if err := opts.Validate(); err != nil {
-		return Ban{}, err
-	}
-
-	ban := Ban{
-		TargetID:        opts.TargetID,
-		SourceID:        opts.SourceID,
-		ReportID:        opts.ReportID,
-		ASNum:           opts.ASNum,
-		BanType:         opts.BanType,
-		IncludeFriends:  false,
-		CommunityBanned: false,
-		LastIP:          opts.LastIP,
-		EvadeOk:         opts.EvadeOk,
-		Reason:          opts.Reason,
-		ReasonText:      opts.ReasonText,
-		Note:            opts.ModNote,
-		Origin:          opts.Origin,
-		Name:            opts.Name,
-		CIDR:            opts.CIDR,
-		ValidUntil:      time.Now().Add(opts.Duration),
-		AppealState:     opts.AppealState,
-		Deleted:         opts.Deleted,
-		IsEnabled:       opts.IsEnabled,
-		CreatedOn:       time.Now(),
-		UpdatedOn:       time.Now(),
-	}
-
-	return ban, nil
 }
 
 type MembersList struct {

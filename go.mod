@@ -1,6 +1,6 @@
 module github.com/leighmacdonald/gbans
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/Depado/ginprom v1.8.1

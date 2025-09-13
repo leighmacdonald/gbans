@@ -10,16 +10,21 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
-	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/quarckster/go-mpris-server/pkg/server"
 )
+
+type PersonProvider interface {
+	// FIXME Retuning a interface for now.
+	GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.PersonInfo, error)
+}
 
 var slashCommands = []*discordgo.ApplicationCommand{
 	{
@@ -145,197 +150,195 @@ var slashCommands = []*discordgo.ApplicationCommand{
 	},
 }
 
-func makeOnFind() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	return func(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionCreate,
-	) (*discordgo.MessageEmbed, error) {
-		opts := helper.OptionMap(i.ApplicationCommandData().Options)
-		userIdentifier := opts[helper.OptUserIdentifier].StringValue()
+type DiscordHandler struct {
+	state   StateUsecase
+	persons PersonProvider
+	servers ServersUsecase
+	network network.NetworkUsecase
+	config  config.Config
+}
 
-		var name string
-
-		steamID, errSteamID := steamid.Resolve(ctx, userIdentifier)
-		if errSteamID != nil || !steamID.Valid() {
-			// Search for name instead on error
-			name = userIdentifier
-		}
-
-		players := h.state.Find(name, steamID, nil, nil)
-
-		if len(players) == 0 {
-			return nil, domain.ErrUnknownID
-		}
-
-		var found []FoundPlayer
-
-		for _, player := range players {
-			server, errServer := h.servers.Server(ctx, player.ServerID)
-			if errServer != nil {
-				return nil, errors.Join(errServer, domain.ErrGetServer)
-			}
-
-			_, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, nil, player.Player.SID)
-			if errPerson != nil {
-				return nil, errors.Join(errPerson, domain.ErrFetchPerson)
-			}
-
-			found = append(found, FoundPlayer{Player: player, Server: server})
-		}
-
-		return FindMessage(found), nil
+func NewDiscordHandler(state StateUsecase) *DiscordHandler {
+	return &DiscordHandler{
+		state: state,
 	}
 }
 
-func makeOnKick() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		var (
-			opts   = helper.OptionMap(interaction.ApplicationCommandData().Options)
-			reason = banDomain.Reason(opts[helper.OptBanReason].IntValue())
-		)
+func (d DiscordHandler) onFind(ctx context.Context, sessiin *discordgo.Session, interation *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	opts := helper.OptionMap(interation.ApplicationCommandData().Options)
+	userIdentifier := opts[helper.OptUserIdentifier].StringValue()
 
-		target, errTarget := steamid.Resolve(ctx, opts[helper.OptUserIdentifier].StringValue())
-		if errTarget != nil || !target.Valid() {
-			return nil, domain.ErrInvalidSID
+	var name string
+
+	steamID, errSteamID := steamid.Resolve(ctx, userIdentifier)
+	if errSteamID != nil || !steamID.Valid() {
+		// Search for name instead on error
+		name = userIdentifier
+	}
+
+	players := d.state.Find(name, steamID, nil, nil)
+
+	if len(players) == 0 {
+		return nil, domain.ErrUnknownID
+	}
+
+	var found []FoundPlayer
+
+	for _, player := range players {
+		server, errServer := d.servers.Server(ctx, player.ServerID)
+		if errServer != nil {
+			return nil, errors.Join(errServer, domain.ErrGetServer)
 		}
 
-		players := h.state.FindBySteamID(target)
-
-		if len(players) == 0 {
-			return nil, domain.ErrPlayerNotFound
+		_, errPerson := d.persons.GetOrCreatePersonBySteamID(ctx, nil, player.Player.SID)
+		if errPerson != nil {
+			return nil, errPerson
 		}
 
-		var err error
+		found = append(found, FoundPlayer{Player: player, Server: server})
+	}
 
-		for _, player := range players {
-			if errKick := h.state.Kick(ctx, player.Player.SID, reason); errKick != nil {
-				err = errors.Join(err, errKick)
+	return FindMessage(found), nil
+}
+
+func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	var (
+		opts   = helper.OptionMap(interaction.ApplicationCommandData().Options)
+		reason = banDomain.Reason(opts[helper.OptBanReason].IntValue())
+	)
+
+	target, errTarget := steamid.Resolve(ctx, opts[helper.OptUserIdentifier].StringValue())
+	if errTarget != nil || !target.Valid() {
+		return nil, domain.ErrInvalidSID
+	}
+
+	players := d.state.FindBySteamID(target)
+
+	if len(players) == 0 {
+		return nil, domain.ErrPlayerNotFound
+	}
+
+	var err error
+
+	for _, player := range players {
+		if errKick := d.state.Kick(ctx, player.Player.SID, reason.String()); errKick != nil {
+			err = errors.Join(err, errKick)
+
+			continue
+		}
+	}
+
+	return KickMessage(players), err
+}
+
+func (d DiscordHandler) onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
+	serverName := opts[helper.OptServerIdentifier].StringValue()
+	msg := opts[helper.OptMessage].StringValue()
+
+	var server Server
+	if err := d.servers.GetByName(ctx, serverName, &server, false, false); err != nil {
+		return nil, ErrUnknownServer
+	}
+
+	if errSay := d.state.Say(ctx, server.ServerID, msg); errSay != nil {
+		return nil, helper.ErrCommandFailed
+	}
+
+	return SayMessage(serverName, msg), nil
+}
+
+func (d DiscordHandler) onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
+	serverName := opts[helper.OptServerIdentifier].StringValue()
+	msg := opts[helper.OptMessage].StringValue()
+
+	var server Server
+	if err := d.servers.GetByName(ctx, serverName, &server, false, false); err != nil {
+		return nil, ErrUnknownServer
+	}
+
+	if errCSay := d.state.CSay(ctx, server.ServerID, msg); errCSay != nil {
+		return nil, helper.ErrCommandFailed
+	}
+
+	return CSayMessage(server.Name, msg), nil
+}
+
+func (d DiscordHandler) onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
+	msg := opts[helper.OptMessage].StringValue()
+
+	playerSid, errPlayerSid := steamid.Resolve(ctx, opts[helper.OptUserIdentifier].StringValue())
+	if errPlayerSid != nil || playerSid.Valid() {
+		return nil, errors.Join(errPlayerSid, domain.ErrInvalidSID)
+	}
+
+	if errPSay := d.state.PSay(ctx, playerSid, msg); errPSay != nil {
+		return nil, helper.ErrCommandFailed
+	}
+
+	return PSayMessage(playerSid, msg), nil
+}
+
+func (d DiscordHandler) makeOnServers(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	return ServersMessage(d.state.SortRegion(), d.config.ExtURLRaw("/servers")), nil
+}
+
+func (d DiscordHandler) makeOnPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
+	serverName := opts[helper.OptServerIdentifier].StringValue()
+	serverStates := d.state.ByName(serverName, false)
+
+	if len(serverStates) != 1 {
+		return nil, ErrUnknownServer
+	}
+
+	serverState := serverStates[0]
+
+	var rows []string
+
+	if len(serverState.Players) > 0 {
+		sort.SliceStable(serverState.Players, func(i, j int) bool {
+			return serverState.Players[i].Name < serverState.Players[j].Name
+		})
+
+		for _, player := range serverState.Players {
+			address, errIP := netip.ParseAddr(player.IP.String())
+			if errIP != nil {
+				slog.Error("Failed to parse player ip", log.ErrAttr(errIP))
 
 				continue
 			}
-		}
 
-		return KickMessage(players), err
-	}
-}
+			network, errNetwork := d.network.QueryNetwork(ctx, address)
+			if errNetwork != nil {
+				slog.Error("Failed to get network info", log.ErrAttr(errNetwork))
 
-func makeOnSay() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
-		serverName := opts[helper.OptServerIdentifier].StringValue()
-		msg := opts[helper.OptMessage].StringValue()
-
-		var server servers.Server
-		if err := h.servers.GetByName(ctx, serverName, &server, false, false); err != nil {
-			return nil, servers.ErrUnknownServer
-		}
-
-		if errSay := h.state.Say(ctx, server.ServerID, msg); errSay != nil {
-			return nil, helper.ErrCommandFailed
-		}
-
-		return SayMessage(serverName, msg), nil
-	}
-}
-
-func makeOnCSay() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
-	) (*discordgo.MessageEmbed, error) {
-		opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
-		serverName := opts[helper.OptServerIdentifier].StringValue()
-		msg := opts[helper.OptMessage].StringValue()
-
-		var server server.Server
-		if err := h.servers.GetByName(ctx, serverName, &server, false, false); err != nil {
-			return nil, domain.ErrUnknownServer
-		}
-
-		if errCSay := h.state.CSay(ctx, server.ServerID, msg); errCSay != nil {
-			return nil, helper.ErrCommandFailed
-		}
-
-		return CSayMessage(server.Name, msg), nil
-	}
-}
-
-func makeOnPSay() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
-		msg := opts[helper.OptMessage].StringValue()
-
-		playerSid, errPlayerSid := steamid.Resolve(ctx, opts[helper.OptUserIdentifier].StringValue())
-		if errPlayerSid != nil || playerSid.Valid() {
-			return nil, errors.Join(errPlayerSid, domain.ErrInvalidSID)
-		}
-
-		if errPSay := h.state.PSay(ctx, playerSid, msg); errPSay != nil {
-			return nil, helper.ErrCommandFailed
-		}
-
-		return PSayMessage(playerSid, msg), nil
-	}
-}
-
-func makeOnServers() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	return func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		return ServersMessage(h.state.SortRegion(), h.config.ExtURLRaw("/servers")), nil
-	}
-}
-
-func makeOnPlayers() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
-		serverName := opts[helper.OptServerIdentifier].StringValue()
-		serverStates := h.state.ByName(serverName, false)
-
-		if len(serverStates) != 1 {
-			return nil, ErrUnknownServer
-		}
-
-		serverState := serverStates[0]
-
-		var rows []string
-
-		if len(serverState.Players) > 0 {
-			sort.SliceStable(serverState.Players, func(i, j int) bool {
-				return serverState.Players[i].Name < serverState.Players[j].Name
-			})
-
-			for _, player := range serverState.Players {
-				address, errIP := netip.ParseAddr(player.IP.String())
-				if errIP != nil {
-					slog.Error("Failed to parse player ip", log.ErrAttr(errIP))
-
-					continue
-				}
-
-				network, errNetwork := h.network.QueryNetwork(ctx, address)
-				if errNetwork != nil {
-					slog.Error("Failed to get network info", log.ErrAttr(errNetwork))
-
-					continue
-				}
-
-				flag := ""
-				if network.Location.CountryCode != "" {
-					flag = fmt.Sprintf(":flag_%s: ", strings.ToLower(network.Location.CountryCode))
-				}
-
-				proxyStr := ""
-				if network.Proxy.ProxyType != "" {
-					proxyStr = fmt.Sprintf("Threat: %s | %s | %s", network.Proxy.ProxyType, network.Proxy.Threat, network.Proxy.UsageType)
-				}
-
-				rows = append(rows, fmt.Sprintf("%s`%s` `%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",
-					flag, player.SID.Steam3(), player.Ping, player.Name, player.SID.String(), proxyStr))
+				continue
 			}
-		}
 
-		return PlayersMessage(rows, serverState.MaxPlayers, serverState.Name), nil
+			flag := ""
+			if network.Location.CountryCode != "" {
+				flag = fmt.Sprintf(":flag_%s: ", strings.ToLower(network.Location.CountryCode))
+			}
+
+			proxyStr := ""
+			if network.Proxy.ProxyType != "" {
+				proxyStr = fmt.Sprintf("Threat: %s | %s | %s", network.Proxy.ProxyType, network.Proxy.Threat, network.Proxy.UsageType)
+			}
+
+			rows = append(rows, fmt.Sprintf("%s`%s` `%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",
+				flag, player.SID.Steam3(), player.Ping, player.Name, player.SID.String(), proxyStr))
+		}
 	}
+
+	return PlayersMessage(rows, serverState.MaxPlayers, serverState.Name), nil
 }
 
 type FoundPlayer struct {
-	Player servers.PlayerServerInfo
-	Server servers.Server
+	Player PlayerServerInfo
+	Server Server
 }
 
 func FindMessage(found []FoundPlayer) *discordgo.MessageEmbed {
@@ -478,7 +481,7 @@ func PlayersMessage(rows []string, maxPlayers int, serverName string) *discordgo
 	return msgEmbed.Embed().MessageEmbed
 }
 
-func KickMessage(players []servers.PlayerServerInfo) *discordgo.MessageEmbed {
+func KickMessage(players []PlayerServerInfo) *discordgo.MessageEmbed {
 	msgEmbed := message.NewEmbed("Users Kicked")
 	for _, player := range players {
 		msgEmbed.Embed().AddField("Name", player.Player.Name)
@@ -488,35 +491,35 @@ func KickMessage(players []servers.PlayerServerInfo) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func NewInGameReportResponse(report ban.ReportWithAuthor, reportURL string, author domain.PersonInfo, authorURL string, _ string) *discordgo.MessageEmbed {
-	msgEmbed := message.NewEmbed("New User Report Created")
-	msgEmbed.
-		Embed().
-		SetDescription(report.Description).
-		SetColor(message.ColourSuccess).
-		SetURL(reportURL)
+// func NewInGameReportResponse(report ban.ReportWithAuthor, reportURL string, author domain.PersonInfo, authorURL string, _ string) *discordgo.MessageEmbed {
+// 	msgEmbed := message.NewEmbed("New User Report Created")
+// 	msgEmbed.
+// 		Embed().
+// 		SetDescription(report.Description).
+// 		SetColor(message.ColourSuccess).
+// 		SetURL(reportURL)
 
-	msgEmbed.AddAuthorPersonInfo(author, authorURL)
+// 	msgEmbed.AddAuthorPersonInfo(author, authorURL)
 
-	name := author.GetName()
+// 	name := author.GetName()
 
-	if name == "" {
-		name = report.TargetID.String()
-	}
+// 	if name == "" {
+// 		name = report.TargetID.String()
+// 	}
 
-	msgEmbed.
-		Embed().
-		AddField("Subject", name).
-		AddField("Reason", report.Reason.String())
+// 	msgEmbed.
+// 		Embed().
+// 		AddField("Subject", name).
+// 		AddField("Reason", report.Reason.String())
 
-	if report.ReasonText != "" {
-		msgEmbed.Embed().AddField("Custom Reason", report.ReasonText)
-	}
+// 	if report.ReasonText != "" {
+// 		msgEmbed.Embed().AddField("Custom Reason", report.ReasonText)
+// 	}
 
-	return msgEmbed.AddFieldsSteamID(report.TargetID).Embed().Truncate().MessageEmbed
-}
+// 	return msgEmbed.AddFieldsSteamID(report.TargetID).Embed().Truncate().MessageEmbed
+// }
 
-func PingModMessage(author domain.PersonInfo, authorURL string, reason string, server servers.Server, roleID string, connect string) *discordgo.MessageEmbed {
+func PingModMessage(author domain.PersonInfo, authorURL string, reason string, server Server, roleID string, connect string) *discordgo.MessageEmbed {
 	msgEmbed := message.NewEmbed("New User In-Game Report")
 	msgEmbed.
 		Embed().

@@ -1,8 +1,10 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -35,6 +37,11 @@ func (h Avatar) Small() string {
 
 func (h Avatar) Hash() string {
 	return h.hash
+}
+
+type PersonProvider interface {
+	// FIXME Retuning a interface for now.
+	GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (PersonInfo, error)
 }
 
 type PersonInfo interface {

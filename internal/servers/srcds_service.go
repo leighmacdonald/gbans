@@ -1,8 +1,8 @@
 package servers
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/netip"
@@ -11,52 +11,48 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
-	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/blocklist"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/network"
-	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+type EvadeCheck interface {
+	CheckEvadeStatus(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error)
+}
+
 type srcdsHandler struct {
-	srcds         *SRCDSUsecase
-	servers       *ServersUsecase
-	persons       person.PersonUsecase
-	state         *StateUsecase
-	notifications notification.NotificationUsecase
-	config        *config.ConfigUsecase
-	reports       ban.ReportUsecase
-	assets        asset.AssetUsecase
-	bans          ban.BanUsecase
-	network       network.NetworkUsecase
-	blocklist     blocklist.BlocklistUsecase
+	srcds     *SRCDSUsecase
+	servers   ServersUsecase
+	persons   PersonProvider
+	state     *StateUsecase
+	config    *config.ConfigUsecase
+	assets    asset.AssetUsecase
+	evades    EvadeCheck
+	network   network.NetworkUsecase
+	blocklist network.BlocklistUsecase
 }
 
 func NewHandlerSRCDS(engine *gin.Engine, srcds *SRCDSUsecase, servers ServersUsecase,
-	persons person.PersonUsecase, assets asset.AssetUsecase, reports ban.ReportUsecase,
-	bans ban.BanUsecase, network network.NetworkUsecase, auth httphelper.Authenticator,
-	config *config.ConfigUsecase, notifications notification.NotificationUsecase, state StateUsecase,
-	blocklist blocklist.BlocklistUsecase,
+	persons PersonProvider, assets asset.AssetUsecase,
+	evades EvadeCheck, network network.NetworkUsecase, auth httphelper.Authenticator,
+	config *config.ConfigUsecase, state *StateUsecase,
+	blocklist network.BlocklistUsecase,
 ) {
 	handler := srcdsHandler{
-		srcds:         srcds,
-		servers:       servers,
-		persons:       persons,
-		reports:       reports,
-		bans:          bans,
-		assets:        assets,
-		network:       network,
-		config:        config,
-		notifications: notifications,
-		state:         state,
-		blocklist:     blocklist,
+		srcds:     srcds,
+		servers:   servers,
+		persons:   persons,
+		evades:    evades,
+		assets:    assets,
+		network:   network,
+		config:    config,
+		state:     state,
+		blocklist: blocklist,
 	}
 
 	adminGroup := engine.Group("/")
@@ -103,8 +99,8 @@ func NewHandlerSRCDS(engine *gin.Engine, srcds *SRCDSUsecase, servers ServersUse
 		server.POST("/api/sm/ping_mod", handler.onAPIPostPingMod())
 
 		// Duplicated since we need to authenticate via server middleware
-		server.POST("/api/sm/bans/steam/create", handler.onAPIPostBanSteamCreate())
-		server.POST("/api/sm/report/create", handler.onAPIPostReportCreate())
+		// server.POST("/api/sm/bans/steam/create", handler.onAPIPostBanSteamCreate())
+		// server.POST("/api/sm/report/create", handler.onAPIPostReportCreate())
 		server.POST("/api/state_update", handler.onAPIPostServerState())
 	}
 }
@@ -123,9 +119,9 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 	}
 
 	type checkResponse struct {
-		ClientID int         `json:"client_id"`
-		BanType  ban.BanType `json:"ban_type"`
-		Msg      string      `json:"msg"`
+		ClientID int               `json:"client_id"`
+		BanType  banDomain.BanType `json:"ban_type"`
+		Msg      string            `json:"msg"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -142,7 +138,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 
 		defaultValue := checkResponse{
 			ClientID: req.ClientID,
-			BanType:  ban.OK,
+			BanType:  banDomain.OK,
 			Msg:      "",
 		}
 
@@ -174,7 +170,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 			}
 
 			if banState.SteamID != steamID && !banState.EvadeOK {
-				evadeBanned, err := s.bans.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
+				evadeBanned, err := s.evades.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
 				if err != nil {
 					ctx.JSON(http.StatusOK, defaultValue)
 
@@ -184,7 +180,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 				if evadeBanned {
 					defaultValue = checkResponse{
 						ClientID: req.ClientID,
-						BanType:  ban.Banned,
+						BanType:  banDomain.Banned,
 						Msg:      "Evasion ban",
 					}
 
@@ -742,7 +738,7 @@ func (s *srcdsHandler) onGetSMAdmins() gin.HandlerFunc {
 
 func (s *srcdsHandler) onAPIPostServerState() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req servers.PartialStateUpdate
+		var req PartialStateUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -762,53 +758,54 @@ func (s *srcdsHandler) onAPIPostServerState() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		currentUser, _ := session.CurrentUserProfile(ctx)
+// func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
+// 	return func(ctx *gin.Context) {
+// 		currentUser, _ := session.CurrentUserProfile(ctx)
 
-		var req ban.RequestReportCreate
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
+// 		var req ban.RequestReportCreate
+// 		if !httphelper.Bind(ctx, &req) {
+// 			return
+// 		}
 
-		report, errReport := s.srcds.Report(ctx, currentUser, req)
-		if errReport != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReport))
+// 		report, errReport := s.srcds.Report(ctx, currentUser, req)
+// 		if errReport != nil {
+// 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errReport))
 
-			return
-		}
+// 			return
+// 		}
 
-		ctx.JSON(http.StatusCreated, report)
-		slog.Info("New report created successfully", slog.Int64("report_id", report.ReportID), slog.String("method", "in-game"))
-	}
-}
+// 		ctx.JSON(http.StatusCreated, report)
+// 		slog.Info("New report created successfully", slog.Int64("report_id", report.ReportID), slog.String("method", "in-game"))
+// 	}
+// }
 
-func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var req domain.RequestBanCreate
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
+// TODO move to ban package
+// func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
+// 	return func(ctx *gin.Context) {
+// 		var req domain.RequestBanCreate
+// 		if !httphelper.Bind(ctx, &req) {
+// 			return
+// 		}
 
-		user, _ := session.CurrentUserProfile(ctx)
-		ban, errBan := s.bans.Ban(ctx, user, ban.InGame, req)
-		if errBan != nil {
-			if errors.Is(errBan, database.ErrDuplicate) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, database.ErrDuplicate,
-					"This user is already currently banned"))
+// 		user, _ := session.CurrentUserProfile(ctx)
+// 		ban, errBan := s.bans.Ban(ctx, user, ban.InGame, req)
+// 		if errBan != nil {
+// 			if errors.Is(errBan, database.ErrDuplicate) {
+// 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, database.ErrDuplicate,
+// 					"This user is already currently banned"))
 
-				return
-			}
+// 				return
+// 			}
 
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBan))
+// 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBan))
 
-			return
-		}
+// 			return
+// 		}
 
-		ctx.JSON(http.StatusCreated, ban)
-		slog.Info("Created new ban successfully", slog.Int64("ban_id", ban.BanID))
-	}
-}
+// 		ctx.JSON(http.StatusCreated, ban)
+// 		slog.Info("Created new ban successfully", slog.Int64("ban_id", ban.BanID))
+// 	}
+// }
 
 func (s *srcdsHandler) onAPIGetServerOverrides() gin.HandlerFunc {
 	type smOverride struct {
@@ -994,19 +991,20 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 			return
 		}
 
-		var connect string
+		// var connect string
 
-		if addr, errIP := server.IP(ctx); errIP != nil {
+		if _, errIP := server.IP(ctx); errIP != nil {
 			slog.Error("Failed to resolve server ip", log.ErrAttr(errIP))
-		} else {
-			connect = fmt.Sprintf("steam://connect/%s:%d", addr.String(), server.Port)
 		}
+		// else {
+		// 	connect = fmt.Sprintf("steam://connect/%s:%d", addr.String(), server.Port)
+		// }
 
 		// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(
 		// 	domain.ChannelMod,
 		// 	discord.PingModMessage(author, conf.ExtURL(author), req.Reason, server, conf.Discord.ModPingRoleID, connect)))
 
-		if errSay := s.state.PSay(ctx, author.SteamID, "Moderators have been notified"); errSay != nil {
+		if errSay := s.state.PSay(ctx, author.GetSteamID(), "Moderators have been notified"); errSay != nil {
 			slog.Error("Failed to reply to user", log.ErrAttr(errSay))
 		}
 	}

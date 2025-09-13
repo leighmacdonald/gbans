@@ -73,7 +73,7 @@ func errorHandler() gin.HandlerFunc {
 				log.ErrAttr(err),
 			}
 
-			user := session.CurrentUserProfile(ctx)
+			user, _ := session.CurrentUserProfile(ctx)
 			sid := user.GetSteamID()
 			if sid.Valid() {
 				args = append(args, slog.String("steam_id", sid.String()))

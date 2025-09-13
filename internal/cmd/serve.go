@@ -358,7 +358,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			// Start discord bot service
 			if conf.Discord.Enabled {
-				discordHandler := discord.NewDiscordHandler(discordUsecase, personUsecase, banUsecase,
+				discordHandler := discord.NewDiscord(discordUsecase, personUsecase, banUsecase,
 					stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, anticheatUsecase, tfapiClient)
 				discordHandler.Start(ctx)
 			}

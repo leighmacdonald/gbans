@@ -13,10 +13,10 @@ import (
 )
 
 type WikiUsecase struct {
-	repository wikiRepository
+	repository *wikiRepository
 }
 
-func NewWikiUsecase(repository wikiRepository) *WikiUsecase {
+func NewWikiUsecase(repository *wikiRepository) *WikiUsecase {
 	return &WikiUsecase{repository: repository}
 }
 

@@ -2,60 +2,34 @@ package notification
 
 import (
 	"context"
-	"log/slog"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/riverqueue/river"
 )
 
-func NewNotificationUsecase(repository NotificationRepository, discord discord.DiscordUsecase) *NotificationUsecase {
-	return &NotificationUsecase{repository: repository}
+func NewNotificationUsecase(repository NotificationRepository, discord *discord.Discord) NotificationUsecase {
+	return NotificationUsecase{repository: repository}
 }
 
 type NotificationUsecase struct {
-	repository  NotificationRepository
-	queueClient *river.Client[pgx.Tx]
+	repository NotificationRepository
 }
 
-func (n *NotificationUsecase) Enqueue(ctx context.Context, payload NotificationPayload) {
-	if n.queueClient == nil {
-		return
-	}
-
-	res, err := n.queueClient.Insert(ctx, SenderArgs{Payload: payload}, &river.InsertOpts{Queue: string(queue.Default)})
-	if err != nil {
-		slog.Error("Failed to queue notification", log.ErrAttr(err))
-	}
-
-	slog.Debug("Job inserted", slog.Int64("id", res.Job.ID), slog.Bool("unique", res.UniqueSkippedAsDuplicate))
-}
-
-func (n *NotificationUsecase) SendSite(ctx context.Context, targetIDs steamid.Collection, severity NotificationSeverity, message string, link string, author *domain.UserProfile) error {
+func (n *NotificationUsecase) SendSite(ctx context.Context, targetIDs steamid.Collection, severity NotificationSeverity, message string, link string, author domain.PersonInfo) error {
 	var authorID *int64
+	sid := author.GetSteamID()
 	if author != nil {
-		sid64 := author.SteamID.Int64()
+		sid64 := sid.Int64()
 		authorID = &sid64
 	}
 
 	return n.repository.SendSite(ctx, fp.Uniq(targetIDs), severity, message, link, authorID)
 }
 
-func (n *NotificationUsecase) SetQueueClient(queueClient *river.Client[pgx.Tx]) {
-	n.queueClient = queueClient
-}
-
-func (n *NotificationUsecase) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]domain.UserNotification, error) {
+func (n *NotificationUsecase) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]UserNotification, error) {
 	return n.repository.GetPersonNotifications(ctx, steamID)
-}
-
-func (n *NotificationUsecase) RegisterWorkers(workers *river.Workers) {
-	river.AddWorker[SenderArgs](workers, &SenderWorker{notifications: n})
 }
 
 func (n *NotificationUsecase) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
