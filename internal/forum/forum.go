@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -19,7 +19,7 @@ type ThreadQueryFilter struct {
 }
 
 type ForumActivity struct {
-	Person       person.UserProfile
+	Person       domain.PersonInfo
 	LastActivity time.Time
 }
 

@@ -6,19 +6,18 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/netip"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/state"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -31,27 +30,25 @@ type BansQueryFilter struct {
 }
 
 type BanUsecase struct {
-	banRepo       *BanRepository
-	persons       *person.PersonUsecase
-	config        *config.ConfigUsecase
-	notifications *notification.NotificationUsecase
-	state         *state.StateUsecase
-	reports       *ReportUsecase
-	tfAPI         *thirdparty.TFAPI
+	banRepo *BanRepository
+	persons *person.PersonUsecase
+	config  *config.ConfigUsecase
+	state   *servers.StateUsecase
+	reports *ReportUsecase
+	tfAPI   *thirdparty.TFAPI
 }
 
 func NewBanUsecase(repository *BanRepository, person *person.PersonUsecase,
-	config *config.ConfigUsecase, notifications *notification.NotificationUsecase, reports *ReportUsecase, state *state.StateUsecase,
+	config *config.ConfigUsecase, reports *ReportUsecase, state *servers.StateUsecase,
 	tfAPI *thirdparty.TFAPI,
 ) *BanUsecase {
 	return &BanUsecase{
-		banRepo:       repository,
-		persons:       person,
-		config:        config,
-		notifications: notifications,
-		reports:       reports,
-		state:         state,
-		tfAPI:         tfAPI,
+		banRepo: repository,
+		persons: person,
+		config:  config,
+		reports: reports,
+		state:   state,
+		tfAPI:   tfAPI,
 	}
 }
 
@@ -89,19 +86,19 @@ func (s *BanUsecase) UpdateCache(ctx context.Context) error {
 	return nil
 }
 
-func (s *BanUsecase) Query(ctx context.Context, opts QueryOpts) ([]BannedPerson, error) {
+func (s *BanUsecase) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 	return s.banRepo.Query(ctx, opts)
 }
 
-func (s *BanUsecase) QueryOne(ctx context.Context, opts QueryOpts) (BannedPerson, error) {
+func (s *BanUsecase) QueryOne(ctx context.Context, opts QueryOpts) (Ban, error) {
 	// TODO FIXME
 	results, errResults := s.banRepo.Query(ctx, opts)
 	if errResults != nil {
-		return BannedPerson{}, errResults
+		return Ban{}, errResults
 	}
 
 	if len(results) == 0 {
-		return BannedPerson{}, database.ErrNoResult
+		return Ban{}, database.ErrNoResult
 	}
 
 	return results[0], nil
@@ -112,68 +109,77 @@ func (s *BanUsecase) Stats(ctx context.Context, stats *Stats) error {
 }
 
 func (s *BanUsecase) Save(ctx context.Context, ban *Ban) error {
-	oldState := Open
-	if ban.BanID > 0 {
-		existing, errExisting := s.QueryOne(ctx, QueryOpts{
-			BanID:      ban.BanID,
-			EvadeOk:    true,
-			Deleted:    true,
-			LatestOnly: true,
-		})
-		if errExisting != nil {
-			slog.Error("Failed to get existing ban", log.ErrAttr(errExisting))
+	// oldState := Open
+	// if ban.BanID > 0 {
+	// 	existing, errExisting := s.QueryOne(ctx, QueryOpts{
+	// 		BanID:      ban.BanID,
+	// 		EvadeOk:    true,
+	// 		Deleted:    true,
+	// 		LatestOnly: true,
+	// 	})
+	// 	if errExisting != nil {
+	// 		slog.Error("Failed to get existing ban", log.ErrAttr(errExisting))
 
-			return errExisting
-		}
+	// 		return errExisting
+	// 	}
 
-		oldState = existing.AppealState
-	}
+	// 	oldState = existing.AppealState
+	// }
 
 	if err := s.banRepo.Save(ctx, ban); err != nil {
 		return err
 	}
 
-	if oldState != ban.AppealState {
-		s.notifications.Enqueue(ctx, notification.NewSiteGroupNotification(
-			[]permission.Privilege{permission.PModerator, permission.PAdmin},
-			notification.SeverityInfo,
-			fmt.Sprintf("Ban appeal state changed: %s -> %s", oldState, ban.AppealState),
-			ban.Path()))
+	// if oldState != ban.AppealState {
+	// 	s.notifications.Enqueue(ctx, notification.NewSiteGroupNotification(
+	// 		[]permission.Privilege{permission.PModerator, permission.PAdmin},
+	// 		notification.SeverityInfo,
+	// 		fmt.Sprintf("Ban appeal state changed: %s -> %s", oldState, ban.AppealState),
+	// 		ban.Path()))
 
-		s.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-			[]steamid.SteamID{ban.TargetID},
-			notification.SeverityInfo,
-			fmt.Sprintf("Your mute/ban appeal status has changed: %s -> %s", oldState, ban.AppealState),
-			ban.Path()))
-	}
+	// 	s.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
+	// 		[]steamid.SteamID{ban.TargetID},
+	// 		notification.SeverityInfo,
+	// 		fmt.Sprintf("Your mute/ban appeal status has changed: %s -> %s", oldState, ban.AppealState),
+	// 		ban.Path()))
+	// }
 
 	return nil
 }
 
+var ErrBanOptsInvalid = errors.New("invalid ban options")
+
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of Config.DefaultExpiration() will be used.
-func (s *BanUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, origin Origin, req BanOpts) (BannedPerson, error) {
-	var (
-		ban BannedPerson
-		sid = curUser.GetSteamID()
-	)
-
-	// if banNet.CIDR == "" {
-	// 	return domain.ErrCIDRMissing
-	// }
-
-	// _, realCIDR, errCIDR := net.ParseCIDR(banNet.CIDR)
-	// if errCIDR != nil {
-	// 	return errors.Join(errCIDR, domain.ErrNetworkInvalidIP)
-	// }
-
-	// srcds sourced bans provide a source_id to id the admin
-	if sourceID, ok := req.SourceSteamID(ctx); ok {
-		origin = InGame
-		sid = sourceID
+func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
+	ban := Ban{
+		IncludeFriends: opts.IncludeFriends,
+		LastIP:         opts.LastIP,
+		EvadeOk:        opts.EvadeOk,
+		BanType:        opts.BanType,
+		Reason:         opts.Reason,
 	}
 
-	duration, errDuration := datetime.CalcDuration(req.Duration, req.ValidUntil)
+	if opts.Reason == banDomain.Custom {
+		if len(opts.ReasonText) < 3 {
+			return ban, fmt.Errorf("%w: Custom reason must be at least 3 characters", ErrBanOptsInvalid)
+		}
+
+		ban.ReasonText = opts.ReasonText
+	}
+
+	if opts.CIDR != "" {
+		// TODO dont ban too many people, limit to /24 ?
+		_, _, errCIDR := net.ParseCIDR(opts.CIDR)
+		if errCIDR != nil {
+			return ban, fmt.Errorf("%w: Invalid CIDR", ErrBanOptsInvalid)
+		}
+		ban.CIDR = opts.CIDR
+	} else if opts.ASNum != 0 {
+
+	}
+
+	duration, errDuration := datetime.CalcDuration(opts.Duration, opts.ValidUntil)
 	if errDuration != nil {
 		return ban, errDuration
 	}
@@ -183,13 +189,12 @@ func (s *BanUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, origin 
 		return ban, errAuthor
 	}
 
-	targetID, targetIDOk := req.TargetSteamID(ctx)
-	if !targetIDOk {
+	if !opts.TargetID.Valid() {
 		return ban, domain.ErrTargetID
 	}
 
-	banSteam, errBanSteam := NewBan(author.SteamID, targetID, duration, req.Reason, req.ReasonText, req.Note,
-		origin, req.ReportID, req.BanType, req.IncludeFriends, req.EvadeOk)
+	banSteam, errBanSteam := NewBan(author.SteamID, targetID, duration, opts.Reason, opts.ReasonText, opts.Note,
+		origin, opts.ReportID, opts.BanType, opts.IncludeFriends, opts.EvadeOk)
 	if errBanSteam != nil {
 		return ban, errBanSteam
 	}
@@ -216,33 +221,33 @@ func (s *BanUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, origin 
 		return ban, errors.Join(errBannedPerson, ErrSaveBan)
 	}
 
-	expIn := "Permanent"
-	expAt := "Permanent"
+	// expIn := "Permanent"
+	// expAt := "Permanent"
 
-	if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
-		expIn = datetime.FmtDuration(banSteam.ValidUntil)
-		expAt = datetime.FmtTimeShort(banSteam.ValidUntil)
-	}
+	// if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
+	// 	expIn = datetime.FmtDuration(banSteam.ValidUntil)
+	// 	expAt = datetime.FmtTimeShort(banSteam.ValidUntil)
+	// }
 
 	// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelBanLog, discord.BanSteamResponse(bannedPerson)))
 
-	siteMsg := notification.NewSiteUserNotificationWithAuthor(
-		[]permission.Privilege{permission.PModerator, permission.PAdmin},
-		notification.SeverityInfo,
-		fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
-			bannedPerson.TargetPersonaname, expIn, bannedPerson.SourcePersonaname),
-		banSteam.Path(),
-		author.ToUserProfile(),
-	)
+	// siteMsg := notification.NewSiteUserNotificationWithAuthor(
+	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
+	// 	notification.SeverityInfo,
+	// 	fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
+	// 		bannedPerson.TargetPersonaname, expIn, bannedPerson.SourcePersonaname),
+	// 	banSteam.Path(),
+	// 	author.ToUserProfile(),
+	// )
 
-	s.notifications.Enqueue(ctx, siteMsg)
+	// s.notifications.Enqueue(ctx, siteMsg)
 
-	s.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-		[]steamid.SteamID{bannedPerson.TargetID},
-		notification.SeverityWarn,
-		fmt.Sprintf("You have been %s, Reason: %s, Duration: %s, Ends: %s", bannedPerson.BanType, bannedPerson.Reason.String(), expIn, expAt),
-		banSteam.Path(),
-	))
+	// s.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
+	// 	[]steamid.SteamID{bannedPerson.TargetID},
+	// 	notification.SeverityWarn,
+	// 	fmt.Sprintf("You have been %s, Reason: %s, Duration: %s, Ends: %s", bannedPerson.BanType, bannedPerson.Reason.String(), expIn, expAt),
+	// 	banSteam.Path(),
+	// ))
 
 	// Close the report if the ban was attached to one
 	if banSteam.ReportID > 0 {
@@ -257,19 +262,19 @@ func (s *BanUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, origin 
 	}
 
 	switch banSteam.BanType {
-	case Banned:
-		if errKick := s.state.Kick(ctx, banSteam.TargetID, banSteam.Reason); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
+	case banDomain.Banned:
+		if errKick := s.state.Kick(ctx, banSteam.TargetID, banSteam.Reason.String()); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to kick player", log.ErrAttr(errKick),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		} else {
-			s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelKickLog, message.KickPlayerEmbed(target)))
+			// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelKickLog, message.KickPlayerEmbed(target)))
 		}
-	case NoComm:
-		if errSilence := s.state.Silence(ctx, banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
+	case banDomain.NoComm:
+		if errSilence := s.state.Silence(ctx, banSteam.TargetID, banSteam.Reason.String()); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		} else {
-			s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelKickLog, message.MuteMessage(bannedPerson)))
+			// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelKickLog, message.MuteMessage(bannedPerson)))
 		}
 	default:
 		return ban, ErrInvalidBanType
@@ -304,22 +309,22 @@ func (s *BanUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reaso
 		return false, errors.Join(err, ErrFetchPerson)
 	}
 
-	s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelBanLog, message.UnbanMessage(s.config, person)))
+	// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelBanLog, message.UnbanMessage(s.config, person)))
 
-	s.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
-		[]permission.Privilege{permission.PModerator, permission.PAdmin},
-		notification.SeverityInfo,
-		fmt.Sprintf("A user has been unbanned: %s, Reason: %s", bannedPerson.TargetPersonaname, reason),
-		bannedPerson.Path(),
-		author,
-	))
+	// s.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
+	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
+	// 	notification.SeverityInfo,
+	// 	fmt.Sprintf("A user has been unbanned: %s, Reason: %s", bannedPerson.TargetPersonaname, reason),
+	// 	bannedPerson.Path(),
+	// 	author,
+	// ))
 
-	s.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-		[]steamid.SteamID{bannedPerson.TargetID},
-		notification.SeverityInfo,
-		"You have been unmuted/unbanned",
-		bannedPerson.Path(),
-	))
+	// s.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
+	// 	[]steamid.SteamID{bannedPerson.TargetID},
+	// 	notification.SeverityInfo,
+	// 	"You have been unmuted/unbanned",
+	// 	bannedPerson.Path(),
+	// ))
 
 	return true, nil
 }
@@ -328,7 +333,7 @@ func (s *BanUsecase) Delete(ctx context.Context, ban *Ban, hardDelete bool) erro
 	return s.banRepo.Delete(ctx, ban, hardDelete)
 }
 
-func (s *BanUsecase) Get(ctx context.Context, filter BansQueryFilter) ([]BannedSteamPerson, error) {
+func (s *BanUsecase) Get(ctx context.Context, filter BansQueryFilter) ([]BannedPerson, error) {
 	return s.banRepo.Get(ctx, filter)
 }
 
@@ -352,7 +357,7 @@ func (s *BanUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Person
 		return false, errMatch
 	}
 
-	if existing.BanType == NoComm {
+	if existing.BanType == banDomain.NoComm {
 		// Currently we do not ban for mute evasion.
 		// TODO make this configurable
 		return false, errMatch
@@ -378,13 +383,13 @@ func (s *BanUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Person
 	req := BanOpts{
 		SourceID: owner,
 		TargetID: steamID,
-		Duration: "10y",
-		BanType:  Banned,
-		Reason:   Evading,
+		Duration: time.Hour * 24 * 365,
+		BanType:  banDomain.Banned,
+		Reason:   banDomain.Evading,
 		Note:     fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, config.ExtURL(existing)),
 	}
 
-	_, errSave := s.Ban(ctx, curUser, System, req)
+	_, errSave := s.Ban(ctx, curUser, banDomain.System, req)
 	if errSave != nil {
 		if errors.Is(errSave, database.ErrDuplicate) {
 			// Already banned

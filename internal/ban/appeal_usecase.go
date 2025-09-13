@@ -10,23 +10,19 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type AppealsUsecase struct {
-	repository    appealRepository
-	bans          BanUsecase
-	persons       *person.PersonUsecase
-	notifications notification.NotificationUsecase
-	config        *config.ConfigUsecase
+	repository appealRepository
+	bans       BanUsecase
+	persons    *person.PersonUsecase
+	config     *config.ConfigUsecase
 }
 
-func NewAppealUsecase(ar appealRepository, bans BanUsecase, persons *person.PersonUsecase,
-	notifications notification.NotificationUsecase, config *config.ConfigUsecase,
-) *AppealsUsecase {
-	return &AppealsUsecase{repository: ar, bans: bans, persons: persons, notifications: notifications, config: config}
+func NewAppealUsecase(ar appealRepository, bans BanUsecase, persons *person.PersonUsecase, config *config.ConfigUsecase) *AppealsUsecase {
+	return &AppealsUsecase{repository: ar, bans: bans, persons: persons, config: config}
 }
 
 func (u *AppealsUsecase) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {

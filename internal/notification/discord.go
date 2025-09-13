@@ -1,9 +1,12 @@
 package notification
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/discord/message"
+)
 
-func NotificationMessage(message string, link string) *discordgo.MessageEmbed {
-	msgEmbed := message.NewEmbed("Notification", message)
+func NotificationMessage(msg string, link string) *discordgo.MessageEmbed {
+	msgEmbed := message.NewEmbed("Notification", msg)
 	if link != "" {
 		msgEmbed.Embed().SetURL(link)
 	}

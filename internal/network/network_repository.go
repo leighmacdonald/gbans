@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -164,6 +165,14 @@ func (r networkRepository) AddConnectionHistory(ctx context.Context, conn *Perso
 		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on, server_id)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING person_connection_id`
+
+	// Maybe ignore these and wait for connect call to create?
+	_, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, nil, newServerEvent.SID)
+	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
+		slog.Error("Failed to fetch connecting person", slog.String("steam_id", newServerEvent.SID.String()), log.ErrAttr(errPerson))
+
+		continue
+	}
 
 	if errQuery := r.db.
 		QueryRow(ctx, nil, query, conn.SteamID.Int64(), conn.IPAddr.String(), conn.PersonaName, conn.CreatedOn, conn.ServerID).

@@ -6,9 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
 )
@@ -30,7 +28,7 @@ type UserNotification struct {
 	Message              string               `json:"message"`
 	Link                 string               `json:"link"`
 	Count                int                  `json:"count"`
-	Author               domain.PersonInfo    `json:"author"`
+	Author               NotificationAuthor   `json:"author"`
 	CreatedOn            time.Time            `json:"created_on"`
 }
 
@@ -58,16 +56,23 @@ var (
 	ErrDiscordEmbedNil      = errors.New("empty embed discord message provided")
 )
 
+type NotificationAuthor struct {
+	SteamID         steamid.SteamID      `json:"steam_id"`
+	PermissionLevel permission.Privilege `json:"permission_level"`
+	Name            string               `json:"name"`
+	Avatarhash      string               `json:"avatarhash"`
+}
+
 type NotificationPayload struct {
 	Types           []MessageType
 	Sids            steamid.Collection
 	Groups          []permission.Privilege
-	DiscordChannels []discord.DiscordChannel
+	DiscordChannels []string
 	Severity        NotificationSeverity
 	Message         string
 	DiscordEmbed    *discordgo.MessageEmbed
 	Link            string
-	Author          *person.UserProfile
+	Author          NotificationAuthor
 }
 
 func (payload NotificationPayload) ValidationError() error {
@@ -86,12 +91,12 @@ func (payload NotificationPayload) ValidationError() error {
 	return nil
 }
 
-func NewDiscordNotification(channel discord.DiscordChannel, embed *discordgo.MessageEmbed) NotificationPayload {
+func NewDiscordNotification(channel string, embed *discordgo.MessageEmbed) NotificationPayload {
 	return NotificationPayload{
 		Types:           []MessageType{Discord},
 		Sids:            nil,
 		Groups:          nil,
-		DiscordChannels: []discord.DiscordChannel{channel},
+		DiscordChannels: []string{channel},
 		Severity:        SeverityInfo,
 		Message:         "",
 		DiscordEmbed:    embed,

@@ -8,9 +8,9 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 

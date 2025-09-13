@@ -3,7 +3,6 @@ package ban
 import (
 	"context"
 	"errors"
-	"net/netip"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -21,8 +20,60 @@ type BanRepository struct {
 	network *network.NetworkUsecase
 }
 
-func (r *BanRepository) Query(ctx context.Context, opts QueryOpts) ([]BannedPerson, error) {
-	panic("unimplemented")
+func (r *BanRepository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
+	builder := r.db.
+		Builder().
+		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
+			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends", "b.evade_ok",
+			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
+			"b.unban_reason_text", "b.is_enabled", "b.appeal_state").
+		From("ban b")
+
+	var ands sq.And
+
+	if !opts.Deleted {
+		ands = append(ands, sq.Eq{"b.deleted": false})
+	}
+
+	if len(ands) > 0 {
+		builder = builder.Where(ands)
+	}
+
+	var bans []Ban
+
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
+	if errQuery != nil {
+		return nil, r.db.DBErr(errQuery)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			ban      = Ban{}
+			sourceID int64
+			targetID int64
+		)
+
+		if errScan := rows.
+			Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason,
+				&ban.ReasonText, &ban.Note, &ban.Origin, &ban.ValidUntil, &ban.CreatedOn,
+				&ban.UpdatedOn, &ban.IncludeFriends, &ban.EvadeOk, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
+				&ban.IsEnabled, &ban.AppealState); errScan != nil {
+			return nil, r.db.DBErr(errScan)
+		}
+
+		ban.TargetID = steamid.New(targetID)
+		ban.SourceID = steamid.New(sourceID)
+
+		bans = append(bans, ban)
+	}
+
+	if bans == nil {
+		bans = []Ban{}
+	}
+
+	return bans, nil
 }
 
 func NewBanRepository(database database.Database, persons *person.PersonUsecase, network *network.NetworkUsecase) *BanRepository {
@@ -118,78 +169,78 @@ func (r *BanRepository) Delete(ctx context.Context, ban *Ban, hardDelete bool) e
 	return r.updateBan(ctx, ban)
 }
 
-func (r *BanRepository) getBanByColumn(ctx context.Context, column string, identifier any, deletedOk bool, evadeOK bool) (BannedPerson, error) {
-	person := NewBannedPerson()
+// func (r *BanRepository) getBanByColumn(ctx context.Context, column string, identifier any, deletedOk bool, evadeOK bool) (Ban, error) {
+// 	person := NewBannedPerson()
 
-	whereClauses := sq.And{
-		sq.Eq{"b." + column: identifier}, // valid columns are immutable
-	}
+// 	whereClauses := sq.And{
+// 		sq.Eq{"b." + column: identifier}, // valid columns are immutable
+// 	}
 
-	if !deletedOk {
-		whereClauses = append(whereClauses, sq.Eq{"b.deleted": false})
-	}
+// 	if !deletedOk {
+// 		whereClauses = append(whereClauses, sq.Eq{"b.deleted": false})
+// 	}
 
-	if !evadeOK {
-		whereClauses = append(whereClauses, sq.Eq{"b.evade_ok": false})
-	}
+// 	if !evadeOK {
+// 		whereClauses = append(whereClauses, sq.Eq{"b.evade_ok": false})
+// 	}
 
-	query := r.db.
-		Builder().
-		Select(
-			"b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
-			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends", "b.evade_ok",
-			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
-			"b.unban_reason_text", "b.is_enabled", "b.appeal_state", "b.last_ip",
-			"s.personaname as source_personaname", "s.avatarhash",
-			"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans",
-		).
-		From("ban b").
-		LeftJoin("person s on s.steam_id = b.source_id").
-		LeftJoin("person t on t.steam_id = b.target_id").
-		Where(whereClauses).
-		OrderBy("b.created_on DESC").
-		Limit(1)
+// 	query := r.db.
+// 		Builder().
+// 		Select(
+// 			"b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
+// 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends", "b.evade_ok",
+// 			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
+// 			"b.unban_reason_text", "b.is_enabled", "b.appeal_state", "b.last_ip",
+// 			"s.personaname as source_personaname", "s.avatarhash",
+// 			"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans",
+// 		).
+// 		From("ban b").
+// 		LeftJoin("person s on s.steam_id = b.source_id").
+// 		LeftJoin("person t on t.steam_id = b.target_id").
+// 		Where(whereClauses).
+// 		OrderBy("b.created_on DESC").
+// 		Limit(1)
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, nil, query)
-	if errQuery != nil {
-		return person, r.db.DBErr(errQuery)
-	}
+// 	row, errQuery := r.db.QueryRowBuilder(ctx, nil, query)
+// 	if errQuery != nil {
+// 		return person, r.db.DBErr(errQuery)
+// 	}
 
-	var (
-		sourceID int64
-		targetID int64
-	)
+// 	var (
+// 		sourceID int64
+// 		targetID int64
+// 	)
 
-	if errScan := row.
-		Scan(&person.BanID, &targetID, &sourceID, &person.BanType, &person.Reason,
-			&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
-			&person.UpdatedOn, &person.IncludeFriends, &person.EvadeOk, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
-			&person.IsEnabled, &person.AppealState, &person.LastIP,
-			&person.SourcePersonaname, &person.SourceAvatarhash,
-			&person.TargetPersonaname, &person.TargetAvatarhash,
-			&person.CommunityBanned, &person.VacBans, &person.GameBans,
-		); errScan != nil {
-		return person, r.db.DBErr(errScan)
-	}
+// 	if errScan := row.
+// 		Scan(&person.BanID, &targetID, &sourceID, &person.BanType, &person.Reason,
+// 			&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
+// 			&person.UpdatedOn, &person.IncludeFriends, &person.EvadeOk, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
+// 			&person.IsEnabled, &person.AppealState, &person.LastIP,
+// 			&person.SourcePersonaname, &person.SourceAvatarhash,
+// 			&person.TargetPersonaname, &person.TargetAvatarhash,
+// 			&person.CommunityBanned, &person.VacBans, &person.GameBans,
+// 		); errScan != nil {
+// 		return person, r.db.DBErr(errScan)
+// 	}
 
-	person.SourceID = steamid.New(sourceID)
-	person.TargetID = steamid.New(targetID)
+// 	person.SourceID = steamid.New(sourceID)
+// 	person.TargetID = steamid.New(targetID)
 
-	return person, nil
-}
+// 	return person, nil
+// }
 
-func (r *BanRepository) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool, evadeOK bool) (BannedPerson, error) {
-	return r.getBanByColumn(ctx, "target_id", sid64, deletedOk, evadeOK)
-}
+// func (r *BanRepository) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool, evadeOK bool) (BannedPerson, error) {
+// 	return r.getBanByColumn(ctx, "target_id", sid64, deletedOk, evadeOK)
+// }
 
-func (r *BanRepository) GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (BannedPerson, error) {
-	return r.getBanByColumn(ctx, "ban_id", banID, deletedOk, evadeOK)
-}
+// func (r *BanRepository) GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (BannedPerson, error) {
+// 	return r.getBanByColumn(ctx, "ban_id", banID, deletedOk, evadeOK)
+// }
 
-func (r *BanRepository) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (BannedPerson, error) {
-	// TODO check if works still
-	return r.getBanByColumn(ctx, "last_ip", lastIP.String(), deletedOk, evadeOK)
-}
+// func (r *BanRepository) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (BannedPerson, error) {
+// 	// TODO check if works still
+// 	return r.getBanByColumn(ctx, "last_ip", lastIP.String(), deletedOk, evadeOK)
+// }
 
 // Save will insert or update the ban record
 // New records will have the Ban.BanID set automatically.
@@ -212,15 +263,13 @@ func (r *BanRepository) Save(ctx context.Context, ban *Ban) error {
 
 	ban.CreatedOn = ban.UpdatedOn
 
-	existing, errGetBan := r.GetBySteamID(ctx, ban.TargetID, false, true)
+	existing, errGetBan := r.Query(ctx, QueryOpts{TargetID: ban.TargetID, EvadeOk: true})
 	if errGetBan != nil {
 		if !errors.Is(errGetBan, database.ErrNoResult) {
 			return errors.Join(errGetBan, ErrGetBan)
 		}
-	} else {
-		if ban.BanType <= existing.BanType {
-			return database.ErrDuplicate
-		}
+	} else if len(existing) > 0 && ban.BanType <= existing[0].BanType {
+		return database.ErrDuplicate
 	}
 
 	if lastIp := r.network.GetPlayerMostRecentIP(ctx, ban.TargetID); lastIp != nil {
@@ -319,70 +368,6 @@ func (r *BanRepository) ExpiredBans(ctx context.Context) ([]Ban, error) {
 
 	if bans == nil {
 		return []Ban{}, nil
-	}
-
-	return bans, nil
-}
-
-// Get returns all bans that fit the filter criteria passed in.
-func (r *BanRepository) Get(ctx context.Context, filter BansQueryFilter) ([]BannedPerson, error) {
-	builder := r.db.
-		Builder().
-		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
-			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends", "b.evade_ok",
-			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
-			"b.unban_reason_text", "b.is_enabled", "b.appeal_state",
-			"s.personaname as source_personaname", "s.avatarhash",
-			"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
-		From("ban b").
-		JoinClause("LEFT JOIN person s on s.steam_id = b.source_id").
-		JoinClause("LEFT JOIN person t on t.steam_id = b.target_id")
-
-	var ands sq.And
-
-	if !filter.Deleted {
-		ands = append(ands, sq.Eq{"b.deleted": false})
-	}
-
-	if len(ands) > 0 {
-		builder = builder.Where(ands)
-	}
-
-	var bans []BannedPerson
-
-	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
-	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var (
-			person   = NewBannedPerson()
-			sourceID int64
-			targetID int64
-		)
-
-		if errScan := rows.
-			Scan(&person.BanID, &targetID, &sourceID, &person.BanType, &person.Reason,
-				&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
-				&person.UpdatedOn, &person.IncludeFriends, &person.EvadeOk, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
-				&person.IsEnabled, &person.AppealState,
-				&person.SourcePersonaname, &person.SourceAvatarhash,
-				&person.TargetPersonaname, &person.TargetAvatarhash,
-				&person.CommunityBanned, &person.VacBans, &person.GameBans); errScan != nil {
-			return nil, r.db.DBErr(errScan)
-		}
-
-		person.TargetID = steamid.New(targetID)
-		person.SourceID = steamid.New(sourceID)
-
-		bans = append(bans, person)
-	}
-
-	if bans == nil {
-		bans = []BannedPerson{}
 	}
 
 	return bans, nil

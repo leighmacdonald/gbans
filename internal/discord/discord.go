@@ -24,7 +24,7 @@ var (
 
 type SlashCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
-type discordService struct {
+type Discord struct {
 	session         *discordgo.Session
 	isReady         atomic.Bool
 	commandHandlers map[string]SlashCommandHandler
@@ -35,12 +35,12 @@ type discordService struct {
 	externalURL     string
 }
 
-func NewDiscordHandler(appID string, guildID string, token string, externalURL string) (*discordService, error) {
+func NewDiscord(appID string, guildID string, token string, externalURL string) (*Discord, error) {
 	if appID == "" || guildID == "" || token == "" {
 		return nil, ErrDiscordConfig
 	}
 
-	bot := &discordService{
+	bot := &Discord{
 		isReady:         atomic.Bool{},
 		commandHandlers: map[string]SlashCommandHandler{},
 		appID:           appID,
@@ -52,7 +52,7 @@ func NewDiscordHandler(appID string, guildID string, token string, externalURL s
 	return bot, nil
 }
 
-func (h *discordService) Start(_ context.Context) error {
+func (h *Discord) Start(_ context.Context) error {
 	session, errNewSession := discordgo.New("Bot " + h.token)
 	if errNewSession != nil {
 		return errors.Join(errNewSession, ErrDiscordCreate)
@@ -144,7 +144,7 @@ func (h *discordService) Start(_ context.Context) error {
 // 	return author, nil
 // }
 
-func (bot *discordService) RegisterHandler(cmd string, handler SlashCommandHandler) error {
+func (bot *Discord) RegisterHandler(cmd string, handler SlashCommandHandler) error {
 	_, found := bot.commandHandlers[cmd]
 	if found {
 		return ErrDuplicateCommand
@@ -155,18 +155,18 @@ func (bot *discordService) RegisterHandler(cmd string, handler SlashCommandHandl
 	return nil
 }
 
-func (bot *discordService) Shutdown() {
+func (bot *Discord) Shutdown() {
 	if bot.session != nil {
 		defer log.Closer(bot.session)
 	}
 }
 
-func (bot *discordService) onReady(session *discordgo.Session, _ *discordgo.Ready) {
+func (bot *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
 	slog.Info("Discord state changed", slog.String("state", "ready"), slog.String("username",
 		fmt.Sprintf("%v#%v", session.State.User.Username, session.State.User.Discriminator)))
 }
 
-func (bot *discordService) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
+func (bot *Discord) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
 	if errRegister := bot.botRegisterSlashCommands(bot.appID); errRegister != nil {
 		slog.Error("Failed to register discord slash commands", log.ErrAttr(errRegister))
 	}
@@ -196,7 +196,7 @@ func (bot *discordService) onConnect(_ *discordgo.Session, _ *discordgo.Connect)
 	bot.isReady.Store(true)
 }
 
-func (bot *discordService) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
+func (bot *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.isReady.Store(false)
 
 	slog.Info("Discord state changed", slog.String("state", "disconnected"))
@@ -205,7 +205,7 @@ func (bot *discordService) onDisconnect(_ *discordgo.Session, _ *discordgo.Disco
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
 // through this interface.
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
-func (bot *discordService) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	var (
 		data    = interaction.ApplicationCommandData()
 		command = data.Name
@@ -252,7 +252,7 @@ func (bot *discordService) onInteractionCreate(session *discordgo.Session, inter
 	}
 }
 
-func (bot *discordService) sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response *discordgo.MessageEmbed) error {
+func (bot *Discord) sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response *discordgo.MessageEmbed) error {
 	resp := &discordgo.InteractionResponseData{
 		Embeds: []*discordgo.MessageEmbed{response},
 	}
@@ -274,7 +274,7 @@ func (bot *discordService) sendInteractionResponse(session *discordgo.Session, i
 	return nil
 }
 
-func (bot *discordService) SendPayload(channelID string, payload *discordgo.MessageEmbed) {
+func (bot *Discord) SendPayload(channelID string, payload *discordgo.MessageEmbed) {
 	if !bot.isReady.Load() {
 		return
 	}
@@ -285,7 +285,7 @@ func (bot *discordService) SendPayload(channelID string, payload *discordgo.Mess
 }
 
 //nolint:funlen,maintidx
-func (bot *discordService) botRegisterSlashCommands(appID string) error {
+func (bot *Discord) botRegisterSlashCommands(appID string) error {
 	commands, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, bot.guildID, bot.commands)
 	if errBulk != nil {
 		return errors.Join(errBulk, ErrDiscordOverwriteCommands)

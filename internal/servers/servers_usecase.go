@@ -8,12 +8,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
-func NewServersUsecase(repository *ServersRepository) *ServersUsecase {
-	return &ServersUsecase{repository: repository}
+func NewServersUsecase(repository ServersRepository) ServersUsecase {
+	return ServersUsecase{repository: repository}
 }
 
 type ServersUsecase struct {
-	repository *ServersRepository
+	repository ServersRepository
 }
 
 // Delete performs a soft delete of the server. We use soft deleted because we dont wand to delete all the relationships

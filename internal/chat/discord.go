@@ -69,21 +69,23 @@ var slashCommands = []*discordgo.ApplicationCommand{
 	},
 }
 
-func onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+type DiscordHandler struct {
+	wordFilters WordFilterUsecase
+}
+
+func (h DiscordHandler) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	message := opts[helper.OptMessage].StringValue()
 
 	return FilterCheckMessage(h.wordFilters.Check(message)), nil
 }
 
-func makeOnFilter() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
-	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		switch interaction.ApplicationCommandData().Options[0].Name {
-		case "check":
-			return h.onFilterCheck(ctx, session, interaction)
-		default:
-			return nil, helper.ErrCommandFailed
-		}
+func (h DiscordHandler) makeOnFilter(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+	switch interaction.ApplicationCommandData().Options[0].Name {
+	case "check":
+		return h.onFilterCheck(ctx, session, interaction)
+	default:
+		return nil, helper.ErrCommandFailed
 	}
 }
 
@@ -121,7 +123,7 @@ func FilterCheckMessage(matches []Filter) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func WarningMessage(newWarning NewUserWarning, banSteam ban.BannedPerson) *discordgo.MessageEmbed {
+func WarningMessage(newWarning NewUserWarning, banSteam ban.Ban) *discordgo.MessageEmbed {
 	msgEmbed := message.NewEmbed("Language Warning")
 	msgEmbed.Embed().
 		SetDescription(newWarning.UserWarning.Message).
@@ -131,10 +133,11 @@ func WarningMessage(newWarning NewUserWarning, banSteam ban.BannedPerson) *disco
 		AddField("ServerStore", newWarning.UserMessage.ServerName).InlineAllFields().
 		AddField("Pattern", newWarning.MatchedFilter.Pattern)
 
-	msgEmbed.
-		AddFieldsSteamID(newWarning.UserMessage.SteamID).
-		Embed().
-		AddField("Name", banSteam.SourcePersonaname)
+	// TODO
+	// msgEmbed.
+	// 	AddFieldsSteamID(newWarning.UserMessage.SteamID).
+	// 	Embed().
+	// 	AddField("Name", banSteam.SourcePersonaname)
 
 	var (
 		expIn = "Permanent"

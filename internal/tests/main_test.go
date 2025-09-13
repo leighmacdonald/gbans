@@ -30,6 +30,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/match"
@@ -38,13 +39,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/report"
 	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/gbans/internal/srcds"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
-	"github.com/leighmacdonald/gbans/internal/wordfilter"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -63,23 +61,23 @@ var (
 	wikiUC         *wiki.WikiUsecase
 	personUC       *person.PersonUsecase
 	authRepo       *auth.AuthRepository
-	authUC         auth.AuthUsecase
-	networkUC      network.NetworkUsecase
-	bansUC         ban.BanUsecase
+	authUC         *auth.AuthUsecase
+	networkUC      *network.NetworkUsecase
+	bansUC         *ban.BanUsecase
 	assetUC        *asset.AssetUsecase
-	chatUC         chat.ChatUsecase
+	chatUC         *chat.ChatUsecase
 	demoRepository demo.DemoRepository
 	demoUC         demo.DemoUsecase
-	discordUC      discord.DiscordUsecase
+	discordUC      *discord.Discord
 	forumUC        *forum.ForumUsecase
 	matchUC        match.MatchUsecase
 	newsUC         news.NewsUsecase
 	notificationUC *notification.NotificationUsecase
-	patreonUC      *patreon.PatreonUsecase
+	patreonUC      patreon.PatreonUsecase
 	reportUC       *ban.ReportUsecase
 	serversUC      *servers.ServersUsecase
-	speedrunsUC    *srcds.SpeedrunUsecase
-	srcdsUC        *srcds.SRCDSUsecase
+	speedrunsUC    *servers.SpeedrunUsecase
+	srcdsUC        *servers.SRCDSUsecase
 	stateUC        *servers.StateUsecase
 	votesUC        *votes.VoteUsecase
 	votesRepo      *votes.VoteRepository
@@ -142,7 +140,11 @@ func TestMain(m *testing.M) {
 
 	authRepo = auth.NewAuthRepository(databaseConn)
 
-	discordUC = discord.NewDiscordUsecase(discord.NewNullDiscordRepository(), configUC)
+	disc, errDiscord := discord.NewDiscord("", "", "", "")
+	if errDiscord != nil {
+		panic(errDiscord)
+	}
+	discordUC = disc
 
 	assetUC = asset.NewAssetUsecase(asset.NewLocalRepository(databaseConn, configUC.Config().LocalStore.PathRoot))
 	newsUC = news.NewNewsUsecase(news.NewNewsRepository(databaseConn))
@@ -151,15 +153,15 @@ func TestMain(m *testing.M) {
 	notificationUC = notification.NewNotificationUsecase(notification.NewNotificationRepository(databaseConn), discordUC)
 	patreonUC = patreon.NewPatreonUsecase(patreon.NewPatreonRepository(databaseConn), configUC)
 	personUC = person.NewPersonUsecase(person.NewPersonRepository(conf, databaseConn), configUC, tfapiClient)
-	wordFilterUC = wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(databaseConn), notificationUC)
+	wordFilterUC = chat.NewWordFilterUsecase(chat.NewWordFilterRepository(databaseConn), notificationUC)
 	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn), notificationUC)
 
-	stateUC = servers.NewStateUsecase.NewStateUsecase(eventBroadcaster, state.NewStateRepository(state.NewCollector(serversUC)), configUC, serversUC)
+	stateUC = servers.NewStateUsecase(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(serversUC)), configUC, serversUC)
 
-	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), personUC, configUC)
+	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), configUC)
 	demoRepository = demo.NewDemoRepository(databaseConn)
-	demoUC = demo.NewDemoUsecase("demos", demoRepository, assetUC, configUC, serversUC)
-	reportUC = report.NewReportUsecase(report.NewReportRepository(databaseConn), notificationUC, configUC, personUC, demoUC, tfapiClient)
+	demoUC = demo.NewDemoUsecase("demos", demoRepository, assetUC, configUC)
+	reportUC = ban.NewReportUsecase(ban.NewReportRepository(databaseConn), notificationUC, configUC, personUC, demoUC, tfapiClient)
 	bansUC = ban.NewBanUsecase(ban.NewBanRepository(databaseConn, personUC, networkUC), personUC, configUC, notificationUC, reportUC, stateUC, tfapiClient)
 	authUC = auth.NewAuthUsecase(authRepo, configUC, personUC, bansUC, serversUC)
 
@@ -167,9 +169,9 @@ func TestMain(m *testing.M) {
 	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC, notificationUC)
 	votesRepo = votes.NewVoteRepository(databaseConn)
 	votesUC = votes.NewVoteUsecase(votesRepo, personUC, matchUC, notificationUC, configUC, eventBroadcaster)
-	appealUC = appeal.NewAppealUsecase(appeal.NewAppealRepository(databaseConn), bansUC, personUC, notificationUC, configUC)
-	speedrunsUC = srcds.NewSpeedrunUsecase(srcds.NewSpeedrunRepository(databaseConn, personUC))
-	blocklistUC = blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(databaseConn), bansUC, banUC)
+	appealUC = ban.NewAppealUsecase(ban.NewAppealRepository(databaseConn), bansUC, personUC, notificationUC, configUC)
+	speedrunsUC = servers.NewSpeedrunUsecase(servers.NewSpeedrunRepository(databaseConn, personUC))
+	blocklistUC = network.NewBlocklistUsecase(network.NewBlocklistRepository(databaseConn), bansUC, banUC)
 	anticheatUC = anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(databaseConn), personUC, bansUC, configUC, notificationUC)
 
 	if internalDB {
@@ -190,12 +192,12 @@ func TestMain(m *testing.M) {
 			LogSecret:       23456789,
 		})
 
-		if errServer != nil && !errors.Is(errServer, domain.ErrDuplicate) {
+		if errServer != nil && !errors.Is(errServer, database.ErrDuplicate) {
 			panic(errServer)
 		}
 		testServer = server
 	} else {
-		srvs, _, errServer := serversUC.Servers(context.Background(), domain.ServerQueryFilter{})
+		srvs, _, errServer := serversUC.Servers(context.Background(), servers.ServerQueryFilter{})
 		if len(srvs) == 0 || errServer != nil {
 			panic("no servers exist, please create at least one before testing")
 		}
@@ -208,12 +210,12 @@ func TestMain(m *testing.M) {
 	target := getUser()
 
 	// Create a valid ban_id
-	bannedPerson, errBan := bansUC.Ban(context.Background(), mod.ToUserProfile(), domain.System, domain.RequestBanCreate{
-		SourceIDField:  domain.SourceIDField{SourceID: mod.SteamID.String()},
-		TargetIDField:  domain.TargetIDField{TargetID: target.SteamID.String()},
-		Duration:       "1d",
-		BanType:        domain.Banned,
-		Reason:         domain.Cheating,
+	bannedPerson, errBan := bansUC.Ban(context.Background(), mod.ToUserProfile(), banDomain.System, ban.BanOpts{
+		SourceID:       mod.SteamID,
+		TargetID:       target.SteamID,
+		Duration:       time.Hour * 24,
+		BanType:        banDomain.Banned,
+		Reason:         banDomain.Cheating,
 		ReasonText:     "",
 		Note:           "notes",
 		ReportID:       0,
@@ -223,7 +225,7 @@ func TestMain(m *testing.M) {
 		EvadeOk:        true,
 	})
 
-	if errBan != nil && !errors.Is(errBan, domain.ErrDuplicate) {
+	if errBan != nil && !errors.Is(errBan, database.ErrDuplicate) {
 		panic(errBan)
 	}
 

@@ -7,9 +7,9 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/person/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -17,8 +17,8 @@ type NotificationRepository struct {
 	db database.Database
 }
 
-func NewNotificationRepository(db database.Database) *NotificationRepository {
-	return &NotificationRepository{db: db}
+func NewNotificationRepository(db database.Database) NotificationRepository {
+	return NotificationRepository{db: db}
 }
 
 func (r *NotificationRepository) SendSite(ctx context.Context, targetIDs steamid.Collection, severity NotificationSeverity,
@@ -64,7 +64,7 @@ func (r *NotificationRepository) DeleteAll(ctx context.Context, steamID steamid.
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
-func (r *NotificationRepository) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]domain.UserNotification, error) {
+func (r *NotificationRepository) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]UserNotification, error) {
 	builder := r.db.
 		Builder().
 		Select("r.person_notification_id", "r.steam_id", "r.read", "r.deleted", "r.severity",
@@ -83,11 +83,11 @@ func (r *NotificationRepository) GetPersonNotifications(ctx context.Context, ste
 
 	defer rows.Close()
 
-	notifications := []domain.UserNotification{}
+	notifications := []UserNotification{}
 
 	for rows.Next() {
 		var (
-			notif      domain.UserNotification
+			notif      UserNotification
 			name       *string
 			pLevel     *permission.Privilege
 			authorID   *int64
@@ -107,12 +107,9 @@ func (r *NotificationRepository) GetPersonNotifications(ctx context.Context, ste
 		notif.SteamID = steamid.New(outSteamID)
 
 		if authorID != nil {
-			notif.Author = &domain.UserProfile{
+			notif.Author = NotificationAuthor{
 				SteamID:         steamid.New(*authorID),
-				CreatedOn:       *createdOn,
-				UpdatedOn:       *updatedOn,
 				PermissionLevel: *pLevel,
-				DiscordID:       *discordID,
 				Name:            *name,
 				Avatarhash:      *avatarHash,
 			}

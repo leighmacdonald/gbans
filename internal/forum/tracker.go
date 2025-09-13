@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
 type Tracker struct {
@@ -19,8 +19,9 @@ func NewTracker() *Tracker {
 	}
 }
 
-func (tracker *Tracker) Touch(person person.UserProfile) {
-	if !person.SteamID.Valid() {
+func (tracker *Tracker) Touch(person domain.PersonInfo) {
+	sid := person.GetSteamID()
+	if !sid.Valid() {
 		return
 	}
 
@@ -30,7 +31,7 @@ func (tracker *Tracker) Touch(person person.UserProfile) {
 	defer tracker.activityMu.Unlock()
 
 	for _, activity := range tracker.activity {
-		if activity.Person.SteamID == person.SteamID {
+		if activity.Person.GetSteamID() == sid {
 			continue
 		}
 

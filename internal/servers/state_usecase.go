@@ -24,7 +24,7 @@ import (
 type StateUsecase struct {
 	state       *StateRepository
 	config      *config.ConfigUsecase
-	servers     ServersUsecase
+	servers     *ServersUsecase
 	logListener *logparse.UDPLogListener
 	logFileChan chan LogFilePayload
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
@@ -32,7 +32,7 @@ type StateUsecase struct {
 
 // NewStateUsecase created a interface to interact with server state and exec rcon commands.
 func NewStateUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository *StateRepository, config *config.ConfigUsecase, servers ServersUsecase,
+	repository *StateRepository, config *config.ConfigUsecase, servers *ServersUsecase,
 ) *StateUsecase {
 	return &StateUsecase{
 		state:       repository,

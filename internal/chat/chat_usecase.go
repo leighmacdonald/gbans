@@ -14,17 +14,18 @@ import (
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type ChatUsecase struct {
-	repository    ChatRepository
-	wordFilters   WordFilterUsecase
+	repository    *ChatRepository
+	wordFilters   *WordFilterUsecase
 	bans          ban.BanUsecase
 	persons       person.PersonUsecase
 	notifications notification.NotificationUsecase
-	state         state.StateUsecase
+	state         servers.StateUsecase
 	warningMu     *sync.RWMutex
 	dry           bool
 	maxWeight     int
@@ -35,33 +36,31 @@ type ChatUsecase struct {
 	pingDiscord   bool
 }
 
-func NewChatUsecase(config *config.ConfigUsecase, chatRepository ChatRepository,
-	filters WordFilterUsecase, stateUsecase state.StateUsecase, bans ban.BanUsecase,
-	persons person.PersonUsecase, notifications notification.NotificationUsecase,
+func NewChatUsecase(config *config.ConfigUsecase, chatRepository *ChatRepository,
+	filters *WordFilterUsecase, stateUsecase servers.StateUsecase, bans ban.BanUsecase,
+	persons person.PersonUsecase,
 ) *ChatUsecase {
 	conf := config.Config()
 
 	return &ChatUsecase{
-		repository:    chatRepository,
-		wordFilters:   filters,
-		bans:          bans,
-		persons:       persons,
-		notifications: notifications,
-		state:         stateUsecase,
-		pingDiscord:   conf.Filters.PingDiscord,
-		warnings:      make(map[steamid.SteamID][]UserWarning),
-		warningMu:     &sync.RWMutex{},
-		matchTimeout:  time.Duration(conf.Filters.MatchTimeout) * time.Second,
-		dry:           conf.Filters.Dry,
-		maxWeight:     conf.Filters.MaxWeight,
-		owner:         steamid.New(conf.Owner),
-		checkTimeout:  time.Duration(conf.Filters.CheckTimeout) * time.Second,
+		repository:   chatRepository,
+		wordFilters:  filters,
+		bans:         bans,
+		persons:      persons,
+		state:        stateUsecase,
+		pingDiscord:  conf.Filters.PingDiscord,
+		warnings:     make(map[steamid.SteamID][]UserWarning),
+		warningMu:    &sync.RWMutex{},
+		matchTimeout: time.Duration(conf.Filters.MatchTimeout) * time.Second,
+		dry:          conf.Filters.Dry,
+		maxWeight:    conf.Filters.MaxWeight,
+		owner:        steamid.New(conf.Owner),
+		checkTimeout: time.Duration(conf.Filters.CheckTimeout) * time.Second,
 	}
 }
 
 func (u ChatUsecase) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) error {
 	var (
-		newBan ban.BannedPerson
 		errBan error
 		req    ban.BanOpts
 	)
@@ -84,16 +83,16 @@ func (u ChatUsecase) onWarningExceeded(ctx context.Context, newWarning NewUserWa
 	switch newWarning.MatchedFilter.Action {
 	case FilterActionMute:
 		req.BanType = banDomain.NoComm
-		newBan, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), banDomain.System, req)
+		_, errBan = u.bans.Ban(ctx, req)
 	case FilterActionBan:
 		req.BanType = banDomain.Banned
-		newBan, errBan = u.bans.Ban(ctx, admin.ToUserProfile(), banDomain.System, req)
+		_, errBan = u.bans.Ban(ctx, req)
 	case FilterActionKick:
 		// Kicks are temporary, so should be done by Player ID to avoid
 		// missing players who weren't in the latest state update
 		// (otherwise, kicking players very shortly after they connect
 		// will usually fail).
-		errBan = u.state.KickPlayerID(ctx, newWarning.PlayerID, newWarning.ServerID, newWarning.WarnReason)
+		errBan = u.state.KickPlayerID(ctx, newWarning.PlayerID, newWarning.ServerID, newWarning.WarnReason.String())
 	}
 
 	if errBan != nil {

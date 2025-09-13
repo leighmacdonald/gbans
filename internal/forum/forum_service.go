@@ -814,7 +814,7 @@ func (f *forumHandler) onAPIForumMessages() gin.HandlerFunc {
 
 		for idx := range messages {
 			for _, activity := range activeUsers {
-				if messages[idx].SourceID == activity.Person.SteamID {
+				if messages[idx].SourceID == activity.Person.GetSteamID() {
 					messages[idx].Online = true
 
 					break
@@ -839,9 +839,9 @@ func (f *forumHandler) onAPIActiveUsers() gin.HandlerFunc {
 
 		for _, act := range f.forums.Current() {
 			results = append(results, userActivity{
-				SteamID:         act.Person.SteamID,
-				Personaname:     act.Person.Name,
-				PermissionLevel: act.Person.PermissionLevel,
+				SteamID:         act.Person.GetSteamID(),
+				Personaname:     act.Person.GetName(),
+				PermissionLevel: act.Person.Permissions(),
 				CreatedOn:       act.LastActivity,
 			})
 		}

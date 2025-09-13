@@ -1,4 +1,4 @@
-package network
+package scp
 
 import (
 	"context"
@@ -34,27 +34,24 @@ var (
 // OnClientConnect is called once a successful ssh connection is established.
 type OnClientConnect func(ctx context.Context, client storage.Storager, server []servers.Server) error
 
-// SCPExecer can be used to execute scp (ssh) operations on a remote host. It connects to all configured active
+// SCPConnection can be used to execute scp (ssh) operations on a remote host. It connects to all configured active
 // servers and will execute the provided OnClientConnect function once connected. It's up to the caller
 // to implement this function and handle any required functionality within it. Caller does not need to close the
 // connection.
-type SCPExecer struct {
-	servers   servers.ServersUsecase
+type SCPConnection struct {
 	database  database.Database
 	config    *config.ConfigUsecase
 	onConnect OnClientConnect
 }
 
-func NewSCPExecer(database database.Database, config *config.ConfigUsecase, servers servers.ServersUsecase, onConnect OnClientConnect) SCPExecer {
-	return SCPExecer{
-		database:  database,
-		config:    config,
-		servers:   servers,
-		onConnect: onConnect,
+func NewSCPConnection(database database.Database, config *config.ConfigUsecase) SCPConnection {
+	return SCPConnection{
+		database: database,
+		config:   config,
 	}
 }
 
-func (f SCPExecer) Update(ctx context.Context) error {
+func (f SCPConnection) Update(ctx context.Context) error {
 	fetchedServers, _, errServers := f.servers.Servers(ctx, servers.ServerQueryFilter{IncludeDisabled: false})
 	if errServers != nil {
 		return errServers
@@ -75,13 +72,12 @@ func (f SCPExecer) Update(ctx context.Context) error {
 	}
 
 	sshConfig := f.config.Config().SSH
-
 	waitGroup := &sync.WaitGroup{}
 
 	for address := range mappedServers {
-		waitGroup.Add(1)
-
-		go f.updateServer(ctx, waitGroup, address, mappedServers[address], sshConfig)
+		waitGroup.Go(func() {
+			f.updateServer(ctx, waitGroup, address, mappedServers[address], sshConfig)
+		})
 	}
 
 	waitGroup.Wait()
@@ -89,7 +85,7 @@ func (f SCPExecer) Update(ctx context.Context) error {
 	return nil
 }
 
-func (f SCPExecer) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []servers.Server, sshConfig config.ConfigSSH) {
+func (f SCPConnection) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []servers.Server, sshConfig config.ConfigSSH) {
 	defer waitGroup.Done()
 
 	scpClient, errClient := f.configAndDialClient(ctx, sshConfig, net.JoinHostPort(addr, strconv.Itoa(sshConfig.Port)))
@@ -111,7 +107,7 @@ func (f SCPExecer) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, 
 }
 
 // configAndDialClient connects to the remote server with the config. client.Close must be called.
-func (f SCPExecer) configAndDialClient(ctx context.Context, sshConfig config.ConfigSSH, address string) (storage.Storager, error) {
+func (f SCPConnection) configAndDialClient(ctx context.Context, sshConfig config.ConfigSSH, address string) (storage.Storager, error) {
 	clientConfig, errConfig := f.createConfig(ctx, sshConfig)
 	if errConfig != nil {
 		return nil, errConfig
@@ -125,7 +121,7 @@ func (f SCPExecer) configAndDialClient(ctx context.Context, sshConfig config.Con
 	return client, nil
 }
 
-func (f SCPExecer) createConfig(ctx context.Context, config config.ConfigSSH) (*ssh.ClientConfig, error) {
+func (f SCPConnection) createConfig(ctx context.Context, config config.ConfigSSH) (*ssh.ClientConfig, error) {
 	if config.Username == "" {
 		return nil, errUsername
 	}
@@ -156,7 +152,7 @@ func (f SCPExecer) createConfig(ctx context.Context, config config.ConfigSSH) (*
 	return sshClientConfig, nil
 }
 
-func (f SCPExecer) createSignerFromKey(config config.ConfigSSH) (ssh.Signer, error) {
+func (f SCPConnection) createSignerFromKey(config config.ConfigSSH) (ssh.Signer, error) {
 	fullPath, errPath := homedir.Expand(config.PrivateKeyPath)
 	if errPath != nil {
 		return nil, errors.Join(errPath, errHomeDir)
@@ -194,7 +190,7 @@ func keyString(k ssh.PublicKey) string {
 // Subsequent connections will require the same key or be rejected. If you want to skip the auto
 // trust of the first key seen, you must insert the host keys into the database manually into the
 // host_key table.
-func (f SCPExecer) trustedHostKeyCallback(ctx context.Context) ssh.HostKeyCallback {
+func (f SCPConnection) trustedHostKeyCallback(ctx context.Context) ssh.HostKeyCallback {
 	getKey := func(addr string) (string, error) {
 		var key string
 

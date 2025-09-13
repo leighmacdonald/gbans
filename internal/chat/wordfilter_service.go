@@ -5,20 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
-	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/user/permission"
 )
 
 type wordFilterHandler struct {
 	filters WordFilterUsecase
-	chat    chat.ChatUsecase
+	chat    ChatUsecase
 	config  *config.ConfigUsecase
 }
 
-func NewWordFilterHandler(engine *gin.Engine, config *config.ConfigUsecase, wordFilters WordFilterUsecase, chat chat.ChatUsecase, auth httphelper.Authenticator) {
+func NewWordFilterHandler(engine *gin.Engine, config *config.ConfigUsecase, wordFilters WordFilterUsecase, chat ChatUsecase, auth httphelper.Authenticator) {
 	handler := wordFilterHandler{
 		config:  config,
 		filters: wordFilters,

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"path"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
@@ -14,28 +16,72 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
-	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/viant/afs/option"
+	"github.com/viant/afs/storage"
 )
 
 type AntiCheatUsecase struct {
-	parser        logparse.StacParser
-	repo          anticheatRepository
-	ban           *ban.BanUsecase
-	config        *config.ConfigUsecase
-	notifications notification.NotificationUsecase
+	parser  logparse.StacParser
+	repo    anticheatRepository
+	persons *person.PersonUsecase
+	ban     *ban.BanUsecase
+	config  *config.ConfigUsecase
 }
 
-func NewAntiCheatUsecase(repo anticheatRepository, ban *ban.BanUsecase, config *config.ConfigUsecase, notif notification.NotificationUsecase) *AntiCheatUsecase {
+func NewAntiCheatUsecase(repo anticheatRepository, ban *ban.BanUsecase, config *config.ConfigUsecase, persons *person.PersonUsecase) *AntiCheatUsecase {
 	return &AntiCheatUsecase{
-		parser:        logparse.NewStacParser(),
-		repo:          repo,
-		ban:           ban,
-		config:        config,
-		notifications: notif,
+		parser:  logparse.NewStacParser(),
+		repo:    repo,
+		ban:     ban,
+		config:  config,
+		persons: persons,
 	}
+}
+
+// TODO fix
+func (a AntiCheatUsecase) FetchStacLogs(ctx context.Context, stactPathFmt string, server servers.Server, client storage.Storager) error {
+	logDir := fmt.Sprintf(stactPathFmt, server.ShortName)
+
+	filelist, errFilelist := client.List(ctx, logDir, option.NewPage(0, 1))
+	if errFilelist != nil {
+		slog.Error("remote list dir failed", log.ErrAttr(errFilelist),
+			slog.String("server", server.ShortName), slog.String("path", logDir))
+
+		return nil //nolint:nilerr
+	}
+
+	for _, file := range filelist {
+		if !strings.HasSuffix(file.Name(), ".log") {
+			continue
+		}
+
+		logPath := path.Join(logDir, file.Name())
+		reader, err := client.Open(ctx, logPath)
+		if err != nil {
+			return err
+		}
+
+		slog.Debug("Importing stac log", slog.String("name", file.Name()), slog.String("server", server.ShortName))
+		entries, errImport := a.Import(ctx, file.Name(), reader, server.ServerID)
+		if errImport != nil && !errors.Is(errImport, database.ErrDuplicate) {
+			slog.Error("Failed to import stac logs", log.ErrAttr(errImport))
+		} else if len(entries) > 0 {
+			if errHandle := a.Handle(ctx, entries); errHandle != nil {
+				slog.Error("Failed to handle stac logs", log.ErrAttr(errHandle))
+			}
+		}
+
+		if errCloseReader := reader.Close(); errCloseReader != nil {
+			return errCloseReader
+		}
+	}
+
+	return nil
 }
 
 func (a AntiCheatUsecase) DetectionsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]logparse.StacEntry, error) {
@@ -50,7 +96,7 @@ func (a AntiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 	results := map[steamid.SteamID]map[logparse.Detection]int{}
 	conf := a.config.Config()
 
-	owner, errOwner := a.person.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
+	owner, errOwner := a.persons.GetOrCreatePersonBySteamID(ctx, nil, steamid.New(conf.Owner))
 	if errOwner != nil {
 		return errOwner
 	}
@@ -97,16 +143,16 @@ func (a AntiCheatUsecase) Handle(ctx context.Context, entries []logparse.StacEnt
 			continue
 		}
 
-		duration := "0"
+		var duration time.Duration
 		if conf.Anticheat.Duration > 0 {
-			duration = fmt.Sprintf("%dm", conf.Anticheat.Duration)
+			duration = time.Duration(conf.Anticheat.Duration) * time.Second
 		}
 
-		newBan, err := a.ban.Ban(ctx, owner.ToUserProfile(), banDomain.System, ban.BanOpts{
+		newBan, err := a.ban.Ban(ctx, ban.BanOpts{
+			Origin:         banDomain.System,
 			SourceID:       owner.SteamID,
 			TargetID:       entry.SteamID,
 			Duration:       duration,
-			ValidUntil:     time.Now().AddDate(10, 0, 0),
 			BanType:        banDomain.Banned,
 			Reason:         banDomain.Cheating,
 			ReasonText:     "",
@@ -151,13 +197,13 @@ func (a AntiCheatUsecase) Import(ctx context.Context, fileName string, reader io
 	}
 
 	for _, entry := range entries {
-		player, err := a.person.GetOrCreatePersonBySteamID(ctx, nil, entry.SteamID)
+		player, err := a.persons.GetOrCreatePersonBySteamID(ctx, nil, entry.SteamID)
 		if err != nil {
 			return nil, err
 		}
 		if player.PersonaName == "" && entry.Name != "" {
 			player.PersonaName = entry.Name
-			if errSave := a.person.SavePerson(ctx, nil, &player); errSave != nil {
+			if errSave := a.persons.SavePerson(ctx, nil, &player); errSave != nil {
 				return nil, errSave
 			}
 		}

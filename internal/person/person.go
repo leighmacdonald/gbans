@@ -5,10 +5,10 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/internal/user/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 

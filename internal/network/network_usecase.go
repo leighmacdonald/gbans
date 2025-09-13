@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -23,18 +22,16 @@ import (
 
 type NetworkUsecase struct {
 	repository networkRepository
-	persons    *person.PersonUsecase
 	config     *config.ConfigUsecase
 	eb         *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 func NewNetworkUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository networkRepository, persons *person.PersonUsecase, config *config.ConfigUsecase,
+	repository networkRepository, config *config.ConfigUsecase,
 ) *NetworkUsecase {
 	return &NetworkUsecase{
 		repository: repository,
 		eb:         broadcaster,
-		persons:    persons,
 		config:     config,
 	}
 }
@@ -66,14 +63,6 @@ func (u NetworkUsecase) Start(ctx context.Context) {
 			parsedAddr, errParsedAddr := netip.ParseAddr(newServerEvent.Address)
 			if errParsedAddr != nil {
 				slog.Warn("Received invalid address", slog.String("addr", newServerEvent.Address))
-
-				continue
-			}
-
-			// Maybe ignore these and wait for connect call to create?
-			_, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, nil, newServerEvent.SID)
-			if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
-				slog.Error("Failed to fetch connecting person", slog.String("steam_id", newServerEvent.SID.String()), log.ErrAttr(errPerson))
 
 				continue
 			}
