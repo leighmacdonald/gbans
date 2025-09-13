@@ -4,15 +4,10 @@ import (
 	"context"
 	"errors"
 
-	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -21,32 +16,30 @@ import (
 )
 
 type MatchRepository struct {
-	database      database.Database
-	persons       *person.PersonUsecase
-	notifications notification.NotificationUsecase
-	servers       servers.ServersUsecase
-	state         state.StateUsecase
-	summarizer    *Summarizer
-	wm            fp.MutexMap[logparse.Weapon, int]
-	events        chan logparse.ServerEvent
-	broadcaster   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	matchUUIDMap  fp.MutexMap[int, uuid.UUID]
+	database     database.Database
+	persons      domain.PersonProvider
+	servers      servers.ServersUsecase
+	state        servers.StateUsecase
+	summarizer   *Summarizer
+	wm           fp.MutexMap[logparse.Weapon, int]
+	events       chan logparse.ServerEvent
+	broadcaster  *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	matchUUIDMap fp.MutexMap[int, uuid.UUID]
 }
 
 func NewMatchRepository(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	database database.Database, persons *person.PersonUsecase, servers servers.ServersUsecase, notifications notification.NotificationUsecase,
+	database database.Database, persons domain.PersonProvider, servers servers.ServersUsecase,
 	state state.StateUsecase, weaponMap fp.MutexMap[logparse.Weapon, int],
-) *MatchRepository {
-	matchRepo := &MatchRepository{
-		database:      database,
-		persons:       persons,
-		servers:       servers,
-		notifications: notifications,
-		state:         state,
-		wm:            weaponMap,
-		broadcaster:   broadcaster,
-		matchUUIDMap:  fp.NewMutexMap[int, uuid.UUID](),
-		events:        make(chan logparse.ServerEvent),
+) MatchRepository {
+	matchRepo := MatchRepository{
+		database:     database,
+		persons:      persons,
+		servers:      servers,
+		state:        state,
+		wm:           weaponMap,
+		broadcaster:  broadcaster,
+		matchUUIDMap: fp.NewMutexMap[int, uuid.UUID](),
+		events:       make(chan logparse.ServerEvent),
 	}
 
 	matchRepo.summarizer = newMatchSummarizer(matchRepo.events, matchRepo.onMatchComplete)
@@ -101,9 +94,9 @@ func (r *MatchRepository) onMatchComplete(ctx context.Context, matchContext *act
 		return errors.Join(errResult, domain.ErrLoadMatch)
 	}
 
-	r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		discord.ChannelPublicMatchLog,
-		message.MatchMessage(result, "")))
+	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
+	// 	discord.ChannelPublicMatchLog,
+	// 	message.MatchMessage(result, "")))
 
 	return nil
 }

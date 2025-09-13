@@ -14,8 +14,8 @@ type ReportRepository struct {
 	db database.Database
 }
 
-func NewReportRepository(database database.Database) *ReportRepository {
-	return &ReportRepository{db: database}
+func NewReportRepository(database database.Database) ReportRepository {
+	return ReportRepository{db: database}
 }
 
 func (r ReportRepository) insertReport(ctx context.Context, report *Report) error {

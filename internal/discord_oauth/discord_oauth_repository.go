@@ -12,8 +12,8 @@ type DiscordOAuthRepository struct {
 	db database.Database
 }
 
-func NewDiscordOAuthRepository(database database.Database) *DiscordOAuthRepository {
-	return &DiscordOAuthRepository{db: database}
+func NewDiscordOAuthRepository(database database.Database) DiscordOAuthRepository {
+	return DiscordOAuthRepository{db: database}
 }
 
 func (d DiscordOAuthRepository) SaveUserDetail(ctx context.Context, detail DiscordUserDetail) error {

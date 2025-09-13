@@ -22,12 +22,12 @@ import (
 
 type PersonUsecase struct {
 	config *config.ConfigUsecase
-	repo   *PersonRepository
+	repo   PersonRepository
 	tfAPI  *thirdparty.TFAPI
 }
 
-func NewPersonUsecase(repository *PersonRepository, config *config.ConfigUsecase, tfAPI *thirdparty.TFAPI) *PersonUsecase {
-	return &PersonUsecase{
+func NewPersonUsecase(repository PersonRepository, config *config.ConfigUsecase, tfAPI *thirdparty.TFAPI) PersonUsecase {
+	return PersonUsecase{
 		repo:   repository,
 		config: config,
 		tfAPI:  tfAPI,

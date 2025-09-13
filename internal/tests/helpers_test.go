@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -87,17 +86,17 @@ type MockConfigRepository struct {
 	config config.Config
 }
 
-func newConfigRepo(conf config.Config) *config.ConfigRepository {
-	return &MockConfigRepository{
+func newConfigRepo(conf config.Config) config.ConfigRepository {
+	return MockConfigRepository{
 		config: conf,
 	}
 }
 
-func (m *MockConfigRepository) Read(_ context.Context) (domain.Config, error) {
+func (m *MockConfigRepository) Read(_ context.Context) (config.Config, error) {
 	return m.config, nil
 }
 
-func (m *MockConfigRepository) Write(_ context.Context, config domain.Config) error {
+func (m *MockConfigRepository) Write(_ context.Context, config config.Config) error {
 	m.config = config
 
 	return nil

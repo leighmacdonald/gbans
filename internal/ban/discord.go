@@ -207,17 +207,18 @@ func (h DiscordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 	if errAuthor != nil {
 		return nil, errAuthor
 	}
-
-	banSteam, errBan := h.bans.Ban(ctx, BanOpts{
+	banOpts := BanOpts{
 		Origin:     banDomain.Bot,
 		SourceID:   author.SteamID,
 		TargetID:   steamid.New(opts.String(helper.OptUserIdentifier)),
-		Duration:   opts[helper.OptDuration].StringValue(),
 		BanType:    banDomain.NoComm,
 		Reason:     banDomain.Reason(reasonValueOpt.IntValue()),
 		ReasonText: "",
 		Note:       opts[helper.OptNote].StringValue(),
-	})
+	}
+	banOpts.SetDuration(opts[helper.OptDuration].StringValue())
+
+	banSteam, errBan := h.bans.Ban(ctx, banOpts)
 	if errBan != nil {
 		return nil, errBan
 	}
@@ -234,16 +235,18 @@ func (h DiscordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 		return nil, errAuthor
 	}
 
-	banSteam, errBan := h.bans.Ban(ctx, BanOpts{
+	banOpts := BanOpts{
 		Origin:     banDomain.Bot,
 		SourceID:   author.SteamID,
 		TargetID:   steamid.New(opts[helper.OptUserIdentifier].StringValue()),
-		Duration:   opts[helper.OptDuration].StringValue(),
 		BanType:    banDomain.Banned,
 		Reason:     banDomain.Reason(opts[helper.OptBanReason].IntValue()),
 		ReasonText: "",
 		Note:       opts[helper.OptNote].StringValue(),
-	})
+	}
+	banOpts.SetDuration(opts[helper.OptDuration].StringValue())
+
+	banSteam, errBan := h.bans.Ban(ctx, banOpts)
 	if errBan != nil {
 		if errors.Is(errBan, database.ErrDuplicate) {
 			return nil, domain.ErrDuplicateBan

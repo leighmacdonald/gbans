@@ -181,6 +181,7 @@ func CalcDuration(durationString string, validUntil time.Time) (time.Duration, e
 		return dur, nil
 	}
 
+	// TODO "real" time parsing
 	dur, errDuration := ParseDuration(durationString)
 	if errDuration != nil {
 		return 0, errDuration

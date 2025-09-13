@@ -1,8 +1,6 @@
 package message
 
 import (
-	"fmt"
-
 	"github.com/bwmarrin/discordgo"
 	embed "github.com/leighmacdonald/discordgo-embed"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -54,9 +52,6 @@ func (e *Embed) Message() *discordgo.MessageEmbed {
 
 func (e *Embed) AddTargetPerson(person domain.PersonInfo) *Embed {
 	name := person.GetName()
-	if person.GetDiscordID() != "" {
-		name = fmt.Sprintf("<@%s> | ", person.GetDiscordID()) + name
-	}
 
 	e.Emb.AddField("Name", name)
 	e.Embed().SetImage(person.GetAvatar().Full())
@@ -66,9 +61,6 @@ func (e *Embed) AddTargetPerson(person domain.PersonInfo) *Embed {
 
 func (e *Embed) AddAuthorPersonInfo(person domain.PersonInfo, url string) *Embed {
 	name := person.GetName()
-	if person.GetDiscordID() != "" {
-		name = fmt.Sprintf("<@%s> | ", person.GetDiscordID()) + name
-	}
 
 	e.Embed().SetAuthor(name, person.GetAvatar().Full(), url)
 	e.AddFieldsSteamID(person.GetSteamID())

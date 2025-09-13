@@ -28,12 +28,6 @@ type RequestPermissionLevelUpdate struct {
 	PermissionLevel permission.Privilege `json:"permission_level"`
 }
 
-type SimplePerson struct {
-	Personaname     string               `json:"personaname"`
-	Avatarhash      string               `json:"avatarhash"`
-	PermissionLevel permission.Privilege `json:"permission_level"`
-}
-
 // UserProfile is the model used in the webui representing the logged-in user.
 type UserProfile struct {
 	SteamID               steamid.SteamID        `json:"steam_id"`
@@ -47,51 +41,6 @@ type UserProfile struct {
 	BanID                 int64                  `json:"ban_id"`
 	Muted                 bool                   `json:"muted"`
 	PlayerqueueChatStatus playerqueue.ChatStatus `json:"playerqueue_chat_status"`
-}
-
-func (p UserProfile) HasPermission(privilege permission.Privilege) bool {
-	return p.PermissionLevel >= privilege
-}
-
-func (p UserProfile) GetDiscordID() string {
-	return p.DiscordID
-}
-
-func (p UserProfile) GetName() string {
-	if p.Name == "" {
-		return p.SteamID.String()
-	}
-
-	return p.Name
-}
-
-func (p UserProfile) GetAvatar() domain.Avatar {
-	if p.Avatarhash == "" {
-		return domain.NewAvatar("fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb")
-	}
-
-	return domain.NewAvatar(p.Avatarhash)
-}
-
-func (p UserProfile) GetSteamID() steamid.SteamID {
-	return p.SteamID
-}
-
-func (p UserProfile) Path() string {
-	return fmt.Sprintf("/profile/%d", p.SteamID.Int64())
-}
-
-// NewUserProfile allocates a new default person instance.
-func NewUserProfile(sid64 steamid.SteamID) UserProfile {
-	t0 := time.Now()
-
-	return UserProfile{
-		SteamID:         sid64,
-		CreatedOn:       t0,
-		UpdatedOn:       t0,
-		PermissionLevel: permission.PUser,
-		Name:            "Guest",
-	}
 }
 
 // EconBanState  holds the users current economy ban status.
@@ -188,22 +137,6 @@ func (p Person) GetSteamID() steamid.SteamID {
 
 func (p Person) Path() string {
 	return fmt.Sprintf("/profile/%d", p.SteamID.Int64())
-}
-
-func (p Person) ToUserProfile() UserProfile {
-	return UserProfile{
-		SteamID:               p.SteamID,
-		CreatedOn:             p.CreatedOn,
-		UpdatedOn:             p.UpdatedOn,
-		PermissionLevel:       p.PermissionLevel,
-		DiscordID:             p.DiscordID,
-		PatreonID:             p.PatreonID,
-		Name:                  p.PersonaName,
-		Avatarhash:            p.AvatarHash,
-		BanID:                 0,
-		Muted:                 p.Muted,
-		PlayerqueueChatStatus: p.PlayerqueueChatStatus,
-	}
 }
 
 // LoggedIn checks for a valid steamID.

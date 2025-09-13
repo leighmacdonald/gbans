@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/match"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -24,14 +23,14 @@ import (
 
 type ChatRepository struct {
 	db          database.Database
-	persons     *person.PersonUsecase
-	wordFilters *WordFilterUsecase
+	persons     domain.PersonProvider
+	wordFilters WordFilterUsecase
 	matches     match.MatchUsecase
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	WarningChan chan NewUserWarning
 }
 
-func NewChatRepository(database database.Database, personUsecase *person.PersonUsecase, wordFilterUsecase *WordFilterUsecase,
+func NewChatRepository(database database.Database, personUsecase domain.PersonProvider, wordFilterUsecase WordFilterUsecase,
 	matchUsecase match.MatchUsecase,
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) *ChatRepository {

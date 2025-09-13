@@ -18,8 +18,8 @@ type BlocklistRepository struct {
 	db database.Database
 }
 
-func NewBlocklistRepository(database database.Database) *BlocklistRepository {
-	return &BlocklistRepository{db: database}
+func NewBlocklistRepository(database database.Database) BlocklistRepository {
+	return BlocklistRepository{db: database}
 }
 
 func (b *BlocklistRepository) InsertCache(ctx context.Context, list CIDRBlockSource, entries []netip.Prefix) error {

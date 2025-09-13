@@ -11,12 +11,11 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/queue"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -25,24 +24,22 @@ import (
 )
 
 type ReportUsecase struct {
-	repository    *ReportRepository
-	notifications notification.NotificationUsecase
-	config        *config.ConfigUsecase
-	persons       *person.PersonUsecase
-	demos         demo.DemoUsecase
-	tfAPI         *thirdparty.TFAPI
+	repository ReportRepository
+	config     *config.ConfigUsecase
+	persons    person.PersonUsecase
+	demos      servers.DemoUsecase
+	tfAPI      *thirdparty.TFAPI
 }
 
-func NewReportUsecase(repository *ReportRepository, notifications notification.NotificationUsecase,
-	config *config.ConfigUsecase, persons *person.PersonUsecase, demos demo.DemoUsecase, tfAPI *thirdparty.TFAPI,
-) *ReportUsecase {
-	return &ReportUsecase{
-		notifications: notifications,
-		repository:    repository,
-		config:        config,
-		persons:       persons,
-		demos:         demos,
-		tfAPI:         tfAPI,
+func NewReportUsecase(repository ReportRepository,
+	config *config.ConfigUsecase, persons person.PersonUsecase, demos servers.DemoUsecase, tfAPI *thirdparty.TFAPI,
+) ReportUsecase {
+	return ReportUsecase{
+		repository: repository,
+		config:     config,
+		persons:    persons,
+		demos:      demos,
+		tfAPI:      tfAPI,
 	}
 }
 
@@ -213,7 +210,7 @@ func (r ReportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo,
 		return ReportWithAuthor{}, errTarget
 	}
 
-	var demo demo.DemoFile
+	var demo servers.DemoFile
 	if report.DemoID > 0 {
 		if errDemo := r.demos.GetDemoByID(ctx, report.DemoID, &demo); errDemo != nil {
 			slog.Error("Failed to load report demo", slog.Int64("report_id", report.ReportID))
@@ -323,7 +320,7 @@ func (r ReportUsecase) SaveReport(ctx context.Context, currentUser domain.Person
 		return ReportWithAuthor{}, domain.ErrReportExists
 	}
 
-	var demo demo.DemoFile
+	var demo servers.DemoFile
 
 	if req.DemoID > 0 {
 		if errDemo := r.demos.GetDemoByID(ctx, req.DemoID, &demo); errDemo != nil {
@@ -450,24 +447,24 @@ func (r ReportUsecase) CreateReportMessage(ctx context.Context, reportID int64, 
 	// 	discord.ChannelModAppealLog,
 	// 	discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser))))
 
-	path := fmt.Sprintf("/report/%d", reportID)
+	// path := fmt.Sprintf("/report/%d", reportID)
+	//
+	// r.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
+	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
+	// 	notification.SeverityInfo,
+	// 	"A new report reply has been posted. Author: "+curUser.GetName(),
+	// 	path,
+	// 	curUser,
+	// ))
 
-	r.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
-		[]permission.Privilege{permission.PModerator, permission.PAdmin},
-		notification.SeverityInfo,
-		"A new report reply has been posted. Author: "+curUser.GetName(),
-		path,
-		curUser,
-	))
-
-	if report.Author.SteamID != curUser.GetSteamID() {
-		r.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-			[]steamid.SteamID{report.Author.SteamID},
-			notification.SeverityInfo,
-			"A new report reply has been posted",
-			path,
-		))
-	}
+	// if report.Author.SteamID != curUser.GetSteamID() {
+	// 	r.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
+	// 		[]steamid.SteamID{report.Author.SteamID},
+	// 		notification.SeverityInfo,
+	// 		"A new report reply has been posted",
+	// 		path,
+	// 	))
+	// }
 
 	sid := curUser.GetSteamID()
 	slog.Info("New report message created",

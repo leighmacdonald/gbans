@@ -28,8 +28,8 @@ type NetworkUsecase struct {
 
 func NewNetworkUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	repository networkRepository, config *config.ConfigUsecase,
-) *NetworkUsecase {
-	return &NetworkUsecase{
+) NetworkUsecase {
+	return NetworkUsecase{
 		repository: repository,
 		eb:         broadcaster,
 		config:     config,

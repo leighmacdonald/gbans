@@ -31,18 +31,18 @@ type BansQueryFilter struct {
 
 type BanUsecase struct {
 	banRepo *BanRepository
-	persons *person.PersonUsecase
+	persons person.PersonUsecase
 	config  *config.ConfigUsecase
 	state   *servers.StateUsecase
-	reports *ReportUsecase
+	reports ReportUsecase
 	tfAPI   *thirdparty.TFAPI
 }
 
-func NewBanUsecase(repository *BanRepository, person *person.PersonUsecase,
-	config *config.ConfigUsecase, reports *ReportUsecase, state *servers.StateUsecase,
+func NewBanUsecase(repository *BanRepository, person person.PersonUsecase,
+	config *config.ConfigUsecase, reports ReportUsecase, state *servers.StateUsecase,
 	tfAPI *thirdparty.TFAPI,
-) *BanUsecase {
-	return &BanUsecase{
+) BanUsecase {
+	return BanUsecase{
 		banRepo: repository,
 		persons: person,
 		config:  config,
@@ -152,7 +152,11 @@ var ErrBanOptsInvalid = errors.New("invalid ban options")
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of Config.DefaultExpiration() will be used.
 func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
-	ban := Ban{
+	if errValidate := opts.Validate(); errValidate != nil {
+		return Ban{}, errValidate
+	}
+
+	newBan := Ban{
 		IncludeFriends: opts.IncludeFriends,
 		LastIP:         opts.LastIP,
 		EvadeOk:        opts.EvadeOk,
@@ -160,65 +164,38 @@ func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
 		Reason:         opts.Reason,
 	}
 
-	if opts.Reason == banDomain.Custom {
-		if len(opts.ReasonText) < 3 {
-			return ban, fmt.Errorf("%w: Custom reason must be at least 3 characters", ErrBanOptsInvalid)
-		}
-
-		ban.ReasonText = opts.ReasonText
-	}
-
 	if opts.CIDR != "" {
 		// TODO dont ban too many people, limit to /24 ?
 		_, _, errCIDR := net.ParseCIDR(opts.CIDR)
 		if errCIDR != nil {
-			return ban, fmt.Errorf("%w: Invalid CIDR", ErrBanOptsInvalid)
+			return newBan, fmt.Errorf("%w: Invalid CIDR", ErrBanOptsInvalid)
 		}
-		ban.CIDR = opts.CIDR
+		newBan.CIDR = opts.CIDR
 	} else if opts.ASNum != 0 {
 
 	}
 
-	duration, errDuration := datetime.CalcDuration(opts.Duration, opts.ValidUntil)
-	if errDuration != nil {
-		return ban, errDuration
-	}
-
-	author, errAuthor := s.persons.GetPersonBySteamID(ctx, nil, sid)
+	_, errAuthor := s.persons.GetOrCreatePersonBySteamID(ctx, nil, opts.SourceID)
 	if errAuthor != nil {
-		return ban, errAuthor
+		return newBan, errAuthor
 	}
 
-	if !opts.TargetID.Valid() {
-		return ban, domain.ErrTargetID
-	}
-
-	banSteam, errBanSteam := NewBan(author.SteamID, targetID, duration, opts.Reason, opts.ReasonText, opts.Note,
-		origin, opts.ReportID, opts.BanType, opts.IncludeFriends, opts.EvadeOk)
-	if errBanSteam != nil {
-		return ban, errBanSteam
-	}
-
-	if !banSteam.TargetID.Valid() {
-		return ban, errors.Join(domain.ErrInvalidSID, domain.ErrTargetID)
-	}
-
-	existing, errGetExistingBan := s.banRepo.GetBySteamID(ctx, banSteam.TargetID, false, true)
+	existing, errGetExistingBan := s.QueryOne(ctx, QueryOpts{TargetID: opts.TargetID, EvadeOk: true})
 	if errGetExistingBan != nil && !errors.Is(errGetExistingBan, database.ErrNoResult) {
-		return ban, errors.Join(errGetExistingBan, ErrGetBan)
+		return newBan, errors.Join(errGetExistingBan, ErrGetBan)
 	}
 
 	if existing.BanID > 0 {
-		return ban, database.ErrDuplicate // TODO better error
+		return newBan, database.ErrDuplicate // TODO better error
 	}
 
-	if errSave := s.banRepo.Save(ctx, &banSteam); errSave != nil {
-		return ban, errors.Join(errSave, ErrSaveBan)
+	if errSave := s.banRepo.Save(ctx, &newBan); errSave != nil {
+		return newBan, errors.Join(errSave, ErrSaveBan)
 	}
 
-	bannedPerson, errBannedPerson := s.banRepo.GetByBanID(ctx, banSteam.BanID, false, true)
+	bannedPerson, errBannedPerson := s.QueryOne(ctx, QueryOpts{BanID: newBan.BanID, EvadeOk: true})
 	if errBannedPerson != nil {
-		return ban, errors.Join(errBannedPerson, ErrSaveBan)
+		return newBan, errors.Join(errBannedPerson, ErrSaveBan)
 	}
 
 	// expIn := "Permanent"
@@ -252,13 +229,13 @@ func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
 	// Close the report if the ban was attached to one
 	if banSteam.ReportID > 0 {
 		if _, errSaveReport := s.reports.SetReportStatus(ctx, banSteam.ReportID, curUser, ClosedWithAction); errSaveReport != nil {
-			return ban, errors.Join(errSaveReport, ErrReportStateUpdate)
+			return newBan, errors.Join(errSaveReport, ErrReportStateUpdate)
 		}
 	}
 
 	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, banSteam.TargetID)
 	if err != nil {
-		return ban, errors.Join(err, ErrFetchPerson)
+		return newBan, errors.Join(err, ErrFetchPerson)
 	}
 
 	switch banSteam.BanType {
@@ -277,7 +254,7 @@ func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
 			// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelKickLog, message.MuteMessage(bannedPerson)))
 		}
 	default:
-		return ban, ErrInvalidBanType
+		return newBan, ErrInvalidBanType
 	}
 
 	return s.GetByBanID(ctx, banSteam.BanID, false, true)

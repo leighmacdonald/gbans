@@ -15,13 +15,13 @@ import (
 )
 
 type MatchUsecase struct {
-	repository    *MatchRepository
+	repository    MatchRepository
 	state         state.StateUsecase
 	servers       servers.ServersUsecase
 	notifications notification.NotificationUsecase
 }
 
-func NewMatchUsecase(repository *MatchRepository, state state.StateUsecase, servers servers.ServersUsecase,
+func NewMatchUsecase(repository MatchRepository, state state.StateUsecase, servers servers.ServersUsecase,
 	notifications notification.NotificationUsecase,
 ) MatchUsecase {
 	return MatchUsecase{

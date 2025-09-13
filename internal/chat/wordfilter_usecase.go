@@ -9,18 +9,16 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 )
 
 type WordFilterUsecase struct {
-	repository    *WordFilterRepository
-	wordFilters   *WordFilters
-	notifications *notification.NotificationUsecase
+	repository  WordFilterRepository
+	wordFilters *WordFilters
 }
 
-func NewWordFilterUsecase(repository *WordFilterRepository, notifications *notification.NotificationUsecase) *WordFilterUsecase {
-	return &WordFilterUsecase{repository: repository, wordFilters: NewWordFilters(), notifications: notifications}
+func NewWordFilterUsecase(repository WordFilterRepository) WordFilterUsecase {
+	return WordFilterUsecase{repository: repository, wordFilters: NewWordFilters()}
 }
 
 func (w *WordFilterUsecase) Import(ctx context.Context) error {

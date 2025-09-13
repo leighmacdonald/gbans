@@ -98,7 +98,7 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 		original := bannedPerson.AppealState
 		bannedPerson.AppealState = req.AppealState
 
-		if errSave := h.bans.Save(ctx, &bannedPerson.Ban); errSave != nil {
+		if errSave := h.bans.Save(ctx, &bannedPerson); errSave != nil {
 			switch {
 			case errors.Is(errSave, domain.ErrPersonTarget):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
@@ -521,7 +521,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 		bannedPerson.EvadeOk = req.EvadeOk
 		bannedPerson.ValidUntil = req.ValidUntil
 
-		if errSave := h.bans.Save(ctx, &bannedPerson.Ban); errSave != nil {
+		if errSave := h.bans.Save(ctx, &bannedPerson); errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return

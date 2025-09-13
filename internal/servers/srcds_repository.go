@@ -18,8 +18,8 @@ type SRCDSRepository struct {
 	database database.Database
 }
 
-func NewRepository(database database.Database) *SRCDSRepository {
-	return &SRCDSRepository{database: database}
+func NewRepository(database database.Database) SRCDSRepository {
+	return SRCDSRepository{database: database}
 }
 
 func (r SRCDSRepository) QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (PlayerBanState, error) {

@@ -34,10 +34,10 @@ type Collector struct {
 	configMu         *sync.RWMutex
 	maxPlayersRx     *regexp.Regexp
 	playersRx        *regexp.Regexp
-	serverUsecase    *ServersUsecase
+	serverUsecase    ServersUsecase
 }
 
-func NewCollector(serverUsecase *ServersUsecase) *Collector {
+func NewCollector(serverUsecase ServersUsecase) *Collector {
 	const (
 		statusUpdateFreq = time.Second * 20
 		updateTimeout    = time.Second * 5

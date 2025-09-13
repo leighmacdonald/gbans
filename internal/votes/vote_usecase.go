@@ -5,26 +5,22 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
 type VoteUsecase struct {
-	repository    VoteRepository
-	notifications notification.NotificationUsecase
+	repository VoteRepository
 
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewVoteUsecase(repository VoteRepository,
-	notifications notification.NotificationUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-) *VoteUsecase {
-	return &VoteUsecase{
-		repository:    repository,
-		notifications: notifications,
-		broadcaster:   broadcaster,
+func NewVoteUsecase(repository VoteRepository, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+) VoteUsecase {
+	return VoteUsecase{
+		repository:  repository,
+		broadcaster: broadcaster,
 	}
 }
 

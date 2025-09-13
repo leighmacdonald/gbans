@@ -21,10 +21,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/contest"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/demo"
-	"github.com/leighmacdonald/gbans/internal/discord"
+	discordoauth "github.com/leighmacdonald/gbans/internal/discord_oauth"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/forum"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -35,7 +35,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/queue"
-	"github.com/leighmacdonald/gbans/internal/state"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
@@ -43,7 +43,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/riverqueue/river"
 	"github.com/spf13/cobra"
 )
 
@@ -94,54 +93,54 @@ func firstTimeSetup(ctx context.Context, persons person.PersonUsecase, newsUC ne
 	return nil
 }
 
-func createQueueWorkers(people person.PersonUsecase, notifications notification.NotificationPayload,
-	discordUC discord.DiscordUsecase, authRepo auth.AuthRepository,
-	patreonUC patreon.PatreonCredential, reports ban.ReportUsecase, discordOAuth discord.DiscordOAuthUsecase,
-) *river.Workers {
-	workers := river.NewWorkers()
+// func createQueueWorkers(people person.PersonUsecase, notifications notification.NotificationPayload,
+// 	discordUC *discord.Discord, authRepo auth.AuthRepository,
+// 	patreonUC patreon.PatreonCredential, reports ban.ReportUsecase, discordOAuth discordoauth.DiscordOAuthUsecase,
+// ) *river.Workers {
+// 	workers := river.NewWorkers()
 
-	river.AddWorker[notification.SenderArgs](workers, notification.NewSenderWorker(people, notifications, discordUC))
-	river.AddWorker[auth.CleanupArgs](workers, auth.NewCleanupWorker(authRepo))
-	river.AddWorker[patreon.AuthUpdateArgs](workers, patreon.NewSyncWorker(patreonUC))
-	river.AddWorker[ban.MetaInfoArgs](workers, ban.NewMetaInfoWorker(reports))
-	river.AddWorker[discord.TokenRefreshArgs](workers, discord.NewTokenRefreshWorker(discordOAuth))
+// 	river.AddWorker[notification.SenderArgs](workers, notification.NewSenderWorker(people, notifications, discordUC))
+// 	river.AddWorker[auth.CleanupArgs](workers, auth.NewCleanupWorker(authRepo))
+// 	river.AddWorker[patreon.AuthUpdateArgs](workers, patreon.NewSyncWorker(patreonUC))
+// 	river.AddWorker[ban.MetaInfoArgs](workers, ban.NewMetaInfoWorker(reports))
+// 	river.AddWorker[discord.TokenRefreshArgs](workers, discord.NewTokenRefreshWorker(discordOAuth))
 
-	return workers
-}
+// 	return workers
+// }
 
-func createPeriodicJobs() []*river.PeriodicJob {
-	jobs := []*river.PeriodicJob{
-		river.NewPeriodicJob(
-			river.PeriodicInterval(24*time.Hour),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return auth.CleanupArgs{}, nil
-			},
-			&river.PeriodicJobOpts{RunOnStart: true}),
+// func createPeriodicJobs() []*river.PeriodicJob {
+// 	jobs := []*river.PeriodicJob{
+// 		river.NewPeriodicJob(
+// 			river.PeriodicInterval(24*time.Hour),
+// 			func() (river.JobArgs, *river.InsertOpts) {
+// 				return auth.CleanupArgs{}, nil
+// 			},
+// 			&river.PeriodicJobOpts{RunOnStart: true}),
 
-		river.NewPeriodicJob(
-			river.PeriodicInterval(time.Hour),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return patreon.AuthUpdateArgs{}, nil
-			},
-			&river.PeriodicJobOpts{RunOnStart: true}),
+// 		river.NewPeriodicJob(
+// 			river.PeriodicInterval(time.Hour),
+// 			func() (river.JobArgs, *river.InsertOpts) {
+// 				return patreon.AuthUpdateArgs{}, nil
+// 			},
+// 			&river.PeriodicJobOpts{RunOnStart: true}),
 
-		river.NewPeriodicJob(
-			river.PeriodicInterval(24*time.Hour),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return report.MetaInfoArgs{}, nil
-			},
-			&river.PeriodicJobOpts{RunOnStart: true}),
+// 		river.NewPeriodicJob(
+// 			river.PeriodicInterval(24*time.Hour),
+// 			func() (river.JobArgs, *river.InsertOpts) {
+// 				return report.MetaInfoArgs{}, nil
+// 			},
+// 			&river.PeriodicJobOpts{RunOnStart: true}),
 
-		river.NewPeriodicJob(
-			river.PeriodicInterval(time.Hour*12),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return discord.TokenRefreshArgs{}, nil
-			},
-			&river.PeriodicJobOpts{RunOnStart: true}),
-	}
+// 		river.NewPeriodicJob(
+// 			river.PeriodicInterval(time.Hour*12),
+// 			func() (river.JobArgs, *river.InsertOpts) {
+// 				return discord.TokenRefreshArgs{}, nil
+// 			},
+// 			&river.PeriodicJobOpts{RunOnStart: true}),
+// 	}
 
-	return jobs
-}
+// 	return jobs
+// }
 
 // serveCmd represents the serve command.
 func serveCmd() *cobra.Command { //nolint:maintidx
@@ -224,14 +223,11 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 			weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-			discordRepository, errDR := discord.NewDiscordRepository(conf)
-			if errDR != nil {
-				slog.Error("Cannot initialize discord", log.ErrAttr(errDR))
-
-				return errDR
+			discordUsecase, errDiscord := discord.NewDiscord(conf.Discord.AppID, conf.Discord.GuildID, conf.Discord.Token, conf.ExternalURL)
+			if errDiscord != nil {
+				return errDiscord
 			}
 
-			discordUsecase := discord.NewDiscordUsecase(discordRepository, configUsecase)
 			if conf.Discord.Enabled {
 				if err := discordUsecase.Start(); err != nil {
 					slog.Error("Failed to start discord", log.ErrAttr(err))
@@ -244,7 +240,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbConn), discordUsecase)
 
-			wordFilterUsecase := chat.NewWordFilterUsecase(chat.NewWordFilterRepository(dbConn), notificationUsecase)
+			wordFilterUsecase := chat.NewWordFilterUsecase(chat.NewWordFilterRepository(dbConn))
 			if err := wordFilterUsecase.Import(ctx); err != nil {
 				slog.Error("Failed to load word filters", log.ErrAttr(err))
 
@@ -258,7 +254,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbConn), configUsecase, tfapiClient)
 
-			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbConn), personUsecase, configUsecase)
+			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbConn), configUsecase)
 			go networkUsecase.Start(ctx)
 
 			assetRepository := asset.NewLocalRepository(dbConn, conf.LocalStore.PathRoot)
@@ -270,17 +266,16 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			assets := asset.NewAssetUsecase(assetRepository)
 			serversUC := servers.NewServersUsecase(servers.NewServersRepository(dbConn))
-			demos := demo.NewDemoUsecase(asset.BucketDemo, demo.NewDemoRepository(dbConn), assets, configUsecase, serversUC)
+			demos := servers.NewDemoUsecase(asset.BucketDemo, servers.NewDemoRepository(dbConn), assets, configUsecase)
 
-			reportUsecase := ban.NewReportUsecase(ban.NewReportRepository(dbConn), notificationUsecase, configUsecase, personUsecase, demos, tfapiClient)
+			reportUsecase := ban.NewReportUsecase(ban.NewReportRepository(dbConn), configUsecase, personUsecase, demos, tfapiClient)
 
-			stateUsecase := state.NewStateUsecase(eventBroadcaster,
-				state.NewStateRepository(state.NewCollector(serversUC)), configUsecase, serversUC)
+			stateUsecase := servers.NewStateUsecase(eventBroadcaster,
+				servers.NewStateRepository(servers.NewCollector(serversUC)), configUsecase, serversUC)
 
 			banRepo := ban.NewBanRepository(dbConn, personUsecase, networkUsecase)
-			banUsecase := ban.NewBanUsecase(banRepo, personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase, tfapiClient)
-
-			blocklistUsecase := network.NewBlocklistUsecase(network.NewBlocklistRepository(dbConn), banUsecase)
+			banUsecase := ban.NewBanUsecase(banRepo, personUsecase, configUsecase, reportUsecase, stateUsecase, tfapiClient)
+			blocklistUsecase := network.NewBlocklistUsecase(network.NewBlocklistRepository(dbConn), &banUsecase) // TODO Does THE & work here?
 
 			go func() {
 				if err := stateUsecase.Start(ctx); err != nil {
@@ -288,11 +283,11 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				}
 			}()
 
-			discordOAuthUsecase := discord.NewDiscordOAuthUsecase(discord.NewDiscordOAuthRepository(dbConn), configUsecase)
+			discordOAuthUsecase := discordoauth.NewDiscordOAuthUsecase(discordoauth.NewDiscordOAuthRepository(dbConn), configUsecase)
 
-			appeals := ban.NewAppealUsecase(ban.NewAppealRepository(dbConn), banUsecase, personUsecase, notificationUsecase, configUsecase)
+			appeals := ban.NewAppealUsecase(ban.NewAppealRepository(dbConn), banUsecase, personUsecase, configUsecase)
 
-			matchRepo := match.NewMatchRepository(eventBroadcaster, dbConn, personUsecase, serversUC, notificationUsecase, stateUsecase, weaponsMap)
+			matchRepo := match.NewMatchRepository(eventBroadcaster, dbConn, personUsecase, serversUC, stateUsecase, weaponsMap)
 			go matchRepo.Start(ctx)
 
 			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUC, notificationUsecase)
@@ -304,10 +299,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			chatRepository := chat.NewChatRepository(dbConn, personUsecase, wordFilterUsecase, matchUsecase, eventBroadcaster)
 			go chatRepository.Start(ctx)
 
-			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase, notificationUsecase)
+			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase)
 			go chatUsecase.Start(ctx)
 
-			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(dbConn), notificationUsecase)
+			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(dbConn))
 			go forumUsecase.Start(ctx)
 
 			metricsUsecase := metrics.NewMetricsUsecase(eventBroadcaster)
@@ -315,18 +310,18 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbConn))
 			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbConn), configUsecase)
-			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbConn), configUsecase, serversUC, personUsecase, reportUsecase, notificationUsecase, banUsecase, tfapiClient)
+			srcdsUsecase := servers.NewSrcdsUsecase(servers.NewRepository(dbConn), configUsecase, serversUC, personUsecase, tfapiClient)
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbConn))
 			authRepo := auth.NewAuthRepository(dbConn)
 			authUsecase := auth.NewAuthUsecase(authRepo, configUsecase, personUsecase, banUsecase, serversUC)
-			anticheatUsecase := anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(dbConn), personUsecase, banUsecase, configUsecase, notificationUsecase)
+			anticheatUsecase := anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(dbConn), personUsecase, banUsecase, configUsecase)
 
-			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), personUsecase, matchUsecase, notificationUsecase, configUsecase, eventBroadcaster)
+			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), personUsecase, matchUsecase, configUsecase, eventBroadcaster)
 			go voteUsecase.Start(ctx)
 
 			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(dbConn))
 
-			speedruns := srcds.NewSpeedrunUsecase(srcds.NewSpeedrunRepository(dbConn, personUsecase))
+			speedruns := servers.NewSpeedrunUsecase(servers.NewSpeedrunRepository(dbConn, personUsecase))
 
 			if err := firstTimeSetup(ctx, personUsecase, newsUsecase, wikiUsecase, conf); err != nil {
 				slog.Error("Failed to run first time setup", log.ErrAttr(err))
@@ -349,7 +344,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
 			}
 
-			router, err := httphelper.CreateRouter(conf, app.Version())
+			router, err := CreateRouter(conf, app.Version())
 			if err != nil {
 				slog.Error("Could not setup router", log.ErrAttr(err))
 
@@ -373,7 +368,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			blocklist.NewHandler(router, blocklistUsecase, networkUsecase, authUsecase)
 			chat.NewHandler(router, chatUsecase, authUsecase)
 			contest.NewHandler(router, contestUsecase, assets, authUsecase)
-			demo.NewHandler(router, demos, authUsecase)
+			servers.NewDemoHandler(router, demos, authUsecase)
 			forum.NewHandler(router, forumUsecase, authUsecase)
 			match.NewHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
 			asset.NewHandler(router, configUsecase, assets, authUsecase)
@@ -383,10 +378,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			notification.NewHandler(router, notificationUsecase, authUsecase)
 			patreon.NewHandler(router, patreonUsecase, authUsecase, configUsecase)
 			person.NewHandler(router, configUsecase, personUsecase, authUsecase)
-			report.NewHandler(router, reportUsecase, authUsecase, notificationUsecase)
+			ban.NewReportHandler(router, reportUsecase, authUsecase, notificationUsecase)
 			servers.NewHandler(router, serversUC, stateUsecase, authUsecase)
-			srcds.NewHandler(router, speedruns, authUsecase, configUsecase)
-			srcds.NewHandlerSRCDS(router, srcdsUsecase, serversUC, personUsecase, assets,
+			servers.NewHandler(router, speedruns, authUsecase, configUsecase)
+			servers.NewHandlerSRCDS(router, srcdsUsecase, serversUC, personUsecase, assets,
 				reportUsecase, banUsecase, networkUsecase, authUsecase,
 				configUsecase, notificationUsecase, stateUsecase, blocklistUsecase)
 			votes.NewHandler(router, voteUsecase, authUsecase)

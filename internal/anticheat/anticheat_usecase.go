@@ -28,13 +28,13 @@ import (
 type AntiCheatUsecase struct {
 	parser  logparse.StacParser
 	repo    anticheatRepository
-	persons *person.PersonUsecase
-	ban     *ban.BanUsecase
+	persons person.PersonUsecase
+	ban     ban.BanUsecase
 	config  *config.ConfigUsecase
 }
 
-func NewAntiCheatUsecase(repo anticheatRepository, ban *ban.BanUsecase, config *config.ConfigUsecase, persons *person.PersonUsecase) *AntiCheatUsecase {
-	return &AntiCheatUsecase{
+func NewAntiCheatUsecase(repo anticheatRepository, ban ban.BanUsecase, config *config.ConfigUsecase, persons person.PersonUsecase) AntiCheatUsecase {
+	return AntiCheatUsecase{
 		parser:  logparse.NewStacParser(),
 		repo:    repo,
 		ban:     ban,
