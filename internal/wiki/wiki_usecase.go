@@ -13,11 +13,11 @@ import (
 )
 
 type WikiUsecase struct {
-	repository *wikiRepository
+	repository wikiRepository
 }
 
-func NewWikiUsecase(repository *wikiRepository) *WikiUsecase {
-	return &WikiUsecase{repository: repository}
+func NewWikiUsecase(repository wikiRepository) WikiUsecase {
+	return WikiUsecase{repository: repository}
 }
 
 func (w *WikiUsecase) GetWikiPageBySlug(ctx context.Context, user domain.PersonInfo, slug string) (Page, error) {

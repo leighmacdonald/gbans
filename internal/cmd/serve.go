@@ -21,6 +21,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/contest"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord_oauth"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/forum"
@@ -296,7 +297,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				slog.Error("Failed to import weapons", log.ErrAttr(errWeapons))
 			}
 
-			chatRepository := chat.NewChatRepository(dbConn, personUsecase, wordFilterUsecase, matchUsecase, eventBroadcaster)
+			chatRepository := chat.NewChatRepository(dbConn, personUsecase, wordFilterUsecase, eventBroadcaster)
 			go chatRepository.Start(ctx)
 
 			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase)
@@ -314,9 +315,9 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbConn))
 			authRepo := auth.NewAuthRepository(dbConn)
 			authUsecase := auth.NewAuthUsecase(authRepo, configUsecase, personUsecase, banUsecase, serversUC)
-			anticheatUsecase := anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(dbConn), personUsecase, banUsecase, configUsecase)
+			anticheatUsecase := anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(dbConn), banUsecase, configUsecase, personUsecase)
 
-			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), personUsecase, matchUsecase, configUsecase, eventBroadcaster)
+			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), eventBroadcaster)
 			go voteUsecase.Start(ctx)
 
 			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(dbConn))
@@ -353,8 +354,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			// Start discord bot service
 			if conf.Discord.Enabled {
-				discordHandler := discord.NewDiscord(discordUsecase, personUsecase, banUsecase,
-					stateUsecase, serversUC, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, anticheatUsecase, tfapiClient)
+				discordHandler, errDiscord := discord.NewDiscord(conf.Discord.AppID, conf.Discord.GuildID, conf.Discord.Token, conf.ExternalURL)
+				if errDiscord != nil {
+					return errDiscord
+				}
 				discordHandler.Start(ctx)
 			}
 
@@ -364,13 +367,13 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			auth.NewHandler(router, authUsecase, configUsecase, personUsecase, tfapiClient)
 			ban.NewHandlerSteam(router, banUsecase, configUsecase, authUsecase)
 			config.NewHandler(router, configUsecase, authUsecase, app.Version())
-			discord.NewHandler(router, authUsecase, configUsecase, personUsecase, discordOAuthUsecase)
-			blocklist.NewHandler(router, blocklistUsecase, networkUsecase, authUsecase)
+			discordoauth.NewHandler(router, authUsecase, configUsecase, personUsecase, discordOAuthUsecase)
+			network.NewBlocklistHandler(router, blocklistUsecase, networkUsecase, authUsecase)
 			chat.NewHandler(router, chatUsecase, authUsecase)
 			contest.NewHandler(router, contestUsecase, assets, authUsecase)
 			servers.NewDemoHandler(router, demos, authUsecase)
 			forum.NewHandler(router, forumUsecase, authUsecase)
-			match.NewHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
+			// match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
 			asset.NewHandler(router, configUsecase, assets, authUsecase)
 			metrics.NewHandler(router)
 			network.NewHandler(router, networkUsecase, authUsecase)
@@ -379,9 +382,9 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			patreon.NewHandler(router, patreonUsecase, authUsecase, configUsecase)
 			person.NewHandler(router, configUsecase, personUsecase, authUsecase)
 			ban.NewReportHandler(router, reportUsecase, authUsecase, notificationUsecase)
-			servers.NewHandler(router, serversUC, stateUsecase, authUsecase)
-			servers.NewHandler(router, speedruns, authUsecase, configUsecase)
-			servers.NewHandlerSRCDS(router, srcdsUsecase, serversUC, personUsecase, assets,
+			servers.NewServersHandler(router, serversUC, stateUsecase, authUsecase)
+			servers.NewSpeedrunsHandler(router, speedruns, authUsecase, configUsecase, serversUC)
+			servers.NewSRCDSHandler(router, srcdsUsecase, serversUC, personUsecase, assets,
 				reportUsecase, banUsecase, networkUsecase, authUsecase,
 				configUsecase, notificationUsecase, stateUsecase, blocklistUsecase)
 			votes.NewHandler(router, voteUsecase, authUsecase)
@@ -395,7 +398,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				slog.Error("Failed to warm playerqueue chatlogs", log.ErrAttr(err))
 				chatlogs = []playerqueue.ChatLog{}
 			}
-			playerqueueUC := playerqueue.NewPlayerqueueUsecase(playerqueueRepo, personUsecase, serversUC, stateUsecase, chatlogs, notificationUsecase)
+			playerqueueUC := playerqueue.NewPlayerqueueUsecase(playerqueueRepo, personUsecase, serversUC, stateUsecase, chatlogs)
 			go playerqueueUC.Start(ctx)
 			playerqueue.NewPlayerqueueHandler(router, authUsecase, configUsecase, playerqueueUC)
 
@@ -445,31 +448,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 					}
 				}
 			}()
-
-			// River Queue
-			workers := createQueueWorkers(
-				personUsecase,
-				notificationUsecase,
-				discordUsecase,
-				authRepo,
-				patreonUsecase,
-				reportUsecase,
-				discordOAuthUsecase)
-
-			queueClient, errClient := queue.New(dbConn.Pool(), workers, createPeriodicJobs())
-			if errClient != nil {
-				slog.Error("Failed to setup job queue", log.ErrAttr(errClient))
-
-				return errClient
-			}
-
-			if errClientStart := queueClient.Start(ctx); errClientStart != nil {
-				slog.Error("Failed to start job client", log.ErrAttr(errClientStart))
-
-				return errors.Join(errClientStart, queue.ErrStartQueue)
-			}
-
-			notificationUsecase.SetQueueClient(queueClient)
 
 			httpServer := httphelper.NewServer(conf.Addr(), router)
 

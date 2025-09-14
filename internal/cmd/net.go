@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -64,8 +65,10 @@ func netUpdateCmd() *cobra.Command {
 			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, app.SentryDSN != "")
 			defer logCloser()
 
+			persons := person.NewPersonUsecase(person.NewPersonRepository(configUsecase.Config(), dbUsecase), configUsecase, nil)
+
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), configUsecase)
+			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase, persons), configUsecase)
 
 			if err := networkUsecase.RefreshLocationData(ctx); err != nil {
 				slog.Error("Failed to refresh location data", log.ErrAttr(err))

@@ -181,7 +181,8 @@ var (
 )
 
 type DiscordHandler struct {
-	bans *BanUsecase
+	bans    *BanUsecase
+	persons domain.PersonProvider
 }
 
 func RegisterDiscordHandler(bans *BanUsecase) {
@@ -244,7 +245,7 @@ func (h DiscordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 		ReasonText: "",
 		Note:       opts[helper.OptNote].StringValue(),
 	}
-	banOpts.SetDuration(opts[helper.OptDuration].StringValue())
+	banOpts.SetDuration(opts[helper.OptDuration].StringValue(), time.Now().AddDate(10, 0, 0))
 
 	banSteam, errBan := h.bans.Ban(ctx, banOpts)
 	if errBan != nil {
@@ -281,12 +282,12 @@ func (h DiscordHandler) onUnban(ctx context.Context, _ *discordgo.Session, inter
 		return nil, domain.ErrBanDoesNotExist
 	}
 
-	user, errUser := h.persons.GetPersonBySteamID(ctx, nil, steamID)
+	user, errUser := h.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
 	if errUser != nil {
 		slog.Warn("Could not fetch unbanned Person", slog.String("steam_id", steamID.String()), log.ErrAttr(errUser))
 	}
 
-	return UnbanMessage(h.config, user), nil
+	return UnbanMessage("/FIXME", user), nil
 }
 
 func (h DiscordHandler) onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx

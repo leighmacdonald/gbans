@@ -13,7 +13,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/mitchellh/go-homedir"
 	"github.com/viant/afs/scp"
@@ -32,7 +31,7 @@ var (
 )
 
 // OnClientConnect is called once a successful ssh connection is established.
-type OnClientConnect func(ctx context.Context, client storage.Storager, server []servers.Server) error
+type OnClientConnect func(ctx context.Context, client storage.Storager, server []ServerDetails) error
 
 // SCPConnection can be used to execute scp (ssh) operations on a remote host. It connects to all configured active
 // servers and will execute the provided OnClientConnect function once connected. It's up to the caller
@@ -51,21 +50,21 @@ func NewSCPConnection(database database.Database, config *config.ConfigUsecase) 
 	}
 }
 
-func (f SCPConnection) Update(ctx context.Context) error {
-	fetchedServers, _, errServers := f.servers.Servers(ctx, servers.ServerQueryFilter{IncludeDisabled: false})
-	if errServers != nil {
-		return errServers
-	}
+type ServerDetails struct {
+	Name    string
+	Address string
+}
 
+func (f SCPConnection) Update(ctx context.Context, servers []ServerDetails) error {
 	// Since multiple instances can exist on a single host we map common servers to a single host address and
 	// perform all operations using a single connection to the host.
-	mappedServers := map[string][]servers.Server{}
+	mappedServers := map[string][]ServerDetails{}
 
-	for _, server := range fetchedServers {
+	for _, server := range servers {
 		actualAddr := server.AddrInternalOrDefault()
 		_, ok := mappedServers[actualAddr]
 		if !ok {
-			mappedServers[actualAddr] = []servers.Server{}
+			mappedServers[actualAddr] = []ServerDetails{}
 		}
 
 		mappedServers[actualAddr] = append(mappedServers[actualAddr], server)
@@ -85,7 +84,7 @@ func (f SCPConnection) Update(ctx context.Context) error {
 	return nil
 }
 
-func (f SCPConnection) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []servers.Server, sshConfig config.ConfigSSH) {
+func (f SCPConnection) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []ServerDetails, sshConfig config.ConfigSSH) {
 	defer waitGroup.Done()
 
 	scpClient, errClient := f.configAndDialClient(ctx, sshConfig, net.JoinHostPort(addr, strconv.Itoa(sshConfig.Port)))

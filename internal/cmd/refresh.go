@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
@@ -107,7 +106,7 @@ func refreshFiltersCmd() *cobra.Command {
 
 			// blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase), banUsecase)
 
-			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, match.MatchUsecase{}, eventBroadcaster)
+			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, eventBroadcaster)
 			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase)
 
 			var query chat.ChatHistoryQueryFilter

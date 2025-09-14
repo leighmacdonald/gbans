@@ -16,10 +16,10 @@ import (
 
 type serversHandler struct {
 	servers ServersUsecase
-	state   StateUsecase
+	state   *StateUsecase
 }
 
-func NewServersHandler(engine *gin.Engine, serversUsecase ServersUsecase, stateUsecase StateUsecase, authUC httphelper.Authenticator) {
+func NewServersHandler(engine *gin.Engine, serversUsecase ServersUsecase, stateUsecase *StateUsecase, authUC httphelper.Authenticator) {
 	handler := &serversHandler{
 		servers: serversUsecase,
 		state:   stateUsecase,

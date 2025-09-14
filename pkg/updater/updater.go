@@ -1,4 +1,4 @@
-package match
+package updater
 
 import (
 	"context"
@@ -11,31 +11,31 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
-// DataUpdater handles periodically updating a data source and caching the results via user supplied func.
-type DataUpdater[T any] struct {
+// Updater handles periodically updating a data source and caching the results via user supplied func.
+type Updater[T any] struct {
 	data       T
-	update     func() (T, error)
+	updateFn   func() (T, error)
 	updateRate time.Duration
 	dataMu     *sync.RWMutex
 }
 
-func NewDataUpdater[T any](updateRate time.Duration, updateFn func() (T, error)) *DataUpdater[T] {
-	return &DataUpdater[T]{
-		update:     updateFn,
+func New[T any](updateInterval time.Duration, updateFn func() (T, error)) *Updater[T] {
+	return &Updater[T]{
+		updateFn:   updateFn,
 		dataMu:     &sync.RWMutex{},
-		updateRate: updateRate,
+		updateRate: updateInterval,
 	}
 }
 
-func (c *DataUpdater[T]) Data() T { //nolint:ireturn
+func (c *Updater[T]) Data() T { //nolint:ireturn
 	c.dataMu.RLock()
 	defer c.dataMu.RUnlock()
 
 	return c.data
 }
 
-func (c *DataUpdater[T]) execUpdate() {
-	newData, errUpdate := c.update()
+func (c *Updater[T]) update() {
+	newData, errUpdate := c.updateFn()
 	if errUpdate != nil && !errors.Is(errUpdate, database.ErrNoResult) {
 		slog.Error("Failed to update data source", log.ErrAttr(errUpdate))
 
@@ -47,13 +47,13 @@ func (c *DataUpdater[T]) execUpdate() {
 	c.dataMu.Unlock()
 }
 
-func (c *DataUpdater[T]) Start(ctx context.Context) {
+func (c *Updater[T]) Start(ctx context.Context) {
 	refreshTimer := time.NewTicker(c.updateRate)
 
 	for {
 		select {
 		case <-refreshTimer.C:
-			c.execUpdate()
+			c.update()
 		case <-ctx.Done():
 			return
 		}

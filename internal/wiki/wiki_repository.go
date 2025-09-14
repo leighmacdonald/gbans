@@ -12,8 +12,8 @@ type wikiRepository struct {
 	db database.Database
 }
 
-func NewWikiRepository(database database.Database) *wikiRepository {
-	return &wikiRepository{db: database}
+func NewWikiRepository(database database.Database) wikiRepository {
+	return wikiRepository{db: database}
 }
 
 func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string) (Page, error) {

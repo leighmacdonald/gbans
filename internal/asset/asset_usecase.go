@@ -18,10 +18,10 @@ import (
 )
 
 type AssetUsecase struct {
-	repository *localRepository
+	repository localRepository
 }
 
-func NewAssetUsecase(assetRepository *localRepository) AssetUsecase {
+func NewAssetUsecase(assetRepository localRepository) AssetUsecase {
 	return AssetUsecase{repository: assetRepository}
 }
 

@@ -10,13 +10,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/network"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type BanRepository struct {
 	db      database.Database
-	persons person.PersonUsecase   // TODO remove
+	persons domain.PersonProvider  // TODO remove
 	network network.NetworkUsecase // TODO remove
 }
 
@@ -76,7 +75,7 @@ func (r *BanRepository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error
 	return bans, nil
 }
 
-func NewBanRepository(database database.Database, persons person.PersonUsecase, network network.NetworkUsecase) *BanRepository {
+func NewBanRepository(database database.Database, persons domain.PersonProvider, network network.NetworkUsecase) *BanRepository {
 	return &BanRepository{db: database, persons: persons, network: network}
 }
 
@@ -251,7 +250,7 @@ func (r *BanRepository) Save(ctx context.Context, ban *Ban) error {
 		return errors.Join(errGetPerson, domain.ErrPersonTarget)
 	}
 
-	_, errGetAuthor := r.persons.GetPersonBySteamID(ctx, nil, ban.SourceID)
+	_, errGetAuthor := r.persons.GetOrCreatePersonBySteamID(ctx, nil, ban.SourceID)
 	if errGetAuthor != nil {
 		return errors.Join(errGetAuthor, domain.ErrPersonSource)
 	}

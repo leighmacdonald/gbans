@@ -6,10 +6,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/person"
 )
 
-func NewPlayerqueueChatStatus(author person.UserProfile, target person.UserProfile, status ChatStatus, reason string) *discordgo.MessageEmbed {
+func NewPlayerqueueChatStatus(author domain.PersonInfo, target domain.PersonInfo, status ChatStatus, reason string) *discordgo.MessageEmbed {
 	colour := message.ColourError
 	switch status {
 	case Readwrite:
@@ -40,7 +39,8 @@ func NewPlayerqueueMessage(author domain.PersonInfo, msg string) *discordgo.Mess
 		SetDescription(msg).MessageEmbed
 }
 
-func NewPlayerqueuePurge(author domain.PersonInfo, target person.UserProfile, chatLog ChatLog, count int) *discordgo.MessageEmbed {
+func NewPlayerqueuePurge(author domain.PersonInfo, target domain.PersonInfo, chatLog ChatLog, count int) *discordgo.MessageEmbed {
+	sid := target.GetSteamID()
 	return message.NewEmbed().
 		Embed().
 		SetColor(message.ColourInfo).
@@ -49,6 +49,6 @@ func NewPlayerqueuePurge(author domain.PersonInfo, target person.UserProfile, ch
 		AddField("Message", chatLog.BodyMD).
 		AddField("Count", strconv.Itoa(count)).
 		AddField("Name", target.GetName()).
-		AddField("SteamID", target.SteamID.String()).
+		AddField("SteamID", sid.String()).
 		MessageEmbed
 }
