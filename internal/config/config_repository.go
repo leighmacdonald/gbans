@@ -92,7 +92,7 @@ func (c *ConfigRepository) Read(ctx context.Context) (Config, error) {
 			&cfg.Network.SDREnabled, &cfg.Network.SDRDNSEnabled, &cfg.Network.CFKey, &cfg.Network.CFEmail, &cfg.Network.CFZoneID,
 		)
 	if err != nil {
-		return cfg, c.db.DBErr(err)
+		return cfg, database.DBErr(err)
 	}
 
 	cfg.Exports.AuthorizedKeys = strings.Join(authorizedKeys, ",")
@@ -122,7 +122,7 @@ func (c *ConfigRepository) Init(ctx context.Context) error {
 }
 
 func (c *ConfigRepository) Write(ctx context.Context, config Config) error {
-	return c.db.DBErr(c.db.ExecUpdateBuilder(ctx, nil, c.db.Builder().
+	return database.DBErr(c.db.ExecUpdateBuilder(ctx, nil, c.db.Builder().
 		Update("config").
 		SetMap(map[string]interface{}{
 			"general_site_name":                   config.General.SiteName,

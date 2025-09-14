@@ -26,7 +26,7 @@ func (d DiscordOAuthRepository) SaveUserDetail(ctx context.Context, detail Disco
 				              publicflags = $5, mfa_enabled = $6, premium_type = $7, updated_on = $9
 				`
 
-	return d.db.DBErr(d.db.Exec(ctx, nil, query, detail.SteamID.Int64(), detail.ID, detail.Username, detail.Avatar,
+	return database.DBErr(d.db.Exec(ctx, nil, query, detail.SteamID.Int64(), detail.ID, detail.Username, detail.Avatar,
 		detail.PublicFlags, detail.MfaEnabled, detail.PremiumType, detail.CreatedOn, detail.UpdatedOn,
 	))
 }
@@ -38,7 +38,7 @@ func (d DiscordOAuthRepository) GetUserDetail(ctx context.Context, steamID steam
 		From("discord_user").
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
 	if errRow != nil {
-		return DiscordUserDetail{}, d.db.DBErr(errRow)
+		return DiscordUserDetail{}, database.DBErr(errRow)
 	}
 
 	var detail DiscordUserDetail
@@ -47,14 +47,14 @@ func (d DiscordOAuthRepository) GetUserDetail(ctx context.Context, steamID steam
 
 	if err := row.Scan(&detail.ID, &detail.Username, &detail.Avatar, &detail.PublicFlags, &detail.MfaEnabled, &detail.PremiumType,
 		&detail.CreatedOn, &detail.UpdatedOn); err != nil {
-		return DiscordUserDetail{}, d.db.DBErr(errRow)
+		return DiscordUserDetail{}, database.DBErr(errRow)
 	}
 
 	return detail, nil
 }
 
 func (d DiscordOAuthRepository) DeleteUserDetail(ctx context.Context, steamID steamid.SteamID) error {
-	return d.db.DBErr(d.db.ExecDeleteBuilder(ctx, nil, d.db.Builder().
+	return database.DBErr(d.db.ExecDeleteBuilder(ctx, nil, d.db.Builder().
 		Delete("discord_user").
 		Where(sq.Eq{"steam_id": steamID})))
 }
@@ -69,7 +69,7 @@ func (d DiscordOAuthRepository) SaveTokens(ctx context.Context, creds DiscordCre
 		DO UPDATE SET discord_id = $2, access_token= $3, refresh_token = $4,
 			expires_in = $5, scope = $6, token_type = $7, updated_on = $9`
 
-	return d.db.DBErr(d.db.Exec(ctx, nil, query, creds.SteamID.Int64(), creds.DiscordID, creds.AccessToken, creds.RefreshToken,
+	return database.DBErr(d.db.Exec(ctx, nil, query, creds.SteamID.Int64(), creds.DiscordID, creds.AccessToken, creds.RefreshToken,
 		creds.ExpiresIn, creds.Scope, creds.TokenType, creds.CreatedOn, creds.UpdatedOn,
 	))
 }
@@ -81,7 +81,7 @@ func (d DiscordOAuthRepository) GetTokens(ctx context.Context, steamID steamid.S
 		From("auth_discord").
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
 	if errRow != nil {
-		return DiscordCredential{}, d.db.DBErr(errRow)
+		return DiscordCredential{}, database.DBErr(errRow)
 	}
 
 	var creds DiscordCredential
@@ -90,7 +90,7 @@ func (d DiscordOAuthRepository) GetTokens(ctx context.Context, steamID steamid.S
 
 	if err := row.Scan(&creds.DiscordID, &creds.AccessToken, &creds.RefreshToken, &creds.ExpiresIn, &creds.Scope, &creds.TokenType,
 		&creds.CreatedOn, &creds.UpdatedOn); err != nil {
-		return DiscordCredential{}, d.db.DBErr(errRow)
+		return DiscordCredential{}, database.DBErr(errRow)
 	}
 
 	return creds, nil
@@ -102,7 +102,7 @@ func (d DiscordOAuthRepository) DeleteTokens(ctx context.Context, steamID steami
 		Where(sq.Eq{"steam_id": steamID}).
 		ToSql()
 	if errQuery != nil {
-		return d.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return d.db.Exec(ctx, nil, query, vars...)
@@ -115,7 +115,7 @@ func (d DiscordOAuthRepository) OldAuths(ctx context.Context) ([]DiscordCredenti
 
 	rows, errRows := d.db.Query(ctx, nil, query)
 	if errRows != nil {
-		return nil, d.db.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	var credentials []DiscordCredential
@@ -124,7 +124,7 @@ func (d DiscordOAuthRepository) OldAuths(ctx context.Context) ([]DiscordCredenti
 		var creds DiscordCredential
 		if errScan := rows.Scan(&creds.SteamID, &creds.DiscordID, &creds.AccessToken, &creds.RefreshToken, &creds.ExpiresIn,
 			&creds.Scope, &creds.TokenType, &creds.CreatedOn, &creds.UpdatedOn); errScan != nil {
-			return credentials, d.db.DBErr(errScan)
+			return credentials, database.DBErr(errScan)
 		}
 
 		credentials = append(credentials, creds)

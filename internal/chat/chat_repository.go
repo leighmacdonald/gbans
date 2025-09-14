@@ -151,7 +151,7 @@ func (r ChatRepository) TopChatters(ctx context.Context, count uint64) ([]TopCha
 		OrderBy("total DESC").
 		Limit(count))
 	if errRows != nil {
-		return nil, r.db.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -165,7 +165,7 @@ func (r ChatRepository) TopChatters(ctx context.Context, count uint64) ([]TopCha
 		)
 
 		if errScan := rows.Scan(&tcr.Name, &steamID, &tcr.Count); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		tcr.SteamID = steamid.New(steamID)
@@ -187,10 +187,52 @@ func (r ChatRepository) AddChatHistory(ctx context.Context, message *PersonMessa
 		QueryRow(ctx, nil, query, message.SteamID.Int64(), message.ServerID, message.Body, message.Team,
 			message.CreatedOn, message.PersonaName, message.MatchID).
 		Scan(&message.PersonMessageID); errScan != nil {
-		return r.db.DBErr(errScan)
+		return database.DBErr(errScan)
 	}
 
 	return nil
+}
+
+func (r ChatRepository) GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error) {
+	var msg PersonMessage
+
+	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
+		Builder().
+		Select(
+			"m.person_message_id",
+			"m.steam_id",
+			"m.server_id",
+			"m.body",
+			"m.team",
+			"m.created_on",
+			"m.persona_name",
+			"m.match_id",
+			"s.short_name").
+		From("person_messages m").
+		LeftJoin("server s on m.server_id = s.server_id").
+		Where(sq.Eq{"m.person_message_id": personMessageID}))
+
+	if errRow != nil {
+		return msg, database.DBErr(errRow)
+	}
+
+	var steamID int64
+
+	if errScan := row.Scan(&msg.PersonMessageID,
+		&steamID,
+		&msg.ServerID,
+		&msg.Body,
+		&msg.Team,
+		&msg.CreatedOn,
+		&msg.PersonaName,
+		&msg.MatchID,
+		&msg.ServerName); errScan != nil {
+		return msg, database.DBErr(errScan)
+	}
+
+	msg.SteamID = steamid.New(steamID)
+
+	return msg, nil
 }
 
 func (r ChatRepository) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error) { //nolint:maintidx
@@ -271,7 +313,7 @@ func (r ChatRepository) QueryChatHistory(ctx context.Context, filters ChatHistor
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -296,7 +338,7 @@ func (r ChatRepository) QueryChatHistory(ctx context.Context, filters ChatHistor
 			&flagged,
 			&message.AvatarHash,
 			&message.Pattern); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		if matchID != nil {
@@ -340,7 +382,7 @@ func (r ChatRepository) GetPersonMessage(ctx context.Context, messageID int64) (
 
 	var msg QueryChatHistoryResult
 
-	if err := r.db.DBErr(r.db.QueryRow(ctx, nil, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
+	if err := database.DBErr(r.db.QueryRow(ctx, nil, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 		&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged)); err != nil {
 		return msg, err
 	}

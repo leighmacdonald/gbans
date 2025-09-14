@@ -9,16 +9,14 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons person.PersonUsecase, serversUC servers.ServersUsecase,
+func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons domain.PersonProvider, serversUC servers.ServersUsecase,
 	state *servers.StateUsecase, chatLogs []ChatLog,
 ) *PlayerqueueUsecase {
 	return &PlayerqueueUsecase{
@@ -60,10 +58,10 @@ func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons person.PersonUsec
 }
 
 type PlayerqueueUsecase struct {
-	repo     PlayerqueueRepository
-	perssons person.PersonUsecase
-	notif    notification.NotificationUsecase
-	queue    *Coordinator
+	repo    PlayerqueueRepository
+	persons domain.PersonProvider
+	notif   notification.NotificationUsecase
+	queue   *Coordinator
 }
 
 func (p PlayerqueueUsecase) Start(ctx context.Context) {
@@ -149,32 +147,25 @@ func (p PlayerqueueUsecase) SetChatStatus(ctx context.Context, authorID steamid.
 		return domain.ErrInvalidSID
 	}
 
+	author, errAuthor := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
+	if errAuthor != nil {
+		return errAuthor
+	}
+
 	person, errPerson := p.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
 	if errPerson != nil {
 		return errPerson
 	}
 
-	allowed, errAlter := p.persons.CanAlter(ctx, authorID, person.SteamID)
-	if errAlter != nil {
-		return errAlter
-	}
-
-	if !allowed {
+	if author.PermissionLevel <= person.PermissionLevel {
 		return permission.ErrPermissionDenied
 	}
 
-	if person.PlayerqueueChatStatus == status {
-		return database.ErrDuplicate
-	}
-
-	previousStatus := person.PlayerqueueChatStatus
-	person.PlayerqueueChatStatus = status
-
-	if errSave := p.persons.SavePerson(ctx, nil, &person); errSave != nil {
+	if errSave := p.repo.SetChatStatus(ctx, person.SteamID, status); errSave != nil {
 		return errSave
 	}
 
-	p.queue.UpdateChatStatus(steamID, status, reason, previousStatus)
+	p.queue.UpdateChatStatus(steamID, status, reason, Readwrite)
 
 	// author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
 	// if errGetProfile != nil {

@@ -293,7 +293,7 @@ func (r ReportUsecase) SaveReport(ctx context.Context, currentUser domain.Person
 		return ReportWithAuthor{}, errSource
 	}
 
-	personTarget, errTarget := r.persons.GetOrCreatePersonBySteamID(ctx, nil, req.TargetID)
+	personTarget, errTarget := r.persons.GetPersonBySteamID(ctx, nil, req.TargetID)
 	if errTarget != nil {
 		return ReportWithAuthor{}, errTarget
 	}

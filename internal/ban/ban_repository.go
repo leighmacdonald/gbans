@@ -42,7 +42,7 @@ func (r *BanRepository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -59,7 +59,7 @@ func (r *BanRepository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error
 				&ban.ReasonText, &ban.Note, &ban.Origin, &ban.ValidUntil, &ban.CreatedOn,
 				&ban.UpdatedOn, &ban.IncludeFriends, &ban.EvadeOk, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
 				&ban.IsEnabled, &ban.AppealState); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		ban.TargetID = steamid.New(targetID)
@@ -81,7 +81,7 @@ func NewBanRepository(database database.Database, persons domain.PersonProvider,
 
 func (r *BanRepository) TruncateCache(ctx context.Context) error {
 	// return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.Builder().Delete("steam_friends")))
-	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.Builder().Delete("steam_group_members")))
+	return database.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.Builder().Delete("steam_group_members")))
 }
 
 func (r *BanRepository) GetMembersList(ctx context.Context, parentID int64, list *MembersList) error {
@@ -91,10 +91,10 @@ func (r *BanRepository) GetMembersList(ctx context.Context, parentID int64, list
 		From("members").
 		Where(sq.Eq{"parent_id": parentID}))
 	if err != nil {
-		return r.db.DBErr(err)
+		return database.DBErr(err)
 	}
 
-	return r.db.DBErr(row.Scan(&list.MembersID, &list.ParentID, &list.Members, &list.CreatedOn, &list.UpdatedOn))
+	return database.DBErr(row.Scan(&list.MembersID, &list.ParentID, &list.Members, &list.CreatedOn, &list.UpdatedOn))
 }
 
 func (r *BanRepository) SaveMembersList(ctx context.Context, list *MembersList) error {
@@ -103,13 +103,13 @@ func (r *BanRepository) SaveMembersList(ctx context.Context, list *MembersList) 
 
 		const update = `UPDATE members SET members = $2::jsonb, updated_on = $3 WHERE members_id = $1`
 
-		return r.db.DBErr(r.db.Exec(ctx, nil, update, list.MembersID, list.Members, list.UpdatedOn))
+		return database.DBErr(r.db.Exec(ctx, nil, update, list.MembersID, list.Members, list.UpdatedOn))
 	}
 
 	const insert = `INSERT INTO members (parent_id, members, created_on, updated_on)
 		VALUES ($1, $2::jsonb, $3, $4) RETURNING members_id`
 
-	return r.db.DBErr(r.db.QueryRow(ctx, nil, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
+	return database.DBErr(r.db.QueryRow(ctx, nil, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
 }
 
 func (r *BanRepository) InsertCache(ctx context.Context, groupID steamid.SteamID, entries []int64) error {
@@ -146,7 +146,7 @@ func (r *BanRepository) Stats(ctx context.Context, stats *Stats) error {
 
 	if errQuery := r.db.QueryRow(ctx, nil, query).
 		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth, &stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal, &stats.FilteredWords, &stats.ServersTotal); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -155,7 +155,7 @@ func (r *BanRepository) Stats(ctx context.Context, stats *Stats) error {
 func (r *BanRepository) Delete(ctx context.Context, ban *Ban, hardDelete bool) error {
 	if hardDelete {
 		if errExec := r.db.Exec(ctx, nil, `DELETE FROM ban WHERE ban_id = $1`, ban.BanID); errExec != nil {
-			return r.db.DBErr(errExec)
+			return database.DBErr(errExec)
 		}
 
 		ban.BanID = 0
@@ -292,7 +292,7 @@ func (r *BanRepository) insertBan(ctx context.Context, ban *Ban) error {
 		Scan(&ban.BanID)
 
 	if errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -325,7 +325,7 @@ func (r *BanRepository) updateBan(ctx context.Context, ban *Ban) error {
 		Set("evade_ok", ban.EvadeOk).
 		Where(sq.Eq{"ban_id": ban.BanID})
 
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, query))
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, query))
 }
 
 func (r *BanRepository) ExpiredBans(ctx context.Context) ([]Ban, error) {
@@ -339,7 +339,7 @@ func (r *BanRepository) ExpiredBans(ctx context.Context) ([]Ban, error) {
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, query)
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -384,7 +384,7 @@ func (r *BanRepository) GetOlderThan(ctx context.Context, filter domain.QueryFil
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, filter.ApplyLimitOffsetDefault(query))
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()

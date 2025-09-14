@@ -31,7 +31,7 @@ func (r *ServersRepository) GetServer(ctx context.Context, serverID int) (Server
 		From("server").
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}))
 	if rowErr != nil {
-		return server, r.db.DBErr(rowErr)
+		return server, database.DBErr(rowErr)
 	}
 
 	var tokenTime *time.Time
@@ -41,7 +41,7 @@ func (r *ServersRepository) GetServer(ctx context.Context, serverID int) (Server
 		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
 		&server.Latitude, &server.Longitude,
 		&server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal, &server.SDREnabled); errScan != nil {
-		return server, r.db.DBErr(errScan)
+		return server, database.DBErr(errScan)
 	}
 
 	if tokenTime != nil {
@@ -58,7 +58,7 @@ func (r *ServersRepository) GetServerPermissions(ctx context.Context) ([]ServerP
 		Where(sq.GtOrEq{"permission_level": permission.PReserved}).
 		OrderBy("permission_level desc"))
 	if errRows != nil {
-		return nil, r.db.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -73,7 +73,7 @@ func (r *ServersRepository) GetServerPermissions(ctx context.Context) ([]ServerP
 		)
 
 		if errScan := rows.Scan(&sid, &perm); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		switch perm {
@@ -131,7 +131,7 @@ func (r *ServersRepository) GetServers(ctx context.Context, filter ServerQueryFi
 
 	rows, errQueryExec := r.db.QueryBuilder(ctx, nil, builder)
 	if errQueryExec != nil {
-		return []Server{}, 0, r.db.DBErr(errQueryExec)
+		return []Server{}, 0, database.DBErr(errQueryExec)
 	}
 
 	defer rows.Close()
@@ -161,7 +161,7 @@ func (r *ServersRepository) GetServers(ctx context.Context, filter ServerQueryFi
 	}
 
 	if rows.Err() != nil {
-		return nil, 0, r.db.DBErr(rows.Err())
+		return nil, 0, database.DBErr(rows.Err())
 	}
 
 	count, errCount := r.db.GetCount(ctx, nil, r.db.
@@ -170,7 +170,7 @@ func (r *ServersRepository) GetServers(ctx context.Context, filter ServerQueryFi
 		From("server s").
 		Where(constraints))
 	if errCount != nil {
-		return nil, 0, r.db.DBErr(errCount)
+		return nil, 0, database.DBErr(errCount)
 	}
 
 	return servers, count, nil
@@ -194,7 +194,7 @@ func (r *ServersRepository) GetServerByName(ctx context.Context, serverName stri
 		From("server").
 		Where(and))
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return database.DBErr(errRow)
 	}
 
 	if err := row.Scan(
@@ -207,7 +207,7 @@ func (r *ServersRepository) GetServerByName(ctx context.Context, serverName stri
 		&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 		&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 		&server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal, &server.SDREnabled); err != nil {
-		return r.db.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	return nil
@@ -231,7 +231,7 @@ func (r *ServersRepository) GetServerByPassword(ctx context.Context, serverPassw
 		From("server").
 		Where(and))
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return database.DBErr(errRow)
 	}
 
 	var tokenTime *time.Time
@@ -240,7 +240,7 @@ func (r *ServersRepository) GetServerByPassword(ctx context.Context, serverPassw
 		&server.RCON, &server.Password, &tokenTime, &server.CreatedOn, &server.UpdatedOn,
 		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC, &server.Latitude,
 		&server.Longitude, &server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal, &server.SDREnabled); err != nil {
-		return r.db.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	if tokenTime != nil {
@@ -274,7 +274,7 @@ func (r *ServersRepository) insertServer(ctx context.Context, server *Server) er
 		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal, &server.SDREnabled).
 		Scan(&server.ServerID)
 	if err != nil {
-		return r.db.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	return nil
@@ -283,7 +283,7 @@ func (r *ServersRepository) insertServer(ctx context.Context, server *Server) er
 func (r *ServersRepository) updateServer(ctx context.Context, server *Server) error {
 	server.UpdatedOn = time.Now()
 
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 		Builder().
 		Update("server").
 		Set("short_name", server.ShortName).

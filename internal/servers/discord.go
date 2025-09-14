@@ -23,7 +23,7 @@ import (
 
 type PersonProvider interface {
 	// FIXME Retuning a interface for now.
-	GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.PersonInfo, error)
+	GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.PersonCore, error)
 }
 
 var slashCommands = []*discordgo.ApplicationCommand{

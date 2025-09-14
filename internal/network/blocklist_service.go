@@ -15,10 +15,10 @@ import (
 
 type blocklistHandler struct {
 	blocklists BlocklistUsecase
-	networks   *NetworkUsecase
+	networks   NetworkUsecase
 }
 
-func NewBlocklistHandler(engine *gin.Engine, bu BlocklistUsecase, nu *NetworkUsecase, ath httphelper.Authenticator) {
+func NewBlocklistHandler(engine *gin.Engine, bu BlocklistUsecase, nu NetworkUsecase, ath httphelper.Authenticator) {
 	handler := blocklistHandler{
 		blocklists: bu,
 		networks:   nu,

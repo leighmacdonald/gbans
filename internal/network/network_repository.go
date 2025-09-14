@@ -63,7 +63,7 @@ func (r networkRepository) QueryConnections(ctx context.Context, opts Connection
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, 0, r.db.DBErr(errQuery)
+		return nil, 0, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -84,7 +84,7 @@ func (r networkRepository) QueryConnections(ctx context.Context, opts Connection
 			&steamID,
 			&connHistory.CreatedOn,
 			&serverID, &shortName, &name); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
+			return nil, 0, database.DBErr(errScan)
 		}
 
 		// Added later in dev, so can be legacy data w/o a server_id
@@ -110,7 +110,7 @@ func (r networkRepository) QueryConnections(ctx context.Context, opts Connection
 		Where(constraints))
 
 	if errCount != nil {
-		return nil, 0, r.db.DBErr(errCount)
+		return nil, 0, database.DBErr(errCount)
 	}
 
 	return messages, count, nil
@@ -135,7 +135,7 @@ func (r networkRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -150,7 +150,7 @@ func (r networkRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid
 
 		if errScan := rows.Scan(&conn.PersonaName, &conn.PersonConnectionID, &steamID,
 			&conn.IPAddr, &conn.CreatedOn, &conn.ServerID); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		conn.SteamID = steamid.New(steamID)
@@ -178,7 +178,7 @@ func (r networkRepository) AddConnectionHistory(ctx context.Context, conn *Perso
 	if errQuery := r.db.
 		QueryRow(ctx, nil, query, conn.SteamID.Int64(), conn.IPAddr.String(), conn.PersonaName, conn.CreatedOn, conn.ServerID).
 		Scan(&conn.PersonConnectionID); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -217,7 +217,7 @@ func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) 
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, query)
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -228,7 +228,7 @@ func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) 
 		var asnRecord NetworkASN
 		if errScan := rows.
 			Scan(&asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		records = append(records, asnRecord)
@@ -249,7 +249,7 @@ func (r networkRepository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Ad
 	if errQuery := r.db.
 		QueryRow(ctx, nil, query, ipAddr.String()).
 		Scan(&asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errQuery != nil {
-		return asnRecord, r.db.DBErr(errQuery)
+		return asnRecord, database.DBErr(errQuery)
 	}
 
 	return asnRecord, nil
@@ -266,7 +266,7 @@ func (r networkRepository) GetLocationRecord(ctx context.Context, ipAddr netip.A
 	if errQuery := r.db.QueryRow(ctx, nil, query, ipAddr.String()).
 		Scan(&record.CIDR, &record.CountryCode, &record.CountryName, &record.RegionName,
 			&record.CityName, &record.LatLong.Latitude, &record.LatLong.Longitude); errQuery != nil {
-		return record, r.db.DBErr(errQuery)
+		return record, database.DBErr(errQuery)
 	}
 
 	return record, nil
@@ -284,7 +284,7 @@ func (r networkRepository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr
 	if errQuery := r.db.QueryRow(ctx, nil, query, ipAddr.String()).
 		Scan(&proxyRecord.CIDR, &proxyRecord.ProxyType, &proxyRecord.CountryCode, &proxyRecord.CountryName, &proxyRecord.RegionName, &proxyRecord.CityName, &proxyRecord.ISP,
 			&proxyRecord.Domain, &proxyRecord.UsageType, &proxyRecord.ASN, &proxyRecord.AS, &proxyRecord.LastSeen, &proxyRecord.Threat); errQuery != nil {
-		return proxyRecord, r.db.DBErr(errQuery)
+		return proxyRecord, database.DBErr(errQuery)
 	}
 
 	return proxyRecord, nil

@@ -76,7 +76,8 @@ func (d Downloader) Start(ctx context.Context) {
 				continue
 			}
 
-			if err := d.scpExec.Update(ctx); err != nil {
+			// FIXME
+			if err := d.scpExec.Update(ctx, nil); err != nil {
 				slog.Error("Error trying to download demos", log.ErrAttr(err))
 			}
 		case <-ctx.Done():

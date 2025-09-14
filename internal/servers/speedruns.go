@@ -1,27 +1,10 @@
 package servers
 
 import (
-	"context"
 	"time"
 
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
-
-type SpeedrunRepository interface {
-	Save(ctx context.Context, details *Speedrun) error
-	ByID(ctx context.Context, speedrunID int) (Speedrun, error)
-	ByMap(ctx context.Context, name string) ([]SpeedrunMapOverview, error)
-	Recent(ctx context.Context, limit int) ([]SpeedrunMapOverview, error)
-	TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error)
-}
-
-type SpeedrunUsecase interface {
-	Save(ctx context.Context, details Speedrun) (Speedrun, error)
-	ByID(ctx context.Context, speedrunID int) (Speedrun, error)
-	ByMap(ctx context.Context, name string) ([]SpeedrunMapOverview, error)
-	Recent(ctx context.Context, limit int) ([]SpeedrunMapOverview, error)
-	TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error)
-}
 
 type SpeedrunInterval int
 

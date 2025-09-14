@@ -27,11 +27,11 @@ func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string) (Pa
 		OrderBy("revision desc").
 		Limit(1))
 	if errQuery != nil {
-		return page, r.db.DBErr(errQuery)
+		return page, database.DBErr(errQuery)
 	}
 
 	if err := row.Scan(&page.Slug, &page.BodyMD, &page.Revision, &page.CreatedOn, &page.UpdatedOn, &page.PermissionLevel); err != nil {
-		return page, r.db.DBErr(err)
+		return page, database.DBErr(err)
 	}
 
 	return page, nil
@@ -42,7 +42,7 @@ func (r *wikiRepository) DeleteWikiPageBySlug(ctx context.Context, slug string) 
 		Builder().
 		Delete("wiki").
 		Where(sq.Eq{"slug": slug})); errExec != nil {
-		return r.db.DBErr(errExec)
+		return database.DBErr(errExec)
 	}
 
 	return nil
@@ -55,7 +55,7 @@ func (r *wikiRepository) SaveWikiPage(ctx context.Context, page *Page) error {
 		Columns("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").
 		Values(page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn, page.PermissionLevel))
 	if errQueryRow != nil {
-		return r.db.DBErr(errQueryRow)
+		return database.DBErr(errQueryRow)
 	}
 
 	return nil

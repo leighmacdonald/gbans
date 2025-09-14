@@ -25,7 +25,7 @@ func (r PatreonRepository) OldAuths(ctx context.Context) ([]PatreonCredential, e
 
 	rows, errRows := r.db.Query(ctx, nil, query)
 	if errRows != nil {
-		return nil, r.db.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	var credentials []PatreonCredential
@@ -34,7 +34,7 @@ func (r PatreonRepository) OldAuths(ctx context.Context) ([]PatreonCredential, e
 		var creds PatreonCredential
 		if errScan := rows.Scan(&creds.SteamID, &creds.PatreonID, &creds.AccessToken, &creds.RefreshToken, &creds.ExpiresIn,
 			&creds.Scope, &creds.TokenType, &creds.Version, &creds.CreatedOn, &creds.UpdatedOn); errScan != nil {
-			return credentials, r.db.DBErr(errScan)
+			return credentials, database.DBErr(errScan)
 		}
 
 		credentials = append(credentials, creds)
@@ -49,14 +49,14 @@ func (r PatreonRepository) DeleteTokens(ctx context.Context, steamID steamid.Ste
 		Where(sq.Eq{"steam_id": steamID}).
 		ToSql()
 	if errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return r.db.Exec(ctx, nil, query, vars...)
 }
 
 func (r PatreonRepository) SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 		Builder().
 		Update("auth_patreon").
 		Set("creator_access_token", accessToken).
@@ -97,7 +97,7 @@ func (r PatreonRepository) SaveTokens(ctx context.Context, creds PatreonCredenti
 				              expires_in = $5, scope = $6, token_type = $7, version = $8, updated_on = $10
 				`
 
-	return r.db.DBErr(r.db.Exec(ctx, nil, query, creds.SteamID.Int64(), creds.PatreonID, creds.AccessToken, creds.RefreshToken,
+	return database.DBErr(r.db.Exec(ctx, nil, query, creds.SteamID.Int64(), creds.PatreonID, creds.AccessToken, creds.RefreshToken,
 		creds.ExpiresIn, creds.Scope, creds.TokenType, creds.Version, creds.CreatedOn, creds.UpdatedOn,
 	))
 }
@@ -109,7 +109,7 @@ func (r PatreonRepository) GetTokens(ctx context.Context, steamID steamid.SteamI
 		From("auth_patreon").
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
 	if errRow != nil {
-		return PatreonCredential{}, r.db.DBErr(errRow)
+		return PatreonCredential{}, database.DBErr(errRow)
 	}
 
 	var creds PatreonCredential
@@ -118,7 +118,7 @@ func (r PatreonRepository) GetTokens(ctx context.Context, steamID steamid.SteamI
 
 	if err := row.Scan(&creds.PatreonID, &creds.AccessToken, &creds.RefreshToken, &creds.ExpiresIn, &creds.Scope, &creds.TokenType,
 		&creds.Version, &creds.CreatedOn, &creds.UpdatedOn); err != nil {
-		return PatreonCredential{}, r.db.DBErr(errRow)
+		return PatreonCredential{}, database.DBErr(errRow)
 	}
 
 	return creds, nil

@@ -27,21 +27,21 @@ func (r AuthRepository) SavePersonAuth(ctx context.Context, auth *PersonAuth) er
 		ToSql()
 
 	if errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
-	return r.db.DBErr(r.db.QueryRow(ctx, nil, query, args...).Scan(&auth.PersonAuthID))
+	return database.DBErr(r.db.QueryRow(ctx, nil, query, args...).Scan(&auth.PersonAuthID))
 }
 
 func (r AuthRepository) DeletePersonAuth(ctx context.Context, authID int64) error {
-	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
+	return database.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
 		Builder().
 		Delete("person_auth").
 		Where(sq.Eq{"person_auth_id": authID})))
 }
 
 func (r AuthRepository) PrunePersonAuth(ctx context.Context) error {
-	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
+	return database.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
 		Builder().
 		Delete("person_auth").
 		Where(sq.Gt{"created_on + interval '1 month'": time.Now()})))
@@ -54,13 +54,13 @@ func (r AuthRepository) GetPersonAuthByFingerprint(ctx context.Context, fingerpr
 		From("person_auth").
 		Where(sq.And{sq.Eq{"fingerprint": fingerprint}}))
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return database.DBErr(errRow)
 	}
 
 	var steamID int64
 
 	if errScan := row.Scan(&auth.PersonAuthID, &steamID, &auth.IPAddr, &auth.AccessToken, &auth.CreatedOn); errScan != nil {
-		return r.db.DBErr(errScan)
+		return database.DBErr(errScan)
 	}
 
 	auth.SteamID = steamid.New(steamID)

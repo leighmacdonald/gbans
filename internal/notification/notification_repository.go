@@ -33,32 +33,32 @@ func (r *NotificationRepository) SendSite(ctx context.Context, targetIDs steamid
 		batch.Queue(query, sid.Int64(), severity, message, link, time.Now(), authorID)
 	}
 
-	return r.db.DBErr(r.db.SendBatch(ctx, nil, batch).Close())
+	return database.DBErr(r.db.SendBatch(ctx, nil, batch).Close())
 }
 
 func (r *NotificationRepository) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
 func (r *NotificationRepository) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
 func (r *NotificationRepository) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
 func (r *NotificationRepository) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
@@ -78,7 +78,7 @@ func (r *NotificationRepository) GetPersonNotifications(ctx context.Context, ste
 
 	rows, errRows := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errRows != nil {
-		return nil, r.db.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	defer rows.Close()

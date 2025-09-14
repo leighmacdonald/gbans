@@ -73,7 +73,7 @@ func (a anticheatRepository) Query(ctx context.Context, query AnticheatQuery) ([
 		if err := rows.Scan(&entry.AnticheatID, &entry.SteamID, &entry.Personaname, &entry.Detection, &entry.Summary,
 			&entry.DemoID, &entry.DemoTick, &entry.ServerID, &entry.RawLog, &entry.ServerName, &entry.Personaname,
 			&entry.AvatarHash, &entry.CreatedOn, &entry.Triggered); err != nil {
-			return nil, a.db.DBErr(err)
+			return nil, database.DBErr(err)
 		}
 
 		entries = append(entries, entry)
@@ -99,7 +99,7 @@ func (a anticheatRepository) DetectionsBySteamID(ctx context.Context, steamID st
 	for rows.Next() {
 		var entry logparse.StacEntry
 		if err := rows.Scan(&entry.AnticheatID); err != nil {
-			return nil, a.db.DBErr(err)
+			return nil, database.DBErr(err)
 		}
 
 		entries = append(entries, entry)
@@ -125,7 +125,7 @@ func (a anticheatRepository) DetectionsByType(ctx context.Context, detectionType
 	for rows.Next() {
 		var entry logparse.StacEntry
 		if err := rows.Scan(&entry.AnticheatID); err != nil {
-			return nil, a.db.DBErr(err)
+			return nil, database.DBErr(err)
 		}
 
 		entries = append(entries, entry)
@@ -148,7 +148,7 @@ func (a anticheatRepository) SaveEntries(ctx context.Context, entries []logparse
 				"raw_log":    entry.RawLog,
 				"created_on": entry.CreatedOn.Truncate(time.Second),
 			})); err != nil && !errors.Is(err, database.ErrDuplicate) {
-			return a.db.DBErr(err)
+			return database.DBErr(err)
 		}
 	}
 
@@ -180,7 +180,7 @@ func (a anticheatRepository) getMissingIDMap(ctx context.Context, limit uint64) 
 	for rows.Next() {
 		var idm demoIDMap
 		if err := rows.Scan(&idm.demoID, &idm.title); err != nil {
-			return nil, nil, a.db.DBErr(err)
+			return nil, nil, database.DBErr(err)
 		}
 
 		titles = append(titles, idm.title)
@@ -206,7 +206,7 @@ func (a anticheatRepository) getDemoIDsByTitle(ctx context.Context, titles []str
 	for demos.Next() {
 		var m demoIDMap
 		if errScan := demos.Scan(&m.demoID, &m.title); errScan != nil {
-			return nil, a.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		demoMaps = append(demoMaps, m)

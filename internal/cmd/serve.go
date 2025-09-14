@@ -26,7 +26,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/network/dns"
@@ -148,8 +147,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 	return &cobra.Command{
 		Use:   "serve",
 		Short: "Starts the gbans web app",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
 			slog.Info("Starting gbans...",
@@ -230,7 +229,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			if conf.Discord.Enabled {
-				if err := discordUsecase.Start(); err != nil {
+				if err := discordUsecase.Start(ctx); err != nil {
 					slog.Error("Failed to start discord", log.ErrAttr(err))
 
 					return err
@@ -255,7 +254,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbConn), configUsecase, tfapiClient)
 
-			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbConn), configUsecase)
+			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbConn, personUsecase), configUsecase)
 			go networkUsecase.Start(ctx)
 
 			assetRepository := asset.NewLocalRepository(dbConn, conf.LocalStore.PathRoot)
@@ -287,15 +286,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			discordOAuthUsecase := discordoauth.NewDiscordOAuthUsecase(discordoauth.NewDiscordOAuthRepository(dbConn), configUsecase)
 
 			appeals := ban.NewAppealUsecase(ban.NewAppealRepository(dbConn), banUsecase, personUsecase, configUsecase)
-
-			matchRepo := match.NewMatchRepository(eventBroadcaster, dbConn, personUsecase, serversUC, stateUsecase, weaponsMap)
-			go matchRepo.Start(ctx)
-
-			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUC, notificationUsecase)
-
-			if errWeapons := matchUsecase.LoadWeapons(ctx, weaponsMap); errWeapons != nil {
-				slog.Error("Failed to import weapons", log.ErrAttr(errWeapons))
-			}
 
 			chatRepository := chat.NewChatRepository(dbConn, personUsecase, wordFilterUsecase, eventBroadcaster)
 			go chatRepository.Start(ctx)

@@ -101,7 +101,10 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			return
 		}
 
-		fetchedPerson, errPerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, nil, sid)
+		// TODO FIX
+		_, _ = h.personUsecase.GetOrCreatePersonBySteamID(ctx, nil, sid)
+
+		fetchedPerson, errPerson := h.personUsecase.GetPersonBySteamID(ctx, nil, sid)
 		if errPerson != nil {
 			ctx.Redirect(302, referralURL)
 			slog.Error("Failed to create or load user profile", log.ErrAttr(errPerson), handlerName)

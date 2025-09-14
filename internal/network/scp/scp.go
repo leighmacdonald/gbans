@@ -196,7 +196,7 @@ func (f SCPConnection) trustedHostKeyCallback(ctx context.Context) ssh.HostKeyCa
 		if errRow := f.database.
 			QueryRow(ctx, nil, `SELECT key FROM host_key WHERE address = $1`, addr).
 			Scan(&key); errRow != nil {
-			return "", f.database.DBErr(errRow)
+			return "", database.DBErr(errRow)
 		}
 
 		return key, nil
@@ -205,7 +205,7 @@ func (f SCPConnection) trustedHostKeyCallback(ctx context.Context) ssh.HostKeyCa
 	setKey := func(addr string, key string) error {
 		const query = `INSERT INTO host_key (address, key, created_on) VALUES ($1, $2, $3)`
 		if err := f.database.Exec(ctx, nil, query, addr, key, time.Now()); err != nil {
-			return f.database.DBErr(err)
+			return database.DBErr(err)
 		}
 
 		return nil

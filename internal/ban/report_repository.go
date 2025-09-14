@@ -46,7 +46,7 @@ func (r ReportRepository) insertReport(ctx context.Context, report *Report) erro
 		msgID,
 	).
 		Scan(&report.ReportID); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -60,7 +60,7 @@ func (r ReportRepository) updateReport(ctx context.Context, report *Report) erro
 		msgID = &report.PersonMessageID
 	}
 
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 		Builder().
 		Update("report").
 		Set("author_id", report.SourceID).
@@ -104,7 +104,7 @@ func (r ReportRepository) updateReportMessage(ctx context.Context, message *Repo
 		Set("updated_on", message.UpdatedOn).
 		Set("message_md", message.MessageMD).
 		Where(sq.Eq{"report_message_id": message.ReportMessageID})); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -127,7 +127,7 @@ func (r ReportRepository) insertReportMessage(ctx context.Context, message *Repo
 		message.CreatedOn,
 		message.UpdatedOn,
 	).Scan(&message.ReportMessageID); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -141,7 +141,7 @@ func (r ReportRepository) DropReport(ctx context.Context, report *Report) error 
 		Update("report").
 		Set("deleted", report.Deleted).
 		Where(sq.Eq{"report_id": report.ReportID})); errExec != nil {
-		return r.db.DBErr(errExec)
+		return database.DBErr(errExec)
 	}
 
 	return nil
@@ -155,7 +155,7 @@ func (r ReportRepository) DropReportMessage(ctx context.Context, message *Report
 		Update("report_message").
 		Set("deleted", message.Deleted).
 		Where(sq.Eq{"report_message_id": message.ReportMessageID})); errExec != nil {
-		return r.db.DBErr(errExec)
+		return database.DBErr(errExec)
 	}
 
 	return nil
@@ -178,7 +178,7 @@ func (r ReportRepository) GetReports(ctx context.Context, steamID steamid.SteamI
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -208,7 +208,7 @@ func (r ReportRepository) GetReports(ctx context.Context, steamID steamid.SteamI
 			&report.DemoTick,
 			&personMessageID,
 		); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		if personMessageID != nil {
@@ -243,7 +243,7 @@ func (r ReportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 		}))
 
 	if errRow != nil {
-		return report, r.db.DBErr(errRow)
+		return report, database.DBErr(errRow)
 	}
 
 	var (
@@ -266,7 +266,7 @@ func (r ReportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 		&report.DemoID,
 		&report.PersonMessageID,
 	); errScan != nil {
-		return report, r.db.DBErr(errScan)
+		return report, database.DBErr(errScan)
 	}
 
 	report.SourceID = steamid.New(sourceID)
@@ -288,7 +288,7 @@ func (r ReportRepository) GetReport(ctx context.Context, reportID int64) (Report
 		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"report_id": reportID}}))
 
 	if errRow != nil {
-		return report, r.db.DBErr(errRow)
+		return report, database.DBErr(errRow)
 	}
 
 	var (
@@ -311,7 +311,7 @@ func (r ReportRepository) GetReport(ctx context.Context, reportID int64) (Report
 		&report.DemoID,
 		&report.PersonMessageID,
 	); errScan != nil {
-		return report, r.db.DBErr(errScan)
+		return report, database.DBErr(errScan)
 	}
 
 	report.SourceID = steamid.New(sourceID)
@@ -330,7 +330,7 @@ func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int64)
 		Where(sq.And{sq.And{sq.Eq{"s.deleted": false}, sq.Eq{"s.report_id": reportID}}}).
 		OrderBy("s.created_on"))
 	if errQuery != nil {
-		if errors.Is(r.db.DBErr(errQuery), database.ErrNoResult) {
+		if errors.Is(database.DBErr(errQuery), database.ErrNoResult) {
 			return []ReportMessage{}, nil
 		}
 	}
@@ -357,7 +357,7 @@ func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int64)
 			&msg.Personaname,
 			&msg.PermissionLevel,
 		); errScan != nil {
-			return nil, r.db.DBErr(errQuery)
+			return nil, database.DBErr(errQuery)
 		}
 
 		msg.AuthorID = steamid.New(authorID)
@@ -397,7 +397,7 @@ func (r ReportRepository) GetReportMessageByID(ctx context.Context, reportMessag
 		&message.Personaname,
 		&message.PermissionLevel,
 	); errScan != nil {
-		return message, r.db.DBErr(errScan)
+		return message, database.DBErr(errScan)
 	}
 
 	message.AuthorID = steamid.New(authorID)
