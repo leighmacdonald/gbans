@@ -31,7 +31,7 @@ func (r newsRepository) GetNewsLatest(ctx context.Context, limit int, includeUnp
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -43,7 +43,7 @@ func (r newsRepository) GetNewsLatest(ctx context.Context, limit int, includeUnp
 		var entry NewsEntry
 		if errScan := rows.Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 			&entry.CreatedOn, &entry.UpdatedOn); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		articles = append(articles, entry)
@@ -63,12 +63,12 @@ func (r newsRepository) GetNewsLatestArticle(ctx context.Context, includeUnpubli
 
 	query, args, errQueryArgs := builder.OrderBy("created_on DESC").ToSql()
 	if errQueryArgs != nil {
-		return r.db.DBErr(errQueryArgs)
+		return database.DBErr(errQueryArgs)
 	}
 
 	if errQuery := r.db.QueryRow(ctx, nil, query, args...).Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -80,12 +80,12 @@ func (r newsRepository) GetNewsByID(ctx context.Context, newsID int, entry *News
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").Where(sq.Eq{"news_id": newsID}).ToSql()
 	if errQueryArgs != nil {
-		return r.db.DBErr(errQueryArgs)
+		return database.DBErr(errQueryArgs)
 	}
 
 	if errQuery := r.db.QueryRow(ctx, nil, query, args...).Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -113,14 +113,14 @@ func (r newsRepository) insertNewsArticle(ctx context.Context, entry *NewsEntry)
 
 	errQueryRow := r.db.QueryRow(ctx, nil, query, args...).Scan(&entry.NewsID)
 	if errQueryRow != nil {
-		return r.db.DBErr(errQueryRow)
+		return database.DBErr(errQueryRow)
 	}
 
 	return nil
 }
 
 func (r newsRepository) updateNewsArticle(ctx context.Context, entry *NewsEntry) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 		Builder().
 		Update("news").
 		Set("title", entry.Title).
@@ -131,7 +131,7 @@ func (r newsRepository) updateNewsArticle(ctx context.Context, entry *NewsEntry)
 }
 
 func (r newsRepository) DropNewsArticle(ctx context.Context, newsID int) error {
-	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
+	return database.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
 		Builder().
 		Delete("news").
 		Where(sq.Eq{"news_id": newsID})))

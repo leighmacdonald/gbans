@@ -248,6 +248,10 @@ func (u ChatUsecase) Start(ctx context.Context) {
 	}
 }
 
+func (u ChatUsecase) GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error) {
+	return u.repository.GetPersonMessageByID(ctx, personMessageID)
+}
+
 func (u ChatUsecase) WarningState() map[string][]UserWarning {
 	return u.State()
 }

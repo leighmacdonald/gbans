@@ -49,7 +49,7 @@ func (r *AppealRepository) GetAppealsByActivity(ctx context.Context, opts Appeal
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -113,7 +113,7 @@ func (r *AppealRepository) updateBanMessage(ctx context.Context, message *BanApp
 		Where(sq.Eq{"ban_message_id": message.BanMessageID})
 
 	if errQuery := r.db.ExecUpdateBuilder(ctx, nil, query); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -136,7 +136,7 @@ func (r *AppealRepository) insertBanMessage(ctx context.Context, message *BanApp
 		message.CreatedOn,
 		message.UpdatedOn,
 	).Scan(&message.BanMessageID); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -154,7 +154,7 @@ func (r *AppealRepository) GetBanMessages(ctx context.Context, banID int64) ([]B
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, query)
 	if errQuery != nil {
-		if errors.Is(r.db.DBErr(errQuery), database.ErrNoResult) {
+		if errors.Is(database.DBErr(errQuery), database.ErrNoResult) {
 			return nil, nil
 		}
 	}
@@ -181,7 +181,7 @@ func (r *AppealRepository) GetBanMessages(ctx context.Context, banID int64) ([]B
 			&msg.Personaname,
 			&msg.PermissionLevel,
 		); errScan != nil {
-			return nil, r.db.DBErr(errQuery)
+			return nil, database.DBErr(errQuery)
 		}
 
 		msg.AuthorID = steamid.New(authorID)
@@ -212,7 +212,7 @@ func (r *AppealRepository) GetBanMessageByID(ctx context.Context, banMessageID i
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, nil, query)
 	if errQuery != nil {
-		return message, r.db.DBErr(errQuery)
+		return message, database.DBErr(errQuery)
 	}
 
 	if errScan := row.Scan(
@@ -227,7 +227,7 @@ func (r *AppealRepository) GetBanMessageByID(ctx context.Context, banMessageID i
 		&message.Personaname,
 		&message.PermissionLevel,
 	); errScan != nil {
-		return message, r.db.DBErr(errScan)
+		return message, database.DBErr(errScan)
 	}
 
 	message.AuthorID = steamid.New(authorID)
@@ -243,7 +243,7 @@ func (r *AppealRepository) DropBanMessage(ctx context.Context, message *BanAppea
 		Where(sq.Eq{"ban_message_id": message.BanMessageID})
 
 	if errExec := r.db.ExecUpdateBuilder(ctx, nil, query); errExec != nil {
-		return r.db.DBErr(errExec)
+		return database.DBErr(errExec)
 	}
 
 	message.Deleted = true

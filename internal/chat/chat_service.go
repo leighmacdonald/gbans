@@ -12,10 +12,10 @@ import (
 )
 
 type chatHandler struct {
-	chat ChatUsecase
+	chat *ChatUsecase
 }
 
-func NewHandler(engine *gin.Engine, chat ChatUsecase, authUsecase httphelper.Authenticator) {
+func NewHandler(engine *gin.Engine, chat *ChatUsecase, authUsecase httphelper.Authenticator) {
 	handler := chatHandler{chat: chat}
 
 	// authed

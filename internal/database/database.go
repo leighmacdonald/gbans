@@ -48,7 +48,6 @@ type Database interface {
 	Builder() sq.StatementBuilderType
 	SendBatch(ctx context.Context, transaction pgx.Tx, b *pgx.Batch) pgx.BatchResults
 	GetCount(ctx context.Context, transaction pgx.Tx, builder sq.SelectBuilder) (int64, error)
-	DBErr(rootError error) error
 	TruncateTable(ctx context.Context, table string) error
 	WrapTx(ctx context.Context, fn func(pgx.Tx) error) error
 }
@@ -81,19 +80,19 @@ type postgresStore struct {
 func (db *postgresStore) WrapTx(ctx context.Context, txFunc func(pgx.Tx) error) error {
 	transaction, errTx := db.Begin(ctx)
 	if errTx != nil {
-		return db.DBErr(errTx)
+		return DBErr(errTx)
 	}
 
 	if err := txFunc(transaction); err != nil {
 		if errRollback := transaction.Rollback(ctx); errRollback != nil {
-			return db.DBErr(errRollback)
+			return DBErr(errRollback)
 		}
 
 		return err
 	}
 
 	if err := transaction.Commit(ctx); err != nil {
-		return db.DBErr(err)
+		return DBErr(err)
 	}
 
 	return nil
@@ -109,7 +108,7 @@ func New(dsn string, autoMigrate bool, logQueries bool) Database {
 }
 
 // DBErr is used to wrap common database errors in owr own error types.
-func (db *postgresStore) DBErr(rootError error) error {
+func DBErr(rootError error) error {
 	if rootError == nil {
 		return nil
 	}
@@ -201,7 +200,7 @@ func (db *postgresStore) Query(ctx context.Context, transaction pgx.Tx, query st
 func (db *postgresStore) QueryBuilder(ctx context.Context, transaction pgx.Tx, builder sq.SelectBuilder) (pgx.Rows, error) { //nolint:ireturn
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return nil, db.DBErr(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	rows, err := db.Query(ctx, transaction, query, args...)
@@ -244,7 +243,7 @@ func (db *postgresStore) Exec(ctx context.Context, transaction pgx.Tx, query str
 func (db *postgresStore) ExecInsertBuilder(ctx context.Context, transaction pgx.Tx, builder sq.InsertBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return db.DBErr(errQuery)
+		return DBErr(errQuery)
 	}
 
 	return db.Exec(ctx, transaction, query, args...) //nolint:wrapcheck
@@ -319,12 +318,12 @@ func (db *postgresStore) GetCount(ctx context.Context, transaction pgx.Tx, build
 func (db *postgresStore) TruncateTable(ctx context.Context, table string) error {
 	query, args, errQueryArgs := sq.Delete(table).ToSql()
 	if errQueryArgs != nil {
-		return db.DBErr(errQueryArgs)
+		return DBErr(errQueryArgs)
 	}
 
 	rows, errExec := db.Query(ctx, nil, query, args...)
 	if errExec != nil {
-		return db.DBErr(errExec)
+		return DBErr(errExec)
 	}
 
 	rows.Close()

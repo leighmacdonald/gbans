@@ -197,15 +197,9 @@ func (a AntiCheatUsecase) Import(ctx context.Context, fileName string, reader io
 	}
 
 	for _, entry := range entries {
-		player, err := a.persons.GetOrCreatePersonBySteamID(ctx, nil, entry.SteamID)
+		_, err := a.persons.GetOrCreatePersonBySteamID(ctx, nil, entry.SteamID)
 		if err != nil {
 			return nil, err
-		}
-		if player.PersonaName == "" && entry.Name != "" {
-			player.PersonaName = entry.Name
-			if errSave := a.persons.SavePerson(ctx, nil, &player); errSave != nil {
-				return nil, errSave
-			}
 		}
 	}
 

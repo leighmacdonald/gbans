@@ -193,10 +193,10 @@ func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
 		return newBan, errors.Join(errSave, ErrSaveBan)
 	}
 
-	bannedPerson, errBannedPerson := s.QueryOne(ctx, QueryOpts{BanID: newBan.BanID, EvadeOk: true})
-	if errBannedPerson != nil {
-		return newBan, errors.Join(errBannedPerson, ErrSaveBan)
-	}
+	// bannedPerson, errBannedPerson := s.QueryOne(ctx, QueryOpts{BanID: newBan.BanID, EvadeOk: true})
+	// if errBannedPerson != nil {
+	// 	return newBan, errors.Join(errBannedPerson, ErrSaveBan)
+	// }
 
 	// expIn := "Permanent"
 	// expAt := "Permanent"
@@ -319,8 +319,8 @@ func (s *BanUsecase) GetOlderThan(ctx context.Context, filter domain.QueryFilter
 
 // CheckEvadeStatus checks if the address matches an existing user who is currently banned already. This
 // function will always fail-open and allow players in if an error occurs.
-func (s *BanUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error) {
-	existing, errMatch := s.GetByLastIP(ctx, address, false, false)
+func (s *BanUsecase) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, address netip.Addr) (bool, error) {
+	existing, errMatch := s.QueryOne(ctx, QueryOpts{CIDR: address.String()})
 	if errMatch != nil {
 		if errors.Is(errMatch, database.ErrNoResult) {
 			return false, nil
@@ -343,7 +343,7 @@ func (s *BanUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Person
 	existing.Note += " Previous expiry: " + existing.ValidUntil.Format(time.DateTime)
 	existing.ValidUntil = time.Now().Add(duration)
 
-	if errSave := s.Save(ctx, &existing.Ban); errSave != nil {
+	if errSave := s.Save(ctx, &existing); errSave != nil {
 		slog.Error("Could not update previous ban.", log.ErrAttr(errSave))
 
 		return false, errSave
@@ -355,13 +355,14 @@ func (s *BanUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Person
 	req := BanOpts{
 		SourceID: owner,
 		TargetID: steamID,
+		Origin:   banDomain.System,
 		Duration: time.Hour * 24 * 365,
 		BanType:  banDomain.Banned,
 		Reason:   banDomain.Evading,
 		Note:     fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, config.ExtURL(existing)),
 	}
 
-	_, errSave := s.Ban(ctx, curUser, banDomain.System, req)
+	_, errSave := s.Ban(ctx, req)
 	if errSave != nil {
 		if errors.Is(errSave, database.ErrDuplicate) {
 			// Already banned

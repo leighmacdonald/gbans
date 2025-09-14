@@ -25,21 +25,28 @@ func (r PlayerqueueRepository) Message(ctx context.Context, messageID int64) (Ch
 		LeftJoin("person p USING(steam_id)").
 		Where(sq.And{sq.Eq{"m.deleted": false}, sq.Eq{"m.message_id": messageID}}))
 	if err != nil {
-		return ChatLog{}, r.db.DBErr(err)
+		return ChatLog{}, database.DBErr(err)
 	}
 
 	var message ChatLog
 
 	if errScan := row.Scan(&message.MessageID, &message.SteamID, &message.CreatedOn, &message.Personaname,
 		&message.Avatarhash, &message.PermissionLevel, &message.BodyMD); errScan != nil {
-		return ChatLog{}, r.db.DBErr(errScan)
+		return ChatLog{}, database.DBErr(errScan)
 	}
 
 	return message, nil
 }
 
+func (r PlayerqueueRepository) SetChatStatus(ctx context.Context, steamID steamid.SteamID, status ChatStatus) error {
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+		Update("person").
+		Set("playerqueue_chat_status", status).
+		Where(sq.Eq{"steam_id": steamID})))
+}
+
 func (r PlayerqueueRepository) Delete(ctx context.Context, messageID ...int64) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("playerqueue_messages").
 		Set("deleted", true).
 		Where(sq.Eq{"message_id": messageID})))
@@ -54,7 +61,7 @@ func (r PlayerqueueRepository) Save(ctx context.Context, message ChatLog) (ChatL
 
 	query, args, errQuery := r.db.Builder().
 		Insert("playerqueue_messages").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"steam_id":    message.SteamID,
 			"created_on":  message.CreatedOn,
 			"personaname": message.Personaname,
@@ -64,11 +71,11 @@ func (r PlayerqueueRepository) Save(ctx context.Context, message ChatLog) (ChatL
 		Suffix("RETURNING message_id").
 		ToSql()
 	if errQuery != nil {
-		return ChatLog{}, r.db.DBErr(errQuery)
+		return ChatLog{}, database.DBErr(errQuery)
 	}
 
 	if err := r.db.QueryRow(ctx, nil, query, args...).Scan(&message.MessageID); err != nil {
-		return message, r.db.DBErr(err)
+		return message, database.DBErr(err)
 	}
 
 	return message, nil
@@ -96,7 +103,7 @@ func (r PlayerqueueRepository) Query(ctx context.Context, query PlayerqueueQuery
 
 	rows, errRows := r.db.QueryBuilder(ctx, nil, builder)
 	if errRows != nil {
-		return nil, r.db.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -105,7 +112,7 @@ func (r PlayerqueueRepository) Query(ctx context.Context, query PlayerqueueQuery
 		var msg ChatLog
 		if errScan := rows.Scan(&msg.MessageID, &msg.SteamID, &msg.CreatedOn, &msg.Personaname,
 			&msg.Avatarhash, &msg.PermissionLevel, &msg.BodyMD); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		msgs = append(msgs, msg)

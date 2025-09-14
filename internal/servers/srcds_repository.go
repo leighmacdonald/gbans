@@ -75,7 +75,7 @@ func (r SRCDSRepository) GetGroupImmunities(ctx context.Context) ([]SMGroupImmun
 		LeftJoin("sm_groups g ON g.id = gi.group_id").
 		LeftJoin("sm_groups o ON o.id = gi.other_id"))
 	if errRows != nil {
-		return nil, r.database.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	for rows.Next() {
@@ -86,7 +86,7 @@ func (r SRCDSRepository) GetGroupImmunities(ctx context.Context) ([]SMGroupImmun
 			&immunity.Group.CreatedOn, &immunity.Group.UpdatedOn,
 			&immunity.Other.GroupID, &immunity.Other.Flags, &immunity.Other.Name, &immunity.Other.ImmunityLevel,
 			&immunity.Other.CreatedOn, &immunity.Other.UpdatedOn); errScan != nil {
-			return nil, r.database.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		immunities = append(immunities, immunity)
@@ -107,7 +107,7 @@ func (r SRCDSRepository) GetGroupImmunityByID(ctx context.Context, groupImmunity
 		LeftJoin("sm_groups o ON o.id = gi.other_id").
 		Where(sq.Eq{"gi.group_immunity_id": groupImmunityID}))
 	if errRow != nil {
-		return SMGroupImmunity{}, r.database.DBErr(errRow)
+		return SMGroupImmunity{}, database.DBErr(errRow)
 	}
 
 	if errScan := row.Scan(&immunity.GroupImmunityID, &immunity.CreatedOn,
@@ -115,7 +115,7 @@ func (r SRCDSRepository) GetGroupImmunityByID(ctx context.Context, groupImmunity
 		&immunity.Group.CreatedOn, &immunity.Group.UpdatedOn,
 		&immunity.Other.GroupID, &immunity.Other.Flags, &immunity.Other.Name, &immunity.Other.ImmunityLevel,
 		&immunity.Other.CreatedOn, &immunity.Other.UpdatedOn); errScan != nil {
-		return SMGroupImmunity{}, r.database.DBErr(errScan)
+		return SMGroupImmunity{}, database.DBErr(errScan)
 	}
 
 	return immunity, nil
@@ -136,14 +136,14 @@ func (r SRCDSRepository) AddGroupImmunity(ctx context.Context, group SMGroups, o
 			"created_on": immunity.CreatedOn,
 		}).
 		Suffix("RETURNING group_immunity_id"), &immunity.GroupImmunityID); err != nil {
-		return SMGroupImmunity{}, r.database.DBErr(err)
+		return SMGroupImmunity{}, database.DBErr(err)
 	}
 
 	return immunity, nil
 }
 
 func (r SRCDSRepository) DelGroupImmunity(ctx context.Context, groupImmunity SMGroupImmunity) error {
-	return r.database.DBErr(r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
+	return database.DBErr(r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
 		Delete("sm_group_immunity").
 		Where(sq.Eq{"group_immunity_id": groupImmunity.GroupImmunityID})))
 }
@@ -160,14 +160,14 @@ func (r SRCDSRepository) AddGroupOverride(ctx context.Context, override SMGroupO
 			"updated_on": override.UpdatedOn,
 		}).
 		Suffix("RETURNING group_override_id"), &override.GroupOverrideID); err != nil {
-		return override, r.database.DBErr(err)
+		return override, database.DBErr(err)
 	}
 
 	return override, nil
 }
 
 func (r SRCDSRepository) DelGroupOverride(ctx context.Context, override SMGroupOverrides) error {
-	return r.database.DBErr(r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
+	return database.DBErr(r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
 		Delete("sm_group_overrides").
 		Where(sq.Eq{"group_override_id": override.GroupOverrideID})))
 }
@@ -180,12 +180,12 @@ func (r SRCDSRepository) GetGroupOverride(ctx context.Context, overrideID int) (
 		From("sm_group_overrides").
 		Where(sq.Eq{"group_override_id": overrideID}))
 	if errRow != nil {
-		return SMGroupOverrides{}, r.database.DBErr(errRow)
+		return SMGroupOverrides{}, database.DBErr(errRow)
 	}
 
 	if errScan := row.Scan(&override.GroupOverrideID, &override.GroupID, &override.Type, &override.Name,
 		&override.Access, &override.CreatedOn, &override.UpdatedOn); errScan != nil {
-		return override, r.database.DBErr(errScan)
+		return override, database.DBErr(errScan)
 	}
 
 	return override, nil
@@ -204,7 +204,7 @@ func (r SRCDSRepository) SaveGroupOverride(ctx context.Context, override SMGroup
 			"updated_on": override.UpdatedOn,
 		}).
 		Where(sq.Eq{"group_override_id": override.GroupOverrideID})); err != nil {
-		return SMGroupOverrides{}, r.database.DBErr(err)
+		return SMGroupOverrides{}, database.DBErr(err)
 	}
 
 	return override, nil
@@ -222,7 +222,7 @@ func (r SRCDSRepository) SaveOverride(ctx context.Context, override SMOverrides)
 			"updated_on": override.UpdatedOn,
 		}).
 		Where(sq.Eq{"override_id": override.OverrideID})); err != nil {
-		return SMOverrides{}, r.database.DBErr(err)
+		return SMOverrides{}, database.DBErr(err)
 	}
 
 	return override, nil
@@ -234,7 +234,7 @@ func (r SRCDSRepository) GroupOverrides(ctx context.Context, group SMGroups) ([]
 		From("sm_group_overrides").
 		Where(sq.Eq{"group_id": group.GroupID}))
 	if errRows != nil {
-		return nil, r.database.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	var overrides []SMGroupOverrides
@@ -243,7 +243,7 @@ func (r SRCDSRepository) GroupOverrides(ctx context.Context, group SMGroups) ([]
 		var override SMGroupOverrides
 		if errScan := rows.Scan(&override.GroupOverrideID, &override.GroupID, &override.Type, &override.Name, &override.Access,
 			&override.CreatedOn, &override.UpdatedOn); errScan != nil {
-			return nil, r.database.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		overrides = append(overrides, override)
@@ -260,12 +260,12 @@ func (r SRCDSRepository) GetOverride(ctx context.Context, overrideID int) (SMOve
 		From("sm_overrides").
 		Where(sq.Eq{"override_id": overrideID}))
 	if err != nil {
-		return override, r.database.DBErr(err)
+		return override, database.DBErr(err)
 	}
 
 	if errScan := row.Scan(&override.OverrideID, &override.Type, &override.Name,
 		&override.Flags, &override.CreatedOn, &override.UpdatedOn); errScan != nil {
-		return override, r.database.DBErr(errScan)
+		return override, database.DBErr(errScan)
 	}
 
 	return override, nil
@@ -280,14 +280,14 @@ func (r SRCDSRepository) AddOverride(ctx context.Context, overrides SMOverrides)
 		"created_on": overrides.CreatedOn,
 		"updated_on": overrides.UpdatedOn,
 	})); err != nil {
-		return overrides, r.database.DBErr(err)
+		return overrides, database.DBErr(err)
 	}
 
 	return overrides, nil
 }
 
 func (r SRCDSRepository) DelOverride(ctx context.Context, override SMOverrides) error {
-	return r.database.DBErr(r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
+	return database.DBErr(r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
 		Delete("sm_overrides").
 		Where(sq.Eq{"override_id": override.OverrideID}),
 	))
@@ -298,7 +298,7 @@ func (r SRCDSRepository) Overrides(ctx context.Context) ([]SMOverrides, error) {
 		Select("override_id", "type", "name", "flags", "created_on", "updated_on").
 		From("sm_overrides"))
 	if errRows != nil {
-		return nil, r.database.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	var overrides []SMOverrides
@@ -307,7 +307,7 @@ func (r SRCDSRepository) Overrides(ctx context.Context) ([]SMOverrides, error) {
 		var override SMOverrides
 		if errScan := rows.Scan(&override.OverrideID, &override.Type, &override.Name, &override.Flags,
 			&override.CreatedOn, &override.UpdatedOn); errScan != nil {
-			return nil, r.database.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		overrides = append(overrides, override)
@@ -332,7 +332,7 @@ func (r SRCDSRepository) GetAdminGroups(ctx context.Context, admin SMAdmin) ([]S
 		var group SMGroups
 		if errScan := rows.Scan(&group.GroupID, &group.Flags, &group.Name, &group.ImmunityLevel,
 			&group.CreatedOn, &group.UpdatedOn); errScan != nil {
-			return nil, r.database.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		groups = append(groups, group)
@@ -362,7 +362,7 @@ func (r SRCDSRepository) Admins(ctx context.Context) ([]SMAdmin, error) {
 			return []SMAdmin{}, nil
 		}
 
-		return nil, r.database.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	var admins []SMAdmin
@@ -376,7 +376,7 @@ func (r SRCDSRepository) Admins(ctx context.Context) ([]SMAdmin, error) {
 
 		if errScan := rows.Scan(&admin.AdminID, &admin.SteamID, &admin.AuthType, &admin.Identity, &admin.Password,
 			&admin.Flags, &admin.Name, &admin.Immunity, &admin.CreatedOn, &admin.UpdatedOn, &groupIDs); errScan != nil {
-			return nil, r.database.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		for _, groupID := range groupIDs {
@@ -406,7 +406,7 @@ func (r SRCDSRepository) Groups(ctx context.Context) ([]SMGroups, error) {
 			return []SMGroups{}, nil
 		}
 
-		return nil, r.database.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	var groups []SMGroups
@@ -415,7 +415,7 @@ func (r SRCDSRepository) Groups(ctx context.Context) ([]SMGroups, error) {
 		var group SMGroups
 		if errScan := rows.Scan(&group.GroupID, &group.Flags, &group.Name, &group.ImmunityLevel,
 			&group.CreatedOn, &group.UpdatedOn); errScan != nil {
-			return nil, r.database.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		groups = append(groups, group)
@@ -439,12 +439,12 @@ func (r SRCDSRepository) GetAdminByID(ctx context.Context, adminID int) (SMAdmin
 		From("sm_admins").
 		Where(sq.And{sq.Eq{"id": adminID}}))
 	if errRow != nil {
-		return admin, r.database.DBErr(errRow)
+		return admin, database.DBErr(errRow)
 	}
 
 	if errScan := row.Scan(&admin.AdminID, &id64, &admin.AuthType, &admin.Identity,
 		&admin.Password, &admin.Flags, &admin.Name, &admin.Immunity, &admin.CreatedOn, &admin.UpdatedOn); errScan != nil {
-		return admin, r.database.DBErr(errScan)
+		return admin, database.DBErr(errScan)
 	}
 
 	if id64 != nil {
@@ -500,12 +500,12 @@ func (r SRCDSRepository) GetAdminByIdentity(ctx context.Context, authType AuthTy
 		From("sm_admins").
 		Where(sq.And{sq.Eq{"authtype": authType}, sq.Eq{"identity": identity}}))
 	if errRow != nil {
-		return admin, r.database.DBErr(errRow)
+		return admin, database.DBErr(errRow)
 	}
 
 	if errScan := row.Scan(&admin.AdminID, &id64, &admin.AuthType, &admin.Identity,
 		&admin.Password, &admin.Flags, &admin.Name, &admin.Immunity, &admin.CreatedOn, &admin.UpdatedOn); errScan != nil {
-		return admin, r.database.DBErr(errScan)
+		return admin, database.DBErr(errScan)
 	}
 
 	admin.SteamID = steamid.New(id64)
@@ -521,12 +521,12 @@ func (r SRCDSRepository) GetGroupByName(ctx context.Context, groupName string) (
 		From("sm_admins").
 		Where(sq.Eq{"name": groupName}))
 	if errRow != nil {
-		return group, r.database.DBErr(errRow)
+		return group, database.DBErr(errRow)
 	}
 
 	if errScan := row.Scan(&group.GroupID, &group.Flags, &group.Name, &group.ImmunityLevel,
 		&group.CreatedOn, &group.UpdatedOn); errScan != nil {
-		return group, r.database.DBErr(errScan)
+		return group, database.DBErr(errScan)
 	}
 
 	return group, nil
@@ -540,12 +540,12 @@ func (r SRCDSRepository) GetGroupByID(ctx context.Context, groupID int) (SMGroup
 		From("sm_groups").
 		Where(sq.Eq{"id": groupID}))
 	if errRow != nil {
-		return group, r.database.DBErr(errRow)
+		return group, database.DBErr(errRow)
 	}
 
 	if errScan := row.Scan(&group.GroupID, &group.Flags, &group.Name, &group.ImmunityLevel,
 		&group.CreatedOn, &group.UpdatedOn); errScan != nil {
-		return group, r.database.DBErr(errScan)
+		return group, database.DBErr(errScan)
 	}
 
 	return group, nil
@@ -554,7 +554,7 @@ func (r SRCDSRepository) GetGroupByID(ctx context.Context, groupID int) (SMGroup
 func (r SRCDSRepository) InsertAdminGroup(ctx context.Context, admin SMAdmin, group SMGroups, inheritOrder int) error {
 	now := time.Now()
 
-	return r.database.DBErr(r.database.ExecInsertBuilder(ctx, nil, r.database.Builder().
+	return database.DBErr(r.database.ExecInsertBuilder(ctx, nil, r.database.Builder().
 		Insert("sm_admins_groups").
 		SetMap(map[string]interface{}{
 			"admin_id":      admin.AdminID,
@@ -569,7 +569,7 @@ func (r SRCDSRepository) DeleteAdminGroups(ctx context.Context, admin SMAdmin) e
 	if err := r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
 		Delete("sm_admins_groups").
 		Where(sq.Eq{"admin_id": admin.AdminID})); err != nil {
-		return r.database.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	slog.Info("Deleted SM admin groups", slog.String("steam_id", admin.SteamID.String()))
@@ -593,7 +593,7 @@ func (r SRCDSRepository) SaveGroup(ctx context.Context, group SMGroups) (SMGroup
 			"flags":          group.Flags,
 		}).
 		Where(sq.Eq{"id": group.GroupID})); err != nil {
-		return group, r.database.DBErr(err)
+		return group, database.DBErr(err)
 	}
 
 	return group, nil
@@ -603,25 +603,25 @@ func (r SRCDSRepository) DeleteGroup(ctx context.Context, group SMGroups) error 
 	if err := r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
 		Delete("sm_admins_groups").
 		Where(sq.Eq{"group_id": group.GroupID})); err != nil {
-		return r.database.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	if err := r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
 		Delete("sm_group_overrides").
 		Where(sq.Eq{"group_id": group.GroupID})); err != nil {
-		return r.database.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	if err := r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
 		Delete("sm_group_immunity").
 		Where(sq.Or{sq.Eq{"group_id": group.GroupID}, sq.Eq{"other_id": group.GroupID}})); err != nil {
-		return r.database.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	if err := r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
 		Delete("sm_groups").
 		Where(sq.Eq{"id": group.GroupID})); err != nil {
-		return r.database.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	slog.Info("Deleted SM Group", slog.Int("group_id", group.GroupID), slog.String("name", group.Name))
@@ -655,13 +655,13 @@ func (r SRCDSRepository) DelAdmin(ctx context.Context, admin SMAdmin) error {
 	if err := r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
 		Delete("sm_admins_groups").
 		Where(sq.Eq{"admin_id": admin.AdminID})); err != nil {
-		return r.database.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	if err := r.database.ExecDeleteBuilder(ctx, nil, r.database.Builder().
 		Delete("sm_admins").
 		Where(sq.Eq{"id": admin.AdminID})); err != nil {
-		return r.database.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	slog.Info("Deleted SM Admin", slog.Int("id", admin.AdminID),
@@ -697,7 +697,7 @@ func (r SRCDSRepository) AddAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, 
 			"updated_on": admin.UpdatedOn,
 		}).
 		Suffix("RETURNING id"), &admin.AdminID); err != nil {
-		return admin, r.database.DBErr(err)
+		return admin, database.DBErr(err)
 	}
 
 	slog.Info("Added SM Admin", slog.Int("id", admin.AdminID), slog.String("identity", admin.Identity))

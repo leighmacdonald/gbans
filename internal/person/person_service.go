@@ -16,11 +16,11 @@ import (
 )
 
 type personHandler struct {
-	persons *PersonUsecase
+	persons PersonUsecase
 	config  *config.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, config *config.ConfigUsecase, persons *PersonUsecase, authUC httphelper.Authenticator) {
+func NewHandler(engine *gin.Engine, config *config.ConfigUsecase, persons PersonUsecase, authUC httphelper.Authenticator) {
 	handler := &personHandler{persons: persons, config: config}
 
 	engine.GET("/api/profile", handler.onAPIProfile())

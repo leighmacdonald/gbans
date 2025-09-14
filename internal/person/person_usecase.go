@@ -9,7 +9,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -56,7 +55,9 @@ func (u PersonUsecase) QueryProfile(ctx context.Context, query string) (ProfileR
 		return resp, domain.ErrInvalidSID
 	}
 
-	person, errGetProfile := u.GetOrCreatePersonBySteamID(ctx, nil, sid)
+	_, _ = u.GetOrCreatePersonBySteamID(ctx, nil, sid)
+
+	person, errGetProfile := u.GetPersonBySteamID(ctx, nil, sid)
 	if errGetProfile != nil {
 		return resp, errGetProfile
 	}
@@ -181,7 +182,7 @@ func (u PersonUsecase) UpdateProfiles(ctx context.Context, transaction pgx.Tx, p
 // instead of requiring users to link their steam account to discord itself. It also
 // means the discord does not require more privileged intents.
 func (u PersonUsecase) SetSteam(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID, discordID string) error {
-	newPerson, errGetPerson := u.GetOrCreatePersonBySteamID(ctx, transaction, sid64)
+	newPerson, errGetPerson := u.GetPersonBySteamID(ctx, transaction, sid64)
 	if errGetPerson != nil || !sid64.Valid() {
 		return domain.ErrInvalidSID
 	}
@@ -224,17 +225,22 @@ func (u PersonUsecase) GetPeople(ctx context.Context, transaction pgx.Tx, filter
 	return u.repo.GetPeople(ctx, transaction, filter)
 }
 
-func (u PersonUsecase) GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (Person, error) {
+func (u PersonUsecase) GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.PersonCore, error) {
 	person, errGetPerson := u.repo.GetPersonBySteamID(ctx, transaction, sid64)
 	if errGetPerson != nil && errors.Is(errGetPerson, database.ErrNoResult) {
 		person = NewPerson(sid64)
 
 		if err := u.repo.SavePerson(ctx, transaction, &person); err != nil {
-			return person, err
+			return domain.PersonCore{}, err
 		}
 	}
 
-	return person, nil
+	return domain.PersonCore{
+		SteamID:         person.SteamID,
+		PermissionLevel: person.PermissionLevel,
+		Name:            person.PersonaName,
+		Avatarhash:      person.AvatarHash,
+	}, nil
 }
 
 func (u PersonUsecase) GetPersonByDiscordID(ctx context.Context, discordID string) (Person, error) {
@@ -243,10 +249,6 @@ func (u PersonUsecase) GetPersonByDiscordID(ctx context.Context, discordID strin
 
 func (u PersonUsecase) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error) {
 	return u.repo.GetExpiredProfiles(ctx, nil, limit)
-}
-
-func (u PersonUsecase) GetPersonMessageByID(ctx context.Context, personMessageID int64) (chat.PersonMessage, error) {
-	return u.repo.GetPersonMessageByID(ctx, personMessageID)
 }
 
 func (u PersonUsecase) GetSteamIDsAbove(ctx context.Context, privilege permission.Privilege) (steamid.Collection, error) {

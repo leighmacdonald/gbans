@@ -43,7 +43,7 @@ func (r *DemoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]Demo
 		OrderBy("d.demo_id").
 		Limit(limit))
 	if errRow != nil {
-		return nil, r.db.DBErr(errRow)
+		return nil, database.DBErr(errRow)
 	}
 
 	defer rows.Close()
@@ -53,7 +53,7 @@ func (r *DemoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]Demo
 	for rows.Next() {
 		var demo DemoInfo
 		if err := rows.Scan(&demo.DemoID, &demo.Title, &demo.AssetID); err != nil {
-			return nil, r.db.DBErr(err)
+			return nil, database.DBErr(err)
 		}
 
 		demos = append(demos, demo)
@@ -72,7 +72,7 @@ func (r *DemoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile
 		LeftJoin("asset a ON a.asset_id = d.asset_id").
 		Where(sq.Eq{"demo_id": demoID}))
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return database.DBErr(errRow)
 	}
 
 	var uuidScan *uuid.UUID
@@ -81,7 +81,7 @@ func (r *DemoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile
 		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName,
 		&demoFile.Archive, &demoFile.Stats, &uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
 		&demoFile.ServerNameLong); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	if uuidScan != nil {
@@ -101,7 +101,7 @@ func (r *DemoRepository) GetDemoByName(ctx context.Context, demoName string, dem
 		LeftJoin("asset a ON a.asset_id = r.asset_id").
 		Where(sq.Eq{"title": demoName}))
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return database.DBErr(errRow)
 	}
 
 	var uuidScan *uuid.UUID
@@ -110,7 +110,7 @@ func (r *DemoRepository) GetDemoByName(ctx context.Context, demoName string, dem
 		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 		&demoFile.Stats, &uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
 		&demoFile.ServerNameLong); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	if uuidScan != nil {
@@ -138,7 +138,7 @@ func (r *DemoRepository) GetDemos(ctx context.Context) ([]DemoFile, error) {
 			return demos, nil
 		}
 
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -152,7 +152,7 @@ func (r *DemoRepository) GetDemos(ctx context.Context) ([]DemoFile, error) {
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
 			&demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 			&demoFile.ServerNameShort, &demoFile.ServerNameLong, &uuidScan, &demoFile.Size); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		if uuidScan != nil {
@@ -177,7 +177,7 @@ func (r *DemoRepository) SaveDemo(ctx context.Context, demoFile *DemoFile) error
 		err = r.insertDemo(ctx, demoFile)
 	}
 
-	return r.db.DBErr(err)
+	return database.DBErr(err)
 }
 
 func (r *DemoRepository) insertDemo(ctx context.Context, demoFile *DemoFile) error {
@@ -190,12 +190,12 @@ func (r *DemoRepository) insertDemo(ctx context.Context, demoFile *DemoFile) err
 		Suffix("RETURNING demo_id").
 		ToSql()
 	if errQueryArgs != nil {
-		return r.db.DBErr(errQueryArgs)
+		return database.DBErr(errQueryArgs)
 	}
 
 	errQuery := r.db.QueryRow(ctx, nil, query, args...).Scan(&demoFile.ServerID)
 	if errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return database.DBErr(errQuery)
 	}
 
 	return nil
@@ -214,7 +214,7 @@ func (r *DemoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) err
 		Where(sq.Eq{"demo_id": demoFile.DemoID})
 
 	if errExec := r.db.ExecUpdateBuilder(ctx, nil, query); errExec != nil {
-		return r.db.DBErr(errExec)
+		return database.DBErr(errExec)
 	}
 
 	return nil
@@ -223,7 +223,7 @@ func (r *DemoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) err
 func (r *DemoRepository) Delete(ctx context.Context, demoID int64) error {
 	const query = `DELETE FROM demo WHERE demo_id = $1`
 	if err := r.db.Exec(ctx, nil, query, demoID); err != nil {
-		return r.db.DBErr(err)
+		return database.DBErr(err)
 	}
 
 	return nil

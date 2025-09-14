@@ -23,17 +23,16 @@ import (
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/cmd"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/forum"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -54,11 +53,11 @@ var (
 	dbContainer    *postgresContainer
 	tempDB         database.Database
 	testServer     servers.Server
-	testBan        ban.BannedPerson
+	testBan        ban.Ban
 	testTarget     person.Person
 	blocklistUC    network.BlocklistUsecase
 	configUC       *config.ConfigUsecase
-	wikiUC         *wiki.WikiUsecase
+	wikiUC         wiki.WikiUsecase
 	personUC       person.PersonUsecase
 	authRepo       auth.AuthRepository
 	authUC         *auth.AuthUsecase
@@ -66,24 +65,23 @@ var (
 	bansUC         ban.BanUsecase
 	assetUC        asset.AssetUsecase
 	chatUC         *chat.ChatUsecase
-	demoRepository demo.DemoRepository
-	demoUC         demo.DemoUsecase
+	demoRepository servers.DemoRepository
+	demoUC         servers.DemoUsecase
 	discordUC      *discord.Discord
 	forumUC        *forum.ForumUsecase
-	matchUC        match.MatchUsecase
 	newsUC         news.NewsUsecase
 	notificationUC notification.NotificationUsecase
 	patreonUC      patreon.PatreonUsecase
 	reportUC       ban.ReportUsecase
 	serversUC      servers.ServersUsecase
-	speedrunsUC    *servers.SpeedrunUsecase
+	speedrunsUC    servers.SpeedrunUsecase
 	srcdsUC        *servers.SRCDSUsecase
 	stateUC        *servers.StateUsecase
 	votesUC        votes.VoteUsecase
 	votesRepo      votes.VoteRepository
 	wordFilterUC   chat.WordFilterUsecase
 	appealUC       ban.AppealsUsecase
-	anticheatUC    *anticheat.AntiCheatUsecase
+	anticheatUC    anticheat.AntiCheatUsecase
 )
 
 func TestMain(m *testing.M) {
@@ -121,7 +119,7 @@ func TestMain(m *testing.M) {
 
 	conf := makeTestConfig(dsn)
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-	weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
+	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
 	configUC = config.NewConfigUsecase(conf.StaticConfig, newConfigRepo(conf))
 	if err := configUC.Reload(testCtx); err != nil {
@@ -158,24 +156,23 @@ func TestMain(m *testing.M) {
 
 	stateUC = servers.NewStateUsecase(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(serversUC)), configUC, serversUC)
 
-	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), configUC)
-	demoRepository = demo.NewDemoRepository(databaseConn)
-	demoUC = demo.NewDemoUsecase("demos", demoRepository, assetUC, configUC)
+	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn, personUC), configUC)
+	demoRepository = servers.NewDemoRepository(databaseConn)
+	demoUC = servers.NewDemoUsecase("demos", demoRepository, assetUC, configUC)
 	reportUC = ban.NewReportUsecase(ban.NewReportRepository(databaseConn), configUC, personUC, demoUC, tfapiClient)
 	bansUC = ban.NewBanUsecase(ban.NewBanRepository(databaseConn, personUC, networkUC), personUC, configUC, reportUC, stateUC, tfapiClient)
 	authUC = auth.NewAuthUsecase(authRepo, configUC, personUC, bansUC, serversUC)
 
-	matchUC = match.NewMatchUsecase(match.NewMatchRepository(eventBroadcaster, databaseConn, personUC, serversUC, stateUC, weaponsMap), stateUC, serversUC, notificationUC)
-	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC, notificationUC)
+	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC)
 	votesRepo = votes.NewVoteRepository(databaseConn)
 	votesUC = votes.NewVoteUsecase(votesRepo, eventBroadcaster)
-	appealUC = ban.NewAppealUsecase(ban.NewAppealRepository(databaseConn), bansUC, personUC, notificationUC, configUC)
+	appealUC = ban.NewAppealUsecase(ban.NewAppealRepository(databaseConn), bansUC, personUC, configUC)
 	speedrunsUC = servers.NewSpeedrunUsecase(servers.NewSpeedrunRepository(databaseConn, personUC))
-	blocklistUC = network.NewBlocklistUsecase(network.NewBlocklistRepository(databaseConn), bansUC, banUC)
-	anticheatUC = anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(databaseConn), personUC, bansUC, configUC, notificationUC)
+	blocklistUC = network.NewBlocklistUsecase(network.NewBlocklistRepository(databaseConn), &bansUC)
+	anticheatUC = anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(databaseConn), bansUC, configUC, personUC)
 
 	if internalDB {
-		server, errServer := serversUC.Save(context.Background(), domain.RequestServerUpdate{
+		server, errServer := serversUC.Save(context.Background(), servers.RequestServerUpdate{
 			ServerName:      stringutil.SecureRandomString(20),
 			ServerNameShort: stringutil.SecureRandomString(5),
 			Host:            "1.2.3.4",
@@ -210,12 +207,13 @@ func TestMain(m *testing.M) {
 	target := getUser()
 
 	// Create a valid ban_id
-	bannedPerson, errBan := bansUC.Ban(context.Background(), mod.ToUserProfile(), banDomain.System, ban.BanOpts{
+	bannedPerson, errBan := bansUC.Ban(context.Background(), ban.BanOpts{
 		SourceID:       mod.SteamID,
 		TargetID:       target.SteamID,
 		Duration:       time.Hour * 24,
 		BanType:        banDomain.Banned,
 		Reason:         banDomain.Cheating,
+		Origin:         banDomain.System,
 		ReasonText:     "",
 		Note:           "notes",
 		ReportID:       0,
@@ -237,7 +235,7 @@ func TestMain(m *testing.M) {
 }
 
 func testRouter() *gin.Engine {
-	router, errRouter := httphelper.CreateRouter(configUC.Config(), app.BuildInfo{
+	router, errRouter := cmd.CreateRouter(configUC.Config(), app.BuildInfo{
 		BuildVersion: "master",
 		Commit:       "",
 		Date:         time.Now().Format(time.DateTime),
@@ -255,12 +253,11 @@ func testRouter() *gin.Engine {
 	config.NewHandler(router, configUC, authUC, app.Version())
 	ban.NewReportHandler(router, reportUC, authUC, notificationUC)
 	ban.NewAppealHandler(router, appealUC, authUC)
-	chat.NewHandler(router, configUC, wordFilterUC, chatUC, authUC)
+	chat.NewHandler(router, chatUC, authUC)
 	person.NewHandler(router, configUC, personUC, authUC)
-	servers.NewHandlerSRCDS(router, srcdsUC, serversUC, personUC, assetUC, reportUC, bansUC, networkUC,
-		authUC, configUC, notificationUC, stateUC, blocklistUC)
+	servers.NewSRCDSHandler(router, srcdsUC, serversUC, personUC, assetUC, bansUC, networkUC, authUC, configUC, stateUC, blocklistUC)
 	network.NewBlocklistHandler(router, blocklistUC, networkUC, authUC)
-	servers.NewSRCDSHandler(router, speedrunsUC, authUC, configUC)
+	servers.NewSpeedrunsHandler(router, speedrunsUC, authUC, configUC, serversUC)
 
 	return router
 }
@@ -279,7 +276,7 @@ func testEndpointWithReceiver(t *testing.T, router *gin.Engine, method string,
 }
 
 type authTokens struct {
-	user           *domain.UserTokens
+	user           *auth.UserTokens
 	serverPassword string
 }
 
@@ -320,7 +317,7 @@ func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, 
 			request.Header.Add("Authorization", tokens.serverPassword)
 		} else if tokens.user != nil {
 			request.AddCookie(&http.Cookie{
-				Name:     domain.FingerprintCookieName,
+				Name:     auth.FingerprintCookieName,
 				Value:    tokens.user.Fingerprint,
 				Path:     "/api",
 				Domain:   "example.com",
@@ -341,8 +338,10 @@ func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, 
 	return recorder
 }
 
-func createTestPerson(sid steamid.SteamID, level domain.Privilege) domain.Person {
-	player, err := personUC.GetOrCreatePersonBySteamID(context.Background(), nil, sid)
+func createTestPerson(sid steamid.SteamID, level permission.Privilege) person.Person {
+	_, _ = personUC.GetOrCreatePersonBySteamID(context.Background(), nil, sid)
+
+	player, err := personUC.GetPersonBySteamID(context.Background(), nil, sid)
 	if err != nil {
 		panic(err)
 	}
@@ -356,25 +355,25 @@ func createTestPerson(sid steamid.SteamID, level domain.Privilege) domain.Person
 	return player
 }
 
-func getOwner() domain.Person {
-	return createTestPerson(steamid.New(configUC.Config().Owner), domain.PAdmin)
+func getOwner() person.Person {
+	return createTestPerson(steamid.New(configUC.Config().Owner), permission.PAdmin)
 }
 
 var curUserID atomic.Int32
 
-func getUser() domain.Person {
-	return createTestPerson(steamid.New(76561198004429398+int64(curUserID.Add(1))), domain.PUser)
+func getUser() person.Person {
+	return createTestPerson(steamid.New(76561198004429398+int64(curUserID.Add(1))), permission.PUser)
 }
 
-func getModerator() domain.Person {
-	return createTestPerson(steamid.New(76561198057999536), domain.PModerator)
+func getModerator() person.Person {
+	return createTestPerson(steamid.New(76561198057999536), permission.PModerator)
 }
 
-func loginUser(person domain.Person) *domain.UserTokens {
+func loginUser(person person.Person) *auth.UserTokens {
 	conf := configUC.Config()
 	fingerprint := stringutil.SecureRandomString(40)
 
-	accessToken, errAccess := authUC.NewUserToken(person.SteamID, conf.HTTPCookieKey, fingerprint, domain.AuthTokenDuration)
+	accessToken, errAccess := authUC.NewUserToken(person.SteamID, conf.HTTPCookieKey, fingerprint, auth.AuthTokenDuration)
 	if errAccess != nil {
 		panic(errAccess)
 	}
@@ -384,22 +383,22 @@ func loginUser(person domain.Person) *domain.UserTokens {
 		panic(domain.ErrClientIP)
 	}
 
-	personAuth := domain.NewPersonAuth(person.SteamID, ipAddr, accessToken)
+	personAuth := auth.NewPersonAuth(person.SteamID, ipAddr, accessToken)
 	if saveErr := authRepo.SavePersonAuth(context.Background(), &personAuth); saveErr != nil {
 		panic(saveErr)
 	}
 
-	return &domain.UserTokens{Access: accessToken, Fingerprint: fingerprint}
+	return &auth.UserTokens{Access: accessToken, Fingerprint: fingerprint}
 }
 
-func makeTestConfig(dsn string) domain.Config {
+func makeTestConfig(dsn string) config.Config {
 	steamKey, found := os.LookupEnv("GBANS_GENERAL_STEAM_KEY")
 	if !found || len(steamKey) != 32 {
 		panic("GBANS_GENERAL_STEAM_KEY is not set, or is invalid")
 	}
 
-	return domain.Config{
-		StaticConfig: domain.StaticConfig{
+	return config.Config{
+		StaticConfig: config.StaticConfig{
 			Owner:               "76561198084134025",
 			SteamKey:            steamKey,
 			ExternalURL:         "http://example.com",
@@ -416,9 +415,9 @@ func makeTestConfig(dsn string) domain.Config {
 			PrometheusEnabled:   false,
 			PProfEnabled:        false,
 		},
-		General: domain.ConfigGeneral{
+		General: config.ConfigGeneral{
 			SiteName:        "gbans",
-			Mode:            domain.TestMode,
+			Mode:            config.TestMode,
 			FileServeMode:   "local",
 			SrcdsLogAddr:    "",
 			AssetURL:        "",
@@ -433,14 +432,14 @@ func makeTestConfig(dsn string) domain.Config {
 			ChatlogsEnabled: true,
 			DemosEnabled:    true,
 		},
-		Demo: domain.ConfigDemo{
+		Demo: config.ConfigDemo{
 			DemoCleanupEnabled:  false,
 			DemoCleanupStrategy: "",
 			DemoCleanupMinPct:   0,
 			DemoCleanupMount:    "",
 			DemoCountLimit:      2,
 		},
-		Filters: domain.ConfigFilter{
+		Filters: config.ConfigFilter{
 			Enabled:        true,
 			WarningTimeout: 10,
 			WarningLimit:   1,
@@ -450,25 +449,25 @@ func makeTestConfig(dsn string) domain.Config {
 			CheckTimeout:   10,
 			MatchTimeout:   10,
 		},
-		Discord: domain.ConfigDiscord{
+		Discord: config.ConfigDiscord{
 			Enabled: false,
 		},
-		Clientprefs: domain.ConfigClientprefs{},
-		Log: domain.ConfigLog{
+		Clientprefs: config.ConfigClientprefs{},
+		Log: config.ConfigLog{
 			HTTPEnabled: false,
 			Level:       "error",
 		},
-		GeoLocation: domain.ConfigIP2Location{
+		GeoLocation: config.ConfigIP2Location{
 			Enabled: false,
 		},
-		Debug: domain.ConfigDebug{},
-		Patreon: domain.ConfigPatreon{
+		Debug: config.ConfigDebug{},
+		Patreon: config.ConfigPatreon{
 			Enabled: false,
 		},
-		SSH: domain.ConfigSSH{
+		SSH: config.ConfigSSH{
 			Enabled: false,
 		},
-		LocalStore: domain.ConfigLocalStore{},
-		Exports:    domain.ConfigExports{},
+		LocalStore: config.ConfigLocalStore{},
+		Exports:    config.ConfigExports{},
 	}
 }

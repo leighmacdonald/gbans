@@ -12,7 +12,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -30,7 +29,7 @@ func NewPersonRepository(conf config.Config, database database.Database) PersonR
 }
 
 func (r *PersonRepository) DropPerson(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID) error {
-	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, transaction, r.db.
+	return database.DBErr(r.db.ExecDeleteBuilder(ctx, transaction, r.db.
 		Builder().
 		Delete("person").
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
@@ -56,7 +55,7 @@ func (r *PersonRepository) SavePerson(ctx context.Context, transaction pgx.Tx, p
 func (r *PersonRepository) updatePerson(ctx context.Context, transaction pgx.Tx, person *Person) error {
 	person.UpdatedOn = time.Now()
 
-	return r.db.DBErr(r.db.
+	return database.DBErr(r.db.
 		ExecUpdateBuilder(ctx, transaction, r.db.
 			Builder().
 			Update("person").
@@ -104,7 +103,7 @@ func (r *PersonRepository) insertPerson(ctx context.Context, transaction pgx.Tx,
 			person.VACBans, person.GameBans, person.EconomyBan, person.DaysSinceLastBan, person.UpdatedOnSteam,
 			person.Muted, person.PlayerqueueChatStatus, person.PlayerqueueChatReason))
 	if errExec != nil {
-		return r.db.DBErr(errExec)
+		return database.DBErr(errExec)
 	}
 
 	person.IsNew = false
@@ -161,13 +160,13 @@ func (r *PersonRepository) GetPersonBySteamID(ctx context.Context, transaction p
 		Where(sq.Eq{"p.steam_id": sid64.Int64()}))
 
 	if errRow != nil {
-		return person, r.db.DBErr(errRow)
+		return person, database.DBErr(errRow)
 	}
 
 	person.IsNew = false
 	person.SteamID = sid64
 
-	if err := r.db.DBErr(row.Scan(&person.CreatedOn,
+	if err := database.DBErr(row.Scan(&person.CreatedOn,
 		&person.UpdatedOn, &person.VisibilityState, &person.ProfileState, &person.PersonaName,
 		&person.AvatarHash,
 		&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
@@ -194,7 +193,7 @@ func (r *PersonRepository) GetPeopleBySteamID(ctx context.Context, transaction p
 		From("person").
 		Where(sq.Eq{"steam_id": ids}))
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -237,7 +236,7 @@ func (r *PersonRepository) GetSteamsAtAddress(ctx context.Context, addr net.IP) 
 		From("person_connections").
 		Where(sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String()))))
 	if errRows != nil {
-		return nil, r.db.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -245,7 +244,7 @@ func (r *PersonRepository) GetSteamsAtAddress(ctx context.Context, addr net.IP) 
 	for rows.Next() {
 		var sid int64
 		if errScan := rows.Scan(&sid); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		ids = append(ids, steamid.New(sid))
@@ -281,7 +280,7 @@ func (r *PersonRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 				return People{}, 0, nil
 			}
 
-			return nil, 0, r.db.DBErr(errFoundIDs)
+			return nil, 0, database.DBErr(errFoundIDs)
 		}
 
 		conditions = append(conditions, sq.Eq{"p.steam_id": foundIDs})
@@ -316,7 +315,7 @@ func (r *PersonRepository) GetPeople(ctx context.Context, transaction pgx.Tx, fi
 
 	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder.Where(conditions))
 	if errQuery != nil {
-		return nil, 0, r.db.DBErr(errQuery)
+		return nil, 0, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -370,7 +369,7 @@ func (r *PersonRepository) GetPersonByDiscordID(ctx context.Context, discordID s
 		From("person").
 		Where(sq.Eq{"discord_id": discordID}))
 	if errRow != nil {
-		return person, r.db.DBErr(errRow)
+		return person, database.DBErr(errRow)
 	}
 
 	errQuery := row.Scan(&steamID, &person.CreatedOn,
@@ -381,7 +380,7 @@ func (r *PersonRepository) GetPersonByDiscordID(ctx context.Context, discordID s
 		&person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam, &person.Muted,
 		&person.PlayerqueueChatStatus, &person.PlayerqueueChatReason)
 	if errQuery != nil {
-		return person, r.db.DBErr(errQuery)
+		return person, database.DBErr(errQuery)
 	}
 
 	person.SteamID = steamid.New(steamID)
@@ -404,7 +403,7 @@ func (r *PersonRepository) GetExpiredProfiles(ctx context.Context, transaction p
 		Where(sq.Lt{"updated_on_steam": time.Now().AddDate(0, 0, -30)}).
 		Limit(limit))
 	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -421,7 +420,7 @@ func (r *PersonRepository) GetExpiredProfiles(ctx context.Context, transaction p
 			&person.DiscordID, &person.CommunityBanned, &person.VACBans, &person.GameBans,
 			&person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam, &person.Muted,
 			&person.PlayerqueueChatStatus, &person.PlayerqueueChatReason); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+			return nil, database.DBErr(errScan)
 		}
 
 		person.SteamID = steamid.New(steamID)
@@ -430,48 +429,6 @@ func (r *PersonRepository) GetExpiredProfiles(ctx context.Context, transaction p
 	}
 
 	return people, nil
-}
-
-func (r *PersonRepository) GetPersonMessageByID(ctx context.Context, personMessageID int64) (chat.PersonMessage, error) {
-	var msg chat.PersonMessage
-
-	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
-		Builder().
-		Select(
-			"m.person_message_id",
-			"m.steam_id",
-			"m.server_id",
-			"m.body",
-			"m.team",
-			"m.created_on",
-			"m.persona_name",
-			"m.match_id",
-			"s.short_name").
-		From("person_messages m").
-		LeftJoin("server s on m.server_id = s.server_id").
-		Where(sq.Eq{"m.person_message_id": personMessageID}))
-
-	if errRow != nil {
-		return msg, r.db.DBErr(errRow)
-	}
-
-	var steamID int64
-
-	if errScan := row.Scan(&msg.PersonMessageID,
-		&steamID,
-		&msg.ServerID,
-		&msg.Body,
-		&msg.Team,
-		&msg.CreatedOn,
-		&msg.PersonaName,
-		&msg.MatchID,
-		&msg.ServerName); errScan != nil {
-		return msg, r.db.DBErr(errScan)
-	}
-
-	msg.SteamID = steamid.New(steamID)
-
-	return msg, nil
 }
 
 // func SetNotificationsRead(ctx context.Context,  notificationIds []int64) error {
@@ -489,7 +446,7 @@ func (r *PersonRepository) GetSteamIDsAbove(ctx context.Context, privilege permi
 		From("person").
 		Where(sq.GtOrEq{"permission_level": privilege}))
 	if errRows != nil {
-		return nil, r.db.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -515,7 +472,7 @@ func (r *PersonRepository) GetSteamIDsByGroups(ctx context.Context, privileges [
 		From("person").
 		Where(sq.Eq{"permission_level": privileges}))
 	if errRows != nil {
-		return nil, r.db.DBErr(errRows)
+		return nil, database.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -545,20 +502,20 @@ func (r *PersonRepository) GetPersonSettings(ctx context.Context, steamID steami
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
 
 	if errRow != nil {
-		return settings, r.db.DBErr(errRow)
+		return settings, database.DBErr(errRow)
 	}
 
 	settings.SteamID = steamID
 
 	if errScan := row.Scan(&settings.PersonSettingsID, &settings.ForumSignature,
 		&settings.ForumProfileMessages, &settings.StatsHidden, &settings.CreatedOn, &settings.UpdatedOn); errScan != nil {
-		if errors.Is(r.db.DBErr(errScan), database.ErrNoResult) {
+		if errors.Is(database.DBErr(errScan), database.ErrNoResult) {
 			settings.ForumProfileMessages = true
 
 			return settings, nil
 		}
 
-		return settings, r.db.DBErr(errScan)
+		return settings, database.DBErr(errScan)
 	}
 
 	if r.conf.Clientprefs.CenterProjectiles {
@@ -572,7 +529,7 @@ func (r *PersonRepository) GetPersonSettings(ctx context.Context, steamID steami
 				sq.Eq{"name": "tf2centerprojectiles"},
 			}))
 		if errRow != nil {
-			return settings, r.db.DBErr(errRow)
+			return settings, database.DBErr(errRow)
 		}
 
 		defer rows.Close()
@@ -582,7 +539,7 @@ func (r *PersonRepository) GetPersonSettings(ctx context.Context, steamID steami
 			value := ""
 
 			if errScan := rows.Scan(&key, &value); errScan != nil {
-				return settings, r.db.DBErr(errScan)
+				return settings, database.DBErr(errScan)
 			}
 
 			if key == "tf2centerprojectiles" {
@@ -627,7 +584,7 @@ func (r *PersonRepository) SavePersonSettings(ctx context.Context, settings *Per
 	if settings.PersonSettingsID == 0 {
 		settings.CreatedOn = settings.UpdatedOn
 
-		errSiteSettings = r.db.DBErr(r.db.ExecInsertBuilderWithReturnValue(ctx, nil, r.db.
+		errSiteSettings = database.DBErr(r.db.ExecInsertBuilderWithReturnValue(ctx, nil, r.db.
 			Builder().
 			Insert("person_settings").
 			SetMap(map[string]any{
@@ -641,7 +598,7 @@ func (r *PersonRepository) SavePersonSettings(ctx context.Context, settings *Per
 			Suffix("RETURNING person_settings_id"),
 			&settings.PersonSettingsID))
 	} else {
-		errSiteSettings = r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
+		errSiteSettings = database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 			Builder().
 			Update("person_settings").
 			SetMap(map[string]any{
@@ -657,7 +614,7 @@ func (r *PersonRepository) SavePersonSettings(ctx context.Context, settings *Per
 
 	var errGameSettings error
 	if r.conf.Clientprefs.CenterProjectiles && settings.CenterProjectiles != nil {
-		errGameSettings = r.db.DBErr(r.db.QueryRow(ctx, nil, query,
+		errGameSettings = database.DBErr(r.db.QueryRow(ctx, nil, query,
 			settings.SteamID.Steam(false),
 			boolToStringDigit(*settings.CenterProjectiles)).Scan(&value))
 	}

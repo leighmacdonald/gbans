@@ -9,14 +9,14 @@ import (
 )
 
 func NewSpeedrunUsecase(repo SpeedrunRepository) SpeedrunUsecase {
-	return &speedrunUsecase{repo: repo}
+	return SpeedrunUsecase{repo: repo}
 }
 
-type speedrunUsecase struct {
+type SpeedrunUsecase struct {
 	repo SpeedrunRepository
 }
 
-func (u *speedrunUsecase) Recent(ctx context.Context, limit int) ([]SpeedrunMapOverview, error) {
+func (u *SpeedrunUsecase) Recent(ctx context.Context, limit int) ([]SpeedrunMapOverview, error) {
 	if limit <= 0 || limit > 100 {
 		return nil, domain.ErrValueOutOfRange
 	}
@@ -24,7 +24,7 @@ func (u *speedrunUsecase) Recent(ctx context.Context, limit int) ([]SpeedrunMapO
 	return u.repo.Recent(ctx, limit)
 }
 
-func (u *speedrunUsecase) TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error) {
+func (u *SpeedrunUsecase) TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error) {
 	if count <= 0 || count > 1000 {
 		return nil, domain.ErrValueOutOfRange
 	}
@@ -32,7 +32,7 @@ func (u *speedrunUsecase) TopNOverall(ctx context.Context, count int) (map[strin
 	return u.repo.TopNOverall(ctx, count)
 }
 
-func (u *speedrunUsecase) ByID(ctx context.Context, speedrunID int) (Speedrun, error) {
+func (u *SpeedrunUsecase) ByID(ctx context.Context, speedrunID int) (Speedrun, error) {
 	if speedrunID <= 0 {
 		return Speedrun{}, domain.ErrValueOutOfRange
 	}
@@ -40,7 +40,7 @@ func (u *speedrunUsecase) ByID(ctx context.Context, speedrunID int) (Speedrun, e
 	return u.repo.ByID(ctx, speedrunID)
 }
 
-func (u *speedrunUsecase) ByMap(ctx context.Context, mapName string) ([]SpeedrunMapOverview, error) {
+func (u *SpeedrunUsecase) ByMap(ctx context.Context, mapName string) ([]SpeedrunMapOverview, error) {
 	if mapName == "" {
 		return []SpeedrunMapOverview{}, domain.ErrValueOutOfRange
 	}
@@ -48,7 +48,7 @@ func (u *speedrunUsecase) ByMap(ctx context.Context, mapName string) ([]Speedrun
 	return u.repo.ByMap(ctx, mapName)
 }
 
-func (u *speedrunUsecase) Save(ctx context.Context, details Speedrun) (Speedrun, error) {
+func (u *SpeedrunUsecase) Save(ctx context.Context, details Speedrun) (Speedrun, error) {
 	if len(details.PointCaptures) == 0 {
 		return details, ErrInsufficientDetails
 	}
@@ -71,11 +71,11 @@ func (u *speedrunUsecase) Save(ctx context.Context, details Speedrun) (Speedrun,
 	return details, nil
 }
 
-func (u *speedrunUsecase) Query(_ context.Context, _ SpeedrunQuery) ([]Speedrun, error) {
+func (u *SpeedrunUsecase) Query(_ context.Context, _ SpeedrunQuery) ([]Speedrun, error) {
 	return nil, nil
 }
 
-func (u *speedrunUsecase) RoundStart() (uuid.UUID, error) {
+func (u *SpeedrunUsecase) RoundStart() (uuid.UUID, error) {
 	id, errID := uuid.NewV4()
 	if errID != nil {
 		return id, errors.Join(errID, domain.ErrUUIDCreate)
