@@ -14,17 +14,15 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons person.PersonUsecase, serversUC servers.ServersUsecase,
-	state state.StateUsecase, chatLogs []ChatLog, notif notification.NotificationUsecase,
+	state *servers.StateUsecase, chatLogs []ChatLog,
 ) *PlayerqueueUsecase {
 	return &PlayerqueueUsecase{
 		repo:    repo,
-		notif:   notif,
 		persons: persons,
 		queue: New(100, 2, chatLogs, func() ([]Lobby, error) {
 			currentState := state.Current()
@@ -62,10 +60,10 @@ func NewPlayerqueueUsecase(repo PlayerqueueRepository, persons person.PersonUsec
 }
 
 type PlayerqueueUsecase struct {
-	repo    PlayerqueueRepository
-	persons person.PersonUsecase
-	notif   notification.NotificationUsecase
-	queue   *Coordinator
+	repo     PlayerqueueRepository
+	perssons person.PersonUsecase
+	notif    notification.NotificationUsecase
+	queue    *Coordinator
 }
 
 func (p PlayerqueueUsecase) Start(ctx context.Context) {

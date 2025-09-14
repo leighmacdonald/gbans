@@ -37,13 +37,13 @@ type UploadedDemo struct {
 
 type DemoUsecase struct {
 	repository  DemoRepository
-	asset       *asset.AssetUsecase
+	asset       asset.AssetUsecase
 	config      *config.ConfigUsecase
 	bucket      asset.Bucket
 	cleanupChan chan any
 }
 
-func NewDemoUsecase(bucket asset.Bucket, repository DemoRepository, assets *asset.AssetUsecase, config *config.ConfigUsecase) DemoUsecase {
+func NewDemoUsecase(bucket asset.Bucket, repository DemoRepository, assets asset.AssetUsecase, config *config.ConfigUsecase) DemoUsecase {
 	return DemoUsecase{
 		bucket:      bucket,
 		repository:  repository,

@@ -71,7 +71,7 @@ func (u ChatUsecase) onWarningExceeded(ctx context.Context, newWarning NewUserWa
 			ReasonText: "",
 			Note:       "Automatic warning ban",
 		}
-		req.SetDuration(newWarning.MatchedFilter.Duration)
+		req.SetDuration(newWarning.MatchedFilter.Duration, time.Now().AddDate(10, 0, 0))
 	}
 
 	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, nil, u.owner)

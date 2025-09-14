@@ -127,8 +127,8 @@ type BanOpts struct {
 	Note           string          `json:"note"`
 }
 
-func (opts *BanOpts) SetDuration(durString string) error {
-	duration, errDuration := datetime.CalcDuration(durString, opts.ValidUntil)
+func (opts *BanOpts) SetDuration(durString string, validUntil time.Time) error {
+	duration, errDuration := datetime.CalcDuration(durString, validUntil)
 	if errDuration != nil {
 		return errDuration
 	}

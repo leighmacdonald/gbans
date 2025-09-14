@@ -18,6 +18,7 @@ import (
 
 type Authenticator interface {
 	Middleware(level permission.Privilege) gin.HandlerFunc
+	MiddlewareWS(level permission.Privilege) gin.HandlerFunc
 }
 
 func Bind(ctx *gin.Context, target any) bool {

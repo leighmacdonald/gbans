@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
-	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -25,20 +24,18 @@ type ChatRepository struct {
 	db          database.Database
 	persons     domain.PersonProvider
 	wordFilters WordFilterUsecase
-	matches     match.MatchUsecase
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	WarningChan chan NewUserWarning
 }
 
 func NewChatRepository(database database.Database, personUsecase domain.PersonProvider, wordFilterUsecase WordFilterUsecase,
-	matchUsecase match.MatchUsecase,
+
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) *ChatRepository {
 	return &ChatRepository{
 		db:          database,
 		persons:     personUsecase,
 		wordFilters: wordFilterUsecase,
-		matches:     matchUsecase,
 		broadcaster: broadcaster,
 		WarningChan: make(chan NewUserWarning),
 	}
@@ -58,8 +55,6 @@ func (r ChatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 		return
 	}
 
-	matchID, _ := r.matches.GetMatchIDFromServerID(evt.ServerID)
-
 	personMsg := PersonMessage{
 		SteamID:     person.SID,
 		PersonaName: strings.ToValidUTF8(person.Name, "_"),
@@ -68,7 +63,6 @@ func (r ChatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 		Body:        strings.ToValidUTF8(msg, "_"),
 		Team:        team,
 		CreatedOn:   created,
-		MatchID:     matchID,
 	}
 
 	if errChat := r.AddChatHistory(ctx, &personMsg); errChat != nil {

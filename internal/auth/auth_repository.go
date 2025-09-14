@@ -13,8 +13,8 @@ type AuthRepository struct {
 	db database.Database
 }
 
-func NewAuthRepository(database database.Database) *AuthRepository {
-	return &AuthRepository{db: database}
+func NewAuthRepository(database database.Database) AuthRepository {
+	return AuthRepository{db: database}
 }
 
 func (r AuthRepository) SavePersonAuth(ctx context.Context, auth *PersonAuth) error {

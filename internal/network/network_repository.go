@@ -19,11 +19,12 @@ import (
 )
 
 type networkRepository struct {
-	db database.Database
+	db      database.Database
+	persons domain.PersonProvider
 }
 
-func NewNetworkRepository(db database.Database) networkRepository {
-	return networkRepository{db: db}
+func NewNetworkRepository(db database.Database, persons domain.PersonProvider) networkRepository {
+	return networkRepository{db: db, persons: persons}
 }
 
 func (r networkRepository) QueryConnections(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error) {
@@ -167,11 +168,11 @@ func (r networkRepository) AddConnectionHistory(ctx context.Context, conn *Perso
 		RETURNING person_connection_id`
 
 	// Maybe ignore these and wait for connect call to create?
-	_, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, nil, newServerEvent.SID)
+	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, nil, conn.SteamID)
 	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
-		slog.Error("Failed to fetch connecting person", slog.String("steam_id", newServerEvent.SID.String()), log.ErrAttr(errPerson))
+		slog.Error("Failed to fetch connecting person", slog.String("steam_id", conn.SteamID.String()), log.ErrAttr(errPerson))
 
-		continue
+		return errPerson
 	}
 
 	if errQuery := r.db.

@@ -21,7 +21,7 @@ import (
 	"github.com/riverqueue/river"
 )
 
-type patreonUsecase struct {
+type PatreonUsecase struct {
 	repository   PatreonRepository
 	manager      *Manager
 	stateTracker *oauth.LoginStateTracker
@@ -29,7 +29,7 @@ type patreonUsecase struct {
 }
 
 func NewPatreonUsecase(repository PatreonRepository, configUsecase *config.ConfigUsecase) PatreonUsecase {
-	return &patreonUsecase{
+	return PatreonUsecase{
 		repository:   repository,
 		cu:           configUsecase,
 		manager:      NewPatreonManager(configUsecase),
@@ -37,16 +37,16 @@ func NewPatreonUsecase(repository PatreonRepository, configUsecase *config.Confi
 	}
 }
 
-func (p patreonUsecase) Forget(ctx context.Context, steamID steamid.SteamID) error {
+func (p PatreonUsecase) Forget(ctx context.Context, steamID steamid.SteamID) error {
 	return p.repository.DeleteTokens(ctx, steamID)
 }
 
-func (p patreonUsecase) Sync(ctx context.Context) {
+func (p PatreonUsecase) Sync(ctx context.Context) {
 	p.manager.sync(ctx)
 	p.checkAuths(ctx)
 }
 
-func (p patreonUsecase) checkAuths(ctx context.Context) {
+func (p PatreonUsecase) checkAuths(ctx context.Context) {
 	oldAuths, errOldAuths := p.repository.OldAuths(ctx)
 	if errOldAuths != nil {
 		slog.Error("Failed to load old auths", log.ErrAttr(errOldAuths))
@@ -61,7 +61,7 @@ func (p patreonUsecase) checkAuths(ctx context.Context) {
 	}
 }
 
-func (p patreonUsecase) refreshToken(ctx context.Context, auth PatreonCredential) error {
+func (p PatreonUsecase) refreshToken(ctx context.Context, auth PatreonCredential) error {
 	conf := p.cu.Config()
 
 	form := url.Values{}
@@ -120,7 +120,7 @@ func (p patreonUsecase) refreshToken(ctx context.Context, auth PatreonCredential
 	return nil
 }
 
-func (p patreonUsecase) CreateOAuthRedirect(steamID steamid.SteamID) string {
+func (p PatreonUsecase) CreateOAuthRedirect(steamID steamid.SteamID) string {
 	conf := p.cu.Config()
 	state := p.stateTracker.Create(steamID)
 
@@ -138,11 +138,11 @@ func (p patreonUsecase) CreateOAuthRedirect(steamID steamid.SteamID) string {
 	return authURL.String()
 }
 
-func (p patreonUsecase) Campaign() patreon.Campaign {
+func (p PatreonUsecase) Campaign() patreon.Campaign {
 	return p.manager.Campaigns()
 }
 
-func (p patreonUsecase) OnOauthLogin(ctx context.Context, state string, code string) error {
+func (p PatreonUsecase) OnOauthLogin(ctx context.Context, state string, code string) error {
 	steamID, valid := p.stateTracker.Get(state)
 	if !valid {
 		return domain.ErrInvalidSID

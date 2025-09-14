@@ -10,15 +10,15 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type patreonRepository struct {
+type PatreonRepository struct {
 	db database.Database
 }
 
 func NewPatreonRepository(database database.Database) PatreonRepository {
-	return &patreonRepository{db: database}
+	return PatreonRepository{db: database}
 }
 
-func (r patreonRepository) OldAuths(ctx context.Context) ([]PatreonCredential, error) {
+func (r PatreonRepository) OldAuths(ctx context.Context) ([]PatreonCredential, error) {
 	const query = `SELECT steam_id, patreon_id, access_token,  refresh_token,
                           expires_in, scope, token_type, version, created_on, updated_on FROM auth_patreon
 					WHERE to_timestamp(extract(epoch from updated_on) + expires_in) < (now() + interval '7 days');`
@@ -43,7 +43,7 @@ func (r patreonRepository) OldAuths(ctx context.Context) ([]PatreonCredential, e
 	return credentials, nil
 }
 
-func (r patreonRepository) DeleteTokens(ctx context.Context, steamID steamid.SteamID) error {
+func (r PatreonRepository) DeleteTokens(ctx context.Context, steamID steamid.SteamID) error {
 	query, vars, errQuery := r.db.Builder().
 		Delete("auth_patreon").
 		Where(sq.Eq{"steam_id": steamID}).
@@ -55,7 +55,7 @@ func (r patreonRepository) DeleteTokens(ctx context.Context, steamID steamid.Ste
 	return r.db.Exec(ctx, nil, query, vars...)
 }
 
-func (r patreonRepository) SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error {
+func (r PatreonRepository) SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error {
 	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 		Builder().
 		Update("auth_patreon").
@@ -63,7 +63,7 @@ func (r patreonRepository) SetPatreonAuth(ctx context.Context, accessToken strin
 		Set("creator_refresh_token", refreshToken)))
 }
 
-func (r patreonRepository) GetPatreonAuth(ctx context.Context) (string, string, error) {
+func (r PatreonRepository) GetPatreonAuth(ctx context.Context) (string, string, error) {
 	query, args, errQuery := r.db.
 		Builder().
 		Select("creator_access_token", "creator_refresh_token").
@@ -87,7 +87,7 @@ func (r patreonRepository) GetPatreonAuth(ctx context.Context) (string, string, 
 	return creatorAccessToken, creatorRefreshToken, nil
 }
 
-func (r patreonRepository) SaveTokens(ctx context.Context, creds PatreonCredential) error {
+func (r PatreonRepository) SaveTokens(ctx context.Context, creds PatreonCredential) error {
 	const query = `INSERT INTO auth_patreon (
                           steam_id, patreon_id, access_token, refresh_token,
                           expires_in, scope, token_type, version, created_on, updated_on)
@@ -102,7 +102,7 @@ func (r patreonRepository) SaveTokens(ctx context.Context, creds PatreonCredenti
 	))
 }
 
-func (r patreonRepository) GetTokens(ctx context.Context, steamID steamid.SteamID) (PatreonCredential, error) {
+func (r PatreonRepository) GetTokens(ctx context.Context, steamID steamid.SteamID) (PatreonCredential, error) {
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.Builder().
 		Select("patreon_id", "access_token", "refresh_token",
 			"expires_in", "scope", "token_type", "version", "created_on", "updated_on").

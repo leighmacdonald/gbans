@@ -227,29 +227,29 @@ func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
 	// ))
 
 	// Close the report if the ban was attached to one
-	if banSteam.ReportID > 0 {
-		if _, errSaveReport := s.reports.SetReportStatus(ctx, banSteam.ReportID, curUser, ClosedWithAction); errSaveReport != nil {
+	if newBan.ReportID > 0 {
+		if _, errSaveReport := s.reports.SetReportStatus(ctx, newBan.ReportID, curUser, ClosedWithAction); errSaveReport != nil {
 			return newBan, errors.Join(errSaveReport, ErrReportStateUpdate)
 		}
 	}
 
-	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, banSteam.TargetID)
+	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, newBan.TargetID)
 	if err != nil {
 		return newBan, errors.Join(err, ErrFetchPerson)
 	}
 
-	switch banSteam.BanType {
+	switch newBan.BanType {
 	case banDomain.Banned:
-		if errKick := s.state.Kick(ctx, banSteam.TargetID, banSteam.Reason.String()); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
+		if errKick := s.state.Kick(ctx, newBan.TargetID, newBan.Reason.String()); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to kick player", log.ErrAttr(errKick),
-				slog.Int64("sid64", banSteam.TargetID.Int64()))
+				slog.Int64("sid64", newBan.TargetID.Int64()))
 		} else {
 			// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelKickLog, message.KickPlayerEmbed(target)))
 		}
 	case banDomain.NoComm:
-		if errSilence := s.state.Silence(ctx, banSteam.TargetID, banSteam.Reason.String()); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
+		if errSilence := s.state.Silence(ctx, newBan.TargetID, newBan.Reason.String()); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
-				slog.Int64("sid64", banSteam.TargetID.Int64()))
+				slog.Int64("sid64", newBan.TargetID.Int64()))
 		} else {
 			// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelKickLog, message.MuteMessage(bannedPerson)))
 		}
@@ -257,15 +257,14 @@ func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
 		return newBan, ErrInvalidBanType
 	}
 
-	return s.GetByBanID(ctx, banSteam.BanID, false, true)
+	return s.QueryOne(ctx, QueryOpts{BanID: newBan.BanID, EvadeOk: true})
 }
 
 // Unban will set the Current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
 func (s *BanUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author domain.PersonInfo) (bool, error) {
-	bannedPerson, errGetBan := s.banRepo.GetBySteamID(ctx, targetSID, false, true)
-
+	playerBan, errGetBan := s.QueryOne(ctx, QueryOpts{TargetID: targetSID, EvadeOk: true})
 	if errGetBan != nil {
 		if errors.Is(errGetBan, database.ErrNoResult) {
 			return false, nil
@@ -274,17 +273,17 @@ func (s *BanUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reaso
 		return false, errors.Join(errGetBan, ErrGetBan)
 	}
 
-	bannedPerson.Deleted = true
-	bannedPerson.UnbanReasonText = reason
+	playerBan.Deleted = true
+	playerBan.UnbanReasonText = reason
 
-	if errSave := s.banRepo.Save(ctx, &bannedPerson.Ban); errSave != nil {
+	if errSave := s.banRepo.Save(ctx, &playerBan); errSave != nil {
 		return false, errors.Join(errSave, ErrSaveBan)
 	}
 
-	person, err := s.persons.GetPersonBySteamID(ctx, nil, targetSID)
-	if err != nil {
-		return false, errors.Join(err, ErrFetchPerson)
-	}
+	// person, err := s.persons.GetPersonBySteamID(ctx, nil, targetSID)
+	// if err != nil {
+	// 	return false, errors.Join(err, ErrFetchPerson)
+	// }
 
 	// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelBanLog, message.UnbanMessage(s.config, person)))
 
@@ -308,10 +307,6 @@ func (s *BanUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reaso
 
 func (s *BanUsecase) Delete(ctx context.Context, ban *Ban, hardDelete bool) error {
 	return s.banRepo.Delete(ctx, ban, hardDelete)
-}
-
-func (s *BanUsecase) Get(ctx context.Context, filter BansQueryFilter) ([]BannedPerson, error) {
-	return s.banRepo.Get(ctx, filter)
 }
 
 func (s *BanUsecase) Expired(ctx context.Context) ([]Ban, error) {
