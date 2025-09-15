@@ -38,39 +38,39 @@ func netUpdateCmd() *cobra.Command {
 				panic(fmt.Sprintf("Failed to read static config: %v", errStatic))
 			}
 
-			dbUsecase := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
-			if errConnect := dbUsecase.Connect(ctx); errConnect != nil {
+			dbConn := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
+			if errConnect := dbConn.Connect(ctx); errConnect != nil {
 				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
 
 				return
 			}
 
 			defer func() {
-				if errClose := dbUsecase.Close(); errClose != nil {
+				if errClose := dbConn.Close(); errClose != nil {
 					slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
 				}
 			}()
 
-			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(dbUsecase))
+			configuration := config.NewConfiguration(staticConfig, config.NewRepository(dbConn))
 
-			if err := configUsecase.Init(ctx); err != nil {
+			if err := configuration.Init(ctx); err != nil {
 				panic(fmt.Sprintf("Failed to init config: %v", err))
 			}
 
-			if errConfig := configUsecase.Reload(ctx); errConfig != nil {
+			if errConfig := configuration.Reload(ctx); errConfig != nil {
 				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
 			}
 
-			conf := configUsecase.Config()
+			conf := configuration.Config()
 			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, app.SentryDSN != "")
 			defer logCloser()
 
-			persons := person.NewPersonUsecase(person.NewPersonRepository(configUsecase.Config(), dbUsecase), configUsecase, nil)
+			persons := person.NewPersons(person.NewRepository(configuration.Config(), dbConn), configuration, nil)
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase, persons), configUsecase)
+			networks := network.NewNetworks(eventBroadcaster, network.NewRepository(dbConn, persons), configuration)
 
-			if err := networkUsecase.RefreshLocationData(ctx); err != nil {
+			if err := networks.RefreshLocationData(ctx); err != nil {
 				slog.Error("Failed to refresh location data", log.ErrAttr(err))
 				os.Exit(1)
 			}

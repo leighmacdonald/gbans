@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -29,7 +29,7 @@ type MatchTrigger struct {
 }
 
 type MatchesQueryOpts struct {
-	domain.QueryFilter
+	query.Filter
 	SteamID   string     `json:"steam_id"`
 	ServerID  int        `json:"server_id"`
 	Map       string     `json:"map"`

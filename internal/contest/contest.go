@@ -1,13 +1,16 @@
 package contest
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -46,7 +49,7 @@ type Contest struct {
 	IsNew     bool
 }
 
-type ContestEntry struct {
+type Entry struct {
 	CreatedOn      time.Time       `json:"created_on"`
 	UpdatedOn      time.Time       `json:"updated_on"`
 	ContestEntryID uuid.UUID       `json:"contest_entry_id"`
@@ -63,7 +66,7 @@ type ContestEntry struct {
 	Asset          asset.Asset     `json:"asset"`
 }
 
-type ContestEntryVote struct {
+type Vote struct {
 	ContestEntryID uuid.UUID       `json:"contest_entry_id"`
 	SteamID        steamid.SteamID `json:"steam_id"`
 	Vote           int             `json:"vote"`
@@ -71,25 +74,25 @@ type ContestEntryVote struct {
 	UpdatedOn      time.Time       `json:"updated_on"`
 }
 
-func (c Contest) NewEntry(steamID steamid.SteamID, assetID uuid.UUID, description string) (ContestEntry, error) {
+func (c Contest) NewEntry(steamID steamid.SteamID, assetID uuid.UUID, description string) (Entry, error) {
 	if c.ContestID.IsNil() {
-		return ContestEntry{}, ErrInvalidContestID
+		return Entry{}, ErrInvalidContestID
 	}
 
 	if !steamID.Valid() {
-		return ContestEntry{}, domain.ErrInvalidSID
+		return Entry{}, domain.ErrInvalidSID
 	}
 
 	if description == "" {
-		return ContestEntry{}, ErrInvalidDescription
+		return Entry{}, ErrInvalidDescription
 	}
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return ContestEntry{}, errors.Join(errID, domain.ErrUUIDCreate)
+		return Entry{}, errors.Join(errID, domain.ErrUUIDCreate)
 	}
 
-	return ContestEntry{
+	return Entry{
 		CreatedOn:      time.Now(),
 		UpdatedOn:      time.Now(),
 		ContestEntryID: newID,
@@ -144,11 +147,111 @@ func NewContest(title string, description string, dateStart time.Time, dateEnd t
 	return contest, nil
 }
 
-type ContentVoteRecord struct {
+type VoteRecord struct {
 	ContestEntryVoteID int64           `json:"contest_entry_vote_id"`
 	ContestEntryID     uuid.UUID       `json:"contest_entry_id"`
 	SteamID            steamid.SteamID `json:"steam_id"`
 	Vote               bool            `json:"vote"`
 	CreatedOn          time.Time       `json:"created_on"`
 	UpdatedOn          time.Time       `json:"updated_on"`
+}
+
+type Contests struct {
+	repository Repository
+}
+
+func NewContests(repository Repository) Contests {
+	return Contests{repository: repository}
+}
+
+func (c *Contests) Save(ctx context.Context, contest Contest) (Contest, error) {
+	if contest.ContestID.IsNil() {
+		newID, errID := uuid.NewV4()
+		if errID != nil {
+			return contest, errors.Join(errID, domain.ErrUUIDCreate)
+		}
+
+		contest.ContestID = newID
+	}
+
+	if errSave := c.repository.ContestSave(ctx, &contest); errSave != nil {
+		return contest, errSave
+	}
+
+	slog.Info("Contest updated",
+		slog.String("contest_id", contest.ContestID.String()),
+		slog.String("title", contest.Title))
+
+	return contest, nil
+}
+
+func (c *Contests) ByID(ctx context.Context, contestID uuid.UUID, contest *Contest) error {
+	return c.repository.ContestByID(ctx, contestID, contest)
+}
+
+func (c *Contests) ContestDelete(ctx context.Context, contestID uuid.UUID) error {
+	if err := c.repository.ContestDelete(ctx, contestID); err != nil {
+		return err
+	}
+
+	slog.Info("Contest deleted", slog.String("contest_id", contestID.String()))
+
+	return nil
+}
+
+func (c *Contests) EntryDelete(ctx context.Context, contestEntryID uuid.UUID) error {
+	return c.repository.ContestEntryDelete(ctx, contestEntryID)
+}
+
+func (c *Contests) Contests(ctx context.Context, user domain.PersonInfo) ([]Contest, error) {
+	return c.repository.Contests(ctx, !user.HasPermission(permission.PModerator))
+}
+
+func (c *Contests) Entry(ctx context.Context, contestID uuid.UUID, entry *Entry) error {
+	return c.repository.ContestEntry(ctx, contestID, entry)
+}
+
+func (c *Contests) EntrySave(ctx context.Context, entry Entry) error {
+	return c.repository.ContestEntrySave(ctx, entry)
+}
+
+func (c *Contests) Entries(ctx context.Context, contestID uuid.UUID) ([]*Entry, error) {
+	return c.repository.ContestEntries(ctx, contestID)
+}
+
+func (c *Contests) EntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SteamID, record *VoteRecord) error {
+	return c.repository.ContestEntryVoteGet(ctx, contestEntryID, steamID, record)
+}
+
+func (c *Contests) EntryVote(ctx context.Context, contestID uuid.UUID, contestEntryID uuid.UUID, user domain.PersonInfo, vote bool) error {
+	var contest Contest
+	if errContests := c.ByID(ctx, contestID, &contest); errContests != nil {
+		return errContests
+	}
+
+	if !contest.Public && !user.HasPermission(permission.PModerator) {
+		return permission.ErrPermissionDenied
+	}
+
+	if !contest.Voting || !contest.DownVotes && !vote {
+		return httphelper.ErrBadRequest // tODO proper error
+	}
+
+	if err := c.repository.ContestEntryVote(ctx, contestEntryID, user.GetSteamID(), vote); err != nil {
+		return err
+	}
+
+	sid := user.GetSteamID()
+
+	slog.Info("Entry vote registered", slog.String("contest_id", contest.ContestID.String()), slog.Bool("vote", vote), slog.String("steam_id", sid.String()))
+
+	return nil
+}
+
+func (c *Contests) EntryVoteDelete(ctx context.Context, contestEntryVoteID int64) error {
+	return c.repository.ContestEntryVoteDelete(ctx, contestEntryVoteID)
+}
+
+func (c *Contests) EntryVoteUpdate(ctx context.Context, contestEntryVoteID int64, newVote bool) error {
+	return c.repository.ContestEntryVoteUpdate(ctx, contestEntryVoteID, newVote)
 }

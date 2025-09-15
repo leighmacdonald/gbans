@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
@@ -53,7 +52,7 @@ func TestReport(t *testing.T) {
 	require.NotEmpty(t, fetchedColl)
 
 	var fetchedModColl []ban.Report
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/reports", domain.ReportQueryFilter{Deleted: true}, http.StatusOK, &authTokens{user: mods}, &fetchedModColl)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/reports", ban.ReportQueryFilter{Deleted: true}, http.StatusOK, &authTokens{user: mods}, &fetchedModColl)
 	require.NotEmpty(t, fetchedModColl)
 
 	// Make sure others cant query other users reports

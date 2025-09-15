@@ -45,7 +45,7 @@ import (
 // 	return nil
 // }
 
-func NewDownloader(config *config.ConfigUsecase, dbConn database.Database) Downloader {
+func NewDownloader(config *config.Configuration, dbConn database.Database) Downloader {
 	return Downloader{
 		scpExec: NewSCPConnection(dbConn, config),
 		config:  config,
@@ -54,7 +54,7 @@ func NewDownloader(config *config.ConfigUsecase, dbConn database.Database) Downl
 
 type Downloader struct {
 	scpExec SCPConnection
-	config  *config.ConfigUsecase
+	config  *config.Configuration
 }
 
 // Start begins the background task scheduler which peridodically will run the provided SCPExecer.Update function.

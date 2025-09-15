@@ -102,7 +102,6 @@ func (h *Discord) Start(_ context.Context) error {
 	}
 
 	return nil
-
 }
 
 //

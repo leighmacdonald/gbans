@@ -11,15 +11,15 @@ const ctxKeyUserProfile = "user_profile"
 
 var ErrNotLoggedIn = errors.New("not logged in")
 
-func CurrentUserProfile(ctx *gin.Context) (domain.PersonInfo, error) {
+func CurrentUserProfile(ctx *gin.Context) (domain.PersonCore, error) {
 	maybePerson, found := ctx.Get(ctxKeyUserProfile)
 	if !found {
-		return nil, ErrNotLoggedIn
+		return domain.PersonCore{}, ErrNotLoggedIn
 	}
 
-	profile, ok := maybePerson.(domain.PersonInfo)
+	profile, ok := maybePerson.(domain.PersonCore)
 	if !ok {
-		return nil, ErrNotLoggedIn
+		return domain.PersonCore{}, ErrNotLoggedIn
 	}
 
 	return profile, nil
