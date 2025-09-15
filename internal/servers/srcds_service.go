@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -21,8 +20,8 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type EvadeCheck interface {
-	CheckEvadeStatus(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error)
+type EvadeChecker interface {
+	CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, address netip.Addr) (bool, error)
 }
 
 type srcdsHandler struct {
@@ -32,14 +31,14 @@ type srcdsHandler struct {
 	state     *StateUsecase
 	config    *config.ConfigUsecase
 	assets    asset.AssetUsecase
-	evades    EvadeCheck
+	evades    EvadeChecker
 	network   network.NetworkUsecase
 	blocklist network.BlocklistUsecase
 }
 
 func NewSRCDSHandler(engine *gin.Engine, srcds *SRCDSUsecase, servers ServersUsecase,
 	persons PersonProvider, assets asset.AssetUsecase,
-	evades EvadeCheck, network network.NetworkUsecase, auth httphelper.Authenticator,
+	evades EvadeChecker, network network.NetworkUsecase, auth httphelper.Authenticator,
 	config *config.ConfigUsecase, state *StateUsecase,
 	blocklist network.BlocklistUsecase,
 ) {
@@ -126,8 +125,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var (
-			currentUser, _ = session.CurrentUserProfile(ctx)
-			req            checkRequest
+			req checkRequest
 		)
 
 		if !httphelper.Bind(ctx, &req) {
@@ -170,7 +168,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 			}
 
 			if banState.SteamID != steamID && !banState.EvadeOK {
-				evadeBanned, err := s.evades.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
+				evadeBanned, err := s.evades.CheckEvadeStatus(ctx, steamID, req.IP)
 				if err != nil {
 					ctx.JSON(http.StatusOK, defaultValue)
 

@@ -28,7 +28,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/network"
-	"github.com/leighmacdonald/gbans/internal/network/dns"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -333,7 +332,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			// If we are using Valve SDR network, optionally enable the dynamic DNS update support to automatically
 			// update the A record when a change is detected with the new public SDR IP.
 			if conf.Network.SDREnabled && conf.Network.SDRDNSEnabled {
-				go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
+				//go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
 			}
 
 			router, err := CreateRouter(conf, app.Version())
@@ -375,8 +374,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			ban.NewReportHandler(router, reportUsecase, authUsecase)
 			servers.NewServersHandler(router, serversUC, stateUsecase, authUsecase)
 			servers.NewSpeedrunsHandler(router, speedruns, authUsecase, configUsecase, serversUC)
-			servers.NewSRCDSHandler(router, srcdsUsecase, serversUC, personUsecase, assets,
-				reportUsecase, banUsecase, networkUsecase, authUsecase,
+			servers.NewSRCDSHandler(router, srcdsUsecase, serversUC, personUsecase, assets, banUsecase,
+				networkUsecase, authUsecase,
 				configUsecase, stateUsecase, blocklistUsecase)
 			votes.NewHandler(router, voteUsecase, authUsecase)
 			wiki.NewHandler(router, wikiUsecase, authUsecase)

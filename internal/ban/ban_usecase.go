@@ -52,7 +52,7 @@ func NewBanUsecase(repository BanRepository, person person.PersonUsecase,
 	}
 }
 
-func (s *BanUsecase) UpdateCache(ctx context.Context) error {
+func (s BanUsecase) UpdateCache(ctx context.Context) error {
 	bans, errBans := s.banRepo.Query(ctx, QueryOpts{})
 	if errBans != nil {
 		return errBans
@@ -86,11 +86,11 @@ func (s *BanUsecase) UpdateCache(ctx context.Context) error {
 	return nil
 }
 
-func (s *BanUsecase) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
+func (s BanUsecase) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 	return s.banRepo.Query(ctx, opts)
 }
 
-func (s *BanUsecase) QueryOne(ctx context.Context, opts QueryOpts) (Ban, error) {
+func (s BanUsecase) QueryOne(ctx context.Context, opts QueryOpts) (Ban, error) {
 	// TODO FIXME
 	results, errResults := s.banRepo.Query(ctx, opts)
 	if errResults != nil {
@@ -104,11 +104,11 @@ func (s *BanUsecase) QueryOne(ctx context.Context, opts QueryOpts) (Ban, error) 
 	return results[0], nil
 }
 
-func (s *BanUsecase) Stats(ctx context.Context, stats *Stats) error {
+func (s BanUsecase) Stats(ctx context.Context, stats *Stats) error {
 	return s.banRepo.Stats(ctx, stats)
 }
 
-func (s *BanUsecase) Save(ctx context.Context, ban *Ban) error {
+func (s BanUsecase) Save(ctx context.Context, ban *Ban) error {
 	// oldState := Open
 	// if ban.BanID > 0 {
 	// 	existing, errExisting := s.QueryOne(ctx, QueryOpts{
@@ -151,7 +151,7 @@ var ErrBanOptsInvalid = errors.New("invalid ban options")
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of Config.DefaultExpiration() will be used.
-func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
+func (s BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
 	if errValidate := opts.Validate(); errValidate != nil {
 		return Ban{}, errValidate
 	}
@@ -263,7 +263,7 @@ func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
 // Unban will set the Current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func (s *BanUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author domain.PersonInfo) (bool, error) {
+func (s BanUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author domain.PersonInfo) (bool, error) {
 	playerBan, errGetBan := s.QueryOne(ctx, QueryOpts{TargetID: targetSID, EvadeOk: true})
 	if errGetBan != nil {
 		if errors.Is(errGetBan, database.ErrNoResult) {
@@ -305,21 +305,21 @@ func (s *BanUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reaso
 	return true, nil
 }
 
-func (s *BanUsecase) Delete(ctx context.Context, ban *Ban, hardDelete bool) error {
+func (s BanUsecase) Delete(ctx context.Context, ban *Ban, hardDelete bool) error {
 	return s.banRepo.Delete(ctx, ban, hardDelete)
 }
 
-func (s *BanUsecase) Expired(ctx context.Context) ([]Ban, error) {
+func (s BanUsecase) Expired(ctx context.Context) ([]Ban, error) {
 	return s.banRepo.ExpiredBans(ctx)
 }
 
-func (s *BanUsecase) GetOlderThan(ctx context.Context, filter domain.QueryFilter, since time.Time) ([]Ban, error) {
+func (s BanUsecase) GetOlderThan(ctx context.Context, filter domain.QueryFilter, since time.Time) ([]Ban, error) {
 	return s.banRepo.GetOlderThan(ctx, filter, since)
 }
 
 // CheckEvadeStatus checks if the address matches an existing user who is currently banned already. This
 // function will always fail-open and allow players in if an error occurs.
-func (s *BanUsecase) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, address netip.Addr) (bool, error) {
+func (s BanUsecase) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, address netip.Addr) (bool, error) {
 	existing, errMatch := s.QueryOne(ctx, QueryOpts{CIDR: address.String()})
 	if errMatch != nil {
 		if errors.Is(errMatch, database.ErrNoResult) {
@@ -377,7 +377,7 @@ func (s *BanUsecase) CheckEvadeStatus(ctx context.Context, steamID steamid.Steam
 	return true, nil
 }
 
-func (s *BanUsecase) UpdateGroupCache(ctx context.Context) error {
+func (s BanUsecase) UpdateGroupCache(ctx context.Context) error {
 	groups, errGroups := s.Query(ctx, QueryOpts{GroupsOnly: true})
 	if errGroups != nil {
 		return errGroups
@@ -439,10 +439,10 @@ func (s *BanUsecase) UpdateGroupCache(ctx context.Context) error {
 	return nil
 }
 
-func (s *BanUsecase) GetMembersList(ctx context.Context, parentID int64, list *MembersList) error {
+func (s BanUsecase) GetMembersList(ctx context.Context, parentID int64, list *MembersList) error {
 	return s.banRepo.GetMembersList(ctx, parentID, list)
 }
 
-func (s *BanUsecase) SaveMembersList(ctx context.Context, list *MembersList) error {
+func (s BanUsecase) SaveMembersList(ctx context.Context, list *MembersList) error {
 	return s.banRepo.SaveMembersList(ctx, list)
 }
