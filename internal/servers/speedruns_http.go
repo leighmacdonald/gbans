@@ -17,7 +17,7 @@ type speedrunHandler struct {
 	config    *config.Configuration
 }
 
-func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, auth httphelper.Authenticator, config *config.Configuration, serversUC Servers) {
+func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, auth httphelper.Authenticator, config *config.Configuration, serversUC Servers, sentryDSN string) {
 	handler := speedrunHandler{
 		speedruns: speedruns,
 		config:    config,
@@ -36,7 +36,7 @@ func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, auth httphelpe
 
 	srcdsGroup := engine.Group("/")
 	{
-		server := srcdsGroup.Use(MiddlewareServer(serversUC))
+		server := srcdsGroup.Use(MiddlewareServer(serversUC, sentryDSN))
 		server.POST("/api/sm/speedruns", handler.postSpeedrun())
 	}
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/frontend"
-	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -214,7 +213,7 @@ func recoveryHandler() gin.HandlerFunc {
 	})
 }
 
-func CreateRouter(conf config.Config, version app.BuildInfo) (*gin.Engine, error) {
+func CreateRouter(conf config.Config, version BuildInfo) (*gin.Engine, error) {
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
 	engine.Use(recoveryHandler())
@@ -224,7 +223,7 @@ func CreateRouter(conf config.Config, version app.BuildInfo) (*gin.Engine, error
 		useSloggin(engine, conf.Log.Level, conf.Log.HTTPOtelEnabled)
 	}
 
-	if app.SentryDSN != "" {
+	if SentryDSN != "" {
 		useSentry(engine, version.BuildVersion)
 	}
 

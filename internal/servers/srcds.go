@@ -15,7 +15,6 @@ import (
 	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -149,7 +148,7 @@ type ServerAuthReq struct {
 	Key string `json:"key"`
 }
 
-func MiddlewareServer(serversUC Servers) gin.HandlerFunc {
+func MiddlewareServer(serversUC Servers, sentryDSN string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reqAuthHeader := ctx.GetHeader("Authorization")
 		if reqAuthHeader == "" {
@@ -179,7 +178,7 @@ func MiddlewareServer(serversUC Servers) gin.HandlerFunc {
 
 		ctx.Set("server_id", server.ServerID)
 
-		if app.SentryDSN != "" {
+		if sentryDSN != "" {
 			if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 				hub.WithScope(func(scope *sentry.Scope) {
 					scope.SetUser(sentry.User{

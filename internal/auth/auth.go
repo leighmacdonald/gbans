@@ -15,7 +15,6 @@ import (
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -78,22 +77,24 @@ func NewPersonAuth(sid64 steamid.SteamID, addr net.IP, accessToken string) Perso
 const ctxKeyUserProfile = "user_profile"
 
 type Authentication struct {
-	auth    Repository
-	config  *config.Configuration
-	persons person.Persons
-	bans    ban.Bans
-	servers servers.Servers
+	auth      Repository
+	config    *config.Configuration
+	persons   person.Persons
+	bans      ban.Bans
+	servers   servers.Servers
+	sentryDSN string
 }
 
 func NewAuthentication(repository Repository, config *config.Configuration, persons person.Persons,
-	bans ban.Bans, servers servers.Servers,
+	bans ban.Bans, servers servers.Servers, sentryDSN string,
 ) *Authentication {
 	return &Authentication{
-		auth:    repository,
-		config:  config,
-		persons: persons,
-		bans:    bans,
-		servers: servers,
+		auth:      repository,
+		config:    config,
+		persons:   persons,
+		bans:      bans,
+		servers:   servers,
+		sentryDSN: sentryDSN,
 	}
 }
 
@@ -175,15 +176,15 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 
 					return
 				}
-
-				sentry.ConfigureScope(func(scope *sentry.Scope) {
-					scope.SetUser(sentry.User{
-						ID:        loggedInPerson.SteamID.String(),
-						IPAddress: ctx.ClientIP(),
-						Username:  loggedInPerson.PersonaName,
+				if u.sentryDSN != "" {
+					sentry.ConfigureScope(func(scope *sentry.Scope) {
+						scope.SetUser(sentry.User{
+							ID:        loggedInPerson.SteamID.String(),
+							IPAddress: ctx.ClientIP(),
+							Username:  loggedInPerson.PersonaName,
+						})
 					})
-				})
-
+				}
 				if level > loggedInPerson.PermissionLevel {
 					ctx.AbortWithStatus(http.StatusForbidden)
 
@@ -216,7 +217,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 
 				ctx.Set(ctxKeyUserProfile, profile)
 
-				if app.SentryDSN != "" {
+				if u.sentryDSN != "" {
 					if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 						hub.WithScope(func(scope *sentry.Scope) {
 							scope.SetUser(sentry.User{
@@ -313,7 +314,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 
 				ctx.Set(ctxKeyUserProfile, profile)
 
-				if app.SentryDSN != "" {
+				if u.sentryDSN != "" {
 					if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 						hub.WithScope(func(scope *sentry.Scope) {
 							scope.SetUser(sentry.User{

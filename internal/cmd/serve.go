@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
-	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -151,9 +150,9 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			defer stop()
 
 			slog.Info("Starting gbans...",
-				slog.String("version", app.BuildVersion),
-				slog.String("commit", app.BuildCommit),
-				slog.String("date", app.BuildDate))
+				slog.String("version", BuildVersion),
+				slog.String("commit", BuildCommit),
+				slog.String("date", BuildDate))
 
 			staticConfig, errStatic := config.ReadStaticConfig()
 			if errStatic != nil {
@@ -190,16 +189,16 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			// This is normally set by build time flags, but can be overwritten by the env var.
-			if app.SentryDSN == "" {
+			if SentryDSN == "" {
 				if value, found := os.LookupEnv("SENTRY_DSN"); found && value != "" {
-					app.SentryDSN = value
+					SentryDSN = value
 				}
 			}
 
 			conf := configuration.Config()
 
-			if app.SentryDSN != "" {
-				sentryClient, err := log.NewSentryClient(app.SentryDSN, true, 0.25, app.BuildVersion, string(conf.General.Mode))
+			if SentryDSN != "" {
+				sentryClient, err := log.NewSentryClient(SentryDSN, true, 0.25, BuildVersion, string(conf.General.Mode))
 				if err != nil {
 					slog.Error("Failed to setup sentry client")
 				} else {
@@ -210,7 +209,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				slog.Info("Sentry.io support is disabled. To enable at runtime, set SENTRY_DSN.")
 			}
 
-			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, app.SentryDSN != "")
+			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, SentryDSN != "", BuildVersion)
 			defer logCloser()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
@@ -291,7 +290,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			patreons := patreon.NewPatreon(patreon.NewRepository(dbConn), configuration)
 			gameServers := servers.NewSRCDS(servers.NewSRCDSRepository(dbConn), configuration, serversUC, persons, tfapiClient)
 			wikis := wiki.NewWiki(wiki.NewRepository(dbConn))
-			authenticator := auth.NewAuthentication(auth.NewRepository(dbConn), configuration, persons, bans, serversUC)
+			authenticator := auth.NewAuthentication(auth.NewRepository(dbConn), configuration, persons, bans, serversUC, SentryDSN)
 			anticheats := anticheat.NewAntiCheat(anticheat.NewRepository(dbConn), bans, configuration, persons)
 
 			voteRecorder := votes.NewVotes(votes.NewRepository(dbConn), eventBroadcaster)
@@ -321,7 +320,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				// go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
 			}
 
-			router, err := CreateRouter(conf, app.Version())
+			router, err := CreateRouter(conf, Version())
 			if err != nil {
 				slog.Error("Could not setup router", log.ErrAttr(err))
 
@@ -342,7 +341,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			ban.NewAppealHandler(router, appeals, authenticator)
 			auth.NewAuthHandler(router, authenticator, configuration, persons, tfapiClient)
 			ban.NewHandlerSteam(router, bans, configuration, authenticator)
-			config.NewConfigHandler(router, configuration, authenticator, app.Version())
+			config.NewConfigHandler(router, configuration, authenticator, BuildVersion)
 			discordoauth.NewDiscordOAuthHandler(router, authenticator, configuration, persons, discordOAuth)
 			network.NewBlocklistHandler(router, blocklists, networks, authenticator)
 			chat.NewChatHandler(router, chats, authenticator)
@@ -359,10 +358,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			person.NewPersonHandler(router, configuration, persons, authenticator)
 			ban.NewReportHandler(router, reports, authenticator)
 			servers.NewServersHandler(router, serversUC, states, authenticator)
-			servers.NewSpeedrunsHandler(router, speedruns, authenticator, configuration, serversUC)
+			servers.NewSpeedrunsHandler(router, speedruns, authenticator, configuration, serversUC, SentryDSN)
 			servers.NewSRCDSHandler(router, gameServers, serversUC, persons, assets, bans,
 				networks, authenticator,
-				configuration, states, blocklists)
+				configuration, states, blocklists, SentryDSN)
 			votes.NewVotesHandler(router, voteRecorder, authenticator)
 			wiki.NewWikiHandler(router, wikis, authenticator)
 			chat.NewWordFilterHandler(router, configuration, wordFilters, chats, authenticator)
