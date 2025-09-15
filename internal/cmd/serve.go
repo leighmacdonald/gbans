@@ -21,9 +21,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/contest"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord_oauth"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/metrics"
@@ -34,7 +34,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
-	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
@@ -46,8 +45,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func firstTimeSetup(ctx context.Context, persons person.PersonUsecase, newsUC news.NewsUsecase,
-	wikiUC wiki.WikiUsecase, conf config.Config,
+func firstTimeSetup(ctx context.Context, persons person.Persons, newsUC news.News,
+	wikiUC wiki.Wiki, conf config.Config,
 ) error {
 	_, errRootUser := persons.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
 	if errRootUser == nil {
@@ -65,7 +64,7 @@ func firstTimeSetup(ctx context.Context, persons person.PersonUsecase, newsUC ne
 		slog.Error("Failed create new owner", log.ErrAttr(errSave))
 	}
 
-	newsEntry := news.NewsEntry{
+	newsEntry := news.Article{
 		Title:       "Welcome to gbans",
 		BodyMD:      "This is an *example* **news** entry.",
 		IsPublished: true,
@@ -85,7 +84,7 @@ func firstTimeSetup(ctx context.Context, persons person.PersonUsecase, newsUC ne
 		UpdatedOn: time.Now(),
 	}
 
-	_, errSave := wikiUC.SaveWikiPage(ctx, newOwner, page.Slug, page.BodyMD, page.PermissionLevel)
+	_, errSave := wikiUC.Save(ctx, newOwner, page.Slug, page.BodyMD, page.PermissionLevel)
 	if errSave != nil {
 		slog.Error("Failed save example wiki entry", log.ErrAttr(errSave))
 	}
@@ -176,27 +175,19 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				}
 			}()
 
-			if err := queue.Init(ctx, dbConn.Pool()); err != nil {
-				slog.Error("Failed to initialize queue", log.ErrAttr(err))
-
-				return err
-			}
-
 			// Config
-			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(dbConn))
-			if err := configUsecase.Init(ctx); err != nil {
+			configuration := config.NewConfiguration(staticConfig, config.NewRepository(dbConn))
+			if err := configuration.Init(ctx); err != nil {
 				slog.Error("Failed to init config", log.ErrAttr(err))
 
 				return err
 			}
 
-			if errConfig := configUsecase.Reload(ctx); errConfig != nil {
+			if errConfig := configuration.Reload(ctx); errConfig != nil {
 				slog.Error("Failed to read config", log.ErrAttr(errConfig))
 
 				return errConfig
 			}
-
-			conf := configUsecase.Config()
 
 			// This is normally set by build time flags, but can be overwritten by the env var.
 			if app.SentryDSN == "" {
@@ -204,6 +195,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 					app.SentryDSN = value
 				}
 			}
+
+			conf := configuration.Config()
 
 			if app.SentryDSN != "" {
 				sentryClient, err := log.NewSentryClient(app.SentryDSN, true, 0.25, app.BuildVersion, string(conf.General.Mode))
@@ -223,25 +216,25 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 			// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-			discordUsecase, errDiscord := discord.NewDiscord(conf.Discord.AppID, conf.Discord.GuildID, conf.Discord.Token, conf.ExternalURL)
+			bot, errDiscord := discord.NewDiscord(conf.Discord.AppID, conf.Discord.GuildID, conf.Discord.Token, conf.ExternalURL)
 			if errDiscord != nil {
 				return errDiscord
 			}
 
 			if conf.Discord.Enabled {
-				if err := discordUsecase.Start(ctx); err != nil {
+				if err := bot.Start(ctx); err != nil {
 					slog.Error("Failed to start discord", log.ErrAttr(err))
 
 					return err
 				}
 
-				defer discordUsecase.Shutdown()
+				defer bot.Shutdown()
 			}
 
-			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbConn), discordUsecase)
+			notifications := notification.NewNotifications(notification.NewRepository(dbConn), bot)
 
-			wordFilterUsecase := chat.NewWordFilterUsecase(chat.NewWordFilterRepository(dbConn))
-			if err := wordFilterUsecase.Import(ctx); err != nil {
+			wordFilters := chat.NewWordFilter(chat.NewWordFilterRepository(dbConn))
+			if err := wordFilters.Import(ctx); err != nil {
 				slog.Error("Failed to load word filters", log.ErrAttr(err))
 
 				return err
@@ -252,69 +245,62 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return errClient
 			}
 
-			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbConn), configUsecase, tfapiClient)
+			persons := person.NewPersons(person.NewRepository(conf, dbConn), configuration, tfapiClient)
 
-			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbConn, personUsecase), configUsecase)
-			go networkUsecase.Start(ctx)
+			networks := network.NewNetworks(eventBroadcaster, network.NewRepository(dbConn, persons), configuration)
+			go networks.Start(ctx)
 
-			assetRepository := asset.NewLocalRepository(dbConn, conf.LocalStore.PathRoot)
-			if err := assetRepository.Init(ctx); err != nil {
+			assetRepo := asset.NewLocalRepository(dbConn, conf.LocalStore.PathRoot)
+			if err := assetRepo.Init(ctx); err != nil {
 				slog.Error("Failed to init local asset repo", log.ErrAttr(err))
 
 				return err
 			}
 
-			assets := asset.NewAssetUsecase(assetRepository)
-			serversUC := servers.NewServersUsecase(servers.NewServersRepository(dbConn))
-			demos := servers.NewDemoUsecase(asset.BucketDemo, servers.NewDemoRepository(dbConn), assets, configUsecase)
-
-			reportUsecase := ban.NewReportUsecase(ban.NewReportRepository(dbConn), configUsecase, personUsecase, demos, tfapiClient)
-
-			stateUsecase := servers.NewStateUsecase(eventBroadcaster,
-				servers.NewStateRepository(servers.NewCollector(serversUC)), configUsecase, serversUC)
-
-			banRepo := ban.NewBanRepository(dbConn, personUsecase, networkUsecase)
-			banUsecase := ban.NewBanUsecase(banRepo, personUsecase, configUsecase, reportUsecase, stateUsecase, tfapiClient)
-			blocklistUsecase := network.NewBlocklistUsecase(network.NewBlocklistRepository(dbConn), &banUsecase) // TODO Does THE & work here?
+			assets := asset.NewAssets(assetRepo)
+			serversUC := servers.NewServers(servers.NewServersRepository(dbConn))
+			demos := servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(dbConn), assets, configuration)
+			reports := ban.NewReports(ban.NewReportRepository(dbConn), configuration, persons, demos, tfapiClient)
+			states := servers.NewState(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(serversUC)), configuration, serversUC)
+			bans := ban.NewBans(ban.NewBanRepository(dbConn, persons, networks), persons, configuration, reports, states, tfapiClient)
+			blocklists := network.NewBlocklists(network.NewBlocklistRepository(dbConn), &bans) // TODO Does THE & work here?
 
 			go func() {
-				if err := stateUsecase.Start(ctx); err != nil {
+				if err := states.Start(ctx); err != nil {
 					slog.Error("Failed to start state tracker", log.ErrAttr(err))
 				}
 			}()
 
-			discordOAuthUsecase := discordoauth.NewDiscordOAuthUsecase(discordoauth.NewDiscordOAuthRepository(dbConn), configUsecase)
+			discordOAuth := discordoauth.NewDiscordOAuth(discordoauth.NewRepository(dbConn), configuration)
 
-			appeals := ban.NewAppealUsecase(ban.NewAppealRepository(dbConn), banUsecase, personUsecase, configUsecase)
+			appeals := ban.NewAppeals(ban.NewAppealRepository(dbConn), bans, persons, configuration)
 
-			chatRepository := chat.NewChatRepository(dbConn, personUsecase, wordFilterUsecase, eventBroadcaster)
-			go chatRepository.Start(ctx)
+			chatRepo := chat.NewChatRepository(dbConn, persons, wordFilters, eventBroadcaster)
+			go chatRepo.Start(ctx)
 
-			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase)
-			go chatUsecase.Start(ctx)
+			chats := chat.NewChat(configuration, chatRepo, wordFilters, states, bans, persons)
+			go chats.Start(ctx)
 
-			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(dbConn))
-			go forumUsecase.Start(ctx)
+			forums := forum.NewForums(forum.NewForumRepository(dbConn))
+			go forums.Start(ctx)
 
-			metricsUsecase := metrics.NewMetricsUsecase(eventBroadcaster)
-			go metricsUsecase.Start(ctx)
+			metric := metrics.NewMetrics(eventBroadcaster)
+			go metric.Start(ctx)
 
-			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbConn))
-			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbConn), configUsecase)
-			srcdsUsecase := servers.NewSrcdsUsecase(servers.NewRepository(dbConn), configUsecase, serversUC, personUsecase, tfapiClient)
-			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbConn))
-			authRepo := auth.NewAuthRepository(dbConn)
-			authUsecase := auth.NewAuthUsecase(authRepo, configUsecase, personUsecase, banUsecase, serversUC)
-			anticheatUsecase := anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(dbConn), banUsecase, configUsecase, personUsecase)
+			newsHandler := news.NewNews(news.NewNewsRepository(dbConn))
+			patreons := patreon.NewPatreon(patreon.NewRepository(dbConn), configuration)
+			gameServers := servers.NewSRCDS(servers.NewSRCDSRepository(dbConn), configuration, serversUC, persons, tfapiClient)
+			wikis := wiki.NewWiki(wiki.NewRepository(dbConn))
+			authenticator := auth.NewAuthentication(auth.NewRepository(dbConn), configuration, persons, bans, serversUC)
+			anticheats := anticheat.NewAntiCheat(anticheat.NewRepository(dbConn), bans, configuration, persons)
 
-			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), eventBroadcaster)
-			go voteUsecase.Start(ctx)
+			voteRecorder := votes.NewVotes(votes.NewRepository(dbConn), eventBroadcaster)
+			go voteRecorder.Start(ctx)
 
-			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(dbConn))
+			contests := contest.NewContests(contest.NewRepository(dbConn))
+			speedruns := servers.NewSpeedruns(servers.NewSpeedrunRepository(dbConn, persons))
 
-			speedruns := servers.NewSpeedrunUsecase(servers.NewSpeedrunRepository(dbConn, personUsecase))
-
-			if err := firstTimeSetup(ctx, personUsecase, newsUsecase, wikiUsecase, conf); err != nil {
+			if err := firstTimeSetup(ctx, persons, newsHandler, wikis, conf); err != nil {
 				slog.Error("Failed to run first time setup", log.ErrAttr(err))
 
 				return err
@@ -332,7 +318,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			// If we are using Valve SDR network, optionally enable the dynamic DNS update support to automatically
 			// update the A record when a change is detected with the new public SDR IP.
 			if conf.Network.SDREnabled && conf.Network.SDRDNSEnabled {
-				//go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
+				// go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
 			}
 
 			router, err := CreateRouter(conf, app.Version())
@@ -352,62 +338,62 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			// Register all our handlers with router
-			anticheat.NewHandler(router, authUsecase, anticheatUsecase)
-			ban.NewAppealHandler(router, appeals, authUsecase)
-			auth.NewHandler(router, authUsecase, configUsecase, personUsecase, tfapiClient)
-			ban.NewHandlerSteam(router, banUsecase, configUsecase, authUsecase)
-			config.NewHandler(router, configUsecase, authUsecase, app.Version())
-			discordoauth.NewHandler(router, authUsecase, configUsecase, personUsecase, discordOAuthUsecase)
-			network.NewBlocklistHandler(router, blocklistUsecase, networkUsecase, authUsecase)
-			chat.NewHandler(router, chatUsecase, authUsecase)
-			contest.NewHandler(router, contestUsecase, assets, authUsecase)
-			servers.NewDemoHandler(router, demos, authUsecase)
-			forum.NewHandler(router, forumUsecase, authUsecase)
+			anticheat.NewAnticheatHandler(router, authenticator, anticheats)
+			ban.NewAppealHandler(router, appeals, authenticator)
+			auth.NewAuthHandler(router, authenticator, configuration, persons, tfapiClient)
+			ban.NewHandlerSteam(router, bans, configuration, authenticator)
+			config.NewConfigHandler(router, configuration, authenticator, app.Version())
+			discordoauth.NewDiscordOAuthHandler(router, authenticator, configuration, persons, discordOAuth)
+			network.NewBlocklistHandler(router, blocklists, networks, authenticator)
+			chat.NewChatHandler(router, chats, authenticator)
+			contest.NewContestHandler(router, contests, assets, authenticator)
+			servers.NewDemoHandler(router, demos, authenticator)
+			forum.NewForumHandler(router, forums, authenticator)
 			// match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
-			asset.NewHandler(router, assets, authUsecase)
-			metrics.NewHandler(router)
-			network.NewHandler(router, networkUsecase, authUsecase)
-			news.NewHandler(router, newsUsecase, notificationUsecase, authUsecase)
-			notification.NewHandler(router, notificationUsecase, authUsecase)
-			patreon.NewHandler(router, patreonUsecase, authUsecase, configUsecase)
-			person.NewHandler(router, configUsecase, personUsecase, authUsecase)
-			ban.NewReportHandler(router, reportUsecase, authUsecase)
-			servers.NewServersHandler(router, serversUC, stateUsecase, authUsecase)
-			servers.NewSpeedrunsHandler(router, speedruns, authUsecase, configUsecase, serversUC)
-			servers.NewSRCDSHandler(router, srcdsUsecase, serversUC, personUsecase, assets, banUsecase,
-				networkUsecase, authUsecase,
-				configUsecase, stateUsecase, blocklistUsecase)
-			votes.NewHandler(router, voteUsecase, authUsecase)
-			wiki.NewHandler(router, wikiUsecase, authUsecase)
-			chat.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
+			asset.NewAssetHandler(router, assets, authenticator)
+			metrics.NewMetricsHandler(router)
+			network.NewNetworkHandler(router, networks, authenticator)
+			news.NewNewsHandler(router, newsHandler, notifications, authenticator)
+			notification.NewNotificationHandler(router, notifications, authenticator)
+			patreon.NewPatreonHandler(router, patreons, authenticator, configuration)
+			person.NewPersonHandler(router, configuration, persons, authenticator)
+			ban.NewReportHandler(router, reports, authenticator)
+			servers.NewServersHandler(router, serversUC, states, authenticator)
+			servers.NewSpeedrunsHandler(router, speedruns, authenticator, configuration, serversUC)
+			servers.NewSRCDSHandler(router, gameServers, serversUC, persons, assets, bans,
+				networks, authenticator,
+				configuration, states, blocklists)
+			votes.NewVotesHandler(router, voteRecorder, authenticator)
+			wiki.NewWikiHandler(router, wikis, authenticator)
+			chat.NewWordFilterHandler(router, configuration, wordFilters, chats, authenticator)
 
-			playerqueueRepo := playerqueue.NewPlayerqueueRepository(dbConn, personUsecase)
+			playerqueueRepo := playerqueue.NewPlayerqueueRepository(dbConn, persons)
 			// Pre-load some messages into queue message cache
-			chatlogs, errChatlogs := playerqueueRepo.Query(ctx, playerqueue.PlayerqueueQueryOpts{QueryFilter: domain.QueryFilter{Limit: 100}})
+			chatlogs, errChatlogs := playerqueueRepo.Query(ctx, playerqueue.PlayerqueueQueryOpts{Filter: query.Filter{Limit: 100}})
 			if errChatlogs != nil {
 				slog.Error("Failed to warm playerqueue chatlogs", log.ErrAttr(err))
 				chatlogs = []playerqueue.ChatLog{}
 			}
-			playerqueueUC := playerqueue.NewPlayerqueueUsecase(playerqueueRepo, personUsecase, serversUC, stateUsecase, chatlogs)
+			playerqueueUC := playerqueue.NewPlayerqueue(playerqueueRepo, persons, serversUC, states, chatlogs)
 			go playerqueueUC.Start(ctx)
-			playerqueue.NewPlayerqueueHandler(router, authUsecase, configUsecase, playerqueueUC)
+			playerqueue.NewPlayerqueueHandler(router, authenticator, configuration, playerqueueUC)
 
 			if conf.Debug.AddRCONLogAddress != "" {
-				go stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
-				defer stateUsecase.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
+				go states.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+				defer states.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
 			}
 
-			memberships := ban.NewMemberships(banRepo, tfapiClient)
-			banExpirations := ban.NewExpirationMonitor(banUsecase, personUsecase, notificationUsecase, configUsecase)
+			memberships := ban.NewMemberships(ban.NewBanRepository(dbConn, persons, networks), tfapiClient)
+			banExpirations := ban.NewExpirationMonitor(bans, persons, notifications, configuration)
 
 			go func() {
-				if errSync := anticheatUsecase.SyncDemoIDs(ctx, 100); errSync != nil {
+				if errSync := anticheats.SyncDemoIDs(ctx, 100); errSync != nil {
 					slog.Error("failed to sync anticheat demos")
 				}
 
 				go memberships.Update(ctx)
 				go banExpirations.Update(ctx)
-				go blocklistUsecase.Sync(ctx)
+				go blocklists.Sync(ctx)
 				go demos.Cleanup(ctx)
 
 				membershipsTicker := time.NewTicker(12 * time.Hour)
@@ -425,15 +411,15 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 					go banExpirations.Update(ctx)
 				case <-reportIntoTicker.C:
 					go func() {
-						if errMeta := reportUsecase.GenerateMetaStats(ctx); errMeta != nil {
+						if errMeta := reports.MetaStats(ctx); errMeta != nil {
 							slog.Error("Failed to generate meta stats", log.ErrAttr(errMeta))
 						}
 					}()
 				case <-blocklistTicker.C:
-					go blocklistUsecase.Sync(ctx)
+					go blocklists.Sync(ctx)
 				case <-demoTicker.C:
 					go demos.Cleanup(ctx)
-					if errSync := anticheatUsecase.SyncDemoIDs(ctx, 100); errSync != nil {
+					if errSync := anticheats.SyncDemoIDs(ctx, 100); errSync != nil {
 						slog.Error("failed to sync anticheat demos")
 					}
 				}
@@ -441,7 +427,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			httpServer := httphelper.NewServer(conf.Addr(), router)
 
-			demoDownloader := scp.NewDownloader(configUsecase, dbConn)
+			demoDownloader := scp.NewDownloader(configuration, dbConn)
 			// TODO register handlers
 			go demoDownloader.Start(ctx)
 

@@ -2,9 +2,7 @@ package permission
 
 import "errors"
 
-var (
-	ErrPermissionDenied = errors.New("permission denied")
-)
+var ErrPermissionDenied = errors.New("permission denied")
 
 type Privilege uint8
 

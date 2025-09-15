@@ -40,11 +40,11 @@ type OnClientConnect func(ctx context.Context, client storage.Storager, server [
 // connection.
 type SCPConnection struct {
 	database  database.Database
-	config    *config.ConfigUsecase
+	config    *config.Configuration
 	onConnect OnClientConnect
 }
 
-func NewSCPConnection(database database.Database, config *config.ConfigUsecase) SCPConnection {
+func NewSCPConnection(database database.Database, config *config.Configuration) SCPConnection {
 	return SCPConnection{
 		database: database,
 		config:   config,

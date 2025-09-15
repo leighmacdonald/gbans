@@ -45,49 +45,45 @@ func refreshFiltersCmd() *cobra.Command {
 				panic(fmt.Sprintf("Failed to read static config: %v", errStatic))
 			}
 
-			dbUsecase := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
-			if errConnect := dbUsecase.Connect(ctx); errConnect != nil {
+			dbConn := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
+			if errConnect := dbConn.Connect(ctx); errConnect != nil {
 				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
 
 				return
 			}
 
 			defer func() {
-				if errClose := dbUsecase.Close(); errClose != nil {
+				if errClose := dbConn.Close(); errClose != nil {
 					slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
 				}
 			}()
 
-			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(dbUsecase))
-			if err := configUsecase.Init(ctx); err != nil {
+			configuration := config.NewConfiguration(staticConfig, config.NewRepository(dbConn))
+			if err := configuration.Init(ctx); err != nil {
 				panic(fmt.Sprintf("Failed to init config: %v", err))
 			}
 
-			if errConfig := configUsecase.Reload(ctx); errConfig != nil {
+			if errConfig := configuration.Reload(ctx); errConfig != nil {
 				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
 			}
 
-			conf := configUsecase.Config()
+			conf := configuration.Config()
 
 			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, app.SentryDSN != "")
 			defer logCloser()
 
 			if //goland:noinspection ALL
-			errDelete := dbUsecase.Exec(ctx, nil, "DELETE FROM person_messages_filter"); errDelete != nil {
+			errDelete := dbConn.Exec(ctx, nil, "DELETE FROM person_messages_filter"); errDelete != nil {
 				slog.Error("Failed to delete existing", log.ErrAttr(errDelete))
 
 				return
 			}
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
-			stateUsecase := servers.NewStateUsecase(eventBroadcaster,
-				servers.NewStateRepository(servers.NewCollector(serversUsecase)), configUsecase, serversUsecase)
-
-			// discordUsecase := discord.NewDiscordUsecase(discord.NewDiscordRepository(conf), configUsecase)
-
-			wordFilterUsecase := chat.NewWordFilterUsecase(chat.NewWordFilterRepository(dbUsecase))
-			if errImport := wordFilterUsecase.Import(ctx); errImport != nil {
+			serversCase := servers.NewServers(servers.NewServersRepository(dbConn))
+			state := servers.NewState(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(serversCase)), configuration, serversCase)
+			wordFilters := chat.NewWordFilter(chat.NewWordFilterRepository(dbConn))
+			if errImport := wordFilters.Import(ctx); errImport != nil {
 				slog.Error("Failed to load filters")
 			}
 
@@ -98,16 +94,15 @@ func refreshFiltersCmd() *cobra.Command {
 				return
 			}
 
-			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase, tfapiClient)
-			reportUsecase := ban.NewReportUsecase(ban.NewReportRepository(dbUsecase), configUsecase, personUsecase, servers.DemoUsecase{}, tfapiClient)
-			// banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase), personUsecase)
-			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase, personUsecase), configUsecase)
-			banUsecase := ban.NewBanUsecase(ban.NewBanRepository(dbUsecase, personUsecase, networkUsecase), personUsecase, configUsecase, reportUsecase, stateUsecase, tfapiClient)
+			persons := person.NewPersons(person.NewRepository(conf, dbConn), configuration, tfapiClient)
+			reports := ban.NewReports(ban.NewReportRepository(dbConn), configuration, persons, servers.Demos{}, tfapiClient)
+			networks := network.NewNetworks(eventBroadcaster, network.NewRepository(dbConn, persons), configuration)
+			bans := ban.NewBans(ban.NewBanRepository(dbConn, persons, networks), persons, configuration, reports, state, tfapiClient)
 
 			// blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase), banUsecase)
 
-			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, eventBroadcaster)
-			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase)
+			chatRepo := chat.NewChatRepository(dbConn, persons, wordFilters, eventBroadcaster)
+			chats := chat.NewChat(configuration, chatRepo, wordFilters, state, bans, persons)
 
 			var query chat.ChatHistoryQueryFilter
 			query.DontCalcTotal = true
@@ -118,7 +113,7 @@ func refreshFiltersCmd() *cobra.Command {
 
 			matches := 0
 
-			admin, errAdmin := personUsecase.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
+			admin, errAdmin := persons.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
 			if errAdmin != nil {
 				slog.Error("Failed to load admin user", log.ErrAttr(errAdmin))
 
@@ -126,7 +121,7 @@ func refreshFiltersCmd() *cobra.Command {
 			}
 
 			for {
-				messages, errMessages := chatUsecase.QueryChatHistory(ctx, admin, query)
+				messages, errMessages := chats.QueryChatHistory(ctx, admin, query)
 				if errMessages != nil {
 					slog.Error("Failed to load more messages", log.ErrAttr(errMessages))
 
@@ -134,9 +129,9 @@ func refreshFiltersCmd() *cobra.Command {
 				}
 
 				for _, message := range messages {
-					matched := wordFilterUsecase.Check(message.Body)
+					matched := wordFilters.Check(message.Body)
 					if len(matched) > 0 {
-						if errAdd := wordFilterUsecase.AddMessageFilterMatch(ctx, message.PersonMessageID, matched[0].FilterID); errAdd != nil {
+						if errAdd := wordFilters.AddMessageFilterMatch(ctx, message.PersonMessageID, matched[0].FilterID); errAdd != nil {
 							slog.Error("Failed to add filter match", log.ErrAttr(errAdd))
 						}
 

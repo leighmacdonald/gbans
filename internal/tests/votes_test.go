@@ -20,13 +20,13 @@ func TestVotes(t *testing.T) {
 	moderator := loginUser(getModerator())
 
 	var results httphelper.LazyResult
-	req := votes.VoteQueryFilter{
+	req := votes.Query{
 		Success: -1,
 	}
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/votes", req, http.StatusOK, &authTokens{user: moderator}, &results)
 	require.Empty(t, results.Data)
 
-	require.NoError(t, votesRepo.AddResult(t.Context(), votes.VoteResult{
+	require.NoError(t, votesRepo.AddResult(t.Context(), votes.Result{
 		SourceID:         source.SteamID,
 		SourceName:       source.PersonaName,
 		SourceAvatarHash: source.AvatarHash,

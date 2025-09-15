@@ -2,96 +2,9 @@ package domain
 
 import (
 	"context"
-	"strings"
 
-	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
-
-const MaxResultsDefault = 100
-
-// QueryFilter provides a structure for common query parameters.
-type QueryFilter struct {
-	Offset  uint64 `json:"offset,omitempty" schema:"offset" binding:"gte=0"`
-	Limit   uint64 `json:"limit,omitempty" schema:"limit" binding:"gte=0,lte=10000"`
-	Desc    bool   `json:"desc,omitempty" schema:"desc"`
-	Query   string `json:"query,omitempty" schema:"query"`
-	OrderBy string `json:"order_by,omitempty" schema:"order_by"`
-	Deleted bool   `json:"deleted,omitempty" schema:"deleted"`
-}
-
-// ApplySafeOrder is used to ensure that a user requested column is valid. This
-// is used to prevent potential injection attacks as there is no parameterized
-// order by value.
-func (qf QueryFilter) ApplySafeOrder(builder sq.SelectBuilder, validColumns map[string][]string, fallback string) sq.SelectBuilder {
-	if qf.OrderBy == "" {
-		qf.OrderBy = fallback
-	}
-
-	qf.OrderBy = strings.ToLower(qf.OrderBy)
-
-	isValid := false
-
-	for prefix, columns := range validColumns {
-		for _, name := range columns {
-			if name == qf.OrderBy {
-				qf.OrderBy = prefix + qf.OrderBy
-				isValid = true
-
-				break
-			}
-		}
-
-		if isValid {
-			break
-		}
-	}
-
-	if qf.Desc {
-		builder = builder.OrderBy(qf.OrderBy + " DESC")
-	} else {
-		builder = builder.OrderBy(qf.OrderBy + " ASC")
-	}
-
-	return builder
-}
-
-func (qf QueryFilter) ApplyLimitOffsetDefault(builder sq.SelectBuilder) sq.SelectBuilder {
-	return qf.ApplyLimitOffset(builder, MaxResultsDefault)
-}
-
-func (qf QueryFilter) ApplyLimitOffset(builder sq.SelectBuilder, maxLimit uint64) sq.SelectBuilder {
-	if qf.Limit > maxLimit {
-		qf.Limit = maxLimit
-	}
-
-	if qf.Limit > 0 {
-		builder = builder.Limit(qf.Limit)
-	}
-
-	if qf.Offset > 0 {
-		builder = builder.Offset(qf.Offset)
-	}
-
-	return builder
-}
-
-type DemoFilter struct {
-	QueryFilter
-	SteamID   string `json:"steam_id"`
-	ServerIDs []int  `json:"server_ids"` //nolint:tagliatelle
-	MapName   string `json:"map_name"`
-}
-
-func (f DemoFilter) SourceSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SteamID)
-
-	return sid, sid.Valid()
-}
-
-type FiltersQueryFilter struct {
-	QueryFilter
-}
 
 type SourceIDProvider interface {
 	SourceSteamID(ctx context.Context) (steamid.SteamID, bool)
@@ -99,11 +12,6 @@ type SourceIDProvider interface {
 
 type TargetIDProvider interface {
 	TargetSteamID(ctx context.Context) (steamid.SteamID, bool)
-}
-
-type ReportQueryFilter struct {
-	SourceIDField
-	Deleted bool `json:"deleted"`
 }
 
 type SteamIDField struct {
@@ -150,19 +58,6 @@ func (f TargetIDField) TargetSteamID(ctx context.Context) (steamid.SteamID, bool
 	}
 
 	sid, err := steamid.Resolve(ctx, f.TargetID)
-	if err != nil {
-		return sid, false
-	}
-
-	return sid, sid.Valid()
-}
-
-type TargetGIDField struct {
-	GroupID string `json:"group_id"  url:"group_id"`
-}
-
-func (f TargetGIDField) TargetGroupID(ctx context.Context) (steamid.SteamID, bool) {
-	sid, err := steamid.Resolve(ctx, f.GroupID)
 	if err != nil {
 		return sid, false
 	}

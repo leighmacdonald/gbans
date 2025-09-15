@@ -55,33 +55,33 @@ var (
 	testServer     servers.Server
 	testBan        ban.Ban
 	testTarget     person.Person
-	blocklistUC    network.BlocklistUsecase
-	configUC       *config.ConfigUsecase
-	wikiUC         wiki.WikiUsecase
-	personUC       person.PersonUsecase
-	authRepo       auth.AuthRepository
-	authUC         *auth.AuthUsecase
-	networkUC      network.NetworkUsecase
-	bansUC         ban.BanUsecase
-	assetUC        asset.AssetUsecase
-	chatUC         *chat.ChatUsecase
+	blocklistUC    network.Blocklists
+	configUC       *config.Configuration
+	wikiUC         wiki.Wiki
+	personUC       person.Persons
+	authRepo       auth.Repository
+	authUC         *auth.Authentication
+	networkUC      network.Networks
+	bansUC         ban.Bans
+	assetUC        asset.Assets
+	chatUC         *chat.Chat
 	demoRepository servers.DemoRepository
-	demoUC         servers.DemoUsecase
+	demoUC         servers.Demos
 	discordUC      *discord.Discord
-	forumUC        forum.ForumUsecase
-	newsUC         news.NewsUsecase
-	notificationUC notification.NotificationUsecase
-	patreonUC      patreon.PatreonUsecase
-	reportUC       ban.ReportUsecase
-	serversUC      servers.ServersUsecase
-	speedrunsUC    servers.SpeedrunUsecase
-	srcdsUC        *servers.SRCDSUsecase
-	stateUC        *servers.StateUsecase
-	votesUC        votes.VoteUsecase
-	votesRepo      votes.VoteRepository
-	wordFilterUC   chat.WordFilterUsecase
-	appealUC       ban.AppealsUsecase
-	anticheatUC    anticheat.AntiCheatUsecase
+	forumUC        forum.Forums
+	newsUC         news.News
+	notificationUC notification.Notifications
+	patreonUC      patreon.Manager
+	reportUC       ban.Reports
+	serversUC      servers.Servers
+	speedrunsUC    servers.Speedruns
+	srcdsUC        *servers.SRCDS
+	stateUC        *servers.State
+	votesUC        votes.Votes
+	votesRepo      votes.Repository
+	wordFilterUC   chat.WordFilters
+	appealUC       ban.Appeals
+	anticheatUC    anticheat.AntiCheat
 )
 
 func TestMain(m *testing.M) {
@@ -121,8 +121,8 @@ func TestMain(m *testing.M) {
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-	configRepo := config.NewConfigRepository(databaseConn)
-	configUC = config.NewConfigUsecase(conf.StaticConfig, configRepo)
+	configRepo := config.NewRepository(databaseConn)
+	configUC = config.NewConfiguration(conf.StaticConfig, configRepo)
 	if err := configUC.Reload(testCtx); err != nil {
 		panic(err)
 	}
@@ -137,7 +137,7 @@ func TestMain(m *testing.M) {
 		panic(errClient)
 	}
 
-	authRepo = auth.NewAuthRepository(databaseConn)
+	authRepo = auth.NewRepository(databaseConn)
 
 	disc, errDiscord := discord.NewDiscord("", "", "", "")
 	if errDiscord != nil {
@@ -145,32 +145,32 @@ func TestMain(m *testing.M) {
 	}
 	discordUC = disc
 
-	assetUC = asset.NewAssetUsecase(asset.NewLocalRepository(databaseConn, configUC.Config().LocalStore.PathRoot))
-	newsUC = news.NewNewsUsecase(news.NewNewsRepository(databaseConn))
-	serversUC = servers.NewServersUsecase(servers.NewServersRepository(databaseConn))
-	wikiUC = wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseConn))
-	notificationUC = notification.NewNotificationUsecase(notification.NewNotificationRepository(databaseConn), discordUC)
-	patreonUC = patreon.NewPatreonUsecase(patreon.NewPatreonRepository(databaseConn), configUC)
-	personUC = person.NewPersonUsecase(person.NewPersonRepository(conf, databaseConn), configUC, tfapiClient)
-	wordFilterUC = chat.NewWordFilterUsecase(chat.NewWordFilterRepository(databaseConn))
-	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn))
+	assetUC = asset.NewAssets(asset.NewLocalRepository(databaseConn, configUC.Config().LocalStore.PathRoot))
+	newsUC = news.NewNews(news.NewNewsRepository(databaseConn))
+	serversUC = servers.NewServers(servers.NewServersRepository(databaseConn))
+	wikiUC = wiki.NewWiki(wiki.NewRepository(databaseConn))
+	notificationUC = notification.NewNotifications(notification.NewRepository(databaseConn), discordUC)
+	patreonUC = patreon.NewPatreonManager(configUC)
+	personUC = person.NewPersons(person.NewRepository(conf, databaseConn), configUC, tfapiClient)
+	wordFilterUC = chat.NewWordFilter(chat.NewWordFilterRepository(databaseConn))
+	forumUC = forum.NewForums(forum.NewForumRepository(databaseConn))
 
-	stateUC = servers.NewStateUsecase(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(serversUC)), configUC, serversUC)
+	stateUC = servers.NewState(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(serversUC)), configUC, serversUC)
 
-	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn, personUC), configUC)
+	networkUC = network.NewNetworks(eventBroadcaster, network.NewRepository(databaseConn, personUC), configUC)
 	demoRepository = servers.NewDemoRepository(databaseConn)
-	demoUC = servers.NewDemoUsecase("demos", demoRepository, assetUC, configUC)
-	reportUC = ban.NewReportUsecase(ban.NewReportRepository(databaseConn), configUC, personUC, demoUC, tfapiClient)
-	bansUC = ban.NewBanUsecase(ban.NewBanRepository(databaseConn, personUC, networkUC), personUC, configUC, reportUC, stateUC, tfapiClient)
-	authUC = auth.NewAuthUsecase(authRepo, configUC, personUC, bansUC, serversUC)
+	demoUC = servers.NewDemos("demos", demoRepository, assetUC, configUC)
+	reportUC = ban.NewReports(ban.NewReportRepository(databaseConn), configUC, personUC, demoUC, tfapiClient)
+	bansUC = ban.NewBans(ban.NewBanRepository(databaseConn, personUC, networkUC), personUC, configUC, reportUC, stateUC, tfapiClient)
+	authUC = auth.NewAuthentication(authRepo, configUC, personUC, bansUC, serversUC)
 
-	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC)
-	votesRepo = votes.NewVoteRepository(databaseConn)
-	votesUC = votes.NewVoteUsecase(votesRepo, eventBroadcaster)
-	appealUC = ban.NewAppealUsecase(ban.NewAppealRepository(databaseConn), bansUC, personUC, configUC)
-	speedrunsUC = servers.NewSpeedrunUsecase(servers.NewSpeedrunRepository(databaseConn, personUC))
-	blocklistUC = network.NewBlocklistUsecase(network.NewBlocklistRepository(databaseConn), &bansUC)
-	anticheatUC = anticheat.NewAntiCheatUsecase(anticheat.NewAntiCheatRepository(databaseConn), bansUC, configUC, personUC)
+	chatUC = chat.NewChat(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC)
+	votesRepo = votes.NewRepository(databaseConn)
+	votesUC = votes.NewVotes(votesRepo, eventBroadcaster)
+	appealUC = ban.NewAppeals(ban.NewAppealRepository(databaseConn), bansUC, personUC, configUC)
+	speedrunsUC = servers.NewSpeedruns(servers.NewSpeedrunRepository(databaseConn, personUC))
+	blocklistUC = network.NewBlocklists(network.NewBlocklistRepository(databaseConn), &bansUC)
+	anticheatUC = anticheat.NewAntiCheat(anticheat.NewRepository(databaseConn), bansUC, configUC, personUC)
 
 	if internalDB {
 		server, errServer := serversUC.Save(context.Background(), servers.RequestServerUpdate{
@@ -208,7 +208,7 @@ func TestMain(m *testing.M) {
 	target := getUser()
 
 	// Create a valid ban_id
-	bannedPerson, errBan := bansUC.Ban(context.Background(), ban.BanOpts{
+	bannedPerson, errBan := bansUC.Create(context.Background(), ban.BanOpts{
 		SourceID:       mod.SteamID,
 		TargetID:       target.SteamID,
 		Duration:       time.Hour * 24,
@@ -248,14 +248,14 @@ func testRouter() *gin.Engine {
 
 	ban.NewHandlerSteam(router, bansUC, configUC, authUC)
 	servers.NewServersHandler(router, serversUC, stateUC, authUC)
-	news.NewHandler(router, newsUC, notificationUC, authUC)
-	wiki.NewHandler(router, wikiUC, authUC)
-	votes.NewHandler(router, votesUC, authUC)
-	config.NewHandler(router, configUC, authUC, app.Version())
+	news.NewNewsHandler(router, newsUC, notificationUC, authUC)
+	wiki.NewWikiHandler(router, wikiUC, authUC)
+	votes.NewVotesHandler(router, votesUC, authUC)
+	config.NewConfigHandler(router, configUC, authUC, app.Version())
 	ban.NewReportHandler(router, reportUC, authUC)
 	ban.NewAppealHandler(router, appealUC, authUC)
-	chat.NewHandler(router, chatUC, authUC)
-	person.NewHandler(router, configUC, personUC, authUC)
+	chat.NewChatHandler(router, chatUC, authUC)
+	person.NewPersonHandler(router, configUC, personUC, authUC)
 	servers.NewSRCDSHandler(router, srcdsUC, serversUC, personUC, assetUC, bansUC, networkUC, authUC, configUC, stateUC, blocklistUC)
 	network.NewBlocklistHandler(router, blocklistUC, networkUC, authUC)
 	servers.NewSpeedrunsHandler(router, speedrunsUC, authUC, configUC, serversUC)
@@ -416,7 +416,7 @@ func makeTestConfig(dsn string) config.Config {
 			PrometheusEnabled:   false,
 			PProfEnabled:        false,
 		},
-		General: config.ConfigGeneral{
+		General: config.General{
 			SiteName:        "gbans",
 			Mode:            config.TestMode,
 			FileServeMode:   "local",
@@ -433,7 +433,7 @@ func makeTestConfig(dsn string) config.Config {
 			ChatlogsEnabled: true,
 			DemosEnabled:    true,
 		},
-		Demo: config.ConfigDemo{
+		Demo: config.Demo{
 			DemoCleanupEnabled:  false,
 			DemoCleanupStrategy: "",
 			DemoCleanupMinPct:   0,
@@ -450,18 +450,18 @@ func makeTestConfig(dsn string) config.Config {
 			CheckTimeout:   10,
 			MatchTimeout:   10,
 		},
-		Discord: config.ConfigDiscord{
+		Discord: config.Discord{
 			Enabled: false,
 		},
 		Clientprefs: config.ConfigClientprefs{},
-		Log: config.ConfigLog{
+		Log: config.Log{
 			HTTPEnabled: false,
 			Level:       "error",
 		},
-		GeoLocation: config.ConfigIP2Location{
+		GeoLocation: config.IP2Location{
 			Enabled: false,
 		},
-		Debug: config.ConfigDebug{},
+		Debug: config.Debug{},
 		Patreon: config.ConfigPatreon{
 			Enabled: false,
 		},

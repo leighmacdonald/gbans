@@ -24,7 +24,7 @@ var (
 )
 
 func newClient(steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) QueueClient {
-	client := &Client{
+	client := &client{
 		steamID:      steamID,
 		name:         name,
 		avatarhash:   avatarHash,
@@ -36,7 +36,7 @@ func newClient(steamID steamid.SteamID, name string, avatarHash string, conn *we
 	return client
 }
 
-type Client struct {
+type client struct {
 	steamID      steamid.SteamID
 	name         string
 	avatarhash   string
@@ -46,31 +46,31 @@ type Client struct {
 	rl           ratelimit.Limiter
 }
 
-func (c *Client) Limit() {
+func (c *client) Limit() {
 	c.rl.Take()
 }
 
-func (c *Client) HasMessageAccess() bool {
+func (c *client) HasMessageAccess() bool {
 	return c.chatStatus != Noaccess
 }
 
-func (c *Client) Send(response Response) {
+func (c *client) Send(response Response) {
 	c.responseChan <- response
 }
 
-func (c *Client) SteamID() steamid.SteamID {
+func (c *client) SteamID() steamid.SteamID {
 	return c.steamID
 }
 
-func (c *Client) Name() string {
+func (c *client) Name() string {
 	return c.name
 }
 
-func (c *Client) Avatarhash() string {
+func (c *client) Avatarhash() string {
 	return c.avatarhash
 }
 
-func (c *Client) Next(request *Request) error {
+func (c *client) Next(request *Request) error {
 	c.rl.Take()
 	if err := c.conn.ReadJSON(request); err != nil {
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
@@ -83,11 +83,11 @@ func (c *Client) Next(request *Request) error {
 	return nil
 }
 
-func (c *Client) ID() string {
+func (c *client) ID() string {
 	return c.conn.RemoteAddr().String()
 }
 
-func (c *Client) Start(ctx context.Context) {
+func (c *client) Start(ctx context.Context) {
 	// TODO refactor this so there is none of this logic under domain.
 	for {
 		select {
@@ -101,7 +101,7 @@ func (c *Client) Start(ctx context.Context) {
 	}
 }
 
-func (c *Client) Close() {
+func (c *client) Close() {
 	slog.Debug("Closing client connection", slog.String("addr", c.conn.RemoteAddr().String()))
 	if errClose := c.conn.Close(); errClose != nil {
 		slog.Warn("Error closing client connection", log.ErrAttr(errClose))

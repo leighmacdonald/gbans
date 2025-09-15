@@ -13,7 +13,7 @@ import (
 func TestNews(t *testing.T) {
 	router := testRouter()
 
-	entry := news.NewsEntry{
+	entry := news.Article{
 		Title:       stringutil.SecureRandomString(10),
 		BodyMD:      stringutil.SecureRandomString(200),
 		IsPublished: true,
@@ -23,12 +23,12 @@ func TestNews(t *testing.T) {
 
 	testEndpoint(t, router, http.MethodPost, "/api/news", entry, http.StatusForbidden, &authTokens{user: loginUser(getUser())})
 
-	var newEntry news.NewsEntry
+	var newEntry news.Article
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/news", entry, http.StatusCreated, &authTokens{user: loginUser(getModerator())}, &newEntry)
 
 	testEndpoint(t, router, http.MethodPost, "/api/news_all", entry, http.StatusForbidden, &authTokens{user: loginUser(getUser())})
 
-	var entries []news.NewsEntry
+	var entries []news.Article
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/news_all", entry, http.StatusOK, &authTokens{user: loginUser(getModerator())}, &entries)
 	require.Len(t, entries, 1)
 	// edited := newEntry
