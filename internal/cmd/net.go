@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -62,7 +61,7 @@ func netUpdateCmd() *cobra.Command {
 			}
 
 			conf := configuration.Config()
-			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, app.SentryDSN != "")
+			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, SentryDSN != "", BuildVersion)
 			defer logCloser()
 
 			persons := person.NewPersons(person.NewRepository(configuration.Config(), dbConn), configuration, nil)

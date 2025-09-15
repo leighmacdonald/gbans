@@ -7,7 +7,6 @@ package cmd
 import (
 	"os"
 
-	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/spf13/cobra"
 )
 
@@ -30,13 +29,13 @@ func Execute() {
 }
 
 func setupRootCmd() *cobra.Command {
-	if app.BuildVersion == "" {
-		app.BuildVersion = "master"
+	if BuildVersion == "" {
+		BuildVersion = "master"
 	}
 
 	root := rootCmd()
 
-	root.Version = app.BuildVersion
+	root.Version = BuildVersion
 
 	refreshCommands := refreshCmd()
 	refreshCommands.AddCommand(refreshFiltersCmd())

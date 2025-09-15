@@ -20,7 +20,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-querystring/query"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
-	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -162,8 +161,7 @@ func TestMain(m *testing.M) {
 	demoUC = servers.NewDemos("demos", demoRepository, assetUC, configUC)
 	reportUC = ban.NewReports(ban.NewReportRepository(databaseConn), configUC, personUC, demoUC, tfapiClient)
 	bansUC = ban.NewBans(ban.NewBanRepository(databaseConn, personUC, networkUC), personUC, configUC, reportUC, stateUC, tfapiClient)
-	authUC = auth.NewAuthentication(authRepo, configUC, personUC, bansUC, serversUC)
-
+	authUC = auth.NewAuthentication(authRepo, configUC, personUC, bansUC, serversUC, cmd.SentryDSN)
 	chatUC = chat.NewChat(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC)
 	votesRepo = votes.NewRepository(databaseConn)
 	votesUC = votes.NewVotes(votesRepo, eventBroadcaster)
@@ -236,7 +234,7 @@ func TestMain(m *testing.M) {
 }
 
 func testRouter() *gin.Engine {
-	router, errRouter := cmd.CreateRouter(configUC.Config(), app.BuildInfo{
+	router, errRouter := cmd.CreateRouter(configUC.Config(), cmd.BuildInfo{
 		BuildVersion: "master",
 		Commit:       "",
 		Date:         time.Now().Format(time.DateTime),
@@ -251,14 +249,14 @@ func testRouter() *gin.Engine {
 	news.NewNewsHandler(router, newsUC, notificationUC, authUC)
 	wiki.NewWikiHandler(router, wikiUC, authUC)
 	votes.NewVotesHandler(router, votesUC, authUC)
-	config.NewConfigHandler(router, configUC, authUC, app.Version())
+	config.NewConfigHandler(router, configUC, authUC, cmd.BuildVersion)
 	ban.NewReportHandler(router, reportUC, authUC)
 	ban.NewAppealHandler(router, appealUC, authUC)
 	chat.NewChatHandler(router, chatUC, authUC)
 	person.NewPersonHandler(router, configUC, personUC, authUC)
-	servers.NewSRCDSHandler(router, srcdsUC, serversUC, personUC, assetUC, bansUC, networkUC, authUC, configUC, stateUC, blocklistUC)
+	servers.NewSRCDSHandler(router, srcdsUC, serversUC, personUC, assetUC, bansUC, networkUC, authUC, configUC, stateUC, blocklistUC, cmd.SentryDSN)
 	network.NewBlocklistHandler(router, blocklistUC, networkUC, authUC)
-	servers.NewSpeedrunsHandler(router, speedrunsUC, authUC, configUC, serversUC)
+	servers.NewSpeedrunsHandler(router, speedrunsUC, authUC, configUC, serversUC, cmd.SentryDSN)
 
 	return router
 }

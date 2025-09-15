@@ -10,7 +10,6 @@ import (
 
 	"github.com/dotse/slug"
 	sentryslog "github.com/getsentry/sentry-go/slog"
-	"github.com/leighmacdonald/gbans/internal/app"
 	slogmulti "github.com/samber/slog-multi"
 )
 
@@ -36,7 +35,7 @@ func ToSlogLevel(level Level) slog.Level {
 	}
 }
 
-func MustCreateLogger(ctx context.Context, debugLogPath string, level Level, useSentry bool) func() {
+func MustCreateLogger(ctx context.Context, debugLogPath string, level Level, useSentry bool, version string) func() {
 	closer := func() {}
 
 	opts := slug.HandlerOptions{
@@ -71,7 +70,10 @@ func MustCreateLogger(ctx context.Context, debugLogPath string, level Level, use
 	}
 
 	defaultLogger := slog.New(slogmulti.Fanout(handlers...))
-	defaultLogger.With("release", app.BuildVersion)
+
+	if version != "" {
+		defaultLogger.With("release", version)
+	}
 
 	slog.SetDefault(defaultLogger)
 

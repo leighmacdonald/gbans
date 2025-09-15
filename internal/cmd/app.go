@@ -1,4 +1,4 @@
-package app
+package cmd
 
 var (
 	BuildVersion = "master" //nolint:gochecknoglobals
@@ -19,4 +19,8 @@ func Version() BuildInfo {
 		Commit:       BuildCommit,
 		Date:         BuildDate,
 	}
+}
+
+type gbans struct {
+	// Define fields here
 }

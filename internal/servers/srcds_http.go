@@ -40,7 +40,7 @@ func NewSRCDSHandler(engine *gin.Engine, srcds *SRCDS, servers Servers,
 	persons PersonProvider, assets asset.Assets,
 	evades EvadeChecker, network network.Networks, auth httphelper.Authenticator,
 	config *config.Configuration, state *State,
-	blocklist network.Blocklists,
+	blocklist network.Blocklists, sentryDSN string,
 ) {
 	handler := srcdsHandler{
 		srcds:     srcds,
@@ -90,7 +90,7 @@ func NewSRCDSHandler(engine *gin.Engine, srcds *SRCDS, servers Servers,
 	// Endpoints called by sourcemod plugin
 	srcdsGroup := engine.Group("/")
 	{
-		server := srcdsGroup.Use(MiddlewareServer(servers))
+		server := srcdsGroup.Use(MiddlewareServer(servers, sentryDSN))
 		server.POST("/api/sm/check", handler.onAPICheckPlayer())
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())

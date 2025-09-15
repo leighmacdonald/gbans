@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
@@ -14,7 +13,7 @@ type ConfigHandler struct {
 	config *Configuration
 }
 
-func NewConfigHandler(engine *gin.Engine, cu *Configuration, authUC httphelper.Authenticator, version app.BuildInfo) {
+func NewConfigHandler(engine *gin.Engine, cu *Configuration, authUC httphelper.Authenticator, version string) {
 	handler := ConfigHandler{config: cu}
 	engine.GET("/api/info", handler.onAppInfo(version))
 	engine.GET("/api/changelog", handler.onChangelog())
@@ -51,7 +50,7 @@ func (c ConfigHandler) onAPIPutConfig() gin.HandlerFunc {
 	}
 }
 
-func (c ConfigHandler) onAppInfo(buildInfo app.BuildInfo) gin.HandlerFunc {
+func (c ConfigHandler) onAppInfo(version string) gin.HandlerFunc {
 	type appInfo struct {
 		SiteName           string `json:"site_name"`
 		AssetURL           string `json:"asset_url"`
@@ -83,7 +82,7 @@ func (c ConfigHandler) onAppInfo(buildInfo app.BuildInfo) gin.HandlerFunc {
 			SiteName:           conf.General.SiteName,
 			AssetURL:           conf.General.AssetURL,
 			LinkID:             conf.Discord.LinkID,
-			AppVersion:         buildInfo.BuildVersion,
+			AppVersion:         version,
 			DocumentPolicy:     "",
 			PatreonClientID:    conf.Patreon.ClientID,
 			DiscordClientID:    conf.Discord.AppID,
