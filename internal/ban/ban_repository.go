@@ -75,8 +75,8 @@ func (r *BanRepository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error
 	return bans, nil
 }
 
-func NewBanRepository(database database.Database, persons domain.PersonProvider, network network.NetworkUsecase) *BanRepository {
-	return &BanRepository{db: database, persons: persons, network: network}
+func NewBanRepository(database database.Database, persons domain.PersonProvider, network network.NetworkUsecase) BanRepository {
+	return BanRepository{db: database, persons: persons, network: network}
 }
 
 func (r *BanRepository) TruncateCache(ctx context.Context) error {

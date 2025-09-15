@@ -44,6 +44,11 @@ type PersonProvider interface {
 	GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (PersonCore, error)
 }
 
+type DiscordPersonProvider interface {
+	// FIXME Retuning a interface for now.
+	GetPersonByDiscordID(ctx context.Context, discordID string) (PersonCore, error)
+}
+
 type PersonInfo interface {
 	GetName() string
 	GetAvatar() Avatar

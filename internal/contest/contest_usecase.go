@@ -16,8 +16,8 @@ type ContestUsecase struct {
 	repository ContestRepository
 }
 
-func NewContestUsecase(repository ContestRepository) *ContestUsecase {
-	return &ContestUsecase{repository: repository}
+func NewContestUsecase(repository ContestRepository) ContestUsecase {
+	return ContestUsecase{repository: repository}
 }
 
 func (c *ContestUsecase) ContestSave(ctx context.Context, contest Contest) (Contest, error) {

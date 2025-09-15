@@ -30,7 +30,7 @@ type BansQueryFilter struct {
 }
 
 type BanUsecase struct {
-	banRepo *BanRepository
+	banRepo BanRepository
 	persons person.PersonUsecase
 	config  *config.ConfigUsecase
 	state   *servers.StateUsecase
@@ -38,7 +38,7 @@ type BanUsecase struct {
 	tfAPI   *thirdparty.TFAPI
 }
 
-func NewBanUsecase(repository *BanRepository, person person.PersonUsecase,
+func NewBanUsecase(repository BanRepository, person person.PersonUsecase,
 	config *config.ConfigUsecase, reports ReportUsecase, state *servers.StateUsecase,
 	tfAPI *thirdparty.TFAPI,
 ) BanUsecase {
@@ -175,9 +175,14 @@ func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
 
 	}
 
-	_, errAuthor := s.persons.GetOrCreatePersonBySteamID(ctx, nil, opts.SourceID)
+	author, errAuthor := s.persons.GetOrCreatePersonBySteamID(ctx, nil, opts.SourceID)
 	if errAuthor != nil {
 		return newBan, errAuthor
+	}
+
+	_, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, opts.TargetID)
+	if err != nil {
+		return newBan, errors.Join(err, ErrFetchPerson)
 	}
 
 	existing, errGetExistingBan := s.QueryOne(ctx, QueryOpts{TargetID: opts.TargetID, EvadeOk: true})
@@ -228,14 +233,9 @@ func (s *BanUsecase) Ban(ctx context.Context, opts BanOpts) (Ban, error) {
 
 	// Close the report if the ban was attached to one
 	if newBan.ReportID > 0 {
-		if _, errSaveReport := s.reports.SetReportStatus(ctx, newBan.ReportID, curUser, ClosedWithAction); errSaveReport != nil {
+		if _, errSaveReport := s.reports.SetReportStatus(ctx, newBan.ReportID, author, ClosedWithAction); errSaveReport != nil {
 			return newBan, errors.Join(errSaveReport, ErrReportStateUpdate)
 		}
-	}
-
-	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, newBan.TargetID)
-	if err != nil {
-		return newBan, errors.Join(err, ErrFetchPerson)
 	}
 
 	switch newBan.BanType {

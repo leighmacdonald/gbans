@@ -93,7 +93,7 @@ func (p PatreonUsecase) refreshToken(ctx context.Context, auth PatreonCredential
 	var creds PatreonCredential
 
 	decoder := json.NewDecoder(resp.Body)
-	if errDec := decoder.Decode(&creds); err != nil {
+	if errDec := decoder.Decode(&creds); errDec != nil {
 		slog.Error("Failed to decode access token", log.ErrAttr(errDec))
 
 		return errors.Join(errDec, domain.ErrRequestDecode)
@@ -180,7 +180,7 @@ func (p PatreonUsecase) OnOauthLogin(ctx context.Context, state string, code str
 	var creds PatreonCredential
 
 	decoder := json.NewDecoder(resp.Body)
-	if errDec := decoder.Decode(&creds); err != nil {
+	if errDec := decoder.Decode(&creds); errDec != nil {
 		slog.Error("Failed to decode access token", log.ErrAttr(errDec))
 
 		return errors.Join(errDec, domain.ErrRequestDecode)

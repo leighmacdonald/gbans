@@ -68,7 +68,7 @@ var (
 	demoRepository servers.DemoRepository
 	demoUC         servers.DemoUsecase
 	discordUC      *discord.Discord
-	forumUC        *forum.ForumUsecase
+	forumUC        forum.ForumUsecase
 	newsUC         news.NewsUsecase
 	notificationUC notification.NotificationUsecase
 	patreonUC      patreon.PatreonUsecase
@@ -121,7 +121,8 @@ func TestMain(m *testing.M) {
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-	configUC = config.NewConfigUsecase(conf.StaticConfig, newConfigRepo(conf))
+	configRepo := config.NewConfigRepository(databaseConn)
+	configUC = config.NewConfigUsecase(conf.StaticConfig, configRepo)
 	if err := configUC.Reload(testCtx); err != nil {
 		panic(err)
 	}
@@ -251,7 +252,7 @@ func testRouter() *gin.Engine {
 	wiki.NewHandler(router, wikiUC, authUC)
 	votes.NewHandler(router, votesUC, authUC)
 	config.NewHandler(router, configUC, authUC, app.Version())
-	ban.NewReportHandler(router, reportUC, authUC, notificationUC)
+	ban.NewReportHandler(router, reportUC, authUC)
 	ban.NewAppealHandler(router, appealUC, authUC)
 	chat.NewHandler(router, chatUC, authUC)
 	person.NewHandler(router, configUC, personUC, authUC)

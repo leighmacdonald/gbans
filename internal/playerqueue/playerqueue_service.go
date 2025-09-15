@@ -20,11 +20,11 @@ import (
 )
 
 type serverQueueHandler struct {
-	queue PlayerqueueUsecase
+	queue *PlayerqueueUsecase
 }
 
 func NewPlayerqueueHandler(engine *gin.Engine, auth httphelper.Authenticator, configUC *config.ConfigUsecase,
-	playerQueue PlayerqueueUsecase,
+	playerQueue *PlayerqueueUsecase,
 ) {
 	conf := configUC.Config()
 	var origins []string

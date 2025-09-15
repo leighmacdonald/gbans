@@ -9,12 +9,12 @@ import (
 )
 
 type ForumUsecase struct {
-	repo    *ForumRepository
+	repo    ForumRepository
 	tracker *Tracker
 }
 
-func NewForumUsecase(repository *ForumRepository) *ForumUsecase {
-	return &ForumUsecase{repo: repository, tracker: NewTracker()}
+func NewForumUsecase(repository ForumRepository) ForumUsecase {
+	return ForumUsecase{repo: repository, tracker: NewTracker()}
 }
 
 func (f ForumUsecase) Start(ctx context.Context) {

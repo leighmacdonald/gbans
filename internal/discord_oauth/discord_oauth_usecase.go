@@ -58,8 +58,8 @@ type DiscordOAuthUsecase struct {
 	repository DiscordOAuthRepository
 }
 
-func NewDiscordOAuthUsecase(repository DiscordOAuthRepository, config *config.ConfigUsecase) *DiscordOAuthUsecase {
-	return &DiscordOAuthUsecase{
+func NewDiscordOAuthUsecase(repository DiscordOAuthRepository, config *config.ConfigUsecase) DiscordOAuthUsecase {
+	return DiscordOAuthUsecase{
 		repository: repository,
 		config:     config,
 		state:      oauth.NewLoginStateTracker(),

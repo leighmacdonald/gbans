@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -55,17 +56,19 @@ type ServerDetails struct {
 	Address string
 }
 
+var ErrInvalidAddress = errors.New("invalid address")
+
 func (f SCPConnection) Update(ctx context.Context, servers []ServerDetails) error {
 	// Since multiple instances can exist on a single host we map common servers to a single host address and
 	// perform all operations using a single connection to the host.
 	mappedServers := map[string][]ServerDetails{}
 
 	for _, server := range servers {
-		actualAddr := server.AddrInternalOrDefault()
-		_, ok := mappedServers[actualAddr]
-		if !ok {
-			mappedServers[actualAddr] = []ServerDetails{}
+		parts := strings.Split(server.Address, ":")
+		if len(parts) != 2 {
+			return ErrInvalidAddress
 		}
+		actualAddr := parts[0]
 
 		mappedServers[actualAddr] = append(mappedServers[actualAddr], server)
 	}
