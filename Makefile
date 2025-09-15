@@ -25,7 +25,7 @@ watch:
 	make -C frontend watch
 
 generate:
-	go generate
+	go generate ./...
 
 serve:
 	make -C frontend serve

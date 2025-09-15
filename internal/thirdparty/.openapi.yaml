@@ -1,0 +1,8 @@
+package: thirdparty
+output: tfapi.gen.go
+output-options:
+  prefer-skip-optional-pointer: true
+generate:
+  models: true
+  #types: true
+  client: true
