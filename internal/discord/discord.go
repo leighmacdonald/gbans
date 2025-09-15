@@ -29,7 +29,6 @@ type Discord struct {
 	isReady         atomic.Bool
 	commandHandlers map[string]SlashCommandHandler
 	commands        []*discordgo.ApplicationCommand
-	token           string
 	appID           string
 	guildID         string
 	externalURL     string
@@ -40,34 +39,34 @@ func NewDiscord(appID string, guildID string, token string, externalURL string) 
 		return nil, ErrDiscordConfig
 	}
 
+	session, errNewSession := discordgo.New("Bot " + token)
+	if errNewSession != nil {
+		return nil, errors.Join(errNewSession, ErrDiscordCreate)
+	}
+
+	session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
+	session.Identify.Intents |= discordgo.IntentsGuildMessages
+	session.Identify.Intents |= discordgo.IntentMessageContent
+	session.Identify.Intents |= discordgo.IntentGuildMembers
+
 	bot := &Discord{
 		isReady:         atomic.Bool{},
 		commandHandlers: map[string]SlashCommandHandler{},
 		appID:           appID,
 		guildID:         guildID,
-		token:           token,
 		externalURL:     externalURL,
+		session:         session,
 	}
+
+	session.AddHandler(bot.onReady)
+	session.AddHandler(bot.onConnect)
+	session.AddHandler(bot.onDisconnect)
+	session.AddHandler(bot.onInteractionCreate)
 
 	return bot, nil
 }
 
-func (h *Discord) Start(_ context.Context) error {
-	session, errNewSession := discordgo.New("Bot " + h.token)
-	if errNewSession != nil {
-		return errors.Join(errNewSession, ErrDiscordCreate)
-	}
-	session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
-	session.Identify.Intents |= discordgo.IntentsGuildMessages
-	session.Identify.Intents |= discordgo.IntentMessageContent
-	session.Identify.Intents |= discordgo.IntentGuildMembers
-	session.AddHandler(h.onReady)
-	session.AddHandler(h.onConnect)
-	session.AddHandler(h.onDisconnect)
-	session.AddHandler(h.onInteractionCreate)
-
-	h.session = session
-
+func (h *Discord) Start(ctx context.Context) error {
 	// cmdMap := map[Cmd]func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error){
 	// 	CmdBan:     h.makeOnBan(),
 	// 	CmdCheck:   h.makeOnCheck(),
@@ -97,51 +96,12 @@ func (h *Discord) Start(_ context.Context) error {
 	//
 
 	// Open a websocket connection to discord and begin listening.
-	if errSessionOpen := session.Open(); errSessionOpen != nil {
+	if errSessionOpen := h.session.Open(); errSessionOpen != nil {
 		return errors.Join(errSessionOpen, ErrDiscordOpen)
 	}
 
 	return nil
 }
-
-//
-// func (discord *Discord) onHistoryChat(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
-//	steamId, errResolveSID := resolveSID(ctx, interaction.Data.Options[0].Options[0].Value.(string))
-//	if errResolveSID != nil {
-//		return consts.ErrInvalidSID
-//	}
-//	Person := model.NewPerson(steamId)
-//	if errPersonBySID := PersonBySID(ctx, discord.database, steamId, "", &Person); errPersonBySID != nil {
-//		return errCommandFailed
-//	}
-//	chatHistory, errChatHistory := discord.database.GetChatHistory(ctx, steamId, 25)
-//	if errChatHistory != nil && !errors.Is(errChatHistory, db.ErrNoResult) {
-//		return errCommandFailed
-//	}
-//	if errors.Is(errChatHistory, db.ErrNoResult) {
-//		return errors.New("No chat history found")
-//	}
-//	var lines []string
-//	for _, sayEvent := range chatHistory {
-//		lines = append(lines, fmt.Sprintf("%s: %s", Config.FmtTimeShort(sayEvent.CreatedOn), sayEvent.Msg))
-//	}
-//	embed := respOk(response, fmt.Sprintf("Chat History of: %s", Person.PersonaName))
-//	embed.Description = strings.Join(lines, "\n")
-//	return nil
-// }
-
-// func (h *discordService) getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCreate) (person.Person, error) {
-// 	author, errPersonByDiscordID := h.persons.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
-// 	if errPersonByDiscordID != nil {
-// 		if errors.Is(errPersonByDiscordID, database.ErrNoResult) {
-// 			return author, domain.ErrSteamUnset
-// 		}
-
-// 		return author, domain.ErrFetchSource
-// 	}
-
-// 	return author, nil
-// }
 
 func (bot *Discord) RegisterHandler(cmd string, handler SlashCommandHandler) error {
 	_, found := bot.commandHandlers[cmd]
@@ -156,7 +116,7 @@ func (bot *Discord) RegisterHandler(cmd string, handler SlashCommandHandler) err
 
 func (bot *Discord) Shutdown() {
 	if bot.session != nil {
-		defer log.Closer(bot.session)
+		log.Closer(bot.session)
 	}
 }
 

@@ -83,7 +83,8 @@ type Chat struct {
 }
 
 func NewChat(config *config.Configuration, repo *ChatRepository, filters WordFilters,
-	state *servers.State, bans ban.Bans, persons domain.PersonProvider) *Chat {
+	state *servers.State, bans ban.Bans, persons domain.PersonProvider,
+) *Chat {
 	conf := config.Config()
 
 	return &Chat{

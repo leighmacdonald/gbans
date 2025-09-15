@@ -61,22 +61,26 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 		Use:   "serve",
 		Short: "Starts the gbans web app",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
+
 			app, errApp := NewGBans()
 			if errApp != nil {
 				return errApp
 			}
 
 			defer func() {
-				if errClose := app.Close(); errClose != nil {
+				if errClose := app.Close(ctx); errClose != nil {
 					slog.Error("Error closing", slog.String("error", errClose.Error()))
 				}
 			}()
 
-			if errSetup := app.Init(cmd.Context()); errSetup != nil {
+			if errSetup := app.Init(ctx); errSetup != nil {
 				return errSetup
 			}
 
-			if errServe := app.Serve(cmd.Context()); errServe != nil {
+			app.StartBackground(ctx)
+
+			if errServe := app.Serve(ctx); errServe != nil {
 				return errServe
 			}
 

@@ -1,18 +1,8 @@
 package cmd
 
 import (
-	"context"
-	"fmt"
 	"log/slog"
-	"os"
 
-	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/network"
-	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/spf13/cobra"
 )
 
@@ -29,50 +19,29 @@ func netUpdateCmd() *cobra.Command {
 		Use:   "update",
 		Short: "Updates ip2location dataset",
 		Long:  `Updates ip2location dataset`,
-		Run: func(_ *cobra.Command, _ []string) {
-			ctx := context.Background()
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
 
-			staticConfig, errStatic := config.ReadStaticConfig()
-			if errStatic != nil {
-				panic(fmt.Sprintf("Failed to read static config: %v", errStatic))
-			}
-
-			dbConn := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
-			if errConnect := dbConn.Connect(ctx); errConnect != nil {
-				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
-
-				return
+			app, errApp := NewGBans()
+			if errApp != nil {
+				return errApp
 			}
 
 			defer func() {
-				if errClose := dbConn.Close(); errClose != nil {
-					slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
+				if errClose := app.Close(ctx); errClose != nil {
+					slog.Error("Error closing", slog.String("error", errClose.Error()))
 				}
 			}()
 
-			configuration := config.NewConfiguration(staticConfig, config.NewRepository(dbConn))
-
-			if err := configuration.Init(ctx); err != nil {
-				panic(fmt.Sprintf("Failed to init config: %v", err))
+			if errSetup := app.Init(ctx); errSetup != nil {
+				return errSetup
 			}
 
-			if errConfig := configuration.Reload(ctx); errConfig != nil {
-				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
+			if err := app.networks.RefreshLocationData(ctx); err != nil {
+				return err
 			}
 
-			conf := configuration.Config()
-			logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, SentryDSN != "", BuildVersion)
-			defer logCloser()
-
-			persons := person.NewPersons(person.NewRepository(configuration.Config(), dbConn), configuration, nil)
-
-			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-			networks := network.NewNetworks(eventBroadcaster, network.NewRepository(dbConn, persons), configuration)
-
-			if err := networks.RefreshLocationData(ctx); err != nil {
-				slog.Error("Failed to refresh location data", log.ErrAttr(err))
-				os.Exit(1)
-			}
+			return nil
 		},
 	}
 }

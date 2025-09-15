@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
@@ -65,36 +66,42 @@ func Version() BuildInfo {
 }
 
 type GBans struct {
-	anticheat     anticheat.AntiCheat
-	appeals       ban.Appeals
-	assets        asset.Assets
-	auth          *auth.Authentication
-	bans          ban.Bans
-	blocklists    network.Blocklists
-	chat          *chat.Chat
-	config        *config.Configuration
-	contests      contest.Contests
-	database      database.Database
-	demos         servers.Demos
-	forums        forum.Forums
-	discordOAuth  discordoauth.DiscordOAuth
-	metrics       metrics.Metrics
-	networks      network.Networks
-	news          news.News
-	notifications notification.Notifications
-	patreon       patreon.Patreon
-	persons       person.Persons
-	playerQueue   *playerqueue.Playerqueue
-	reports       ban.Reports
-	servers       servers.Servers
-	speedruns     servers.Speedruns
-	srcds         *servers.SRCDS
-	states        *servers.State
-	staticConfig  config.StaticConfig
-	tfapiClient   *thirdparty.TFAPI
-	votes         votes.Votes
-	wiki          wiki.Wiki
-	wordFilters   chat.WordFilters
+	anticheat      anticheat.AntiCheat
+	appeals        ban.Appeals
+	assets         asset.Assets
+	auth           *auth.Authentication
+	banExpirations *ban.ExpirationMonitor
+	bans           ban.Bans
+	blocklists     network.Blocklists
+	chat           *chat.Chat
+	chatRepo       *chat.ChatRepository
+	config         *config.Configuration
+	contests       contest.Contests
+	database       database.Database
+	demos          servers.Demos
+	downloader     scp.Downloader
+	forums         forum.Forums
+	discordOAuth   discordoauth.DiscordOAuth
+	memberships    *ban.Memberships
+	metrics        metrics.Metrics
+	networks       network.Networks
+	news           news.News
+	notifications  notification.Notifications
+	patreon        patreon.Patreon
+	persons        person.Persons
+	playerQueue    *playerqueue.Playerqueue
+	reports        ban.Reports
+	servers        servers.Servers
+	speedruns      servers.Speedruns
+	srcds          *servers.SRCDS
+	states         *servers.State
+	staticConfig   config.StaticConfig
+	tfapiClient    *thirdparty.TFAPI
+	votes          votes.Votes
+	wiki           wiki.Wiki
+	wordFilters    chat.WordFilters
+	sentry         *sentry.Client
+	bot            *discord.Discord
 
 	logCloser func()
 }
@@ -107,9 +114,7 @@ func NewGBans() (*GBans, error) {
 		return nil, errStatic
 	}
 
-	return &GBans{
-		staticConfig: staticConfig,
-	}, nil
+	return &GBans{staticConfig: staticConfig}, nil
 }
 
 func (g *GBans) Init(ctx context.Context) error {
@@ -149,17 +154,7 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	conf := configuration.Config()
 
-	if SentryDSN != "" {
-		sentryClient, err := log.NewSentryClient(SentryDSN, true, 0.25, BuildVersion, string(conf.General.Mode))
-		if err != nil {
-			slog.Error("Failed to setup sentry client")
-		} else {
-			slog.Info("Sentry.io support is enabled.")
-			defer sentryClient.Flush(2 * time.Second)
-		}
-	} else {
-		slog.Info("Sentry.io support is disabled. To enable at runtime, set SENTRY_DSN.")
-	}
+	g.setupSentry()
 
 	logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, SentryDSN != "", BuildVersion)
 	g.logCloser = logCloser
@@ -167,22 +162,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-	bot, errDiscord := discord.NewDiscord(conf.Discord.AppID, conf.Discord.GuildID, conf.Discord.Token, conf.ExternalURL)
-	if errDiscord != nil {
-		return errDiscord
-	}
-
-	if conf.Discord.Enabled {
-		if err := bot.Start(ctx); err != nil {
-			slog.Error("Failed to start discord", log.ErrAttr(err))
-
-			return err
-		}
-
-		defer bot.Shutdown()
-	}
-
-	g.notifications = notification.NewNotifications(notification.NewRepository(dbConn), bot)
+	g.notifications = notification.NewNotifications(notification.NewRepository(dbConn), g.bot)
 
 	wordFilters := chat.NewWordFilter(chat.NewWordFilterRepository(dbConn))
 	if err := wordFilters.Import(ctx); err != nil {
@@ -208,6 +188,12 @@ func (g *GBans) Init(ctx context.Context) error {
 		return err
 	}
 
+	bot, errDiscord := discord.NewDiscord(conf.Discord.AppID, conf.Discord.GuildID, conf.Discord.Token, conf.ExternalURL)
+	if errDiscord != nil {
+		return errDiscord
+	}
+	g.bot = bot
+
 	g.assets = asset.NewAssets(assetRepo)
 	g.servers = servers.NewServers(servers.NewServersRepository(dbConn))
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(dbConn), g.assets, configuration)
@@ -224,29 +210,17 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	g.discordOAuth = discordoauth.NewDiscordOAuth(discordoauth.NewRepository(dbConn), configuration)
 	g.appeals = ban.NewAppeals(ban.NewAppealRepository(dbConn), g.bans, persons, configuration)
-
-	chatRepo := chat.NewChatRepository(dbConn, persons, wordFilters, eventBroadcaster)
-	go chatRepo.Start(ctx)
-
-	g.chat = chat.NewChat(configuration, chatRepo, wordFilters, g.states, g.bans, persons)
-	go g.chat.Start(ctx)
-
+	g.chatRepo = chat.NewChatRepository(dbConn, persons, wordFilters, eventBroadcaster)
+	g.chat = chat.NewChat(configuration, g.chatRepo, wordFilters, g.states, g.bans, persons)
 	g.forums = forum.NewForums(forum.NewForumRepository(dbConn))
-	go g.forums.Start(ctx)
-
 	g.metrics = metrics.NewMetrics(eventBroadcaster)
-	go g.metrics.Start(ctx)
-
 	g.news = news.NewNews(news.NewNewsRepository(dbConn))
 	g.patreon = patreon.NewPatreon(patreon.NewRepository(dbConn), configuration)
 	g.srcds = servers.NewSRCDS(servers.NewSRCDSRepository(dbConn), configuration, g.servers, persons, tfapiClient)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(dbConn))
 	g.auth = auth.NewAuthentication(auth.NewRepository(dbConn), configuration, persons, g.bans, g.servers, SentryDSN)
 	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(dbConn), g.bans, configuration, persons)
-
-	voteRecorder := votes.NewVotes(votes.NewRepository(dbConn), eventBroadcaster)
-	go voteRecorder.Start(ctx)
-
+	g.votes = votes.NewVotes(votes.NewRepository(dbConn), eventBroadcaster)
 	g.contests = contest.NewContests(contest.NewRepository(dbConn))
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(dbConn, persons))
 
@@ -261,44 +235,80 @@ func (g *GBans) Init(ctx context.Context) error {
 		gin.SetMode(gin.DebugMode)
 	}
 
-	conf.Network.SDREnabled = true
-	conf.Network.SDRDNSEnabled = true
-
 	// If we are using Valve SDR network, optionally enable the dynamic DNS update support to automatically
 	// update the A record when a change is detected with the new public SDR IP.
 	if conf.Network.SDREnabled && conf.Network.SDRDNSEnabled {
 		// go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
 	}
-	// Config
 
-	playerqueueRepo := playerqueue.NewPlayerqueueRepository(dbConn, persons)
+	// Config
+	g.setupPlayerQueue(ctx)
+
+	if conf.Debug.AddRCONLogAddress != "" {
+		go g.states.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+	}
+
+	g.memberships = ban.NewMemberships(ban.NewBanRepository(dbConn, persons, networks), tfapiClient)
+	g.banExpirations = ban.NewExpirationMonitor(g.bans, persons, g.notifications, configuration)
+	g.downloader = scp.NewDownloader(configuration, dbConn)
+
+	return nil
+}
+
+func (g *GBans) startBot(ctx context.Context) error {
+	if !g.config.Config().Discord.Enabled {
+		return nil
+	}
+
+	if err := g.bot.Start(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g *GBans) setupPlayerQueue(ctx context.Context) {
+	playerqueueRepo := playerqueue.NewPlayerqueueRepository(g.database, g.persons)
 	// Pre-load some messages into queue message cache
 	chatlogs, errChatlogs := playerqueueRepo.Query(ctx, playerqueue.PlayerqueueQueryOpts{Filter: query.Filter{Limit: 100}})
 	if errChatlogs != nil {
 		slog.Error("Failed to warm playerqueue chatlogs", log.ErrAttr(errChatlogs))
 		chatlogs = []playerqueue.ChatLog{}
 	}
-	playerqueueUC := playerqueue.NewPlayerqueue(playerqueueRepo, persons, g.servers, g.states, chatlogs)
-	go playerqueueUC.Start(ctx)
+	g.playerQueue = playerqueue.NewPlayerqueue(playerqueueRepo, g.persons, g.servers, g.states, chatlogs)
+}
 
-	if conf.Debug.AddRCONLogAddress != "" {
-		go g.states.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
-		defer g.states.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
+func (g *GBans) setupSentry() {
+	if SentryDSN != "" {
+		sentryClient, err := log.NewSentryClient(SentryDSN, true, 0.25, BuildVersion, string(g.config.Config().General.Mode))
+		if err != nil {
+			slog.Error("Failed to setup sentry client")
+		} else {
+			slog.Info("Sentry.io support is enabled.")
+			g.sentry = sentryClient
+		}
+	} else {
+		slog.Info("Sentry.io support is disabled. To enable at runtime, set SENTRY_DSN.")
 	}
+}
 
-	memberships := ban.NewMemberships(ban.NewBanRepository(dbConn, persons, networks), tfapiClient)
-	banExpirations := ban.NewExpirationMonitor(g.bans, persons, g.notifications, configuration)
-	demoDownloader := scp.NewDownloader(configuration, dbConn)
+func (g *GBans) StartBackground(ctx context.Context) {
+	go g.chatRepo.Start(ctx)
+	go g.chat.Start(ctx)
+	go g.forums.Start(ctx)
+	go g.metrics.Start(ctx)
+	go g.votes.Start(ctx)
+	go g.playerQueue.Start(ctx)
 	// TODO register handlers
-	go demoDownloader.Start(ctx)
+	go g.downloader.Start(ctx)
 
 	go func() {
 		if errSync := g.anticheat.SyncDemoIDs(ctx, 100); errSync != nil {
 			slog.Error("failed to sync anticheat demos")
 		}
 
-		go memberships.Update(ctx)
-		go banExpirations.Update(ctx)
+		go g.memberships.Update(ctx)
+		go g.banExpirations.Update(ctx)
 		go g.blocklists.Sync(ctx)
 		go g.demos.Cleanup(ctx)
 
@@ -312,9 +322,9 @@ func (g *GBans) Init(ctx context.Context) error {
 		case <-ctx.Done():
 			return
 		case <-membershipsTicker.C:
-			go memberships.Update(ctx)
+			go g.memberships.Update(ctx)
 		case <-expirationsTicker.C:
-			go banExpirations.Update(ctx)
+			go g.banExpirations.Update(ctx)
 		case <-reportIntoTicker.C:
 			go func() {
 				if errMeta := g.reports.MetaStats(ctx); errMeta != nil {
@@ -330,13 +340,13 @@ func (g *GBans) Init(ctx context.Context) error {
 			}
 		}
 	}()
-
-	return nil
 }
 
-func (g *GBans) Serve(ctx context.Context) error {
-	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+func (g *GBans) Serve(rootCtx context.Context) error {
+	ctx, stop := signal.NotifyContext(rootCtx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	go g.startBot(ctx)
 
 	conf := g.config.Config()
 
@@ -401,6 +411,8 @@ func (g *GBans) Serve(ctx context.Context) error {
 		}
 	}()
 
+	slog.Info("Starting HTTP server", slog.String("address", conf.Addr()), slog.String("url", conf.ExternalURL))
+
 	errServe := httpServer.ListenAndServe()
 	if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
 		slog.Error("HTTP server returned error", log.ErrAttr(errServe))
@@ -413,21 +425,34 @@ func (g *GBans) Serve(ctx context.Context) error {
 	return nil
 }
 
-func (g *GBans) Close() error {
+func (g *GBans) Close(ctx context.Context) error {
+	conf := g.config.Config()
+	if conf.Debug.AddRCONLogAddress != "" {
+		g.states.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
+	}
+
+	if g.bot != nil {
+		g.bot.Shutdown()
+	}
+
 	if g.database != nil {
 		if errClose := g.database.Close(); errClose != nil {
 			slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
 		}
 	}
+
+	if g.sentry != nil {
+		g.sentry.Flush(2 * time.Second)
+	}
+
 	if g.logCloser != nil {
 		g.logCloser()
 	}
+
 	return nil
 }
 
-func (g GBans) firstTimeSetup(ctx context.Context, persons person.Persons, newsUC news.News,
-	wikiUC wiki.Wiki, conf config.Config,
-) error {
+func (g GBans) firstTimeSetup(ctx context.Context, persons person.Persons, newsUC news.News, wikiUC wiki.Wiki, conf config.Config) error {
 	_, errRootUser := persons.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
 	if errRootUser == nil {
 		return nil

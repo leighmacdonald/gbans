@@ -1,6 +1,7 @@
 package logparse
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"sort"
@@ -10,7 +11,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -880,7 +880,7 @@ func (match *Match) killedCustom(evt CustomKilledEvt) error {
 		// This is taken from damage event instead to match logs.tf
 		// weaponSum.Headshots++
 	default:
-		return errors.Errorf("Custom kill type unknown: %s", evt.Customkill)
+		return fmt.Errorf("Custom kill type unknown: %s", evt.Customkill)
 	}
 
 	player.addKill(evt.CreatedOn, evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
