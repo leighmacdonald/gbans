@@ -33,10 +33,10 @@ builds:
     ldflags:
       - -s
       - -w
-      #- -X github.com/leighmacdonald/gbans/internal/app.SentryDSN={{ .Env.SENTRY_DSN }}
-      - -X github.com/leighmacdonald/gbans/internal/app.BuildVersion={{.Version}}
-      - -X github.com/leighmacdonald/gbans/internal/app.BuildCommit={{.Commit}}
-      - -X github.com/leighmacdonald/gbans/internal/app.BuildDate={{.Date}}
+      #- -X github.com/leighmacdonald/gbans/internal/cmd.SentryDSN={{ .Env.SENTRY_DSN }}
+      - -X github.com/leighmacdonald/gbans/internal/cmd.BuildVersion={{.Version}}
+      - -X github.com/leighmacdonald/gbans/internal/cmd.BuildCommit={{.Commit}}
+      - -X github.com/leighmacdonald/gbans/internal/cmd.BuildDate={{.Date}}
 
 nfpms:
   - maintainer: Leigh MacDonald <leigh.macdonald@gmail.com>
