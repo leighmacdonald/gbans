@@ -204,7 +204,7 @@ func useSloggin(engine *gin.Engine, level log.Level, otelEnabled bool) {
 }
 
 func recoveryHandler() gin.HandlerFunc {
-	return gin.CustomRecoveryWithWriter(nil, func(c *gin.Context, err interface{}) {
+	return gin.CustomRecoveryWithWriter(nil, func(c *gin.Context, err any) {
 		slog.Error("Recovery error:", slog.String("err", fmt.Sprintf("%v", err)))
 
 		c.JSON(http.StatusInternalServerError, gin.H{
