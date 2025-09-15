@@ -10,19 +10,16 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type reportHandler struct {
-	reports       ReportUsecase
-	notifications notification.NotificationUsecase
+	reports ReportUsecase
 }
 
-func NewReportHandler(engine *gin.Engine, reports ReportUsecase, authUC httphelper.Authenticator, notifications notification.NotificationUsecase) {
+func NewReportHandler(engine *gin.Engine, reports ReportUsecase, authUC httphelper.Authenticator) {
 	handler := reportHandler{
-		reports:       reports,
-		notifications: notifications,
+		reports: reports,
 	}
 
 	// auth

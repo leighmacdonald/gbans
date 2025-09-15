@@ -16,8 +16,8 @@ type ForumRepository struct {
 	db database.Database
 }
 
-func NewForumRepository(database database.Database) *ForumRepository {
-	return &ForumRepository{db: database}
+func NewForumRepository(database database.Database) ForumRepository {
+	return ForumRepository{db: database}
 }
 
 func (f *ForumRepository) ForumCategories(ctx context.Context) ([]ForumCategory, error) {

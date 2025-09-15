@@ -29,6 +29,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/network/dns"
+	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/patreon"
@@ -221,7 +222,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			defer logCloser()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-			weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
+			// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
 			discordUsecase, errDiscord := discord.NewDiscord(conf.Discord.AppID, conf.Discord.GuildID, conf.Discord.Token, conf.ExternalURL)
 			if errDiscord != nil {
@@ -364,19 +365,19 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			servers.NewDemoHandler(router, demos, authUsecase)
 			forum.NewHandler(router, forumUsecase, authUsecase)
 			// match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
-			asset.NewHandler(router, configUsecase, assets, authUsecase)
+			asset.NewHandler(router, assets, authUsecase)
 			metrics.NewHandler(router)
 			network.NewHandler(router, networkUsecase, authUsecase)
 			news.NewHandler(router, newsUsecase, notificationUsecase, authUsecase)
 			notification.NewHandler(router, notificationUsecase, authUsecase)
 			patreon.NewHandler(router, patreonUsecase, authUsecase, configUsecase)
 			person.NewHandler(router, configUsecase, personUsecase, authUsecase)
-			ban.NewReportHandler(router, reportUsecase, authUsecase, notificationUsecase)
+			ban.NewReportHandler(router, reportUsecase, authUsecase)
 			servers.NewServersHandler(router, serversUC, stateUsecase, authUsecase)
 			servers.NewSpeedrunsHandler(router, speedruns, authUsecase, configUsecase, serversUC)
 			servers.NewSRCDSHandler(router, srcdsUsecase, serversUC, personUsecase, assets,
 				reportUsecase, banUsecase, networkUsecase, authUsecase,
-				configUsecase, notificationUsecase, stateUsecase, blocklistUsecase)
+				configUsecase, stateUsecase, blocklistUsecase)
 			votes.NewHandler(router, voteUsecase, authUsecase)
 			wiki.NewHandler(router, wikiUsecase, authUsecase)
 			chat.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
@@ -441,7 +442,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			httpServer := httphelper.NewServer(conf.Addr(), router)
 
-			demoDownloader := demo.NewDownloader(configUsecase, dbConn, serversUC, assets, demos, anticheatUsecase)
+			demoDownloader := scp.NewDownloader(configUsecase, dbConn)
+			// TODO register handlers
 			go demoDownloader.Start(ctx)
 
 			go func() {

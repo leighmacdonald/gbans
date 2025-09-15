@@ -9,14 +9,12 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
-	"github.com/leighmacdonald/gbans/internal/network"
-	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -183,6 +181,8 @@ var (
 type DiscordHandler struct {
 	bans    *BanUsecase
 	persons domain.PersonProvider
+	discord domain.DiscordPersonProvider
+	config  *config.ConfigUsecase
 }
 
 func RegisterDiscordHandler(bans *BanUsecase) {
@@ -204,7 +204,7 @@ func (h DiscordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 		return nil, domain.ErrReasonInvalid
 	}
 
-	author, errAuthor := h.getDiscordAuthor(ctx, interaction)
+	author, errAuthor := h.discord.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
 	if errAuthor != nil {
 		return nil, errAuthor
 	}
@@ -217,7 +217,8 @@ func (h DiscordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 		ReasonText: "",
 		Note:       opts[helper.OptNote].StringValue(),
 	}
-	banOpts.SetDuration(opts[helper.OptDuration].StringValue())
+	//TODO FIX time
+	banOpts.SetDuration(opts[helper.OptDuration].StringValue(), time.Now().AddDate(10, 0, 0))
 
 	banSteam, errBan := h.bans.Ban(ctx, banOpts)
 	if errBan != nil {
@@ -231,7 +232,7 @@ func (h DiscordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 func (h DiscordHandler) onBan(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	author, errAuthor := h.getDiscordAuthor(ctx, interaction)
+	author, errAuthor := h.discord.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
 	if errAuthor != nil {
 		return nil, errAuthor
 	}
@@ -263,7 +264,7 @@ func (h DiscordHandler) onUnban(ctx context.Context, _ *discordgo.Session, inter
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	reason := opts[helper.OptUnbanReason].StringValue()
 
-	author, err := h.getDiscordAuthor(ctx, interaction)
+	author, err := h.discord.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +274,7 @@ func (h DiscordHandler) onUnban(ctx context.Context, _ *discordgo.Session, inter
 		return nil, domain.ErrInvalidSID
 	}
 
-	found, errUnban := h.bans.Unban(ctx, steamID, reason, author.ToUserProfile())
+	found, errUnban := h.bans.Unban(ctx, steamID, reason, author)
 	if errUnban != nil {
 		return nil, errUnban
 	}
@@ -304,7 +305,7 @@ func (h DiscordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 		return nil, helper.ErrCommandFailed
 	}
 
-	bans, errGetBanBySID := h.bans.Query(ctx, QueryOpts{EvadeOk: true, TargetID: sid})
+	bans, errGetBanBySID := h.bans.QueryOne(ctx, QueryOpts{EvadeOk: true, TargetID: sid})
 	if errGetBanBySID != nil {
 		if !errors.Is(errGetBanBySID, database.ErrNoResult) {
 			slog.Error("Failed to get ban by steamid", log.ErrAttr(errGetBanBySID))
@@ -332,15 +333,14 @@ func (h DiscordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 	var banURL string
 
 	var (
-		conf = h.config.Config()
-
-		authorProfile person.Person
+		conf          = h.config.Config()
+		authorProfile domain.PersonCore
 	)
 
 	// TODO Show the longest remaining ban.
 	if bans.BanID > 0 {
-		if ban.SourceID.Valid() {
-			ap, errGetProfile := h.persons.GetPersonBySteamID(ctx, nil, bans.SourceID)
+		if bans.SourceID.Valid() {
+			ap, errGetProfile := h.persons.GetOrCreatePersonBySteamID(ctx, nil, bans.SourceID)
 			if errGetProfile != nil {
 				slog.Error("Failed to load author for ban", log.ErrAttr(errGetProfile))
 			} else {
@@ -348,20 +348,10 @@ func (h DiscordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 			}
 		}
 
-		banURL = conf.ExtURL(bans.Ban)
+		banURL = conf.ExtURL(bans)
 	}
 
-	logData, errLogs := h.tfAPI.LogsTFSummary(ctx, sid)
-	if errLogs != nil {
-		slog.Info("Failed to query logstf summary", slog.String("error", errLogs.Error()))
-	}
-
-	network, errNetwork := h.network.QueryNetwork(ctx, player.IPAddr)
-	if errNetwork != nil {
-		slog.Error("Failed to query network details")
-	}
-
-	return CheckMessage(player, ban, banURL, authorProfile, oldBans, network.Location, network.Proxy, logData), nil
+	return CheckMessage(player, bans, banURL, authorProfile, oldBans), nil
 }
 
 func UnbanMessage(link string, person domain.PersonInfo) *discordgo.MessageEmbed {
@@ -375,13 +365,10 @@ func UnbanMessage(link string, person domain.PersonInfo) *discordgo.MessageEmbed
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func CheckMessage(player person.Person, banPerson Ban, banURL string, author domain.PersonInfo,
-	oldBans []Ban, location network.NetworkLocation,
-	proxy network.NetworkProxy, logData thirdparty.LogsTFPlayerSummary,
-) *discordgo.MessageEmbed {
+func CheckMessage(player domain.PersonCore, banPerson Ban, banURL string, author domain.PersonInfo, oldBans []Ban) *discordgo.MessageEmbed {
 	msgEmbed := message.NewEmbed()
 
-	title := player.PersonaName
+	title := player.Name
 
 	if banPerson.BanID > 0 {
 		switch banPerson.BanType {
@@ -394,30 +381,30 @@ func CheckMessage(player person.Person, banPerson Ban, banURL string, author dom
 
 	msgEmbed.Embed().SetTitle(title)
 
-	if player.RealName != "" {
-		msgEmbed.Embed().AddField("Real Name", player.RealName)
-	}
+	// if player.RealName != "" {
+	// 	msgEmbed.Embed().AddField("Real Name", player.RealName)
+	// }
 
-	cd := time.Unix(player.TimeCreated, 0)
-	msgEmbed.Embed().AddField("Age", datetime.FmtDuration(cd))
-	msgEmbed.Embed().AddField("Private", strconv.FormatBool(player.VisibilityState == 1))
-	msgEmbed.AddFieldsSteamID(player.SteamID)
+	// cd := time.Unix(player.TimeCreated, 0)
+	// msgEmbed.Embed().AddField("Age", datetime.FmtDuration(cd))
+	// msgEmbed.Embed().AddField("Private", strconv.FormatBool(player.VisibilityState == 1))
+	// msgEmbed.AddFieldsSteamID(player.SteamID)
 
-	if player.VACBans > 0 {
-		msgEmbed.Embed().AddField("VAC Bans", fmt.Sprintf("count: %d days: %d", player.VACBans, player.DaysSinceLastBan))
-	}
+	// if player.VACBans > 0 {
+	// 	msgEmbed.Embed().AddField("VAC Bans", fmt.Sprintf("count: %d days: %d", player.VACBans, player.DaysSinceLastBan))
+	// }
 
-	if player.GameBans > 0 {
-		msgEmbed.Embed().AddField("Game Bans", fmt.Sprintf("count: %d", player.GameBans))
-	}
+	// if player.GameBans > 0 {
+	// 	msgEmbed.Embed().AddField("Game Bans", fmt.Sprintf("count: %d", player.GameBans))
+	// }
 
-	if player.CommunityBanned {
-		msgEmbed.Embed().AddField("Com. Ban", "true")
-	}
+	// if player.CommunityBanned {
+	// 	msgEmbed.Embed().AddField("Com. Ban", "true")
+	// }
 
-	if player.EconomyBan != "" {
-		msgEmbed.Embed().AddField("Econ Ban", string(player.EconomyBan))
-	}
+	// if player.EconomyBan != "" {
+	// 	msgEmbed.Embed().AddField("Econ Ban", string(player.EconomyBan))
+	// }
 
 	if len(oldBans) > 0 {
 		numMutes, numBans := 0, 0
@@ -468,7 +455,7 @@ func CheckMessage(player person.Person, banPerson Ban, banURL string, author dom
 			msgEmbed.Embed().AddField("Expires", datetime.FmtDuration(expiry)).MakeFieldInline()
 		}
 
-		msgEmbed.Embed().AddField("Author", fmt.Sprintf("<@%s>", author.GetDiscordID())).MakeFieldInline()
+		// msgEmbed.Embed().AddField("Author", fmt.Sprintf("<@%s>", author.GetDiscordID())).MakeFieldInline()
 
 		if banPerson.Note != "" {
 			msgEmbed.Embed().AddField("Mod Note", banPerson.Note).MakeFieldInline()
@@ -502,40 +489,40 @@ func CheckMessage(player person.Person, banPerson Ban, banURL string, author dom
 
 	msgEmbed.Embed().AddField("Ban/Muted", banStateStr)
 
-	if player.IPAddr.IsValid() {
-		msgEmbed.Embed().AddField("Last IP", player.IPAddr.String()).MakeFieldInline()
-	}
+	// if player.IPAddr.IsValid() {
+	// 	msgEmbed.Embed().AddField("Last IP", player.IPAddr.String()).MakeFieldInline()
+	// }
 
 	// if asn.ASName != "" {
 	// 	msgEmbed.Embed().AddField("ASN", fmt.Sprintf("(%d) %s", asn.ASNum, asn.ASName)).MakeFieldInline()
 	// }
 
-	if location.CountryCode != "" {
-		msgEmbed.Embed().AddField("City", location.CityName).MakeFieldInline()
-	}
+	// if location.CountryCode != "" {
+	// 	msgEmbed.Embed().AddField("City", location.CityName).MakeFieldInline()
+	// }
 
-	if location.CountryName != "" {
-		msgEmbed.Embed().AddField("Country", location.CountryName).MakeFieldInline()
-	}
+	// if location.CountryName != "" {
+	// 	msgEmbed.Embed().AddField("Country", location.CountryName).MakeFieldInline()
+	// }
 
-	if proxy.CountryCode != "" {
-		msgEmbed.Embed().AddField("Proxy Type", string(proxy.ProxyType)).MakeFieldInline()
-		msgEmbed.Embed().AddField("Proxy", string(proxy.Threat)).MakeFieldInline()
-	}
+	// if proxy.CountryCode != "" {
+	// 	msgEmbed.Embed().AddField("Proxy Type", string(proxy.ProxyType)).MakeFieldInline()
+	// 	msgEmbed.Embed().AddField("Proxy", string(proxy.Threat)).MakeFieldInline()
+	// }
 
-	if logData.Logs > 0 {
-		msgEmbed.Embed().AddField("Logs.tf", strconv.Itoa(int(logData.Logs))).MakeFieldInline()
-	}
+	// if logData.Logs > 0 {
+	// 	msgEmbed.Embed().AddField("Logs.tf", strconv.Itoa(int(logData.Logs))).MakeFieldInline()
+	// }
 
 	if createdAt != "" {
 		msgEmbed.Embed().AddField("created at", createdAt).MakeFieldInline()
 	}
 
 	return msgEmbed.Embed().
-		SetURL(player.Profile()).
+		SetURL(player.Path()).
 		SetColor(color).
-		SetImage(player.AvatarFull()).
-		SetThumbnail(player.Avatar()).
+		SetImage(player.GetAvatar().Full()).
+		SetThumbnail(player.GetAvatar().Small()).
 		Truncate().MessageEmbed
 }
 

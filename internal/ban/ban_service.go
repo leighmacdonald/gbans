@@ -154,7 +154,7 @@ func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			switch {
 			case errors.Is(errBan, database.ErrDuplicate):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, database.ErrDuplicate,
-					"Ban already active for steam_id: %s", req.TargetID))
+					"Ban already active for steam_id: %s", req.TargetID.String()))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBan, httphelper.ErrInternal)))
 			}

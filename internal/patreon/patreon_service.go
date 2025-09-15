@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -20,7 +19,7 @@ type patreonHandler struct {
 	config  *config.ConfigUsecase
 }
 
-func NewHandler(engine *gin.Engine, patreon PatreonUsecase, auth auth.AuthUsecase, config *config.ConfigUsecase) {
+func NewHandler(engine *gin.Engine, patreon PatreonUsecase, auth httphelper.Authenticator, config *config.ConfigUsecase) {
 	handler := patreonHandler{
 		patreon: patreon,
 		config:  config,

@@ -14,10 +14,10 @@ import (
 )
 
 type NetworkHandler struct {
-	networks *NetworkUsecase
+	networks NetworkUsecase
 }
 
-func NewHandler(engine *gin.Engine, networks *NetworkUsecase, authUC httphelper.Authenticator) {
+func NewHandler(engine *gin.Engine, networks NetworkUsecase, authUC httphelper.Authenticator) {
 	handler := NetworkHandler{networks: networks}
 
 	modGrp := engine.Group("/")

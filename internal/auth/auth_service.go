@@ -22,12 +22,12 @@ import (
 type authHandler struct {
 	authUsecase   *AuthUsecase
 	configUsecase *config.ConfigUsecase
-	personUsecase *person.PersonUsecase
+	personUsecase person.PersonUsecase
 	tfAPI         *thirdparty.TFAPI
 }
 
 func NewHandler(engine *gin.Engine, authUsecase *AuthUsecase, configUsecase *config.ConfigUsecase,
-	personUsecase *person.PersonUsecase, tfAPI *thirdparty.TFAPI,
+	personUsecase person.PersonUsecase, tfAPI *thirdparty.TFAPI,
 ) {
 	handler := &authHandler{
 		authUsecase:   authUsecase,
