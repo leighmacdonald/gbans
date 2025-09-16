@@ -29,7 +29,7 @@ type banHandler struct {
 }
 
 func NewHandlerSteam(engine *gin.Engine, bans Bans,
-	config *config.Configuration, authUC httphelper.Authenticator,
+	config *config.Configuration, authenticator httphelper.Authenticator,
 ) {
 	handler := banHandler{bans: bans, config: config}
 
@@ -44,14 +44,14 @@ func NewHandlerSteam(engine *gin.Engine, bans Bans,
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authUC.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
 		authed.GET("/api/bans/steam/:ban_id", handler.onAPIGetBanByID())
 	}
 
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
 
 		mod.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
 		mod.GET("/api/stats", handler.onAPIGetStats())

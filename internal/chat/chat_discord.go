@@ -8,13 +8,16 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 )
 
-var slashCommands = []*discordgo.ApplicationCommand{
-	{
+func RegisterDiscordCommands(bot *discord.Discord, wordFilters WordFilters) {
+	handler := &discordHandler{wordFilters: wordFilters}
+
+	bot.RegisterHandler("filter", handler.onFilterCheck, &discordgo.ApplicationCommand{
 		Name:                     "filter",
 		Description:              "Manage and test global word filters",
 		DMPermission:             &helper.DmPerms,
@@ -66,21 +69,21 @@ var slashCommands = []*discordgo.ApplicationCommand{
 				},
 			},
 		},
-	},
+	})
 }
 
-type DiscordHandler struct {
+type discordHandler struct {
 	wordFilters WordFilters
 }
 
-func (h DiscordHandler) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h discordHandler) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	message := opts[helper.OptMessage].StringValue()
 
 	return FilterCheckMessage(h.wordFilters.Check(message)), nil
 }
 
-func (h DiscordHandler) makeOnFilter(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h discordHandler) makeOnFilter(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	switch interaction.ApplicationCommandData().Options[0].Name {
 	case "check":
 		return h.onFilterCheck(ctx, session, interaction)

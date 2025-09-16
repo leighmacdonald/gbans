@@ -80,6 +80,12 @@ func (r Reason) String() string {
 	}[r]
 }
 
+var Reasons = []Reason{
+	External, Cheating, Racism, Harassment, Exploiting,
+	WarningsExceeded, Spam, Language, Profile, ItemDescriptions,
+	BotHost, Evading, Username, Custom,
+}
+
 // Origin defines the origin of the ban or action.
 type Origin int
 

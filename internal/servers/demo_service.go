@@ -13,7 +13,7 @@ type DemoHandler struct {
 	demos Demos
 }
 
-func NewDemoHandler(engine *gin.Engine, du Demos, authUC httphelper.Authenticator) {
+func NewDemoHandler(engine *gin.Engine, du Demos, authenticator httphelper.Authenticator) {
 	handler := DemoHandler{
 		demos: du,
 	}
@@ -22,7 +22,7 @@ func NewDemoHandler(engine *gin.Engine, du Demos, authUC httphelper.Authenticato
 
 	adminGrp := engine.Group("/")
 	{
-		mod := adminGrp.Use(authUC.Middleware(permission.PAdmin))
+		mod := adminGrp.Use(authenticator.Middleware(permission.PAdmin))
 		mod.GET("/api/demos/cleanup", handler.onAPIGetCleanup())
 	}
 }

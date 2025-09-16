@@ -11,6 +11,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -23,114 +24,7 @@ import (
 
 var (
 	slashCommands = []*discordgo.ApplicationCommand{
-		{
-			Name:                     "ban",
-			Description:              "Manage steam, ip, group and ASN bans",
-			DMPermission:             &helper.DmPerms,
-			DefaultMemberPermissions: &helper.ModPerms,
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "steam",
-					Description: "Ban and kick a user from all servers",
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        helper.OptUserIdentifier,
-							Description: "SteamID in any format OR profile url",
-							Required:    true,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        helper.OptDuration,
-							Description: "Duration [s,m,h,d,w,M,y]N|0",
-							Required:    true,
-						},
-						optBanReason,
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        helper.OptNote,
-							Description: "Mod only notes for the ban reason",
-							Required:    true,
-						},
-					},
-				},
-			},
-		},
-		{
-			Name:                     "unban",
-			Description:              "Manage steam, ip and ASN bans",
-			DMPermission:             &helper.DmPerms,
-			DefaultMemberPermissions: &helper.ModPerms,
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "steam",
-					Description: "Unban a previously banned player",
-					Type:        discordgo.ApplicationCommandOptionSubCommand,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        helper.OptUserIdentifier,
-							Description: "SteamID in any format OR profile url",
-							Required:    true,
-						},
-						{
-							Type:        discordgo.ApplicationCommandOptionString,
-							Name:        helper.OptUnbanReason,
-							Description: "Reason for unbanning",
-							Required:    true,
-						},
-					},
-				},
-			},
-		},
-		{
-			Name:                     "mute",
-			Description:              "Mute a player",
-			DMPermission:             &helper.DmPerms,
-			DefaultMemberPermissions: &helper.ModPerms,
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        helper.OptUserIdentifier,
-					Description: "SteamID in any format OR profile url",
-					Required:    true,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        helper.OptDuration,
-					Description: "Duration [s,m,h,d,w,M,y]N|0",
-					Required:    true,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionInteger,
-					Name:        helper.OptBanReason,
-					Description: "Reason for the ban/mute",
-					Required:    true,
-					Choices:     reasons,
-				},
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        helper.OptNote,
-					Description: "Mod only notes for the mute reason",
-					Required:    true,
-				},
-			},
-		},
-		{
-			Name:                     "check",
-			DMPermission:             &helper.DmPerms,
-			DefaultMemberPermissions: &helper.ModPerms,
-			Description:              "Get ban status for a steam id",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        helper.OptUserIdentifier,
-					Description: "SteamID in any format OR profile url",
-					Required:    true,
-				},
-			},
-		},
+
 		{
 			Name:                     "checkip",
 			DMPermission:             &helper.DmPerms,
@@ -146,11 +40,7 @@ var (
 			},
 		},
 	}
-	reasonCollection = []banDomain.Reason{
-		banDomain.External, banDomain.Cheating, banDomain.Racism, banDomain.Harassment, banDomain.Exploiting,
-		banDomain.WarningsExceeded, banDomain.Spam, banDomain.Language, banDomain.Profile, banDomain.ItemDescriptions,
-		banDomain.BotHost, banDomain.Evading, banDomain.Username, banDomain.Custom,
-	}
+
 
 	reasons = []*discordgo.ApplicationCommandOptionChoice{
 		{Name: banDomain.External.String(), Value: banDomain.External},
@@ -178,20 +68,130 @@ var (
 	}
 )
 
-type DiscordHandler struct {
-	bans    *Bans
+type discordHandler struct {
+	bans    Bans
 	persons domain.PersonProvider
 	discord domain.DiscordPersonProvider
 	config  *config.Configuration
 }
 
-func RegisterDiscordHandler(bans *Bans) {
-	_ = &DiscordHandler{
-		bans: bans,
-	}
+func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
+	handler := &discordHandler{bans: bans}
+
+	bot.RegisterHandler("ban", handler.onBan, &discordgo.ApplicationCommand{
+		Name:                     "ban",
+		Description:              "Manage steam, ip, group and ASN bans",
+		DMPermission:             &helper.DmPerms,
+		DefaultMemberPermissions: &helper.ModPerms,
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "steam",
+				Description: "Ban and kick a user from all servers",
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        helper.OptUserIdentifier,
+						Description: "SteamID in any format OR profile url",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        helper.OptDuration,
+						Description: "Duration [s,m,h,d,w,M,y]N|0",
+						Required:    true,
+					},
+					optBanReason,
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        helper.OptNote,
+						Description: "Mod only notes for the ban reason",
+						Required:    true,
+					},
+				},
+			},
+		},
+	})
+
+	bot.RegisterHandler("unban", handler.onUnban, &discordgo.ApplicationCommand{
+		Name:                     "unban",
+		Description:              "Manage steam, ip and ASN bans",
+		DMPermission:             &helper.DmPerms,
+		DefaultMemberPermissions: &helper.ModPerms,
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "steam",
+				Description: "Unban a previously banned player",
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        helper.OptUserIdentifier,
+						Description: "SteamID in any format OR profile url",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        helper.OptUnbanReason,
+						Description: "Reason for unbanning",
+						Required:    true,
+					},
+				},
+			},
+		},
+	})
+
+	bot.RegisterHandler("mute", handler.onMute, &discordgo.ApplicationCommand{
+		Name:                     "mute",
+		Description:              "Mute a player",
+		DMPermission:             &helper.DmPerms,
+		DefaultMemberPermissions: &helper.ModPerms,
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        helper.OptUserIdentifier,
+				Description: "SteamID in any format OR profile url",
+				Required:    true,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        helper.OptDuration,
+				Description: "Duration [s,m,h,d,w,M,y]N|0",
+				Required:    true,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionInteger,
+				Name:        helper.OptBanReason,
+				Description: "Reason for the ban/mute",
+				Required:    true,
+				Choices:     reasons,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        helper.OptNote,
+				Description: "Mod only notes for the mute reason",
+				Required:    true,
+			},
+		},
+	})
+
+	bot.RegisterHandler("check", handler.onCheck, &discordgo.ApplicationCommand{
+		Name:                     "check",
+		DMPermission:             &helper.DmPerms,
+		DefaultMemberPermissions: &helper.ModPerms,
+		Description:              "Get ban status for a steam id",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        helper.OptUserIdentifier,
+				Description: "SteamID in any format OR profile url",
+				Required:    true,
+			},
+		},
+	})
 }
 
-func (h DiscordHandler) onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h discordHandler) onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
 
 	playerID, errPlayerID := steamid.Resolve(ctx, opts.String(helper.OptUserIdentifier))
@@ -229,7 +229,7 @@ func (h DiscordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 }
 
 // onBanSteam !ban <id> <duration> [reason].
-func (h DiscordHandler) onBan(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h discordHandler) onBan(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
 	author, errAuthor := h.discord.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
@@ -260,7 +260,7 @@ func (h DiscordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 	return BanSteamResponse(banSteam), nil
 }
 
-func (h DiscordHandler) onUnban(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h discordHandler) onUnban(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	reason := opts[helper.OptUnbanReason].StringValue()
 
@@ -291,7 +291,7 @@ func (h DiscordHandler) onUnban(ctx context.Context, _ *discordgo.Session, inter
 	return UnbanMessage("/FIXME", user), nil
 }
 
-func (h DiscordHandler) onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
+func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
 ) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
 	sid, errResolveSID := steamid.Resolve(ctx, opts[helper.OptUserIdentifier].StringValue())

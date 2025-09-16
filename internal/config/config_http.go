@@ -13,14 +13,14 @@ type ConfigHandler struct {
 	config *Configuration
 }
 
-func NewConfigHandler(engine *gin.Engine, cu *Configuration, authUC httphelper.Authenticator, version string) {
+func NewConfigHandler(engine *gin.Engine, cu *Configuration, authenticator httphelper.Authenticator, version string) {
 	handler := ConfigHandler{config: cu}
 	engine.GET("/api/info", handler.onAppInfo(version))
 	engine.GET("/api/changelog", handler.onChangelog())
 
 	adminGroup := engine.Group("/")
 	{
-		admin := adminGroup.Use(authUC.Middleware(permission.PAdmin))
+		admin := adminGroup.Use(authenticator.Middleware(permission.PAdmin))
 		admin.GET("/api/config", handler.onAPIGetConfig())
 		admin.PUT("/api/config", handler.onAPIPutConfig())
 	}

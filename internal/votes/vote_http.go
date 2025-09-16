@@ -13,12 +13,12 @@ type voteHandler struct {
 	votes Votes
 }
 
-func NewVotesHandler(engine *gin.Engine, votes Votes, authUC httphelper.Authenticator) {
+func NewVotesHandler(engine *gin.Engine, votes Votes, authenticator httphelper.Authenticator) {
 	handler := voteHandler{votes: votes}
 
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
 		mod.POST("/api/votes", handler.onVotes())
 	}
 }

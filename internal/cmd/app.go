@@ -131,19 +131,18 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 	g.database = dbConn
 
-	configuration := config.NewConfiguration(g.staticConfig, config.NewRepository(g.database))
-	if err := configuration.Init(ctx); err != nil {
+	g.config = config.NewConfiguration(g.staticConfig, config.NewRepository(g.database))
+	if err := g.config.Init(ctx); err != nil {
 		slog.Error("Failed to init config", log.ErrAttr(err))
 
 		return err
 	}
 
-	if errConfig := configuration.Reload(ctx); errConfig != nil {
+	if errConfig := g.config.Reload(ctx); errConfig != nil {
 		slog.Error("Failed to read config", log.ErrAttr(errConfig))
 
 		return errConfig
 	}
-	g.config = configuration
 
 	// This is normally set by build time flags, but can be overwritten by the env var.
 	if SentryDSN == "" {
@@ -152,12 +151,11 @@ func (g *GBans) Init(ctx context.Context) error {
 		}
 	}
 
-	conf := configuration.Config()
+	conf := g.config.Config()
 
 	g.setupSentry()
 
-	logCloser := log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, SentryDSN != "", BuildVersion)
-	g.logCloser = logCloser
+	g.logCloser = log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, SentryDSN != "", BuildVersion)
 
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
@@ -176,10 +174,8 @@ func (g *GBans) Init(ctx context.Context) error {
 		return errClient
 	}
 
-	persons := person.NewPersons(person.NewRepository(conf, dbConn), configuration, tfapiClient)
-
-	networks := network.NewNetworks(eventBroadcaster, network.NewRepository(dbConn, persons), configuration)
-	go networks.Start(ctx)
+	g.persons = person.NewPersons(person.NewRepository(conf, dbConn), g.config, tfapiClient)
+	g.networks = network.NewNetworks(eventBroadcaster, network.NewRepository(dbConn, g.persons), g.config)
 
 	assetRepo := asset.NewLocalRepository(dbConn, conf.LocalStore.PathRoot)
 	if err := assetRepo.Init(ctx); err != nil {
@@ -196,10 +192,10 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	g.assets = asset.NewAssets(assetRepo)
 	g.servers = servers.NewServers(servers.NewServersRepository(dbConn))
-	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(dbConn), g.assets, configuration)
-	g.reports = ban.NewReports(ban.NewReportRepository(dbConn), configuration, persons, g.demos, tfapiClient)
-	g.states = servers.NewState(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(g.servers)), configuration, g.servers)
-	g.bans = ban.NewBans(ban.NewBanRepository(dbConn, persons, networks), persons, configuration, g.reports, g.states, tfapiClient)
+	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(dbConn), g.assets, g.config)
+	g.reports = ban.NewReports(ban.NewReportRepository(dbConn), g.config, g.persons, g.demos, tfapiClient)
+	g.states = servers.NewState(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(g.servers)), g.config, g.servers)
+	g.bans = ban.NewBans(ban.NewBanRepository(dbConn, g.persons, g.networks), g.persons, g.config, g.reports, g.states, tfapiClient)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(dbConn), g.bans) // TODO Does THE & work here?
 
 	go func() {
@@ -208,23 +204,23 @@ func (g *GBans) Init(ctx context.Context) error {
 		}
 	}()
 
-	g.discordOAuth = discordoauth.NewDiscordOAuth(discordoauth.NewRepository(dbConn), configuration)
-	g.appeals = ban.NewAppeals(ban.NewAppealRepository(dbConn), g.bans, persons, configuration)
-	g.chatRepo = chat.NewChatRepository(dbConn, persons, wordFilters, eventBroadcaster)
-	g.chat = chat.NewChat(configuration, g.chatRepo, wordFilters, g.states, g.bans, persons)
+	g.discordOAuth = discordoauth.NewDiscordOAuth(discordoauth.NewRepository(dbConn), g.config)
+	g.appeals = ban.NewAppeals(ban.NewAppealRepository(dbConn), g.bans, g.persons, g.config)
+	g.chatRepo = chat.NewChatRepository(dbConn, g.persons, wordFilters, eventBroadcaster)
+	g.chat = chat.NewChat(g.config, g.chatRepo, wordFilters, g.states, g.bans, g.persons)
 	g.forums = forum.NewForums(forum.NewForumRepository(dbConn))
 	g.metrics = metrics.NewMetrics(eventBroadcaster)
 	g.news = news.NewNews(news.NewNewsRepository(dbConn))
-	g.patreon = patreon.NewPatreon(patreon.NewRepository(dbConn), configuration)
-	g.srcds = servers.NewSRCDS(servers.NewSRCDSRepository(dbConn), configuration, g.servers, persons, tfapiClient)
+	g.patreon = patreon.NewPatreon(patreon.NewRepository(dbConn), g.config)
+	g.srcds = servers.NewSRCDS(servers.NewSRCDSRepository(dbConn), g.config, g.servers, g.persons, tfapiClient)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(dbConn))
-	g.auth = auth.NewAuthentication(auth.NewRepository(dbConn), configuration, persons, g.bans, g.servers, SentryDSN)
-	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(dbConn), g.bans, configuration, persons)
+	g.auth = auth.NewAuthentication(auth.NewRepository(dbConn), g.config, g.persons, g.bans, g.servers, SentryDSN)
+	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(dbConn), g.bans, g.config, g.persons)
 	g.votes = votes.NewVotes(votes.NewRepository(dbConn), eventBroadcaster)
 	g.contests = contest.NewContests(contest.NewRepository(dbConn))
-	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(dbConn, persons))
+	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(dbConn, g.persons))
 
-	if err := g.firstTimeSetup(ctx, persons, g.news, g.wiki, conf); err != nil {
+	if err := g.firstTimeSetup(ctx); err != nil {
 		slog.Error("Failed to run first time setup", log.ErrAttr(err))
 
 		return err
@@ -248,9 +244,9 @@ func (g *GBans) Init(ctx context.Context) error {
 		go g.states.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
 	}
 
-	g.memberships = ban.NewMemberships(ban.NewBanRepository(dbConn, persons, networks), tfapiClient)
-	g.banExpirations = ban.NewExpirationMonitor(g.bans, persons, g.notifications, configuration)
-	g.downloader = scp.NewDownloader(configuration, dbConn)
+	g.memberships = ban.NewMemberships(ban.NewBanRepository(dbConn, g.persons, g.networks), tfapiClient)
+	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications, g.config)
+	g.downloader = scp.NewDownloader(g.config, dbConn)
 
 	return nil
 }
@@ -259,6 +255,10 @@ func (g *GBans) startBot(ctx context.Context) error {
 	if !g.config.Config().Discord.Enabled {
 		return nil
 	}
+
+	anticheat.RegisterDiscordCommands(g.bot, g.anticheat, g.config)
+	ban.RegisterDiscordCommands(g.bot, g.bans)
+	chat.RegisterDiscordCommands(g.bot, g.wordFilters)
 
 	if err := g.bot.Start(ctx); err != nil {
 		return err
@@ -301,6 +301,7 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go g.playerQueue.Start(ctx)
 	// TODO register handlers
 	go g.downloader.Start(ctx)
+	go g.networks.Start(ctx)
 
 	go func() {
 		if errSync := g.anticheat.SyncDemoIDs(ctx, 100); errSync != nil {
@@ -452,8 +453,9 @@ func (g *GBans) Close(ctx context.Context) error {
 	return nil
 }
 
-func (g GBans) firstTimeSetup(ctx context.Context, persons person.Persons, newsUC news.News, wikiUC wiki.Wiki, conf config.Config) error {
-	_, errRootUser := persons.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
+func (g GBans) firstTimeSetup(ctx context.Context) error {
+	conf := g.config.Config()
+	_, errRootUser := g.persons.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
 	if errRootUser == nil {
 		return nil
 	}
@@ -462,14 +464,14 @@ func (g GBans) firstTimeSetup(ctx context.Context, persons person.Persons, newsU
 		return errRootUser
 	}
 
-	newOwner := person.NewPerson(steamid.New(conf.Owner))
-	newOwner.PermissionLevel = permission.PAdmin
+	owner := person.NewPerson(steamid.New(conf.Owner))
+	owner.PermissionLevel = permission.PAdmin
 
-	if errSave := persons.SavePerson(ctx, nil, &newOwner); errSave != nil {
+	if errSave := g.persons.SavePerson(ctx, nil, &owner); errSave != nil {
 		slog.Error("Failed create new owner", log.ErrAttr(errSave))
 	}
 
-	newsEntry := news.Article{
+	article := news.Article{
 		Title:       "Welcome to gbans",
 		BodyMD:      "This is an *example* **news** entry.",
 		IsPublished: true,
@@ -477,7 +479,7 @@ func (g GBans) firstTimeSetup(ctx context.Context, persons person.Persons, newsU
 		UpdatedOn:   time.Now(),
 	}
 
-	if errSave := newsUC.Save(ctx, &newsEntry); errSave != nil {
+	if errSave := g.news.Save(ctx, &article); errSave != nil {
 		return errSave
 	}
 
@@ -489,7 +491,7 @@ func (g GBans) firstTimeSetup(ctx context.Context, persons person.Persons, newsU
 		UpdatedOn: time.Now(),
 	}
 
-	_, errSave := wikiUC.Save(ctx, newOwner, page.Slug, page.BodyMD, page.PermissionLevel)
+	_, errSave := g.wiki.Save(ctx, owner, page.Slug, page.BodyMD, page.PermissionLevel)
 	if errSave != nil {
 		slog.Error("Failed save example wiki entry", log.ErrAttr(errSave))
 	}
