@@ -25,7 +25,7 @@ var (
 type SlashCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
 type Discord struct {
-	session         *discordgo.Session
+	Session         *discordgo.Session
 	isReady         atomic.Bool
 	commandHandlers map[string]SlashCommandHandler
 	commands        []*discordgo.ApplicationCommand
@@ -55,7 +55,7 @@ func NewDiscord(appID string, guildID string, token string, externalURL string) 
 		appID:           appID,
 		guildID:         guildID,
 		externalURL:     externalURL,
-		session:         session,
+		Session:         session,
 	}
 
 	session.AddHandler(bot.onReady)
@@ -96,14 +96,14 @@ func (h *Discord) Start(ctx context.Context) error {
 	//
 
 	// Open a websocket connection to discord and begin listening.
-	if errSessionOpen := h.session.Open(); errSessionOpen != nil {
+	if errSessionOpen := h.Session.Open(); errSessionOpen != nil {
 		return errors.Join(errSessionOpen, ErrDiscordOpen)
 	}
 
 	return nil
 }
 
-func (bot *Discord) RegisterHandler(cmd string, handler SlashCommandHandler) error {
+func (bot *Discord) RegisterHandler(cmd string, handler SlashCommandHandler, appCommand *discordgo.ApplicationCommand) error {
 	_, found := bot.commandHandlers[cmd]
 	if found {
 		return ErrDuplicateCommand
@@ -115,8 +115,8 @@ func (bot *Discord) RegisterHandler(cmd string, handler SlashCommandHandler) err
 }
 
 func (bot *Discord) Shutdown() {
-	if bot.session != nil {
-		log.Closer(bot.session)
+	if bot.Session != nil {
+		log.Closer(bot.Session)
 	}
 }
 
@@ -146,7 +146,7 @@ func (bot *Discord) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
 		AFK:    false,
 		Status: "https://github.com/leighmacdonald/gbans",
 	}
-	if errUpdateStatus := bot.session.UpdateStatusComplex(status); errUpdateStatus != nil {
+	if errUpdateStatus := bot.Session.UpdateStatusComplex(status); errUpdateStatus != nil {
 		slog.Error("Failed to update status complex", log.ErrAttr(errUpdateStatus))
 	}
 
@@ -238,14 +238,14 @@ func (bot *Discord) SendPayload(channelID string, payload *discordgo.MessageEmbe
 		return
 	}
 
-	if _, errSend := bot.session.ChannelMessageSendEmbed(channelID, payload); errSend != nil {
+	if _, errSend := bot.Session.ChannelMessageSendEmbed(channelID, payload); errSend != nil {
 		slog.Error("Failed to send discord payload", log.ErrAttr(errSend))
 	}
 }
 
 //nolint:funlen,maintidx
 func (bot *Discord) botRegisterSlashCommands(appID string) error {
-	commands, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, bot.guildID, bot.commands)
+	commands, errBulk := bot.Session.ApplicationCommandBulkOverwrite(appID, bot.guildID, bot.commands)
 	if errBulk != nil {
 		return errors.Join(errBulk, ErrDiscordOverwriteCommands)
 	}

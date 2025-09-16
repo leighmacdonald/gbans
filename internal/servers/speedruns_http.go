@@ -17,7 +17,7 @@ type speedrunHandler struct {
 	config    *config.Configuration
 }
 
-func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, auth httphelper.Authenticator, config *config.Configuration, serversUC Servers, sentryDSN string) {
+func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, authenticator httphelper.Authenticator, config *config.Configuration, serversUC Servers, sentryDSN string) {
 	handler := speedrunHandler{
 		speedruns: speedruns,
 		config:    config,
@@ -25,7 +25,7 @@ func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, auth httphelpe
 
 	guestGroup := engine.Group("/")
 	{
-		guest := guestGroup.Use(auth.Middleware(permission.PGuest))
+		guest := guestGroup.Use(authenticator.Middleware(permission.PGuest))
 		// Groups
 		// guest.GET("/api/speedruns/overall", handler.getOverall())
 		guest.GET("/api/speedruns/map", handler.getByMap())

@@ -148,7 +148,7 @@ type ServerAuthReq struct {
 	Key string `json:"key"`
 }
 
-func MiddlewareServer(serversUC Servers, sentryDSN string) gin.HandlerFunc {
+func MiddlewareServer(servers Servers, sentryDSN string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reqAuthHeader := ctx.GetHeader("Authorization")
 		if reqAuthHeader == "" {
@@ -169,7 +169,7 @@ func MiddlewareServer(serversUC Servers, sentryDSN string) gin.HandlerFunc {
 		}
 
 		var server Server
-		if errServer := serversUC.GetByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
+		if errServer := servers.GetByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
 			slog.Error("Failed to load server during auth", log.ErrAttr(errServer), slog.String("token", reqAuthHeader), slog.String("IP", ctx.ClientIP()))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 

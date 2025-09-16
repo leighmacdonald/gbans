@@ -42,6 +42,7 @@ type Query struct {
 	Detection logparse.Detection `json:"detection" schema:"detection"`
 }
 
+// AntiCheat handles parsing and processing of stac anti-cheat logs.
 type AntiCheat struct {
 	parser  logparse.StacParser
 	repo    Repository
@@ -101,7 +102,7 @@ func (a AntiCheat) FetchStacLogs(ctx context.Context, stactPathFmt string, serve
 	return nil
 }
 
-func (a AntiCheat) DetectionsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]logparse.StacEntry, error) {
+func (a AntiCheat) BySteamID(ctx context.Context, steamID steamid.SteamID) ([]logparse.StacEntry, error) {
 	if !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}

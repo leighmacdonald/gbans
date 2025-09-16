@@ -19,7 +19,7 @@ type serversHandler struct {
 	state   *State
 }
 
-func NewServersHandler(engine *gin.Engine, servers Servers, state *State, authUC httphelper.Authenticator) {
+func NewServersHandler(engine *gin.Engine, servers Servers, state *State, authenticator httphelper.Authenticator) {
 	handler := &serversHandler{
 		servers: servers,
 		state:   state,
@@ -31,7 +31,7 @@ func NewServersHandler(engine *gin.Engine, servers Servers, state *State, authUC
 	// admin
 	srvGrp := engine.Group("/")
 	{
-		admin := srvGrp.Use(authUC.Middleware(permission.PAdmin))
+		admin := srvGrp.Use(authenticator.Middleware(permission.PAdmin))
 		admin.POST("/api/servers", handler.onAPIPostServer())
 		admin.POST("/api/servers/:server_id", handler.onAPIPostServerUpdate())
 		admin.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())

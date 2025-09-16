@@ -21,7 +21,7 @@ type forumHandler struct {
 	forums Forums
 }
 
-func NewForumHandler(engine *gin.Engine, forums Forums, authUC httphelper.Authenticator) {
+func NewForumHandler(engine *gin.Engine, forums Forums, authenticator httphelper.Authenticator) {
 	handler := &forumHandler{
 		forums: forums,
 	}
@@ -31,7 +31,7 @@ func NewForumHandler(engine *gin.Engine, forums Forums, authUC httphelper.Authen
 	// opt
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(authUC.Middleware(permission.PGuest))
+		opt := optGrp.Use(authenticator.Middleware(permission.PGuest))
 		opt.GET("/api/forum/overview", handler.onAPIForumOverview())
 		opt.GET("/api/forum/messages/recent", handler.onAPIForumMessagesRecent())
 		opt.POST("/api/forum/threads", handler.onAPIForumThreads())
@@ -43,7 +43,7 @@ func NewForumHandler(engine *gin.Engine, forums Forums, authUC httphelper.Authen
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authUC.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
 		authed.POST("/api/forum/forum/:forum_id/thread", handler.onAPIThreadCreate())
 		authed.POST("/api/forum/thread/:forum_thread_id/message", handler.onAPIThreadCreateReply())
 		authed.POST("/api/forum/message/:forum_message_id", handler.onAPIThreadMessageUpdate())
@@ -54,7 +54,7 @@ func NewForumHandler(engine *gin.Engine, forums Forums, authUC httphelper.Authen
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
 		mod.POST("/api/forum/category", handler.onAPICreateForumCategory())
 		mod.GET("/api/forum/category/:forum_category_id", handler.onAPIForumCategory())
 		mod.POST("/api/forum/category/:forum_category_id", handler.onAPIUpdateForumCategory())

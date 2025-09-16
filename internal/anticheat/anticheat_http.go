@@ -15,12 +15,12 @@ type antiCheatHandler struct {
 	anticheat AntiCheat
 }
 
-func NewAnticheatHandler(engine *gin.Engine, authUC httphelper.Authenticator, anticheat AntiCheat) {
+func NewAnticheatHandler(engine *gin.Engine, authenticator httphelper.Authenticator, anticheat AntiCheat) {
 	handler := &antiCheatHandler{anticheat: anticheat}
 	// mod
 	modGrp := engine.Group("/api/anticheat")
 	{
-		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
 		mod.GET("/entries", handler.query())
 		mod.GET("/steamid/:steam_id", handler.bySteamID())
 		mod.GET("/detection/:detection_type", handler.byDetection())
@@ -34,7 +34,7 @@ func (h antiCheatHandler) bySteamID() gin.HandlerFunc {
 			return
 		}
 
-		detections, errDetections := h.anticheat.DetectionsBySteamID(ctx, steamID)
+		detections, errDetections := h.anticheat.BySteamID(ctx, steamID)
 		if errDetections != nil && !errors.Is(errDetections, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDetections, httphelper.ErrInternal)))
 

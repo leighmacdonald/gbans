@@ -8,6 +8,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -40,19 +41,38 @@ var slashCommands = []*discordgo.ApplicationCommand{
 
 const CmdAC = "ac"
 
-func RegisterDiscord(config *config.Configuration, session *discordgo.Session) {
-	_ = DiscordHandler{
-		config: config,
-	}
+func RegisterDiscordCommands(bot *discord.Discord, anticheat AntiCheat, config *config.Configuration) {
+	handler := discordHandler{anticheat: anticheat, config: config}
+
+	bot.RegisterHandler("ac", handler.onAC, &discordgo.ApplicationCommand{
+		Name:                     "anticheat",
+		Description:              "Query Anticheat Logs",
+		DefaultMemberPermissions: &helper.ModPerms,
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "player",
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Description: "Query a players anticheat logs by steam id",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        helper.OptUserIdentifier,
+						Description: "SteamID in any format OR profile url",
+						Required:    true,
+					},
+				},
+			},
+		},
+	})
 }
 
-type DiscordHandler struct {
+type discordHandler struct {
 	anticheat AntiCheat
 	persons   domain.PersonProvider
 	config    *config.Configuration
 }
 
-func (h DiscordHandler) onAC(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h discordHandler) onAC(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	name := interaction.ApplicationCommandData().Options[0].Name
 	switch name {
 	case "player":
@@ -62,7 +82,7 @@ func (h DiscordHandler) onAC(ctx context.Context, session *discordgo.Session, in
 	}
 }
 
-func (h DiscordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
 	steamID, errResolveSID := steamid.Resolve(ctx, opts[helper.OptUserIdentifier].StringValue())

@@ -17,19 +17,19 @@ type NetworkHandler struct {
 	networks Networks
 }
 
-func NewNetworkHandler(engine *gin.Engine, networks Networks, authUC httphelper.Authenticator) {
+func NewNetworkHandler(engine *gin.Engine, networks Networks, authenticator httphelper.Authenticator) {
 	handler := NetworkHandler{networks: networks}
 
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
 		mod.POST("/api/connections", handler.onAPIQueryConnections())
 		mod.POST("/api/network", handler.onAPIQueryNetwork())
 	}
 
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(authUC.Middleware(permission.PAdmin))
+		admin := adminGrp.Use(authenticator.Middleware(permission.PAdmin))
 		admin.GET("/api/network/update_db", handler.onAPIGetUpdateDB())
 	}
 }

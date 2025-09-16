@@ -12,6 +12,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -26,8 +27,10 @@ type PersonProvider interface {
 	GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.PersonCore, error)
 }
 
-var slashCommands = []*discordgo.ApplicationCommand{
-	{
+func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonProvider, servers Servers, network network.Networks, config config.Config) {
+	handler := discordHandler{state: state, persons: persons, servers: servers, network: network, config: config}
+
+	bot.RegisterHandler("find", handler.onFind, &discordgo.ApplicationCommand{
 		Name:                     "find",
 		DMPermission:             &helper.DmPerms,
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -40,8 +43,9 @@ var slashCommands = []*discordgo.ApplicationCommand{
 				Required:    true,
 			},
 		},
-	},
-	{
+	})
+
+	bot.RegisterHandler("players", handler.onPlayers, &discordgo.ApplicationCommand{
 		Name:                     "players",
 		DMPermission:             &helper.DmPerms,
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -54,8 +58,9 @@ var slashCommands = []*discordgo.ApplicationCommand{
 				Required:    true,
 			},
 		},
-	},
-	{
+	})
+
+	bot.RegisterHandler("kick", handler.onKick, &discordgo.ApplicationCommand{
 		Name:                     "kick",
 		DMPermission:             &helper.DmPerms,
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -74,9 +79,9 @@ var slashCommands = []*discordgo.ApplicationCommand{
 				Required:    true,
 			},
 		},
-	},
+	})
 
-	{
+	bot.RegisterHandler("psay", handler.onPSay, &discordgo.ApplicationCommand{
 		Name:                     "psay",
 		Description:              "Privately message a player",
 		DMPermission:             &helper.DmPerms,
@@ -95,8 +100,9 @@ var slashCommands = []*discordgo.ApplicationCommand{
 				Required:    true,
 			},
 		},
-	},
-	{
+	})
+
+	bot.RegisterHandler("csay", handler.onCSay, &discordgo.ApplicationCommand{
 		Name:                     "csay",
 		Description:              "Send a centered message to the whole server",
 		DMPermission:             &helper.DmPerms,
@@ -115,8 +121,9 @@ var slashCommands = []*discordgo.ApplicationCommand{
 				Required:    true,
 			},
 		},
-	},
-	{
+	})
+
+	bot.RegisterHandler("say", handler.onSay, &discordgo.ApplicationCommand{
 		Name:                     "say",
 		Description:              "Send a console message to the whole server",
 		DMPermission:             &helper.DmPerms,
@@ -135,8 +142,9 @@ var slashCommands = []*discordgo.ApplicationCommand{
 				Required:    true,
 			},
 		},
-	},
-	{
+	})
+
+	bot.RegisterHandler("servers", handler.onServers, &discordgo.ApplicationCommand{
 		Name:                     "servers",
 		Description:              "Show the high level status of all servers",
 		DefaultMemberPermissions: &helper.UserPerms,
@@ -147,10 +155,10 @@ var slashCommands = []*discordgo.ApplicationCommand{
 				Description: "Return the full status output including server versions and tags",
 			},
 		},
-	},
+	})
 }
 
-type DiscordHandler struct {
+type discordHandler struct {
 	state   State
 	persons PersonProvider
 	servers Servers
@@ -158,13 +166,13 @@ type DiscordHandler struct {
 	config  config.Config
 }
 
-func NewDiscordHandler(state State) *DiscordHandler {
-	return &DiscordHandler{
+func NewDiscordHandler(state State) *discordHandler {
+	return &discordHandler{
 		state: state,
 	}
 }
 
-func (d DiscordHandler) onFind(ctx context.Context, sessiin *discordgo.Session, interation *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d discordHandler) onFind(ctx context.Context, sessiin *discordgo.Session, interation *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interation.ApplicationCommandData().Options)
 	userIdentifier := opts[helper.OptUserIdentifier].StringValue()
 
@@ -201,7 +209,7 @@ func (d DiscordHandler) onFind(ctx context.Context, sessiin *discordgo.Session, 
 	return FindMessage(found), nil
 }
 
-func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d discordHandler) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	var (
 		opts   = helper.OptionMap(interaction.ApplicationCommandData().Options)
 		reason = banDomain.Reason(opts[helper.OptBanReason].IntValue())
@@ -231,7 +239,7 @@ func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, intera
 	return KickMessage(players), err
 }
 
-func (d DiscordHandler) onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d discordHandler) onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[helper.OptServerIdentifier].StringValue()
 	msg := opts[helper.OptMessage].StringValue()
@@ -248,7 +256,7 @@ func (d DiscordHandler) onSay(ctx context.Context, _ *discordgo.Session, interac
 	return SayMessage(serverName, msg), nil
 }
 
-func (d DiscordHandler) onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d discordHandler) onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[helper.OptServerIdentifier].StringValue()
 	msg := opts[helper.OptMessage].StringValue()
@@ -265,7 +273,7 @@ func (d DiscordHandler) onCSay(ctx context.Context, _ *discordgo.Session, intera
 	return CSayMessage(server.Name, msg), nil
 }
 
-func (d DiscordHandler) onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d discordHandler) onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
 	msg := opts[helper.OptMessage].StringValue()
 
@@ -281,11 +289,11 @@ func (d DiscordHandler) onPSay(ctx context.Context, _ *discordgo.Session, intera
 	return PSayMessage(playerSid, msg), nil
 }
 
-func (d DiscordHandler) makeOnServers(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d discordHandler) onServers(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return ServersMessage(d.state.SortRegion(), d.config.ExtURLRaw("/servers")), nil
 }
 
-func (d DiscordHandler) makeOnPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d discordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[helper.OptServerIdentifier].StringValue()
 	serverStates := d.state.ByName(serverName, false)

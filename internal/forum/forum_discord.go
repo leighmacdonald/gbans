@@ -8,6 +8,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
+type discordHandler struct{}
+
 func ForumCategorySave(category Category) *discordgo.MessageEmbed {
 	embed := message.NewEmbed("Forum Category Saved")
 	embed.Embed().AddField("Category", category.Title)

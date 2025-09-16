@@ -62,7 +62,7 @@ var (
 	authUC         *auth.Authentication
 	networkUC      network.Networks
 	bansUC         ban.Bans
-	assetUC        asset.Assets
+	assets         asset.Assets
 	chatUC         *chat.Chat
 	demoRepository servers.DemoRepository
 	demoUC         servers.Demos
@@ -144,7 +144,7 @@ func TestMain(m *testing.M) {
 	}
 	discordUC = disc
 
-	assetUC = asset.NewAssets(asset.NewLocalRepository(databaseConn, configUC.Config().LocalStore.PathRoot))
+	assets = asset.NewAssets(asset.NewLocalRepository(databaseConn, configUC.Config().LocalStore.PathRoot))
 	newsUC = news.NewNews(news.NewNewsRepository(databaseConn))
 	serversUC = servers.NewServers(servers.NewServersRepository(databaseConn))
 	wikiUC = wiki.NewWiki(wiki.NewRepository(databaseConn))
@@ -158,7 +158,7 @@ func TestMain(m *testing.M) {
 
 	networkUC = network.NewNetworks(eventBroadcaster, network.NewRepository(databaseConn, personUC), configUC)
 	demoRepository = servers.NewDemoRepository(databaseConn)
-	demoUC = servers.NewDemos("demos", demoRepository, assetUC, configUC)
+	demoUC = servers.NewDemos("demos", demoRepository, assets, configUC)
 	reportUC = ban.NewReports(ban.NewReportRepository(databaseConn), configUC, personUC, demoUC, tfapiClient)
 	bansUC = ban.NewBans(ban.NewBanRepository(databaseConn, personUC, networkUC), personUC, configUC, reportUC, stateUC, tfapiClient)
 	authUC = auth.NewAuthentication(authRepo, configUC, personUC, bansUC, serversUC, cmd.SentryDSN)
@@ -254,7 +254,7 @@ func testRouter() *gin.Engine {
 	ban.NewAppealHandler(router, appealUC, authUC)
 	chat.NewChatHandler(router, chatUC, authUC)
 	person.NewPersonHandler(router, configUC, personUC, authUC)
-	servers.NewSRCDSHandler(router, srcdsUC, serversUC, personUC, assetUC, bansUC, networkUC, authUC, configUC, stateUC, blocklistUC, cmd.SentryDSN)
+	servers.NewSRCDSHandler(router, srcdsUC, serversUC, personUC, assets, bansUC, networkUC, authUC, configUC, stateUC, blocklistUC, cmd.SentryDSN)
 	network.NewBlocklistHandler(router, blocklistUC, networkUC, authUC)
 	servers.NewSpeedrunsHandler(router, speedrunsUC, authUC, configUC, serversUC, cmd.SentryDSN)
 

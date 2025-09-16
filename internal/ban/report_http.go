@@ -17,7 +17,7 @@ type reportHandler struct {
 	reports Reports
 }
 
-func NewReportHandler(engine *gin.Engine, reports Reports, authUC httphelper.Authenticator) {
+func NewReportHandler(engine *gin.Engine, reports Reports, authenticator httphelper.Authenticator) {
 	handler := reportHandler{
 		reports: reports,
 	}
@@ -25,7 +25,7 @@ func NewReportHandler(engine *gin.Engine, reports Reports, authUC httphelper.Aut
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authUC.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
 
 		// Reports
 		authed.POST("/api/report", handler.onAPIPostReportCreate())
@@ -42,7 +42,7 @@ func NewReportHandler(engine *gin.Engine, reports Reports, authUC httphelper.Aut
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUC.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
 		mod.POST("/api/reports", handler.onAPIGetAllReports())
 	}
 }
