@@ -214,6 +214,12 @@ func recoveryHandler() gin.HandlerFunc {
 }
 
 func CreateRouter(conf config.Config, version BuildInfo) (*gin.Engine, error) {
+	if conf.General.Mode == config.ReleaseMode {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
+	}
+
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
 	engine.Use(recoveryHandler())

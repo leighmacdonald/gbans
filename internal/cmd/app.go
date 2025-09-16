@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
@@ -197,13 +196,6 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.states = servers.NewState(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(g.servers)), g.config, g.servers)
 	g.bans = ban.NewBans(ban.NewBanRepository(dbConn, g.persons, g.networks), g.persons, g.config, g.reports, g.states, tfapiClient)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(dbConn), g.bans) // TODO Does THE & work here?
-
-	go func() {
-		if err := g.states.Start(ctx); err != nil {
-			slog.Error("Failed to start state tracker", log.ErrAttr(err))
-		}
-	}()
-
 	g.discordOAuth = discordoauth.NewDiscordOAuth(discordoauth.NewRepository(dbConn), g.config)
 	g.appeals = ban.NewAppeals(ban.NewAppealRepository(dbConn), g.bans, g.persons, g.config)
 	g.chatRepo = chat.NewChatRepository(dbConn, g.persons, wordFilters, eventBroadcaster)
@@ -219,16 +211,14 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.votes = votes.NewVotes(votes.NewRepository(dbConn), eventBroadcaster)
 	g.contests = contest.NewContests(contest.NewRepository(dbConn))
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(dbConn, g.persons))
+	g.memberships = ban.NewMemberships(ban.NewBanRepository(dbConn, g.persons, g.networks), tfapiClient)
+	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications, g.config)
+	g.downloader = scp.NewDownloader(g.config, dbConn)
 
 	if err := g.firstTimeSetup(ctx); err != nil {
 		slog.Error("Failed to run first time setup", log.ErrAttr(err))
 
 		return err
-	}
-	if conf.General.Mode == config.ReleaseMode {
-		gin.SetMode(gin.ReleaseMode)
-	} else {
-		gin.SetMode(gin.DebugMode)
 	}
 
 	// If we are using Valve SDR network, optionally enable the dynamic DNS update support to automatically
@@ -239,14 +229,6 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	// Config
 	g.setupPlayerQueue(ctx)
-
-	if conf.Debug.AddRCONLogAddress != "" {
-		go g.states.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
-	}
-
-	g.memberships = ban.NewMemberships(ban.NewBanRepository(dbConn, g.persons, g.networks), tfapiClient)
-	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications, g.config)
-	g.downloader = scp.NewDownloader(g.config, dbConn)
 
 	return nil
 }
@@ -293,6 +275,12 @@ func (g *GBans) setupSentry() {
 }
 
 func (g *GBans) StartBackground(ctx context.Context) {
+	conf := g.config.Config()
+
+	if conf.Debug.AddRCONLogAddress != "" {
+		go g.states.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+	}
+
 	go g.chatRepo.Start(ctx)
 	go g.chat.Start(ctx)
 	go g.forums.Start(ctx)
@@ -302,6 +290,12 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	// TODO register handlers
 	go g.downloader.Start(ctx)
 	go g.networks.Start(ctx)
+
+	go func() {
+		if err := g.states.Start(ctx); err != nil {
+			slog.Error("Failed to start state tracker", log.ErrAttr(err))
+		}
+	}()
 
 	go func() {
 		if errSync := g.anticheat.SyncDemoIDs(ctx, 100); errSync != nil {
@@ -356,15 +350,6 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		slog.Error("Could not setup router", log.ErrAttr(err))
 
 		return err
-	}
-
-	// Start discord bot service
-	if conf.Discord.Enabled {
-		discordHandler, errDiscord := discord.NewDiscord(conf.Discord.AppID, conf.Discord.GuildID, conf.Discord.Token, conf.ExternalURL)
-		if errDiscord != nil {
-			return errDiscord
-		}
-		discordHandler.Start(ctx)
 	}
 
 	// Register all our handlers with router
