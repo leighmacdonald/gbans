@@ -142,7 +142,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 
 		hdrToken, errToken := u.TokenFromHeader(ctx, level == permission.PGuest)
 		if errToken != nil || hdrToken == "" {
-			ctx.Set(ctxKeyUserProfile, person.UserProfile{PermissionLevel: permission.PGuest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.PGuest, Name: "Guest"})
 		} else {
 			token = hdrToken
 
@@ -201,18 +201,14 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					}
 				}
 
-				profile := person.UserProfile{
-					SteamID:               loggedInPerson.SteamID,
-					CreatedOn:             loggedInPerson.CreatedOn,
-					UpdatedOn:             loggedInPerson.UpdatedOn,
-					PermissionLevel:       loggedInPerson.PermissionLevel,
-					DiscordID:             loggedInPerson.DiscordID,
-					PatreonID:             loggedInPerson.PatreonID,
-					Name:                  loggedInPerson.PersonaName,
-					Avatarhash:            loggedInPerson.AvatarHash,
-					Muted:                 loggedInPerson.Muted,
-					BanID:                 bannedPerson.BanID,
-					PlayerqueueChatStatus: loggedInPerson.PlayerqueueChatStatus,
+				profile := domain.PersonCore{
+					SteamID:         loggedInPerson.SteamID,
+					PermissionLevel: loggedInPerson.PermissionLevel,
+					DiscordID:       loggedInPerson.DiscordID,
+					PatreonID:       loggedInPerson.PatreonID,
+					Name:            loggedInPerson.PersonaName,
+					Avatarhash:      loggedInPerson.AvatarHash,
+					BanID:           bannedPerson.BanID,
 				}
 
 				ctx.Set(ctxKeyUserProfile, profile)
@@ -229,7 +225,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					}
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, person.UserProfile{PermissionLevel: permission.PGuest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.PGuest, Name: "Guest"})
 			}
 		}
 
@@ -256,7 +252,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 
 		queryToken, errToken := u.TokenFromQuery(ctx)
 		if errToken != nil || queryToken == "" {
-			ctx.Set(ctxKeyUserProfile, person.UserProfile{PermissionLevel: permission.PGuest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.PGuest, Name: "Guest"})
 		} else {
 			token = queryToken
 
@@ -299,16 +295,13 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 					}
 				}
 
-				profile := person.UserProfile{
+				profile := domain.PersonCore{
 					SteamID:         loggedInPerson.SteamID,
-					CreatedOn:       loggedInPerson.CreatedOn,
-					UpdatedOn:       loggedInPerson.UpdatedOn,
 					PermissionLevel: loggedInPerson.PermissionLevel,
 					DiscordID:       loggedInPerson.DiscordID,
 					PatreonID:       loggedInPerson.PatreonID,
 					Name:            loggedInPerson.PersonaName,
 					Avatarhash:      loggedInPerson.AvatarHash,
-					Muted:           loggedInPerson.Muted,
 					BanID:           bannedPerson.BanID,
 				}
 
@@ -326,7 +319,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 					}
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, person.UserProfile{PermissionLevel: permission.PGuest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.PGuest, Name: "Guest"})
 			}
 		}
 

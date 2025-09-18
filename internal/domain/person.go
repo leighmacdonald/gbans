@@ -64,6 +64,9 @@ type PersonCore struct {
 	PermissionLevel permission.Privilege `json:"permission_level"`
 	Name            string               `json:"name"`
 	Avatarhash      string               `json:"avatarhash"`
+	DiscordID       string               `json:"discord_id"`
+	PatreonID       string               `json:"patreon_id"`
+	BanID           int64                `json:"ban_id"`
 }
 
 func (p PersonCore) Permissions() permission.Privilege {

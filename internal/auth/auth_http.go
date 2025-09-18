@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
@@ -156,7 +157,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			int(AuthTokenDuration.Seconds()),
 			"/api",
 			parsedExternal.Hostname(),
-			conf.General.Mode == config.ReleaseMode,
+			strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),
 			true)
 
 		ctx.Redirect(302, parsedURL.String())
