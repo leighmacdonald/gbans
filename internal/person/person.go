@@ -39,21 +39,6 @@ type RequestPermissionLevelUpdate struct {
 	PermissionLevel permission.Privilege `json:"permission_level"`
 }
 
-// UserProfile is the model used in the webui representing the logged-in user.
-type UserProfile struct {
-	SteamID               steamid.SteamID        `json:"steam_id"`
-	CreatedOn             time.Time              `json:"created_on"`
-	UpdatedOn             time.Time              `json:"updated_on"`
-	PermissionLevel       permission.Privilege   `json:"permission_level"`
-	DiscordID             string                 `json:"discord_id"`
-	PatreonID             string                 `json:"patreon_id"`
-	Name                  string                 `json:"name"`
-	Avatarhash            string                 `json:"avatarhash"`
-	BanID                 int64                  `json:"ban_id"`
-	Muted                 bool                   `json:"muted"`
-	PlayerqueueChatStatus playerqueue.ChatStatus `json:"playerqueue_chat_status"`
-}
-
 // EconBanState  holds the users current economy ban status.
 type EconBanState string
 

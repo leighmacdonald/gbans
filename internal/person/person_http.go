@@ -129,12 +129,12 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 		}
 
 		// TODO custom profile query
-		ctx.JSON(http.StatusOK, UserProfile{
+		ctx.JSON(http.StatusOK, domain.PersonCore{
 			SteamID:         user.GetSteamID(),
 			Name:            user.GetName(),
 			Avatarhash:      user.GetAvatar().Hash(),
 			PermissionLevel: user.Permissions(),
-
+			DiscordID:       user.DiscordID,
 			//	DiscordID:       user.DiscordID,
 		})
 	}

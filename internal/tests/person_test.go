@@ -24,7 +24,7 @@ func TestPerson(t *testing.T) {
 	require.Equal(t, source.SteamID, prof.Player.SteamID)
 	require.NotEmpty(t, prof.Player.AvatarHash)
 
-	var profile person.UserProfile
+	var profile domain.PersonCore
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/current_profile", nil, http.StatusOK, &authTokens{user: sourceAuth}, &profile)
 	require.Equal(t, source.SteamID, profile.SteamID)
 

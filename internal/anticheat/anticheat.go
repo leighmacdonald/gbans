@@ -168,7 +168,7 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 
 		newBan, err := a.ban.Create(ctx, ban.BanOpts{
 			Origin:         banDomain.System,
-			SourceID:       owner.SteamID,
+			SourceID:       owner.GetSteamID(),
 			TargetID:       entry.SteamID,
 			Duration:       duration,
 			BanType:        banDomain.Banned,
