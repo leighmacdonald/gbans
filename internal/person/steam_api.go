@@ -30,11 +30,7 @@ func FetchPlayerBans(ctx context.Context, tfAPI *thirdparty.TFAPI, steamIDs []st
 	)
 
 	for index := 0; index < len(steamIDs); index += chunkSize {
-		waitGroup.Add(1)
-
-		func() {
-			defer waitGroup.Done()
-
+		waitGroup.Go(func() {
 			var (
 				total      = uint64(len(steamIDs) - index) //nolint:gosec
 				maxResults = min(steamQueryMaxResults, total)
@@ -53,7 +49,7 @@ func FetchPlayerBans(ctx context.Context, tfAPI *thirdparty.TFAPI, steamIDs []st
 			resultsMu.Lock()
 			results = append(results, *bans.JSON200...)
 			resultsMu.Unlock()
-		}()
+		})
 	}
 
 	if hasErr > 0 {
