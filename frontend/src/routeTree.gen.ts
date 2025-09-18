@@ -42,6 +42,7 @@ import { Route as ModAdminPeopleRouteImport } from './routes/_mod.admin.people'
 import { Route as ModAdminNewsRouteImport } from './routes/_mod.admin.news'
 import { Route as ModAdminFiltersRouteImport } from './routes/_mod.admin.filters'
 import { Route as ModAdminContestsRouteImport } from './routes/_mod.admin.contests'
+import { Route as ModAdminBansRouteImport } from './routes/_mod.admin.bans'
 import { Route as ModAdminAppealsRouteImport } from './routes/_mod.admin.appeals'
 import { Route as ModAdminAnticheatRouteImport } from './routes/_mod.admin.anticheat'
 import { Route as GuestWikiSlugRouteImport } from './routes/_guest.wiki.$slug'
@@ -60,7 +61,6 @@ import { Route as ModAdminNetworkPlayersbyipRouteImport } from './routes/_mod.ad
 import { Route as ModAdminNetworkIphistRouteImport } from './routes/_mod.admin.network.iphist'
 import { Route as ModAdminNetworkIpInfoRouteImport } from './routes/_mod.admin.network.ipInfo'
 import { Route as ModAdminNetworkCidrblocksRouteImport } from './routes/_mod.admin.network.cidrblocks'
-import { Route as ModAdminBanSteamRouteImport } from './routes/_mod.admin.ban.steam'
 import { Route as GuestSpeedrunsMapMapNameRouteImport } from './routes/_guest.speedruns.map.$mapName'
 import { Route as GuestSpeedrunsIdSpeedrunIdRouteImport } from './routes/_guest.speedruns.id.$speedrunId'
 import { Route as AuthStatsWeaponWeapon_idRouteImport } from './routes/_auth.stats.weapon.$weapon_id'
@@ -228,6 +228,11 @@ const ModAdminContestsRoute = ModAdminContestsRouteImport.update({
   path: '/admin/contests',
   getParentRoute: () => ModRoute,
 } as any)
+const ModAdminBansRoute = ModAdminBansRouteImport.update({
+  id: '/admin/bans',
+  path: '/admin/bans',
+  getParentRoute: () => ModRoute,
+} as any)
 const ModAdminAppealsRoute = ModAdminAppealsRouteImport.update({
   id: '/admin/appeals',
   path: '/admin/appeals',
@@ -320,11 +325,6 @@ const ModAdminNetworkCidrblocksRoute =
     path: '/admin/network/cidrblocks',
     getParentRoute: () => ModRoute,
   } as any)
-const ModAdminBanSteamRoute = ModAdminBanSteamRouteImport.update({
-  id: '/admin/ban/steam',
-  path: '/admin/ban/steam',
-  getParentRoute: () => ModRoute,
-} as any)
 const GuestSpeedrunsMapMapNameRoute =
   GuestSpeedrunsMapMapNameRouteImport.update({
     id: '/speedruns/map/$mapName',
@@ -386,6 +386,7 @@ export interface FileRoutesByFullPath {
   '/wiki/$slug': typeof GuestWikiSlugRoute
   '/admin/anticheat': typeof ModAdminAnticheatRoute
   '/admin/appeals': typeof ModAdminAppealsRoute
+  '/admin/bans': typeof ModAdminBansRoute
   '/admin/contests': typeof ModAdminContestsRoute
   '/admin/filters': typeof ModAdminFiltersRoute
   '/admin/news': typeof ModAdminNewsRoute
@@ -403,7 +404,6 @@ export interface FileRoutesByFullPath {
   '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeapon_idRoute
   '/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
   '/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
-  '/admin/ban/steam': typeof ModAdminBanSteamRoute
   '/admin/network/cidrblocks': typeof ModAdminNetworkCidrblocksRoute
   '/admin/network/ipInfo': typeof ModAdminNetworkIpInfoRoute
   '/admin/network/iphist': typeof ModAdminNetworkIphistRoute
@@ -437,6 +437,7 @@ export interface FileRoutesByTo {
   '/wiki/$slug': typeof GuestWikiSlugRoute
   '/admin/anticheat': typeof ModAdminAnticheatRoute
   '/admin/appeals': typeof ModAdminAppealsRoute
+  '/admin/bans': typeof ModAdminBansRoute
   '/admin/contests': typeof ModAdminContestsRoute
   '/admin/filters': typeof ModAdminFiltersRoute
   '/admin/news': typeof ModAdminNewsRoute
@@ -454,7 +455,6 @@ export interface FileRoutesByTo {
   '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeapon_idRoute
   '/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
   '/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
-  '/admin/ban/steam': typeof ModAdminBanSteamRoute
   '/admin/network/cidrblocks': typeof ModAdminNetworkCidrblocksRoute
   '/admin/network/ipInfo': typeof ModAdminNetworkIpInfoRoute
   '/admin/network/iphist': typeof ModAdminNetworkIphistRoute
@@ -497,6 +497,7 @@ export interface FileRoutesById {
   '/_guest/wiki/$slug': typeof GuestWikiSlugRoute
   '/_mod/admin/anticheat': typeof ModAdminAnticheatRoute
   '/_mod/admin/appeals': typeof ModAdminAppealsRoute
+  '/_mod/admin/bans': typeof ModAdminBansRoute
   '/_mod/admin/contests': typeof ModAdminContestsRoute
   '/_mod/admin/filters': typeof ModAdminFiltersRoute
   '/_mod/admin/news': typeof ModAdminNewsRoute
@@ -514,7 +515,6 @@ export interface FileRoutesById {
   '/_auth/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeapon_idRoute
   '/_guest/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
   '/_guest/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
-  '/_mod/admin/ban/steam': typeof ModAdminBanSteamRoute
   '/_mod/admin/network/cidrblocks': typeof ModAdminNetworkCidrblocksRoute
   '/_mod/admin/network/ipInfo': typeof ModAdminNetworkIpInfoRoute
   '/_mod/admin/network/iphist': typeof ModAdminNetworkIphistRoute
@@ -554,6 +554,7 @@ export interface FileRouteTypes {
     | '/wiki/$slug'
     | '/admin/anticheat'
     | '/admin/appeals'
+    | '/admin/bans'
     | '/admin/contests'
     | '/admin/filters'
     | '/admin/news'
@@ -571,7 +572,6 @@ export interface FileRouteTypes {
     | '/stats/weapon/$weapon_id'
     | '/speedruns/id/$speedrunId'
     | '/speedruns/map/$mapName'
-    | '/admin/ban/steam'
     | '/admin/network/cidrblocks'
     | '/admin/network/ipInfo'
     | '/admin/network/iphist'
@@ -605,6 +605,7 @@ export interface FileRouteTypes {
     | '/wiki/$slug'
     | '/admin/anticheat'
     | '/admin/appeals'
+    | '/admin/bans'
     | '/admin/contests'
     | '/admin/filters'
     | '/admin/news'
@@ -622,7 +623,6 @@ export interface FileRouteTypes {
     | '/stats/weapon/$weapon_id'
     | '/speedruns/id/$speedrunId'
     | '/speedruns/map/$mapName'
-    | '/admin/ban/steam'
     | '/admin/network/cidrblocks'
     | '/admin/network/ipInfo'
     | '/admin/network/iphist'
@@ -664,6 +664,7 @@ export interface FileRouteTypes {
     | '/_guest/wiki/$slug'
     | '/_mod/admin/anticheat'
     | '/_mod/admin/appeals'
+    | '/_mod/admin/bans'
     | '/_mod/admin/contests'
     | '/_mod/admin/filters'
     | '/_mod/admin/news'
@@ -681,7 +682,6 @@ export interface FileRouteTypes {
     | '/_auth/stats/weapon/$weapon_id'
     | '/_guest/speedruns/id/$speedrunId'
     | '/_guest/speedruns/map/$mapName'
-    | '/_mod/admin/ban/steam'
     | '/_mod/admin/network/cidrblocks'
     | '/_mod/admin/network/ipInfo'
     | '/_mod/admin/network/iphist'
@@ -929,6 +929,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModAdminContestsRouteImport
       parentRoute: typeof ModRoute
     }
+    '/_mod/admin/bans': {
+      id: '/_mod/admin/bans'
+      path: '/admin/bans'
+      fullPath: '/admin/bans'
+      preLoaderRoute: typeof ModAdminBansRouteImport
+      parentRoute: typeof ModRoute
+    }
     '/_mod/admin/appeals': {
       id: '/_mod/admin/appeals'
       path: '/admin/appeals'
@@ -1053,13 +1060,6 @@ declare module '@tanstack/react-router' {
       path: '/admin/network/cidrblocks'
       fullPath: '/admin/network/cidrblocks'
       preLoaderRoute: typeof ModAdminNetworkCidrblocksRouteImport
-      parentRoute: typeof ModRoute
-    }
-    '/_mod/admin/ban/steam': {
-      id: '/_mod/admin/ban/steam'
-      path: '/admin/ban/steam'
-      fullPath: '/admin/ban/steam'
-      preLoaderRoute: typeof ModAdminBanSteamRouteImport
       parentRoute: typeof ModRoute
     }
     '/_guest/speedruns/map/$mapName': {
@@ -1245,13 +1245,13 @@ const GuestRouteWithChildren = GuestRoute._addFileChildren(GuestRouteChildren)
 interface ModRouteChildren {
   ModAdminAnticheatRoute: typeof ModAdminAnticheatRoute
   ModAdminAppealsRoute: typeof ModAdminAppealsRoute
+  ModAdminBansRoute: typeof ModAdminBansRoute
   ModAdminContestsRoute: typeof ModAdminContestsRoute
   ModAdminFiltersRoute: typeof ModAdminFiltersRoute
   ModAdminNewsRoute: typeof ModAdminNewsRoute
   ModAdminPeopleRoute: typeof ModAdminPeopleRoute
   ModAdminReportsRoute: typeof ModAdminReportsRoute
   ModAdminVotesRoute: typeof ModAdminVotesRoute
-  ModAdminBanSteamRoute: typeof ModAdminBanSteamRoute
   ModAdminNetworkCidrblocksRoute: typeof ModAdminNetworkCidrblocksRoute
   ModAdminNetworkIpInfoRoute: typeof ModAdminNetworkIpInfoRoute
   ModAdminNetworkIphistRoute: typeof ModAdminNetworkIphistRoute
@@ -1262,13 +1262,13 @@ interface ModRouteChildren {
 const ModRouteChildren: ModRouteChildren = {
   ModAdminAnticheatRoute: ModAdminAnticheatRoute,
   ModAdminAppealsRoute: ModAdminAppealsRoute,
+  ModAdminBansRoute: ModAdminBansRoute,
   ModAdminContestsRoute: ModAdminContestsRoute,
   ModAdminFiltersRoute: ModAdminFiltersRoute,
   ModAdminNewsRoute: ModAdminNewsRoute,
   ModAdminPeopleRoute: ModAdminPeopleRoute,
   ModAdminReportsRoute: ModAdminReportsRoute,
   ModAdminVotesRoute: ModAdminVotesRoute,
-  ModAdminBanSteamRoute: ModAdminBanSteamRoute,
   ModAdminNetworkCidrblocksRoute: ModAdminNetworkCidrblocksRoute,
   ModAdminNetworkIpInfoRoute: ModAdminNetworkIpInfoRoute,
   ModAdminNetworkIphistRoute: ModAdminNetworkIphistRoute,
