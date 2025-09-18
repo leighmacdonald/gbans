@@ -102,6 +102,8 @@ type GBans struct {
 	sentry         *sentry.Client
 	bot            *discord.Discord
 
+	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+
 	logCloser func()
 }
 
@@ -113,15 +115,13 @@ func NewGBans() (*GBans, error) {
 		return nil, errStatic
 	}
 
-	return &GBans{staticConfig: staticConfig}, nil
+	return &GBans{
+		staticConfig: staticConfig,
+		broadcaster:  fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent](),
+	}, nil
 }
 
 func (g *GBans) Init(ctx context.Context) error {
-	slog.Info("Starting gbans...",
-		slog.String("version", BuildVersion),
-		slog.String("commit", BuildCommit),
-		slog.String("date", BuildDate))
-
 	dbConn := database.New(g.staticConfig.DatabaseDSN, g.staticConfig.DatabaseAutoMigrate, g.staticConfig.DatabaseLogQueries)
 	if errConnect := dbConn.Connect(ctx); errConnect != nil {
 		slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
@@ -156,27 +156,33 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	g.logCloser = log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, SentryDSN != "", BuildVersion)
 
-	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
+	slog.Info("Starting gbans...",
+		slog.String("version", BuildVersion),
+		slog.String("commit", BuildCommit),
+		slog.String("date", BuildDate))
+
 	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-	g.notifications = notification.NewNotifications(notification.NewRepository(dbConn), g.bot)
+	g.notifications = notification.NewNotifications(notification.NewRepository(g.database), g.bot)
 
-	wordFilters := chat.NewWordFilter(chat.NewWordFilterRepository(dbConn))
+	wordFilters := chat.NewWordFilter(chat.NewWordFilterRepository(g.database))
 	if err := wordFilters.Import(ctx); err != nil {
 		slog.Error("Failed to load word filters", log.ErrAttr(err))
 
 		return err
 	}
+	g.wordFilters = wordFilters
 
 	tfapiClient, errClient := thirdparty.NewTFAPI("https://tf-api.roto.lol", &http.Client{Timeout: time.Second * 15})
 	if errClient != nil {
 		return errClient
 	}
+	g.tfapiClient = tfapiClient
 
-	g.persons = person.NewPersons(person.NewRepository(conf, dbConn), g.config, tfapiClient)
-	g.networks = network.NewNetworks(eventBroadcaster, network.NewRepository(dbConn, g.persons), g.config)
+	g.persons = person.NewPersons(person.NewRepository(conf, g.database), g.config, g.tfapiClient)
+	g.networks = network.NewNetworks(g.broadcaster, network.NewRepository(g.database, g.persons), g.config)
 
-	assetRepo := asset.NewLocalRepository(dbConn, conf.LocalStore.PathRoot)
+	assetRepo := asset.NewLocalRepository(g.database, conf.LocalStore.PathRoot)
 	if err := assetRepo.Init(ctx); err != nil {
 		slog.Error("Failed to init local asset repo", log.ErrAttr(err))
 
@@ -190,30 +196,30 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.bot = bot
 
 	g.assets = asset.NewAssets(assetRepo)
-	g.servers = servers.NewServers(servers.NewServersRepository(dbConn))
-	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(dbConn), g.assets, g.config)
-	g.reports = ban.NewReports(ban.NewReportRepository(dbConn), g.config, g.persons, g.demos, tfapiClient)
-	g.states = servers.NewState(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(g.servers)), g.config, g.servers)
-	g.bans = ban.NewBans(ban.NewBanRepository(dbConn, g.persons, g.networks), g.persons, g.config, g.reports, g.states, tfapiClient)
-	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(dbConn), g.bans) // TODO Does THE & work here?
-	g.discordOAuth = discordoauth.NewDiscordOAuth(discordoauth.NewRepository(dbConn), g.config)
-	g.appeals = ban.NewAppeals(ban.NewAppealRepository(dbConn), g.bans, g.persons, g.config)
-	g.chatRepo = chat.NewChatRepository(dbConn, g.persons, wordFilters, eventBroadcaster)
-	g.chat = chat.NewChat(g.config, g.chatRepo, wordFilters, g.states, g.bans, g.persons)
-	g.forums = forum.NewForums(forum.NewForumRepository(dbConn))
-	g.metrics = metrics.NewMetrics(eventBroadcaster)
-	g.news = news.NewNews(news.NewNewsRepository(dbConn))
-	g.patreon = patreon.NewPatreon(patreon.NewRepository(dbConn), g.config)
-	g.srcds = servers.NewSRCDS(servers.NewSRCDSRepository(dbConn), g.config, g.servers, g.persons, tfapiClient)
-	g.wiki = wiki.NewWiki(wiki.NewRepository(dbConn))
-	g.auth = auth.NewAuthentication(auth.NewRepository(dbConn), g.config, g.persons, g.bans, g.servers, SentryDSN)
-	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(dbConn), g.bans, g.config, g.persons)
-	g.votes = votes.NewVotes(votes.NewRepository(dbConn), eventBroadcaster)
-	g.contests = contest.NewContests(contest.NewRepository(dbConn))
-	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(dbConn, g.persons))
-	g.memberships = ban.NewMemberships(ban.NewBanRepository(dbConn, g.persons, g.networks), tfapiClient)
+	g.servers = servers.NewServers(servers.NewServersRepository(g.database))
+	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, g.config)
+	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.config, g.persons, g.demos, g.tfapiClient)
+	g.states = servers.NewState(g.broadcaster, servers.NewStateRepository(servers.NewCollector(g.servers)), g.config, g.servers)
+	g.bans = ban.NewBans(ban.NewBanRepository(g.database, g.persons, g.networks), g.persons, g.config, g.reports, g.states, g.tfapiClient)
+	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), g.bans) // TODO Does THE & work here?
+	g.discordOAuth = discordoauth.NewDiscordOAuth(discordoauth.NewRepository(g.database), g.config)
+	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.config)
+	g.chatRepo = chat.NewChatRepository(g.database, g.persons, g.wordFilters, g.broadcaster)
+	g.chat = chat.NewChat(g.config, g.chatRepo, g.wordFilters, g.states, g.bans, g.persons)
+	g.forums = forum.NewForums(forum.NewForumRepository(g.database))
+	g.metrics = metrics.NewMetrics(g.broadcaster)
+	g.news = news.NewNews(news.NewNewsRepository(g.database))
+	g.patreon = patreon.NewPatreon(patreon.NewRepository(g.database), g.config)
+	g.srcds = servers.NewSRCDS(servers.NewSRCDSRepository(g.database), g.config, g.servers, g.persons, g.tfapiClient)
+	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
+	g.auth = auth.NewAuthentication(auth.NewRepository(g.database), g.config, g.persons, g.bans, g.servers, SentryDSN)
+	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), g.bans, g.config, g.persons)
+	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster)
+	g.contests = contest.NewContests(contest.NewRepository(g.database))
+	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
+	g.memberships = ban.NewMemberships(ban.NewBanRepository(g.database, g.persons, g.networks), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications, g.config)
-	g.downloader = scp.NewDownloader(g.config, dbConn)
+	g.downloader = scp.NewDownloader(g.config, g.database)
 
 	if err := g.firstTimeSetup(ctx); err != nil {
 		slog.Error("Failed to run first time setup", log.ErrAttr(err))

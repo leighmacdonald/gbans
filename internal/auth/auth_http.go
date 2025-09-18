@@ -47,7 +47,7 @@ func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Con
 	}
 }
 
-func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
+func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 	var (
 		handlerName    = log.HandlerName(1)
 		nonceStore     = openid.NewSimpleNonceStore()
@@ -174,7 +174,7 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 	}
 }
 
-func (h authHandler) onAPILogout() gin.HandlerFunc {
+func (h *authHandler) onAPILogout() gin.HandlerFunc {
 	conf := h.config.Config()
 
 	return func(ctx *gin.Context) {
