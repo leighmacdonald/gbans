@@ -87,7 +87,7 @@ type GBans struct {
 	news           news.News
 	notifications  notification.Notifications
 	patreon        patreon.Patreon
-	persons        person.Persons
+	persons        *person.Persons
 	playerQueue    *playerqueue.Playerqueue
 	reports        ban.Reports
 	servers        servers.Servers

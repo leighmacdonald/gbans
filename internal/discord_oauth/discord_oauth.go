@@ -36,13 +36,13 @@ type DiscordUserDetail struct {
 	ID               string          `json:"id"`
 	Username         string          `json:"username"`
 	Avatar           string          `json:"avatar"`
-	AvatarDecoration interface{}     `json:"avatar_decoration"`
+	AvatarDecoration any             `json:"avatar_decoration"`
 	Discriminator    string          `json:"discriminator"`
 	PublicFlags      int             `json:"public_flags"`
 	Flags            int             `json:"flags"`
-	Banner           interface{}     `json:"banner"`
-	BannerColor      interface{}     `json:"banner_color"`
-	AccentColor      interface{}     `json:"accent_color"`
+	Banner           any             `json:"banner"`
+	BannerColor      any             `json:"banner_color"`
+	AccentColor      any             `json:"accent_color"`
 	Locale           string          `json:"locale"`
 	MfaEnabled       bool            `json:"mfa_enabled"`
 	PremiumType      int             `json:"premium_type"`

@@ -106,7 +106,7 @@ func (c *Repository) Init(ctx context.Context) error {
 			// Insert a value so that the database will populate a row of defaults.
 			if err := c.db.ExecInsertBuilder(ctx, nil, c.db.Builder().
 				Insert("config").
-				SetMap(map[string]interface{}{
+				SetMap(map[string]any{
 					"general_site_name": "New gbans site",
 				})); err != nil {
 				return err
@@ -124,7 +124,7 @@ func (c *Repository) Init(ctx context.Context) error {
 func (c *Repository) Write(ctx context.Context, config Config) error {
 	return database.DBErr(c.db.ExecUpdateBuilder(ctx, nil, c.db.Builder().
 		Update("config").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"general_site_name":                   config.General.SiteName,
 			"general_mode":                        config.General.Mode,
 			"general_file_serve_mode":             config.General.FileServeMode,

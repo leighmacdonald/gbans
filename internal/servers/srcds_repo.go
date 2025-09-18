@@ -130,7 +130,7 @@ func (r SRCDSRepository) AddGroupImmunity(ctx context.Context, group SMGroups, o
 	}
 	if err := r.database.ExecInsertBuilderWithReturnValue(ctx, nil, r.database.Builder().
 		Insert("sm_group_immunity").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"group_id":   immunity.Group.GroupID,
 			"other_id":   immunity.Other.GroupID,
 			"created_on": immunity.CreatedOn,
@@ -151,7 +151,7 @@ func (r SRCDSRepository) DelGroupImmunity(ctx context.Context, groupImmunity SMG
 func (r SRCDSRepository) AddGroupOverride(ctx context.Context, override SMGroupOverrides) (SMGroupOverrides, error) {
 	if err := r.database.ExecInsertBuilderWithReturnValue(ctx, nil, r.database.Builder().
 		Insert("sm_group_overrides").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"group_id":   override.GroupID,
 			"type":       override.Type,
 			"name":       override.Name,
@@ -196,7 +196,7 @@ func (r SRCDSRepository) SaveGroupOverride(ctx context.Context, override SMGroup
 
 	if err := r.database.ExecUpdateBuilder(ctx, nil, r.database.Builder().
 		Update("sm_group_overrides").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"group_id":   override.GroupID,
 			"type":       override.Type,
 			"name":       override.Name,
@@ -215,7 +215,7 @@ func (r SRCDSRepository) SaveOverride(ctx context.Context, override SMOverrides)
 
 	if err := r.database.ExecUpdateBuilder(ctx, nil, r.database.Builder().
 		Update("sm_overrides").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"type":       override.Type,
 			"name":       override.Name,
 			"flags":      override.Flags,
@@ -273,7 +273,7 @@ func (r SRCDSRepository) GetOverride(ctx context.Context, overrideID int) (SMOve
 
 func (r SRCDSRepository) AddOverride(ctx context.Context, overrides SMOverrides) (SMOverrides, error) {
 	if err := r.database.ExecInsertBuilder(ctx, nil, r.database.Builder().
-		Insert("sm_overrides").SetMap(map[string]interface{}{
+		Insert("sm_overrides").SetMap(map[string]any{
 		"type":       overrides.Type,
 		"name":       overrides.Name,
 		"flags":      overrides.Flags,
@@ -473,7 +473,7 @@ func (r SRCDSRepository) SaveAdmin(ctx context.Context, admin SMAdmin) (SMAdmin,
 
 	if err := r.database.ExecUpdateBuilder(ctx, nil, r.database.Builder().
 		Update("sm_admins").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"steam_id":   sid64,
 			"authtype":   admin.AuthType,
 			"identity":   admin.Identity,
@@ -556,7 +556,7 @@ func (r SRCDSRepository) InsertAdminGroup(ctx context.Context, admin SMAdmin, gr
 
 	return database.DBErr(r.database.ExecInsertBuilder(ctx, nil, r.database.Builder().
 		Insert("sm_admins_groups").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"admin_id":      admin.AdminID,
 			"group_id":      group.GroupID,
 			"inherit_order": inheritOrder,
@@ -587,7 +587,7 @@ func (r SRCDSRepository) SaveGroup(ctx context.Context, group SMGroups) (SMGroup
 	group.UpdatedOn = time.Now()
 	if err := r.database.ExecUpdateBuilder(ctx, nil, r.database.Builder().
 		Update("sm_groups").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"name":           group.Name,
 			"immunity_level": group.ImmunityLevel,
 			"flags":          group.Flags,
@@ -635,7 +635,7 @@ func (r SRCDSRepository) AddGroup(ctx context.Context, group SMGroups) (SMGroups
 	if err := r.database.ExecInsertBuilderWithReturnValue(ctx, nil, r.database.
 		Builder().
 		Insert("sm_groups").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"name":           group.Name,
 			"immunity_level": group.ImmunityLevel,
 			"flags":          group.Flags,
@@ -685,7 +685,7 @@ func (r SRCDSRepository) AddAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, 
 
 	if err := r.database.ExecInsertBuilderWithReturnValue(ctx, nil, r.database.Builder().
 		Insert("sm_admins").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"steam_id":   nullableSID64,
 			"authtype":   admin.AuthType,
 			"identity":   admin.Identity,

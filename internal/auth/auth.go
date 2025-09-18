@@ -79,13 +79,13 @@ const ctxKeyUserProfile = "user_profile"
 type Authentication struct {
 	auth      Repository
 	config    *config.Configuration
-	persons   person.Persons
+	persons   *person.Persons
 	bans      ban.Bans
 	servers   servers.Servers
 	sentryDSN string
 }
 
-func NewAuthentication(repository Repository, config *config.Configuration, persons person.Persons,
+func NewAuthentication(repository Repository, config *config.Configuration, persons *person.Persons,
 	bans ban.Bans, servers servers.Servers, sentryDSN string,
 ) *Authentication {
 	return &Authentication{

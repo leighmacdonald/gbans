@@ -215,7 +215,7 @@ func (l Repository) getAssetByHash(ctx context.Context, hash []byte) (Asset, err
 }
 
 func (l Repository) saveAssetToDB(ctx context.Context, asset Asset) error {
-	query := l.db.Builder().Insert("asset").SetMap(map[string]interface{}{
+	query := l.db.Builder().Insert("asset").SetMap(map[string]any{
 		"asset_id":   asset.AssetID,
 		"hash":       asset.Hash,
 		"author_id":  asset.AuthorID.Int64(),

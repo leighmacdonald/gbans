@@ -154,13 +154,13 @@ type ReportMeta struct {
 type Reports struct {
 	repository ReportRepository
 	config     *config.Configuration
-	persons    person.Persons
+	persons    *person.Persons
 	demos      servers.Demos
 	tfAPI      *thirdparty.TFAPI
 }
 
 func NewReports(repository ReportRepository,
-	config *config.Configuration, persons person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI,
+	config *config.Configuration, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI,
 ) Reports {
 	return Reports{
 		repository: repository,

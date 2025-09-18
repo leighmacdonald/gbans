@@ -46,12 +46,12 @@ type Query struct {
 type AntiCheat struct {
 	parser  logparse.StacParser
 	repo    Repository
-	persons person.Persons
+	persons *person.Persons
 	ban     ban.Bans
 	config  *config.Configuration
 }
 
-func NewAntiCheat(repo Repository, ban ban.Bans, config *config.Configuration, persons person.Persons) AntiCheat {
+func NewAntiCheat(repo Repository, ban ban.Bans, config *config.Configuration, persons *person.Persons) AntiCheat {
 	return AntiCheat{
 		parser:  logparse.NewStacParser(),
 		repo:    repo,
