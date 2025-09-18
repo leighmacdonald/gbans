@@ -16,16 +16,21 @@ const (
 )
 
 func DefaultTable(writer io.Writer) *tablewriter.Table {
-	tbl := tablewriter.NewWriter(writer)
-	tbl.SetAutoFormatHeaders(true)
-	tbl.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	tbl.SetCenterSeparator("")
-	tbl.SetColumnSeparator("")
-	tbl.SetRowSeparator("")
-	tbl.SetHeaderLine(false)
-	tbl.SetTablePadding("")
-	tbl.SetAutoMergeCells(true)
-	tbl.SetAlignment(tablewriter.ALIGN_LEFT)
+	tbl := tablewriter.NewTable(writer)
+	// tbl.Configure(func(cfg *tablewriter.Config) {
+	// 	cfg.Header.Formatting = tw.AlignLeft
+	// })
+	// tbl.W(tablewriter.WithHeaderAlignment(tw.AlignLeft))
+	// tbl.Config().Header.Formatting = tablewriter.
+	// 	tbl.SetAutoFormatHeaders(true)
+	// tbl.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	// tbl.SetCenterSeparator("")
+	// tbl.SetColumnSeparator("")
+	// tbl.SetRowSeparator("")
+	// tbl.SetHeaderLine(false)
+	// tbl.SetTablePadding("")
+	// tbl.SetAutoMergeCells(true)
+	// tbl.SetAlignment(tablewriter.ALIGN_LEFT)
 
 	return tbl
 }
