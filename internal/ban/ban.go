@@ -225,14 +225,14 @@ type Stats struct {
 
 type Bans struct {
 	banRepo BanRepository
-	persons person.Persons
+	persons *person.Persons
 	config  *config.Configuration
 	state   *servers.State
 	reports Reports
 	tfAPI   *thirdparty.TFAPI
 }
 
-func NewBans(repository BanRepository, person person.Persons,
+func NewBans(repository BanRepository, person *person.Persons,
 	config *config.Configuration, reports Reports, state *servers.State,
 	tfAPI *thirdparty.TFAPI,
 ) Bans {

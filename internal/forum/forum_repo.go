@@ -52,7 +52,7 @@ func (f *ForumRepository) ForumCategorySave(ctx context.Context, category *Categ
 		return database.DBErr(f.db.ExecUpdateBuilder(ctx, nil, f.db.
 			Builder().
 			Update("forum_category").
-			SetMap(map[string]interface{}{
+			SetMap(map[string]any{
 				"title":       category.Title,
 				"description": category.Description,
 				"ordering":    category.Ordering,
@@ -66,7 +66,7 @@ func (f *ForumRepository) ForumCategorySave(ctx context.Context, category *Categ
 	return database.DBErr(f.db.ExecInsertBuilderWithReturnValue(ctx, nil, f.db.
 		Builder().
 		Insert("forum_category").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"title":       category.Title,
 			"description": category.Description,
 			"ordering":    category.Ordering,
@@ -173,7 +173,7 @@ func (f *ForumRepository) ForumSave(ctx context.Context, forum *Forum) error {
 		return database.DBErr(f.db.ExecUpdateBuilder(ctx, nil, f.db.
 			Builder().
 			Update("forum").
-			SetMap(map[string]interface{}{
+			SetMap(map[string]any{
 				"forum_category_id": forum.ForumCategoryID,
 				"title":             forum.Title,
 				"description":       forum.Description,
@@ -192,7 +192,7 @@ func (f *ForumRepository) ForumSave(ctx context.Context, forum *Forum) error {
 	return database.DBErr(f.db.ExecInsertBuilderWithReturnValue(ctx, nil, f.db.
 		Builder().
 		Insert("forum").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"forum_category_id": forum.ForumCategoryID,
 			"title":             forum.Title,
 			"description":       forum.Description,
@@ -245,7 +245,7 @@ func (f *ForumRepository) ForumThreadSave(ctx context.Context, thread *Thread) e
 		return database.DBErr(f.db.ExecUpdateBuilder(ctx, nil, f.db.
 			Builder().
 			Update("forum_thread").
-			SetMap(map[string]interface{}{
+			SetMap(map[string]any{
 				"forum_id":   thread.ForumID,
 				"source_id":  thread.SourceID.Int64(),
 				"title":      thread.Title,
@@ -262,7 +262,7 @@ func (f *ForumRepository) ForumThreadSave(ctx context.Context, thread *Thread) e
 	if errInsert := f.db.ExecInsertBuilderWithReturnValue(ctx, nil, f.db.
 		Builder().
 		Insert("forum_thread").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"forum_id":   thread.ForumID,
 			"source_id":  thread.SourceID.Int64(),
 			"title":      thread.Title,
@@ -408,7 +408,7 @@ func (f *ForumRepository) ForumMessageSave(ctx context.Context, message *Message
 		return database.DBErr(f.db.ExecUpdateBuilder(ctx, nil, f.db.
 			Builder().
 			Update("forum_message").
-			SetMap(map[string]interface{}{
+			SetMap(map[string]any{
 				"forum_thread_id": message.ForumThreadID,
 				"source_id":       message.SourceID.Int64(),
 				"body_md":         message.BodyMD,
@@ -422,7 +422,7 @@ func (f *ForumRepository) ForumMessageSave(ctx context.Context, message *Message
 	if errInsert := f.db.ExecInsertBuilderWithReturnValue(ctx, nil, f.db.
 		Builder().
 		Insert("forum_message").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"forum_thread_id": message.ForumThreadID,
 			"source_id":       message.SourceID.Int64(),
 			"body_md":         message.BodyMD,
@@ -596,7 +596,7 @@ func (f *ForumRepository) ForumMessageVoteApply(ctx context.Context, messageVote
 	return database.DBErr(f.db.ExecInsertBuilderWithReturnValue(ctx, nil, f.db.
 		Builder().
 		Insert("forum_message_vote").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"forum_message_id": messageVote.ForumMessageID,
 			"source_id":        messageVote.SourceID.Int64(),
 			"vote":             messageVote.Vote,

@@ -47,7 +47,7 @@ func (b *BlocklistRepository) TruncateCachedEntries(ctx context.Context) error {
 func (b *BlocklistRepository) CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (WhitelistSteam, error) {
 	now := time.Now()
 
-	if err := b.db.ExecInsertBuilder(ctx, nil, b.db.Builder().Insert("person_whitelist").SetMap(map[string]interface{}{
+	if err := b.db.ExecInsertBuilder(ctx, nil, b.db.Builder().Insert("person_whitelist").SetMap(map[string]any{
 		"steam_id":   steamID.Int64(),
 		"created_on": now,
 		"updated_on": now,
@@ -170,7 +170,7 @@ func (b *BlocklistRepository) SaveCIDRBlockSources(ctx context.Context, block *C
 		return database.DBErr(b.db.ExecUpdateBuilder(ctx, nil, b.db.
 			Builder().
 			Update("cidr_block_source").
-			SetMap(map[string]interface{}{
+			SetMap(map[string]any{
 				"name":       block.Name,
 				"url":        block.URL,
 				"enabled":    block.Enabled,
@@ -184,7 +184,7 @@ func (b *BlocklistRepository) SaveCIDRBlockSources(ctx context.Context, block *C
 	return database.DBErr(b.db.ExecInsertBuilderWithReturnValue(ctx, nil, b.db.
 		Builder().
 		Insert("cidr_block_source").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"name":       block.Name,
 			"url":        block.URL,
 			"enabled":    block.Enabled,
@@ -256,7 +256,7 @@ func (b *BlocklistRepository) SaveCIDRBlockWhitelist(ctx context.Context, whitel
 		return database.DBErr(b.db.ExecUpdateBuilder(ctx, nil, b.db.
 			Builder().
 			Update("cidr_block_whitelist").
-			SetMap(map[string]interface{}{
+			SetMap(map[string]any{
 				"address":    whitelist.Address.String(),
 				"updated_on": whitelist.UpdatedOn,
 			})))
@@ -267,7 +267,7 @@ func (b *BlocklistRepository) SaveCIDRBlockWhitelist(ctx context.Context, whitel
 	return database.DBErr(b.db.ExecInsertBuilderWithReturnValue(ctx, nil, b.db.
 		Builder().
 		Insert("cidr_block_whitelist").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"address":    whitelist.Address.String(),
 			"created_on": whitelist.CreatedOn,
 			"updated_on": whitelist.UpdatedOn,

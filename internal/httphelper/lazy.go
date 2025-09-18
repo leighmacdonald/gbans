@@ -8,7 +8,7 @@ type LazyResult struct {
 func NewLazyResult(count int64, data any) LazyResult {
 	if count == 0 {
 		// Return an empty list instead of null
-		return LazyResult{0, []interface{}{}}
+		return LazyResult{0, []any{}}
 	}
 
 	return LazyResult{Count: count, Data: data}

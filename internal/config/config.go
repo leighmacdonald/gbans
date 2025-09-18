@@ -512,7 +512,7 @@ func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 
 // decodeDuration automatically parses the string duration type (1s,1m,1h,etc.) into a real time.Duration type.
 func decodeDuration() mapstructure.DecodeHookFuncType {
-	return func(f reflect.Type, target reflect.Type, data interface{}) (interface{}, error) {
+	return func(f reflect.Type, target reflect.Type, data any) (any, error) {
 		if f.Kind() != reflect.String {
 			return data, nil
 		}

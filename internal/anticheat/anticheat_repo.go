@@ -138,7 +138,7 @@ func (a Repository) SaveEntries(ctx context.Context, entries []logparse.StacEntr
 	for _, entry := range entries {
 		if err := a.db.ExecInsertBuilder(ctx, nil, a.db.Builder().
 			Insert("anticheat").
-			SetMap(map[string]interface{}{
+			SetMap(map[string]any{
 				"steam_id":   entry.SteamID.Int64(),
 				"name":       entry.Name,
 				"detection":  entry.Detection,

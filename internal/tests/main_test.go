@@ -57,7 +57,7 @@ var (
 	blocklistUC    network.Blocklists
 	configUC       *config.Configuration
 	wikiUC         wiki.Wiki
-	personUC       person.Persons
+	personUC       *person.Persons
 	authRepo       auth.Repository
 	authUC         *auth.Authentication
 	networkUC      network.Networks

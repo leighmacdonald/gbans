@@ -100,7 +100,7 @@ func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, e
 func (r Repository) AddResult(ctx context.Context, voteResult Result) error {
 	return database.DBErr(r.db.ExecInsertBuilder(ctx, nil, r.db.Builder().
 		Insert("vote_result").
-		SetMap(map[string]interface{}{
+		SetMap(map[string]any{
 			"server_id":  voteResult.ServerID,
 			"source_id":  voteResult.SourceID,
 			"target_id":  voteResult.TargetID,

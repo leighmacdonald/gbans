@@ -17,13 +17,13 @@ import (
 
 type discordOAuthHandler struct {
 	config  *config.Configuration
-	persons person.Persons
+	persons *person.Persons
 	discord DiscordOAuth
 }
 
 // NewDiscordOAuthHandler provides handlers for authentication with discord connect.
 func NewDiscordOAuthHandler(engine *gin.Engine, auth httphelper.Authenticator, config *config.Configuration,
-	persons person.Persons, discord DiscordOAuth,
+	persons *person.Persons, discord DiscordOAuth,
 ) {
 	handler := discordOAuthHandler{
 		config:  config,

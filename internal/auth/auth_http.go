@@ -22,12 +22,12 @@ import (
 type authHandler struct {
 	authentication *Authentication
 	config         *config.Configuration
-	persons        person.Persons
+	persons        *person.Persons
 	tfAPI          *thirdparty.TFAPI
 }
 
 func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Configuration,
-	person person.Persons, tfAPI *thirdparty.TFAPI,
+	person *person.Persons, tfAPI *thirdparty.TFAPI,
 ) {
 	handler := &authHandler{
 		authentication: auth,
