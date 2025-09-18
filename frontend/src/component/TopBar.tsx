@@ -2,7 +2,6 @@ import { JSX, MouseEvent, useCallback, useMemo, useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';
 import ArticleIcon from '@mui/icons-material/Article';
-import BlockIcon from '@mui/icons-material/Block';
 import CellTowerIcon from '@mui/icons-material/CellTower';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -10,7 +9,6 @@ import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import ForumIcon from '@mui/icons-material/Forum';
-import GroupsIcon from '@mui/icons-material/Groups';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import KeyboardIcon from '@mui/icons-material/Keyboard';
 import KeyboardHideIcon from '@mui/icons-material/KeyboardHide';
@@ -21,7 +19,6 @@ import MenuIcon from '@mui/icons-material/Menu';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import NoAccountsIcon from '@mui/icons-material/NoAccounts';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import PublicOffIcon from '@mui/icons-material/PublicOff';
 import ReportIcon from '@mui/icons-material/Report';
 import SensorOccupiedIcon from '@mui/icons-material/SensorOccupied';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -224,30 +221,9 @@ export const TopBar = () => {
                     callback: onClickHandler('/admin/filters')
                 },
                 {
-                    leftIcon: <BlockIcon sx={colourOpts} />,
-                    label: 'Ban',
-                    items: [
-                        {
-                            leftIcon: <NoAccountsIcon sx={colourOpts} />,
-                            label: 'Steam',
-                            callback: onClickHandler('/admin/ban/steam')
-                        },
-                        {
-                            leftIcon: <WifiOffIcon sx={colourOpts} />,
-                            label: 'IP/CIDR',
-                            callback: onClickHandler('/admin/ban/cidr')
-                        },
-                        {
-                            leftIcon: <GroupsIcon sx={colourOpts} />,
-                            label: 'Steam Group',
-                            callback: onClickHandler('/admin/ban/group')
-                        },
-                        {
-                            leftIcon: <PublicOffIcon sx={colourOpts} />,
-                            label: 'ASN',
-                            callback: onClickHandler('/admin/ban/asn')
-                        }
-                    ]
+                    leftIcon: <NoAccountsIcon sx={colourOpts} />,
+                    label: 'Bans',
+                    callback: onClickHandler('/admin/bans')
                 },
 
                 {

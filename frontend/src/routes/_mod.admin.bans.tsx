@@ -40,7 +40,7 @@ const searchSchema = commonTableSearchSchema.extend({
     deleted: z.boolean().optional()
 });
 
-export const Route = createFileRoute('/_mod/admin/ban/steam')({
+export const Route = createFileRoute('/_mod/admin/bans')({
     component: AdminBanSteam,
     validateSearch: (search) => searchSchema.parse(search)
 });
@@ -78,7 +78,7 @@ function AdminBanSteam() {
         onSubmit: async ({ value }) => {
             setColumnFilters(initColumnFilter(value));
             await navigate({
-                to: '/admin/ban/steam',
+                to: '/admin/bans',
                 search: (prev) => ({ ...prev, ...value })
             });
         },
@@ -94,7 +94,7 @@ function AdminBanSteam() {
         setColumnFilters([]);
         form.reset();
         await navigate({
-            to: '/admin/ban/steam',
+            to: '/admin/bans',
             search: (prev) => ({
                 ...prev,
                 source_id: undefined,
