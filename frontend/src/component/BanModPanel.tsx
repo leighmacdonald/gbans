@@ -22,7 +22,7 @@ import { ContainerWithHeader } from './ContainerWithHeader';
 import { ErrorDetails } from './ErrorDetails.tsx';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 import { Title } from './Title';
-import { ModalBanSteam, ModalUnbanSteam } from './modal';
+import { ModalBan, ModalUnban } from './modal';
 
 const onSubmit = z.object({
     appeal_state: AppealStateEnum
@@ -53,14 +53,14 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
     }, [ban?.valid_until]);
 
     const onUnban = useCallback(async () => {
-        await NiceModal.show(ModalUnbanSteam, {
+        await NiceModal.show(ModalUnban, {
             banId: ban_id,
             personaName: ban?.target_personaname
         });
     }, [ban_id, ban?.target_personaname]);
 
     const onEditBan = useCallback(async () => {
-        await NiceModal.show(ModalBanSteam, {
+        await NiceModal.show(ModalBan, {
             ban_id: ban_id
         });
     }, [ban_id, ban?.target_personaname]);

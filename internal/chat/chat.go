@@ -18,6 +18,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/sosodev/duration"
 )
 
 type ChatHistoryQueryFilter struct {
@@ -111,13 +112,17 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 	)
 
 	if newWarning.MatchedFilter.Action == FilterActionBan || newWarning.MatchedFilter.Action == FilterActionMute {
+		dur, errDur := duration.Parse(newWarning.MatchedFilter.Duration)
+		if errDur != nil {
+			return errDur
+		}
 		req = ban.BanOpts{
 			TargetID:   newWarning.UserMessage.SteamID,
 			Reason:     newWarning.WarnReason,
 			ReasonText: "",
 			Note:       "Automatic warning ban",
+			Duration:   dur,
 		}
-		req.SetDuration(newWarning.MatchedFilter.Duration, time.Now().AddDate(10, 0, 0))
 	}
 
 	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, nil, u.owner)

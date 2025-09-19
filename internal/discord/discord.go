@@ -135,9 +135,18 @@ func (bot *Discord) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
 		Activities: []*discordgo.Activity{
 			{
 				Name:     "Cheeseburgers",
-				Type:     discordgo.ActivityTypeListening,
+				Type:     discordgo.ActivityTypeCompeting,
 				URL:      bot.externalURL,
-				State:    "state field",
+				State:    "Nom Nom",
+				Details:  "Blah",
+				Instance: true,
+				Flags:    1 << 0,
+			},
+			{
+				Name:     "Hot Dogs",
+				Type:     discordgo.ActivityTypeCompeting,
+				URL:      bot.externalURL,
+				State:    "Chomp Chomp",
 				Details:  "Blah",
 				Instance: true,
 				Flags:    1 << 0,

@@ -59,7 +59,6 @@ import { PermissionLevel, UserNotification } from '../schema/people.ts';
 import { tf2Fonts } from '../theme';
 import { generateOIDCLink } from '../util/auth/generateOIDCLink.ts';
 import { checkFeatureEnabled } from '../util/features.ts';
-import { DesktopNotifications } from './DesktopNotifications.tsx';
 import RouterLink from './RouterLink.tsx';
 import { StyledBadge } from './StyledBadge.tsx';
 import { VCenterBox } from './VCenterBox.tsx';
@@ -512,9 +511,9 @@ export const TopBar = () => {
                         </Box>
                     </Toolbar>
                 </Container>
-                {hasPermission(PermissionLevel.User) && (
+                {/*{hasPermission(PermissionLevel.User) && (
                     <DesktopNotifications notifications={notifications} isLoading={isLoading} />
-                )}
+                )}*/}
             </AppBar>
             <div style={{ padding: 24 }}></div>
         </>

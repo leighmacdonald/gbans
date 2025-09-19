@@ -464,14 +464,13 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 }
 
 type RequestBanSteamUpdate struct {
-	TargetID       steamid.SteamID `json:"target_id"`
-	BanType        ban.BanType     `json:"ban_type"`
-	Reason         ban.Reason      `json:"reason"`
-	ReasonText     string          `json:"reason_text"`
-	Note           string          `json:"note"`
-	IncludeFriends bool            `json:"include_friends"`
-	EvadeOk        bool            `json:"evade_ok"`
-	ValidUntil     time.Time       `json:"valid_until"`
+	TargetID   steamid.SteamID `json:"target_id"`
+	BanType    ban.BanType     `json:"ban_type"`
+	Reason     ban.Reason      `json:"reason"`
+	ReasonText string          `json:"reason_text"`
+	Note       string          `json:"note"`
+	EvadeOk    bool            `json:"evade_ok"`
+	ValidUntil time.Time       `json:"valid_until"`
 }
 
 func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
@@ -517,7 +516,6 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 		bannedPerson.Note = req.Note
 		bannedPerson.BanType = req.BanType
 		bannedPerson.Reason = req.Reason
-		bannedPerson.IncludeFriends = req.IncludeFriends
 		bannedPerson.EvadeOk = req.EvadeOk
 		bannedPerson.ValidUntil = req.ValidUntil
 

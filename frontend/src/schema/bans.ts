@@ -163,7 +163,9 @@ const schemaBanBase = schemaTimeStamped.extend({
     unban_reason_text: z.string(),
     note: z.string(),
     origin: OriginEnum,
+    as_num: z.number().positive(),
     appeal_state: AppealStateEnum,
+    cidr: z.cidrv4(),
     source_personaname: z.string(),
     source_avatarhash: z.string(),
     target_personaname: z.string(),
@@ -189,15 +191,13 @@ export const schemaGroupBanRecord = schemaBanBase.extend({
 export type GroupBanRecord = z.infer<typeof schemaGroupBanRecord>;
 
 export const schemaCIDRBanRecord = schemaBanBase.extend({
-    net_id: z.number(),
-    cidr: z.cidrv4()
+    net_id: z.number()
 });
 
 export type CIDRBanRecord = z.infer<typeof schemaCIDRBanRecord>;
 
 export const schemaASNBanRecord = schemaBanBase.extend({
-    ban_asn_id: z.number(),
-    as_num: z.number().positive()
+    ban_asn_id: z.number()
 });
 
 export type ASNBanRecord = z.infer<typeof schemaASNBanRecord>;
@@ -226,28 +226,6 @@ export const schemaBanPayloadSteam = schemaBanBasePayload.extend({
 });
 
 export type BanPayloadSteam = z.infer<typeof schemaBanPayloadSteam>;
-
-export const schemaBanPayloadCIDR = schemaBanBasePayload.extend({
-    cidr: z.cidrv4()
-});
-
-export type BanPayloadCIDR = z.infer<typeof schemaBanPayloadCIDR>;
-
-export const schemaBanPayloadASN = schemaBanBasePayload.extend({
-    as_num: z.number()
-});
-
-export type BanPayloadASN = z.infer<typeof schemaBanPayloadASN>;
-
-export const schemaBanPayloadGroup = z.object({
-    target_id: z.string(),
-    duration: DurationEnum,
-    valid_until: z.date().optional(),
-    note: z.string(),
-    group_id: z.string()
-});
-
-export type BanPayloadGroup = z.infer<typeof schemaBanPayloadGroup>;
 
 export const schemaSbBanRecord = z.object({
     ban_id: z.number(),

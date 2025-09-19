@@ -17,7 +17,7 @@ import { ReportStatus, ReportStatusCollection, ReportStatusEnum, reportStatusStr
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { ErrorDetails } from './ErrorDetails.tsx';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
-import { ModalBanSteam } from './modal';
+import { ModalBan } from './modal';
 
 const schema = z.object({
     report_status: ReportStatusEnum
@@ -65,7 +65,7 @@ export const ReportModPanel = ({ reportId }: { reportId: number }) => {
         }
 
         try {
-            const banRecord = await NiceModal.show(ModalBanSteam, {
+            const banRecord = await NiceModal.show(ModalBan, {
                 reportId: report.report_id,
                 steamId: report.subject.steam_id
             });

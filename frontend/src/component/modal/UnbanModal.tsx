@@ -4,29 +4,33 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod/v4';
-import { apiDeleteGroupBan } from '../../api';
+import { apiDeleteBan } from '../../api/index.ts';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 
-const schema = z.object({
+const onSubmit = z.object({
     unban_reason: z.string().min(5)
 });
 
-export const UnbanGroupModal = NiceModal.create(
+export const UnbanModal = NiceModal.create(
     ({
-        banId
+        banId,
+        personaName
     }: {
         banId: number; // common placeholder for any primary key id for a ban
+        personaName?: string;
     }) => {
         const modal = useModal();
         const { sendError } = useUserFlashCtx();
-        const defaultValues: z.input<typeof schema> = {
+
+        const defaultValues: z.input<typeof onSubmit> = {
             unban_reason: ''
         };
+
         const mutation = useMutation({
-            mutationKey: ['deleteGroupBan', { banId }],
+            mutationKey: ['deleteSteamBan', { banId }],
             mutationFn: async (unban_reason: string) => {
-                await apiDeleteGroupBan(banId, unban_reason);
+                await apiDeleteBan(banId, unban_reason);
             },
             onSuccess: async () => {
                 modal.resolve();
@@ -43,9 +47,7 @@ export const UnbanGroupModal = NiceModal.create(
                 mutation.mutate(value.unban_reason);
             },
             defaultValues,
-            validators: {
-                onSubmit: schema
-            }
+            validators: { onSubmit }
         });
 
         return (
@@ -57,10 +59,12 @@ export const UnbanGroupModal = NiceModal.create(
                         await form.handleSubmit();
                     }}
                 >
-                    <DialogTitle>Unban Steam Group (#{banId})</DialogTitle>
+                    <DialogTitle>
+                        Unban {personaName} (#{banId})
+                    </DialogTitle>
 
                     <DialogContent>
-                        <Grid container>
+                        <Grid container spacing={2}>
                             <Grid size={{ xs: 12 }}>
                                 <form.AppField
                                     name={'unban_reason'}

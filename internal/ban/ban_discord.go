@@ -20,6 +20,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/sosodev/duration"
 )
 
 var (
@@ -40,7 +41,6 @@ var (
 			},
 		},
 	}
-
 
 	reasons = []*discordgo.ApplicationCommandOptionChoice{
 		{Name: banDomain.External.String(), Value: banDomain.External},
@@ -217,8 +217,13 @@ func (h discordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 		ReasonText: "",
 		Note:       opts[helper.OptNote].StringValue(),
 	}
-	// TODO FIX time
-	banOpts.SetDuration(opts[helper.OptDuration].StringValue(), time.Now().AddDate(10, 0, 0))
+
+	duration, errDuration := duration.Parse(opts[helper.OptDuration].StringValue())
+	if errDuration != nil {
+		return nil, errDuration
+	}
+
+	banOpts.Duration = duration
 
 	banSteam, errBan := h.bans.Create(ctx, banOpts)
 	if errBan != nil {
@@ -246,7 +251,12 @@ func (h discordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 		ReasonText: "",
 		Note:       opts[helper.OptNote].StringValue(),
 	}
-	banOpts.SetDuration(opts[helper.OptDuration].StringValue(), time.Now().AddDate(10, 0, 0))
+
+	duration, errDuration := duration.Parse(opts[helper.OptDuration].StringValue())
+	if errDuration != nil {
+		return nil, errDuration
+	}
+	banOpts.Duration = duration
 
 	banSteam, errBan := h.bans.Create(ctx, banOpts)
 	if errBan != nil {
