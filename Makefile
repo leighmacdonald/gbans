@@ -8,7 +8,7 @@ ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 all: frontend sourcemod buildp
 
 fmt:
-	go tool golangci-lint fmt
+	golangci-lint fmt
 	make -C frontend fmt
 
 bump_deps:
@@ -61,10 +61,10 @@ vulncheck:
 	go tool govulncheck
 
 lint_golangci:
-	go tool golangci-lint run --timeout 3m ./...
+	golangci-lint run --timeout 3m ./...
 
 fix: fmt
-	go tool golangci-lint run --fix
+	golangci-lint run --fix
 
 lint_ts:
 	make -C frontend lint
