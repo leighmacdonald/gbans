@@ -21,9 +21,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/sosodev/duration"
 )
 
 var (
@@ -42,67 +42,31 @@ var (
 // It should not be instantiated directly, but instead use one of the composites that build
 // upon it.
 type BanOpts struct {
-	TargetID       steamid.SteamID `json:"target_id"`
-	SourceID       steamid.SteamID `json:"source_id"`
-	Duration       time.Duration   `json:"duration"`
-	BanType        ban.BanType     `json:"ban_type"`
-	Reason         ban.Reason      `json:"reason"`
-	ReasonText     string          `json:"reason_text"`
-	Origin         ban.Origin      `json:"origin"`
-	ModNote        string          `json:"mod_note"`
-	IsEnabled      bool            `json:"is_enabled"`
-	Deleted        bool            `json:"deleted"`
-	AppealState    AppealState     `json:"appeal_state"`
-	ReportID       int64           `json:"report_id"`
-	ASNum          int64           `json:"as_num"`
-	CIDR           string          `json:"cidr"`
-	EvadeOk        bool            `json:"evade_ok"`
-	LastIP         string          `json:"last_ip"`
-	Name           string          `json:"name"`
-	DemoName       string          `json:"demo_name"`
-	DemoTick       int             `json:"demo_tick"`
-	IncludeFriends bool            `json:"include_friends"`
-	Note           string          `json:"note"`
-}
-
-func (opts *BanOpts) SetDuration(durString string, validUntil time.Time) error {
-	duration, errDuration := datetime.CalcDuration(durString, validUntil)
-	if errDuration != nil {
-		return errDuration
-	}
-	opts.Duration = duration
-	return nil
+	TargetID steamid.SteamID `json:"target_id" validate:"required,steamid"`
+	SourceID steamid.SteamID `json:"source_id" validate:"required,steamid"`
+	// ISO8601
+	Duration   *duration.Duration `json:"duration" validate:"required,duration"`
+	BanType    ban.BanType        `json:"ban_type" validate:"required"`
+	Reason     ban.Reason         `json:"reason" validate:"required"`
+	ReasonText string             `json:"reason_text" validate:"required"`
+	Origin     ban.Origin         `json:"origin" validate:"required"`
+	ReportID   int64              `json:"report_id" validate:"gte=1"`
+	ASNum      int64              `json:"as_num" validate:"asnum"`
+	CIDR       string             `json:"cidr" validate:"cidrv4"`
+	EvadeOk    bool               `json:"evade_ok"`
+	Name       string             `json:"name"`
+	DemoName   string             `json:"demo_name"`
+	DemoTick   int                `json:"demo_tick" validate:"gte=1"`
+	Note       string             `json:"note"`
 }
 
 func (opts *BanOpts) Validate() error {
-	if !opts.SourceID.Valid() {
-		return fmt.Errorf("%w: Invalid source steam id", ErrInvalidBanOpts)
-	}
-
-	if !opts.TargetID.Valid() {
-		return fmt.Errorf("%w: Invalid target steam id", ErrInvalidBanOpts)
-	}
-
-	if opts.BanType != ban.Banned && opts.BanType != ban.NoComm {
-		return fmt.Errorf("%w: %w", ErrInvalidBanOpts, ErrInvalidBanType)
-	}
-
-	if opts.Duration <= 0 {
+	if opts.Duration.ToTimeDuration() <= 0 {
 		return fmt.Errorf("%w: %w", ErrInvalidBanOpts, ErrInvalidBanDuration)
 	}
 
 	if opts.Reason == ban.Custom && len(opts.ReasonText) < 3 {
 		return fmt.Errorf("%w: Custom reason must be at least 3 characters", ErrInvalidBanOpts)
-	}
-
-	if opts.ReportID < 0 {
-		return fmt.Errorf("%w: %w", ErrInvalidBanOpts, ErrInvalidReportID)
-	}
-
-	if opts.ASNum > 0 && !isValidASNRange(opts.ASNum) {
-		// Valid public ASN ranges
-		// https://www.iana.org/assignments/as-numbers/as-numbers.xhtml
-		return fmt.Errorf("%w: %w", ErrInvalidBanOpts, ErrInvalidASN)
 	}
 
 	if opts.CIDR != "" {
@@ -116,36 +80,16 @@ func (opts *BanOpts) Validate() error {
 	return nil
 }
 
-func isValidASNRange(asNum int64) bool {
-	ranges := []struct {
-		start int64
-		end   int64
-	}{
-		{1, 23455},
-		{23457, 64495},
-		{131072, 4199999999},
-	}
-
-	for _, r := range ranges {
-		if asNum >= r.start && asNum <= r.end {
-			return true
-		}
-	}
-
-	return false
-}
-
 // BanBase provides a common struct shared between all ban types, it should not be used
 // directly.
 type Ban struct {
 	// SteamID is the steamID of the banned person
-	TargetID       steamid.SteamID `json:"target_id"`
-	SourceID       steamid.SteamID `json:"source_id"`
-	BanID          int64           `json:"ban_id"`
-	ReportID       int64           `json:"report_id"`
-	IncludeFriends bool            `json:"include_friends"`
-	LastIP         string          `json:"last_ip"`
-	EvadeOk        bool            `json:"evade_ok"`
+	TargetID steamid.SteamID `json:"target_id"`
+	SourceID steamid.SteamID `json:"source_id"`
+	BanID    int64           `json:"ban_id"`
+	ReportID int64           `json:"report_id"`
+	LastIP   string          `json:"last_ip"`
+	EvadeOk  bool            `json:"evade_ok"`
 
 	// Reason defines the overall ban classification
 	BanType ban.BanType `json:"ban_type"`
@@ -169,6 +113,10 @@ type Ban struct {
 	ValidUntil time.Time `json:"valid_until" `
 	CreatedOn  time.Time `json:"created_on"`
 	UpdatedOn  time.Time `json:"updated_on"`
+}
+
+func (b Ban) IsGroup() bool {
+	return b.TargetID.Int64() >= int64(steamid.BaseGID)
 }
 
 func (b Ban) Path() string {
@@ -247,7 +195,7 @@ func NewBans(repository BanRepository, person *person.Persons,
 }
 
 func (s Bans) UpdateCache(ctx context.Context) error {
-	bans, errBans := s.banRepo.Query(ctx, QueryOpts{})
+	bans, errBans := s.banRepo.Query(ctx, QueryOpts{GroupsOnly: true})
 	if errBans != nil {
 		return errBans
 	}
@@ -256,19 +204,24 @@ func (s Bans) UpdateCache(ctx context.Context) error {
 		return err
 	}
 
-	for _, ban := range bans {
-		if !ban.IncludeFriends || ban.Deleted || ban.ValidUntil.Before(time.Now()) {
+	for idx, ban := range bans {
+		if ban.Deleted || ban.ValidUntil.Before(time.Now()) {
 			continue
 		}
 
-		friends, errFriends := s.tfAPI.Friends(ctx, ban.TargetID)
-		if errFriends != nil {
-			continue
+		if idx > 0 {
+			// Not sure what the rate limit is, but be generous for groups.
+			time.Sleep(time.Second * 5)
+		}
+
+		groupInfo, err := s.tfAPI.SteamGroup(ctx, ban.TargetID)
+		if err != nil {
+			return err
 		}
 
 		var list []int64
-		for _, friend := range friends {
-			sid := steamid.New(friend.SteamId)
+		for _, member := range groupInfo.Members {
+			sid := steamid.New(member.SteamId)
 			list = append(list, sid.Int64())
 		}
 
@@ -349,24 +302,24 @@ func (s Bans) Create(ctx context.Context, opts BanOpts) (Ban, error) {
 	}
 
 	newBan := Ban{
-		IncludeFriends: opts.IncludeFriends,
-		LastIP:         opts.LastIP,
-		EvadeOk:        opts.EvadeOk,
-		BanType:        opts.BanType,
-		Reason:         opts.Reason,
-		TargetID:       opts.TargetID,
-		SourceID:       opts.SourceID,
-		ReportID:       opts.ReportID,
-		CIDR:           opts.CIDR,
-		ReasonText:     opts.ReasonText,
-		Note:           opts.Note,
-		Origin:         opts.Origin,
-		ASNum:          opts.ASNum,
-		Name:           opts.Name,
+		// TODO set last ip
+		//LastIP:     opts.LastIP,
+		EvadeOk:    opts.EvadeOk,
+		BanType:    opts.BanType,
+		Reason:     opts.Reason,
+		TargetID:   opts.TargetID,
+		SourceID:   opts.SourceID,
+		ReportID:   opts.ReportID,
+		CIDR:       opts.CIDR,
+		ReasonText: opts.ReasonText,
+		Note:       opts.Note,
+		Origin:     opts.Origin,
+		ASNum:      opts.ASNum,
+		Name:       opts.Name,
 	}
 
-	if opts.Duration > 0 {
-		newBan.ValidUntil = time.Now().Add(opts.Duration)
+	if opts.Duration.ToTimeDuration() > 0 {
+		newBan.ValidUntil = time.Now().Add(opts.Duration.ToTimeDuration())
 	}
 
 	author, errAuthor := s.persons.GetOrCreatePersonBySteamID(ctx, nil, opts.SourceID)
@@ -527,13 +480,13 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 		return false, errMatch
 	}
 
-	duration, errDuration := datetime.ParseUserStringDuration("10y")
+	dur, errDuration := duration.Parse("P10Y")
 	if errDuration != nil {
 		return false, errDuration
 	}
 
 	existing.Note += " Previous expiry: " + existing.ValidUntil.Format(time.DateTime)
-	existing.ValidUntil = time.Now().Add(duration)
+	existing.ValidUntil = time.Now().Add(dur.ToTimeDuration())
 
 	if errSave := s.Save(ctx, &existing); errSave != nil {
 		slog.Error("Could not update previous ban.", log.ErrAttr(errSave))
@@ -548,7 +501,7 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 		SourceID: owner,
 		TargetID: steamID,
 		Origin:   banDomain.System,
-		Duration: time.Hour * 24 * 365,
+		Duration: dur,
 		BanType:  banDomain.Banned,
 		Reason:   banDomain.Evading,
 		Note:     fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, config.ExtURL(existing)),
