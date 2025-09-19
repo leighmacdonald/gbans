@@ -149,8 +149,6 @@ func (b *Blocklists) updateSource(ctx context.Context, list CIDRBlockSource) err
 		blocks = append(blocks, prefix)
 	}
 
-	blocks = append(blocks, netip.MustParsePrefix("192.168.0.0/24"))
-
 	if err := b.repository.TruncateCachedEntries(ctx); err != nil {
 		return err
 	}

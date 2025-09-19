@@ -234,6 +234,7 @@ var steamidValidator validator.Func = func(fl validator.FieldLevel) bool {
 
 	return false
 }
+
 var asNumValidator validator.Func = func(fl validator.FieldLevel) bool {
 	asNum, ok := fl.Field().Interface().(int64)
 	if ok {

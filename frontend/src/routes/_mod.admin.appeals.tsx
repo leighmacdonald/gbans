@@ -25,7 +25,7 @@ import { Title } from '../component/Title';
 import { PaginatorLocal } from '../component/forum/PaginatorLocal.tsx';
 import { DataTable } from '../component/table/DataTable.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
-import { AppealState, AppealStateCollection, AppealStateEnum, BanReasons, SteamBanRecord } from '../schema/bans.ts';
+import { AppealState, AppealStateCollection, AppealStateEnum, BanReasons, BanRecord } from '../schema/bans.ts';
 import { TablePropsAll } from '../types/table.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
@@ -185,7 +185,7 @@ function AdminAppeals() {
         // </Formik>
     );
 }
-const columnHelper = createColumnHelper<SteamBanRecord>();
+const columnHelper = createColumnHelper<BanRecord>();
 
 const AppealsTable = ({
     appeals,
@@ -196,7 +196,7 @@ const AppealsTable = ({
     setColumnFilters,
     sorting,
     setSorting
-}: { appeals: SteamBanRecord[]; isLoading: boolean } & TablePropsAll) => {
+}: { appeals: BanRecord[]; isLoading: boolean } & TablePropsAll) => {
     const columns = [
         columnHelper.accessor('ban_id', {
             header: 'ID',

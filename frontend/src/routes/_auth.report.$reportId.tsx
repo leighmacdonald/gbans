@@ -84,9 +84,6 @@ function ReportView() {
                         <ListItemText primary={'Note'} secondary={ban.note} />
                     </ListItem>
                     <ListItem>
-                        <ListItemText primary={'Include Friends'} secondary={ban.include_friends ? 'Yes' : 'No'} />
-                    </ListItem>
-                    <ListItem>
                         <ListItemText primary={'Evasion OK'} secondary={ban.evade_ok ? 'Yes' : 'No'} />
                     </ListItem>
                     <ListItem>

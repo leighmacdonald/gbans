@@ -33,19 +33,19 @@ export const BanReasonEnum = z.enum(BanReason);
 export type BanReasonEnum = z.infer<typeof BanReasonEnum>;
 
 export const Duration = {
-    dur15m: '15m',
-    dur6h: '6h',
-    dur12h: '12h',
-    dur24h: '24h',
-    dur48h: '48h',
-    dur72h: '72h',
-    dur1w: '1w',
-    dur2w: '2w',
+    dur15m: 'PT15M',
+    dur6h: 'T6H',
+    dur12h: 'T12H',
+    dur24h: 'P1D',
+    dur48h: 'P2D',
+    dur72h: 'P3D',
+    dur1w: 'P1W',
+    dur2w: 'P2W',
     dur1M: '1M',
     dur6M: '6M',
     dur1y: '1y',
     durInf: '0',
-    durCustom: 'custom'
+    durCustom: ''
 } as const;
 
 export const DurationEnum = z.enum(Duration);
@@ -152,7 +152,7 @@ export const AppealStateCollection = [
     AppealState.NoAppeal
 ];
 
-const schemaBanBase = schemaTimeStamped.extend({
+export const schemaBan = schemaTimeStamped.extend({
     valid_until: z.date(),
     reason: BanReasonEnum,
     ban_type: BanTypeEnum,
@@ -163,44 +163,18 @@ const schemaBanBase = schemaTimeStamped.extend({
     unban_reason_text: z.string(),
     note: z.string(),
     origin: OriginEnum,
-    as_num: z.number().positive(),
     appeal_state: AppealStateEnum,
     cidr: z.cidrv4(),
+    ban_id: z.number(),
+    report_id: z.number(),
+    evade_ok: z.boolean(),
     source_personaname: z.string(),
     source_avatarhash: z.string(),
     target_personaname: z.string(),
     target_avatarhash: z.string()
 });
 
-export const schemaSteamBanRecord = schemaBanBase.extend({
-    ban_id: z.number(),
-    report_id: z.number(),
-    ban_type: BanTypeEnum,
-    include_friends: z.boolean(),
-    evade_ok: z.boolean()
-});
-
-export type SteamBanRecord = z.infer<typeof schemaSteamBanRecord>;
-
-export const schemaGroupBanRecord = schemaBanBase.extend({
-    ban_group_id: z.number(),
-    group_id: z.string(),
-    group_name: z.string()
-});
-
-export type GroupBanRecord = z.infer<typeof schemaGroupBanRecord>;
-
-export const schemaCIDRBanRecord = schemaBanBase.extend({
-    net_id: z.number()
-});
-
-export type CIDRBanRecord = z.infer<typeof schemaCIDRBanRecord>;
-
-export const schemaASNBanRecord = schemaBanBase.extend({
-    ban_asn_id: z.number()
-});
-
-export type ASNBanRecord = z.infer<typeof schemaASNBanRecord>;
+export type BanRecord = z.infer<typeof schemaBan>;
 
 export const schemaUnbanPayload = z.object({
     unban_reason_text: z.string()
@@ -208,24 +182,19 @@ export const schemaUnbanPayload = z.object({
 
 export type UnbanPayload = z.infer<typeof schemaUnbanPayload>;
 
-const schemaBanBasePayload = z.object({
+export const schemaBanPayload = z.object({
     reason: BanReasonEnum,
     reason_text: z.string(),
     target_id: z.string(),
-    duration: DurationEnum,
-    valid_until: z.date().optional(),
-    note: z.string()
-});
-
-export const schemaBanPayloadSteam = schemaBanBasePayload.extend({
+    duration: z.string(),
+    note: z.string(),
     report_id: z.number().optional(),
-    include_friends: z.boolean(),
     evade_ok: z.boolean(),
     ban_type: BanTypeEnum,
-    duration_custom: z.date().optional()
+    cidr: z.cidrv4().optional()
 });
 
-export type BanPayloadSteam = z.infer<typeof schemaBanPayloadSteam>;
+export type BanPayload = z.infer<typeof schemaBanPayload>;
 
 export const schemaSbBanRecord = z.object({
     ban_id: z.number(),
@@ -247,43 +216,16 @@ export const schemaAppealQueryFilter = z.object({
 
 export type AppealQueryFilter = z.infer<typeof schemaAppealQueryFilter>;
 
-const schemaUpdateBanPayload = z.object({
+export const schemaUpdateBanPayload = z.object({
     reason: BanReasonEnum,
     reason_text: z.string(),
     note: z.string(),
-    valid_until: z.date().optional()
+    valid_until: z.date().optional(),
+    evade_ok: z.boolean(),
+    ban_type: BanTypeEnum
 });
 
 export type UpdateBanPayload = z.infer<typeof schemaUpdateBanPayload>;
-
-export const schemaUpdateBanSteamPayload = z
-    .object({
-        include_friends: z.boolean(),
-        evade_ok: z.boolean(),
-        ban_type: BanTypeEnum
-    })
-    .merge(schemaUpdateBanPayload);
-
-export type UpdateBanSteamPayload = z.infer<typeof schemaUpdateBanSteamPayload>;
-
-export const schemaUpdateBanASNPayload = z.object({
-    target_id: z.string(),
-    reason: BanReasonEnum,
-    as_num: z.number(),
-    reason_text: z.string(),
-    note: z.string(),
-    valid_until: z.date().optional()
-});
-
-export type UpdateBanASNPayload = z.infer<typeof schemaUpdateBanASNPayload>;
-
-export const schemaUpdateBanGroupPayload = z.object({
-    target_id: z.string(),
-    note: z.string(),
-    valid_until: z.date().optional()
-});
-
-export type UpdateBanGroupPayload = z.infer<typeof schemaUpdateBanGroupPayload>;
 
 export const schemaUpdateBodyMD = z.object({
     body_md: z.string()
