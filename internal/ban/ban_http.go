@@ -45,7 +45,7 @@ func NewHandlerSteam(engine *gin.Engine, bans Bans,
 	authedGrp := engine.Group("/")
 	{
 		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
-		authed.GET("/api/bans/steam/:ban_id", handler.onAPIGetBanByID())
+		authed.GET("/api/bans/:ban_id", handler.onAPIGetBanByID())
 	}
 
 	// mod
@@ -55,13 +55,13 @@ func NewHandlerSteam(engine *gin.Engine, bans Bans,
 
 		mod.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
 		mod.GET("/api/stats", handler.onAPIGetStats())
-		mod.GET("/api/bans/steam", handler.onAPIGetBansSteam())
-		mod.GET("/api/bans/steam_all/:steam_id", handler.onAPIGetBansSteamBySteamID())
+		mod.GET("/api/bans", handler.onAPIGetBans())
+		mod.POST("/api/bans", handler.onAPIPostBanSteamCreate())
+		mod.GET("/api/bans/all/:steam_id", handler.onAPIGetBansSteamBySteamID())
 		mod.GET("/api/bans/steamid/:steam_id", handler.onAPIGetBanBySteam())
-		mod.POST("/api/bans/steam/create", handler.onAPIPostBanSteamCreate())
-		mod.DELETE("/api/bans/steam/:ban_id", handler.onAPIPostBanDelete())
-		mod.POST("/api/bans/steam/:ban_id", handler.onAPIPostBanUpdate())
-		mod.POST("/api/bans/steam/:ban_id/status", handler.onAPIPostSetBanAppealStatus())
+		mod.DELETE("/api/bans/:ban_id", handler.onAPIPostBanDelete())
+		mod.POST("/api/bans/:ban_id", handler.onAPIPostBanUpdate())
+		mod.POST("/api/bans/:ban_id/status", handler.onAPIPostSetBanAppealStatus())
 	}
 }
 
@@ -382,16 +382,14 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 	}
 }
 
-func (h banHandler) onAPIGetBansSteam() gin.HandlerFunc {
+func (h banHandler) onAPIGetBans() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var params BansQueryFilter
 		if !httphelper.BindQuery(ctx, &params) {
 			return
 		}
 
-		bans, errBans := h.bans.Query(ctx, QueryOpts{
-			Deleted: params.Deleted,
-		})
+		bans, errBans := h.bans.Query(ctx, QueryOpts{Deleted: params.Deleted})
 		if errBans != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
 

@@ -51,7 +51,6 @@ type BanOpts struct {
 	ReasonText string             `json:"reason_text" validate:"required"`
 	Origin     ban.Origin         `json:"origin" validate:"required"`
 	ReportID   int64              `json:"report_id" validate:"gte=1"`
-	ASNum      int64              `json:"as_num" validate:"asnum"`
 	CIDR       string             `json:"cidr" validate:"cidrv4"`
 	EvadeOk    bool               `json:"evade_ok"`
 	Name       string             `json:"name"`
@@ -102,7 +101,6 @@ type Ban struct {
 	Note        string      `json:"note"`
 	Origin      ban.Origin  `json:"origin"`
 	CIDR        string      `json:"cidr"`
-	ASNum       int64       `json:"as_num"`
 	Name        string      `json:"name"`
 	AppealState AppealState `json:"appeal_state"`
 
@@ -151,7 +149,6 @@ type QueryOpts struct {
 	Personaname   string
 	CIDR          string
 	IncludeGroups bool
-	ASNum         bool
 	LatestOnly    bool
 }
 
@@ -303,7 +300,7 @@ func (s Bans) Create(ctx context.Context, opts BanOpts) (Ban, error) {
 
 	newBan := Ban{
 		// TODO set last ip
-		//LastIP:     opts.LastIP,
+		// LastIP:     opts.LastIP,
 		EvadeOk:    opts.EvadeOk,
 		BanType:    opts.BanType,
 		Reason:     opts.Reason,
@@ -314,7 +311,6 @@ func (s Bans) Create(ctx context.Context, opts BanOpts) (Ban, error) {
 		ReasonText: opts.ReasonText,
 		Note:       opts.Note,
 		Origin:     opts.Origin,
-		ASNum:      opts.ASNum,
 		Name:       opts.Name,
 	}
 

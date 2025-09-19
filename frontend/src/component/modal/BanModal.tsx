@@ -6,20 +6,19 @@ import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod/v4';
-import { apiCreateBanSteam, apiGetBanSteam, apiUpdateBanSteam, banTypeString } from '../../api';
+import { apiCreateBan, apiGetBanSteam, apiUpdateBanSteam, banTypeString } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import {
-    BanPayloadSteam,
+    BanPayload,
     BanReason,
     BanReasons,
     banReasonsCollection,
     BanType,
     BanTypeCollection,
     Duration,
-    DurationCollection,
-    schemaBanPayloadSteam,
-    SteamBanRecord
+    schemaBanPayload,
+    BanRecord
 } from '../../schema/bans.ts';
 import { ErrorDetails } from '../ErrorDetails.tsx';
 import { Heading } from '../Heading';
@@ -40,7 +39,7 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
                 return await apiGetBanSteam(Number(ban_id), true);
             }
 
-            return {} as SteamBanRecord;
+            return {} as BanRecord;
         }
     });
 
@@ -49,31 +48,27 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
 
     const mutation = useMutation({
         mutationKey: ['banSteam'],
-        mutationFn: async (values: BanPayloadSteam) => {
-            let updated: BanPayloadSteam;
+        mutationFn: async (values: BanPayload) => {
+            let updated: BanPayload;
             if (ban?.ban_id) {
                 updated = (await apiUpdateBanSteam(ban.ban_id, {
                     note: values.note,
                     ban_type: values.ban_type,
                     reason: values.reason,
                     reason_text: values.reason_text,
-                    include_friends: values.include_friends,
-                    evade_ok: values.evade_ok,
-                    valid_until: values.duration_custom
-                })) as unknown as BanPayloadSteam; // TODO fix
+                    evade_ok: values.evade_ok
+                })) as unknown as BanPayload; // TODO fix
             } else {
-                updated = (await apiCreateBanSteam({
+                updated = (await apiCreateBan({
                     note: values.note,
                     ban_type: values.ban_type,
                     duration: values.duration,
-                    valid_until: values.duration_custom,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     report_id: values.report_id,
                     target_id: values.target_id,
-                    include_friends: values.include_friends,
                     evade_ok: values.evade_ok
-                })) as unknown as BanPayloadSteam;
+                })) as unknown as BanPayload;
             }
             queryClient.setQueryData(['ban', { ban_id }], updated);
         },
@@ -89,17 +84,16 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
         onError: sendError
     });
 
-    const defaultValues: z.infer<typeof schemaBanPayloadSteam> = {
+    const defaultValues: z.infer<typeof schemaBanPayload> = {
         report_id: ban?.report_id ?? 0,
         target_id: ban?.target_id ?? '',
         ban_type: ban?.ban_type ?? BanType.Banned,
         reason: ban?.reason ?? BanReason.Cheating,
         reason_text: ban?.reason_text ?? '',
         duration: ban ? Duration.durCustom : Duration.dur2w,
-        duration_custom: ban?.valid_until ?? new Date(),
         note: ban?.note ?? '',
-        include_friends: ban?.include_friends ?? false,
-        evade_ok: ban?.evade_ok ?? false
+        evade_ok: ban?.evade_ok ?? false,
+        cidr: ban?.cidr
     };
 
     const form = useAppForm({
@@ -108,7 +102,7 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
         },
         defaultValues,
         validators: {
-            onSubmit: schemaBanPayloadSteam
+            onSubmit: schemaBanPayload
         }
     });
 
@@ -130,7 +124,7 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<DirectionsRunIcon />}>
-                    Ban Steam Profile
+                    {Number(ban_id) > 0 ? 'Edit Ban' : 'Create Ban'}
                 </DialogTitle>
 
                 <DialogContent>
@@ -140,11 +134,24 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
                                 name={'target_id'}
                                 children={(field) => {
                                     return (
-                                        <field.SteamIDField label={'Target Steam ID'} disabled={Boolean(ban?.ban_id)} />
+                                        <field.SteamIDField
+                                            label={'Target Steam ID Or Group ID'}
+                                            disabled={Boolean(ban?.ban_id)}
+                                        />
                                     );
                                 }}
                             />
                         </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                            <form.AppField
+                                name={'cidr'}
+                                children={(field) => {
+                                    return <field.TextField label={'IP/CIDR'} />;
+                                }}
+                            />
+                        </Grid>
+
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'ban_type'}
@@ -209,49 +216,21 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
                                 }}
                             />
                         </Grid>
-                        <Grid size={{ xs: 6 }}>
-                            <form.AppField
-                                name={'include_friends'}
-                                children={(field) => {
-                                    return <field.CheckboxField label={'Include Friends'} />;
-                                }}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 6 }}>
-                            <form.AppField
-                                name={'evade_ok'}
-                                children={(field) => {
-                                    return <field.CheckboxField label={'IP Evading Allowed'} />;
-                                }}
-                            />
-                        </Grid>
 
                         <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'duration'}
                                 children={(field) => {
-                                    return (
-                                        <field.SelectField
-                                            label={'Duration'}
-                                            items={DurationCollection}
-                                            renderItem={(du) => {
-                                                return (
-                                                    <MenuItem value={du} key={`du-${du}`}>
-                                                        {du}
-                                                    </MenuItem>
-                                                );
-                                            }}
-                                        />
-                                    );
+                                    return <field.TextField label={'Duration'} />;
                                 }}
                             />
                         </Grid>
 
-                        <Grid size={{ xs: 6 }}>
+                        <Grid size={{ xs: 12 }}>
                             <form.AppField
-                                name={'duration_custom'}
+                                name={'evade_ok'}
                                 children={(field) => {
-                                    return <field.DateTimeField label={'Custom Expire Date'} />;
+                                    return <field.CheckboxField label={'IP Evading Allowed'} />;
                                 }}
                             />
                         </Grid>

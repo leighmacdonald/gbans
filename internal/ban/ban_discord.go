@@ -25,7 +25,6 @@ import (
 
 var (
 	slashCommands = []*discordgo.ApplicationCommand{
-
 		{
 			Name:                     "checkip",
 			DMPermission:             &helper.DmPerms,

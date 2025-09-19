@@ -16,7 +16,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { z } from 'zod/v4';
-import { apiGetBansSteam } from '../api';
+import { apiGetBans } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
@@ -28,26 +28,29 @@ import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { BanReason, BanReasonEnum, BanReasons, banReasonsCollection, SteamBanRecord } from '../schema/bans.ts';
+import { BanReason, BanReasonEnum, BanReasons, banReasonsCollection, BanRecord } from '../schema/bans.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, isPermanentBan } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 
 const searchSchema = commonTableSearchSchema.extend({
-    sortColumn: z.enum(['ban_id', 'source_id', 'target_id', 'as_num', 'reason', 'created_on', 'updated_on']).optional(),
+    sortColumn: z.enum(['ban_id', 'source_id', 'target_id', 'reason', 'created_on', 'updated_on']).optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     reason: BanReasonEnum.optional(),
-    deleted: z.boolean().optional()
+    deleted: z.boolean().optional(),
+    groups_only: z.boolean().optional(),
+    cidr: z.cidrv4().optional(),
+    networks_only: z.boolean().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/bans')({
-    component: AdminBanSteam,
+    component: AdminBans,
     validateSearch: (search) => searchSchema.parse(search)
 });
 
 const queryKey = ['steamBans'];
 
-function AdminBanSteam() {
+function AdminBans() {
     const queryClient = useQueryClient();
     const navigate = useNavigate({ from: Route.fullPath });
     const search = Route.useSearch();
@@ -59,7 +62,7 @@ function AdminBanSteam() {
     const { data: bans, isLoading } = useQuery({
         queryKey: queryKey,
         queryFn: async () => {
-            return await apiGetBansSteam({
+            return await apiGetBans({
                 deleted: false
             });
         }
@@ -67,7 +70,7 @@ function AdminBanSteam() {
 
     const onNewBanSteam = async () => {
         try {
-            const ban = await NiceModal.show<SteamBanRecord>(ModalBan, {});
+            const ban = await NiceModal.show<BanRecord>(ModalBan, {});
             queryClient.setQueryData(queryKey, [...(bans ?? []), ban]);
         } catch (e) {
             sendFlash('error', `Error trying to set up ban: ${e}`);
@@ -86,7 +89,10 @@ function AdminBanSteam() {
             source_id: search.source_id ?? '',
             target_id: search.target_id ?? '',
             reason: search.reason ?? BanReason.Any,
-            deleted: search.deleted ?? false
+            deleted: search.deleted ?? false,
+            groups_only: search.groups_only,
+            cidr: search.cidr,
+            networks_only: search.networks_only
         }
     });
 
@@ -100,13 +106,16 @@ function AdminBanSteam() {
                 source_id: undefined,
                 target_id: undefined,
                 reason: undefined,
-                valid_until: undefined
+                valid_until: undefined,
+                groups_only: undefined,
+                cidr: undefined,
+                networks_only: undefined
             })
         });
     };
 
     const columns = useMemo(() => {
-        const onUnban = async (ban: SteamBanRecord) => {
+        const onUnban = async (ban: BanRecord) => {
             try {
                 await NiceModal.show(ModalUnban, {
                     banId: ban.ban_id,
@@ -122,9 +131,9 @@ function AdminBanSteam() {
             }
         };
 
-        const onEdit = async (ban: SteamBanRecord) => {
+        const onEdit = async (ban: BanRecord) => {
             try {
-                const updated = await NiceModal.show<SteamBanRecord>(ModalBan, {
+                const updated = await NiceModal.show<BanRecord>(ModalBan, {
                     banId: ban.ban_id,
                     personaName: ban.target_personaname,
                     existing: ban
@@ -143,7 +152,7 @@ function AdminBanSteam() {
 
     return (
         <Grid container spacing={2}>
-            <Title>Ban SteamID</Title>
+            <Title>Bans</Title>
             <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
@@ -171,7 +180,14 @@ function AdminBanSteam() {
                                     }}
                                 />
                             </Grid>
-
+                            <Grid size={{ xs: 6, md: 3 }}>
+                                <form.AppField
+                                    name={'cidr'}
+                                    children={(field) => {
+                                        return <field.TextField label={'CIDR Range/IP Address'} />;
+                                    }}
+                                />
+                            </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
                                 <form.AppField
                                     name={'reason'}
@@ -192,6 +208,22 @@ function AdminBanSteam() {
                                                 }}
                                             />
                                         );
+                                    }}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 6, md: 3 }}>
+                                <form.AppField
+                                    name={'networks_only'}
+                                    children={(field) => {
+                                        return <field.CheckboxField label={'CIDR/IP Bans Only'} />;
+                                    }}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 6, md: 3 }}>
+                                <form.AppField
+                                    name={'groups_only'}
+                                    children={(field) => {
+                                        return <field.CheckboxField label={'Show groups only'} />;
                                     }}
                                 />
                             </Grid>
@@ -255,12 +287,9 @@ function AdminBanSteam() {
     );
 }
 
-const columnHelper = createColumnHelper<SteamBanRecord>();
+const columnHelper = createColumnHelper<BanRecord>();
 
-const makeColumns = (
-    onEdit: (ban: SteamBanRecord) => Promise<void>,
-    onUnban: (ban: SteamBanRecord) => Promise<void>
-) => [
+const makeColumns = (onEdit: (ban: BanRecord) => Promise<void>, onUnban: (ban: BanRecord) => Promise<void>) => [
     columnHelper.accessor('ban_id', {
         enableColumnFilter: false,
         size: 50,
@@ -300,6 +329,15 @@ const makeColumns = (
             );
         }
     }),
+    columnHelper.accessor('cidr', {
+        enableColumnFilter: true,
+        size: 150,
+        // filterFn: (row, _, filterValue) => {
+        //     return filterValue == BanReason.Any || row.original.reason == filterValue;
+        // },
+        header: 'CIDR/IP',
+        cell: (info) => <Typography>{info.getValue()}</Typography>
+    }),
     columnHelper.accessor('reason', {
         enableColumnFilter: true,
         size: 150,
@@ -329,12 +367,6 @@ const makeColumns = (
                 />
             );
         }
-    }),
-    columnHelper.accessor('include_friends', {
-        meta: { tooltip: 'Friends list also banned' },
-        size: 30,
-        header: 'F',
-        cell: (info) => <TableCellBool enabled={info.getValue()} />
     }),
     columnHelper.accessor('evade_ok', {
         meta: { tooltip: 'Evasion OK. Players connecting from the same ip will not be banned.' },
