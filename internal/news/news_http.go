@@ -46,7 +46,7 @@ func (h newsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 			newsLatest = []Article{}
 		}
 
-		ctx.JSON(http.StatusOK, newsLatest)
+		ctx.PureJSON(http.StatusOK, newsLatest)
 	}
 }
 

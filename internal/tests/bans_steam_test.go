@@ -8,6 +8,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/ban"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/sosodev/duration"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,18 +25,17 @@ func TestBans(t *testing.T) {
 
 	// Create a ban
 	banReq := ban.BanOpts{
-		SourceID:       mod.SteamID,
-		TargetID:       target.SteamID,
-		Duration:       time.Hour * 24,
-		BanType:        banDomain.Banned,
-		Reason:         banDomain.Cheating,
-		ReasonText:     "",
-		Note:           "notes",
-		ReportID:       0,
-		DemoName:       "demo-test.dem",
-		DemoTick:       100,
-		IncludeFriends: true,
-		EvadeOk:        true,
+		SourceID:   mod.SteamID,
+		TargetID:   target.SteamID,
+		Duration:   duration.FromTimeDuration(time.Hour * 24),
+		BanType:    banDomain.Banned,
+		Reason:     banDomain.Cheating,
+		ReasonText: "",
+		Note:       "notes",
+		ReportID:   0,
+		DemoName:   "demo-test.dem",
+		DemoTick:   100,
+		EvadeOk:    true,
 	}
 
 	var fetchedBan ban.Ban
@@ -49,8 +49,7 @@ func TestBans(t *testing.T) {
 	require.Equal(t, banReq.ReasonText, fetchedBan.ReasonText)
 	require.Equal(t, banReq.Note, fetchedBan.Note)
 	require.Equal(t, banReq.ReportID, fetchedBan.ReportID)
-	require.Equal(t, banReq.IncludeFriends, fetchedBan.EvadeOk)
-	require.Equal(t, banReq.IncludeFriends, fetchedBan.IncludeFriends)
+	require.Equal(t, banReq.EvadeOk, fetchedBan.EvadeOk)
 
 	// Ensure it's in the ban collection
 	var bans []ban.Ban
@@ -58,14 +57,13 @@ func TestBans(t *testing.T) {
 	require.Len(t, bans, 2)
 
 	updateReq := ban.RequestBanSteamUpdate{
-		TargetID:       fetchedBan.TargetID,
-		BanType:        banDomain.NoComm,
-		Reason:         banDomain.Custom,
-		ReasonText:     "blah",
-		Note:           "edited",
-		IncludeFriends: false,
-		EvadeOk:        false,
-		ValidUntil:     fetchedBan.ValidUntil.Add(time.Second * 10),
+		TargetID:   fetchedBan.TargetID,
+		BanType:    banDomain.NoComm,
+		Reason:     banDomain.Custom,
+		ReasonText: "blah",
+		Note:       "edited",
+		EvadeOk:    false,
+		ValidUntil: fetchedBan.ValidUntil.Add(time.Second * 10),
 	}
 
 	// Update the ban
@@ -78,7 +76,6 @@ func TestBans(t *testing.T) {
 	require.Equal(t, updateReq.Reason, updatedBan.Reason)
 	require.Equal(t, updateReq.ReasonText, updatedBan.ReasonText)
 	require.Equal(t, updateReq.Note, updatedBan.Note)
-	require.Equal(t, updateReq.IncludeFriends, updatedBan.IncludeFriends)
 	require.Equal(t, updateReq.EvadeOk, updatedBan.EvadeOk)
 	require.True(t, updatedBan.ValidUntil.After(fetchedBan.ValidUntil))
 

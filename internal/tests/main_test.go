@@ -45,6 +45,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/sosodev/duration"
 	"github.com/stretchr/testify/require"
 )
 
@@ -207,19 +208,18 @@ func TestMain(m *testing.M) {
 
 	// Create a valid ban_id
 	bannedPerson, errBan := bansUC.Create(context.Background(), ban.BanOpts{
-		SourceID:       mod.SteamID,
-		TargetID:       target.SteamID,
-		Duration:       time.Hour * 24,
-		BanType:        banDomain.Banned,
-		Reason:         banDomain.Cheating,
-		Origin:         banDomain.System,
-		ReasonText:     "",
-		Note:           "notes",
-		ReportID:       0,
-		DemoName:       "demo-test.dem",
-		DemoTick:       100,
-		IncludeFriends: true,
-		EvadeOk:        true,
+		SourceID:   mod.SteamID,
+		TargetID:   target.SteamID,
+		Duration:   duration.FromTimeDuration(time.Hour * 2),
+		BanType:    banDomain.Banned,
+		Reason:     banDomain.Cheating,
+		Origin:     banDomain.System,
+		ReasonText: "",
+		Note:       "notes",
+		ReportID:   0,
+		DemoName:   "demo-test.dem",
+		DemoTick:   100,
+		EvadeOk:    true,
 	})
 
 	if errBan != nil && !errors.Is(errBan, database.ErrDuplicate) {

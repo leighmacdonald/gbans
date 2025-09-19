@@ -22,7 +22,7 @@ import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderA
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
-import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
+import { ModalBan, ModalUnban } from '../component/modal';
 import { FullTable } from '../component/table/FullTable.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
@@ -67,7 +67,7 @@ function AdminBanSteam() {
 
     const onNewBanSteam = async () => {
         try {
-            const ban = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {});
+            const ban = await NiceModal.show<SteamBanRecord>(ModalBan, {});
             queryClient.setQueryData(queryKey, [...(bans ?? []), ban]);
         } catch (e) {
             sendFlash('error', `Error trying to set up ban: ${e}`);
@@ -108,7 +108,7 @@ function AdminBanSteam() {
     const columns = useMemo(() => {
         const onUnban = async (ban: SteamBanRecord) => {
             try {
-                await NiceModal.show(ModalUnbanSteam, {
+                await NiceModal.show(ModalUnban, {
                     banId: ban.ban_id,
                     personaName: ban.target_personaname
                 });
@@ -124,7 +124,7 @@ function AdminBanSteam() {
 
         const onEdit = async (ban: SteamBanRecord) => {
             try {
-                const updated = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {
+                const updated = await NiceModal.show<SteamBanRecord>(ModalBan, {
                     banId: ban.ban_id,
                     personaName: ban.target_personaname,
                     existing: ban

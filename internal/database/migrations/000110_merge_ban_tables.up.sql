@@ -99,3 +99,6 @@ DROP TABLE ban_group;
 DROP TABLE ban_asn;
 
 DROP TABLE ban_net;
+
+ALTER TABLE IF EXISTS ban
+DROP COLUMN IF EXISTS include_friends;

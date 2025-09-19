@@ -14,13 +14,17 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	sloggin "github.com/samber/slog-gin"
+	"github.com/sosodev/duration"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
 )
@@ -213,6 +217,47 @@ func recoveryHandler() gin.HandlerFunc {
 	})
 }
 
+var durationValidator validator.Func = func(fl validator.FieldLevel) bool {
+	dur, ok := fl.Field().Interface().(duration.Duration)
+	if ok {
+		return dur.ToTimeDuration().Seconds() > 0
+	}
+
+	return false
+}
+
+var steamidValidator validator.Func = func(fl validator.FieldLevel) bool {
+	sid, ok := fl.Field().Interface().(steamid.SteamID)
+	if ok {
+		return sid.Valid()
+	}
+
+	return false
+}
+var asNumValidator validator.Func = func(fl validator.FieldLevel) bool {
+	asNum, ok := fl.Field().Interface().(int64)
+	if ok {
+		ranges := []struct {
+			start int64
+			end   int64
+		}{
+			{1, 23455},
+			{23457, 64495},
+			{131072, 4199999999},
+		}
+
+		for _, r := range ranges {
+			if asNum >= r.start && asNum <= r.end {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	return false
+}
+
 func CreateRouter(conf config.Config, version BuildInfo) (*gin.Engine, error) {
 	if conf.General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
@@ -224,6 +269,12 @@ func CreateRouter(conf config.Config, version BuildInfo) (*gin.Engine, error) {
 	engine.MaxMultipartMemory = 8 << 24
 	engine.Use(recoveryHandler())
 	engine.Use(errorHandler())
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("steamid", steamidValidator)
+		v.RegisterValidation("asnum", asNumValidator)
+		v.RegisterValidation("duration", durationValidator)
+	}
 
 	if conf.Log.HTTPEnabled {
 		useSloggin(engine, conf.Log.Level, conf.Log.HTTPOtelEnabled)

@@ -69,7 +69,7 @@ func (r *Repository) GetPersonNotifications(ctx context.Context, steamID steamid
 		Builder().
 		Select("r.person_notification_id", "r.steam_id", "r.read", "r.deleted", "r.severity",
 			"r.message", "r.link", "r.count", "r.created_on", "r.author_id",
-			"p.personaname", "p.permission_level", "p.discord_id", "p.avatarhash", "p.created_on", "p.updated_on").
+			"p.personaname", "p.permission_level", "p.discord_id", "p.avatarhash").
 		From("person_notification r").
 		LeftJoin("person p on r.author_id = p.steam_id").
 		OrderBy("r.person_notification_id desc")
@@ -93,25 +93,24 @@ func (r *Repository) GetPersonNotifications(ctx context.Context, steamID steamid
 			authorID   *int64
 			discordID  *string
 			avatarHash *string
-			createdOn  *time.Time
-			updatedOn  *time.Time
 			outSteamID int64
 		)
 
 		if errScan := rows.Scan(&notif.PersonNotificationID, &outSteamID, &notif.Read, &notif.Deleted,
 			&notif.Severity, &notif.Message, &notif.Link, &notif.Count, &notif.CreatedOn,
-			&authorID, &name, &pLevel, &discordID, &avatarHash, &createdOn, &updatedOn); errScan != nil {
+			&authorID, &name, &pLevel, &discordID, &avatarHash); errScan != nil {
 			return nil, errors.Join(errScan, domain.ErrScanResult)
 		}
 
 		notif.SteamID = steamid.New(outSteamID)
 
 		if authorID != nil {
-			notif.Author = Author{
+			notif.Author = domain.PersonCore{
 				SteamID:         steamid.New(*authorID),
 				PermissionLevel: *pLevel,
 				Name:            *name,
 				Avatarhash:      *avatarHash,
+				DiscordID:       *discordID,
 			}
 		}
 

@@ -7,7 +7,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -24,27 +23,16 @@ const (
 )
 
 type UserNotification struct {
-	PersonNotificationID int64           `json:"person_notification_id"`
-	SteamID              steamid.SteamID `json:"steam_id"`
-	Read                 bool            `json:"read"`
-	Deleted              bool            `json:"deleted"`
-	Severity             Severity        `json:"severity"`
-	Message              string          `json:"message"`
-	Link                 string          `json:"link"`
-	Count                int             `json:"count"`
-	Author               Author          `json:"author"`
-	CreatedOn            time.Time       `json:"created_on"`
-}
-
-type Query struct {
-	query.Filter
-	SteamID string `json:"steam_id"`
-}
-
-func (f Query) SourceSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SteamID)
-
-	return sid, sid.Valid()
+	PersonNotificationID int64             `json:"person_notification_id"`
+	SteamID              steamid.SteamID   `json:"steam_id"`
+	Read                 bool              `json:"read"`
+	Deleted              bool              `json:"deleted"`
+	Severity             Severity          `json:"severity"`
+	Message              string            `json:"message"`
+	Link                 string            `json:"link"`
+	Count                int               `json:"count"`
+	Author               domain.PersonCore `json:"author"`
+	CreatedOn            time.Time         `json:"created_on"`
 }
 
 type MessageType int
@@ -60,13 +48,6 @@ var (
 	ErrDiscordEmbedNil      = errors.New("empty embed discord message provided")
 )
 
-type Author struct {
-	SteamID         steamid.SteamID      `json:"steam_id"`
-	PermissionLevel permission.Privilege `json:"permission_level"`
-	Name            string               `json:"name"`
-	Avatarhash      string               `json:"avatarhash"`
-}
-
 type Payload struct {
 	Types           []MessageType
 	Sids            steamid.Collection
@@ -76,7 +57,7 @@ type Payload struct {
 	Message         string
 	DiscordEmbed    *discordgo.MessageEmbed
 	Link            string
-	Author          Author
+	Author          domain.PersonCore
 }
 
 func (payload Payload) ValidationError() error {

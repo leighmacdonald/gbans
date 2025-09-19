@@ -22,6 +22,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/sosodev/duration"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 )
@@ -161,24 +162,23 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 			continue
 		}
 
-		var duration time.Duration
+		var dur time.Duration
 		if conf.Anticheat.Duration > 0 {
-			duration = time.Duration(conf.Anticheat.Duration) * time.Second
+			dur = time.Duration(conf.Anticheat.Duration) * time.Second
 		}
 
 		newBan, err := a.ban.Create(ctx, ban.BanOpts{
-			Origin:         banDomain.System,
-			SourceID:       owner.GetSteamID(),
-			TargetID:       entry.SteamID,
-			Duration:       duration,
-			BanType:        banDomain.Banned,
-			Reason:         banDomain.Cheating,
-			ReasonText:     "",
-			Note:           entry.Summary + "\n\nRaw log:\n" + entry.RawLog,
-			DemoName:       entry.DemoName,
-			DemoTick:       entry.DemoTick,
-			IncludeFriends: false,
-			EvadeOk:        false,
+			Origin:     banDomain.System,
+			SourceID:   owner.GetSteamID(),
+			TargetID:   entry.SteamID,
+			Duration:   duration.FromTimeDuration(dur),
+			BanType:    banDomain.Banned,
+			Reason:     banDomain.Cheating,
+			ReasonText: "",
+			Note:       entry.Summary + "\n\nRaw log:\n" + entry.RawLog,
+			DemoName:   entry.DemoName,
+			DemoTick:   entry.DemoTick,
+			EvadeOk:    false,
 		})
 		if err != nil && !errors.Is(err, database.ErrDuplicate) {
 			slog.Error("Failed to ban cheater", slog.String("detection", string(entry.Detection)),

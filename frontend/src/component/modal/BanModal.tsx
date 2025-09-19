@@ -26,7 +26,7 @@ import { Heading } from '../Heading';
 import { LoadingPlaceholder } from '../LoadingPlaceholder.tsx';
 import { MarkdownField } from '../form/field/MarkdownField.tsx';
 
-export const BanSteamModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
+export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
     const queryClient = useQueryClient();
     const {
         data: ban,

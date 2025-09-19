@@ -81,9 +81,9 @@ export const schemaUserProfile = z
         name: z.string(),
         avatarhash: z.string(),
         ban_id: z.number(),
-        muted: z.boolean(),
-        playerqueue_chat_status: z.enum(['readwrite', 'readonly', 'noaccess']),
-        playerqueue_chat_reason: z.string()
+        muted: z.boolean()
+        // playerqueue_chat_status: z.enum(['readwrite', 'readonly', 'noaccess']),
+        // playerqueue_chat_reason: z.string()
     })
     .merge(schemaTimeStamped);
 

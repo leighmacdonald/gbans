@@ -257,8 +257,7 @@ func (r *Repository) GetPeople(ctx context.Context, transaction pgx.Tx, filter P
 	builder := r.db.
 		Builder().
 		Select("p.steam_id", "p.created_on", "p.updated_on",
-			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.profileurl", "p.avatar",
-			"p.avatarmedium", "p.avatarfull", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
+			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
 			"p.loccountrycode", "p.locstatecode", "p.loccityid", "p.permission_level", "p.discord_id",
 			"p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban", "p.days_since_last_ban",
 			"p.updated_on_steam", "p.muted", "coalesce(pt.patreon_id, '')", "p.playerqueue_chat_status",

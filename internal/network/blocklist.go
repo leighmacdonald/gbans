@@ -80,18 +80,8 @@ func (b *Blocklists) Sync(ctx context.Context) {
 	})
 
 	waitGroup.Go(func() {
-		if err := b.bans.UpdateCache(ctx); err != nil {
-			slog.Error("failed to update banned friends", log.ErrAttr(err))
-
-			return
-		}
-
-		slog.Debug("Banned friends updated")
-	})
-
-	waitGroup.Go(func() {
 		if err := b.UpdateCache(ctx); err != nil {
-			slog.Error("failed to update banned friends", log.ErrAttr(err))
+			slog.Error("failed to update banned CIDR ranges", log.ErrAttr(err))
 
 			return
 		}
