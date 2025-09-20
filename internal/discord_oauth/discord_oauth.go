@@ -2,7 +2,6 @@ package discordoauth
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/json"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -126,8 +126,8 @@ func (d DiscordOAuth) fetchRefresh(ctx context.Context, credentials DiscordCrede
 		_ = resp.Body.Close()
 	}()
 
-	var atr DiscordCredential
-	if errJSON := json.NewDecoder(resp.Body).Decode(&atr); errJSON != nil {
+	atr, errJSON := json.Decode[DiscordCredential](resp.Body)
+	if errJSON != nil {
 		return DiscordCredential{}, errors.Join(errJSON, domain.ErrRequestDecode)
 	}
 
@@ -256,25 +256,24 @@ func (d DiscordOAuth) HandleOAuthCode(ctx context.Context, code string, state st
 }
 
 func (d DiscordOAuth) fetchDiscordUser(ctx context.Context, client *http.Client, accessToken string, steamID steamid.SteamID) (DiscordUserDetail, error) {
-	var details DiscordUserDetail
-
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
 	if errReq != nil {
-		return details, errors.Join(errReq, domain.ErrRequestCreate)
+		return DiscordUserDetail{}, errors.Join(errReq, domain.ErrRequestCreate)
 	}
 
 	req.Header.Add("Authorization", "Bearer "+accessToken)
 	resp, errResp := client.Do(req)
 
 	if errResp != nil {
-		return details, errors.Join(errResp, domain.ErrRequestPerform)
+		return DiscordUserDetail{}, errors.Join(errResp, domain.ErrRequestPerform)
 	}
 
 	defer func() {
 		_ = resp.Body.Close()
 	}()
 
-	if errJSON := json.NewDecoder(resp.Body).Decode(&details); errJSON != nil {
+	details, errJSON := json.Decode[DiscordUserDetail](resp.Body)
+	if errJSON != nil {
 		return details, errors.Join(errJSON, domain.ErrRequestDecode)
 	}
 
@@ -311,8 +310,8 @@ func (d DiscordOAuth) fetchToken(ctx context.Context, client *http.Client, code 
 		_ = resp.Body.Close()
 	}()
 
-	var atr DiscordCredential
-	if errJSON := json.NewDecoder(resp.Body).Decode(&atr); errJSON != nil {
+	atr, errJSON := json.Decode[DiscordCredential](resp.Body)
+	if errJSON != nil {
 		return DiscordCredential{}, errors.Join(errJSON, domain.ErrRequestDecode)
 	}
 

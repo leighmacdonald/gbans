@@ -20,7 +20,7 @@ func TestBans(t *testing.T) {
 
 	// Ensure no bans exist
 	var bansEmpty []ban.Ban
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/steam", nil, http.StatusOK, &authTokens{user: modCreds}, &bansEmpty)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/query", nil, http.StatusOK, &authTokens{user: modCreds}, &bansEmpty)
 	require.Len(t, bansEmpty, 1)
 
 	// Create a ban
@@ -36,10 +36,11 @@ func TestBans(t *testing.T) {
 		DemoName:   "demo-test.dem",
 		DemoTick:   100,
 		EvadeOk:    true,
+		Origin:     banDomain.System,
 	}
 
 	var fetchedBan ban.Ban
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/steam/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
 	require.Equal(t, banReq.SourceID, fetchedBan.SourceID.String())
 	require.Equal(t, banReq.TargetID, fetchedBan.TargetID.String())
@@ -53,7 +54,7 @@ func TestBans(t *testing.T) {
 
 	// Ensure it's in the ban collection
 	var bans []ban.Ban
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/steam", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/query", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
 	require.Len(t, bans, 2)
 
 	updateReq := ban.RequestBanSteamUpdate{
@@ -68,7 +69,7 @@ func TestBans(t *testing.T) {
 
 	// Update the ban
 	var updatedBan ban.Ban
-	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/steam/%d", fetchedBan.BanID),
+	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/ban/%d", fetchedBan.BanID),
 		updateReq, http.StatusOK, &authTokens{user: modCreds}, &updatedBan)
 
 	require.Equal(t, updateReq.TargetID, updatedBan.TargetID)
@@ -81,26 +82,26 @@ func TestBans(t *testing.T) {
 
 	// Get the ban by ban_id
 	var banByBanID ban.Ban
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steam/%d?deleted=true", updatedBan.BanID),
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/ban/%d?deleted=true", updatedBan.BanID),
 		nil, http.StatusOK, &authTokens{user: modCreds}, &banByBanID)
 	require.EqualExportedValues(t, updatedBan, banByBanID)
 
 	// Get the same ban when querying a users active ban
 	var banBySteamID ban.Ban
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steamid/%d", target.SteamID.Int64()),
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/ban/%d", target.SteamID.Int64()),
 		nil, http.StatusOK, &authTokens{user: modCreds}, &banBySteamID)
 	require.EqualExportedValues(t, updatedBan, banBySteamID)
 
 	// Delete the ban
-	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
+	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/ban/%d", banBySteamID.BanID),
 		ban.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, &authTokens{user: modCreds})
 
 	// Ensure it was deleted
-	testEndpoint(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
+	testEndpoint(t, router, http.MethodGet, fmt.Sprintf("/api/ban/%d", banBySteamID.BanID),
 		nil, http.StatusNotFound, &authTokens{user: modCreds})
 
 	// Try to delete non existent bam
-	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
+	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/ban/%d", banBySteamID.BanID),
 		ban.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, &authTokens{user: modCreds})
 }
 
@@ -113,7 +114,7 @@ func TestBansSteamPermissions(t *testing.T) {
 			levels: moderators,
 		},
 		{
-			path:   "/api/bans/steam",
+			path:   "/api/bans/query",
 			method: http.MethodGet,
 			code:   http.StatusForbidden,
 			levels: moderators,
@@ -125,31 +126,31 @@ func TestBansSteamPermissions(t *testing.T) {
 		//	levels: authed,
 		// },
 		{
-			path:   "/api/bans/steam/create",
+			path:   "/api/bans/create",
 			method: http.MethodPost,
 			code:   http.StatusForbidden,
 			levels: moderators,
 		},
 		{
-			path:   "/api/bans/steam/1",
+			path:   "/api/ban/1",
 			method: http.MethodDelete,
 			code:   http.StatusForbidden,
 			levels: moderators,
 		},
 		{
-			path:   "/api/bans/steam/1",
+			path:   "/api/ban/1",
 			method: http.MethodPost,
 			code:   http.StatusForbidden,
 			levels: moderators,
 		},
 		{
-			path:   "/api/bans/steam/1/status",
+			path:   "/api/ban/1/status",
 			method: http.MethodPost,
 			code:   http.StatusForbidden,
 			levels: moderators,
 		},
 		// {
-		//	path:   "/api/bans/steam/1",
+		//	path:   "/api/bans/1",
 		//	method: http.MethodGet,
 		//	code:   http.StatusForbidden,
 		//	levels: moderators,

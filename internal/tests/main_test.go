@@ -19,6 +19,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-querystring/query"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
@@ -84,6 +85,30 @@ var (
 	anticheatUC    anticheat.AntiCheat
 )
 
+type TestConfigRepo struct {
+	config config.Config
+}
+
+// Read implements config.ConfigRepo.
+func (c *TestConfigRepo) Read(_ context.Context) (config.Config, error) {
+	return c.config, nil
+}
+
+// Write implements config.ConfigRepo.
+func (c *TestConfigRepo) Write(_ context.Context, config config.Config) error {
+	c.config = config
+
+	return nil
+}
+
+func (c *TestConfigRepo) Config() config.Config {
+	return c.config
+}
+
+func (c *TestConfigRepo) Init(ctx context.Context) error {
+	return nil
+}
+
 func TestMain(m *testing.M) {
 	slog.SetDefault(slog.New(slog.DiscardHandler))
 	var dsn string
@@ -121,15 +146,14 @@ func TestMain(m *testing.M) {
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-	configRepo := config.NewRepository(databaseConn)
-	configUC = config.NewConfiguration(conf.StaticConfig, configRepo)
+	configUC = config.NewConfiguration(conf.StaticConfig, &TestConfigRepo{config: conf})
 	if err := configUC.Reload(testCtx); err != nil {
 		panic(err)
 	}
 
-	if err := configUC.Write(testCtx, configUC.Config()); err != nil {
-		panic(err)
-	}
+	// if err := configUC.Write(testCtx, configUC.Config()); err != nil {
+	// 	panic(err)
+	// }
 
 	// TODO caching client?
 	tfapiClient, errClient := thirdparty.NewTFAPI("https://tf-api.roto.lol", &http.Client{Timeout: time.Second * 15})
@@ -139,7 +163,7 @@ func TestMain(m *testing.M) {
 
 	authRepo = auth.NewRepository(databaseConn)
 
-	disc, errDiscord := discord.NewDiscord("", "", "", "")
+	disc, errDiscord := discord.NewDiscord("dummy", "dummy", "dummy", "dummy")
 	if errDiscord != nil {
 		panic(errDiscord)
 	}
@@ -220,6 +244,8 @@ func TestMain(m *testing.M) {
 		DemoName:   "demo-test.dem",
 		DemoTick:   100,
 		EvadeOk:    true,
+		CIDR:       nil,
+		Name:       "",
 	})
 
 	if errBan != nil && !errors.Is(errBan, database.ErrDuplicate) {
@@ -234,7 +260,9 @@ func TestMain(m *testing.M) {
 }
 
 func testRouter() *gin.Engine {
-	router, errRouter := cmd.CreateRouter(configUC.Config(), cmd.BuildInfo{
+	conf := configUC.Config()
+	conf.General.Mode = config.TestMode
+	router, errRouter := cmd.CreateRouter(conf, cmd.BuildInfo{
 		BuildVersion: "master",
 		Commit:       "",
 		Date:         time.Now().Format(time.DateTime),
@@ -253,6 +281,7 @@ func testRouter() *gin.Engine {
 	ban.NewReportHandler(router, reportUC, authUC)
 	ban.NewAppealHandler(router, appealUC, authUC)
 	chat.NewChatHandler(router, chatUC, authUC)
+	chat.NewWordFilterHandler(router, configUC, wordFilterUC, chatUC, authUC)
 	person.NewPersonHandler(router, configUC, personUC, authUC)
 	servers.NewSRCDSHandler(router, srcdsUC, serversUC, personUC, assets, bansUC, networkUC, authUC, configUC, stateUC, blocklistUC, cmd.SentryDSN)
 	network.NewBlocklistHandler(router, blocklistUC, networkUC, authUC)
@@ -391,15 +420,10 @@ func loginUser(person person.Person) *auth.UserTokens {
 }
 
 func makeTestConfig(dsn string) config.Config {
-	steamKey, found := os.LookupEnv("GBANS_GENERAL_STEAM_KEY")
-	if !found || len(steamKey) != 32 {
-		panic("GBANS_GENERAL_STEAM_KEY is not set, or is invalid")
-	}
-
 	return config.Config{
 		StaticConfig: config.StaticConfig{
-			Owner:               "76561198084134025",
-			SteamKey:            steamKey,
+			Owner: "76561198084134025",
+			//	SteamKey:            steamKey,
 			ExternalURL:         "http://example.com",
 			HTTPHost:            "localhost",
 			HTTPPort:            6006,

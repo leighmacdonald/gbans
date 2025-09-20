@@ -3,7 +3,6 @@ package servers
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -25,6 +24,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	networkDomain "github.com/leighmacdonald/gbans/internal/domain/network"
 	"github.com/leighmacdonald/gbans/pkg/fs"
+	"github.com/leighmacdonald/gbans/pkg/json"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/ricochet2200/go-disk-usage/du"
@@ -421,15 +421,14 @@ func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails,
 
 	defer log.Closer(resp.Body)
 
-	var demo DemoDetails
-
 	// TODO remove this extra copy once this feature doesnt have much need for debugging/inspection.
 	rawBody, errRead := io.ReadAll(resp.Body)
 	if errRead != nil {
 		return nil, errors.Join(errRead, domain.ErrDemoLoad)
 	}
 
-	if errDecode := json.NewDecoder(bytes.NewReader(rawBody)).Decode(&demo); errDecode != nil {
+	demo, errDecode := json.Decode[DemoDetails](bytes.NewReader(rawBody))
+	if errDecode != nil {
 		return nil, errors.Join(errDecode, domain.ErrDemoLoad)
 	}
 

@@ -51,7 +51,7 @@ type BanOpts struct {
 	ReasonText string             `json:"reason_text" validate:"required"`
 	Origin     ban.Origin         `json:"origin" validate:"required"`
 	ReportID   int64              `json:"report_id" validate:"gte=1"`
-	CIDR       string             `json:"cidr" validate:"cidrv4"`
+	CIDR       *string            `json:"cidr" validate:"cidrv4"`
 	EvadeOk    bool               `json:"evade_ok"`
 	Name       string             `json:"name"`
 	DemoName   string             `json:"demo_name"`
@@ -68,9 +68,9 @@ func (opts *BanOpts) Validate() error {
 		return fmt.Errorf("%w: Custom reason must be at least 3 characters", ErrInvalidBanOpts)
 	}
 
-	if opts.CIDR != "" {
+	if opts.CIDR != nil {
 		// TODO dont ban too many people, limit to /24 ?
-		_, _, errCIDR := net.ParseCIDR(opts.CIDR)
+		_, _, errCIDR := net.ParseCIDR(*opts.CIDR)
 		if errCIDR != nil {
 			return fmt.Errorf("%w: Invalid CIDR", ErrInvalidBanOpts)
 		}
@@ -87,7 +87,7 @@ type Ban struct {
 	SourceID steamid.SteamID `json:"source_id"`
 	BanID    int64           `json:"ban_id"`
 	ReportID int64           `json:"report_id"`
-	LastIP   string          `json:"last_ip"`
+	LastIP   *string         `json:"last_ip"`
 	EvadeOk  bool            `json:"evade_ok"`
 
 	// Reason defines the overall ban classification
@@ -100,7 +100,7 @@ type Ban struct {
 	// Note is a supplementary note added by admins that is hidden from normal view
 	Note        string      `json:"note"`
 	Origin      ban.Origin  `json:"origin"`
-	CIDR        string      `json:"cidr"`
+	CIDR        *string     `json:"cidr"`
 	Name        string      `json:"name"`
 	AppealState AppealState `json:"appeal_state"`
 
@@ -328,14 +328,14 @@ func (s Bans) Create(ctx context.Context, opts BanOpts) (Ban, error) {
 		return newBan, errors.Join(err, ErrFetchPerson)
 	}
 
-	existing, errGetExistingBan := s.QueryOne(ctx, QueryOpts{TargetID: opts.TargetID, EvadeOk: true})
-	if errGetExistingBan != nil && !errors.Is(errGetExistingBan, database.ErrNoResult) {
-		return newBan, errors.Join(errGetExistingBan, ErrGetBan)
-	}
+	// existing, errGetExistingBan := s.QueryOne(ctx, QueryOpts{TargetID: opts.TargetID, EvadeOk: true})
+	// if errGetExistingBan != nil && !errors.Is(errGetExistingBan, database.ErrNoResult) {
+	// 	return newBan, errors.Join(errGetExistingBan, ErrGetBan)
+	// }
 
-	if existing.BanID > 0 {
-		return newBan, database.ErrDuplicate // TODO better error
-	}
+	// if existing.BanID > 0 {
+	// 	return newBan, database.ErrDuplicate // TODO better error
+	// }
 
 	if errSave := s.banRepo.Save(ctx, &newBan); errSave != nil {
 		return newBan, errors.Join(errSave, ErrSaveBan)

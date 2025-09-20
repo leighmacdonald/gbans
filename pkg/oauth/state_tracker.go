@@ -12,6 +12,7 @@ type activeState struct {
 	State   string
 	Created time.Time
 }
+
 type LoginStateTracker struct {
 	stateMap   map[steamid.SteamID]activeState
 	stateMapMu *sync.RWMutex

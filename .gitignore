@@ -38,7 +38,7 @@ sourcemod/.vscode/
 /build/
 /*.zip
 node_modules
-.env
+.env*
 
 /unhandled_messages.log
 *.privatekey.vdf

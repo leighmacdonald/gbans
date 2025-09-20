@@ -26,7 +26,7 @@ func (r *BanRepository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.evade_ok",
 			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
-			"b.unban_reason_text", "b.is_enabled", "b.appeal_state").
+			"b.unban_reason_text", "b.is_enabled", "b.appeal_state", "b.cidr").
 		From("ban b")
 
 	var ands sq.And
@@ -59,7 +59,7 @@ func (r *BanRepository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error
 			Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason,
 				&ban.ReasonText, &ban.Note, &ban.Origin, &ban.ValidUntil, &ban.CreatedOn,
 				&ban.UpdatedOn, &ban.EvadeOk, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
-				&ban.IsEnabled, &ban.AppealState); errScan != nil {
+				&ban.IsEnabled, &ban.AppealState, &ban.CIDR); errScan != nil {
 			return nil, database.DBErr(errScan)
 		}
 
@@ -273,7 +273,8 @@ func (r *BanRepository) Save(ctx context.Context, ban *Ban) error {
 	}
 
 	if lastIp := r.network.GetPlayerMostRecentIP(ctx, ban.TargetID); lastIp != nil {
-		ban.LastIP = lastIp.String()
+		last := lastIp.String()
+		ban.LastIP = &last
 	}
 
 	return r.insertBan(ctx, ban)
@@ -282,14 +283,14 @@ func (r *BanRepository) Save(ctx context.Context, ban *Ban) error {
 func (r *BanRepository) insertBan(ctx context.Context, ban *Ban) error {
 	const query = `
 		INSERT INTO ban (target_id, source_id, ban_type, reason, reason_text, note, valid_until,
-		                 created_on, updated_on, origin, report_id, appeal_state, evade_ok, last_ip)
+		                 created_on, updated_on, origin, report_id, appeal_state, evade_ok, last_ip, cidr)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case WHEN $11 = 0 THEN null ELSE $11 END, $12, $13, $14, $15)
 		RETURNING ban_id`
 
 	errQuery := r.db.
 		QueryRow(ctx, nil, query, ban.TargetID.Int64(), ban.SourceID.Int64(), ban.BanType, ban.Reason, ban.ReasonText,
 			ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Origin, ban.ReportID, ban.AppealState,
-			ban.EvadeOk, &ban.LastIP).
+			ban.EvadeOk, &ban.LastIP, &ban.CIDR).
 		Scan(&ban.BanID)
 
 	if errQuery != nil {
@@ -309,6 +310,7 @@ func (r *BanRepository) updateBan(ctx context.Context, ban *Ban) error {
 		Builder().
 		Update("ban").
 		Set("source_id", ban.SourceID.Int64()).
+		Set("target_id", ban.TargetID.Int64()).
 		Set("reason", ban.Reason).
 		Set("reason_text", ban.ReasonText).
 		Set("note", ban.Note).
@@ -320,9 +322,9 @@ func (r *BanRepository) updateBan(ctx context.Context, ban *Ban) error {
 		Set("report_id", reportID).
 		Set("unban_reason_text", ban.UnbanReasonText).
 		Set("is_enabled", ban.IsEnabled).
-		Set("target_id", ban.TargetID.Int64()).
 		Set("appeal_state", ban.AppealState).
 		Set("evade_ok", ban.EvadeOk).
+		Set("cidr", ban.CIDR).
 		Where(sq.Eq{"ban_id": ban.BanID})
 
 	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, query))
@@ -333,7 +335,7 @@ func (r *BanRepository) ExpiredBans(ctx context.Context) ([]Ban, error) {
 		Builder().
 		Select("ban_id", "target_id", "source_id", "ban_type", "reason", "reason_text", "note",
 			"valid_until", "origin", "created_on", "updated_on", "deleted", "case WHEN report_id is null THEN 0 ELSE report_id END",
-			"unban_reason_text", "is_enabled", "appeal_state", "evade_ok").
+			"unban_reason_text", "is_enabled", "appeal_state", "evade_ok", "cidr").
 		From("ban").
 		Where(sq.And{sq.Lt{"valid_until": time.Now()}, sq.Eq{"deleted": false}})
 
@@ -355,7 +357,7 @@ func (r *BanRepository) ExpiredBans(ctx context.Context) ([]Ban, error) {
 
 		if errScan := rows.Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.ValidUntil, &ban.Origin, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
-			&ban.IsEnabled, &ban.AppealState, &ban.EvadeOk); errScan != nil {
+			&ban.IsEnabled, &ban.AppealState, &ban.EvadeOk, &ban.CIDR); errScan != nil {
 			return nil, errors.Join(errScan, domain.ErrScanResult)
 		}
 
@@ -378,7 +380,7 @@ func (r *BanRepository) GetOlderThan(ctx context.Context, filter query.Filter, s
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.deleted",
 			"case WHEN b.report_id is null THEN 0 ELSE s.report_id END", "b.unban_reason_text", "b.is_enabled",
-			"b.appeal_state", "b.evade_ok").
+			"b.appeal_state", "b.evade_ok", "b.cidr").
 		From("ban b").
 		Where(sq.And{sq.Lt{"b.updated_on": since}, sq.Eq{"b.deleted": false}})
 
@@ -400,7 +402,7 @@ func (r *BanRepository) GetOlderThan(ctx context.Context, filter query.Filter, s
 
 		if errQuery = rows.Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.Origin, &ban.ValidUntil, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
-			&ban.IsEnabled, &ban.AppealState, &ban.EvadeOk); errQuery != nil {
+			&ban.IsEnabled, &ban.AppealState, &ban.EvadeOk, &ban.CIDR); errQuery != nil {
 			return nil, errors.Join(errQuery, domain.ErrScanResult)
 		}
 

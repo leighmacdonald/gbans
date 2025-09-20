@@ -2,7 +2,6 @@ package patreon
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/json"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -196,10 +196,8 @@ func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
 		}
 	}()
 
-	var creds Credential
-
-	decoder := json.NewDecoder(resp.Body)
-	if errDec := decoder.Decode(&creds); errDec != nil {
+	creds, errDec := json.Decode[Credential](resp.Body)
+	if errDec != nil {
 		slog.Error("Failed to decode access token", log.ErrAttr(errDec))
 
 		return errors.Join(errDec, domain.ErrRequestDecode)
@@ -283,10 +281,8 @@ func (p Patreon) OnOauthLogin(ctx context.Context, state string, code string) er
 		}
 	}()
 
-	var creds Credential
-
-	decoder := json.NewDecoder(resp.Body)
-	if errDec := decoder.Decode(&creds); errDec != nil {
+	creds, errDec := json.Decode[Credential](resp.Body)
+	if errDec != nil {
 		slog.Error("Failed to decode access token", log.ErrAttr(errDec))
 
 		return errors.Join(errDec, domain.ErrRequestDecode)

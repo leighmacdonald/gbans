@@ -55,13 +55,13 @@ func NewHandlerSteam(engine *gin.Engine, bans Bans,
 
 		mod.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
 		mod.GET("/api/stats", handler.onAPIGetStats())
-		mod.GET("/api/bans", handler.onAPIGetBans())
-		mod.POST("/api/bans", handler.onAPIPostBanSteamCreate())
+		mod.GET("/api/bans/query", handler.onAPIGetBans())
+		mod.POST("/api/bans/create", handler.onAPIPostBanSteamCreate())
 		mod.GET("/api/bans/all/:steam_id", handler.onAPIGetBansSteamBySteamID())
 		mod.GET("/api/bans/steamid/:steam_id", handler.onAPIGetBanBySteam())
-		mod.DELETE("/api/bans/:ban_id", handler.onAPIPostBanDelete())
-		mod.POST("/api/bans/:ban_id", handler.onAPIPostBanUpdate())
-		mod.POST("/api/bans/:ban_id/status", handler.onAPIPostSetBanAppealStatus())
+		mod.DELETE("/api/ban/:ban_id", handler.onAPIPostBanDelete())
+		mod.POST("/api/ban/:ban_id", handler.onAPIPostBanUpdate())
+		mod.POST("/api/ban/:ban_id/status", handler.onAPIPostSetBanAppealStatus())
 	}
 }
 

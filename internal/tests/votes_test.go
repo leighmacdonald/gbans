@@ -12,8 +12,6 @@ import (
 )
 
 func TestVotes(t *testing.T) {
-	t.Parallel()
-
 	router := testRouter()
 	source := getUser()
 	target := getUser()
@@ -46,8 +44,6 @@ func TestVotes(t *testing.T) {
 }
 
 func TestVotesPermissions(t *testing.T) {
-	t.Parallel()
-
 	testPermissions(t, testRouter(), []permTestValues{
 		{
 			path:   "/api/votes",
