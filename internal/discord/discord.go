@@ -66,7 +66,7 @@ func NewDiscord(appID string, guildID string, token string, externalURL string) 
 	return bot, nil
 }
 
-func (h *Discord) Start(ctx context.Context) error {
+func (bot *Discord) Start(_ context.Context) error {
 	// cmdMap := map[Cmd]func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error){
 	// 	CmdBan:     h.makeOnBan(),
 	// 	CmdCheck:   h.makeOnCheck(),
@@ -96,7 +96,7 @@ func (h *Discord) Start(ctx context.Context) error {
 	//
 
 	// Open a websocket connection to discord and begin listening.
-	if errSessionOpen := h.Session.Open(); errSessionOpen != nil {
+	if errSessionOpen := bot.Session.Open(); errSessionOpen != nil {
 		return errors.Join(errSessionOpen, ErrDiscordOpen)
 	}
 
@@ -206,7 +206,7 @@ func (bot *Discord) onInteractionCreate(session *discordgo.Session, interaction 
 		response, errHandleCommand := handler(commandCtx, session, interaction)
 		if errHandleCommand != nil || response == nil {
 			if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
-				Embeds: []*discordgo.MessageEmbed{message.ErrorMessage(string(command), errHandleCommand)},
+				Embeds: []*discordgo.MessageEmbed{message.ErrorMessage(command, errHandleCommand)},
 			}); errFollow != nil {
 				slog.Error("Failed sending error response for interaction", log.ErrAttr(errFollow))
 			}
@@ -266,22 +266,22 @@ func (bot *Discord) botRegisterSlashCommands(appID string) error {
 	return nil
 }
 
-type nullDiscordRepository struct{}
+type NullDiscordRepository struct{}
 
-func (bot *nullDiscordRepository) RegisterHandler(_ string, _ SlashCommandHandler) error {
+func (bot *NullDiscordRepository) RegisterHandler(_ string, _ SlashCommandHandler) error {
 	return nil
 }
 
-func (bot *nullDiscordRepository) Shutdown() {
+func (bot *NullDiscordRepository) Shutdown() {
 }
 
-func (bot *nullDiscordRepository) Start() error {
+func (bot *NullDiscordRepository) Start() error {
 	return nil
 }
 
-func (bot *nullDiscordRepository) SendPayload(_ string, _ *discordgo.MessageEmbed) {
+func (bot *NullDiscordRepository) SendPayload(_ string, _ *discordgo.MessageEmbed) {
 }
 
-func NewNullDiscordRepository() *nullDiscordRepository {
-	return &nullDiscordRepository{}
+func NewNullDiscordRepository() *NullDiscordRepository {
+	return &NullDiscordRepository{}
 }

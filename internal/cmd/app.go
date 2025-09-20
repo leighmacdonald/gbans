@@ -196,7 +196,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.bot = bot
 
 	g.assets = asset.NewAssets(assetRepo)
-	g.servers = servers.NewServers(servers.NewServersRepository(g.database))
+	g.servers = servers.NewServers(servers.NewRepository(g.database))
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, g.config)
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.config, g.persons, g.demos, g.tfapiClient)
 	g.states = servers.NewState(g.broadcaster, servers.NewStateRepository(servers.NewCollector(g.servers)), g.config, g.servers)
@@ -206,9 +206,9 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.config)
 	g.chatRepo = chat.NewChatRepository(g.database, g.persons, g.wordFilters, g.broadcaster)
 	g.chat = chat.NewChat(g.config, g.chatRepo, g.wordFilters, g.states, g.bans, g.persons)
-	g.forums = forum.NewForums(forum.NewForumRepository(g.database))
+	g.forums = forum.NewForums(forum.NewRepository(g.database))
 	g.metrics = metrics.NewMetrics(g.broadcaster)
-	g.news = news.NewNews(news.NewNewsRepository(g.database))
+	g.news = news.NewNews(news.NewRepository(g.database))
 	g.patreon = patreon.NewPatreon(patreon.NewRepository(g.database), g.config)
 	g.srcds = servers.NewSRCDS(servers.NewSRCDSRepository(g.database), g.config, g.servers, g.persons, g.tfapiClient)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
@@ -258,7 +258,7 @@ func (g *GBans) startBot(ctx context.Context) error {
 }
 
 func (g *GBans) setupPlayerQueue(ctx context.Context) {
-	playerqueueRepo := playerqueue.NewPlayerqueueRepository(g.database, g.persons)
+	playerqueueRepo := playerqueue.NewRepository(g.database, g.persons)
 	// Pre-load some messages into queue message cache
 	chatlogs, errChatlogs := playerqueueRepo.Query(ctx, playerqueue.PlayerqueueQueryOpts{Filter: query.Filter{Limit: 100}})
 	if errChatlogs != nil {
@@ -457,7 +457,7 @@ func (g GBans) firstTimeSetup(ctx context.Context) error {
 		return errRootUser
 	}
 
-	owner := person.NewPerson(steamid.New(conf.Owner))
+	owner := person.New(steamid.New(conf.Owner))
 	owner.PermissionLevel = permission.PAdmin
 
 	if errSave := g.persons.SavePerson(ctx, nil, &owner); errSave != nil {

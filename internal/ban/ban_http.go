@@ -463,7 +463,7 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 
 type RequestBanSteamUpdate struct {
 	TargetID   steamid.SteamID `json:"target_id"`
-	BanType    ban.BanType     `json:"ban_type"`
+	BanType    ban.Type        `json:"ban_type"`
 	Reason     ban.Reason      `json:"reason"`
 	ReasonText string          `json:"reason_text"`
 	Note       string          `json:"note"`

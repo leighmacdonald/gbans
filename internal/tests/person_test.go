@@ -28,11 +28,11 @@ func TestPerson(t *testing.T) {
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/current_profile", nil, http.StatusOK, &authTokens{user: sourceAuth}, &profile)
 	require.Equal(t, source.SteamID, profile.SteamID)
 
-	var settings person.PersonSettings
+	var settings person.Settings
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/current_profile/settings", nil, http.StatusOK, &authTokens{user: sourceAuth}, &settings)
 
-	var updated person.PersonSettings
-	update := person.PersonSettingsUpdate{
+	var updated person.Settings
+	update := person.SettingsUpdate{
 		ForumSignature:       settings.ForumSignature + "x",
 		ForumProfileMessages: !settings.ForumProfileMessages,
 		StatsHidden:          !settings.StatsHidden,

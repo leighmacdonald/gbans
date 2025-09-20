@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	ErrIgnored           = errors.New("Ignored msg")
-	ErrUnhandled         = errors.New("Unhandled msg")
-	ErrInvalidType       = errors.New("Invalid Type")
+	ErrIgnored           = errors.New("ignored msg")
+	ErrUnhandled         = errors.New("unhandled msg")
+	ErrInvalidType       = errors.New("invalid Type")
 	ErrPlayerSIDNotExist = errors.New("player sid does not exist")
 )
 

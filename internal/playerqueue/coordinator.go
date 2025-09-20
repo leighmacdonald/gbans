@@ -19,7 +19,7 @@ type Coordinator struct {
 	chatLogHistorySize int
 	minQueueSize       int
 	lobbies            []*Lobby
-	clients            []QueueClient
+	clients            []Client
 	chatLogs           []ChatLog
 	mu                 *sync.RWMutex
 	validLobbies       func() ([]Lobby, error)
@@ -28,7 +28,7 @@ type Coordinator struct {
 func New(chatLogHistorySize int, minQueueSize int, chatlogs []ChatLog, currentStateFunc func() ([]Lobby, error)) *Coordinator {
 	return &Coordinator{
 		minQueueSize:       minQueueSize,
-		clients:            []QueueClient{},
+		clients:            []Client{},
 		chatLogs:           chatlogs,
 		lobbies:            []*Lobby{},
 		mu:                 &sync.RWMutex{},
@@ -88,7 +88,7 @@ func (q *Coordinator) updateClientStates(fullUpdate bool) {
 	go q.broadcast(Response{Op: StateUpdate, Payload: update})
 }
 
-func (q *Coordinator) Leave(client QueueClient, servers []int) error {
+func (q *Coordinator) Leave(client Client, servers []int) error {
 	changed := false
 
 	q.mu.Lock()
@@ -120,7 +120,7 @@ func (q *Coordinator) Leave(client QueueClient, servers []int) error {
 	return nil
 }
 
-func (q *Coordinator) Join(client QueueClient, servers []int) error {
+func (q *Coordinator) Join(client Client, servers []int) error {
 	changed := false
 	q.mu.Lock()
 
@@ -159,7 +159,7 @@ func (q *Coordinator) Join(client QueueClient, servers []int) error {
 
 // Connect adds the user to the swarm. If a user exists with the same steamid exists, it will be replaced with
 // the new connection.
-func (q *Coordinator) Connect(ctx context.Context, steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) QueueClient {
+func (q *Coordinator) Connect(ctx context.Context, steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) Client {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -246,7 +246,7 @@ func (q *Coordinator) checkQueueCompat() error {
 
 func (q *Coordinator) initiateGame(serverID int) error {
 	q.mu.RLock()
-	var queuedClients []QueueClient
+	var queuedClients []Client
 
 	var currentLobby *Lobby
 
@@ -348,7 +348,7 @@ func (q *Coordinator) PurgeMessages(deletedIDs ...int64) {
 
 // Disconnect removes a client from the coordinator entirely, leaving all its queues, closing the underlying client and broadcasting
 // the full state change to all clients.
-func (q *Coordinator) Disconnect(client QueueClient) {
+func (q *Coordinator) Disconnect(client Client) {
 	q.mu.RLock()
 
 	var serverIDs []int //nolint:prealloc
@@ -363,7 +363,7 @@ func (q *Coordinator) Disconnect(client QueueClient) {
 	}
 
 	q.mu.Lock()
-	var valid []QueueClient //nolint:prealloc
+	var valid []Client //nolint:prealloc
 	for _, existing := range q.clients {
 		if existing.SteamID() == client.SteamID() {
 			continue
@@ -401,7 +401,7 @@ func (q *Coordinator) Message(message ChatLog) {
 
 // broadcast sends a domain.Response payload to multiple clients. If no clients are specified, all
 // clients will receive the payload.
-func (q *Coordinator) broadcast(payload Response, targetClients ...QueueClient) {
+func (q *Coordinator) broadcast(payload Response, targetClients ...Client) {
 	if len(targetClients) == 0 {
 		targetClients = q.clients
 	}
@@ -417,7 +417,7 @@ func (q *Coordinator) broadcast(payload Response, targetClients ...QueueClient) 
 	}
 }
 
-func (q *Coordinator) removeFromQueues(client QueueClient) {
+func (q *Coordinator) removeFromQueues(client Client) {
 	for _, srv := range q.lobbies {
 		var valid []ClientQueueState
 
@@ -432,7 +432,7 @@ func (q *Coordinator) removeFromQueues(client QueueClient) {
 }
 
 // sendClientChatHistory sends the last N messages of the chatLogs history to the client provided.
-func (q *Coordinator) sendClientChatHistory(client QueueClient) {
+func (q *Coordinator) sendClientChatHistory(client Client) {
 	payload := MessagePayload{
 		Messages: []ChatLog{},
 	}

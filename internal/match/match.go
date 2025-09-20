@@ -13,22 +13,22 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type MatchTriggerType int
+type TriggerType int
 
 const (
-	MatchTriggerStart MatchTriggerType = 1
-	MatchTriggerEnd   MatchTriggerType = 2
+	MatchTriggerStart TriggerType = 1
+	MatchTriggerEnd   TriggerType = 2
 )
 
-type MatchTrigger struct {
-	Type     MatchTriggerType
+type Trigger struct {
+	Type     TriggerType
 	UUID     uuid.UUID
 	Server   servers.Server
 	MapName  string
 	DemoName string
 }
 
-type MatchesQueryOpts struct {
+type QueryOpts struct {
 	query.Filter
 	SteamID   string     `json:"steam_id"`
 	ServerID  int        `json:"server_id"`
@@ -37,7 +37,7 @@ type MatchesQueryOpts struct {
 	TimeEnd   *time.Time `json:"time_end,omitempty"`
 }
 
-func (mqf MatchesQueryOpts) TargetSteamID() (steamid.SteamID, bool) {
+func (mqf QueryOpts) TargetSteamID() (steamid.SteamID, bool) {
 	sid := steamid.New(mqf.SteamID)
 
 	return sid, sid.Valid()
@@ -45,7 +45,7 @@ func (mqf MatchesQueryOpts) TargetSteamID() (steamid.SteamID, bool) {
 
 const MinMedicHealing = 500
 
-type MatchPlayerKillstreak struct {
+type PlayerKillstreak struct {
 	MatchKillstreakID int64                `json:"match_killstreak_id"`
 	MatchPlayerID     int64                `json:"match_player_id"`
 	PlayerClass       logparse.PlayerClass `json:"player_class"`
@@ -73,21 +73,21 @@ type MatchPlayerClass struct {
 	BuildingDestroyed  int                  `json:"building_destroyed"`
 }
 
-type MatchPlayer struct {
+type Player struct {
 	MatchPlayerID int64 `json:"match_player_id"`
 	CommonPlayerStats
 	Team      logparse.Team `json:"team"`
 	TimeStart time.Time     `json:"time_start"`
 	TimeEnd   time.Time     `json:"time_end"`
 
-	MedicStats  *MatchHealer            `json:"medic_stats"`
-	Classes     []MatchPlayerClass      `json:"classes"`
-	Killstreaks []MatchPlayerKillstreak `json:"killstreaks"`
-	Weapons     []MatchPlayerWeapon     `json:"weapons"`
+	MedicStats  *Healer            `json:"medic_stats"`
+	Classes     []MatchPlayerClass `json:"classes"`
+	Killstreaks []PlayerKillstreak `json:"killstreaks"`
+	Weapons     []PlayerWeapon     `json:"weapons"`
 }
 
-func (player MatchPlayer) BiggestKillstreak() *MatchPlayerKillstreak {
-	var biggest *MatchPlayerKillstreak
+func (player Player) BiggestKillstreak() *PlayerKillstreak {
+	var biggest *PlayerKillstreak
 
 	for _, killstreakVal := range player.Killstreaks {
 		killstreak := killstreakVal
@@ -99,7 +99,7 @@ func (player MatchPlayer) BiggestKillstreak() *MatchPlayerKillstreak {
 	return biggest
 }
 
-func (player MatchPlayer) KDRatio() float64 {
+func (player Player) KDRatio() float64 {
 	if player.Deaths <= 0 {
 		return -1
 	}
@@ -107,7 +107,7 @@ func (player MatchPlayer) KDRatio() float64 {
 	return math.Ceil((float64(player.Kills)/float64(player.Deaths))*100) / 100
 }
 
-func (player MatchPlayer) KDARatio() float64 {
+func (player Player) KDARatio() float64 {
 	if player.Deaths <= 0 {
 		return -1
 	}
@@ -115,11 +115,11 @@ func (player MatchPlayer) KDARatio() float64 {
 	return math.Ceil((float64(player.Kills+player.Assists)/float64(player.Deaths))*100) / 100
 }
 
-func (player MatchPlayer) DamagePerMin() int {
+func (player Player) DamagePerMin() int {
 	return slices.Max([]int{int(float64(player.Damage) / player.TimeEnd.Sub(player.TimeStart).Minutes()), 0})
 }
 
-type MatchHealer struct {
+type Healer struct {
 	MatchMedicID        int64   `json:"match_medic_id"`
 	MatchPlayerID       int64   `json:"match_player_id"`
 	Healing             int     `json:"healing"`
@@ -134,7 +134,7 @@ type MatchHealer struct {
 	BiggestAdvLost      int     `json:"biggest_adv_lost"`
 }
 
-func (h MatchHealer) HealingPerMin(matchDuration time.Duration) int {
+func (h Healer) HealingPerMin(matchDuration time.Duration) int {
 	if h.Healing <= 0 {
 		return 0
 	}
@@ -147,7 +147,7 @@ type MatchWeapon struct {
 	MatchPlayerID  int64 `json:"match_player_id"`
 }
 
-type MatchResult struct {
+type Result struct {
 	MatchID    uuid.UUID           `json:"match_id"`
 	ServerID   int                 `json:"server_id"`
 	Title      string              `json:"title"`
@@ -156,7 +156,7 @@ type MatchResult struct {
 	TimeStart  time.Time           `json:"time_start"`
 	TimeEnd    time.Time           `json:"time_end"`
 	Winner     logparse.Team       `json:"winner"`
-	Players    []*MatchPlayer      `json:"players"`
+	Players    []*Player           `json:"players"`
 	Chat       []PersonMessage     `json:"chat"`
 }
 type PersonMessage struct {
@@ -173,7 +173,7 @@ type PersonMessage struct {
 	AutoFilterFlagged int64           `json:"auto_filter_flagged"`
 }
 
-func (match *MatchResult) TopPlayers() []*MatchPlayer {
+func (match *Result) TopPlayers() []*Player {
 	players := match.Players
 
 	sort.SliceStable(players, func(i, j int) bool {
@@ -183,8 +183,8 @@ func (match *MatchResult) TopPlayers() []*MatchPlayer {
 	return players
 }
 
-func (match *MatchResult) TopKillstreaks(count int) []*MatchPlayer {
-	var killStreakPlayers []*MatchPlayer
+func (match *Result) TopKillstreaks(count int) []*Player {
+	var killStreakPlayers []*Player
 
 	for _, player := range match.Players {
 		if killStreak := player.BiggestKillstreak(); killStreak != nil {
@@ -203,8 +203,8 @@ func (match *MatchResult) TopKillstreaks(count int) []*MatchPlayer {
 	return killStreakPlayers
 }
 
-func (match *MatchResult) Healers() []*MatchPlayer {
-	var healers []*MatchPlayer
+func (match *Result) Healers() []*Player {
+	var healers []*Player
 
 	for _, player := range match.Players {
 		if player.MedicStats != nil {
@@ -219,7 +219,7 @@ func (match *MatchResult) Healers() []*MatchPlayer {
 	return healers
 }
 
-type MatchPlayerWeapon struct {
+type PlayerWeapon struct {
 	Weapon
 	Kills     int     `json:"kills"`
 	Damage    int     `json:"damage"`
@@ -231,7 +231,7 @@ type MatchPlayerWeapon struct {
 	Airshots  int     `json:"airshots"`
 }
 
-type PlayerClassStats struct {
+type ClassStats struct {
 	Class              logparse.PlayerClass
 	ClassName          string
 	Kills              int
@@ -252,7 +252,7 @@ type PlayerClassStats struct {
 	Playtime           float64 // seconds
 }
 
-func (player PlayerClassStats) KDRatio() float64 {
+func (player ClassStats) KDRatio() float64 {
 	if player.Deaths <= 0 {
 		return -1
 	}
@@ -260,7 +260,7 @@ func (player PlayerClassStats) KDRatio() float64 {
 	return math.Ceil((float64(player.Kills)/float64(player.Deaths))*100) / 100
 }
 
-func (player PlayerClassStats) KDARatio() float64 {
+func (player ClassStats) KDARatio() float64 {
 	if player.Deaths <= 0 {
 		return -1
 	}
@@ -268,11 +268,11 @@ func (player PlayerClassStats) KDARatio() float64 {
 	return math.Ceil((float64(player.Kills+player.Assists)/float64(player.Deaths))*100) / 100
 }
 
-func (player PlayerClassStats) DamagePerMin() int {
+func (player ClassStats) DamagePerMin() int {
 	return int(float64(player.Damage) / (player.Playtime / 60))
 }
 
-type PlayerClassStatsCollection []PlayerClassStats
+type PlayerClassStatsCollection []ClassStats
 
 func (ps PlayerClassStatsCollection) Kills() int {
 	var total int
@@ -449,7 +449,7 @@ type PlayerStats struct {
 	PlayTime     time.Duration `json:"play_time"`
 }
 
-type MatchSummary struct {
+type Summary struct {
 	MatchID   uuid.UUID `json:"match_id"`
 	ServerID  int       `json:"server_id"`
 	IsWinner  bool      `json:"is_winner"`
@@ -462,6 +462,6 @@ type MatchSummary struct {
 	TimeEnd   time.Time `json:"time_end"`
 }
 
-func (m MatchSummary) Path() string {
+func (m Summary) Path() string {
 	return "/log/" + m.MatchID.String()
 }

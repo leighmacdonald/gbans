@@ -132,7 +132,7 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 	}
 }
 
-func (h *serverQueueHandler) handleWSMessage(client QueueClient) (Request, error) {
+func (h *serverQueueHandler) handleWSMessage(client Client) (Request, error) {
 	var payloadInbound Request
 	if errRead := client.Next(&payloadInbound); errRead != nil {
 		return payloadInbound, errors.Join(errRead, ErrQueueIO)
@@ -141,7 +141,7 @@ func (h *serverQueueHandler) handleWSMessage(client QueueClient) (Request, error
 	return payloadInbound, nil
 }
 
-func (h *serverQueueHandler) handleRequest(ctx context.Context, client QueueClient, payloadInbound Request, user domain.PersonInfo) error {
+func (h *serverQueueHandler) handleRequest(ctx context.Context, client Client, payloadInbound Request, user domain.PersonInfo) error {
 	var err error
 	switch payloadInbound.Op {
 	case JoinQueue:

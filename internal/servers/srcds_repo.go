@@ -35,7 +35,7 @@ func (r SRCDSRepository) QueryBanState(ctx context.Context, steamID steamid.Stea
 	var (
 		banSource  *BanSource
 		banID      *int
-		banType    *ban.BanType
+		banType    *ban.Type
 		reason     *ban.Reason
 		evadeOK    *bool
 		validUntil *time.Time

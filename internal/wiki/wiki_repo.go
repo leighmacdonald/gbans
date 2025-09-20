@@ -8,15 +8,15 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 )
 
-type wikiRepository struct {
+type Repository struct {
 	db database.Database
 }
 
-func NewRepository(database database.Database) wikiRepository {
-	return wikiRepository{db: database}
+func NewRepository(database database.Database) Repository {
+	return Repository{db: database}
 }
 
-func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string) (Page, error) {
+func (r *Repository) GetWikiPageBySlug(ctx context.Context, slug string) (Page, error) {
 	var page Page
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, nil, r.db.
@@ -37,7 +37,7 @@ func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string) (Pa
 	return page, nil
 }
 
-func (r *wikiRepository) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
+func (r *Repository) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
 	if errExec := r.db.ExecDeleteBuilder(ctx, nil, r.db.
 		Builder().
 		Delete("wiki").
@@ -48,7 +48,7 @@ func (r *wikiRepository) DeleteWikiPageBySlug(ctx context.Context, slug string) 
 	return nil
 }
 
-func (r *wikiRepository) SaveWikiPage(ctx context.Context, page *Page) error {
+func (r *Repository) SaveWikiPage(ctx context.Context, page *Page) error {
 	errQueryRow := r.db.ExecInsertBuilder(ctx, nil, r.db.
 		Builder().
 		Insert("wiki").

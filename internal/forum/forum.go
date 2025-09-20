@@ -165,11 +165,11 @@ const (
 )
 
 type Forums struct {
-	repo    ForumRepository
+	repo    Repository
 	tracker *Tracker
 }
 
-func NewForums(repository ForumRepository) Forums {
+func NewForums(repository Repository) Forums {
 	return Forums{repo: repository, tracker: NewTracker()}
 }
 

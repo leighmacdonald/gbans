@@ -201,7 +201,7 @@ func (r *Repository) GetPeopleBySteamID(ctx context.Context, transaction pgx.Tx,
 	for rows.Next() {
 		var (
 			steamID int64
-			person  = NewPerson(steamid.SteamID{})
+			person  = New(steamid.SteamID{})
 		)
 
 		if errScan := rows.Scan(&steamID, &person.CreatedOn, &person.UpdatedOn, &person.VisibilityState,
@@ -321,7 +321,7 @@ func (r *Repository) GetPeople(ctx context.Context, transaction pgx.Tx, filter P
 
 	for rows.Next() {
 		var (
-			person  = NewPerson(steamid.SteamID{})
+			person  = New(steamid.SteamID{})
 			steamID int64
 		)
 
@@ -409,7 +409,7 @@ func (r *Repository) GetExpiredProfiles(ctx context.Context, transaction pgx.Tx,
 
 	for rows.Next() {
 		var (
-			person  = NewPerson(steamid.SteamID{})
+			person  = New(steamid.SteamID{})
 			steamID int64
 		)
 
@@ -490,8 +490,8 @@ func (r *Repository) GetSteamIDsByGroups(ctx context.Context, privileges []permi
 	return ids, nil
 }
 
-func (r *Repository) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (PersonSettings, error) {
-	var settings PersonSettings
+func (r *Repository) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (Settings, error) {
+	var settings Settings
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
@@ -562,7 +562,7 @@ func boolToStringDigit(b bool) string {
 	return "0"
 }
 
-func (r *Repository) SavePersonSettings(ctx context.Context, settings *PersonSettings) error {
+func (r *Repository) SavePersonSettings(ctx context.Context, settings *Settings) error {
 	const (
 		query = `
     INSERT INTO sm_cookie_cache (player, cookie_id, value, timestamp)

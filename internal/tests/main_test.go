@@ -170,14 +170,14 @@ func TestMain(m *testing.M) {
 	discordUC = disc
 
 	assets = asset.NewAssets(asset.NewLocalRepository(databaseConn, configUC.Config().LocalStore.PathRoot))
-	newsUC = news.NewNews(news.NewNewsRepository(databaseConn))
-	serversUC = servers.NewServers(servers.NewServersRepository(databaseConn))
+	newsUC = news.NewNews(news.NewRepository(databaseConn))
+	serversUC = servers.NewServers(servers.NewRepository(databaseConn))
 	wikiUC = wiki.NewWiki(wiki.NewRepository(databaseConn))
 	notificationUC = notification.NewNotifications(notification.NewRepository(databaseConn), discordUC)
 	patreonUC = patreon.NewPatreonManager(configUC)
 	personUC = person.NewPersons(person.NewRepository(conf, databaseConn), configUC, tfapiClient)
 	wordFilterUC = chat.NewWordFilter(chat.NewWordFilterRepository(databaseConn))
-	forumUC = forum.NewForums(forum.NewForumRepository(databaseConn))
+	forumUC = forum.NewForums(forum.NewRepository(databaseConn))
 
 	stateUC = servers.NewState(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(serversUC)), configUC, serversUC)
 
@@ -462,7 +462,7 @@ func makeTestConfig(dsn string) config.Config {
 			DemoCleanupMount:    "",
 			DemoCountLimit:      2,
 		},
-		Filters: config.ConfigFilter{
+		Filters: config.Filter{
 			Enabled:        true,
 			WarningTimeout: 10,
 			WarningLimit:   1,
@@ -475,7 +475,7 @@ func makeTestConfig(dsn string) config.Config {
 		Discord: config.Discord{
 			Enabled: false,
 		},
-		Clientprefs: config.ConfigClientprefs{},
+		Clientprefs: config.Clientprefs{},
 		Log: config.Log{
 			HTTPEnabled: false,
 			Level:       "error",
@@ -484,13 +484,13 @@ func makeTestConfig(dsn string) config.Config {
 			Enabled: false,
 		},
 		Debug: config.Debug{},
-		Patreon: config.ConfigPatreon{
+		Patreon: config.Patreon{
 			Enabled: false,
 		},
-		SSH: config.ConfigSSH{
+		SSH: config.SSH{
 			Enabled: false,
 		},
-		LocalStore: config.ConfigLocalStore{},
-		Exports:    config.ConfigExports{},
+		LocalStore: config.LocalStore{},
+		Exports:    config.Exports{},
 	}
 }

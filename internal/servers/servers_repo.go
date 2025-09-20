@@ -12,15 +12,15 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type ServersRepository struct {
+type Repository struct {
 	db database.Database
 }
 
-func NewServersRepository(database database.Database) ServersRepository {
-	return ServersRepository{db: database}
+func NewRepository(database database.Database) Repository {
+	return Repository{db: database}
 }
 
-func (r *ServersRepository) GetServer(ctx context.Context, serverID int) (Server, error) {
+func (r *Repository) GetServer(ctx context.Context, serverID int) (Server, error) {
 	var server Server
 
 	row, rowErr := r.db.QueryRowBuilder(ctx, nil, r.db.
@@ -51,7 +51,7 @@ func (r *ServersRepository) GetServer(ctx context.Context, serverID int) (Server
 	return server, nil
 }
 
-func (r *ServersRepository) GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
+func (r *Repository) GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
 	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("steam_id", "permission_level").From("person").
@@ -97,7 +97,7 @@ func (r *ServersRepository) GetServerPermissions(ctx context.Context) ([]ServerP
 	return perms, nil
 }
 
-func (r *ServersRepository) GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error) {
+func (r *Repository) GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error) {
 	builder := r.db.
 		Builder().
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
@@ -176,7 +176,7 @@ func (r *ServersRepository) GetServers(ctx context.Context, filter ServerQueryFi
 	return servers, count, nil
 }
 
-func (r *ServersRepository) GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error {
+func (r *Repository) GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error {
 	and := sq.And{sq.Eq{"short_name": serverName}}
 	if !disabledOk {
 		and = append(and, sq.Eq{"is_enabled": true})
@@ -213,7 +213,7 @@ func (r *ServersRepository) GetServerByName(ctx context.Context, serverName stri
 	return nil
 }
 
-func (r *ServersRepository) GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error {
+func (r *Repository) GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error {
 	and := sq.And{sq.Eq{"password": serverPassword}}
 	if !disabledOk {
 		and = append(and, sq.Eq{"is_enabled": true})
@@ -251,7 +251,7 @@ func (r *ServersRepository) GetServerByPassword(ctx context.Context, serverPassw
 }
 
 // SaveServer updates or creates the server data in the database.
-func (r *ServersRepository) SaveServer(ctx context.Context, server *Server) error {
+func (r *Repository) SaveServer(ctx context.Context, server *Server) error {
 	if server.ServerID > 0 {
 		return r.updateServer(ctx, server)
 	}
@@ -259,7 +259,7 @@ func (r *ServersRepository) SaveServer(ctx context.Context, server *Server) erro
 	return r.insertServer(ctx, server)
 }
 
-func (r *ServersRepository) insertServer(ctx context.Context, server *Server) error {
+func (r *Repository) insertServer(ctx context.Context, server *Server) error {
 	const query = `
 		INSERT INTO server (
 		    short_name, name, address, port, rcon, token_created_on,
@@ -280,7 +280,7 @@ func (r *ServersRepository) insertServer(ctx context.Context, server *Server) er
 	return nil
 }
 
-func (r *ServersRepository) updateServer(ctx context.Context, server *Server) error {
+func (r *Repository) updateServer(ctx context.Context, server *Server) error {
 	server.UpdatedOn = time.Now()
 
 	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.

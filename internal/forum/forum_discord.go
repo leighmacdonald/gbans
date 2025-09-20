@@ -10,7 +10,7 @@ import (
 
 type discordHandler struct{}
 
-func ForumCategorySave(category Category) *discordgo.MessageEmbed {
+func discordCategorySave(category Category) *discordgo.MessageEmbed {
 	embed := message.NewEmbed("Forum Category Saved")
 	embed.Embed().AddField("Category", category.Title)
 	embed.Embed().AddField("ID", strconv.Itoa(category.ForumCategoryID))
@@ -22,7 +22,7 @@ func ForumCategorySave(category Category) *discordgo.MessageEmbed {
 	return embed.Embed().MessageEmbed
 }
 
-func ForumCategoryDelete(category Category) *discordgo.MessageEmbed {
+func discordCategoryDelete(category Category) *discordgo.MessageEmbed {
 	embed := message.NewEmbed("Forum Category Deleted")
 	embed.Embed().AddField("Category", category.Title)
 	embed.Embed().AddField("ID", strconv.Itoa(category.ForumCategoryID))
@@ -34,7 +34,7 @@ func ForumCategoryDelete(category Category) *discordgo.MessageEmbed {
 	return embed.Embed().MessageEmbed
 }
 
-func ForumMessageSaved(forumMessage Message) *discordgo.MessageEmbed {
+func discordForunMessageSaved(forumMessage Message) *discordgo.MessageEmbed {
 	embed := message.NewEmbed("Forum Message Created/Edited", forumMessage.BodyMD)
 	embed.Embed().
 		AddField("Category", forumMessage.Title)
@@ -49,7 +49,7 @@ func ForumMessageSaved(forumMessage Message) *discordgo.MessageEmbed {
 	return embed.Embed().MessageEmbed
 }
 
-func ForumSaved(forumMessage Forum) *discordgo.MessageEmbed {
+func discordForumSaved(forumMessage Forum) *discordgo.MessageEmbed {
 	embed := message.NewEmbed("Forum Created/Edited")
 	embed.Embed().
 		AddField("Forum", forumMessage.Title)

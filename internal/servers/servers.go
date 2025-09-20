@@ -195,12 +195,12 @@ type PartialStateUpdate struct {
 	PlayersVisible int    `json:"players_visible"`
 }
 
-func NewServers(repository ServersRepository) Servers {
+func NewServers(repository Repository) Servers {
 	return Servers{repository: repository}
 }
 
 type Servers struct {
-	repository ServersRepository
+	repository Repository
 }
 
 // Delete performs a soft delete of the server. We use soft deleted because we dont wand to delete all the relationships

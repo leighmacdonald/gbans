@@ -9,15 +9,15 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 )
 
-type NewsRepository struct {
+type Repository struct {
 	db database.Database
 }
 
-func NewNewsRepository(database database.Database) NewsRepository {
-	return NewsRepository{db: database}
+func NewRepository(database database.Database) Repository {
+	return Repository{db: database}
 }
 
-func (r NewsRepository) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]Article, error) {
+func (r Repository) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]Article, error) {
 	builder := r.db.
 		Builder().
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
@@ -52,7 +52,7 @@ func (r NewsRepository) GetNewsLatest(ctx context.Context, limit int, includeUnp
 	return articles, nil
 }
 
-func (r NewsRepository) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *Article) error {
+func (r Repository) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *Article) error {
 	builder := r.db.
 		Builder().
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
@@ -74,7 +74,7 @@ func (r NewsRepository) GetNewsLatestArticle(ctx context.Context, includeUnpubli
 	return nil
 }
 
-func (r NewsRepository) GetNewsByID(ctx context.Context, newsID int, entry *Article) error {
+func (r Repository) GetNewsByID(ctx context.Context, newsID int, entry *Article) error {
 	query, args, errQueryArgs := r.db.
 		Builder().
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
@@ -91,7 +91,7 @@ func (r NewsRepository) GetNewsByID(ctx context.Context, newsID int, entry *Arti
 	return nil
 }
 
-func (r NewsRepository) Save(ctx context.Context, entry *Article) error {
+func (r Repository) Save(ctx context.Context, entry *Article) error {
 	if entry.NewsID > 0 {
 		return r.updateNewsArticle(ctx, entry)
 	}
@@ -99,7 +99,7 @@ func (r NewsRepository) Save(ctx context.Context, entry *Article) error {
 	return r.insertNewsArticle(ctx, entry)
 }
 
-func (r NewsRepository) insertNewsArticle(ctx context.Context, entry *Article) error {
+func (r Repository) insertNewsArticle(ctx context.Context, entry *Article) error {
 	query, args, errQueryArgs := r.db.
 		Builder().
 		Insert("news").
@@ -119,7 +119,7 @@ func (r NewsRepository) insertNewsArticle(ctx context.Context, entry *Article) e
 	return nil
 }
 
-func (r NewsRepository) updateNewsArticle(ctx context.Context, entry *Article) error {
+func (r Repository) updateNewsArticle(ctx context.Context, entry *Article) error {
 	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 		Builder().
 		Update("news").
@@ -130,7 +130,7 @@ func (r NewsRepository) updateNewsArticle(ctx context.Context, entry *Article) e
 		Where(sq.Eq{"news_id": entry.NewsID})))
 }
 
-func (r NewsRepository) DropNewsArticle(ctx context.Context, newsID int) error {
+func (r Repository) DropNewsArticle(ctx context.Context, newsID int) error {
 	return database.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
 		Builder().
 		Delete("news").
