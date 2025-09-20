@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
@@ -59,7 +58,7 @@ func (s StaticConfig) Addr() string {
 	return net.JoinHostPort(s.HTTPHost, strconv.Itoa(int(s.HTTPPort)))
 }
 
-type ConfigAnticheat struct {
+type Anticheat struct {
 	Enabled               bool         `mapstructure:"enabled" json:"enabled"`
 	Action                ConfigAction `mapstructure:"action" json:"action"`
 	Duration              int          `mapstructure:"duration" json:"duration"`
@@ -77,20 +76,20 @@ type ConfigAnticheat struct {
 // Config is the root config container.
 type Config struct {
 	StaticConfig
-	General     General           `json:"general"`
-	Demo        Demo              `json:"demo"`
-	Filters     ConfigFilter      `json:"filters"`
-	Discord     Discord           `json:"discord"`
-	Clientprefs ConfigClientprefs `json:"clientprefs"`
-	Log         Log               `json:"log"`
-	GeoLocation IP2Location       `json:"geo_location"`
-	Debug       Debug             `json:"debug"`
-	Patreon     ConfigPatreon     `json:"patreon"`
-	SSH         ConfigSSH         `json:"ssh"`
-	Network     ConfigNetwork     `json:"network"`
-	LocalStore  ConfigLocalStore  `json:"local_store"`
-	Exports     ConfigExports     `json:"exports"`
-	Anticheat   ConfigAnticheat   `json:"anticheat"`
+	General     General     `json:"general"`
+	Demo        Demo        `json:"demo"`
+	Filters     Filter      `json:"filters"`
+	Discord     Discord     `json:"discord"`
+	Clientprefs Clientprefs `json:"clientprefs"`
+	Log         Log         `json:"log"`
+	GeoLocation IP2Location `json:"geo_location"`
+	Debug       Debug       `json:"debug"`
+	Patreon     Patreon     `json:"patreon"`
+	SSH         SSH         `json:"ssh"`
+	Network     Network     `json:"network"`
+	LocalStore  LocalStore  `json:"local_store"`
+	Exports     Exports     `json:"exports"`
+	Anticheat   Anticheat   `json:"anticheat"`
 }
 
 func (c Config) ExtURLInstance(obj LinkablePath) *url.URL {
@@ -110,7 +109,7 @@ func (c Config) ExtURLRaw(path string, args ...any) string {
 	return strings.TrimRight(c.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
 }
 
-type ConfigNetwork struct {
+type Network struct {
 	SDREnabled    bool   `mapstructure:"sdr_enabled" json:"sdr_enabled"`
 	SDRDNSEnabled bool   `mapstructure:"sdr_dns_enabled" json:"sdr_dns_enabled"` // nolint:tagliatelle
 	CFKey         string `mapstructure:"cf_key" json:"cf_key"`
@@ -118,7 +117,7 @@ type ConfigNetwork struct {
 	CFZoneID      string `mapstructure:"cf_zone_id" json:"cf_zone_id"`
 }
 
-type ConfigSSH struct {
+type SSH struct {
 	Enabled        bool   `json:"enabled"`
 	Username       string `json:"username"`
 	Port           int    `json:"port"`
@@ -131,13 +130,13 @@ type ConfigSSH struct {
 	// TODO configurable handling of host keys
 }
 
-type ConfigExports struct {
+type Exports struct {
 	BDEnabled      bool   `json:"bd_enabled"`
 	ValveEnabled   bool   `json:"valve_enabled"`
 	AuthorizedKeys string `json:"authorized_keys"`
 }
 
-type ConfigFilter struct {
+type Filter struct {
 	Enabled        bool `json:"enabled"`
 	WarningTimeout int  `json:"warning_timeout"`
 	WarningLimit   int  `json:"warning_limit"`
@@ -148,15 +147,15 @@ type ConfigFilter struct {
 	MatchTimeout   int  `json:"match_timeout"`
 }
 
-type ConfigLocalStore struct {
+type LocalStore struct {
 	PathRoot string `json:"path_root"`
 }
 
-type ConfigClientprefs struct {
+type Clientprefs struct {
 	CenterProjectiles bool `mapstructure:"center_projectiles"`
 }
 
-type ConfigPatreon struct {
+type Patreon struct {
 	Enabled             bool   `json:"enabled"`
 	IntegrationsEnabled bool   `json:"integrations_enabled"`
 	ClientID            string `json:"client_id"`

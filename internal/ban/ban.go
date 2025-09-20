@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
-	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
@@ -46,7 +45,7 @@ type BanOpts struct {
 	SourceID steamid.SteamID `json:"source_id" validate:"required,steamid"`
 	// ISO8601
 	Duration   *duration.Duration `json:"duration" validate:"required,duration"`
-	BanType    ban.BanType        `json:"ban_type" validate:"required"`
+	BanType    ban.Type           `json:"ban_type" validate:"required"`
 	Reason     ban.Reason         `json:"reason" validate:"required"`
 	ReasonText string             `json:"reason_text" validate:"required"`
 	Origin     ban.Origin         `json:"origin" validate:"required"`
@@ -91,7 +90,7 @@ type Ban struct {
 	EvadeOk  bool            `json:"evade_ok"`
 
 	// Reason defines the overall ban classification
-	BanType ban.BanType `json:"ban_type"`
+	BanType ban.Type `json:"ban_type"`
 	// Reason defines the overall ban classification
 	Reason ban.Reason `json:"reason"`
 	// ReasonText is returned to the client when kicked trying to join the server
@@ -382,14 +381,14 @@ func (s Bans) Create(ctx context.Context, opts BanOpts) (Ban, error) {
 	}
 
 	switch newBan.BanType {
-	case banDomain.Banned:
+	case ban.Banned:
 		if errKick := s.state.Kick(ctx, newBan.TargetID, newBan.Reason.String()); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to kick player", log.ErrAttr(errKick),
 				slog.Int64("sid64", newBan.TargetID.Int64()))
 		} else {
 			// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelKickLog, message.KickPlayerEmbed(target)))
 		}
-	case banDomain.NoComm:
+	case ban.NoComm:
 		if errSilence := s.state.Silence(ctx, newBan.TargetID, newBan.Reason.String()); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
 				slog.Int64("sid64", newBan.TargetID.Int64()))
@@ -470,7 +469,7 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 		return false, errMatch
 	}
 
-	if existing.BanType == banDomain.NoComm {
+	if existing.BanType == ban.NoComm {
 		// Currently we do not ban for mute evasion.
 		// TODO make this configurable
 		return false, errMatch
@@ -496,10 +495,10 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 	req := BanOpts{
 		SourceID: owner,
 		TargetID: steamID,
-		Origin:   banDomain.System,
+		Origin:   ban.System,
 		Duration: dur,
-		BanType:  banDomain.Banned,
-		Reason:   banDomain.Evading,
+		BanType:  ban.Banned,
+		Reason:   ban.Evading,
 		Note:     fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, config.ExtURL(existing)),
 	}
 

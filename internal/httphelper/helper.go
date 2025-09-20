@@ -172,8 +172,6 @@ type ResultsCount struct {
 	Count int64 `json:"count"`
 }
 
-const ctxKeyUserProfile = "user_profile"
-
 func NewServer(listenAddr string, handler http.Handler) *http.Server {
 	httpServer := &http.Server{
 		Addr:           listenAddr,

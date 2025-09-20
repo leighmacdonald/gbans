@@ -18,10 +18,10 @@ type Article struct {
 }
 
 type News struct {
-	repository NewsRepository
+	repository Repository
 }
 
-func NewNews(repository NewsRepository) News {
+func NewNews(repository Repository) News {
 	return News{repository: repository}
 }
 

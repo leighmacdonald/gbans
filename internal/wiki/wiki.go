@@ -63,10 +63,10 @@ func NewPage(slug string, body string) Page {
 }
 
 type Wiki struct {
-	repository wikiRepository
+	repository Repository
 }
 
-func NewWiki(repository wikiRepository) Wiki {
+func NewWiki(repository Repository) Wiki {
 	return Wiki{repository: repository}
 }
 

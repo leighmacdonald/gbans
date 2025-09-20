@@ -143,11 +143,11 @@ func (p Person) LoggedIn() bool {
 type ProfileResponse struct {
 	Player   *Person                  `json:"player"`
 	Friends  []thirdparty.SteamFriend `json:"friends"`
-	Settings PersonSettings           `json:"settings"`
+	Settings Settings                 `json:"settings"`
 }
 
-// NewPerson allocates a new default person instance.
-func NewPerson(sid64 steamid.SteamID) Person {
+// New allocates a new default person instance.
+func New(sid64 steamid.SteamID) Person {
 	curTime := time.Now()
 
 	return Person{
@@ -189,7 +189,7 @@ func (p People) AsMap() map[steamid.SteamID]Person {
 	return m
 }
 
-type PersonSettings struct {
+type Settings struct {
 	PersonSettingsID     int64           `json:"person_settings_id"`
 	SteamID              steamid.SteamID `json:"steam_id"`
 	ForumSignature       string          `json:"forum_signature"`
@@ -204,7 +204,7 @@ type PersonSettings struct {
 	UpdatedOn time.Time `json:"updated_on"`
 }
 
-type PersonSettingsUpdate struct {
+type SettingsUpdate struct {
 	ForumSignature       string `json:"forum_signature"`
 	ForumProfileMessages bool   `json:"forum_profile_messages"`
 	StatsHidden          bool   `json:"stats_hidden"`
@@ -420,7 +420,7 @@ func (u *Persons) GetPeople(ctx context.Context, transaction pgx.Tx, filter Play
 func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.PersonCore, error) {
 	person, errGetPerson := u.repo.GetPersonBySteamID(ctx, transaction, sid64)
 	if errGetPerson != nil && errors.Is(errGetPerson, database.ErrNoResult) {
-		person = NewPerson(sid64)
+		person = New(sid64)
 
 		if err := u.repo.SavePerson(ctx, transaction, &person); err != nil {
 			return domain.PersonCore{}, err
@@ -451,11 +451,11 @@ func (u *Persons) GetSteamIDsByGroups(ctx context.Context, privileges []permissi
 	return u.repo.GetSteamIDsByGroups(ctx, privileges)
 }
 
-func (u *Persons) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (PersonSettings, error) {
+func (u *Persons) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (Settings, error) {
 	return u.repo.GetPersonSettings(ctx, steamID)
 }
 
-func (u *Persons) SavePersonSettings(ctx context.Context, user domain.PersonInfo, update PersonSettingsUpdate) (PersonSettings, error) {
+func (u *Persons) SavePersonSettings(ctx context.Context, user domain.PersonInfo, update SettingsUpdate) (Settings, error) {
 	settings, err := u.GetPersonSettings(ctx, user.GetSteamID())
 	if err != nil {
 		return settings, err

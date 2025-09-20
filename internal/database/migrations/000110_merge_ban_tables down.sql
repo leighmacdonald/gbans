@@ -64,3 +64,11 @@ DROP COLUMN IF EXISTS cidr;
 
 ALTER TABLE IF EXISTS ban
 DROP COLUMN IF EXISTS name;
+
+CREATE TABLE IF NOT EXISTS asn_ban (
+  as_num INTEGER NOT NULL PRIMARY KEY,
+  reason TEXT NOT NULL DEFAULT '',
+  notes TEXT NOT NULL DEFAULT '',
+  created_on timestamp with time zone not null,
+  updated_on timestamp with time zone not null
+);

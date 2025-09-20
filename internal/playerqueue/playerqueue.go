@@ -33,7 +33,7 @@ type ChatLog struct {
 	Deleted         bool            `json:"deleted"`
 }
 
-type QueueClient interface {
+type Client interface {
 	// ID generates a unique identifier for the client connection instance
 	ID() string
 	// Next handles the incoming operation request
@@ -88,7 +88,7 @@ type ChatStatusChangePayload struct {
 	Reason string     `json:"reason"`
 }
 
-func NewPlayerqueue(repo PlayerqueueRepository, persons domain.PersonProvider, serversUC servers.Servers,
+func NewPlayerqueue(repo Repository, persons domain.PersonProvider, serversUC servers.Servers,
 	state *servers.State, chatLogs []ChatLog,
 ) *Playerqueue {
 	return &Playerqueue{
@@ -130,7 +130,7 @@ func NewPlayerqueue(repo PlayerqueueRepository, persons domain.PersonProvider, s
 }
 
 type Playerqueue struct {
-	repo    PlayerqueueRepository
+	repo    Repository
 	persons domain.PersonProvider
 	notif   notification.Notifications
 	queue   *Coordinator
@@ -153,19 +153,19 @@ func (p Playerqueue) Start(ctx context.Context) {
 	}
 }
 
-func (p Playerqueue) JoinLobbies(client QueueClient, servers []int) error {
+func (p Playerqueue) JoinLobbies(client Client, servers []int) error {
 	return p.queue.Join(client, servers)
 }
 
-func (p Playerqueue) LeaveLobbies(client QueueClient, servers []int) error {
+func (p Playerqueue) LeaveLobbies(client Client, servers []int) error {
 	return p.queue.Leave(client, servers)
 }
 
-func (p Playerqueue) Connect(ctx context.Context, user domain.PersonInfo, conn *websocket.Conn) QueueClient {
+func (p Playerqueue) Connect(ctx context.Context, user domain.PersonInfo, conn *websocket.Conn) Client {
 	return p.queue.Connect(ctx, user.GetSteamID(), user.GetName(), user.GetAvatar().Hash(), conn)
 }
 
-func (p Playerqueue) Disconnect(client QueueClient) {
+func (p Playerqueue) Disconnect(client Client) {
 	p.queue.Disconnect(client)
 }
 

@@ -19,7 +19,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
-	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -54,7 +53,7 @@ type PlayerBanState struct {
 	SteamID    steamid.SteamID `json:"steam_id"`
 	BanSource  BanSource       `json:"ban_source"`
 	BanID      int             `json:"ban_id"`
-	BanType    ban.BanType     `json:"ban_type"`
+	BanType    ban.Type        `json:"ban_type"`
 	Reason     ban.Reason      `json:"reason"`
 	EvadeOK    bool            `json:"evade_ok"`
 	ValidUntil time.Time       `json:"valid_until"`
@@ -235,10 +234,10 @@ func (h SRCDS) GetBanState(ctx context.Context, steamID steamid.SteamID, ip neti
 		appealURL = h.config.ExtURLRaw("/appeal/%d", banState.BanID)
 	}
 
-	if banState.BanID > 0 && banState.BanType >= banDomain.NoComm {
+	if banState.BanID > 0 && banState.BanType >= ban.NoComm {
 		switch banState.BanSource {
 		case BanSourceSteam:
-			if banState.BanType == banDomain.NoComm {
+			if banState.BanType == ban.NoComm {
 				msg = fmt.Sprintf("You are muted & gagged. Expires: %s. Appeal: %s", banState.ValidUntil.Format(time.DateTime), appealURL)
 			} else {
 				msg = fmt.Sprintf(format, banState.Reason.String(), "Steam", validUntil, appealURL)

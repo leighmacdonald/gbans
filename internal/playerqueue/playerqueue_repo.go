@@ -9,16 +9,16 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewPlayerqueueRepository(db database.Database, persons domain.PersonProvider) PlayerqueueRepository {
-	return PlayerqueueRepository{db: db, persons: persons}
+func NewRepository(db database.Database, persons domain.PersonProvider) Repository {
+	return Repository{db: db, persons: persons}
 }
 
-type PlayerqueueRepository struct {
+type Repository struct {
 	db      database.Database
 	persons domain.PersonProvider
 }
 
-func (r PlayerqueueRepository) Message(ctx context.Context, messageID int64) (ChatLog, error) {
+func (r Repository) Message(ctx context.Context, messageID int64) (ChatLog, error) {
 	row, err := r.db.QueryRowBuilder(ctx, nil, r.db.Builder().
 		Select("m.message_id", "m.steam_id", "m.created_on", "m.personaname", "m.avatarhash", "p.permission_level", "m.body_md").
 		From("playerqueue_messages m").
@@ -38,21 +38,21 @@ func (r PlayerqueueRepository) Message(ctx context.Context, messageID int64) (Ch
 	return message, nil
 }
 
-func (r PlayerqueueRepository) SetChatStatus(ctx context.Context, steamID steamid.SteamID, status ChatStatus) error {
+func (r Repository) SetChatStatus(ctx context.Context, steamID steamid.SteamID, status ChatStatus) error {
 	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("person").
 		Set("playerqueue_chat_status", status).
 		Where(sq.Eq{"steam_id": steamID})))
 }
 
-func (r PlayerqueueRepository) Delete(ctx context.Context, messageID ...int64) error {
+func (r Repository) Delete(ctx context.Context, messageID ...int64) error {
 	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
 		Update("playerqueue_messages").
 		Set("deleted", true).
 		Where(sq.Eq{"message_id": messageID})))
 }
 
-func (r PlayerqueueRepository) Save(ctx context.Context, message ChatLog) (ChatLog, error) {
+func (r Repository) Save(ctx context.Context, message ChatLog) (ChatLog, error) {
 	// Ensure player exists
 	_, errPlayer := r.persons.GetOrCreatePersonBySteamID(ctx, nil, steamid.New(message.SteamID))
 	if errPlayer != nil {
@@ -81,7 +81,7 @@ func (r PlayerqueueRepository) Save(ctx context.Context, message ChatLog) (ChatL
 	return message, nil
 }
 
-func (r PlayerqueueRepository) Query(ctx context.Context, query PlayerqueueQueryOpts) ([]ChatLog, error) {
+func (r Repository) Query(ctx context.Context, query PlayerqueueQueryOpts) ([]ChatLog, error) {
 	builder := r.db.Builder().
 		Select("m.message_id", "m.steam_id", "m.created_on", "m.personaname", "m.avatarhash",
 			"p.permission_level", "m.body_md").

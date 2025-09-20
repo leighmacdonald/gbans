@@ -7,13 +7,13 @@ type SourceTarget struct {
 	TargetAvatarhash  string `json:"target_avatarhash"`
 }
 
-// BanType defines the state of the ban for a user, 0 being no ban.
-type BanType int
+// Type defines the state of the ban for a user, 0 being no ban.
+type Type int
 
 const (
 	// Unknown means the ban state could not be determined, failing-open to allowing players
 	// to connect.
-	Unknown BanType = iota - 1
+	Unknown Type = iota - 1
 	// OK Ban state is clean.
 	OK //nolint:varnamelen
 	// NoComm means the player cannot communicate while playing voice + chat.
@@ -24,7 +24,7 @@ const (
 	Network
 )
 
-func (bt BanType) String() string {
+func (bt Type) String() string {
 	switch bt {
 	case Network:
 		return "network"

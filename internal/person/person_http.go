@@ -100,7 +100,7 @@ func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 
 func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req PersonSettingsUpdate
+		var req SettingsUpdate
 
 		if !httphelper.Bind(ctx, &req) {
 			return

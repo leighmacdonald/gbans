@@ -118,9 +118,9 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 	}
 
 	type checkResponse struct {
-		ClientID int               `json:"client_id"`
-		BanType  banDomain.BanType `json:"ban_type"`
-		Msg      string            `json:"msg"`
+		ClientID int            `json:"client_id"`
+		BanType  banDomain.Type `json:"ban_type"`
+		Msg      string         `json:"msg"`
 	}
 
 	return func(ctx *gin.Context) {

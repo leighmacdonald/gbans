@@ -87,7 +87,7 @@ func (f SCPConnection) Update(ctx context.Context, servers []ServerDetails) erro
 	return nil
 }
 
-func (f SCPConnection) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []ServerDetails, sshConfig config.ConfigSSH) {
+func (f SCPConnection) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []ServerDetails, sshConfig config.SSH) {
 	defer waitGroup.Done()
 
 	scpClient, errClient := f.configAndDialClient(ctx, sshConfig, net.JoinHostPort(addr, strconv.Itoa(sshConfig.Port)))
@@ -109,7 +109,7 @@ func (f SCPConnection) updateServer(ctx context.Context, waitGroup *sync.WaitGro
 }
 
 // configAndDialClient connects to the remote server with the config. client.Close must be called.
-func (f SCPConnection) configAndDialClient(ctx context.Context, sshConfig config.ConfigSSH, address string) (storage.Storager, error) {
+func (f SCPConnection) configAndDialClient(ctx context.Context, sshConfig config.SSH, address string) (storage.Storager, error) {
 	clientConfig, errConfig := f.createConfig(ctx, sshConfig)
 	if errConfig != nil {
 		return nil, errConfig
@@ -123,7 +123,7 @@ func (f SCPConnection) configAndDialClient(ctx context.Context, sshConfig config
 	return client, nil
 }
 
-func (f SCPConnection) createConfig(ctx context.Context, config config.ConfigSSH) (*ssh.ClientConfig, error) {
+func (f SCPConnection) createConfig(ctx context.Context, config config.SSH) (*ssh.ClientConfig, error) {
 	if config.Username == "" {
 		return nil, errUsername
 	}
@@ -154,7 +154,7 @@ func (f SCPConnection) createConfig(ctx context.Context, config config.ConfigSSH
 	return sshClientConfig, nil
 }
 
-func (f SCPConnection) createSignerFromKey(config config.ConfigSSH) (ssh.Signer, error) {
+func (f SCPConnection) createSignerFromKey(config config.SSH) (ssh.Signer, error) {
 	fullPath, errPath := homedir.Expand(config.PrivateKeyPath)
 	if errPath != nil {
 		return nil, errors.Join(errPath, errHomeDir)
