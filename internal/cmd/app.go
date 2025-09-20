@@ -248,6 +248,8 @@ func (g *GBans) startBot(ctx context.Context) error {
 	ban.RegisterDiscordCommands(g.bot, g.bans)
 	chat.RegisterDiscordCommands(g.bot, g.wordFilters)
 
+	servers.RegisterDiscordCommands(g.bot, *g.states, g.persons, g.servers, g.networks, g.config.Config())
+
 	if err := g.bot.Start(ctx); err != nil {
 		return err
 	}

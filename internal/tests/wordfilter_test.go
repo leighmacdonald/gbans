@@ -71,7 +71,7 @@ func TestWordFilter(t *testing.T) {
 func TestWordFilterPermissions(t *testing.T) {
 	testPermissions(t, testRouter(), []permTestValues{
 		{
-			path:   "/api/filters/query",
+			path:   "/api/filters",
 			method: http.MethodPost,
 			code:   http.StatusForbidden,
 			levels: moderators,

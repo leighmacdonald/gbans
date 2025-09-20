@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -16,9 +15,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
+	"github.com/leighmacdonald/gbans/pkg/json"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -281,13 +282,13 @@ type IP2Location struct {
 }
 
 type Configuration struct {
-	repository    *Repository
+	repository    ConfigRepo
 	static        StaticConfig
 	configMu      sync.RWMutex
 	currentConfig Config
 }
 
-func NewConfiguration(static StaticConfig, repository *Repository) *Configuration {
+func NewConfiguration(static StaticConfig, repository ConfigRepo) *Configuration {
 	return &Configuration{static: static, repository: repository}
 }
 
@@ -502,8 +503,8 @@ func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 		}
 	}()
 
-	var releases []GithubRelease
-	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
+	releases, err := json.Decode[[]GithubRelease](resp.Body)
+	if err != nil {
 		return nil, errors.Join(err, domain.ErrRequestDecode)
 	}
 

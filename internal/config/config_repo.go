@@ -9,6 +9,13 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 )
 
+type ConfigRepo interface {
+	Init(ctx context.Context) error
+	Config() Config
+	Read(context.Context) (Config, error)
+	Write(context.Context, Config) error
+}
+
 type Repository struct {
 	db   database.Database
 	conf Config

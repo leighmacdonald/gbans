@@ -41,7 +41,7 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	fromDockerfile := testcontainers.FromDockerfile{
 		Dockerfile:    "postgres-ip4r.Dockerfile",
 		Context:       dockerRoot,
-		PrintBuildLog: true,
+		PrintBuildLog: false,
 	}
 
 	cont, errContainer := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{

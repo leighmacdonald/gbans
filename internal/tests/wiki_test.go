@@ -10,24 +10,18 @@ import (
 )
 
 func TestGetWikiPageBySlugMissing(t *testing.T) {
-	t.Parallel()
-
 	router := testRouter()
 
 	testEndpoint(t, router, http.MethodGet, "/api/wiki/slug/home", nil, http.StatusNotFound, nil)
 }
 
 func TestSaveWikiPageBySlugUnauthed(t *testing.T) {
-	t.Parallel()
-
 	router := testRouter()
 	page := wiki.NewPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
 	testEndpoint(t, router, http.MethodPost, "/api/wiki/slug", page, http.StatusForbidden, nil)
 }
 
 func TestSaveWikiPageBySlugAuthed(t *testing.T) {
-	t.Parallel()
-
 	router := testRouter()
 	tokens := loginUser(getModerator())
 

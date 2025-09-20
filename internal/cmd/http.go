@@ -260,11 +260,7 @@ var asNumValidator validator.Func = func(fl validator.FieldLevel) bool {
 }
 
 func CreateRouter(conf config.Config, version BuildInfo) (*gin.Engine, error) {
-	if conf.General.Mode == config.ReleaseMode {
-		gin.SetMode(gin.ReleaseMode)
-	} else {
-		gin.SetMode(gin.DebugMode)
-	}
+	gin.SetMode(gin.ReleaseMode)
 
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
