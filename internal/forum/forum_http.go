@@ -31,7 +31,7 @@ func NewForumHandler(engine *gin.Engine, forums Forums, authenticator httphelper
 	// opt
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(authenticator.Middleware(permission.PGuest))
+		opt := optGrp.Use(authenticator.Middleware(permission.Guest))
 		opt.GET("/api/forum/overview", handler.onAPIForumOverview())
 		opt.GET("/api/forum/messages/recent", handler.onAPIForumMessagesRecent())
 		opt.POST("/api/forum/threads", handler.onAPIForumThreads())
@@ -43,7 +43,7 @@ func NewForumHandler(engine *gin.Engine, forums Forums, authenticator httphelper
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.User))
 		authed.POST("/api/forum/forum/:forum_id/thread", handler.onAPIThreadCreate())
 		authed.POST("/api/forum/thread/:forum_thread_id/message", handler.onAPIThreadCreateReply())
 		authed.POST("/api/forum/message/:forum_message_id", handler.onAPIThreadMessageUpdate())
@@ -54,7 +54,7 @@ func NewForumHandler(engine *gin.Engine, forums Forums, authenticator httphelper
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 		mod.POST("/api/forum/category", handler.onAPICreateForumCategory())
 		mod.GET("/api/forum/category/:forum_category_id", handler.onAPIForumCategory())
 		mod.POST("/api/forum/category/:forum_category_id", handler.onAPIUpdateForumCategory())
@@ -376,7 +376,7 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if thread.SourceID != currentUser.GetSteamID() && !currentUser.HasPermission(permission.PModerator) {
+		if thread.SourceID != currentUser.GetSteamID() && !currentUser.HasPermission(permission.Moderator) {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 				"You do not have access to edit this."))
 
@@ -476,7 +476,7 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if message.SourceID != currentUser.GetSteamID() && !currentUser.HasPermission(permission.PModerator) {
+		if message.SourceID != currentUser.GetSteamID() && !currentUser.HasPermission(permission.Moderator) {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 				"You do not have permission to edit this message."))
 
@@ -607,7 +607,7 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 			return
 		}
 
-		if thread.Locked && !currentUser.HasPermission(permission.PEditor) {
+		if thread.Locked && !currentUser.HasPermission(permission.Editor) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrThreadLocked))
 
 			return

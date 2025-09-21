@@ -73,7 +73,7 @@ type GBans struct {
 	bans           ban.Bans
 	blocklists     network.Blocklists
 	chat           *chat.Chat
-	chatRepo       *chat.ChatRepository
+	chatRepo       *chat.Repository
 	config         *config.Configuration
 	contests       contest.Contests
 	database       database.Database
@@ -94,7 +94,7 @@ type GBans struct {
 	speedruns      servers.Speedruns
 	srcds          *servers.SRCDS
 	states         *servers.State
-	staticConfig   config.StaticConfig
+	staticConfig   config.Static
 	tfapiClient    *thirdparty.TFAPI
 	votes          votes.Votes
 	wiki           wiki.Wiki
@@ -165,7 +165,7 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	g.notifications = notification.NewNotifications(notification.NewRepository(g.database), g.bot)
 
-	wordFilters := chat.NewWordFilter(chat.NewWordFilterRepository(g.database))
+	wordFilters := chat.NewWordFilters(chat.NewWordFilterRepository(g.database), g.notifications, g.config)
 	if err := wordFilters.Import(ctx); err != nil {
 		slog.Error("Failed to load word filters", log.ErrAttr(err))
 
@@ -198,26 +198,26 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.assets = asset.NewAssets(assetRepo)
 	g.servers = servers.NewServers(servers.NewRepository(g.database))
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, g.config)
-	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.config, g.persons, g.demos, g.tfapiClient)
+	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.config, g.persons, g.demos, g.tfapiClient, g.notifications)
 	g.states = servers.NewState(g.broadcaster, servers.NewStateRepository(servers.NewCollector(g.servers)), g.config, g.servers)
-	g.bans = ban.NewBans(ban.NewBanRepository(g.database, g.persons, g.networks), g.persons, g.config, g.reports, g.states, g.tfapiClient)
+	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons, g.networks), g.persons, g.config, g.reports, g.states, g.tfapiClient, g.notifications)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), g.bans) // TODO Does THE & work here?
-	g.discordOAuth = discordoauth.NewDiscordOAuth(discordoauth.NewRepository(g.database), g.config)
-	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.config)
-	g.chatRepo = chat.NewChatRepository(g.database, g.persons, g.wordFilters, g.broadcaster)
+	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
+	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.config, g.notifications)
+	g.chatRepo = chat.NewRepository(g.database, g.persons, g.wordFilters, g.broadcaster)
 	g.chat = chat.NewChat(g.config, g.chatRepo, g.wordFilters, g.states, g.bans, g.persons)
-	g.forums = forum.NewForums(forum.NewRepository(g.database))
+	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database))
 	g.patreon = patreon.NewPatreon(patreon.NewRepository(g.database), g.config)
-	g.srcds = servers.NewSRCDS(servers.NewSRCDSRepository(g.database), g.config, g.servers, g.persons, g.tfapiClient)
+	g.srcds = servers.NewSRCDS(servers.NewSRCDSRepository(g.database), g.config, g.servers, g.persons, g.tfapiClient, g.notifications)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
 	g.auth = auth.NewAuthentication(auth.NewRepository(g.database), g.config, g.persons, g.bans, g.servers, SentryDSN)
-	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), g.bans, g.config, g.persons)
-	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster)
+	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), g.bans, g.config, g.persons, g.notifications)
+	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications, g.config, g.persons)
 	g.contests = contest.NewContests(contest.NewRepository(g.database))
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
-	g.memberships = ban.NewMemberships(ban.NewBanRepository(g.database, g.persons, g.networks), g.tfapiClient)
+	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons, g.networks), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications, g.config)
 	g.downloader = scp.NewDownloader(g.config, g.database)
 
@@ -265,7 +265,7 @@ func (g *GBans) setupPlayerQueue(ctx context.Context) {
 		slog.Error("Failed to warm playerqueue chatlogs", log.ErrAttr(errChatlogs))
 		chatlogs = []playerqueue.ChatLog{}
 	}
-	g.playerQueue = playerqueue.NewPlayerqueue(playerqueueRepo, g.persons, g.servers, g.states, chatlogs)
+	g.playerQueue = playerqueue.NewPlayerqueue(playerqueueRepo, g.persons, g.servers, g.states, chatlogs, g.config, g.notifications)
 }
 
 func (g *GBans) setupSentry() {
@@ -298,6 +298,7 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	// TODO register handlers
 	go g.downloader.Start(ctx)
 	go g.networks.Start(ctx)
+	go g.notifications.Sender(ctx)
 
 	go func() {
 		if err := g.states.Start(ctx); err != nil {
@@ -349,7 +350,11 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	ctx, stop := signal.NotifyContext(rootCtx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	go g.startBot(ctx)
+	go func() {
+		if errStart := g.startBot(ctx); errStart != nil {
+			slog.Error("Failed to start bot", slog.String("error", errStart.Error()))
+		}
+	}()
 
 	conf := g.config.Config()
 
@@ -369,7 +374,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	ban.NewHandlerSteam(router, g.bans, g.config, g.auth)
 	chat.NewChatHandler(router, g.chat, g.auth)
 	chat.NewWordFilterHandler(router, g.config, g.wordFilters, g.chat, g.auth)
-	config.NewConfigHandler(router, g.config, g.auth, BuildVersion)
+	config.NewHandler(router, g.config, g.auth, BuildVersion)
 	contest.NewContestHandler(router, g.contests, g.assets, g.auth)
 	discordoauth.NewDiscordOAuthHandler(router, g.auth, g.config, g.persons, g.discordOAuth)
 	forum.NewForumHandler(router, g.forums, g.auth)
@@ -458,7 +463,7 @@ func (g GBans) firstTimeSetup(ctx context.Context) error {
 	}
 
 	owner := person.New(steamid.New(conf.Owner))
-	owner.PermissionLevel = permission.PAdmin
+	owner.PermissionLevel = permission.Admin
 
 	if errSave := g.persons.SavePerson(ctx, nil, &owner); errSave != nil {
 		slog.Error("Failed create new owner", log.ErrAttr(errSave))

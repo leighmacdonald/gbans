@@ -20,7 +20,7 @@ func NewAnticheatHandler(engine *gin.Engine, authenticator httphelper.Authentica
 	// mod
 	modGrp := engine.Group("/api/anticheat")
 	{
-		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 		mod.GET("/entries", handler.query())
 		mod.GET("/steamid/:steam_id", handler.bySteamID())
 		mod.GET("/detection/:detection_type", handler.byDetection())

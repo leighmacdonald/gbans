@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 )
 
-type ConfigRepo interface {
+type Repo interface {
 	Init(ctx context.Context) error
 	Config() Config
 	Read(context.Context) (Config, error)

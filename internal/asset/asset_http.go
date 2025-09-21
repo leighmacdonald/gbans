@@ -21,14 +21,14 @@ func NewAssetHandler(engine *gin.Engine, assets Assets, authenticator httphelper
 
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(authenticator.Middleware(permission.PGuest))
+		opt := optGrp.Use(authenticator.Middleware(permission.Guest))
 		opt.GET("/asset/:asset_id", handler.onGetByUUID())
 	}
 
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.User))
 		authed.POST("/api/asset", handler.onAPISaveMedia())
 	}
 }
@@ -88,7 +88,7 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 		if asset.IsPrivate {
 			user, _ := session.CurrentUserProfile(ctx)
 			sid := user.GetSteamID()
-			if !sid.Valid() && (sid == asset.AuthorID || user.HasPermission(permission.PModerator)) {
+			if !sid.Valid() && (sid == asset.AuthorID || user.HasPermission(permission.Moderator)) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 					"You do not have permission to access this asset."))
 

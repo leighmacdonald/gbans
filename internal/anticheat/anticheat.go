@@ -17,6 +17,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/leighmacdonald/gbans/internal/domain/network"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -50,15 +52,17 @@ type AntiCheat struct {
 	persons *person.Persons
 	ban     ban.Bans
 	config  *config.Configuration
+	notif   notification.Notifications
 }
 
-func NewAntiCheat(repo Repository, ban ban.Bans, config *config.Configuration, persons *person.Persons) AntiCheat {
+func NewAntiCheat(repo Repository, ban ban.Bans, config *config.Configuration, persons *person.Persons, notif notification.Notifications) AntiCheat {
 	return AntiCheat{
 		parser:  logparse.NewStacParser(),
 		repo:    repo,
 		ban:     ban,
 		config:  config,
 		persons: persons,
+		notif:   notif,
 	}
 }
 
@@ -82,7 +86,7 @@ func (a AntiCheat) FetchStacLogs(ctx context.Context, stactPathFmt string, serve
 		logPath := path.Join(logDir, file.Name())
 		reader, err := client.Open(ctx, logPath)
 		if err != nil {
-			return err
+			return errors.Join(err, network.ErrOpenClient)
 		}
 
 		slog.Debug("Importing stac log", slog.String("name", file.Name()), slog.String("server", server.ShortName))
@@ -95,8 +99,8 @@ func (a AntiCheat) FetchStacLogs(ctx context.Context, stactPathFmt string, serve
 			}
 		}
 
-		if errCloseReader := reader.Close(); errCloseReader != nil {
-			return errCloseReader
+		if errClose := reader.Close(); errClose != nil {
+			return errors.Join(errClose, network.ErrCloseReader)
 		}
 	}
 
@@ -187,9 +191,8 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 			slog.Info("Banned cheater", slog.String("detection", string(entry.Detection)),
 				slog.Int64("steam_id", entry.SteamID.Int64()))
 			hasBeenBanned = append(hasBeenBanned, entry.SteamID)
-
-			// go a.notifications.Enqueue(ctx, notification.NewDiscordNotification(a.config.Config().Discord.AnticheatChannelID,
-			// 	discord.NewAnticheatTrigger(newBan, conf, entry, results[entry.SteamID][entry.Detection])))
+			a.notif.Send <- notification.NewDiscord(a.config.Config().Discord.AnticheatChannelID,
+				NewAnticheatTrigger(newBan, a.config.Config().Anticheat.Action, entry, results[entry.SteamID][entry.Detection]))
 		}
 	}
 

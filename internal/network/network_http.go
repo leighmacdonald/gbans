@@ -22,14 +22,14 @@ func NewNetworkHandler(engine *gin.Engine, networks Networks, authenticator http
 
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 		mod.POST("/api/connections", handler.onAPIQueryConnections())
 		mod.POST("/api/network", handler.onAPIQueryNetwork())
 	}
 
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(authenticator.Middleware(permission.PAdmin))
+		admin := adminGrp.Use(authenticator.Middleware(permission.Admin))
 		admin.GET("/api/network/update_db", handler.onAPIGetUpdateDB())
 	}
 }

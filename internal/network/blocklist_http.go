@@ -27,7 +27,7 @@ func NewBlocklistHandler(engine *gin.Engine, bu Blocklists, nu Networks, ath htt
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(ath.Middleware(permission.PModerator))
+		mod := modGrp.Use(ath.Middleware(permission.Moderator))
 		mod.GET("/api/block_list/sources", handler.onAPIGetBlockListSources())
 
 		mod.GET("/api/block_list/whitelist/ip", handler.onAPIWhitelistIPs())
@@ -45,7 +45,7 @@ func NewBlocklistHandler(engine *gin.Engine, bu Blocklists, nu Networks, ath htt
 	// admin
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(ath.Middleware(permission.PAdmin))
+		admin := adminGrp.Use(ath.Middleware(permission.Admin))
 		admin.POST("/api/block_list/sources", handler.onAPIPostBlockListCreate())
 		admin.POST("/api/block_list/sources/:cidr_block_source_id", handler.onAPIPostBlockListUpdate())
 		admin.DELETE("/api/block_list/sources/:cidr_block_source_id", handler.onAPIDeleteBlockList())

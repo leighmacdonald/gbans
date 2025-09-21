@@ -17,7 +17,7 @@ import (
 func RegisterDiscordCommands(bot *discord.Discord, wordFilters WordFilters) {
 	handler := &discordHandler{wordFilters: wordFilters}
 
-	bot.RegisterHandler("filter", handler.onFilterCheck, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("filter", handler.makeOnFilter, &discordgo.ApplicationCommand{
 		Name:                     "filter",
 		Description:              "Manage and test global word filters",
 		DMPermission:             &helper.DmPerms,
@@ -92,7 +92,7 @@ func (h discordHandler) makeOnFilter(ctx context.Context, session *discordgo.Ses
 	}
 }
 
-func FilterAddMessage(filter Filter) *discordgo.MessageEmbed {
+func filterAddMessage(filter Filter) *discordgo.MessageEmbed {
 	msgEmbed := message.NewEmbed("Filter Created Successfully").Embed().
 		SetColor(message.ColourSuccess).
 		AddField("pattern", filter.Pattern).
@@ -101,7 +101,7 @@ func FilterAddMessage(filter Filter) *discordgo.MessageEmbed {
 	return msgEmbed.MessageEmbed
 }
 
-func FilterDelMessage(filter Filter) *discordgo.MessageEmbed {
+func filterDelMessage(filter Filter) *discordgo.MessageEmbed {
 	return message.NewEmbed("Filter Deleted Successfully").
 		Embed().
 		SetColor(message.ColourSuccess).

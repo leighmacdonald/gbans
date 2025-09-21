@@ -38,14 +38,14 @@ func NewPlayerqueueHandler(engine *gin.Engine, auth httphelper.Authenticator, co
 
 	authedGroup := engine.Group("/api/playerqueue")
 	{
-		mod := authedGroup.Use(auth.Middleware(permission.PModerator))
+		mod := authedGroup.Use(auth.Middleware(permission.Moderator))
 		mod.PUT("/status/:steam_id", handler.status())
 		mod.DELETE("/messages/:message_id/:count", handler.purge())
 	}
 
 	authedGroupWS := engine.Group("/")
 	{
-		mod := authedGroupWS.Use(auth.MiddlewareWS(permission.PUser))
+		mod := authedGroupWS.Use(auth.MiddlewareWS(permission.User))
 		mod.GET("/ws", handler.start(origins))
 	}
 }

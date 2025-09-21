@@ -33,9 +33,9 @@ type LinkablePath interface {
 	Path() string
 }
 
-// StaticConfig defines non-dynamic config values that cannot be changed during runtime. These
+// Static defines non-dynamic config values that cannot be changed during runtime. These
 // are loaded via the config file.
-type StaticConfig struct {
+type Static struct {
 	Owner               string   `mapstructure:"owner" json:"-"`
 	SteamKey            string   `mapstructure:"steam_key" json:"-"`
 	ExternalURL         string   `mapstructure:"external_url" json:"-"`
@@ -54,28 +54,28 @@ type StaticConfig struct {
 }
 
 // Addr returns the address in host:port format.
-func (s StaticConfig) Addr() string {
+func (s Static) Addr() string {
 	return net.JoinHostPort(s.HTTPHost, strconv.Itoa(int(s.HTTPPort)))
 }
 
 type Anticheat struct {
-	Enabled               bool         `mapstructure:"enabled" json:"enabled"`
-	Action                ConfigAction `mapstructure:"action" json:"action"`
-	Duration              int          `mapstructure:"duration" json:"duration"`
-	MaxAimSnap            int          `mapstructure:"max_aim_snap" json:"max_aim_snap"`
-	MaxPsilent            int          `mapstructure:"max_psilent" json:"max_psilent"`
-	MaxBhop               int          `mapstructure:"max_bhop" json:"max_bhop"`
-	MaxFakeAng            int          `mapstructure:"max_fake_ang" json:"max_fake_ang"`
-	MaxCmdNum             int          `mapstructure:"max_cmd_num" json:"max_cmd_num"`
-	MaxTooManyConnections int          `mapstructure:"max_too_many_connections" json:"max_too_many_connections"`
-	MaxCheatCvar          int          `mapstructure:"max_cheat_cvar" json:"max_cheat_cvar"`
-	MaxOOBVar             int          `mapstructure:"max_oob_var" json:"max_oob_var"`
-	MaxInvalidUserCmd     int          `mapstructure:"max_invalid_user_cmd" json:"max_invalid_user_cmd"`
+	Enabled               bool   `mapstructure:"enabled" json:"enabled"`
+	Action                Action `mapstructure:"action" json:"action"`
+	Duration              int    `mapstructure:"duration" json:"duration"`
+	MaxAimSnap            int    `mapstructure:"max_aim_snap" json:"max_aim_snap"`
+	MaxPsilent            int    `mapstructure:"max_psilent" json:"max_psilent"`
+	MaxBhop               int    `mapstructure:"max_bhop" json:"max_bhop"`
+	MaxFakeAng            int    `mapstructure:"max_fake_ang" json:"max_fake_ang"`
+	MaxCmdNum             int    `mapstructure:"max_cmd_num" json:"max_cmd_num"`
+	MaxTooManyConnections int    `mapstructure:"max_too_many_connections" json:"max_too_many_connections"`
+	MaxCheatCvar          int    `mapstructure:"max_cheat_cvar" json:"max_cheat_cvar"`
+	MaxOOBVar             int    `mapstructure:"max_oob_var" json:"max_oob_var"`
+	MaxInvalidUserCmd     int    `mapstructure:"max_invalid_user_cmd" json:"max_invalid_user_cmd"`
 }
 
 // Config is the root config container.
 type Config struct {
-	StaticConfig
+	Static
 	General     General     `json:"general"`
 	Demo        Demo        `json:"demo"`
 	Filters     Filter      `json:"filters"`
@@ -180,12 +180,12 @@ func (rm RunMode) String() string {
 	return string(rm)
 }
 
-type ConfigAction string
+type Action string
 
 const (
-	ActionGag  ConfigAction = "gag"
-	ActionKick ConfigAction = "kick"
-	ActionBan  ConfigAction = "ban"
+	ActionGag  Action = "gag"
+	ActionKick Action = "kick"
+	ActionBan  Action = "ban"
 )
 
 type FileServeMode string
@@ -281,13 +281,13 @@ type IP2Location struct {
 }
 
 type Configuration struct {
-	repository    ConfigRepo
-	static        StaticConfig
+	repository    Repo
+	static        Static
 	configMu      sync.RWMutex
 	currentConfig Config
 }
 
-func NewConfiguration(static StaticConfig, repository ConfigRepo) *Configuration {
+func NewConfiguration(static Static, repository Repo) *Configuration {
 	return &Configuration{static: static, repository: repository}
 }
 
@@ -336,7 +336,7 @@ func (c *Configuration) Reload(ctx context.Context) error {
 		return errConfig
 	}
 
-	config.StaticConfig = c.static
+	config.Static = c.static
 
 	c.configMu.Lock()
 	c.currentConfig = config
@@ -349,10 +349,10 @@ func (c *Configuration) Reload(ctx context.Context) error {
 	return nil
 }
 
-func ReadStaticConfig() (StaticConfig, error) {
+func ReadStaticConfig() (Static, error) {
 	setDefaultConfigValues()
 
-	var config StaticConfig
+	var config Static
 	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil {
 		return config, errors.Join(errReadConfig, domain.ErrReadConfig)
 	}

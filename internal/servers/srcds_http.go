@@ -56,7 +56,7 @@ func NewSRCDSHandler(engine *gin.Engine, srcds *SRCDS, servers Servers,
 
 	adminGroup := engine.Group("/")
 	{
-		admin := adminGroup.Use(auth.Middleware(permission.PAdmin))
+		admin := adminGroup.Use(auth.Middleware(permission.Admin))
 		// Groups
 		admin.GET("/api/smadmin/groups", handler.onAPISMGroups())
 		admin.POST("/api/smadmin/groups", handler.onCreateSMGroup())

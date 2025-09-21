@@ -89,9 +89,9 @@ type permTestValues struct {
 }
 
 var (
-	authed     = []permission.Privilege{permission.PGuest}                                          //nolint:gochecknoglobals
-	moderators = []permission.Privilege{permission.PGuest, permission.PUser}                        //nolint:gochecknoglobals
-	admin      = []permission.Privilege{permission.PGuest, permission.PUser, permission.PModerator} //nolint:gochecknoglobals
+	authed     = []permission.Privilege{permission.Guest}                                        //nolint:gochecknoglobals
+	moderators = []permission.Privilege{permission.Guest, permission.User}                       //nolint:gochecknoglobals
+	admin      = []permission.Privilege{permission.Guest, permission.User, permission.Moderator} //nolint:gochecknoglobals
 )
 
 func testPermissions(t *testing.T, router *gin.Engine, testCases []permTestValues) {
@@ -102,9 +102,9 @@ func testPermissions(t *testing.T, router *gin.Engine, testCases []permTestValue
 			var tokens *auth.UserTokens
 
 			switch level {
-			case permission.PUser:
+			case permission.User:
 				tokens = loginUser(getUser())
-			case permission.PModerator:
+			case permission.Moderator:
 				tokens = loginUser(getModerator())
 			}
 

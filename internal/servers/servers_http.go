@@ -31,7 +31,7 @@ func NewServersHandler(engine *gin.Engine, servers Servers, state *State, authen
 	// admin
 	srvGrp := engine.Group("/")
 	{
-		admin := srvGrp.Use(authenticator.Middleware(permission.PAdmin))
+		admin := srvGrp.Use(authenticator.Middleware(permission.Admin))
 		admin.POST("/api/servers", handler.onAPIPostServer())
 		admin.POST("/api/servers/:server_id", handler.onAPIPostServerUpdate())
 		admin.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())

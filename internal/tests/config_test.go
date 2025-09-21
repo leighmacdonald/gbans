@@ -15,7 +15,7 @@ func TestConfig(t *testing.T) {
 
 	var conf config.Config
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/config", nil, http.StatusOK, &authTokens{user: owner}, &conf)
-	conf.StaticConfig = configUC.Config().StaticConfig
+	conf.Static = configUC.Config().Static
 	require.Equal(t, configUC.Config(), conf)
 
 	conf.General.SiteName += "x"
@@ -108,7 +108,7 @@ func TestConfig(t *testing.T) {
 
 	var updated config.Config
 	testEndpointWithReceiver(t, router, http.MethodPut, "/api/config", conf, http.StatusOK, &authTokens{user: owner}, &updated)
-	updated.StaticConfig = configUC.Config().StaticConfig
+	updated.Static = configUC.Config().Static
 	require.Equal(t, conf, updated)
 }
 

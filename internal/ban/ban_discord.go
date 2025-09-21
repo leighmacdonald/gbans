@@ -15,56 +15,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
-)
-
-var (
-	slashCommands = []*discordgo.ApplicationCommand{
-		{
-			Name:                     "checkip",
-			DMPermission:             &helper.DmPerms,
-			DefaultMemberPermissions: &helper.ModPerms,
-			Description:              "Check if a ip is banned",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        helper.OptIP,
-					Description: "IP address to check",
-					Required:    true,
-				},
-			},
-		},
-	}
-
-	reasons = []*discordgo.ApplicationCommandOptionChoice{
-		{Name: banDomain.External.String(), Value: banDomain.External},
-		{Name: banDomain.Cheating.String(), Value: banDomain.Cheating},
-		{Name: banDomain.Racism.String(), Value: banDomain.Racism},
-		{Name: banDomain.Harassment.String(), Value: banDomain.Harassment},
-		{Name: banDomain.Exploiting.String(), Value: banDomain.Exploiting},
-		{Name: banDomain.WarningsExceeded.String(), Value: banDomain.WarningsExceeded},
-		{Name: banDomain.Spam.String(), Value: banDomain.Spam},
-		{Name: banDomain.Language.String(), Value: banDomain.Language},
-		{Name: banDomain.Profile.String(), Value: banDomain.Profile},
-		{Name: banDomain.ItemDescriptions.String(), Value: banDomain.ItemDescriptions},
-		{Name: banDomain.BotHost.String(), Value: banDomain.BotHost},
-		{Name: banDomain.Evading.String(), Value: banDomain.Evading},
-		{Name: banDomain.Username.String(), Value: banDomain.Username},
-		{Name: banDomain.Custom.String(), Value: banDomain.Custom},
-	}
-
-	optBanReason = &discordgo.ApplicationCommandOption{
-		Type:        discordgo.ApplicationCommandOptionInteger,
-		Name:        helper.OptBanReason,
-		Description: "Reason for the ban/mute",
-		Required:    true,
-		Choices:     reasons,
-	}
 )
 
 type discordHandler struct {
@@ -75,9 +31,36 @@ type discordHandler struct {
 }
 
 func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
+	var (
+		reasons = []*discordgo.ApplicationCommandOptionChoice{
+			{Name: ban.External.String(), Value: ban.External},
+			{Name: ban.Cheating.String(), Value: ban.Cheating},
+			{Name: ban.Racism.String(), Value: ban.Racism},
+			{Name: ban.Harassment.String(), Value: ban.Harassment},
+			{Name: ban.Exploiting.String(), Value: ban.Exploiting},
+			{Name: ban.WarningsExceeded.String(), Value: ban.WarningsExceeded},
+			{Name: ban.Spam.String(), Value: ban.Spam},
+			{Name: ban.Language.String(), Value: ban.Language},
+			{Name: ban.Profile.String(), Value: ban.Profile},
+			{Name: ban.ItemDescriptions.String(), Value: ban.ItemDescriptions},
+			{Name: ban.BotHost.String(), Value: ban.BotHost},
+			{Name: ban.Evading.String(), Value: ban.Evading},
+			{Name: ban.Username.String(), Value: ban.Username},
+			{Name: ban.Custom.String(), Value: ban.Custom},
+		}
+
+		optBanReason = &discordgo.ApplicationCommandOption{
+			Type:        discordgo.ApplicationCommandOptionInteger,
+			Name:        helper.OptBanReason,
+			Description: "Reason for the ban/mute",
+			Required:    true,
+			Choices:     reasons,
+		}
+	)
+
 	handler := &discordHandler{bans: bans}
 
-	bot.RegisterHandler("ban", handler.onBan, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("ban", handler.onBan, &discordgo.ApplicationCommand{
 		Name:                     "ban",
 		Description:              "Manage steam, ip, group and ASN bans",
 		DMPermission:             &helper.DmPerms,
@@ -112,7 +95,7 @@ func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
 		},
 	})
 
-	bot.RegisterHandler("unban", handler.onUnban, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("unban", handler.onUnban, &discordgo.ApplicationCommand{
 		Name:                     "unban",
 		Description:              "Manage steam, ip and ASN bans",
 		DMPermission:             &helper.DmPerms,
@@ -140,7 +123,7 @@ func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
 		},
 	})
 
-	bot.RegisterHandler("mute", handler.onMute, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("mute", handler.onMute, &discordgo.ApplicationCommand{
 		Name:                     "mute",
 		Description:              "Mute a player",
 		DMPermission:             &helper.DmPerms,
@@ -174,7 +157,7 @@ func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
 		},
 	})
 
-	bot.RegisterHandler("check", handler.onCheck, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("check", handler.onCheck, &discordgo.ApplicationCommand{
 		Name:                     "check",
 		DMPermission:             &helper.DmPerms,
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -208,18 +191,18 @@ func (h discordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 		return nil, errAuthor
 	}
 	banOpts := BanOpts{
-		Origin:     banDomain.Bot,
+		Origin:     ban.Bot,
 		SourceID:   author.SteamID,
 		TargetID:   steamid.New(opts.String(helper.OptUserIdentifier)),
-		BanType:    banDomain.NoComm,
-		Reason:     banDomain.Reason(reasonValueOpt.IntValue()),
+		BanType:    ban.NoComm,
+		Reason:     ban.Reason(reasonValueOpt.IntValue()),
 		ReasonText: "",
 		Note:       opts[helper.OptNote].StringValue(),
 	}
 
 	duration, errDuration := duration.Parse(opts[helper.OptDuration].StringValue())
 	if errDuration != nil {
-		return nil, errDuration
+		return nil, errors.Join(errDuration, ban.ErrDuration)
 	}
 
 	banOpts.Duration = duration
@@ -229,7 +212,7 @@ func (h discordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 		return nil, errBan
 	}
 
-	return MuteMessage(banSteam), nil
+	return MuteMessage(banSteam.TargetID), nil
 }
 
 // onBanSteam !ban <id> <duration> [reason].
@@ -242,18 +225,18 @@ func (h discordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 	}
 
 	banOpts := BanOpts{
-		Origin:     banDomain.Bot,
+		Origin:     ban.Bot,
 		SourceID:   author.SteamID,
 		TargetID:   steamid.New(opts[helper.OptUserIdentifier].StringValue()),
-		BanType:    banDomain.Banned,
-		Reason:     banDomain.Reason(opts[helper.OptBanReason].IntValue()),
+		BanType:    ban.Banned,
+		Reason:     ban.Reason(opts[helper.OptBanReason].IntValue()),
 		ReasonText: "",
 		Note:       opts[helper.OptNote].StringValue(),
 	}
 
 	duration, errDuration := duration.Parse(opts[helper.OptDuration].StringValue())
 	if errDuration != nil {
-		return nil, errDuration
+		return nil, errors.Join(errDuration, ban.ErrDuration)
 	}
 	banOpts.Duration = duration
 
@@ -266,7 +249,7 @@ func (h discordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 		return nil, helper.ErrCommandFailed
 	}
 
-	return BanSteamResponse(banSteam), nil
+	return CreateResponse(banSteam), nil
 }
 
 func (h discordHandler) onUnban(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
@@ -381,9 +364,9 @@ func CheckMessage(player domain.PersonCore, banPerson Ban, banURL string, author
 
 	if banPerson.BanID > 0 {
 		switch banPerson.BanType {
-		case banDomain.Banned:
+		case ban.Banned:
 			title += " (BANNED)"
-		case banDomain.NoComm:
+		case ban.NoComm:
 			title += " (MUTED)"
 		}
 	}
@@ -419,7 +402,7 @@ func CheckMessage(player domain.PersonCore, banPerson Ban, banURL string, author
 		numMutes, numBans := 0, 0
 
 		for _, oldBan := range oldBans {
-			if oldBan.BanType == banDomain.Banned {
+			if oldBan.BanType == ban.Banned {
 				numBans++
 			} else {
 				numMutes++
@@ -441,8 +424,8 @@ func CheckMessage(player domain.PersonCore, banPerson Ban, banURL string, author
 	)
 
 	if banPerson.BanID > 0 {
-		banned = banPerson.BanType == banDomain.Banned
-		muted = banPerson.BanType == banDomain.NoComm
+		banned = banPerson.BanType == ban.Banned
+		muted = banPerson.BanType == ban.NoComm
 		reason := banPerson.ReasonText
 
 		if len(reason) == 0 {
@@ -556,9 +539,9 @@ func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus,
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func MuteMessage(banSteam Ban) *discordgo.MessageEmbed {
+func MuteMessage(target steamid.SteamID) *discordgo.MessageEmbed {
 	embed := message.NewEmbed("Player muted successfully")
-	embed.AddFieldsSteamID(banSteam.TargetID)
+	embed.AddFieldsSteamID(target)
 
 	return embed.Embed().SetColor(message.ColourSuccess).Truncate().MessageEmbed
 }
@@ -588,9 +571,9 @@ func SilenceEmbed(target domain.PersonInfo) *discordgo.MessageEmbed {
 	return msgEmbed.AddTargetPerson(target).Embed().MessageEmbed
 }
 
-func BanExpiresMessage(inBan Ban, person domain.PersonInfo, banURL string) *discordgo.MessageEmbed {
+func ExpiredMessage(inBan Ban, person domain.PersonInfo, banURL string) *discordgo.MessageEmbed {
 	banType := "Ban"
-	if inBan.BanType == banDomain.NoComm {
+	if inBan.BanType == ban.NoComm {
 		banType = "Mute"
 	}
 
@@ -605,20 +588,20 @@ func BanExpiresMessage(inBan Ban, person domain.PersonInfo, banURL string) *disc
 
 	msgEmbed.AddFieldsSteamID(person.GetSteamID())
 
-	if inBan.BanType == banDomain.NoComm {
+	if inBan.BanType == ban.NoComm {
 		msgEmbed.Embed().SetColor(message.ColourWarn)
 	}
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func BanSteamResponse(banSteam Ban) *discordgo.MessageEmbed {
+func CreateResponse(banSteam Ban) *discordgo.MessageEmbed {
 	var (
 		title  string
 		colour int
 	)
 
-	if banSteam.BanType == banDomain.NoComm {
+	if banSteam.BanType == ban.NoComm {
 		title = fmt.Sprintf("User Muted (#%d)", banSteam.BanID)
 		colour = message.ColourWarn
 	} else {
@@ -757,4 +740,32 @@ func ReportStatsMessage(meta ReportMeta, url string) *discordgo.MessageEmbed {
 		AddField(">1 Week", fmt.Sprintf(" %d", meta.OpenWeek)).MakeFieldInline().
 		Truncate().
 		MessageEmbed
+}
+
+func NewInGameReportResponse(report ReportWithAuthor, reportURL string, author domain.PersonInfo, authorURL string, _ string) *discordgo.MessageEmbed {
+	msgEmbed := message.NewEmbed("New User Report Created")
+	msgEmbed.
+		Embed().
+		SetDescription(report.Description).
+		SetColor(message.ColourSuccess).
+		SetURL(reportURL)
+
+	msgEmbed.AddAuthorPersonInfo(author, authorURL)
+
+	name := author.GetName()
+
+	if name == "" {
+		name = report.TargetID.String()
+	}
+
+	msgEmbed.
+		Embed().
+		AddField("Subject", name).
+		AddField("Reason", report.Reason.String())
+
+	if report.ReasonText != "" {
+		msgEmbed.Embed().AddField("Custom Reason", report.ReasonText)
+	}
+
+	return msgEmbed.AddFieldsSteamID(report.TargetID).Embed().Truncate().MessageEmbed
 }

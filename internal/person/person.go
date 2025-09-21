@@ -112,6 +112,10 @@ func (p Person) GetDiscordID() string {
 }
 
 func (p Person) GetName() string {
+	if p.PersonaName == "" {
+		return p.SteamID.String()
+	}
+
 	return p.PersonaName
 }
 
@@ -154,7 +158,7 @@ func New(sid64 steamid.SteamID) Person {
 		SteamID:               sid64,
 		CreatedOn:             curTime,
 		UpdatedOn:             curTime,
-		PermissionLevel:       permission.PUser,
+		PermissionLevel:       permission.User,
 		Muted:                 false,
 		IsNew:                 true,
 		DiscordID:             "",
@@ -481,7 +485,7 @@ func (u *Persons) SetPermissionLevel(ctx context.Context, transaction pgx.Tx, st
 
 	// Don't let admins un-admin themselves.
 	if steamID == steamid.New(u.config.Config().Owner) {
-		return permission.ErrPermissionDenied
+		return permission.ErrDenied
 	}
 
 	person.PermissionLevel = level

@@ -42,7 +42,7 @@ func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Con
 	authGrp := engine.Group("/")
 	{
 		// authed
-		env := authGrp.Use(auth.Middleware(permission.PUser))
+		env := authGrp.Use(auth.Middleware(permission.User))
 
 		env.GET("/api/auth/logout", handler.onAPILogout())
 	}

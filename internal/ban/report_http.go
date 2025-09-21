@@ -25,7 +25,7 @@ func NewReportHandler(engine *gin.Engine, reports Reports, authenticator httphel
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.User))
 
 		// Reports
 		authed.POST("/api/report", handler.onAPIPostReportCreate())
@@ -42,7 +42,7 @@ func NewReportHandler(engine *gin.Engine, reports Reports, authenticator httphel
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 		mod.POST("/api/reports", handler.onAPIGetAllReports())
 	}
 }
@@ -178,7 +178,7 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 			return
 		}
 
-		if !httphelper.HasPrivilege(user, steamid.Collection{report.SourceID, report.TargetID}, permission.PModerator) {
+		if !httphelper.HasPrivilege(user, steamid.Collection{report.SourceID, report.TargetID}, permission.Moderator) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrBadRequest))
 
 			return

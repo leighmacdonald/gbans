@@ -56,7 +56,7 @@ func NewPage(slug string, body string) Page {
 		Slug:            slug,
 		BodyMD:          body,
 		Revision:        0,
-		PermissionLevel: permission.PGuest,
+		PermissionLevel: permission.Guest,
 		CreatedOn:       now,
 		UpdatedOn:       now,
 	}
@@ -82,7 +82,7 @@ func (w *Wiki) BySlug(ctx context.Context, user domain.PersonInfo, slug string) 
 	}
 
 	if !user.HasPermission(page.PermissionLevel) {
-		return page, permission.ErrPermissionDenied
+		return page, permission.ErrDenied
 	}
 
 	return page, nil

@@ -50,7 +50,7 @@ func TestPerson(t *testing.T) {
 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/players", query, http.StatusOK, &authTokens{user: modAuth}, &res)
 	require.Len(t, res.Data, 1)
 
-	newPerms := person.RequestPermissionLevelUpdate{PermissionLevel: permission.PModerator}
+	newPerms := person.RequestPermissionLevelUpdate{PermissionLevel: permission.Moderator}
 	var newMod person.Person
 	testEndpointWithReceiver(t, router, http.MethodPut, fmt.Sprintf("/api/player/%s/permissions", profile.SteamID.String()), newPerms, http.StatusOK, &authTokens{user: adminAuth}, &newMod)
 	require.Equal(t, newPerms.PermissionLevel, newMod.PermissionLevel)

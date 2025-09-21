@@ -259,6 +259,8 @@ var asNumValidator validator.Func = func(fl validator.FieldLevel) bool {
 	return false
 }
 
+var ErrValidator = errors.New("failed to register validator")
+
 func CreateRouter(conf config.Config, version BuildInfo) (*gin.Engine, error) {
 	gin.SetMode(gin.ReleaseMode)
 
@@ -268,9 +270,15 @@ func CreateRouter(conf config.Config, version BuildInfo) (*gin.Engine, error) {
 	engine.Use(errorHandler())
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("steamid", steamidValidator)
-		v.RegisterValidation("asnum", asNumValidator)
-		v.RegisterValidation("duration", durationValidator)
+		if err := v.RegisterValidation("steamid", steamidValidator); err != nil {
+			return nil, errors.Join(err, ErrValidator)
+		}
+		if err := v.RegisterValidation("asnum", asNumValidator); err != nil {
+			return nil, errors.Join(err, ErrValidator)
+		}
+		if err := v.RegisterValidation("duration", durationValidator); err != nil {
+			return nil, errors.Join(err, ErrValidator)
+		}
 	}
 
 	if conf.Log.HTTPEnabled {

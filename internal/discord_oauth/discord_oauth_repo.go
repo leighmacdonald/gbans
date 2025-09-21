@@ -8,15 +8,15 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type DiscordOAuthRepository struct {
+type Repository struct {
 	db database.Database
 }
 
-func NewRepository(database database.Database) DiscordOAuthRepository {
-	return DiscordOAuthRepository{db: database}
+func NewRepository(database database.Database) Repository {
+	return Repository{db: database}
 }
 
-func (d DiscordOAuthRepository) SaveUserDetail(ctx context.Context, detail DiscordUserDetail) error {
+func (d Repository) SaveUserDetail(ctx context.Context, detail UserDetail) error {
 	const query = `INSERT INTO discord_user (
                           steam_id, discord_id, username, avatar,
                           publicflags, mfa_enabled, premium_type, created_on, updated_on)
@@ -31,35 +31,35 @@ func (d DiscordOAuthRepository) SaveUserDetail(ctx context.Context, detail Disco
 	))
 }
 
-func (d DiscordOAuthRepository) GetUserDetail(ctx context.Context, steamID steamid.SteamID) (DiscordUserDetail, error) {
+func (d Repository) GetUserDetail(ctx context.Context, steamID steamid.SteamID) (UserDetail, error) {
 	row, errRow := d.db.QueryRowBuilder(ctx, nil, d.db.Builder().
 		Select("discord_id", "username", "avatar",
 			"publicflags", "mfa_enabled", "premium_type", "created_on", "updated_on").
 		From("discord_user").
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
 	if errRow != nil {
-		return DiscordUserDetail{}, database.DBErr(errRow)
+		return UserDetail{}, database.DBErr(errRow)
 	}
 
-	var detail DiscordUserDetail
+	var detail UserDetail
 
 	detail.SteamID = steamID
 
 	if err := row.Scan(&detail.ID, &detail.Username, &detail.Avatar, &detail.PublicFlags, &detail.MfaEnabled, &detail.PremiumType,
 		&detail.CreatedOn, &detail.UpdatedOn); err != nil {
-		return DiscordUserDetail{}, database.DBErr(errRow)
+		return UserDetail{}, database.DBErr(errRow)
 	}
 
 	return detail, nil
 }
 
-func (d DiscordOAuthRepository) DeleteUserDetail(ctx context.Context, steamID steamid.SteamID) error {
+func (d Repository) DeleteUserDetail(ctx context.Context, steamID steamid.SteamID) error {
 	return database.DBErr(d.db.ExecDeleteBuilder(ctx, nil, d.db.Builder().
 		Delete("discord_user").
 		Where(sq.Eq{"steam_id": steamID})))
 }
 
-func (d DiscordOAuthRepository) SaveTokens(ctx context.Context, creds DiscordCredential) error {
+func (d Repository) SaveTokens(ctx context.Context, creds Credential) error {
 	const query = `
 		INSERT INTO auth_discord (
 			steam_id, discord_id, access_token, refresh_token,
@@ -74,29 +74,29 @@ func (d DiscordOAuthRepository) SaveTokens(ctx context.Context, creds DiscordCre
 	))
 }
 
-func (d DiscordOAuthRepository) GetTokens(ctx context.Context, steamID steamid.SteamID) (DiscordCredential, error) {
+func (d Repository) GetTokens(ctx context.Context, steamID steamid.SteamID) (Credential, error) {
 	row, errRow := d.db.QueryRowBuilder(ctx, nil, d.db.Builder().
 		Select("discord_id", "access_token", "refresh_token",
 			"expires_in", "scope", "token_type", "created_on", "updated_on").
 		From("auth_discord").
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
 	if errRow != nil {
-		return DiscordCredential{}, database.DBErr(errRow)
+		return Credential{}, database.DBErr(errRow)
 	}
 
-	var creds DiscordCredential
+	var creds Credential
 
 	creds.SteamID = steamID
 
 	if err := row.Scan(&creds.DiscordID, &creds.AccessToken, &creds.RefreshToken, &creds.ExpiresIn, &creds.Scope, &creds.TokenType,
 		&creds.CreatedOn, &creds.UpdatedOn); err != nil {
-		return DiscordCredential{}, database.DBErr(errRow)
+		return Credential{}, database.DBErr(errRow)
 	}
 
 	return creds, nil
 }
 
-func (d DiscordOAuthRepository) DeleteTokens(ctx context.Context, steamID steamid.SteamID) error {
+func (d Repository) DeleteTokens(ctx context.Context, steamID steamid.SteamID) error {
 	query, vars, errQuery := d.db.Builder().
 		Delete("auth_discord").
 		Where(sq.Eq{"steam_id": steamID}).
@@ -108,7 +108,7 @@ func (d DiscordOAuthRepository) DeleteTokens(ctx context.Context, steamID steami
 	return d.db.Exec(ctx, nil, query, vars...)
 }
 
-func (d DiscordOAuthRepository) OldAuths(ctx context.Context) ([]DiscordCredential, error) {
+func (d Repository) OldAuths(ctx context.Context) ([]Credential, error) {
 	const query = `SELECT steam_id, discord_id, access_token,  refresh_token,
                           expires_in, scope, token_type, created_on, updated_on FROM auth_discord
 					WHERE to_timestamp(extract(epoch from updated_on) + expires_in) < (now()) -- + interval '7 days');`
@@ -118,10 +118,10 @@ func (d DiscordOAuthRepository) OldAuths(ctx context.Context) ([]DiscordCredenti
 		return nil, database.DBErr(errRows)
 	}
 
-	var credentials []DiscordCredential
+	var credentials []Credential
 
 	for rows.Next() {
-		var creds DiscordCredential
+		var creds Credential
 		if errScan := rows.Scan(&creds.SteamID, &creds.DiscordID, &creds.AccessToken, &creds.RefreshToken, &creds.ExpiresIn,
 			&creds.Scope, &creds.TokenType, &creds.CreatedOn, &creds.UpdatedOn); errScan != nil {
 			return credentials, database.DBErr(errScan)

@@ -140,13 +140,13 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 	return func(ctx *gin.Context) {
 		var token string
 
-		hdrToken, errToken := u.TokenFromHeader(ctx, level == permission.PGuest)
+		hdrToken, errToken := u.TokenFromHeader(ctx, level == permission.Guest)
 		if errToken != nil || hdrToken == "" {
-			ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.PGuest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.Guest, Name: "Guest"})
 		} else {
 			token = hdrToken
 
-			if level >= permission.PGuest {
+			if level >= permission.Guest {
 				fingerprint, errFingerprint := ctx.Cookie("fingerprint")
 				if errFingerprint != nil {
 					slog.Error("Failed to load fingerprint cookie", log.ErrAttr(errFingerprint))
@@ -225,7 +225,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					}
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.PGuest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.Guest, Name: "Guest"})
 			}
 		}
 
@@ -252,11 +252,11 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 
 		queryToken, errToken := u.TokenFromQuery(ctx)
 		if errToken != nil || queryToken == "" {
-			ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.PGuest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.Guest, Name: "Guest"})
 		} else {
 			token = queryToken
 
-			if level >= permission.PGuest {
+			if level >= permission.Guest {
 				sid, errFromToken := u.Sid64FromJWTTokenNoFP(token, cookieKey)
 				if errFromToken != nil {
 					if errors.Is(errFromToken, domain.ErrExpired) {
@@ -319,7 +319,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 					}
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.PGuest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.Guest, Name: "Guest"})
 			}
 		}
 

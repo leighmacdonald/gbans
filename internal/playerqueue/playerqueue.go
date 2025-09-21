@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -89,11 +90,13 @@ type ChatStatusChangePayload struct {
 }
 
 func NewPlayerqueue(repo Repository, persons domain.PersonProvider, serversUC servers.Servers,
-	state *servers.State, chatLogs []ChatLog,
+	state *servers.State, chatLogs []ChatLog, config *config.Configuration, notif notification.Notifications,
 ) *Playerqueue {
 	return &Playerqueue{
+		config:  config,
 		repo:    repo,
 		persons: persons,
+		notif:   notif,
 		queue: New(100, 2, chatLogs, func() ([]Lobby, error) {
 			currentState := state.Current()
 
@@ -133,6 +136,7 @@ type Playerqueue struct {
 	repo    Repository
 	persons domain.PersonProvider
 	notif   notification.Notifications
+	config  *config.Configuration
 	queue   *Coordinator
 }
 
@@ -186,18 +190,18 @@ func (p Playerqueue) Purge(ctx context.Context, authorID steamid.SteamID, messag
 
 	p.queue.PurgeMessages(messageIDs...)
 
-	// author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
-	// if errGetProfile != nil {
-	// 	return errGetProfile
-	// }
+	author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
+	if errGetProfile != nil {
+		return errGetProfile
+	}
 
-	// target, errGetTarget := p.persons.GetOrCreatePersonBySteamID(ctx, nil, message.SteamID)
-	// if errGetTarget != nil {
-	// 	return errGetTarget
-	// }
+	target, errGetTarget := p.persons.GetOrCreatePersonBySteamID(ctx, nil, message.SteamID)
+	if errGetTarget != nil {
+		return errGetTarget
+	}
 
-	// p.notif.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	discord.ChannelPlayerqueue, discord.NewPlayerqueuePurge(author.ToUserProfile(), target.ToUserProfile(), message, count)))
+	p.notif.Send <- notification.NewDiscord(p.config.Config().Discord.PlayerqueueChannelID,
+		NewPlayerqueuePurge(author, target, message, count))
 
 	return nil
 }
@@ -230,7 +234,7 @@ func (p Playerqueue) SetChatStatus(ctx context.Context, authorID steamid.SteamID
 	}
 
 	if author.PermissionLevel <= person.PermissionLevel {
-		return permission.ErrPermissionDenied
+		return permission.ErrDenied
 	}
 
 	if errSave := p.repo.SetChatStatus(ctx, person.SteamID, status); errSave != nil {
@@ -239,13 +243,12 @@ func (p Playerqueue) SetChatStatus(ctx context.Context, authorID steamid.SteamID
 
 	p.queue.UpdateChatStatus(steamID, status, reason, Readwrite)
 
-	// author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
-	// if errGetProfile != nil {
-	// 	return errGetProfile
-	// }
-	//
-	// p.notif.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	discord.ChannelPlayerqueue, discord.NewPlayerqueueChatStatus(author.ToUserProfile(), person.ToUserProfile(), status, reason)))
+	author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
+	if errGetProfile != nil {
+		return errGetProfile
+	}
+
+	p.notif.Send <- notification.NewDiscord(p.config.Config().Discord.PlayerqueueChannelID, NewPlayerqueueChatStatus(author, person, status, reason))
 
 	slog.Info("Set chat status", slog.String("steam_id", person.SteamID.String()), slog.String("status", string(status)))
 

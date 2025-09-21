@@ -5,8 +5,10 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -42,13 +44,20 @@ type Result struct {
 type Votes struct {
 	repository  Repository
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	notif       notification.Notifications
+	config      *config.Configuration
+	persons     domain.PersonProvider
 }
 
 func NewVotes(repository Repository, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+	notif notification.Notifications, config *config.Configuration, persons domain.PersonProvider,
 ) Votes {
 	return Votes{
 		repository:  repository,
 		broadcaster: broadcaster,
+		notif:       notif,
+		config:      config,
+		persons:     persons,
 	}
 }
 
@@ -176,19 +185,19 @@ func (u Votes) Start(ctx context.Context) {
 				recent = append(recent, result)
 
 				delete(active, evt.ServerID)
-				// source, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
-				// if errSource != nil {
-				// 	slog.Error("Failed to load vote source", log.ErrAttr(errSource), slog.String("steam_id", result.SourceID.String()))
-				// }
 
-				// target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
-				// if errTarget != nil {
-				// 	slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
-				// }
+				source, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
+				if errSource != nil {
+					slog.Error("Failed to load vote source", log.ErrAttr(errSource), slog.String("steam_id", result.SourceID.String()))
+				}
 
-				// u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-				// 	u.config.Config().Discord.VoteLogChannelID,
-				// 	message.VoteResultMessage(u.config.Config(), result, source, target)))
+				target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
+				if errTarget != nil {
+					slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
+				}
+				conf := u.config.Config()
+				u.notif.Send <- notification.NewDiscord(u.config.Config().Discord.VoteLogChannelID,
+					VoteResultMessage(&conf, result, source, target))
 			}
 		}
 	}

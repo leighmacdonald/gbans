@@ -67,9 +67,10 @@ type QueryChatHistoryResult struct {
 }
 
 type Chat struct {
-	repository    *ChatRepository
+	repository    *Repository
 	wordFilters   WordFilters
 	bans          ban.Bans
+	config        *config.Configuration
 	persons       domain.PersonProvider
 	notifications notification.Notifications
 	state         *servers.State
@@ -83,7 +84,7 @@ type Chat struct {
 	pingDiscord   bool
 }
 
-func NewChat(config *config.Configuration, repo *ChatRepository, filters WordFilters,
+func NewChat(config *config.Configuration, repo *Repository, filters WordFilters,
 	state *servers.State, bans ban.Bans, persons domain.PersonProvider,
 ) *Chat {
 	conf := config.Config()
@@ -102,6 +103,7 @@ func NewChat(config *config.Configuration, repo *ChatRepository, filters WordFil
 		maxWeight:    conf.Filters.MaxWeight,
 		owner:        steamid.New(conf.Owner),
 		checkTimeout: time.Duration(conf.Filters.CheckTimeout) * time.Second,
+		config:       config,
 	}
 }
 
@@ -109,12 +111,13 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 	var (
 		errBan error
 		req    ban.BanOpts
+		newBan ban.Ban
 	)
 
 	if newWarning.MatchedFilter.Action == FilterActionBan || newWarning.MatchedFilter.Action == FilterActionMute {
 		dur, errDur := duration.Parse(newWarning.MatchedFilter.Duration)
 		if errDur != nil {
-			return errDur
+			return errors.Join(errDur, banDomain.ErrDuration)
 		}
 		req = ban.BanOpts{
 			TargetID:   newWarning.UserMessage.SteamID,
@@ -133,10 +136,10 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 	switch newWarning.MatchedFilter.Action {
 	case FilterActionMute:
 		req.BanType = banDomain.NoComm
-		_, errBan = u.bans.Create(ctx, req)
+		newBan, errBan = u.bans.Create(ctx, req)
 	case FilterActionBan:
 		req.BanType = banDomain.Banned
-		_, errBan = u.bans.Create(ctx, req)
+		newBan, errBan = u.bans.Create(ctx, req)
 	case FilterActionKick:
 		// Kicks are temporary, so should be done by Player ID to avoid
 		// missing players who weren't in the latest state update
@@ -160,9 +163,9 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 		return nil
 	}
 
-	// u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	discord.ChannelWordFilterLog,
-	// 	discord.WarningMessage(newWarning, newBan)))
+	u.notifications.Send <- notification.NewDiscord(
+		u.config.Config().Discord.WordFilterLogChannelID,
+		WarningMessage(newWarning, newBan))
 
 	return nil
 }
@@ -316,11 +319,11 @@ func (u Chat) AddChatHistory(ctx context.Context, message *PersonMessage) error 
 }
 
 func (u Chat) QueryChatHistory(ctx context.Context, user domain.PersonInfo, req ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error) {
-	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(permission.PModerator)) {
+	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(permission.Moderator)) {
 		req.Limit = 100
 	}
 
-	if !user.HasPermission(permission.PModerator) {
+	if !user.HasPermission(permission.Moderator) {
 		req.Unrestricted = false
 	} else {
 		req.Unrestricted = true
