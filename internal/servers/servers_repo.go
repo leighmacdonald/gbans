@@ -55,7 +55,7 @@ func (r *Repository) GetServerPermissions(ctx context.Context) ([]ServerPermissi
 	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("steam_id", "permission_level").From("person").
-		Where(sq.GtOrEq{"permission_level": permission.PReserved}).
+		Where(sq.GtOrEq{"permission_level": permission.Reserved}).
 		OrderBy("permission_level desc"))
 	if errRows != nil {
 		return nil, database.DBErr(errRows)
@@ -77,13 +77,13 @@ func (r *Repository) GetServerPermissions(ctx context.Context) ([]ServerPermissi
 		}
 
 		switch perm {
-		case permission.PReserved:
+		case permission.Reserved:
 			flags = "a"
-		case permission.PEditor:
+		case permission.Editor:
 			flags = "aj"
-		case permission.PModerator:
+		case permission.Moderator:
 			flags = "abcdegjk"
-		case permission.PAdmin:
+		case permission.Admin:
 			flags = "z"
 		}
 

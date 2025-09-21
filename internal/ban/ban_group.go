@@ -70,12 +70,12 @@ func NewMembersList(parentID int64, members steamid.Collection) MembersList {
 type Memberships struct {
 	members map[steamid.SteamID]steamid.Collection
 	*sync.RWMutex
-	store      BanRepository
+	store      Repository
 	updateFreq time.Duration
 	tfAPI      *thirdparty.TFAPI
 }
 
-func NewMemberships(db BanRepository, tfAPI *thirdparty.TFAPI) *Memberships {
+func NewMemberships(db Repository, tfAPI *thirdparty.TFAPI) *Memberships {
 	return &Memberships{
 		RWMutex:    &sync.RWMutex{},
 		store:      db,

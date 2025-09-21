@@ -2,35 +2,35 @@ package permission
 
 import "errors"
 
-var ErrPermissionDenied = errors.New("permission denied")
+var ErrDenied = errors.New("permission denied")
 
 type Privilege uint8
 
 const (
-	PBanned    Privilege = 0   // Logged in, but is banned
-	PGuest     Privilege = 1   // Non logged in user
-	PUser      Privilege = 10  // Normal logged-in user
-	PReserved  Privilege = 15  // Normal logged-in user with reserved slot
-	PEditor    Privilege = 25  // Edit Access to site / resources
-	PModerator Privilege = 50  // Access detailed player into & ban permissions.
-	PAdmin     Privilege = 100 // Unrestricted admin
+	Banned    Privilege = 0   // Logged in, but is banned
+	Guest     Privilege = 1   // Non logged in user
+	User      Privilege = 10  // Normal logged-in user
+	Reserved  Privilege = 15  // Normal logged-in user with reserved slot
+	Editor    Privilege = 25  // Edit Access to site / resources (not really used yet)
+	Moderator Privilege = 50  // Access detailed player into & ban permissions.
+	Admin     Privilege = 100 // Unrestricted admin
 )
 
 func (p Privilege) String() string {
 	switch p {
-	case PBanned:
+	case Banned:
 		return "banned"
-	case PGuest:
+	case Guest:
 		return "guest"
-	case PUser:
+	case User:
 		return "user"
-	case PReserved:
+	case Reserved:
 		return "reserved"
-	case PEditor:
+	case Editor:
 		return "editor"
-	case PModerator:
+	case Moderator:
 		return "moderator"
-	case PAdmin:
+	case Admin:
 		return "admin"
 	default:
 		return "unknown"

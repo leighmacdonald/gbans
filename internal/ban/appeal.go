@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -84,10 +85,11 @@ type Appeals struct {
 	bans       Bans
 	persons    domain.PersonProvider
 	config     *config.Configuration
+	notif      notification.Notifications
 }
 
-func NewAppeals(ar AppealRepository, bans Bans, persons domain.PersonProvider, config *config.Configuration) Appeals {
-	return Appeals{repository: ar, bans: bans, persons: persons, config: config}
+func NewAppeals(ar AppealRepository, bans Bans, persons domain.PersonProvider, config *config.Configuration, notif notification.Notifications) Appeals {
+	return Appeals{repository: ar, bans: bans, persons: persons, config: config, notif: notif}
 }
 
 func (u *Appeals) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
@@ -109,8 +111,8 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser domain.PersonInfo,
 		return existing, errReport
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.PModerator) {
-		return existing, permission.ErrPermissionDenied
+	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.Moderator) {
+		return existing, permission.ErrDenied
 	}
 
 	if newMsg == "" {
@@ -127,10 +129,10 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser domain.PersonInfo,
 		return existing, errSave
 	}
 
-	//conf := u.config.Config()
-	//
-	// u.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelModAppealLog, discord.NewAppealMessage(existing.MessageMD,
-	// 	conf.ExtURL(bannedPerson.Ban), curUser, conf.ExtURL(curUser))))
+	conf := u.config.Config()
+
+	u.notif.Send <- notification.NewDiscord(conf.Discord.LogChannelID, NewAppealMessage(existing.MessageMD,
+		conf.ExtURLRaw("/ban/%d", existing.BanID), curUser, conf.ExtURL(curUser)))
 
 	slog.Debug("Appeal message updated", slog.Int64("message_id", banMessageID))
 
@@ -142,8 +144,8 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser domain.PersonInf
 		return AppealMessage{}, domain.ErrInvalidParameter
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{curUser.GetSteamID()}, permission.PModerator) {
-		return AppealMessage{}, permission.ErrPermissionDenied
+	if !httphelper.HasPrivilege(curUser, steamid.Collection{curUser.GetSteamID()}, permission.Moderator) {
+		return AppealMessage{}, permission.ErrDenied
 	}
 
 	if newMsg == "" {
@@ -159,8 +161,8 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser domain.PersonInf
 		return AppealMessage{}, errReport
 	}
 
-	if bannedPerson.AppealState != Open && !curUser.HasPermission(permission.PModerator) {
-		return AppealMessage{}, permission.ErrPermissionDenied
+	if bannedPerson.AppealState != Open && !curUser.HasPermission(permission.Moderator) {
+		return AppealMessage{}, permission.ErrDenied
 	}
 
 	_, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, nil, bannedPerson.TargetID)
@@ -221,8 +223,8 @@ func (u *Appeals) Messages(ctx context.Context, userProfile domain.PersonInfo, b
 		return nil, errGetBan
 	}
 
-	if !httphelper.HasPrivilege(userProfile, steamid.Collection{banPerson.TargetID, banPerson.SourceID}, permission.PModerator) {
-		return nil, permission.ErrPermissionDenied
+	if !httphelper.HasPrivilege(userProfile, steamid.Collection{banPerson.TargetID, banPerson.SourceID}, permission.Moderator) {
+		return nil, permission.ErrDenied
 	}
 
 	return u.repository.Messages(ctx, banID)
@@ -238,8 +240,8 @@ func (u *Appeals) DropMessage(ctx context.Context, curUser domain.PersonInfo, ba
 		return errExist
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.PModerator) {
-		return permission.ErrPermissionDenied
+	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.Moderator) {
+		return permission.ErrDenied
 	}
 
 	if errDrop := u.repository.DropMessage(ctx, &existing); errDrop != nil {

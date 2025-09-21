@@ -137,7 +137,7 @@ func NewContest(title string, description string, dateStart time.Time, dateEnd t
 		MediaTypes:         "",
 		Deleted:            false,
 		Voting:             false,
-		MinPermissionLevel: permission.PUser,
+		MinPermissionLevel: permission.User,
 		DownVotes:          false,
 		IsNew:              true,
 		CreatedOn:          time.Now(),
@@ -204,7 +204,7 @@ func (c *Contests) EntryDelete(ctx context.Context, contestEntryID uuid.UUID) er
 }
 
 func (c *Contests) Contests(ctx context.Context, user domain.PersonInfo) ([]Contest, error) {
-	return c.repository.Contests(ctx, !user.HasPermission(permission.PModerator))
+	return c.repository.Contests(ctx, !user.HasPermission(permission.Moderator))
 }
 
 func (c *Contests) Entry(ctx context.Context, contestID uuid.UUID, entry *Entry) error {
@@ -229,8 +229,8 @@ func (c *Contests) EntryVote(ctx context.Context, contestID uuid.UUID, contestEn
 		return errContests
 	}
 
-	if !contest.Public && !user.HasPermission(permission.PModerator) {
-		return permission.ErrPermissionDenied
+	if !contest.Public && !user.HasPermission(permission.Moderator) {
+		return permission.ErrDenied
 	}
 
 	if !contest.Voting || !contest.DownVotes && !vote {

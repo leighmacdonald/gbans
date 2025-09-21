@@ -1,5 +1,9 @@
 package ban
 
+import "errors"
+
+var ErrDuration = errors.New("invalid ban duration")
+
 type SourceTarget struct {
 	SourcePersonaname string `json:"source_personaname"`
 	SourceAvatarhash  string `json:"source_avatarhash"`

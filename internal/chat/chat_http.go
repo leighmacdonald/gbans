@@ -21,14 +21,14 @@ func NewChatHandler(engine *gin.Engine, chat *Chat, authenticator httphelper.Aut
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.User))
 		authed.POST("/api/messages", handler.onAPIQueryMessages())
 	}
 
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 		mod.GET("/api/message/:person_message_id/context/:padding", handler.onAPIQueryMessageContext())
 	}
 }

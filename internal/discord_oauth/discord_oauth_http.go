@@ -36,7 +36,7 @@ func NewDiscordOAuthHandler(engine *gin.Engine, auth httphelper.Authenticator, c
 	authGrp := engine.Group("/")
 	{
 		// authed
-		authed := authGrp.Use(auth.Middleware(permission.PUser))
+		authed := authGrp.Use(auth.Middleware(permission.User))
 		authed.GET("/api/discord/login", handler.onLogin())
 		authed.GET("/api/discord/logout", handler.onLogout())
 		authed.GET("/api/discord/user", handler.onGetDiscordUser())

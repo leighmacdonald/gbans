@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -157,10 +158,11 @@ type Reports struct {
 	persons    *person.Persons
 	demos      servers.Demos
 	tfAPI      *thirdparty.TFAPI
+	notif      notification.Notifications
 }
 
 func NewReports(repository ReportRepository,
-	config *config.Configuration, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI,
+	config *config.Configuration, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI, notif notification.Notifications,
 ) Reports {
 	return Reports{
 		repository: repository,
@@ -168,6 +170,7 @@ func NewReports(repository ReportRepository,
 		persons:    persons,
 		demos:      demos,
 		tfAPI:      tfAPI,
+		notif:      notif,
 	}
 }
 
@@ -211,9 +214,9 @@ func (r Reports) MetaStats(ctx context.Context) error {
 		}
 	}
 
-	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	r.config.Config().Discord.LogChannelID,
-	// 	discord.ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports"))))
+	r.notif.Send <- notification.NewDiscord(
+		r.config.Config().Discord.LogChannelID,
+		ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports")))
 
 	return nil
 }
@@ -254,7 +257,7 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user domai
 		return report, database.ErrDuplicate // TODO proper specific error
 	}
 
-	// fromStatus := report.ReportStatus
+	fromStatus := report.ReportStatus
 
 	report.ReportStatus = status
 
@@ -262,24 +265,24 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user domai
 		return report, errSave
 	}
 
-	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	r.config.Config().Discord.LogChannelID,
-	// 	discord.ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report))))
+	r.notif.Send <- notification.NewDiscord(
+		r.config.Config().Discord.LogChannelID,
+		ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report)))
 
-	// r.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
-	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
-	// 	notification.SeverityInfo,
-	// 	fmt.Sprintf("A report status has changed: %s -> %s", fromStatus, status),
-	// 	report.Path(),
-	// 	user,
-	// ))
+	r.notif.Send <- notification.NewSiteGroupNotificationWithAuthor(
+		[]permission.Privilege{permission.Moderator, permission.Admin},
+		notification.Info,
+		fmt.Sprintf("A report status has changed: %s -> %s", fromStatus, status),
+		report.Path(),
+		user,
+	)
 
-	// r.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-	// 	[]steamid.SteamID{report.Author.SteamID},
-	// 	notification.SeverityInfo,
-	// 	fmt.Sprintf("Your report status has changed: %s -> %s", fromStatus, status),
-	// 	report.Path(),
-	// ))
+	r.notif.Send <- notification.NewSiteUser(
+		[]steamid.SteamID{report.Author.SteamID},
+		notification.Info,
+		fmt.Sprintf("Your report status has changed: %s -> %s", fromStatus, status),
+		report.Path(),
+	)
 
 	slog.Info("Report status changed",
 		slog.Int64("report_id", report.ReportID),
@@ -329,8 +332,8 @@ func (r Reports) Report(ctx context.Context, curUser domain.PersonInfo, reportID
 		return ReportWithAuthor{}, errAuthor
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{author.SteamID}, permission.PModerator) {
-		return ReportWithAuthor{}, permission.ErrPermissionDenied
+	if !httphelper.HasPrivilege(curUser, steamid.Collection{author.SteamID}, permission.Moderator) {
+		return ReportWithAuthor{}, permission.ErrDenied
 	}
 
 	target, errTarget := r.persons.GetPersonBySteamID(ctx, nil, report.TargetID)
@@ -371,17 +374,16 @@ func (r Reports) DropMessage(ctx context.Context, curUser domain.PersonInfo, rep
 		return errExist
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.PModerator) {
-		return permission.ErrPermissionDenied
+	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.Moderator) {
+		return permission.ErrDenied
 	}
 
 	if err := r.repository.DropReportMessage(ctx, &existing); err != nil {
 		return err
 	}
 
-	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	discord.ChannelModAppealLog,
-	// 	discord.DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser))))
+	r.notif.Send <- notification.NewDiscord(r.config.Config().Discord.AppealLogChannelID,
+		DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser)))
 
 	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
 
@@ -397,9 +399,9 @@ func (r Reports) Save(ctx context.Context, currentUser domain.PersonInfo, req Re
 		return ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
 	}
 
-	// ServerStore initiated requests will have a sourceID set by the server
+	// Server initiated requests will have a sourceID set by the server
 	// Web based reports the source should not be set, the reporter will be taken from the
-	// current session information instead
+	// current session information instead to avoid forging.
 	if !req.SourceID.Valid() {
 		req.SourceID = currentUser.GetSteamID()
 	}
@@ -485,21 +487,22 @@ func (r Reports) Save(ctx context.Context, currentUser domain.PersonInfo, req Re
 		return ReportWithAuthor{}, errReport
 	}
 
-	//	conf := r.config.Config()
-	// demoURL := ""
-	// if report.DemoID > 0 {
-	// 	demoURL = conf.ExtURLRaw("/asset/%s", demo.AssetID.String())
-	// }
-	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	discord.ChannelModAppealLog,
-	// 	discord.NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)))
-	// r.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
-	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
-	// 	notification.SeverityInfo,
-	// 	fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.PersonaName),
-	// 	newReport.Path(),
-	// 	currentUser,
-	// ))
+	conf := r.config.Config()
+	demoURL := ""
+	if report.DemoID > 0 {
+		demoURL = conf.ExtURLRaw("/asset/%s", demo.AssetID.String())
+	}
+
+	r.notif.Send <- notification.NewDiscord(
+		conf.Discord.AppealLogChannelID,
+		NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL))
+	r.notif.Send <- notification.NewSiteGroupNotificationWithAuthor(
+		[]permission.Privilege{permission.Moderator, permission.Admin},
+		notification.Info,
+		fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.PersonaName),
+		newReport.Path(),
+		currentUser,
+	)
 
 	return newReport, nil
 }
@@ -514,8 +517,8 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 		return ReportMessage{}, errExist
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.PModerator) {
-		return ReportMessage{}, permission.ErrPermissionDenied
+	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, permission.Moderator) {
+		return ReportMessage{}, permission.ErrDenied
 	}
 
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
@@ -534,12 +537,11 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 		return ReportMessage{}, errSave
 	}
 
-	// conf := r.config.Config()
+	conf := r.config.Config()
 
-	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	discord.ChannelModAppealLog,
-	// 	discord.EditReportMessageResponse(req.BodyMD, existing.MessageMD,
-	// 		conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))))
+	r.notif.Send <- notification.NewDiscord(conf.Discord.AppealLogChannelID,
+		EditReportMessageResponse(req.BodyMD, existing.MessageMD,
+			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser)))
 
 	slog.Info("Report message edited", slog.Int64("report_message_id", reportMessageID))
 
@@ -569,30 +571,30 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser doma
 		return ReportMessage{}, errSave
 	}
 
-	// conf := r.config.Config()
+	conf := r.config.Config()
 
-	// r.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	discord.ChannelModAppealLog,
-	// 	discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser))))
+	r.notif.Send <- notification.NewDiscord(
+		conf.Discord.AppealLogChannelID,
+		NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser)))
 
-	// path := fmt.Sprintf("/report/%d", reportID)
-	//
-	// r.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
-	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
-	// 	notification.SeverityInfo,
-	// 	"A new report reply has been posted. Author: "+curUser.GetName(),
-	// 	path,
-	// 	curUser,
-	// ))
+	path := fmt.Sprintf("/report/%d", reportID)
 
-	// if report.Author.SteamID != curUser.GetSteamID() {
-	// 	r.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-	// 		[]steamid.SteamID{report.Author.SteamID},
-	// 		notification.SeverityInfo,
-	// 		"A new report reply has been posted",
-	// 		path,
-	// 	))
-	// }
+	r.notif.Send <- notification.NewSiteGroupNotificationWithAuthor(
+		[]permission.Privilege{permission.Moderator, permission.Admin},
+		notification.Info,
+		"A new report reply has been posted. Author: "+curUser.GetName(),
+		path,
+		curUser,
+	)
+
+	if report.Author.SteamID != curUser.GetSteamID() {
+		r.notif.Send <- notification.NewSiteUser(
+			[]steamid.SteamID{report.Author.SteamID},
+			notification.Info,
+			"A new report reply has been posted",
+			path,
+		)
+	}
 
 	sid := curUser.GetSteamID()
 	slog.Info("New report message created",

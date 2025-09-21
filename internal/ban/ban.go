@@ -11,15 +11,18 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
@@ -168,35 +171,37 @@ type Stats struct {
 }
 
 type Bans struct {
-	banRepo BanRepository
+	repo    Repository
 	persons *person.Persons
 	config  *config.Configuration
 	state   *servers.State
 	reports Reports
 	tfAPI   *thirdparty.TFAPI
+	notif   notification.Notifications
 }
 
-func NewBans(repository BanRepository, person *person.Persons,
+func NewBans(repository Repository, person *person.Persons,
 	config *config.Configuration, reports Reports, state *servers.State,
-	tfAPI *thirdparty.TFAPI,
+	tfAPI *thirdparty.TFAPI, notif notification.Notifications,
 ) Bans {
 	return Bans{
-		banRepo: repository,
+		repo:    repository,
 		persons: person,
 		config:  config,
 		reports: reports,
 		state:   state,
 		tfAPI:   tfAPI,
+		notif:   notif,
 	}
 }
 
 func (s Bans) UpdateCache(ctx context.Context) error {
-	bans, errBans := s.banRepo.Query(ctx, QueryOpts{GroupsOnly: true})
+	bans, errBans := s.repo.Query(ctx, QueryOpts{GroupsOnly: true})
 	if errBans != nil {
 		return errBans
 	}
 
-	if err := s.banRepo.TruncateCache(ctx); err != nil {
+	if err := s.repo.TruncateCache(ctx); err != nil {
 		return err
 	}
 
@@ -221,7 +226,7 @@ func (s Bans) UpdateCache(ctx context.Context) error {
 			list = append(list, sid.Int64())
 		}
 
-		if err := s.banRepo.InsertCache(ctx, ban.TargetID, list); err != nil {
+		if err := s.repo.InsertCache(ctx, ban.TargetID, list); err != nil {
 			return err
 		}
 	}
@@ -230,12 +235,12 @@ func (s Bans) UpdateCache(ctx context.Context) error {
 }
 
 func (s Bans) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
-	return s.banRepo.Query(ctx, opts)
+	return s.repo.Query(ctx, opts)
 }
 
 func (s Bans) QueryOne(ctx context.Context, opts QueryOpts) (Ban, error) {
 	// TODO FIXME
-	results, errResults := s.banRepo.Query(ctx, opts)
+	results, errResults := s.repo.Query(ctx, opts)
 	if errResults != nil {
 		return Ban{}, errResults
 	}
@@ -248,44 +253,44 @@ func (s Bans) QueryOne(ctx context.Context, opts QueryOpts) (Ban, error) {
 }
 
 func (s Bans) Stats(ctx context.Context, stats *Stats) error {
-	return s.banRepo.Stats(ctx, stats)
+	return s.repo.Stats(ctx, stats)
 }
 
 func (s Bans) Save(ctx context.Context, ban *Ban) error {
-	// oldState := Open
-	// if ban.BanID > 0 {
-	// 	existing, errExisting := s.QueryOne(ctx, QueryOpts{
-	// 		BanID:      ban.BanID,
-	// 		EvadeOk:    true,
-	// 		Deleted:    true,
-	// 		LatestOnly: true,
-	// 	})
-	// 	if errExisting != nil {
-	// 		slog.Error("Failed to get existing ban", log.ErrAttr(errExisting))
+	oldState := Open
+	if ban.BanID > 0 {
+		existing, errExisting := s.QueryOne(ctx, QueryOpts{
+			BanID:      ban.BanID,
+			EvadeOk:    true,
+			Deleted:    true,
+			LatestOnly: true,
+		})
+		if errExisting != nil {
+			slog.Error("Failed to get existing ban", log.ErrAttr(errExisting))
 
-	// 		return errExisting
-	// 	}
+			return errExisting
+		}
 
-	// 	oldState = existing.AppealState
-	// }
+		oldState = existing.AppealState
+	}
 
-	if err := s.banRepo.Save(ctx, ban); err != nil {
+	if err := s.repo.Save(ctx, ban); err != nil {
 		return err
 	}
 
-	// if oldState != ban.AppealState {
-	// 	s.notifications.Enqueue(ctx, notification.NewSiteGroupNotification(
-	// 		[]permission.Privilege{permission.PModerator, permission.PAdmin},
-	// 		notification.SeverityInfo,
-	// 		fmt.Sprintf("Ban appeal state changed: %s -> %s", oldState, ban.AppealState),
-	// 		ban.Path()))
+	if oldState != ban.AppealState {
+		s.notif.Send <- notification.NewSiteGroup(
+			[]permission.Privilege{permission.Moderator, permission.Admin},
+			notification.Info,
+			fmt.Sprintf("Ban appeal state changed: %s -> %s", oldState, ban.AppealState),
+			ban.Path())
 
-	// 	s.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-	// 		[]steamid.SteamID{ban.TargetID},
-	// 		notification.SeverityInfo,
-	// 		fmt.Sprintf("Your mute/ban appeal status has changed: %s -> %s", oldState, ban.AppealState),
-	// 		ban.Path()))
-	// }
+		s.notif.Send <- notification.NewSiteUser(
+			[]steamid.SteamID{ban.TargetID},
+			notification.Info,
+			fmt.Sprintf("Your mute/ban appeal status has changed: %s -> %s", oldState, ban.AppealState),
+			ban.Path())
+	}
 
 	return nil
 }
@@ -322,56 +327,41 @@ func (s Bans) Create(ctx context.Context, opts BanOpts) (Ban, error) {
 		return newBan, errAuthor
 	}
 
-	_, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, opts.TargetID)
+	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, opts.TargetID)
 	if err != nil {
 		return newBan, errors.Join(err, ErrFetchPerson)
 	}
 
-	// existing, errGetExistingBan := s.QueryOne(ctx, QueryOpts{TargetID: opts.TargetID, EvadeOk: true})
-	// if errGetExistingBan != nil && !errors.Is(errGetExistingBan, database.ErrNoResult) {
-	// 	return newBan, errors.Join(errGetExistingBan, ErrGetBan)
-	// }
-
-	// if existing.BanID > 0 {
-	// 	return newBan, database.ErrDuplicate // TODO better error
-	// }
-
-	if errSave := s.banRepo.Save(ctx, &newBan); errSave != nil {
+	if errSave := s.repo.Save(ctx, &newBan); errSave != nil {
 		return newBan, errors.Join(errSave, ErrSaveBan)
 	}
 
-	// bannedPerson, errBannedPerson := s.QueryOne(ctx, QueryOpts{BanID: newBan.BanID, EvadeOk: true})
-	// if errBannedPerson != nil {
-	// 	return newBan, errors.Join(errBannedPerson, ErrSaveBan)
-	// }
+	expIn := "Permanent"
+	expAt := "Permanent"
 
-	// expIn := "Permanent"
-	// expAt := "Permanent"
+	if newBan.ValidUntil.Year()-time.Now().Year() < 5 {
+		expIn = datetime.FmtDuration(newBan.ValidUntil)
+		expAt = datetime.FmtTimeShort(newBan.ValidUntil)
+	}
 
-	// if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
-	// 	expIn = datetime.FmtDuration(banSteam.ValidUntil)
-	// 	expAt = datetime.FmtTimeShort(banSteam.ValidUntil)
-	// }
+	s.notif.Send <- notification.NewDiscord(s.config.Config().Discord.BanLogChannelID,
+		CreateResponse(newBan))
 
-	// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelBanLog, discord.BanSteamResponse(bannedPerson)))
+	s.notif.Send <- notification.NewSiteUserWithAuthor(
+		[]permission.Privilege{permission.Moderator, permission.Admin},
+		notification.Info,
+		fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
+			newBan.Name, expIn, author.GetName()),
+		newBan.Path(),
+		author,
+	)
 
-	// siteMsg := notification.NewSiteUserNotificationWithAuthor(
-	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
-	// 	notification.SeverityInfo,
-	// 	fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
-	// 		bannedPerson.TargetPersonaname, expIn, bannedPerson.SourcePersonaname),
-	// 	banSteam.Path(),
-	// 	author.ToUserProfile(),
-	// )
-
-	// s.notifications.Enqueue(ctx, siteMsg)
-
-	// s.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-	// 	[]steamid.SteamID{bannedPerson.TargetID},
-	// 	notification.SeverityWarn,
-	// 	fmt.Sprintf("You have been %s, Reason: %s, Duration: %s, Ends: %s", bannedPerson.BanType, bannedPerson.Reason.String(), expIn, expAt),
-	// 	banSteam.Path(),
-	// ))
+	s.notif.Send <- notification.NewSiteUser(
+		[]steamid.SteamID{newBan.TargetID},
+		notification.Warn,
+		fmt.Sprintf("You have been %s, Reason: %s, Duration: %s, Ends: %s", newBan.BanType, newBan.Reason.String(), expIn, expAt),
+		newBan.Path(),
+	)
 
 	// Close the report if the ban was attached to one
 	if newBan.ReportID > 0 {
@@ -386,14 +376,14 @@ func (s Bans) Create(ctx context.Context, opts BanOpts) (Ban, error) {
 			slog.Error("Failed to kick player", log.ErrAttr(errKick),
 				slog.Int64("sid64", newBan.TargetID.Int64()))
 		} else {
-			// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelKickLog, message.KickPlayerEmbed(target)))
+			s.notif.Send <- notification.NewDiscord(s.config.Config().Discord.KickLogChannelID, KickPlayerEmbed(target))
 		}
 	case ban.NoComm:
 		if errSilence := s.state.Silence(ctx, newBan.TargetID, newBan.Reason.String()); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
 				slog.Int64("sid64", newBan.TargetID.Int64()))
 		} else {
-			// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelKickLog, message.MuteMessage(bannedPerson)))
+			s.notif.Send <- notification.NewDiscord(s.config.Config().Discord.KickLogChannelID, MuteMessage(target.GetSteamID()))
 		}
 	}
 
@@ -416,45 +406,45 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 	playerBan.Deleted = true
 	playerBan.UnbanReasonText = reason
 
-	if errSave := s.banRepo.Save(ctx, &playerBan); errSave != nil {
+	if errSave := s.repo.Save(ctx, &playerBan); errSave != nil {
 		return false, errors.Join(errSave, ErrSaveBan)
 	}
 
-	// person, err := s.persons.GetPersonBySteamID(ctx, nil, targetSID)
-	// if err != nil {
-	// 	return false, errors.Join(err, ErrFetchPerson)
-	// }
+	person, err := s.persons.GetPersonBySteamID(ctx, nil, targetSID)
+	if err != nil {
+		return false, errors.Join(err, ErrFetchPerson)
+	}
 
-	// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(domain.ChannelBanLog, message.UnbanMessage(s.config, person)))
+	s.notif.Send <- notification.NewDiscord(s.config.Config().Discord.BanLogChannelID, UnbanMessage(s.config.ExtURL(person), person))
 
-	// s.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
-	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
-	// 	notification.SeverityInfo,
-	// 	fmt.Sprintf("A user has been unbanned: %s, Reason: %s", bannedPerson.TargetPersonaname, reason),
-	// 	bannedPerson.Path(),
-	// 	author,
-	// ))
+	s.notif.Send <- notification.NewSiteGroupNotificationWithAuthor(
+		[]permission.Privilege{permission.Moderator, permission.Admin},
+		notification.Info,
+		fmt.Sprintf("A user has been unbanned: %s, Reason: %s", person.GetName(), reason),
+		person.Path(),
+		author,
+	)
 
-	// s.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-	// 	[]steamid.SteamID{bannedPerson.TargetID},
-	// 	notification.SeverityInfo,
-	// 	"You have been unmuted/unbanned",
-	// 	bannedPerson.Path(),
-	// ))
+	s.notif.Send <- notification.NewSiteUser(
+		[]steamid.SteamID{person.SteamID},
+		notification.Info,
+		"You have been unmuted/unbanned",
+		person.Path(),
+	)
 
 	return true, nil
 }
 
 func (s Bans) Delete(ctx context.Context, ban *Ban, hardDelete bool) error {
-	return s.banRepo.Delete(ctx, ban, hardDelete)
+	return s.repo.Delete(ctx, ban, hardDelete)
 }
 
 func (s Bans) Expired(ctx context.Context) ([]Ban, error) {
-	return s.banRepo.ExpiredBans(ctx)
+	return s.repo.ExpiredBans(ctx)
 }
 
 func (s Bans) GetOlderThan(ctx context.Context, filter query.Filter, since time.Time) ([]Ban, error) {
-	return s.banRepo.GetOlderThan(ctx, filter, since)
+	return s.repo.GetOlderThan(ctx, filter, since)
 }
 
 // CheckEvadeStatus checks if the address matches an existing user who is currently banned already. This
@@ -477,7 +467,7 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 
 	dur, errDuration := duration.Parse("P10Y")
 	if errDuration != nil {
-		return false, errDuration
+		return false, errors.Join(errDuration, ban.ErrDuration)
 	}
 
 	existing.Note += " Previous expiry: " + existing.ValidUntil.Format(time.DateTime)
@@ -523,7 +513,7 @@ func (s Bans) UpdateGroupCache(ctx context.Context) error {
 		return errGroups
 	}
 
-	if err := s.banRepo.TruncateCache(ctx); err != nil {
+	if err := s.repo.TruncateCache(ctx); err != nil {
 		return err
 	}
 
@@ -571,7 +561,7 @@ func (s Bans) UpdateGroupCache(ctx context.Context) error {
 			}
 		}
 
-		if err := s.banRepo.InsertCache(ctx, groupID, list.Members.SteamID64); err != nil {
+		if err := s.repo.InsertCache(ctx, groupID, list.Members.SteamID64); err != nil {
 			return err
 		}
 	}
@@ -580,9 +570,9 @@ func (s Bans) UpdateGroupCache(ctx context.Context) error {
 }
 
 func (s Bans) GetMembersList(ctx context.Context, parentID int64, list *MembersList) error {
-	return s.banRepo.GetMembersList(ctx, parentID, list)
+	return s.repo.GetMembersList(ctx, parentID, list)
 }
 
 func (s Bans) SaveMembersList(ctx context.Context, list *MembersList) error {
-	return s.banRepo.SaveMembersList(ctx, list)
+	return s.repo.SaveMembersList(ctx, list)
 }

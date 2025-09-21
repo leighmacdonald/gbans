@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -167,10 +169,12 @@ const (
 type Forums struct {
 	repo    Repository
 	tracker *Tracker
+	notif   notification.Notifications
+	config  *config.Configuration
 }
 
-func NewForums(repository Repository) Forums {
-	return Forums{repo: repository, tracker: NewTracker()}
+func NewForums(repository Repository, config *config.Configuration, notif notification.Notifications) Forums {
+	return Forums{repo: repository, tracker: NewTracker(), config: config, notif: notif}
 }
 
 func (f Forums) Start(ctx context.Context) {
@@ -202,7 +206,7 @@ func (f Forums) CategorySave(ctx context.Context, category *Category) error {
 		slog.Info("Forum category updated", slog.String("title", category.Title))
 	}
 
-	// f.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelForumLog, ForumCategorySave(*category)))
+	f.notif.Send <- notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategorySave(*category))
 
 	return nil
 }
@@ -216,7 +220,7 @@ func (f Forums) CategoryDelete(ctx context.Context, category Category) error {
 		return err
 	}
 
-	// f.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelForumLog, ForumCategoryDelete(category)))
+	f.notif.Send <- notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategoryDelete(category))
 	slog.Info("Forum category deleted", slog.String("category", category.Title), slog.Int("forum_category_id", category.ForumCategoryID))
 
 	return nil
@@ -233,7 +237,7 @@ func (f Forums) ForumSave(ctx context.Context, forum *Forum) error {
 		return err
 	}
 
-	// f.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelForumLog, ForumSaved(*forum)))
+	f.notif.Send <- notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordForumSaved(*forum))
 
 	if isNew {
 		slog.Info("New forum created", slog.String("title", forum.Title))
@@ -307,7 +311,7 @@ func (f Forums) MessageSave(ctx context.Context, fMessage *Message) error {
 		return err
 	}
 
-	// f.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelForumLog, ForumMessageSaved(*fMessage)))
+	f.notif.Send <- notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordForumMessageSaved(*fMessage))
 
 	if isNew {
 		slog.Info("Created new forum message", slog.Int64("forum_thread_id", fMessage.ForumThreadID))

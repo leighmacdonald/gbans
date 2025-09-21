@@ -20,6 +20,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -198,12 +199,14 @@ type SRCDS struct {
 	config     *config.Configuration
 	servers    Servers
 	persons    PersonProvider
-
-	cookie string
-	tfAPI  *thirdparty.TFAPI
+	notif      notification.Notifications
+	cookie     string
+	tfAPI      *thirdparty.TFAPI
 }
 
-func NewSRCDS(repository SRCDSRepository, config *config.Configuration, servers Servers, persons PersonProvider, tfAPI *thirdparty.TFAPI) *SRCDS {
+func NewSRCDS(repository SRCDSRepository, config *config.Configuration, servers Servers,
+	persons PersonProvider, tfAPI *thirdparty.TFAPI, notif notification.Notifications,
+) *SRCDS {
 	return &SRCDS{
 		config:     config,
 		servers:    servers,
@@ -211,6 +214,7 @@ func NewSRCDS(repository SRCDSRepository, config *config.Configuration, servers 
 		repository: repository,
 		cookie:     config.Config().HTTPCookieKey,
 		tfAPI:      tfAPI,
+		notif:      notif,
 	}
 }
 

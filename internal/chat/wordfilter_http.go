@@ -27,7 +27,7 @@ func NewWordFilterHandler(engine *gin.Engine, config *config.Configuration, word
 	// editor
 	modGroup := engine.Group("/")
 	{
-		mod := modGroup.Use(auth.Middleware(permission.PModerator))
+		mod := modGroup.Use(auth.Middleware(permission.Moderator))
 		mod.GET("/api/filters", handler.queryFilters())
 		mod.GET("/api/filters/state", handler.filterStates())
 		mod.POST("/api/filters", handler.createFilter())

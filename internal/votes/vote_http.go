@@ -18,7 +18,7 @@ func NewVotesHandler(engine *gin.Engine, votes Votes, authenticator httphelper.A
 
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 		mod.POST("/api/votes", handler.onVotes())
 	}
 }

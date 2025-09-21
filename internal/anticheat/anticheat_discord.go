@@ -16,35 +16,10 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-var slashCommands = []*discordgo.ApplicationCommand{
-	{
-		Name:                     "anticheat",
-		Description:              "Query Anticheat Logs",
-		DefaultMemberPermissions: &helper.ModPerms,
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Name:        "player",
-				Type:        discordgo.ApplicationCommandOptionSubCommand,
-				Description: "Query a players anticheat logs by steam id",
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        helper.OptUserIdentifier,
-						Description: "SteamID in any format OR profile url",
-						Required:    true,
-					},
-				},
-			},
-		},
-	},
-}
-
-const CmdAC = "ac"
-
 func RegisterDiscordCommands(bot *discord.Discord, anticheat AntiCheat, config *config.Configuration) {
 	handler := discordHandler{anticheat: anticheat, config: config}
 
-	bot.RegisterHandler("ac", handler.onAC, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("ac", handler.onAC, &discordgo.ApplicationCommand{
 		Name:                     "anticheat",
 		Description:              "Query Anticheat Logs",
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -103,13 +78,13 @@ func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 	return ACPlayerLogs(h.config, person, logs), nil
 }
 
-func NewAnticheatTrigger(ban ban.Ban, config *config.Config, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
+func NewAnticheatTrigger(ban ban.Ban, action config.Action, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
 	embed := message.NewEmbed("Player triggered anti-cheat response")
 	embed.Embed().
 		SetColor(message.ColourSuccess).
 		AddField("Detection", string(entry.Detection)).
 		AddField("Count", strconv.Itoa(count)).
-		AddField("Action", string(config.Anticheat.Action))
+		AddField("Action", string(action))
 
 	if entry.DemoName != "" {
 		embed.Emb.AddField("Demo Name", entry.DemoName)

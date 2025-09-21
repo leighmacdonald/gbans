@@ -76,7 +76,7 @@ func (payload Payload) ValidationError() error {
 	return nil
 }
 
-func NewDiscordNotification(channel string, embed *discordgo.MessageEmbed) Payload {
+func NewDiscord(channel string, embed *discordgo.MessageEmbed) Payload {
 	return Payload{
 		Types:           []MessageType{Discord},
 		Sids:            nil,
@@ -89,7 +89,7 @@ func NewDiscordNotification(channel string, embed *discordgo.MessageEmbed) Paylo
 	}
 }
 
-func NewSiteUserNotification(recipients steamid.Collection, severity Severity, message string, link string) Payload {
+func NewSiteUser(recipients steamid.Collection, severity Severity, message string, link string) Payload {
 	return Payload{
 		Types:           []MessageType{User},
 		Sids:            recipients,
@@ -102,14 +102,14 @@ func NewSiteUserNotification(recipients steamid.Collection, severity Severity, m
 	}
 }
 
-func NewSiteUserNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, author domain.PersonInfo) Payload {
-	payload := NewSiteGroupNotification(groups, severity, message, link)
+func NewSiteUserWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, author domain.PersonInfo) Payload {
+	payload := NewSiteGroup(groups, severity, message, link)
 	// payload.Author = &author
 
 	return payload
 }
 
-func NewSiteGroupNotification(groups []permission.Privilege, severity Severity, message string, link string) Payload {
+func NewSiteGroup(groups []permission.Privilege, severity Severity, message string, link string) Payload {
 	return Payload{
 		Types:           []MessageType{User},
 		Sids:            nil,
@@ -123,18 +123,33 @@ func NewSiteGroupNotification(groups []permission.Privilege, severity Severity, 
 }
 
 func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, author domain.PersonInfo) Payload {
-	payload := NewSiteGroupNotification(groups, severity, message, link)
+	payload := NewSiteGroup(groups, severity, message, link)
 	// payload.Author = &author
 
 	return payload
 }
 
 func NewNotifications(repository Repository, discord *discord.Discord) Notifications {
-	return Notifications{repository: repository}
+	return Notifications{repository: repository, bot: discord}
 }
 
 type Notifications struct {
 	repository Repository
+	Send       chan Payload
+	bot        *discord.Discord
+}
+
+func (n *Notifications) Sender(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case notif := <-n.Send:
+			for _, channelID := range notif.DiscordChannels {
+				n.bot.SendPayload(channelID, notif.DiscordEmbed)
+			}
+		}
+	}
 }
 
 func (n *Notifications) SendSite(ctx context.Context, targetIDs steamid.Collection, severity Severity, message string, link string, author domain.PersonInfo) error {

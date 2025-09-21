@@ -21,7 +21,7 @@ func NewAppealHandler(engine *gin.Engine, appeals Appeals, authenticator httphel
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.User))
 		authed.GET("/api/bans/:ban_id/messages", handler.onAPIGetBanMessages())
 		authed.POST("/api/bans/:ban_id/messages", handler.createBanMessage())
 		authed.POST("/api/bans/message/:ban_message_id", handler.editBanMessage())
@@ -31,7 +31,7 @@ func NewAppealHandler(engine *gin.Engine, appeals Appeals, authenticator httphel
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 		mod.POST("/api/appeals", handler.onAPIGetAppeals())
 	}
 }
@@ -108,7 +108,7 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 			case errors.Is(errSave, domain.ErrParamInvalid):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Invalid message body"))
-			case errors.Is(errSave, permission.ErrPermissionDenied):
+			case errors.Is(errSave, permission.ErrDenied):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 					"Not allowed to edit message."))
 			case errors.Is(errSave, database.ErrDuplicate):
@@ -144,7 +144,7 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 
 		if err := h.appeals.DropMessage(ctx, curUser, banMessageID); err != nil {
 			switch {
-			case errors.Is(err, permission.ErrPermissionDenied):
+			case errors.Is(err, permission.ErrDenied):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 					"You are not allowed to delete this message."))
 			case errors.Is(err, database.ErrNoResult):

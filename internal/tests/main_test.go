@@ -105,7 +105,7 @@ func (c *TestConfigRepo) Config() config.Config {
 	return c.config
 }
 
-func (c *TestConfigRepo) Init(ctx context.Context) error {
+func (c *TestConfigRepo) Init(_ context.Context) error {
 	return nil
 }
 
@@ -146,7 +146,7 @@ func TestMain(m *testing.M) {
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-	configUC = config.NewConfiguration(conf.StaticConfig, &TestConfigRepo{config: conf})
+	configUC = config.NewConfiguration(conf.Static, &TestConfigRepo{config: conf})
 	if err := configUC.Reload(testCtx); err != nil {
 		panic(err)
 	}
@@ -176,24 +176,24 @@ func TestMain(m *testing.M) {
 	notificationUC = notification.NewNotifications(notification.NewRepository(databaseConn), discordUC)
 	patreonUC = patreon.NewPatreonManager(configUC)
 	personUC = person.NewPersons(person.NewRepository(conf, databaseConn), configUC, tfapiClient)
-	wordFilterUC = chat.NewWordFilter(chat.NewWordFilterRepository(databaseConn))
-	forumUC = forum.NewForums(forum.NewRepository(databaseConn))
+	wordFilterUC = chat.NewWordFilters(chat.NewWordFilterRepository(databaseConn), notificationUC, configUC)
+	forumUC = forum.NewForums(forum.NewRepository(databaseConn), configUC, notificationUC)
 
 	stateUC = servers.NewState(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(serversUC)), configUC, serversUC)
 
 	networkUC = network.NewNetworks(eventBroadcaster, network.NewRepository(databaseConn, personUC), configUC)
 	demoRepository = servers.NewDemoRepository(databaseConn)
 	demoUC = servers.NewDemos("demos", demoRepository, assets, configUC)
-	reportUC = ban.NewReports(ban.NewReportRepository(databaseConn), configUC, personUC, demoUC, tfapiClient)
-	bansUC = ban.NewBans(ban.NewBanRepository(databaseConn, personUC, networkUC), personUC, configUC, reportUC, stateUC, tfapiClient)
+	reportUC = ban.NewReports(ban.NewReportRepository(databaseConn), configUC, personUC, demoUC, tfapiClient, notificationUC)
+	bansUC = ban.NewBans(ban.NewRepository(databaseConn, personUC, networkUC), personUC, configUC, reportUC, stateUC, tfapiClient, notificationUC)
 	authUC = auth.NewAuthentication(authRepo, configUC, personUC, bansUC, serversUC, cmd.SentryDSN)
-	chatUC = chat.NewChat(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC)
+	chatUC = chat.NewChat(configUC, chat.NewRepository(databaseConn, personUC, wordFilterUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC)
 	votesRepo = votes.NewRepository(databaseConn)
-	votesUC = votes.NewVotes(votesRepo, eventBroadcaster)
-	appealUC = ban.NewAppeals(ban.NewAppealRepository(databaseConn), bansUC, personUC, configUC)
+	votesUC = votes.NewVotes(votesRepo, eventBroadcaster, notificationUC, configUC, personUC)
+	appealUC = ban.NewAppeals(ban.NewAppealRepository(databaseConn), bansUC, personUC, configUC, notificationUC)
 	speedrunsUC = servers.NewSpeedruns(servers.NewSpeedrunRepository(databaseConn, personUC))
 	blocklistUC = network.NewBlocklists(network.NewBlocklistRepository(databaseConn), &bansUC)
-	anticheatUC = anticheat.NewAntiCheat(anticheat.NewRepository(databaseConn), bansUC, configUC, personUC)
+	anticheatUC = anticheat.NewAntiCheat(anticheat.NewRepository(databaseConn), bansUC, configUC, personUC, notificationUC)
 
 	if internalDB {
 		server, errServer := serversUC.Save(context.Background(), servers.RequestServerUpdate{
@@ -277,7 +277,7 @@ func testRouter() *gin.Engine {
 	news.NewNewsHandler(router, newsUC, notificationUC, authUC)
 	wiki.NewWikiHandler(router, wikiUC, authUC)
 	votes.NewVotesHandler(router, votesUC, authUC)
-	config.NewConfigHandler(router, configUC, authUC, cmd.BuildVersion)
+	config.NewHandler(router, configUC, authUC, cmd.BuildVersion)
 	ban.NewReportHandler(router, reportUC, authUC)
 	ban.NewAppealHandler(router, appealUC, authUC)
 	chat.NewChatHandler(router, chatUC, authUC)
@@ -384,17 +384,17 @@ func createTestPerson(sid steamid.SteamID, level permission.Privilege) person.Pe
 }
 
 func getOwner() person.Person {
-	return createTestPerson(steamid.New(configUC.Config().Owner), permission.PAdmin)
+	return createTestPerson(steamid.New(configUC.Config().Owner), permission.Admin)
 }
 
 var curUserID atomic.Int32
 
 func getUser() person.Person {
-	return createTestPerson(steamid.New(76561198004429398+int64(curUserID.Add(1))), permission.PUser)
+	return createTestPerson(steamid.New(76561198004429398+int64(curUserID.Add(1))), permission.User)
 }
 
 func getModerator() person.Person {
-	return createTestPerson(steamid.New(76561198057999536), permission.PModerator)
+	return createTestPerson(steamid.New(76561198057999536), permission.Moderator)
 }
 
 func loginUser(person person.Person) *auth.UserTokens {
@@ -421,7 +421,7 @@ func loginUser(person person.Person) *auth.UserTokens {
 
 func makeTestConfig(dsn string) config.Config {
 	return config.Config{
-		StaticConfig: config.StaticConfig{
+		Static: config.Static{
 			Owner: "76561198084134025",
 			//	SteamKey:            steamKey,
 			ExternalURL:         "http://example.com",

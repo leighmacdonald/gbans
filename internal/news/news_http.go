@@ -25,7 +25,7 @@ func NewNewsHandler(engine *gin.Engine, news News, notifications notification.No
 	// editor
 	editorGrp := engine.Group("/")
 	{
-		editor := editorGrp.Use(auth.Middleware(permission.PEditor))
+		editor := editorGrp.Use(auth.Middleware(permission.Editor))
 		editor.POST("/api/news", handler.onAPIPostNewsCreate())
 		editor.POST("/api/news/:news_id", handler.onAPIPostNewsUpdate())
 		editor.DELETE("/api/news/:news_id", handler.onAPIPostNewsDelete())

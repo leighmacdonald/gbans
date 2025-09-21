@@ -34,7 +34,7 @@ func NewContestHandler(engine *gin.Engine, contests Contests, assets asset.Asset
 	// opt
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(authenticator.Middleware(permission.PGuest))
+		opt := optGrp.Use(authenticator.Middleware(permission.Guest))
 		opt.GET("/api/contests", handler.onAPIGetContests())
 		opt.GET("/api/contests/:contest_id", handler.onAPIGetContest())
 		opt.GET("/api/contests/:contest_id/entries", handler.onAPIGetContestEntries())
@@ -43,7 +43,7 @@ func NewContestHandler(engine *gin.Engine, contests Contests, assets asset.Asset
 	// auth
 	authGrp := engine.Group("/")
 	{
-		authed := authGrp.Use(authenticator.Middleware(permission.PUser))
+		authed := authGrp.Use(authenticator.Middleware(permission.User))
 		authed.POST("/api/contests/:contest_id/upload", handler.onAPISaveContestEntryMedia())
 		authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", handler.onAPISaveContestEntryVote())
 		authed.POST("/api/contests/:contest_id/submit", handler.onAPISaveContestEntrySubmit())
@@ -53,7 +53,7 @@ func NewContestHandler(engine *gin.Engine, contests Contests, assets asset.Asset
 	// mods
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 		mod.POST("/api/contests", handler.onAPIPostContest())
 		mod.DELETE("/api/contests/:contest_id", handler.onAPIDeleteContest())
 		mod.PUT("/api/contests/:contest_id", handler.onAPIUpdateContest())
@@ -80,7 +80,7 @@ func (c *contestHandler) contestFromCtx(ctx *gin.Context) (Contest, bool) {
 	}
 
 	user, _ := session.CurrentUserProfile(ctx)
-	if !contest.Public && !user.HasPermission(permission.PModerator) {
+	if !contest.Public && !user.HasPermission(permission.Moderator) {
 		httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 			"You do not have permission to load this contest."))
 
@@ -395,7 +395,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		}
 
 		// Only >=moderators or the entry author are allowed to delete entries.
-		if !user.HasPermission(permission.PModerator) || user.GetSteamID() != entry.SteamID {
+		if !user.HasPermission(permission.Moderator) || user.GetSteamID() != entry.SteamID {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 			return

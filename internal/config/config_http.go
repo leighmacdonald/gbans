@@ -9,30 +9,30 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
-type ConfigHandler struct {
+type httpHandler struct {
 	config *Configuration
 }
 
-func NewConfigHandler(engine *gin.Engine, cu *Configuration, authenticator httphelper.Authenticator, version string) {
-	handler := ConfigHandler{config: cu}
+func NewHandler(engine *gin.Engine, cu *Configuration, authenticator httphelper.Authenticator, version string) {
+	handler := httpHandler{config: cu}
 	engine.GET("/api/info", handler.onAppInfo(version))
 	engine.GET("/api/changelog", handler.onChangelog())
 
 	adminGroup := engine.Group("/")
 	{
-		admin := adminGroup.Use(authenticator.Middleware(permission.PAdmin))
+		admin := adminGroup.Use(authenticator.Middleware(permission.Admin))
 		admin.GET("/api/config", handler.onAPIGetConfig())
 		admin.PUT("/api/config", handler.onAPIPutConfig())
 	}
 }
 
-func (c ConfigHandler) onAPIGetConfig() gin.HandlerFunc {
+func (c httpHandler) onAPIGetConfig() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, c.config.Config())
 	}
 }
 
-func (c ConfigHandler) onAPIPutConfig() gin.HandlerFunc {
+func (c httpHandler) onAPIPutConfig() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req Config
 		if !httphelper.Bind(ctx, &req) {
@@ -50,7 +50,7 @@ func (c ConfigHandler) onAPIPutConfig() gin.HandlerFunc {
 	}
 }
 
-func (c ConfigHandler) onAppInfo(version string) gin.HandlerFunc {
+func (c httpHandler) onAppInfo(version string) gin.HandlerFunc {
 	type appInfo struct {
 		SiteName           string `json:"site_name"`
 		AssetURL           string `json:"asset_url"`
@@ -104,7 +104,7 @@ func (c ConfigHandler) onAppInfo(version string) gin.HandlerFunc {
 	}
 }
 
-func (c ConfigHandler) onChangelog() gin.HandlerFunc {
+func (c httpHandler) onChangelog() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		releases, err := getGithubReleases(ctx)
 		if err != nil {

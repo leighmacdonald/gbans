@@ -44,14 +44,14 @@ func NewHandlerSteam(engine *gin.Engine, bans Bans,
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.User))
 		authed.GET("/api/bans/:ban_id", handler.onAPIGetBanByID())
 	}
 
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 
 		mod.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
 		mod.GET("/api/stats", handler.onAPIGetStats())
@@ -210,7 +210,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 			return
 		}
 
-		if !httphelper.HasPrivilege(user, steamid.Collection{bannedPerson.TargetID}, permission.PModerator) {
+		if !httphelper.HasPrivilege(user, steamid.Collection{bannedPerson.TargetID}, permission.Moderator) {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 				"You do not have permission to access this ban."))
 

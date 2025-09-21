@@ -25,7 +25,7 @@ func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, authenticator 
 
 	guestGroup := engine.Group("/")
 	{
-		guest := guestGroup.Use(authenticator.Middleware(permission.PGuest))
+		guest := guestGroup.Use(authenticator.Middleware(permission.Guest))
 		// Groups
 		// guest.GET("/api/speedruns/overall", handler.getOverall())
 		guest.GET("/api/speedruns/map", handler.getByMap())

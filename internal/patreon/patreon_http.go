@@ -30,7 +30,7 @@ func NewPatreonHandler(engine *gin.Engine, patreon Patreon, auth httphelper.Auth
 
 	authGrp := engine.Group("/")
 	{
-		authed := authGrp.Use(auth.Middleware(permission.PUser))
+		authed := authGrp.Use(auth.Middleware(permission.User))
 		authed.GET("/api/patreon/login", handler.onLogin())
 		authed.GET("/api/patreon/logout", handler.onLogout())
 	}
@@ -38,7 +38,7 @@ func NewPatreonHandler(engine *gin.Engine, patreon Patreon, auth httphelper.Auth
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(auth.Middleware(permission.PModerator))
+		mod := modGrp.Use(auth.Middleware(permission.Moderator))
 		mod.GET("/api/patreon/pledges", handler.onAPIGetPatreonPledges())
 	}
 }

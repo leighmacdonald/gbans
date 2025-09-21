@@ -295,7 +295,7 @@ func (r *Repository) GetPeople(ctx context.Context, transaction pgx.Tx, filter P
 	}
 
 	if filter.StaffOnly {
-		conditions = append(conditions, sq.Gt{"p.permission_level": permission.PUser})
+		conditions = append(conditions, sq.Gt{"p.permission_level": permission.User})
 	}
 
 	builder = filter.ApplyLimitOffsetDefault(builder)

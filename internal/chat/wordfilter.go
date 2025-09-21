@@ -9,10 +9,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
@@ -118,10 +120,12 @@ type WordFilters struct {
 	*sync.RWMutex
 	repository  WordFilterRepository
 	wordFilters []Filter
+	notif       notification.Notifications
+	config      *config.Configuration
 }
 
-func NewWordFilter(repository WordFilterRepository) WordFilters {
-	return WordFilters{repository: repository, RWMutex: &sync.RWMutex{}}
+func NewWordFilters(repository WordFilterRepository, notif notification.Notifications, config *config.Configuration) WordFilters {
+	return WordFilters{repository: repository, RWMutex: &sync.RWMutex{}, notif: notif, config: config}
 }
 
 func (w *WordFilters) Add(filter Filter) {
@@ -247,15 +251,13 @@ func (w *WordFilters) Create(ctx context.Context, user domain.PersonInfo, opts F
 		return Filter{}, domain.ErrInvalidWeight
 	}
 
-	now := time.Now()
-
 	newFilter := Filter{
 		AuthorID:  user.GetSteamID(),
 		Pattern:   opts.Pattern,
 		Action:    opts.Action,
 		Duration:  opts.Duration,
-		CreatedOn: now,
-		UpdatedOn: now,
+		CreatedOn: time.Now(),
+		UpdatedOn: time.Now(),
 		IsRegex:   opts.IsRegex,
 		IsEnabled: opts.IsEnabled,
 		Weight:    opts.Weight,
@@ -273,7 +275,7 @@ func (w *WordFilters) Create(ctx context.Context, user domain.PersonInfo, opts F
 
 	w.Add(newFilter)
 
-	// w.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelWordFilterLog, discord.FilterAddMessage(newFilter)))
+	w.notif.Send <- notification.NewDiscord(w.config.Config().Discord.WordFilterLogChannelID, filterAddMessage(newFilter))
 
 	slog.Info("Created filter", slog.Int64("filter_id", newFilter.FilterID))
 
@@ -292,7 +294,7 @@ func (w *WordFilters) DropFilter(ctx context.Context, filterID int64) error {
 
 	w.Remove(filterID)
 
-	// w.notifications.Enqueue(ctx, domain.NewDiscordNotification(discord.ChannelWordFilterLog, discord.FilterDelMessage(filter)))
+	w.notif.Send <- notification.NewDiscord(w.config.Config().Discord.WordFilterLogChannelID, filterDelMessage(filter))
 
 	slog.Info("Deleted filter", slog.Int64("filter_id", filterID))
 

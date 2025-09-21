@@ -29,7 +29,7 @@ func NewPersonHandler(engine *gin.Engine, config *config.Configuration, persons 
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authenticator.Middleware(permission.PUser))
+		authed := authedGrp.Use(authenticator.Middleware(permission.User))
 		authed.GET("/api/current_profile", handler.onAPICurrentProfile())
 		authed.GET("/api/current_profile/settings", handler.onAPIGetPersonSettings())
 		authed.POST("/api/current_profile/settings", handler.onAPIPostPersonSettings())
@@ -38,14 +38,14 @@ func NewPersonHandler(engine *gin.Engine, config *config.Configuration, persons 
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authenticator.Middleware(permission.PModerator))
+		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 		mod.POST("/api/players", handler.searchPlayers())
 	}
 
 	// admin
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(authenticator.Middleware(permission.PAdmin))
+		admin := adminGrp.Use(authenticator.Middleware(permission.Admin))
 		admin.PUT("/api/player/:steam_id/permissions", handler.onAPIPutPlayerPermission())
 	}
 }

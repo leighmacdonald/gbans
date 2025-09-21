@@ -22,7 +22,7 @@ func NewDemoHandler(engine *gin.Engine, du Demos, authenticator httphelper.Authe
 
 	adminGrp := engine.Group("/")
 	{
-		mod := adminGrp.Use(authenticator.Middleware(permission.PAdmin))
+		mod := adminGrp.Use(authenticator.Middleware(permission.Admin))
 		mod.GET("/api/demos/cleanup", handler.onAPIGetCleanup())
 	}
 }

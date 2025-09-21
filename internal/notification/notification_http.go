@@ -27,7 +27,7 @@ func NewNotificationHandler(engine *gin.Engine, notifications Notifications, aut
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(auth.Middleware(permission.PUser))
+		authed := authedGrp.Use(auth.Middleware(permission.User))
 		authed.GET("/api/notifications", handler.onNotifications())
 		authed.POST("/api/notifications/all", handler.onMarkAllRead())
 		authed.POST("/api/notifications", handler.onMarkRead())

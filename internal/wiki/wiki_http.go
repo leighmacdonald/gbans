@@ -21,14 +21,14 @@ func NewWikiHandler(engine *gin.Engine, wiki Wiki, ath httphelper.Authenticator)
 	// optional
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(ath.Middleware(permission.PGuest))
+		opt := optGrp.Use(ath.Middleware(permission.Guest))
 		opt.GET("/api/wiki/slug/*slug", handler.onAPIGetWikiSlug())
 	}
 
 	// editor
 	editorGrp := engine.Group("/")
 	{
-		editor := editorGrp.Use(ath.Middleware(permission.PEditor))
+		editor := editorGrp.Use(ath.Middleware(permission.Editor))
 		// TODO use PUT and slug param
 		editor.POST("/api/wiki/slug", handler.onAPISaveWikiSlug())
 	}
