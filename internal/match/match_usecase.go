@@ -3,13 +3,25 @@ package match
 import (
 	"context"
 	"errors"
+	"math"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+// func parseMapName(name string) string {
+//	if strings.HasPrefix(name, "workshop/") {
+//		parts := strings.Split(strings.TrimPrefix(name, "workshop/"), ".ugc")
+//		name = parts[0]
+//	}
+//
+//	return name
+// }
 
 type matchUsecase struct {
 	repository    domain.MatchRepository
@@ -29,50 +41,93 @@ func NewMatchUsecase(repository domain.MatchRepository, state domain.StateUsecas
 	}
 }
 
-func (m matchUsecase) StartMatch(server domain.Server, mapName string, demoName string) (uuid.UUID, error) {
-	matchUUID, errUUID := uuid.NewV4()
-	if errUUID != nil {
-		return uuid.UUID{}, errors.Join(errUUID, domain.ErrUUIDCreate)
-	}
-
-	trigger := domain.MatchTrigger{
-		Type:     domain.MatchTriggerStart,
-		UUID:     matchUUID,
-		Server:   server,
-		MapName:  mapName,
-		DemoName: demoName,
-	}
-
-	m.repository.StartMatch(trigger)
-
-	return matchUUID, nil
-}
-
-func (m matchUsecase) EndMatch(ctx context.Context, serverID int) (uuid.UUID, error) {
-	matchID, found := m.repository.GetMatchIDFromServerID(serverID)
-	if !found {
-		return matchID, domain.ErrLoadMatch
-	}
-
-	server, errServer := m.servers.Server(ctx, serverID)
+func (m matchUsecase) CreateFromDemo(_ context.Context, serverID int, demo demoparse.Demo) (domain.MatchResult, error) {
+	server, errServer := m.servers.Server(context.Background(), serverID)
 	if errServer != nil {
-		return matchID, errors.Join(errServer, domain.ErrUnknownServer)
+		return domain.MatchResult{}, errServer
+	}
+	newID, errID := uuid.NewV4()
+	if errID != nil {
+		return domain.MatchResult{}, errors.Join(errID, domain.ErrUUIDCreate)
 	}
 
-	m.repository.EndMatch(domain.MatchTrigger{
-		Type:   domain.MatchTriggerEnd,
-		UUID:   matchID,
-		Server: server,
-	})
+	endTime := time.Now()
+	startTime := endTime.Add(-time.Duration(int(math.Ceil(demo.Duration))))
+	result := domain.MatchResult{
+		MatchID:  newID,
+		ServerID: server.ServerID,
+		Title:    demo.Server,
+		MapName:  demo.Map,
+		// 		TeamScores: logparse.TeamScores{
+		// 			Red:     demo.Rounds.ScoreRed,
+		// 			RedTime: demo.Rounds.RedTime,
+		// 			Blu:     demo.Rounds.Results.ScoreBlu,
+		// 			BluTime: demo.Rounds.Results.BluTime,
+		// 		},
+		TimeStart: startTime,
+		TimeEnd:   endTime,
+		Winner:    logparse.BLU,
+		Players:   nil,
+		Chat:      nil,
+	}
 
-	return matchID, nil
+	for _, chat := range demo.Chat {
+		result.Chat = append(result.Chat, domain.MatchChat{
+			SteamID:     steamid.New(chat.SteamID),
+			PersonaName: chat.PersonaName,
+			Body:        chat.Body,
+			Team:        chat.Team,
+		})
+	}
+
+	for _, player := range demo.Players {
+		matchPlayer := domain.MatchPlayer{
+			CommonPlayerStats: domain.CommonPlayerStats{
+				SteamID:           steamid.New(player.SteamID),
+				Name:              player.Name,
+				Kills:             player.Kills,
+				Assists:           player.Assists,
+				Deaths:            player.Deaths,
+				Suicides:          0,
+				Dominations:       player.Dominations,
+				Dominated:         0,
+				Revenges:          player.Revenges,
+				Damage:            player.Damage,
+				DamageTaken:       player.DamageTaken,
+				HealingTaken:      player.HealingTaken,
+				HealthPacks:       player.HealthPacksCount,
+				HealingPacks:      player.HealingFromPacks,
+				Captures:          player.Captures,
+				CapturesBlocked:   player.CapturesBlocked,
+				Extinguishes:      player.Extinguishes,
+				BuildingBuilt:     player.BuildingBuilt,
+				BuildingDestroyed: player.BuildingDestroyed,
+				Backstabs:         player.Backstabs,
+				Airshots:          player.Airshots,
+				Headshots:         player.Headshots,
+				Shots:             player.Shots,
+				Hits:              player.Hits,
+			},
+			Team:        logparse.UNASSIGNED,
+			TimeStart:   time.Time{},
+			TimeEnd:     time.Time{},
+			MedicStats:  nil,
+			Classes:     nil,
+			Killstreaks: nil,
+			Weapons:     nil,
+		}
+
+		result.Players = append(result.Players, &matchPlayer)
+	}
+
+	return result, nil
 }
 
 func (m matchUsecase) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {
 	return m.repository.GetMatchIDFromServerID(serverID)
 }
 
-func (m matchUsecase) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchSummary, int64, error) {
+func (m matchUsecase) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchResult, int64, error) {
 	return m.repository.Matches(ctx, opts)
 }
 
@@ -81,8 +136,8 @@ func (m matchUsecase) MatchGetByID(ctx context.Context, matchID uuid.UUID, match
 }
 
 // todo hide.
-func (m matchUsecase) MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
-	return m.repository.MatchSave(ctx, match, weaponMap)
+func (m matchUsecase) MatchSave(ctx context.Context, match *domain.MatchResult) error {
+	return m.repository.MatchSave(ctx, match)
 }
 
 func (m matchUsecase) StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (domain.PlayerClassStatsCollection, error) {

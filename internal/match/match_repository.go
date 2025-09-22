@@ -8,7 +8,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -21,7 +20,6 @@ type matchRepository struct {
 	notifications domain.NotificationUsecase
 	servers       domain.ServersUsecase
 	state         domain.StateUsecase
-	summarizer    *Summarizer
 	wm            fp.MutexMap[logparse.Weapon, int]
 	events        chan logparse.ServerEvent
 	broadcaster   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
@@ -44,74 +42,14 @@ func NewMatchRepository(broadcaster *fp.Broadcaster[logparse.EventType, logparse
 		events:        make(chan logparse.ServerEvent),
 	}
 
-	matchRepo.summarizer = newMatchSummarizer(matchRepo.events, matchRepo.onMatchComplete)
-
 	return matchRepo
-}
-
-func (r *matchRepository) StartMatch(startTrigger domain.MatchTrigger) {
-	r.summarizer.triggers <- startTrigger
-}
-
-func (r *matchRepository) EndMatch(endTrigger domain.MatchTrigger) {
-	r.summarizer.triggers <- endTrigger
-}
-
-func (r *matchRepository) onMatchComplete(ctx context.Context, matchContext *activeMatchContext) error {
-	const minPlayers = 6
-
-	server, found := r.state.ByServerID(matchContext.server.ServerID)
-
-	if found && server.Name != "" {
-		matchContext.match.Title = server.Name
-	}
-
-	fullServer, err := r.servers.Server(ctx, server.ServerID)
-	if err != nil {
-		return errors.Join(err, domain.ErrLoadServer)
-	}
-
-	if !fullServer.EnableStats {
-		return nil
-	}
-
-	if len(matchContext.match.PlayerSums) < minPlayers {
-		return domain.ErrInsufficientPlayers
-	}
-
-	if matchContext.match.TimeStart == nil || matchContext.match.MapName == "" {
-		return domain.ErrIncompleteMatch
-	}
-
-	if errSave := r.MatchSave(ctx, &matchContext.match, r.wm); errSave != nil {
-		if errors.Is(errSave, domain.ErrInsufficientPlayers) {
-			return domain.ErrInsufficientPlayers
-		}
-
-		return errors.Join(errSave, domain.ErrSaveMatch)
-	}
-
-	var result domain.MatchResult
-	if errResult := r.MatchGetByID(ctx, matchContext.match.MatchID, &result); errResult != nil {
-		return errors.Join(errResult, domain.ErrLoadMatch)
-	}
-
-	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelPublicMatchLog,
-		discord.MatchMessage(result, "")))
-
-	return nil
-}
-
-func (r *matchRepository) Start(ctx context.Context) {
-	r.summarizer.Start(ctx)
 }
 
 func (r *matchRepository) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {
 	return r.matchUUIDMap.Get(serverID)
 }
 
-func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchSummary, int64, error) {
+func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchResult, int64, error) {
 	countBuilder := r.database.
 		Builder().
 		Select("count(m.match_id) as count").
@@ -165,12 +103,14 @@ func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryO
 
 	defer rows.Close()
 
-	var matches []domain.MatchSummary
+	var matches []domain.MatchResult
 
 	for rows.Next() {
-		var summary domain.MatchSummary
-		if errScan := rows.Scan(&summary.MatchID, &summary.ServerID, &summary.IsWinner, &summary.ShortName,
-			&summary.Title, &summary.MapName, &summary.ScoreBlu, &summary.ScoreRed, &summary.TimeStart,
+		var summary domain.MatchResult
+		var winner bool
+		var shortName string
+		if errScan := rows.Scan(&summary.MatchID, &summary.ServerID, &winner, &shortName,
+			&summary.Title, &summary.MapName, &summary.TeamScores.Blu, &summary.TeamScores.Red, &summary.TimeStart,
 			&summary.TimeEnd); errScan != nil {
 			return nil, 0, errors.Join(errScan, domain.ErrScanResult)
 		}
@@ -595,15 +535,21 @@ func (r *matchRepository) MatchGetByID(ctx context.Context, matchID uuid.UUID, m
 	}
 
 	chat, errChat := r.matchGetChat(ctx, matchID)
-
 	if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 		return errChat
 	}
 
-	match.Chat = chat
+	for _, msg := range chat {
+		match.Chat = append(match.Chat, domain.MatchChat{
+			SteamID:     msg.SteamID,
+			PersonaName: msg.PersonaName,
+			Body:        msg.Body,
+			Team:        msg.Team,
+		})
+	}
 
 	if match.Chat == nil {
-		match.Chat = domain.PersonMessages{}
+		match.Chat = []domain.MatchChat{}
 	}
 
 	for _, player := range match.Players {
@@ -623,7 +569,7 @@ func (r *matchRepository) MatchGetByID(ctx context.Context, matchID uuid.UUID, m
 	return nil
 }
 
-func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
+func (r *matchRepository) MatchSave(ctx context.Context, match *domain.MatchResult) error {
 	const (
 		query = `
 		INSERT INTO match (match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end, winner) 
@@ -639,7 +585,7 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 	if errQuery := transaction.
 		QueryRow(ctx, query, match.MatchID, match.ServerID, match.MapName, match.Title,
 			match.TeamScores.Red, match.TeamScores.Blu, match.TeamScores.RedTime, match.TeamScores.BluTime,
-			match.TimeStart, match.TimeEnd, match.Winner()).
+			match.TimeStart, match.TimeEnd, match.Winner).
 		Scan(&match.MatchID); errQuery != nil {
 		if errRollback := transaction.Rollback(ctx); errRollback != nil {
 			return errors.Join(errRollback, domain.ErrTxRollback)
@@ -648,7 +594,7 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 		return errors.Join(errQuery, domain.ErrMatchQuery)
 	}
 
-	for _, player := range match.PlayerSums {
+	for _, player := range match.Players {
 		if !player.SteamID.Valid() {
 			// TODO Why can this happen? stv host?
 			continue
@@ -671,7 +617,7 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 			return errSave
 		}
 
-		if errSave := r.saveMatchWeaponStats(ctx, transaction, player, weaponMap); errSave != nil {
+		if errSave := r.saveMatchWeaponStats(ctx, transaction, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
 				return errors.Join(errRollback, domain.ErrTxRollback)
 			}
@@ -695,8 +641,8 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 			return errSave
 		}
 
-		if player.HealingStats != nil && player.HealingStats.Healing >= domain.MinMedicHealing {
-			if errSave := r.saveMatchMedicStats(ctx, transaction, player.MatchPlayerID, player.HealingStats); errSave != nil {
+		if player.MedicStats != nil && player.MedicStats.Healing >= domain.MinMedicHealing {
+			if errSave := r.saveMatchMedicStats(ctx, transaction, player.MatchPlayerID, player.MedicStats); errSave != nil {
 				if errRollback := transaction.Rollback(ctx); errRollback != nil {
 					return errors.Join(errRollback, domain.ErrTxRollback)
 				}
@@ -713,7 +659,7 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 	return nil
 }
 
-func (r *matchRepository) saveMatchPlayerStats(ctx context.Context, transaction pgx.Tx, match *logparse.Match, stats *logparse.PlayerStats) error {
+func (r *matchRepository) saveMatchPlayerStats(ctx context.Context, transaction pgx.Tx, match *domain.MatchResult, player *domain.MatchPlayer) error {
 	const playerQuery = `
 		INSERT INTO match_player (
 			match_id, steam_id, team, time_start, time_end, health_packs, extinguishes, buildings
@@ -721,24 +667,19 @@ func (r *matchRepository) saveMatchPlayerStats(ctx context.Context, transaction 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
 		RETURNING match_player_id`
 
-	endTime := stats.TimeEnd
-
-	if endTime == nil {
-		// Use match end time
-		endTime = match.TimeEnd
-	}
+	endTime := player.TimeEnd
 
 	if errPlayerExec := transaction.
-		QueryRow(ctx, playerQuery, match.MatchID, stats.SteamID.Int64(), stats.Team, stats.TimeStart,
-			endTime, stats.HealthPacks(), stats.Extinguishes(), stats.BuildingBuilt).
-		Scan(&stats.MatchPlayerID); errPlayerExec != nil {
+		QueryRow(ctx, playerQuery, match.MatchID, player.SteamID.Int64(), player.Team, player.TimeStart,
+			endTime, player.HealthPacks, player.Extinguishes, player.BuildingBuilt).
+		Scan(&player.MatchPlayerID); errPlayerExec != nil {
 		return errors.Join(errPlayerExec, domain.ErrSavePlayerStats)
 	}
 
 	return nil
 }
 
-func (r *matchRepository) saveMatchMedicStats(ctx context.Context, transaction pgx.Tx, matchPlayerID int64, stats *logparse.HealingStats) error {
+func (r *matchRepository) saveMatchMedicStats(ctx context.Context, transaction pgx.Tx, matchPlayerID int64, stats *domain.MatchHealer) error {
 	const medicQuery = `
 		INSERT INTO match_medic (
 			match_player_id, healing, drops, near_full_charge_death, avg_uber_length,  major_adv_lost, biggest_adv_lost, 
@@ -748,9 +689,9 @@ func (r *matchRepository) saveMatchMedicStats(ctx context.Context, transaction p
 
 	if errMedExec := transaction.
 		QueryRow(ctx, medicQuery, matchPlayerID, stats.Healing,
-			stats.DropsTotal(), stats.NearFullChargeDeath, stats.AverageUberLength(), stats.MajorAdvLost, stats.BiggestAdvLost,
-			stats.Charges[logparse.Kritzkrieg], stats.Charges[logparse.QuickFix],
-			stats.Charges[logparse.Uber], stats.Charges[logparse.Vaccinator]).
+			stats.Drops, stats.NearFullChargeDeath, stats.AvgUberLength, stats.MajorAdvLost, stats.BiggestAdvLost,
+			stats.ChargesKritz, stats.ChargesQuickfix,
+			stats.ChargesUber, stats.ChargesVacc).
 		Scan(&stats.MatchMedicID); errMedExec != nil {
 		return errors.Join(errMedExec, domain.ErrSaveMedicStats)
 	}
@@ -758,30 +699,30 @@ func (r *matchRepository) saveMatchMedicStats(ctx context.Context, transaction p
 	return nil
 }
 
-func (r *matchRepository) saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
+func (r *matchRepository) saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, player *domain.MatchPlayer) error {
 	const query = `
 		INSERT INTO match_weapon (match_player_id, weapon_id, kills, damage, shots, hits, backstabs, headshots, airshots) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
 		RETURNING player_weapon_id`
 
-	for weapon, info := range player.WeaponInfo {
-		weaponID, found := weaponMap.Get(weapon)
-		if !found {
-			// database.log.Error("Unknown weapon", slog.String("weapon", string(weapon)))
-			continue
-		}
-
-		if _, errWeapon := transaction.
-			Exec(ctx, query, player.MatchPlayerID, weaponID, info.Kills, info.Damage, info.Shots, info.Hits,
-				info.BackStabs, info.Headshots, info.Airshots); errWeapon != nil {
-			return errors.Join(errWeapon, domain.ErrSaveWeaponStats)
-		}
-	}
+	//for weapon, info := range player.WeaponInfo {
+	//	weaponID, found := weaponMap.Get(weapon)
+	//	if !found {
+	//		// database.log.Error("Unknown weapon", slog.String("weapon", string(weapon)))
+	//		continue
+	//	}
+	//
+	//	if _, errWeapon := transaction.
+	//		Exec(ctx, query, player.MatchPlayerID, weaponID, info.Kills, info.Damage, info.Shots, info.Hits,
+	//			info.BackStabs, info.Headshots, info.Airshots); errWeapon != nil {
+	//		return errors.Join(errWeapon, domain.ErrSaveWeaponStats)
+	//	}
+	//}
 
 	return nil
 }
 
-func (r *matchRepository) saveMatchPlayerClassStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
+func (r *matchRepository) saveMatchPlayerClassStats(ctx context.Context, transaction pgx.Tx, player *domain.MatchPlayer) error {
 	const query = `
 		INSERT INTO match_player_class (
 			match_player_id, player_class_id, kills, assists, deaths, playtime, dominations, dominated, revenges, 
@@ -792,7 +733,7 @@ func (r *matchRepository) saveMatchPlayerClassStats(ctx context.Context, transac
 		if _, errWeapon := transaction.
 			Exec(ctx, query, player.MatchPlayerID, class, stats.Kills, stats.Assists, stats.Deaths, stats.Playtime,
 				stats.Dominations, stats.Dominated, stats.Revenges, stats.Damage, stats.DamageTaken, stats.HealingTaken,
-				stats.Captures, stats.CapturesBlocked, stats.BuildingsDestroyed); errWeapon != nil {
+				stats.Captures, stats.CapturesBlocked, stats.BuildingDestroyed); errWeapon != nil {
 			return errors.Join(errWeapon, domain.ErrSaveClassStats)
 		}
 	}
@@ -800,12 +741,12 @@ func (r *matchRepository) saveMatchPlayerClassStats(ctx context.Context, transac
 	return nil
 }
 
-func (r *matchRepository) saveMatchKillstreakStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
+func (r *matchRepository) saveMatchKillstreakStats(ctx context.Context, transaction pgx.Tx, player *domain.MatchPlayer) error {
 	const query = `
 		INSERT INTO match_player_killstreak (match_player_id, player_class_id, killstreak, duration) 
 		VALUES ($1, $2, $3, $4)`
 
-	for class, stats := range player.KillStreaks {
+	for class, stats := range player.Killstreaks {
 		if _, errWeapon := transaction.
 			Exec(ctx, query, player.MatchPlayerID, class, stats.Killstreak, stats.Duration); errWeapon != nil {
 			return errors.Join(errWeapon, domain.ErrSaveKillstreakStats)
