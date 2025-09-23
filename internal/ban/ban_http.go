@@ -461,7 +461,7 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 	}
 }
 
-type RequestBanSteamUpdate struct {
+type RequestBanUpdate struct {
 	TargetID   steamid.SteamID `json:"target_id"`
 	BanType    ban.Type        `json:"ban_type"`
 	Reason     ban.Reason      `json:"reason"`
@@ -478,7 +478,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var req RequestBanSteamUpdate
+		var req RequestBanUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
