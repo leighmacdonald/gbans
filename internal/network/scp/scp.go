@@ -21,6 +21,12 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// KeyStore is responsible for storing and retrieving host keys
+type KeyStore interface {
+	Set(ctx context.Context, host string, key string) error
+	Get(ctx context.Context, host string) error
+}
+
 var (
 	errInsufficientAuthMethod = errors.New("ssh password or private key missing")
 	errReadPrivateKey         = errors.New("failed to read private key contents")
@@ -29,46 +35,47 @@ var (
 	errConnect                = errors.New("failed to connect to ssh server")
 	errHomeDir                = errors.New("failed to expand home dir")
 	errKeyVerificationFailed  = errors.New("host key validation failed")
+	ErrInvalidAddress         = errors.New("invalid address")
 )
 
-// OnClientConnect is called once a successful ssh connection is established.
-type OnClientConnect func(ctx context.Context, client storage.Storager, server []ServerDetails) error
+type ConnectionHandler interface {
+	Handler(ctx context.Context, client storage.Storager, server ServerInfo) error
+}
 
-// SCPConnection can be used to execute scp (ssh) operations on a remote host. It connects to all configured active
+// SCPHandler can be used to execute scp (ssh) operations on a remote host. It connects to all configured active
 // servers and will execute the provided OnClientConnect function once connected. It's up to the caller
 // to implement this function and handle any required functionality within it. Caller does not need to close the
 // connection.
-type SCPConnection struct {
-	database  database.Database
-	config    *config.Configuration
-	onConnect OnClientConnect
+type SCPHandler struct {
+	details  ServerInfo
+	config   *config.Configuration
+	handlers []ConnectionHandler
+	keyStore KeyStore
+	conn     storage.Storager
 }
 
-func NewSCPConnection(database database.Database, config *config.Configuration) SCPConnection {
-	return SCPConnection{
-		database: database,
-		config:   config,
+func NewSCPHandler(database Repository, config *config.Configuration) SCPHandler {
+	return SCPHandler{config: config}
+}
+
+func (f SCPHandler) Address() string {
+	return f.details.Address
+}
+
+func (f SCPHandler) Close() {
+	if errClose := f.conn.Close(); errClose != nil {
+		slog.Error("failed to close scp client", log.ErrAttr(errClose))
 	}
 }
 
-type ServerDetails struct {
-	Name    string
-	Address string
-}
-
-var ErrInvalidAddress = errors.New("invalid address")
-
-func (f SCPConnection) Update(ctx context.Context, servers []ServerDetails) error {
+func (f SCPHandler) Update(ctx context.Context) error {
 	// Since multiple instances can exist on a single host we map common servers to a single host address and
 	// perform all operations using a single connection to the host.
-	mappedServers := map[string][]ServerDetails{}
+	mappedServers := map[string][]ServerInfo{}
 
 	for _, server := range servers {
-		parts := strings.Split(server.Address, ":")
-		if len(parts) != 2 {
-			return ErrInvalidAddress
-		}
-		actualAddr := parts[0]
+
+		actualAddr := HostPart(server.Address)
 
 		mappedServers[actualAddr] = append(mappedServers[actualAddr], server)
 	}
@@ -87,29 +94,21 @@ func (f SCPConnection) Update(ctx context.Context, servers []ServerDetails) erro
 	return nil
 }
 
-func (f SCPConnection) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []ServerDetails, sshConfig config.SSH) {
-	defer waitGroup.Done()
+func (f SCPHandler) connect(ctx context.Context, sshConfig config.SSH) error {
+	if f.conn != nil {
+		return nil
+	}
 
-	scpClient, errClient := f.configAndDialClient(ctx, sshConfig, net.JoinHostPort(addr, strconv.Itoa(sshConfig.Port)))
+	client, errClient := f.configAndDialClient(ctx, sshConfig, net.JoinHostPort(f.details.Address, strconv.Itoa(sshConfig.Port)))
 	if errClient != nil {
-		slog.Error("failed to connect to remote host", log.ErrAttr(errClient))
-
-		return
+		return errClient
 	}
 
-	defer func() {
-		if errClose := scpClient.Close(); errClose != nil {
-			slog.Error("failed to close scp client", log.ErrAttr(errClose))
-		}
-	}()
-
-	if err := f.onConnect(ctx, scpClient, addrServers); err != nil {
-		slog.Error("onConnect function errored", log.ErrAttr(err))
-	}
+	f.conn = client
 }
 
 // configAndDialClient connects to the remote server with the config. client.Close must be called.
-func (f SCPConnection) configAndDialClient(ctx context.Context, sshConfig config.SSH, address string) (storage.Storager, error) {
+func (f SCPHandler) configAndDialClient(ctx context.Context, sshConfig config.SSH, address string) (storage.Storager, error) {
 	clientConfig, errConfig := f.createConfig(ctx, sshConfig)
 	if errConfig != nil {
 		return nil, errConfig
@@ -123,7 +122,7 @@ func (f SCPConnection) configAndDialClient(ctx context.Context, sshConfig config
 	return client, nil
 }
 
-func (f SCPConnection) createConfig(ctx context.Context, config config.SSH) (*ssh.ClientConfig, error) {
+func (f SCPHandler) createConfig(ctx context.Context, config config.SSH) (*ssh.ClientConfig, error) {
 	if config.Username == "" {
 		return nil, errUsername
 	}
@@ -147,14 +146,14 @@ func (f SCPConnection) createConfig(ctx context.Context, config config.SSH) (*ss
 	sshClientConfig := &ssh.ClientConfig{
 		User:            config.Username,
 		Auth:            authMethod,
-		HostKeyCallback: f.trustedHostKeyCallback(ctx),
+		HostKeyCallback: f.trustedHostKeyCallback,
 		Timeout:         time.Duration(config.Timeout) * time.Second,
 	}
 
 	return sshClientConfig, nil
 }
 
-func (f SCPConnection) createSignerFromKey(config config.SSH) (ssh.Signer, error) {
+func (f SCPHandler) createSignerFromKey(config config.SSH) (ssh.Signer, error) {
 	fullPath, errPath := homedir.Expand(config.PrivateKeyPath)
 	if errPath != nil {
 		return nil, errors.Join(errPath, errHomeDir)
@@ -192,52 +191,37 @@ func keyString(k ssh.PublicKey) string {
 // Subsequent connections will require the same key or be rejected. If you want to skip the auto
 // trust of the first key seen, you must insert the host keys into the database manually into the
 // host_key table.
-func (f SCPConnection) trustedHostKeyCallback(ctx context.Context) ssh.HostKeyCallback {
-	getKey := func(addr string) (string, error) {
-		var key string
+func (f SCPHandler) trustedHostKeyCallback(hostname string, addr net.Addr, pubKey ssh.PublicKey) error {
+	slog.Debug("SSH Connect", slog.String("hostname", hostname), slog.String("addr", addr.String()))
 
-		if errRow := f.database.
-			QueryRow(ctx, nil, `SELECT key FROM host_key WHERE address = $1`, addr).
-			Scan(&key); errRow != nil {
-			return "", database.DBErr(errRow)
-		}
-
-		return key, nil
+	trustedPubKeyString, errKey := f.repo.getKey(context.Background(), addr.String())
+	if errKey != nil && !errors.Is(errKey, database.ErrNoResult) {
+		return errKey
 	}
 
-	setKey := func(addr string, key string) error {
-		const query = `INSERT INTO host_key (address, key, created_on) VALUES ($1, $2, $3)`
-		if err := f.database.Exec(ctx, nil, query, addr, key, time.Now()); err != nil {
-			return database.DBErr(err)
+	pubKeyString := keyString(pubKey)
+
+	if trustedPubKeyString == "" {
+		if errSet := f.repo.setKey(context.Background(), addr.String(), pubKeyString); errSet != nil {
+			return errSet
 		}
 
-		return nil
+		trustedPubKeyString = pubKeyString
 	}
 
-	return func(hostname string, addr net.Addr, pubKey ssh.PublicKey) error {
-		slog.Debug("SSH Connect", slog.String("hostname", hostname), slog.String("addr", addr.String()))
+	if trustedPubKeyString != pubKeyString {
+		slog.Error("Host key validation failed", slog.String("hostname", hostname))
 
-		trustedPubKeyString, errKey := getKey(addr.String())
-		if errKey != nil && !errors.Is(errKey, database.ErrNoResult) {
-			return errKey
-		}
-
-		pubKeyString := keyString(pubKey)
-
-		if trustedPubKeyString == "" {
-			if errSet := setKey(addr.String(), pubKeyString); errSet != nil {
-				return errSet
-			}
-
-			trustedPubKeyString = pubKeyString
-		}
-
-		if trustedPubKeyString != pubKeyString {
-			slog.Error("Host key validation failed", slog.String("hostname", hostname))
-
-			return errKeyVerificationFailed
-		}
-
-		return nil
+		return errKeyVerificationFailed
 	}
+
+	return nil
+}
+
+func HostPart(address string) string {
+	parts := strings.Split(address, ":")
+	if len(parts) != 2 {
+		return address
+	}
+	return parts[0]
 }

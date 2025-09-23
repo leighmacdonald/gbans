@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -219,7 +220,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons, g.networks), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications, g.config)
-	g.downloader = scp.NewDownloader(g.config, g.database)
+	g.downloader = scp.NewSCPHandler(scp.NewRepository(g.database), g.config)
 
 	if err := g.firstTimeSetup(ctx); err != nil {
 		slog.Error("Failed to run first time setup", log.ErrAttr(err))
@@ -493,6 +494,72 @@ func (g GBans) firstTimeSetup(ctx context.Context) error {
 	if errSave != nil {
 		slog.Error("Failed save example wiki entry", log.ErrAttr(errSave))
 	}
+
+	return nil
+}
+
+func (g GBans) downloadManager(ctx context.Context, freq time.Duration) {
+	var (
+		timeout  time.Duration
+		handlers []scp.SCPHandler
+		repo     = scp.NewRepository(g.database)
+		ticker   = time.NewTicker(freq)
+	)
+
+	defer func() {
+		for _, handler := range handlers {
+			handler.Close()
+		}
+	}()
+
+	for {
+		select {
+		case <-ticker.C:
+			servers, errServers := repo.Servers(ctx)
+			if errServers != nil {
+				if errors.Is(errServers, database.ErrNoResult) {
+					continue
+				}
+
+				slog.Error("Failed to query download servers", slog.String("error", errServers.Error()))
+				continue
+			}
+
+			for _, server := range servers {
+				actualAddr := scp.HostPart(server.Address)
+				exists := false
+				for _, handler := range handlers {
+					if handler.Address() == actualAddr {
+						exists = true
+						break
+					}
+				}
+
+				if !exists {
+					handlers = append(handlers, scp.NewSCPHandler(repo, g.config))
+				}
+			}
+
+			slog.Debug("Updating SCP handlers")
+			start := time.Now()
+			lCtx, cancel := context.WithTimeout(ctx, timeout)
+			waitGroup := &sync.WaitGroup{}
+
+			for _, handler := range handlers {
+				waitGroup.Go(func() { handler.Update(lCtx) })
+			}
+
+			waitGroup.Wait()
+
+			slog.Debug("SCP Update complete", slog.Duration("duration", time.Since(start)))
+			cancel()
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (g GBans) update(ctx context.Context) error {
 
 	return nil
 }

@@ -57,7 +57,7 @@ func TestBans(t *testing.T) {
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/query", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
 	require.Len(t, bans, 2)
 
-	updateReq := ban.RequestBanSteamUpdate{
+	updateReq := ban.RequestBanUpdate{
 		TargetID:   fetchedBan.TargetID,
 		BanType:    banDomain.NoComm,
 		Reason:     banDomain.Custom,
