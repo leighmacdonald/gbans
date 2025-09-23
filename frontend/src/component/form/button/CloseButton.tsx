@@ -16,7 +16,7 @@ type Props = {
 
 export const CloseButton = (props: Props) => {
     const form = useFormContext();
-    const modal = useModal();
+    const modal = useModal(ModalConfirm);
 
     const onClick = useCallback(async () => {
         if (form.state.isDirty) {
