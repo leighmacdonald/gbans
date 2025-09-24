@@ -14,7 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/extra"
@@ -126,11 +126,11 @@ type State struct {
 	servers     Servers
 	logListener *logparse.UDPLogListener
 	logFileChan chan LogFilePayload
-	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 // NewState created a interface to interact with server state and exec rcon commands.
-func NewState(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+func NewState(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	repository *StateRepository, config *config.Configuration, servers Servers,
 ) *State {
 	return &State{

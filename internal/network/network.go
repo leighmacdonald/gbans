@@ -14,7 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -109,10 +109,10 @@ type Proxy struct {
 type Networks struct {
 	repository Repository
 	config     *config.Configuration
-	eb         *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	eb         *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewNetworks(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+func NewNetworks(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	repository Repository, config *config.Configuration,
 ) Networks {
 	return Networks{

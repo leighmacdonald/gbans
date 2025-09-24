@@ -18,8 +18,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/pkg/sliceutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -227,7 +227,7 @@ func (r Reports) addAuthorsToReports(ctx context.Context, reports []Report) ([]R
 		peopleIDs = append(peopleIDs, report.SourceID, report.TargetID)
 	}
 
-	people, errAuthors := r.persons.GetPeopleBySteamID(ctx, nil, fp.Uniq(peopleIDs))
+	people, errAuthors := r.persons.GetPeopleBySteamID(ctx, nil, sliceutil.Uniq(peopleIDs))
 	if errAuthors != nil {
 		return nil, errAuthors
 	}

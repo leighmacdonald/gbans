@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -43,13 +43,13 @@ type Result struct {
 
 type Votes struct {
 	repository  Repository
-	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	notif       notification.Notifications
 	config      *config.Configuration
 	persons     domain.PersonProvider
 }
 
-func NewVotes(repository Repository, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+func NewVotes(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	notif notification.Notifications, config *config.Configuration, persons domain.PersonProvider,
 ) Votes {
 	return Votes{

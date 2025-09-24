@@ -23,8 +23,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/pkg/convert"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 )
 
 const downloadURL = "https://www.ip2location.com/download/?token=%s&file=%s"
@@ -188,7 +188,7 @@ type ASNRecords []ASNRecord
 func (r ASNRecords) Hosts() uint32 {
 	total := uint32(0)
 	for _, n := range r {
-		total += convert.IP2Int(*n.IPTo) - convert.IP2Int(*n.IPFrom)
+		total += IP2Int(*n.IPTo) - IP2Int(*n.IPFrom)
 	}
 
 	return total
@@ -325,8 +325,6 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 					return
 				}
 			}
-
-			slog.Debug("Downloading ip2location records", slog.String("db", string(param.dbName)))
 
 			if errDownload := downloadDatabase(param); errDownload != nil {
 				slog.Error("Failed to download geo database", log.ErrAttr(errDownload))
@@ -466,8 +464,8 @@ func ReadLocationRecords(ctx context.Context, path string, ipv6 bool, onRecords 
 			RegionName:  recordLine[4],
 			CityName:    recordLine[5],
 			LatLong: LatLong{
-				convert.StringToFloat64Default(recordLine[6], 0),
-				convert.StringToFloat64Default(recordLine[7], 0),
+				stringutil.StringToFloat64Default(recordLine[6], 0),
+				stringutil.StringToFloat64Default(recordLine[7], 0),
 			},
 		}
 
@@ -478,8 +476,6 @@ func ReadLocationRecords(ctx context.Context, path string, ipv6 bool, onRecords 
 			if err := onRecords(ctx, first, records); err != nil {
 				return err
 			}
-
-			slog.Debug("Imported location records", slog.Int64("total", total))
 
 			first = false
 			records = nil
@@ -502,12 +498,7 @@ func ReadProxyRecords(ctx context.Context, path string, onRecords ProxyLoader) e
 		records []ProxyRecord
 		first   = true
 		total   int64
-		started = time.Now()
 	)
-
-	defer func() {
-		slog.Info("Import proxy records complete", slog.Int64("total", total), slog.Duration("duration", time.Since(started)))
-	}()
 
 	for {
 		recordLine, errReadLine := reader.Read()
@@ -570,8 +561,6 @@ func ReadProxyRecords(ctx context.Context, path string, onRecords ProxyLoader) e
 			if err := onRecords(ctx, first, records); err != nil {
 				return err
 			}
-
-			slog.Debug("Imported proxy records", slog.Int64("total", total))
 
 			first = false
 			records = nil

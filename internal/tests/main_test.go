@@ -42,7 +42,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
-	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -143,7 +143,7 @@ func TestMain(m *testing.M) {
 	}
 
 	conf := makeTestConfig(dsn)
-	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
+	eventBroadcaster := broadcaster.New[logparse.EventType, logparse.ServerEvent]()
 	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
 	configUC = config.NewConfiguration(conf.Static, &TestConfigRepo{config: conf})

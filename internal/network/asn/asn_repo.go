@@ -2,6 +2,7 @@ package asn
 
 import (
 	"context"
+	"net/netip"
 
 	"github.com/leighmacdonald/gbans/internal/database"
 )
@@ -33,6 +34,12 @@ func (r Repository) All(ctx context.Context) ([]Block, error) {
 	}
 
 	return blocks, nil
+}
+
+func (r Repository) IsBlocked(ctx context.Context, addr netip.Addr) bool {
+	const query = `SELECT `
+
+	return false
 }
 
 func (r Repository) Save(ctx context.Context, ban Block) error {

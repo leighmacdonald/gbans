@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/sliceutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
 )
@@ -160,7 +160,7 @@ func (n *Notifications) SendSite(ctx context.Context, targetIDs steamid.Collecti
 		authorID = &sid64
 	}
 
-	return n.repository.SendSite(ctx, fp.Uniq(targetIDs), severity, message, link, authorID)
+	return n.repository.SendSite(ctx, sliceutil.Uniq(targetIDs), severity, message, link, authorID)
 }
 
 func (n *Notifications) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]UserNotification, error) {

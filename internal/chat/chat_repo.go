@@ -13,8 +13,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
-	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -24,13 +24,13 @@ type Repository struct {
 	db          database.Database
 	persons     domain.PersonProvider
 	wordFilters WordFilters
-	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	WarningChan chan NewUserWarning
 }
 
 func NewRepository(database database.Database, persons domain.PersonProvider, wordFilters WordFilters,
 
-	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) *Repository {
 	return &Repository{
 		db:          database,
