@@ -13,7 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
-type NetworkHandler struct {
+type NetworkHandler struct { //nolint:revive
 	networks Networks
 }
 

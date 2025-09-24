@@ -217,7 +217,7 @@ func recoveryHandler() gin.HandlerFunc {
 	})
 }
 
-var durationValidator validator.Func = func(fl validator.FieldLevel) bool {
+func durationValidator(fl validator.FieldLevel) bool {
 	dur, ok := fl.Field().Interface().(duration.Duration)
 	if ok {
 		return dur.ToTimeDuration().Seconds() > 0
@@ -226,7 +226,7 @@ var durationValidator validator.Func = func(fl validator.FieldLevel) bool {
 	return false
 }
 
-var steamidValidator validator.Func = func(fl validator.FieldLevel) bool {
+func steamidValidator(fl validator.FieldLevel) bool {
 	sid, ok := fl.Field().Interface().(steamid.SteamID)
 	if ok {
 		return sid.Valid()
@@ -235,7 +235,7 @@ var steamidValidator validator.Func = func(fl validator.FieldLevel) bool {
 	return false
 }
 
-var asNumValidator validator.Func = func(fl validator.FieldLevel) bool {
+func asNumValidator(fl validator.FieldLevel) bool {
 	asNum, ok := fl.Field().Interface().(int64)
 	if ok {
 		ranges := []struct {
@@ -269,14 +269,14 @@ func CreateRouter(conf config.Config, version BuildInfo) (*gin.Engine, error) {
 	engine.Use(recoveryHandler())
 	engine.Use(errorHandler())
 
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		if err := v.RegisterValidation("steamid", steamidValidator); err != nil {
+	if validator, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		if err := validator.RegisterValidation("steamid", steamidValidator); err != nil {
 			return nil, errors.Join(err, ErrValidator)
 		}
-		if err := v.RegisterValidation("asnum", asNumValidator); err != nil {
+		if err := validator.RegisterValidation("asnum", asNumValidator); err != nil {
 			return nil, errors.Join(err, ErrValidator)
 		}
-		if err := v.RegisterValidation("duration", durationValidator); err != nil {
+		if err := validator.RegisterValidation("duration", durationValidator); err != nil {
 			return nil, errors.Join(err, ErrValidator)
 		}
 	}

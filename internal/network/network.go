@@ -230,7 +230,7 @@ func (u Networks) QueryConnectionHistory(ctx context.Context, opts ConnectionHis
 
 	if opts.CIDR != "" {
 		if !strings.Contains(opts.CIDR, "/") {
-			opts.CIDR += "/32"
+			opts.CIDR += maskSingleHost
 		}
 
 		_, network, errNetwork := net.ParseCIDR(opts.CIDR)

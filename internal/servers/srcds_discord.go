@@ -28,7 +28,7 @@ type PersonProvider interface {
 }
 
 func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonProvider, servers Servers, network network.Networks, config config.Config) {
-	handler := discordHandler{state: state, persons: persons, servers: servers, network: network, config: config}
+	handler := DiscordHandler{state: state, persons: persons, servers: servers, network: network, config: config}
 
 	bot.MustRegisterHandler("find", handler.onFind, &discordgo.ApplicationCommand{
 		Name:                     "find",
@@ -158,7 +158,7 @@ func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonPr
 	})
 }
 
-type discordHandler struct {
+type DiscordHandler struct {
 	state   State
 	persons PersonProvider
 	servers Servers
@@ -166,13 +166,13 @@ type discordHandler struct {
 	config  config.Config
 }
 
-func NewDiscordHandler(state State) *discordHandler {
-	return &discordHandler{
+func NewDiscordHandler(state State) *DiscordHandler {
+	return &DiscordHandler{
 		state: state,
 	}
 }
 
-func (d discordHandler) onFind(ctx context.Context, _ *discordgo.Session, interation *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d DiscordHandler) onFind(ctx context.Context, _ *discordgo.Session, interation *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interation.ApplicationCommandData().Options)
 	userIdentifier := opts[helper.OptUserIdentifier].StringValue()
 
@@ -190,9 +190,9 @@ func (d discordHandler) onFind(ctx context.Context, _ *discordgo.Session, intera
 		return nil, domain.ErrUnknownID
 	}
 
-	var found []discordFoundPlayer
+	found := make([]discordFoundPlayer, len(players))
 
-	for _, player := range players {
+	for index, player := range players {
 		server, errServer := d.servers.Server(ctx, player.ServerID)
 		if errServer != nil {
 			return nil, errors.Join(errServer, domain.ErrGetServer)
@@ -203,13 +203,13 @@ func (d discordHandler) onFind(ctx context.Context, _ *discordgo.Session, intera
 			return nil, errPerson
 		}
 
-		found = append(found, discordFoundPlayer{Player: player, Server: server})
+		found[index] = discordFoundPlayer{Player: player, Server: server}
 	}
 
 	return discordFindMessage(found), nil
 }
 
-func (d discordHandler) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	var (
 		opts   = helper.OptionMap(interaction.ApplicationCommandData().Options)
 		reason = banDomain.Reason(opts[helper.OptBanReason].IntValue())
@@ -239,7 +239,7 @@ func (d discordHandler) onKick(ctx context.Context, _ *discordgo.Session, intera
 	return discordKickMessage(players), err
 }
 
-func (d discordHandler) onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d DiscordHandler) onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[helper.OptServerIdentifier].StringValue()
 	msg := opts[helper.OptMessage].StringValue()
@@ -256,7 +256,7 @@ func (d discordHandler) onSay(ctx context.Context, _ *discordgo.Session, interac
 	return discordSayMessage(serverName, msg), nil
 }
 
-func (d discordHandler) onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d DiscordHandler) onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[helper.OptServerIdentifier].StringValue()
 	msg := opts[helper.OptMessage].StringValue()
@@ -273,7 +273,7 @@ func (d discordHandler) onCSay(ctx context.Context, _ *discordgo.Session, intera
 	return discordCSayMessage(server.Name, msg), nil
 }
 
-func (d discordHandler) onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d DiscordHandler) onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
 	msg := opts[helper.OptMessage].StringValue()
 
@@ -289,11 +289,11 @@ func (d discordHandler) onPSay(ctx context.Context, _ *discordgo.Session, intera
 	return discordPSayMessage(playerSid, msg), nil
 }
 
-func (d discordHandler) onServers(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d DiscordHandler) onServers(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return discordServersMessage(d.state.SortRegion(), d.config.ExtURLRaw("/servers")), nil
 }
 
-func (d discordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d DiscordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := helper.OptionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[helper.OptServerIdentifier].StringValue()
 	serverStates := d.state.ByName(serverName, false)
@@ -527,18 +527,18 @@ func discordKickMessage(players []PlayerServerInfo) *discordgo.MessageEmbed {
 // 	return msgEmbed.AddFieldsSteamID(report.TargetID).Embed().Truncate().MessageEmbed
 // }
 
-func discordPingModMessage(author domain.PersonInfo, authorURL string, reason string, server Server, roleID string, connect string) *discordgo.MessageEmbed {
-	msgEmbed := message.NewEmbed("New User In-Game Report")
-	msgEmbed.
-		Embed().
-		SetDescription(fmt.Sprintf("%s | <@&%s>", reason, roleID)).
-		AddField("server", server.Name)
+// func discordPingModMessage(author domain.PersonInfo, authorURL string, reason string, server Server, roleID string, connect string) *discordgo.MessageEmbed {
+// 	msgEmbed := message.NewEmbed("New User In-Game Report")
+// 	msgEmbed.
+// 		Embed().
+// 		SetDescription(fmt.Sprintf("%s | <@&%s>", reason, roleID)).
+// 		AddField("server", server.Name)
 
-	if connect != "" {
-		msgEmbed.Embed().AddField("connect", connect)
-	}
+// 	if connect != "" {
+// 		msgEmbed.Embed().AddField("connect", connect)
+// 	}
 
-	msgEmbed.AddAuthorPersonInfo(author, authorURL).Embed().Truncate()
+// 	msgEmbed.AddAuthorPersonInfo(author, authorURL).Embed().Truncate()
 
-	return msgEmbed.Embed().MessageEmbed
-}
+// 	return msgEmbed.Embed().MessageEmbed
+// }

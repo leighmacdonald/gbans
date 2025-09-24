@@ -31,7 +31,7 @@ type Blocker struct {
 	repo Repository
 }
 
-func (a Blocker) Check(ctx context.Context, addr string) error {
+func (a Blocker) Check(_ context.Context, _ string) error {
 	return nil
 }
 

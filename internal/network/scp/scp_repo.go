@@ -2,6 +2,7 @@ package scp
 
 import (
 	"context"
+	"path"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -13,12 +14,26 @@ type serverID struct {
 	ShortName string
 }
 
+func NewServerInfo(address string, addressInternal string, serversRoot string, serverIDs ...serverID) ServerInfo {
+	return ServerInfo{
+		ServerIDs:       serverIDs,
+		Address:         address,
+		AddressInternal: addressInternal,
+		serversRoot:     serversRoot,
+	}
+}
+
 // ServerInfo represents a single *physical* machine. It can have several instances locally however as defined by multiple
 // [erverID].
 type ServerInfo struct {
 	ServerIDs       []serverID
 	Address         string
 	AddressInternal string
+	serversRoot     string
+}
+
+func (s ServerInfo) GamePath(sid serverID, subDir string) string {
+	return path.Join(s.serversRoot, sid.ShortName, subDir)
 }
 
 func NewRepository(db database.Database) Repository {
@@ -29,7 +44,7 @@ type Repository struct {
 	db database.Database
 }
 
-func (r Repository) getKey(ctx context.Context, addr string) (string, error) {
+func (r Repository) GetHostKey(ctx context.Context, addr string) (string, error) {
 	var key string
 
 	if errRow := r.db.
@@ -41,7 +56,7 @@ func (r Repository) getKey(ctx context.Context, addr string) (string, error) {
 	return key, nil
 }
 
-func (r Repository) setKey(ctx context.Context, addr string, key string) error {
+func (r Repository) SetHostKey(ctx context.Context, addr string, key string) error {
 	const query = `INSERT INTO host_key (address, key, created_on) VALUES ($1, $2, $3)`
 	if err := r.db.Exec(ctx, nil, query, addr, key, time.Now()); err != nil {
 		return database.DBErr(err)
@@ -66,6 +81,7 @@ func (r Repository) Servers(ctx context.Context) ([]ServerInfo, error) {
 		result  ServerInfo
 		dirty   bool // Is there a result to still append on the last record
 	)
+
 	for rows.Next() {
 		var (
 			sid             serverID
@@ -76,14 +92,15 @@ func (r Repository) Servers(ctx context.Context) ([]ServerInfo, error) {
 			return nil, database.DBErr(err)
 		}
 
-		if result.Address == "" {
+		switch {
+		case result.Address == "":
 			result = ServerInfo{ServerIDs: []serverID{sid}, Address: address, AddressInternal: addressInternal}
 			dirty = true
-		} else if result.Address != address {
+		case result.Address != address:
 			results = append(results, result)
 			result = ServerInfo{ServerIDs: []serverID{sid}, Address: address, AddressInternal: addressInternal}
 			dirty = false
-		} else {
+		default:
 			result.ServerIDs = append(result.ServerIDs, sid)
 			dirty = true
 		}

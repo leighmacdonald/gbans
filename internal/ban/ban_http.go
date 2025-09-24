@@ -139,7 +139,7 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 
 func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req BanOpts
+		var req Opts
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}

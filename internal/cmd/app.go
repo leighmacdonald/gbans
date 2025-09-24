@@ -79,7 +79,6 @@ type GBans struct {
 	contests       contest.Contests
 	database       database.Database
 	demos          servers.Demos
-	downloader     scp.Downloader
 	forums         forum.Forums
 	discordOAuth   discordoauth.DiscordOAuth
 	memberships    *ban.Memberships
@@ -220,7 +219,6 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons, g.networks), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications, g.config)
-	g.downloader = scp.NewSCPHandler(scp.NewRepository(g.database), g.config)
 
 	if err := g.firstTimeSetup(ctx); err != nil {
 		slog.Error("Failed to run first time setup", log.ErrAttr(err))
@@ -230,9 +228,9 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	// If we are using Valve SDR network, optionally enable the dynamic DNS update support to automatically
 	// update the A record when a change is detected with the new public SDR IP.
-	if conf.Network.SDREnabled && conf.Network.SDRDNSEnabled {
-		// go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
-	}
+	// if conf.Network.SDREnabled && conf.Network.SDRDNSEnabled {
+	// 	// go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
+	// }
 
 	// Config
 	g.setupPlayerQueue(ctx)
@@ -261,7 +259,7 @@ func (g *GBans) startBot(ctx context.Context) error {
 func (g *GBans) setupPlayerQueue(ctx context.Context) {
 	playerqueueRepo := playerqueue.NewRepository(g.database, g.persons)
 	// Pre-load some messages into queue message cache
-	chatlogs, errChatlogs := playerqueueRepo.Query(ctx, playerqueue.PlayerqueueQueryOpts{Filter: query.Filter{Limit: 100}})
+	chatlogs, errChatlogs := playerqueueRepo.Query(ctx, playerqueue.QueryOpts{Filter: query.Filter{Limit: 100}})
 	if errChatlogs != nil {
 		slog.Error("Failed to warm playerqueue chatlogs", log.ErrAttr(errChatlogs))
 		chatlogs = []playerqueue.ChatLog{}
@@ -296,10 +294,9 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go g.metrics.Start(ctx)
 	go g.votes.Start(ctx)
 	go g.playerQueue.Start(ctx)
-	// TODO register handlers
-	go g.downloader.Start(ctx)
 	go g.networks.Start(ctx)
 	go g.notifications.Sender(ctx)
+	go g.downloadManager(ctx, time.Minute*5)
 
 	go func() {
 		if err := g.states.Start(ctx); err != nil {
@@ -498,10 +495,12 @@ func (g GBans) firstTimeSetup(ctx context.Context) error {
 	return nil
 }
 
+// downloadManager is responsible for connecting to the remote servers via ssh/scp and executing instructions.
+// Multiple handlers can be registered that will be ran for every update call.
 func (g GBans) downloadManager(ctx context.Context, freq time.Duration) {
 	var (
 		timeout  time.Duration
-		handlers []scp.SCPHandler
+		handlers []scp.Connection
 		repo     = scp.NewRepository(g.database)
 		ticker   = time.NewTicker(freq)
 	)
@@ -522,6 +521,7 @@ func (g GBans) downloadManager(ctx context.Context, freq time.Duration) {
 				}
 
 				slog.Error("Failed to query download servers", slog.String("error", errServers.Error()))
+
 				continue
 			}
 
@@ -531,22 +531,32 @@ func (g GBans) downloadManager(ctx context.Context, freq time.Duration) {
 				for _, handler := range handlers {
 					if handler.Address() == actualAddr {
 						exists = true
+
 						break
 					}
 				}
 
 				if !exists {
-					handlers = append(handlers, scp.NewSCPHandler(repo, g.config))
+					handler := scp.NewSCPHandler(repo, g.config.Config().SSH)
+					handler.AddHandler(g.demos)
+					handler.AddHandler(g.anticheat)
+					handlers = append(handlers, handler)
 				}
 			}
 
 			slog.Debug("Updating SCP handlers")
 			start := time.Now()
 			lCtx, cancel := context.WithTimeout(ctx, timeout)
+
+			// No errgroup since we want to continue on errors.
 			waitGroup := &sync.WaitGroup{}
 
 			for _, handler := range handlers {
-				waitGroup.Go(func() { handler.Update(lCtx) })
+				waitGroup.Go(func() {
+					if err := handler.Update(lCtx); err != nil {
+						slog.Error("Error running scp handler", slog.String("error", err.Error()))
+					}
+				})
 			}
 
 			waitGroup.Wait()
@@ -557,9 +567,4 @@ func (g GBans) downloadManager(ctx context.Context, freq time.Duration) {
 			return
 		}
 	}
-}
-
-func (g GBans) update(ctx context.Context) error {
-
-	return nil
 }

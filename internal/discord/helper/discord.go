@@ -9,9 +9,9 @@ import (
 
 var (
 	ErrCommandFailed = errors.New("command failed")
-	DmPerms          = false
-	ModPerms         = int64(discordgo.PermissionBanMembers)
-	UserPerms        = int64(discordgo.PermissionViewChannel)
+	DmPerms          = false                                  //nolint:gochecknoglobals
+	ModPerms         = int64(discordgo.PermissionBanMembers)  //nolint:gochecknoglobals
+	UserPerms        = int64(discordgo.PermissionViewChannel) //nolint:gochecknoglobals
 )
 
 type SlashCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)

@@ -880,7 +880,7 @@ func (match *Match) killedCustom(evt CustomKilledEvt) error {
 		// This is taken from damage event instead to match logs.tf
 		// weaponSum.Headshots++
 	default:
-		return fmt.Errorf("Custom kill type unknown: %s", evt.Customkill)
+		return fmt.Errorf("%w: Custom kill type unknown: %s", ErrLogParse, evt.Customkill)
 	}
 
 	player.addKill(evt.CreatedOn, evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)

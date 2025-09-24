@@ -54,7 +54,7 @@ type PlayerKillstreak struct {
 	Duration int `json:"duration"`
 }
 
-type MatchPlayerClass struct {
+type PlayerClassDetail struct {
 	MatchPlayerClassID int                  `json:"match_player_class_id"`
 	MatchPlayerID      int64                `json:"match_player_id"`
 	PlayerClass        logparse.PlayerClass `json:"player_class"`
@@ -80,10 +80,10 @@ type Player struct {
 	TimeStart time.Time     `json:"time_start"`
 	TimeEnd   time.Time     `json:"time_end"`
 
-	MedicStats  *Healer            `json:"medic_stats"`
-	Classes     []MatchPlayerClass `json:"classes"`
-	Killstreaks []PlayerKillstreak `json:"killstreaks"`
-	Weapons     []PlayerWeapon     `json:"weapons"`
+	MedicStats  *Healer             `json:"medic_stats"`
+	Classes     []PlayerClassDetail `json:"classes"`
+	Killstreaks []PlayerKillstreak  `json:"killstreaks"`
+	Weapons     []PlayerWeapon      `json:"weapons"`
 }
 
 func (player Player) BiggestKillstreak() *PlayerKillstreak {
@@ -142,7 +142,7 @@ func (h Healer) HealingPerMin(matchDuration time.Duration) int {
 	return int(float64(h.Healing) / matchDuration.Minutes())
 }
 
-type MatchWeapon struct {
+type PlayerMatchWeapon struct {
 	PlayerWeaponID int64 `json:"player_weapon_id"`
 	MatchPlayerID  int64 `json:"match_player_id"`
 }

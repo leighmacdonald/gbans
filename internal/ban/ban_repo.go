@@ -199,8 +199,8 @@ func (r *Repository) Save(ctx context.Context, ban *Ban) error {
 		return database.ErrDuplicate
 	}
 
-	if lastIp := r.network.GetPlayerMostRecentIP(ctx, ban.TargetID); lastIp != nil {
-		last := lastIp.String()
+	if lastIP := r.network.GetPlayerMostRecentIP(ctx, ban.TargetID); lastIP != nil {
+		last := lastIP.String()
 		ban.LastIP = &last
 	}
 

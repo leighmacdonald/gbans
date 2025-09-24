@@ -24,6 +24,8 @@ import (
 
 var ErrInvalidCIDR = errors.New("failed to parse CIDR address")
 
+const maskSingleHost = "/32"
+
 type CIDRBlockSource struct {
 	CIDRBlockSourceID int       `json:"cidr_block_source_id"`
 	Name              string    `json:"name"`
@@ -264,7 +266,7 @@ func (b *Blocklists) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int,
 
 func (b *Blocklists) CreateCIDRBlockWhitelist(ctx context.Context, address string) (WhitelistIP, error) {
 	if !strings.Contains(address, "/") {
-		address += "/32"
+		address += maskSingleHost
 	}
 
 	_, cidr, errParse := net.ParseCIDR(address)

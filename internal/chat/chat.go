@@ -21,7 +21,7 @@ import (
 	"github.com/sosodev/duration"
 )
 
-type ChatHistoryQueryFilter struct {
+type HistoryQueryFilter struct {
 	query.Filter
 	domain.SourceIDField
 	Personaname   string     `json:"personaname,omitempty"`
@@ -33,7 +33,7 @@ type ChatHistoryQueryFilter struct {
 	FlaggedOnly   bool       `json:"flagged_only"`
 }
 
-func (f ChatHistoryQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
+func (f HistoryQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
 	sid := steamid.New(f.SourceID)
 
 	return sid, sid.Valid()
@@ -110,7 +110,7 @@ func NewChat(config *config.Configuration, repo *Repository, filters WordFilters
 func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) error {
 	var (
 		errBan error
-		req    ban.BanOpts
+		req    ban.Opts
 		newBan ban.Ban
 	)
 
@@ -119,7 +119,7 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 		if errDur != nil {
 			return errors.Join(errDur, banDomain.ErrDuration)
 		}
-		req = ban.BanOpts{
+		req = ban.Opts{
 			TargetID:   newWarning.UserMessage.SteamID,
 			Reason:     newWarning.WarnReason,
 			ReasonText: "",
@@ -318,7 +318,7 @@ func (u Chat) AddChatHistory(ctx context.Context, message *PersonMessage) error 
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u Chat) QueryChatHistory(ctx context.Context, user domain.PersonInfo, req ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error) {
+func (u Chat) QueryChatHistory(ctx context.Context, user domain.PersonInfo, req HistoryQueryFilter) ([]QueryChatHistoryResult, error) {
 	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(permission.Moderator)) {
 		req.Limit = 100
 	}

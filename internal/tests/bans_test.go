@@ -24,7 +24,7 @@ func TestBans(t *testing.T) {
 	require.Len(t, bansEmpty, 1)
 
 	// Create a ban
-	banReq := ban.BanOpts{
+	banReq := ban.Opts{
 		SourceID:   mod.SteamID,
 		TargetID:   target.SteamID,
 		Duration:   duration.FromTimeDuration(time.Hour * 24),

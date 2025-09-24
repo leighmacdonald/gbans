@@ -84,7 +84,7 @@ func (r Reason) String() string {
 	}[r]
 }
 
-var Reasons = []Reason{
+var Reasons = []Reason{ //nolint:gochecknoglobals
 	External, Cheating, Racism, Harassment, Exploiting,
 	WarningsExceeded, Spam, Language, Profile, ItemDescriptions,
 	BotHost, Evading, Username, Custom,
