@@ -41,6 +41,7 @@ func NewPlayerqueueMessage(author domain.PersonInfo, msg string) *discordgo.Mess
 
 func NewPlayerqueuePurge(author domain.PersonInfo, target domain.PersonInfo, chatLog ChatLog, count int) *discordgo.MessageEmbed {
 	sid := target.GetSteamID()
+
 	return message.NewEmbed().
 		Embed().
 		SetColor(message.ColourInfo).

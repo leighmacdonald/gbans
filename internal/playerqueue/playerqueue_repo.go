@@ -81,7 +81,7 @@ func (r Repository) Save(ctx context.Context, message ChatLog) (ChatLog, error) 
 	return message, nil
 }
 
-func (r Repository) Query(ctx context.Context, query PlayerqueueQueryOpts) ([]ChatLog, error) {
+func (r Repository) Query(ctx context.Context, query QueryOpts) ([]ChatLog, error) {
 	builder := r.db.Builder().
 		Select("m.message_id", "m.steam_id", "m.created_on", "m.personaname", "m.avatarhash",
 			"p.permission_level", "m.body_md").

@@ -23,6 +23,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	networkDomain "github.com/leighmacdonald/gbans/internal/domain/network"
+	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/json"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -108,9 +109,9 @@ type DemoDetails struct {
 }
 
 type UploadedDemo struct {
-	Name    string
-	Server  Server
-	Content []byte
+	Name     string
+	ServerID int
+	Content  []byte
 }
 
 type Demos struct {
@@ -133,7 +134,7 @@ func NewDemos(bucket asset.Bucket, repository DemoRepository, assets asset.Asset
 
 func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 	slog.Debug("Got new demo",
-		slog.String("server", demo.Server.ShortName),
+		slog.Int("server_id", demo.ServerID),
 		slog.String("name", demo.Name))
 
 	demoAsset, errNewAsset := d.asset.Create(ctx, steamid.New(d.config.Config().Owner),
@@ -142,7 +143,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		return errNewAsset
 	}
 
-	_, errDemo := d.CreateFromAsset(ctx, demoAsset, demo.Server.ServerID)
+	_, errDemo := d.CreateFromAsset(ctx, demoAsset, demo.ServerID)
 	if errDemo != nil {
 		// Cleanup the asset not attached to a demo
 		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
@@ -155,58 +156,59 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 	return nil
 }
 
-func (d Demos) fetchDemos(ctx context.Context, demoPathFmt string, server Server, client storage.Storager) error {
-	demoDir := fmt.Sprintf(demoPathFmt, server.ShortName)
+func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo) error {
+	for _, instance := range server.ServerIDs {
+		demoDir := server.GamePath(instance, "tf/stv_demos/complete/")
+		filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
+		if errFilelist != nil {
+			slog.Error("remote list dir failed", log.ErrAttr(networkDomain.ErrFailedToList),
+				slog.String("server", instance.ShortName), slog.String("path", demoDir))
 
-	filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
-	if errFilelist != nil {
-		slog.Error("remote list dir failed", log.ErrAttr(networkDomain.ErrFailedToList),
-			slog.String("server", server.ShortName), slog.String("path", demoDir))
-
-		return nil //nolint:nilerr
-	}
-
-	for _, file := range filelist {
-		if !strings.HasSuffix(file.Name(), ".dem") {
-			continue
+			return nil //nolint:nilerr
 		}
 
-		demoPath := path.Join(demoDir, file.Name())
-
-		slog.Info("Downloading demo", slog.String("name", file.Name()), slog.String("server", server.ShortName))
-
-		reader, err := client.Open(ctx, demoPath)
-		if err != nil {
-			return errors.Join(err, networkDomain.ErrFailedOpenFile)
-		}
-
-		data, errRead := io.ReadAll(reader)
-		if errRead != nil {
-			_ = reader.Close()
-
-			return errors.Join(errRead, networkDomain.ErrFailedReadFile)
-		}
-
-		if errClose := reader.Close(); errClose != nil {
-			return errors.Join(errClose, networkDomain.ErrCloseReader)
-		}
-
-		// need Seeker, but afs does not provide
-		demo := UploadedDemo{Name: file.Name(), Server: server, Content: data}
-
-		if errDemo := d.onDemoReceived(ctx, demo); errDemo != nil {
-			if !errors.Is(errDemo, domain.ErrAssetTooLarge) {
-				slog.Error("Failed to create new demo asset", log.ErrAttr(errDemo))
-
+		for _, file := range filelist {
+			if !strings.HasSuffix(file.Name(), ".dem") {
 				continue
 			}
-		}
 
-		if errDelete := client.Delete(ctx, demoPath); errDelete != nil {
-			slog.Error("Failed to cleanup demo", log.ErrAttr(errDelete), slog.String("path", demoPath))
-		}
+			demoPath := path.Join(demoDir, file.Name())
 
-		slog.Info("Deleted demo on remote host", slog.String("path", demoPath))
+			slog.Info("Downloading demo", slog.String("name", file.Name()), slog.String("server", instance.ShortName))
+
+			reader, err := client.Open(ctx, demoPath)
+			if err != nil {
+				return errors.Join(err, networkDomain.ErrFailedOpenFile)
+			}
+
+			data, errRead := io.ReadAll(reader)
+			if errRead != nil {
+				_ = reader.Close()
+
+				return errors.Join(errRead, networkDomain.ErrFailedReadFile)
+			}
+
+			if errClose := reader.Close(); errClose != nil {
+				return errors.Join(errClose, networkDomain.ErrCloseReader)
+			}
+
+			// need Seeker, but afs does not provide
+			demo := UploadedDemo{Name: file.Name(), ServerID: instance.ServerID, Content: data}
+
+			if errDemo := d.onDemoReceived(ctx, demo); errDemo != nil {
+				if !errors.Is(errDemo, domain.ErrAssetTooLarge) {
+					slog.Error("Failed to create new demo asset", log.ErrAttr(errDemo))
+
+					continue
+				}
+			}
+
+			if errDelete := client.Delete(ctx, demoPath); errDelete != nil {
+				slog.Error("Failed to cleanup demo", log.ErrAttr(errDelete), slog.String("path", demoPath))
+			}
+
+			slog.Info("Deleted demo on remote host", slog.String("path", demoPath))
+		}
 	}
 
 	return nil

@@ -12,8 +12,8 @@ import (
 type Repo interface {
 	Init(ctx context.Context) error
 	Config() Config
-	Read(context.Context) (Config, error)
-	Write(context.Context, Config) error
+	Read(ctx context.Context) (Config, error)
+	Write(ctx context.Context, conf Config) error
 }
 
 type Repository struct {

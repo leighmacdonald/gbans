@@ -40,10 +40,12 @@ var (
 	ErrInvalidCIDR        = errors.New("failed to parse CIDR address")
 )
 
-// BanOpts defines common ban options that apply to all types to varying degrees
+const Permanent = "Permanent"
+
+// Opts defines common ban options that apply to all types to varying degrees
 // It should not be instantiated directly, but instead use one of the composites that build
 // upon it.
-type BanOpts struct {
+type Opts struct {
 	TargetID steamid.SteamID `json:"target_id" validate:"required,steamid"`
 	SourceID steamid.SteamID `json:"source_id" validate:"required,steamid"`
 	// ISO8601
@@ -61,7 +63,7 @@ type BanOpts struct {
 	Note       string             `json:"note"`
 }
 
-func (opts *BanOpts) Validate() error {
+func (opts *Opts) Validate() error {
 	if opts.Duration.ToTimeDuration() <= 0 {
 		return fmt.Errorf("%w: %w", ErrInvalidBanOpts, ErrInvalidBanDuration)
 	}
@@ -297,7 +299,7 @@ func (s Bans) Save(ctx context.Context, ban *Ban) error {
 
 // Create will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of Config.DefaultExpiration() will be used.
-func (s Bans) Create(ctx context.Context, opts BanOpts) (Ban, error) {
+func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 	if errValidate := opts.Validate(); errValidate != nil {
 		return Ban{}, errValidate
 	}
@@ -336,8 +338,8 @@ func (s Bans) Create(ctx context.Context, opts BanOpts) (Ban, error) {
 		return newBan, errors.Join(errSave, ErrSaveBan)
 	}
 
-	expIn := "Permanent"
-	expAt := "Permanent"
+	expIn := Permanent
+	expAt := Permanent
 
 	if newBan.ValidUntil.Year()-time.Now().Year() < 5 {
 		expIn = datetime.FmtDuration(newBan.ValidUntil)
@@ -482,7 +484,7 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 	config := s.config.Config()
 	owner := steamid.New(config.Owner)
 
-	req := BanOpts{
+	req := Opts{
 		SourceID: owner,
 		TargetID: steamID,
 		Origin:   ban.System,

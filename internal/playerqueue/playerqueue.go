@@ -19,7 +19,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type PlayerqueueQueryOpts struct {
+type QueryOpts struct {
 	query.Filter
 }
 
@@ -313,7 +313,7 @@ func (p Playerqueue) Recent(ctx context.Context, limit uint64) ([]ChatLog, error
 		limit = 50
 	}
 
-	return p.repo.Query(ctx, PlayerqueueQueryOpts{
+	return p.repo.Query(ctx, QueryOpts{
 		Filter: query.Filter{
 			Limit:   limit,
 			Desc:    true,

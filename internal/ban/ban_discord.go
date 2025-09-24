@@ -190,7 +190,7 @@ func (h discordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 	if errAuthor != nil {
 		return nil, errAuthor
 	}
-	banOpts := BanOpts{
+	banOpts := Opts{
 		Origin:     ban.Bot,
 		SourceID:   author.SteamID,
 		TargetID:   steamid.New(opts.String(helper.OptUserIdentifier)),
@@ -224,7 +224,7 @@ func (h discordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 		return nil, errAuthor
 	}
 
-	banOpts := BanOpts{
+	banOpts := Opts{
 		Origin:     ban.Bot,
 		SourceID:   author.SteamID,
 		TargetID:   steamid.New(opts[helper.OptUserIdentifier].StringValue()),
@@ -442,7 +442,7 @@ func CheckMessage(player domain.PersonCore, banPerson Ban, banURL string, author
 		msgEmbed.Embed().AddField("Created", datetime.FmtTimeShort(banPerson.CreatedOn)).MakeFieldInline()
 
 		if time.Until(expiry) > time.Hour*24*365*5 {
-			msgEmbed.Embed().AddField("Expires", "Permanent").MakeFieldInline()
+			msgEmbed.Embed().AddField("Expires", Permanent).MakeFieldInline()
 		} else {
 			msgEmbed.Embed().AddField("Expires", datetime.FmtDuration(expiry)).MakeFieldInline()
 		}
@@ -518,7 +518,7 @@ func CheckMessage(player domain.PersonCore, banPerson Ban, banURL string, author
 		Truncate().MessageEmbed
 }
 
-func BanIPMessage() *discordgo.MessageEmbed {
+func IPMessage() *discordgo.MessageEmbed {
 	return message.NewEmbed("IP ban created successfully").Embed().
 		SetColor(message.ColourSuccess).
 		Truncate().
@@ -618,8 +618,8 @@ func CreateResponse(banSteam Ban) *discordgo.MessageEmbed {
 
 	//	msgEmbed.Embed().SetAuthor(banSteam.SourcePersonaname, domain.NewAvatar(banSteam.SourceAvatarhash).Full(), "https://steamcommunity.com/profiles/"+banSteam.SourceID.String())
 
-	expIn := "Permanent"
-	expAt := "Permanent"
+	expIn := Permanent
+	expAt := Permanent
 
 	if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
 		expIn = datetime.FmtDuration(banSteam.ValidUntil)

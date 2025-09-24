@@ -7,7 +7,6 @@ package cmd
 import (
 	"os"
 
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/spf13/cobra"
 )
 

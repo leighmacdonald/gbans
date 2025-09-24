@@ -102,7 +102,7 @@ func NewSiteUser(recipients steamid.Collection, severity Severity, message strin
 	}
 }
 
-func NewSiteUserWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, author domain.PersonInfo) Payload {
+func NewSiteUserWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ domain.PersonInfo) Payload {
 	payload := NewSiteGroup(groups, severity, message, link)
 	// payload.Author = &author
 
@@ -122,7 +122,7 @@ func NewSiteGroup(groups []permission.Privilege, severity Severity, message stri
 	}
 }
 
-func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, author domain.PersonInfo) Payload {
+func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ domain.PersonInfo) Payload {
 	payload := NewSiteGroup(groups, severity, message, link)
 	// payload.Author = &author
 

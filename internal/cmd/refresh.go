@@ -40,7 +40,7 @@ func refreshFiltersCmd() *cobra.Command {
 				return errSetup
 			}
 
-			var query chat.ChatHistoryQueryFilter
+			var query chat.HistoryQueryFilter
 			query.DontCalcTotal = true
 			query.OrderBy = "created_on"
 			query.Desc = false

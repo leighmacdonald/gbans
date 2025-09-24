@@ -235,7 +235,7 @@ func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID in
 	return msg, nil
 }
 
-func (r Repository) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error) { //nolint:maintidx
+func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFilter) ([]QueryChatHistoryResult, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
 		return nil, fmt.Errorf("%w: query", domain.ErrTooShort)
 	}

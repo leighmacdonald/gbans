@@ -72,3 +72,15 @@ CREATE TABLE IF NOT EXISTS asn_ban (
   created_on timestamp with time zone not null,
   updated_on timestamp with time zone not null
 );
+
+DROP TABLE IF EXISTS river_migration;
+
+DROP TABLE IF EXISTS river_job;
+
+DROP TABLE IF EXISTS river_queue;
+
+DROP TABLE IF EXISTS river_client_queue;
+
+DROP TABLE IF EXISTS river_client;
+
+DROP TABLE IF EXISTS river_leader;

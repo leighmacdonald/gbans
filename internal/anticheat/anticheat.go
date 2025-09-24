@@ -3,7 +3,6 @@ package anticheat
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"path"
@@ -18,9 +17,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/domain/network"
+	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -66,41 +65,42 @@ func NewAntiCheat(repo Repository, ban ban.Bans, config *config.Configuration, p
 	}
 }
 
-// TODO fix
-func (a AntiCheat) FetchStacLogs(ctx context.Context, stactPathFmt string, server servers.Server, client storage.Storager) error {
-	logDir := fmt.Sprintf(stactPathFmt, server.ShortName)
+func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo) error {
+	for _, instance := range server.ServerIDs {
+		logDir := server.GamePath(instance, "tf/addons/sourcemod/logs/stac")
 
-	filelist, errFilelist := client.List(ctx, logDir, option.NewPage(0, 1))
-	if errFilelist != nil {
-		slog.Error("remote list dir failed", log.ErrAttr(errFilelist),
-			slog.String("server", server.ShortName), slog.String("path", logDir))
+		filelist, errFilelist := client.List(ctx, logDir, option.NewPage(0, 1))
+		if errFilelist != nil {
+			slog.Error("remote list dir failed", log.ErrAttr(errFilelist),
+				slog.String("server", instance.ShortName), slog.String("path", logDir))
 
-		return nil //nolint:nilerr
-	}
-
-	for _, file := range filelist {
-		if !strings.HasSuffix(file.Name(), ".log") {
-			continue
+			return nil //nolint:nilerr
 		}
 
-		logPath := path.Join(logDir, file.Name())
-		reader, err := client.Open(ctx, logPath)
-		if err != nil {
-			return errors.Join(err, network.ErrOpenClient)
-		}
-
-		slog.Debug("Importing stac log", slog.String("name", file.Name()), slog.String("server", server.ShortName))
-		entries, errImport := a.Import(ctx, file.Name(), reader, server.ServerID)
-		if errImport != nil && !errors.Is(errImport, database.ErrDuplicate) {
-			slog.Error("Failed to import stac logs", log.ErrAttr(errImport))
-		} else if len(entries) > 0 {
-			if errHandle := a.Handle(ctx, entries); errHandle != nil {
-				slog.Error("Failed to handle stac logs", log.ErrAttr(errHandle))
+		for _, file := range filelist {
+			if !strings.HasSuffix(file.Name(), ".log") {
+				continue
 			}
-		}
 
-		if errClose := reader.Close(); errClose != nil {
-			return errors.Join(errClose, network.ErrCloseReader)
+			logPath := path.Join(logDir, file.Name())
+			reader, err := client.Open(ctx, logPath)
+			if err != nil {
+				return errors.Join(err, network.ErrOpenClient)
+			}
+
+			slog.Debug("Importing stac log", slog.String("name", file.Name()), slog.String("server", instance.ShortName))
+			entries, errImport := a.Import(ctx, file.Name(), reader, instance.ServerID)
+			if errImport != nil && !errors.Is(errImport, database.ErrDuplicate) {
+				slog.Error("Failed to import stac logs", log.ErrAttr(errImport))
+			} else if len(entries) > 0 {
+				if errHandle := a.Handle(ctx, entries); errHandle != nil {
+					slog.Error("Failed to handle stac logs", log.ErrAttr(errHandle))
+				}
+			}
+
+			if errClose := reader.Close(); errClose != nil {
+				return errors.Join(errClose, network.ErrCloseReader)
+			}
 		}
 	}
 
@@ -171,7 +171,7 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 			dur = time.Duration(conf.Anticheat.Duration) * time.Second
 		}
 
-		newBan, err := a.ban.Create(ctx, ban.BanOpts{
+		newBan, err := a.ban.Create(ctx, ban.Opts{
 			Origin:     banDomain.System,
 			SourceID:   owner.GetSteamID(),
 			TargetID:   entry.SteamID,

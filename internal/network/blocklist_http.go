@@ -278,7 +278,7 @@ func (b *blocklistHandler) onAPIUpdateWhitelistIP() gin.HandlerFunc {
 		}
 
 		if !strings.Contains(req.Address, "/") {
-			req.Address += "/32"
+			req.Address += maskSingleHost
 		}
 
 		whiteList, errSave := b.blocklists.UpdateCIDRBlockWhitelist(ctx, whitelistID, req.Address)

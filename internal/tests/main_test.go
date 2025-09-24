@@ -231,7 +231,7 @@ func TestMain(m *testing.M) {
 	target := getUser()
 
 	// Create a valid ban_id
-	bannedPerson, errBan := bansUC.Create(context.Background(), ban.BanOpts{
+	bannedPerson, errBan := bansUC.Create(context.Background(), ban.Opts{
 		SourceID:   mod.SteamID,
 		TargetID:   target.SteamID,
 		Duration:   duration.FromTimeDuration(time.Hour * 2),
