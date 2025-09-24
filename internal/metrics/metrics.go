@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/prometheus/client_golang/prometheus"
@@ -28,10 +28,10 @@ type collector struct {
 
 type Metrics struct {
 	collector *collector
-	eb        *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	eb        *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewMetrics(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]) Metrics {
+func NewMetrics(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]) Metrics {
 	collector := newMetricCollector()
 
 	return Metrics{collector: collector, eb: broadcaster}

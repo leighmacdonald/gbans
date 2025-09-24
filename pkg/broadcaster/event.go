@@ -1,7 +1,8 @@
-package fp
+package broadcaster
 
 import (
 	"errors"
+	"slices"
 	"sync"
 )
 
@@ -16,7 +17,7 @@ type Broadcaster[T comparable, V any] struct {
 	allReadersMu *sync.RWMutex
 }
 
-func NewBroadcaster[T comparable, V any]() *Broadcaster[T, V] {
+func New[T comparable, V any]() *Broadcaster[T, V] {
 	return &Broadcaster[T, V]{
 		readerMap:    map[T][]chan V{},
 		readerMapMu:  &sync.RWMutex{},
@@ -40,12 +41,10 @@ func (eb *Broadcaster[k, v]) Consume(serverEventChan chan v, keys ...k) error {
 		eb.readerMapMu.Unlock()
 	} else {
 		eb.allReadersMu.Lock()
-		for _, existing := range eb.allReaders {
-			if existing == serverEventChan {
-				eb.allReadersMu.Unlock()
+		if slices.Contains(eb.allReaders, serverEventChan) {
+			eb.allReadersMu.Unlock()
 
-				return ErrDuplicateChannel
-			}
+			return ErrDuplicateChannel
 		}
 
 		eb.allReaders = append(eb.allReaders, serverEventChan)

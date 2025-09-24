@@ -1,5 +1,5 @@
-// Package fp provides basic generic functional style functions
-package fp
+// Package sliceutil provides basic generic functions for operating over slices
+package sliceutil
 
 import (
 	"golang.org/x/exp/constraints"

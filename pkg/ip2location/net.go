@@ -1,4 +1,4 @@
-package convert
+package ip2location
 
 import (
 	"encoding/binary"

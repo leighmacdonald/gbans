@@ -15,7 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/sliceutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -181,7 +181,7 @@ func (r *Repository) GetPersonBySteamID(ctx context.Context, transaction pgx.Tx,
 
 func (r *Repository) GetPeopleBySteamID(ctx context.Context, transaction pgx.Tx, steamIDs steamid.Collection) (People, error) {
 	var ids []int64 //nolint:prealloc
-	for _, sid := range fp.Uniq[steamid.SteamID](steamIDs) {
+	for _, sid := range sliceutil.Uniq[steamid.SteamID](steamIDs) {
 		ids = append(ids, sid.Int64())
 	}
 

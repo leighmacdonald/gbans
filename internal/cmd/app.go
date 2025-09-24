@@ -38,7 +38,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
-	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -102,7 +102,7 @@ type GBans struct {
 	sentry         *sentry.Client
 	bot            *discord.Discord
 
-	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 
 	logCloser func()
 }
@@ -117,7 +117,7 @@ func NewGBans() (*GBans, error) {
 
 	return &GBans{
 		staticConfig: staticConfig,
-		broadcaster:  fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent](),
+		broadcaster:  broadcaster.New[logparse.EventType, logparse.ServerEvent](),
 	}, nil
 }
 

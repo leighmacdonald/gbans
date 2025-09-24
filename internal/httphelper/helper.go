@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/schema"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/pkg/convert"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -110,7 +110,7 @@ func GetIntParam(ctx *gin.Context, key string) (int, bool) {
 		return 0, false
 	}
 
-	return convert.StringToInt(valueStr), true
+	return stringutil.StringToInt(valueStr), true
 }
 
 func GetStringParam(ctx *gin.Context, key string) (string, bool) {

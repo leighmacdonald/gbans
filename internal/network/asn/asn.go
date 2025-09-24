@@ -3,6 +3,7 @@ package asn
 import (
 	"context"
 	"errors"
+	"net/netip"
 	"time"
 )
 
@@ -31,7 +32,7 @@ type Blocker struct {
 	repo Repository
 }
 
-func (a Blocker) Check(_ context.Context, _ string) error {
+func (a Blocker) Check(ctx context.Context, addr netip.Addr) error {
 	return nil
 }
 

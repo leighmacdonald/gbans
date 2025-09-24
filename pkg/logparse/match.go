@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/sliceutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -750,7 +750,7 @@ func (match *Match) extinguishes(evt ExtinguishedEvt) {
 
 func (match *Match) damage(evt DamageEvt) {
 	player := match.player(evt.CreatedOn, evt.SID)
-	dmg := fp.FirstNonZero(evt.Realdamage, evt.Damage)
+	dmg := sliceutil.FirstNonZero(evt.Realdamage, evt.Damage)
 
 	weaponSum := player.getWeaponSum(evt.Weapon)
 	weaponSum.Damage += dmg
