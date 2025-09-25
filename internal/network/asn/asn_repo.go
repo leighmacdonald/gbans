@@ -7,7 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 )
 
-func NewASNRepository(db database.Database) Repository {
+func NewRepository(db database.Database) Repository {
 	return Repository{db: db}
 }
 
@@ -37,7 +37,7 @@ func (r Repository) All(ctx context.Context) ([]Block, error) {
 }
 
 func (r Repository) IsBlocked(ctx context.Context, addr netip.Addr) bool {
-	const query = `SELECT `
+	const query = `SELECT as_num, ip_range FRON net_asn WHERE as_num = $1`
 
 	return false
 }
@@ -49,7 +49,7 @@ func (r Repository) Save(ctx context.Context, ban Block) error {
 		ON CONFLICT (as_num) DO UPDATE
 		SET reason = $2, updated_on = $5`
 
-	if err := r.db.Exec(ctx, nil, query, ban.ASNum, ban.Reason, ban.CreatedOn, ban.UpdatedOn); err != nil {
+	if err := r.db.Exec(ctx, nil, query, ban.ASNum, ban.Reason, ban.Notes, ban.CreatedOn, ban.UpdatedOn); err != nil {
 		return database.DBErr(err)
 	}
 

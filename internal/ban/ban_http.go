@@ -54,18 +54,16 @@ func NewHandlerSteam(engine *gin.Engine, bans Bans,
 		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
 
 		mod.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
-		mod.GET("/api/stats", handler.onAPIGetStats())
-		mod.GET("/api/bans/query", handler.onAPIGetBans())
-		mod.POST("/api/bans/create", handler.onAPIPostBanSteamCreate())
-		mod.GET("/api/bans/all/:steam_id", handler.onAPIGetBansSteamBySteamID())
-		mod.GET("/api/bans/steamid/:steam_id", handler.onAPIGetBanBySteam())
-		mod.DELETE("/api/ban/:ban_id", handler.onAPIPostBanDelete())
+		mod.GET("/api/stats", handler.onStats())
+		mod.GET("/api/bans", handler.onBanQuery())
+		mod.POST("/api/bans", handler.onBanCreate())
+		mod.DELETE("/api/ban/:ban_id", handler.onBanDelete())
 		mod.POST("/api/ban/:ban_id", handler.onAPIPostBanUpdate())
-		mod.POST("/api/ban/:ban_id/status", handler.onAPIPostSetBanAppealStatus())
+		mod.POST("/api/ban/:ban_id/status", handler.onSetBanAppealStatus())
 	}
 }
 
-func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
+func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
 	type setStatusReq struct {
 		AppealState AppealState `json:"appeal_state"`
 	}
@@ -137,7 +135,7 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 	}
 }
 
-func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
+func (h banHandler) onBanCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req Opts
 		if !httphelper.Bind(ctx, &req) {
@@ -271,7 +269,7 @@ func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
 	}
 }
 
-func (h banHandler) onAPIGetStats() gin.HandlerFunc {
+func (h banHandler) onStats() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var stats Stats
 		if errGetStats := h.bans.Stats(ctx, &stats); errGetStats != nil {
@@ -382,14 +380,36 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 	}
 }
 
-func (h banHandler) onAPIGetBans() gin.HandlerFunc {
+type BanQueryOpts struct {
+	SourceID string
+	// TargetID can represent a SteamID or a group ID. They both use steamID formats, just in a different numberspace
+	TargetID      string
+	GroupsOnly    bool
+	IncludeGroups bool
+	Deleted       bool
+	CIDR          string
+	CIDROnly      bool
+	Reasons       []ban.Reason
+	AppealState   AppealState
+}
+
+func (h banHandler) onBanQuery() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var params BansQueryFilter
+		var params BanQueryOpts
 		if !httphelper.BindQuery(ctx, &params) {
 			return
 		}
 
-		bans, errBans := h.bans.Query(ctx, QueryOpts{Deleted: params.Deleted})
+		bans, errBans := h.bans.Query(ctx, QueryOpts{
+			Deleted:       params.Deleted,
+			SourceID:      steamid.New(params.SourceID),
+			TargetID:      steamid.New(params.TargetID),
+			GroupsOnly:    params.GroupsOnly,
+			CIDR:          params.CIDR,
+			CIDROnly:      params.CIDROnly,
+			Reasons:       params.Reasons,
+			IncludeGroups: params.IncludeGroups,
+		})
 		if errBans != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
 
@@ -400,7 +420,7 @@ func (h banHandler) onAPIGetBans() gin.HandlerFunc {
 	}
 }
 
-func (h banHandler) onAPIGetBansSteamBySteamID() gin.HandlerFunc {
+func (h banHandler) onAPIGetBansBySteamID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		sid, idFound := httphelper.GetSID64Param(ctx, "steam_id")
 		if !idFound {
@@ -418,7 +438,7 @@ func (h banHandler) onAPIGetBansSteamBySteamID() gin.HandlerFunc {
 	}
 }
 
-func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
+func (h banHandler) onBanDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, idFound := httphelper.GetInt64Param(ctx, "ban_id")
 		if !idFound {

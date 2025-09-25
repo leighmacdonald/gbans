@@ -28,6 +28,7 @@ import (
 	"github.com/viant/afs/storage"
 )
 
+// Entry represents a
 type Entry struct {
 	logparse.StacEntry
 	Personaname string `json:"personaname"`
@@ -107,6 +108,7 @@ func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager,
 	return nil
 }
 
+// BySteamID returns all stac entries for the user.
 func (a AntiCheat) BySteamID(ctx context.Context, steamID steamid.SteamID) ([]logparse.StacEntry, error) {
 	if !steamID.Valid() {
 		return nil, domain.ErrInvalidSID

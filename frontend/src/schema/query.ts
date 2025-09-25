@@ -1,5 +1,5 @@
 import { z } from 'zod/v4';
-import { AppealStateEnum } from './bans.ts';
+import { AppealStateEnum, BanReasonEnum } from './bans.ts';
 
 export const schemaQueryFilter = z.object({
     offset: z.number().optional(),
@@ -11,18 +11,19 @@ export const schemaQueryFilter = z.object({
     flagged_only: z.boolean().optional()
 });
 
-export const schemaBanQueryCommon = z
-    .object({
-        source_id: z.string().optional(),
-        target_id: z.string().optional(),
-        appeal_state: AppealStateEnum.optional(),
-        deleted: z.boolean().optional()
-    })
-    .merge(schemaQueryFilter);
+export const schemaBanQueryOpts = z.object({
+    source_id: z.string().optional(),
+    target_id: z.string().optional(),
+    appeal_state: AppealStateEnum.optional(),
+    groups_only: z.boolean().optional(),
+    deleted: z.boolean().optional(),
+    cidr: z.cidrv4().optional(),
+    cidr_only: z.boolean().optional(),
+    reason: BanReasonEnum.optional(),
+    include_groups: z.boolean().optional()
+});
 
-export type BanQueryCommon = z.infer<typeof schemaBanQueryCommon>;
-
-export type BanSteamQueryFilter = BanQueryCommon;
+export type BanQueryOpts = z.infer<typeof schemaBanQueryOpts>;
 
 export const schemaReportQueryFilter = z.object({
     deleted: z.boolean().optional(),

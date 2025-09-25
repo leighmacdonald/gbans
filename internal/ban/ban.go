@@ -105,8 +105,9 @@ type Ban struct {
 	Note        string      `json:"note"`
 	Origin      ban.Origin  `json:"origin"`
 	CIDR        *string     `json:"cidr"`
-	Name        string      `json:"name"`
 	AppealState AppealState `json:"appeal_state"`
+	// Name is the name at time of banning.
+	Name string `json:"name"`
 
 	// Deleted is used for soft-deletes
 	Deleted   bool `json:"deleted"`
@@ -115,6 +116,11 @@ type Ban struct {
 	ValidUntil time.Time `json:"valid_until" `
 	CreatedOn  time.Time `json:"created_on"`
 	UpdatedOn  time.Time `json:"updated_on"`
+
+	SourcePersonaname string `json:"source_personaname"`
+	SourceAvatarhash  string `json:"source_avatarhash"`
+	TargetPersonaname string `json:"target_personaname"`
+	TargetAvatarhash  string `json:"target_avatarhash"`
 }
 
 func (b Ban) IsGroup() bool {
@@ -150,8 +156,10 @@ type QueryOpts struct {
 	BanID         int64
 	Deleted       bool
 	EvadeOk       bool
+	Reasons       []ban.Reason
 	Personaname   string
 	CIDR          string
+	CIDROnly      bool
 	IncludeGroups bool
 	LatestOnly    bool
 }

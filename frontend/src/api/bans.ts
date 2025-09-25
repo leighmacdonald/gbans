@@ -12,7 +12,7 @@ import {
     UpdateBanPayload
 } from '../schema/bans.ts';
 import { TimeStampedWithValidUntil } from '../schema/chrono.ts';
-import { BanSteamQueryFilter } from '../schema/query.ts';
+import { BanQueryOpts } from '../schema/query.ts';
 import { BanAppealMessage } from '../schema/report.ts';
 import {
     parseDateTime,
@@ -50,13 +50,13 @@ export const banTypeString = (bt: BanTypeEnum) => {
     }
 };
 
-export const apiGetBans = async (opts: BanSteamQueryFilter, abortController?: AbortController) => {
-    const resp = await apiCall<BanRecord[], BanSteamQueryFilter>(`/api/bans/query`, 'GET', opts, abortController);
+export const apiGetBans = async (opts: BanQueryOpts, abortController?: AbortController) => {
+    const resp = await apiCall<BanRecord[], BanQueryOpts>(`/api/bans/query`, 'GET', opts, abortController);
     return resp.map(transformTimeStampedDates);
 };
 
 export const apiGetBansSteamBySteamID = async (steam_id: string, abortController?: AbortController) => {
-    const resp = await apiCall<BanRecord[], BanSteamQueryFilter>(
+    const resp = await apiCall<BanRecord[], BanQueryOpts>(
         `/api/bans/all/${steam_id}`,
         'GET',
         undefined,

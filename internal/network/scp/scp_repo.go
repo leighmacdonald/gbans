@@ -68,6 +68,7 @@ func (r Repository) SetHostKey(ctx context.Context, addr string, key string) err
 func (r Repository) Servers(ctx context.Context) ([]ServerInfo, error) {
 	const query = `
 		SELECT server_id, short_name, address, address_internal
+		FROM server
 		WHERE is_enabled = true AND deleted = false
 		ORDER BY short_name`
 	rows, errRows := r.db.Query(ctx, nil, query)

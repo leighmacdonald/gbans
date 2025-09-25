@@ -28,19 +28,16 @@ import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { BanReason, BanReasonEnum, BanReasons, banReasonsCollection, BanRecord } from '../schema/bans.ts';
+import { AppealState, BanReason, BanReasonEnum, BanReasons, banReasonsCollection, BanRecord } from '../schema/bans.ts';
+import { schemaBanQueryOpts } from '../schema/query.ts';
 import { commonTableSearchSchema, initColumnFilter, initPagination, isPermanentBan } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 
-const searchSchema = commonTableSearchSchema.extend({
-    sortColumn: z.enum(['ban_id', 'source_id', 'target_id', 'reason', 'created_on', 'updated_on']).optional(),
-    source_id: z.string().optional(),
-    target_id: z.string().optional(),
-    reason: BanReasonEnum.optional(),
-    deleted: z.boolean().optional(),
-    groups_only: z.boolean().optional(),
-    cidr: z.cidrv4().optional(),
-    networks_only: z.boolean().optional()
+const searchSchema = z.object({
+    ...commonTableSearchSchema.extend({
+        sortColumn: z.enum(['ban_id', 'source_id', 'target_id', 'reason', 'created_on', 'updated_on']).optional()
+    }).shape,
+    ...schemaBanQueryOpts.shape
 });
 
 export const Route = createFileRoute('/_mod/admin/bans')({
@@ -77,6 +74,18 @@ function AdminBans() {
         }
     };
 
+    const defaultValues: z.infer<typeof schemaBanQueryOpts> = {
+        source_id: search.source_id ?? '',
+        target_id: search.target_id ?? '',
+        appeal_state: search.appeal_state ?? AppealState.Any,
+        groups_only: search.groups_only ?? false,
+        deleted: search.deleted ?? false,
+        cidr: search.cidr,
+        cidr_only: search.cidr_only ?? false,
+        reason: search.reason ?? BanReason.Any,
+        include_groups: search.include_groups ?? true
+    };
+
     const form = useAppForm({
         onSubmit: async ({ value }) => {
             setColumnFilters(initColumnFilter(value));
@@ -85,15 +94,10 @@ function AdminBans() {
                 search: (prev) => ({ ...prev, ...value })
             });
         },
-        defaultValues: {
-            source_id: search.source_id ?? '',
-            target_id: search.target_id ?? '',
-            reason: search.reason ?? BanReason.Any,
-            deleted: search.deleted ?? false,
-            groups_only: search.groups_only,
-            cidr: search.cidr,
-            networks_only: search.networks_only
-        }
+        validators: {
+            onSubmit: schemaBanQueryOpts
+        },
+        defaultValues
     });
 
     const clear = async () => {
@@ -213,7 +217,7 @@ function AdminBans() {
                             </Grid>
                             <Grid size={{ xs: 6, md: 3 }}>
                                 <form.AppField
-                                    name={'networks_only'}
+                                    name={'cidr_only'}
                                     children={(field) => {
                                         return <field.CheckboxField label={'CIDR/IP Bans Only'} />;
                                     }}
@@ -224,6 +228,14 @@ function AdminBans() {
                                     name={'groups_only'}
                                     children={(field) => {
                                         return <field.CheckboxField label={'Show groups only'} />;
+                                    }}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 6, md: 3 }}>
+                                <form.AppField
+                                    name={'include_groups'}
+                                    children={(field) => {
+                                        return <field.CheckboxField label={'Show groups'} />;
                                     }}
                                 />
                             </Grid>

@@ -3,7 +3,6 @@ package sliceutil
 
 import (
 	"golang.org/x/exp/constraints"
-	"golang.org/x/exp/slices"
 )
 
 type Number interface {
@@ -17,10 +16,12 @@ func Uniq[T comparable](input []T) []T {
 		return output
 	}
 
+	found := make(map[T]bool)
 	output = append(output, input[0])
 
 	for _, value := range input {
-		if !slices.Contains(output, value) {
+		if !found[value] {
+			found[value] = true
 			output = append(output, value)
 		}
 	}

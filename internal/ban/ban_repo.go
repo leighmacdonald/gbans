@@ -26,13 +26,45 @@ func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.evade_ok",
 			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
-			"b.unban_reason_text", "b.is_enabled", "b.appeal_state", "b.cidr").
-		From("ban b")
+			"b.unban_reason_text", "b.is_enabled", "b.appeal_state", "b.cidr",
+			"coalesce(s.personaname, s.steam_id::text)", "coalesce(s.avatarhash, 'fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb')",
+			"coalesce(t.personaname, t.steam_id::text)", "coalesce(t.avatarhash, 'fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb')").
+		From("ban b").
+		LeftJoin("person s ON b.source_id = s.steam_id").
+		LeftJoin("person t ON b.target_id = t.steam_id")
 
 	var ands sq.And
 
 	if !opts.Deleted {
 		ands = append(ands, sq.Eq{"b.deleted": false})
+	}
+
+	if opts.CIDROnly {
+		ands = append(ands, sq.NotEq{"b.cidr": nil})
+	}
+
+	if opts.CIDR != "" {
+		ands = append(ands, sq.Expr("?::inet @> ip_range", opts.CIDR))
+	}
+
+	// if opts.SourceID.Valid() {
+	// 	ands = append(ands, sq.Eq{"b.source_id": opts.SourceID.Int64()})
+	// }
+
+	// if opts.TargetID.Valid() {
+	// 	ands = append(ands, sq.Eq{"b.target_id": opts.TargetID.Int64()})
+	// }
+
+	if len(opts.Reasons) > 0 {
+		ands = append(ands, sq.Eq{"b.reason": opts.Reasons})
+	}
+
+	if opts.GroupsOnly {
+		ands = append(ands, sq.GtOrEq{"b.target_id": steamid.BaseGID})
+	}
+
+	if !opts.IncludeGroups {
+		ands = append(ands, sq.Lt{"b.target_id": steamid.BaseGID})
 	}
 
 	if len(ands) > 0 {
@@ -59,7 +91,9 @@ func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 			Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason,
 				&ban.ReasonText, &ban.Note, &ban.Origin, &ban.ValidUntil, &ban.CreatedOn,
 				&ban.UpdatedOn, &ban.EvadeOk, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
-				&ban.IsEnabled, &ban.AppealState, &ban.CIDR); errScan != nil {
+				&ban.IsEnabled, &ban.AppealState, &ban.CIDR,
+				&ban.SourcePersonaname, &ban.SourceAvatarhash,
+				&ban.TargetPersonaname, &ban.TargetAvatarhash); errScan != nil {
 			return nil, database.DBErr(errScan)
 		}
 
