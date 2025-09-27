@@ -115,7 +115,7 @@ func (b *Blocklists) updateSource(ctx context.Context, list CIDRBlockSource) err
 		return errors.Join(errReq, domain.ErrRequestCreate)
 	}
 
-	client := httphelper.NewHTTPClient()
+	client := httphelper.NewClient()
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {

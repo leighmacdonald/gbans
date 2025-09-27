@@ -54,7 +54,7 @@ type Connection struct {
 	config   config.SSH
 }
 
-func NewSCPHandler(database KeyStore, config config.SSH) Connection {
+func NewConnection(database KeyStore, config config.SSH) Connection {
 	return Connection{repo: database, config: config}
 }
 

@@ -4,141 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/domain/ban"
-	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
-	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type Repository struct {
-	db          database.Database
-	persons     domain.PersonProvider
-	wordFilters WordFilters
-	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	WarningChan chan NewUserWarning
+	db database.Database
 }
 
-func NewRepository(database database.Database, persons domain.PersonProvider, wordFilters WordFilters,
-
-	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
-) *Repository {
-	return &Repository{
-		db:          database,
-		persons:     persons,
-		wordFilters: wordFilters,
-		broadcaster: broadcaster,
-		WarningChan: make(chan NewUserWarning),
-	}
-}
-
-func (r Repository) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason ban.Reason) {
-	if msg == "" {
-		slog.Warn("Empty message body, skipping")
-
-		return
-	}
-
-	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, nil, person.SID)
-	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
-		slog.Error("Failed to handle message, could not get author", log.ErrAttr(errPerson), slog.String("message", msg))
-
-		return
-	}
-
-	personMsg := PersonMessage{
-		SteamID:     person.SID,
-		PersonaName: strings.ToValidUTF8(person.Name, "_"),
-		ServerName:  evt.ServerName,
-		ServerID:    evt.ServerID,
-		Body:        strings.ToValidUTF8(msg, "_"),
-		Team:        team,
-		CreatedOn:   created,
-	}
-
-	if errChat := r.AddChatHistory(ctx, &personMsg); errChat != nil {
-		slog.Error("Failed to add chat history", log.ErrAttr(errChat))
-
-		return
-	}
-
-	go func(userMsg PersonMessage) {
-		matchedFilter := r.wordFilters.Check(userMsg.Body)
-		if len(matchedFilter) > 0 {
-			if errSaveMatch := r.wordFilters.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
-				slog.Error("Failed to save message findMatch status", log.ErrAttr(errSaveMatch))
-			}
-
-			matchResult := matchedFilter[0]
-			r.WarningChan <- NewUserWarning{
-				UserMessage: userMsg,
-				PlayerID:    person.PID,
-				UserWarning: UserWarning{
-					WarnReason: reason,
-					Message:    userMsg.Body,
-					// todo
-					// Matched:       matchResult,
-					MatchedFilter: matchResult,
-					CreatedOn:     time.Now(),
-					Personaname:   userMsg.PersonaName,
-					Avatar:        userMsg.AvatarHash,
-					ServerName:    userMsg.ServerName,
-					ServerID:      userMsg.ServerID,
-					SteamID:       userMsg.SteamID.String(),
-				},
-			}
-		}
-	}(personMsg)
-}
-
-func (r Repository) Start(ctx context.Context) {
-	eventChan := make(chan logparse.ServerEvent)
-	if errRegister := r.broadcaster.Consume(eventChan, logparse.Connected, logparse.Say, logparse.SayTeam); errRegister != nil {
-		slog.Warn("logWriter Tried to register duplicate reader channel", log.ErrAttr(errRegister))
-
-		return
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case evt := <-eventChan:
-			switch evt.EventType {
-			case logparse.Connected:
-				connectEvent, ok := evt.Event.(logparse.ConnectedEvt)
-				if !ok {
-					continue
-				}
-
-				connectMsg := "Player connected with username: " + connectEvent.Name
-
-				r.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, false, connectEvent.CreatedOn, ban.Username)
-			case logparse.Say:
-				fallthrough
-			case logparse.SayTeam:
-				sayEvent, ok := evt.Event.(logparse.SayEvt)
-				if !ok {
-					continue
-				}
-
-				r.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.Team, sayEvent.CreatedOn, ban.Language)
-			}
-		}
-	}
-}
-
-func (r Repository) GetWarningChan() chan NewUserWarning {
-	return r.WarningChan
+func NewRepository(database database.Database) Repository {
+	return Repository{db: database}
 }
 
 func (r Repository) TopChatters(ctx context.Context, count uint64) ([]TopChatterResult, error) {
@@ -177,7 +58,7 @@ func (r Repository) TopChatters(ctx context.Context, count uint64) ([]TopChatter
 
 const minQueryLen = 2
 
-func (r Repository) AddChatHistory(ctx context.Context, message *PersonMessage) error {
+func (r Repository) AddChatHistory(ctx context.Context, message *Message) error {
 	const query = `INSERT INTO person_messages
     		(steam_id, server_id, body, team, created_on, persona_name, match_id)
 			VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -193,8 +74,8 @@ func (r Repository) AddChatHistory(ctx context.Context, message *PersonMessage) 
 	return nil
 }
 
-func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error) {
-	var msg PersonMessage
+func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID int64) (Message, error) {
+	var msg Message
 
 	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().

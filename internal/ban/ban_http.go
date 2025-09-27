@@ -55,10 +55,10 @@ func NewHandlerSteam(engine *gin.Engine, bans Bans,
 
 		mod.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
 		mod.GET("/api/stats", handler.onStats())
-		mod.GET("/api/bans", handler.onBanQuery())
+		mod.GET("/api/bans", handler.onQuery())
 		mod.POST("/api/bans", handler.onBanCreate())
 		mod.DELETE("/api/ban/:ban_id", handler.onBanDelete())
-		mod.POST("/api/ban/:ban_id", handler.onAPIPostBanUpdate())
+		mod.POST("/api/ban/:ban_id", handler.onBanUpdate())
 		mod.POST("/api/ban/:ban_id/status", handler.onSetBanAppealStatus())
 	}
 }
@@ -380,22 +380,22 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 	}
 }
 
-type BanQueryOpts struct {
-	SourceID string
+type RequestQueryOpts struct {
+	SourceID string `query:"source_id"`
 	// TargetID can represent a SteamID or a group ID. They both use steamID formats, just in a different numberspace
-	TargetID      string
-	GroupsOnly    bool
-	IncludeGroups bool
-	Deleted       bool
-	CIDR          string
-	CIDROnly      bool
-	Reasons       []ban.Reason
-	AppealState   AppealState
+	TargetID      string       `query:"target_id"`
+	GroupsOnly    bool         `query:"groups_only"`
+	IncludeGroups bool         `query:"include_groups"`
+	Deleted       bool         `query:"deleted"`
+	CIDR          string       `query:"cidr"`
+	CIDROnly      bool         `query:"cidr_only"`
+	Reasons       []ban.Reason `query:"reasons"`
+	AppealState   AppealState  `query:"appeal_state"`
 }
 
-func (h banHandler) onBanQuery() gin.HandlerFunc {
+func (h banHandler) onQuery() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var params BanQueryOpts
+		var params RequestQueryOpts
 		if !httphelper.BindQuery(ctx, &params) {
 			return
 		}
@@ -410,24 +410,6 @@ func (h banHandler) onBanQuery() gin.HandlerFunc {
 			Reasons:       params.Reasons,
 			IncludeGroups: params.IncludeGroups,
 		})
-		if errBans != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, bans)
-	}
-}
-
-func (h banHandler) onAPIGetBansBySteamID() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		sid, idFound := httphelper.GetSID64Param(ctx, "steam_id")
-		if !idFound {
-			return
-		}
-
-		bans, errBans := h.bans.Query(ctx, QueryOpts{TargetID: sid, Deleted: true})
 		if errBans != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
 
@@ -491,7 +473,7 @@ type RequestBanUpdate struct {
 	ValidUntil time.Time       `json:"valid_until"`
 }
 
-func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
+func (h banHandler) onBanUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, idFound := httphelper.GetInt64Param(ctx, "ban_id")
 		if !idFound {
@@ -544,23 +526,5 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, bannedPerson)
-	}
-}
-
-func (h banHandler) onAPIGetBanBySteam() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		steamID, idFound := httphelper.GetSID64Param(ctx, "steam_id")
-		if !idFound {
-			return
-		}
-
-		ban, errBans := h.bans.Query(ctx, QueryOpts{TargetID: steamID})
-		if errBans != nil && !errors.Is(errBans, database.ErrNoResult) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errBans))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, ban)
 	}
 }

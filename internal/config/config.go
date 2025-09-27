@@ -489,7 +489,7 @@ func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 	req.Header.Add("Accept", "application/vnd.github+json")
 	req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
 
-	client := httphelper.NewHTTPClient()
+	client := httphelper.NewClient()
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {

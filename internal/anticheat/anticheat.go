@@ -28,7 +28,7 @@ import (
 	"github.com/viant/afs/storage"
 )
 
-// Entry represents a
+// Entry represents a stac log entry and some associated meta data.
 type Entry struct {
 	logparse.StacEntry
 	Personaname string `json:"personaname"`

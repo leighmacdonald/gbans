@@ -143,8 +143,7 @@ func (r *WordFilterRepository) GetFilters(ctx context.Context) ([]Filter, error)
 }
 
 func (r *WordFilterRepository) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
-	return database.DBErr(r.db.ExecInsertBuilder(ctx, nil, r.db.
-		Builder().
+	return database.DBErr(r.db.ExecInsertBuilder(ctx, nil, r.db.Builder().
 		Insert("person_messages_filter").
 		Columns("person_message_id", "filter_id").
 		Values(messageID, filterID)))

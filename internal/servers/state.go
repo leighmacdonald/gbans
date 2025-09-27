@@ -124,7 +124,7 @@ type State struct {
 	state       *StateRepository
 	config      *config.Configuration
 	servers     Servers
-	logListener *logparse.UDPLogListener
+	logListener *logparse.Listener
 	logFileChan chan LogFilePayload
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
@@ -145,7 +145,7 @@ func NewState(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.
 func (s *State) Start(ctx context.Context) error {
 	conf := s.config.Config()
 
-	logSrc, errLogSrc := logparse.NewUDPLogListener(conf.General.SrcdsLogAddr,
+	logSrc, errLogSrc := logparse.NewListener(conf.General.SrcdsLogAddr,
 		func(_ logparse.EventType, event logparse.ServerEvent) {
 			s.broadcaster.Emit(event.EventType, event)
 		})

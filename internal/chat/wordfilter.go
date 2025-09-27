@@ -107,7 +107,7 @@ type UserWarning struct {
 }
 
 type NewUserWarning struct {
-	UserMessage PersonMessage
+	UserMessage Message
 	PlayerID    int
 	UserWarning
 }

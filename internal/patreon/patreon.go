@@ -183,7 +183,7 @@ func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	httpClient := httphelper.NewHTTPClient()
+	httpClient := httphelper.NewClient()
 
 	resp, errResp := httpClient.Do(req)
 	if errResp != nil {
@@ -268,7 +268,7 @@ func (p Patreon) OnOauthLogin(ctx context.Context, state string, code string) er
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	httpClient := httphelper.NewHTTPClient()
+	httpClient := httphelper.NewClient()
 
 	resp, errResp := httpClient.Do(req)
 	if errResp != nil {
