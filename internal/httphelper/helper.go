@@ -48,8 +48,8 @@ func BindQuery(ctx *gin.Context, target any) bool {
 	return true
 }
 
-// NewHTTPClient allocates a preconfigured *http.Client.
-func NewHTTPClient() *http.Client {
+// NewClient allocates a preconfigured *http.Client.
+func NewClient() *http.Client {
 	c := &http.Client{
 		Timeout: time.Second * 10,
 	}

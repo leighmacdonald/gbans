@@ -7,7 +7,10 @@ import (
 	"time"
 )
 
-var ErrInvalidASNBan = errors.New("invalid asnban")
+var (
+	ErrBlocked       = errors.New("asn blocked")
+	ErrInvalidASNBan = errors.New("invalid asnban")
+)
 
 // Block represents a autonomous systems number based network block.
 type Block struct {
@@ -33,6 +36,10 @@ type Blocker struct {
 }
 
 func (a Blocker) Check(ctx context.Context, addr netip.Addr) error {
+	if a.repo.IsBlocked(ctx, addr) {
+		return ErrBlocked
+	}
+
 	return nil
 }
 

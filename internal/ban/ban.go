@@ -527,7 +527,7 @@ func (s Bans) UpdateGroupCache(ctx context.Context) error {
 		return err
 	}
 
-	client := httphelper.NewHTTPClient()
+	client := httphelper.NewClient()
 
 	for _, group := range groups {
 		listURL := fmt.Sprintf("https://steamcommunity.com/gid/%d/memberslistxml/?xml=1", group.TargetID.Int64())

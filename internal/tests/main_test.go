@@ -187,7 +187,7 @@ func TestMain(m *testing.M) {
 	reportUC = ban.NewReports(ban.NewReportRepository(databaseConn), configUC, personUC, demoUC, tfapiClient, notificationUC)
 	bansUC = ban.NewBans(ban.NewRepository(databaseConn, personUC, networkUC), personUC, configUC, reportUC, stateUC, tfapiClient, notificationUC)
 	authUC = auth.NewAuthentication(authRepo, configUC, personUC, bansUC, serversUC, cmd.SentryDSN)
-	chatUC = chat.NewChat(configUC, chat.NewRepository(databaseConn, personUC, wordFilterUC, eventBroadcaster), wordFilterUC, stateUC, bansUC, personUC)
+	chatUC = chat.NewChat(chat.NewRepository(databaseConn), configUC, wordFilterUC, bansUC, personUC)
 	votesRepo = votes.NewRepository(databaseConn)
 	votesUC = votes.NewVotes(votesRepo, eventBroadcaster, notificationUC, configUC, personUC)
 	appealUC = ban.NewAppeals(ban.NewAppealRepository(databaseConn), bansUC, personUC, configUC, notificationUC)

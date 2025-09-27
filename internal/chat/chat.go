@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,12 +12,15 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
 )
@@ -45,7 +49,7 @@ type TopChatterResult struct {
 	Count   int
 }
 
-type PersonMessage struct {
+type Message struct {
 	PersonMessageID   int64           `json:"person_message_id"`
 	MatchID           uuid.UUID       `json:"match_id"`
 	SteamID           steamid.SteamID `json:"steam_id"`
@@ -59,15 +63,15 @@ type PersonMessage struct {
 	AutoFilterFlagged int64           `json:"auto_filter_flagged"`
 }
 
-type PersonMessages []PersonMessage
+type PersonMessages []Message
 
 type QueryChatHistoryResult struct {
-	PersonMessage
+	Message
 	Pattern string `json:"pattern"`
 }
 
 type Chat struct {
-	repository    *Repository
+	repository    Repository
 	wordFilters   WordFilters
 	bans          ban.Bans
 	config        *config.Configuration
@@ -82,10 +86,12 @@ type Chat struct {
 	matchTimeout  time.Duration
 	checkTimeout  time.Duration
 	pingDiscord   bool
+
+	WarningChan chan NewUserWarning
 }
 
-func NewChat(config *config.Configuration, repo *Repository, filters WordFilters,
-	state *servers.State, bans ban.Bans, persons domain.PersonProvider,
+func NewChat(repo Repository, config *config.Configuration, filters WordFilters,
+	bans ban.Bans, persons domain.PersonProvider,
 ) *Chat {
 	conf := config.Config()
 
@@ -94,7 +100,6 @@ func NewChat(config *config.Configuration, repo *Repository, filters WordFilters
 		wordFilters:  filters,
 		bans:         bans,
 		persons:      persons,
-		state:        state,
 		pingDiscord:  conf.Filters.PingDiscord,
 		warnings:     make(map[steamid.SteamID][]UserWarning),
 		warningMu:    &sync.RWMutex{},
@@ -105,6 +110,127 @@ func NewChat(config *config.Configuration, repo *Repository, filters WordFilters
 		checkTimeout: time.Duration(conf.Filters.CheckTimeout) * time.Second,
 		config:       config,
 	}
+}
+
+func (u Chat) Start(ctx context.Context, events *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]) {
+	cleanupTicker := time.NewTicker(u.checkTimeout)
+	eventChan := make(chan logparse.ServerEvent)
+	if errRegister := events.Consume(eventChan, logparse.Connected, logparse.Say, logparse.SayTeam); errRegister != nil {
+		slog.Warn("logWriter Tried to register duplicate reader channel", log.ErrAttr(errRegister))
+
+		return
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-cleanupTicker.C:
+			u.cleanupExpired()
+		case evt := <-eventChan:
+			if errEvent := u.handleEvent(ctx, evt); errEvent != nil {
+				slog.Error("Failed to handle chat event", slog.String("error", errEvent.Error()))
+			}
+		}
+	}
+}
+
+func (u *Chat) handleEvent(ctx context.Context, evt logparse.ServerEvent) error {
+	switch evt.EventType {
+	case logparse.Connected:
+		connectEvent, ok := evt.Event.(logparse.ConnectedEvt)
+		if !ok {
+			return nil
+		}
+
+		connectMsg := "Player connected with username: " + connectEvent.Name
+
+		return u.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, false, connectEvent.CreatedOn, banDomain.Username)
+	case logparse.Say:
+		fallthrough
+	case logparse.SayTeam:
+		sayEvent, ok := evt.Event.(logparse.SayEvt)
+		if !ok {
+			return nil
+		}
+
+		return u.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.Team, sayEvent.CreatedOn, banDomain.Language)
+	}
+
+	return nil
+}
+
+func (u *Chat) cleanupExpired() {
+	u.warningMu.Lock()
+	defer u.warningMu.Unlock()
+
+	for steamID := range u.warnings {
+		for warnIdx, warning := range u.warnings[steamID] {
+			if time.Since(warning.CreatedOn) > u.matchTimeout {
+				if len(u.warnings[steamID]) > 1 {
+					u.warnings[steamID] = append(u.warnings[steamID][:warnIdx], u.warnings[steamID][warnIdx+1])
+				} else {
+					delete(u.warnings, steamID)
+				}
+			}
+		}
+	}
+}
+
+func (u Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason banDomain.Reason) error {
+	if msg == "" {
+		return nil
+	}
+
+	_, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, nil, person.SID)
+	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
+		return errPerson
+	}
+
+	userMsg := Message{
+		SteamID:     person.SID,
+		PersonaName: strings.ToValidUTF8(person.Name, "_"),
+		ServerName:  evt.ServerName,
+		ServerID:    evt.ServerID,
+		Body:        strings.ToValidUTF8(msg, "_"),
+		Team:        team,
+		CreatedOn:   created,
+	}
+
+	if errChat := u.AddChatHistory(ctx, &userMsg); errChat != nil {
+		return errChat
+	}
+
+	matchedFilter := u.wordFilters.Check(userMsg.Body)
+	if len(matchedFilter) == 0 {
+		return nil
+	}
+
+	if errSaveMatch := u.wordFilters.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
+		slog.Error("Failed to save message findMatch status", log.ErrAttr(errSaveMatch))
+	}
+
+	matchResult := matchedFilter[0]
+
+	u.WarningChan <- NewUserWarning{
+		UserMessage: userMsg,
+		PlayerID:    person.PID,
+		UserWarning: UserWarning{
+			WarnReason: reason,
+			Message:    userMsg.Body,
+			// todo
+			// Matched:       matchResult,
+			MatchedFilter: matchResult,
+			CreatedOn:     time.Now(),
+			Personaname:   userMsg.PersonaName,
+			Avatar:        userMsg.AvatarHash,
+			ServerName:    userMsg.ServerName,
+			ServerID:      userMsg.ServerID,
+			SteamID:       userMsg.SteamID.String(),
+		},
+	}
+
+	return nil
 }
 
 func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) error {
@@ -206,9 +332,7 @@ func (u Chat) State() map[string][]UserWarning {
 
 	for steamID, v := range u.warnings {
 		var warnings []UserWarning
-
 		warnings = append(warnings, v...)
-
 		out[steamID.String()] = warnings
 	}
 
@@ -286,23 +410,7 @@ func (u Chat) trigger(ctx context.Context, newWarn NewUserWarning) {
 	}
 }
 
-func (u Chat) Start(ctx context.Context) {
-	ticker := time.NewTicker(u.checkTimeout)
-
-	for {
-		select {
-		case now := <-ticker.C:
-			u.check(now)
-			ticker.Reset(u.checkTimeout)
-		case newWarn := <-u.repository.GetWarningChan():
-			u.trigger(ctx, newWarn)
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-func (u Chat) GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error) {
+func (u Chat) GetPersonMessageByID(ctx context.Context, personMessageID int64) (Message, error) {
 	return u.repository.GetPersonMessageByID(ctx, personMessageID)
 }
 
@@ -314,7 +422,7 @@ func (u Chat) GetPersonMessage(ctx context.Context, messageID int64) (QueryChatH
 	return u.repository.GetPersonMessage(ctx, messageID)
 }
 
-func (u Chat) AddChatHistory(ctx context.Context, message *PersonMessage) error {
+func (u Chat) AddChatHistory(ctx context.Context, message *Message) error {
 	return u.repository.AddChatHistory(ctx, message)
 }
 

@@ -20,7 +20,7 @@ func TestBans(t *testing.T) {
 
 	// Ensure no bans exist
 	var bansEmpty []ban.Ban
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/query", nil, http.StatusOK, &authTokens{user: modCreds}, &bansEmpty)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans", nil, http.StatusOK, &authTokens{user: modCreds}, &bansEmpty)
 	require.Len(t, bansEmpty, 1)
 
 	// Create a ban
@@ -40,7 +40,7 @@ func TestBans(t *testing.T) {
 	}
 
 	var fetchedBan ban.Ban
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
 	require.Equal(t, banReq.SourceID, fetchedBan.SourceID.String())
 	require.Equal(t, banReq.TargetID, fetchedBan.TargetID.String())
@@ -54,7 +54,7 @@ func TestBans(t *testing.T) {
 
 	// Ensure it's in the ban collection
 	var bans []ban.Ban
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/query", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
 	require.Len(t, bans, 2)
 
 	updateReq := ban.RequestBanUpdate{
@@ -114,7 +114,7 @@ func TestBansSteamPermissions(t *testing.T) {
 			levels: moderators,
 		},
 		{
-			path:   "/api/bans/query",
+			path:   "/api/bans",
 			method: http.MethodGet,
 			code:   http.StatusForbidden,
 			levels: moderators,
@@ -126,7 +126,7 @@ func TestBansSteamPermissions(t *testing.T) {
 		//	levels: authed,
 		// },
 		{
-			path:   "/api/bans/create",
+			path:   "/api/bans",
 			method: http.MethodPost,
 			code:   http.StatusForbidden,
 			levels: moderators,

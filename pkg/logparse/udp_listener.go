@@ -25,8 +25,8 @@ const (
 
 type LogEventHandler func(EventType, ServerEvent)
 
-// UDPLogListener handles reading inbound srcds log packets.
-type UDPLogListener struct {
+// Listener handles reading inbound srcds log packets.
+type Listener struct {
 	*sync.RWMutex
 
 	udpAddr   *net.UDPAddr
@@ -42,29 +42,29 @@ var (
 	ErrSecretAuth = errors.New("failed secret auth")
 )
 
-func NewUDPLogListener(logAddr string, onEvent LogEventHandler) (*UDPLogListener, error) {
-	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
+func NewListener(logAddr string, onEvent LogEventHandler) (*Listener, error) {
+	listenAddress, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Join(errResolveUDP, ErrResolve)
 	}
 
-	return &UDPLogListener{
+	return &Listener{
 		RWMutex:   &sync.RWMutex{},
 		onEvent:   onEvent,
-		udpAddr:   udpAddr,
+		udpAddr:   listenAddress,
 		secretMap: map[int]ServerIDMap{},
 		serverMap: map[netip.Addr]bool{},
 	}, nil
 }
 
-func (remoteSrc *UDPLogListener) SetSecrets(secrets map[int]ServerIDMap) {
+func (remoteSrc *Listener) SetSecrets(secrets map[int]ServerIDMap) {
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()
 
 	remoteSrc.secretMap = secrets
 }
 
-func (remoteSrc *UDPLogListener) SetServers(servers map[netip.Addr]bool) {
+func (remoteSrc *Listener) SetServers(servers map[netip.Addr]bool) {
 	remoteSrc.Lock()
 	defer remoteSrc.Unlock()
 
@@ -79,7 +79,7 @@ type ServerIDMap struct {
 // Start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
+func (remoteSrc *Listener) Start(ctx context.Context) {
 	type newMsg struct {
 		source int64
 		body   string

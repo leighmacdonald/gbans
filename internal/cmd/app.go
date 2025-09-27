@@ -75,7 +75,7 @@ type GBans struct {
 	bans           ban.Bans
 	blocklists     network.Blocklists
 	chat           *chat.Chat
-	chatRepo       *chat.Repository
+	chatRepo       chat.Repository
 	config         *config.Configuration
 	contests       contest.Contests
 	database       database.Database
@@ -205,8 +205,8 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), g.bans) // TODO Does THE & work here?
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
 	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.config, g.notifications)
-	g.chatRepo = chat.NewRepository(g.database, g.persons, g.wordFilters, g.broadcaster)
-	g.chat = chat.NewChat(g.config, g.chatRepo, g.wordFilters, g.states, g.bans, g.persons)
+	g.chatRepo = chat.NewRepository(g.database)
+	g.chat = chat.NewChat(g.chatRepo, g.config, g.wordFilters, g.bans, g.persons)
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database))
@@ -294,15 +294,15 @@ func (g *GBans) StartBackground(ctx context.Context) {
 		go g.states.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
 	}
 
-	go g.chatRepo.Start(ctx)
-	go g.chat.Start(ctx)
+	go g.chat.Start(ctx, g.broadcaster)
 	go g.forums.Start(ctx)
 	go g.metrics.Start(ctx)
 	go g.votes.Start(ctx)
 	go g.playerQueue.Start(ctx)
 	go g.networks.Start(ctx)
 	go g.notifications.Sender(ctx)
-	go g.downloadManager(ctx, time.Minute*5)
+
+	go downloadManager(ctx, time.Minute*5, g.database, g.config, g.demos, g.anticheat)
 
 	go func() {
 		if err := g.states.Start(ctx); err != nil {
@@ -503,16 +503,16 @@ func (g GBans) firstTimeSetup(ctx context.Context) error {
 
 // downloadManager is responsible for connecting to the remote servers via ssh/scp and executing instructions.
 // Multiple handlers can be registered that will be ran for every update call.
-func (g GBans) downloadManager(ctx context.Context, freq time.Duration) {
+func downloadManager(ctx context.Context, freq time.Duration, store database.Database, conf *config.Configuration, handlers ...scp.ConnectionHandler) {
 	var (
-		timeout  time.Duration
-		handlers []scp.Connection
-		repo     = scp.NewRepository(g.database)
-		ticker   = time.NewTicker(freq)
+		timeout     time.Duration
+		connections []scp.Connection
+		repo        = scp.NewRepository(store)
+		ticker      = time.NewTicker(freq)
 	)
 
 	defer func() {
-		for _, handler := range handlers {
+		for _, handler := range connections {
 			handler.Close()
 		}
 	}()
@@ -534,8 +534,8 @@ func (g GBans) downloadManager(ctx context.Context, freq time.Duration) {
 			for _, server := range servers {
 				actualAddr := scp.HostPart(server.Address)
 				exists := false
-				for _, handler := range handlers {
-					if handler.Address() == actualAddr {
+				for _, conn := range connections {
+					if conn.Address() == actualAddr {
 						exists = true
 
 						break
@@ -543,10 +543,11 @@ func (g GBans) downloadManager(ctx context.Context, freq time.Duration) {
 				}
 
 				if !exists {
-					handler := scp.NewSCPHandler(repo, g.config.Config().SSH)
-					handler.AddHandler(g.demos)
-					handler.AddHandler(g.anticheat)
-					handlers = append(handlers, handler)
+					connection := scp.NewConnection(repo, conf.Config().SSH)
+					for _, handler := range handlers {
+						connection.AddHandler(handler)
+					}
+					connections = append(connections, connection)
 				}
 			}
 
@@ -557,7 +558,7 @@ func (g GBans) downloadManager(ctx context.Context, freq time.Duration) {
 			// No errgroup since we want to continue on errors.
 			waitGroup := &sync.WaitGroup{}
 
-			for _, handler := range handlers {
+			for _, handler := range connections {
 				waitGroup.Go(func() {
 					if err := handler.Update(lCtx); err != nil {
 						slog.Error("Error running scp handler", slog.String("error", err.Error()))

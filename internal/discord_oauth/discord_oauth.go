@@ -117,7 +117,7 @@ func (d DiscordOAuth) fetchRefresh(ctx context.Context, credentials Credential) 
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, errResp := httphelper.NewHTTPClient().Do(req)
+	resp, errResp := httphelper.NewClient().Do(req)
 	if errResp != nil {
 		return Credential{}, errors.Join(errResp, domain.ErrRequestPerform)
 	}
@@ -182,7 +182,7 @@ func (d DiscordOAuth) Logout(ctx context.Context, steamID steamid.SteamID) error
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, errResp := httphelper.NewHTTPClient().Do(req)
+	resp, errResp := httphelper.NewClient().Do(req)
 	if errResp != nil {
 		return errors.Join(errResp, domain.ErrRequestPerform)
 	}
@@ -215,7 +215,7 @@ func (d DiscordOAuth) CreateStatefulLoginURL(steamID steamid.SteamID) (string, e
 }
 
 func (d DiscordOAuth) HandleOAuthCode(ctx context.Context, code string, state string) error {
-	client := httphelper.NewHTTPClient()
+	client := httphelper.NewClient()
 
 	steamID, found := d.state.Get(state)
 	if !found {
