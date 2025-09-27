@@ -86,7 +86,7 @@ type GBans struct {
 	metrics        metrics.Metrics
 	networks       network.Networks
 	news           news.News
-	notifications  notification.Notifications
+	notifications  *notification.Notifications
 	patreon        patreon.Patreon
 	persons        *person.Persons
 	playerQueue    *playerqueue.Playerqueue
@@ -180,7 +180,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 	g.tfapiClient = tfapiClient
 
-	g.persons = person.NewPersons(person.NewRepository(conf, g.database), g.config, g.tfapiClient)
+	g.persons = person.NewPersons(person.NewRepository(conf, g.database), steamid.New(conf.Owner), g.tfapiClient)
 	g.networks = network.NewNetworks(g.broadcaster, network.NewRepository(g.database, g.persons), g.config)
 
 	assetRepo := asset.NewLocalRepository(g.database, conf.LocalStore.PathRoot)
@@ -206,7 +206,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
 	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.config, g.notifications)
 	g.chatRepo = chat.NewRepository(g.database)
-	g.chat = chat.NewChat(g.chatRepo, g.config, g.wordFilters, g.bans, g.persons)
+	g.chat = chat.NewChat(g.chatRepo, g.config, g.wordFilters, g.bans, g.persons, g.notifications)
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database))
@@ -375,7 +375,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	auth.NewAuthHandler(router, g.auth, g.config, g.persons, g.tfapiClient)
 	ban.NewAppealHandler(router, g.appeals, g.auth)
 	ban.NewReportHandler(router, g.reports, g.auth)
-	ban.NewHandlerSteam(router, g.bans, g.config, g.auth)
+	ban.NewHandlerBans(router, g.bans, g.config, g.auth)
 	chat.NewChatHandler(router, g.chat, g.auth)
 	chat.NewWordFilterHandler(router, g.config, g.wordFilters, g.chat, g.auth)
 	config.NewHandler(router, g.config, g.auth, BuildVersion)
@@ -386,7 +386,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	metrics.NewMetricsHandler(router)
 	network.NewNetworkHandler(router, g.networks, g.auth)
 	network.NewBlocklistHandler(router, g.blocklists, g.networks, g.auth)
-	news.NewNewsHandler(router, g.news, g.notifications, g.auth)
+	news.NewNewsHandler(router, g.news, g.auth)
 	notification.NewNotificationHandler(router, g.notifications, g.auth)
 	patreon.NewPatreonHandler(router, g.patreon, g.auth, g.config)
 	person.NewPersonHandler(router, g.config, g.persons, g.auth)
@@ -486,14 +486,14 @@ func (g GBans) firstTimeSetup(ctx context.Context) error {
 	}
 
 	page := wiki.Page{
-		Slug:      wiki.RootSlug,
-		BodyMD:    "# Welcome to the wiki",
-		Revision:  1,
-		CreatedOn: time.Now(),
-		UpdatedOn: time.Now(),
+		PermissionLevel: permission.Banned,
+		Slug:            wiki.RootSlug,
+		BodyMD:          "# Welcome to the wiki",
+		Revision:        1,
+		CreatedOn:       time.Now(),
+		UpdatedOn:       time.Now(),
 	}
-
-	_, errSave := g.wiki.Save(ctx, owner, page.Slug, page.BodyMD, page.PermissionLevel)
+	_, errSave := g.wiki.Save(ctx, page)
 	if errSave != nil {
 		slog.Error("Failed save example wiki entry", log.ErrAttr(errSave))
 	}

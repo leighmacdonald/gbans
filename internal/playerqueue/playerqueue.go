@@ -90,7 +90,7 @@ type ChatStatusChangePayload struct {
 }
 
 func NewPlayerqueue(repo Repository, persons domain.PersonProvider, serversUC servers.Servers,
-	state *servers.State, chatLogs []ChatLog, config *config.Configuration, notif notification.Notifications,
+	state *servers.State, chatLogs []ChatLog, config *config.Configuration, notif notification.Notifier,
 ) *Playerqueue {
 	return &Playerqueue{
 		config:  config,
@@ -135,7 +135,7 @@ func NewPlayerqueue(repo Repository, persons domain.PersonProvider, serversUC se
 type Playerqueue struct {
 	repo    Repository
 	persons domain.PersonProvider
-	notif   notification.Notifications
+	notif   notification.Notifier
 	config  *config.Configuration
 	queue   *Coordinator
 }
@@ -200,8 +200,8 @@ func (p Playerqueue) Purge(ctx context.Context, authorID steamid.SteamID, messag
 		return errGetTarget
 	}
 
-	p.notif.Send <- notification.NewDiscord(p.config.Config().Discord.PlayerqueueChannelID,
-		NewPlayerqueuePurge(author, target, message, count))
+	p.notif.Send(notification.NewDiscord(p.config.Config().Discord.PlayerqueueChannelID,
+		NewPlayerqueuePurge(author, target, message, count)))
 
 	return nil
 }
@@ -248,7 +248,7 @@ func (p Playerqueue) SetChatStatus(ctx context.Context, authorID steamid.SteamID
 		return errGetProfile
 	}
 
-	p.notif.Send <- notification.NewDiscord(p.config.Config().Discord.PlayerqueueChannelID, NewPlayerqueueChatStatus(author, person, status, reason))
+	p.notif.Send(notification.NewDiscord(p.config.Config().Discord.PlayerqueueChannelID, NewPlayerqueueChatStatus(author, person, status, reason)))
 
 	slog.Info("Set chat status", slog.String("steam_id", person.SteamID.String()), slog.String("status", string(status)))
 

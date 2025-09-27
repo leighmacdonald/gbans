@@ -3,7 +3,9 @@ package wiki_test
 import (
 	"testing"
 
+	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/internal/wiki"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,4 +28,21 @@ func TestRender(t *testing.T) {
 `),
 		rendered,
 		"Invalid markdown output")
+}
+
+func TestWiki(t *testing.T) {
+	testDB := tests.NewFixture()
+	defer testDB.Close()
+
+	wikiCase := wiki.NewWiki(wiki.NewRepository(testDB.Database))
+	page := wiki.NewPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
+	saved, errSave := wikiCase.Save(t.Context(), page)
+	require.NoError(t, errSave)
+	require.Equal(t, page.BodyMD, saved.BodyMD)
+	require.Equal(t, page.Slug, saved.Slug)
+
+	saved2, errSave2 := wikiCase.Save(t.Context(), saved)
+	require.NoError(t, errSave2)
+
+	require.True(t, saved.Revision+1 == saved2.Revision)
 }

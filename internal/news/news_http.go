@@ -9,16 +9,14 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/notification"
 )
 
 type newsHandler struct {
-	news          News
-	notifications notification.Notifications
+	news News
 }
 
-func NewNewsHandler(engine *gin.Engine, news News, notifications notification.Notifications, auth httphelper.Authenticator) {
-	handler := newsHandler{news: news, notifications: notifications}
+func NewNewsHandler(engine *gin.Engine, news News, auth httphelper.Authenticator) {
+	handler := newsHandler{news: news}
 
 	engine.POST("/api/news_latest", handler.onAPIGetNewsLatest())
 

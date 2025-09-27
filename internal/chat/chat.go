@@ -76,7 +76,7 @@ type Chat struct {
 	bans          ban.Bans
 	config        *config.Configuration
 	persons       domain.PersonProvider
-	notifications notification.Notifications
+	notifications notification.Notifier
 	state         *servers.State
 	warningMu     *sync.RWMutex
 	dry           bool
@@ -91,24 +91,25 @@ type Chat struct {
 }
 
 func NewChat(repo Repository, config *config.Configuration, filters WordFilters,
-	bans ban.Bans, persons domain.PersonProvider,
+	bans ban.Bans, persons domain.PersonProvider, notifications notification.Notifier,
 ) *Chat {
 	conf := config.Config()
 
 	return &Chat{
-		repository:   repo,
-		wordFilters:  filters,
-		bans:         bans,
-		persons:      persons,
-		pingDiscord:  conf.Filters.PingDiscord,
-		warnings:     make(map[steamid.SteamID][]UserWarning),
-		warningMu:    &sync.RWMutex{},
-		matchTimeout: time.Duration(conf.Filters.MatchTimeout) * time.Second,
-		dry:          conf.Filters.Dry,
-		maxWeight:    conf.Filters.MaxWeight,
-		owner:        steamid.New(conf.Owner),
-		checkTimeout: time.Duration(conf.Filters.CheckTimeout) * time.Second,
-		config:       config,
+		repository:    repo,
+		wordFilters:   filters,
+		bans:          bans,
+		notifications: notifications,
+		persons:       persons,
+		pingDiscord:   conf.Filters.PingDiscord,
+		warnings:      make(map[steamid.SteamID][]UserWarning),
+		warningMu:     &sync.RWMutex{},
+		matchTimeout:  time.Duration(conf.Filters.MatchTimeout) * time.Second,
+		dry:           conf.Filters.Dry,
+		maxWeight:     conf.Filters.MaxWeight,
+		owner:         steamid.New(conf.Owner),
+		checkTimeout:  time.Duration(conf.Filters.CheckTimeout) * time.Second,
+		config:        config,
 	}
 }
 
@@ -289,9 +290,9 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 		return nil
 	}
 
-	u.notifications.Send <- notification.NewDiscord(
+	u.notifications.Send(notification.NewDiscord(
 		u.config.Config().Discord.WordFilterLogChannelID,
-		WarningMessage(newWarning, newBan))
+		WarningMessage(newWarning, newBan)))
 
 	return nil
 }

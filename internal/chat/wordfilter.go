@@ -120,11 +120,11 @@ type WordFilters struct {
 	*sync.RWMutex
 	repository  WordFilterRepository
 	wordFilters []Filter
-	notif       notification.Notifications
+	notif       notification.Notifier
 	config      *config.Configuration
 }
 
-func NewWordFilters(repository WordFilterRepository, notif notification.Notifications, config *config.Configuration) WordFilters {
+func NewWordFilters(repository WordFilterRepository, notif notification.Notifier, config *config.Configuration) WordFilters {
 	return WordFilters{repository: repository, RWMutex: &sync.RWMutex{}, notif: notif, config: config}
 }
 
@@ -275,7 +275,7 @@ func (w *WordFilters) Create(ctx context.Context, user domain.PersonInfo, opts F
 
 	w.Add(newFilter)
 
-	w.notif.Send <- notification.NewDiscord(w.config.Config().Discord.WordFilterLogChannelID, filterAddMessage(newFilter))
+	w.notif.Send(notification.NewDiscord(w.config.Config().Discord.WordFilterLogChannelID, filterAddMessage(newFilter)))
 
 	slog.Info("Created filter", slog.Int64("filter_id", newFilter.FilterID))
 
@@ -294,7 +294,7 @@ func (w *WordFilters) DropFilter(ctx context.Context, filterID int64) error {
 
 	w.Remove(filterID)
 
-	w.notif.Send <- notification.NewDiscord(w.config.Config().Discord.WordFilterLogChannelID, filterDelMessage(filter))
+	w.notif.Send(notification.NewDiscord(w.config.Config().Discord.WordFilterLogChannelID, filterDelMessage(filter)))
 
 	slog.Info("Deleted filter", slog.Int64("filter_id", filterID))
 

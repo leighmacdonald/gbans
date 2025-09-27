@@ -37,7 +37,7 @@ func NewWikiHandler(engine *gin.Engine, wiki Wiki, ath httphelper.Authenticator)
 func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user, _ := session.CurrentUserProfile(ctx)
-		page, err := w.wiki.BySlug(ctx, user, ctx.Param("slug"))
+		page, err := w.wiki.BySlug(ctx, ctx.Param("slug"))
 		if err != nil {
 			switch {
 			case errors.Is(err, database.ErrNoResult):
@@ -47,6 +47,12 @@ func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 			}
+
+			return
+		}
+
+		if !user.HasPermission(page.PermissionLevel) {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, httphelper.ErrPermissionDenied)))
 
 			return
 		}
@@ -62,13 +68,28 @@ func (w *wikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 			return
 		}
 		user, _ := session.CurrentUserProfile(ctx)
-		page, err := w.wiki.Save(ctx, user, req.Slug, req.BodyMD, req.PermissionLevel)
+		page, err := w.wiki.BySlug(ctx, req.Slug)
 		if err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, page)
+		if !user.HasPermission(page.PermissionLevel) {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, httphelper.ErrPermissionDenied)))
+
+			return
+		}
+
+		page.BodyMD = req.BodyMD
+
+		newPage, err := w.wiki.Save(ctx, page)
+		if err != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
+
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, newPage)
 	}
 }

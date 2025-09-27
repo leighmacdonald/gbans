@@ -16,10 +16,10 @@ type messagesRequest struct {
 }
 
 type notificationHandler struct {
-	notifications Notifications
+	notifications *Notifications
 }
 
-func NewNotificationHandler(engine *gin.Engine, notifications Notifications, auth httphelper.Authenticator) {
+func NewNotificationHandler(engine *gin.Engine, notifications *Notifications, auth httphelper.Authenticator) {
 	handler := notificationHandler{
 		notifications: notifications,
 	}

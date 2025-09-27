@@ -199,13 +199,13 @@ type SRCDS struct {
 	config     *config.Configuration
 	servers    Servers
 	persons    PersonProvider
-	notif      notification.Notifications
+	notif      notification.Notifier
 	cookie     string
 	tfAPI      *thirdparty.TFAPI
 }
 
 func NewSRCDS(repository SRCDSRepository, config *config.Configuration, servers Servers,
-	persons PersonProvider, tfAPI *thirdparty.TFAPI, notif notification.Notifications,
+	persons PersonProvider, tfAPI *thirdparty.TFAPI, notif notification.Notifier,
 ) *SRCDS {
 	return &SRCDS{
 		config:     config,

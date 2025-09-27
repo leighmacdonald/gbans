@@ -44,13 +44,13 @@ type Result struct {
 type Votes struct {
 	repository  Repository
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	notif       notification.Notifications
+	notif       notification.Notifier
 	config      *config.Configuration
 	persons     domain.PersonProvider
 }
 
 func NewVotes(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	notif notification.Notifications, config *config.Configuration, persons domain.PersonProvider,
+	notif notification.Notifier, config *config.Configuration, persons domain.PersonProvider,
 ) Votes {
 	return Votes{
 		repository:  repository,
@@ -59,6 +59,18 @@ func NewVotes(repository Repository, broadcaster *broadcaster.Broadcaster[logpar
 		config:      config,
 		persons:     persons,
 	}
+}
+
+func (u Votes) Add(ctx context.Context, sourceID steamid.SteamID, targetID steamid.SteamID, name string, success bool, serverID int, code logparse.VoteCode) error {
+	return u.repository.AddResult(ctx, Result{
+		SourceID:  sourceID,
+		TargetID:  targetID,
+		Name:      name,
+		Success:   success,
+		ServerID:  serverID,
+		Code:      code,
+		CreatedOn: time.Now(),
+	})
 }
 
 func (u Votes) Query(ctx context.Context, filter Query) ([]Result, int64, error) {
@@ -196,8 +208,8 @@ func (u Votes) Start(ctx context.Context) {
 					slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
 				}
 				conf := u.config.Config()
-				u.notif.Send <- notification.NewDiscord(u.config.Config().Discord.VoteLogChannelID,
-					VoteResultMessage(&conf, result, source, target))
+				u.notif.Send(notification.NewDiscord(u.config.Config().Discord.VoteLogChannelID,
+					VoteResultMessage(&conf, result, source, target)))
 			}
 		}
 	}
