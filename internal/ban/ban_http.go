@@ -28,7 +28,7 @@ type banHandler struct {
 	config *config.Configuration
 }
 
-func NewHandlerSteam(engine *gin.Engine, bans Bans,
+func NewHandlerBans(engine *gin.Engine, bans Bans,
 	config *config.Configuration, authenticator httphelper.Authenticator,
 ) {
 	handler := banHandler{bans: bans, config: config}

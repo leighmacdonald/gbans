@@ -62,15 +62,17 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.persons.SetPermissionLevel(ctx, nil, steamID, req.PermissionLevel); err != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
+		person, errPerson := h.persons.GetPersonBySteamID(ctx, nil, steamID)
+		if errPerson != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errPerson, httphelper.ErrInternal)))
 
 			return
 		}
 
-		person, errPerson := h.persons.GetPersonBySteamID(ctx, nil, steamID)
-		if errPerson != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errPerson, httphelper.ErrInternal)))
+		person.PermissionLevel = req.PermissionLevel
+
+		if err := h.persons.SavePerson(ctx, nil, &person); err != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}

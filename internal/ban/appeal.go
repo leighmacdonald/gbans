@@ -85,10 +85,10 @@ type Appeals struct {
 	bans       Bans
 	persons    domain.PersonProvider
 	config     *config.Configuration
-	notif      notification.Notifications
+	notif      notification.Notifier
 }
 
-func NewAppeals(ar AppealRepository, bans Bans, persons domain.PersonProvider, config *config.Configuration, notif notification.Notifications) Appeals {
+func NewAppeals(ar AppealRepository, bans Bans, persons domain.PersonProvider, config *config.Configuration, notif notification.Notifier) Appeals {
 	return Appeals{repository: ar, bans: bans, persons: persons, config: config, notif: notif}
 }
 
@@ -131,8 +131,8 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser domain.PersonInfo,
 
 	conf := u.config.Config()
 
-	u.notif.Send <- notification.NewDiscord(conf.Discord.LogChannelID, NewAppealMessage(existing.MessageMD,
-		conf.ExtURLRaw("/ban/%d", existing.BanID), curUser, conf.ExtURL(curUser)))
+	u.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, NewAppealMessage(existing.MessageMD,
+		conf.ExtURLRaw("/ban/%d", existing.BanID), curUser, conf.ExtURL(curUser))))
 
 	slog.Debug("Appeal message updated", slog.Int64("message_id", banMessageID))
 

@@ -187,12 +187,12 @@ type Bans struct {
 	state   *servers.State
 	reports Reports
 	tfAPI   *thirdparty.TFAPI
-	notif   notification.Notifications
+	notif   notification.Notifier
 }
 
 func NewBans(repository Repository, person *person.Persons,
 	config *config.Configuration, reports Reports, state *servers.State,
-	tfAPI *thirdparty.TFAPI, notif notification.Notifications,
+	tfAPI *thirdparty.TFAPI, notif notification.Notifier,
 ) Bans {
 	return Bans{
 		repo:    repository,
@@ -289,17 +289,17 @@ func (s Bans) Save(ctx context.Context, ban *Ban) error {
 	}
 
 	if oldState != ban.AppealState {
-		s.notif.Send <- notification.NewSiteGroup(
+		s.notif.Send(notification.NewSiteGroup(
 			[]permission.Privilege{permission.Moderator, permission.Admin},
 			notification.Info,
 			fmt.Sprintf("Ban appeal state changed: %s -> %s", oldState, ban.AppealState),
-			ban.Path())
+			ban.Path()))
 
-		s.notif.Send <- notification.NewSiteUser(
+		s.notif.Send(notification.NewSiteUser(
 			[]steamid.SteamID{ban.TargetID},
 			notification.Info,
 			fmt.Sprintf("Your mute/ban appeal status has changed: %s -> %s", oldState, ban.AppealState),
-			ban.Path())
+			ban.Path()))
 	}
 
 	return nil
@@ -354,24 +354,24 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 		expAt = datetime.FmtTimeShort(newBan.ValidUntil)
 	}
 
-	s.notif.Send <- notification.NewDiscord(s.config.Config().Discord.BanLogChannelID,
-		CreateResponse(newBan))
+	s.notif.Send(notification.NewDiscord(s.config.Config().Discord.BanLogChannelID,
+		CreateResponse(newBan)))
 
-	s.notif.Send <- notification.NewSiteUserWithAuthor(
+	s.notif.Send(notification.NewSiteUserWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
 			newBan.Name, expIn, author.GetName()),
 		newBan.Path(),
 		author,
-	)
+	))
 
-	s.notif.Send <- notification.NewSiteUser(
+	s.notif.Send(notification.NewSiteUser(
 		[]steamid.SteamID{newBan.TargetID},
 		notification.Warn,
 		fmt.Sprintf("You have been %s, Reason: %s, Duration: %s, Ends: %s", newBan.BanType, newBan.Reason.String(), expIn, expAt),
 		newBan.Path(),
-	)
+	))
 
 	// Close the report if the ban was attached to one
 	if newBan.ReportID > 0 {
@@ -386,14 +386,14 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 			slog.Error("Failed to kick player", log.ErrAttr(errKick),
 				slog.Int64("sid64", newBan.TargetID.Int64()))
 		} else {
-			s.notif.Send <- notification.NewDiscord(s.config.Config().Discord.KickLogChannelID, KickPlayerEmbed(target))
+			s.notif.Send(notification.NewDiscord(s.config.Config().Discord.KickLogChannelID, KickPlayerEmbed(target)))
 		}
 	case ban.NoComm:
 		if errSilence := s.state.Silence(ctx, newBan.TargetID, newBan.Reason.String()); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
 				slog.Int64("sid64", newBan.TargetID.Int64()))
 		} else {
-			s.notif.Send <- notification.NewDiscord(s.config.Config().Discord.KickLogChannelID, MuteMessage(target.GetSteamID()))
+			s.notif.Send(notification.NewDiscord(s.config.Config().Discord.KickLogChannelID, MuteMessage(target.GetSteamID())))
 		}
 	}
 
@@ -425,22 +425,22 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		return false, errors.Join(err, ErrFetchPerson)
 	}
 
-	s.notif.Send <- notification.NewDiscord(s.config.Config().Discord.BanLogChannelID, UnbanMessage(s.config.ExtURL(person), person))
+	s.notif.Send(notification.NewDiscord(s.config.Config().Discord.BanLogChannelID, UnbanMessage(s.config.ExtURL(person), person)))
 
-	s.notif.Send <- notification.NewSiteGroupNotificationWithAuthor(
+	s.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		fmt.Sprintf("A user has been unbanned: %s, Reason: %s", person.GetName(), reason),
 		person.Path(),
 		author,
-	)
+	))
 
-	s.notif.Send <- notification.NewSiteUser(
+	s.notif.Send(notification.NewSiteUser(
 		[]steamid.SteamID{person.SteamID},
 		notification.Info,
 		"You have been unmuted/unbanned",
 		person.Path(),
-	)
+	))
 
 	return true, nil
 }

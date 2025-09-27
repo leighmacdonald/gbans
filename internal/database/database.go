@@ -156,8 +156,6 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 		if errMigrate := db.migrate(ctx, MigrateUp, db.dsn); errMigrate != nil {
 			return fmt.Errorf("could not migrate schema: %w", errMigrate)
 		}
-
-		slog.Info("Migration completed successfully")
 	}
 
 	dbConn, errConnectConfig := pgxpool.NewWithConfig(ctx, cfg)

@@ -169,11 +169,11 @@ const (
 type Forums struct {
 	repo    Repository
 	tracker *Tracker
-	notif   notification.Notifications
+	notif   notification.Notifier
 	config  *config.Configuration
 }
 
-func NewForums(repository Repository, config *config.Configuration, notif notification.Notifications) Forums {
+func NewForums(repository Repository, config *config.Configuration, notif notification.Notifier) Forums {
 	return Forums{repo: repository, tracker: NewTracker(), config: config, notif: notif}
 }
 
@@ -206,7 +206,7 @@ func (f Forums) CategorySave(ctx context.Context, category *Category) error {
 		slog.Info("Forum category updated", slog.String("title", category.Title))
 	}
 
-	f.notif.Send <- notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategorySave(*category))
+	f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategorySave(*category)))
 
 	return nil
 }
@@ -220,7 +220,7 @@ func (f Forums) CategoryDelete(ctx context.Context, category Category) error {
 		return err
 	}
 
-	f.notif.Send <- notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategoryDelete(category))
+	f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategoryDelete(category)))
 	slog.Info("Forum category deleted", slog.String("category", category.Title), slog.Int("forum_category_id", category.ForumCategoryID))
 
 	return nil
@@ -237,7 +237,7 @@ func (f Forums) ForumSave(ctx context.Context, forum *Forum) error {
 		return err
 	}
 
-	f.notif.Send <- notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordForumSaved(*forum))
+	f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordForumSaved(*forum)))
 
 	if isNew {
 		slog.Info("New forum created", slog.String("title", forum.Title))
@@ -311,7 +311,7 @@ func (f Forums) MessageSave(ctx context.Context, fMessage *Message) error {
 		return err
 	}
 
-	f.notif.Send <- notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordForumMessageSaved(*fMessage))
+	f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordForumMessageSaved(*fMessage)))
 
 	if isNew {
 		slog.Info("Created new forum message", slog.Int64("forum_thread_id", fMessage.ForumThreadID))

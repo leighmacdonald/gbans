@@ -14,6 +14,14 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+type Notifier interface {
+	Send(payload Payload)
+}
+
+type NullNotifier struct{}
+
+func (n NullNotifier) Send(payload Payload) {}
+
 type Severity int
 
 const (
@@ -129,14 +137,18 @@ func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity 
 	return payload
 }
 
-func NewNotifications(repository Repository, discord *discord.Discord) Notifications {
-	return Notifications{repository: repository, bot: discord}
+func NewNotifications(repository Repository, discord *discord.Discord) *Notifications {
+	return &Notifications{repository: repository, bot: discord}
 }
 
 type Notifications struct {
 	repository Repository
-	Send       chan Payload
+	send       chan Payload
 	bot        *discord.Discord
+}
+
+func (n *Notifications) Send(payload Payload) {
+	n.send <- payload
 }
 
 func (n *Notifications) Sender(ctx context.Context) {
@@ -144,7 +156,7 @@ func (n *Notifications) Sender(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case notif := <-n.Send:
+		case notif := <-n.send:
 			for _, channelID := range notif.DiscordChannels {
 				n.bot.SendPayload(channelID, notif.DiscordEmbed)
 			}

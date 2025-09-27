@@ -11,7 +11,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -216,16 +215,16 @@ type SettingsUpdate struct {
 }
 
 type Persons struct {
-	config *config.Configuration
-	repo   Repository
-	tfAPI  *thirdparty.TFAPI
+	owner steamid.SteamID
+	repo  Repository
+	tfAPI *thirdparty.TFAPI
 }
 
-func NewPersons(repository Repository, config *config.Configuration, tfAPI *thirdparty.TFAPI) *Persons {
+func NewPersons(repository Repository, owner steamid.SteamID, tfAPI *thirdparty.TFAPI) *Persons {
 	return &Persons{
-		repo:   repository,
-		config: config,
-		tfAPI:  tfAPI,
+		repo:  repository,
+		owner: owner,
+		tfAPI: tfAPI,
 	}
 }
 
@@ -406,6 +405,11 @@ func (u *Persons) DropPerson(ctx context.Context, transaction pgx.Tx, steamID st
 }
 
 func (u *Persons) SavePerson(ctx context.Context, transaction pgx.Tx, person *Person) error {
+	// Don't let owner un-admin themselves.
+	if person.SteamID == u.owner && person.PermissionLevel != permission.Admin {
+		return permission.ErrDenied
+	}
+
 	return u.repo.SavePerson(ctx, transaction, person)
 }
 
@@ -456,7 +460,20 @@ func (u *Persons) GetSteamIDsByGroups(ctx context.Context, privileges []permissi
 }
 
 func (u *Persons) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (Settings, error) {
-	return u.repo.GetPersonSettings(ctx, steamID)
+	settings, errSettings := u.repo.GetPersonSettings(ctx, steamID)
+	if errSettings != nil {
+		if !errors.Is(errSettings, database.ErrNoResult) {
+			return settings, errSettings
+		}
+
+		return Settings{
+			SteamID:   steamID,
+			CreatedOn: time.Now(),
+			UpdatedOn: time.Now(),
+		}, nil
+	}
+
+	return settings, nil
 }
 
 func (u *Persons) SavePersonSettings(ctx context.Context, user domain.PersonInfo, update SettingsUpdate) (Settings, error) {
@@ -475,24 +492,4 @@ func (u *Persons) SavePersonSettings(ctx context.Context, user domain.PersonInfo
 	}
 
 	return settings, nil
-}
-
-func (u *Persons) SetPermissionLevel(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID, level permission.Privilege) error {
-	person, errGet := u.GetPersonBySteamID(ctx, transaction, steamID)
-	if errGet != nil {
-		return errGet
-	}
-
-	// Don't let admins un-admin themselves.
-	if steamID == steamid.New(u.config.Config().Owner) {
-		return permission.ErrDenied
-	}
-
-	person.PermissionLevel = level
-
-	if errSave := u.SavePerson(ctx, transaction, &person); errSave != nil {
-		return errSave
-	}
-
-	return u.repo.SavePerson(ctx, transaction, &person)
 }

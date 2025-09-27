@@ -70,7 +70,7 @@ func NewWiki(repository Repository) Wiki {
 	return Wiki{repository: repository}
 }
 
-func (w *Wiki) BySlug(ctx context.Context, user domain.PersonInfo, slug string) (Page, error) {
+func (w *Wiki) BySlug(ctx context.Context, slug string) (Page, error) {
 	slug = strings.ToLower(slug)
 	if slug[0] == '/' {
 		slug = slug[1:]
@@ -81,10 +81,6 @@ func (w *Wiki) BySlug(ctx context.Context, user domain.PersonInfo, slug string) 
 		return page, errGetWikiSlug
 	}
 
-	if !user.HasPermission(page.PermissionLevel) {
-		return page, permission.ErrDenied
-	}
-
 	return page, nil
 }
 
@@ -92,17 +88,17 @@ func (w *Wiki) DeleteBySlug(ctx context.Context, slug string) error {
 	return w.repository.DeleteWikiPageBySlug(ctx, slug)
 }
 
-func (w *Wiki) Save(ctx context.Context, user domain.PersonInfo, slug string, body string, level permission.Privilege) (Page, error) {
-	if slug == "" || body == "" {
+func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
+	if update.Slug == "" || update.BodyMD == "" {
 		return Page{}, domain.ErrInvalidParameter
 	}
 
-	page, errGetWikiSlug := w.BySlug(ctx, user, slug)
+	page, errGetWikiSlug := w.BySlug(ctx, update.Slug)
 	if errGetWikiSlug != nil {
 		if errors.Is(errGetWikiSlug, database.ErrNoResult) {
 			page.CreatedOn = time.Now()
 			page.Revision++
-			page.Slug = slug
+			page.Slug = update.Slug
 		} else {
 			return page, httphelper.ErrInternal // TODO better error
 		}
@@ -110,8 +106,8 @@ func (w *Wiki) Save(ctx context.Context, user domain.PersonInfo, slug string, bo
 		page = page.NewRevision()
 	}
 
-	page.PermissionLevel = level
-	page.BodyMD = body
+	page.PermissionLevel = update.PermissionLevel
+	page.BodyMD = update.BodyMD
 
 	if errSave := w.repository.SaveWikiPage(ctx, &page); errSave != nil {
 		return page, errSave

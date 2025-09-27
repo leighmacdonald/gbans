@@ -158,11 +158,11 @@ type Reports struct {
 	persons    *person.Persons
 	demos      servers.Demos
 	tfAPI      *thirdparty.TFAPI
-	notif      notification.Notifications
+	notif      notification.Notifier
 }
 
 func NewReports(repository ReportRepository,
-	config *config.Configuration, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI, notif notification.Notifications,
+	config *config.Configuration, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI, notif notification.Notifier,
 ) Reports {
 	return Reports{
 		repository: repository,
@@ -214,9 +214,9 @@ func (r Reports) MetaStats(ctx context.Context) error {
 		}
 	}
 
-	r.notif.Send <- notification.NewDiscord(
+	r.notif.Send(notification.NewDiscord(
 		r.config.Config().Discord.LogChannelID,
-		ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports")))
+		ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports"))))
 
 	return nil
 }
@@ -265,24 +265,24 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user domai
 		return report, errSave
 	}
 
-	r.notif.Send <- notification.NewDiscord(
+	r.notif.Send(notification.NewDiscord(
 		r.config.Config().Discord.LogChannelID,
-		ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report)))
+		ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report))))
 
-	r.notif.Send <- notification.NewSiteGroupNotificationWithAuthor(
+	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		fmt.Sprintf("A report status has changed: %s -> %s", fromStatus, status),
 		report.Path(),
 		user,
-	)
+	))
 
-	r.notif.Send <- notification.NewSiteUser(
+	r.notif.Send(notification.NewSiteUser(
 		[]steamid.SteamID{report.Author.SteamID},
 		notification.Info,
 		fmt.Sprintf("Your report status has changed: %s -> %s", fromStatus, status),
 		report.Path(),
-	)
+	))
 
 	slog.Info("Report status changed",
 		slog.Int64("report_id", report.ReportID),
@@ -382,8 +382,8 @@ func (r Reports) DropMessage(ctx context.Context, curUser domain.PersonInfo, rep
 		return err
 	}
 
-	r.notif.Send <- notification.NewDiscord(r.config.Config().Discord.AppealLogChannelID,
-		DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser)))
+	r.notif.Send(notification.NewDiscord(r.config.Config().Discord.AppealLogChannelID,
+		DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser))))
 
 	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
 
@@ -493,16 +493,16 @@ func (r Reports) Save(ctx context.Context, currentUser domain.PersonInfo, req Re
 		demoURL = conf.ExtURLRaw("/asset/%s", demo.AssetID.String())
 	}
 
-	r.notif.Send <- notification.NewDiscord(
+	r.notif.Send(notification.NewDiscord(
 		conf.Discord.AppealLogChannelID,
-		NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL))
-	r.notif.Send <- notification.NewSiteGroupNotificationWithAuthor(
+		NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)))
+	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.PersonaName),
 		newReport.Path(),
 		currentUser,
-	)
+	))
 
 	return newReport, nil
 }
@@ -539,9 +539,9 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 
 	conf := r.config.Config()
 
-	r.notif.Send <- notification.NewDiscord(conf.Discord.AppealLogChannelID,
+	r.notif.Send(notification.NewDiscord(conf.Discord.AppealLogChannelID,
 		EditReportMessageResponse(req.BodyMD, existing.MessageMD,
-			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser)))
+			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))))
 
 	slog.Info("Report message edited", slog.Int64("report_message_id", reportMessageID))
 
@@ -573,27 +573,27 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser doma
 
 	conf := r.config.Config()
 
-	r.notif.Send <- notification.NewDiscord(
+	r.notif.Send(notification.NewDiscord(
 		conf.Discord.AppealLogChannelID,
-		NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser)))
+		NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser))))
 
 	path := fmt.Sprintf("/report/%d", reportID)
 
-	r.notif.Send <- notification.NewSiteGroupNotificationWithAuthor(
+	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		"A new report reply has been posted. Author: "+curUser.GetName(),
 		path,
 		curUser,
-	)
+	))
 
 	if report.Author.SteamID != curUser.GetSteamID() {
-		r.notif.Send <- notification.NewSiteUser(
+		r.notif.Send(notification.NewSiteUser(
 			[]steamid.SteamID{report.Author.SteamID},
 			notification.Info,
 			"A new report reply has been posted",
 			path,
-		)
+		))
 	}
 
 	sid := curUser.GetSteamID()

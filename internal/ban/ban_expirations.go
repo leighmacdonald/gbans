@@ -12,7 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
-func NewExpirationMonitor(steam Bans, person domain.PersonProvider, notifications notification.Notifications, config *config.Configuration,
+func NewExpirationMonitor(steam Bans, person domain.PersonProvider, notifications notification.Notifier, config *config.Configuration,
 ) *ExpirationMonitor {
 	return &ExpirationMonitor{
 		steam:         steam,
@@ -25,7 +25,7 @@ func NewExpirationMonitor(steam Bans, person domain.PersonProvider, notification
 type ExpirationMonitor struct {
 	steam         Bans
 	person        domain.PersonProvider
-	notifications notification.Notifications
+	notifications notification.Notifier
 	config        *config.Configuration
 }
 
