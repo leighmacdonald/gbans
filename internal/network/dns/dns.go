@@ -32,7 +32,7 @@ type StateProvider interface {
 }
 
 type ServerProvider interface {
-	Servers(ctx context.Context, filter servers.ServerQueryFilter) ([]servers.Server, int64, error)
+	Servers(ctx context.Context, filter servers.Query) ([]servers.Server, error)
 }
 
 func MonitorChanges(ctx context.Context, conf config.Config, state StateProvider, server ServerProvider) {
@@ -79,7 +79,7 @@ func (c *ChangeDetector) findIP(serverID int) net.IP {
 // sync takes care of checking if the SDR ip of the game servers changes, and if so, it updates the DNS with the
 // new ip.
 func (c *ChangeDetector) sync(ctx context.Context) error {
-	servers, _, errServers := c.servers.Servers(ctx, servers.ServerQueryFilter{SDROnly: true})
+	servers, errServers := c.servers.Servers(ctx, servers.Query{SDROnly: true})
 	if errServers != nil {
 		return errServers
 	}

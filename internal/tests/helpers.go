@@ -325,16 +325,18 @@ func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID) 
 
 func (f Fixture) CreateTestServer(ctx context.Context) servers.Server {
 	serverCase := servers.NewServers(servers.NewRepository(f.Database))
-	server, errServer := serverCase.Save(ctx, servers.RequestServerUpdate{
-		ServerName:      stringutil.SecureRandomString(10),
-		ServerNameShort: stringutil.SecureRandomString(3),
-		Host:            stringutil.SecureRandomString(10),
-		Password:        stringutil.SecureRandomString(10),
-		LogSecret:       12345678,
-		Port:            27015,
-		RCON:            stringutil.SecureRandomString(10),
-		IsEnabled:       true,
-		Region:          "eu",
+	server, errServer := serverCase.Save(ctx, servers.Server{
+		Name:      stringutil.SecureRandomString(10),
+		ShortName: stringutil.SecureRandomString(3),
+		Address:   stringutil.SecureRandomString(10),
+		Password:  stringutil.SecureRandomString(10),
+		LogSecret: 12345678,
+		Port:      27015,
+		RCON:      stringutil.SecureRandomString(10),
+		IsEnabled: true,
+		Region:    "eu",
+		CreatedOn: time.Now(),
+		UpdatedOn: time.Now(),
 	})
 	if errServer != nil {
 		panic(errServer)

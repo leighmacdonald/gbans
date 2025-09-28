@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v4/extra"
@@ -95,7 +94,7 @@ func (c *Collector) GetServer(serverID int) (ServerConfig, error) {
 	})
 
 	if serverIdx == -1 {
-		return ServerConfig{}, ErrUnknownServerID
+		return ServerConfig{}, ErrUnknownServer
 	}
 
 	return configs[serverIdx], nil
@@ -397,10 +396,7 @@ func (c *Collector) startStatus(ctx context.Context) {
 }
 
 func (c *Collector) updateServerConfigs(ctx context.Context) {
-	servers, _, errServers := c.servers.Servers(ctx, ServerQueryFilter{
-		Filter:          query.Filter{Deleted: false},
-		IncludeDisabled: false,
-	})
+	servers, errServers := c.servers.Servers(ctx, Query{})
 
 	if errServers != nil && !errors.Is(errServers, database.ErrNoResult) {
 		slog.Error("Failed to fetch servers, cannot update State", log.ErrAttr(errServers))

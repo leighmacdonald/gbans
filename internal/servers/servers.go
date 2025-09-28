@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/extra"
@@ -17,29 +16,16 @@ import (
 )
 
 var (
-	ErrUnknownServerID = errors.New("unknown server id")
-	ErrUnknownServer   = errors.New("unknown server")
+	ErrUnknownServer = errors.New("unknown server")
 )
 
-type RequestServerUpdate struct {
-	ServerID        int     `json:"server_id"`
-	ServerName      string  `json:"server_name"`
-	ServerNameShort string  `json:"server_name_short"`
-	Host            string  `json:"host"`
-	Port            uint16  `json:"port"`
-	ReservedSlots   int     `json:"reserved_slots"`
-	Password        string  `json:"password"`
-	RCON            string  `json:"rcon"`
-	Lat             float64 `json:"lat"`
-	Lon             float64 `json:"lon"`
-	CC              string  `json:"cc"`
-	DefaultMap      string  `json:"default_map"`
-	Region          string  `json:"region"`
-	IsEnabled       bool    `json:"is_enabled"`
-	EnableStats     bool    `json:"enable_stats"`
-	LogSecret       int     `json:"log_secret"`
-	AddressInternal string  `json:"address_internal"`
-	SDREnabled      bool    `json:"sdr_enabled"`
+type Query struct {
+	ServerID        int    `query:"server_id"`
+	IncludeDisabled bool   `query:"include_disabled"`
+	SDROnly         bool   `query:"sdr_only"`
+	ShortName       string `query:"short_name"`
+	Password        string `query:"password"`
+	IncludeDeleted  bool
 }
 
 type ServerInfoSafe struct {
@@ -74,8 +60,6 @@ func NewServer(shortName string, address string, port uint16) Server {
 }
 
 type Server struct {
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
 	// Auto generated id
 	ServerID int `json:"server_id"`
 	// ShortName is a short reference name for the server eg: us-1
@@ -105,6 +89,8 @@ type Server struct {
 	EnableStats bool    `json:"enable_stats"`
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time `json:"token_created_on"`
+	CreatedOn      time.Time `json:"created_on"`
+	UpdatedOn      time.Time `json:"updated_on"`
 }
 
 func (s Server) IP(ctx context.Context) (net.IP, error) {
@@ -151,12 +137,6 @@ func (s Server) AddrInternalOrDefault() string {
 
 func (s Server) Slots(statusSlots int) int {
 	return statusSlots - s.ReservedSlots
-}
-
-type ServerQueryFilter struct {
-	query.Filter
-	IncludeDisabled bool `json:"include_disabled"`
-	SDROnly         bool `json:"sdr_only"`
 }
 
 // SafeServer provides a server struct stripped of any sensitive info suitable for public-facing
@@ -217,7 +197,7 @@ func (s *Servers) Delete(ctx context.Context, serverID int) error {
 
 	server.Deleted = true
 
-	if err := s.repository.SaveServer(ctx, &server); err != nil {
+	if err := s.repository.Save(ctx, &server); err != nil {
 		return err
 	}
 
@@ -231,61 +211,68 @@ func (s *Servers) Server(ctx context.Context, serverID int) (Server, error) {
 		return Server{}, domain.ErrGetServer
 	}
 
-	return s.repository.GetServer(ctx, serverID)
+	servers, err := s.repository.Query(ctx, Query{ServerID: serverID})
+	if err != nil {
+		return Server{}, err
+	}
+
+	if len(servers) != 1 {
+		return Server{}, ErrServerNotFound
+	}
+
+	return servers[0], nil
 }
 
 func (s *Servers) ServerPermissions(ctx context.Context) ([]ServerPermission, error) {
 	return s.repository.GetServerPermissions(ctx)
 }
 
-func (s *Servers) Servers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error) {
-	return s.repository.GetServers(ctx, filter)
+func (s *Servers) Servers(ctx context.Context, filter Query) ([]Server, error) {
+	return s.repository.Query(ctx, filter)
 }
 
-func (s *Servers) GetByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error {
-	return s.repository.GetServerByName(ctx, serverName, server, disabledOk, deletedOk)
-}
+func (s *Servers) GetByName(ctx context.Context, serverName string) (Server, error) {
+	server, errServer := s.repository.Query(ctx, Query{ShortName: serverName})
 
-func (s *Servers) GetByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error {
-	return s.repository.GetServerByPassword(ctx, serverPassword, server, disabledOk, deletedOk)
-}
-
-func (s *Servers) Save(ctx context.Context, req RequestServerUpdate) (Server, error) {
-	var server Server
-
-	if req.ServerID > 0 {
-		existingServer, errServer := s.Server(ctx, req.ServerID)
-		if errServer != nil {
-			return Server{}, errServer
-		}
-		server = existingServer
-		server.UpdatedOn = time.Now()
-	} else {
-		server = NewServer(req.ServerNameShort, req.Host, req.Port)
+	if errServer != nil {
+		return Server{}, errServer
 	}
 
-	server.ShortName = req.ServerNameShort
-	server.Name = req.ServerName
-	server.Address = req.Host
-	server.Port = req.Port
-	server.ReservedSlots = req.ReservedSlots
-	server.RCON = req.RCON
-	server.Password = req.Password
-	server.Latitude = req.Lat
-	server.Longitude = req.Lon
-	server.CC = req.CC
-	server.Region = req.Region
-	server.IsEnabled = req.IsEnabled
-	server.LogSecret = req.LogSecret
-	server.EnableStats = req.EnableStats
-	server.AddressInternal = req.AddressInternal
-	server.SDREnabled = req.SDREnabled
+	if len(server) == 0 {
+		return Server{}, ErrUnknownServer
+	}
 
-	if err := s.repository.SaveServer(ctx, &server); err != nil {
+	return server[0], nil
+}
+
+func (s *Servers) GetByPassword(ctx context.Context, serverPassword string) (Server, error) {
+	server, errServer := s.repository.Query(ctx, Query{Password: serverPassword})
+
+	if errServer != nil {
+		return Server{}, errServer
+	}
+
+	if len(server) == 0 {
+		return Server{}, ErrUnknownServer
+	}
+
+	return server[0], nil
+}
+
+func (s *Servers) Save(ctx context.Context, server Server) (Server, error) {
+	if server.ServerID > 0 {
+		if _, errServer := s.Server(ctx, server.ServerID); errServer != nil {
+			return Server{}, errServer
+		}
+
+		server.UpdatedOn = time.Now()
+	}
+
+	if err := s.repository.Save(ctx, &server); err != nil {
 		return Server{}, err
 	}
 
-	if req.ServerID > 0 {
+	if server.ServerID > 0 {
 		slog.Info("Updated server successfully", slog.String("name", server.ShortName))
 	} else {
 		slog.Info("Created new server", slog.String("name", server.ShortName), slog.Int("server_id", server.ServerID))

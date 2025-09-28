@@ -168,8 +168,8 @@ func MiddlewareServer(servers Servers, sentryDSN string) gin.HandlerFunc {
 			reqAuthHeader = parts[1]
 		}
 
-		var server Server
-		if errServer := servers.GetByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
+		server, errServer := servers.GetByPassword(ctx, reqAuthHeader)
+		if errServer != nil {
 			slog.Error("Failed to load server during auth", log.ErrAttr(errServer), slog.String("token", reqAuthHeader), slog.String("IP", ctx.ClientIP()))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
