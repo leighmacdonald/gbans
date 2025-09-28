@@ -63,13 +63,16 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 
 	fromDockerfile := testcontainers.FromDockerfile{
 		Dockerfile:    "postgres-ip4r.Dockerfile",
+		
 		Context:       dockerRoot,
 		PrintBuildLog: false,
+		KeepImage:     true,
 	}
 
 	cont, errContainer := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			FromDockerfile: fromDockerfile,
+
 			HostConfigModifier: func(config *container.HostConfig) {
 				config.AutoRemove = false
 			},

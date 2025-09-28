@@ -169,7 +169,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					return
 				}
 
-				loggedInPerson, errGetPerson := u.persons.GetPersonBySteamID(ctx, nil, sid)
+				loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, nil, sid)
 				if errGetPerson != nil {
 					slog.Error("Failed to load person during auth", log.ErrAttr(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)
@@ -271,7 +271,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 					return
 				}
 
-				loggedInPerson, errGetPerson := u.persons.GetPersonBySteamID(ctx, nil, sid)
+				loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, nil, sid)
 				if errGetPerson != nil {
 					slog.Error("Failed to load person during auth", log.ErrAttr(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)

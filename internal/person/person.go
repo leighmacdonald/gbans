@@ -26,13 +26,16 @@ type SteamMember interface {
 	IsMember(steamID steamid.SteamID) (int64, bool)
 }
 
-type PlayerQuery struct {
+type Query struct {
 	query.Filter
-	domain.TargetIDField
-	Personaname     string               `json:"personaname"`
-	IP              string               `json:"ip"`
-	StaffOnly       bool                 `json:"staff_only"`
-	WithPermissions permission.Privilege `json:"with_permissions"`
+	Personaname          string               `json:"personaname"`
+	IP                   string               `json:"ip"`
+	StaffOnly            bool                 `json:"staff_only"`
+	WithPermissions      permission.Privilege `json:"with_permissions"`
+	DiscordID            string               `json:"discord_id"`
+	SteamUpdateOlderThan time.Time            `json:"steam_update_older_than"`
+	Addr                 net.IP               `json:"addr"`
+	SteamIDs             steamid.Collection   `json:"steam_ids"`
 }
 
 type RequestPermissionLevelUpdate struct {
@@ -58,7 +61,7 @@ type Person struct {
 	UpdatedOn             time.Time              `json:"updated_on"`
 	PermissionLevel       permission.Privilege   `json:"permission_level"`
 	Muted                 bool                   `json:"muted"`
-	IsNew                 bool                   `json:"-"`
+	isNew                 bool                   `json:"-"`
 	DiscordID             string                 `json:"discord_id"`
 	PatreonID             string                 `json:"patreon_id"`
 	IPAddr                netip.Addr             `json:"-"` // TODO Allow json for admins endpoints
@@ -104,7 +107,7 @@ func (p Person) Profile() string {
 }
 
 func (p Person) Expired() bool {
-	return p.IsNew || time.Since(p.UpdatedOnSteam) > time.Hour*24*30
+	return p.isNew || time.Since(p.UpdatedOnSteam) > time.Hour*24*30
 }
 
 func (p Person) GetDiscordID() string {
@@ -160,7 +163,7 @@ func New(sid64 steamid.SteamID) Person {
 		UpdatedOn:             curTime,
 		PermissionLevel:       permission.User,
 		Muted:                 false,
-		IsNew:                 true,
+		isNew:                 true,
 		DiscordID:             "",
 		CommunityBanned:       false,
 		VACBans:               0,
@@ -253,7 +256,7 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 
 	_, _ = u.GetOrCreatePersonBySteamID(ctx, nil, sid)
 
-	person, errGetProfile := u.GetPersonBySteamID(ctx, nil, sid)
+	person, errGetProfile := u.BySteamID(ctx, nil, sid)
 	if errGetProfile != nil {
 		return resp, errGetProfile
 	}
@@ -262,7 +265,7 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 		if err := UpdatePlayerSummary(ctx, &person, u.tfAPI); err != nil {
 			slog.Error("Failed to update player summary", log.ErrAttr(err))
 		} else {
-			if errSave := u.SavePerson(ctx, nil, &person); errSave != nil {
+			if errSave := u.Save(ctx, nil, &person); errSave != nil {
 				slog.Error("Failed to save person summary", log.ErrAttr(errSave))
 			}
 		}
@@ -325,7 +328,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people
 
 	for _, curPerson := range people {
 		person := curPerson
-		person.IsNew = false
+		person.isNew = false
 		person.UpdatedOnSteam = time.Now()
 
 		for _, newSummary := range summaries {
@@ -366,7 +369,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people
 			person.DaysSinceLastBan = int(banState.DaysSinceLastBan)
 		}
 
-		if errSavePerson := u.repo.SavePerson(ctx, transaction, &person); errSavePerson != nil {
+		if errSavePerson := u.repo.Save(ctx, transaction, &person); errSavePerson != nil {
 			return 0, errors.Join(errSavePerson, domain.ErrUpdatePerson)
 		}
 	}
@@ -378,7 +381,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people
 // instead of requiring users to link their steam account to discord itself. It also
 // means the discord does not require more privileged intents.
 func (u *Persons) SetSteam(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID, discordID string) error {
-	newPerson, errGetPerson := u.GetPersonBySteamID(ctx, transaction, sid64)
+	newPerson, errGetPerson := u.BySteamID(ctx, transaction, sid64)
 	if errGetPerson != nil || !sid64.Valid() {
 		return domain.ErrInvalidSID
 	}
@@ -388,7 +391,7 @@ func (u *Persons) SetSteam(ctx context.Context, transaction pgx.Tx, sid64 steami
 	}
 
 	newPerson.DiscordID = discordID
-	if errSavePerson := u.SavePerson(ctx, transaction, &newPerson); errSavePerson != nil {
+	if errSavePerson := u.Save(ctx, transaction, &newPerson); errSavePerson != nil {
 		return errors.Join(errSavePerson, domain.ErrSaveChanges)
 	}
 
@@ -397,41 +400,60 @@ func (u *Persons) SetSteam(ctx context.Context, transaction pgx.Tx, sid64 steami
 	return nil
 }
 
-func (u *Persons) GetPersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (Person, error) {
-	return u.repo.GetPersonBySteamID(ctx, transaction, sid64)
+func (u *Persons) BySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (Person, error) {
+	results, errQuery := u.repo.Query(ctx, transaction, Query{SteamIDs: []steamid.SteamID{sid64}})
+	if errQuery != nil {
+		return Person{}, errQuery
+	}
+
+	if len(results) != 1 {
+		return Person{}, ErrInvalidResult
+	}
+
+	return results[0], nil
 }
 
-func (u *Persons) DropPerson(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID) error {
+func (u *Persons) Drop(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID) error {
 	return u.repo.DropPerson(ctx, transaction, steamID)
 }
 
-func (u *Persons) SavePerson(ctx context.Context, transaction pgx.Tx, person *Person) error {
+func (u *Persons) Save(ctx context.Context, transaction pgx.Tx, person *Person) error {
 	// Don't let owner un-admin themselves.
 	if person.SteamID == u.owner && person.PermissionLevel != permission.Admin {
 		return permission.ErrDenied
 	}
 
-	return u.repo.SavePerson(ctx, transaction, person)
+	return u.repo.Save(ctx, transaction, person)
 }
 
-func (u *Persons) GetPeopleBySteamID(ctx context.Context, transaction pgx.Tx, steamIDs steamid.Collection) (People, error) {
-	return u.repo.GetPeopleBySteamID(ctx, transaction, steamIDs)
+func (u *Persons) BySteamIDs(ctx context.Context, transaction pgx.Tx, steamIDs steamid.Collection) (People, error) {
+	return u.repo.Query(ctx, transaction, Query{SteamIDs: steamIDs})
 }
 
 func (u *Persons) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
-	return u.repo.GetSteamsAtAddress(ctx, addr)
+	people, errQuery := u.repo.Query(ctx, nil, Query{Addr: addr})
+	if errQuery != nil {
+		return nil, errQuery
+	}
+
+	var coll steamid.Collection
+	for _, person := range people {
+		coll = append(coll, person.SteamID)
+	}
+
+	return coll, nil
 }
 
-func (u *Persons) GetPeople(ctx context.Context, transaction pgx.Tx, filter PlayerQuery) (People, int64, error) {
-	return u.repo.GetPeople(ctx, transaction, filter)
+func (u *Persons) GetPeople(ctx context.Context, transaction pgx.Tx, filter Query) (People, error) {
+	return u.repo.Query(ctx, transaction, filter)
 }
 
 func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.PersonCore, error) {
-	person, errGetPerson := u.repo.GetPersonBySteamID(ctx, transaction, sid64)
+	person, errGetPerson := u.BySteamID(ctx, transaction, sid64)
 	if errGetPerson != nil && errors.Is(errGetPerson, database.ErrNoResult) {
 		person = New(sid64)
 
-		if err := u.repo.SavePerson(ctx, transaction, &person); err != nil {
+		if err := u.repo.Save(ctx, transaction, &person); err != nil {
 			return domain.PersonCore{}, err
 		}
 	}
@@ -444,24 +466,51 @@ func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, transaction pg
 	}, nil
 }
 
+func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
+	people, errPeople := u.repo.Query(ctx, nil, query)
+	if errPeople != nil {
+		return Person{}, errPeople
+	}
+
+	if len(people) != 1 {
+		return Person{}, ErrInvalidResult
+	}
+
+	return people[0], nil
+}
+
 func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (Person, error) {
-	return u.repo.GetPersonByDiscordID(ctx, discordID)
+	return u.getFirst(ctx, Query{DiscordID: discordID})
 }
 
 func (u *Persons) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error) {
-	return u.repo.GetExpiredProfiles(ctx, nil, limit)
+	return u.repo.Query(ctx, nil, Query{
+		Filter: query.Filter{
+			Limit: limit,
+		},
+		SteamUpdateOlderThan: time.Now().AddDate(0, 0, -30),
+	})
 }
 
 func (u *Persons) GetSteamIDsAbove(ctx context.Context, privilege permission.Privilege) (steamid.Collection, error) {
-	return u.repo.GetSteamIDsAbove(ctx, privilege)
-}
+	var steamIDs steamid.Collection
+	players, errPlayers := u.repo.Query(ctx, nil, Query{
+		WithPermissions: privilege,
+	})
 
-func (u *Persons) GetSteamIDsByGroups(ctx context.Context, privileges []permission.Privilege) (steamid.Collection, error) {
-	return u.repo.GetSteamIDsByGroups(ctx, privileges)
+	if errPlayers != nil {
+		return steamIDs, errPlayers
+	}
+
+	for _, player := range players {
+		steamIDs = append(steamIDs, player.SteamID)
+	}
+
+	return steamIDs, nil
 }
 
 func (u *Persons) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (Settings, error) {
-	settings, errSettings := u.repo.GetPersonSettings(ctx, steamID)
+	settings, errSettings := u.repo.Settings(ctx, steamID)
 	if errSettings != nil {
 		if !errors.Is(errSettings, database.ErrNoResult) {
 			return settings, errSettings
@@ -488,7 +537,7 @@ func (u *Persons) SavePersonSettings(ctx context.Context, user domain.PersonInfo
 	settings.ForumSignature = stringutil.SanitizeUGC(update.ForumSignature)
 	settings.CenterProjectiles = update.CenterProjectiles
 
-	if errSave := u.repo.SavePersonSettings(ctx, &settings); errSave != nil {
+	if errSave := u.repo.SaveSettings(ctx, &settings); errSave != nil {
 		return settings, errSave
 	}
 

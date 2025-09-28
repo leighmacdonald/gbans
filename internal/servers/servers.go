@@ -15,9 +15,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-var (
-	ErrUnknownServer = errors.New("unknown server")
-)
+var ErrUnknownServer = errors.New("unknown server")
 
 type Query struct {
 	ServerID        int    `query:"server_id"`

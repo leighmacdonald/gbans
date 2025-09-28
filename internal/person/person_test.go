@@ -7,6 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,19 +17,32 @@ func TestPerson(t *testing.T) {
 
 	personCase := person.NewPersons(person.NewRepository(testFixture.Config, testFixture.Database), tests.OwnerSID, nil)
 
-	_, err := personCase.GetPersonBySteamID(t.Context(), nil, tests.UserSID)
+	_, err := personCase.BySteamID(t.Context(), nil, tests.UserSID)
 	require.Error(t, err)
 
-	user := person.New(tests.UserSID)
-	require.NoError(t, personCase.SavePerson(t.Context(), nil, &user))
+	for idx, sid := range []steamid.SteamID{tests.OwnerSID, tests.ModSID, tests.UserSID, tests.GuestSID} {
+		user := person.New(sid)
+		switch idx {
+		case 0:
+			user.PermissionLevel = permission.Admin
+		case 1:
+			user.PermissionLevel = permission.Moderator
+		case 2:
+			user.PermissionLevel = permission.User
+		case 3:
+			user.PermissionLevel = permission.Guest
+		}
+		require.NoError(t, personCase.Save(t.Context(), nil, &user))
+	}
 
-	fetched, errFetched := personCase.GetPersonBySteamID(t.Context(), nil, tests.UserSID)
+	fetched, errFetched := personCase.BySteamID(t.Context(), nil, tests.UserSID)
 	require.NoError(t, errFetched)
 
 	fetched.PermissionLevel = permission.Moderator
 	fetched.PersonaName = stringutil.SecureRandomString(10)
+	fetched.DiscordID = stringutil.SecureRandomString(10)
 
-	require.NoError(t, personCase.SavePerson(t.Context(), nil, &fetched))
+	require.NoError(t, personCase.Save(t.Context(), nil, &fetched))
 
 	_, errSettings := personCase.GetPersonSettings(t.Context(), fetched.SteamID)
 	require.NoError(t, errSettings)
@@ -46,10 +60,19 @@ func TestPerson(t *testing.T) {
 	require.NoError(t, errSettingsUpdate)
 
 	// TODO fix
-	//require.EqualValues(t, updateValues.CenterProjectiles, settings.CenterProjectiles)
+	// require.EqualValues(t, updateValues.CenterProjectiles, settings.CenterProjectiles)
 	require.Equal(t, updateValues.StatsHidden, settings.StatsHidden)
 
-	players, _, errPlayers := personCase.GetPeople(t.Context(), nil, person.PlayerQuery{})
+	players, errPlayers := personCase.GetPeople(t.Context(), nil, person.Query{})
 	require.NoError(t, errPlayers)
-	require.True(t, len(players) > 0)
+	require.Len(t, players, 4)
+
+	aboveMod, _ := personCase.GetSteamIDsAbove(t.Context(), permission.Moderator)
+	require.Len(t, aboveMod, 3)
+
+	discord, _ := personCase.GetPersonByDiscordID(t.Context(), fetched.DiscordID)
+	require.EqualExportedValues(t, fetched, discord)
+
+	steamID, _ := personCase.BySteamID(t.Context(), nil, fetched.SteamID)
+	require.EqualExportedValues(t, fetched, steamID)
 }

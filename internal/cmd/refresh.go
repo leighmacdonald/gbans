@@ -49,7 +49,7 @@ func refreshFiltersCmd() *cobra.Command {
 
 			matches := 0
 
-			admin, errAdmin := app.persons.GetPersonBySteamID(ctx, nil, steamid.New(app.config.Config().Owner))
+			admin, errAdmin := app.persons.BySteamID(ctx, nil, steamid.New(app.config.Config().Owner))
 			if errAdmin != nil {
 				return errAdmin
 			}

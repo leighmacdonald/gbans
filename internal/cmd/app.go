@@ -457,7 +457,7 @@ func (g *GBans) Close(ctx context.Context) error {
 
 func (g GBans) firstTimeSetup(ctx context.Context) error {
 	conf := g.config.Config()
-	_, errRootUser := g.persons.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
+	_, errRootUser := g.persons.BySteamID(ctx, nil, steamid.New(conf.Owner))
 	if errRootUser == nil {
 		return nil
 	}
@@ -469,7 +469,7 @@ func (g GBans) firstTimeSetup(ctx context.Context) error {
 	owner := person.New(steamid.New(conf.Owner))
 	owner.PermissionLevel = permission.Admin
 
-	if errSave := g.persons.SavePerson(ctx, nil, &owner); errSave != nil {
+	if errSave := g.persons.Save(ctx, nil, &owner); errSave != nil {
 		slog.Error("Failed create new owner", log.ErrAttr(errSave))
 	}
 
