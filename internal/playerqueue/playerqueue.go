@@ -100,8 +100,7 @@ func NewPlayerqueue(repo Repository, persons domain.PersonProvider, serversUC se
 		queue: New(100, 2, chatLogs, func() ([]Lobby, error) {
 			currentState := state.Current()
 
-			srvs, _, errServers := serversUC.Servers(context.Background(), servers.ServerQueryFilter{
-				Filter:          query.Filter{},
+			srvs, errServers := serversUC.Servers(context.Background(), servers.Query{
 				IncludeDisabled: false,
 			})
 

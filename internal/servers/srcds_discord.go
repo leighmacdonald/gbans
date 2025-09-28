@@ -244,8 +244,8 @@ func (d DiscordHandler) onSay(ctx context.Context, _ *discordgo.Session, interac
 	serverName := opts[helper.OptServerIdentifier].StringValue()
 	msg := opts[helper.OptMessage].StringValue()
 
-	var server Server
-	if err := d.servers.GetByName(ctx, serverName, &server, false, false); err != nil {
+	server, err := d.servers.GetByName(ctx, serverName)
+	if err != nil {
 		return nil, ErrUnknownServer
 	}
 
@@ -261,8 +261,8 @@ func (d DiscordHandler) onCSay(ctx context.Context, _ *discordgo.Session, intera
 	serverName := opts[helper.OptServerIdentifier].StringValue()
 	msg := opts[helper.OptMessage].StringValue()
 
-	var server Server
-	if err := d.servers.GetByName(ctx, serverName, &server, false, false); err != nil {
+	server, err := d.servers.GetByName(ctx, serverName)
+	if err != nil {
 		return nil, ErrUnknownServer
 	}
 

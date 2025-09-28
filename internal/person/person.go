@@ -29,9 +29,10 @@ type SteamMember interface {
 type PlayerQuery struct {
 	query.Filter
 	domain.TargetIDField
-	Personaname string `json:"personaname"`
-	IP          string `json:"ip"`
-	StaffOnly   bool   `json:"staff_only"`
+	Personaname     string               `json:"personaname"`
+	IP              string               `json:"ip"`
+	StaffOnly       bool                 `json:"staff_only"`
+	WithPermissions permission.Privilege `json:"with_permissions"`
 }
 
 type RequestPermissionLevelUpdate struct {

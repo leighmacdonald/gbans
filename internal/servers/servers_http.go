@@ -33,7 +33,7 @@ func NewServersHandler(engine *gin.Engine, servers Servers, state *State, authen
 	{
 		admin := srvGrp.Use(authenticator.Middleware(permission.Admin))
 		admin.POST("/api/servers", handler.onAPIPostServer())
-		admin.POST("/api/servers/:server_id", handler.onAPIPostServerUpdate())
+		admin.PUT("/api/servers/:server_id", handler.onSave())
 		admin.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())
 		admin.GET("/api/servers_admin", handler.onAPIGetServersAdmin())
 	}
@@ -41,7 +41,7 @@ func NewServersHandler(engine *gin.Engine, servers Servers, state *State, authen
 
 func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		fullServers, _, errServers := h.servers.Servers(ctx, ServerQueryFilter{})
+		fullServers, errServers := h.servers.Servers(ctx, Query{})
 		if errServers != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServers, httphelper.ErrInternal)))
 
@@ -138,7 +138,7 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req RequestServerUpdate
+		var req Server
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -154,14 +154,14 @@ func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 	}
 }
 
-func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
+func (h *serversHandler) onSave() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		serverID, idFound := httphelper.GetIntParam(ctx, "server_id")
 		if !idFound {
 			return
 		}
 
-		var req RequestServerUpdate
+		var req Server
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -181,11 +181,7 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		filter := ServerQueryFilter{
-			IncludeDisabled: true,
-		}
-
-		servers, _, errServers := h.servers.Servers(ctx, filter)
+		servers, errServers := h.servers.Servers(ctx, Query{IncludeDisabled: true})
 		if errServers != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errServers, httphelper.ErrInternal)))
 

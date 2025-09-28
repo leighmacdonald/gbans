@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -173,10 +172,7 @@ func (s *State) updateSrcdsLogServers(ctx context.Context) {
 
 	defer cancelServers()
 
-	servers, _, errServers := s.servers.Servers(serversCtx, ServerQueryFilter{
-		IncludeDisabled: false,
-		Filter:          query.Filter{Deleted: false},
-	})
+	servers, errServers := s.servers.Servers(serversCtx, Query{})
 	if errServers != nil {
 		slog.Error("Failed to update srcds log secrets", log.ErrAttr(errServers))
 
@@ -382,7 +378,7 @@ func (s *State) ExecServer(ctx context.Context, serverID int, cmd string) (strin
 	}
 
 	if conf.ServerID == 0 {
-		return "", ErrUnknownServerID
+		return "", ErrUnknownServer
 	}
 
 	return s.ExecRaw(ctx, conf.Addr(), conf.RconPassword, cmd)
