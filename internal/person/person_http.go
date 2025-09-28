@@ -62,7 +62,7 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		person, errPerson := h.persons.GetPersonBySteamID(ctx, nil, steamID)
+		person, errPerson := h.persons.BySteamID(ctx, nil, steamID)
 		if errPerson != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errPerson, httphelper.ErrInternal)))
 
@@ -71,7 +71,7 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 
 		person.PermissionLevel = req.PermissionLevel
 
-		if err := h.persons.SavePerson(ctx, nil, &person); err != nil {
+		if err := h.persons.Save(ctx, nil, &person); err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
@@ -208,18 +208,19 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 func (h personHandler) searchPlayers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var query PlayerQuery
+		var query Query
 		if !httphelper.Bind(ctx, &query) {
 			return
 		}
 
-		people, count, errGetPeople := h.persons.GetPeople(ctx, nil, query)
+		people, errGetPeople := h.persons.GetPeople(ctx, nil, query)
 		if errGetPeople != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetPeople, httphelper.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(count, people))
+		// FIXME
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(100, people))
 	}
 }

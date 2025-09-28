@@ -420,7 +420,7 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		return false, errors.Join(errSave, ErrSaveBan)
 	}
 
-	person, err := s.persons.GetPersonBySteamID(ctx, nil, targetSID)
+	person, err := s.persons.BySteamID(ctx, nil, targetSID)
 	if err != nil {
 		return false, errors.Join(err, ErrFetchPerson)
 	}
