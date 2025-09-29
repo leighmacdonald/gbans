@@ -22,6 +22,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var ErrPlayerDoesNotExist = errors.New("player does not exist")
+
 type SteamMember interface {
 	IsMember(steamID steamid.SteamID) (int64, bool)
 }
@@ -381,9 +383,13 @@ func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people
 // instead of requiring users to link their steam account to discord itself. It also
 // means the discord does not require more privileged intents.
 func (u *Persons) SetSteam(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID, discordID string) error {
-	newPerson, errGetPerson := u.BySteamID(ctx, transaction, sid64)
-	if errGetPerson != nil || !sid64.Valid() {
+	if !sid64.Valid() {
 		return domain.ErrInvalidSID
+	}
+
+	newPerson, errGetPerson := u.BySteamID(ctx, transaction, sid64)
+	if errGetPerson != nil {
+		return errGetPerson
 	}
 
 	if (newPerson.DiscordID) != "" {
@@ -407,7 +413,7 @@ func (u *Persons) BySteamID(ctx context.Context, transaction pgx.Tx, sid64 steam
 	}
 
 	if len(results) != 1 {
-		return Person{}, ErrInvalidResult
+		return Person{}, ErrPlayerDoesNotExist
 	}
 
 	return results[0], nil
@@ -450,7 +456,7 @@ func (u *Persons) GetPeople(ctx context.Context, transaction pgx.Tx, filter Quer
 
 func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.PersonCore, error) {
 	person, errGetPerson := u.BySteamID(ctx, transaction, sid64)
-	if errGetPerson != nil && errors.Is(errGetPerson, database.ErrNoResult) {
+	if errGetPerson != nil && errors.Is(errGetPerson, ErrPlayerDoesNotExist) {
 		person = New(sid64)
 
 		if err := u.repo.Save(ctx, transaction, &person); err != nil {
@@ -473,7 +479,7 @@ func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
 	}
 
 	if len(people) != 1 {
-		return Person{}, ErrInvalidResult
+		return Person{}, ErrPlayerDoesNotExist
 	}
 
 	return people[0], nil
