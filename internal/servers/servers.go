@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"time"
 
@@ -199,14 +198,12 @@ func (s *Servers) Delete(ctx context.Context, serverID int) error {
 		return err
 	}
 
-	slog.Info("Deleted server", slog.Int("server_id", serverID))
-
 	return nil
 }
 
 func (s *Servers) Server(ctx context.Context, serverID int) (Server, error) {
 	if serverID <= 0 {
-		return Server{}, domain.ErrGetServer
+		return Server{}, ErrNotFound
 	}
 
 	servers, err := s.repository.Query(ctx, Query{ServerID: serverID})
@@ -215,7 +212,7 @@ func (s *Servers) Server(ctx context.Context, serverID int) (Server, error) {
 	}
 
 	if len(servers) != 1 {
-		return Server{}, ErrServerNotFound
+		return Server{}, ErrNotFound
 	}
 
 	return servers[0], nil
@@ -268,12 +265,6 @@ func (s *Servers) Save(ctx context.Context, server Server) (Server, error) {
 
 	if err := s.repository.Save(ctx, &server); err != nil {
 		return Server{}, err
-	}
-
-	if server.ServerID > 0 {
-		slog.Info("Updated server successfully", slog.String("name", server.ShortName))
-	} else {
-		slog.Info("Created new server", slog.String("name", server.ShortName), slog.Int("server_id", server.ServerID))
 	}
 
 	return s.Server(ctx, server.ServerID)

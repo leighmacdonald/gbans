@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 )
 
-var ErrServerNotFound = errors.New("server not found")
+var ErrNotFound = errors.New("server not found")
 
 type DemoRepository struct {
 	db database.Database
@@ -21,13 +21,13 @@ func NewDemoRepository(database database.Database) DemoRepository {
 
 func (r *DemoRepository) ValidateServer(ctx context.Context, serverID int) error {
 	if serverID == 0 {
-		return ErrServerNotFound
+		return ErrNotFound
 	}
 
 	row := r.db.QueryRow(ctx, nil, `SELECT server_id FROM server WHERE server_id = $1`, serverID)
 	var serverIDScan int
 	if errQuery := row.Scan(&serverIDScan); errQuery != nil {
-		return ErrServerNotFound
+		return ErrNotFound
 	}
 
 	return nil

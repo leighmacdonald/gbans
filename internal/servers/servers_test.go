@@ -40,6 +40,9 @@ func TestServers(t *testing.T) {
 	// Delete one
 	require.NoError(t, serversCase.Delete(t.Context(), otherServer.ServerID))
 
+	_, deletedErr := serversCase.Server(t.Context(), otherServer.ServerID)
+	require.ErrorIs(t, servers.ErrNotFound, deletedErr)
+
 	// Query all
 	serversDeleted, errServers := serversCase.Servers(t.Context(), servers.Query{})
 	require.Len(t, serversDeleted, 1)

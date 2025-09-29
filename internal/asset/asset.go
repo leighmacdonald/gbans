@@ -159,7 +159,7 @@ func NewAsset(author steamid.SteamID, name string, bucket Bucket, contentReader 
 		return Asset{}, errHash
 	}
 
-	curTime := time.Now()
+	curTime := time.Now().Truncate(time.Second)
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {

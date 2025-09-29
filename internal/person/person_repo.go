@@ -142,7 +142,7 @@ func (r *Repository) Query(ctx context.Context, transaction pgx.Tx, query Query)
 		conditions = append(conditions, sq.Eq{"p.discord_id": query.DiscordID})
 	}
 
-	//sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String())))
+	// sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String())))
 	if len(query.SteamIDs) > 0 {
 		conditions = append(conditions, sq.Eq{"p.steam_id": query.SteamIDs.ToInt64Slice()})
 	}
@@ -174,7 +174,7 @@ func (r *Repository) Query(ctx context.Context, transaction pgx.Tx, query Query)
 	defer rows.Close()
 
 	for rows.Next() {
-		var person = New(steamid.SteamID{})
+		person := New(steamid.SteamID{})
 
 		if errScan := rows.
 			Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn, &person.VisibilityState,
