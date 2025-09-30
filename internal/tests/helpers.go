@@ -1,23 +1,12 @@
 package tests
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/gin-gonic/gin"
-	"github.com/google/go-querystring/query"
-	"github.com/leighmacdonald/gbans/internal/auth"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/cmd"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -26,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -39,9 +27,9 @@ var (
 
 	ErrContainer = errors.New("failed to bring up test container")
 
-	authed     = []permission.Privilege{permission.Guest}                                        //nolint:gochecknoglobals
-	moderators = []permission.Privilege{permission.Guest, permission.User}                       //nolint:gochecknoglobals
-	admin      = []permission.Privilege{permission.Guest, permission.User, permission.Moderator} //nolint:gochecknoglobals
+	// authed     = []permission.Privilege{permission.Guest}                                        //nolint:gochecknoglobals
+	// moderators = []permission.Privilege{permission.Guest, permission.User}                       //nolint:gochecknoglobals
+	// admin      = []permission.Privilege{permission.Guest, permission.User, permission.Moderator} //nolint:gochecknoglobals
 )
 
 // postgresContainer is used instead of the postgres.PostgresContainer one since
@@ -107,12 +95,12 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	return &pgContainer, nil
 }
 
-type permTestValues struct {
-	method string
-	code   int
-	path   string
-	levels []permission.Privilege
-}
+// type permTestValues struct {
+// 	method string
+// 	code   int
+// 	path   string
+// 	levels []permission.Privilege
+// }
 
 type TestConfigRepo struct {
 	config config.Config
@@ -174,96 +162,96 @@ func NewFixture() *Fixture {
 	}
 }
 
-func testRouter(conf config.Config) *gin.Engine {
-	conf.General.Mode = config.TestMode
-	router, errRouter := cmd.CreateRouter(conf, cmd.BuildInfo{
-		BuildVersion: "master",
-		Commit:       "",
-		Date:         time.Now().Format(time.DateTime),
-	})
+// func testRouter(conf config.Config) *gin.Engine {
+// 	conf.General.Mode = config.TestMode
+// 	router, errRouter := cmd.CreateRouter(conf, cmd.BuildInfo{
+// 		BuildVersion: "master",
+// 		Commit:       "",
+// 		Date:         time.Now().Format(time.DateTime),
+// 	})
 
-	if errRouter != nil {
-		panic(errRouter)
-	}
+// 	if errRouter != nil {
+// 		panic(errRouter)
+// 	}
 
-	return router
-}
+// 	return router
+// }
 
-func testEndpointWithReceiver(t *testing.T, router *gin.Engine, method string,
-	path string, body any, expectedStatus int, tokens *authTokens, receiver any,
-) {
-	t.Helper()
+// func testEndpointWithReceiver(t *testing.T, router *gin.Engine, method string,
+// 	path string, body any, expectedStatus int, tokens *authTokens, receiver any,
+// ) {
+// 	t.Helper()
 
-	resp := testEndpoint(t, router, method, path, body, expectedStatus, tokens)
-	if receiver != nil {
-		if err := json.NewDecoder(resp.Body).Decode(&receiver); err != nil {
-			t.Fatalf("Failed to decode response: %v", err)
-		}
-	}
-}
+// 	resp := testEndpoint(t, router, method, path, body, expectedStatus, tokens)
+// 	if receiver != nil {
+// 		if err := json.NewDecoder(resp.Body).Decode(&receiver); err != nil {
+// 			t.Fatalf("Failed to decode response: %v", err)
+// 		}
+// 	}
+// }
 
-type authTokens struct {
-	user           *auth.UserTokens
-	serverPassword string
-}
+// type authTokens struct {
+// 	user           *auth.UserTokens
+// 	serverPassword string
+// }
 
-func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, body any, expectedStatus int, tokens *authTokens) *httptest.ResponseRecorder {
-	t.Helper()
+// func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, body any, expectedStatus int, tokens *authTokens) *httptest.ResponseRecorder {
+// 	t.Helper()
 
-	reqCtx, cancel := context.WithTimeout(t.Context(), time.Second*10)
-	defer cancel()
+// 	reqCtx, cancel := context.WithTimeout(t.Context(), time.Second*10)
+// 	defer cancel()
 
-	recorder := httptest.NewRecorder()
+// 	recorder := httptest.NewRecorder()
 
-	var bodyReader io.Reader
-	if body != nil {
-		bodyJSON, errJSON := json.Marshal(body)
-		if errJSON != nil {
-			t.Fatalf("Failed to encode request: %v", errJSON)
-		}
+// 	var bodyReader io.Reader
+// 	if body != nil {
+// 		bodyJSON, errJSON := json.Marshal(body)
+// 		if errJSON != nil {
+// 			t.Fatalf("Failed to encode request: %v", errJSON)
+// 		}
 
-		bodyReader = bytes.NewReader(bodyJSON)
-	}
+// 		bodyReader = bytes.NewReader(bodyJSON)
+// 	}
 
-	if body != nil && method == http.MethodGet {
-		values, err := query.Values(body)
-		if err != nil {
-			t.Fatalf("failed to encode values: %v", err)
-		}
+// 	if body != nil && method == http.MethodGet {
+// 		values, err := query.Values(body)
+// 		if err != nil {
+// 			t.Fatalf("failed to encode values: %v", err)
+// 		}
 
-		path += "?" + values.Encode()
-	}
+// 		path += "?" + values.Encode()
+// 	}
 
-	request, errRequest := http.NewRequestWithContext(reqCtx, method, path, bodyReader)
-	if errRequest != nil {
-		t.Fatalf("Failed to make request: %v", errRequest)
-	}
+// 	request, errRequest := http.NewRequestWithContext(reqCtx, method, path, bodyReader)
+// 	if errRequest != nil {
+// 		t.Fatalf("Failed to make request: %v", errRequest)
+// 	}
 
-	if tokens != nil {
-		if tokens.serverPassword != "" {
-			request.Header.Add("Authorization", tokens.serverPassword)
-		} else if tokens.user != nil {
-			request.AddCookie(&http.Cookie{
-				Name:     auth.FingerprintCookieName,
-				Value:    tokens.user.Fingerprint,
-				Path:     "/api",
-				Domain:   "example.com",
-				Expires:  time.Now().AddDate(0, 0, 1),
-				MaxAge:   0,
-				Secure:   false,
-				HttpOnly: false,
-				SameSite: http.SameSiteStrictMode,
-			})
-			request.Header.Add("Authorization", "Bearer "+tokens.user.Access)
-		}
-	}
+// 	if tokens != nil {
+// 		if tokens.serverPassword != "" {
+// 			request.Header.Add("Authorization", tokens.serverPassword)
+// 		} else if tokens.user != nil {
+// 			request.AddCookie(&http.Cookie{
+// 				Name:     auth.FingerprintCookieName,
+// 				Value:    tokens.user.Fingerprint,
+// 				Path:     "/api",
+// 				Domain:   "example.com",
+// 				Expires:  time.Now().AddDate(0, 0, 1),
+// 				MaxAge:   0,
+// 				Secure:   false,
+// 				HttpOnly: false,
+// 				SameSite: http.SameSiteStrictMode,
+// 			})
+// 			request.Header.Add("Authorization", "Bearer "+tokens.user.Access)
+// 		}
+// 	}
 
-	router.ServeHTTP(recorder, request)
+// 	router.ServeHTTP(recorder, request)
 
-	require.Equal(t, expectedStatus, recorder.Code, "Received invalid response code. method: %s path: %s", method, path)
+// 	require.Equal(t, expectedStatus, recorder.Code, "Received invalid response code. method: %s path: %s", method, path)
 
-	return recorder
-}
+// 	return recorder
+// }
 
 // func createTestPerson(sid steamid.SteamID, level permission.Privilege) person.Person {
 // 	_, _ = personUC.GetOrCreatePersonBySteamID(context.Background(), nil, sid)
