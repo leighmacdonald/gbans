@@ -14,7 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
@@ -141,7 +141,7 @@ func (h *serverQueueHandler) handleWSMessage(client Client) (Request, error) {
 	return payloadInbound, nil
 }
 
-func (h *serverQueueHandler) handleRequest(ctx context.Context, client Client, payloadInbound Request, user domain.PersonInfo) error {
+func (h *serverQueueHandler) handleRequest(ctx context.Context, client Client, payloadInbound Request, user person.Info) error {
 	var err error
 	switch payloadInbound.Op {
 	case JoinQueue:

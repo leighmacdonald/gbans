@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -20,10 +21,10 @@ import (
 
 type Repository struct {
 	db      database.Database
-	persons domain.PersonProvider
+	persons person.Provider
 }
 
-func NewRepository(db database.Database, persons domain.PersonProvider) Repository {
+func NewRepository(db database.Database, persons person.Provider) Repository {
 	return Repository{db: db, persons: persons}
 }
 
@@ -61,7 +62,7 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 
 	var messages []PersonConnection
 
-	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
+	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
 		return nil, 0, database.DBErr(errQuery)
 	}
@@ -103,7 +104,7 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 		return []PersonConnection{}, 0, nil
 	}
 
-	count, errCount := r.db.GetCount(ctx, nil, r.db.
+	count, errCount := r.db.GetCount(ctx, r.db.
 		Builder().
 		Select("count(c.person_connection_id)").
 		From("person_connections c").
@@ -133,7 +134,7 @@ func (r Repository) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamI
 		Limit(limit)
 	builder = builder.Where(sq.Eq{"pc.steam_id": sid64.Int64()})
 
-	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
+	rows, errQuery := r.db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, database.DBErr(errQuery)
 	}
@@ -168,7 +169,7 @@ func (r Repository) AddConnectionHistory(ctx context.Context, conn *PersonConnec
 		RETURNING person_connection_id`
 
 	// Maybe ignore these and wait for connect call to create?
-	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, nil, conn.SteamID)
+	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, conn.SteamID)
 	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
 		slog.Error("Failed to fetch connecting person", slog.String("steam_id", conn.SteamID.String()), log.ErrAttr(errPerson))
 
@@ -176,7 +177,7 @@ func (r Repository) AddConnectionHistory(ctx context.Context, conn *PersonConnec
 	}
 
 	if errQuery := r.db.
-		QueryRow(ctx, nil, query, conn.SteamID.Int64(), conn.IPAddr.String(), conn.PersonaName, conn.CreatedOn, conn.ServerID).
+		QueryRow(ctx, query, conn.SteamID.Int64(), conn.IPAddr.String(), conn.PersonaName, conn.CreatedOn, conn.ServerID).
 		Scan(&conn.PersonConnectionID); errQuery != nil {
 		return database.DBErr(errQuery)
 	}
@@ -185,7 +186,7 @@ func (r Repository) AddConnectionHistory(ctx context.Context, conn *PersonConnec
 }
 
 func (r Repository) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP {
-	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("c.ip_addr").
 		From("person_connections c").
@@ -215,7 +216,7 @@ func (r Repository) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]ASN,
 		From("net_asn").
 		Where(sq.Eq{"as_num": asNum})
 
-	rows, errQuery := r.db.QueryBuilder(ctx, nil, query)
+	rows, errQuery := r.db.QueryBuilder(ctx, query)
 	if errQuery != nil {
 		return nil, database.DBErr(errQuery)
 	}
@@ -247,7 +248,7 @@ func (r Repository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (AS
 	var asnRecord ASN
 
 	if errQuery := r.db.
-		QueryRow(ctx, nil, query, ipAddr.String()).
+		QueryRow(ctx, query, ipAddr.String()).
 		Scan(&asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errQuery != nil {
 		return asnRecord, database.DBErr(errQuery)
 	}
@@ -263,7 +264,7 @@ func (r Repository) GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (L
 
 	var record Location
 
-	if errQuery := r.db.QueryRow(ctx, nil, query, ipAddr.String()).
+	if errQuery := r.db.QueryRow(ctx, query, ipAddr.String()).
 		Scan(&record.CIDR, &record.CountryCode, &record.CountryName, &record.RegionName,
 			&record.CityName, &record.LatLong.Latitude, &record.LatLong.Longitude); errQuery != nil {
 		return record, database.DBErr(errQuery)
@@ -281,7 +282,7 @@ func (r Repository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (Prox
 
 	var proxyRecord Proxy
 
-	if errQuery := r.db.QueryRow(ctx, nil, query, ipAddr.String()).
+	if errQuery := r.db.QueryRow(ctx, query, ipAddr.String()).
 		Scan(&proxyRecord.CIDR, &proxyRecord.ProxyType, &proxyRecord.CountryCode, &proxyRecord.CountryName, &proxyRecord.RegionName, &proxyRecord.CityName, &proxyRecord.ISP,
 			&proxyRecord.Domain, &proxyRecord.UsageType, &proxyRecord.ASN, &proxyRecord.AS, &proxyRecord.LastSeen, &proxyRecord.Threat); errQuery != nil {
 		return proxyRecord, database.DBErr(errQuery)
@@ -312,7 +313,7 @@ func (r Repository) LoadASN(ctx context.Context, truncate bool, records []ip2loc
 	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	batchResults := r.db.SendBatch(c, nil, &batch)
+	batchResults := r.db.SendBatch(c, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}
@@ -342,7 +343,7 @@ func (r Repository) LoadLocation(ctx context.Context, truncate bool, records []i
 	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	batchResults := r.db.SendBatch(c, nil, &batch)
+	batchResults := r.db.SendBatch(c, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}
@@ -374,7 +375,7 @@ func (r Repository) LoadProxies(ctx context.Context, truncate bool, records []ip
 	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	batchResults := r.db.SendBatch(c, nil, &batch)
+	batchResults := r.db.SendBatch(c, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}

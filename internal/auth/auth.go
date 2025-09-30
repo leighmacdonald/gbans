@@ -20,6 +20,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -142,7 +143,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 
 		hdrToken, errToken := u.TokenFromHeader(ctx, level == permission.Guest)
 		if errToken != nil || hdrToken == "" {
-			ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.Guest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
 		} else {
 			token = hdrToken
 
@@ -169,7 +170,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					return
 				}
 
-				loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, nil, sid)
+				loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, sid)
 				if errGetPerson != nil {
 					slog.Error("Failed to load person during auth", log.ErrAttr(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)
@@ -201,7 +202,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					}
 				}
 
-				profile := domain.PersonCore{
+				profile := personDomain.Core{
 					SteamID:         loggedInPerson.SteamID,
 					PermissionLevel: loggedInPerson.PermissionLevel,
 					DiscordID:       loggedInPerson.DiscordID,
@@ -225,7 +226,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					}
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.Guest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
 			}
 		}
 
@@ -252,7 +253,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 
 		queryToken, errToken := u.TokenFromQuery(ctx)
 		if errToken != nil || queryToken == "" {
-			ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.Guest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
 		} else {
 			token = queryToken
 
@@ -271,7 +272,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 					return
 				}
 
-				loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, nil, sid)
+				loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, sid)
 				if errGetPerson != nil {
 					slog.Error("Failed to load person during auth", log.ErrAttr(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)
@@ -295,7 +296,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 					}
 				}
 
-				profile := domain.PersonCore{
+				profile := personDomain.Core{
 					SteamID:         loggedInPerson.SteamID,
 					PermissionLevel: loggedInPerson.PermissionLevel,
 					DiscordID:       loggedInPerson.DiscordID,
@@ -319,7 +320,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 					}
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, domain.PersonCore{PermissionLevel: permission.Guest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
 			}
 		}
 

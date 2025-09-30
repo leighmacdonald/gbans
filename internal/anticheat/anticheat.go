@@ -121,7 +121,7 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 	results := map[steamid.SteamID]map[logparse.Detection]int{}
 	conf := a.config.Config()
 
-	owner, errOwner := a.persons.GetOrCreatePersonBySteamID(ctx, nil, steamid.New(conf.Owner))
+	owner, errOwner := a.persons.GetOrCreatePersonBySteamID(ctx, steamid.New(conf.Owner))
 	if errOwner != nil {
 		return errOwner
 	}
@@ -220,7 +220,7 @@ func (a AntiCheat) Import(ctx context.Context, fileName string, reader io.ReadCl
 	}
 
 	for _, entry := range entries {
-		_, err := a.persons.GetOrCreatePersonBySteamID(ctx, nil, entry.SteamID)
+		_, err := a.persons.GetOrCreatePersonBySteamID(ctx, entry.SteamID)
 		if err != nil {
 			return nil, err
 		}

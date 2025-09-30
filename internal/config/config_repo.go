@@ -74,7 +74,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 		authorizedKeys []string
 	)
 
-	err := c.db.QueryRow(ctx, nil, query).
+	err := c.db.QueryRow(ctx, query).
 		Scan(&cfg.General.SiteName, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr, &cfg.General.AssetURL,
 			&cfg.General.DefaultRoute, &cfg.General.NewsEnabled, &cfg.General.ForumsEnabled, &cfg.General.ContestsEnabled, &cfg.General.WikiEnabled,
 			&cfg.General.StatsEnabled, &cfg.General.ServersEnabled, &cfg.General.ReportsEnabled, &cfg.General.ChatlogsEnabled, &cfg.General.DemosEnabled, &cfg.General.SpeedrunsEnabled,
@@ -111,7 +111,7 @@ func (c *Repository) Init(ctx context.Context) error {
 	if _, errRead := c.Read(ctx); errRead != nil {
 		if errors.Is(errRead, database.ErrNoResult) {
 			// Insert a value so that the database will populate a row of defaults.
-			if err := c.db.ExecInsertBuilder(ctx, nil, c.db.Builder().
+			if err := c.db.ExecInsertBuilder(ctx, c.db.Builder().
 				Insert("config").
 				SetMap(map[string]any{
 					"general_site_name": "New gbans site",
@@ -129,7 +129,7 @@ func (c *Repository) Init(ctx context.Context) error {
 }
 
 func (c *Repository) Write(ctx context.Context, config Config) error {
-	return database.DBErr(c.db.ExecUpdateBuilder(ctx, nil, c.db.Builder().
+	return database.DBErr(c.db.ExecUpdateBuilder(ctx, c.db.Builder().
 		Update("config").
 		SetMap(map[string]any{
 			"general_site_name":                   config.General.SiteName,

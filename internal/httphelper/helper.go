@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/schema"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -160,7 +161,7 @@ func GetDefaultFloat64(s string, def float64) float64 {
 // HasPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
 // if the user has appropriate privilege levels.
 // Error responses are handled by this function, no further action needs to take place in the handlers.
-func HasPrivilege(person domain.PersonInfo, allowedSteamIDs steamid.Collection, minPrivilege permission.Privilege) bool {
+func HasPrivilege(person person.Info, allowedSteamIDs steamid.Collection, minPrivilege permission.Privilege) bool {
 	if slices.Contains(allowedSteamIDs, person.GetSteamID()) {
 		return true
 	}

@@ -5,21 +5,21 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func NewRepository(db database.Database, persons domain.PersonProvider) Repository {
+func NewRepository(db database.Database, persons person.Provider) Repository {
 	return Repository{db: db, persons: persons}
 }
 
 type Repository struct {
 	db      database.Database
-	persons domain.PersonProvider
+	persons person.Provider
 }
 
 func (r Repository) Message(ctx context.Context, messageID int64) (ChatLog, error) {
-	row, err := r.db.QueryRowBuilder(ctx, nil, r.db.Builder().
+	row, err := r.db.QueryRowBuilder(ctx, r.db.Builder().
 		Select("m.message_id", "m.steam_id", "m.created_on", "m.personaname", "m.avatarhash", "p.permission_level", "m.body_md").
 		From("playerqueue_messages m").
 		LeftJoin("person p USING(steam_id)").
@@ -39,14 +39,14 @@ func (r Repository) Message(ctx context.Context, messageID int64) (ChatLog, erro
 }
 
 func (r Repository) SetChatStatus(ctx context.Context, steamID steamid.SteamID, status ChatStatus) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
 		Update("person").
 		Set("playerqueue_chat_status", status).
 		Where(sq.Eq{"steam_id": steamID})))
 }
 
 func (r Repository) Delete(ctx context.Context, messageID ...int64) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
 		Update("playerqueue_messages").
 		Set("deleted", true).
 		Where(sq.Eq{"message_id": messageID})))
@@ -54,7 +54,7 @@ func (r Repository) Delete(ctx context.Context, messageID ...int64) error {
 
 func (r Repository) Save(ctx context.Context, message ChatLog) (ChatLog, error) {
 	// Ensure player exists
-	_, errPlayer := r.persons.GetOrCreatePersonBySteamID(ctx, nil, steamid.New(message.SteamID))
+	_, errPlayer := r.persons.GetOrCreatePersonBySteamID(ctx, steamid.New(message.SteamID))
 	if errPlayer != nil {
 		return ChatLog{}, errPlayer
 	}
@@ -74,7 +74,7 @@ func (r Repository) Save(ctx context.Context, message ChatLog) (ChatLog, error) 
 		return ChatLog{}, database.DBErr(errQuery)
 	}
 
-	if err := r.db.QueryRow(ctx, nil, query, args...).Scan(&message.MessageID); err != nil {
+	if err := r.db.QueryRow(ctx, query, args...).Scan(&message.MessageID); err != nil {
 		return message, database.DBErr(err)
 	}
 
@@ -101,7 +101,7 @@ func (r Repository) Query(ctx context.Context, query QueryOpts) ([]ChatLog, erro
 
 	var msgs []ChatLog
 
-	rows, errRows := r.db.QueryBuilder(ctx, nil, builder)
+	rows, errRows := r.db.QueryBuilder(ctx, builder)
 	if errRows != nil {
 		return nil, database.DBErr(errRows)
 	}

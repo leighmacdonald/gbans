@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -203,7 +204,7 @@ func (c *Contests) EntryDelete(ctx context.Context, contestEntryID uuid.UUID) er
 	return c.repository.ContestEntryDelete(ctx, contestEntryID)
 }
 
-func (c *Contests) Contests(ctx context.Context, user domain.PersonInfo) ([]Contest, error) {
+func (c *Contests) Contests(ctx context.Context, user person.Info) ([]Contest, error) {
 	return c.repository.Contests(ctx, !user.HasPermission(permission.Moderator))
 }
 
@@ -223,7 +224,7 @@ func (c *Contests) EntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, s
 	return c.repository.ContestEntryVoteGet(ctx, contestEntryID, steamID, record)
 }
 
-func (c *Contests) EntryVote(ctx context.Context, contestID uuid.UUID, contestEntryID uuid.UUID, user domain.PersonInfo, vote bool) error {
+func (c *Contests) EntryVote(ctx context.Context, contestID uuid.UUID, contestEntryID uuid.UUID, user person.Info, vote bool) error {
 	var contest Contest
 	if errContests := c.ByID(ctx, contestID, &contest); errContests != nil {
 		return errContests

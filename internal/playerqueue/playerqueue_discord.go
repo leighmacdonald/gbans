@@ -4,22 +4,22 @@ import (
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/discord/message"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 )
 
-func NewPlayerqueueChatStatus(author domain.PersonInfo, target domain.PersonInfo, status ChatStatus, reason string) *discordgo.MessageEmbed {
-	colour := message.ColourError
+func NewPlayerqueueChatStatus(author person.Info, target person.Info, status ChatStatus, reason string) *discordgo.MessageEmbed {
+	colour := discord.ColourError
 	switch status {
 	case Readwrite:
-		colour = message.ColourSuccess
+		colour = discord.ColourSuccess
 	case Readonly:
-		colour = message.ColourWarn
+		colour = discord.ColourWarn
 	}
 
 	sid := target.GetSteamID()
 
-	return message.NewEmbed("Updated chat status").
+	return discord.NewEmbed("Updated chat status").
 		Embed().
 		SetColor(colour).
 		SetAuthor(author.GetName(), author.GetAvatar().Small()).
@@ -31,20 +31,20 @@ func NewPlayerqueueChatStatus(author domain.PersonInfo, target domain.PersonInfo
 		MessageEmbed
 }
 
-func NewPlayerqueueMessage(author domain.PersonInfo, msg string) *discordgo.MessageEmbed {
-	return message.NewEmbed().
+func NewPlayerqueueMessage(author person.Info, msg string) *discordgo.MessageEmbed {
+	return discord.NewEmbed().
 		Embed().
-		SetColor(message.ColourInfo).
+		SetColor(discord.ColourInfo).
 		SetAuthor(author.GetName(), author.GetAvatar().Small()).
 		SetDescription(msg).MessageEmbed
 }
 
-func NewPlayerqueuePurge(author domain.PersonInfo, target domain.PersonInfo, chatLog ChatLog, count int) *discordgo.MessageEmbed {
+func NewPlayerqueuePurge(author person.Info, target person.Info, chatLog ChatLog, count int) *discordgo.MessageEmbed {
 	sid := target.GetSteamID()
 
-	return message.NewEmbed().
+	return discord.NewEmbed().
 		Embed().
-		SetColor(message.ColourInfo).
+		SetColor(discord.ColourInfo).
 		SetAuthor(author.GetName(), author.GetAvatar().Small()).
 		SetThumbnail(target.GetAvatar().Medium()).
 		AddField("Message", chatLog.BodyMD).

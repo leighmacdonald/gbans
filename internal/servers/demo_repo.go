@@ -24,7 +24,7 @@ func (r *DemoRepository) ValidateServer(ctx context.Context, serverID int) error
 		return ErrNotFound
 	}
 
-	row := r.db.QueryRow(ctx, nil, `SELECT server_id FROM server WHERE server_id = $1`, serverID)
+	row := r.db.QueryRow(ctx, `SELECT server_id FROM server WHERE server_id = $1`, serverID)
 	var serverIDScan int
 	if errQuery := row.Scan(&serverIDScan); errQuery != nil {
 		return ErrNotFound
@@ -34,7 +34,7 @@ func (r *DemoRepository) ValidateServer(ctx context.Context, serverID int) error
 }
 
 func (r *DemoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {
-	rows, errRow := r.db.QueryBuilder(ctx, nil, r.db.
+	rows, errRow := r.db.QueryBuilder(ctx, r.db.
 		Builder().
 		Select("d.demo_id", "d.title", "d.asset_id").
 		From("demo d").
@@ -63,7 +63,7 @@ func (r *DemoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]Demo
 }
 
 func (r *DemoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
-	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
@@ -92,7 +92,7 @@ func (r *DemoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile
 }
 
 func (r *DemoRepository) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
-	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("r.demo_id", "r.server_id", "r.title", "r.created_on", "r.downloads",
 			"r.map_name", "r.archive", "r.stats", "r.asset_id", "a.size", "s.short_name", "s.name").
@@ -132,7 +132,7 @@ func (r *DemoRepository) GetDemos(ctx context.Context) ([]DemoFile, error) {
 		LeftJoin("asset a ON a.asset_id = d.asset_id").
 		OrderBy("d.demo_id DESC")
 
-	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
+	rows, errQuery := r.db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		if errors.Is(errQuery, database.ErrNoResult) {
 			return demos, nil
@@ -193,7 +193,7 @@ func (r *DemoRepository) insertDemo(ctx context.Context, demoFile *DemoFile) err
 		return database.DBErr(errQueryArgs)
 	}
 
-	errQuery := r.db.QueryRow(ctx, nil, query, args...).Scan(&demoFile.ServerID)
+	errQuery := r.db.QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
 	if errQuery != nil {
 		return database.DBErr(errQuery)
 	}
@@ -213,7 +213,7 @@ func (r *DemoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) err
 		Set("asset_id", demoFile.AssetID).
 		Where(sq.Eq{"demo_id": demoFile.DemoID})
 
-	if errExec := r.db.ExecUpdateBuilder(ctx, nil, query); errExec != nil {
+	if errExec := r.db.ExecUpdateBuilder(ctx, query); errExec != nil {
 		return database.DBErr(errExec)
 	}
 
@@ -222,7 +222,7 @@ func (r *DemoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) err
 
 func (r *DemoRepository) Delete(ctx context.Context, demoID int64) error {
 	const query = `DELETE FROM demo WHERE demo_id = $1`
-	if err := r.db.Exec(ctx, nil, query, demoID); err != nil {
+	if err := r.db.Exec(ctx, query, demoID); err != nil {
 		return database.DBErr(err)
 	}
 

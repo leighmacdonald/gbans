@@ -1,18 +1,24 @@
 package ban_test
 
-// func TestBan(t *testing.T) {
-// 	testDB := tests.Database()
-// 	defer testDB.Close()
+import (
+	"testing"
 
-// 	bans := ban.NewBans(ban.NewRepository(testDB.Database), nil, nil, nil, nil, nil, nil)
+	"github.com/leighmacdonald/gbans/internal/tests"
+)
 
-// 	opts := []ban.Opts{
-// 		{SourceID: steamid.New(o), TargetID: "", Duration: "P1M", BanType: banDomain.Banned, Reason: banDomain.Cheating, Origin: banDomain.System, Name: "", Note: "", ReasonText: "", CIDR: nil},
-// 	}
+func TestBan(t *testing.T) {
+	testDB := tests.NewFixture()
+	defer testDB.Close()
 
-// 	for _, opt := range opts {
-// 		ban, err := bans.Create(t.Context(), opt)
-// 		require.NoError(t, err)
-// 		require.Greater(t, 0, ban.BanID)
-// 	}
-// }
+	// bans := ban.NewBans(ban.NewRepository(testDB.Database), nil, nil, nil, nil, nil, nil)
+
+	// opts := []ban.Opts{
+	// 	{SourceID: steamid.New(o), TargetID: "", Duration: "P1M", BanType: banDomain.Banned, Reason: banDomain.Cheating, Origin: banDomain.System, Name: "", Note: "", ReasonText: "", CIDR: nil},
+	// }
+
+	// for _, opt := range opts {
+	// 	ban, err := bans.Create(t.Context(), opt)
+	// 	require.NoError(t, err)
+	// 	require.Greater(t, 0, ban.BanID)
+	// }
+}

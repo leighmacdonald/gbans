@@ -24,7 +24,7 @@ func TestServers(t *testing.T) {
 	newServer := servers.NewServer(stringutil.SecureRandomString(10), stringutil.SecureRandomString(10)+".com", 27015)
 	saved, errSave := serversCase.Save(t.Context(), newServer)
 	require.NoError(t, errSave)
-	require.True(t, saved.ServerID > 0)
+	require.Positive(t, saved.ServerID)
 	require.Equal(t, newServer.ShortName, saved.ShortName)
 	require.Equal(t, newServer.Address, saved.Address)
 	require.Equal(t, newServer.Port, saved.Port)
@@ -34,8 +34,9 @@ func TestServers(t *testing.T) {
 	require.NoError(t, errSave)
 
 	// Query them all
-	serversAll, errServers := serversCase.Servers(t.Context(), servers.Query{})
+	serversAll, errServers2 := serversCase.Servers(t.Context(), servers.Query{})
 	require.Len(t, serversAll, 2)
+	require.NoError(t, errServers2)
 
 	// Delete one
 	require.NoError(t, serversCase.Delete(t.Context(), otherServer.ServerID))
@@ -44,16 +45,18 @@ func TestServers(t *testing.T) {
 	require.ErrorIs(t, servers.ErrNotFound, deletedErr)
 
 	// Query all
-	serversDeleted, errServers := serversCase.Servers(t.Context(), servers.Query{})
+	serversDeleted, errServers3 := serversCase.Servers(t.Context(), servers.Query{})
 	require.Len(t, serversDeleted, 1)
+	require.NoError(t, errServers3)
 
 	// Query all including soft-deleted
-	serversAllDeleted, errServers := serversCase.Servers(t.Context(), servers.Query{IncludeDeleted: true})
+	serversAllDeleted, errServers4 := serversCase.Servers(t.Context(), servers.Query{IncludeDeleted: true})
 	require.Len(t, serversAllDeleted, 2)
+	require.NoError(t, errServers4)
 
 	byPass, _ := serversCase.GetByPassword(t.Context(), saved.Password)
-	require.EqualValues(t, saved, byPass)
+	require.Equal(t, saved, byPass)
 
 	byName, _ := serversCase.GetByName(t.Context(), saved.ShortName)
-	require.EqualValues(t, saved, byName)
+	require.Equal(t, saved, byName)
 }

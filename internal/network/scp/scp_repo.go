@@ -48,7 +48,7 @@ func (r Repository) GetHostKey(ctx context.Context, addr string) (string, error)
 	var key string
 
 	if errRow := r.db.
-		QueryRow(ctx, nil, `SELECT key FROM host_key WHERE address = $1`, addr).
+		QueryRow(ctx, `SELECT key FROM host_key WHERE address = $1`, addr).
 		Scan(&key); errRow != nil {
 		return "", database.DBErr(errRow)
 	}
@@ -58,7 +58,7 @@ func (r Repository) GetHostKey(ctx context.Context, addr string) (string, error)
 
 func (r Repository) SetHostKey(ctx context.Context, addr string, key string) error {
 	const query = `INSERT INTO host_key (address, key, created_on) VALUES ($1, $2, $3)`
-	if err := r.db.Exec(ctx, nil, query, addr, key, time.Now()); err != nil {
+	if err := r.db.Exec(ctx, query, addr, key, time.Now()); err != nil {
 		return database.DBErr(err)
 	}
 
@@ -71,7 +71,7 @@ func (r Repository) Servers(ctx context.Context) ([]ServerInfo, error) {
 		FROM server
 		WHERE is_enabled = true AND deleted = false
 		ORDER BY short_name`
-	rows, errRows := r.db.Query(ctx, nil, query)
+	rows, errRows := r.db.Query(ctx, query)
 	if errRows != nil {
 		return nil, database.DBErr(errRows)
 	}

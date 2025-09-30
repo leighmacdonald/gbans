@@ -30,25 +30,25 @@ func (r Repository) SavePersonAuth(ctx context.Context, auth *PersonAuth) error 
 		return database.DBErr(errQuery)
 	}
 
-	return database.DBErr(r.db.QueryRow(ctx, nil, query, args...).Scan(&auth.PersonAuthID))
+	return database.DBErr(r.db.QueryRow(ctx, query, args...).Scan(&auth.PersonAuthID))
 }
 
 func (r Repository) DeletePersonAuth(ctx context.Context, authID int64) error {
-	return database.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
+	return database.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.
 		Builder().
 		Delete("person_auth").
 		Where(sq.Eq{"person_auth_id": authID})))
 }
 
 func (r Repository) PrunePersonAuth(ctx context.Context) error {
-	return database.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
+	return database.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.
 		Builder().
 		Delete("person_auth").
 		Where(sq.Gt{"created_on + interval '1 month'": time.Now()})))
 }
 
 func (r Repository) GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *PersonAuth) error {
-	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on").
 		From("person_auth").

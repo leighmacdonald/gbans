@@ -8,7 +8,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -24,7 +24,7 @@ type ThreadQueryFilter struct {
 }
 
 type Activity struct {
-	Person       domain.PersonInfo
+	Person       person.Info
 	LastActivity time.Time
 }
 
@@ -181,7 +181,7 @@ func (f Forums) Start(ctx context.Context) {
 	f.tracker.Start(ctx)
 }
 
-func (f Forums) Touch(up domain.PersonInfo) {
+func (f Forums) Touch(up person.Info) {
 	f.tracker.Touch(up)
 }
 
@@ -363,7 +363,7 @@ func NewTracker() *Tracker {
 	}
 }
 
-func (t *Tracker) Touch(person domain.PersonInfo) {
+func (t *Tracker) Touch(person person.Info) {
 	sid := person.GetSteamID()
 	if !sid.Valid() {
 		return

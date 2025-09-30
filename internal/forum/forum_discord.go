@@ -4,12 +4,12 @@ import (
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/discord/message"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 )
 
 func discordCategorySave(category Category) *discordgo.MessageEmbed {
-	embed := message.NewEmbed("Forum Category Saved")
+	embed := discord.NewEmbed("Forum Category Saved")
 	embed.Embed().AddField("Category", category.Title)
 	embed.Embed().AddField("ID", strconv.Itoa(category.ForumCategoryID))
 
@@ -21,7 +21,7 @@ func discordCategorySave(category Category) *discordgo.MessageEmbed {
 }
 
 func discordCategoryDelete(category Category) *discordgo.MessageEmbed {
-	embed := message.NewEmbed("Forum Category Deleted")
+	embed := discord.NewEmbed("Forum Category Deleted")
 	embed.Embed().AddField("Category", category.Title)
 	embed.Embed().AddField("ID", strconv.Itoa(category.ForumCategoryID))
 
@@ -33,13 +33,13 @@ func discordCategoryDelete(category Category) *discordgo.MessageEmbed {
 }
 
 func discordForumMessageSaved(forumMessage Message) *discordgo.MessageEmbed {
-	embed := message.NewEmbed("Forum Message Created/Edited", forumMessage.BodyMD)
+	embed := discord.NewEmbed("Forum Message Created/Edited", forumMessage.BodyMD)
 	embed.Embed().
 		AddField("Category", forumMessage.Title)
 
 	if forumMessage.Personaname != "" {
 		embed.Embed().Author = &discordgo.MessageEmbedAuthor{
-			IconURL: domain.NewAvatar(forumMessage.Avatarhash).Medium(),
+			IconURL: person.NewAvatar(forumMessage.Avatarhash).Medium(),
 			Name:    forumMessage.Personaname,
 		}
 	}
@@ -48,7 +48,7 @@ func discordForumMessageSaved(forumMessage Message) *discordgo.MessageEmbed {
 }
 
 func discordForumSaved(forumMessage Forum) *discordgo.MessageEmbed {
-	embed := message.NewEmbed("Forum Created/Edited")
+	embed := discord.NewEmbed("Forum Created/Edited")
 	embed.Embed().
 		AddField("Forum", forumMessage.Title)
 

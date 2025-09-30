@@ -17,7 +17,7 @@ func TestPerson(t *testing.T) {
 
 	personCase := person.NewPersons(person.NewRepository(testFixture.Config, testFixture.Database), tests.OwnerSID, nil)
 
-	_, err := personCase.BySteamID(t.Context(), nil, tests.UserSID)
+	_, err := personCase.BySteamID(t.Context(), tests.UserSID)
 	require.Error(t, err)
 
 	for idx, sid := range []steamid.SteamID{tests.OwnerSID, tests.ModSID, tests.UserSID, tests.GuestSID} {
@@ -32,17 +32,17 @@ func TestPerson(t *testing.T) {
 		case 3:
 			user.PermissionLevel = permission.Guest
 		}
-		require.NoError(t, personCase.Save(t.Context(), nil, &user))
+		require.NoError(t, personCase.Save(t.Context(), &user))
 	}
 
-	fetched, errFetched := personCase.BySteamID(t.Context(), nil, tests.UserSID)
+	fetched, errFetched := personCase.BySteamID(t.Context(), tests.UserSID)
 	require.NoError(t, errFetched)
 
 	fetched.PermissionLevel = permission.Moderator
 	fetched.PersonaName = stringutil.SecureRandomString(10)
 	fetched.DiscordID = stringutil.SecureRandomString(10)
 
-	require.NoError(t, personCase.Save(t.Context(), nil, &fetched))
+	require.NoError(t, personCase.Save(t.Context(), &fetched))
 
 	_, errSettings := personCase.GetPersonSettings(t.Context(), fetched.SteamID)
 	require.NoError(t, errSettings)
@@ -63,7 +63,7 @@ func TestPerson(t *testing.T) {
 	// require.EqualValues(t, updateValues.CenterProjectiles, settings.CenterProjectiles)
 	require.Equal(t, updateValues.StatsHidden, settings.StatsHidden)
 
-	players, errPlayers := personCase.GetPeople(t.Context(), nil, person.Query{})
+	players, errPlayers := personCase.GetPeople(t.Context(), person.Query{})
 	require.NoError(t, errPlayers)
 	require.Len(t, players, 4)
 
@@ -73,6 +73,6 @@ func TestPerson(t *testing.T) {
 	discord, _ := personCase.GetPersonByDiscordID(t.Context(), fetched.DiscordID)
 	require.EqualExportedValues(t, fetched, discord)
 
-	steamID, _ := personCase.BySteamID(t.Context(), nil, fetched.SteamID)
+	steamID, _ := personCase.BySteamID(t.Context(), fetched.SteamID)
 	require.EqualExportedValues(t, fetched, steamID)
 }

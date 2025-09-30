@@ -19,7 +19,7 @@ func NewRepository(database database.Database) Repository {
 func (r *Repository) GetWikiPageBySlug(ctx context.Context, slug string) (Page, error) {
 	var page Page
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, nil, r.db.
+	row, errQuery := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").
 		From("wiki").
@@ -38,7 +38,7 @@ func (r *Repository) GetWikiPageBySlug(ctx context.Context, slug string) (Page, 
 }
 
 func (r *Repository) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
-	if errExec := r.db.ExecDeleteBuilder(ctx, nil, r.db.
+	if errExec := r.db.ExecDeleteBuilder(ctx, r.db.
 		Builder().
 		Delete("wiki").
 		Where(sq.Eq{"slug": slug})); errExec != nil {
@@ -49,7 +49,7 @@ func (r *Repository) DeleteWikiPageBySlug(ctx context.Context, slug string) erro
 }
 
 func (r *Repository) SaveWikiPage(ctx context.Context, page *Page) error {
-	errQueryRow := r.db.ExecInsertBuilder(ctx, nil, r.db.
+	errQueryRow := r.db.ExecInsertBuilder(ctx, r.db.
 		Builder().
 		Insert("wiki").
 		Columns("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").

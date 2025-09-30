@@ -20,9 +20,9 @@ func NewRepository(database database.Database) Repository {
 	return Repository{db: database}
 }
 
-// todo move to srcds
+// todo move to srcds.
 func (r *Repository) GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
-	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
+	rows, errRows := r.db.QueryBuilder(ctx, r.db.
 		Builder().
 		Select("steam_id", "permission_level").
 		From("person").
@@ -102,7 +102,7 @@ func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) 
 		constraints = append(constraints, sq.Eq{"s.password": filter.Password})
 	}
 
-	rows, errQueryExec := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
+	rows, errQueryExec := r.db.QueryBuilder(ctx, builder.Where(constraints))
 	if errQueryExec != nil {
 		return []Server{}, database.DBErr(errQueryExec)
 	}
@@ -154,7 +154,7 @@ func (r *Repository) Save(ctx context.Context, server *Server) error {
       		deleted = $16, log_secret = $17, enable_stats = $18, address_internal = $19, sdr_enabled = $20
 		RETURNING server_id;`
 
-	err := r.db.QueryRow(ctx, nil, query, server.ShortName, server.Name, server.Address, server.Port,
+	err := r.db.QueryRow(ctx, query, server.ShortName, server.Name, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal, &server.SDREnabled).

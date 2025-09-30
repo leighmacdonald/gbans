@@ -36,18 +36,18 @@ type Database interface {
 	Close() error
 	Begin(ctx context.Context) (pgx.Tx, error)
 	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
-	Query(ctx context.Context, transaction pgx.Tx, query string, args ...any) (pgx.Rows, error)
-	QueryBuilder(ctx context.Context, transaction pgx.Tx, builder sq.SelectBuilder) (pgx.Rows, error)
-	QueryRow(ctx context.Context, transaction pgx.Tx, query string, args ...any) pgx.Row
-	QueryRowBuilder(ctx context.Context, transaction pgx.Tx, builder sq.SelectBuilder) (pgx.Row, error)
-	Exec(ctx context.Context, transaction pgx.Tx, query string, args ...any) error
-	ExecInsertBuilder(ctx context.Context, transaction pgx.Tx, builder sq.InsertBuilder) error
-	ExecDeleteBuilder(ctx context.Context, transaction pgx.Tx, builder sq.DeleteBuilder) error
-	ExecUpdateBuilder(ctx context.Context, transaction pgx.Tx, builder sq.UpdateBuilder) error
-	ExecInsertBuilderWithReturnValue(ctx context.Context, transaction pgx.Tx, builder sq.InsertBuilder, outID any) error
+	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
+	QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error)
+	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
+	QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error)
+	Exec(ctx context.Context, query string, args ...any) error
+	ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error
+	ExecDeleteBuilder(ctx context.Context, builder sq.DeleteBuilder) error
+	ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder) error
+	ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error
 	Builder() sq.StatementBuilderType
-	SendBatch(ctx context.Context, transaction pgx.Tx, b *pgx.Batch) pgx.BatchResults
-	GetCount(ctx context.Context, transaction pgx.Tx, builder sq.SelectBuilder) (int64, error)
+	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
+	GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error)
 	TruncateTable(ctx context.Context, table string) error
 	WrapTx(ctx context.Context, fn func(pgx.Tx) error) error
 }
@@ -168,11 +168,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (db *postgresStore) SendBatch(ctx context.Context, transaction pgx.Tx, batch *pgx.Batch) pgx.BatchResults { //nolint:ireturn
-	if transaction != nil {
-		return transaction.SendBatch(ctx, batch)
-	}
-
+func (db *postgresStore) SendBatch(ctx context.Context, batch *pgx.Batch) pgx.BatchResults { //nolint:ireturn
 	return db.conn.SendBatch(ctx, batch)
 }
 
@@ -181,98 +177,76 @@ func (db *postgresStore) Builder() sq.StatementBuilderType {
 }
 
 //nolint:ireturn
-func (db *postgresStore) Query(ctx context.Context, transaction pgx.Tx, query string, args ...any) (pgx.Rows, error) {
-	var (
-		rows pgx.Rows
-		err  error
-	)
-	if transaction != nil {
-		rows, err = transaction.Query(ctx, query, args...)
-	} else {
-		rows, err = db.conn.Query(ctx, query, args...)
-	}
-
-	return rows, err //nolint:wrapcheck
+func (db *postgresStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
+	return db.conn.Query(ctx, query, args...) //nolint:wrapcheck
 }
 
-func (db *postgresStore) QueryBuilder(ctx context.Context, transaction pgx.Tx, builder sq.SelectBuilder) (pgx.Rows, error) { //nolint:ireturn
+func (db *postgresStore) QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error) { //nolint:ireturn
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return nil, DBErr(errQuery)
 	}
 
-	rows, err := db.Query(ctx, transaction, query, args...)
+	rows, err := db.Query(ctx, query, args...)
 
 	return rows, err //nolint:wrapcheck
 }
 
-func (db *postgresStore) QueryRow(ctx context.Context, transaction pgx.Tx, query string, args ...any) pgx.Row { //nolint:ireturn
-	if transaction != nil {
-		return transaction.QueryRow(ctx, query, args...)
-	}
-
+func (db *postgresStore) QueryRow(ctx context.Context, query string, args ...any) pgx.Row { //nolint:ireturn
 	return db.conn.QueryRow(ctx, query, args...)
 }
 
-func (db *postgresStore) QueryRowBuilder(ctx context.Context, transaction pgx.Tx, builder sq.SelectBuilder) (pgx.Row, error) { //nolint:ireturn
+func (db *postgresStore) QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error) { //nolint:ireturn
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return nil, errQuery //nolint:wrapcheck
 	}
 
-	if transaction != nil {
-		return transaction.QueryRow(ctx, query, args...), nil
-	}
-
 	return db.conn.QueryRow(ctx, query, args...), nil
 }
 
-func (db *postgresStore) Exec(ctx context.Context, transaction pgx.Tx, query string, args ...any) error {
+func (db *postgresStore) Exec(ctx context.Context, query string, args ...any) error {
 	var err error
-	if transaction != nil {
-		_, err = transaction.Exec(ctx, query, args...)
-	} else {
-		_, err = db.conn.Exec(ctx, query, args...)
-	}
+	_, err = db.conn.Exec(ctx, query, args...)
 
 	return err //nolint:wrapcheck
 }
 
-func (db *postgresStore) ExecInsertBuilder(ctx context.Context, transaction pgx.Tx, builder sq.InsertBuilder) error {
+func (db *postgresStore) ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return DBErr(errQuery)
 	}
 
-	return db.Exec(ctx, transaction, query, args...) //nolint:wrapcheck
+	return db.Exec(ctx, query, args...) //nolint:wrapcheck
 }
 
-func (db *postgresStore) ExecDeleteBuilder(ctx context.Context, transaction pgx.Tx, builder sq.DeleteBuilder) error {
+func (db *postgresStore) ExecDeleteBuilder(ctx context.Context, builder sq.DeleteBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return errQuery //nolint:wrapcheck
 	}
 
-	return db.Exec(ctx, transaction, query, args...) //nolint:wrapcheck
+	return db.Exec(ctx, query, args...) //nolint:wrapcheck
 }
 
-func (db *postgresStore) ExecUpdateBuilder(ctx context.Context, transaction pgx.Tx, builder sq.UpdateBuilder) error {
+func (db *postgresStore) ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return errQuery //nolint:wrapcheck
 	}
 
-	return db.Exec(ctx, transaction, query, args...) //nolint:wrapcheck
+	return db.Exec(ctx, query, args...) //nolint:wrapcheck
 }
 
-func (db *postgresStore) ExecInsertBuilderWithReturnValue(ctx context.Context, transaction pgx.Tx, builder sq.InsertBuilder, outID any) error {
+func (db *postgresStore) ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return errQuery //nolint:wrapcheck
 	}
 
 	if errScan := db.
-		QueryRow(ctx, transaction, query, args...).
+		QueryRow(ctx, query, args...).
 		Scan(outID); errScan != nil {
 		return errScan //nolint:wrapcheck
 	}
@@ -297,7 +271,7 @@ func (db *postgresStore) Close() error {
 	return nil
 }
 
-func (db *postgresStore) GetCount(ctx context.Context, transaction pgx.Tx, builder sq.SelectBuilder) (int64, error) {
+func (db *postgresStore) GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error) {
 	countQuery, argsCount, errCountQuery := builder.ToSql()
 	if errCountQuery != nil {
 		return 0, errors.Join(errCountQuery, ErrCreateQuery)
@@ -305,7 +279,7 @@ func (db *postgresStore) GetCount(ctx context.Context, transaction pgx.Tx, build
 
 	var count int64
 	if errCount := db.
-		QueryRow(ctx, transaction, countQuery, argsCount...).
+		QueryRow(ctx, countQuery, argsCount...).
 		Scan(&count); errCount != nil {
 		return 0, errCount //nolint:wrapcheck
 	}
@@ -319,7 +293,7 @@ func (db *postgresStore) TruncateTable(ctx context.Context, table string) error 
 		return DBErr(errQueryArgs)
 	}
 
-	rows, errExec := db.Query(ctx, nil, query, args...)
+	rows, errExec := db.Query(ctx, query, args...)
 	if errExec != nil {
 		return DBErr(errExec)
 	}

@@ -36,6 +36,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
@@ -93,7 +94,7 @@ type GBans struct {
 	reports        ban.Reports
 	servers        servers.Servers
 	speedruns      servers.Speedruns
-	srcds          *servers.SRCDS
+	sourcemod      *sourcemod.Sourcemod
 	states         *servers.State
 	staticConfig   config.Static
 	tfapiClient    *thirdparty.TFAPI
@@ -193,7 +194,8 @@ func (g *GBans) Init(ctx context.Context) error {
 	discord, errDiscord := bot.New(bot.Opts{
 		Token:   conf.Discord.Token,
 		AppID:   conf.Discord.AppID,
-		GuildID: conf.Discord.GuildID})
+		GuildID: conf.Discord.GuildID,
+	})
 	if errDiscord != nil {
 		return errDiscord
 	}
@@ -214,7 +216,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database))
 	g.patreon = patreon.NewPatreon(patreon.NewRepository(g.database), g.config)
-	g.srcds = servers.NewSRCDS(servers.NewSRCDSRepository(g.database), g.config, g.servers, g.persons, g.tfapiClient, g.notifications)
+	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.config, g.persons)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
 	g.auth = auth.NewAuthentication(auth.NewRepository(g.database), g.config, g.persons, g.bans, g.servers, SentryDSN)
 	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), g.bans, g.config, g.persons, g.notifications)
@@ -397,8 +399,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	servers.NewDemoHandler(router, g.demos, g.auth)
 	servers.NewServersHandler(router, g.servers, g.states, g.auth)
 	servers.NewSpeedrunsHandler(router, g.speedruns, g.auth, g.config, g.servers, SentryDSN)
-	servers.NewSRCDSHandler(router, g.srcds, g.servers, g.persons, g.assets, g.bans,
-		g.networks, g.auth, g.config, g.states, g.blocklists, SentryDSN)
+	sourcemod.NewHandler(router, g.auth, nil, g.sourcemod)
 	votes.NewVotesHandler(router, g.votes, g.auth)
 	wiki.NewWikiHandler(router, g.wiki, g.auth)
 
@@ -460,7 +461,7 @@ func (g *GBans) Close(ctx context.Context) error {
 
 func (g GBans) firstTimeSetup(ctx context.Context) error {
 	conf := g.config.Config()
-	_, errRootUser := g.persons.BySteamID(ctx, nil, steamid.New(conf.Owner))
+	_, errRootUser := g.persons.BySteamID(ctx, steamid.New(conf.Owner))
 	if errRootUser == nil {
 		return nil
 	}
@@ -472,7 +473,7 @@ func (g GBans) firstTimeSetup(ctx context.Context) error {
 	owner := person.New(steamid.New(conf.Owner))
 	owner.PermissionLevel = permission.Admin
 
-	if errSave := g.persons.Save(ctx, nil, &owner); errSave != nil {
+	if errSave := g.persons.Save(ctx, &owner); errSave != nil {
 		slog.Error("Failed create new owner", log.ErrAttr(errSave))
 	}
 

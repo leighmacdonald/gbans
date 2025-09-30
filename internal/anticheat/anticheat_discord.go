@@ -9,9 +9,9 @@ import (
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord/helper"
-	"github.com/leighmacdonald/gbans/internal/discord/message"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -22,7 +22,7 @@ func RegisterDiscordCommands(bot *bot.Bot, anticheat AntiCheat, config *config.C
 	bot.MustRegisterHandler("ac", &discordgo.ApplicationCommand{
 		Name:                     "anticheat",
 		Description:              "Query Anticheat Logs",
-		DefaultMemberPermissions: &helper.ModPerms,
+		DefaultMemberPermissions: &discord.ModPerms,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        "player",
@@ -31,7 +31,7 @@ func RegisterDiscordCommands(bot *bot.Bot, anticheat AntiCheat, config *config.C
 				Options: []*discordgo.ApplicationCommandOption{
 					{
 						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        helper.OptUserIdentifier,
+						Name:        discord.OptUserIdentifier,
 						Description: "SteamID in any format OR profile url",
 						Required:    true,
 					},
@@ -43,7 +43,7 @@ func RegisterDiscordCommands(bot *bot.Bot, anticheat AntiCheat, config *config.C
 
 type discordHandler struct {
 	anticheat AntiCheat
-	persons   domain.PersonProvider
+	persons   person.Provider
 	config    *config.Configuration
 }
 
@@ -53,19 +53,19 @@ func (h discordHandler) onAC(ctx context.Context, session *discordgo.Session, in
 	case "player":
 		return h.onACPlayer(ctx, session, interaction)
 	default:
-		return nil, helper.ErrCommandFailed
+		return nil, discord.ErrCommandFailed
 	}
 }
 
 func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	opts := bot.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	steamID, errResolveSID := steamid.Resolve(ctx, opts[helper.OptUserIdentifier].StringValue())
+	steamID, errResolveSID := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errResolveSID != nil || !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
 
-	person, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
+	person, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errAuthor != nil {
 		return nil, errAuthor
 	}
@@ -79,9 +79,9 @@ func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 }
 
 func NewAnticheatTrigger(ban ban.Ban, action config.Action, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
-	embed := message.NewEmbed("Player triggered anti-cheat response")
+	embed := discord.NewEmbed("Player triggered anti-cheat response")
 	embed.Embed().
-		SetColor(message.ColourSuccess).
+		SetColor(discord.ColourSuccess).
 		AddField("Detection", string(entry.Detection)).
 		AddField("Count", strconv.Itoa(count)).
 		AddField("Action", string(action))
@@ -100,9 +100,9 @@ func NewAnticheatTrigger(ban ban.Ban, action config.Action, entry logparse.StacE
 	return embed.Embed().MessageEmbed
 }
 
-func ACPlayerLogs(conf *config.Configuration, person domain.PersonInfo, entries []Entry) *discordgo.MessageEmbed {
+func ACPlayerLogs(conf *config.Configuration, person person.Info, entries []Entry) *discordgo.MessageEmbed {
 	sid := person.GetSteamID()
-	emb := message.NewEmbed()
+	emb := discord.NewEmbed()
 
 	total := 0
 	detections := map[logparse.Detection]int{}
@@ -118,7 +118,7 @@ func ACPlayerLogs(conf *config.Configuration, person domain.PersonInfo, entries 
 
 	emb.Embed().
 		SetTitle(fmt.Sprintf("Anticheat Detections (count: %d)", total)).
-		SetColor(message.ColourSuccess).
+		SetColor(discord.ColourSuccess).
 		SetAuthor(person.GetName(), person.GetAvatar().Small(), conf.ExtURL(person))
 
 	j := 0

@@ -1,4 +1,4 @@
-package servers
+package sourcemod
 
 import (
 	"context"
@@ -6,36 +6,29 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"net/http"
 	"net/netip"
-	"strconv"
+	"slices"
 	"strings"
 	"time"
 
-	"github.com/getsentry/sentry-go"
-	sentrygin "github.com/getsentry/sentry-go/gin"
-	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/leighmacdonald/gbans/internal/domain/config"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"golang.org/x/exp/slices"
 )
 
 var (
-	ErrSMInvalidAuthName   = errors.New("invalid auth name")
-	ErrSMImmunity          = errors.New("invalid immunity level, must be between 0-100")
-	ErrSMGroupName         = errors.New("group name cannot be empty")
-	ErrSMAdminGroupExists  = errors.New("admin group already exists")
-	ErrSMAdminExists       = errors.New("admin already exists")
-	ErrSMAdminFlagInvalid  = errors.New("invalid admin flag")
-	ErrSMRequirePassword   = errors.New("name auth type requires password")
-	ErrInsufficientDetails = errors.New("insufficient details")
+	ErrInvalidAuthName  = errors.New("invalid auth name")
+	ErrImmunity         = errors.New("invalid immunity level, must be between 0-100")
+	ErrGroupName        = errors.New("group name cannot be empty")
+	ErrAdminGroupExists = errors.New("admin group already exists")
+	ErrAdminExists      = errors.New("admin already exists")
+	ErrAdminFlagInvalid = errors.New("invalid admin flag")
+	ErrRequirePassword  = errors.New("name auth type requires password")
 )
 
 type BanSource string
@@ -82,7 +75,7 @@ const (
 	OverrideAccessDeny  OverrideAccess = "deny"
 )
 
-type SMAdmin struct {
+type Admin struct {
 	AdminID   int             `json:"admin_id"`
 	SteamID   steamid.SteamID `json:"steam_id"`
 	AuthType  AuthType        `json:"auth_type"` // steam | name |ip
@@ -91,12 +84,12 @@ type SMAdmin struct {
 	Flags     string          `json:"flags"`
 	Name      string          `json:"name"`
 	Immunity  int             `json:"immunity"`
-	Groups    []SMGroups      `json:"groups"`
+	Groups    []Groups        `json:"groups"`
 	CreatedOn time.Time       `json:"created_on"`
 	UpdatedOn time.Time       `json:"updated_on"`
 }
 
-type SMGroups struct {
+type Groups struct {
 	GroupID       int       `json:"group_id"`
 	Flags         string    `json:"flags"`
 	Name          string    `json:"name"`
@@ -105,14 +98,14 @@ type SMGroups struct {
 	UpdatedOn     time.Time `json:"updated_on"`
 }
 
-type SMGroupImmunity struct {
+type GroupImmunity struct {
 	GroupImmunityID int       `json:"group_immunity_id"`
-	Group           SMGroups  `json:"group"`
-	Other           SMGroups  `json:"other"`
+	Group           Groups    `json:"group"`
+	Other           Groups    `json:"other"`
 	CreatedOn       time.Time `json:"created_on"`
 }
 
-type SMGroupOverrides struct {
+type GroupOverrides struct {
 	GroupOverrideID int            `json:"group_override_id"`
 	GroupID         int            `json:"group_id"`
 	Type            OverrideType   `json:"type"` // command | group
@@ -122,7 +115,7 @@ type SMGroupOverrides struct {
 	UpdatedOn       time.Time      `json:"updated_on"`
 }
 
-type SMOverrides struct {
+type Overrides struct {
 	OverrideID int          `json:"override_id"`
 	Type       OverrideType `json:"type"` // command | group
 	Name       string       `json:"name"`
@@ -131,7 +124,7 @@ type SMOverrides struct {
 	UpdatedOn  time.Time    `json:"updated_on"`
 }
 
-type SMAdminGroups struct {
+type AdminGroups struct {
 	AdminID      int       `json:"admin_id"`
 	GroupID      int       `json:"group_id"`
 	InheritOrder int       `json:"inherit_order"`
@@ -139,86 +132,22 @@ type SMAdminGroups struct {
 	UpdatedOn    time.Time `json:"updated_on"`
 }
 
-type SMConfig struct {
+type Config struct {
 	CfgKey   string `json:"cfg_key"`
 	CfgValue string `json:"cfg_value"`
 }
 
-type ServerAuthReq struct {
-	Key string `json:"key"`
+func New(repository Repository, linker config.Linker, person person.Provider) *Sourcemod {
+	return &Sourcemod{repository: repository, linker: linker, person: person}
 }
 
-func MiddlewareServer(servers Servers, sentryDSN string) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		reqAuthHeader := ctx.GetHeader("Authorization")
-		if reqAuthHeader == "" {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-
-			return
-		}
-
-		if strings.HasPrefix(reqAuthHeader, "Bearer ") {
-			parts := strings.Split(reqAuthHeader, " ")
-			if len(parts) != 2 {
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-
-				return
-			}
-
-			reqAuthHeader = parts[1]
-		}
-
-		server, errServer := servers.GetByPassword(ctx, reqAuthHeader)
-		if errServer != nil {
-			slog.Error("Failed to load server during auth", log.ErrAttr(errServer), slog.String("token", reqAuthHeader), slog.String("IP", ctx.ClientIP()))
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-
-			return
-		}
-
-		ctx.Set("server_id", server.ServerID)
-
-		if sentryDSN != "" {
-			if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
-				hub.WithScope(func(scope *sentry.Scope) {
-					scope.SetUser(sentry.User{
-						ID:        strconv.Itoa(server.ServerID),
-						IPAddress: server.Addr(),
-						Name:      server.ShortName,
-					})
-				})
-			}
-		}
-
-		ctx.Next()
-	}
+type Sourcemod struct {
+	repository Repository
+	linker     config.Linker
+	person     person.Provider
 }
 
-type SRCDS struct {
-	repository SRCDSRepository
-	config     *config.Configuration
-	servers    Servers
-	persons    PersonProvider
-	notif      notification.Notifier
-	cookie     string
-	tfAPI      *thirdparty.TFAPI
-}
-
-func NewSRCDS(repository SRCDSRepository, config *config.Configuration, servers Servers,
-	persons PersonProvider, tfAPI *thirdparty.TFAPI, notif notification.Notifier,
-) *SRCDS {
-	return &SRCDS{
-		config:     config,
-		servers:    servers,
-		persons:    persons,
-		repository: repository,
-		cookie:     config.Config().HTTPCookieKey,
-		tfAPI:      tfAPI,
-		notif:      notif,
-	}
-}
-
-func (h SRCDS) GetBanState(ctx context.Context, steamID steamid.SteamID, ip netip.Addr) (PlayerBanState, string, error) {
+func (h Sourcemod) GetBanState(ctx context.Context, steamID steamid.SteamID, ip netip.Addr) (PlayerBanState, string, error) {
 	banState, errBanState := h.repository.QueryBanState(ctx, steamID, ip)
 	if errBanState != nil || banState.BanID == 0 {
 		return banState, "", errBanState
@@ -235,7 +164,7 @@ func (h SRCDS) GetBanState(ctx context.Context, steamID steamid.SteamID, ip neti
 
 	appealURL := "n/a"
 	if banState.BanSource == BanSourceSteam {
-		appealURL = h.config.ExtURLRaw("/appeal/%d", banState.BanID)
+		appealURL = h.linker.ExtURLRaw("/appeal/%d", banState.BanID)
 	}
 
 	if banState.BanID > 0 && banState.BanType >= ban.NoComm {
@@ -262,38 +191,38 @@ func (h SRCDS) GetBanState(ctx context.Context, steamID steamid.SteamID, ip neti
 	return banState, msg, nil
 }
 
-func (h SRCDS) GetOverride(ctx context.Context, overrideID int) (SMOverrides, error) {
+func (h Sourcemod) Override(ctx context.Context, overrideID int) (Overrides, error) {
 	return h.repository.GetOverride(ctx, overrideID)
 }
 
-func (h SRCDS) GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (SMGroupImmunity, error) {
+func (h Sourcemod) GroupImmunityByID(ctx context.Context, groupImmunityID int) (GroupImmunity, error) {
 	return h.repository.GetGroupImmunityByID(ctx, groupImmunityID)
 }
 
-func (h SRCDS) GetGroupImmunities(ctx context.Context) ([]SMGroupImmunity, error) {
+func (h Sourcemod) GroupImmunities(ctx context.Context) ([]GroupImmunity, error) {
 	return h.repository.GetGroupImmunities(ctx)
 }
 
-func (h SRCDS) AddGroupImmunity(ctx context.Context, groupID int, otherID int) (SMGroupImmunity, error) {
+func (h Sourcemod) AddGroupImmunity(ctx context.Context, groupID int, otherID int) (GroupImmunity, error) {
 	if groupID == otherID {
-		return SMGroupImmunity{}, httphelper.ErrBadRequest // TODO fix error
+		return GroupImmunity{}, httphelper.ErrBadRequest // TODO fix error
 	}
 
 	group, errGroup := h.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
-		return SMGroupImmunity{}, errGroup
+		return GroupImmunity{}, errGroup
 	}
 
 	other, errOther := h.GetGroupByID(ctx, otherID)
 	if errOther != nil {
-		return SMGroupImmunity{}, errOther
+		return GroupImmunity{}, errOther
 	}
 
 	return h.repository.AddGroupImmunity(ctx, group, other)
 }
 
-func (h SRCDS) DelGroupImmunity(ctx context.Context, groupImmunityID int) error {
-	immunity, errImmunity := h.GetGroupImmunityByID(ctx, groupImmunityID)
+func (h Sourcemod) DelGroupImmunity(ctx context.Context, groupImmunityID int) error {
+	immunity, errImmunity := h.GroupImmunityByID(ctx, groupImmunityID)
 	if errImmunity != nil {
 		return errImmunity
 	}
@@ -307,18 +236,18 @@ func (h SRCDS) DelGroupImmunity(ctx context.Context, groupImmunityID int) error 
 	return nil
 }
 
-func (h SRCDS) AddGroupOverride(ctx context.Context, groupID int, name string, overrideType OverrideType, access OverrideAccess) (SMGroupOverrides, error) {
+func (h Sourcemod) AddGroupOverride(ctx context.Context, groupID int, name string, overrideType OverrideType, access OverrideAccess) (GroupOverrides, error) {
 	if name == "" || overrideType == "" {
-		return SMGroupOverrides{}, domain.ErrInvalidParameter
+		return GroupOverrides{}, domain.ErrInvalidParameter
 	}
 
 	if access != OverrideAccessAllow && access != OverrideAccessDeny {
-		return SMGroupOverrides{}, domain.ErrInvalidParameter
+		return GroupOverrides{}, domain.ErrInvalidParameter
 	}
 
 	now := time.Now()
 
-	override, err := h.repository.AddGroupOverride(ctx, SMGroupOverrides{
+	override, err := h.repository.AddGroupOverride(ctx, GroupOverrides{
 		GroupID:   groupID,
 		Type:      overrideType,
 		Name:      name,
@@ -335,8 +264,8 @@ func (h SRCDS) AddGroupOverride(ctx context.Context, groupID int, name string, o
 	return override, nil
 }
 
-func (h SRCDS) DelGroupOverride(ctx context.Context, groupOverrideID int) error {
-	override, errOverride := h.GetGroupOverride(ctx, groupOverrideID)
+func (h Sourcemod) DelGroupOverride(ctx context.Context, groupOverrideID int) error {
+	override, errOverride := h.GroupOverride(ctx, groupOverrideID)
 	if errOverride != nil {
 		return errOverride
 	}
@@ -344,51 +273,51 @@ func (h SRCDS) DelGroupOverride(ctx context.Context, groupOverrideID int) error 
 	return h.repository.DelGroupOverride(ctx, override)
 }
 
-func (h SRCDS) GetGroupOverride(ctx context.Context, groupOverrideID int) (SMGroupOverrides, error) {
+func (h Sourcemod) GroupOverride(ctx context.Context, groupOverrideID int) (GroupOverrides, error) {
 	return h.repository.GetGroupOverride(ctx, groupOverrideID)
 }
 
-func (h SRCDS) SaveGroupOverride(ctx context.Context, override SMGroupOverrides) (SMGroupOverrides, error) {
+func (h Sourcemod) SaveGroupOverride(ctx context.Context, override GroupOverrides) (GroupOverrides, error) {
 	if override.Name == "" || override.Type == "" {
-		return SMGroupOverrides{}, domain.ErrInvalidParameter
+		return GroupOverrides{}, domain.ErrInvalidParameter
 	}
 
 	if override.Access != OverrideAccessAllow && override.Access != OverrideAccessDeny {
-		return SMGroupOverrides{}, domain.ErrInvalidParameter
+		return GroupOverrides{}, domain.ErrInvalidParameter
 	}
 
 	return h.repository.SaveGroupOverride(ctx, override)
 }
 
-func (h SRCDS) GroupOverrides(ctx context.Context, groupID int) ([]SMGroupOverrides, error) {
+func (h Sourcemod) GroupOverrides(ctx context.Context, groupID int) ([]GroupOverrides, error) {
 	group, errGroup := h.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
-		return []SMGroupOverrides{}, errGroup
+		return []GroupOverrides{}, errGroup
 	}
 
 	return h.repository.GroupOverrides(ctx, group)
 }
 
-func (h SRCDS) Overrides(ctx context.Context) ([]SMOverrides, error) {
+func (h Sourcemod) Overrides(ctx context.Context) ([]Overrides, error) {
 	return h.repository.Overrides(ctx)
 }
 
-func (h SRCDS) SaveOverride(ctx context.Context, override SMOverrides) (SMOverrides, error) {
+func (h Sourcemod) SaveOverride(ctx context.Context, override Overrides) (Overrides, error) {
 	if override.Name == "" || override.Flags == "" || override.Type != OverrideTypeCommand && override.Type != OverrideTypeGroup {
-		return SMOverrides{}, domain.ErrInvalidParameter
+		return Overrides{}, domain.ErrInvalidParameter
 	}
 
 	return h.repository.SaveOverride(ctx, override)
 }
 
-func (h SRCDS) AddOverride(ctx context.Context, name string, overrideType OverrideType, flags string) (SMOverrides, error) {
+func (h Sourcemod) AddOverride(ctx context.Context, name string, overrideType OverrideType, flags string) (Overrides, error) {
 	if name == "" || flags == "" || overrideType != OverrideTypeCommand && overrideType != OverrideTypeGroup {
-		return SMOverrides{}, domain.ErrInvalidParameter
+		return Overrides{}, domain.ErrInvalidParameter
 	}
 
 	now := time.Now()
 
-	return h.repository.AddOverride(ctx, SMOverrides{
+	return h.repository.AddOverride(ctx, Overrides{
 		Type:      overrideType,
 		Name:      name,
 		Flags:     flags,
@@ -397,7 +326,7 @@ func (h SRCDS) AddOverride(ctx context.Context, name string, overrideType Overri
 	})
 }
 
-func (h SRCDS) DelOverride(ctx context.Context, overrideID int) error {
+func (h Sourcemod) DelOverride(ctx context.Context, overrideID int) error {
 	override, errOverride := h.repository.GetOverride(ctx, overrideID)
 	if errOverride != nil {
 		return errOverride
@@ -406,59 +335,59 @@ func (h SRCDS) DelOverride(ctx context.Context, overrideID int) error {
 	return h.repository.DelOverride(ctx, override)
 }
 
-func (h SRCDS) DelAdminGroup(ctx context.Context, adminID int, groupID int) (SMAdmin, error) {
-	admin, errAdmin := h.GetAdminByID(ctx, adminID)
+func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int, groupID int) (Admin, error) {
+	admin, errAdmin := h.AdminByID(ctx, adminID)
 	if errAdmin != nil {
-		return SMAdmin{}, errAdmin
+		return Admin{}, errAdmin
 	}
 
 	group, errGroup := h.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
-		return SMAdmin{}, errGroup
+		return Admin{}, errGroup
 	}
 
-	existing, errExisting := h.GetAdminGroups(ctx, admin)
+	existing, errExisting := h.AdminGroups(ctx, admin)
 	if errExisting != nil && !errors.Is(errExisting, database.ErrNoResult) {
 		return admin, errExisting
 	}
 
 	if !slices.Contains(existing, group) {
-		return admin, ErrSMAdminGroupExists
+		return admin, ErrAdminGroupExists
 	}
 
 	if err := h.repository.DeleteAdminGroup(ctx, admin, group); err != nil {
-		return SMAdmin{}, err
+		return Admin{}, err
 	}
 
-	admin.Groups = slices.DeleteFunc(admin.Groups, func(g SMGroups) bool {
+	admin.Groups = slices.DeleteFunc(admin.Groups, func(g Groups) bool {
 		return g.GroupID == groupID
 	})
 
 	return admin, nil
 }
 
-func (h SRCDS) AddAdminGroup(ctx context.Context, adminID int, groupID int) (SMAdmin, error) {
-	admin, errAdmin := h.GetAdminByID(ctx, adminID)
+func (h Sourcemod) AddAdminGroup(ctx context.Context, adminID int, groupID int) (Admin, error) {
+	admin, errAdmin := h.AdminByID(ctx, adminID)
 	if errAdmin != nil {
-		return SMAdmin{}, errAdmin
+		return Admin{}, errAdmin
 	}
 
 	group, errGroup := h.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
-		return SMAdmin{}, errGroup
+		return Admin{}, errGroup
 	}
 
-	existing, errExisting := h.GetAdminGroups(ctx, admin)
+	existing, errExisting := h.AdminGroups(ctx, admin)
 	if errExisting != nil && !errors.Is(errExisting, database.ErrNoResult) {
 		return admin, errExisting
 	}
 
 	if slices.Contains(existing, group) {
-		return admin, ErrSMAdminGroupExists
+		return admin, ErrAdminGroupExists
 	}
 
 	if err := h.repository.InsertAdminGroup(ctx, admin, group, len(existing)+1); err != nil {
-		return SMAdmin{}, err
+		return Admin{}, err
 	}
 
 	admin.Groups = append(admin.Groups, group)
@@ -466,83 +395,11 @@ func (h SRCDS) AddAdminGroup(ctx context.Context, adminID int, groupID int) (SMA
 	return admin, nil
 }
 
-func (h SRCDS) GetAdminGroups(ctx context.Context, admin SMAdmin) ([]SMGroups, error) {
+func (h Sourcemod) AdminGroups(ctx context.Context, admin Admin) ([]Groups, error) {
 	return h.repository.GetAdminGroups(ctx, admin)
 }
 
-// func (h SRCDSUsecase) Report(ctx context.Context, currentUser domain.PersonInfo, req ban.RequestReportCreate) (ban.ReportWithAuthor, error) {
-// 	if req.Description == "" || len(req.Description) < 10 {
-// 		return ban.ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
-// 	}
-
-// 	// ServerStore initiated requests will have a sourceID set by the server
-// 	// Web based reports the source should not be set, the reporter will be taken from the
-// 	// current session information instead
-// 	if !req.SourceID.Valid() {
-// 		req.SourceID = currentUser.GetSteamID()
-// 	}
-
-// 	if !req.SourceID.Valid() {
-// 		return ban.ReportWithAuthor{}, domain.ErrSourceID
-// 	}
-
-// 	if !req.TargetID.Valid() {
-// 		return ban.ReportWithAuthor{}, domain.ErrTargetID
-// 	}
-
-// 	if req.SourceID.Int64() == req.TargetID.Int64() {
-// 		return ban.ReportWithAuthor{}, domain.ErrSelfReport
-// 	}
-
-// 	personSource, errCreateSource := h.persons.GetPersonBySteamID(ctx, nil, req.SourceID)
-// 	if errCreateSource != nil {
-// 		return ban.ReportWithAuthor{}, errCreateSource
-// 	}
-
-// 	personTarget, errCreateTarget := h.persons.GetOrCreatePersonBySteamID(ctx, nil, req.TargetID)
-// 	if errCreateTarget != nil {
-// 		return ban.ReportWithAuthor{}, errCreateTarget
-// 	}
-
-// 	if personTarget.Expired() {
-// 		if err := person.UpdatePlayerSummary(ctx, &personTarget, h.tfAPI); err != nil {
-// 			slog.Error("Failed to update target player", log.ErrAttr(err))
-// 		} else {
-// 			if errSave := h.persons.SavePerson(ctx, nil, &personTarget); errSave != nil {
-// 				slog.Error("Failed to save target player update", log.ErrAttr(err))
-// 			}
-// 		}
-// 	}
-
-// 	// Ensure the user doesn't already have an open report against the user
-// 	existing, errReports := h.reports.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
-// 	if errReports != nil {
-// 		if !errors.Is(errReports, database.ErrNoResult) {
-// 			return ban.ReportWithAuthor{}, errReports
-// 		}
-// 	}
-
-// 	if existing.ReportID > 0 {
-// 		return ban.ReportWithAuthor{}, domain.ErrReportExists
-// 	}
-
-// 	savedReport, errReportSave := h.reports.SaveReport(ctx, currentUser, req)
-// 	if errReportSave != nil {
-// 		return ban.ReportWithAuthor{}, errReportSave
-// 	}
-
-// 	// conf := h.config.Config()
-// 	//
-// 	// demoURL := ""
-// 	//
-// 	// h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-// 	// 	discord.ChannelModLog,
-// 	// 	discord.NewInGameReportResponse(savedReport, conf.ExtURL(savedReport), currentUser, conf.ExtURL(currentUser), demoURL)))
-
-// 	return savedReport, nil
-// }
-
-func (h SRCDS) SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...SMGroups) error {
+func (h Sourcemod) SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...Groups) error {
 	admin, errAdmin := h.repository.GetAdminByIdentity(ctx, authType, identity)
 	if errAdmin != nil {
 		return errAdmin
@@ -567,7 +424,7 @@ func (h SRCDS) SetAdminGroups(ctx context.Context, authType AuthType, identity s
 	return nil
 }
 
-func (h SRCDS) DelGroup(ctx context.Context, groupID int) error {
+func (h Sourcemod) DelGroup(ctx context.Context, groupID int) error {
 	group, errGroup := h.repository.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
 		return errGroup
@@ -578,22 +435,22 @@ func (h SRCDS) DelGroup(ctx context.Context, groupID int) error {
 
 const validFlags = "zabcdefghijklmnopqrst"
 
-func (h SRCDS) AddGroup(ctx context.Context, name string, flags string, immunityLevel int) (SMGroups, error) {
+func (h Sourcemod) AddGroup(ctx context.Context, name string, flags string, immunityLevel int) (Groups, error) {
 	if name == "" {
-		return SMGroups{}, ErrSMGroupName
+		return Groups{}, ErrGroupName
 	}
 
 	if immunityLevel > 100 || immunityLevel < 0 {
-		return SMGroups{}, ErrSMImmunity
+		return Groups{}, ErrImmunity
 	}
 
 	for _, flag := range flags {
 		if !strings.ContainsRune(validFlags, flag) {
-			return SMGroups{}, ErrSMAdminFlagInvalid
+			return Groups{}, ErrAdminFlagInvalid
 		}
 	}
 
-	return h.repository.AddGroup(ctx, SMGroups{
+	return h.repository.AddGroup(ctx, Groups{
 		Flags:         flags,
 		Name:          name,
 		ImmunityLevel: immunityLevel,
@@ -615,18 +472,18 @@ func validateAuthIdentity(ctx context.Context, authType AuthType, identity strin
 		}
 	case AuthTypeName:
 		if identity == "" {
-			return "", ErrSMInvalidAuthName
+			return "", ErrInvalidAuthName
 		}
 
 		if password == "" {
-			return "", ErrSMRequirePassword
+			return "", ErrRequirePassword
 		}
 	}
 
 	return identity, nil
 }
 
-func (h SRCDS) DelAdmin(ctx context.Context, adminID int) error {
+func (h Sourcemod) DelAdmin(ctx context.Context, adminID int) error {
 	admin, errAdmin := h.repository.GetAdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return errAdmin
@@ -635,25 +492,25 @@ func (h SRCDS) DelAdmin(ctx context.Context, adminID int) error {
 	return h.repository.DelAdmin(ctx, admin)
 }
 
-func (h SRCDS) GetAdminByID(ctx context.Context, adminID int) (SMAdmin, error) {
+func (h Sourcemod) AdminByID(ctx context.Context, adminID int) (Admin, error) {
 	return h.repository.GetAdminByID(ctx, adminID)
 }
 
-func (h SRCDS) SaveAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error) {
+func (h Sourcemod) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
 	realIdentity, errValidate := validateAuthIdentity(ctx, admin.AuthType, admin.Identity, admin.Password)
 	if errValidate != nil {
-		return SMAdmin{}, errValidate
+		return Admin{}, errValidate
 	}
 
 	if admin.Immunity < 0 || admin.Immunity > 100 {
-		return SMAdmin{}, ErrSMImmunity
+		return Admin{}, ErrImmunity
 	}
 
 	var steamID steamid.SteamID
 	if admin.AuthType == AuthTypeSteam {
 		steamID = steamid.New(realIdentity)
-		if _, err := h.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID); err != nil {
-			return SMAdmin{}, domain.ErrGetPerson
+		if _, err := h.person.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
+			return Admin{}, domain.ErrGetPerson
 		}
 
 		admin.Identity = string(steamID.Steam3())
@@ -663,36 +520,36 @@ func (h SRCDS) SaveAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error) {
 	return h.repository.SaveAdmin(ctx, admin)
 }
 
-func (h SRCDS) AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int, password string) (SMAdmin, error) {
+func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int, password string) (Admin, error) {
 	realIdentity, errValidate := validateAuthIdentity(ctx, authType, identity, password)
 	if errValidate != nil {
-		return SMAdmin{}, errValidate
+		return Admin{}, errValidate
 	}
 
 	if immunity < 0 || immunity > 100 {
-		return SMAdmin{}, ErrSMImmunity
+		return Admin{}, ErrImmunity
 	}
 
 	admin, errAdmin := h.repository.GetAdminByIdentity(ctx, authType, realIdentity)
 	if errAdmin != nil && !errors.Is(errAdmin, database.ErrNoResult) {
-		return SMAdmin{}, errAdmin
+		return Admin{}, errAdmin
 	}
 
 	if errAdmin == nil {
-		return admin, ErrSMAdminExists
+		return admin, ErrAdminExists
 	}
 
 	var steamID steamid.SteamID
 	if authType == AuthTypeSteam {
 		steamID = steamid.New(realIdentity)
-		if _, err := h.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID); err != nil {
-			return SMAdmin{}, domain.ErrGetPerson
+		if _, err := h.person.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
+			return Admin{}, domain.ErrGetPerson
 		}
 
 		identity = string(steamID.Steam3())
 	}
 
-	return h.repository.AddAdmin(ctx, SMAdmin{
+	return h.repository.AddAdmin(ctx, Admin{
 		SteamID:  steamID,
 		AuthType: authType,
 		Identity: identity,
@@ -700,34 +557,34 @@ func (h SRCDS) AddAdmin(ctx context.Context, alias string, authType AuthType, id
 		Flags:    flags,
 		Name:     alias,
 		Immunity: immunity,
-		Groups:   []SMGroups{},
+		Groups:   []Groups{},
 	})
 }
 
-func (h SRCDS) Admins(ctx context.Context) ([]SMAdmin, error) {
+func (h Sourcemod) Admins(ctx context.Context) ([]Admin, error) {
 	return h.repository.Admins(ctx)
 }
 
-func (h SRCDS) Groups(ctx context.Context) ([]SMGroups, error) {
+func (h Sourcemod) Groups(ctx context.Context) ([]Groups, error) {
 	return h.repository.Groups(ctx)
 }
 
-func (h SRCDS) GetGroupByID(ctx context.Context, groupID int) (SMGroups, error) {
+func (h Sourcemod) GetGroupByID(ctx context.Context, groupID int) (Groups, error) {
 	return h.repository.GetGroupByID(ctx, groupID)
 }
 
-func (h SRCDS) SaveGroup(ctx context.Context, group SMGroups) (SMGroups, error) {
+func (h Sourcemod) SaveGroup(ctx context.Context, group Groups) (Groups, error) {
 	if group.Name == "" {
-		return SMGroups{}, ErrSMGroupName
+		return Groups{}, ErrGroupName
 	}
 
 	if group.ImmunityLevel > 100 || group.ImmunityLevel < 0 {
-		return SMGroups{}, ErrSMImmunity
+		return Groups{}, ErrImmunity
 	}
 
 	for _, flag := range group.Flags {
 		if !strings.ContainsRune(validFlags, flag) {
-			return SMGroups{}, ErrSMAdminFlagInvalid
+			return Groups{}, ErrAdminFlagInvalid
 		}
 	}
 
