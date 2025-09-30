@@ -7,17 +7,17 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 )
 
-func RegisterDiscordCommands(bot *discord.Discord, wordFilters WordFilters) {
+func RegisterDiscordCommands(bot *bot.Bot, wordFilters WordFilters) {
 	handler := &discordHandler{wordFilters: wordFilters}
 
-	bot.MustRegisterHandler("filter", handler.makeOnFilter, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("filter", &discordgo.ApplicationCommand{
 		Name:                     "filter",
 		Description:              "Manage and test global word filters",
 		DMPermission:             &helper.DmPerms,
@@ -69,7 +69,7 @@ func RegisterDiscordCommands(bot *discord.Discord, wordFilters WordFilters) {
 				},
 			},
 		},
-	})
+	}, handler.makeOnFilter)
 }
 
 type discordHandler struct {

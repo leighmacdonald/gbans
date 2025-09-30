@@ -11,8 +11,8 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -27,10 +27,10 @@ type PersonProvider interface {
 	GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (domain.PersonCore, error)
 }
 
-func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonProvider, servers Servers, network network.Networks, config config.Config) {
+func RegisterDiscordCommands(bot *bot.Bot, state State, persons PersonProvider, servers Servers, network network.Networks, config config.Config) {
 	handler := DiscordHandler{state: state, persons: persons, servers: servers, network: network, config: config}
 
-	bot.MustRegisterHandler("find", handler.onFind, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("find", &discordgo.ApplicationCommand{
 		Name:                     "find",
 		DMPermission:             &helper.DmPerms,
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -43,9 +43,9 @@ func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonPr
 				Required:    true,
 			},
 		},
-	})
+	}, handler.onFind)
 
-	bot.MustRegisterHandler("players", handler.onPlayers, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("players", &discordgo.ApplicationCommand{
 		Name:                     "players",
 		DMPermission:             &helper.DmPerms,
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -58,9 +58,9 @@ func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonPr
 				Required:    true,
 			},
 		},
-	})
+	}, handler.onPlayers)
 
-	bot.MustRegisterHandler("kick", handler.onKick, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("kick", &discordgo.ApplicationCommand{
 		Name:                     "kick",
 		DMPermission:             &helper.DmPerms,
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -79,9 +79,9 @@ func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonPr
 				Required:    true,
 			},
 		},
-	})
+	}, handler.onKick)
 
-	bot.MustRegisterHandler("psay", handler.onPSay, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("psay", &discordgo.ApplicationCommand{
 		Name:                     "psay",
 		Description:              "Privately message a player",
 		DMPermission:             &helper.DmPerms,
@@ -100,9 +100,9 @@ func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonPr
 				Required:    true,
 			},
 		},
-	})
+	}, handler.onPSay)
 
-	bot.MustRegisterHandler("csay", handler.onCSay, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("csay", &discordgo.ApplicationCommand{
 		Name:                     "csay",
 		Description:              "Send a centered message to the whole server",
 		DMPermission:             &helper.DmPerms,
@@ -121,9 +121,9 @@ func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonPr
 				Required:    true,
 			},
 		},
-	})
+	}, handler.onCSay)
 
-	bot.MustRegisterHandler("say", handler.onSay, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("say", &discordgo.ApplicationCommand{
 		Name:                     "say",
 		Description:              "Send a console message to the whole server",
 		DMPermission:             &helper.DmPerms,
@@ -142,9 +142,9 @@ func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonPr
 				Required:    true,
 			},
 		},
-	})
+	}, handler.onSay)
 
-	bot.MustRegisterHandler("servers", handler.onServers, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("servers", &discordgo.ApplicationCommand{
 		Name:                     "servers",
 		Description:              "Show the high level status of all servers",
 		DefaultMemberPermissions: &helper.UserPerms,
@@ -155,7 +155,7 @@ func RegisterDiscordCommands(bot *discord.Discord, state State, persons PersonPr
 				Description: "Return the full status output including server versions and tags",
 			},
 		},
-	})
+	}, handler.onServers)
 }
 
 type DiscordHandler struct {
