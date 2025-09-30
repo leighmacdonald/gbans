@@ -112,6 +112,7 @@ linters:
       ignore-package-globs:
         - github.com/leighmacdonald/gbans/pkg/*
         - github.com/leighmacdonald/gbans/internal/*
+        - github.com/leighmacdonald/discordgo-lipstick/*
   exclusions:
     generated: lax
     presets:

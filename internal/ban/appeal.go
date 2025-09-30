@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -83,12 +84,12 @@ type AppealQueryFilter struct {
 type Appeals struct {
 	repository AppealRepository
 	bans       Bans
-	persons    domain.PersonProvider
+	persons    person.Provider
 	config     *config.Configuration
 	notif      notification.Notifier
 }
 
-func NewAppeals(ar AppealRepository, bans Bans, persons domain.PersonProvider, config *config.Configuration, notif notification.Notifier) Appeals {
+func NewAppeals(ar AppealRepository, bans Bans, persons person.Provider, config *config.Configuration, notif notification.Notifier) Appeals {
 	return Appeals{repository: ar, bans: bans, persons: persons, config: config, notif: notif}
 }
 
@@ -96,7 +97,7 @@ func (u *Appeals) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilt
 	return u.repository.ByActivity(ctx, opts)
 }
 
-func (u *Appeals) EditBanMessage(ctx context.Context, curUser domain.PersonInfo, banMessageID int64, newMsg string) (AppealMessage, error) {
+func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.Info, banMessageID int64, newMsg string) (AppealMessage, error) {
 	existing, err := u.MessageByID(ctx, banMessageID)
 	if err != nil {
 		return AppealMessage{}, err
@@ -139,7 +140,7 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser domain.PersonInfo,
 	return existing, nil
 }
 
-func (u *Appeals) CreateBanMessage(ctx context.Context, curUser domain.PersonInfo, banID int64, newMsg string) (AppealMessage, error) {
+func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, banID int64, newMsg string) (AppealMessage, error) {
 	if banID <= 0 {
 		return AppealMessage{}, domain.ErrInvalidParameter
 	}
@@ -165,12 +166,12 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser domain.PersonInf
 		return AppealMessage{}, permission.ErrDenied
 	}
 
-	_, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, nil, bannedPerson.TargetID)
+	_, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, bannedPerson.TargetID)
 	if errTarget != nil {
 		return AppealMessage{}, errTarget
 	}
 
-	_, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, nil, bannedPerson.SourceID)
+	_, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, bannedPerson.SourceID)
 	if errSource != nil {
 		return AppealMessage{}, errSource
 	}
@@ -213,7 +214,7 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser domain.PersonInf
 	return msg, nil
 }
 
-func (u *Appeals) Messages(ctx context.Context, userProfile domain.PersonInfo, banID int64) ([]AppealMessage, error) {
+func (u *Appeals) Messages(ctx context.Context, userProfile person.Info, banID int64) ([]AppealMessage, error) {
 	banPerson, errGetBan := u.bans.QueryOne(ctx, QueryOpts{
 		BanID:   banID,
 		Deleted: true,
@@ -234,7 +235,7 @@ func (u *Appeals) MessageByID(ctx context.Context, banMessageID int64) (AppealMe
 	return u.repository.MessageByID(ctx, banMessageID)
 }
 
-func (u *Appeals) DropMessage(ctx context.Context, curUser domain.PersonInfo, banMessageID int64) error {
+func (u *Appeals) DropMessage(ctx context.Context, curUser person.Info, banMessageID int64) error {
 	existing, errExist := u.MessageByID(ctx, banMessageID)
 	if errExist != nil {
 		return errExist

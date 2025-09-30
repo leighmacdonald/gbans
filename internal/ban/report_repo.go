@@ -31,7 +31,7 @@ func (r ReportRepository) insertReport(ctx context.Context, report *Report) erro
 		msgID = &report.PersonMessageID
 	}
 
-	if errQuery := r.db.QueryRow(ctx, nil, query,
+	if errQuery := r.db.QueryRow(ctx, query,
 		report.SourceID,
 		report.TargetID,
 		report.ReportStatus,
@@ -60,7 +60,7 @@ func (r ReportRepository) updateReport(ctx context.Context, report *Report) erro
 		msgID = &report.PersonMessageID
 	}
 
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
 		Builder().
 		Update("report").
 		Set("author_id", report.SourceID).
@@ -96,7 +96,7 @@ func (r ReportRepository) SaveReportMessage(ctx context.Context, message *Report
 func (r ReportRepository) updateReportMessage(ctx context.Context, message *ReportMessage) error {
 	message.UpdatedOn = time.Now()
 
-	if errQuery := r.db.ExecUpdateBuilder(ctx, nil, r.db.
+	if errQuery := r.db.ExecUpdateBuilder(ctx, r.db.
 		Builder().
 		Update("report_message").
 		Set("deleted", message.Deleted).
@@ -119,7 +119,7 @@ func (r ReportRepository) insertReportMessage(ctx context.Context, message *Repo
 		RETURNING report_message_id
 	`
 
-	if errQuery := r.db.QueryRow(ctx, nil, query,
+	if errQuery := r.db.QueryRow(ctx, query,
 		message.ReportID,
 		message.AuthorID,
 		message.MessageMD,
@@ -136,7 +136,7 @@ func (r ReportRepository) insertReportMessage(ctx context.Context, message *Repo
 func (r ReportRepository) DropReport(ctx context.Context, report *Report) error {
 	report.Deleted = true
 
-	if errExec := r.db.ExecUpdateBuilder(ctx, nil, r.db.
+	if errExec := r.db.ExecUpdateBuilder(ctx, r.db.
 		Builder().
 		Update("report").
 		Set("deleted", report.Deleted).
@@ -150,7 +150,7 @@ func (r ReportRepository) DropReport(ctx context.Context, report *Report) error 
 func (r ReportRepository) DropReportMessage(ctx context.Context, message *ReportMessage) error {
 	message.Deleted = true
 
-	if errExec := r.db.ExecUpdateBuilder(ctx, nil, r.db.
+	if errExec := r.db.ExecUpdateBuilder(ctx, r.db.
 		Builder().
 		Update("report_message").
 		Set("deleted", message.Deleted).
@@ -176,7 +176,7 @@ func (r ReportRepository) GetReports(ctx context.Context, steamID steamid.SteamI
 		Where(constraints).
 		LeftJoin("demo d on d.demo_id = r.demo_id")
 
-	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
+	rows, errQuery := r.db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, database.DBErr(errQuery)
 	}
@@ -228,7 +228,7 @@ func (r ReportRepository) GetReports(ctx context.Context, steamID steamid.SteamI
 func (r ReportRepository) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error) {
 	var report Report
 
-	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_id", "s.author_id", "s.reported_id", "s.report_status", "s.description",
 			"s.deleted", "s.created_on", "s.updated_on", "s.reason", "s.reason_text", "s.demo_tick",
@@ -278,7 +278,7 @@ func (r ReportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 func (r ReportRepository) GetReport(ctx context.Context, reportID int64) (Report, error) {
 	var report Report
 
-	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_id", "s.author_id", "s.reported_id", "s.report_status", "s.description",
 			"s.deleted", "s.created_on", "s.updated_on", "s.reason", "s.reason_text", "s.demo_tick",
@@ -321,7 +321,7 @@ func (r ReportRepository) GetReport(ctx context.Context, reportID int64) (Report
 }
 
 func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error) {
-	rows, errQuery := r.db.QueryBuilder(ctx, nil, r.db.
+	rows, errQuery := r.db.QueryBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_message_id", "s.report_id", "s.author_id", "s.message_md", "s.deleted",
 			"s.created_on", "s.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
@@ -371,7 +371,7 @@ func (r ReportRepository) GetReportMessages(ctx context.Context, reportID int64)
 func (r ReportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error) {
 	var message ReportMessage
 
-	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_message_id", "s.report_id", "s.author_id", "s.message_md", "s.deleted",
 			"s.created_on", "s.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").

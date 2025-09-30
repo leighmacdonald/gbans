@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -46,11 +47,11 @@ type Votes struct {
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	notif       notification.Notifier
 	config      *config.Configuration
-	persons     domain.PersonProvider
+	persons     person.Provider
 }
 
 func NewVotes(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	notif notification.Notifier, config *config.Configuration, persons domain.PersonProvider,
+	notif notification.Notifier, config *config.Configuration, persons person.Provider,
 ) Votes {
 	return Votes{
 		repository:  repository,
@@ -198,12 +199,12 @@ func (u Votes) Start(ctx context.Context) {
 
 				delete(active, evt.ServerID)
 
-				source, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
+				source, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, result.SourceID)
 				if errSource != nil {
 					slog.Error("Failed to load vote source", log.ErrAttr(errSource), slog.String("steam_id", result.SourceID.String()))
 				}
 
-				target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
+				target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, result.SourceID)
 				if errTarget != nil {
 					slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
 				}

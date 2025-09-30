@@ -1,10 +1,9 @@
-package domain
+package person
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -39,17 +38,17 @@ func (h Avatar) Hash() string {
 	return h.hash
 }
 
-type PersonProvider interface {
+type Provider interface {
 	// FIXME Retuning a interface for now.
-	GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (PersonCore, error)
+	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Core, error)
 }
 
 type DiscordPersonProvider interface {
 	// FIXME Retuning a interface for now.
-	GetPersonByDiscordID(ctx context.Context, discordID string) (PersonCore, error)
+	GetPersonByDiscordID(ctx context.Context, discordID string) (Core, error)
 }
 
-type PersonInfo interface {
+type Info interface {
 	GetName() string
 	GetAvatar() Avatar
 	GetSteamID() steamid.SteamID
@@ -58,8 +57,8 @@ type PersonInfo interface {
 	Permissions() permission.Privilege
 }
 
-// PersonCore is the model used in the webui representing the logged-in user.
-type PersonCore struct {
+// Core is the model used in the webui representing the logged-in user.
+type Core struct {
 	SteamID         steamid.SteamID      `json:"steam_id"`
 	PermissionLevel permission.Privilege `json:"permission_level"`
 	Name            string               `json:"name"`
@@ -69,15 +68,15 @@ type PersonCore struct {
 	BanID           int64                `json:"ban_id"`
 }
 
-func (p PersonCore) Permissions() permission.Privilege {
+func (p Core) Permissions() permission.Privilege {
 	return p.PermissionLevel
 }
 
-func (p PersonCore) HasPermission(privilege permission.Privilege) bool {
+func (p Core) HasPermission(privilege permission.Privilege) bool {
 	return p.PermissionLevel >= privilege
 }
 
-func (p PersonCore) GetName() string {
+func (p Core) GetName() string {
 	if p.Name == "" {
 		return p.SteamID.String()
 	}
@@ -85,7 +84,7 @@ func (p PersonCore) GetName() string {
 	return p.Name
 }
 
-func (p PersonCore) GetAvatar() Avatar {
+func (p Core) GetAvatar() Avatar {
 	if p.Avatarhash == "" {
 		return NewAvatar("fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb")
 	}
@@ -93,10 +92,10 @@ func (p PersonCore) GetAvatar() Avatar {
 	return NewAvatar(p.Avatarhash)
 }
 
-func (p PersonCore) GetSteamID() steamid.SteamID {
+func (p Core) GetSteamID() steamid.SteamID {
 	return p.SteamID
 }
 
-func (p PersonCore) Path() string {
+func (p Core) Path() string {
 	return fmt.Sprintf("/profile/%d", p.SteamID.Int64())
 }

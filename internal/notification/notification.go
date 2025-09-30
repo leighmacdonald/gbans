@@ -3,12 +3,13 @@ package notification
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/sliceutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
@@ -20,7 +21,7 @@ type Notifier interface {
 
 type NullNotifier struct{}
 
-func (n NullNotifier) Send(payload Payload) {}
+func (n NullNotifier) Send(_ Payload) {}
 
 type Severity int
 
@@ -31,16 +32,16 @@ const (
 )
 
 type UserNotification struct {
-	PersonNotificationID int64             `json:"person_notification_id"`
-	SteamID              steamid.SteamID   `json:"steam_id"`
-	Read                 bool              `json:"read"`
-	Deleted              bool              `json:"deleted"`
-	Severity             Severity          `json:"severity"`
-	Message              string            `json:"message"`
-	Link                 string            `json:"link"`
-	Count                int               `json:"count"`
-	Author               domain.PersonCore `json:"author"`
-	CreatedOn            time.Time         `json:"created_on"`
+	PersonNotificationID int64           `json:"person_notification_id"`
+	SteamID              steamid.SteamID `json:"steam_id"`
+	Read                 bool            `json:"read"`
+	Deleted              bool            `json:"deleted"`
+	Severity             Severity        `json:"severity"`
+	Message              string          `json:"message"`
+	Link                 string          `json:"link"`
+	Count                int             `json:"count"`
+	Author               person.Core     `json:"author"`
+	CreatedOn            time.Time       `json:"created_on"`
 }
 
 type MessageType int
@@ -65,7 +66,7 @@ type Payload struct {
 	Message         string
 	DiscordEmbed    *discordgo.MessageEmbed
 	Link            string
-	Author          domain.PersonCore
+	Author          person.Core
 }
 
 func (payload Payload) ValidationError() error {
@@ -110,7 +111,7 @@ func NewSiteUser(recipients steamid.Collection, severity Severity, message strin
 	}
 }
 
-func NewSiteUserWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ domain.PersonInfo) Payload {
+func NewSiteUserWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ person.Info) Payload {
 	payload := NewSiteGroup(groups, severity, message, link)
 	// payload.Author = &author
 
@@ -130,7 +131,7 @@ func NewSiteGroup(groups []permission.Privilege, severity Severity, message stri
 	}
 }
 
-func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ domain.PersonInfo) Payload {
+func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ person.Info) Payload {
 	payload := NewSiteGroup(groups, severity, message, link)
 	// payload.Author = &author
 
@@ -158,13 +159,15 @@ func (n *Notifications) Sender(ctx context.Context) {
 			return
 		case notif := <-n.send:
 			for _, channelID := range notif.DiscordChannels {
-				n.bot.Send(channelID, notif.DiscordEmbed)
+				if errSend := n.bot.Send(channelID, notif.DiscordEmbed); errSend != nil {
+					slog.Error("failed to send discord notification payload", slog.String("error", errSend.Error()))
+				}
 			}
 		}
 	}
 }
 
-func (n *Notifications) SendSite(ctx context.Context, targetIDs steamid.Collection, severity Severity, message string, link string, author domain.PersonInfo) error {
+func (n *Notifications) SendSite(ctx context.Context, targetIDs steamid.Collection, severity Severity, message string, link string, author person.Info) error {
 	var authorID *int64
 	sid := author.GetSteamID()
 	if author != nil {

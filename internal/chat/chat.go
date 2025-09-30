@@ -16,6 +16,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
@@ -75,7 +76,7 @@ type Chat struct {
 	wordFilters   WordFilters
 	bans          ban.Bans
 	config        *config.Configuration
-	persons       domain.PersonProvider
+	persons       person.Provider
 	notifications notification.Notifier
 	state         *servers.State
 	warningMu     *sync.RWMutex
@@ -91,7 +92,7 @@ type Chat struct {
 }
 
 func NewChat(repo Repository, config *config.Configuration, filters WordFilters,
-	bans ban.Bans, persons domain.PersonProvider, notifications notification.Notifier,
+	bans ban.Bans, persons person.Provider, notifications notification.Notifier,
 ) *Chat {
 	conf := config.Config()
 
@@ -183,7 +184,7 @@ func (u Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, perso
 		return nil
 	}
 
-	_, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, nil, person.SID)
+	_, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, person.SID)
 	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
 		return errPerson
 	}
@@ -255,7 +256,7 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 		}
 	}
 
-	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, nil, u.owner)
+	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, u.owner)
 	if errAdmin != nil {
 		return errAdmin
 	}
@@ -303,7 +304,7 @@ func (u Chat) onWarningHandler(ctx context.Context, newWarning NewUserWarning) e
 
 	newWarning.MatchedFilter.TriggerCount++
 
-	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, nil, u.owner)
+	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, u.owner)
 	if errAdmin != nil {
 		return errAdmin
 	}
@@ -427,7 +428,7 @@ func (u Chat) AddChatHistory(ctx context.Context, message *Message) error {
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u Chat) QueryChatHistory(ctx context.Context, user domain.PersonInfo, req HistoryQueryFilter) ([]QueryChatHistoryResult, error) {
+func (u Chat) QueryChatHistory(ctx context.Context, user person.Info, req HistoryQueryFilter) ([]QueryChatHistoryResult, error) {
 	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(permission.Moderator)) {
 		req.Limit = 100
 	}

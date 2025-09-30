@@ -44,5 +44,5 @@ func TestWiki(t *testing.T) {
 	saved2, errSave2 := wikiCase.Save(t.Context(), saved)
 	require.NoError(t, errSave2)
 
-	require.True(t, saved.Revision+1 == saved2.Revision)
+	require.Equal(t, saved.Revision+1, saved2.Revision)
 }

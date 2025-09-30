@@ -1,4 +1,4 @@
-package servers
+package sourcemod
 
 import (
 	"context"
@@ -8,14 +8,12 @@ import (
 	"net/netip"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -24,34 +22,16 @@ type EvadeChecker interface {
 	CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, address netip.Addr) (bool, error)
 }
 
-type srcdsHandler struct {
-	srcds     *SRCDS
-	servers   Servers
-	persons   PersonProvider
-	state     *State
-	config    *config.Configuration
-	assets    asset.Assets
+type Handler struct {
+	sourcemod *Sourcemod
+	persons   person.Provider
 	evades    EvadeChecker
-	network   network.Networks
-	blocklist network.Blocklists
 }
 
-func NewSRCDSHandler(engine *gin.Engine, srcds *SRCDS, servers Servers,
-	persons PersonProvider, assets asset.Assets,
-	evades EvadeChecker, network network.Networks, auth httphelper.Authenticator,
-	config *config.Configuration, state *State,
-	blocklist network.Blocklists, sentryDSN string,
-) {
-	handler := srcdsHandler{
-		srcds:     srcds,
-		servers:   servers,
-		persons:   persons,
-		evades:    evades,
-		assets:    assets,
-		network:   network,
-		config:    config,
-		state:     state,
-		blocklist: blocklist,
+// MiddlewareServer(servers, sentryDSN).
+func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth gin.HandlerFunc, sourcemod *Sourcemod) {
+	handler := Handler{
+		sourcemod: sourcemod,
 	}
 
 	adminGroup := engine.Group("/")
@@ -90,17 +70,15 @@ func NewSRCDSHandler(engine *gin.Engine, srcds *SRCDS, servers Servers,
 	// Endpoints called by sourcemod plugin
 	srcdsGroup := engine.Group("/")
 	{
-		server := srcdsGroup.Use(MiddlewareServer(servers, sentryDSN))
+		server := srcdsGroup.Use(serverAuth)
 		server.POST("/api/sm/check", handler.onAPICheckPlayer())
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())
 		server.GET("/api/sm/groups", handler.onAPIGetServerGroups())
-		server.POST("/api/sm/ping_mod", handler.onAPIPostPingMod())
 
 		// Duplicated since we need to authenticate via server middleware
 		// server.POST("/api/sm/bans/steam/create", handler.onAPIPostBanSteamCreate())
 		// server.POST("/api/sm/report/create", handler.onAPIPostReportCreate())
-		server.POST("/api/state_update", handler.onAPIPostServerState())
 	}
 }
 
@@ -109,7 +87,7 @@ type ServerAuthResp struct {
 	Token  string `json:"token"`
 }
 
-func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
+func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 	type checkRequest struct {
 		domain.SteamIDField
 		ClientID int        `json:"client_id"`
@@ -118,9 +96,9 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 	}
 
 	type checkResponse struct {
-		ClientID int            `json:"client_id"`
-		BanType  banDomain.Type `json:"ban_type"`
-		Msg      string         `json:"msg"`
+		ClientID int      `json:"client_id"`
+		BanType  ban.Type `json:"ban_type"`
+		Msg      string   `json:"msg"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -134,7 +112,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 
 		defaultValue := checkResponse{
 			ClientID: req.ClientID,
-			BanType:  banDomain.OK,
+			BanType:  ban.OK,
 			Msg:      "",
 		}
 
@@ -146,7 +124,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 			return
 		}
 
-		banState, msg, errBS := s.srcds.GetBanState(ctx, steamID, req.IP)
+		banState, msg, errBS := s.sourcemod.GetBanState(ctx, steamID, req.IP)
 		if errBS != nil {
 			slog.Error("failed to get ban state", log.ErrAttr(errBS))
 
@@ -157,7 +135,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 		}
 
 		if banState.BanID != 0 {
-			_, errPlayer := s.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
+			_, errPlayer := s.persons.GetOrCreatePersonBySteamID(ctx, steamID)
 			if errPlayer != nil {
 				slog.Error("Failed to load or create player on connect")
 				ctx.JSON(http.StatusOK, defaultValue)
@@ -176,7 +154,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 				if evadeBanned {
 					defaultValue = checkResponse{
 						ClientID: req.ClientID,
-						BanType:  banDomain.Banned,
+						BanType:  ban.Banned,
 						Msg:      "Evasion ban",
 					}
 
@@ -209,9 +187,9 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onGetGroupImmunities() gin.HandlerFunc {
+func (s *Handler) onGetGroupImmunities() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		immunities, errImmunities := s.srcds.GetGroupImmunities(ctx)
+		immunities, errImmunities := s.sourcemod.GroupImmunities(ctx)
 		if errImmunities != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errImmunities))
 
@@ -219,7 +197,7 @@ func (s *srcdsHandler) onGetGroupImmunities() gin.HandlerFunc {
 		}
 
 		if immunities == nil {
-			immunities = []SMGroupImmunity{}
+			immunities = []GroupImmunity{}
 		}
 
 		ctx.JSON(http.StatusOK, immunities)
@@ -231,14 +209,14 @@ type groupImmunityRequest struct {
 	OtherID int `json:"other_id"`
 }
 
-func (s *srcdsHandler) onCreateGroupImmunity() gin.HandlerFunc {
+func (s *Handler) onCreateGroupImmunity() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req groupImmunityRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		immunity, errImmunity := s.srcds.AddGroupImmunity(ctx, req.GroupID, req.OtherID)
+		immunity, errImmunity := s.sourcemod.AddGroupImmunity(ctx, req.GroupID, req.OtherID)
 		if errImmunity != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errImmunity))
 
@@ -249,14 +227,14 @@ func (s *srcdsHandler) onCreateGroupImmunity() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onDeleteGroupImmunity() gin.HandlerFunc {
+func (s *Handler) onDeleteGroupImmunity() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupImmunityID, idFound := httphelper.GetIntParam(ctx, "group_immunity_id")
 		if !idFound {
 			return
 		}
 
-		if err := s.srcds.DelGroupImmunity(ctx, groupImmunityID); err != nil {
+		if err := s.sourcemod.DelGroupImmunity(ctx, groupImmunityID); err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
@@ -270,14 +248,14 @@ type groupRequest struct {
 	GroupID int `json:"group_id"`
 }
 
-func (s *srcdsHandler) onGroupOverrides() gin.HandlerFunc {
+func (s *Handler) onGroupOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, idFound := httphelper.GetIntParam(ctx, "group_id")
 		if !idFound {
 			return
 		}
 
-		overrides, errOverrides := s.srcds.GroupOverrides(ctx, groupID)
+		overrides, errOverrides := s.sourcemod.GroupOverrides(ctx, groupID)
 		if errOverrides != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOverrides))
 
@@ -285,7 +263,7 @@ func (s *srcdsHandler) onGroupOverrides() gin.HandlerFunc {
 		}
 
 		if overrides == nil {
-			overrides = []SMGroupOverrides{}
+			overrides = []GroupOverrides{}
 		}
 
 		ctx.JSON(http.StatusOK, overrides)
@@ -298,7 +276,7 @@ type groupOverrideRequest struct {
 	Access OverrideAccess `json:"access"`
 }
 
-func (s *srcdsHandler) onCreateGroupOverride() gin.HandlerFunc {
+func (s *Handler) onCreateGroupOverride() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, idFound := httphelper.GetIntParam(ctx, "group_id")
 		if idFound {
@@ -310,7 +288,7 @@ func (s *srcdsHandler) onCreateGroupOverride() gin.HandlerFunc {
 			return
 		}
 
-		override, errOverride := s.srcds.AddGroupOverride(ctx, groupID, req.Name, req.Type, req.Access)
+		override, errOverride := s.sourcemod.AddGroupOverride(ctx, groupID, req.Name, req.Type, req.Access)
 		if errOverride != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOverride))
 
@@ -321,7 +299,7 @@ func (s *srcdsHandler) onCreateGroupOverride() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onSaveGroupOverride() gin.HandlerFunc {
+func (s *Handler) onSaveGroupOverride() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupOverrideID, idFound := httphelper.GetIntParam(ctx, "group_override_id")
 		if !idFound {
@@ -333,7 +311,7 @@ func (s *srcdsHandler) onSaveGroupOverride() gin.HandlerFunc {
 			return
 		}
 
-		override, errOverride := s.srcds.GetGroupOverride(ctx, groupOverrideID)
+		override, errOverride := s.sourcemod.GroupOverride(ctx, groupOverrideID)
 		if errOverride != nil {
 			if errors.Is(errOverride, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
@@ -350,7 +328,7 @@ func (s *srcdsHandler) onSaveGroupOverride() gin.HandlerFunc {
 		override.Name = req.Name
 		override.Access = req.Access
 
-		edited, errSave := s.srcds.SaveGroupOverride(ctx, override)
+		edited, errSave := s.sourcemod.SaveGroupOverride(ctx, override)
 		if errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
@@ -361,14 +339,14 @@ func (s *srcdsHandler) onSaveGroupOverride() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onDeleteGroupOverride() gin.HandlerFunc {
+func (s *Handler) onDeleteGroupOverride() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupOverrideID, idFound := httphelper.GetIntParam(ctx, "group_override_id")
 		if !idFound {
 			return
 		}
 
-		if err := s.srcds.DelGroupOverride(ctx, groupOverrideID); err != nil {
+		if err := s.sourcemod.DelGroupOverride(ctx, groupOverrideID); err != nil {
 			if errors.Is(err, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
 
@@ -390,7 +368,7 @@ type overrideRequest struct {
 	Flags string       `json:"flags"`
 }
 
-func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
+func (s *Handler) onSaveOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		overrideID, idFound := httphelper.GetIntParam(ctx, "override_id")
 		if !idFound {
@@ -402,7 +380,7 @@ func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
 			return
 		}
 
-		override, errOverride := s.srcds.GetOverride(ctx, overrideID)
+		override, errOverride := s.sourcemod.Override(ctx, overrideID)
 		if errOverride != nil {
 			if errors.Is(errOverride, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
@@ -419,7 +397,7 @@ func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
 		override.Name = req.Name
 		override.Flags = req.Flags
 
-		edited, errSave := s.srcds.SaveOverride(ctx, override)
+		edited, errSave := s.sourcemod.SaveOverride(ctx, override)
 		if errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
@@ -430,14 +408,14 @@ func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onCreateOverrides() gin.HandlerFunc {
+func (s *Handler) onCreateOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req overrideRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		override, errCreate := s.srcds.AddOverride(ctx, req.Name, req.Type, req.Flags)
+		override, errCreate := s.sourcemod.AddOverride(ctx, req.Name, req.Type, req.Flags)
 		if errCreate != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errCreate))
 
@@ -448,14 +426,14 @@ func (s *srcdsHandler) onCreateOverrides() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onDeleteOverrides() gin.HandlerFunc {
+func (s *Handler) onDeleteOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		override, idFound := httphelper.GetIntParam(ctx, "override_id")
 		if !idFound {
 			return
 		}
 
-		if errCreate := s.srcds.DelOverride(ctx, override); errCreate != nil {
+		if errCreate := s.sourcemod.DelOverride(ctx, override); errCreate != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errCreate))
 
 			return
@@ -465,9 +443,9 @@ func (s *srcdsHandler) onDeleteOverrides() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onGetOverrides() gin.HandlerFunc {
+func (s *Handler) onGetOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		overrides, errOverrides := s.srcds.Overrides(ctx)
+		overrides, errOverrides := s.sourcemod.Overrides(ctx)
 		if errOverrides != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOverrides))
 
@@ -475,14 +453,14 @@ func (s *srcdsHandler) onGetOverrides() gin.HandlerFunc {
 		}
 
 		if overrides == nil {
-			overrides = []SMOverrides{}
+			overrides = []Overrides{}
 		}
 
 		ctx.JSON(http.StatusOK, overrides)
 	}
 }
 
-func (s *srcdsHandler) onAddAdminGroup() gin.HandlerFunc {
+func (s *Handler) onAddAdminGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		adminID, idFound := httphelper.GetIntParam(ctx, "admin_id")
 		if !idFound {
@@ -494,7 +472,7 @@ func (s *srcdsHandler) onAddAdminGroup() gin.HandlerFunc {
 			return
 		}
 
-		admin, err := s.srcds.AddAdminGroup(ctx, adminID, req.GroupID)
+		admin, err := s.sourcemod.AddAdminGroup(ctx, adminID, req.GroupID)
 		if err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
@@ -505,7 +483,7 @@ func (s *srcdsHandler) onAddAdminGroup() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onDeleteAdminGroup() gin.HandlerFunc {
+func (s *Handler) onDeleteAdminGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		adminID, idFound := httphelper.GetIntParam(ctx, "admin_id")
 		if !idFound {
@@ -517,7 +495,7 @@ func (s *srcdsHandler) onDeleteAdminGroup() gin.HandlerFunc {
 			return
 		}
 
-		admin, errDel := s.srcds.DelAdminGroup(ctx, adminID, groupID)
+		admin, errDel := s.sourcemod.DelAdminGroup(ctx, adminID, groupID)
 		if errDel != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDel))
 
@@ -528,14 +506,14 @@ func (s *srcdsHandler) onDeleteAdminGroup() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {
+func (s *Handler) onSaveSMAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		adminID, idFound := httphelper.GetIntParam(ctx, "admin_id")
 		if !idFound {
 			return
 		}
 
-		admin, errAdmin := s.srcds.GetAdminByID(ctx, adminID)
+		admin, errAdmin := s.sourcemod.AdminByID(ctx, adminID)
 		if errAdmin != nil {
 			if errors.Is(errAdmin, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
@@ -560,7 +538,7 @@ func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {
 		admin.Identity = req.Identity
 		admin.Password = req.Password
 
-		editedGroup, errSave := s.srcds.SaveAdmin(ctx, admin)
+		editedGroup, errSave := s.sourcemod.SaveAdmin(ctx, admin)
 		if errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
@@ -571,14 +549,14 @@ func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onDeleteSMAdmin() gin.HandlerFunc {
+func (s *Handler) onDeleteSMAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		adminID, idFound := httphelper.GetIntParam(ctx, "admin_id")
 		if !idFound {
 			return
 		}
 
-		if err := s.srcds.DelAdmin(ctx, adminID); err != nil {
+		if err := s.sourcemod.DelAdmin(ctx, adminID); err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, err))
 
 			return
@@ -597,14 +575,14 @@ type smAdminRequest struct {
 	Immunity int      `json:"immunity"`
 }
 
-func (s *srcdsHandler) onCreateSMAdmin() gin.HandlerFunc {
+func (s *Handler) onCreateSMAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req smAdminRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		admin, errAdmin := s.srcds.AddAdmin(ctx, req.Name, req.AuthType, req.Identity, req.Flags, req.Immunity, req.Password)
+		admin, errAdmin := s.sourcemod.AddAdmin(ctx, req.Name, req.AuthType, req.Identity, req.Flags, req.Immunity, req.Password)
 		if errAdmin != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errAdmin))
 
@@ -615,14 +593,14 @@ func (s *srcdsHandler) onCreateSMAdmin() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onDeleteSMGroup() gin.HandlerFunc {
+func (s *Handler) onDeleteSMGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, idFound := httphelper.GetIntParam(ctx, "group_id")
 		if !idFound {
 			return
 		}
 
-		if err := s.srcds.DelGroup(ctx, groupID); err != nil {
+		if err := s.sourcemod.DelGroup(ctx, groupID); err != nil {
 			if errors.Is(err, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
 
@@ -644,14 +622,14 @@ type smGroupRequest struct {
 	Flags    string `json:"flags"`
 }
 
-func (s *srcdsHandler) onSaveSMGroup() gin.HandlerFunc {
+func (s *Handler) onSaveSMGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, idFound := httphelper.GetIntParam(ctx, "group_id")
 		if !idFound {
 			return
 		}
 
-		group, errGroup := s.srcds.GetGroupByID(ctx, groupID)
+		group, errGroup := s.sourcemod.GetGroupByID(ctx, groupID)
 		if errGroup != nil {
 			if errors.Is(errGroup, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
@@ -673,7 +651,7 @@ func (s *srcdsHandler) onSaveSMGroup() gin.HandlerFunc {
 		group.Flags = req.Flags
 		group.ImmunityLevel = req.Immunity
 
-		editedGroup, errSave := s.srcds.SaveGroup(ctx, group)
+		editedGroup, errSave := s.sourcemod.SaveGroup(ctx, group)
 		if errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
@@ -684,14 +662,14 @@ func (s *srcdsHandler) onSaveSMGroup() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onCreateSMGroup() gin.HandlerFunc {
+func (s *Handler) onCreateSMGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req smGroupRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		group, errGroup := s.srcds.AddGroup(ctx, req.Name, req.Flags, req.Immunity)
+		group, errGroup := s.sourcemod.AddGroup(ctx, req.Name, req.Flags, req.Immunity)
 		if errGroup != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGroup))
 
@@ -702,9 +680,9 @@ func (s *srcdsHandler) onCreateSMGroup() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onAPISMGroups() gin.HandlerFunc {
+func (s *Handler) onAPISMGroups() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		groups, errGroups := s.srcds.Groups(ctx)
+		groups, errGroups := s.sourcemod.Groups(ctx)
 		if errGroups != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errGroups))
 
@@ -715,9 +693,9 @@ func (s *srcdsHandler) onAPISMGroups() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onGetSMAdmins() gin.HandlerFunc {
+func (s *Handler) onGetSMAdmins() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		admins, errAdmins := s.srcds.Admins(ctx)
+		admins, errAdmins := s.sourcemod.Admins(ctx)
 		if errAdmins != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errAdmins))
 
@@ -725,32 +703,10 @@ func (s *srcdsHandler) onGetSMAdmins() gin.HandlerFunc {
 		}
 
 		if admins == nil {
-			admins = []SMAdmin{}
+			admins = []Admin{}
 		}
 
 		ctx.JSON(http.StatusOK, admins)
-	}
-}
-
-func (s *srcdsHandler) onAPIPostServerState() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var req PartialStateUpdate
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
-
-		serverID, idFound := httphelper.GetIntParam(ctx, "server_id")
-		if !idFound {
-			return
-		}
-
-		if errUpdate := s.state.Update(serverID, req); errUpdate != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errUpdate))
-
-			return
-		}
-
-		ctx.AbortWithStatus(http.StatusNoContent)
 	}
 }
 
@@ -803,7 +759,7 @@ func (s *srcdsHandler) onAPIPostServerState() gin.HandlerFunc {
 // 	}
 // }
 
-func (s *srcdsHandler) onAPIGetServerOverrides() gin.HandlerFunc {
+func (s *Handler) onAPIGetServerOverrides() gin.HandlerFunc {
 	type smOverride struct {
 		Type  OverrideType `json:"type"`
 		Name  string       `json:"name"`
@@ -811,7 +767,7 @@ func (s *srcdsHandler) onAPIGetServerOverrides() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		overrides, errOverrides := s.srcds.Overrides(ctx)
+		overrides, errOverrides := s.sourcemod.Overrides(ctx)
 		if errOverrides != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errOverrides))
 
@@ -832,7 +788,7 @@ func (s *srcdsHandler) onAPIGetServerOverrides() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onAPIGetServerGroups() gin.HandlerFunc {
+func (s *Handler) onAPIGetServerGroups() gin.HandlerFunc {
 	type smGroup struct {
 		Flags         string `json:"flags"`
 		Name          string `json:"name"`
@@ -850,14 +806,14 @@ func (s *srcdsHandler) onAPIGetServerGroups() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		groups, errGroups := s.srcds.Groups(ctx)
+		groups, errGroups := s.sourcemod.Groups(ctx)
 		if errGroups != nil && !errors.Is(errGroups, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
 
 			return
 		}
 
-		immunities, errImmunities := s.srcds.GetGroupImmunities(ctx)
+		immunities, errImmunities := s.sourcemod.GroupImmunities(ctx)
 		if errImmunities != nil && !errors.Is(errImmunities, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errImmunities))
 
@@ -890,7 +846,7 @@ func (s *srcdsHandler) onAPIGetServerGroups() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onAPIGetServerUsers() gin.HandlerFunc {
+func (s *Handler) onAPIGetServerUsers() gin.HandlerFunc {
 	type smUser struct {
 		ID       int      `json:"id"`
 		Authtype AuthType `json:"authtype"`
@@ -912,7 +868,7 @@ func (s *srcdsHandler) onAPIGetServerUsers() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		users, errUsers := s.srcds.Admins(ctx)
+		users, errUsers := s.sourcemod.Admins(ctx)
 		if errUsers != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errUsers))
 
@@ -944,64 +900,5 @@ func (s *srcdsHandler) onAPIGetServerUsers() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, smResp)
-	}
-}
-
-type pingReq struct {
-	ServerName string          `json:"server_name"`
-	Name       string          `json:"name"`
-	SteamID    steamid.SteamID `json:"steam_id"`
-	Reason     string          `json:"reason"`
-	Client     int             `json:"client"`
-}
-
-func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var req pingReq
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
-
-		conf := s.config.Config()
-		players := s.state.FindBySteamID(req.SteamID)
-
-		if len(players) == 0 && conf.General.Mode != config.TestMode {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, httphelper.ErrInternal))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{"client": req.Client, "message": "Moderators have been notified"})
-
-		author, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, req.SteamID)
-		if err != nil {
-			slog.Error("Failed to load user", log.ErrAttr(err))
-
-			return
-		}
-
-		server, errServer := s.servers.Server(ctx, players[0].ServerID)
-		if errServer != nil {
-			slog.Error("Failed to load server", log.ErrAttr(errServer))
-
-			return
-		}
-
-		// var connect string
-
-		if _, errIP := server.IP(ctx); errIP != nil {
-			slog.Error("Failed to resolve server ip", log.ErrAttr(errIP))
-		}
-		// else {
-		// 	connect = fmt.Sprintf("steam://connect/%s:%d", addr.String(), server.Port)
-		// }
-
-		// s.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		// 	domain.ChannelMod,
-		// 	discord.PingModMessage(author, conf.ExtURL(author), req.Reason, server, conf.Discord.ModPingRoleID, connect)))
-
-		if errSay := s.state.PSay(ctx, author.GetSteamID(), "Moderators have been notified"); errSay != nil {
-			slog.Error("Failed to reply to user", log.ErrAttr(errSay))
-		}
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
+	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -227,7 +228,7 @@ func (r Reports) addAuthorsToReports(ctx context.Context, reports []Report) ([]R
 		peopleIDs = append(peopleIDs, report.SourceID, report.TargetID)
 	}
 
-	people, errAuthors := r.persons.BySteamIDs(ctx, nil, sliceutil.Uniq(peopleIDs))
+	people, errAuthors := r.persons.BySteamIDs(ctx, sliceutil.Uniq(peopleIDs))
 	if errAuthors != nil {
 		return nil, errAuthors
 	}
@@ -247,7 +248,7 @@ func (r Reports) addAuthorsToReports(ctx context.Context, reports []Report) ([]R
 	return userReports, nil
 }
 
-func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user domain.PersonInfo, status ReportStatus) (ReportWithAuthor, error) {
+func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user personDomain.Info, status ReportStatus) (ReportWithAuthor, error) {
 	report, errGet := r.Report(ctx, user, reportID)
 	if errGet != nil {
 		return report, errGet
@@ -321,13 +322,13 @@ func (r Reports) Reports(ctx context.Context) ([]ReportWithAuthor, error) {
 	return r.addAuthorsToReports(ctx, reports)
 }
 
-func (r Reports) Report(ctx context.Context, curUser domain.PersonInfo, reportID int64) (ReportWithAuthor, error) {
+func (r Reports) Report(ctx context.Context, curUser personDomain.Info, reportID int64) (ReportWithAuthor, error) {
 	report, err := r.repository.GetReport(ctx, reportID)
 	if err != nil {
 		return ReportWithAuthor{}, err
 	}
 
-	author, errAuthor := r.persons.BySteamID(ctx, nil, report.SourceID)
+	author, errAuthor := r.persons.BySteamID(ctx, report.SourceID)
 	if errAuthor != nil {
 		return ReportWithAuthor{}, errAuthor
 	}
@@ -336,7 +337,7 @@ func (r Reports) Report(ctx context.Context, curUser domain.PersonInfo, reportID
 		return ReportWithAuthor{}, permission.ErrDenied
 	}
 
-	target, errTarget := r.persons.BySteamID(ctx, nil, report.TargetID)
+	target, errTarget := r.persons.BySteamID(ctx, report.TargetID)
 	if errTarget != nil {
 		return ReportWithAuthor{}, errTarget
 	}
@@ -368,7 +369,7 @@ func (r Reports) MessageByID(ctx context.Context, reportMessageID int64) (Report
 	return r.repository.GetReportMessageByID(ctx, reportMessageID)
 }
 
-func (r Reports) DropMessage(ctx context.Context, curUser domain.PersonInfo, reportMessageID int64) error {
+func (r Reports) DropMessage(ctx context.Context, curUser personDomain.Info, reportMessageID int64) error {
 	existing, errExist := r.repository.GetReportMessageByID(ctx, reportMessageID)
 	if errExist != nil {
 		return errExist
@@ -394,7 +395,7 @@ func (r Reports) Drop(ctx context.Context, report *Report) error {
 	return r.repository.DropReport(ctx, report)
 }
 
-func (r Reports) Save(ctx context.Context, currentUser domain.PersonInfo, req RequestReportCreate) (ReportWithAuthor, error) {
+func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req RequestReportCreate) (ReportWithAuthor, error) {
 	if req.Description == "" || len(req.Description) < 10 {
 		return ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
 	}
@@ -418,12 +419,12 @@ func (r Reports) Save(ctx context.Context, currentUser domain.PersonInfo, req Re
 		return ReportWithAuthor{}, fmt.Errorf("%w: cannot report self", domain.ErrParamInvalid)
 	}
 
-	personSource, errSource := r.persons.BySteamID(ctx, nil, req.SourceID)
+	personSource, errSource := r.persons.BySteamID(ctx, req.SourceID)
 	if errSource != nil {
 		return ReportWithAuthor{}, errSource
 	}
 
-	personTarget, errTarget := r.persons.BySteamID(ctx, nil, req.TargetID)
+	personTarget, errTarget := r.persons.BySteamID(ctx, req.TargetID)
 	if errTarget != nil {
 		return ReportWithAuthor{}, errTarget
 	}
@@ -432,7 +433,7 @@ func (r Reports) Save(ctx context.Context, currentUser domain.PersonInfo, req Re
 		if err := person.UpdatePlayerSummary(ctx, &personTarget, r.tfAPI); err != nil {
 			slog.Error("Failed to update target player", log.ErrAttr(err))
 		} else {
-			if errSave := r.persons.Save(ctx, nil, &personTarget); errSave != nil {
+			if errSave := r.persons.Save(ctx, &personTarget); errSave != nil {
 				slog.Error("Failed to save target player update", log.ErrAttr(err))
 			}
 		}
@@ -507,7 +508,7 @@ func (r Reports) Save(ctx context.Context, currentUser domain.PersonInfo, req Re
 	return newReport, nil
 }
 
-func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser domain.PersonInfo, req RequestMessageBodyMD) (ReportMessage, error) {
+func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser personDomain.Info, req RequestMessageBodyMD) (ReportMessage, error) {
 	if reportMessageID <= 0 {
 		return ReportMessage{}, domain.ErrParamInvalid
 	}
@@ -548,7 +549,7 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 	return r.MessageByID(ctx, reportMessageID)
 }
 
-func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser domain.PersonInfo, req RequestMessageBodyMD) (ReportMessage, error) {
+func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser personDomain.Info, req RequestMessageBodyMD) (ReportMessage, error) {
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
 
 	if req.BodyMD == "" {

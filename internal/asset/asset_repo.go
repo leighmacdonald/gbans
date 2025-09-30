@@ -80,7 +80,7 @@ func (l Repository) Delete(ctx context.Context, assetID uuid.UUID) (int64, error
 
 	query := l.db.Builder().Delete("asset").Where(sq.Eq{"asset_id": assetID})
 
-	if errExec := l.db.ExecDeleteBuilder(ctx, nil, query); errExec != nil {
+	if errExec := l.db.ExecDeleteBuilder(ctx, query); errExec != nil {
 		return 0, database.DBErr(errExec)
 	}
 
@@ -163,7 +163,7 @@ func (l Repository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) (Asse
 		authorID int64
 	)
 
-	if errScan := l.db.QueryRow(ctx, nil, query, args...).
+	if errScan := l.db.QueryRow(ctx, query, args...).
 		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
 			&asset.Size, &asset.Hash, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
 		return Asset{}, database.DBErr(errScan)
@@ -196,7 +196,7 @@ func (l Repository) getAssetByHash(ctx context.Context, hash []byte) (Asset, err
 		authorID int64
 	)
 
-	if errScan := l.db.QueryRow(ctx, nil, query, args...).
+	if errScan := l.db.QueryRow(ctx, query, args...).
 		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
 			&asset.Size, &asset.Hash, &asset.IsPrivate, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
 		return Asset{}, database.DBErr(errScan)
@@ -227,7 +227,7 @@ func (l Repository) saveAssetToDB(ctx context.Context, asset Asset) error {
 		"updated_on": asset.UpdatedOn,
 	})
 
-	if errInsert := l.db.ExecInsertBuilder(ctx, nil, query); errInsert != nil {
+	if errInsert := l.db.ExecInsertBuilder(ctx, query); errInsert != nil {
 		return database.DBErr(errInsert)
 	}
 

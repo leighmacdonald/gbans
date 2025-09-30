@@ -12,6 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
@@ -62,7 +63,7 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		person, errPerson := h.persons.BySteamID(ctx, nil, steamID)
+		person, errPerson := h.persons.BySteamID(ctx, steamID)
 		if errPerson != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errPerson, httphelper.ErrInternal)))
 
@@ -71,7 +72,7 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 
 		person.PermissionLevel = req.PermissionLevel
 
-		if err := h.persons.Save(ctx, nil, &person); err != nil {
+		if err := h.persons.Save(ctx, &person); err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
@@ -131,7 +132,7 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 		}
 
 		// TODO custom profile query
-		ctx.JSON(http.StatusOK, domain.PersonCore{
+		ctx.JSON(http.StatusOK, person.Core{
 			SteamID:         user.GetSteamID(),
 			Name:            user.GetName(),
 			Avatarhash:      user.GetAvatar().Hash(),
@@ -213,7 +214,7 @@ func (h personHandler) searchPlayers() gin.HandlerFunc {
 			return
 		}
 
-		people, errGetPeople := h.persons.GetPeople(ctx, nil, query)
+		people, errGetPeople := h.persons.GetPeople(ctx, query)
 		if errGetPeople != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetPeople, httphelper.ErrInternal)))
 

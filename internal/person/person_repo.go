@@ -10,7 +10,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -26,14 +25,14 @@ func NewRepository(conf config.Config, database database.Database) Repository {
 	return Repository{conf: conf, db: database}
 }
 
-func (r *Repository) DropPerson(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID) error {
-	return database.DBErr(r.db.ExecDeleteBuilder(ctx, transaction, r.db.
+func (r *Repository) DropPerson(ctx context.Context, steamID steamid.SteamID) error {
+	return database.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.
 		Builder().
 		Delete("person").
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
-func (r *Repository) Save(ctx context.Context, transaction pgx.Tx, person *Person) error {
+func (r *Repository) Save(ctx context.Context, person *Person) error {
 	const query = `
 		INSERT INTO person (
 			steam_id, communityvisibilitystate, profilestate,
@@ -48,7 +47,8 @@ func (r *Repository) Save(ctx context.Context, transaction pgx.Tx, person *Perso
 			realname = $7, timecreated = $8, loccountrycode = $9, locstatecode = $10, loccityid = $11,  permission_level = $12,
 			discord_id = $13, community_banned = $14,  vac_bans = $15, game_bans = $16, economy_ban = $17, days_since_last_ban = $18,
 			updated_on_steam = $19, muted =$20, playerqueue_chat_status =$21, playerqueue_chat_reason=$22, updated_on=$24`
-	return database.DBErr(r.db.Exec(ctx, transaction, query, person.SteamID.Int64(), person.VisibilityState,
+
+	return database.DBErr(r.db.Exec(ctx, query, person.SteamID.Int64(), person.VisibilityState,
 		person.ProfileState, person.PersonaName,
 		person.AvatarHash, person.PersonaState, person.RealName,
 		person.TimeCreated, person.LocCountryCode, person.LocStateCode,
@@ -68,7 +68,7 @@ func (r *Repository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steam
 	var ids steamid.Collection
 
 	// TODO
-	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
+	rows, errRows := r.db.QueryBuilder(ctx, r.db.
 		Builder().
 		Select("DISTINCT steam_id").
 		From("person_connections").
@@ -91,7 +91,7 @@ func (r *Repository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steam
 	return ids, nil
 }
 
-func (r *Repository) Query(ctx context.Context, transaction pgx.Tx, query Query) (People, error) {
+func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
 	builder := r.db.
 		Builder().
 		Select("p.steam_id", "p.created_on", "p.updated_on",
@@ -166,7 +166,7 @@ func (r *Repository) Query(ctx context.Context, transaction pgx.Tx, query Query)
 
 	var people People
 
-	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder.Where(conditions))
+	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(conditions))
 	if errQuery != nil {
 		return nil, database.DBErr(errQuery)
 	}
@@ -196,7 +196,7 @@ func (r *Repository) Query(ctx context.Context, transaction pgx.Tx, query Query)
 func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Settings, error) {
 	var settings Settings
 
-	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("person_settings_id", "forum_signature", "forum_profile_messages",
 			"stats_hidden", "created_on", "updated_on").
@@ -221,7 +221,7 @@ func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Set
 	}
 
 	if r.conf.Clientprefs.CenterProjectiles {
-		rows, errRow := r.db.QueryBuilder(ctx, nil, r.db.
+		rows, errRow := r.db.QueryBuilder(ctx, r.db.
 			Builder().
 			Select("name", "value").
 			From("sm_cookie_cache").
@@ -286,7 +286,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 	if settings.PersonSettingsID == 0 {
 		settings.CreatedOn = settings.UpdatedOn
 
-		errSiteSettings = database.DBErr(r.db.ExecInsertBuilderWithReturnValue(ctx, nil, r.db.
+		errSiteSettings = database.DBErr(r.db.ExecInsertBuilderWithReturnValue(ctx, r.db.
 			Builder().
 			Insert("person_settings").
 			SetMap(map[string]any{
@@ -300,7 +300,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 			Suffix("RETURNING person_settings_id"),
 			&settings.PersonSettingsID))
 	} else {
-		errSiteSettings = database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
+		errSiteSettings = database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
 			Builder().
 			Update("person_settings").
 			SetMap(map[string]any{
@@ -316,7 +316,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 
 	var errGameSettings error
 	if r.conf.Clientprefs.CenterProjectiles && settings.CenterProjectiles != nil {
-		errGameSettings = database.DBErr(r.db.QueryRow(ctx, nil, query,
+		errGameSettings = database.DBErr(r.db.QueryRow(ctx, query,
 			settings.SteamID.Steam(false),
 			boolToStringDigit(*settings.CenterProjectiles)).Scan(&value))
 	}

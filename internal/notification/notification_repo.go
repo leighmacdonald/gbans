@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -33,32 +34,32 @@ func (r *Repository) SendSite(ctx context.Context, targetIDs steamid.Collection,
 		batch.Queue(query, sid.Int64(), severity, message, link, time.Now(), authorID)
 	}
 
-	return database.DBErr(r.db.SendBatch(ctx, nil, batch).Close())
+	return database.DBErr(r.db.SendBatch(ctx, batch).Close())
 }
 
 func (r *Repository) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
 func (r *Repository) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
 func (r *Repository) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
 func (r *Repository) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.Builder().
+	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
@@ -76,7 +77,7 @@ func (r *Repository) GetPersonNotifications(ctx context.Context, steamID steamid
 
 	constraints := sq.And{sq.Eq{"r.deleted": false}, sq.Eq{"r.steam_id": steamID.Int64()}}
 
-	rows, errRows := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
+	rows, errRows := r.db.QueryBuilder(ctx, builder.Where(constraints))
 	if errRows != nil {
 		return nil, database.DBErr(errRows)
 	}
@@ -105,7 +106,7 @@ func (r *Repository) GetPersonNotifications(ctx context.Context, steamID steamid
 		notif.SteamID = steamid.New(outSteamID)
 
 		if authorID != nil {
-			notif.Author = domain.PersonCore{
+			notif.Author = person.Core{
 				SteamID:         steamid.New(*authorID),
 				PermissionLevel: *pLevel,
 				Name:            *name,

@@ -8,6 +8,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
+var ErrInsufficientDetails = errors.New("insufficient details")
+
 func NewSpeedruns(repo SpeedrunRepository) Speedruns {
 	return Speedruns{repo: repo}
 }

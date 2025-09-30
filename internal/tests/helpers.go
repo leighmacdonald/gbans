@@ -9,7 +9,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/fs"
@@ -20,16 +20,16 @@ import (
 )
 
 var (
-	OwnerSID = steamid.New(76561198084134025)
-	ModSID   = steamid.New(76561198084134026)
-	UserSID  = steamid.New(76561198084134027)
-	GuestSID = steamid.New(76561198084134028)
+	OwnerSID = steamid.New(76561198084134025) //nolint:gochecknoglobals
+	ModSID   = steamid.New(76561198084134026) //nolint:gochecknoglobals
+	UserSID  = steamid.New(76561198084134027) //nolint:gochecknoglobals
+	GuestSID = steamid.New(76561198084134028) //nolint:gochecknoglobals
 
 	ErrContainer = errors.New("failed to bring up test container")
 
-	// authed     = []permission.Privilege{permission.Guest}                                        //nolint:gochecknoglobals
-	// moderators = []permission.Privilege{permission.Guest, permission.User}                       //nolint:gochecknoglobals
-	// admin      = []permission.Privilege{permission.Guest, permission.User, permission.Moderator} //nolint:gochecknoglobals
+	// authed     = []permission.Privilege{permission.Guest}
+	// moderators = []permission.Privilege{permission.Guest, permission.User}
+	// admin      = []permission.Privilege{permission.Guest, permission.User, permission.Moderator}.
 )
 
 // postgresContainer is used instead of the postgres.PostgresContainer one since
@@ -305,12 +305,13 @@ func NewFixture() *Fixture {
 
 //		return &auth.UserTokens{Access: accessToken, Fingerprint: fingerprint}
 //	}
-func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID) domain.PersonCore {
+func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID) personDomain.Core {
 	p := person.NewPersons(person.NewRepository(f.Config, f.Database), OwnerSID, nil)
-	person, errPerson := p.GetOrCreatePersonBySteamID(ctx, nil, steamID)
+	person, errPerson := p.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPerson != nil {
 		panic(errPerson)
 	}
+
 	return person
 }
 

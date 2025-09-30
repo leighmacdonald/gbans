@@ -16,6 +16,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/json"
@@ -27,11 +28,6 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 )
-
-type LinkablePath interface {
-	// Path returns the HTTP path that is represented by the instance.
-	Path() string
-}
 
 // Static defines non-dynamic config values that cannot be changed during runtime. These
 // are loaded via the config file.
@@ -92,16 +88,7 @@ type Config struct {
 	Anticheat   Anticheat   `json:"anticheat"`
 }
 
-func (c Config) ExtURLInstance(obj LinkablePath) *url.URL {
-	urlObj, err := url.Parse(c.ExtURLRaw(obj.Path()))
-	if err != nil {
-		slog.Error("Failed to parse URL", slog.String("url", c.ExtURLRaw(obj.Path())), log.ErrAttr(err))
-	}
-
-	return urlObj
-}
-
-func (c Config) ExtURL(obj LinkablePath) string {
+func (c Config) ExtURL(obj config.LinkablePath) string {
 	return c.ExtURLRaw(obj.Path())
 }
 
@@ -311,11 +298,7 @@ func (c *Configuration) Write(ctx context.Context, config Config) error {
 	return nil
 }
 
-func (c *Configuration) ExtURLInstance(obj LinkablePath) *url.URL {
-	return c.Config().ExtURLInstance(obj)
-}
-
-func (c *Configuration) ExtURL(obj LinkablePath) string {
+func (c *Configuration) ExtURL(obj config.LinkablePath) string {
 	return c.Config().ExtURL(obj)
 }
 

@@ -16,7 +16,7 @@ type Repository struct {
 }
 
 func (r Repository) All(ctx context.Context) ([]Block, error) {
-	rows, errRows := r.db.Query(ctx, nil, `SELECT as_num, reason, notes, created_on, updated_on FROM as_num`)
+	rows, errRows := r.db.Query(ctx, `SELECT as_num, reason, notes, created_on, updated_on FROM as_num`)
 	if errRows != nil {
 		return nil, database.DBErr(errRows)
 	}
@@ -49,7 +49,7 @@ func (r Repository) Save(ctx context.Context, ban Block) error {
 		ON CONFLICT (as_num) DO UPDATE
 		SET reason = $2, updated_on = $5`
 
-	if err := r.db.Exec(ctx, nil, query, ban.ASNum, ban.Reason, ban.Notes, ban.CreatedOn, ban.UpdatedOn); err != nil {
+	if err := r.db.Exec(ctx, query, ban.ASNum, ban.Reason, ban.Notes, ban.CreatedOn, ban.UpdatedOn); err != nil {
 		return database.DBErr(err)
 	}
 
@@ -57,5 +57,5 @@ func (r Repository) Save(ctx context.Context, ban Block) error {
 }
 
 func (r Repository) Delete(ctx context.Context, asNum int) error {
-	return database.DBErr(r.db.Exec(ctx, nil, `DELETE FROM ban_asn WHERE as_num = $1`, asNum))
+	return database.DBErr(r.db.Exec(ctx, `DELETE FROM ban_asn WHERE as_num = $1`, asNum))
 }

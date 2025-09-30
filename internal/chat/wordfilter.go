@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -203,7 +204,7 @@ func (w *WordFilters) Import(ctx context.Context) error {
 	return nil
 }
 
-func (w *WordFilters) Edit(ctx context.Context, user domain.PersonInfo, filterID int64, filter Filter) (Filter, error) {
+func (w *WordFilters) Edit(ctx context.Context, user person.Info, filterID int64, filter Filter) (Filter, error) {
 	existingFilter, errGet := w.repository.GetFilterByID(ctx, filterID)
 	if errGet != nil {
 		return Filter{}, errGet
@@ -230,7 +231,7 @@ func (w *WordFilters) Edit(ctx context.Context, user domain.PersonInfo, filterID
 	return existingFilter, nil
 }
 
-func (w *WordFilters) Create(ctx context.Context, user domain.PersonInfo, opts Filter) (Filter, error) {
+func (w *WordFilters) Create(ctx context.Context, user person.Info, opts Filter) (Filter, error) {
 	if opts.Pattern == "" {
 		return Filter{}, domain.ErrInvalidPattern
 	}

@@ -26,13 +26,13 @@ func (d Repository) SaveUserDetail(ctx context.Context, detail UserDetail) error
 				              publicflags = $5, mfa_enabled = $6, premium_type = $7, updated_on = $9
 				`
 
-	return database.DBErr(d.db.Exec(ctx, nil, query, detail.SteamID.Int64(), detail.ID, detail.Username, detail.Avatar,
+	return database.DBErr(d.db.Exec(ctx, query, detail.SteamID.Int64(), detail.ID, detail.Username, detail.Avatar,
 		detail.PublicFlags, detail.MfaEnabled, detail.PremiumType, detail.CreatedOn, detail.UpdatedOn,
 	))
 }
 
 func (d Repository) GetUserDetail(ctx context.Context, steamID steamid.SteamID) (UserDetail, error) {
-	row, errRow := d.db.QueryRowBuilder(ctx, nil, d.db.Builder().
+	row, errRow := d.db.QueryRowBuilder(ctx, d.db.Builder().
 		Select("discord_id", "username", "avatar",
 			"publicflags", "mfa_enabled", "premium_type", "created_on", "updated_on").
 		From("discord_user").
@@ -54,7 +54,7 @@ func (d Repository) GetUserDetail(ctx context.Context, steamID steamid.SteamID) 
 }
 
 func (d Repository) DeleteUserDetail(ctx context.Context, steamID steamid.SteamID) error {
-	return database.DBErr(d.db.ExecDeleteBuilder(ctx, nil, d.db.Builder().
+	return database.DBErr(d.db.ExecDeleteBuilder(ctx, d.db.Builder().
 		Delete("discord_user").
 		Where(sq.Eq{"steam_id": steamID})))
 }
@@ -69,13 +69,13 @@ func (d Repository) SaveTokens(ctx context.Context, creds Credential) error {
 		DO UPDATE SET discord_id = $2, access_token= $3, refresh_token = $4,
 			expires_in = $5, scope = $6, token_type = $7, updated_on = $9`
 
-	return database.DBErr(d.db.Exec(ctx, nil, query, creds.SteamID.Int64(), creds.DiscordID, creds.AccessToken, creds.RefreshToken,
+	return database.DBErr(d.db.Exec(ctx, query, creds.SteamID.Int64(), creds.DiscordID, creds.AccessToken, creds.RefreshToken,
 		creds.ExpiresIn, creds.Scope, creds.TokenType, creds.CreatedOn, creds.UpdatedOn,
 	))
 }
 
 func (d Repository) GetTokens(ctx context.Context, steamID steamid.SteamID) (Credential, error) {
-	row, errRow := d.db.QueryRowBuilder(ctx, nil, d.db.Builder().
+	row, errRow := d.db.QueryRowBuilder(ctx, d.db.Builder().
 		Select("discord_id", "access_token", "refresh_token",
 			"expires_in", "scope", "token_type", "created_on", "updated_on").
 		From("auth_discord").
@@ -105,7 +105,7 @@ func (d Repository) DeleteTokens(ctx context.Context, steamID steamid.SteamID) e
 		return database.DBErr(errQuery)
 	}
 
-	return d.db.Exec(ctx, nil, query, vars...)
+	return d.db.Exec(ctx, query, vars...)
 }
 
 func (d Repository) OldAuths(ctx context.Context) ([]Credential, error) {
@@ -113,7 +113,7 @@ func (d Repository) OldAuths(ctx context.Context) ([]Credential, error) {
                           expires_in, scope, token_type, created_on, updated_on FROM auth_discord
 					WHERE to_timestamp(extract(epoch from updated_on) + expires_in) < (now()) -- + interval '7 days');`
 
-	rows, errRows := d.db.Query(ctx, nil, query)
+	rows, errRows := d.db.Query(ctx, query)
 	if errRows != nil {
 		return nil, database.DBErr(errRows)
 	}

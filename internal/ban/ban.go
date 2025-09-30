@@ -17,6 +17,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
+	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -332,12 +333,12 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 		newBan.ValidUntil = time.Now().Add(opts.Duration.ToTimeDuration())
 	}
 
-	author, errAuthor := s.persons.GetOrCreatePersonBySteamID(ctx, nil, opts.SourceID)
+	author, errAuthor := s.persons.GetOrCreatePersonBySteamID(ctx, opts.SourceID)
 	if errAuthor != nil {
 		return newBan, errAuthor
 	}
 
-	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, opts.TargetID)
+	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, opts.TargetID)
 	if err != nil {
 		return newBan, errors.Join(err, ErrFetchPerson)
 	}
@@ -403,7 +404,7 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 // Unban will set the Current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author domain.PersonInfo) (bool, error) {
+func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author personDomain.Info) (bool, error) {
 	playerBan, errGetBan := s.QueryOne(ctx, QueryOpts{TargetID: targetSID, EvadeOk: true})
 	if errGetBan != nil {
 		if errors.Is(errGetBan, database.ErrNoResult) {
@@ -420,7 +421,7 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		return false, errors.Join(errSave, ErrSaveBan)
 	}
 
-	person, err := s.persons.BySteamID(ctx, nil, targetSID)
+	person, err := s.persons.BySteamID(ctx, targetSID)
 	if err != nil {
 		return false, errors.Join(err, ErrFetchPerson)
 	}
@@ -565,7 +566,7 @@ func (s Bans) UpdateGroupCache(ctx context.Context) error {
 			}
 
 			// Statisfy FK
-			_, errCreate := s.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
+			_, errCreate := s.persons.GetOrCreatePersonBySteamID(ctx, steamID)
 			if errCreate != nil {
 				return errCreate
 			}

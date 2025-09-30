@@ -9,8 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/discord/helper"
-	"github.com/leighmacdonald/gbans/internal/discord/message"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 )
 
@@ -20,8 +19,8 @@ func RegisterDiscordCommands(bot *bot.Bot, wordFilters WordFilters) {
 	bot.MustRegisterHandler("filter", &discordgo.ApplicationCommand{
 		Name:                     "filter",
 		Description:              "Manage and test global word filters",
-		DMPermission:             &helper.DmPerms,
-		DefaultMemberPermissions: &helper.ModPerms,
+		DMPermission:             &discord.DmPerms,
+		DefaultMemberPermissions: &discord.ModPerms,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        "add",
@@ -30,13 +29,13 @@ func RegisterDiscordCommands(bot *bot.Bot, wordFilters WordFilters) {
 				Options: []*discordgo.ApplicationCommandOption{
 					{
 						Type:        discordgo.ApplicationCommandOptionBoolean,
-						Name:        helper.OptIsRegex,
+						Name:        discord.OptIsRegex,
 						Description: "Is the pattern a regular expression?",
 						Required:    true,
 					},
 					{
 						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        helper.OptPattern,
+						Name:        discord.OptPattern,
 						Description: "Regular expression or word for matching",
 						Required:    true,
 					},
@@ -62,7 +61,7 @@ func RegisterDiscordCommands(bot *bot.Bot, wordFilters WordFilters) {
 				Options: []*discordgo.ApplicationCommandOption{
 					{
 						Type:        discordgo.ApplicationCommandOptionString,
-						Name:        helper.OptMessage,
+						Name:        discord.OptMessage,
 						Description: "String to check filters against",
 						Required:    true,
 					},
@@ -77,8 +76,8 @@ type discordHandler struct {
 }
 
 func (h discordHandler) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := helper.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	message := opts[helper.OptMessage].StringValue()
+	opts := bot.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	message := opts[discord.OptMessage].StringValue()
 
 	return FilterCheckMessage(h.wordFilters.Check(message)), nil
 }
@@ -88,13 +87,13 @@ func (h discordHandler) makeOnFilter(ctx context.Context, session *discordgo.Ses
 	case "check":
 		return h.onFilterCheck(ctx, session, interaction)
 	default:
-		return nil, helper.ErrCommandFailed
+		return nil, discord.ErrCommandFailed
 	}
 }
 
 func filterAddMessage(filter Filter) *discordgo.MessageEmbed {
-	msgEmbed := message.NewEmbed("Filter Created Successfully").Embed().
-		SetColor(message.ColourSuccess).
+	msgEmbed := discord.NewEmbed("Filter Created Successfully").Embed().
+		SetColor(discord.ColourSuccess).
 		AddField("pattern", filter.Pattern).
 		Truncate()
 
@@ -102,21 +101,21 @@ func filterAddMessage(filter Filter) *discordgo.MessageEmbed {
 }
 
 func filterDelMessage(filter Filter) *discordgo.MessageEmbed {
-	return message.NewEmbed("Filter Deleted Successfully").
+	return discord.NewEmbed("Filter Deleted Successfully").
 		Embed().
-		SetColor(message.ColourSuccess).
+		SetColor(discord.ColourSuccess).
 		AddField("filter", filter.Pattern).
 		Truncate().MessageEmbed
 }
 
 func FilterCheckMessage(matches []Filter) *discordgo.MessageEmbed {
-	msgEmbed := message.NewEmbed()
+	msgEmbed := discord.NewEmbed()
 	if len(matches) == 0 {
 		msgEmbed.Embed().SetTitle("No Matches Found")
-		msgEmbed.Embed().SetColor(message.ColourSuccess)
+		msgEmbed.Embed().SetColor(discord.ColourSuccess)
 	} else {
 		msgEmbed.Embed().SetTitle("Matched Found")
-		msgEmbed.Embed().SetColor(message.ColourWarn)
+		msgEmbed.Embed().SetColor(discord.ColourWarn)
 
 		for _, match := range matches {
 			msgEmbed.Embed().AddField(fmt.Sprintf("Matched ID: %d", match.FilterID), match.Pattern)
@@ -127,10 +126,10 @@ func FilterCheckMessage(matches []Filter) *discordgo.MessageEmbed {
 }
 
 func WarningMessage(newWarning NewUserWarning, banSteam ban.Ban) *discordgo.MessageEmbed {
-	msgEmbed := message.NewEmbed("Language Warning")
+	msgEmbed := discord.NewEmbed("Language Warning")
 	msgEmbed.Embed().
 		SetDescription(newWarning.UserWarning.Message).
-		SetColor(message.ColourWarn).
+		SetColor(discord.ColourWarn).
 		AddField("Filter ID", strconv.FormatInt(newWarning.MatchedFilter.FilterID, 10)).
 		AddField("Matched", newWarning.Matched).
 		AddField("ServerStore", newWarning.UserMessage.ServerName).InlineAllFields().

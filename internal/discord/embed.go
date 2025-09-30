@@ -1,9 +1,9 @@
-package message
+package discord
 
 import (
 	"github.com/bwmarrin/discordgo"
 	embed "github.com/leighmacdonald/discordgo-embed"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -50,7 +50,7 @@ func (e *Embed) Message() *discordgo.MessageEmbed {
 	return e.Emb.MessageEmbed
 }
 
-func (e *Embed) AddTargetPerson(person domain.PersonInfo) *Embed {
+func (e *Embed) AddTargetPerson(person person.Info) *Embed {
 	name := person.GetName()
 
 	e.Emb.AddField("Name", name)
@@ -59,7 +59,7 @@ func (e *Embed) AddTargetPerson(person domain.PersonInfo) *Embed {
 	return e
 }
 
-func (e *Embed) AddAuthorPersonInfo(person domain.PersonInfo, url string) *Embed {
+func (e *Embed) AddAuthorPersonInfo(person person.Info, url string) *Embed {
 	name := person.GetName()
 
 	e.Embed().SetAuthor(name, person.GetAvatar().Full(), url)

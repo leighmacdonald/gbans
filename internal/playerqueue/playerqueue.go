@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -89,7 +90,7 @@ type ChatStatusChangePayload struct {
 	Reason string     `json:"reason"`
 }
 
-func NewPlayerqueue(repo Repository, persons domain.PersonProvider, serversUC servers.Servers,
+func NewPlayerqueue(repo Repository, persons person.Provider, serversUC servers.Servers,
 	state *servers.State, chatLogs []ChatLog, config *config.Configuration, notif notification.Notifier,
 ) *Playerqueue {
 	return &Playerqueue{
@@ -133,7 +134,7 @@ func NewPlayerqueue(repo Repository, persons domain.PersonProvider, serversUC se
 
 type Playerqueue struct {
 	repo    Repository
-	persons domain.PersonProvider
+	persons person.Provider
 	notif   notification.Notifier
 	config  *config.Configuration
 	queue   *Coordinator
@@ -164,7 +165,7 @@ func (p Playerqueue) LeaveLobbies(client Client, servers []int) error {
 	return p.queue.Leave(client, servers)
 }
 
-func (p Playerqueue) Connect(ctx context.Context, user domain.PersonInfo, conn *websocket.Conn) Client {
+func (p Playerqueue) Connect(ctx context.Context, user person.Info, conn *websocket.Conn) Client {
 	return p.queue.Connect(ctx, user.GetSteamID(), user.GetName(), user.GetAvatar().Hash(), conn)
 }
 
@@ -189,12 +190,12 @@ func (p Playerqueue) Purge(ctx context.Context, authorID steamid.SteamID, messag
 
 	p.queue.PurgeMessages(messageIDs...)
 
-	author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
+	author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, authorID)
 	if errGetProfile != nil {
 		return errGetProfile
 	}
 
-	target, errGetTarget := p.persons.GetOrCreatePersonBySteamID(ctx, nil, message.SteamID)
+	target, errGetTarget := p.persons.GetOrCreatePersonBySteamID(ctx, message.SteamID)
 	if errGetTarget != nil {
 		return errGetTarget
 	}
@@ -222,12 +223,12 @@ func (p Playerqueue) SetChatStatus(ctx context.Context, authorID steamid.SteamID
 		return domain.ErrInvalidSID
 	}
 
-	author, errAuthor := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
+	author, errAuthor := p.persons.GetOrCreatePersonBySteamID(ctx, authorID)
 	if errAuthor != nil {
 		return errAuthor
 	}
 
-	person, errPerson := p.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
+	person, errPerson := p.persons.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPerson != nil {
 		return errPerson
 	}
@@ -242,7 +243,7 @@ func (p Playerqueue) SetChatStatus(ctx context.Context, authorID steamid.SteamID
 
 	p.queue.UpdateChatStatus(steamID, status, reason, Readwrite)
 
-	author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, nil, authorID)
+	author, errGetProfile := p.persons.GetOrCreatePersonBySteamID(ctx, authorID)
 	if errGetProfile != nil {
 		return errGetProfile
 	}
@@ -273,7 +274,7 @@ func removeNonPrintable(input string) string {
 	return out
 }
 
-func (p Playerqueue) AddMessage(ctx context.Context, bodyMD string, user domain.PersonInfo) error {
+func (p Playerqueue) AddMessage(ctx context.Context, bodyMD string, user person.Info) error {
 	bodyMD = sanitizeUserMessage(bodyMD)
 	if len(bodyMD) == 0 {
 		return ErrBadInput

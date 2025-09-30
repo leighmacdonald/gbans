@@ -6,16 +6,16 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord/message"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 )
 
-func VoteResultMessage(conf *config.Config, result Result, source domain.PersonCore, target domain.PersonCore) *discordgo.MessageEmbed {
-	msgEmbed := message.NewEmbed("Vote Result")
+func VoteResultMessage(conf *config.Config, result Result, source person.Core, target person.Core) *discordgo.MessageEmbed {
+	msgEmbed := discord.NewEmbed("Vote Result")
 	if result.Success {
-		msgEmbed.Emb.Color = message.ColourSuccess
+		msgEmbed.Emb.Color = discord.ColourSuccess
 	} else {
-		msgEmbed.Emb.Color = message.ColourWarn
+		msgEmbed.Emb.Color = discord.ColourWarn
 	}
 
 	msgEmbed.Emb.Thumbnail = &discordgo.MessageEmbedThumbnail{

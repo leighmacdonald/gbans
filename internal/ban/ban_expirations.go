@@ -7,12 +7,12 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
-func NewExpirationMonitor(steam Bans, person domain.PersonProvider, notifications notification.Notifier, config *config.Configuration,
+func NewExpirationMonitor(steam Bans, person person.Provider, notifications notification.Notifier, config *config.Configuration,
 ) *ExpirationMonitor {
 	return &ExpirationMonitor{
 		steam:         steam,
@@ -24,7 +24,7 @@ func NewExpirationMonitor(steam Bans, person domain.PersonProvider, notification
 
 type ExpirationMonitor struct {
 	steam         Bans
-	person        domain.PersonProvider
+	person        person.Provider
 	notifications notification.Notifier
 	config        *config.Configuration
 }
@@ -45,7 +45,7 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 			continue
 		}
 
-		person, errPerson := monitor.person.GetOrCreatePersonBySteamID(ctx, nil, ban.TargetID)
+		person, errPerson := monitor.person.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
 		if errPerson != nil {
 			slog.Error("Failed to get expired Person", log.ErrAttr(errPerson))
 
