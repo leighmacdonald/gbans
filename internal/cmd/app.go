@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
@@ -22,7 +23,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/contest"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord_oauth"
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -101,7 +101,7 @@ type GBans struct {
 	wiki           wiki.Wiki
 	wordFilters    chat.WordFilters
 	sentry         *sentry.Client
-	bot            *discord.Discord
+	bot            *bot.Bot
 
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 
@@ -190,11 +190,14 @@ func (g *GBans) Init(ctx context.Context) error {
 		return err
 	}
 
-	bot, errDiscord := discord.NewDiscord(conf.Discord.AppID, conf.Discord.GuildID, conf.Discord.Token, conf.ExternalURL)
+	discord, errDiscord := bot.New(bot.Opts{
+		Token:   conf.Discord.Token,
+		AppID:   conf.Discord.AppID,
+		GuildID: conf.Discord.GuildID})
 	if errDiscord != nil {
 		return errDiscord
 	}
-	g.bot = bot
+	g.bot = discord
 
 	g.assets = asset.NewAssets(assetRepo)
 	g.servers = servers.NewServers(servers.NewRepository(g.database))
@@ -435,7 +438,7 @@ func (g *GBans) Close(ctx context.Context) error {
 	}
 
 	if g.bot != nil {
-		g.bot.Shutdown()
+		g.bot.Close()
 	}
 
 	if g.database != nil {

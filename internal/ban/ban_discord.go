@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -30,7 +30,7 @@ type discordHandler struct {
 	config  *config.Configuration
 }
 
-func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
+func RegisterDiscordCommands(bot *bot.Bot, bans Bans) {
 	var (
 		reasons = []*discordgo.ApplicationCommandOptionChoice{
 			{Name: ban.External.String(), Value: ban.External},
@@ -60,7 +60,7 @@ func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
 
 	handler := &discordHandler{bans: bans}
 
-	bot.MustRegisterHandler("ban", handler.onBan, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("ban", &discordgo.ApplicationCommand{
 		Name:                     "ban",
 		Description:              "Manage steam, ip, group and ASN bans",
 		DMPermission:             &helper.DmPerms,
@@ -93,9 +93,9 @@ func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
 				},
 			},
 		},
-	})
+	}, handler.onBan)
 
-	bot.MustRegisterHandler("unban", handler.onUnban, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("unban", &discordgo.ApplicationCommand{
 		Name:                     "unban",
 		Description:              "Manage steam, ip and ASN bans",
 		DMPermission:             &helper.DmPerms,
@@ -121,9 +121,9 @@ func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
 				},
 			},
 		},
-	})
+	}, handler.onUnban)
 
-	bot.MustRegisterHandler("mute", handler.onMute, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("mute", &discordgo.ApplicationCommand{
 		Name:                     "mute",
 		Description:              "Mute a player",
 		DMPermission:             &helper.DmPerms,
@@ -155,9 +155,9 @@ func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
 				Required:    true,
 			},
 		},
-	})
+	}, handler.onMute)
 
-	bot.MustRegisterHandler("check", handler.onCheck, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("check", &discordgo.ApplicationCommand{
 		Name:                     "check",
 		DMPermission:             &helper.DmPerms,
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -170,7 +170,7 @@ func RegisterDiscordCommands(bot *discord.Discord, bans Bans) {
 				Required:    true,
 			},
 		},
-	})
+	}, handler.onCheck)
 }
 
 func (h discordHandler) onMute(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {

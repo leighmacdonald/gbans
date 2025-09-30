@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/sliceutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -137,14 +137,14 @@ func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity 
 	return payload
 }
 
-func NewNotifications(repository Repository, discord *discord.Discord) *Notifications {
+func NewNotifications(repository Repository, discord *bot.Bot) *Notifications {
 	return &Notifications{repository: repository, bot: discord}
 }
 
 type Notifications struct {
 	repository Repository
 	send       chan Payload
-	bot        *discord.Discord
+	bot        *bot.Bot
 }
 
 func (n *Notifications) Send(payload Payload) {
@@ -158,7 +158,7 @@ func (n *Notifications) Sender(ctx context.Context) {
 			return
 		case notif := <-n.send:
 			for _, channelID := range notif.DiscordChannels {
-				n.bot.SendPayload(channelID, notif.DiscordEmbed)
+				n.bot.Send(channelID, notif.DiscordEmbed)
 			}
 		}
 	}

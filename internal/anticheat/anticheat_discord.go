@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/discord/helper"
 	"github.com/leighmacdonald/gbans/internal/discord/message"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -16,10 +16,10 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func RegisterDiscordCommands(bot *discord.Discord, anticheat AntiCheat, config *config.Configuration) {
+func RegisterDiscordCommands(bot *bot.Bot, anticheat AntiCheat, config *config.Configuration) {
 	handler := discordHandler{anticheat: anticheat, config: config}
 
-	bot.MustRegisterHandler("ac", handler.onAC, &discordgo.ApplicationCommand{
+	bot.MustRegisterHandler("ac", &discordgo.ApplicationCommand{
 		Name:                     "anticheat",
 		Description:              "Query Anticheat Logs",
 		DefaultMemberPermissions: &helper.ModPerms,
@@ -38,7 +38,7 @@ func RegisterDiscordCommands(bot *discord.Discord, anticheat AntiCheat, config *
 				},
 			},
 		},
-	})
+	}, handler.onAC)
 }
 
 type discordHandler struct {

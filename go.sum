@@ -675,8 +675,6 @@ github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeN
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/google/go-querystring v1.1.0 h1:AnCroh3fv4ZBgVIf1Iwtovgjaw/GiKJo8M8yD/fhyJ8=
-github.com/google/go-querystring v1.1.0/go.mod h1:Kcdr2DB4koayq7X8pmAG4sNG59So17icRSOU623lUBU=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/martian v2.1.0+incompatible/go.mod h1:9I4somxYTbIHy5NJKHRl3wXiIaQGbYVAs8BPL6v8lEs=
 github.com/google/martian/v3 v3.0.0/go.mod h1:y5Zk1BBys9G+gd6Jrk0W3cC1+ELVxBWuIGO+w/tUAp0=
@@ -886,6 +884,8 @@ github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 h1:P6pPBnrTSX3DEVR4fDembhR
 github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0/go.mod h1:vmVJ0l/dxyfGW6FmdpVm2joNMFikkuWg0EoCKLGUMNw=
 github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89 h1:02OqTCqTgujZumT9xVJGbRxlxfxu8y6BELVw2XUcTnQ=
 github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89/go.mod h1:CeSSZ6/97+4vqbT5y1+WbNqpNBASL2IFntAYUvrPM8M=
+github.com/leighmacdonald/discordgo-lipstick v0.0.0-20250930022325-98efeff35acc h1:GGI8u9G0AtzYXdMPjuKaxMJPPABWH0XfzdGcSHFePkQ=
+github.com/leighmacdonald/discordgo-lipstick v0.0.0-20250930022325-98efeff35acc/go.mod h1:VdQFixP2WtE6GykPN/zsO8lZjFl2SUmfcCNzcXujDRA=
 github.com/leighmacdonald/rcon v1.0.10 h1:lTwFaYMwC1q+l2ULXuk05bZaSJpAU8o33klIZMl92B4=
 github.com/leighmacdonald/rcon v1.0.10/go.mod h1:RRkAjtBsT3VMheHl+pMfrxkA001LdtSArkU+tLvSKsk=
 github.com/leighmacdonald/steamid/v4 v4.0.6 h1:oa3P64LEQalJ+YEGi0bChPi70uvL+dFc3KzTC8L/NCU=
