@@ -557,3 +557,34 @@ func setDefaultConfigValues() {
 		return
 	}
 }
+
+func NewMemConfigRepository(conf Config) *MemConfigRepository {
+	return &MemConfigRepository{config: conf}
+}
+
+type MemConfigRepository struct {
+	config Config
+	mutex  *sync.RWMutex
+}
+
+func (m *MemConfigRepository) Init(ctx context.Context) error { return nil }
+
+func (m *MemConfigRepository) Config() Config {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+	return m.config
+}
+
+func (m *MemConfigRepository) Read(ctx context.Context) (Config, error) {
+	m.mutex.RLock()
+	defer m.mutex.RUnlock()
+	return m.config, nil
+}
+
+func (m *MemConfigRepository) Write(ctx context.Context, config Config) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	m.config = config
+
+	return nil
+}

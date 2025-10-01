@@ -138,6 +138,14 @@ func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity 
 	return payload
 }
 
+func NewNullNotifications() *NullNotifications {
+	return &NullNotifications{}
+}
+
+type NullNotifications struct{}
+
+func (n *NullNotifications) Send(_ Payload) {}
+
 func NewNotifications(repository Repository, discord *bot.Bot) *Notifications {
 	return &Notifications{repository: repository, bot: discord}
 }

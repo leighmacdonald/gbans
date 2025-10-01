@@ -129,7 +129,9 @@ func (c *TestConfigRepo) Init(_ context.Context) error {
 type Fixture struct {
 	container *postgresContainer
 	Database  database.Database
-	Config    config.Config
+	Config    *config.Configuration
+	Persons   personDomain.Provider
+	DSN       string
 	Close     func()
 }
 
@@ -147,10 +149,14 @@ func NewFixture() *Fixture {
 		panic(err)
 	}
 
+	conf := TestConfig(testDB.dsn)
+
 	return &Fixture{
 		container: testDB,
 		Database:  databaseConn,
-		Config:    TestConfig(testDB.dsn),
+		Config:    conf,
+		DSN:       testDB.dsn,
+		Persons:   person.NewPersons(person.NewRepository(conf.Config(), databaseConn), steamid.New(conf.Config().Owner), nil),
 		Close: func() {
 			termCtx, termCancel := context.WithTimeout(context.Background(), time.Second*30)
 			defer termCancel()
@@ -159,6 +165,28 @@ func NewFixture() *Fixture {
 				panic(fmt.Sprintf("Failed to terminate test container: %v", errTerm))
 			}
 		},
+	}
+}
+
+func (f *Fixture) Reset(ctx context.Context) {
+	const query = `DO
+$do$
+BEGIN
+   EXECUTE
+   (SELECT 'TRUNCATE TABLE ' || string_agg(oid::regclass::text, ', ') || ' CASCADE'
+    FROM   pg_class
+    WHERE  relkind = 'r'
+    AND    relnamespace = 'public'::regnamespace
+   );
+END
+$do$;`
+
+	if err := f.Database.Exec(ctx, query); err != nil {
+		panic(err)
+	}
+
+	if err := f.Database.Migrate(ctx, database.MigrateUp, f.DSN); err != nil {
+		panic(err)
 	}
 }
 
@@ -306,7 +334,7 @@ func NewFixture() *Fixture {
 //		return &auth.UserTokens{Access: accessToken, Fingerprint: fingerprint}
 //	}
 func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID) personDomain.Core {
-	p := person.NewPersons(person.NewRepository(f.Config, f.Database), OwnerSID, nil)
+	p := person.NewPersons(person.NewRepository(f.Config.Config(), f.Database), OwnerSID, nil)
 	person, errPerson := p.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPerson != nil {
 		panic(errPerson)
@@ -337,9 +365,10 @@ func (f Fixture) CreateTestServer(ctx context.Context) servers.Server {
 	return server
 }
 
-func TestConfig(dsn string) config.Config {
-	return config.Config{
-		Static: config.Static{
+func TestConfig(dsn string) *config.Configuration {
+	return config.NewConfiguration(config.Static{}, config.NewMemConfigRepository(config.Config{
+		Static: config.
+			Static{
 			Owner: OwnerSID.String(),
 			//	SteamKey:            steamKey,
 			ExternalURL:         "http://example.com",
@@ -410,125 +439,5 @@ func TestConfig(dsn string) config.Config {
 		},
 		LocalStore: config.LocalStore{},
 		Exports:    config.Exports{},
-	}
+	}))
 }
-
-// func TestMain(m *testing.M) {
-// 	slog.SetDefault(slog.New(slog.DiscardHandler))
-
-// 	conf := makeTestConfig(dsn)
-// 	eventBroadcaster := broadcaster.New[logparse.EventType, logparse.ServerEvent]()
-// 	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
-
-// 	configUC = config.NewConfiguration(conf.Static, &TestConfigRepo{config: conf})
-// 	if err := configUC.Reload(testCtx); err != nil {
-// 		panic(err)
-// 	}
-
-// 	// if err := configUC.Write(testCtx, configUC.Config()); err != nil {
-// 	// 	panic(err)
-// 	// }
-
-// 	// TODO caching client?
-// 	tfapiClient, errClient := thirdparty.NewTFAPI("https://tf-api.roto.lol", &http.Client{Timeout: time.Second * 15})
-// 	if errClient != nil {
-// 		panic(errClient)
-// 	}
-
-// 	authRepo = auth.NewRepository(databaseConn)
-
-// 	disc, errDiscord := discord.NewDiscord("dummy", "dummy", "dummy", "dummy")
-// 	if errDiscord != nil {
-// 		panic(errDiscord)
-// 	}
-// 	discordUC = disc
-
-// assets = asset.NewAssets(asset.NewLocalRepository(databaseConn, configUC.Config().LocalStore.PathRoot))
-// newsUC = news.NewNews(news.NewRepository(databaseConn))
-// serversUC = servers.NewServers(servers.NewRepository(databaseConn))
-// wikiUC = wiki.NewWiki(wiki.NewRepository(databaseConn))
-// notificationUC = notification.NewNotifications(notification.NewRepository(databaseConn), discordUC)
-// patreonUC = patreon.NewPatreonManager(configUC)
-// personUC = person.NewPersons(person.NewRepository(conf, databaseConn), configUC, tfapiClient)
-// wordFilterUC = chat.NewWordFilters(chat.NewWordFilterRepository(databaseConn), notificationUC, configUC)
-// forumUC = forum.NewForums(forum.NewRepository(databaseConn), configUC, notificationUC)
-
-// stateUC = servers.NewState(eventBroadcaster, servers.NewStateRepository(servers.NewCollector(serversUC)), configUC, serversUC)
-
-// networkUC = network.NewNetworks(eventBroadcaster, network.NewRepository(databaseConn, personUC), configUC)
-// demoRepository = servers.NewDemoRepository(databaseConn)
-// demoUC = servers.NewDemos("demos", demoRepository, assets, configUC)
-// reportUC = ban.NewReports(ban.NewReportRepository(databaseConn), configUC, personUC, demoUC, tfapiClient, notificationUC)
-// bansUC = ban.NewBans(ban.NewRepository(databaseConn, personUC, networkUC), personUC, configUC, reportUC, stateUC, tfapiClient, notificationUC)
-// authUC = auth.NewAuthentication(authRepo, configUC, personUC, bansUC, serversUC, cmd.SentryDSN)
-// chatUC = chat.NewChat(chat.NewRepository(databaseConn), configUC, wordFilterUC, bansUC, personUC)
-// votesRepo = votes.NewRepository(databaseConn)
-// votesUC = votes.NewVotes(votesRepo, eventBroadcaster, notificationUC, configUC, personUC)
-// appealUC = ban.NewAppeals(ban.NewAppealRepository(databaseConn), bansUC, personUC, configUC, notificationUC)
-// speedrunsUC = servers.NewSpeedruns(servers.NewSpeedrunRepository(databaseConn, personUC))
-// blocklistUC = network.NewBlocklists(network.NewBlocklistRepository(databaseConn), &bansUC)
-// anticheatUC = anticheat.NewAntiCheat(anticheat.NewRepository(databaseConn), bansUC, configUC, personUC, notificationUC)
-
-// if internalDB {
-// 	server, errServer := serversUC.Save(context.Background(), servers.RequestServerUpdate{
-// 		ServerName:      stringutil.SecureRandomString(20),
-// 		ServerNameShort: stringutil.SecureRandomString(5),
-// 		Host:            "1.2.3.4",
-// 		Port:            27015,
-// 		ReservedSlots:   8,
-// 		Password:        stringutil.SecureRandomString(8),
-// 		RCON:            stringutil.SecureRandomString(8),
-// 		Lat:             10,
-// 		Lon:             10,
-// 		CC:              "de",
-// 		Region:          "eu",
-// 		IsEnabled:       true,
-// 		EnableStats:     false,
-// 		LogSecret:       23456789,
-// 	})
-
-// 	if errServer != nil && !errors.Is(errServer, database.ErrDuplicate) {
-// 		panic(errServer)
-// 	}
-// 	testServer = server
-// } else {
-// 	srvs, _, errServer := serversUC.Servers(context.Background(), servers.ServerQueryFilter{})
-// 	if len(srvs) == 0 || errServer != nil {
-// 		panic("no servers exist, please create at least one before testing")
-// 	}
-// 	testServer = srvs[0]
-// }
-
-// getOwner()
-
-// mod := getModerator()
-// target := getUser()
-
-// // Create a valid ban_id
-// bannedPerson, errBan := bansUC.Create(context.Background(), ban.Opts{
-// 	SourceID:   mod.SteamID,
-// 	TargetID:   target.SteamID,
-// 	Duration:   duration.FromTimeDuration(time.Hour * 2),
-// 	BanType:    banDomain.Banned,
-// 	Reason:     banDomain.Cheating,
-// 	Origin:     banDomain.System,
-// 	ReasonText: "",
-// 	Note:       "notes",
-// 	ReportID:   0,
-// 	DemoName:   "demo-test.dem",
-// 	DemoTick:   100,
-// 	EvadeOk:    true,
-// 	CIDR:       nil,
-// 	Name:       "",
-// })
-
-// if errBan != nil && !errors.Is(errBan, database.ErrDuplicate) {
-// 	panic(errBan)
-// }
-
-// testBan = bannedPerson
-// testTarget = target
-// tempDB = databaseConn
-
-// m.Run()
-// }

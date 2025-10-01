@@ -11,14 +11,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type Repository struct {
 	db      database.Database
-	persons person.Provider  // TODO remove
-	network network.Networks // TODO remove
+	persons person.Provider // TODO remove
 }
 
 func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
@@ -46,6 +44,10 @@ func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 
 	if opts.CIDR != "" {
 		ands = append(ands, sq.Expr("?::inet @> ip_range", opts.CIDR))
+	}
+
+	if !opts.ValidUntil.IsZero() {
+		ands = append(ands, sq.Lt{"valid_until": time.Now()})
 	}
 
 	// if opts.SourceID.Valid() {
@@ -111,8 +113,8 @@ func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 	return bans, nil
 }
 
-func NewRepository(database database.Database, persons person.Provider, network network.Networks) Repository {
-	return Repository{db: database, persons: persons, network: network}
+func NewRepository(database database.Database, persons person.Provider) Repository {
+	return Repository{db: database, persons: persons}
 }
 
 func (r *Repository) TruncateCache(ctx context.Context) error {
@@ -234,10 +236,11 @@ func (r *Repository) Save(ctx context.Context, ban *Ban) error {
 		return database.ErrDuplicate
 	}
 
-	if lastIP := r.network.GetPlayerMostRecentIP(ctx, ban.TargetID); lastIP != nil {
-		last := lastIP.String()
-		ban.LastIP = &last
-	}
+	// TODO Use trigger / stored proc
+	// if lastIP := r.network.GetPlayerMostRecentIP(ctx, ban.TargetID); lastIP != nil {
+	// 	last := lastIP.String()
+	// 	ban.LastIP = &last
+	// }
 
 	return r.insertBan(ctx, ban)
 }
@@ -290,50 +293,6 @@ func (r *Repository) updateBan(ctx context.Context, ban *Ban) error {
 		Where(sq.Eq{"ban_id": ban.BanID})
 
 	return database.DBErr(r.db.ExecUpdateBuilder(ctx, query))
-}
-
-func (r *Repository) ExpiredBans(ctx context.Context) ([]Ban, error) {
-	query := r.db.
-		Builder().
-		Select("ban_id", "target_id", "source_id", "ban_type", "reason", "reason_text", "note",
-			"valid_until", "origin", "created_on", "updated_on", "deleted", "case WHEN report_id is null THEN 0 ELSE report_id END",
-			"unban_reason_text", "is_enabled", "appeal_state", "evade_ok", "cidr").
-		From("ban").
-		Where(sq.And{sq.Lt{"valid_until": time.Now()}, sq.Eq{"deleted": false}})
-
-	rows, errQuery := r.db.QueryBuilder(ctx, query)
-	if errQuery != nil {
-		return nil, database.DBErr(errQuery)
-	}
-
-	defer rows.Close()
-
-	var bans []Ban
-
-	for rows.Next() {
-		var (
-			ban      Ban
-			sourceID int64
-			targetID int64
-		)
-
-		if errScan := rows.Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
-			&ban.ValidUntil, &ban.Origin, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
-			&ban.IsEnabled, &ban.AppealState, &ban.EvadeOk, &ban.CIDR); errScan != nil {
-			return nil, errors.Join(errScan, domain.ErrScanResult)
-		}
-
-		ban.SourceID = steamid.New(sourceID)
-		ban.TargetID = steamid.New(targetID)
-
-		bans = append(bans, ban)
-	}
-
-	if bans == nil {
-		return []Ban{}, nil
-	}
-
-	return bans, nil
 }
 
 func (r *Repository) GetOlderThan(ctx context.Context, filter query.Filter, since time.Time) ([]Ban, error) {

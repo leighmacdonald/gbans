@@ -50,6 +50,7 @@ type Database interface {
 	GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error)
 	TruncateTable(ctx context.Context, table string) error
 	WrapTx(ctx context.Context, fn func(pgx.Tx) error) error
+	Migrate(ctx context.Context, action MigrationAction, dsn string) error
 }
 
 type dbQueryTracer struct{}
@@ -153,7 +154,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 	}
 
 	if db.autoMigrate && !db.migrated {
-		if errMigrate := db.migrate(ctx, MigrateUp, db.dsn); errMigrate != nil {
+		if errMigrate := db.Migrate(ctx, MigrateUp, db.dsn); errMigrate != nil {
 			return fmt.Errorf("could not migrate schema: %w", errMigrate)
 		}
 	}

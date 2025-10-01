@@ -9,10 +9,10 @@ import (
 )
 
 func TestConfig(t *testing.T) {
-	db := tests.NewFixture()
-	defer db.Close()
+	fixture := tests.NewFixture()
+	defer fixture.Close()
 
-	configuration := config.NewConfiguration(db.Config.Static, config.NewRepository(db.Database))
+	configuration := config.NewConfiguration(fixture.Config.Config().Static, config.NewRepository(fixture.Database))
 	require.NoError(t, configuration.Init(t.Context()))
 	require.NoError(t, configuration.Reload(t.Context()))
 	conf := configuration.Config()

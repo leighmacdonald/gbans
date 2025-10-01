@@ -1,6 +1,7 @@
 package servers_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/servers"
@@ -9,11 +10,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestServers(t *testing.T) {
-	testDB := tests.NewFixture()
-	defer testDB.Close()
+var fixture *tests.Fixture
 
-	serversCase := servers.NewServers(servers.NewRepository(testDB.Database))
+func TestMain(m *testing.M) {
+	fixture = tests.NewFixture()
+	defer fixture.Close()
+
+	os.Exit(m.Run())
+}
+
+func TestServers(t *testing.T) {
+	serversCase := servers.NewServers(servers.NewRepository(fixture.Database))
 
 	// no results yet
 	noServers, errServers := serversCase.Servers(t.Context(), servers.Query{})

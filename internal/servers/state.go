@@ -120,7 +120,7 @@ type ServerState struct {
 }
 
 type State struct {
-	state       *StateRepository
+	state       *Collector
 	config      *config.Configuration
 	servers     Servers
 	logListener *logparse.Listener
@@ -130,10 +130,10 @@ type State struct {
 
 // NewState created a interface to interact with server state and exec rcon commands.
 func NewState(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository *StateRepository, config *config.Configuration, servers Servers,
+	state *Collector, config *config.Configuration, servers Servers,
 ) *State {
 	return &State{
-		state:       repository,
+		state:       state,
 		config:      config,
 		broadcaster: broadcaster,
 		servers:     servers,
@@ -214,28 +214,19 @@ func (s *State) Current() []ServerState {
 	return s.state.Current()
 }
 
-func (s *State) FindByCIDR(cidr *net.IPNet) []PlayerServerInfo {
-	return s.Find("", steamid.SteamID{}, nil, cidr)
-}
-
-func (s *State) FindByIP(addr net.IP) []PlayerServerInfo {
-	return s.Find("", steamid.SteamID{}, addr, nil)
-}
-
-func (s *State) FindByName(name string) []PlayerServerInfo {
-	return s.Find(name, steamid.SteamID{}, nil, nil)
-}
-
-func (s *State) FindBySteamID(steamID steamid.SteamID) []PlayerServerInfo {
-	return s.Find("", steamID, nil, nil)
-}
-
 func (s *State) Update(serverID int, update PartialStateUpdate) error {
 	return s.state.Update(serverID, update)
 }
 
+type FindOpts struct {
+	Name    string
+	SteamID steamid.SteamID
+	Addr    net.IP
+	CIDR    *net.IPNet
+}
+
 // Find searches the current server state for players matching at least one of the provided criteria.
-func (s *State) Find(name string, steamID steamid.SteamID, addr net.IP, cidr *net.IPNet) []PlayerServerInfo {
+func (s *State) Find(opts FindOpts) []PlayerServerInfo {
 	var found []PlayerServerInfo
 
 	current := s.state.Current()
@@ -243,12 +234,12 @@ func (s *State) Find(name string, steamID steamid.SteamID, addr net.IP, cidr *ne
 	for server := range current {
 		for _, player := range current[server].Players {
 			matched := false
-			if steamID.Valid() && player.SID == steamID {
+			if opts.SteamID.Valid() && player.SID == opts.SteamID {
 				matched = true
 			}
 
-			if name != "" {
-				queryName := name
+			if opts.Name != "" {
+				queryName := opts.Name
 				if !strings.HasPrefix(queryName, "*") {
 					queryName = "*" + queryName
 				}
@@ -263,11 +254,11 @@ func (s *State) Find(name string, steamID steamid.SteamID, addr net.IP, cidr *ne
 				}
 			}
 
-			if addr != nil && addr.Equal(player.IP) {
+			if opts.Addr != nil && opts.Addr.Equal(player.IP) {
 				matched = true
 			}
 
-			if cidr != nil && cidr.Contains(player.IP) {
+			if opts.CIDR != nil && opts.CIDR.Contains(player.IP) {
 				matched = true
 			}
 
@@ -342,9 +333,9 @@ func (s *State) ServerIDsByName(name string, wildcardOk bool) []int {
 	return servers
 }
 
-func (s *State) OnFindExec(ctx context.Context, name string, steamID steamid.SteamID, ip net.IP, cidr *net.IPNet, onFoundCmd func(info PlayerServerInfo) string) error {
+func (s *State) FindExec(ctx context.Context, opts FindOpts, onFoundCmd func(info PlayerServerInfo) string) error {
 	currentState := s.state.Current()
-	players := s.Find(name, steamID, ip, cidr)
+	players := s.Find(opts)
 
 	if len(players) == 0 {
 		return domain.ErrPlayerNotFound
@@ -474,7 +465,7 @@ func (s *State) Kick(ctx context.Context, target steamid.SteamID, reason string)
 		return domain.ErrInvalidTargetSID
 	}
 
-	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info PlayerServerInfo) string {
+	if errExec := s.FindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
 		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, reason)
 	}); errExec != nil {
 		return errExec
@@ -502,7 +493,7 @@ func (s *State) Silence(ctx context.Context, target steamid.SteamID, reason stri
 		usersMu = &sync.RWMutex{}
 	)
 
-	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info PlayerServerInfo) string {
+	if errExec := s.FindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
 		usersMu.Lock()
 		users = append(users, info.Player.Name)
 		usersMu.Unlock()
@@ -535,7 +526,7 @@ func (s *State) PSay(ctx context.Context, target steamid.SteamID, message string
 		return domain.ErrInvalidTargetSID
 	}
 
-	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(_ PlayerServerInfo) string {
+	if errExec := s.FindExec(ctx, FindOpts{SteamID: target}, func(_ PlayerServerInfo) string {
 		return fmt.Sprintf(`sm_psay "#%s" "%s"`, target.Steam(false), message)
 	}); errExec != nil {
 		return errors.Join(errExec, fmt.Errorf("%w: sm_psay", errExec))
