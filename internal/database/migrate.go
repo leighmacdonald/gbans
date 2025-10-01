@@ -35,8 +35,8 @@ var (
 	ErrMigrate         = errors.New("migration failed to complete")
 )
 
-// migrate database schema.
-func (db *postgresStore) migrate(ctx context.Context, action MigrationAction, dsn string) error {
+// Migrate database schema.
+func (db *postgresStore) Migrate(ctx context.Context, action MigrationAction, dsn string) error {
 	defer func() {
 		db.migrated = true
 	}()

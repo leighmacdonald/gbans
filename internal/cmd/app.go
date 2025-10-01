@@ -91,7 +91,7 @@ type GBans struct {
 	patreon        patreon.Patreon
 	persons        *person.Persons
 	playerQueue    *playerqueue.Playerqueue
-	reports        ban.Reports
+	reports        *ban.Reports
 	servers        servers.Servers
 	speedruns      servers.Speedruns
 	sourcemod      *sourcemod.Sourcemod
@@ -205,8 +205,8 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.servers = servers.NewServers(servers.NewRepository(g.database))
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, g.config)
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.config, g.persons, g.demos, g.tfapiClient, g.notifications)
-	g.states = servers.NewState(g.broadcaster, servers.NewStateRepository(servers.NewCollector(g.servers)), g.config, g.servers)
-	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons, g.networks), g.persons, g.config, g.reports, g.states, g.tfapiClient, g.notifications)
+	g.states = servers.NewState(g.broadcaster, servers.NewCollector(g.servers), g.config, g.servers)
+	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, g.config, g.reports, g.tfapiClient, g.notifications)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), g.bans) // TODO Does THE & work here?
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
 	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.config, g.notifications)
@@ -223,7 +223,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications, g.config, g.persons)
 	g.contests = contest.NewContests(contest.NewRepository(g.database))
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
-	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons, g.networks), g.tfapiClient)
+	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications, g.config)
 
 	if err := g.firstTimeSetup(ctx); err != nil {

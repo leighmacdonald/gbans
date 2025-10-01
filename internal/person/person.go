@@ -228,11 +228,7 @@ type Persons struct {
 }
 
 func NewPersons(repository Repository, owner steamid.SteamID, tfAPI *thirdparty.TFAPI) *Persons {
-	return &Persons{
-		repo:  repository,
-		owner: owner,
-		tfAPI: tfAPI,
-	}
+	return &Persons{repo: repository, owner: owner, tfAPI: tfAPI}
 }
 
 func (u *Persons) CanAlter(ctx context.Context, sourceID steamid.SteamID, targetID steamid.SteamID) (bool, error) {
@@ -407,17 +403,8 @@ func (u *Persons) SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID
 	return nil
 }
 
-func (u *Persons) BySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error) {
-	results, errQuery := u.repo.Query(ctx, Query{SteamIDs: []steamid.SteamID{sid64}})
-	if errQuery != nil {
-		return Person{}, errQuery
-	}
-
-	if len(results) != 1 {
-		return Person{}, ErrPlayerDoesNotExist
-	}
-
-	return results[0], nil
+func (u *Persons) BySteamID(ctx context.Context, steamID steamid.SteamID) (Person, error) {
+	return u.getFirst(ctx, Query{SteamIDs: []steamid.SteamID{steamID}})
 }
 
 func (u *Persons) Drop(ctx context.Context, steamID steamid.SteamID) error {

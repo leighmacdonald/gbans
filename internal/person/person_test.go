@@ -1,6 +1,7 @@
 package person_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -11,11 +12,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPerson(t *testing.T) {
-	testFixture := tests.NewFixture()
-	defer testFixture.Close()
+var fixture *tests.Fixture
 
-	personCase := person.NewPersons(person.NewRepository(testFixture.Config, testFixture.Database), tests.OwnerSID, nil)
+func TestMain(m *testing.M) {
+	fixture = tests.NewFixture()
+	defer fixture.Close()
+
+	os.Exit(m.Run())
+}
+
+func TestPerson(t *testing.T) {
+	personCase := person.NewPersons(person.NewRepository(fixture.Config.Config(), fixture.Database), tests.OwnerSID, nil)
 
 	_, err := personCase.BySteamID(t.Context(), tests.UserSID)
 	require.Error(t, err)

@@ -14,10 +14,10 @@ import (
 )
 
 type reportHandler struct {
-	reports Reports
+	reports *Reports
 }
 
-func NewReportHandler(engine *gin.Engine, reports Reports, authenticator httphelper.Authenticator) {
+func NewReportHandler(engine *gin.Engine, reports *Reports, authenticator httphelper.Authenticator) {
 	handler := reportHandler{
 		reports: reports,
 	}

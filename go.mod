@@ -31,6 +31,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89
 	github.com/leighmacdonald/rcon v1.0.10
+	github.com/leighmacdonald/slur v0.0.0-20250930220707-362018fceedc
 	github.com/leighmacdonald/steamid/v4 v4.0.6
 	github.com/maruel/natural v1.1.1
 	github.com/microcosm-cc/bluemonday v1.0.27
@@ -61,7 +62,6 @@ require (
 
 require (
 	github.com/goccy/go-yaml v1.18.0 // indirect
-	github.com/leighmacdonald/slur v0.0.0-20250930220707-362018fceedc // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/quic-go/quic-go v0.54.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect

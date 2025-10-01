@@ -14,14 +14,11 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
-	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -163,6 +160,7 @@ type QueryOpts struct {
 	CIDROnly      bool
 	IncludeGroups bool
 	LatestOnly    bool
+	ValidUntil    time.Time
 }
 
 type Stats struct {
@@ -183,16 +181,15 @@ type Stats struct {
 
 type Bans struct {
 	repo    Repository
-	persons *person.Persons
+	persons person.Provider
 	config  *config.Configuration
-	state   *servers.State
-	reports Reports
+	reports *Reports
 	tfAPI   *thirdparty.TFAPI
 	notif   notification.Notifier
 }
 
-func NewBans(repository Repository, person *person.Persons,
-	config *config.Configuration, reports Reports, state *servers.State,
+func NewBans(repository Repository, person person.Provider,
+	config *config.Configuration, reports *Reports,
 	tfAPI *thirdparty.TFAPI, notif notification.Notifier,
 ) Bans {
 	return Bans{
@@ -200,7 +197,6 @@ func NewBans(repository Repository, person *person.Persons,
 		persons: person,
 		config:  config,
 		reports: reports,
-		state:   state,
 		tfAPI:   tfAPI,
 		notif:   notif,
 	}
@@ -338,11 +334,6 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 		return newBan, errAuthor
 	}
 
-	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, opts.TargetID)
-	if err != nil {
-		return newBan, errors.Join(err, ErrFetchPerson)
-	}
-
 	if errSave := s.repo.Save(ctx, &newBan); errSave != nil {
 		return newBan, errors.Join(errSave, ErrSaveBan)
 	}
@@ -381,22 +372,22 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 		}
 	}
 
-	switch newBan.BanType {
-	case ban.Banned:
-		if errKick := s.state.Kick(ctx, newBan.TargetID, newBan.Reason.String()); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
-			slog.Error("Failed to kick player", log.ErrAttr(errKick),
-				slog.Int64("sid64", newBan.TargetID.Int64()))
-		} else {
-			s.notif.Send(notification.NewDiscord(s.config.Config().Discord.KickLogChannelID, KickPlayerEmbed(target)))
-		}
-	case ban.NoComm:
-		if errSilence := s.state.Silence(ctx, newBan.TargetID, newBan.Reason.String()); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
-			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
-				slog.Int64("sid64", newBan.TargetID.Int64()))
-		} else {
-			s.notif.Send(notification.NewDiscord(s.config.Config().Discord.KickLogChannelID, MuteMessage(target.GetSteamID())))
-		}
-	}
+	// switch newBan.BanType {
+	// case ban.Banned:
+	// 	if errKick := s.state.Kick(ctx, newBan.TargetID, newBan.Reason.String()); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
+	// 		slog.Error("Failed to kick player", log.ErrAttr(errKick),
+	// 			slog.Int64("sid64", newBan.TargetID.Int64()))
+	// 	} else {
+	// 		s.notif.Send(notification.NewDiscord(s.config.Config().Discord.KickLogChannelID, KickPlayerEmbed(target)))
+	// 	}
+	// case ban.NoComm:
+	// 	if errSilence := s.state.Silence(ctx, newBan.TargetID, newBan.Reason.String()); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
+	// 		slog.Error("Failed to silence player", log.ErrAttr(errSilence),
+	// 			slog.Int64("sid64", newBan.TargetID.Int64()))
+	// 	} else {
+	// 		s.notif.Send(notification.NewDiscord(s.config.Config().Discord.KickLogChannelID, MuteMessage(target.GetSteamID())))
+	// 	}
+	// }
 
 	return s.QueryOne(ctx, QueryOpts{BanID: newBan.BanID, EvadeOk: true})
 }
@@ -404,7 +395,7 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 // Unban will set the Current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author personDomain.Info) (bool, error) {
+func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author person.Info) (bool, error) {
 	playerBan, errGetBan := s.QueryOne(ctx, QueryOpts{TargetID: targetSID, EvadeOk: true})
 	if errGetBan != nil {
 		if errors.Is(errGetBan, database.ErrNoResult) {
@@ -421,7 +412,7 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		return false, errors.Join(errSave, ErrSaveBan)
 	}
 
-	person, err := s.persons.BySteamID(ctx, targetSID)
+	person, err := s.persons.GetOrCreatePersonBySteamID(ctx, targetSID)
 	if err != nil {
 		return false, errors.Join(err, ErrFetchPerson)
 	}
@@ -451,11 +442,9 @@ func (s Bans) Delete(ctx context.Context, ban *Ban, hardDelete bool) error {
 }
 
 func (s Bans) Expired(ctx context.Context) ([]Ban, error) {
-	return s.repo.ExpiredBans(ctx)
-}
-
-func (s Bans) GetOlderThan(ctx context.Context, filter query.Filter, since time.Time) ([]Ban, error) {
-	return s.repo.GetOlderThan(ctx, filter, since)
+	return s.repo.Query(ctx, QueryOpts{
+		ValidUntil: time.Now(),
+	})
 }
 
 // CheckEvadeStatus checks if the address matches an existing user who is currently banned already. This

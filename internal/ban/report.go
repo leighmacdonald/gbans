@@ -164,8 +164,8 @@ type Reports struct {
 
 func NewReports(repository ReportRepository,
 	config *config.Configuration, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI, notif notification.Notifier,
-) Reports {
-	return Reports{
+) *Reports {
+	return &Reports{
 		repository: repository,
 		config:     config,
 		persons:    persons,

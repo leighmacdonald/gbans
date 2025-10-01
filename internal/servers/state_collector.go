@@ -19,38 +19,44 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-var (
-	ErrRCONCommand      = errors.New("failed to execute rcon command")
-	ErrFailedToDialRCON = errors.New("failed to dial rcon")
+const (
+	statusUpdateFreq = time.Second * 20
+	// updateTimeout    = time.Second * 5
 )
 
+var (
+	ErrRCONCommand       = errors.New("failed to execute rcon command")
+	ErrFailedToDialRCON  = errors.New("failed to dial rcon")
+	ErrStatusParse       = errors.New("failed to parse status response")
+	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
+	ErrMaxPlayerParse    = errors.New("failed to parse sv_visiblemaxplayers response")
+	ErrDNSResolve        = errors.New("failed to resolve server dns")
+)
+
+type Status struct {
+	extra.Status
+	Humans int
+	Bots   int
+}
+
 type Collector struct {
-	statusUpdateFreq time.Duration
-	updateTimeout    time.Duration
-	serverState      map[int]ServerState
-	stateMu          *sync.RWMutex
-	configs          []ServerConfig
-	configMu         *sync.RWMutex
-	maxPlayersRx     *regexp.Regexp
-	playersRx        *regexp.Regexp
-	servers          Servers
+	serverState  map[int]ServerState
+	stateMu      *sync.RWMutex
+	configs      []ServerConfig
+	configMu     *sync.RWMutex
+	maxPlayersRx *regexp.Regexp
+	playersRx    *regexp.Regexp
+	servers      Servers
 }
 
 func NewCollector(servers Servers) *Collector {
-	const (
-		statusUpdateFreq = time.Second * 20
-		updateTimeout    = time.Second * 5
-	)
-
 	return &Collector{
-		statusUpdateFreq: statusUpdateFreq,
-		updateTimeout:    updateTimeout,
-		serverState:      map[int]ServerState{},
-		stateMu:          &sync.RWMutex{},
-		configMu:         &sync.RWMutex{},
-		maxPlayersRx:     regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`),
-		playersRx:        regexp.MustCompile(`players\s: (\d+)\s+humans,\s+(\d+)\s+bots\s\((\d+)\s+max`),
-		servers:          servers,
+		serverState:  map[int]ServerState{},
+		stateMu:      &sync.RWMutex{},
+		configMu:     &sync.RWMutex{},
+		maxPlayersRx: regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`),
+		playersRx:    regexp.MustCompile(`players\s: (\d+)\s+humans,\s+(\d+)\s+bots\s\((\d+)\s+max`),
+		servers:      servers,
 	}
 }
 
@@ -73,7 +79,7 @@ func (c *Collector) ExecRaw(ctx context.Context, addr string, password string, c
 
 	resp, errExec := conn.Exec(cmd)
 	if errExec != nil {
-		return "", errors.Join(errExec, ErrRCONExecCommand)
+		return "", errors.Join(errExec, ErrRCONCommand)
 	}
 
 	if errClose := conn.Close(); errClose != nil {
@@ -246,20 +252,6 @@ func (c *Collector) Update(serverID int, update PartialStateUpdate) error {
 	return nil
 }
 
-type Status struct {
-	extra.Status
-	Humans int
-	Bots   int
-}
-
-var (
-	ErrStatusParse       = errors.New("failed to parse status response")
-	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
-	ErrMaxPlayerParse    = errors.New("failed to parse sv_visiblemaxplayers response")
-	ErrDNSResolve        = errors.New("failed to resolve server dns")
-	ErrRCONExecCommand   = errors.New("failed to perform command")
-)
-
 func (c *Collector) status(ctx context.Context, serverID int) (Status, error) {
 	server, errServerID := c.GetServer(serverID)
 	if errServerID != nil {
@@ -339,7 +331,7 @@ func (c *Collector) maxVisiblePlayers(ctx context.Context, serverID int) (int, e
 }
 
 func (c *Collector) startStatus(ctx context.Context) {
-	statusUpdateTicker := time.NewTicker(c.statusUpdateFreq)
+	statusUpdateTicker := time.NewTicker(statusUpdateFreq)
 
 	for {
 		select {

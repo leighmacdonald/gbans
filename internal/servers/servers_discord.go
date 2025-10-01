@@ -178,8 +178,7 @@ func (d DiscordHandler) onFind(ctx context.Context, _ *discordgo.Session, intera
 		name = userIdentifier
 	}
 
-	players := d.state.Find(name, steamID, nil, nil)
-
+	players := d.state.Find(FindOpts{SteamID: steamID, Name: name})
 	if len(players) == 0 {
 		return nil, domain.ErrUnknownID
 	}
@@ -214,7 +213,7 @@ func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, intera
 		return nil, domain.ErrInvalidSID
 	}
 
-	players := d.state.FindBySteamID(target)
+	players := d.state.Find(FindOpts{SteamID: target})
 
 	if len(players) == 0 {
 		return nil, domain.ErrPlayerNotFound
