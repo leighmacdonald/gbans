@@ -56,3 +56,4 @@ parse_demo
 .zed
 frontend/.tanstack
 TODO*
+*.csv

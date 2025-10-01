@@ -80,6 +80,11 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			app.StartBackground(ctx)
 
+			// _, _, err := slur.Calc(ctx, &chat.MessageProvider{Db: app.database})
+			// if err != nil {
+			// 	return err
+			// }
+
 			if errServe := app.Serve(ctx); errServe != nil {
 				return errServe
 			}

@@ -888,6 +888,10 @@ github.com/leighmacdonald/discordgo-lipstick v0.0.0-20250930022325-98efeff35acc 
 github.com/leighmacdonald/discordgo-lipstick v0.0.0-20250930022325-98efeff35acc/go.mod h1:VdQFixP2WtE6GykPN/zsO8lZjFl2SUmfcCNzcXujDRA=
 github.com/leighmacdonald/rcon v1.0.10 h1:lTwFaYMwC1q+l2ULXuk05bZaSJpAU8o33klIZMl92B4=
 github.com/leighmacdonald/rcon v1.0.10/go.mod h1:RRkAjtBsT3VMheHl+pMfrxkA001LdtSArkU+tLvSKsk=
+github.com/leighmacdonald/slur v0.0.0-20250930220239-fdc2a1cf6e24 h1:6MYSRjiOmQmgcJ7ssCoukYj7H6iupJtVkIML7KGdOAo=
+github.com/leighmacdonald/slur v0.0.0-20250930220239-fdc2a1cf6e24/go.mod h1:nTPi1MMXofiALN2xzYHYZ2aiWrsmAGIF3OVjKVOetSU=
+github.com/leighmacdonald/slur v0.0.0-20250930220707-362018fceedc h1:m8Q8g3wxYGae7T3pOKCadgLJD6gwRC9P6KFdGqvjE4U=
+github.com/leighmacdonald/slur v0.0.0-20250930220707-362018fceedc/go.mod h1:nTPi1MMXofiALN2xzYHYZ2aiWrsmAGIF3OVjKVOetSU=
 github.com/leighmacdonald/steamid/v4 v4.0.6 h1:oa3P64LEQalJ+YEGi0bChPi70uvL+dFc3KzTC8L/NCU=
 github.com/leighmacdonald/steamid/v4 v4.0.6/go.mod h1:QT5vYPh48vf4vhqd2CWMWjPlr4pypjWZaXHkZTKXnh4=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=

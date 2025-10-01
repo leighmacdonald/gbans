@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/leighmacdonald/slur"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -13,6 +15,56 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+type SlurMessage struct {
+	steamID steamid.SteamID
+	id      int64
+	message string
+}
+
+func (s SlurMessage) UserID() string {
+	return s.steamID.String()
+}
+
+func (s SlurMessage) MessageID() int64 {
+	return s.id
+}
+
+func (s SlurMessage) Text() string {
+	return s.message
+}
+
+type MessageProvider struct {
+	Db     database.Database
+	offset int
+}
+
+func (m *MessageProvider) Next(ctx context.Context, count uint64) ([]slur.Message, error) {
+	query := fmt.Sprintf(`SELECT steam_id, person_message_id, body
+					FROM person_messages
+				   ORDER BY person_message_id OFFSET %d LIMIT %d`, m.offset, count)
+	rows, errRows := m.Db.Query(ctx, query)
+	if errRows != nil {
+		if errors.Is(errRows, database.ErrNoResult) {
+			return nil, nil
+		}
+		return nil, database.DBErr(errRows)
+	}
+
+	var res []slur.Message
+	for rows.Next() {
+		var sm SlurMessage
+		if err := rows.Scan(&sm.steamID, &sm.id, &sm.message); err != nil {
+			return nil, database.DBErr(err)
+		}
+
+		res = append(res, sm)
+	}
+
+	m.offset += int(count)
+
+	return res, nil
+}
 
 type Repository struct {
 	db database.Database
