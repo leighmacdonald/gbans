@@ -6,14 +6,6 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type SourceIDProvider interface {
-	SourceSteamID(ctx context.Context) (steamid.SteamID, bool)
-}
-
-type TargetIDProvider interface {
-	TargetSteamID(ctx context.Context) (steamid.SteamID, bool)
-}
-
 type SteamIDField struct {
 	SteamIDValue string `json:"steam_id"  url:"steam_id"` //nolint:tagliatelle
 }

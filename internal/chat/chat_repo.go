@@ -370,7 +370,7 @@ func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int, m
 
 	rows, errRows := r.db.Query(ctx, query, messageID, paddedMessageCount, serverID)
 	if errRows != nil {
-		return nil, errors.Join(errRows, domain.ErrMessageContext)
+		return nil, database.DBErr(errRows)
 	}
 	defer rows.Close()
 
@@ -381,7 +381,7 @@ func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int, m
 
 		if errScan := rows.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 			&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {
-			return nil, errors.Join(errRows, domain.ErrScanResult)
+			return nil, database.DBErr(errScan)
 		}
 
 		messages = append(messages, msg)

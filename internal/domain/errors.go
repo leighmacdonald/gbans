@@ -5,7 +5,6 @@ import (
 )
 
 var (
-	ErrMessageContext         = errors.New("could not fetch message context")
 	ErrFailedWeapon           = errors.New("failed to save weapon")
 	ErrSaveChanges            = errors.New("cannot save changes")
 	ErrDiscordAlreadyLinked   = errors.New("discord account is already linked")
