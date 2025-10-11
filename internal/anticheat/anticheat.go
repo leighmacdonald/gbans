@@ -15,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
-	"github.com/leighmacdonald/gbans/internal/domain/network"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -25,6 +24,10 @@ import (
 	"github.com/sosodev/duration"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
+)
+
+var (
+	ErrOpenClient = errors.New("failed to open client")
 )
 
 // Entry represents a stac log entry and some associated meta data.
@@ -85,7 +88,7 @@ func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager,
 			logPath := path.Join(logDir, file.Name())
 			reader, err := client.Open(ctx, logPath)
 			if err != nil {
-				return errors.Join(err, network.ErrOpenClient)
+				return errors.Join(err, ErrOpenClient)
 			}
 
 			slog.Debug("Importing stac log", slog.String("name", file.Name()), slog.String("server", instance.ShortName))
@@ -98,9 +101,7 @@ func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager,
 				}
 			}
 
-			if errClose := reader.Close(); errClose != nil {
-				return errors.Join(errClose, network.ErrCloseReader)
-			}
+			_ = reader.Close()
 		}
 	}
 

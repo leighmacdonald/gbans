@@ -31,17 +31,13 @@ var (
 	ErrInvalidBanOpts     = errors.New("invalid ban options")
 	ErrGetBan             = errors.New("failed to load existing ban")
 	ErrSaveBan            = errors.New("failed to save ban")
-	ErrInvalidBanType     = errors.New("invalid ban type")
 	ErrInvalidBanDuration = errors.New("invalid ban duration")
-	ErrInvalidBanReason   = errors.New("custom reason cannot be empty")
-	ErrInvalidASN         = errors.New("invalid asn, out of range")
-	ErrInvalidCIDR        = errors.New("failed to parse CIDR address")
 	ErrUnbanFailed        = errors.New("failed to perform unban")
 	ErrPersonSource       = errors.New("failed to load source person")
 	ErrPersonTarget       = errors.New("failed to load target person")
 	ErrDuplicateBan       = errors.New("duplicate ban")
-	ErrReasonInvalid      = errors.New("invalid reason")
 	ErrBanDoesNotExist    = errors.New("ban does not exist")
+	ErrReasonInvalid      = errors.New("invalid reason")
 )
 
 const Permanent = "Permanent"
@@ -473,7 +469,7 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 
 	dur, errDuration := duration.Parse("P10Y")
 	if errDuration != nil {
-		return false, errors.Join(errDuration, ban.ErrDuration)
+		return false, errors.Join(errDuration, ErrInvalidBanDuration)
 	}
 
 	existing.Note += " Previous expiry: " + existing.ValidUntil.Format(time.DateTime)

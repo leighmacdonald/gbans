@@ -27,7 +27,8 @@ import (
 )
 
 var (
-	ErrWarnActionApply = errors.New("failed to apply warning action")
+	ErrWarnActionApply       = errors.New("failed to apply warning action")
+	ErrInvalidActionDuration = errors.New("invalid action duration")
 )
 
 type HistoryQueryFilter struct {
@@ -249,7 +250,7 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 	if newWarning.MatchedFilter.Action == FilterActionBan || newWarning.MatchedFilter.Action == FilterActionMute {
 		dur, errDur := duration.Parse(newWarning.MatchedFilter.Duration)
 		if errDur != nil {
-			return errors.Join(errDur, banDomain.ErrDuration)
+			return errors.Join(errDur, ErrInvalidActionDuration)
 		}
 		req = ban.Opts{
 			TargetID:   newWarning.UserMessage.SteamID,

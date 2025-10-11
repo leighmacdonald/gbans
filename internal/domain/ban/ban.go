@@ -1,16 +1,5 @@
 package ban
 
-import "errors"
-
-var ErrDuration = errors.New("invalid ban duration")
-
-type SourceTarget struct {
-	SourcePersonaname string `json:"source_personaname"`
-	SourceAvatarhash  string `json:"source_avatarhash"`
-	TargetPersonaname string `json:"target_personaname"`
-	TargetAvatarhash  string `json:"target_avatarhash"`
-}
-
 // Type defines the state of the ban for a user, 0 being no ban.
 type Type int
 

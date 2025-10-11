@@ -24,7 +24,7 @@ func NewServerInfo(address string, addressInternal string, serversRoot string, s
 }
 
 // ServerInfo represents a single *physical* machine. It can have several instances locally however as defined by multiple
-// [erverID].
+// [serverID].
 type ServerInfo struct {
 	ServerIDs       []serverID
 	Address         string

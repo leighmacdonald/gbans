@@ -201,7 +201,7 @@ func (h discordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 
 	duration, errDuration := duration.Parse(opts[discord.OptDuration].StringValue())
 	if errDuration != nil {
-		return nil, errors.Join(errDuration, ban.ErrDuration)
+		return nil, errors.Join(errDuration, ErrInvalidBanDuration)
 	}
 
 	banOpts.Duration = duration
@@ -235,7 +235,7 @@ func (h discordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 
 	duration, errDuration := duration.Parse(opts[discord.OptDuration].StringValue())
 	if errDuration != nil {
-		return nil, errors.Join(errDuration, ban.ErrDuration)
+		return nil, errors.Join(errDuration, ErrInvalidBanDuration)
 	}
 	banOpts.Duration = duration
 
