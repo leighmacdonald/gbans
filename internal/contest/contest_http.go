@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"golang.org/x/exp/slices"
 )
@@ -167,7 +166,7 @@ func (c *contestHandler) onAPIDeleteContest() gin.HandlerFunc {
 		if errContest := c.contests.ByID(ctx, contestID, &contest); errContest != nil {
 			switch {
 			case errors.Is(errContest, database.ErrNoResult):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, domain.ErrUnknownID, "Contest does not exist"))
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, ErrUnknownID, "Contest does not exist"))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
 			}
@@ -237,7 +236,7 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 			}
 
 			if !slices.Contains(strings.Split(strings.ToLower(contest.MediaTypes), ","), strings.ToLower(mimeType.String())) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrMimeTypeNotAllowed,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, asset.ErrMimeTypeNotAllowed,
 					"Detected mimetype: %s", mimeType.String()))
 
 				return
@@ -284,7 +283,7 @@ func (c *contestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 
 		user, _ := session.CurrentUserProfile(ctx)
 		if errVote := c.contests.EntryVote(ctx, contestID, contestEntryID, user, direction == "up"); errVote != nil {
-			if errors.Is(errVote, domain.ErrVoteDeleted) {
+			if errors.Is(errVote, ErrVoteDeleted) {
 				ctx.JSON(http.StatusOK, voteResult{""})
 
 				return
@@ -333,7 +332,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 			}
 
 			if own >= contest.MaxSubmissions {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, domain.ErrContestMaxEntries,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, ErrContestMaxEntries,
 					"You have already sumitted the max (%d) allowable items.", contest.MaxSubmissions))
 
 				return
@@ -386,7 +385,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		if errContest := c.contests.Entry(ctx, contestEntryID, &entry); errContest != nil {
 			switch {
 			case errors.Is(errContest, database.ErrNoResult):
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrUnknownID))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, ErrUnknownID))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errContest, httphelper.ErrInternal)))
 			}
@@ -406,7 +405,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		if errContest := c.contests.ByID(ctx, entry.ContestID, &contest); errContest != nil {
 			switch {
 			case errors.Is(errContest, database.ErrNoResult):
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrUnknownID))
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, ErrUnknownID))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errContest, httphelper.ErrInternal)))
 			}

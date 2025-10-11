@@ -22,7 +22,9 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-var ErrInvalidCIDR = errors.New("failed to parse CIDR address")
+var (
+	ErrInvalidCIDR = errors.New("failed to parse CIDR address")
+)
 
 const maskSingleHost = "/32"
 
@@ -112,14 +114,14 @@ func (b *Blocklists) UpdateCache(ctx context.Context) error {
 func (b *Blocklists) updateSource(ctx context.Context, list CIDRBlockSource) error {
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, list.URL, nil)
 	if errReq != nil {
-		return errors.Join(errReq, domain.ErrRequestCreate)
+		return errors.Join(errReq, httphelper.ErrRequestCreate)
 	}
 
 	client := httphelper.NewClient()
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {
-		return errors.Join(errResp, domain.ErrRequestPerform)
+		return errors.Join(errResp, httphelper.ErrRequestPerform)
 	}
 
 	defer func() {
@@ -127,12 +129,12 @@ func (b *Blocklists) updateSource(ctx context.Context, list CIDRBlockSource) err
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("%w: %d", domain.ErrRequestInvalidCode, resp.StatusCode)
+		return fmt.Errorf("%w: %d", httphelper.ErrRequestInvalidCode, resp.StatusCode)
 	}
 
 	bodyBytes, errRead := io.ReadAll(resp.Body)
 	if errRead != nil {
-		return errors.Join(errRead, domain.ErrResponseBody)
+		return errors.Join(errRead, httphelper.ErrResponseBody)
 	}
 
 	var blocks []netip.Prefix //nolint:prealloc

@@ -9,16 +9,25 @@ import (
 )
 
 var (
-	ErrBadRequest       = errors.New("invalid request")
-	ErrInternal         = errors.New("internal server error")
-	ErrNotFound         = errors.New("entity not found")
-	ErrPermissionDenied = errors.New("permission denied")
+	ErrBadRequest         = errors.New("invalid request")
+	ErrInternal           = errors.New("internal server error")
+	ErrNotFound           = errors.New("entity not found")
+	ErrPermissionDenied   = errors.New("permission denied")
+	ErrRequestPerform     = errors.New("could not perform http request")
+	ErrRequestInvalidCode = errors.New("invalid response code returned from request")
+	ErrRequestDecode      = errors.New("failed to decode http response")
+	ErrRequestCreate      = errors.New("failed to create new request")
+	ErrParamKeyMissing    = errors.New("param key not found")
+	ErrParamParse         = errors.New("failed to parse param value")
+	ErrParamInvalid       = errors.New("param value invalid")
+	ErrInvalidParameter   = errors.New("invalid parameter format")
+	ErrTooShort           = errors.New("value too short")
+	ErrResponseBody       = errors.New("failed to read response body")
 )
 
 func NewAPIErrorf(code int, err error, message string, args ...any) APIError {
 	apiErr := NewAPIError(code, err)
 	apiErr.Detail = fmt.Sprintf(message, args...)
-
 	return apiErr
 }
 

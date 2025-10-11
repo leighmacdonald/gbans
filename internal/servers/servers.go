@@ -8,13 +8,17 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-var ErrUnknownServer = errors.New("unknown server")
+var (
+	ErrUnknownServer  = errors.New("unknown server")
+	ErrGetServer      = errors.New("failed to get server")
+	ErrPlayerNotFound = errors.New("could not find player")
+)
 
 type Query struct {
 	ServerID        int    `query:"server_id"`
@@ -184,7 +188,7 @@ type Servers struct {
 // that rely on this suchs a stats.
 func (s *Servers) Delete(ctx context.Context, serverID int) error {
 	if serverID <= 0 {
-		return domain.ErrInvalidParameter
+		return httphelper.ErrInvalidParameter
 	}
 
 	server, errServer := s.Server(ctx, serverID)

@@ -119,7 +119,7 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 		steamID, valid := req.SteamID(ctx)
 		if !valid {
 			ctx.JSON(http.StatusOK, defaultValue)
-			slog.Error("Did not receive valid steamid for check response", log.ErrAttr(domain.ErrInvalidSID))
+			slog.Error("Did not receive valid steamid for check response", log.ErrAttr(steamid.ErrDecodeSID))
 
 			return
 		}

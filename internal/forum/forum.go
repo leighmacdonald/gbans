@@ -2,6 +2,7 @@ package forum
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 	"time"
@@ -12,6 +13,11 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+)
+
+var (
+	ErrInvalidThread = errors.New("invalid thread id")
+	ErrThreadLocked  = errors.New("thread is locked")
 )
 
 type ThreadMessagesQuery struct {

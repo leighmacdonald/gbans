@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
@@ -73,14 +72,14 @@ func (h patreonHandler) onOAuth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		grantCode, codeOK := ctx.GetQuery("code")
 		if !codeOK {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrInvalidParameter, "code invalid."))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrInvalidParameter, "code invalid."))
 
 			return
 		}
 
 		state, stateOK := ctx.GetQuery("state")
 		if !stateOK {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrInvalidParameter, "state invalid."))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrInvalidParameter, "state invalid."))
 
 			return
 		}

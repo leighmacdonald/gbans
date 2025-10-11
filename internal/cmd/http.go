@@ -19,7 +19,6 @@ import (
 	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -27,6 +26,11 @@ import (
 	"github.com/sosodev/duration"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
+)
+
+var (
+	ErrFrontendRoutes  = errors.New("failed to initialize frontend asset routes")
+	ErrStaticPathError = errors.New("could not load static path")
 )
 
 func errorHandler() gin.HandlerFunc {
@@ -172,11 +176,11 @@ func useFrontend(engine *gin.Engine, staticPath string) error {
 
 	absStaticPath, errStaticPath := filepath.Abs(staticPath)
 	if errStaticPath != nil {
-		return errors.Join(errStaticPath, domain.ErrStaticPathError)
+		return errors.Join(errStaticPath, ErrStaticPathError)
 	}
 
 	if errRoute := frontend.AddRoutes(engine, absStaticPath); errRoute != nil {
-		return errors.Join(errRoute, domain.ErrFrontendRoutes)
+		return errors.Join(errRoute, ErrFrontendRoutes)
 	}
 
 	return nil

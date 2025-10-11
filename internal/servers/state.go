@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -338,7 +337,7 @@ func (s *State) FindExec(ctx context.Context, opts FindOpts, onFoundCmd func(inf
 	players := s.Find(opts)
 
 	if len(players) == 0 {
-		return domain.ErrPlayerNotFound
+		return ErrPlayerNotFound
 	}
 
 	var err error
@@ -462,7 +461,7 @@ func (s *State) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[
 // Kick will kick the steam id from whatever server it is connected to.
 func (s *State) Kick(ctx context.Context, target steamid.SteamID, reason string) error {
 	if !target.Valid() {
-		return domain.ErrInvalidTargetSID
+		return steamid.ErrInvalidSID
 	}
 
 	if errExec := s.FindExec(ctx, FindOpts{SteamID: target}, func(info PlayerServerInfo) string {
@@ -485,7 +484,7 @@ func (s *State) KickPlayerID(ctx context.Context, targetPlayerID int, targetServ
 func (s *State) Silence(ctx context.Context, target steamid.SteamID, reason string,
 ) error {
 	if !target.Valid() {
-		return domain.ErrInvalidTargetSID
+		return steamid.ErrInvalidSID
 	}
 
 	var (
@@ -523,7 +522,7 @@ func (s *State) CSay(ctx context.Context, serverID int, message string) error {
 // PSay is used to send a private message to a player.
 func (s *State) PSay(ctx context.Context, target steamid.SteamID, message string) error {
 	if !target.Valid() {
-		return domain.ErrInvalidTargetSID
+		return steamid.ErrInvalidSID
 	}
 
 	if errExec := s.FindExec(ctx, FindOpts{SteamID: target}, func(_ PlayerServerInfo) string {

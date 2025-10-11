@@ -26,6 +26,10 @@ import (
 	"github.com/sosodev/duration"
 )
 
+var (
+	ErrWarnActionApply = errors.New("failed to apply warning action")
+)
+
 type HistoryQueryFilter struct {
 	query.Filter
 	domain.SourceIDField
@@ -277,7 +281,7 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 	}
 
 	if errBan != nil {
-		return errors.Join(errBan, domain.ErrWarnActionApply)
+		return errors.Join(errBan, ErrWarnActionApply)
 	}
 
 	newWarning.MatchedFilter.TriggerCount++

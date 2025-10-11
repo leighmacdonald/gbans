@@ -19,7 +19,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
@@ -31,6 +30,18 @@ import (
 const (
 	AuthTokenDuration     = time.Hour * 24 * 31
 	FingerprintCookieName = "fingerprint"
+)
+
+var (
+	ErrExpired             = errors.New("expired")
+	ErrAuthentication      = errors.New("auth invalid")
+	ErrSaveToken           = errors.New("failed to save new createRefresh token")
+	ErrSignToken           = errors.New("failed create signed string")
+	ErrAuthHeader          = errors.New("failed to bind auth header")
+	ErrMalformedAuthHeader = errors.New("invalid auth header format")
+	ErrCookieKeyMissing    = errors.New("cookie key missing, cannot generate token")
+	ErrCreateToken         = errors.New("failed to create new Access token")
+	ErrClientIP            = errors.New("failed to parse IP")
 )
 
 func FingerprintHash(fingerprint string) string {
@@ -111,25 +122,25 @@ func (u *Authentication) GetPersonAuthByRefreshToken(ctx context.Context, token 
 // fingerprint is a random string used to prevent side-jacking.
 func (u *Authentication) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID) (UserTokens, error) {
 	if cookieKey == "" {
-		return UserTokens{}, domain.ErrCookieKeyMissing
+		return UserTokens{}, ErrCookieKeyMissing
 	}
 
 	fingerprint := stringutil.SecureRandomString(40)
 
 	accessToken, errAccess := u.NewUserToken(sid, cookieKey, fingerprint, AuthTokenDuration)
 	if errAccess != nil {
-		return UserTokens{}, errors.Join(errAccess, domain.ErrCreateToken)
+		return UserTokens{}, errors.Join(errAccess, ErrCreateToken)
 	}
 
 	ipAddr := net.ParseIP(ctx.ClientIP())
 	if ipAddr == nil {
-		return UserTokens{}, domain.ErrClientIP
+		return UserTokens{}, ErrClientIP
 	}
 
 	personAuth := NewPersonAuth(sid, ipAddr, accessToken)
 
 	if saveErr := u.auth.SavePersonAuth(ctx, &personAuth); saveErr != nil {
-		return UserTokens{}, errors.Join(saveErr, domain.ErrSaveToken)
+		return UserTokens{}, errors.Join(saveErr, ErrSaveToken)
 	}
 
 	return UserTokens{Access: accessToken, Fingerprint: fingerprint}, nil
@@ -158,7 +169,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 
 				sid, errFromToken := u.Sid64FromJWTToken(token, cookieKey, fingerprint)
 				if errFromToken != nil {
-					if errors.Is(errFromToken, domain.ErrExpired) {
+					if errors.Is(errFromToken, ErrExpired) {
 						ctx.AbortWithStatus(http.StatusUnauthorized)
 
 						return
@@ -239,7 +250,7 @@ func (u *Authentication) TokenFromQuery(ctx *gin.Context) (string, error) {
 	if !found || token == "" {
 		ctx.AbortWithStatus(http.StatusForbidden)
 
-		return "", domain.ErrMalformedAuthHeader
+		return "", ErrMalformedAuthHeader
 	}
 
 	return token, nil
@@ -260,7 +271,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 			if level >= permission.Guest {
 				sid, errFromToken := u.Sid64FromJWTTokenNoFP(token, cookieKey)
 				if errFromToken != nil {
-					if errors.Is(errFromToken, domain.ErrExpired) {
+					if errors.Is(errFromToken, ErrExpired) {
 						ctx.AbortWithStatus(http.StatusUnauthorized)
 
 						return
@@ -351,7 +362,7 @@ func (u *Authentication) NewUserToken(steamID steamid.SteamID, cookieKey string,
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
 
 	if errSigned != nil {
-		return "", errors.Join(errSigned, domain.ErrSignToken)
+		return "", errors.Join(errSigned, ErrSignToken)
 	}
 
 	return signedToken, nil
@@ -364,7 +375,7 @@ type authHeader struct {
 func (u *Authentication) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 	hdr := authHeader{}
 	if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
-		return "", errors.Join(errBind, domain.ErrAuthHeader)
+		return "", errors.Join(errBind, ErrAuthHeader)
 	}
 
 	pcs := strings.Split(hdr.Authorization, " ")
@@ -375,7 +386,7 @@ func (u *Authentication) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string
 
 		ctx.AbortWithStatus(http.StatusForbidden)
 
-		return "", domain.ErrMalformedAuthHeader
+		return "", ErrMalformedAuthHeader
 	}
 
 	return pcs[1], nil
@@ -387,29 +398,29 @@ func (u *Authentication) Sid64FromJWTToken(token string, cookieKey string, finge
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
 		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
-			return steamid.SteamID{}, domain.ErrAuthentication
+			return steamid.SteamID{}, ErrAuthentication
 		}
 
 		if errors.Is(errParseClaims, jwt.ErrTokenExpired) {
-			return steamid.SteamID{}, domain.ErrExpired
+			return steamid.SteamID{}, ErrExpired
 		}
 
-		return steamid.SteamID{}, domain.ErrAuthentication
+		return steamid.SteamID{}, ErrAuthentication
 	}
 
 	if !tkn.Valid {
-		return steamid.SteamID{}, domain.ErrAuthentication
+		return steamid.SteamID{}, ErrAuthentication
 	}
 
 	if claims.Fingerprint != FingerprintHash(fingerprint) {
 		slog.Error("Invalid cookie fingerprint, token rejected")
 
-		return steamid.SteamID{}, domain.ErrAuthentication
+		return steamid.SteamID{}, ErrAuthentication
 	}
 
 	sid := steamid.New(claims.Subject)
 	if !sid.Valid() {
-		return steamid.SteamID{}, domain.ErrAuthentication
+		return steamid.SteamID{}, ErrAuthentication
 	}
 
 	return sid, nil
@@ -421,23 +432,23 @@ func (u *Authentication) Sid64FromJWTTokenNoFP(token string, cookieKey string) (
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
 		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
-			return steamid.SteamID{}, domain.ErrAuthentication
+			return steamid.SteamID{}, ErrAuthentication
 		}
 
 		if errors.Is(errParseClaims, jwt.ErrTokenExpired) {
-			return steamid.SteamID{}, domain.ErrExpired
+			return steamid.SteamID{}, ErrExpired
 		}
 
-		return steamid.SteamID{}, domain.ErrAuthentication
+		return steamid.SteamID{}, ErrAuthentication
 	}
 
 	if !tkn.Valid {
-		return steamid.SteamID{}, domain.ErrAuthentication
+		return steamid.SteamID{}, ErrAuthentication
 	}
 
 	sid := steamid.New(claims.Subject)
 	if !sid.Valid() {
-		return steamid.SteamID{}, domain.ErrAuthentication
+		return steamid.SteamID{}, ErrAuthentication
 	}
 
 	return sid, nil

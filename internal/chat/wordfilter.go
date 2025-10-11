@@ -12,7 +12,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -21,7 +20,12 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-var ErrInvalidRegex = errors.New("invalid regex format")
+var (
+	ErrInvalidRegex   = errors.New("invalid regex format")
+	ErrInvalidPattern = errors.New("invalid pattern")
+
+	ErrInvalidWeight = errors.New("invalid weight value")
+)
 
 type FiltersQueryFilter struct {
 	query.Filter
@@ -233,7 +237,7 @@ func (w *WordFilters) Edit(ctx context.Context, user person.Info, filterID int64
 
 func (w *WordFilters) Create(ctx context.Context, user person.Info, opts Filter) (Filter, error) {
 	if opts.Pattern == "" {
-		return Filter{}, domain.ErrInvalidPattern
+		return Filter{}, ErrInvalidPattern
 	}
 
 	_, errDur := datetime.ParseDuration(opts.Duration)
@@ -249,7 +253,7 @@ func (w *WordFilters) Create(ctx context.Context, user person.Info, opts Filter)
 	}
 
 	if opts.Weight < 1 {
-		return Filter{}, domain.ErrInvalidWeight
+		return Filter{}, ErrInvalidWeight
 	}
 
 	newFilter := Filter{
@@ -269,7 +273,7 @@ func (w *WordFilters) Create(ctx context.Context, user person.Info, opts Filter)
 			return Filter{}, database.ErrDuplicate
 		}
 
-		return Filter{}, errors.Join(errSave, domain.ErrSaveChanges)
+		return Filter{}, errors.Join(errSave, database.ErrSaveChanges)
 	}
 
 	newFilter.Init()

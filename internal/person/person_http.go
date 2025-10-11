@@ -11,9 +11,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type personHandler struct {
@@ -126,7 +126,7 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 		user, _ := session.CurrentUserProfile(ctx)
 		sid := user.GetSteamID()
 		if !sid.Valid() {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrInvalidSID))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, steamid.ErrInvalidSID))
 
 			return
 		}
@@ -161,8 +161,8 @@ func (h personHandler) onSteamValidate() gin.HandlerFunc {
 
 		response, err := h.persons.QueryProfile(requestCtx, req.Query)
 		if err != nil {
-			if errors.Is(err, domain.ErrInvalidSID) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrInvalidSID))
+			if errors.Is(err, steamid.ErrInvalidSID) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, steamid.ErrInvalidSID))
 
 				return
 			}
@@ -192,8 +192,8 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 		response, err := h.persons.QueryProfile(requestCtx, req.Query)
 		if err != nil {
-			if errors.Is(err, domain.ErrInvalidSID) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, domain.ErrInvalidSID))
+			if errors.Is(err, steamid.ErrInvalidSID) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, steamid.ErrInvalidSID))
 
 				return
 			}

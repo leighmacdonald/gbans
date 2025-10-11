@@ -12,13 +12,16 @@ import (
 
 	"github.com/austinbspencer/patreon-go-wrapper"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/json"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/oauth2"
+)
+
+var (
+	ErrQueryPatreon = errors.New("failed to query patreon")
 )
 
 type Credential struct {
@@ -81,7 +84,7 @@ func (p *Manager) loadUser(client *patreon.Client) (*patreon.UserResponse, error
 
 	user, err := client.FetchIdentity(fieldOpts, campOpts, includeOpts)
 	if err != nil {
-		return nil, errors.Join(err, domain.ErrQueryPatreon)
+		return nil, errors.Join(err, ErrQueryPatreon)
 	}
 
 	return user, nil
@@ -178,7 +181,7 @@ func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://www.patreon.com/api/oauth2/token", strings.NewReader(form.Encode()))
 	if err != nil {
-		return errors.Join(err, domain.ErrRequestCreate)
+		return errors.Join(err, httphelper.ErrRequestCreate)
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -187,7 +190,7 @@ func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
 
 	resp, errResp := httpClient.Do(req)
 	if errResp != nil {
-		return errors.Join(errResp, domain.ErrRequestPerform)
+		return errors.Join(errResp, httphelper.ErrRequestPerform)
 	}
 
 	defer func() {
@@ -200,7 +203,7 @@ func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
 	if errDec != nil {
 		slog.Error("Failed to decode access token", log.ErrAttr(errDec))
 
-		return errors.Join(errDec, domain.ErrRequestDecode)
+		return errors.Join(errDec, httphelper.ErrRequestDecode)
 	}
 
 	now := time.Now()
@@ -249,7 +252,7 @@ func (p Patreon) Campaign() patreon.Campaign {
 func (p Patreon) OnOauthLogin(ctx context.Context, state string, code string) error {
 	steamID, valid := p.stateTracker.Get(state)
 	if !valid {
-		return domain.ErrInvalidSID
+		return steamid.ErrInvalidSID
 	}
 
 	conf := p.cu.Config()
@@ -263,7 +266,7 @@ func (p Patreon) OnOauthLogin(ctx context.Context, state string, code string) er
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://www.patreon.com/api/oauth2/token", strings.NewReader(form.Encode()))
 	if err != nil {
-		return errors.Join(err, domain.ErrRequestCreate)
+		return errors.Join(err, httphelper.ErrRequestCreate)
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -272,7 +275,7 @@ func (p Patreon) OnOauthLogin(ctx context.Context, state string, code string) er
 
 	resp, errResp := httpClient.Do(req)
 	if errResp != nil {
-		return errors.Join(errResp, domain.ErrRequestPerform)
+		return errors.Join(errResp, httphelper.ErrRequestPerform)
 	}
 
 	defer func() {
@@ -285,7 +288,7 @@ func (p Patreon) OnOauthLogin(ctx context.Context, state string, code string) er
 	if errDec != nil {
 		slog.Error("Failed to decode access token", log.ErrAttr(errDec))
 
-		return errors.Join(errDec, domain.ErrRequestDecode)
+		return errors.Join(errDec, httphelper.ErrRequestDecode)
 	}
 
 	now := time.Now()

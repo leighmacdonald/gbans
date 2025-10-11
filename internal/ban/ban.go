@@ -36,6 +36,12 @@ var (
 	ErrInvalidBanReason   = errors.New("custom reason cannot be empty")
 	ErrInvalidASN         = errors.New("invalid asn, out of range")
 	ErrInvalidCIDR        = errors.New("failed to parse CIDR address")
+	ErrUnbanFailed        = errors.New("failed to perform unban")
+	ErrPersonSource       = errors.New("failed to load source person")
+	ErrPersonTarget       = errors.New("failed to load target person")
+	ErrDuplicateBan       = errors.New("duplicate ban")
+	ErrReasonInvalid      = errors.New("invalid reason")
+	ErrBanDoesNotExist    = errors.New("ban does not exist")
 )
 
 const Permanent = "Permanent"
@@ -524,12 +530,12 @@ func (s Bans) UpdateGroupCache(ctx context.Context) error {
 
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, listURL, nil)
 		if errReq != nil {
-			return errors.Join(errReq, domain.ErrRequestCreate)
+			return errors.Join(errReq, httphelper.ErrRequestCreate)
 		}
 
 		resp, errResp := client.Do(req)
 		if errResp != nil {
-			return errors.Join(errResp, domain.ErrRequestPerform)
+			return errors.Join(errResp, httphelper.ErrRequestPerform)
 		}
 
 		var list SteamGroupInfo
@@ -538,14 +544,14 @@ func (s Bans) UpdateGroupCache(ctx context.Context) error {
 		if err := decoder.Decode(&list); err != nil {
 			_ = resp.Body.Close()
 
-			return errors.Join(err, domain.ErrRequestDecode)
+			return errors.Join(err, httphelper.ErrRequestDecode)
 		}
 
 		_ = resp.Body.Close()
 
 		groupID := steamid.New(list.GroupID64)
 		if !groupID.Valid() {
-			return domain.ErrInvalidSID
+			return steamid.ErrInvalidSID
 		}
 
 		for _, member := range list.Members.SteamID64 {

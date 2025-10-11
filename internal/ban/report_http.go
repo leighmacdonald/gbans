@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -58,8 +57,8 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		report, errReportSave := h.reports.Save(ctx, currentUser, req)
 		if errReportSave != nil {
-			if errors.Is(errReportSave, domain.ErrReportExists) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, domain.ErrReportExists,
+			if errors.Is(errReportSave, ErrReportExists) {
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, ErrReportExists,
 					"An open report already exists for this player, duplicates are not allowed."))
 
 				return

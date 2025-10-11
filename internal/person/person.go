@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -23,7 +22,16 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var ErrPlayerDoesNotExist = errors.New("player does not exist")
+var (
+	ErrPlayerDoesNotExist   = errors.New("player does not exist")
+	ErrDiscordAlreadyLinked = errors.New("discord account is already linked")
+	ErrSteamAPIArgLimit     = errors.New("steam api support a max of 100 steam ids")
+	ErrFetchSteamBans       = errors.New("failed to fetch ban status from steam api")
+	ErrSteamAPISummaries    = errors.New("failed to fetch player summaries")
+	ErrSteamAPI             = errors.New("steam api requests have errors")
+	ErrUpdatePerson         = errors.New("failed to save updated person profile")
+	ErrNetworkInvalidIP     = errors.New("invalid ip")
+)
 
 type SteamMember interface {
 	IsMember(steamID steamid.SteamID) (int64, bool)
@@ -250,7 +258,7 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 
 	sid, errResolveSID64 := steamid.Resolve(ctx, query)
 	if errResolveSID64 != nil {
-		return resp, domain.ErrInvalidSID
+		return resp, steamid.ErrInvalidSID
 	}
 
 	_, _ = u.GetOrCreatePersonBySteamID(ctx, sid)
@@ -289,7 +297,7 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 
 func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people People) (int, error) {
 	if len(people) > 100 {
-		return 0, domain.ErrSteamAPIArgLimit
+		return 0, ErrSteamAPIArgLimit
 	}
 
 	var (
@@ -302,7 +310,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people
 	errGroup.Go(func() error {
 		newBanStates, errBans := FetchPlayerBans(cancelCtx, u.tfAPI, steamIDs)
 		if errBans != nil {
-			return errors.Join(errBans, domain.ErrFetchSteamBans)
+			return errors.Join(errBans, ErrFetchSteamBans)
 		}
 
 		banStates = newBanStates
@@ -313,7 +321,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people
 	errGroup.Go(func() error {
 		newSummaries, errSummaries := u.tfAPI.Summaries(ctx, steamIDs)
 		if errSummaries != nil {
-			return errors.Join(errSummaries, domain.ErrSteamAPISummaries)
+			return errors.Join(errSummaries, ErrSteamAPISummaries)
 		}
 
 		summaries = newSummaries
@@ -322,7 +330,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people
 	})
 
 	if errFetch := errGroup.Wait(); errFetch != nil {
-		return 0, errors.Join(errFetch, domain.ErrSteamAPI)
+		return 0, errors.Join(errFetch, ErrSteamAPI)
 	}
 
 	for _, curPerson := range people {
@@ -369,7 +377,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people
 		}
 
 		if errSavePerson := u.repo.Save(ctx, &person); errSavePerson != nil {
-			return 0, errors.Join(errSavePerson, domain.ErrUpdatePerson)
+			return 0, errors.Join(errSavePerson, ErrUpdatePerson)
 		}
 	}
 
@@ -381,7 +389,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people
 // means the discord does not require more privileged intents.
 func (u *Persons) SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID string) error {
 	if !sid64.Valid() {
-		return domain.ErrInvalidSID
+		return steamid.ErrInvalidSID
 	}
 
 	newPerson, errGetPerson := u.BySteamID(ctx, sid64)
@@ -390,12 +398,12 @@ func (u *Persons) SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID
 	}
 
 	if (newPerson.DiscordID) != "" {
-		return domain.ErrDiscordAlreadyLinked
+		return ErrDiscordAlreadyLinked
 	}
 
 	newPerson.DiscordID = discordID
 	if errSavePerson := u.Save(ctx, &newPerson); errSavePerson != nil {
-		return errors.Join(errSavePerson, domain.ErrSaveChanges)
+		return errors.Join(errSavePerson, database.ErrSaveChanges)
 	}
 
 	slog.Info("Discord steamid set", slog.Int64("sid64", sid64.Int64()), slog.String("discordId", discordID))

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/domain/config"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
@@ -29,6 +28,8 @@ var (
 	ErrAdminExists      = errors.New("admin already exists")
 	ErrAdminFlagInvalid = errors.New("invalid admin flag")
 	ErrRequirePassword  = errors.New("name auth type requires password")
+	ErrInvalidIP        = errors.New("invalid ip, could not parse")
+	ErrGetPerson        = errors.New("failed to fetch person result")
 )
 
 type BanSource string
@@ -238,11 +239,11 @@ func (h Sourcemod) DelGroupImmunity(ctx context.Context, groupImmunityID int) er
 
 func (h Sourcemod) AddGroupOverride(ctx context.Context, groupID int, name string, overrideType OverrideType, access OverrideAccess) (GroupOverrides, error) {
 	if name == "" || overrideType == "" {
-		return GroupOverrides{}, domain.ErrInvalidParameter
+		return GroupOverrides{}, httphelper.ErrInvalidParameter
 	}
 
 	if access != OverrideAccessAllow && access != OverrideAccessDeny {
-		return GroupOverrides{}, domain.ErrInvalidParameter
+		return GroupOverrides{}, httphelper.ErrInvalidParameter
 	}
 
 	now := time.Now()
@@ -279,11 +280,11 @@ func (h Sourcemod) GroupOverride(ctx context.Context, groupOverrideID int) (Grou
 
 func (h Sourcemod) SaveGroupOverride(ctx context.Context, override GroupOverrides) (GroupOverrides, error) {
 	if override.Name == "" || override.Type == "" {
-		return GroupOverrides{}, domain.ErrInvalidParameter
+		return GroupOverrides{}, httphelper.ErrInvalidParameter
 	}
 
 	if override.Access != OverrideAccessAllow && override.Access != OverrideAccessDeny {
-		return GroupOverrides{}, domain.ErrInvalidParameter
+		return GroupOverrides{}, httphelper.ErrInvalidParameter
 	}
 
 	return h.repository.SaveGroupOverride(ctx, override)
@@ -304,7 +305,7 @@ func (h Sourcemod) Overrides(ctx context.Context) ([]Overrides, error) {
 
 func (h Sourcemod) SaveOverride(ctx context.Context, override Overrides) (Overrides, error) {
 	if override.Name == "" || override.Flags == "" || override.Type != OverrideTypeCommand && override.Type != OverrideTypeGroup {
-		return Overrides{}, domain.ErrInvalidParameter
+		return Overrides{}, httphelper.ErrInvalidParameter
 	}
 
 	return h.repository.SaveOverride(ctx, override)
@@ -312,7 +313,7 @@ func (h Sourcemod) SaveOverride(ctx context.Context, override Overrides) (Overri
 
 func (h Sourcemod) AddOverride(ctx context.Context, name string, overrideType OverrideType, flags string) (Overrides, error) {
 	if name == "" || flags == "" || overrideType != OverrideTypeCommand && overrideType != OverrideTypeGroup {
-		return Overrides{}, domain.ErrInvalidParameter
+		return Overrides{}, httphelper.ErrInvalidParameter
 	}
 
 	now := time.Now()
@@ -462,13 +463,13 @@ func validateAuthIdentity(ctx context.Context, authType AuthType, identity strin
 	case AuthTypeSteam:
 		steamID, errSteamID := steamid.Resolve(ctx, identity)
 		if errSteamID != nil {
-			return "", domain.ErrInvalidSID
+			return "", steamid.ErrDecodeSID
 		}
 
 		identity = steamID.String()
 	case AuthTypeIP:
 		if ip := net.ParseIP(identity); ip == nil || ip.To4() != nil {
-			return "", domain.ErrInvalidIP
+			return "", ErrInvalidIP
 		}
 	case AuthTypeName:
 		if identity == "" {
@@ -510,7 +511,7 @@ func (h Sourcemod) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
 	if admin.AuthType == AuthTypeSteam {
 		steamID = steamid.New(realIdentity)
 		if _, err := h.person.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
-			return Admin{}, domain.ErrGetPerson
+			return Admin{}, ErrGetPerson
 		}
 
 		admin.Identity = string(steamID.Steam3())
@@ -543,7 +544,7 @@ func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType
 	if authType == AuthTypeSteam {
 		steamID = steamid.New(realIdentity)
 		if _, err := h.person.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
-			return Admin{}, domain.ErrGetPerson
+			return Admin{}, ErrGetPerson
 		}
 
 		identity = string(steamID.Steam3())

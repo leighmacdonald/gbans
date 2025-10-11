@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
@@ -74,7 +73,7 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 
 		asset, reader, errGet := h.assets.Get(ctx, mediaID)
 		if errGet != nil {
-			if errors.Is(errGet, domain.ErrOpenFile) {
+			if errors.Is(errGet, ErrOpenFile) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound, "Asset with this asset_id does not exist: %s", mediaID))
 
 				return

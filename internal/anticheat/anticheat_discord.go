@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -62,7 +61,7 @@ func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 
 	steamID, errResolveSID := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errResolveSID != nil || !steamID.Valid() {
-		return nil, domain.ErrInvalidSID
+		return nil, steamid.ErrInvalidSID
 	}
 
 	person, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)

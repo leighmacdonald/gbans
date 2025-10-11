@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -117,7 +116,7 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.Info, banMe
 	}
 
 	if newMsg == "" {
-		return existing, domain.ErrInvalidParameter
+		return existing, httphelper.ErrInvalidParameter
 	}
 
 	if newMsg == existing.MessageMD {
@@ -142,7 +141,7 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.Info, banMe
 
 func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, banID int64, newMsg string) (AppealMessage, error) {
 	if banID <= 0 {
-		return AppealMessage{}, domain.ErrInvalidParameter
+		return AppealMessage{}, httphelper.ErrInvalidParameter
 	}
 
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{curUser.GetSteamID()}, permission.Moderator) {
@@ -150,7 +149,7 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, ban
 	}
 
 	if newMsg == "" {
-		return AppealMessage{}, domain.ErrInvalidParameter
+		return AppealMessage{}, httphelper.ErrInvalidParameter
 	}
 
 	bannedPerson, errReport := u.bans.QueryOne(ctx, QueryOpts{

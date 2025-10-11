@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -162,7 +161,7 @@ func (r *Repository) InsertCache(ctx context.Context, groupID steamid.SteamID, e
 
 	batchResults := r.db.SendBatch(ctx, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
-		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
+		return errors.Join(errCloseBatch, database.ErrCloseBatch)
 	}
 
 	return nil
@@ -212,12 +211,12 @@ func (r *Repository) Save(ctx context.Context, ban *Ban) error {
 	// Ensure the foreign keys are satisfied
 	_, errGetPerson := r.persons.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
 	if errGetPerson != nil {
-		return errors.Join(errGetPerson, domain.ErrPersonTarget)
+		return errors.Join(errGetPerson, ErrPersonTarget)
 	}
 
 	_, errGetAuthor := r.persons.GetOrCreatePersonBySteamID(ctx, ban.SourceID)
 	if errGetAuthor != nil {
-		return errors.Join(errGetAuthor, domain.ErrPersonSource)
+		return errors.Join(errGetAuthor, ErrPersonSource)
 	}
 
 	ban.UpdatedOn = time.Now()
@@ -324,7 +323,7 @@ func (r *Repository) GetOlderThan(ctx context.Context, filter query.Filter, sinc
 		if errQuery = rows.Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.Origin, &ban.ValidUntil, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
 			&ban.IsEnabled, &ban.AppealState, &ban.EvadeOk, &ban.CIDR); errQuery != nil {
-			return nil, errors.Join(errQuery, domain.ErrScanResult)
+			return nil, errors.Join(errQuery, database.ErrScanResult)
 		}
 
 		ban.SourceID = steamid.New(sourceID)

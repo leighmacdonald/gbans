@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
@@ -131,8 +130,8 @@ func (s *speedrunHandler) getRecentChanges() gin.HandlerFunc {
 
 		top, errTop := s.speedruns.Recent(ctx, query.Count)
 		if errTop != nil {
-			if errors.Is(errTop, domain.ErrValueOutOfRange) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrValueOutOfRange))
+			if errors.Is(errTop, ErrValueOutOfRange) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, ErrValueOutOfRange))
 
 				return
 			}
@@ -158,8 +157,8 @@ func (s *speedrunHandler) getOverallTopN() gin.HandlerFunc {
 
 		top, errTop := s.speedruns.TopNOverall(ctx, query.Count)
 		if errTop != nil {
-			if errors.Is(errTop, domain.ErrValueOutOfRange) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrValueOutOfRange))
+			if errors.Is(errTop, ErrValueOutOfRange) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, ErrValueOutOfRange))
 
 				return
 			}

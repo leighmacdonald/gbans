@@ -9,7 +9,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -100,7 +99,7 @@ func (r *Repository) GetPersonNotifications(ctx context.Context, steamID steamid
 		if errScan := rows.Scan(&notif.PersonNotificationID, &outSteamID, &notif.Read, &notif.Deleted,
 			&notif.Severity, &notif.Message, &notif.Link, &notif.Count, &notif.CreatedOn,
 			&authorID, &name, &pLevel, &discordID, &avatarHash); errScan != nil {
-			return nil, errors.Join(errScan, domain.ErrScanResult)
+			return nil, errors.Join(errScan, database.ErrScanResult)
 		}
 
 		notif.SteamID = steamid.New(outSteamID)

@@ -12,7 +12,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -123,7 +122,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
 	if query.IP != "" {
 		addr := net.ParseIP(query.IP)
 		if addr == nil {
-			return nil, domain.ErrNetworkInvalidIP
+			return nil, ErrNetworkInvalidIP
 		}
 
 		foundIDs, errFoundIDs := r.GetSteamsAtAddress(ctx, addr)
@@ -184,7 +183,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID, &person.PlayerqueueChatStatus,
 				&person.PlayerqueueChatReason); errScan != nil {
-			return nil, errors.Join(errScan, domain.ErrScanResult)
+			return nil, errors.Join(errScan, database.ErrScanResult)
 		}
 
 		people = append(people, person)
@@ -276,7 +275,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 	)
 
 	if !settings.SteamID.Valid() {
-		return domain.ErrInvalidSID
+		return steamid.ErrDecodeSID
 	}
 
 	settings.UpdatedOn = time.Now()

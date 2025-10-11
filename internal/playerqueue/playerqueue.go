@@ -12,7 +12,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/servers"
@@ -220,7 +219,7 @@ func (p Playerqueue) Delete(ctx context.Context, messageID ...int64) error {
 
 func (p Playerqueue) SetChatStatus(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID, status ChatStatus, reason string) error {
 	if !steamID.Valid() {
-		return domain.ErrInvalidSID
+		return steamid.ErrDecodeSID
 	}
 
 	author, errAuthor := p.persons.GetOrCreatePersonBySteamID(ctx, authorID)

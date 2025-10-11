@@ -8,7 +8,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -319,7 +318,7 @@ func (f *Repository) ForumThreadDelete(ctx context.Context, forumThreadID int64)
 
 func (f *Repository) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, error) {
 	if filter.ForumID <= 0 {
-		return nil, domain.ErrInvalidThread
+		return nil, ErrInvalidThread
 	}
 
 	// todo deleted archive

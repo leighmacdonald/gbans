@@ -8,7 +8,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -118,7 +117,7 @@ func (c *Repository) ContestSave(ctx context.Context, contest *Contest) error {
 	if contest.ContestID == uuid.FromStringOrNil(EmptyUUID) {
 		newID, errID := uuid.NewV4()
 		if errID != nil {
-			return errors.Join(errID, domain.ErrUUIDGen)
+			return errors.Join(errID, ErrUUIDGen)
 		}
 
 		contest.ContestID = newID
@@ -336,7 +335,7 @@ func (c *Repository) ContestEntryVote(ctx context.Context, contestEntryID uuid.U
 			return errDelete
 		}
 
-		return domain.ErrVoteDeleted
+		return ErrVoteDeleted
 	}
 
 	if errSave := c.ContestEntryVoteUpdate(ctx, record.ContestEntryVoteID, vote); errSave != nil {

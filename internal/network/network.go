@@ -25,6 +25,11 @@ var (
 	ErrNetworkInvalidASNRecord      = errors.New("invalid asn record")
 	ErrNetworkInvalidLocationRecord = errors.New("invalid location record")
 	ErrNetworkInvalidProxyRecord    = errors.New("invalid proxy record")
+	ErrNetworkInvalidIP             = errors.New("invalid ip")
+	ErrNetworkLocationUnknown       = errors.New("unknown location record")
+	ErrNetworkASNUnknown            = errors.New("unknown asn record")
+	ErrNetworkProxyUnknown          = errors.New("no proxy record")
+	ErrMissingParam                 = errors.New("failed to request at least one required parameter")
 )
 
 // PersonIPRecord holds a composite result of the more relevant ip2location results.
@@ -191,7 +196,7 @@ func (u Networks) importDatabase(ctx context.Context, dbName ip2location.Databas
 	case ip2location.GeoDatabaseProxyFile:
 		return ip2location.ReadProxyRecords(ctx, filePath, u.repository.LoadProxies)
 	default:
-		return domain.ErrNetworkLocationUnknown
+		return ErrNetworkLocationUnknown
 	}
 }
 
@@ -244,7 +249,7 @@ func (u Networks) QueryConnectionHistory(ctx context.Context, opts ConnectionHis
 	}
 
 	if opts.Sid64 == "" && opts.Network == "" {
-		return nil, 0, domain.ErrMissingParam
+		return nil, 0, ErrMissingParam
 	}
 
 	return u.repository.QueryConnections(ctx, opts)
@@ -254,26 +259,26 @@ func (u Networks) QueryNetwork(ctx context.Context, address netip.Addr) (Details
 	var details Details
 
 	if !address.IsValid() {
-		return details, domain.ErrNetworkInvalidIP
+		return details, ErrNetworkInvalidIP
 	}
 
 	location, errLocation := u.repository.GetLocationRecord(ctx, address)
 	if errLocation != nil {
-		return details, errors.Join(errLocation, domain.ErrNetworkLocationUnknown)
+		return details, errors.Join(errLocation, ErrNetworkLocationUnknown)
 	}
 
 	details.Location = location
 
 	asn, errASN := u.repository.GetASNRecordByIP(ctx, address)
 	if errASN != nil {
-		return details, errors.Join(errASN, domain.ErrNetworkASNUnknown)
+		return details, errors.Join(errASN, ErrNetworkASNUnknown)
 	}
 
 	details.Asn = asn
 
 	proxy, errProxy := u.repository.GetProxyRecord(ctx, address)
 	if errProxy != nil && !errors.Is(errProxy, database.ErrNoResult) {
-		return details, errors.Join(errProxy, domain.ErrNetworkProxyUnknown)
+		return details, errors.Join(errProxy, ErrNetworkProxyUnknown)
 	}
 
 	details.Proxy = proxy
