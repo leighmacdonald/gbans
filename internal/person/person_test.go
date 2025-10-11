@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var fixture *tests.Fixture
+var fixture *tests.Fixture //nolint:gochecknoglobals
 
 func TestMain(m *testing.M) {
 	fixture = tests.NewFixture()
