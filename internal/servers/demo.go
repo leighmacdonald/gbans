@@ -21,7 +21,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	networkDomain "github.com/leighmacdonald/gbans/internal/domain/network"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/json"
@@ -33,7 +32,9 @@ import (
 )
 
 var (
-	ErrDemoLoad = errors.New("could not load demo file")
+	ErrDemoLoad       = errors.New("could not load demo file")
+	ErrFailedOpenFile = errors.New("failed to open file")
+	ErrFailedReadFile = errors.New("failed to read file")
 )
 
 type DemoFilter struct {
@@ -164,7 +165,7 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 		demoDir := server.GamePath(instance, "tf/stv_demos/complete/")
 		filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
 		if errFilelist != nil {
-			slog.Error("remote list dir failed", log.ErrAttr(networkDomain.ErrFailedToList),
+			slog.Error("remote list dir failed", log.ErrAttr(errFilelist),
 				slog.String("server", instance.ShortName), slog.String("path", demoDir))
 
 			return nil //nolint:nilerr
@@ -181,19 +182,17 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 
 			reader, err := client.Open(ctx, demoPath)
 			if err != nil {
-				return errors.Join(err, networkDomain.ErrFailedOpenFile)
+				return errors.Join(err, ErrFailedOpenFile)
 			}
 
 			data, errRead := io.ReadAll(reader)
 			if errRead != nil {
 				_ = reader.Close()
 
-				return errors.Join(errRead, networkDomain.ErrFailedReadFile)
+				return errors.Join(errRead, ErrFailedReadFile)
 			}
 
-			if errClose := reader.Close(); errClose != nil {
-				return errors.Join(errClose, networkDomain.ErrCloseReader)
-			}
+			_ = reader.Close()
 
 			// need Seeker, but afs does not provide
 			demo := UploadedDemo{Name: file.Name(), ServerID: instance.ServerID, Content: data}

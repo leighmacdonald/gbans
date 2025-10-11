@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/domain/config"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/json"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -34,6 +33,16 @@ var (
 	ErrFormatConfig   = errors.New("config file format invalid")
 	ErrDecodeDuration = errors.New("failed to decode duration")
 )
+
+type LinkablePath interface {
+	// Path returns the HTTP path that is represented by the instance.
+	Path() string
+}
+
+type Linker interface {
+	ExtURL(obj LinkablePath) string
+	ExtURLRaw(path string, args ...any) string
+}
 
 // Static defines non-dynamic config values that cannot be changed during runtime. These
 // are loaded via the config file.
@@ -94,7 +103,7 @@ type Config struct {
 	Anticheat   Anticheat   `json:"anticheat"`
 }
 
-func (c Config) ExtURL(obj config.LinkablePath) string {
+func (c Config) ExtURL(obj LinkablePath) string {
 	return c.ExtURLRaw(obj.Path())
 }
 
@@ -304,7 +313,7 @@ func (c *Configuration) Write(ctx context.Context, config Config) error {
 	return nil
 }
 
-func (c *Configuration) ExtURL(obj config.LinkablePath) string {
+func (c *Configuration) ExtURL(obj LinkablePath) string {
 	return c.Config().ExtURL(obj)
 }
 
