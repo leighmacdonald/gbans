@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/domain/network"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
@@ -111,7 +110,7 @@ func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager,
 // BySteamID returns all stac entries for the user.
 func (a AntiCheat) BySteamID(ctx context.Context, steamID steamid.SteamID) ([]logparse.StacEntry, error) {
 	if !steamID.Valid() {
-		return nil, domain.ErrInvalidSID
+		return nil, steamid.ErrInvalidSID
 	}
 
 	return a.repo.DetectionsBySteamID(ctx, steamID)
@@ -245,7 +244,7 @@ func (a AntiCheat) Query(ctx context.Context, query Query) ([]Entry, error) {
 	if query.SteamID != "" {
 		sid := steamid.New(query.SteamID)
 		if !sid.Valid() {
-			return nil, domain.ErrInvalidSID
+			return nil, steamid.ErrInvalidSID
 		}
 	}
 

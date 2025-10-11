@@ -12,7 +12,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -34,7 +33,7 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 	if opts.Sid64 != "" {
 		sid := steamid.New(opts.Sid64)
 		if !sid.Valid() {
-			return nil, 0, domain.ErrInvalidSID
+			return nil, 0, steamid.ErrInvalidSID
 		}
 
 		constraints = append(constraints, sq.Eq{"steam_id": sid.Int64()})
@@ -315,7 +314,7 @@ func (r Repository) LoadASN(ctx context.Context, truncate bool, records []ip2loc
 
 	batchResults := r.db.SendBatch(c, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
-		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
+		return errors.Join(errCloseBatch, database.ErrCloseBatch)
 	}
 
 	return nil
@@ -345,7 +344,7 @@ func (r Repository) LoadLocation(ctx context.Context, truncate bool, records []i
 
 	batchResults := r.db.SendBatch(c, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
-		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
+		return errors.Join(errCloseBatch, database.ErrCloseBatch)
 	}
 
 	return nil
@@ -377,7 +376,7 @@ func (r Repository) LoadProxies(ctx context.Context, truncate bool, records []ip
 
 	batchResults := r.db.SendBatch(c, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
-		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
+		return errors.Join(errCloseBatch, database.ErrCloseBatch)
 	}
 
 	return nil

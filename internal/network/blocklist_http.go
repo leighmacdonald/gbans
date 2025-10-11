@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type blocklistHandler struct {
@@ -87,7 +88,7 @@ func (b *blocklistHandler) onAPICreateWhitelistSteam() gin.HandlerFunc {
 
 		steamID, ok := req.SteamID(ctx)
 		if !ok {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, domain.ErrInvalidSID))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, steamid.ErrInvalidSID))
 
 			return
 		}

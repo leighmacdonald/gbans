@@ -10,7 +10,6 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/microcosm-cc/bluemonday"
 )
@@ -90,7 +89,7 @@ func (w *Wiki) DeleteBySlug(ctx context.Context, slug string) error {
 
 func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
 	if update.Slug == "" || update.BodyMD == "" {
-		return Page{}, domain.ErrInvalidParameter
+		return Page{}, httphelper.ErrInvalidParameter
 	}
 
 	page, errGetWikiSlug := w.BySlug(ctx, update.Slug)

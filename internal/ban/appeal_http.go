@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
@@ -105,7 +104,7 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 		msg, errSave := h.appeals.EditBanMessage(ctx, curUser, reportMessageID, req.BodyMD)
 		if errSave != nil {
 			switch {
-			case errors.Is(errSave, domain.ErrParamInvalid):
+			case errors.Is(errSave, httphelper.ErrParamInvalid):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Invalid message body"))
 			case errors.Is(errSave, permission.ErrDenied):

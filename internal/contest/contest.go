@@ -3,24 +3,26 @@ package contest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 var (
-	ErrInvalidContestID   = errors.New("invalid contest id")
-	ErrInvalidDescription = errors.New("invalid description, cannot be empty")
-	ErrTitleEmpty         = errors.New("title cannot be empty")
-	ErrDescriptionEmpty   = errors.New("description cannot be empty")
-	ErrEndDateBefore      = errors.New("end date comes before start date")
+	ErrEntryInvalid      = errors.New("invalid entry")
+	ErrContestInvalid    = errors.New("invalid contest")
+	ErrInvalidContestID  = errors.New("invalid contest id")
+	ErrVoteDeleted       = errors.New("vote deleted")
+	ErrContestMaxEntries = errors.New("entries count exceed max_submission limits")
+	ErrUUIDGen           = errors.New("could not generate uuid")
+	ErrUnknownID         = errors.New("could not find matching server/player/steamid")
 )
 
 // EmptyUUID is used as a placeholder value for signaling the entity is new.
@@ -77,20 +79,20 @@ type Vote struct {
 
 func (c Contest) NewEntry(steamID steamid.SteamID, assetID uuid.UUID, description string) (Entry, error) {
 	if c.ContestID.IsNil() {
-		return Entry{}, ErrInvalidContestID
+		return Entry{}, fmt.Errorf("%w: contest id nil", ErrEntryInvalid)
 	}
 
 	if !steamID.Valid() {
-		return Entry{}, domain.ErrInvalidSID
+		return Entry{}, fmt.Errorf("%w: steam id invalid", ErrEntryInvalid)
 	}
 
 	if description == "" {
-		return Entry{}, ErrInvalidDescription
+		return Entry{}, fmt.Errorf("%w: description empty", ErrEntryInvalid)
 	}
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return Entry{}, errors.Join(errID, domain.ErrUUIDCreate)
+		return Entry{}, fmt.Errorf("%w: %w", ErrEntryInvalid, errID)
 	}
 
 	return Entry{
@@ -111,19 +113,19 @@ func (c Contest) NewEntry(steamID steamid.SteamID, assetID uuid.UUID, descriptio
 func NewContest(title string, description string, dateStart time.Time, dateEnd time.Time, public bool) (Contest, error) {
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return Contest{}, errors.Join(errID, domain.ErrUUIDCreate)
+		return Contest{}, fmt.Errorf("%w: %w", ErrContestInvalid, errID)
 	}
 
 	if title == "" {
-		return Contest{}, ErrTitleEmpty
+		return Contest{}, fmt.Errorf("%w: empty title", ErrContestInvalid)
 	}
 
 	if description == "" {
-		return Contest{}, ErrDescriptionEmpty
+		return Contest{}, fmt.Errorf("%w: empty description", ErrContestInvalid)
 	}
 
 	if dateEnd.Before(dateStart) {
-		return Contest{}, ErrEndDateBefore
+		return Contest{}, fmt.Errorf("%w: end date before start date", ErrContestInvalid)
 	}
 
 	contest := Contest{
@@ -169,7 +171,7 @@ func (c *Contests) Save(ctx context.Context, contest Contest) (Contest, error) {
 	if contest.ContestID.IsNil() {
 		newID, errID := uuid.NewV4()
 		if errID != nil {
-			return contest, errors.Join(errID, domain.ErrUUIDCreate)
+			return contest, errors.Join(errID, fmt.Errorf("%w: %w", ErrContestInvalid, errID))
 		}
 
 		contest.ContestID = newID

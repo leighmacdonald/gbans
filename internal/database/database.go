@@ -19,10 +19,12 @@ var (
 	// ErrNoResult is returned on successful queries which return no rows.
 	ErrNoResult = errors.New("no results found")
 	// ErrDuplicate is returned when a duplicate row result is attempted to be inserted.
-	ErrDuplicate = errors.New("entity already exists")
-
+	ErrDuplicate   = errors.New("entity already exists")
 	ErrPoolFailed  = errors.New("could not create store pool")
 	ErrCreateQuery = errors.New("failed to generate query")
+	ErrSaveChanges = errors.New("cannot save changes")
+	ErrCloseBatch  = errors.New("failed to close batch request")
+	ErrScanResult  = errors.New("failed to scan result")
 )
 
 //go:embed migrations

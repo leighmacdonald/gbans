@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
@@ -178,12 +177,12 @@ func (h discordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 
 	playerID, errPlayerID := steamid.Resolve(ctx, opts.String(discord.OptUserIdentifier))
 	if errPlayerID != nil || !playerID.Valid() {
-		return nil, domain.ErrInvalidSID
+		return nil, steamid.ErrInvalidSID
 	}
 
 	reasonValueOpt, ok := opts[discord.OptBanReason]
 	if !ok {
-		return nil, domain.ErrReasonInvalid
+		return nil, ErrReasonInvalid
 	}
 
 	author, errAuthor := h.discord.GetPersonByDiscordID(ctx, interaction.Member.User.ID)
@@ -243,7 +242,7 @@ func (h discordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 	banSteam, errBan := h.bans.Create(ctx, banOpts)
 	if errBan != nil {
 		if errors.Is(errBan, database.ErrDuplicate) {
-			return nil, domain.ErrDuplicateBan
+			return nil, ErrDuplicateBan
 		}
 
 		return nil, discord.ErrCommandFailed
@@ -263,7 +262,7 @@ func (h discordHandler) onUnban(ctx context.Context, _ *discordgo.Session, inter
 
 	steamID, errResolveSID := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errResolveSID != nil || !steamID.Valid() {
-		return nil, domain.ErrInvalidSID
+		return nil, steamid.ErrInvalidSID
 	}
 
 	found, errUnban := h.bans.Unban(ctx, steamID, reason, author)
@@ -272,7 +271,7 @@ func (h discordHandler) onUnban(ctx context.Context, _ *discordgo.Session, inter
 	}
 
 	if !found {
-		return nil, domain.ErrBanDoesNotExist
+		return nil, ErrBanDoesNotExist
 	}
 
 	user, errUser := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
@@ -289,7 +288,7 @@ func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 	sid, errResolveSID := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
 
 	if errResolveSID != nil || !sid.Valid() {
-		return nil, domain.ErrInvalidSID
+		return nil, steamid.ErrInvalidSID
 	}
 
 	player, errGetPlayer := h.persons.GetOrCreatePersonBySteamID(ctx, sid)

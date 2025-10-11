@@ -9,7 +9,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -44,7 +43,7 @@ func (r Repository) QueryBanState(ctx context.Context, steamID steamid.SteamID, 
 
 	row := r.database.QueryRow(ctx, query, steamID.String(), ipAddr.String())
 	if errScan := row.Scan(&banSource, &banID, &banType, &reason, &evadeOK, &validUntil, &banSteamID); errScan != nil {
-		return banState, errors.Join(errScan, domain.ErrScanResult)
+		return banState, errors.Join(errScan, database.ErrScanResult)
 	}
 
 	if banSource != nil {

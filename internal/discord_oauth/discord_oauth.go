@@ -11,12 +11,16 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/json"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+)
+
+var (
+	ErrValidateURL = errors.New("could not validate url")
+	ErrEmptyToken  = errors.New("invalid Access token decoded")
 )
 
 type Credential struct {
@@ -112,14 +116,14 @@ func (d DiscordOAuth) fetchRefresh(ctx context.Context, credentials Credential) 
 		strings.NewReader(form.Encode()))
 
 	if errReq != nil {
-		return Credential{}, errors.Join(errReq, domain.ErrRequestCreate)
+		return Credential{}, errors.Join(errReq, httphelper.ErrRequestCreate)
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, errResp := httphelper.NewClient().Do(req)
 	if errResp != nil {
-		return Credential{}, errors.Join(errResp, domain.ErrRequestPerform)
+		return Credential{}, errors.Join(errResp, httphelper.ErrRequestPerform)
 	}
 
 	defer func() {
@@ -128,11 +132,11 @@ func (d DiscordOAuth) fetchRefresh(ctx context.Context, credentials Credential) 
 
 	atr, errJSON := json.Decode[Credential](resp.Body)
 	if errJSON != nil {
-		return Credential{}, errors.Join(errJSON, domain.ErrRequestDecode)
+		return Credential{}, errors.Join(errJSON, httphelper.ErrRequestDecode)
 	}
 
 	if atr.AccessToken == "" {
-		return Credential{}, domain.ErrEmptyToken
+		return Credential{}, ErrEmptyToken
 	}
 
 	credentials.RefreshToken = atr.RefreshToken
@@ -177,14 +181,14 @@ func (d DiscordOAuth) Logout(ctx context.Context, steamID steamid.SteamID) error
 
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "https://discord.com/api/oauth2/token/revoke", strings.NewReader(form.Encode()))
 	if errReq != nil {
-		return errors.Join(errReq, domain.ErrRequestCreate)
+		return errors.Join(errReq, httphelper.ErrRequestCreate)
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, errResp := httphelper.NewClient().Do(req)
 	if errResp != nil {
-		return errors.Join(errResp, domain.ErrRequestPerform)
+		return errors.Join(errResp, httphelper.ErrRequestPerform)
 	}
 
 	defer func() {
@@ -199,7 +203,7 @@ func (d DiscordOAuth) CreateStatefulLoginURL(steamID steamid.SteamID) (string, e
 
 	inviteLink, errParse := url.Parse("https://discord.com/oauth2/authorize")
 	if errParse != nil {
-		return "", errors.Join(errParse, domain.ErrValidateURL)
+		return "", errors.Join(errParse, ErrValidateURL)
 	}
 
 	values := inviteLink.Query()
@@ -258,14 +262,14 @@ func (d DiscordOAuth) HandleOAuthCode(ctx context.Context, code string, state st
 func (d DiscordOAuth) fetchDiscordUser(ctx context.Context, client *http.Client, accessToken string, steamID steamid.SteamID) (UserDetail, error) {
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
 	if errReq != nil {
-		return UserDetail{}, errors.Join(errReq, domain.ErrRequestCreate)
+		return UserDetail{}, errors.Join(errReq, httphelper.ErrRequestCreate)
 	}
 
 	req.Header.Add("Authorization", "Bearer "+accessToken)
 	resp, errResp := client.Do(req)
 
 	if errResp != nil {
-		return UserDetail{}, errors.Join(errResp, domain.ErrRequestPerform)
+		return UserDetail{}, errors.Join(errResp, httphelper.ErrRequestPerform)
 	}
 
 	defer func() {
@@ -274,7 +278,7 @@ func (d DiscordOAuth) fetchDiscordUser(ctx context.Context, client *http.Client,
 
 	details, errJSON := json.Decode[UserDetail](resp.Body)
 	if errJSON != nil {
-		return details, errors.Join(errJSON, domain.ErrRequestDecode)
+		return details, errors.Join(errJSON, httphelper.ErrRequestDecode)
 	}
 
 	details.SteamID = steamID
@@ -296,14 +300,14 @@ func (d DiscordOAuth) fetchToken(ctx context.Context, client *http.Client, code 
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "https://discord.com/api/oauth2/token", strings.NewReader(form.Encode()))
 
 	if errReq != nil {
-		return Credential{}, errors.Join(errReq, domain.ErrRequestCreate)
+		return Credential{}, errors.Join(errReq, httphelper.ErrRequestCreate)
 	}
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {
-		return Credential{}, errors.Join(errResp, domain.ErrRequestPerform)
+		return Credential{}, errors.Join(errResp, httphelper.ErrRequestPerform)
 	}
 
 	defer func() {
@@ -312,11 +316,11 @@ func (d DiscordOAuth) fetchToken(ctx context.Context, client *http.Client, code 
 
 	atr, errJSON := json.Decode[Credential](resp.Body)
 	if errJSON != nil {
-		return Credential{}, errors.Join(errJSON, domain.ErrRequestDecode)
+		return Credential{}, errors.Join(errJSON, httphelper.ErrRequestDecode)
 	}
 
 	if atr.AccessToken == "" {
-		return Credential{}, domain.ErrEmptyToken
+		return Credential{}, ErrEmptyToken
 	}
 
 	return atr, nil

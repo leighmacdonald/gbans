@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type Article struct {
@@ -39,11 +39,11 @@ func (u News) GetNewsByID(ctx context.Context, newsID int, entry *Article) error
 
 func (u News) Save(ctx context.Context, entry *Article) error {
 	if entry.Title == "" {
-		return domain.ErrTooShort
+		return httphelper.ErrTooShort
 	}
 
 	if entry.BodyMD == "" {
-		return domain.ErrTooShort
+		return httphelper.ErrTooShort
 	}
 
 	return u.repository.Save(ctx, entry)

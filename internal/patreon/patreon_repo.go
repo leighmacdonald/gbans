@@ -6,7 +6,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -81,7 +80,7 @@ func (r Repository) GetPatreonAuth(ctx context.Context) (string, string, error) 
 	if errScan := r.db.
 		QueryRow(ctx, query, args...).
 		Scan(&creatorAccessToken, &creatorRefreshToken); errScan != nil {
-		return "", "", errors.Join(errQuery, domain.ErrQueryPatreon)
+		return "", "", errors.Join(errQuery, ErrQueryPatreon)
 	}
 
 	return creatorAccessToken, creatorRefreshToken, nil

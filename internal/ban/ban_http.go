@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -98,10 +97,10 @@ func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
 
 		if errSave := h.bans.Save(ctx, &bannedPerson); errSave != nil {
 			switch {
-			case errors.Is(errSave, domain.ErrPersonTarget):
+			case errors.Is(errSave, ErrPersonTarget):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Ban target steam_id invalid"))
-			case errors.Is(errSave, domain.ErrPersonSource):
+			case errors.Is(errSave, ErrPersonSource):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Ban author steam_id invalid"))
 			case errors.Is(errSave, database.ErrDuplicate):
@@ -454,7 +453,7 @@ func (h banHandler) onBanDelete() gin.HandlerFunc {
 		}
 
 		if !changed {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusOK, domain.ErrUnbanFailed, "Ban status is unchanged"))
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusOK, ErrUnbanFailed, "Ban status is unchanged"))
 
 			return
 		}

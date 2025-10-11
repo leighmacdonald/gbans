@@ -7,7 +7,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -73,7 +72,7 @@ func (r *AppealRepository) ByActivity(ctx context.Context, opts AppealQueryFilte
 			&SourceSteamID, &overview.SourcePersonaname, &overview.SourceAvatarhash,
 			&TargetSteamID, &overview.TargetPersonaname, &overview.TargetAvatarhash,
 		); errScan != nil {
-			return nil, errors.Join(errScan, domain.ErrScanResult)
+			return nil, errors.Join(errScan, database.ErrScanResult)
 		}
 
 		overview.SourceID = steamid.New(SourceSteamID)

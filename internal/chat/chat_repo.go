@@ -9,7 +9,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/slur"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -169,11 +169,11 @@ func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID in
 
 func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFilter) ([]QueryChatHistoryResult, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
-		return nil, fmt.Errorf("%w: query", domain.ErrTooShort)
+		return nil, fmt.Errorf("%w: query", httphelper.ErrTooShort)
 	}
 
 	if filters.Personaname != "" && len(filters.Personaname) < minQueryLen {
-		return nil, fmt.Errorf("%w: name", domain.ErrTooShort)
+		return nil, fmt.Errorf("%w: name", httphelper.ErrTooShort)
 	}
 
 	builder := r.db.

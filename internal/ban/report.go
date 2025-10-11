@@ -27,6 +27,7 @@ import (
 var (
 	ErrInvalidReportID   = errors.New("invalid report id")
 	ErrReportStateUpdate = errors.New("failed to update report state")
+	ErrReportExists      = errors.New("duplicate user report")
 )
 
 type RequestMessageBodyMD struct {
@@ -294,7 +295,7 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user perso
 
 func (r Reports) BySteamID(ctx context.Context, steamID steamid.SteamID) ([]ReportWithAuthor, error) {
 	if !steamID.Valid() {
-		return nil, domain.ErrInvalidSID
+		return nil, steamid.ErrInvalidSID
 	}
 
 	reports, errReports := r.repository.GetReports(ctx, steamID)
@@ -397,7 +398,7 @@ func (r Reports) Drop(ctx context.Context, report *Report) error {
 
 func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req RequestReportCreate) (ReportWithAuthor, error) {
 	if req.Description == "" || len(req.Description) < 10 {
-		return ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
+		return ReportWithAuthor{}, fmt.Errorf("%w: description", httphelper.ErrParamInvalid)
 	}
 
 	// Server initiated requests will have a sourceID set by the server
@@ -408,15 +409,15 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 	}
 
 	if !req.SourceID.Valid() {
-		return ReportWithAuthor{}, fmt.Errorf("%w: source_id", domain.ErrParamInvalid)
+		return ReportWithAuthor{}, fmt.Errorf("%w: source_id", httphelper.ErrParamInvalid)
 	}
 
 	if !req.TargetID.Valid() {
-		return ReportWithAuthor{}, fmt.Errorf("%w: target_id", domain.ErrParamInvalid)
+		return ReportWithAuthor{}, fmt.Errorf("%w: target_id", httphelper.ErrParamInvalid)
 	}
 
 	if req.SourceID.Int64() == req.TargetID.Int64() {
-		return ReportWithAuthor{}, fmt.Errorf("%w: cannot report self", domain.ErrParamInvalid)
+		return ReportWithAuthor{}, fmt.Errorf("%w: cannot report self", httphelper.ErrParamInvalid)
 	}
 
 	personSource, errSource := r.persons.BySteamID(ctx, req.SourceID)
@@ -448,7 +449,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 	}
 
 	if existing.ReportID > 0 {
-		return ReportWithAuthor{}, domain.ErrReportExists
+		return ReportWithAuthor{}, ErrReportExists
 	}
 
 	var demo servers.DemoFile
@@ -510,7 +511,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 
 func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser personDomain.Info, req RequestMessageBodyMD) (ReportMessage, error) {
 	if reportMessageID <= 0 {
-		return ReportMessage{}, domain.ErrParamInvalid
+		return ReportMessage{}, httphelper.ErrParamInvalid
 	}
 
 	existing, errExist := r.MessageByID(ctx, reportMessageID)
@@ -525,7 +526,7 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
 
 	if req.BodyMD == "" {
-		return ReportMessage{}, domain.ErrInvalidParameter
+		return ReportMessage{}, httphelper.ErrInvalidParameter
 	}
 
 	if req.BodyMD == existing.MessageMD {
@@ -553,7 +554,7 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser pers
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
 
 	if req.BodyMD == "" {
-		return ReportMessage{}, domain.ErrParamInvalid
+		return ReportMessage{}, httphelper.ErrParamInvalid
 	}
 
 	report, errReport := r.Report(ctx, curUser, reportID)

@@ -5,10 +5,13 @@ import (
 	"errors"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/asset"
 )
 
-var ErrInsufficientDetails = errors.New("insufficient details")
+var (
+	ErrInsufficientDetails = errors.New("insufficient details")
+	ErrValueOutOfRange     = errors.New("value out of range")
+)
 
 func NewSpeedruns(repo SpeedrunRepository) Speedruns {
 	return Speedruns{repo: repo}
@@ -20,7 +23,7 @@ type Speedruns struct {
 
 func (u *Speedruns) Recent(ctx context.Context, limit int) ([]SpeedrunMapOverview, error) {
 	if limit <= 0 || limit > 100 {
-		return nil, domain.ErrValueOutOfRange
+		return nil, ErrValueOutOfRange
 	}
 
 	return u.repo.Recent(ctx, limit)
@@ -28,7 +31,7 @@ func (u *Speedruns) Recent(ctx context.Context, limit int) ([]SpeedrunMapOvervie
 
 func (u *Speedruns) TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error) {
 	if count <= 0 || count > 1000 {
-		return nil, domain.ErrValueOutOfRange
+		return nil, ErrValueOutOfRange
 	}
 
 	return u.repo.TopNOverall(ctx, count)
@@ -36,7 +39,7 @@ func (u *Speedruns) TopNOverall(ctx context.Context, count int) (map[string][]Sp
 
 func (u *Speedruns) ByID(ctx context.Context, speedrunID int) (Speedrun, error) {
 	if speedrunID <= 0 {
-		return Speedrun{}, domain.ErrValueOutOfRange
+		return Speedrun{}, ErrValueOutOfRange
 	}
 
 	return u.repo.ByID(ctx, speedrunID)
@@ -44,7 +47,7 @@ func (u *Speedruns) ByID(ctx context.Context, speedrunID int) (Speedrun, error) 
 
 func (u *Speedruns) ByMap(ctx context.Context, mapName string) ([]SpeedrunMapOverview, error) {
 	if mapName == "" {
-		return []SpeedrunMapOverview{}, domain.ErrValueOutOfRange
+		return []SpeedrunMapOverview{}, ErrValueOutOfRange
 	}
 
 	return u.repo.ByMap(ctx, mapName)
@@ -80,7 +83,7 @@ func (u *Speedruns) Query(_ context.Context, _ SpeedrunQuery) ([]Speedrun, error
 func (u *Speedruns) RoundStart() (uuid.UUID, error) {
 	id, errID := uuid.NewV4()
 	if errID != nil {
-		return id, errors.Join(errID, domain.ErrUUIDCreate)
+		return id, errors.Join(errID, asset.ErrUUIDCreate)
 	}
 
 	return id, nil

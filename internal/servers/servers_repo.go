@@ -8,7 +8,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -123,7 +122,7 @@ func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) 
 				&server.Password, &tokenDate, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 				&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 				&server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal, &server.SDREnabled); errScan != nil {
-			return nil, errors.Join(errScan, domain.ErrScanResult)
+			return nil, errors.Join(errScan, database.ErrScanResult)
 		}
 
 		if tokenDate != nil {

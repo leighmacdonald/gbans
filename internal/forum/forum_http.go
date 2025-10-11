@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -486,7 +485,7 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 		req.BodyMD = stringutil.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 10 {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, domain.ErrTooShort,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrTooShort,
 				"Body must be at least 10 characters."))
 
 			return
@@ -535,7 +534,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 		}
 
 		if thread.Locked {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrThreadLocked))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, ErrThreadLocked))
 
 			return
 		}
@@ -608,7 +607,7 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 		}
 
 		if thread.Locked && !currentUser.HasPermission(permission.Editor) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, domain.ErrThreadLocked))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, ErrThreadLocked))
 
 			return
 		}

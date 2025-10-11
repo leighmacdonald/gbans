@@ -9,7 +9,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -34,7 +33,7 @@ func (b *BlocklistRepository) InsertCache(ctx context.Context, list CIDRBlockSou
 
 	batchResults := b.db.SendBatch(ctx, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
-		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
+		return errors.Join(errCloseBatch, database.ErrCloseBatch)
 	}
 
 	return nil

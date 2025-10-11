@@ -15,9 +15,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/config"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/json"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -27,6 +25,14 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
+)
+
+var (
+	ErrInvalidConfig  = errors.New("invalid config value")
+	ErrSteamAPIKey    = errors.New("failed to set steam api key")
+	ErrReadConfig     = errors.New("failed to read config file")
+	ErrFormatConfig   = errors.New("config file format invalid")
+	ErrDecodeDuration = errors.New("failed to decode duration")
 )
 
 // Static defines non-dynamic config values that cannot be changed during runtime. These
@@ -337,11 +343,11 @@ func ReadStaticConfig() (Static, error) {
 
 	var config Static
 	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil {
-		return config, errors.Join(errReadConfig, domain.ErrReadConfig)
+		return config, errors.Join(errReadConfig, ErrReadConfig)
 	}
 
 	if errUnmarshal := viper.Unmarshal(&config, viper.DecodeHook(mapstructure.DecodeHookFunc(decodeDuration()))); errUnmarshal != nil {
-		return config, errors.Join(errUnmarshal, domain.ErrFormatConfig)
+		return config, errors.Join(errUnmarshal, ErrFormatConfig)
 	}
 
 	if strings.HasPrefix(config.DatabaseDSN, "pgx://") {
@@ -349,24 +355,24 @@ func ReadStaticConfig() (Static, error) {
 	}
 
 	if _, errParse := url.Parse(config.DatabaseDSN); errParse != nil {
-		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "database_dsn")
+		return config, fmt.Errorf("%w: %s", ErrInvalidConfig, "database_dsn")
 	}
 
 	if len(config.SteamKey) != 32 {
-		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "steam_key")
+		return config, fmt.Errorf("%w: %s", ErrInvalidConfig, "steam_key")
 	}
 
 	ownerSID := steamid.New(config.Owner)
 	if !ownerSID.Valid() {
-		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "owner")
+		return config, fmt.Errorf("%w: %s", ErrInvalidConfig, "owner")
 	}
 
 	if config.ExternalURL == "" {
-		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "external_url")
+		return config, fmt.Errorf("%w: %s", ErrInvalidConfig, "external_url")
 	}
 
 	if parsed, errParse := url.Parse(config.ExternalURL); errParse != nil || parsed.Host == "" {
-		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "external_url")
+		return config, fmt.Errorf("%w: %s", ErrInvalidConfig, "external_url")
 	}
 
 	if !slices.Contains(config.HTTPCorsOrigins, config.ExternalURL) {
@@ -374,7 +380,7 @@ func ReadStaticConfig() (Static, error) {
 	}
 
 	if len(config.HTTPCookieKey) < 10 {
-		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "http_cookie_key")
+		return config, fmt.Errorf("%w: %s", ErrInvalidConfig, "http_cookie_key")
 	}
 
 	return config, nil
@@ -384,7 +390,7 @@ func applyGlobalConfig(config Config) error {
 	gin.SetMode(config.General.Mode.String())
 
 	if errSteam := steamid.SetKey(config.SteamKey); errSteam != nil {
-		return errors.Join(errSteam, domain.ErrSteamAPIKey)
+		return errors.Join(errSteam, ErrSteamAPIKey)
 	}
 
 	return nil
@@ -463,20 +469,22 @@ type GithubRelease struct {
 	} `json:"assets"`
 }
 
+var ErrGithubRelease = errors.New("failed to load github release")
+
 func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://api.github.com/repos/leighmacdonald/gbans/releases", nil)
 	if errReq != nil {
-		return nil, errors.Join(errReq, domain.ErrRequestCreate)
+		return nil, fmt.Errorf("%w: %w", ErrGithubRelease, errReq)
 	}
 
 	req.Header.Add("Accept", "application/vnd.github+json")
 	req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
 
-	client := httphelper.NewClient()
+	client := &http.Client{}
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {
-		return nil, errors.Join(errResp, domain.ErrRequestPerform)
+		return nil, fmt.Errorf("%w: %w", ErrGithubRelease, errResp)
 	}
 
 	defer func() {
@@ -487,7 +495,7 @@ func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 
 	releases, err := json.Decode[[]GithubRelease](resp.Body)
 	if err != nil {
-		return nil, errors.Join(err, domain.ErrRequestDecode)
+		return nil, fmt.Errorf("%w: %w", ErrGithubRelease, err)
 	}
 
 	return releases, nil
@@ -507,12 +515,12 @@ func decodeDuration() mapstructure.DecodeHookFuncType {
 
 		durString, ok := data.(string)
 		if !ok {
-			return nil, domain.ErrDecodeDuration
+			return nil, ErrDecodeDuration
 		}
 
 		duration, errDuration := datetime.ParseUserStringDuration(durString)
 		if errDuration != nil {
-			return nil, errors.Join(errDuration, fmt.Errorf("%w: %s", domain.ErrDecodeDuration, target.String()))
+			return nil, errors.Join(errDuration, fmt.Errorf("%w: %s", ErrDecodeDuration, target.String()))
 		}
 
 		return duration, nil

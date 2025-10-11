@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -180,7 +179,7 @@ func (d DiscordHandler) onFind(ctx context.Context, _ *discordgo.Session, intera
 
 	players := d.state.Find(FindOpts{SteamID: steamID, Name: name})
 	if len(players) == 0 {
-		return nil, domain.ErrUnknownID
+		return nil, steamid.ErrDecodeSID
 	}
 
 	found := make([]discordFoundPlayer, len(players))
@@ -188,7 +187,7 @@ func (d DiscordHandler) onFind(ctx context.Context, _ *discordgo.Session, intera
 	for index, player := range players {
 		server, errServer := d.servers.Server(ctx, player.ServerID)
 		if errServer != nil {
-			return nil, errors.Join(errServer, domain.ErrGetServer)
+			return nil, errors.Join(errServer, ErrGetServer)
 		}
 
 		_, errPerson := d.persons.GetOrCreatePersonBySteamID(ctx, player.Player.SID)
@@ -210,13 +209,13 @@ func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, intera
 
 	target, errTarget := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errTarget != nil || !target.Valid() {
-		return nil, domain.ErrInvalidSID
+		return nil, steamid.ErrDecodeSID
 	}
 
 	players := d.state.Find(FindOpts{SteamID: target})
 
 	if len(players) == 0 {
-		return nil, domain.ErrPlayerNotFound
+		return nil, ErrPlayerNotFound
 	}
 
 	var err error
@@ -272,7 +271,7 @@ func (d DiscordHandler) onPSay(ctx context.Context, _ *discordgo.Session, intera
 
 	playerSid, errPlayerSid := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errPlayerSid != nil || playerSid.Valid() {
-		return nil, errors.Join(errPlayerSid, domain.ErrInvalidSID)
+		return nil, errors.Join(errPlayerSid, steamid.ErrDecodeSID)
 	}
 
 	if errPSay := d.state.PSay(ctx, playerSid, msg); errPSay != nil {

@@ -21,7 +21,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	networkDomain "github.com/leighmacdonald/gbans/internal/domain/network"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/pkg/fs"
@@ -31,6 +30,10 @@ import (
 	"github.com/ricochet2200/go-disk-usage/du"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
+)
+
+var (
+	ErrDemoLoad = errors.New("could not load demo file")
 )
 
 type DemoFilter struct {
@@ -196,7 +199,7 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 			demo := UploadedDemo{Name: file.Name(), ServerID: instance.ServerID, Content: data}
 
 			if errDemo := d.onDemoReceived(ctx, demo); errDemo != nil {
-				if !errors.Is(errDemo, domain.ErrAssetTooLarge) {
+				if !errors.Is(errDemo, asset.ErrAssetTooLarge) {
 					slog.Error("Failed to create new demo asset", log.ErrAttr(errDemo))
 
 					continue
@@ -303,7 +306,7 @@ func (d Demos) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64
 	for _, demo := range expired {
 		// FIXME cascade delete does not work????
 		demoSize, errDrop := d.asset.Delete(ctx, demo.AssetID)
-		if errDrop != nil && !errors.Is(errDrop, domain.ErrDeleteAssetFile) {
+		if errDrop != nil && !errors.Is(errDrop, asset.ErrDeleteAssetFile) {
 			slog.Error("Failed to remove demo asset", log.ErrAttr(errDrop),
 				slog.String("bucket", string(d.bucket)), slog.String("name", demo.Title))
 
@@ -378,17 +381,17 @@ func (d Demos) GetDemos(ctx context.Context) ([]DemoFile, error) {
 func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails, error) {
 	fileHandle, errDF := os.Open(path)
 	if errDF != nil {
-		return nil, errors.Join(errDF, domain.ErrDemoLoad)
+		return nil, errors.Join(errDF, ErrDemoLoad)
 	}
 
 	content, errContent := io.ReadAll(fileHandle)
 	if errContent != nil {
-		return nil, errors.Join(errDF, domain.ErrDemoLoad)
+		return nil, errors.Join(errDF, ErrDemoLoad)
 	}
 
 	info, errInfo := fileHandle.Stat()
 	if errInfo != nil {
-		return nil, errors.Join(errInfo, domain.ErrDemoLoad)
+		return nil, errors.Join(errInfo, ErrDemoLoad)
 	}
 
 	log.Closer(fileHandle)
@@ -398,27 +401,27 @@ func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails,
 
 	part, errCreate := writer.CreateFormFile("file", info.Name())
 	if errCreate != nil {
-		return nil, errors.Join(errCreate, domain.ErrDemoLoad)
+		return nil, errors.Join(errCreate, ErrDemoLoad)
 	}
 
 	if _, err := part.Write(content); err != nil {
-		return nil, errors.Join(errCreate, domain.ErrDemoLoad)
+		return nil, errors.Join(errCreate, ErrDemoLoad)
 	}
 
 	if errClose := writer.Close(); errClose != nil {
-		return nil, errors.Join(errClose, domain.ErrDemoLoad)
+		return nil, errors.Join(errClose, ErrDemoLoad)
 	}
 
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, d.config.Config().Demo.DemoParserURL, body)
 	if errReq != nil {
-		return nil, errors.Join(errReq, domain.ErrDemoLoad)
+		return nil, errors.Join(errReq, ErrDemoLoad)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	client := &http.Client{}
 	resp, errSend := client.Do(req) //nolint:bodyclose
 	if errSend != nil {
-		return nil, errors.Join(errSend, domain.ErrDemoLoad)
+		return nil, errors.Join(errSend, ErrDemoLoad)
 	}
 
 	defer log.Closer(resp.Body)
@@ -426,12 +429,12 @@ func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails,
 	// TODO remove this extra copy once this feature doesnt have much need for debugging/inspection.
 	rawBody, errRead := io.ReadAll(resp.Body)
 	if errRead != nil {
-		return nil, errors.Join(errRead, domain.ErrDemoLoad)
+		return nil, errors.Join(errRead, ErrDemoLoad)
 	}
 
 	demo, errDecode := json.Decode[DemoDetails](bytes.NewReader(rawBody))
 	if errDecode != nil {
-		return nil, errors.Join(errDecode, domain.ErrDemoLoad)
+		return nil, errors.Join(errDecode, ErrDemoLoad)
 	}
 
 	return &demo, nil
@@ -439,7 +442,7 @@ func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails,
 
 func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID int) (*DemoFile, error) {
 	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
-		return nil, domain.ErrGetServer
+		return nil, ErrGetServer
 	}
 
 	namePartsAll := strings.Split(asset.Name, "-")
@@ -502,16 +505,16 @@ func (d Demos) RemoveOrphans(ctx context.Context) error {
 
 	for _, demo := range demos {
 		var remove bool
-		asset, _, errAsset := d.asset.Get(ctx, demo.AssetID)
+		realAsset, _, errAsset := d.asset.Get(ctx, demo.AssetID)
 		if errAsset != nil {
 			// If it doesn't exist on disk we want to delete our internal references to it.
-			if errors.Is(errAsset, database.ErrNoResult) || errors.Is(errAsset, domain.ErrOpenFile) {
+			if errors.Is(errAsset, database.ErrNoResult) || errors.Is(errAsset, asset.ErrOpenFile) {
 				remove = true
 			} else {
 				return errAsset
 			}
 		} else {
-			localPath, errPath := d.asset.GenAssetPath(asset.HashString())
+			localPath, errPath := d.asset.GenAssetPath(realAsset.HashString())
 			if errPath != nil {
 				return errPath
 			}
