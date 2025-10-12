@@ -14,8 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -40,6 +38,125 @@ var (
 	ErrReasonInvalid      = errors.New("invalid reason")
 )
 
+// Type defines the state of the ban for a user, 0 being no ban.
+type Type int
+
+const (
+	// Unknown means the ban state could not be determined, failing-open to allowing players
+	// to connect.
+	Unknown Type = iota - 1
+	// OK Ban state is clean.
+	OK //nolint:varnamelen
+	// NoComm means the player cannot communicate while playing voice + chat.
+	NoComm
+	// Banned means the player cannot join the server at all.
+	Banned
+	// Network is used when a client connected from a banned CIDR block.
+	Network
+)
+
+func (bt Type) String() string {
+	switch bt {
+	case Network:
+		return "network"
+	case Unknown:
+		return "unknown"
+	case NoComm:
+		return "mute/gag"
+	case Banned:
+		return "banned"
+	case OK:
+		fallthrough
+	default:
+		return ""
+	}
+}
+
+// Reason defined a set of predefined ban reasons.
+type Reason int
+
+const (
+	Custom Reason = iota + 1
+	External
+	Cheating
+	Racism
+	Harassment
+	Exploiting
+	WarningsExceeded
+	Spam
+	Language
+	Profile
+	ItemDescriptions
+	BotHost
+	Evading
+	Username
+)
+
+func (r Reason) String() string {
+	return map[Reason]string{
+		Custom:           "Custom",
+		External:         "3rd party",
+		Cheating:         "Cheating",
+		Racism:           "Racism",
+		Harassment:       "Personal Harassment",
+		Exploiting:       "Exploiting",
+		WarningsExceeded: "Warnings Exceeded",
+		Spam:             "Spam",
+		Language:         "Language",
+		Profile:          "Profile",
+		ItemDescriptions: "Item Name or Descriptions",
+		BotHost:          "BotHost",
+		Evading:          "Evading",
+		Username:         "Inappropriate Username",
+	}[r]
+}
+
+var Reasons = []Reason{ //nolint:gochecknoglobals
+	External,
+	Cheating,
+	Racism,
+	Harassment,
+	Exploiting,
+	WarningsExceeded,
+	Spam,
+	Language,
+	Profile,
+	ItemDescriptions,
+	BotHost,
+	Evading,
+	Username,
+	Custom,
+}
+
+// Origin defines the origin of the ban or action.
+type Origin int
+
+const (
+	// System is an automatic ban triggered by the service.
+	System Origin = iota
+	// Bot is a ban using the discord bot interface.
+	Bot
+	// Web is a ban using the web-ui.
+	Web
+	// InGame is a ban using the sourcemod plugin.
+	InGame
+)
+
+func (s Origin) String() string {
+	switch s {
+	case System:
+		return "System"
+	case Bot:
+		return "Bot"
+	case Web:
+		return "Web"
+	case InGame:
+		return "In-Game"
+	default:
+		return "Unknown"
+	}
+}
+
 const Permanent = "Permanent"
 
 // Opts defines common ban options that apply to all types to varying degrees
@@ -50,10 +167,10 @@ type Opts struct {
 	SourceID steamid.SteamID `json:"source_id" validate:"required,steamid"`
 	// ISO8601
 	Duration   *duration.Duration `json:"duration" validate:"required,duration"`
-	BanType    ban.Type           `json:"ban_type" validate:"required"`
-	Reason     ban.Reason         `json:"reason" validate:"required"`
+	BanType    Type               `json:"ban_type" validate:"required"`
+	Reason     Reason             `json:"reason" validate:"required"`
 	ReasonText string             `json:"reason_text" validate:"required"`
-	Origin     ban.Origin         `json:"origin" validate:"required"`
+	Origin     Origin             `json:"origin" validate:"required"`
 	ReportID   int64              `json:"report_id" validate:"gte=1"`
 	CIDR       *string            `json:"cidr" validate:"cidrv4"`
 	EvadeOk    bool               `json:"evade_ok"`
@@ -68,7 +185,7 @@ func (opts *Opts) Validate() error {
 		return fmt.Errorf("%w: %w", ErrInvalidBanOpts, ErrInvalidBanDuration)
 	}
 
-	if opts.Reason == ban.Custom && len(opts.ReasonText) < 3 {
+	if opts.Reason == Custom && len(opts.ReasonText) < 3 {
 		return fmt.Errorf("%w: Custom reason must be at least 3 characters", ErrInvalidBanOpts)
 	}
 
@@ -95,15 +212,15 @@ type Ban struct {
 	EvadeOk  bool            `json:"evade_ok"`
 
 	// Reason defines the overall ban classification
-	BanType ban.Type `json:"ban_type"`
+	BanType Type `json:"ban_type"`
 	// Reason defines the overall ban classification
-	Reason ban.Reason `json:"reason"`
+	Reason Reason `json:"reason"`
 	// ReasonText is returned to the client when kicked trying to join the server
 	ReasonText      string `json:"reason_text"`
 	UnbanReasonText string `json:"unban_reason_text"`
 	// Note is a supplementary note added by admins that is hidden from normal view
 	Note        string      `json:"note"`
-	Origin      ban.Origin  `json:"origin"`
+	Origin      Origin      `json:"origin"`
 	CIDR        *string     `json:"cidr"`
 	AppealState AppealState `json:"appeal_state"`
 	// Name is the name at time of banning.
@@ -136,7 +253,7 @@ func (b Ban) String() string {
 }
 
 type BansQueryFilter struct {
-	domain.TargetIDField
+	httphelper.TargetIDField
 	Deleted bool `json:"deleted"`
 }
 
@@ -156,7 +273,7 @@ type QueryOpts struct {
 	BanID         int64
 	Deleted       bool
 	EvadeOk       bool
-	Reasons       []ban.Reason
+	Reasons       []Reason
 	Personaname   string
 	CIDR          string
 	CIDROnly      bool
@@ -461,7 +578,7 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 		return false, errMatch
 	}
 
-	if existing.BanType == ban.NoComm {
+	if existing.BanType == NoComm {
 		// Currently we do not ban for mute evasion.
 		// TODO make this configurable
 		return false, errMatch
@@ -487,10 +604,10 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 	req := Opts{
 		SourceID: owner,
 		TargetID: steamID,
-		Origin:   ban.System,
+		Origin:   System,
 		Duration: dur,
-		BanType:  ban.Banned,
-		Reason:   ban.Evading,
+		BanType:  Banned,
+		Reason:   Evading,
 		Note:     fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, config.ExtURL(existing)),
 	}
 

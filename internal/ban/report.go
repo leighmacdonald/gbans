@@ -11,8 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -35,7 +33,7 @@ type RequestMessageBodyMD struct {
 }
 
 type ReportQueryFilter struct {
-	domain.SourceIDField
+	httphelper.SourceIDField
 	Deleted bool `json:"deleted"`
 }
 
@@ -47,7 +45,7 @@ type RequestReportCreate struct {
 	SourceID        steamid.SteamID `json:"source_id"`
 	TargetID        steamid.SteamID `json:"target_id"`
 	Description     string          `json:"description"`
-	Reason          ban.Reason      `json:"reason"`
+	Reason          Reason          `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
 	DemoID          int64           `json:"demo_id"`
 	DemoTick        int             `json:"demo_tick"`
@@ -83,7 +81,7 @@ type Report struct {
 	TargetID        steamid.SteamID `json:"target_id"`
 	Description     string          `json:"description"`
 	ReportStatus    ReportStatus    `json:"report_status"`
-	Reason          ban.Reason      `json:"reason"`
+	Reason          Reason          `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
 	Deleted         bool            `json:"deleted"`
 	DemoTick        int             `json:"demo_tick"`

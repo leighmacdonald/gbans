@@ -7,8 +7,8 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -18,8 +18,8 @@ import (
 
 type Query struct {
 	query.Filter
-	domain.SourceIDField
-	domain.TargetIDField
+	httphelper.SourceIDField
+	httphelper.TargetIDField
 	ServerID int    `json:"server_id"`
 	Name     string `json:"name"`
 	Success  int    `json:"success"` // -1 = any, 0 = false, 1 = true

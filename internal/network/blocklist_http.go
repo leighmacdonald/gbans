@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -77,7 +76,7 @@ func (b *blocklistHandler) onAPIWhitelistSteam() gin.HandlerFunc {
 
 func (b *blocklistHandler) onAPICreateWhitelistSteam() gin.HandlerFunc {
 	type createRequest struct {
-		domain.SteamIDField
+		httphelper.SteamIDField
 	}
 
 	return func(ctx *gin.Context) {

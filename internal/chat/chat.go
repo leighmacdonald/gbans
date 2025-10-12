@@ -14,9 +14,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
@@ -33,7 +32,7 @@ var (
 
 type HistoryQueryFilter struct {
 	query.Filter
-	domain.SourceIDField
+	httphelper.SourceIDField
 	Personaname   string     `json:"personaname,omitempty"`
 	ServerID      int        `json:"server_id,omitempty"`
 	DateStart     *time.Time `json:"date_start,omitempty"`
@@ -152,7 +151,7 @@ func (u *Chat) handleEvent(ctx context.Context, evt logparse.ServerEvent) error 
 
 		connectMsg := "Player connected with username: " + connectEvent.Name
 
-		return u.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, false, connectEvent.CreatedOn, banDomain.Username)
+		return u.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, false, connectEvent.CreatedOn, ban.Username)
 	case logparse.Say:
 		fallthrough
 	case logparse.SayTeam:
@@ -161,7 +160,7 @@ func (u *Chat) handleEvent(ctx context.Context, evt logparse.ServerEvent) error 
 			return nil
 		}
 
-		return u.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.Team, sayEvent.CreatedOn, banDomain.Language)
+		return u.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.Team, sayEvent.CreatedOn, ban.Language)
 	}
 
 	return nil
@@ -184,7 +183,7 @@ func (u *Chat) cleanupExpired() {
 	}
 }
 
-func (u Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason banDomain.Reason) error {
+func (u Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason ban.Reason) error {
 	if msg == "" {
 		return nil
 	}
@@ -268,10 +267,10 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 
 	switch newWarning.MatchedFilter.Action {
 	case FilterActionMute:
-		req.BanType = banDomain.NoComm
+		req.BanType = ban.NoComm
 		newBan, errBan = u.bans.Create(ctx, req)
 	case FilterActionBan:
-		req.BanType = banDomain.Banned
+		req.BanType = ban.Banned
 		newBan, errBan = u.bans.Create(ctx, req)
 	case FilterActionKick:
 		// Kicks are temporary, so should be done by Player ID to avoid

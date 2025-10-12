@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -47,7 +46,7 @@ type WhitelistIP struct {
 type WhitelistSteam struct {
 	CreatedOn time.Time `json:"created_on"`
 	UpdatedOn time.Time `json:"updated_on"`
-	domain.SteamIDField
+	httphelper.SteamIDField
 	Personaname string `json:"personaname"`
 	AvatarHash  string `json:"avatar_hash"`
 }

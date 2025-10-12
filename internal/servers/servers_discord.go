@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -203,8 +202,8 @@ func (d DiscordHandler) onFind(ctx context.Context, _ *discordgo.Session, intera
 
 func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	var (
-		opts   = bot.OptionMap(interaction.ApplicationCommandData().Options)
-		reason = banDomain.Reason(opts[discord.OptBanReason].IntValue())
+		opts = bot.OptionMap(interaction.ApplicationCommandData().Options)
+		// reason = ban.Reason(opts[discord.OptBanReason].IntValue())
 	)
 
 	target, errTarget := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
@@ -221,7 +220,7 @@ func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, intera
 	var err error
 
 	for _, player := range players {
-		if errKick := d.state.Kick(ctx, player.Player.SID, reason.String()); errKick != nil {
+		if errKick := d.state.Kick(ctx, player.Player.SID, ""); errKick != nil {
 			err = errors.Join(err, errKick)
 
 			continue

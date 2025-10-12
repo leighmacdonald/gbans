@@ -9,9 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -89,7 +88,7 @@ type ServerAuthResp struct {
 
 func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 	type checkRequest struct {
-		domain.SteamIDField
+		httphelper.SteamIDField
 		ClientID int        `json:"client_id"`
 		IP       netip.Addr `json:"ip"`
 		Name     string     `json:"name"`

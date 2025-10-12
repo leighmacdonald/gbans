@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	banDomain "github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -174,12 +173,12 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 		}
 
 		newBan, err := a.ban.Create(ctx, ban.Opts{
-			Origin:     banDomain.System,
+			Origin:     ban.System,
 			SourceID:   owner.GetSteamID(),
 			TargetID:   entry.SteamID,
 			Duration:   duration.FromTimeDuration(dur),
-			BanType:    banDomain.Banned,
-			Reason:     banDomain.Cheating,
+			BanType:    ban.Banned,
+			Reason:     ban.Cheating,
 			ReasonText: "",
 			Note:       entry.Summary + "\n\nRaw log:\n" + entry.RawLog,
 			DemoName:   entry.DemoName,

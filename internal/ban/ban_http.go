@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain/ban"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -344,7 +343,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 		var filtered []Ban
 
 		for _, curBan := range bans {
-			if curBan.Reason != ban.Cheating || curBan.Deleted || !curBan.IsEnabled {
+			if curBan.Reason != Cheating || curBan.Deleted || !curBan.IsEnabled {
 				continue
 			}
 
@@ -382,14 +381,14 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 type RequestQueryOpts struct {
 	SourceID string `query:"source_id"`
 	// TargetID can represent a SteamID or a group ID. They both use steamID formats, just in a different numberspace
-	TargetID      string       `query:"target_id"`
-	GroupsOnly    bool         `query:"groups_only"`
-	IncludeGroups bool         `query:"include_groups"`
-	Deleted       bool         `query:"deleted"`
-	CIDR          string       `query:"cidr"`
-	CIDROnly      bool         `query:"cidr_only"`
-	Reasons       []ban.Reason `query:"reasons"`
-	AppealState   AppealState  `query:"appeal_state"`
+	TargetID      string      `query:"target_id"`
+	GroupsOnly    bool        `query:"groups_only"`
+	IncludeGroups bool        `query:"include_groups"`
+	Deleted       bool        `query:"deleted"`
+	CIDR          string      `query:"cidr"`
+	CIDROnly      bool        `query:"cidr_only"`
+	Reasons       []Reason    `query:"reasons"`
+	AppealState   AppealState `query:"appeal_state"`
 }
 
 func (h banHandler) onQuery() gin.HandlerFunc {
@@ -464,8 +463,8 @@ func (h banHandler) onBanDelete() gin.HandlerFunc {
 
 type RequestBanUpdate struct {
 	TargetID   steamid.SteamID `json:"target_id"`
-	BanType    ban.Type        `json:"ban_type"`
-	Reason     ban.Reason      `json:"reason"`
+	BanType    Type            `json:"ban_type"`
+	Reason     Reason          `json:"reason"`
 	ReasonText string          `json:"reason_text"`
 	Note       string          `json:"note"`
 	EvadeOk    bool            `json:"evade_ok"`
@@ -499,7 +498,7 @@ func (h banHandler) onBanUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if req.Reason == ban.Custom {
+		if req.Reason == Custom {
 			if req.ReasonText == "" {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Reason cannot be empty."))

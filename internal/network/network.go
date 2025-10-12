@@ -13,7 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -49,7 +49,7 @@ type PersonIPRecord struct {
 
 type ConnectionHistoryQuery struct {
 	query.Filter
-	domain.SourceIDField
+	httphelper.SourceIDField
 	CIDR    string `json:"cidr,omitempty"`
 	ASN     int    `json:"asn,omitempty"`
 	Sid64   string `json:"sid64,omitempty"`
