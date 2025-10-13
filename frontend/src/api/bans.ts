@@ -51,7 +51,7 @@ export const banTypeString = (bt: BanTypeEnum) => {
 };
 
 export const apiGetBans = async (opts: BanQueryOpts, abortController?: AbortController) => {
-    const resp = await apiCall<BanRecord[], BanQueryOpts>(`/api/bans/query`, 'GET', opts, abortController);
+    const resp = await apiCall<BanRecord[], BanQueryOpts>(`/api/bans`, 'GET', opts, abortController);
     return resp.map(transformTimeStampedDates);
 };
 
