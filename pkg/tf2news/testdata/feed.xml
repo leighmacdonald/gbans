@@ -1,0 +1,727 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated on Mon, 13 Oct 2025 15:38:06 -0700 -->
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <atom:link href="https://www.teamfortress.com/rss.xml" rel="self" type="application/rss+xml" />
+    <title>TF2 Official Blog</title>
+    <link>https://www.teamfortress.com</link>
+    <description><![CDATA[Insight and announcements from the creators of Team Fortress 2]]></description>
+    <language>en-us</language>
+    <generator>TF2 Blog RSS</generator>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<ul>
+<li>Added 'No Bullets' style for the Commissar's Coat
+<li>Added missing string for Cowerhouse contracts
+<li>Updated/Added some tournament medals
+<li>Updated the Mad Drip to fix LOD problems with a couple of the styles
+<li>Updated the Candle Flame Unusual effect to fix a bug where flame's direction point wasn't placed correctly
+<li>Updated the Viscera Visor to fix missing flex animation for the surgical hood mesh
+<li>Updated Cigarillo Caballero to fix some clipping on the scarf when worn with the poncho
+<li>Updated the El Gigante's Gunbelt<ul>
+<li>Fixed some minor clipping, 
+<li>Fixed a gap on the back with another bullet
+<li>Slightly scaled up belt buckle</ul>
+<li>Updated the Poncho del Pesado<ul>
+<li>Fixed "No Bullets" style not hiding the bullets
+<li>Fixed some minor clipping on both styles</ul>
+<li>Updated the Buzz Kill<ul>
+<li>Fixed hair normals and improved texturing 
+<li>Updated backpack icon</ul>
+<li>Updated the Torn Terror and the Ripped Runts<ul>
+<li>Fixed AO problems and improved texture
+<li>Improved mesh to fix clipping</ul>
+<li>Updated arena_afterlife<ul>
+<li>Fixed additional issues causing rounds to last or restart indefinitely
+<li>Added two new Devil voicelines during preround
+<li>Prevented players from going above the clocktower in Hell
+<li>Fixed Devil voicelines overlapping each other
+<li>Fixed players being able to cancel taunts or levitate by attempting to change class mid-round
+<li>Fixed players being able to fall into the lava in Hell and survive
+<li>Rounds are now best-of-3 minirounds instead of best-of-5
+<li>Removed crumpkins</ul>
+<li>Updated cp_cowerhouse<ul>
+<li>Reworked the implementation of the BLU last control point gantry: ragdolls no longer fall through, Engineers' buildings can be placed as intended, and players can properly fall to their demise after the gantry has opened in the post-round finale
+<li>Prevented ragdolls from falling through the RED last control point pit
+<li>Moved the soul gargoyle spawn that used to be underwater to be above-water on the debris buildup at the MID control point
+<li>Shifted the boards on the upper waterfall-side RED barricade in MID to more closely match the height of its BLU counterpart
+<li>Applied minor performance-related optimiztions throughout the map, namely: combined some groups of prop_dynamics each into one prop_static, disabled bone followers on static robots (& gibs), combined several func_nobuilds, and converted a few prop_dynamics to prop_static
+<li>Adjusted a playerclip in the BLU spawn near the rear exit door
+<li>Adjusted the playerclip around the BLU battlement's painting depicting the RED village on fire to more effectively prevent players from getting caught on the edge along the wall
+<li>Mentioned in the changelog (because it wasn't being in nearly enough matches) that shooting each wood cow standin in the RED stable (near the MID control point) will result in them returning to haunt as ghost cows</ul>
+</ul>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=254509</link>
+      <pubDate>Mon, 13 Oct 2025 22:35:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=254509</guid>
+    </item>
+    <item>
+      <title>ÜBERFEST RED vs. BLU Bonk vs. Jarate Propaganda Contest</title>
+      <description><![CDATA[<a href="https://discord.gg/kritzkast" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/254398/prop_prop_small.png?t=1496190998"></a>
+(Image credit: <a href="https://steamcommunity.com/profiles/76561198914938199" target="_blank">Endi</a>, Code credit: <a href="https://www.herwork.dev/" target="_blank">Herwork</a>)<br><br>
+
+<p>Troops! Once again you find yourselves approaching the ultimate assault. Not of teams drawn from across the wide divides of Europe to see which group of 6 can hold aloft the ÜBERFEST trophy. But the true fight, the Epic battle of beverages named in honour of RED and BLU Bonk! In this great age, truth be damned, it's propaganda that sets the hearts of fighting drinking combatants ablaze.</p><br>
+
+<p>KritzKast now gives YOU a chance to make those images, to design posters exulting the Glory of RED Bonk, the Vigour of BLU Bonk, or the rank rancid moreishness of Jarate!</p><br>
+
+<p>Submit your poster entries to the <a href="https://discord.gg/kritzkast" target="_blank">KritzKast Discord</a> before October 29th. Winners will have their creations made real, turned into posters, displayed at ÜBERFEST LAN above battle stations and bar stools, signed by production staff, players, and any still sober enough to hold a pen, then returned to you. And of course there will be KritzKast <a href="https://wiki.teamfortress.com/wiki/Lo-Fi_Longwave" target="_blank">hats</a> aplenty, too.</p><br>
+
+<p>Good luck, have fun and we’ll see you all at ÜBERFEST.</p><br>
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=254398</link>
+      <pubDate>Fri, 10 Oct 2025 22:01:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=254398</guid>
+    </item>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<ul>
+<li>Added missing style for the One-Man Convoy
+<li>Fixed regression in vbsp
+<li>Fixed broken styles for the Professor Photon
+<li>Renamed Feathered Villain to Feathered Foe
+<li>Updated the Pyromantic Plumage to fix a clipping problem
+<li>Updated the backpack image for the Fused Plates
+<li>Updated arena_afterlife<ul>
+<li>Fixed the bug that caused the round to never end
+<li>Fixed some of the default announcer lines not being replaced with the Devil</ul>
+<li>Updated koth_dusker<ul>
+<li>Lighting and fog adjustments
+<li>Fixed displacement seam
+<li>Fixed perch spot on blue mountain
+<li>Fixed being able to build in the death pit
+<li>Adjusted timing of voicelines</ul>
+<li>Updated sd_marshlands<ul>
+<li>Reduced pumpkin bomb amount
+<li>Removed spell pickup from the mid shack
+<li>Adjusted trigger_push speed on top of the bridge
+<li>Reduced respawn time</ul>
+</ul>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=254394</link>
+      <pubDate>Fri, 10 Oct 2025 20:41:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=254394</guid>
+    </item>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<br/>
+<b>Scream Fortress XVII has arrived!</b>
+<ul>
+<li>Featuring 5 new community maps: Cowerhouse, Dusker, Afterlife, Devilcross, and Marshlands
+<li>Added the Spectral Stash Case<ul>
+<li>Contains 23 new community-created cosmetic items that make up the Spectral Stash Collection
+<li>Has a chance to give one of 4 new community-created Halloween-restricted items as a bonus item
+<li>Has a chance to give a taunt Unusualifier as a bonus item</ul>
+<li>Added 3 new community-contributed taunts to the Mann Co. Store<ul>
+<li>Taunt: Heartbreaker
+<li>Taunt: Healthcare Hog
+<li>Taunt: Ring King</ul>
+<li>Added 15 new community-created Unusual effects<ul>
+<li>7 new effects for Unusual hats
+<li>8 new effects for Unusual taunts</ul>
+<li>All players who launch the game will receive a Soul Gargoyle if they don't already have one<ul>
+<li>Grants access to Merasmissions and Halloween item transmutations
+<li>Tracks Merasmissions completed and souls collected</ul>
+<li>All Halloween Contracts have been reset, allowing them to be completed again
+<li>Added new Contracts for this year's featured community maps
+<li>Completing a Halloween Contract will give players a classic Halloween item and the chance for a Spectral Stash Case
+<li>Continue last year's event by collecting the souls of dead players for your Soul Gargoyle by killing enemies, doing map objectives, or collecting the Soul Gargoyles that spawn in the maps
+<li>All cosmetic and taunt Cases will grant Halloween 2025 Unusual effects instead of their normal Unusual effects during the event. This does not include Crates.
+<li>Join Halloween matches by using the Special Events category in Casual
+<li>Scream Fortress XVII runs through November 7th, 2025
+</ul>
+<b>General</b>
+<ul>
+<li>Added (VSH) and (ZI) extensions to the community game mode map names to help identify them
+<li>Fixed self-illum settings for capture point materials (community fix from Horiuchi)
+<li>Fixed The Weather Master not cloaking properly
+<li>Fixed an issue with props and team colors when taunting with the Mutated Milk
+<li>Updated several strings with consistency fixes
+<li>Updated the ConTracker to allow community map contracts to be completed in any order
+<li>Updated the Dusk Duster to add "No Bullets" styles and fix an issue with missing triangles under the right lapel
+<li>Updated the Fully Charged and Overcharged Unusual effects to improve performance
+<li>Updated Randolph the Blood-Nosed Caribou to fix missing self-illum setting for the BLU team
+<li>Updated pl_camber<ul>
+<li>Fixed forward spawn again</ul>
+<li>Updated pl_citadel<ul>
+<li>Adjusted prop placement around the C checkpoint
+<li>Clipping fixes and adjustments
+<li>Visual fixes and adjustments</ul>
+<li>Updated koth_demolition<ul>
+<li>Updated steam whistle sounds
+<li>Reduced ambient_generic across the map to avoid problems with sounds not playing
+<li>Adjusted RED side wooden signs on the lower flank to match BLU side
+<li>Adjusted spawn points to point at the main door
+<li>Removed trimp spot on the crane platform
+<li>Moved healthpack on the crane platform forward so players don't need to make an U turn to reach the control point
+<li>Added jump pad on the crane platform to allow less mobile classes to get back to the control point if they get stuck there
+<li>Added critical hit particles to the "evil deer" when it kills players
+<li>Added collision to some pipes near the control point platform so players can stand on them
+<li>Adjusted nav mesh to accommodate the new changes (thanks again Katsu)</ul>
+</ul>
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=254063</link>
+      <pubDate>Thu, 09 Oct 2025 18:13:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=254063</guid>
+    </item>
+    <item>
+      <title>Jump World Cup</title>
+      <description><![CDATA[<a href="https://youtu.be/P2-6PDkE7Ls" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/253178/jwc_etf_small.png?t=1496190994"></a>
+(Image credit: <a href="https://steamcommunity.com/id/metalcloud" target="_blank">MetalCloud</a>)<br><br>
+
+<p>Jump Fortress is proud to present the most ambitious rocket jumping tournament in Team Fortress history: <a href="https://youtu.be/P2-6PDkE7Ls" target="_blank">The Jump World Cup</a>!</p><br>
+
+<p>Join them on Saturday, September 27th, at 1:00pm CEST on the <a href="https://twitch.tv/essentialstf" target="_blank">EssentialsTF Twitch Channel</a> to watch 16 of the world's best jumpers join forces in teams of four to represent their continents. Players will go head-to-head in 1v1 races on both Soldier and Demoman across 14 different maps, competing for their share of a $5000+ USD prize pool and the ultimate title: The Best Continent.</p><br>
+
+<p>And it's not just the competitors who stand to win! Everyone tuning in live will have a chance to claim a prize or two throughout the event!</p><br>
+
+<p>More information can be found on <a href="https://discord.gg/tusBc64wnv" target="_blank">Jump Fortress's Discord Server</a>. Don’t miss out! This will be the biggest live jump tournament TF2 has ever seen!</p><br>
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=253178</link>
+      <pubDate>Mon, 22 Sep 2025 18:22:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=253178</guid>
+    </item>
+    <item>
+      <title>AsiaFortress Gibus Cup Grand Final</title>
+      <description><![CDATA[<a href="https://liquid.tf/live" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/252932/asiafortress_09_21_small.png?t=1496190994"></a><br><br>
+
+<p>AsiaFortress will be hosting their Gibus Cup Grand Final this Sunday, September 21, @ 8:00 PM SGT (GMT+8) @ the <a href="https://liquid.tf/live" target="_blank">Fireside twitch channel</a>!</p><br>
+
+<p>There will be a special pre-game tribute for two AsiaFortress community members that passed away in the last year. Come share memories and premiere a tribute video created by the community.</p><br>
+
+<p>Important Links:<ul>
+<li><a href="https://liquid.tf/live" target="_blank">Twitch</a>
+<li><a href="https://liquid.tf/youtube" target="_blank">YouTube</a>
+<li><a href="https://liquid.tf/twitter" target="_blank">Twitter</a>
+<li><a href="https://liquid.tf/asiafortress" target="_blank">Discord</a>
+<li><a href="https://asiafortress.liquid.tf/" target="_blank">Asiafortress</a>
+</ul>
+</p><br>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=252932</link>
+      <pubDate>Thu, 18 Sep 2025 20:04:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=252932</guid>
+    </item>
+    <item>
+      <title>ETF2L is hosting its 50th 6v6 Season!</title>
+      <description><![CDATA[<a href="https://etf2l.org/" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/252557/etf2l_50_small.jpg?t=1496190994"></a>
+(Image credit: <a href="https://x.com/sodaboop" target="_blank">soda</a>)<br><br>
+
+<p>Over seventeen years after kicking off its very first 6v6 season, ETF2L, Europe’s biggest online league for competitive Team Fortress 2, has reached a major milestone: Season 50 launches this autumn! To mark the occasion, you will see the return of a classic fan-favourite map, Badlands.</p><br>
+
+<p>There will be a prize pool of 500€ for the winner of the Premiership division. Will Witness Gaming EU, winners of ETF2L Season 49 and Physgun Fireside Denver, return to defend their title as Europe’s best team? Catch all the action live on the EssentialsTF <a href="https://www.twitch.tv/essentialstf" target="_blank">Twitch</a> channel.</p><br>
+
+<p>ETF2L hosts 6v6 and Highlander divisions for all skill levels, whether you are brand new to competitive TF2 or an experienced player. Are you interested in joining a team and playing yourself? Then head over to the <a href="https://etf2l.org/" target="_blank">ETF2L</a> website and join their <a href="https://discord.etf2l.org/" target="_blank">Discord</a>!</p><br>
+
+<p><b>Dates and Schedule:</b>
+<ul>
+<li>Team Signups: Until September 23rd, 2025, 18:00 CEST
+<li>Group Stages: September 29th – November 2nd, 2025
+<li>Playoffs: November 3rd – November 23rd, 2025
+</ul>
+</p><br>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=252557</link>
+      <pubDate>Sat, 13 Sep 2025 03:45:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=252557</guid>
+    </item>
+    <item>
+      <title>Update on the MvM Update</title>
+      <link>https://www.teamfortress.com/post.php?id=252400</link>
+      <pubDate>Wed, 10 Sep 2025 19:14:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=252400</guid>
+    </item>
+    <item>
+      <title>MGE.tf 2v2 League Fall Season</title>
+      <description><![CDATA[<a href="https://mge.tf/signup" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/251978/mge_2v2_small.jpg?t=1496190994"></a>
+(Image credit: <a href="https://steamcommunity.com/id/sh4z1" target="_blank">Shazi</a>)<br><br>
+
+<p><b>Calling all players!</b> Grab a teammate and get ready for the next season of 2v2 MGE League.</p><br>
+
+<p><a href="https://mge.tf" target="_blank">MGE.tf</a> is announcing another season of the 2v2 league and this time they're welcoming the <b>North American region with its debut in Season 1</b> (NA) alongside <b>Europe Season 2</b> (EU).</p><br>
+
+<p>With <b>custom medals, multiple skill divisions</b> and an <b>8-week regular season followed by playoffs</b>, teams will battle for <b>cash prizes, glory and the coveted 1st place medal</b>.</p><br>
+
+<p><a href="https://mge.tf/signup" target="_blank"><b>Signups are open through September 19!</b></a> Don’t miss out, whether you’re playing for fun or fighting for glory this league is for all players.</p><br>
+
+<p>Important Links:<ul>
+<li><a href="https://mge.tf/signup" target="_blank">Signups</a>
+<li><a href="https://mge.tf/discord" target="_blank">Discord</a>
+<li><a href="https://youtube.com/@mge.tf.1v1?si=SpG1-Rkdr88bmtnB" target="_blank">YouTube</a>
+</ul>
+</p><br>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=251978</link>
+      <pubDate>Wed, 03 Sep 2025 01:57:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=251978</guid>
+    </item>
+    <item>
+      <title>LBTF2 Sixes &amp; Highlander Grand Finals on LegãoTV</title>
+      <description><![CDATA[<a href="https://www.twitch.tv/legaotv" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/250847/lbtf_poster_small.jpg?t=1496190994"></a>
+(Image credit: <a href="https://steamcommunity.com/id/vpccc/" target="_blank">vpc</a>)<br><br>
+
+<p><a href="https://www.twitch.tv/legaotv" target="_blank">LegãoTV</a> is back! This time they have the Team Fortress 2 Brazilian League (LBTF2 - Liga Brasileira de Team Fortress 2)'s Grand Finals! Get ready for two epic clashes in two different modes: Sixes & Highlander!</p><br>
+
+<p>It doesn't stop there! Other electrifying games will happen during the league! Don't miss out on those games! Join the <a href="https://discord.gg/FqUfGYK6XT" target="_blank">LegãoTV Discord</a>, where they'll announce the other matches and schedules!</p><br>
+ 
+<p>Where to watch? On the <a href="https://www.twitch.tv/legaotv" target="_blank">LegãoTV Twitch channel</a>, the home of South-American Team Fortress 2!</p><br>
+ 
+<p>Keep your eyes on the clock and don't miss out! LegãoTV, the best of South-American TF2, is not the same without you!</p><br>
+
+<p>Dates and Schedules<ul>
+<li>Sunday, 08/17 (August 17th) at 10pm (BRT), 9pm (EST)<br> — Grand Final Sixes Elite Division
+<li>Sunday, 08/24 (August 24th) at 11pm (BRT), 10pm (EST)<br> — Grand Final Highlander Open Division</ul></p><br>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=250847</link>
+      <pubDate>Fri, 15 Aug 2025 19:30:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=250847</guid>
+    </item>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<ul>
+<li>Fixed a physics crash whenever a ragdoll is spawned
+</ul>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=250729</link>
+      <pubDate>Thu, 14 Aug 2025 21:53:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=250729</guid>
+    </item>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<ul>
+<li>Added 'No Bullets' styles for the Tsar Platinum, Siberian Sweater, Heavy Metal, and Bigger Mann on Campus
+<li>Updated the Tsar Platinum to fix some clipping issues when using the 'No Bullets' style
+<li>Updated/Added some tournament medals
+<li>Updated pl_citadel<ul>
+<li>Further adjustments to payload collision 
+<li>Adjusted cover near first checkpoint gate
+<li>Made drawbridge less prone to crushing players while opening
+<li>Fixed some projectiles colliding with the bounding box of func_brush entities
+<li>Fixed an exploit that allowed buildings to be placed under terrain
+<li>Fixed an exploit that allowed BLU players to enter RED spawn
+<li>Improved navmesh (community fix from Koi)
+<li>Visual fixes and adjustments
+<li>Clipping adjustments</ul>
+<li>Updated cp_gravelpit_snowy<ul>
+<li>Enabled radial fog
+<li>Repositioned weather particles
+<li>Adjusted holiday events
+<li>Fixed displacement seams
+<li>Fixed footstep sounds on clipping brushes</ul>
+<li>Updated pl_aquarius<ul>
+<li>Fixed underwater speed boost conflicting with several item effects
+<li>Fixed some cases where players could get stuck in payload lifts
+<li>Fixed case where Megalodon could eat the payload without final being capped (Thanks Chaos!)
+<li>Adjusted layout of catwalk area over A to improve flow and navigation
+<li>Full ammo on B reduced to medium
+<li>Slightly raised rubber catwalk over C lift
+<li>Blocked dead end cubby near point C
+<li>D shortcut platform given short barrier and easier pipe jump</ul>
+</ul>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=250718</link>
+      <pubDate>Thu, 14 Aug 2025 20:59:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=250718</guid>
+    </item>
+    <item>
+      <title>TFCL QEL Post Season Cup 2</title>
+      <description><![CDATA[<a href="https://discord.gg/yBmCvcVP79" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/250186/qel_cup2_small.png?t=1496194998"></a><br><br>
+
+<p>TFCL and Quick Esports League are hosting the Post Season Cup 2, a North American competitive 6v6 tournament featuring medals and an $800 prize pool, running from <b>August 29th - 31st</b>! The event will include three divisions for all skill levels and follow a double-elimination format with Bo3 matches and a Bo5 Grand Final.</p><br>
+
+<p>Signups open August 14th and close on August 25th, with early registration available now! Matches will use a pick/ban map system and a one-offclass limit.</p><br>
+
+<p>For more information join their <a href="https://discord.gg/yBmCvcVP79" target="_blank">Discord Server</a>!</p><br>
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=250186</link>
+      <pubDate>Fri, 08 Aug 2025 15:41:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=250186</guid>
+    </item>
+    <item>
+      <title>Horse Run Monthly</title>
+      <description><![CDATA[<a href="https://bit.ly/gamerlatamdiscord" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/250184/horse_run_small.png?t=1496190994"></a><br><br>
+
+<p>After much anticipation, The Horse Run Monthly has officially returned!</p><br>
+
+<p>The Horse Run Monthly is a monthly event series for Team Fortress 2 that features the competitive 6s format and boasts two simultaneous brackets.</p><br>
+
+<p>Their Headliner Bracket (intended for players within RGL Main+) will have teams going head to head on stream for their share of the $500 prize pool! There's also a Secondary Bracket (intended for players within RGL AM-IM) with a prize of 30 keys for the winning team!</p><br>
+
+<p>Join them on Sunday, August 24th, at 3 PM ET to watch some of the best teams in the world compete for first place and bragging rights. You may even win some TF2-themed goodies for tuning in!</p><br>
+
+<p>For more information on how you and your team can play in The Horse Run Monthly, join the <a href="https://bit.ly/gamerlatamdiscord" target="_blank">Gamer LatAm Discord Server</a>! Sign your team up today!</p><br>
+
+<p>Important Links:<ul>
+<li><a href="https://bit.ly/gamerlatamdiscord" target="_blank">Discord</a>
+<li><a href="https://twitch.tv/gamerlatammx" target="_blank">Twitch</a>
+<li><a href="https://www.youtube.com/@GamerLatamOfficial" target="_blank">YouTube</a>
+<li><a href="https://www.tiktok.com/@gamerlatammx" target="_blank">TikTok</a>
+<li><a href="https://x.com/GamerLatamMX" target="_blank">Twitter</a>
+</ul>
+</p><br>
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=250184</link>
+      <pubDate>Wed, 06 Aug 2025 18:36:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=250184</guid>
+    </item>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<ul>
+<li>Added 'No Bullets' style for the Heavy Tourism, the Combat Casual, the Sleeveless in Siberia, and the Siberian Tigerstripe
+<li>Fixed point_camera transmit state in multiplayer (GitHub fix from ficool2)
+<li>Fixed CVoiceStatus::UpdateServerState not sending the correct vban state from the client (GitHub fix from FlaminSarge)
+<li>Updated the Team Cap to fix some clipping problems
+<li>Updated/Added some tournament medals
+<li>Updated cp_fortezza<ul>
+<li>Managed problematic sniper sightline on point A</ul>
+<li>Updated koth_boardwalk<ul>
+<li>Fixed a missing window in Mad Manor
+<li>Restored missing signage along the shoreline boardwalk
+<li>Fixed the funhouse mirrors breaking under extreme circumstances</ul>
+</ul>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=250139</link>
+      <pubDate>Tue, 05 Aug 2025 23:41:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=250139</guid>
+    </item>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<ul>
+<li>Added 'No Bullets' styles for the Brute's Braces and the Hunter Heavy to support the new 'bullets' bodygroup
+<li>Updated cp_fulgur<ul>
+<li>Added an extra dropdown path between B and C
+<li>Fixed particle manifest naming</ul>
+<li>Updated cp_fortezza<ul>
+<li>Managed sniper sightlines on last
+<li>Added new cover object to first point
+<li>Improved clipping in areas</ul>
+<li>Updated koth_demolition<ul>
+<li>Fixed a prop on the RED helipad building being inside a wall
+<li>Fixed two props missing particle effect on the helipad buildings
+<li>Fixed a small bug with the shortcuts where sometimes they stayed closed after players exited them even when other players were on the trigger
+<li>Fixed nav mesh (thanks Katsu for editing it)
+<li>Added missing spectator cameras around the map
+<li>Added the "evil deer" on the boat hanging above the sea, do not touch it
+<li>Raised the water kill trigger slightly
+<li>Changed the type of the water kill trigger from drown to fall so it displays the message "<player_name> fell to a clumsy and painful death"
+<li>Reduced the damage of the water kill trigger from 9999 to 2000 to avoid issues with physic objects</ul>
+</ul>
+Notes missed from the previous update:<ul>
+<li>Fixed the Taunt: Bear Hug not always playing the correct animations
+</ul>
+
+
+
+
+
+
+
+
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=249943</link>
+      <pubDate>Fri, 01 Aug 2025 21:43:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=249943</guid>
+    </item>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<ul>
+<li>Added missing Engineer audio for the Taunt: The Final Score
+<li>Fixed an issue with props and team colors when taunting with Australium weapons
+<li>Updated the Le Morne Uniforme to fix some clipping problems
+<li>Updated the Kapitan's Kaftan to hide the Heavy's bullets
+<li>Updated the Fully Charged and Overcharged Unusual effects to fix a refraction bug
+<li>Updated the Esprit De Corps to improve the rigging
+<li>Updated the Blindin' Bonnett and Shady Shelby to adjust their team colors
+<li>Updated/Added some tournament medals
+<li>Updated the Fat Friar<ul>
+<li>Improved rig
+<li>Adjusted mesh to compensate for lack of bullets bodygroup
+<li>Removed misplaced ambient occlusion and light generators from the texture
+<li>Removed normal map artifacts
+<li>Updated backpack icon to represent above changes</ul>
+<li>Updated pl_citadel<ul>
+<li>Adjusted payload collision 
+<li>Reduced radius of payload spawn exit explosion 
+<li>Updated various decorative particles to not render on low graphics settings</ul>
+<li>Updated pl_odyssey<ul>
+<li>Added 60 seconds to the round timer when the final control point is activated
+<li>Fixed some projectiles colliding with the bounding box of func_brush entities
+<li>Visual fixes and adjustments</ul>
+<li>Updated koth_blowout<ul>
+<li>Added Experimental Cage around the maps central Blowout Preventer<ul>
+<li>This change aims to make the cover around the point feel more consistent and prevents players from shooting through small gaps or from behind unfair cover</ul>
+<li>Improved Optimization 
+<li>Fixed kill trigger delay in finale sequence
+<li>Fixed some Unintended Sightlines
+<li>Improved Detailing and Visual Clarity in some areas</ul>
+<li>Updated koth_boardwalk<ul>
+<li>Fixed being able to smuggle enemy Spies into spawn
+<li>Reduced ambient soundscape music
+<li>Added new voice lines for the Barker
+<li>Fixed a visible hall-of-mirrors error in the water by the Sawmill of Love
+<li>Fixed visible nodraw under the shoreline boardwalk</ul>
+<li>Updated cp_cargo<ul>
+<li>Added bullet block to prevent Red from being able to shoot into blue spawn
+<li>Added bullet block to the last point wires
+<li>Fixed the setupgoal text
+<li>Extended the fence next to red spawn slightly</ul>
+<li>Updated cp_fortezza<ul>
+<li>Added more cover to Last
+<li>Added defensive hold for Engineer's holding valley between A and B
+<li>Rebalanced pickups in some areas
+<li>Lighting improvements
+<li>Reduced file size of the map</ul>
+<li>Updated koth_demolition<ul>
+<li>Replaced pillars under the crane using the red texture with ones using the yellow texture
+<li>Fixed the HDR so lights aren't super bright
+<li>Replaced the helicopters with ones not using the Yeti Park logo
+<li>Replaced the Coaltown frames with new ones using newspapers talking about story of the oilrig
+<li>Added a decal showing the oilrig name (Fort Water Rig No. 2) next to the spawns
+<li>Updated the luxel scale in multiple places of the map
+<li>Replaced old blockbullets with new blockbullets for better footsteps sfx
+<li>Replaced the health and ammo pack stands with new ones, metal for outdoors and wooden for indoors
+<li>Added a mini ammo on the furnace rooms
+<li>Added new clipping on top of the furnace rooms to avoid demos and soldiers spamming the point from far away
+<li>Improved the clipping on the spawn platforms to not allow stickies to stick mid air
+<li>Added a wooden sign pointing to the shortcut and long path
+<li>Added new signs that toggle depending on the state of the shortcut to help players navigate the map
+<li>Reworked the art pass inside the helipad platform
+<li>Added a new catwalk behind the furnace buildings to give players more routes on the map
+<li>Adjusted the stairs inside the office building
+<li>Clipped the open window inside the office building so demos can lob pipes through it
+<li>Moved a prop on BLU spawn to prevent it from clipping inside a floor light
+<li>Changed the lights on the shortcuts to be more vibrant and have better illumination and fading</ul>
+</ul>
+
+
+
+
+
+
+
+
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=249654</link>
+      <pubDate>Wed, 30 Jul 2025 20:56:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=249654</guid>
+    </item>
+    <item>
+      <title>TF2CC Newbie Cup 11</title>
+      <description><![CDATA[<a href="https://liquid.tf/TF2CC" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/249505/nc11_poster_small.png?t=1496190994"></a>)<br><br>
+
+<p><a href="https://liquid.tf/TF2CC" target="_blank">TF2 Coaching Central</a> is announcing their eleventh North American Newbie 6s Cup, a learning experience and friendly tournament for people who are new to competitive 6v6.</p><br>
+
+<p>Players with no or minimal competitive experience can sign up to be placed on a team of six, led by experienced coaches who will teach the basics of the 6v6 format and help you learn the maps. Teams have a total of four weeks to learn and train together before facing off in a tournament with a prize pool of 18 keys for the winners and runners up, along with medals for all participants. TF2 Coaching Central's previous Newbie Cup events, which have been running since 2021, have successfully prepared many players and teams to continue competitive play in RGL, the biggest North American TF2 league.</p><br>
+
+<p>Signups are open now, and the deadline to apply to be placed on a team is August 1. Team and coach assignments will be made by August 3. Group stage tournament matches (with select matches casted live on Twitch by Fireside Casts) will be the weekend of August 30-31, 2025.</p><br>
+
+<p>Check out their <a href="https://liquid.tf/TF2CC" target="_blank">Discord</a> for more information. Whether you're looking to dip your toes in competitive TF2 or you're a more experienced player looking to mentor newbies, feel free to join the community - with learning resources and pickup games running daily. All skill levels are welcome!</p><br>
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=249505</link>
+      <pubDate>Mon, 28 Jul 2025 22:52:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=249505</guid>
+    </item>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<ul>
+<li>Reverted the change to the Taunt: Texan Trickshot
+<li>Updated koth_boardwalk<ul>
+<li>Fixed players being able to spam the Barker's voice lines when approaching the shooting galleries
+<li>Fixed a set of missing handrails
+<li>Improved ambient lighting
+<li>Fixed missing shoreline visible from the far end of the pier</ul>
+</ul>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=249410</link>
+      <pubDate>Sat, 26 Jul 2025 15:08:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=249410</guid>
+    </item>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<ul>
+<li>Fixed Wrangler shield not moving with parented Sentry Gun (GitHub fix from ficool2)
+<li>Fixed missing sounds for Taunt: The Final Score
+<li>Fixed sound effect being clipped for the Taunt: Bear Hug
+<li>Reduced the taunt attack range for the Taunt: Texan Trickshot
+<li>Updated the Esprit De Corps to fix a clipping issue on the shoulder
+<li>Updated the Short Fuse to fix an issue with the normal map
+<li>Updated the in-game item importer to support the new 'bullets' bodygroup
+<li>Updated the Fully Charged and Overcharged Unusual effects to fix problems with DirectX80
+<li>Updated the Iconic Outline and Subtle Silhouette Unusual effects<ul>
+<li>Added path to fallback material for refract texture to prevent rendering issues for dx80 users
+<li>Lowered depth bias value of refraction to mitigate rendering issues on taunts that do not move their default control point with the model</ul>
+<li>Updated pl_aquarius<ul>
+<li>Fixed skybox
+<li>Updated soundscapes</ul>
+<li>Updated cp_conifer<ul>
+<li>Fixed missing poster texture
+<li>Fixed outdated loading screen pictures</ul>
+<li>Updated cp_fulgur<ul>
+<li>Fixed clipping in the exterior area
+<li>Replaced one of the outdated spytech assets with newer version</ul>
+<li>Updated pl_citadel<ul>
+<li>VScript stability improvements</ul>
+</ul>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=249379</link>
+      <pubDate>Fri, 25 Jul 2025 22:48:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=249379</guid>
+    </item>
+    <item>
+      <title>Team Fortress 2 Update Released</title>
+      <description><![CDATA[An update to Team Fortress 2 has been released. The update will be applied automatically when you restart Team Fortress 2. The major changes include:<br/>
+<br>
+<b>Summer 2025!</b>
+<ul>
+<li>Featuring 10 new community maps: Citadel, Aquarius, Fulgur, Cargo, Conifer, Boardwalk, Blowout, Mannhole, Demolition, and Pressure
+<li>Added the Summer 2025 Cosmetic Case<ul>
+<li>Contains 23 new community-contributed items</ul>
+<li>Added 4 new community-contributed taunts to the Mann Co. Store<ul>
+<li>Taunt: The Final Score
+<li>Taunt: Bear Hug
+<li>Taunt: Texan Trickshot
+<li>Taunt: Flying Colors</ul>
+<li>Added 14 new community-created Unusual effects<ul>
+<li>7 new effects for Unusual hats
+<li>7 new effects for Unusual taunts</ul>
+<li>All cosmetic and taunt cases will grant Summer 2025 Unusual effects instead of their normal Unusual effects during the Summer event. This does not include crates.
+<li>The Summer event runs through September 15th, 2025
+</ul>
+<b>General</b>
+<ul>
+<li>Fixed the Frontline Field Recorder not using its normal map
+<li>Fixed The Texas Half-Pants not fully using rimlight
+<li>Fixed the Das Hazmattenhatten's materials not using its normal map
+<li>Fixed The Bazaar Bargain's scope being painted when using the Saccharine Striped, Team Detail, Gobi Glazed, and Team Charged war paints
+<li>Fixed some outdated in-game tips
+<li>Reduced default value for ConVar 'tf_mm_next_map_vote_time' from 30s to 15s
+<li>Updated materials for The Candy Cane to fix consistency issues
+<li>Updated lightwarptexture setting for the blood version of the Half-Zatoichi
+<li>Updated the Strasbourg Scholar to improve clipping
+<li>Updated the Heavy's model to add a 'bullets' bodygroup for cosmetics
+<li>Updated/Added some tournament medals
+<li>Updated cp_fortezza<ul>
+<li>Reworked routes between Point A and Last
+<li>Improved lighting and visuals across the map
+<li>Clipping fixes</ul>
+<li>Updated vsh_distillery, vsh_maul, vsh_nucleus, vsh_outburst, vsh_skirmish, and vsh_tinyrock<ul>
+<li>Big thanks to Whurr, Starfall and Bradasparky for reporting bugs and suggesting changes.
+<li>Balance changes<ul>
+<li>Consecutive Wall Climbs no longer cut your preexisting speed
+<li>Mini-Sentries now deal 80% damage (up from 50%)
+<li>Crit-boosted Miniguns now deal 70% damage (up from 60%)
+<li>Reduced the Mighty Slam's damage at point-blank range
+<li>Rebalanced Hale's damage against buildings<ul>
+<li>Level 1 buildings are destroyed with a single punch
+<li>Level 2 and 3 buildings now require two punches 
+<li>The Wrangler Shield adds an additional punch to the required count 
+<li>Ability-based damage to buildings is unchanged</ul></ul>
+<li>Bugfixes<ul>
+<li>Fixed a crash caused by the string pool overflowing over time 
+<li>Fixed Hale's attacks applying knockback in the wrong direction 
+<li>Fixed dead players being flagged as AFK and kicked for idling during long rounds
+<li>Fixed the round timer resetting to 60 seconds if it was lower when the number of alive Mercs dropped to 5
+<li>Fixed Hale being able to punch immediately as the Sweeping Charge ends.
+<li>Fixed Hale's punch knockback being too strong against Demoman, Heavy, and Medic
+<li>Fixed healing effects from the Warrior's Spirit and the Powerjack erasing overheal
+<li>Fixed the Quick-Fix occasionally failing to mirror the patient's Wall Climbing
+<li>Fixed a rare bug at the start of a round where Hale couldn't move
+<li>Fixed being able to Wall Climb off of projectiles</ul></ul>
+</ul>]]></description>
+      <link>https://www.teamfortress.com/post.php?id=249054</link>
+      <pubDate>Thu, 24 Jul 2025 21:52:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=249054</guid>
+    </item>
+    <item>
+      <title>MGE.tf 1v1 World Championship 2025</title>
+      <description><![CDATA[<a href="https://mge.tf/WorldChampionship/2025" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/249066/mge_tf_1v1_small.jpg?t=1496190994"></a><br><br>
+
+<p>The <b><a href="https://mge.tf" target="_blank">MGE.tf</a></b> 1v1 World Championship 2025 will take place July 26-27 and feature 32 competitors across four continents fighting for <b>$5000</b>! Participants include <b>b4nny</b>, <b>habib</b> and <b>logan</b> of froyotech, North America, <b>ixy</b> of Witness Gaming Europe, <b>silvo</b> of Witness Gaming Australia, and <b>reco</b> of South America!</p><br>
+
+<p>Watch on <a href="https://twitch.tv/FiresideCasts" target="_blank">Fireside Casts</a>!</p><br>
+
+<p><b>Day 1 (Saturday, July 26)</b><br>
+Group Stage: 6:30 pm Eastern | 27, July 00:30 CEST | 27, July 08:30 AEST</p><br>
+
+<p><b>Day 2 (Sunday, July 27)</b><br>
+Playoffs: 6:30 pm Eastern | 28, July 00:30 CEST | 28, July 08:30 AEST</p><br>
+
+<p><b>Prize Pool:</b><br>
+1st: $2000<br>
+2nd: $1000<br>
+3rd: $600<br>
+4th: $400<br>
+5th-6th: $300<br>
+7th-8th: $200</p><br>
+
+<p>Important Links:<ul>
+<li><a href="https://twitch.tv/FiresideCasts" target="_blank">Twitch</a>
+<li><a href="https://mge.tf/WorldChampionship/2025" target="_blank">Bracket</a>
+<li><a href="https://mge.tf/discord" target="_blank">Discord</a>
+</ul>
+</p><br>
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=249066</link>
+      <pubDate>Wed, 23 Jul 2025 17:39:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=249066</guid>
+    </item>
+    <item>
+      <title>LAN Downunder 2025: Australia's Premier TF2 Championship Returns!</title>
+      <description><![CDATA[<iframe width="546" height="307" src="https://www.youtube.com/embed/TqiMOjMYEaE" frameborder="0" allowfullscreen></iframe><br><br>
+
+<p>The Australian winter gaming tradition continues as LAN Downunder 2025 prepares to light up Melbourne once again! On July 19-20, the premier event returns to Fortress Arena, Australia’s largest dedicated esports venue, where eight elite teams will battle for glory!</p><br>
+
+<p>After last year’s successful debut, LAN Downunder stands as the pinnacle of Australian offline TF2 tournaments. With Witness Gaming AU now split after Physgun Fireside Denver 2025, the field is wide open for a new champion.</p><br>
+
+<p>The stage is set, the teams are ready, and the winter gaming season is about to reach its peak! Who will claim the crown and etch their name into Australian TF2 history?</p><br>
+
+<p>Catch all the action live on July 19-20th from 11am AEST via <a href="https://www.twitch.tv/cappingtv/" target="_blank">Twitch</a> or attending in person. For tickets and event details, visit the <a href="https://lan.cappingtv.com" target="_blank">Event Hub</a>.</p><br>
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=248636</link>
+      <pubDate>Thu, 17 Jul 2025 18:03:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=248636</guid>
+    </item>
+    <item>
+      <title>RGL.gg Season 18 LAN Playoffs (Philadelphia, PA)</title>
+      <description><![CDATA[<a href="https://www.twitch.tv/RGLgg" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/248606/rgl2025_small.png?t=1496190994"></a>
+(Image credit: <a href="https://steamcommunity.com/id/metalcloud/" target="_blank">MetalCloud</a>)<br><br>
+ 
+<p>On July 18-20th, the top four teams in RGL will be flying out to Philadelphia, PA, for the Season 18 LAN Playoffs and a chance to prove who is the best team in North America!</p><br>
+
+<p>Come watch it in person or catch all of the action live on the <a href="https://www.twitch.tv/RGLgg" target="_blank">RGL.gg Twitch Stream</a>! Here are the match schedules for July 19th - 20th (July 18th is an optional preparation day for PC time, player and spectator pre-registration, media/interview time, and more):</p><br>
+
+<p>Schedule - Day 1 (Saturday, July 19th)<br>
+1:00 pm Eastern – Round 1 Match<br>
+4:30 pm Eastern - Semi-finals</p><br>
+
+<p>Schedule - Day 2 (Sunday, July 20th)<br>
+12:00 pm Eastern - Lower Bracket Finals<br>
+4:00 pm Eastern - GRAND FINAL</p><br>
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=248606</link>
+      <pubDate>Wed, 16 Jul 2025 17:58:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=248606</guid>
+    </item>
+    <item>
+      <title>Operation Bolted Barbecue</title>
+      <description><![CDATA[<a href="http://potato.tf/" target="_blank"><img src="https://steamcdn-a.akamaihd.net/steam/news/247722/bolted_2025_small.png?t=1496190994"></a><br><br>
+
+<p>It’s that time of year again. The gentle sea breeze... digging holes in the sand... seagulls flying above, looking for the best time to steal an entire hotdog right out of your hands... Sounds nice doesn’t it? Well there’s no time for relaxing now, Soldier! <b>Gray Mann’s army is back with a vengeance</b>, and <i>thousands</i> of robotic abominations are storming across those very beaches as we speak. It’s time to <b>get out there and fight</b> unless you want this to be the last summer you'll ever get! Gray Mann is coming for a lot more than your hotdogs and if you don’t fight back hard and fast, there won’t be any more hotdogs left for those flying beach rats to take...</p><br>
+
+<p>Operation Bolted Barbecue is a new Mann vs. Machine charity event brought to you by <a href="http://potato.tf/" target="_blank">Potato MvM</a>! <b>Complete over 50 missions across new and returning maps! Complete at least 10 missions to receive an in-game medal!</b> Event servers are available across the world. <a href="http://potato.tf/" target="_blank">Click here to get started!</a></p><br>
+
+<p>Feeling generous? <a href="http://potato.tf/" target="_blank">Potato.TF</a> is also hosting a charity fundraiser supporting <a href="https://tiltify.com/@potatomvm/operation-bolted-barbecue" target="_blank">Direct Relief</a>! <b>Donate as little as $5 to receive an in-game medal!</b> Have the link to your Steam profile ready and <a href="https://tiltify.com/@potatomvm/operation-bolted-barbecue" target="_blank">click here</a> for more information.</p><br>
+
+<p>Destroy those robots while you can! <b>The event will run until October 15th, 2025.</b></p><br>
+
+<p>Important Links:<ul>
+<li><a href="http://potato.tf/" target="_blank">Event Website</a>
+<li><a href="https://discord.gg/M8YbW3k" target="_blank">Discord</a>
+<li><a href="https://steamcommunity.com/groups/potatomvmservers" target="_blank">Steam Group</a>
+</ul>
+</p><br>
+]]></description>
+      <link>https://www.teamfortress.com/post.php?id=247722</link>
+      <pubDate>Thu, 03 Jul 2025 17:18:00 +0000</pubDate>
+      <guid isPermaLink="true">https://www.teamfortress.com/post.php?id=247722</guid>
+    </item>
+  </channel>
+</rss>

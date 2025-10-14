@@ -163,21 +163,21 @@ const Permanent = "Permanent"
 // It should not be instantiated directly, but instead use one of the composites that build
 // upon it.
 type Opts struct {
-	TargetID steamid.SteamID `json:"target_id" validate:"required,steamid"`
-	SourceID steamid.SteamID `json:"source_id" validate:"required,steamid"`
+	TargetID steamid.SteamID `json:"target_id" binding:"required,steamid"`
+	SourceID steamid.SteamID `json:"source_id" binding:"required,steamid"`
 	// ISO8601
-	Duration   *duration.Duration `json:"duration" validate:"required,duration"`
-	BanType    Type               `json:"ban_type" validate:"required"`
-	Reason     Reason             `json:"reason" validate:"required"`
-	ReasonText string             `json:"reason_text" validate:"required"`
-	Origin     Origin             `json:"origin" validate:"required"`
-	ReportID   int64              `json:"report_id" validate:"gte=1"`
-	CIDR       *string            `json:"cidr" validate:"cidrv4"`
+	Duration   *duration.Duration `json:"duration" binding:"required,duration"`
+	BanType    Type               `json:"ban_type" binding:"required" oneof:"1,2,3"`
+	Reason     Reason             `json:"reason" binding:"required"`
+	ReasonText string             `json:"reason_text" binding:"required"`
+	Origin     Origin             `json:"origin" binding:"required" oneof:"0,1,2,3"`
+	ReportID   int64              `json:"report_id" binding:"gte=0"`
+	CIDR       *string            `json:"cidr" binding:"cidrv4"`
 	EvadeOk    bool               `json:"evade_ok"`
 	Name       string             `json:"name"`
 	DemoName   string             `json:"demo_name"`
-	DemoTick   int                `json:"demo_tick" validate:"gte=1"`
-	Note       string             `json:"note"`
+	DemoTick   int                `json:"demo_tick" binding:"gte=1"`
+	Note       string             `json:"note" binding:"max=100000"`
 }
 
 func (opts *Opts) Validate() error {

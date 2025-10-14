@@ -1,20 +1,34 @@
 package tests
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/gin-gonic/gin"
+	"github.com/google/go-querystring/query"
+
+	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/fs"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -31,6 +45,32 @@ var (
 	// moderators = []permission.Privilege{permission.Guest, permission.User}
 	// admin      = []permission.Privilege{permission.Guest, permission.User, permission.Moderator}.
 )
+
+type StaticAuthenticator struct {
+	Profile personDomain.Core
+}
+
+func (s *StaticAuthenticator) Middleware(level permission.Privilege) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		if level > s.Profile.PermissionLevel {
+			ctx.AbortWithStatus(http.StatusForbidden)
+
+			return
+		}
+		ctx.Set(auth.CtxKeyUserProfile, s.Profile)
+	}
+}
+
+func (s *StaticAuthenticator) MiddlewareWS(level permission.Privilege) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		if level > s.Profile.PermissionLevel {
+			ctx.AbortWithStatus(http.StatusForbidden)
+
+			return
+		}
+		ctx.Set(auth.CtxKeyUserProfile, s.Profile)
+	}
+}
 
 // postgresContainer is used instead of the postgres.PostgresContainer one since
 // we need to build our custom image with extra extensions.
@@ -168,6 +208,15 @@ func NewFixture() *Fixture {
 	}
 }
 
+func (f *Fixture) CreateRouter() *gin.Engine {
+	router, err := httphelper.CreateRouter(httphelper.RouterOpts{LogLevel: log.Error})
+	if err != nil {
+		panic(err)
+	}
+
+	return router
+}
+
 func (f *Fixture) Reset(ctx context.Context) {
 	const query = `DO
 $do$
@@ -190,21 +239,6 @@ $do$;`
 	}
 }
 
-// func testRouter(conf config.Config) *gin.Engine {
-// 	conf.General.Mode = config.TestMode
-// 	router, errRouter := cmd.CreateRouter(conf, cmd.BuildInfo{
-// 		BuildVersion: "master",
-// 		Commit:       "",
-// 		Date:         time.Now().Format(time.DateTime),
-// 	})
-
-// 	if errRouter != nil {
-// 		panic(errRouter)
-// 	}
-
-// 	return router
-// }
-
 // func testEndpointWithReceiver(t *testing.T, router *gin.Engine, method string,
 // 	path string, body any, expectedStatus int, tokens *authTokens, receiver any,
 // ) {
@@ -218,68 +252,68 @@ $do$;`
 // 	}
 // }
 
-// type authTokens struct {
-// 	user           *auth.UserTokens
-// 	serverPassword string
-// }
+type AuthTokens struct {
+	user           *auth.UserTokens
+	serverPassword string
+}
 
-// func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, body any, expectedStatus int, tokens *authTokens) *httptest.ResponseRecorder {
-// 	t.Helper()
+func TestEndpoint(t *testing.T, router *gin.Engine, method string, path string, body any, expectedStatus int, tokens *AuthTokens) *httptest.ResponseRecorder {
+	t.Helper()
 
-// 	reqCtx, cancel := context.WithTimeout(t.Context(), time.Second*10)
-// 	defer cancel()
+	reqCtx, cancel := context.WithTimeout(t.Context(), time.Second*10)
+	defer cancel()
 
-// 	recorder := httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 
-// 	var bodyReader io.Reader
-// 	if body != nil {
-// 		bodyJSON, errJSON := json.Marshal(body)
-// 		if errJSON != nil {
-// 			t.Fatalf("Failed to encode request: %v", errJSON)
-// 		}
+	var bodyReader io.Reader
+	if body != nil {
+		bodyJSON, errJSON := json.Marshal(body)
+		if errJSON != nil {
+			t.Fatalf("Failed to encode request: %v", errJSON)
+		}
 
-// 		bodyReader = bytes.NewReader(bodyJSON)
-// 	}
+		bodyReader = bytes.NewReader(bodyJSON)
+	}
 
-// 	if body != nil && method == http.MethodGet {
-// 		values, err := query.Values(body)
-// 		if err != nil {
-// 			t.Fatalf("failed to encode values: %v", err)
-// 		}
+	if body != nil && method == http.MethodGet {
+		values, err := query.Values(body)
+		if err != nil {
+			t.Fatalf("failed to encode values: %v", err)
+		}
 
-// 		path += "?" + values.Encode()
-// 	}
+		path += "?" + values.Encode()
+	}
 
-// 	request, errRequest := http.NewRequestWithContext(reqCtx, method, path, bodyReader)
-// 	if errRequest != nil {
-// 		t.Fatalf("Failed to make request: %v", errRequest)
-// 	}
+	request, errRequest := http.NewRequestWithContext(reqCtx, method, path, bodyReader)
+	if errRequest != nil {
+		t.Fatalf("Failed to make request: %v", errRequest)
+	}
 
-// 	if tokens != nil {
-// 		if tokens.serverPassword != "" {
-// 			request.Header.Add("Authorization", tokens.serverPassword)
-// 		} else if tokens.user != nil {
-// 			request.AddCookie(&http.Cookie{
-// 				Name:     auth.FingerprintCookieName,
-// 				Value:    tokens.user.Fingerprint,
-// 				Path:     "/api",
-// 				Domain:   "example.com",
-// 				Expires:  time.Now().AddDate(0, 0, 1),
-// 				MaxAge:   0,
-// 				Secure:   false,
-// 				HttpOnly: false,
-// 				SameSite: http.SameSiteStrictMode,
-// 			})
-// 			request.Header.Add("Authorization", "Bearer "+tokens.user.Access)
-// 		}
-// 	}
+	if tokens != nil {
+		if tokens.serverPassword != "" {
+			request.Header.Add("Authorization", tokens.serverPassword)
+		} else if tokens.user != nil {
+			request.AddCookie(&http.Cookie{
+				Name:     auth.FingerprintCookieName,
+				Value:    tokens.user.Fingerprint,
+				Path:     "/api",
+				Domain:   "example.com",
+				Expires:  time.Now().AddDate(0, 0, 1),
+				MaxAge:   0,
+				Secure:   false,
+				HttpOnly: false,
+				SameSite: http.SameSiteStrictMode,
+			})
+			request.Header.Add("Authorization", "Bearer "+tokens.user.Access)
+		}
+	}
 
-// 	router.ServeHTTP(recorder, request)
+	router.ServeHTTP(recorder, request)
 
-// 	require.Equal(t, expectedStatus, recorder.Code, "Received invalid response code. method: %s path: %s", method, path)
+	require.Equal(t, expectedStatus, recorder.Code, "Received invalid response code. method: %s path: %s", method, path)
 
-// 	return recorder
-// }
+	return recorder
+}
 
 // func createTestPerson(sid steamid.SteamID, level permission.Privilege) person.Person {
 // 	_, _ = personUC.GetOrCreatePersonBySteamID(context.Background(), nil, sid)

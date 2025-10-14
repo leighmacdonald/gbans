@@ -86,7 +86,7 @@ func NewPersonAuth(sid64 steamid.SteamID, addr net.IP, accessToken string) Perso
 	}
 }
 
-const ctxKeyUserProfile = "user_profile"
+const CtxKeyUserProfile = "user_profile"
 
 type Authentication struct {
 	auth      Repository
@@ -154,7 +154,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 
 		hdrToken, errToken := u.TokenFromHeader(ctx, level == permission.Guest)
 		if errToken != nil || hdrToken == "" {
-			ctx.Set(ctxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
+			ctx.Set(CtxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
 		} else {
 			token = hdrToken
 
@@ -223,7 +223,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					BanID:           bannedPerson.BanID,
 				}
 
-				ctx.Set(ctxKeyUserProfile, profile)
+				ctx.Set(CtxKeyUserProfile, profile)
 
 				if u.sentryDSN != "" {
 					if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
@@ -237,7 +237,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					}
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
+				ctx.Set(CtxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
 			}
 		}
 
@@ -264,7 +264,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 
 		queryToken, errToken := u.TokenFromQuery(ctx)
 		if errToken != nil || queryToken == "" {
-			ctx.Set(ctxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
+			ctx.Set(CtxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
 		} else {
 			token = queryToken
 
@@ -317,7 +317,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 					BanID:           bannedPerson.BanID,
 				}
 
-				ctx.Set(ctxKeyUserProfile, profile)
+				ctx.Set(CtxKeyUserProfile, profile)
 
 				if u.sentryDSN != "" {
 					if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
@@ -331,7 +331,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 					}
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
+				ctx.Set(CtxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
 			}
 		}
 

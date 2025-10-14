@@ -367,7 +367,19 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	conf := g.config.Config()
 
-	router, err := CreateRouter(conf, Version())
+	router, err := httphelper.CreateRouter(httphelper.RouterOpts{
+		HTTPLogEnabled:    conf.Log.HTTPEnabled,
+		LogLevel:          conf.Log.Level,
+		HTTPOtelEnabled:   conf.Log.HTTPOtelEnabled,
+		SentryDSN:         SentryDSN,
+		Version:           BuildVersion,
+		PProfEnabled:      conf.PProfEnabled,
+		PrometheusEnabled: conf.PrometheusEnabled,
+		FrontendEnable:    conf.General.Mode != config.TestMode,
+		StaticPath:        conf.HTTPStaticPath,
+		HTTPCORSEnabled:   conf.HTTPCORSEnabled,
+		CORSOrigins:       conf.HTTPCorsOrigins,
+	})
 	if err != nil {
 		slog.Error("Could not setup router", log.ErrAttr(err))
 

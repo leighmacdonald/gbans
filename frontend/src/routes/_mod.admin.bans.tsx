@@ -28,16 +28,33 @@ import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { AppealState, BanReason, BanReasonEnum, BanReasons, banReasonsCollection, BanRecord } from '../schema/bans.ts';
+import {
+    AppealState,
+    AppealStateEnum,
+    BanReason,
+    BanReasonEnum,
+    BanReasons,
+    banReasonsCollection,
+    BanRecord
+} from '../schema/bans.ts';
 import { schemaBanQueryOpts } from '../schema/query.ts';
-import { commonTableSearchSchema, initColumnFilter, initPagination, isPermanentBan } from '../util/table.ts';
+import { initColumnFilter, initPagination, isPermanentBan, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
 
 const searchSchema = z.object({
-    ...commonTableSearchSchema.extend({
-        sortColumn: z.enum(['ban_id', 'source_id', 'target_id', 'reason', 'created_on', 'updated_on']).optional()
-    }).shape,
-    ...schemaBanQueryOpts.shape
+    pageIndex: z.number().optional().catch(0),
+    pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
+    sortOrder: z.enum(['desc', 'asc']).optional().catch('desc'),
+    sortColumn: z.enum(['ban_id', 'source_id', 'target_id', 'reason', 'created_on', 'updated_on']).optional(),
+    source_id: z.string().optional(),
+    target_id: z.string().optional(),
+    appeal_state: AppealStateEnum.optional(),
+    groups_only: z.boolean().optional(),
+    deleted: z.boolean().optional(),
+    cidr: z.string().optional(),
+    cidr_only: z.boolean().optional(),
+    reason: BanReasonEnum.optional(),
+    include_groups: z.boolean().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/bans')({
@@ -113,7 +130,12 @@ function AdminBans() {
                 valid_until: undefined,
                 groups_only: undefined,
                 cidr: undefined,
-                networks_only: undefined
+                cidr_only: undefined,
+                appeal_state: undefined,
+                networks_only: undefined,
+                include_groups: undefined,
+                sortColumn: undefined,
+                sortOrder: undefined
             })
         });
     };
