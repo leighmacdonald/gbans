@@ -21,7 +21,6 @@ import (
 
 const (
 	statusUpdateFreq = time.Second * 20
-	// updateTimeout    = time.Second * 5
 )
 
 var (

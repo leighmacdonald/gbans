@@ -36,8 +36,8 @@ func (r Repository) All(ctx context.Context) ([]Block, error) {
 	return blocks, nil
 }
 
-func (r Repository) IsBlocked(ctx context.Context, addr netip.Addr) bool {
-	const query = `SELECT as_num, ip_range FRON net_asn WHERE as_num = $1`
+func (r Repository) IsBlocked(_ context.Context, _ netip.Addr) bool {
+	// const query = `SELECT as_num, ip_range FRON net_asn WHERE as_num = $1`
 
 	return false
 }

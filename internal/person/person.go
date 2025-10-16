@@ -295,7 +295,7 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 	return resp, nil
 }
 
-func (u *Persons) UpdateProfiles(ctx context.Context, transaction pgx.Tx, people People) (int, error) {
+func (u *Persons) UpdateProfiles(ctx context.Context, _ pgx.Tx, people People) (int, error) {
 	if len(people) > 100 {
 		return 0, ErrSteamAPIArgLimit
 	}

@@ -1,7 +1,6 @@
 package ban_test
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -22,7 +21,7 @@ func TestMain(m *testing.M) {
 	fixture = tests.NewFixture()
 	defer fixture.Close()
 
-	os.Exit(m.Run())
+	m.Run()
 }
 
 func TestBan(t *testing.T) {

@@ -375,13 +375,14 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	conf := g.config.Config()
 
 	originValidate := func(v *validator.Validate) {
-		var o ban.Origin
+		var origin ban.Origin
 		v.RegisterCustomTypeFunc(func(field reflect.Value) any {
 			if value, ok := field.Interface().(ban.Origin); ok {
 				return value
 			}
+
 			return nil
-		}, o)
+		}, origin)
 	}
 
 	router, err := httphelper.CreateRouter(httphelper.RouterOpts{

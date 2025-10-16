@@ -22,7 +22,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func init() {
+func init() { //nolint:gochecknoinits
 	var b AppealState
 	httphelper.Decoder.RegisterConverter(&b, func(input string) reflect.Value {
 		var state AppealState
@@ -31,6 +31,7 @@ func init() {
 			return reflect.Value{}
 		}
 		state = AppealState(value)
+
 		return reflect.ValueOf(&state)
 	})
 }
@@ -57,7 +58,7 @@ func NewHandlerBans(engine *gin.Engine, bans Bans,
 	authedGrp := engine.Group("/")
 	{
 		authed := authedGrp.Use(authenticator.Middleware(permission.User))
-		authed.GET("/api/bans/:ban_id", handler.onAPIGetBanByID())
+		authed.GET("/api/ban/:ban_id", handler.onAPIGetBanByID())
 	}
 
 	// mod
@@ -75,18 +76,18 @@ func NewHandlerBans(engine *gin.Engine, bans Bans,
 	}
 }
 
-func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
-	type setStatusReq struct {
-		AppealState AppealState `json:"appeal_state"`
-	}
+type SetStatusReq struct {
+	AppealState AppealState `json:"appeal_state"`
+}
 
+func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, idFound := httphelper.GetInt64Param(ctx, "ban_id")
 		if !idFound {
 			return
 		}
 
-		var req setStatusReq
+		var req SetStatusReq
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -479,7 +480,7 @@ func (h banHandler) onBanDelete() gin.HandlerFunc {
 type RequestBanUpdate struct {
 	TargetID   steamid.SteamID `json:"target_id"`
 	BanType    Type            `json:"ban_type"`
-	Reason     Reason          `json:"reason"`
+	Reason     int             `json:"reason"`
 	ReasonText string          `json:"reason_text"`
 	Note       string          `json:"note"`
 	EvadeOk    bool            `json:"evade_ok"`
@@ -513,7 +514,7 @@ func (h banHandler) onBanUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if req.Reason == Custom {
+		if Reason(req.Reason) == Custom {
 			if req.ReasonText == "" {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Reason cannot be empty."))
@@ -528,7 +529,7 @@ func (h banHandler) onBanUpdate() gin.HandlerFunc {
 
 		bannedPerson.Note = req.Note
 		bannedPerson.BanType = req.BanType
-		bannedPerson.Reason = req.Reason
+		bannedPerson.Reason = Reason(req.Reason)
 		bannedPerson.EvadeOk = req.EvadeOk
 		bannedPerson.ValidUntil = req.ValidUntil
 

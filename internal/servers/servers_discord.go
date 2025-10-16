@@ -201,10 +201,8 @@ func (d DiscordHandler) onFind(ctx context.Context, _ *discordgo.Session, intera
 }
 
 func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	var (
-		opts = bot.OptionMap(interaction.ApplicationCommandData().Options)
-		// reason = ban.Reason(opts[discord.OptBanReason].IntValue())
-	)
+	opts := bot.OptionMap(interaction.ApplicationCommandData().Options)
+	// reason = ban.Reason(opts[discord.OptBanReason].IntValue())
 
 	target, errTarget := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errTarget != nil || !target.Valid() {

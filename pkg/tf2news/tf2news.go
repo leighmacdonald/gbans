@@ -17,9 +17,7 @@ const (
 	updateTitle = "Team Fortress 2 Update Released"
 )
 
-var (
-	ErrFetch = errors.New("failed to fetch news")
-)
+var ErrFetch = errors.New("failed to fetch news")
 
 type FeedItem struct {
 	Title       string
@@ -44,7 +42,7 @@ func Fetch(ctx context.Context) ([]*FeedItem, error) {
 	return Parse(ctx, resp.Body)
 }
 
-func Parse(ctx context.Context, body io.Reader) ([]*FeedItem, error) {
+func Parse(_ context.Context, body io.Reader) ([]*FeedItem, error) {
 	parser := gofeed.NewParser()
 	feed, err := parser.Parse(body)
 	if err != nil {
@@ -52,7 +50,7 @@ func Parse(ctx context.Context, body io.Reader) ([]*FeedItem, error) {
 	}
 
 	items := make([]*FeedItem, len(feed.Items))
-	for i, item := range feed.Items {
+	for index, item := range feed.Items {
 		markdown, errConv := htmltomarkdown.ConvertString(item.Description)
 		if errConv != nil {
 			return items, fmt.Errorf("%w: %w", ErrFetch, errConv)
@@ -60,7 +58,7 @@ func Parse(ctx context.Context, body io.Reader) ([]*FeedItem, error) {
 		if item.PublishedParsed == nil {
 			continue
 		}
-		items[i] = &FeedItem{
+		items[index] = &FeedItem{
 			Title:       item.Title,
 			Description: markdown,
 			Link:        item.Link,

@@ -25,9 +25,7 @@ import (
 	"github.com/viant/afs/storage"
 )
 
-var (
-	ErrOpenClient = errors.New("failed to open client")
-)
+var ErrOpenClient = errors.New("failed to open client")
 
 // Entry represents a stac log entry and some associated meta data.
 type Entry struct {

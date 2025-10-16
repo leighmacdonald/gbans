@@ -20,9 +20,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-var (
-	ErrQueryPatreon = errors.New("failed to query patreon")
-)
+var ErrQueryPatreon = errors.New("failed to query patreon")
 
 type Credential struct {
 	SteamID      steamid.SteamID `json:"steam_id"`

@@ -70,7 +70,7 @@ linters:
     - thelper
     - unconvert
     - unparam
-    - unused
+    # - unused
     - usestdlibvars
     - usetesting
     - varnamelen

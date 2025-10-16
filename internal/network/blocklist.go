@@ -21,9 +21,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-var (
-	ErrInvalidCIDR = errors.New("failed to parse CIDR address")
-)
+var ErrInvalidCIDR = errors.New("failed to parse CIDR address")
 
 const maskSingleHost = "/32"
 

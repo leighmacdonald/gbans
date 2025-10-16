@@ -584,21 +584,23 @@ type MemConfigRepository struct {
 	mutex  *sync.RWMutex
 }
 
-func (m *MemConfigRepository) Init(ctx context.Context) error { return nil }
+func (m *MemConfigRepository) Init(_ context.Context) error { return nil }
 
 func (m *MemConfigRepository) Config() Config {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
+
 	return m.config
 }
 
-func (m *MemConfigRepository) Read(ctx context.Context) (Config, error) {
+func (m *MemConfigRepository) Read(_ context.Context) (Config, error) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
+
 	return m.config, nil
 }
 
-func (m *MemConfigRepository) Write(ctx context.Context, config Config) error {
+func (m *MemConfigRepository) Write(_ context.Context, config Config) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	m.config = config

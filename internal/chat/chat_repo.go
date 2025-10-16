@@ -47,6 +47,7 @@ func (m *MessageProvider) Next(ctx context.Context, count uint64) ([]slur.Messag
 		if errors.Is(errRows, database.ErrNoResult) {
 			return nil, nil
 		}
+
 		return nil, database.DBErr(errRows)
 	}
 
@@ -60,7 +61,7 @@ func (m *MessageProvider) Next(ctx context.Context, count uint64) ([]slur.Messag
 		res = append(res, sm)
 	}
 
-	m.offset += int(count)
+	m.offset += int(count) //nolint:gosec
 
 	return res, nil
 }

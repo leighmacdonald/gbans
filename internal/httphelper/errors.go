@@ -28,6 +28,7 @@ var (
 func NewAPIErrorf(code int, err error, message string, args ...any) APIError {
 	apiErr := NewAPIError(code, err)
 	apiErr.Detail = fmt.Sprintf(message, args...)
+
 	return apiErr
 }
 
