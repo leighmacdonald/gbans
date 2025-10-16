@@ -28,7 +28,6 @@ func TestHTTPBan(t *testing.T) {
 			SourceID: tests.OwnerSID, TargetID: sid, Duration: duration.FromTimeDuration(time.Hour * 10),
 			BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
 		}, http.StatusCreated, &tokens, &r)
-		time.Sleep(time.Second)
 	}
 	require.Positive(t, r.BanID)
 	require.Equal(t, tests.OwnerSID, r.SourceID)
@@ -39,8 +38,29 @@ func TestHTTPBan(t *testing.T) {
 	}, http.StatusConflict, &tokens)
 
 	var loadedBans []ban.Ban
-	tests.EndpointReceiver(t, router, "GET", "/api/bans", ban.RequestQueryOpts{}, http.StatusOK, &tokens, &loadedBans)
+	tests.EndpointReceiver(t, router, "GET", "/api/bans", ban.RequestQueryOpts{
+		AppealState: ptr(int(ban.AnyState)),
+	}, http.StatusOK, &tokens, &loadedBans)
 	require.Len(t, loadedBans, 2)
 
 	tests.Endpoint(t, router, "DELETE", fmt.Sprintf("/api/ban/%d", r.BanID), ban.RequestUnban{UnbanReasonText: "test reason"}, http.StatusOK, &tokens)
+
+	tests.EndpointReceiver(t, router, "GET", "/api/bans", ban.RequestQueryOpts{
+		AppealState: ptr(int(ban.AnyState)),
+	}, http.StatusOK, &tokens, &loadedBans)
+	require.Len(t, loadedBans, 1)
+
+	tests.EndpointReceiver(t, router, "GET", "/api/bans", ban.RequestQueryOpts{
+		AppealState: ptr(int(ban.AnyState)),
+		Deleted:     true,
+	}, http.StatusOK, &tokens, &loadedBans)
+	require.Len(t, loadedBans, 2)
+
+	var stats ban.Stats
+	tests.EndpointReceiver(t, router, "GET", "/api/stats", nil, http.StatusOK, &tokens, &stats)
+	require.Equal(t, ban.Stats{}, stats)
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }

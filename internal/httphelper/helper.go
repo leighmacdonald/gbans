@@ -33,10 +33,10 @@ func Bind(ctx *gin.Context, target any) bool {
 
 // Set a Decoder instance as a package global, because it caches
 // meta-data about structs, and an instance can be shared safely.
-var decoder = schema.NewDecoder() //nolint:gochecknoglobals
+var Decoder = schema.NewDecoder() //nolint:gochecknoglobals
 
 func BindQuery(ctx *gin.Context, target any) bool {
-	if errBind := decoder.Decode(target, ctx.Request.URL.Query()); errBind != nil {
+	if errBind := Decoder.Decode(target, ctx.Request.URL.Query()); errBind != nil {
 		SetError(ctx,
 			NewAPIErrorf(http.StatusInternalServerError,
 				errors.Join(errBind, ErrBadRequest),
