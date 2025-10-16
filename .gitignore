@@ -57,3 +57,4 @@ parse_demo
 frontend/.tanstack
 TODO*
 *.csv
+__*
