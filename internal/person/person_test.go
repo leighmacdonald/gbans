@@ -1,7 +1,6 @@
 package person_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -18,7 +17,7 @@ func TestMain(m *testing.M) {
 	fixture = tests.NewFixture()
 	defer fixture.Close()
 
-	os.Exit(m.Run())
+	m.Run()
 }
 
 func TestPerson(t *testing.T) {

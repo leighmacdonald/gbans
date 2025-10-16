@@ -15,7 +15,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-querystring/query"
-
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -349,7 +348,7 @@ func Endpoint(t *testing.T, router *gin.Engine, method string, path string, body
 // func (f Fixture) Login(person personDomain.Core) *auth.UserTokens {
 // 	conf := f.Config.Config()
 // 	fingerprint := stringutil.SecureRandomString(40)
-// 	authUC := auth.NewAuthentication(auth.NewRepository(f.Database), f.Config, nil, nil, nil, "")
+// 	authUC := auth.NewAuthentication(auth.NewRepository(f.Database), f.Config, nil,.., "")
 // 	accessToken, errAccess := authUC.NewUserToken(person.SteamID, conf.HTTPCookieKey, fingerprint, auth.AuthTokenDuration)
 // 	if errAccess != nil {
 // 		panic(errAccess)
@@ -366,15 +365,15 @@ func Endpoint(t *testing.T, router *gin.Engine, method string, path string, body
 // }
 
 func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID, perm permission.Privilege) personDomain.Core {
-	p := person.NewPersons(person.NewRepository(f.Config.Config(), f.Database), OwnerSID, nil)
-	person, errPerson := p.GetOrCreatePersonBySteamID(ctx, steamID)
+	people := person.NewPersons(person.NewRepository(f.Config.Config(), f.Database), OwnerSID, nil)
+	person, errPerson := people.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPerson != nil {
 		panic(errPerson)
 	}
-	full, _ := p.BySteamID(ctx, steamID)
+	full, _ := people.BySteamID(ctx, steamID)
 	full.PermissionLevel = perm
 	person.PermissionLevel = perm
-	_ = p.Save(ctx, &full)
+	_ = people.Save(ctx, &full)
 
 	return person
 }

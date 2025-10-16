@@ -177,7 +177,7 @@ func (r *Repository) Stats(ctx context.Context, stats *Stats) error {
 	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '3 MONTH')) as bans_3month,
 	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '6 MONTH')) as bans_6month,
 	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 YEAR')) as bans_year,
-		(SELECT COUNT(net_id) FROM ban_net) as bans_cidr,
+		(SELECT COUNT(ban_id) FROM ban WHERE cidr IS NOT NULL) as bans_cidr,
 		(SELECT COUNT(filter_id) FROM filtered_word) as filtered_words,
 		(SELECT COUNT(server_id) FROM server) as servers_total`
 
