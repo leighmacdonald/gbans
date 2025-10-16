@@ -49,13 +49,13 @@ func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 		ands = append(ands, sq.Lt{"valid_until": time.Now()})
 	}
 
-	// if opts.SourceID.Valid() {
-	// 	ands = append(ands, sq.Eq{"b.source_id": opts.SourceID.Int64()})
-	// }
+	if opts.SourceID.Valid() {
+		ands = append(ands, sq.Eq{"b.source_id": opts.SourceID.Int64()})
+	}
 
-	// if opts.TargetID.Valid() {
-	// 	ands = append(ands, sq.Eq{"b.target_id": opts.TargetID.Int64()})
-	// }
+	if opts.TargetID.Valid() {
+		ands = append(ands, sq.Eq{"b.target_id": opts.TargetID.Int64()})
+	}
 
 	if len(opts.Reasons) > 0 {
 		ands = append(ands, sq.Eq{"b.reason": opts.Reasons})
