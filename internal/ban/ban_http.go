@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +21,19 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
 )
+
+func init() {
+	var b AppealState
+	httphelper.Decoder.RegisterConverter(&b, func(input string) reflect.Value {
+		var state AppealState
+		value, errValue := strconv.ParseInt(input, 10, 64)
+		if errValue != nil {
+			return reflect.Value{}
+		}
+		state = AppealState(value)
+		return reflect.ValueOf(&state)
+	})
+}
 
 type banHandler struct {
 	bans   Bans
@@ -381,14 +395,15 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 type RequestQueryOpts struct {
 	SourceID string `query:"source_id"`
 	// TargetID can represent a SteamID or a group ID. They both use steamID formats, just in a different numberspace
-	TargetID      string      `query:"target_id"`
-	GroupsOnly    bool        `query:"groups_only"`
-	IncludeGroups bool        `query:"include_groups"`
-	Deleted       bool        `query:"deleted"`
-	CIDR          string      `query:"cidr"`
-	CIDROnly      bool        `query:"cidr_only"`
-	Reasons       []Reason    `query:"reasons"`
-	AppealState   AppealState `query:"appeal_state"`
+	TargetID      string   `query:"target_id"`
+	GroupsOnly    bool     `query:"groups_only"`
+	IncludeGroups bool     `query:"include_groups"`
+	Deleted       bool     `query:"deleted"`
+	CIDR          string   `query:"cidr"`
+	CIDROnly      bool     `query:"cidr_only"`
+	Reasons       []Reason `query:"reasons"`
+	// TODO AppealState conversions instead of int
+	AppealState *int `form:"appeal_state" query:"appeal_state"`
 }
 
 func (h banHandler) onQuery() gin.HandlerFunc {
