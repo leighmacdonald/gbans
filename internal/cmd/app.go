@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"reflect"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/go-playground/validator/v10"
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
@@ -155,9 +157,12 @@ func (g *GBans) Init(ctx context.Context) error {
 	conf := g.config.Config()
 
 	g.setupSentry()
-
-	g.logCloser = log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, SentryDSN != "", BuildVersion)
-
+	if conf.General.Mode == config.TestMode {
+		slog.SetDefault(slog.New(slog.DiscardHandler))
+		g.logCloser = func() {}
+	} else {
+		g.logCloser = log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, SentryDSN != "", BuildVersion)
+	}
 	slog.Info("Starting gbans...",
 		slog.String("version", BuildVersion),
 		slog.String("commit", BuildCommit),
@@ -201,13 +206,15 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 	g.bot = discord
 
+	members := ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons))
+
 	g.assets = asset.NewAssets(assetRepo)
 	g.servers = servers.NewServers(servers.NewRepository(g.database))
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, g.config)
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.config, g.persons, g.demos, g.tfapiClient, g.notifications)
 	g.states = servers.NewState(g.broadcaster, servers.NewCollector(g.servers), g.config, g.servers)
-	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, g.config, g.reports, g.tfapiClient, g.notifications)
-	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), g.bans) // TODO Does THE & work here?
+	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, g.config, g.reports, g.notifications)
+	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), members) // TODO Does THE & work here?
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
 	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.config, g.notifications)
 	g.chatRepo = chat.NewRepository(g.database)
@@ -367,6 +374,16 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	conf := g.config.Config()
 
+	originValidate := func(v *validator.Validate) {
+		var o ban.Origin
+		v.RegisterCustomTypeFunc(func(field reflect.Value) any {
+			if value, ok := field.Interface().(ban.Origin); ok {
+				return value
+			}
+			return nil
+		}, o)
+	}
+
 	router, err := httphelper.CreateRouter(httphelper.RouterOpts{
 		HTTPLogEnabled:    conf.Log.HTTPEnabled,
 		LogLevel:          conf.Log.Level,
@@ -379,6 +396,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		StaticPath:        conf.HTTPStaticPath,
 		HTTPCORSEnabled:   conf.HTTPCORSEnabled,
 		CORSOrigins:       conf.HTTPCorsOrigins,
+		Validators:        []func(*validator.Validate){originValidate},
 	})
 	if err != nil {
 		slog.Error("Could not setup router", log.ErrAttr(err))

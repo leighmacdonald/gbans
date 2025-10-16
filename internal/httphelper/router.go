@@ -36,6 +36,7 @@ type RouterOpts struct {
 	StaticPath        string
 	HTTPCORSEnabled   bool
 	CORSOrigins       []string
+	Validators        []func(*validator.Validate)
 }
 
 func CreateRouter(opts RouterOpts) (*gin.Engine, error) {
@@ -55,6 +56,9 @@ func CreateRouter(opts RouterOpts) (*gin.Engine, error) {
 		}
 		if err := validator.RegisterValidation("duration", durationValidator); err != nil {
 			return nil, errors.Join(err, ErrValidator)
+		}
+		for _, validatorFn := range opts.Validators {
+			validatorFn(validator)
 		}
 	}
 

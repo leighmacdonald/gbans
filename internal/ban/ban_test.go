@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -28,7 +29,7 @@ func TestBan(t *testing.T) {
 	t.Parallel()
 	var (
 		br     = ban.NewRepository(fixture.Database, fixture.Persons)
-		bans   = ban.NewBans(br, fixture.Persons, fixture.Config, nil, nil, notification.NewNullNotifications())
+		bans   = ban.NewBans(br, fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 	)
@@ -49,7 +50,7 @@ func TestDuplicate(t *testing.T) {
 	t.Parallel()
 	var (
 		br     = ban.NewRepository(fixture.Database, fixture.Persons)
-		bans   = ban.NewBans(br, fixture.Persons, fixture.Config, nil, nil, notification.NewNullNotifications())
+		bans   = ban.NewBans(br, fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 		opts   = []ban.Opts{
@@ -79,10 +80,10 @@ func TestUnban(t *testing.T) {
 	t.Parallel()
 	var (
 		br     = ban.NewRepository(fixture.Database, fixture.Persons)
-		bans   = ban.NewBans(br, fixture.Persons, fixture.Config, nil, nil, notification.NewNullNotifications())
+		bans   = ban.NewBans(br, fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
-		author = fixture.CreateTestPerson(t.Context(), source)
+		author = fixture.CreateTestPerson(t.Context(), source, permission.Admin)
 	)
 	testBan, err := bans.Create(t.Context(), ban.Opts{
 		SourceID: source, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),

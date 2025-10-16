@@ -163,21 +163,21 @@ const Permanent = "Permanent"
 // It should not be instantiated directly, but instead use one of the composites that build
 // upon it.
 type Opts struct {
-	TargetID steamid.SteamID `json:"target_id" binding:"required,steamid"`
-	SourceID steamid.SteamID `json:"source_id" binding:"required,steamid"`
+	TargetID steamid.SteamID `json:"target_id" form:"target_id" binding:"required,steamid"`
+	SourceID steamid.SteamID `json:"source_id" form:"source_id" binding:"required,steamid"`
 	// ISO8601
-	Duration   *duration.Duration `json:"duration" binding:"required,duration"`
-	BanType    Type               `json:"ban_type" binding:"required" oneof:"1,2,3"`
-	Reason     Reason             `json:"reason" binding:"required"`
-	ReasonText string             `json:"reason_text" binding:"required"`
-	Origin     Origin             `json:"origin" binding:"required" oneof:"0,1,2,3"`
-	ReportID   int64              `json:"report_id" binding:"gte=0"`
-	CIDR       *string            `json:"cidr" binding:"cidrv4"`
-	EvadeOk    bool               `json:"evade_ok"`
-	Name       string             `json:"name"`
-	DemoName   string             `json:"demo_name"`
-	DemoTick   int                `json:"demo_tick" binding:"gte=1"`
-	Note       string             `json:"note" binding:"max=100000"`
+	Duration   *duration.Duration `json:"duration" form:"duration" binding:"required,duration"`
+	BanType    Type               `json:"ban_type" form:"ban_type" binding:"required" oneof:"1,2,3"`
+	Reason     Reason             `json:"reason" form:"reason" binding:"required"`
+	ReasonText string             `json:"reason_text" form:"reason_text" binding:"required_if=Reason 1"`
+	Origin     Origin             `json:"origin" form:"origin"`
+	ReportID   int64              `json:"report_id" form:"report_id" binding:"gte=0"`
+	CIDR       *string            `json:"cidr" form:"cidr" binding:"omitnil,cidrv4"`
+	EvadeOk    bool               `json:"evade_ok" form:"evade_ok" `
+	Name       string             `json:"name" form:"name" `
+	DemoName   string             `json:"demo_name" form:"demo_name"`
+	DemoTick   int                `json:"demo_tick" form:"demo_tick" binding:"required_with=DemoName gte=1"`
+	Note       string             `json:"note" form:"note" binding:"max=100000"`
 }
 
 func (opts *Opts) Validate() error {
@@ -298,36 +298,26 @@ type Stats struct {
 	ServersTotal  int `json:"servers_total"`
 }
 
-type Bans struct {
-	repo    Repository
-	persons person.Provider
-	config  *config.Configuration
-	reports *Reports
-	tfAPI   *thirdparty.TFAPI
-	notif   notification.Notifier
-}
-
-func NewBans(repository Repository, person person.Provider,
-	config *config.Configuration, reports *Reports,
-	tfAPI *thirdparty.TFAPI, notif notification.Notifier,
-) Bans {
-	return Bans{
-		repo:    repository,
-		persons: person,
-		config:  config,
-		reports: reports,
-		tfAPI:   tfAPI,
-		notif:   notif,
+func NewGroupMemberships(tfAPI *thirdparty.TFAPI, repo Repository) *GroupMemberships {
+	return &GroupMemberships{
+		tfAPI: tfAPI,
+		repo:  repo,
 	}
 }
 
-func (s Bans) UpdateCache(ctx context.Context) error {
-	bans, errBans := s.repo.Query(ctx, QueryOpts{GroupsOnly: true})
+type GroupMemberships struct {
+	tfAPI *thirdparty.TFAPI
+	repo  Repository
+}
+
+// groupMemberUpdater updates the current members of banned Steam groups in the database.
+func (g GroupMemberships) UpdateCache(ctx context.Context) error {
+	bans, errBans := g.repo.Query(ctx, QueryOpts{GroupsOnly: true})
 	if errBans != nil {
 		return errBans
 	}
 
-	if err := s.repo.TruncateCache(ctx); err != nil {
+	if err := g.repo.TruncateCache(ctx); err != nil {
 		return err
 	}
 
@@ -341,7 +331,7 @@ func (s Bans) UpdateCache(ctx context.Context) error {
 			time.Sleep(time.Second * 5)
 		}
 
-		groupInfo, err := s.tfAPI.SteamGroup(ctx, ban.TargetID)
+		groupInfo, err := g.tfAPI.SteamGroup(ctx, ban.TargetID)
 		if err != nil {
 			return err
 		}
@@ -352,12 +342,32 @@ func (s Bans) UpdateCache(ctx context.Context) error {
 			list = append(list, sid.Int64())
 		}
 
-		if err := s.repo.InsertCache(ctx, ban.TargetID, list); err != nil {
+		if err := g.repo.InsertCache(ctx, ban.TargetID, list); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+type Bans struct {
+	repo    Repository
+	persons person.Provider
+	config  *config.Configuration
+	reports *Reports
+	notif   notification.Notifier
+}
+
+func NewBans(repository Repository, person person.Provider, config *config.Configuration, reports *Reports,
+	notif notification.Notifier,
+) Bans {
+	return Bans{
+		repo:    repository,
+		persons: person,
+		config:  config,
+		reports: reports,
+		notif:   notif,
+	}
 }
 
 func (s Bans) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {

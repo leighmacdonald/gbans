@@ -239,25 +239,25 @@ $do$;`
 	}
 }
 
-// func testEndpointWithReceiver(t *testing.T, router *gin.Engine, method string,
-// 	path string, body any, expectedStatus int, tokens *authTokens, receiver any,
-// ) {
-// 	t.Helper()
+func EndpointReceiver(t *testing.T, router *gin.Engine, method string,
+	path string, body any, expectedStatus int, tokens *AuthTokens, receiver any,
+) {
+	t.Helper()
 
-// 	resp := testEndpoint(t, router, method, path, body, expectedStatus, tokens)
-// 	if receiver != nil {
-// 		if err := json.NewDecoder(resp.Body).Decode(&receiver); err != nil {
-// 			t.Fatalf("Failed to decode response: %v", err)
-// 		}
-// 	}
-// }
+	resp := Endpoint(t, router, method, path, body, expectedStatus, tokens)
+	if receiver != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&receiver); err != nil {
+			t.Fatalf("Failed to decode response: %v", err)
+		}
+	}
+}
 
 type AuthTokens struct {
 	user           *auth.UserTokens
 	serverPassword string
 }
 
-func TestEndpoint(t *testing.T, router *gin.Engine, method string, path string, body any, expectedStatus int, tokens *AuthTokens) *httptest.ResponseRecorder {
+func Endpoint(t *testing.T, router *gin.Engine, method string, path string, body any, expectedStatus int, tokens *AuthTokens) *httptest.ResponseRecorder {
 	t.Helper()
 
 	reqCtx, cancel := context.WithTimeout(t.Context(), time.Second*10)
@@ -346,33 +346,35 @@ func TestEndpoint(t *testing.T, router *gin.Engine, method string, path string, 
 // 	return createTestPerson(steamid.New(76561198057999536), permission.Moderator)
 // }
 
-// func loginUser(person person.Person) *auth.UserTokens {
-// 	conf := configUC.Config()
+// func (f Fixture) Login(person personDomain.Core) *auth.UserTokens {
+// 	conf := f.Config.Config()
 // 	fingerprint := stringutil.SecureRandomString(40)
-
+// 	authUC := auth.NewAuthentication(auth.NewRepository(f.Database), f.Config, nil, nil, nil, "")
 // 	accessToken, errAccess := authUC.NewUserToken(person.SteamID, conf.HTTPCookieKey, fingerprint, auth.AuthTokenDuration)
 // 	if errAccess != nil {
 // 		panic(errAccess)
 // 	}
 
 // 	ipAddr := net.ParseIP("127.0.0.1")
-// 	if ipAddr == nil {
-// 		panic(domain.ErrClientIP)
-// 	}
 
 // 	personAuth := auth.NewPersonAuth(person.SteamID, ipAddr, accessToken)
 // 	if saveErr := authRepo.SavePersonAuth(context.Background(), &personAuth); saveErr != nil {
 // 		panic(saveErr)
 // 	}
 
-//		return &auth.UserTokens{Access: accessToken, Fingerprint: fingerprint}
-//	}
-func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID) personDomain.Core {
+// 	return &auth.UserTokens{Access: accessToken, Fingerprint: fingerprint}
+// }
+
+func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID, perm permission.Privilege) personDomain.Core {
 	p := person.NewPersons(person.NewRepository(f.Config.Config(), f.Database), OwnerSID, nil)
 	person, errPerson := p.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPerson != nil {
 		panic(errPerson)
 	}
+	full, _ := p.BySteamID(ctx, steamID)
+	full.PermissionLevel = perm
+	person.PermissionLevel = perm
+	_ = p.Save(ctx, &full)
 
 	return person
 }
