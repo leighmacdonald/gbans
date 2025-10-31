@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+const (
+	formatShort = "Mon Jan 2 15:04:05 MST 2006"
+)
+
 var (
 	reDuration         = regexp.MustCompile(`^(\d+)([smhdwMy])$`)
 	ErrInvalidDuration = errors.New("invalid duration")
@@ -16,7 +20,7 @@ var (
 
 // FmtTimeShort returns a common format for time display.
 func FmtTimeShort(t time.Time) string {
-	return t.Format("Mon Jan 2 15:04:05 MST 2006")
+	return t.Format(formatShort)
 }
 
 // FmtDuration calculates and returns a string for duration differences. This handles
@@ -53,6 +57,8 @@ func FmtDuration(t time.Time) string {
 	return strings.Join(pieces, " ")
 }
 
+// diff computes the difference between two times. Results are returned as a tuple
+// of time components: year, month, day, hour, minute, sec.
 func diff(timeFrom time.Time, timeTo time.Time) (int, int, int, int, int, int) {
 	var year, month, day, hour, minute, sec int
 

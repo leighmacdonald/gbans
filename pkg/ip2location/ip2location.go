@@ -29,16 +29,16 @@ import (
 
 const downloadURL = "https://www.ip2location.com/download/?token=%s&file=%s"
 
-type DatabaseName string
+type databaseName string
 
 const (
-	GeoDatabaseASN4      DatabaseName = "DBASNLITE"
-	GeoDatabaseASN6      DatabaseName = "DBASNLITEIPV6"
-	GeoDatabaseLocation4 DatabaseName = "DB5LITECSV"
-	GeoDatabaseLocation6 DatabaseName = "DB5LITECSVIPV6"
+	geoDatabaseASN4      databaseName = "DBASNLITE"
+	geoDatabaseASN6      databaseName = "DBASNLITEIPV6"
+	geoDatabaseLocation4 databaseName = "DB5LITECSV"
+	geoDatabaseLocation6 databaseName = "DB5LITECSVIPV6"
 
 	// No ipv6 for proxy.
-	GeoDatabaseProxy DatabaseName = "PX10LITECSV"
+	geoDatabaseProxy databaseName = "PX10LITECSV"
 )
 
 type DatabaseFile string
@@ -169,6 +169,14 @@ type ProxyRecord struct {
 	Threat      ThreatType
 }
 
+func ip2int(ip net.IP) uint32 {
+	if len(ip) == 16 {
+		return binary.BigEndian.Uint32(ip[12:16])
+	}
+
+	return binary.BigEndian.Uint32(ip)
+}
+
 // ASNRecord
 // ip_from 	INT (10)† / DECIMAL (39,0)†† 	First IP address show netblock.
 // ip_to 	INT (10)† / DECIMAL (39,0)†† 	Last IP address show netblock.
@@ -188,7 +196,7 @@ type ASNRecords []ASNRecord
 func (r ASNRecords) Hosts() uint32 {
 	total := uint32(0)
 	for _, n := range r {
-		total += IP2Int(*n.IPTo) - IP2Int(*n.IPFrom)
+		total += ip2int(*n.IPTo) - ip2int(*n.IPFrom)
 	}
 
 	return total
@@ -197,16 +205,6 @@ func (r ASNRecords) Hosts() uint32 {
 type LatLong struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
-}
-
-// Location provides a container and some helper functions for location data.
-type Location struct {
-	ISOCode string
-	LatLong LatLong
-	// Autonomous system number (ASN)
-	ASN uint64
-	// Autonomous system (AS) name
-	AS string
 }
 
 // Value implements the driver.Valuer interface for our custom type.
@@ -255,6 +253,16 @@ func (ll *LatLong) String() string {
 	return fmt.Sprintf("POINT(%f %f)", ll.Latitude, ll.Longitude)
 }
 
+// Location provides a container and some helper functions for location data.
+type Location struct {
+	ISOCode string
+	LatLong LatLong
+	// Autonomous system number (ASN)
+	ASN uint64
+	// Autonomous system (AS) name
+	AS string
+}
+
 var (
 	ErrCreateRequest = errors.New("failed to create request")
 	ErrDownload      = errors.New("failed to downloaded geoip db")
@@ -266,7 +274,7 @@ var (
 // into the configured geodb_path defined in the configuration file.
 func Update(ctx context.Context, outputPath string, apiKey string) error {
 	type dlParam struct {
-		dbName   DatabaseName
+		dbName   databaseName
 		fileName DatabaseFile
 	}
 
@@ -307,11 +315,11 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 	)
 
 	for _, param := range []dlParam{
-		{dbName: GeoDatabaseASN4, fileName: GeoDatabaseASNFile4},
-		{dbName: GeoDatabaseASN6, fileName: GeoDatabaseASNFile6},
-		{dbName: GeoDatabaseLocation4, fileName: GeoDatabaseLocationFile4},
-		{dbName: GeoDatabaseLocation6, fileName: GeoDatabaseLocationFile6},
-		{dbName: GeoDatabaseProxy, fileName: GeoDatabaseProxyFile},
+		{dbName: geoDatabaseASN4, fileName: GeoDatabaseASNFile4},
+		{dbName: geoDatabaseASN6, fileName: GeoDatabaseASNFile6},
+		{dbName: geoDatabaseLocation4, fileName: GeoDatabaseLocationFile4},
+		{dbName: geoDatabaseLocation6, fileName: GeoDatabaseLocationFile6},
+		{dbName: geoDatabaseProxy, fileName: GeoDatabaseProxyFile},
 	} {
 		waitGroup.Add(1)
 

@@ -27,6 +27,7 @@ type FeedItem struct {
 	GameUpdate  bool
 }
 
+// Fetch retreives and parses the latest news items from the teamfortress.com RSS feed.
 func Fetch(ctx context.Context) ([]*FeedItem, error) {
 	client := &http.Client{Timeout: time.Second * 30}
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, feedURL, nil)
@@ -39,10 +40,10 @@ func Fetch(ctx context.Context) ([]*FeedItem, error) {
 	}
 	defer resp.Body.Close()
 
-	return Parse(ctx, resp.Body)
+	return FromReader(resp.Body)
 }
 
-func Parse(_ context.Context, body io.Reader) ([]*FeedItem, error) {
+func FromReader(body io.Reader) ([]*FeedItem, error) {
 	parser := gofeed.NewParser()
 	feed, err := parser.Parse(body)
 	if err != nil {

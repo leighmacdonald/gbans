@@ -29,7 +29,7 @@ func Uniq[T comparable](input []T) []T {
 	return output
 }
 
-//nolint:ireturn
+// FirstNonZero returns the first positive value in the slice.
 func FirstNonZero[T Number](numbers ...T) T {
 	for _, curValue := range numbers {
 		if curValue > 0 {

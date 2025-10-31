@@ -24,7 +24,7 @@ func TestHTTPBan(t *testing.T) {
 	tokens := tests.AuthTokens{}
 	var createdBan ban.Ban
 	for _, sid := range []steamid.SteamID{tests.GuestSID, tests.UserSID} {
-		tests.EndpointReceiver(t, router, "POST", "/api/bans", ban.Opts{
+		tests.EndpointReceiver(t, router, http.MethodPost, "/api/bans", ban.Opts{
 			SourceID: tests.OwnerSID, TargetID: sid, Duration: duration.FromTimeDuration(time.Hour * 10),
 			BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
 		}, http.StatusCreated, &tokens, &createdBan)
@@ -32,36 +32,36 @@ func TestHTTPBan(t *testing.T) {
 	require.Positive(t, createdBan.BanID)
 	require.Equal(t, tests.OwnerSID, createdBan.SourceID)
 	require.Equal(t, tests.UserSID, createdBan.TargetID)
-	tests.Endpoint(t, router, "POST", "/api/bans", ban.Opts{
+	tests.Endpoint(t, router, http.MethodPost, "/api/bans", ban.Opts{
 		SourceID: tests.OwnerSID, TargetID: createdBan.TargetID, Duration: duration.FromTimeDuration(time.Hour * 10),
 		BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
 	}, http.StatusConflict, &tokens)
 
 	var loadedBans []ban.Ban
-	tests.EndpointReceiver(t, router, "GET", "/api/bans", ban.RequestQueryOpts{
+	tests.EndpointReceiver(t, router, http.MethodGet, "/api/bans", ban.RequestQueryOpts{
 		AppealState: ptr(int(ban.AnyState)),
 	}, http.StatusOK, &tokens, &loadedBans)
 	require.Len(t, loadedBans, 2)
 
-	tests.Endpoint(t, router, "DELETE", fmt.Sprintf("/api/ban/%d", createdBan.BanID), ban.RequestUnban{UnbanReasonText: "test reason"}, http.StatusOK, &tokens)
+	tests.Endpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/ban/%d", createdBan.BanID), ban.RequestUnban{UnbanReasonText: "test reason"}, http.StatusOK, &tokens)
 
-	tests.EndpointReceiver(t, router, "GET", "/api/bans", ban.RequestQueryOpts{
+	tests.EndpointReceiver(t, router, http.MethodGet, "/api/bans", ban.RequestQueryOpts{
 		AppealState: ptr(int(ban.AnyState)),
 	}, http.StatusOK, &tokens, &loadedBans)
 	require.Len(t, loadedBans, 1)
 
-	tests.EndpointReceiver(t, router, "GET", "/api/bans", ban.RequestQueryOpts{
+	tests.EndpointReceiver(t, router, http.MethodGet, "/api/bans", ban.RequestQueryOpts{
 		AppealState: ptr(int(ban.AnyState)),
 		Deleted:     true,
 	}, http.StatusOK, &tokens, &loadedBans)
 	require.Len(t, loadedBans, 2)
 
 	var stats ban.Stats
-	tests.EndpointReceiver(t, router, "GET", "/api/stats", nil, http.StatusOK, &tokens, &stats)
+	tests.EndpointReceiver(t, router, http.MethodGet, "/api/stats", nil, http.StatusOK, &tokens, &stats)
 	require.Equal(t, 2, stats.BansTotal)
 
 	var single ban.Ban
-	tests.EndpointReceiver(t, router, "GET", fmt.Sprintf("/api/ban/%d", loadedBans[0].BanID), nil, http.StatusOK, &tokens, &single)
+	tests.EndpointReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/ban/%d", loadedBans[0].BanID), nil, http.StatusOK, &tokens, &single)
 	require.Equal(t, loadedBans[0], single)
 
 	// var update2 ban.Ban
@@ -70,7 +70,7 @@ func TestHTTPBan(t *testing.T) {
 	// }, http.StatusOK, &tokens, &update2)
 	// require.Equal(t, ban.BotHost, update2.Reason)
 
-	tests.Endpoint(t, router, "POST", fmt.Sprintf("/api/ban/%d/status", loadedBans[0].BanID), ban.SetStatusReq{
+	tests.Endpoint(t, router, http.MethodPost, fmt.Sprintf("/api/ban/%d/status", loadedBans[0].BanID), ban.SetStatusReq{
 		AppealState: ban.Accepted,
 	}, http.StatusAccepted, &tokens)
 }

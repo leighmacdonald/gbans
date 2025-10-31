@@ -110,7 +110,7 @@ func GetIntParam(ctx *gin.Context, key string) (int, bool) {
 		return 0, false
 	}
 
-	return stringutil.StringToInt(valueStr), true
+	return stringutil.StringToIntOrZero(valueStr), true
 }
 
 func GetStringParam(ctx *gin.Context, key string) (string, bool) {

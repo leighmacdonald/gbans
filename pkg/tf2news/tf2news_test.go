@@ -10,7 +10,7 @@ import (
 
 func TestParse(t *testing.T) {
 	testFeed, _ := os.Open("testdata/feed.xml")
-	entries, err := tf2news.Parse(t.Context(), testFeed)
+	entries, err := tf2news.FromReader(testFeed)
 	require.NoError(t, err)
 	require.Len(t, entries, 25)
 	require.True(t, entries[0].GameUpdate)

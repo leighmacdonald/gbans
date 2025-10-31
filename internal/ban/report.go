@@ -418,25 +418,25 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 		return ReportWithAuthor{}, fmt.Errorf("%w: cannot report self", httphelper.ErrParamInvalid)
 	}
 
-	personSource, errSource := r.persons.BySteamID(ctx, req.SourceID)
+	personSource, errSource := r.persons.GetOrCreatePersonBySteamID(ctx, req.SourceID)
 	if errSource != nil {
 		return ReportWithAuthor{}, errSource
 	}
 
-	personTarget, errTarget := r.persons.BySteamID(ctx, req.TargetID)
+	personTarget, errTarget := r.persons.GetOrCreatePersonBySteamID(ctx, req.TargetID)
 	if errTarget != nil {
 		return ReportWithAuthor{}, errTarget
 	}
-
-	if personTarget.Expired() {
-		if err := person.UpdatePlayerSummary(ctx, &personTarget, r.tfAPI); err != nil {
-			slog.Error("Failed to update target player", log.ErrAttr(err))
-		} else {
-			if errSave := r.persons.Save(ctx, &personTarget); errSave != nil {
-				slog.Error("Failed to save target player update", log.ErrAttr(err))
-			}
-		}
-	}
+	// TODO readd
+	// if personTarget.Expired() {
+	// 	if err := person.UpdatePlayerSummary(ctx, &personTarget, r.tfAPI); err != nil {
+	// 		slog.Error("Failed to update target player", log.ErrAttr(err))
+	// 	} else {
+	// 		if errSave := r.persons.Save(ctx, &personTarget); errSave != nil {
+	// 			slog.Error("Failed to save target player update", log.ErrAttr(err))
+	// 		}
+	// 	}
+	// }
 
 	// Ensure the user doesn't already have an open report against the user
 	existing, errReports := r.ReportBySteamID(ctx, personSource.SteamID, req.TargetID)
@@ -499,7 +499,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
-		fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.PersonaName),
+		fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.GetName()),
 		newReport.Path(),
 		currentUser,
 	))
