@@ -525,7 +525,7 @@ func (s *Handler) onSaveSMAdmin() gin.HandlerFunc {
 			return
 		}
 
-		var req smAdminRequest
+		var req CreateAdminRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -565,7 +565,7 @@ func (s *Handler) onDeleteSMAdmin() gin.HandlerFunc {
 	}
 }
 
-type smAdminRequest struct {
+type CreateAdminRequest struct {
 	AuthType AuthType `json:"auth_type"`
 	Identity string   `json:"identity"`
 	Password string   `json:"password"`
@@ -576,7 +576,7 @@ type smAdminRequest struct {
 
 func (s *Handler) onCreateSMAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req smAdminRequest
+		var req CreateAdminRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
