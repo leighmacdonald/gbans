@@ -129,10 +129,11 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.Info, banMe
 		return existing, errSave
 	}
 
-	conf := u.config.Config()
-
-	u.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, NewAppealMessage(existing.MessageMD,
-		conf.ExtURLRaw("/ban/%d", existing.BanID), curUser, conf.ExtURL(curUser))))
+	if u.notif != nil {
+		conf := u.config.Config()
+		u.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, NewAppealMessage(existing.MessageMD,
+			conf.ExtURLRaw("/ban/%d", existing.BanID), curUser, conf.ExtURL(curUser))))
+	}
 
 	slog.Debug("Appeal message updated", slog.Int64("message_id", banMessageID))
 

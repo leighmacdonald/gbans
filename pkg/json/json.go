@@ -1,7 +1,6 @@
 package json
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -9,6 +8,7 @@ import (
 
 var ErrDecodeJSON = errors.New("failed to decode JSON")
 
+// Decode is a generic version of the stdlib json decoder.
 func Decode[T any](reader io.Reader) (T, error) {
 	var value T
 	if err := json.NewDecoder(reader).Decode(&value); err != nil {
@@ -16,8 +16,4 @@ func Decode[T any](reader io.Reader) (T, error) {
 	}
 
 	return value, nil
-}
-
-func DecodeBytes[T any](body []byte) (T, error) {
-	return Decode[T](bytes.NewReader(body))
 }

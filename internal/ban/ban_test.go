@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// fixture provides a shared set of common dependencies that can be used for integration testing.
 var fixture *tests.Fixture //nolint:gochecknoglobals
 
 func TestMain(m *testing.M) {

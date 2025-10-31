@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Exists checks for the existence of a file or directory.
 func Exists(filePath string) bool {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return false

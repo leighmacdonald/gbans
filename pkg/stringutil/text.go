@@ -30,18 +30,15 @@ func StringChunkDelimited(data string, chunkSize int, sep ...string) []string {
 	}
 
 	rows := strings.Split(data, sepChar)
-
 	for index, row := range rows {
 		curLineSize := len(row) + len(sepChar) // account for \n
 		if curSize+curLineSize >= chunkSize {
 			results = append(results, strings.TrimSuffix(strings.Join(curPieces, sepChar), sepChar))
-
 			curSize = 0
 			curPieces = nil
 		}
 
 		curPieces = append(curPieces, row)
-
 		curSize += curLineSize
 
 		if index+1 == len(rows) {

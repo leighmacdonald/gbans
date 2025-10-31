@@ -9,6 +9,7 @@ import (
 
 var ErrClientInit = errors.New("failed to initialize sentry client")
 
+// NewSentryClient initializes a sentry.io client configured to the current environment.
 func NewSentryClient(dsn string, tracing bool, sampleRate float64, buildVersion string, environment string) (*sentry.Client, error) {
 	// We map these to the same environment values used for frontend/node to be consistent.
 	env := "production"

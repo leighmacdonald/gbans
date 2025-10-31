@@ -1,7 +1,6 @@
 package stringutil
 
 import (
-	"math"
 	"strconv"
 )
 
@@ -16,17 +15,15 @@ func StringToFloat64Default(numericString string, defaultValue float64) float64 
 	return value
 }
 
-const DefaultIntAllocate int = 0
+const defaultIntAllocate int = 0
 
-func StringToInt(desired string) int {
-	parsed, err := strconv.Atoi(desired)
+// StringToIntOrZero handles convering a string to a integer that is within 32bit bounds.
+// Returns 0 on a out of bounds value.
+func StringToIntOrZero(desired string) int {
+	parsed, err := strconv.ParseInt(desired, 10, 32)
 	if err != nil {
-		return DefaultIntAllocate
+		return defaultIntAllocate
 	}
 
-	if parsed > 0 && parsed <= math.MaxInt32 {
-		return parsed
-	}
-
-	return DefaultIntAllocate
+	return int(parsed)
 }

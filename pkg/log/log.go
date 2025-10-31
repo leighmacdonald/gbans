@@ -22,6 +22,7 @@ const (
 	Error Level = "error"
 )
 
+// ToSlogLevel maps our levels to the equivalent slog level.
 func ToSlogLevel(level Level) slog.Level {
 	switch level {
 	case Debug:
@@ -35,16 +36,22 @@ func ToSlogLevel(level Level) slog.Level {
 	}
 }
 
+// MustCreateLogger creates and configures the default global log handler. Depending on configuration
+// a local log file and an external sentry handler may also be created.
+//
+// Returns a cleanup function which should be called on program shutdown.
+//
+// Panics on failure to open log file for writing.
 func MustCreateLogger(ctx context.Context, debugLogPath string, level Level, useSentry bool, version string) func() {
-	closer := func() {}
-
-	opts := slug.HandlerOptions{
-		HandlerOptions: slog.HandlerOptions{
-			Level: ToSlogLevel(level),
-		},
-	}
-
-	var handlers []slog.Handler
+	var (
+		closer = func() {}
+		opts   = slug.HandlerOptions{
+			HandlerOptions: slog.HandlerOptions{
+				Level: ToSlogLevel(level),
+			},
+		}
+		handlers []slog.Handler
+	)
 	if useSentry {
 		handlers = append(handlers, sentryslog.Option{
 			Level:     slog.LevelDebug,

@@ -23,6 +23,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -170,6 +171,7 @@ type Fixture struct {
 	Database  database.Database
 	Config    *config.Configuration
 	Persons   personDomain.Provider
+	TFApi     *thirdparty.TFAPI
 	DSN       string
 	Close     func()
 }
@@ -188,11 +190,14 @@ func NewFixture() *Fixture {
 		panic(err)
 	}
 
+	api, _ := thirdparty.NewTFAPI("https://tf-api.roto.lol", &http.Client{Timeout: time.Second * 15})
+
 	conf := TestConfig(testDB.dsn)
 
 	return &Fixture{
 		container: testDB,
 		Database:  databaseConn,
+		TFApi:     api,
 		Config:    conf,
 		DSN:       testDB.dsn,
 		Persons:   person.NewPersons(person.NewRepository(conf.Config(), databaseConn), steamid.New(conf.Config().Owner), nil),
@@ -313,56 +318,6 @@ func Endpoint(t *testing.T, router *gin.Engine, method string, path string, body
 
 	return recorder
 }
-
-// func createTestPerson(sid steamid.SteamID, level permission.Privilege) person.Person {
-// 	_, _ = personUC.GetOrCreatePersonBySteamID(context.Background(), nil, sid)
-
-// 	player, err := personUC.GetPersonBySteamID(context.Background(), nil, sid)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	player.PermissionLevel = level
-
-// 	if errSave := personUC.SavePerson(context.Background(), nil, &player); errSave != nil {
-// 		panic(errSave)
-// 	}
-
-// 	return player
-// }
-
-// func getOwner() person.Person {
-// 	return createTestPerson(steamid.New(configUC.Config().Owner), permission.Admin)
-// }
-
-// var curUserID atomic.Int32
-
-// func getUser() person.Person {
-// 	return createTestPerson(steamid.New(76561198004429398+int64(curUserID.Add(1))), permission.User)
-// }
-
-// func getModerator() person.Person {
-// 	return createTestPerson(steamid.New(76561198057999536), permission.Moderator)
-// }
-
-// func (f Fixture) Login(person personDomain.Core) *auth.UserTokens {
-// 	conf := f.Config.Config()
-// 	fingerprint := stringutil.SecureRandomString(40)
-// 	authUC := auth.NewAuthentication(auth.NewRepository(f.Database), f.Config, nil,.., "")
-// 	accessToken, errAccess := authUC.NewUserToken(person.SteamID, conf.HTTPCookieKey, fingerprint, auth.AuthTokenDuration)
-// 	if errAccess != nil {
-// 		panic(errAccess)
-// 	}
-
-// 	ipAddr := net.ParseIP("127.0.0.1")
-
-// 	personAuth := auth.NewPersonAuth(person.SteamID, ipAddr, accessToken)
-// 	if saveErr := authRepo.SavePersonAuth(context.Background(), &personAuth); saveErr != nil {
-// 		panic(saveErr)
-// 	}
-
-// 	return &auth.UserTokens{Access: accessToken, Fingerprint: fingerprint}
-// }
 
 func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID, perm permission.Privilege) personDomain.Core {
 	people := person.NewPersons(person.NewRepository(f.Config.Config(), f.Database), OwnerSID, nil)
