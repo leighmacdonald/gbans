@@ -138,8 +138,8 @@ type Config struct {
 	CfgValue string `json:"cfg_value"`
 }
 
-func New(repository Repository, linker config.Linker, person person.Provider) *Sourcemod {
-	return &Sourcemod{repository: repository, linker: linker, person: person}
+func New(repository Repository, linker config.Linker, person person.Provider) Sourcemod {
+	return Sourcemod{repository: repository, linker: linker, person: person}
 }
 
 type Sourcemod struct {

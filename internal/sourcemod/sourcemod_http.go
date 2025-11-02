@@ -22,13 +22,13 @@ type EvadeChecker interface {
 }
 
 type Handler struct {
-	sourcemod *Sourcemod
+	sourcemod Sourcemod
 	persons   person.Provider
 	evades    EvadeChecker
 }
 
 // MiddlewareServer(servers, sentryDSN).
-func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth gin.HandlerFunc, sourcemod *Sourcemod) {
+func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth gin.HandlerFunc, sourcemod Sourcemod) {
 	handler := Handler{
 		sourcemod: sourcemod,
 	}
@@ -39,7 +39,7 @@ func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth gi
 		// Groups
 		admin.GET("/api/smadmin/groups", handler.onAPISMGroups())
 		admin.POST("/api/smadmin/groups", handler.onCreateSMGroup())
-		admin.POST("/api/smadmin/groups/:group_id", handler.onSaveSMGroup())
+		admin.PUT("/api/smadmin/groups/:group_id", handler.onSaveSMGroup())
 		admin.DELETE("/api/smadmin/groups/:group_id", handler.onDeleteSMGroup())
 		admin.GET("/api/smadmin/groups/:group_id/overrides", handler.onGroupOverrides())
 		admin.POST("/api/smadmin/groups/:group_id/overrides", handler.onCreateGroupOverride())
@@ -203,14 +203,14 @@ func (s *Handler) onGetGroupImmunities() gin.HandlerFunc {
 	}
 }
 
-type groupImmunityRequest struct {
+type GroupImmunityRequest struct {
 	GroupID int `json:"group_id"`
 	OtherID int `json:"other_id"`
 }
 
 func (s *Handler) onCreateGroupImmunity() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req groupImmunityRequest
+		var req GroupImmunityRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -269,7 +269,7 @@ func (s *Handler) onGroupOverrides() gin.HandlerFunc {
 	}
 }
 
-type groupOverrideRequest struct {
+type GroupOverrideRequest struct {
 	Name   string         `json:"name"`
 	Type   OverrideType   `json:"type"`
 	Access OverrideAccess `json:"access"`
@@ -278,11 +278,11 @@ type groupOverrideRequest struct {
 func (s *Handler) onCreateGroupOverride() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, idFound := httphelper.GetIntParam(ctx, "group_id")
-		if idFound {
+		if !idFound {
 			return
 		}
 
-		var req groupOverrideRequest
+		var req GroupOverrideRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -305,7 +305,7 @@ func (s *Handler) onSaveGroupOverride() gin.HandlerFunc {
 			return
 		}
 
-		var req groupOverrideRequest
+		var req GroupOverrideRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -361,7 +361,7 @@ func (s *Handler) onDeleteGroupOverride() gin.HandlerFunc {
 	}
 }
 
-type overrideRequest struct {
+type OverrideRequest struct {
 	Name  string       `json:"name"`
 	Type  OverrideType `json:"type"`
 	Flags string       `json:"flags"`
@@ -374,7 +374,7 @@ func (s *Handler) onSaveOverrides() gin.HandlerFunc {
 			return
 		}
 
-		var req overrideRequest
+		var req OverrideRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -409,7 +409,7 @@ func (s *Handler) onSaveOverrides() gin.HandlerFunc {
 
 func (s *Handler) onCreateOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req overrideRequest
+		var req OverrideRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -615,7 +615,7 @@ func (s *Handler) onDeleteSMGroup() gin.HandlerFunc {
 	}
 }
 
-type smGroupRequest struct {
+type CreateGroupRequest struct {
 	Name     string `json:"name"`
 	Immunity int    `json:"immunity"`
 	Flags    string `json:"flags"`
@@ -641,7 +641,7 @@ func (s *Handler) onSaveSMGroup() gin.HandlerFunc {
 			return
 		}
 
-		var req smGroupRequest
+		var req CreateGroupRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -663,7 +663,7 @@ func (s *Handler) onSaveSMGroup() gin.HandlerFunc {
 
 func (s *Handler) onCreateSMGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req smGroupRequest
+		var req CreateGroupRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}

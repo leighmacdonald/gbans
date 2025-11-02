@@ -271,14 +271,16 @@ func (r Repository) GetOverride(ctx context.Context, overrideID int) (Overrides,
 }
 
 func (r Repository) AddOverride(ctx context.Context, overrides Overrides) (Overrides, error) {
-	if err := r.database.ExecInsertBuilder(ctx, r.database.Builder().
-		Insert("sm_overrides").SetMap(map[string]any{
-		"type":       overrides.Type,
-		"name":       overrides.Name,
-		"flags":      overrides.Flags,
-		"created_on": overrides.CreatedOn,
-		"updated_on": overrides.UpdatedOn,
-	})); err != nil {
+	if err := r.database.ExecInsertBuilderWithReturnValue(ctx, r.database.Builder().
+		Insert("sm_overrides").
+		SetMap(map[string]any{
+			"type":       overrides.Type,
+			"name":       overrides.Name,
+			"flags":      overrides.Flags,
+			"created_on": overrides.CreatedOn,
+			"updated_on": overrides.UpdatedOn,
+		}).
+		Suffix("RETURNING override_id"), &overrides.OverrideID); err != nil {
 		return overrides, database.DBErr(err)
 	}
 
