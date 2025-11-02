@@ -239,11 +239,20 @@ $do$;`
 	}
 }
 
+func GetOK(t *testing.T, router http.Handler, path string, receiver any) {
+	t.Helper()
+	EndpointReceiver(t, router, http.MethodGet, path, nil, http.StatusOK, nil, receiver)
+}
+
+func PostOK(t *testing.T, router http.Handler, path string, body any, receiver any) {
+	t.Helper()
+	EndpointReceiver(t, router, http.MethodPost, path, nil, http.StatusOK, nil, receiver)
+}
+
 func EndpointReceiver(t *testing.T, router http.Handler, method string,
 	path string, body any, expectedStatus int, tokens *AuthTokens, receiver any,
 ) {
 	t.Helper()
-
 	resp := Endpoint(t, router, method, path, body, expectedStatus, tokens)
 	if receiver != nil {
 		if err := json.NewDecoder(resp.Body).Decode(&receiver); err != nil {
