@@ -96,7 +96,7 @@ type GBans struct {
 	reports        *ban.Reports
 	servers        servers.Servers
 	speedruns      servers.Speedruns
-	sourcemod      *sourcemod.Sourcemod
+	sourcemod      sourcemod.Sourcemod
 	states         *servers.State
 	staticConfig   config.Static
 	tfapiClient    *thirdparty.TFAPI

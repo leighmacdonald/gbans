@@ -40,10 +40,6 @@ var (
 	GuestSID = steamid.New(76561198084134028) //nolint:gochecknoglobals
 
 	ErrContainer = errors.New("failed to bring up test container")
-
-	// authed     = []permission.Privilege{permission.Guest}
-	// moderators = []permission.Privilege{permission.Guest, permission.User}
-	// admin      = []permission.Privilege{permission.Guest, permission.User, permission.Moderator}.
 )
 
 type StaticAuthenticator struct {
@@ -243,7 +239,7 @@ $do$;`
 	}
 }
 
-func EndpointReceiver(t *testing.T, router *gin.Engine, method string,
+func EndpointReceiver(t *testing.T, router http.Handler, method string,
 	path string, body any, expectedStatus int, tokens *AuthTokens, receiver any,
 ) {
 	t.Helper()
@@ -261,7 +257,7 @@ type AuthTokens struct {
 	serverPassword string
 }
 
-func Endpoint(t *testing.T, router *gin.Engine, method string, path string, body any, expectedStatus int, tokens *AuthTokens) *httptest.ResponseRecorder {
+func Endpoint(t *testing.T, router http.Handler, method string, path string, body any, expectedStatus int, tokens *AuthTokens) *httptest.ResponseRecorder {
 	t.Helper()
 
 	reqCtx, cancel := context.WithTimeout(t.Context(), time.Second*10)
