@@ -21,6 +21,7 @@ func NewRepository(database database.Database) Repository {
 	return Repository{database: database}
 }
 
+// FIXME check_ban no longer functional.
 func (r Repository) QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (PlayerBanState, error) {
 	const query = `
 		SELECT b.out_ban_source, b.out_ban_id, b.out_ban_type, b.out_reason, b.out_evade_ok, b.out_valid_until, p.steam_id

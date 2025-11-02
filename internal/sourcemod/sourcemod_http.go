@@ -86,44 +86,50 @@ type ServerAuthResp struct {
 	Token  string `json:"token"`
 }
 
+type CheckRequest struct {
+	SteamID  string `json:"steam_id"`
+	ClientID int    `json:"client_id"`
+	IP       string `json:"ip"`
+	Name     string `json:"name"`
+}
+
+type CheckResponse struct {
+	ClientID int      `json:"client_id"`
+	BanType  ban.Type `json:"ban_type"`
+	Msg      string   `json:"msg"`
+}
+
 func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
-	type checkRequest struct {
-		httphelper.SteamIDField
-		ClientID int        `json:"client_id"`
-		IP       netip.Addr `json:"ip"`
-		Name     string     `json:"name"`
-	}
-
-	type checkResponse struct {
-		ClientID int      `json:"client_id"`
-		BanType  ban.Type `json:"ban_type"`
-		Msg      string   `json:"msg"`
-	}
-
 	return func(ctx *gin.Context) {
-		var req checkRequest
+		var req CheckRequest
 
 		if !httphelper.Bind(ctx, &req) {
-			slog.Error("Failed to bind check request")
-
 			return
 		}
 
-		defaultValue := checkResponse{
+		defaultValue := CheckResponse{
 			ClientID: req.ClientID,
 			BanType:  ban.OK,
 			Msg:      "",
 		}
+		steamID := steamid.New(req.SteamID)
+		// steamID, valid := req.SteamID
+		// if !valid {
+		// 	ctx.JSON(http.StatusOK, defaultValue)
+		// 	slog.Error("Did not receive valid steamid for check response", log.ErrAttr(steamid.ErrDecodeSID))
 
-		steamID, valid := req.SteamID(ctx)
-		if !valid {
+		// 	return
+		// }
+
+		ip, errIP := netip.ParseAddr(req.IP)
+		if errIP != nil {
 			ctx.JSON(http.StatusOK, defaultValue)
-			slog.Error("Did not receive valid steamid for check response", log.ErrAttr(steamid.ErrDecodeSID))
+			slog.Error("Failed to parse IP", log.ErrAttr(errIP))
 
 			return
 		}
 
-		banState, msg, errBS := s.sourcemod.GetBanState(ctx, steamID, req.IP)
+		banState, msg, errBS := s.sourcemod.GetBanState(ctx, steamID, ip)
 		if errBS != nil {
 			slog.Error("failed to get ban state", log.ErrAttr(errBS))
 
@@ -143,7 +149,7 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 			}
 
 			if banState.SteamID != steamID && !banState.EvadeOK {
-				evadeBanned, err := s.evades.CheckEvadeStatus(ctx, steamID, req.IP)
+				evadeBanned, err := s.evades.CheckEvadeStatus(ctx, steamID, ip)
 				if err != nil {
 					ctx.JSON(http.StatusOK, defaultValue)
 
@@ -151,7 +157,7 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 				}
 
 				if evadeBanned {
-					defaultValue = checkResponse{
+					defaultValue = CheckResponse{
 						ClientID: req.ClientID,
 						BanType:  ban.Banned,
 						Msg:      "Evasion ban",
@@ -173,7 +179,7 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 				return
 			}
 
-			ctx.JSON(http.StatusOK, checkResponse{
+			ctx.JSON(http.StatusOK, CheckResponse{
 				ClientID: req.ClientID,
 				BanType:  banState.BanType,
 				Msg:      msg,
@@ -241,10 +247,6 @@ func (s *Handler) onDeleteGroupImmunity() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, gin.H{})
 	}
-}
-
-type groupRequest struct {
-	GroupID int `json:"group_id"`
 }
 
 func (s *Handler) onGroupOverrides() gin.HandlerFunc {
@@ -457,6 +459,10 @@ func (s *Handler) onGetOverrides() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, overrides)
 	}
+}
+
+type groupRequest struct {
+	GroupID int `json:"group_id"`
 }
 
 func (s *Handler) onAddAdminGroup() gin.HandlerFunc {
@@ -753,18 +759,18 @@ func (s *Handler) onGetSMAdmins() gin.HandlerFunc {
 // 			return
 // 		}
 
-// 		ctx.JSON(http.StatusCreated, ban)
-// 		slog.Info("Created new ban successfully", slog.Int64("ban_id", ban.BanID))
-// 	}
-// }
+//			ctx.JSON(http.StatusCreated, ban)
+//			slog.Info("Created new ban successfully", slog.Int64("ban_id", ban.BanID))
+//		}
+//	}
+
+type Override struct {
+	Type  OverrideType `json:"type"`
+	Name  string       `json:"name"`
+	Flags string       `json:"flags"`
+}
 
 func (s *Handler) onAPIGetServerOverrides() gin.HandlerFunc {
-	type smOverride struct {
-		Type  OverrideType `json:"type"`
-		Name  string       `json:"name"`
-		Flags string       `json:"flags"`
-	}
-
 	return func(ctx *gin.Context) {
 		overrides, errOverrides := s.sourcemod.Overrides(ctx)
 		if errOverrides != nil {
@@ -774,9 +780,9 @@ func (s *Handler) onAPIGetServerOverrides() gin.HandlerFunc {
 		}
 
 		//goland:noinspection ALL
-		smOverrides := []smOverride{}
+		smOverrides := []Override{}
 		for _, group := range overrides {
-			smOverrides = append(smOverrides, smOverride{
+			smOverrides = append(smOverrides, Override{
 				Flags: group.Flags,
 				Name:  group.Name,
 				Type:  group.Type,
@@ -787,23 +793,23 @@ func (s *Handler) onAPIGetServerOverrides() gin.HandlerFunc {
 	}
 }
 
+type Group struct {
+	Flags         string `json:"flags"`
+	Name          string `json:"name"`
+	ImmunityLevel int    `json:"immunity_level"`
+}
+
+type GroupImmunityResp struct {
+	GroupName string `json:"group_name"`
+	OtherName string `json:"other_name"`
+}
+
+type GroupsResp struct {
+	Groups     []Group             `json:"groups"`
+	Immunities []GroupImmunityResp `json:"immunities"`
+}
+
 func (s *Handler) onAPIGetServerGroups() gin.HandlerFunc {
-	type smGroup struct {
-		Flags         string `json:"flags"`
-		Name          string `json:"name"`
-		ImmunityLevel int    `json:"immunity_level"`
-	}
-
-	type smGroupImmunity struct {
-		GroupName string `json:"group_name"`
-		OtherName string `json:"other_name"`
-	}
-
-	type smGroupsResp struct {
-		Groups     []smGroup         `json:"groups"`
-		Immunities []smGroupImmunity `json:"immunities"`
-	}
-
 	return func(ctx *gin.Context) {
 		groups, errGroups := s.sourcemod.Groups(ctx)
 		if errGroups != nil && !errors.Is(errGroups, database.ErrNoResult) {
@@ -819,15 +825,15 @@ func (s *Handler) onAPIGetServerGroups() gin.HandlerFunc {
 			return
 		}
 
-		resp := smGroupsResp{
+		resp := GroupsResp{
 			// Make sure we return an empty list instead of null
-			Groups:     []smGroup{},
-			Immunities: []smGroupImmunity{},
+			Groups:     []Group{},
+			Immunities: []GroupImmunityResp{},
 		}
 
 		//goland:noinspection ALL
 		for _, group := range groups {
-			resp.Groups = append(resp.Groups, smGroup{
+			resp.Groups = append(resp.Groups, Group{
 				Flags:         group.Flags,
 				Name:          group.Name,
 				ImmunityLevel: group.ImmunityLevel,
@@ -835,7 +841,7 @@ func (s *Handler) onAPIGetServerGroups() gin.HandlerFunc {
 		}
 
 		for _, immunity := range immunities {
-			resp.Immunities = append(resp.Immunities, smGroupImmunity{
+			resp.Immunities = append(resp.Immunities, GroupImmunityResp{
 				GroupName: immunity.Group.Name,
 				OtherName: immunity.Other.Name,
 			})
@@ -845,27 +851,27 @@ func (s *Handler) onAPIGetServerGroups() gin.HandlerFunc {
 	}
 }
 
+type User struct {
+	ID       int      `json:"id"`
+	Authtype AuthType `json:"authtype"`
+	Identity string   `json:"identity"`
+	Password string   `json:"password"`
+	Flags    string   `json:"flags"`
+	Name     string   `json:"name"`
+	Immunity int      `json:"immunity"`
+}
+
+type UserGroup struct {
+	AdminID   int    `json:"admin_id"`
+	GroupName string `json:"group_name"`
+}
+
+type UsersResponse struct {
+	Users      []User      `json:"users"`
+	UserGroups []UserGroup `json:"user_groups"`
+}
+
 func (s *Handler) onAPIGetServerUsers() gin.HandlerFunc {
-	type smUser struct {
-		ID       int      `json:"id"`
-		Authtype AuthType `json:"authtype"`
-		Identity string   `json:"identity"`
-		Password string   `json:"password"`
-		Flags    string   `json:"flags"`
-		Name     string   `json:"name"`
-		Immunity int      `json:"immunity"`
-	}
-
-	type smUserGroup struct {
-		AdminID   int    `json:"admin_id"`
-		GroupName string `json:"group_name"`
-	}
-
-	type smUsersResponse struct {
-		Users      []smUser      `json:"users"`
-		UserGroups []smUserGroup `json:"user_groups"`
-	}
-
 	return func(ctx *gin.Context) {
 		users, errUsers := s.sourcemod.Admins(ctx)
 		if errUsers != nil {
@@ -874,13 +880,13 @@ func (s *Handler) onAPIGetServerUsers() gin.HandlerFunc {
 			return
 		}
 
-		smResp := smUsersResponse{
-			Users:      []smUser{},
-			UserGroups: []smUserGroup{},
+		smResp := UsersResponse{
+			Users:      []User{},
+			UserGroups: []UserGroup{},
 		}
 
 		for _, user := range users {
-			smResp.Users = append(smResp.Users, smUser{
+			smResp.Users = append(smResp.Users, User{
 				ID:       user.AdminID,
 				Authtype: user.AuthType,
 				Identity: user.Identity,
@@ -891,7 +897,7 @@ func (s *Handler) onAPIGetServerUsers() gin.HandlerFunc {
 			})
 
 			for _, ug := range user.Groups {
-				smResp.UserGroups = append(smResp.UserGroups, smUserGroup{
+				smResp.UserGroups = append(smResp.UserGroups, UserGroup{
 					AdminID:   user.AdminID,
 					GroupName: ug.Name,
 				})

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -160,7 +161,7 @@ func testGroupOverrides(router *gin.Engine, authenticator *tests.StaticAuthentic
 	}
 }
 
-func testGlobalOverrides(router *gin.Engine, authenticator *tests.StaticAuthenticator, _ sourcemod.Sourcemod) func(t *testing.T) {
+func testGlobalOverrides(router *gin.Engine, authenticator *tests.StaticAuthenticator) func(t *testing.T) {
 	return func(t *testing.T) {
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
 		// group, errGroup := sm.AddGroup(t.Context(), stringutil.SecureRandomString(10), "abc", 100)
@@ -244,6 +245,60 @@ func TestSourcemod(t *testing.T) {
 	t.Run("admins", testAdmins(router, authenticator))
 	t.Run("groups", testGroups(router, authenticator))
 	t.Run("group_overrides", testGroupOverrides(router, authenticator, sm))
-	t.Run("global_overrides", testGlobalOverrides(router, authenticator, sm))
+	t.Run("global_overrides", testGlobalOverrides(router, authenticator))
 	t.Run("group_immunities", testGroupImmunities(router, authenticator, sm))
+}
+
+func TestSRCDS(t *testing.T) {
+	authenticator := &tests.StaticAuthenticator{}
+	router := fixture.CreateRouter()
+	sm := sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Config, fixture.Persons)
+	sourcemod.NewHandler(router, authenticator, func(ctx *gin.Context) {
+		// Dummy server auth
+		ctx.Next()
+	}, sm)
+	t.Run("permissions", testPermissions(router, authenticator, sm))
+	t.Run("check", testCheck(router, authenticator))
+}
+
+func testPermissions(router *gin.Engine, authenticator *tests.StaticAuthenticator, sm sourcemod.Sourcemod) func(t *testing.T) {
+	return func(t *testing.T) {
+		admin, _ := sm.AddAdmin(t.Context(), stringutil.SecureRandomString(10), sourcemod.AuthTypeSteam, tests.ModSID.String(), "abc", 0, "")
+		group, _ := sm.AddGroup(t.Context(), stringutil.SecureRandomString(10), "abc", 0)
+		_, _ = sm.AddAdminGroup(t.Context(), admin.AdminID, group.GroupID)
+		_, _ = sm.AddOverride(t.Context(), stringutil.SecureRandomString(10), sourcemod.OverrideTypeCommand, "g")
+		_, _ = sm.AddOverride(t.Context(), stringutil.SecureRandomString(10), sourcemod.OverrideTypeGroup, "a")
+
+		var users sourcemod.UsersResponse
+		tests.GetOK(t, router, "/api/sm/users", &users)
+		require.Len(t, users.Users, 1)
+		require.Len(t, users.UserGroups, 1)
+
+		var groups sourcemod.GroupsResp
+		tests.GetOK(t, router, "/api/sm/groups", &groups)
+		require.Len(t, users.Users, 1)
+
+		var overrides []sourcemod.Override
+		tests.GetOK(t, router, "/api/sm/overrides", &overrides)
+		require.Len(t, overrides, 2)
+	}
+}
+
+func testCheck(router *gin.Engine, authenticator *tests.StaticAuthenticator) func(t *testing.T) {
+	return func(t *testing.T) {
+		authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Moderator)
+
+		// Check none exist
+		var (
+			resp sourcemod.CheckResponse
+			req  = sourcemod.CheckRequest{
+				SteamID:  tests.UserSID.String(),
+				ClientID: 10,
+				IP:       "1.2.3.4",
+				Name:     stringutil.SecureRandomString(12),
+			}
+		)
+		tests.PostOK(t, router, "/api/sm/check", req, &resp)
+		require.Equal(t, resp.BanType, ban.OK)
+	}
 }
