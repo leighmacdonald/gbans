@@ -176,6 +176,7 @@ func NewFixture() *Fixture {
 	testCtx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 	defer cancel()
 
+	// slog.SetDefault(slog.New(slog.DiscardHandler))
 	testDB, errStore := newDB(testCtx)
 	if errStore != nil {
 		panic(errStore)
@@ -239,14 +240,55 @@ $do$;`
 	}
 }
 
-func GetOK(t *testing.T, router http.Handler, path string, receiver any) {
+func GetForbidden(t *testing.T, router http.Handler, path string, receiver ...any) {
 	t.Helper()
-	EndpointReceiver(t, router, http.MethodGet, path, nil, http.StatusOK, nil, receiver)
+
+	EndpointReceiver(t, router, http.MethodGet, path, nil, http.StatusForbidden, nil, receiver[0])
 }
 
-func PostOK(t *testing.T, router http.Handler, path string, body any, receiver any) {
+func PutForbidden(t *testing.T, router http.Handler, path string, body any, receiver ...any) {
 	t.Helper()
-	EndpointReceiver(t, router, http.MethodPost, path, nil, http.StatusOK, nil, receiver)
+
+	if len(receiver) > 0 {
+		EndpointReceiver(t, router, http.MethodPut, path, body, http.StatusForbidden, nil, receiver[0])
+	} else {
+		Endpoint(t, router, http.MethodPut, path, body, http.StatusForbidden, nil)
+	}
+}
+
+func GetNotFound(t *testing.T, router http.Handler, path string, receiver ...any) {
+	t.Helper()
+
+	EndpointReceiver(t, router, http.MethodGet, path, nil, http.StatusNotFound, nil, receiver)
+}
+
+func GetOK(t *testing.T, router http.Handler, path string, receiver ...any) {
+	t.Helper()
+	if len(receiver) > 0 {
+		EndpointReceiver(t, router, http.MethodGet, path, nil, http.StatusOK, nil, receiver[0])
+	} else {
+		Endpoint(t, router, http.MethodGet, path, nil, http.StatusOK, nil)
+	}
+}
+
+func PutOK(t *testing.T, router http.Handler, path string, body any, receiver ...any) {
+	t.Helper()
+
+	if len(receiver) > 0 {
+		EndpointReceiver(t, router, http.MethodPut, path, body, http.StatusOK, nil, receiver[0])
+	} else {
+		Endpoint(t, router, http.MethodPut, path, body, http.StatusOK, nil)
+	}
+}
+
+func PostOK(t *testing.T, router http.Handler, path string, body any, receiver ...any) {
+	t.Helper()
+
+	if len(receiver) > 0 {
+		EndpointReceiver(t, router, http.MethodPost, path, body, http.StatusOK, nil, receiver[0])
+	} else {
+		Endpoint(t, router, http.MethodPost, path, body, http.StatusOK, nil)
+	}
 }
 
 func EndpointReceiver(t *testing.T, router http.Handler, method string,

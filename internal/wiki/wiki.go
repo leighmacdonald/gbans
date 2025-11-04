@@ -14,6 +14,8 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
+var ErrSlugUnknown = errors.New("slug unknown")
+
 func Render(page Page) []byte {
 	unsafeHTML := markdown.ToHTML([]byte(page.BodyMD), NewParser(), nil)
 
@@ -30,22 +32,19 @@ func NewParser() *parser.Parser {
 const RootSlug = "home"
 
 type Page struct {
-	Slug            string               `json:"slug"`
-	BodyMD          string               `json:"body_md"`
-	Revision        int                  `json:"revision"`
-	PermissionLevel permission.Privilege `json:"permission_level"`
+	Slug            string               `json:"slug" binding:"required,gte=1,lte=64"`
+	BodyMD          string               `json:"body_md" binding:"required,gte=1"`
+	Revision        int                  `json:"revision" binding:"gte=0"`
+	PermissionLevel permission.Privilege `json:"permission_level" binding:"required"`
 	CreatedOn       time.Time            `json:"created_on"`
 	UpdatedOn       time.Time            `json:"updated_on"`
 }
 
-func (page *Page) NewRevision() Page {
-	return Page{
-		Slug:      page.Slug,
-		BodyMD:    page.BodyMD,
-		Revision:  page.Revision + 1,
-		CreatedOn: page.CreatedOn,
-		UpdatedOn: time.Now(),
-	}
+func (page Page) NewRevision() Page {
+	newPage := page
+	newPage.UpdatedOn = time.Now()
+
+	return newPage
 }
 
 func NewPage(slug string, body string) Page {
@@ -54,7 +53,6 @@ func NewPage(slug string, body string) Page {
 	return Page{
 		Slug:            slug,
 		BodyMD:          body,
-		Revision:        0,
 		PermissionLevel: permission.Guest,
 		CreatedOn:       now,
 		UpdatedOn:       now,
@@ -69,22 +67,26 @@ func NewWiki(repository Repository) Wiki {
 	return Wiki{repository: repository}
 }
 
-func (w *Wiki) BySlug(ctx context.Context, slug string) (Page, error) {
+func (w *Wiki) Page(ctx context.Context, slug string) (Page, error) {
 	slug = strings.ToLower(slug)
 	if slug[0] == '/' {
 		slug = slug[1:]
 	}
 
-	page, errGetWikiSlug := w.repository.GetWikiPageBySlug(ctx, slug)
+	page, errGetWikiSlug := w.repository.Page(ctx, slug)
 	if errGetWikiSlug != nil {
+		if errors.Is(errGetWikiSlug, database.ErrNoResult) {
+			return page, ErrSlugUnknown
+		}
+
 		return page, errGetWikiSlug
 	}
 
 	return page, nil
 }
 
-func (w *Wiki) DeleteBySlug(ctx context.Context, slug string) error {
-	return w.repository.DeleteWikiPageBySlug(ctx, slug)
+func (w *Wiki) Delete(ctx context.Context, slug string) error {
+	return w.repository.Delete(ctx, slug)
 }
 
 func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
@@ -92,11 +94,10 @@ func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
 		return Page{}, httphelper.ErrInvalidParameter
 	}
 
-	page, errGetWikiSlug := w.BySlug(ctx, update.Slug)
+	page, errGetWikiSlug := w.Page(ctx, update.Slug)
 	if errGetWikiSlug != nil {
-		if errors.Is(errGetWikiSlug, database.ErrNoResult) {
+		if errors.Is(errGetWikiSlug, ErrSlugUnknown) {
 			page.CreatedOn = time.Now()
-			page.Revision++
 			page.Slug = update.Slug
 		} else {
 			return page, httphelper.ErrInternal // TODO better error
@@ -105,10 +106,13 @@ func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
 		page = page.NewRevision()
 	}
 
+	page.Revision++
 	page.PermissionLevel = update.PermissionLevel
 	page.BodyMD = update.BodyMD
 
-	if errSave := w.repository.SaveWikiPage(ctx, &page); errSave != nil {
+	if errSave := w.repository.Save(ctx, &page); errSave != nil {
+		page.Revision--
+
 		return page, errSave
 	}
 
