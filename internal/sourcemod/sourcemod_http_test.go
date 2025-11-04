@@ -24,6 +24,19 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+func TestSourcemod(t *testing.T) {
+	authenticator := &tests.StaticAuthenticator{}
+	router := fixture.CreateRouter()
+	sourcemodUC := sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Config, fixture.Persons)
+	sourcemod.NewHandler(router, authenticator, nil, sourcemodUC)
+
+	t.Run("admins", testAdmins(router, authenticator))
+	t.Run("groups", testGroups(router, authenticator))
+	t.Run("group_overrides", testGroupOverrides(router, authenticator, sourcemodUC))
+	t.Run("global_overrides", testGlobalOverrides(router, authenticator))
+	t.Run("group_immunities", testGroupImmunities(router, authenticator, sourcemodUC))
+}
+
 func testAdmins(router *gin.Engine, authenticator *tests.StaticAuthenticator) func(t *testing.T) {
 	return func(t *testing.T) {
 		// Non-admin should be 403
@@ -236,19 +249,6 @@ func testGroupImmunities(router *gin.Engine, authenticator *tests.StaticAuthenti
 	}
 }
 
-func TestSourcemod(t *testing.T) {
-	authenticator := &tests.StaticAuthenticator{}
-	router := fixture.CreateRouter()
-	sm := sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Config, fixture.Persons)
-	sourcemod.NewHandler(router, authenticator, nil, sm)
-
-	t.Run("admins", testAdmins(router, authenticator))
-	t.Run("groups", testGroups(router, authenticator))
-	t.Run("group_overrides", testGroupOverrides(router, authenticator, sm))
-	t.Run("global_overrides", testGlobalOverrides(router, authenticator))
-	t.Run("group_immunities", testGroupImmunities(router, authenticator, sm))
-}
-
 func TestSRCDS(t *testing.T) {
 	authenticator := &tests.StaticAuthenticator{}
 	router := fixture.CreateRouter()
@@ -261,13 +261,13 @@ func TestSRCDS(t *testing.T) {
 	t.Run("check", testCheck(router, authenticator))
 }
 
-func testPermissions(router *gin.Engine, authenticator *tests.StaticAuthenticator, sm sourcemod.Sourcemod) func(t *testing.T) {
+func testPermissions(router *gin.Engine, _ *tests.StaticAuthenticator, sourcemodUC sourcemod.Sourcemod) func(t *testing.T) {
 	return func(t *testing.T) {
-		admin, _ := sm.AddAdmin(t.Context(), stringutil.SecureRandomString(10), sourcemod.AuthTypeSteam, tests.ModSID.String(), "abc", 0, "")
-		group, _ := sm.AddGroup(t.Context(), stringutil.SecureRandomString(10), "abc", 0)
-		_, _ = sm.AddAdminGroup(t.Context(), admin.AdminID, group.GroupID)
-		_, _ = sm.AddOverride(t.Context(), stringutil.SecureRandomString(10), sourcemod.OverrideTypeCommand, "g")
-		_, _ = sm.AddOverride(t.Context(), stringutil.SecureRandomString(10), sourcemod.OverrideTypeGroup, "a")
+		admin, _ := sourcemodUC.AddAdmin(t.Context(), stringutil.SecureRandomString(10), sourcemod.AuthTypeSteam, tests.ModSID.String(), "abc", 0, "")
+		group, _ := sourcemodUC.AddGroup(t.Context(), stringutil.SecureRandomString(10), "abc", 0)
+		_, _ = sourcemodUC.AddAdminGroup(t.Context(), admin.AdminID, group.GroupID)
+		_, _ = sourcemodUC.AddOverride(t.Context(), stringutil.SecureRandomString(10), sourcemod.OverrideTypeCommand, "g")
+		_, _ = sourcemodUC.AddOverride(t.Context(), stringutil.SecureRandomString(10), sourcemod.OverrideTypeGroup, "a")
 
 		var users sourcemod.UsersResponse
 		tests.GetOK(t, router, "/api/sm/users", &users)
@@ -298,7 +298,7 @@ func testCheck(router *gin.Engine, authenticator *tests.StaticAuthenticator) fun
 				Name:     stringutil.SecureRandomString(12),
 			}
 		)
-		tests.PostOK(t, router, "/api/sm/check", req, &resp)
-		require.Equal(t, resp.BanType, ban.OK)
+		tests.GetOK(t, router, "/api/sm/check", req, &resp)
+		require.Equal(t, ban.OK, resp.BanType)
 	}
 }

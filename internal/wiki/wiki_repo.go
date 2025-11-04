@@ -16,7 +16,7 @@ func NewRepository(database database.Database) Repository {
 	return Repository{db: database}
 }
 
-func (r *Repository) GetWikiPageBySlug(ctx context.Context, slug string) (Page, error) {
+func (r *Repository) Page(ctx context.Context, slug string) (Page, error) {
 	var page Page
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, r.db.
@@ -37,24 +37,21 @@ func (r *Repository) GetWikiPageBySlug(ctx context.Context, slug string) (Page, 
 	return page, nil
 }
 
-func (r *Repository) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
-	if errExec := r.db.ExecDeleteBuilder(ctx, r.db.
-		Builder().
+func (r *Repository) Delete(ctx context.Context, slug string) error {
+	if errExec := r.db.ExecDeleteBuilder(ctx, r.db.Builder().
 		Delete("wiki").
-		Where(sq.Eq{"slug": slug})); errExec != nil {
+		Where(sq.Eq{"lower(slug)": strings.ToLower(slug)})); errExec != nil {
 		return database.DBErr(errExec)
 	}
 
 	return nil
 }
 
-func (r *Repository) SaveWikiPage(ctx context.Context, page *Page) error {
-	errQueryRow := r.db.ExecInsertBuilder(ctx, r.db.
-		Builder().
-		Insert("wiki").
-		Columns("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").
-		Values(page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn, page.PermissionLevel))
-	if errQueryRow != nil {
+func (r *Repository) Save(ctx context.Context, page *Page) error {
+	const query = `
+		INSERT INTO wiki (slug, body_md, revision, created_on, updated_on, permission_level)
+		VALUES ($1, $2, $3, $4, $5, $6)`
+	if errQueryRow := r.db.Exec(ctx, query, page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn, page.PermissionLevel); errQueryRow != nil {
 		return database.DBErr(errQueryRow)
 	}
 

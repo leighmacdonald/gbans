@@ -70,7 +70,7 @@ func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth gi
 	srcdsGroup := engine.Group("/")
 	{
 		server := srcdsGroup.Use(serverAuth)
-		server.POST("/api/sm/check", handler.onAPICheckPlayer())
+		server.GET("/api/sm/check", handler.onAPICheckPlayer())
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())
 		server.GET("/api/sm/groups", handler.onAPIGetServerGroups())
@@ -121,7 +121,7 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 		// 	return
 		// }
 
-		ip, errIP := netip.ParseAddr(req.IP)
+		ipAddr, errIP := netip.ParseAddr(req.IP)
 		if errIP != nil {
 			ctx.JSON(http.StatusOK, defaultValue)
 			slog.Error("Failed to parse IP", log.ErrAttr(errIP))
@@ -129,7 +129,7 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 			return
 		}
 
-		banState, msg, errBS := s.sourcemod.GetBanState(ctx, steamID, ip)
+		banState, msg, errBS := s.sourcemod.GetBanState(ctx, steamID, ipAddr)
 		if errBS != nil {
 			slog.Error("failed to get ban state", log.ErrAttr(errBS))
 
@@ -149,7 +149,7 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 			}
 
 			if banState.SteamID != steamID && !banState.EvadeOK {
-				evadeBanned, err := s.evades.CheckEvadeStatus(ctx, steamID, ip)
+				evadeBanned, err := s.evades.CheckEvadeStatus(ctx, steamID, ipAddr)
 				if err != nil {
 					ctx.JSON(http.StatusOK, defaultValue)
 
