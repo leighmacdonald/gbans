@@ -33,7 +33,7 @@ func TestReport(t *testing.T) {
 		reporter      = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.User)
 		target        = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)
 		externalUser  = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)
-		authenticator = &tests.StaticAuthenticator{Profile: moderator}
+		authenticator = &tests.StaticAuth{Profile: moderator}
 	)
 
 	ban.NewReportHandler(router, reports, authenticator)
@@ -49,8 +49,8 @@ func TestReport(t *testing.T) {
 		DemoTick:        0,
 		PersonMessageID: 0,
 	}
-	var report ban.Report
-	tests.PostCreated(t, router, "/api/report", req, &report)
+
+	report := tests.PostGCreated[ban.Report](t, router, "/api/report", req)
 	require.Equal(t, req.SourceID, report.SourceID)
 	require.Equal(t, req.TargetID, report.TargetID)
 	require.Equal(t, req.Description, report.Description)
@@ -61,58 +61,47 @@ func TestReport(t *testing.T) {
 	require.Equal(t, req.PersonMessageID, report.PersonMessageID)
 
 	// Make sure we can query it
-	var fetched ban.Report
-	tests.GetOK(t, router, fmt.Sprintf("/api/report/%d", report.ReportID), &fetched)
-	require.Equal(t, report, fetched)
+	require.Equal(t, report, tests.GetGOK[ban.Report](t, router, fmt.Sprintf("/api/report/%d", report.ReportID)))
 
 	// Make sure we can query all
-	var fetchedColl []ban.Report
-	tests.GetOK(t, router, "/api/reports/user", &fetchedColl)
+	fetchedColl := tests.GetGOK[[]ban.Report](t, router, "/api/reports/user")
 	require.NotEmpty(t, fetchedColl)
 
-	var fetchedModColl []ban.Report
 	authenticator.Profile = moderator
-	tests.PostOK(t, router, "/api/reports", ban.ReportQueryFilter{Deleted: true}, &fetchedModColl)
-	require.NotEmpty(t, fetchedModColl)
+	require.NotEmpty(t, tests.PostGOK[[]ban.Report](t, router, "/api/reports", ban.ReportQueryFilter{Deleted: true}))
 
 	// Make sure others cant query other users reports
 	authenticator.Profile = externalUser
-	tests.GetOK(t, router, "/api/reports/user", &fetchedColl)
-	require.Empty(t, fetchedColl)
+	require.Empty(t, tests.GetGOK[[]ban.Report](t, router, "/api/reports/user"))
 
 	// Change the status
 	statusReq := ban.RequestReportStatusUpdate{Status: ban.ClosedWithAction}
 	authenticator.Profile = moderator
 	tests.PostOK(t, router, fmt.Sprintf("/api/report_status/%d", report.ReportID), statusReq)
 
-	tests.GetOK(t, router, fmt.Sprintf("/api/report/%d", report.ReportID), &fetched)
+	fetched := tests.GetGOK[ban.Report](t, router, fmt.Sprintf("/api/report/%d", report.ReportID))
 	require.Equal(t, statusReq.Status, fetched.ReportStatus)
 
 	// Get empty child messages
-	var messages []ban.ReportMessage
-	tests.GetOK(t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID), &messages)
-	require.Empty(t, messages)
+	require.Empty(t, tests.GetGOK[[]ban.ReportMessage](t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID)))
 
 	// Add a reply
-	var fetchedMsg ban.ReportMessage
 	msgReq := ban.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
-	tests.PostCreated(t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID), msgReq, &fetchedMsg)
+	fetchedMsg := tests.PostGCreated[ban.ReportMessage](t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID), msgReq)
 	require.Equal(t, msgReq.BodyMD, fetchedMsg.MessageMD)
 
 	// Get the reply
-	tests.GetOK(t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID), &messages)
-	require.NotEmpty(t, messages)
+
+	require.NotEmpty(t, tests.GetGOK[[]ban.ReportMessage](t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID)))
 
 	// Edit the reply
 	editMsgReq := ban.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
-	var edited ban.ReportMessage
-	tests.PostOK(t, router, fmt.Sprintf("/api/report/message/%d", report.ReportID), editMsgReq, &edited)
+	edited := tests.PostGOK[ban.ReportMessage](t, router, fmt.Sprintf("/api/report/message/%d", report.ReportID), editMsgReq)
 	require.Equal(t, editMsgReq.BodyMD, edited.MessageMD)
 
 	// Delete the message
 	tests.DeleteOK(t, router, fmt.Sprintf("/api/report/message/%d", fetchedMsg.ReportMessageID), nil)
 
 	// Make sure it was deleted
-	tests.GetOK(t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID), &messages)
-	require.Empty(t, messages)
+	require.Empty(t, tests.GetGOK[[]ban.ReportMessage](t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID)))
 }

@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 
 func TestGetSlug(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuthenticator{}
+		authenticator = &tests.StaticAuth{}
 		wuc           = wiki.NewWiki(wiki.NewRepository(fixture.Database))
 		router        = fixture.CreateRouter()
 		slug          = stringutil.SecureRandomString(10)
@@ -37,15 +37,14 @@ func TestGetSlug(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, page.Revision+1, saved.Revision)
 
-	var fetched wiki.Page
-	tests.GetOK(t, router, "/api/wiki/slug/"+slug, &fetched)
+	fetched := tests.GetGOK[wiki.Page](t, router, "/api/wiki/slug/"+slug)
 	require.Equal(t, saved.Revision, fetched.Revision)
 
 	saved.PermissionLevel = permission.Moderator
 	_, _ = wuc.Save(t.Context(), saved)
 
 	authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)
-	tests.GetOK(t, router, "/api/wiki/slug/"+slug)
+	tests.GetGOK[wiki.Page](t, router, "/api/wiki/slug/"+slug)
 
 	authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.GuestSID, permission.Guest)
 	tests.GetForbidden(t, router, "/api/wiki/slug/"+slug)
@@ -53,20 +52,17 @@ func TestGetSlug(t *testing.T) {
 
 func TestPutSlug(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuthenticator{}
+		authenticator = &tests.StaticAuth{}
 		wuc           = wiki.NewWiki(wiki.NewRepository(fixture.Database))
 		router        = fixture.CreateRouter()
 		page          = wiki.NewPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(1000))
 	)
 	wiki.NewWikiHandler(router, wuc, authenticator)
 
-	var resp wiki.Page
-
 	authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.GuestSID, permission.Guest)
 	tests.PutForbidden(t, router, "/api/wiki/slug/"+page.Slug, page)
 
 	authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)
-
-	tests.PutOK(t, router, "/api/wiki/slug/"+page.Slug, page, &resp)
-	require.Equal(t, page.Revision+1, resp.Revision)
+	updated := tests.PutGOK[wiki.Page](t, router, "/api/wiki/slug/"+page.Slug, page)
+	require.Equal(t, page.Revision+1, updated.Revision)
 }

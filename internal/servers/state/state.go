@@ -80,8 +80,8 @@ func (s ServerConfig) IPInternal(ctx context.Context) (net.IP, error) {
 	return ips[0], nil
 }
 
-func (config *ServerConfig) Addr() string {
-	return fmt.Sprintf("%s:%d", config.Host, config.Port)
+func (s *ServerConfig) Addr() string {
+	return fmt.Sprintf("%s:%d", s.Host, s.Port)
 }
 
 type PlayerServerInfo struct {

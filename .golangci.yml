@@ -78,6 +78,12 @@ linters:
     - whitespace
     - wrapcheck
   settings:
+    varnamelen:
+      ignore-decls:
+        - t *testing.T
+        - T any
+        - r *gin.Engine
+        - r fixture.CreateRouter
     depguard:
       rules:
         errors:

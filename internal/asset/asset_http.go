@@ -87,7 +87,7 @@ func (h mediaHandler) getAsset() gin.HandlerFunc {
 		if asset.IsPrivate {
 			user, _ := session.CurrentUserProfile(ctx)
 			sid := user.GetSteamID()
-			if !sid.Valid() || !(sid == asset.AuthorID || user.HasPermission(permission.Moderator)) {
+			if !sid.Valid() || sid != asset.AuthorID && !user.HasPermission(permission.Moderator) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 					"You do not have permission to access this asset."))
 
