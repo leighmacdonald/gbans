@@ -27,6 +27,7 @@ var (
 type RouterOpts struct {
 	HTTPLogEnabled    bool
 	LogLevel          log.Level
+	Mode              string
 	HTTPOtelEnabled   bool
 	SentryDSN         string
 	Version           string
@@ -40,7 +41,11 @@ type RouterOpts struct {
 }
 
 func CreateRouter(opts RouterOpts) (*gin.Engine, error) {
-	gin.SetMode(gin.ReleaseMode)
+	if opts.Mode != "" {
+		gin.SetMode(opts.Mode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24

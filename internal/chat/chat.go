@@ -17,7 +17,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -82,7 +82,7 @@ type Chat struct {
 	config        *config.Configuration
 	persons       person.Provider
 	notifications notification.Notifier
-	state         *servers.State
+	state         *state.State
 	warningMu     *sync.RWMutex
 	dry           bool
 	maxWeight     int

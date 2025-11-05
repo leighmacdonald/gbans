@@ -15,6 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -90,7 +91,7 @@ type ChatStatusChangePayload struct {
 }
 
 func NewPlayerqueue(repo Repository, persons person.Provider, serversUC servers.Servers,
-	state *servers.State, chatLogs []ChatLog, config *config.Configuration, notif notification.Notifier,
+	state *state.State, chatLogs []ChatLog, config *config.Configuration, notif notification.Notifier,
 ) *Playerqueue {
 	return &Playerqueue{
 		config:  config,

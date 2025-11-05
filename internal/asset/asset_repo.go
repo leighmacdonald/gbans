@@ -150,7 +150,7 @@ func (l Repository) GenAssetPath(hash string) (string, error) {
 
 func (l Repository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) (Asset, error) {
 	query, args, errSQL := l.db.Builder().
-		Select("asset_id", "bucket", "author_id", "mime_type", "name", "size", "hash", "created_on", "updated_on").
+		Select("asset_id", "bucket", "author_id", "mime_type", "name", "size", "hash", "created_on", "updated_on", "is_private").
 		From("asset").
 		Where(sq.Eq{"asset_id": assetID}).
 		ToSql()
@@ -165,7 +165,7 @@ func (l Repository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) (Asse
 
 	if errScan := l.db.QueryRow(ctx, query, args...).
 		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
-			&asset.Size, &asset.Hash, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
+			&asset.Size, &asset.Hash, &asset.CreatedOn, &asset.UpdatedOn, &asset.IsPrivate); errScan != nil {
 		return Asset{}, database.DBErr(errScan)
 	}
 
@@ -221,6 +221,7 @@ func (l Repository) saveAssetToDB(ctx context.Context, asset Asset) error {
 		"author_id":  asset.AuthorID.Int64(),
 		"bucket":     asset.Bucket,
 		"mime_type":  asset.MimeType,
+		"is_private": asset.IsPrivate,
 		"name":       asset.Name,
 		"size":       asset.Size,
 		"created_on": asset.CreatedOn,

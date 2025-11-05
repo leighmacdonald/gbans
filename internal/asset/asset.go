@@ -75,7 +75,7 @@ func NewAssets(repo Repository) Assets {
 	return Assets{repository: repo}
 }
 
-func (s Assets) Create(ctx context.Context, author steamid.SteamID, bucket Bucket, fileName string, content io.ReadSeeker) (Asset, error) {
+func (s Assets) Create(ctx context.Context, author steamid.SteamID, bucket Bucket, fileName string, content io.ReadSeeker, private bool) (Asset, error) {
 	if bucket != "demos" && bucket != "media" {
 		return Asset{}, ErrBucketType
 	}
@@ -89,7 +89,7 @@ func (s Assets) Create(ctx context.Context, author steamid.SteamID, bucket Bucke
 		return Asset{}, steamid.ErrInvalidSID
 	}
 
-	asset, errAsset := NewAsset(author, fileName, bucket, content)
+	asset, errAsset := NewAsset(author, fileName, bucket, content, private)
 	if errAsset != nil {
 		return Asset{}, errAsset
 	}
@@ -151,7 +151,7 @@ const (
 	maxDemoFileSize  = 500000000
 )
 
-func NewAsset(author steamid.SteamID, name string, bucket Bucket, contentReader io.ReadSeeker) (Asset, error) {
+func NewAsset(author steamid.SteamID, name string, bucket Bucket, contentReader io.ReadSeeker, private bool) (Asset, error) {
 	mType, errMime := mimetype.DetectReader(contentReader)
 	if errMime != nil {
 		return Asset{}, errors.Join(errMime, ErrMimeTypeReadFailed)
@@ -191,7 +191,7 @@ func NewAsset(author steamid.SteamID, name string, bucket Bucket, contentReader 
 		Bucket:    bucket,
 		AuthorID:  author,
 		Hash:      hash,
-		IsPrivate: false,
+		IsPrivate: private,
 		MimeType:  mType.String(),
 		Name:      strings.ReplaceAll(name, " ", "_"),
 		Size:      size,

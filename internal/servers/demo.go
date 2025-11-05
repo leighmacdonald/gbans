@@ -142,7 +142,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		slog.String("name", demo.Name))
 
 	demoAsset, errNewAsset := d.asset.Create(ctx, steamid.New(d.config.Config().Owner),
-		asset.BucketDemo, demo.Name, bytes.NewReader(demo.Content))
+		asset.BucketDemo, demo.Name, bytes.NewReader(demo.Content), false)
 	if errNewAsset != nil {
 		return errNewAsset
 	}
