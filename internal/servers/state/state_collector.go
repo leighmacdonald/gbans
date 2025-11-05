@@ -1,4 +1,4 @@
-package servers
+package state
 
 import (
 	"context"
@@ -45,10 +45,10 @@ type Collector struct {
 	configMu     *sync.RWMutex
 	maxPlayersRx *regexp.Regexp
 	playersRx    *regexp.Regexp
-	servers      Servers
+	servers      ServerProvider
 }
 
-func NewCollector(servers Servers) *Collector {
+func NewCollector(servers ServerProvider) *Collector {
 	return &Collector{
 		serverState:  map[int]ServerState{},
 		stateMu:      &sync.RWMutex{},
@@ -387,34 +387,14 @@ func (c *Collector) startStatus(ctx context.Context) {
 }
 
 func (c *Collector) updateServerConfigs(ctx context.Context) {
-	servers, errServers := c.servers.Servers(ctx, Query{})
-
+	servers, errServers := c.servers(ctx)
 	if errServers != nil && !errors.Is(errServers, database.ErrNoResult) {
 		slog.Error("Failed to fetch servers, cannot update State", log.ErrAttr(errServers))
 
 		return
 	}
 
-	configs := make([]ServerConfig, len(servers))
-
-	for i, server := range servers {
-		configs[i] = newServerConfig(
-			server.ServerID,
-			server.ShortName,
-			server.Name,
-			server.Address,
-			server.Port,
-			server.RCON,
-			server.ReservedSlots,
-			server.CC,
-			server.Region,
-			server.Latitude,
-			server.Longitude,
-			server.IsEnabled,
-		)
-	}
-
-	c.setServerConfigs(ctx, configs)
+	c.setServerConfigs(ctx, servers)
 }
 
 func (c *Collector) Start(ctx context.Context) {
@@ -431,26 +411,6 @@ func (c *Collector) Start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		}
-	}
-}
-
-func newServerConfig(serverID int, name string, defaultHostname string, address string,
-	port uint16, rconPassword string, reserved int, countryCode string, region string, lat float64, long float64,
-	enabled bool,
-) ServerConfig {
-	return ServerConfig{
-		ServerID:        serverID,
-		Tag:             name,
-		DefaultHostname: defaultHostname,
-		Host:            address,
-		Port:            port,
-		Enabled:         enabled,
-		RconPassword:    rconPassword,
-		ReservedSlots:   reserved,
-		CC:              countryCode,
-		Region:          region,
-		Latitude:        lat,
-		Longitude:       long,
 	}
 }
 

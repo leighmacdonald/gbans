@@ -15,11 +15,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func RegisterDiscordCommands(bot *bot.Bot, state State, persons person.Provider, servers Servers, network network.Networks, config config.Config) {
+func RegisterDiscordCommands(bot *bot.Bot, state *state.State, persons person.Provider, servers Servers, network network.Networks, config config.Config) {
 	handler := DiscordHandler{state: state, persons: persons, servers: servers, network: network, config: config}
 
 	bot.MustRegisterHandler("find", &discordgo.ApplicationCommand{
@@ -151,14 +152,14 @@ func RegisterDiscordCommands(bot *bot.Bot, state State, persons person.Provider,
 }
 
 type DiscordHandler struct {
-	state   State
+	state   *state.State
 	persons person.Provider
 	servers Servers
 	network network.Networks
 	config  config.Config
 }
 
-func NewDiscordHandler(state State) *DiscordHandler {
+func NewDiscordHandler(state *state.State) *DiscordHandler {
 	return &DiscordHandler{
 		state: state,
 	}
@@ -176,7 +177,7 @@ func (d DiscordHandler) onFind(ctx context.Context, _ *discordgo.Session, intera
 		name = userIdentifier
 	}
 
-	players := d.state.Find(FindOpts{SteamID: steamID, Name: name})
+	players := d.state.Find(state.FindOpts{SteamID: steamID, Name: name})
 	if len(players) == 0 {
 		return nil, steamid.ErrDecodeSID
 	}
@@ -209,7 +210,7 @@ func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, intera
 		return nil, steamid.ErrDecodeSID
 	}
 
-	players := d.state.Find(FindOpts{SteamID: target})
+	players := d.state.Find(state.FindOpts{SteamID: target})
 
 	if len(players) == 0 {
 		return nil, ErrPlayerNotFound
@@ -334,7 +335,7 @@ func (d DiscordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, int
 }
 
 type discordFoundPlayer struct {
-	Player PlayerServerInfo
+	Player state.PlayerServerInfo
 	Server Server
 }
 
@@ -399,7 +400,7 @@ func mapRegion(region string) string {
 	}
 }
 
-func discordServersMessage(currentStateRegion map[string][]ServerState, serversURL string) *discordgo.MessageEmbed {
+func discordServersMessage(currentStateRegion map[string][]state.ServerState, serversURL string) *discordgo.MessageEmbed {
 	var (
 		stats       = map[string]float64{}
 		used, total = 0, 0
@@ -478,7 +479,7 @@ func discordPlayersMessage(rows []string, maxPlayers int, serverName string) *di
 	return msgEmbed.Embed().MessageEmbed
 }
 
-func discordKickMessage(players []PlayerServerInfo) *discordgo.MessageEmbed {
+func discordKickMessage(players []state.PlayerServerInfo) *discordgo.MessageEmbed {
 	msgEmbed := discord.NewEmbed("Users Kicked")
 	for _, player := range players {
 		msgEmbed.Embed().AddField("Name", player.Player.Name)

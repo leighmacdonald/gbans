@@ -2,7 +2,6 @@ package ban_test
 
 import (
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/asset"
@@ -30,7 +29,6 @@ func TestReport(t *testing.T) {
 		assets        = asset.NewAssets(asset.NewLocalRepository(fixture.Database, "./"))
 		demo          = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database), assets, fixture.Config)
 		reports       = ban.NewReports(ban.NewReportRepository(fixture.Database), fixture.Config, persons, demo, fixture.TFApi, notification.NewNullNotifications())
-		tokens        = &tests.AuthTokens{}
 		moderator     = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)
 		reporter      = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.User)
 		target        = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)
@@ -52,7 +50,7 @@ func TestReport(t *testing.T) {
 		PersonMessageID: 0,
 	}
 	var report ban.Report
-	tests.EndpointReceiver(t, router, http.MethodPost, "/api/report", req, http.StatusCreated, tokens, &report)
+	tests.PostCreated(t, router, "/api/report", req, &report)
 	require.Equal(t, req.SourceID, report.SourceID)
 	require.Equal(t, req.TargetID, report.TargetID)
 	require.Equal(t, req.Description, report.Description)
@@ -64,57 +62,57 @@ func TestReport(t *testing.T) {
 
 	// Make sure we can query it
 	var fetched ban.Report
-	tests.EndpointReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d", report.ReportID), nil, http.StatusOK, tokens, &fetched)
+	tests.GetOK(t, router, fmt.Sprintf("/api/report/%d", report.ReportID), &fetched)
 	require.Equal(t, report, fetched)
 
 	// Make sure we can query all
 	var fetchedColl []ban.Report
-	tests.EndpointReceiver(t, router, http.MethodGet, "/api/reports/user", nil, http.StatusOK, tokens, &fetchedColl)
+	tests.GetOK(t, router, "/api/reports/user", &fetchedColl)
 	require.NotEmpty(t, fetchedColl)
 
 	var fetchedModColl []ban.Report
 	authenticator.Profile = moderator
-	tests.EndpointReceiver(t, router, http.MethodPost, "/api/reports", ban.ReportQueryFilter{Deleted: true}, http.StatusOK, tokens, &fetchedModColl)
+	tests.PostOK(t, router, "/api/reports", ban.ReportQueryFilter{Deleted: true}, &fetchedModColl)
 	require.NotEmpty(t, fetchedModColl)
 
 	// Make sure others cant query other users reports
 	authenticator.Profile = externalUser
-	tests.EndpointReceiver(t, router, http.MethodGet, "/api/reports/user", nil, http.StatusOK, tokens, &fetchedColl)
+	tests.GetOK(t, router, "/api/reports/user", &fetchedColl)
 	require.Empty(t, fetchedColl)
 
 	// Change the status
 	statusReq := ban.RequestReportStatusUpdate{Status: ban.ClosedWithAction}
 	authenticator.Profile = moderator
-	tests.Endpoint(t, router, http.MethodPost, fmt.Sprintf("/api/report_status/%d", report.ReportID), statusReq, http.StatusOK, tokens)
+	tests.PostOK(t, router, fmt.Sprintf("/api/report_status/%d", report.ReportID), statusReq)
 
-	tests.EndpointReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d", report.ReportID), nil, http.StatusOK, tokens, &fetched)
+	tests.GetOK(t, router, fmt.Sprintf("/api/report/%d", report.ReportID), &fetched)
 	require.Equal(t, statusReq.Status, fetched.ReportStatus)
 
 	// Get empty child messages
 	var messages []ban.ReportMessage
-	tests.EndpointReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d/messages", report.ReportID), nil, http.StatusOK, tokens, &messages)
+	tests.GetOK(t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID), &messages)
 	require.Empty(t, messages)
 
 	// Add a reply
 	var fetchedMsg ban.ReportMessage
 	msgReq := ban.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
-	tests.EndpointReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/report/%d/messages", report.ReportID), msgReq, http.StatusCreated, tokens, &fetchedMsg)
+	tests.PostCreated(t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID), msgReq, &fetchedMsg)
 	require.Equal(t, msgReq.BodyMD, fetchedMsg.MessageMD)
 
 	// Get the reply
-	tests.EndpointReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d/messages", report.ReportID), nil, http.StatusOK, tokens, &messages)
+	tests.GetOK(t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID), &messages)
 	require.NotEmpty(t, messages)
 
 	// Edit the reply
 	editMsgReq := ban.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
 	var edited ban.ReportMessage
-	tests.EndpointReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/report/message/%d", report.ReportID), editMsgReq, http.StatusOK, tokens, &edited)
+	tests.PostOK(t, router, fmt.Sprintf("/api/report/message/%d", report.ReportID), editMsgReq, &edited)
 	require.Equal(t, editMsgReq.BodyMD, edited.MessageMD)
 
 	// Delete the message
-	tests.Endpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/report/message/%d", fetchedMsg.ReportMessageID), nil, http.StatusOK, tokens)
+	tests.DeleteOK(t, router, fmt.Sprintf("/api/report/message/%d", fetchedMsg.ReportMessageID), nil)
 
 	// Make sure it was deleted
-	tests.EndpointReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d/messages", report.ReportID), nil, http.StatusOK, tokens, &messages)
+	tests.GetOK(t, router, fmt.Sprintf("/api/report/%d/messages", report.ReportID), &messages)
 	require.Empty(t, messages)
 }

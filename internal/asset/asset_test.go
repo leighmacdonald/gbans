@@ -21,7 +21,7 @@ func TestAssets(t *testing.T) {
 	owner := testFixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
 	data := []byte(stringutil.SecureRandomString(100))
 	assetCase := asset.NewAssets(asset.NewLocalRepository(testFixture.Database, tempRoot))
-	saved, errCreate := assetCase.Create(t.Context(), owner.SteamID, asset.BucketDemo, stringutil.SecureRandomString(10), bytes.NewReader(data))
+	saved, errCreate := assetCase.Create(t.Context(), owner.SteamID, asset.BucketDemo, stringutil.SecureRandomString(10), bytes.NewReader(data), false)
 	require.NoError(t, errCreate)
 	require.FileExists(t, saved.LocalPath)
 	contents, _ := os.ReadFile(saved.LocalPath)

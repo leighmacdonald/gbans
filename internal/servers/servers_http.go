@@ -15,6 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/maruel/natural"
@@ -72,10 +73,10 @@ func MiddlewareServer(servers Servers, sentryDSN string) gin.HandlerFunc {
 
 type serversHandler struct {
 	servers Servers
-	state   *State
+	state   *state.State
 }
 
-func NewServersHandler(engine *gin.Engine, servers Servers, state *State, authenticator httphelper.Authenticator) {
+func NewServersHandler(engine *gin.Engine, servers Servers, state *state.State, authenticator httphelper.Authenticator) {
 	handler := &serversHandler{
 		servers: servers,
 		state:   state,

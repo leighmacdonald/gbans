@@ -4,13 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
-	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -94,36 +92,6 @@ type Server struct {
 	UpdatedOn      time.Time `json:"updated_on"`
 }
 
-func (s Server) IP(ctx context.Context) (net.IP, error) {
-	parsedIP := net.ParseIP(s.Address)
-	if parsedIP != nil {
-		// We already have an ip
-		return parsedIP, nil
-	}
-	// TODO proper timeout for ctx
-	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", s.Address)
-	if errResolve != nil || len(ips) == 0 {
-		return nil, errors.Join(errResolve, ErrResolveIP)
-	}
-
-	return ips[0], nil
-}
-
-func (s Server) IPInternal(ctx context.Context) (net.IP, error) {
-	parsedIP := net.ParseIP(s.AddressInternal)
-	if parsedIP != nil {
-		// We already have an ip
-		return parsedIP, nil
-	}
-	// TODO proper timeout for ctx
-	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", s.Address)
-	if errResolve != nil || len(ips) == 0 {
-		return nil, errors.Join(errResolve, ErrResolveIP)
-	}
-
-	return ips[0], nil
-}
-
 func (s Server) Addr() string {
 	return fmt.Sprintf("%s:%d", s.Address, s.Port)
 }
@@ -160,20 +128,6 @@ type SafeServer struct {
 	Longitude  float64  `json:"longitude"`
 	Distance   float64  `json:"distance"`
 	Humans     int      `json:"humans"`
-}
-
-type PlayerServerInfo struct {
-	Player   extra.Player
-	ServerID int
-}
-
-type PartialStateUpdate struct {
-	Hostname       string `json:"hostname"`
-	ShortName      string `json:"short_name"`
-	CurrentMap     string `json:"current_map"`
-	PlayersReal    int    `json:"players_real"`
-	PlayersTotal   int    `json:"players_total"`
-	PlayersVisible int    `json:"players_visible"`
 }
 
 func NewServers(repository Repository) Servers {

@@ -38,6 +38,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
@@ -97,7 +98,7 @@ type GBans struct {
 	servers        servers.Servers
 	speedruns      servers.Speedruns
 	sourcemod      sourcemod.Sourcemod
-	states         *servers.State
+	states         *state.State
 	staticConfig   config.Static
 	tfapiClient    *thirdparty.TFAPI
 	votes          votes.Votes
@@ -212,7 +213,36 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.servers = servers.NewServers(servers.NewRepository(g.database))
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, g.config)
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.config, g.persons, g.demos, g.tfapiClient, g.notifications)
-	g.states = servers.NewState(g.broadcaster, servers.NewCollector(g.servers), g.config, g.servers)
+
+	serverFetcher := func(ctx context.Context) ([]state.ServerConfig, error) {
+		servers, errServers := g.servers.Servers(ctx, servers.Query{})
+		if errServers != nil {
+			return nil, errServers
+		}
+
+		confs := make([]state.ServerConfig, len(servers))
+		for index, server := range servers {
+			confs[index] = state.ServerConfig{
+				ServerID:        server.ServerID,
+				Tag:             server.ShortName,
+				DefaultHostname: server.Name,
+				Host:            server.Address,
+				Port:            server.Port,
+				Enabled:         server.IsEnabled,
+				RconPassword:    server.RCON,
+				ReservedSlots:   server.ReservedSlots,
+				CC:              server.CC,
+				Region:          server.Region,
+				Latitude:        server.Latitude,
+				Longitude:       server.Longitude,
+				LogSecret:       server.LogSecret,
+			}
+		}
+
+		return confs, nil
+	}
+
+	g.states = state.NewState(g.broadcaster, state.NewCollector(serverFetcher), g.config, serverFetcher)
 	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, g.config, g.reports, g.notifications)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), members) // TODO Does THE & work here?
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
@@ -265,7 +295,7 @@ func (g *GBans) startBot(ctx context.Context) error {
 	ban.RegisterDiscordCommands(g.bot, g.bans)
 	chat.RegisterDiscordCommands(g.bot, g.wordFilters)
 
-	servers.RegisterDiscordCommands(g.bot, *g.states, g.persons, g.servers, g.networks, g.config.Config())
+	servers.RegisterDiscordCommands(g.bot, g.states, g.persons, g.servers, g.networks, g.config.Config())
 
 	if err := g.bot.Start(ctx); err != nil {
 		return err

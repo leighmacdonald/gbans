@@ -21,18 +21,18 @@ func NewAssetHandler(engine *gin.Engine, assets Assets, authenticator httphelper
 	optGrp := engine.Group("/")
 	{
 		opt := optGrp.Use(authenticator.Middleware(permission.Guest))
-		opt.GET("/asset/:asset_id", handler.onGetByUUID())
+		opt.GET("/asset/:asset_id", handler.getAsset())
 	}
 
 	// authed
 	authedGrp := engine.Group("/")
 	{
 		authed := authedGrp.Use(authenticator.Middleware(permission.User))
-		authed.POST("/api/asset", handler.onAPISaveMedia())
+		authed.POST("/api/asset", handler.saveAsset())
 	}
 }
 
-func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
+func (h mediaHandler) saveAsset() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req UserUploadedFile
 
@@ -53,18 +53,18 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 			req.Name = req.File.Filename
 		}
 		user, _ := session.CurrentUserProfile(ctx)
-		media, errMedia := h.assets.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile)
-		if errMedia != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMedia, httphelper.ErrInternal)))
+		asset, errAsset := h.assets.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile, false)
+		if errAsset != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errAsset, httphelper.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, media)
+		ctx.JSON(http.StatusCreated, asset)
 	}
 }
 
-func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
+func (h mediaHandler) getAsset() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		mediaID, idFound := httphelper.GetUUIDParam(ctx, "asset_id")
 		if !idFound {
@@ -87,7 +87,7 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 		if asset.IsPrivate {
 			user, _ := session.CurrentUserProfile(ctx)
 			sid := user.GetSteamID()
-			if !sid.Valid() && (sid == asset.AuthorID || user.HasPermission(permission.Moderator)) {
+			if !sid.Valid() || !(sid == asset.AuthorID || user.HasPermission(permission.Moderator)) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 					"You do not have permission to access this asset."))
 

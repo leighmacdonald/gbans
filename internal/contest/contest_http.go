@@ -243,7 +243,7 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 			}
 		}
 		user, _ := session.CurrentUserProfile(ctx)
-		asset, errCreate := c.assets.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile)
+		asset, errCreate := c.assets.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile, false)
 		if errCreate != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCreate, httphelper.ErrInternal)))
 

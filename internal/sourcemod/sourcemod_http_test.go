@@ -2,7 +2,6 @@ package sourcemod_test
 
 import (
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -40,40 +39,40 @@ func TestSourcemod(t *testing.T) {
 func testAdmins(router *gin.Engine, authenticator *tests.StaticAuthenticator) func(t *testing.T) {
 	return func(t *testing.T) {
 		// Non-admin should be 403
-		tests.Endpoint(t, router, http.MethodGet, "/api/smadmin/admins", nil, http.StatusForbidden, nil)
+		tests.GetForbidden(t, router, "/api/smadmin/admins")
 
 		// Make sure no results exists yet
 		var admins []sourcemod.Admin
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
-		tests.EndpointReceiver(t, router, http.MethodGet, "/api/smadmin/admins", nil, http.StatusOK, nil, &admins)
+		tests.GetOK(t, router, "/api/smadmin/admins", &admins)
 		require.Empty(t, admins)
 
 		// Create a admin
 		randUser := steamid.RandSID64()
 		var adminRecv sourcemod.Admin
-		tests.EndpointReceiver(t, router, http.MethodPost, "/api/smadmin/admins", sourcemod.CreateAdminRequest{
+		tests.PostOK(t, router, "/api/smadmin/admins", sourcemod.CreateAdminRequest{
 			AuthType: sourcemod.AuthTypeSteam,
 			Identity: randUser.String(),
 			Password: "",
 			Flags:    "z",
 			Name:     "admin test",
 			Immunity: 100,
-		}, http.StatusOK, nil, &adminRecv)
+		}, &adminRecv)
 
 		// Fetch admins and verify creation
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
-		tests.EndpointReceiver(t, router, http.MethodGet, "/api/smadmin/admins", nil, http.StatusOK, nil, &admins)
+		tests.GetOK(t, router, "/api/smadmin/admins", &admins)
 		require.Len(t, admins, 1)
 
 		// Update admin
 		adminUpdate := adminRecv
 		adminUpdate.Name = adminRecv.Name + "xxx"
-		tests.EndpointReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/smadmin/admins/%d", adminUpdate.AdminID), adminUpdate, http.StatusOK, nil, &adminUpdate)
+		tests.PostOK(t, router, fmt.Sprintf("/api/smadmin/admins/%d", adminUpdate.AdminID), adminUpdate, &adminUpdate)
 		require.Len(t, admins, 1)
 
 		// Verify update
 		var updatesAdmins []sourcemod.Admin
-		tests.EndpointReceiver(t, router, http.MethodGet, "/api/smadmin/admins", nil, http.StatusOK, nil, &updatesAdmins)
+		tests.GetOK(t, router, "/api/smadmin/admins", &updatesAdmins)
 		require.Len(t, updatesAdmins, 1)
 		require.Equal(t, adminUpdate.Name, updatesAdmins[0].Name)
 	}
@@ -83,11 +82,11 @@ func testGroups(router *gin.Engine, authenticator *tests.StaticAuthenticator) fu
 	return func(t *testing.T) {
 		// Non-admin should be 403
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)
-		tests.Endpoint(t, router, http.MethodGet, "/api/smadmin/groups", nil, http.StatusForbidden, nil)
+		tests.GetForbidden(t, router, "/api/smadmin/groups")
 
 		var groups []sourcemod.Admin
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
-		tests.EndpointReceiver(t, router, http.MethodGet, "/api/smadmin/groups", nil, http.StatusOK, nil, &groups)
+		tests.GetOK(t, router, "/api/smadmin/groups", &groups)
 		require.Empty(t, groups)
 
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
@@ -97,33 +96,33 @@ func testGroups(router *gin.Engine, authenticator *tests.StaticAuthenticator) fu
 			Immunity: 100,
 			Flags:    "abc",
 		}
-		tests.EndpointReceiver(t, router, http.MethodPost, "/api/smadmin/groups", req, http.StatusCreated, nil, &group)
+		tests.PostCreated(t, router, "/api/smadmin/groups", req, &group)
 		require.Equal(t, req.Name, group.Name)
 		require.Equal(t, req.Flags, group.Flags)
 		require.Equal(t, req.Immunity, group.ImmunityLevel)
 
-		tests.EndpointReceiver(t, router, http.MethodGet, "/api/smadmin/groups", nil, http.StatusOK, nil, &groups)
+		tests.GetOK(t, router, "/api/smadmin/groups", &groups)
 		require.NotEmpty(t, groups)
 
 		update := group
 		update.Flags = "z"
 		update.ImmunityLevel = 50
 		update.Name = stringutil.SecureRandomString(10)
-		tests.EndpointReceiver(t, router, http.MethodPut, fmt.Sprintf("/api/smadmin/groups/%d", update.GroupID), sourcemod.CreateGroupRequest{
+		tests.PutOK(t, router, fmt.Sprintf("/api/smadmin/groups/%d", update.GroupID), sourcemod.CreateGroupRequest{
 			Name:     update.Name,
 			Immunity: update.ImmunityLevel,
 			Flags:    update.Flags,
-		}, http.StatusOK, nil, &group)
+		}, &group)
 		require.Equal(t, update.Name, group.Name)
 		require.Equal(t, update.Flags, group.Flags)
 		require.Equal(t, update.ImmunityLevel, group.ImmunityLevel)
 
 		// Delete the group
-		tests.Endpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/smadmin/groups/%d", group.GroupID), nil, http.StatusOK, nil)
+		tests.DeleteOK(t, router, fmt.Sprintf("/api/smadmin/groups/%d", group.GroupID), nil)
 
 		// Make sure its deleted
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
-		tests.EndpointReceiver(t, router, http.MethodGet, "/api/smadmin/groups", nil, http.StatusOK, nil, &groups)
+		tests.GetOK(t, router, "/api/smadmin/groups", &groups)
 		require.Empty(t, groups)
 	}
 }
@@ -136,7 +135,7 @@ func testGroupOverrides(router *gin.Engine, authenticator *tests.StaticAuthentic
 
 		// Make sure none exist
 		var overrides []sourcemod.GroupOverrides
-		tests.EndpointReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/smadmin/groups/%d/overrides", group.GroupID), nil, http.StatusOK, nil, &overrides)
+		tests.GetOK(t, router, fmt.Sprintf("/api/smadmin/groups/%d/overrides", group.GroupID), &overrides)
 		require.Empty(t, overrides)
 
 		// Create an override
@@ -146,7 +145,7 @@ func testGroupOverrides(router *gin.Engine, authenticator *tests.StaticAuthentic
 			Type:   sourcemod.OverrideTypeCommand,
 			Access: sourcemod.OverrideAccessAllow,
 		}
-		tests.EndpointReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/smadmin/groups/%d/overrides", group.GroupID), req, http.StatusOK, nil, &override)
+		tests.PostOK(t, router, fmt.Sprintf("/api/smadmin/groups/%d/overrides", group.GroupID), req, &override)
 		require.Equal(t, req.Name, override.Name)
 		require.Equal(t, req.Type, override.Type)
 		require.Equal(t, req.Access, override.Access)
@@ -159,17 +158,17 @@ func testGroupOverrides(router *gin.Engine, authenticator *tests.StaticAuthentic
 			Access: sourcemod.OverrideAccessDeny,
 		}
 		origID := override.GroupOverrideID
-		tests.EndpointReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/smadmin/groups_overrides/%d", origID), update, http.StatusOK, nil, &override)
+		tests.PostOK(t, router, fmt.Sprintf("/api/smadmin/groups_overrides/%d", origID), update, &override)
 		require.Equal(t, update.Name, override.Name)
 		require.Equal(t, update.Type, override.Type)
 		require.Equal(t, update.Access, override.Access)
 		require.Equal(t, origID, override.GroupOverrideID)
 
 		// Delete it
-		tests.Endpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/smadmin/groups_overrides/%d", origID), update, http.StatusOK, nil)
+		tests.DeleteOK(t, router, fmt.Sprintf("/api/smadmin/groups_overrides/%d", origID), update, nil)
 
 		// Make sure it deleted
-		tests.EndpointReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/smadmin/groups/%d/overrides", group.GroupID), nil, http.StatusOK, nil, &overrides)
+		tests.GetOK(t, router, fmt.Sprintf("/api/smadmin/groups/%d/overrides", group.GroupID), &overrides)
 		require.Empty(t, overrides)
 	}
 }
@@ -181,7 +180,7 @@ func testGlobalOverrides(router *gin.Engine, authenticator *tests.StaticAuthenti
 		// require.NoError(t, errGroup)
 
 		var overrides []sourcemod.Overrides
-		tests.EndpointReceiver(t, router, http.MethodGet, "/api/smadmin/overrides", nil, http.StatusOK, nil, &overrides)
+		tests.GetOK(t, router, "/api/smadmin/overrides", &overrides)
 		require.Empty(t, overrides)
 
 		// Create
@@ -191,7 +190,7 @@ func testGlobalOverrides(router *gin.Engine, authenticator *tests.StaticAuthenti
 			Type:  sourcemod.OverrideTypeCommand,
 			Flags: "f",
 		}
-		tests.EndpointReceiver(t, router, http.MethodPost, "/api/smadmin/overrides", req, http.StatusOK, nil, &override)
+		tests.PostOK(t, router, "/api/smadmin/overrides", req, &override)
 		require.Equal(t, req.Name, override.Name)
 		require.Equal(t, req.Type, override.Type)
 		require.Equal(t, req.Flags, override.Flags)
@@ -203,16 +202,16 @@ func testGlobalOverrides(router *gin.Engine, authenticator *tests.StaticAuthenti
 			Type:  sourcemod.OverrideTypeGroup,
 			Flags: "g",
 		}
-		tests.EndpointReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/smadmin/overrides/%d", override.OverrideID), req, http.StatusOK, nil, &override)
+		tests.PostOK(t, router, fmt.Sprintf("/api/smadmin/overrides/%d", override.OverrideID), req, &override)
 		require.Equal(t, req.Name, override.Name)
 		require.Equal(t, req.Type, override.Type)
 		require.Equal(t, req.Flags, override.Flags)
 
 		// Delete it
-		tests.Endpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/smadmin/overrides/%d", override.OverrideID), nil, http.StatusOK, nil)
+		tests.DeleteOK(t, router, fmt.Sprintf("/api/smadmin/overrides/%d", override.OverrideID), nil)
 
 		// Make sure it deleted
-		tests.EndpointReceiver(t, router, http.MethodGet, "/api/smadmin/overrides", nil, http.StatusOK, nil, &overrides)
+		tests.GetOK(t, router, "/api/smadmin/overrides", &overrides)
 		require.Empty(t, overrides)
 	}
 }
@@ -226,7 +225,7 @@ func testGroupImmunities(router *gin.Engine, authenticator *tests.StaticAuthenti
 
 		// Check none exist
 		var immunities []sourcemod.GroupImmunity
-		tests.EndpointReceiver(t, router, http.MethodGet, "/api/smadmin/group_immunity", nil, http.StatusOK, nil, &immunities)
+		tests.GetOK(t, router, "/api/smadmin/group_immunity", &immunities)
 		require.Empty(t, immunities)
 
 		// Create
@@ -235,16 +234,16 @@ func testGroupImmunities(router *gin.Engine, authenticator *tests.StaticAuthenti
 			GroupID: groupA.GroupID,
 			OtherID: groupB.GroupID,
 		}
-		tests.EndpointReceiver(t, router, http.MethodPost, "/api/smadmin/group_immunity", req, http.StatusOK, nil, &groupImmunity)
+		tests.PostOK(t, router, "/api/smadmin/group_immunity", req, &groupImmunity)
 		require.Equal(t, req.GroupID, groupImmunity.Group.GroupID)
 		require.Equal(t, req.OtherID, groupImmunity.Other.GroupID)
 		require.Positive(t, groupImmunity.GroupImmunityID)
 
 		// Delete it
-		tests.Endpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/smadmin/group_immunity/%d", groupImmunity.GroupImmunityID), nil, http.StatusOK, nil)
+		tests.DeleteOK(t, router, fmt.Sprintf("/api/smadmin/group_immunity/%d", groupImmunity.GroupImmunityID), nil)
 
 		// Make sure it deleted
-		tests.EndpointReceiver(t, router, http.MethodGet, "/api/smadmin/overrides", nil, http.StatusOK, nil, &immunities)
+		tests.GetOK(t, router, "/api/smadmin/overrides", &immunities)
 		require.Empty(t, immunities)
 	}
 }

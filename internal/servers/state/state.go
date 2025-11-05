@@ -1,4 +1,4 @@
-package servers
+package state
 
 import (
 	"context"
@@ -21,6 +21,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var (
+	ErrResolveIP      = errors.New("failed to resolve address")
+	ErrPlayerNotFound = errors.New("could not find player")
+	ErrUnknownServer  = errors.New("unknown server")
+)
+
 type LogFilePayload struct {
 	ServerID   int
 	ServerName string
@@ -41,10 +47,55 @@ type ServerConfig struct {
 	Region          string
 	Latitude        float64
 	Longitude       float64
+	LogSecret       int
+}
+
+func (s ServerConfig) IP(ctx context.Context) (net.IP, error) {
+	parsedIP := net.ParseIP(s.Host)
+	if parsedIP != nil {
+		// We already have an ip
+		return parsedIP, nil
+	}
+	// TODO proper timeout for ctx
+	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", s.Host)
+	if errResolve != nil || len(ips) == 0 {
+		return nil, errors.Join(errResolve, ErrResolveIP)
+	}
+
+	return ips[0], nil
+}
+
+func (s ServerConfig) IPInternal(ctx context.Context) (net.IP, error) {
+	parsedIP := net.ParseIP(s.Host)
+	if parsedIP != nil {
+		// We already have an ip
+		return parsedIP, nil
+	}
+	// TODO proper timeout for ctx
+	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", s.Host)
+	if errResolve != nil || len(ips) == 0 {
+		return nil, errors.Join(errResolve, ErrResolveIP)
+	}
+
+	return ips[0], nil
 }
 
 func (config *ServerConfig) Addr() string {
 	return fmt.Sprintf("%s:%d", config.Host, config.Port)
+}
+
+type PlayerServerInfo struct {
+	Player   extra.Player
+	ServerID int
+}
+
+type PartialStateUpdate struct {
+	Hostname       string `json:"hostname"`
+	ShortName      string `json:"short_name"`
+	CurrentMap     string `json:"current_map"`
+	PlayersReal    int    `json:"players_real"`
+	PlayersTotal   int    `json:"players_total"`
+	PlayersVisible int    `json:"players_visible"`
 }
 
 // ServerState contains the entire State for the servers. This
@@ -118,18 +169,20 @@ type ServerState struct {
 	HasSynchronizedDNS bool `json:"has_synchronized_dns"`
 }
 
+type ServerProvider func(ctx context.Context) ([]ServerConfig, error)
+
 type State struct {
 	state       *Collector
 	config      *config.Configuration
-	servers     Servers
 	logListener *logparse.Listener
 	logFileChan chan LogFilePayload
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	servers     ServerProvider
 }
 
 // NewState created a interface to interact with server state and exec rcon commands.
 func NewState(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	state *Collector, config *config.Configuration, servers Servers,
+	state *Collector, config *config.Configuration, servers ServerProvider,
 ) *State {
 	return &State{
 		state:       state,
@@ -171,7 +224,7 @@ func (s *State) updateSrcdsLogServers(ctx context.Context) {
 
 	defer cancelServers()
 
-	servers, errServers := s.servers.Servers(serversCtx, Query{})
+	servers, errServers := s.servers(serversCtx)
 	if errServers != nil {
 		slog.Error("Failed to update srcds log secrets", log.ErrAttr(errServers))
 
@@ -181,7 +234,7 @@ func (s *State) updateSrcdsLogServers(ctx context.Context) {
 	for _, server := range servers {
 		newSecrets[server.LogSecret] = logparse.ServerIDMap{
 			ServerID:   server.ServerID,
-			ServerName: server.ShortName,
+			ServerName: server.Tag,
 		}
 
 		if ip, errIP := server.IP(ctx); errIP == nil {
