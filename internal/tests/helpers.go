@@ -28,11 +28,11 @@ var (
 	ErrContainer = errors.New("failed to bring up test container")
 )
 
-type StaticAuthenticator struct {
+type StaticAuth struct {
 	Profile personDomain.Core
 }
 
-func (s *StaticAuthenticator) Middleware(level permission.Privilege) gin.HandlerFunc {
+func (s *StaticAuth) Middleware(level permission.Privilege) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if level > s.Profile.PermissionLevel {
 			ctx.AbortWithStatus(http.StatusForbidden)
@@ -43,7 +43,7 @@ func (s *StaticAuthenticator) Middleware(level permission.Privilege) gin.Handler
 	}
 }
 
-func (s *StaticAuthenticator) MiddlewareWS(level permission.Privilege) gin.HandlerFunc {
+func (s *StaticAuth) MiddlewareWS(level permission.Privilege) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if level > s.Profile.PermissionLevel {
 			ctx.AbortWithStatus(http.StatusForbidden)

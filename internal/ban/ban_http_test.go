@@ -17,15 +17,15 @@ import (
 func TestHTTPBan(t *testing.T) {
 	router := fixture.CreateRouter()
 	bans := ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
-	ban.NewHandlerBans(router, bans, fixture.Config, &tests.StaticAuthenticator{
+	ban.NewHandlerBans(router, bans, fixture.Config, &tests.StaticAuth{
 		Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin),
 	})
 	var createdBan ban.Ban
 	for _, sid := range []steamid.SteamID{tests.GuestSID, tests.UserSID} {
-		tests.PostCreated(t, router, "/api/bans", ban.Opts{
+		createdBan = tests.PostGCreated[ban.Ban](t, router, "/api/bans", ban.Opts{
 			SourceID: tests.OwnerSID, TargetID: sid, Duration: duration.FromTimeDuration(time.Hour * 10),
 			BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
-		}, &createdBan)
+		})
 	}
 	require.Positive(t, createdBan.BanID)
 	require.Equal(t, tests.OwnerSID, createdBan.SourceID)
@@ -35,24 +35,17 @@ func TestHTTPBan(t *testing.T) {
 		BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
 	})
 
-	var loadedBans []ban.Ban
-	tests.GetOK(t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))}, &loadedBans)
-	require.Len(t, loadedBans, 2)
+	require.Len(t, tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))}), 2)
 
 	tests.DeleteOK(t, router, fmt.Sprintf("/api/ban/%d", createdBan.BanID), ban.RequestUnban{UnbanReasonText: "test reason"})
-
-	tests.GetOK(t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))}, &loadedBans)
-	require.Len(t, loadedBans, 1)
-
-	tests.GetOK(t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState)), Deleted: true}, &loadedBans)
+	require.Len(t, tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))}), 1)
+	loadedBans := tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState)), Deleted: true})
 	require.Len(t, loadedBans, 2)
 
-	var stats ban.Stats
-	tests.GetOK(t, router, "/api/stats", &stats)
+	stats := tests.GetGOK[ban.Stats](t, router, "/api/stats")
 	require.Equal(t, 2, stats.BansTotal)
 
-	var single ban.Ban
-	tests.GetOK(t, router, fmt.Sprintf("/api/ban/%d", loadedBans[0].BanID), &single)
+	single := tests.GetGOK[ban.Ban](t, router, fmt.Sprintf("/api/ban/%d", loadedBans[0].BanID))
 	require.Equal(t, loadedBans[0], single)
 
 	// var update2 ban.Ban

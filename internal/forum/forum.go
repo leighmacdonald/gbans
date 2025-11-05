@@ -1,5 +1,9 @@
 package forum
 
+// - Categories
+//   - Forums
+//     - Threads
+// 		 - Messages
 import (
 	"context"
 	"errors"
@@ -73,7 +77,7 @@ type Forum struct {
 	PermissionLevel     permission.Privilege `json:"permission_level"`
 	RecentForumThreadID int64                `json:"recent_forum_thread_id"`
 	RecentForumTitle    string               `json:"recent_forum_title"`
-	RecentSourceID      steamid.SteamID      `json:"recent_source_id"`
+	RecentSourceID      string               `json:"recent_source_id"`
 	RecentPersonaname   string               `json:"recent_personaname"`
 	RecentAvatarhash    string               `json:"recent_avatarhash"`
 	RecentCreatedOn     time.Time            `json:"recent_created_on"`

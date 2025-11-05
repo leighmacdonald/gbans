@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var fixture *tests.Fixture
+var fixture *tests.Fixture //nolint:gochecknoglobals
 
 func TestMain(m *testing.M) {
 	fixture = tests.NewFixture()
@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 
 func TestHTTPSaveAsset(t *testing.T) {
 	var (
-		auth = &tests.StaticAuthenticator{
+		auth = &tests.StaticAuth{
 			Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User),
 		}
 		router   = fixture.CreateRouter()
@@ -38,21 +38,21 @@ func TestHTTPSaveAsset(t *testing.T) {
 	writer := multipart.NewWriter(body)
 	// create a new form-data header name data and filename data.txt
 	dataPart, err := writer.CreateFormFile("file", name)
-	dataPart.Write(contentA)
-	writer.WriteField("name", name)
+	_, _ = dataPart.Write(contentA)
+	_ = writer.WriteField("name", name)
 	require.NoError(t, writer.Close())
 
 	require.NoError(t, err)
 
-	var saved asset.Asset
-	tests.PostCreatedForm(t, router, "/api/asset", body, map[string]string{
+	saved := tests.PostCreatedForm[asset.Asset](t, router, "/api/asset", body, map[string]string{
 		"Content-Type": writer.FormDataContentType(),
-	}, &saved)
+	})
+	require.NotEmpty(t, saved.Name)
 }
 
 func TestHTTPGetAsset(t *testing.T) {
 	var (
-		auth = &tests.StaticAuthenticator{
+		auth = &tests.StaticAuth{
 			Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User),
 		}
 		router   = fixture.CreateRouter()

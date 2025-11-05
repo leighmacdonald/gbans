@@ -146,7 +146,7 @@ func (f *Repository) Forums(ctx context.Context) ([]Forum, error) {
 
 		if lastForumTheadID != nil {
 			frm.RecentForumThreadID = *lastForumTheadID
-			frm.RecentSourceID = *lastSourceID
+			frm.RecentSourceID = lastSourceID.String()
 			frm.RecentPersonaname = *lastPersonaname
 			frm.RecentAvatarhash = *lastAvatarhash
 			frm.RecentCreatedOn = *lastCreatedOn

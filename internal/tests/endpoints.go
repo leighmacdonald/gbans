@@ -11,130 +11,103 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
+	gjson "github.com/leighmacdonald/gbans/pkg/json"
 	"github.com/stretchr/testify/require"
 )
 
-func GetOKBytes(t *testing.T, router http.Handler, path string) []byte {
+func GetNotFound(t *testing.T, router http.Handler, path string) {
 	t.Helper()
 
+	endpoint(t, router, http.MethodGet, path, nil, http.StatusNotFound, nil)
+}
+
+func GetGOK[T any](t *testing.T, router http.Handler, path string, body ...any) T {
+	t.Helper()
+	if len(body) > 0 {
+		return endpointWithReceiver[T](t, router, http.MethodGet, path, body[0], http.StatusOK, nil)
+	}
+
+	return endpointWithReceiver[T](t, router, http.MethodGet, path, nil, http.StatusOK, nil)
+}
+
+func GetOKBytes(t *testing.T, router http.Handler, path string) []byte {
+	t.Helper()
 	response := endpoint(t, router, http.MethodGet, path, nil, http.StatusOK, nil)
+
 	return response.Body.Bytes()
 }
 
-func GetForbidden(t *testing.T, router http.Handler, path string, receiver ...any) {
+func GetForbidden(t *testing.T, router http.Handler, path string) {
 	t.Helper()
-
-	if len(receiver) > 0 {
-		endpointWithReceiver(t, router, http.MethodGet, path, nil, http.StatusForbidden, nil, receiver[0])
-	} else {
-		endpoint(t, router, http.MethodGet, path, nil, http.StatusForbidden, nil)
-	}
+	endpoint(t, router, http.MethodGet, path, nil, http.StatusForbidden, nil)
 }
 
-func PutForbidden(t *testing.T, router http.Handler, path string, body any, receiver ...any) {
+func PutForbidden(t *testing.T, router http.Handler, path string, body any) {
 	t.Helper()
-
-	if len(receiver) > 0 {
-		endpointWithReceiver(t, router, http.MethodPut, path, body, http.StatusForbidden, nil, receiver[0])
-	} else {
-		endpoint(t, router, http.MethodPut, path, body, http.StatusForbidden, nil)
-	}
+	endpoint(t, router, http.MethodPut, path, body, http.StatusForbidden, nil)
 }
 
-func GetNotFound(t *testing.T, router http.Handler, path string, receiver ...any) {
+func PutGOK[T any](t *testing.T, router http.Handler, path string, body any) T {
 	t.Helper()
 
-	endpointWithReceiver(t, router, http.MethodGet, path, nil, http.StatusNotFound, nil, receiver)
+	return endpointWithReceiver[T](t, router, http.MethodPut, path, body, http.StatusOK, nil)
 }
 
-func GetOK(t *testing.T, router http.Handler, path string, receiver ...any) {
+func PutOK(t *testing.T, router http.Handler, path string, body any) {
 	t.Helper()
-	if len(receiver) > 0 {
-		endpointWithReceiver(t, router, http.MethodGet, path, nil, http.StatusOK, nil, receiver[0])
-	} else {
-		endpoint(t, router, http.MethodGet, path, nil, http.StatusOK, nil)
-	}
+	endpoint(t, router, http.MethodPut, path, body, http.StatusOK, nil)
 }
 
-func PutOK(t *testing.T, router http.Handler, path string, body any, receiver ...any) {
+func PostAccepted(t *testing.T, router http.Handler, path string, body any) {
 	t.Helper()
-
-	if len(receiver) > 0 {
-		endpointWithReceiver(t, router, http.MethodPut, path, body, http.StatusOK, nil, receiver[0])
-	} else {
-		endpoint(t, router, http.MethodPut, path, body, http.StatusOK, nil)
-	}
+	endpoint(t, router, http.MethodPost, path, body, http.StatusAccepted, nil)
 }
 
-func PostAccepted(t *testing.T, router http.Handler, path string, body any, receiver ...any) {
+func PostConflict(t *testing.T, router http.Handler, path string, body any) {
 	t.Helper()
-
-	if len(receiver) > 0 {
-		endpointWithReceiver(t, router, http.MethodPost, path, body, http.StatusAccepted, nil, receiver[0])
-	} else {
-		endpoint(t, router, http.MethodPost, path, body, http.StatusAccepted, nil)
-	}
+	endpoint(t, router, http.MethodPost, path, body, http.StatusConflict, nil)
 }
 
-func PostConflict(t *testing.T, router http.Handler, path string, body any, receiver ...any) {
+func PostCreatedForm[T any](t *testing.T, router http.Handler, path string, body any, headers map[string]string) T {
 	t.Helper()
 
-	if len(receiver) > 0 {
-		endpointWithReceiver(t, router, http.MethodPost, path, body, http.StatusConflict, nil, receiver[0])
-	} else {
-		endpoint(t, router, http.MethodPost, path, body, http.StatusConflict, nil)
-	}
+	return endpointWithReceiver[T](t, router, http.MethodPost, path, body, http.StatusCreated, headers)
 }
 
-func PostCreatedForm(t *testing.T, router http.Handler, path string, body any, headers map[string]string, receiver ...any) {
+func PostGCreated[T any](t *testing.T, router http.Handler, path string, body any) T {
 	t.Helper()
 
-	if len(receiver) > 0 {
-		endpointWithReceiver(t, router, http.MethodPost, path, body, http.StatusCreated, headers, receiver[0])
-	} else {
-		endpoint(t, router, http.MethodPost, path, body, http.StatusCreated, headers)
-	}
+	return endpointWithReceiver[T](t, router, http.MethodPost, path, body, http.StatusCreated, nil)
 }
 
-func PostCreated(t *testing.T, router http.Handler, path string, body any, receiver ...any) {
+func PostGOK[T any](t *testing.T, router http.Handler, path string, body any) T {
 	t.Helper()
 
-	if len(receiver) > 0 {
-		endpointWithReceiver(t, router, http.MethodPost, path, body, http.StatusCreated, nil, receiver[0])
-	} else {
-		endpoint(t, router, http.MethodPost, path, body, http.StatusCreated, nil)
-	}
+	return endpointWithReceiver[T](t, router, http.MethodPost, path, body, http.StatusOK, nil)
 }
 
-func PostOK(t *testing.T, router http.Handler, path string, body any, receiver ...any) {
+func PostOK(t *testing.T, router http.Handler, path string, body any) {
 	t.Helper()
-
-	if len(receiver) > 0 {
-		endpointWithReceiver(t, router, http.MethodPost, path, body, http.StatusOK, nil, receiver[0])
-	} else {
-		endpoint(t, router, http.MethodPost, path, body, http.StatusOK, nil)
-	}
+	endpoint(t, router, http.MethodPost, path, body, http.StatusOK, nil)
 }
 
-func DeleteOK(t *testing.T, router http.Handler, path string, body any, receiver ...any) {
+func DeleteOK(t *testing.T, router http.Handler, path string, body any) {
+	t.Helper()
+	endpoint(t, router, http.MethodDelete, path, body, http.StatusOK, nil)
+}
+
+func endpointWithReceiver[T any](t *testing.T, router http.Handler, method string,
+	path string, body any, expectedStatus int, headers map[string]string,
+) T {
 	t.Helper()
 
-	if len(receiver) > 0 {
-		endpointWithReceiver(t, router, http.MethodDelete, path, body, http.StatusOK, nil, receiver[0])
-	} else {
-		endpoint(t, router, http.MethodDelete, path, body, http.StatusOK, nil)
+	resp := endpoint(t, router, method, path, body, expectedStatus, headers)
+	value, err := gjson.Decode[T](resp.Body)
+	if err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
 	}
-}
-func endpointWithReceiver(t *testing.T, router http.Handler, method string,
-	path string, body any, expectedStatus int, headers map[string]string, receiver any,
-) {
-	t.Helper()
-	resp := endpoint(t, router, method, path, body, expectedStatus, nil)
-	if receiver != nil {
-		if err := json.NewDecoder(resp.Body).Decode(&receiver); err != nil {
-			t.Fatalf("Failed to decode response: %v", err)
-		}
-	}
+
+	return value
 }
 
 func endpoint(t *testing.T, router http.Handler, method string, path string, body any, expectedStatus int, headers map[string]string) *httptest.ResponseRecorder {

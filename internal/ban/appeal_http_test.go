@@ -28,7 +28,7 @@ func TestHTTPAppeal(t *testing.T) {
 		target  = steamid.RandSID64()
 	)
 
-	ban.NewAppealHandler(router, appeals, &tests.StaticAuthenticator{
+	ban.NewAppealHandler(router, appeals, &tests.StaticAuth{
 		Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin),
 	})
 
@@ -40,14 +40,12 @@ func TestHTTPAppeal(t *testing.T) {
 	require.NoError(t, errTestBan)
 
 	// Check for no messages
-	var banMessages []ban.AppealMessage
-	tests.GetOK(t, router, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), &banMessages)
+	banMessages := tests.GetGOK[[]ban.AppealMessage](t, router, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID))
 	require.Empty(t, banMessages)
 
 	// Create a message
 	newMessage := ban.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
-	var createdMessage ban.AppealMessage
-	tests.PostCreated(t, router, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), newMessage, &createdMessage)
+	createdMessage := tests.PostGCreated[ban.AppealMessage](t, router, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), newMessage)
 	require.Equal(t, newMessage.BodyMD, createdMessage.MessageMD)
 
 	// Try and create a message as non target user or mod
@@ -55,24 +53,19 @@ func TestHTTPAppeal(t *testing.T) {
 	// tests.EndpointReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), newMessage, http.StatusForbidden, tokens, &createdMessage)
 
 	// Get appeals
-	var appealOverviews []ban.AppealOverview
-	tests.PostOK(t, router, "/api/appeals", ban.AppealQueryFilter{Deleted: false}, &appealOverviews)
-	require.NotEmpty(t, appealOverviews)
+	require.NotEmpty(t, tests.PostGOK[[]ban.AppealOverview](t, router, "/api/appeals", ban.AppealQueryFilter{Deleted: false}))
 
 	// Get messages
-	tests.GetOK(t, router, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), &banMessages)
-	require.NotEmpty(t, banMessages)
+	require.NotEmpty(t, tests.GetGOK[[]ban.AppealMessage](t, router, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID)))
 
 	// Edit the message
 	editMessage := ban.RequestMessageBodyMD{BodyMD: createdMessage.MessageMD + "x"}
-	var editedMessage ban.AppealMessage
-	tests.PostOK(t, router, fmt.Sprintf("/api/bans/message/%d", createdMessage.BanMessageID), editMessage, &editedMessage)
+	editedMessage := tests.PostGOK[ban.AppealMessage](t, router, fmt.Sprintf("/api/bans/message/%d", createdMessage.BanMessageID), editMessage)
 	require.Equal(t, editMessage.BodyMD, editedMessage.MessageMD)
 
 	// Delete the message
 	tests.DeleteOK(t, router, fmt.Sprintf("/api/bans/message/%d", createdMessage.BanMessageID), nil)
 
 	// Confirm delete
-	tests.GetOK(t, router, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), &banMessages)
-	require.Empty(t, banMessages)
+	require.Empty(t, tests.GetGOK[[]ban.AppealMessage](t, router, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID)))
 }

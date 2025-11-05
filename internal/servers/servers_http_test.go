@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestServersHTTP(t *testing.T) {
+func TestServersHTTP(_ *testing.T) {
 	// var (
 	// 	authenticator = &tests.StaticAuthenticator{}
 	// 	serversUC     = servers.NewServers(servers.NewRepository(fixture.Database))
