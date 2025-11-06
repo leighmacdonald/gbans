@@ -29,6 +29,7 @@ type TimeStamp struct {
 
 type IgnoredMsgEvt struct {
 	TimeStamp
+
 	Message string
 }
 
@@ -50,11 +51,13 @@ type WMiniRoundStartEvt TimeStamp
 
 type WMiniRoundWinEvt struct {
 	TimeStamp
+
 	Team Team `json:"team" mapstructure:"team"`
 }
 
 type WMiniRoundLenEvt struct {
 	TimeStamp
+
 	Seconds float64 `json:"seconds" mapstructure:"seconds"`
 }
 
@@ -83,6 +86,7 @@ type EnteredEvt struct {
 
 type LogStartEvt struct {
 	TimeStamp
+
 	File    string `json:"file" mapstructure:"file"`
 	Game    string `json:"game" mapstructure:"game"`
 	Version string `json:"version" mapstructure:"version"`
@@ -94,6 +98,7 @@ type LogStopEvt TimeStamp
 // CVAREvt is emitted on a cvar change.
 type CVAREvt struct {
 	TimeStamp
+
 	CVAR  string `json:"cvar" mapstructure:"cvar"`
 	Value string `json:"value" mapstructure:"value"`
 }
@@ -101,6 +106,7 @@ type CVAREvt struct {
 // RCONEvt is emitted on a rcon connection executing a command.
 type RCONEvt struct {
 	TimeStamp
+
 	Cmd string `json:"cmd" mapstructure:"cmd"`
 }
 
@@ -115,18 +121,21 @@ const (
 // L 04/15/2024 - 22:38:57: Vote succeeded "Kick Pain in a Box".
 type VoteFailEvt struct {
 	TimeStamp
+
 	Name string   `json:"name" mapstructure:"name"`
 	Code VoteCode `json:"code" mapstructure:"code"`
 }
 
 type VoteSuccessEvt struct {
 	TimeStamp
+
 	Name string `json:"name" mapstructure:"name"`
 }
 
 // L 04/15/2024 - 22:38:57: Kick Vote details:  VoteInitiatorSteamID: [U:1:8169544]  VoteTargetSteamID: [U:1:30511445]  Valid: 1  BIndividual: 1  Name: Pain in a Box  Proxy: 0.
 type VoteKickDetailsEvt struct {
 	TimeStamp
+
 	SID   steamid.SteamID `json:"sid" mapstructure:"source_id"`
 	SID2  steamid.SteamID `json:"sid2" mapstructure:"target_id"`
 	Valid int             `json:"valid,omitempty" mapstructure:"valid"`
@@ -136,30 +145,35 @@ type VoteKickDetailsEvt struct {
 
 type MapStartedEvt struct {
 	TimeStamp
+
 	Map string `json:"map" mapstructure:"map"`
 }
 
 type JoinedTeamEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	NewTeam Team `json:"new_team" mapstructure:"new_team"`
 }
 
 type SpawnedAsEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Class PlayerClass `json:"class" mapstructure:"class"`
 }
 
 type ChangeClassEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Class PlayerClass `json:"class" mapstructure:"class"`
 }
 
 type SuicideEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	AttackerPosition Pos    `json:"attacker_position" mapstructure:"attacker_position"`
 	Weapon           Weapon `json:"weapon" mapstructure:"weapon"`
 }
@@ -168,6 +182,7 @@ type JarateAttackEvt struct {
 	TimeStamp
 	SourcePlayer
 	TargetPlayer
+
 	Weapon           Weapon `json:"weapon" mapstructure:"weapon"`
 	AttackerPosition Pos    `json:"attacker_position" mapstructure:"attacker_position"`
 	VictimPosition   Pos    `json:"victim_position" mapstructure:"victim_position"`
@@ -183,6 +198,7 @@ type MedicDeathEvt struct {
 	TimeStamp
 	SourcePlayer
 	TargetPlayer
+
 	Healing    int  `json:"healing" mapstructure:"healing"`
 	Ubercharge bool `json:"ubercharge" mapstructure:"ubercharge"`
 }
@@ -190,6 +206,7 @@ type MedicDeathEvt struct {
 type MedicDeathExEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Uberpct int `json:"uberpct" mapstructure:"uberpct"`
 }
 
@@ -197,6 +214,7 @@ type KilledEvt struct {
 	TimeStamp
 	SourcePlayer
 	TargetPlayer
+
 	AttackerPosition Pos    `json:"attacker_position" mapstructure:"attacker_position"`
 	VictimPosition   Pos    `json:"victim_position" mapstructure:"victim_position"`
 	Weapon           Weapon `json:"weapon" mapstructure:"weapon"`
@@ -206,9 +224,10 @@ type CustomKilledEvt struct {
 	TimeStamp
 	SourcePlayer
 	TargetPlayer
+
 	AttackerPosition Pos    `json:"attacker_position" mapstructure:"attacker_position"`
 	VictimPosition   Pos    `json:"victim_position" mapstructure:"victim_position"`
-	Customkill       string `json:"customkill"  mapstructure:"customkill"`
+	Customkill       string `json:"customkill" mapstructure:"customkill"`
 	Weapon           Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
@@ -216,7 +235,8 @@ type KillAssistEvt struct {
 	TimeStamp
 	SourcePlayer
 	TargetPlayer
-	AssisterPosition Pos `json:"assister_position"  mapstructure:"assister_position"`
+
+	AssisterPosition Pos `json:"assister_position" mapstructure:"assister_position"`
 	AttackerPosition Pos `json:"attacker_position" mapstructure:"attacker_position"`
 	VictimPosition   Pos `json:"victim_position" mapstructure:"victim_position"`
 }
@@ -228,20 +248,21 @@ type SourcePlayerPosition struct {
 
 type PointCapturedEvt struct {
 	TimeStamp
+
 	Team       Team   `json:"team" mapstructure:"team"`
 	CP         int    `json:"cp" mapstructure:"cp"`
 	Cpname     string `json:"cpname" mapstructure:"cpname"`
 	Numcappers int    `json:"numcappers" mapstructure:"numcappers"`
 	Player1    string `json:"player1" mapstructure:"player1"`
-	Position1  Pos    `json:"position1"  mapstructure:"position1"`
+	Position1  Pos    `json:"position1" mapstructure:"position1"`
 	Player2    string `json:"player2" mapstructure:"player2"`
-	Position2  Pos    `json:"position2"  mapstructure:"position2"`
+	Position2  Pos    `json:"position2" mapstructure:"position2"`
 	Player3    string `json:"player3" mapstructure:"player3"`
-	Position3  Pos    `json:"position3"  mapstructure:"position3"`
+	Position3  Pos    `json:"position3" mapstructure:"position3"`
 	Player4    string `json:"player4" mapstructure:"player4"`
-	Position4  Pos    `json:"position4"  mapstructure:"position4"`
+	Position4  Pos    `json:"position4" mapstructure:"position4"`
 	Player5    string `json:"player5" mapstructure:"player5"`
-	Position5  Pos    `json:"position5"  mapstructure:"position5"`
+	Position5  Pos    `json:"position5" mapstructure:"position5"`
 }
 
 func (e *PointCapturedEvt) Players() []SourcePlayerPosition {
@@ -290,6 +311,7 @@ func (e *PointCapturedEvt) Players() []SourcePlayerPosition {
 type ConnectedEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Address string `json:"address" mapstructure:"address"`
 	Port    int    `json:"port" mapstructure:"port"`
 }
@@ -297,6 +319,7 @@ type ConnectedEvt struct {
 type DisconnectedEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Reason string `json:"reason" mapstructure:"reason"`
 }
 
@@ -304,16 +327,18 @@ type KilledObjectEvt struct {
 	TimeStamp
 	SourcePlayer
 	TargetPlayer
+
 	Object           string `json:"object" mapstructure:"object"`
 	Weapon           Weapon `json:"weapon" mapstructure:"weapon"`
-	AttackerPosition Pos    `json:"attacker_position"  mapstructure:"attacker_position"`
+	AttackerPosition Pos    `json:"attacker_position" mapstructure:"attacker_position"`
 }
 
 type CarryObjectEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Object   string `json:"object" mapstructure:"object"`
-	Position Pos    `json:"position"  mapstructure:"position"`
+	Position Pos    `json:"position" mapstructure:"position"`
 }
 
 type DropObjectEvt CarryObjectEvt
@@ -324,21 +349,25 @@ type DetonatedObjectEvt CarryObjectEvt
 
 type WIntermissionWinLimitEvt struct {
 	TimeStamp
+
 	Team Team `json:"team" mapstructure:"team"`
 }
 
 type WRoundWinEvt struct {
 	TimeStamp
+
 	Winner Team `json:"winner" mapstructure:"winner"`
 }
 
 type WRoundLenEvt struct {
 	TimeStamp
+
 	Seconds float64 `json:"seconds" mapstructure:"seconds"`
 }
 
 type WTeamScoreEvt struct {
 	TimeStamp
+
 	Team    Team `json:"team" mapstructure:"team"`
 	Score   int  `json:"score" mapstructure:"score"`
 	Players int  `json:"players" mapstructure:"players"`
@@ -347,8 +376,9 @@ type WTeamScoreEvt struct {
 type SayEvt struct {
 	TimeStamp
 	SourcePlayer `json:"source_player"`
-	Msg          string `json:"msg" mapstructure:"msg"`
-	Team         bool   `json:"team"`
+
+	Msg  string `json:"msg" mapstructure:"msg"`
+	Team bool   `json:"team"`
 }
 
 type DominationEvt struct {
@@ -362,6 +392,7 @@ type RevengeEvt DominationEvt
 type CaptureBlockedEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	CP       int    `json:"cp" mapstructure:"cp"`
 	Cpname   string `json:"cpname" mapstructure:"cpname"`
 	Position Pos    `json:"position" mapstructure:"position"`
@@ -370,6 +401,7 @@ type CaptureBlockedEvt struct {
 type FirstHealAfterSpawnEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Time float64 `json:"time" mapstructure:"time"`
 }
 
@@ -381,18 +413,21 @@ type ChargeReadyEvt struct {
 type ChargeDeployedEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Medigun MedigunType `json:"medigun" mapstructure:"medigun"`
 }
 
 type ChargeEndedEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Duration float32 `json:"duration" mapstructure:"duration"`
 }
 
 type LostUberAdvantageEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Time int `json:"time" mapstructure:"time"`
 }
 
@@ -404,6 +439,7 @@ type EmptyUberEvt struct {
 type PickupEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Item    PickupItem
 	Healing int `json:"healing" mapstructure:"healing"`
 }
@@ -411,12 +447,14 @@ type PickupEvt struct {
 type ShotFiredEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
 type ShotHitEvt struct {
 	TimeStamp
 	SourcePlayer
+
 	Weapon Weapon `json:"weapon" mapstructure:"weapon"`
 }
 
@@ -424,6 +462,7 @@ type DamageEvt struct {
 	TimeStamp
 	SourcePlayer
 	TargetPlayer
+
 	Damage     int      `json:"damage" mapstructure:"damage"`
 	Realdamage int      `json:"realdamage" mapstructure:"realdamage"`
 	Weapon     Weapon   `json:"weapon" mapstructure:"weapon"`
@@ -437,16 +476,19 @@ type HealedEvt struct {
 	TimeStamp
 	SourcePlayer
 	TargetPlayer
+
 	Healing int `json:"healing,omitempty" mapstructure:"healing"` // On ubersaw
 }
 
 type WGameOverEvt struct {
 	TimeStamp
+
 	Reason string `json:"reason" mapstructure:"reason"`
 }
 
 type WTeamFinalScoreEvt struct {
 	TimeStamp
+
 	Team    Team `json:"team" mapstructure:"team"`
 	Score   int  `json:"score" mapstructure:"score"`
 	Players int  `json:"players" mapstructure:"players"`

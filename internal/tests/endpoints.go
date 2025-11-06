@@ -21,7 +21,7 @@ func GetNotFound(t *testing.T, router http.Handler, path string) {
 	endpoint(t, router, http.MethodGet, path, nil, http.StatusNotFound, nil)
 }
 
-func GetGOK[T any](t *testing.T, router http.Handler, path string, body ...any) T {
+func GetGOK[T any](t *testing.T, router http.Handler, path string, body ...any) T { //nolint:ireturn
 	t.Helper()
 	if len(body) > 0 {
 		return endpointWithReceiver[T](t, router, http.MethodGet, path, body[0], http.StatusOK, nil)
@@ -47,7 +47,7 @@ func PutForbidden(t *testing.T, router http.Handler, path string, body any) {
 	endpoint(t, router, http.MethodPut, path, body, http.StatusForbidden, nil)
 }
 
-func PutGOK[T any](t *testing.T, router http.Handler, path string, body any) T {
+func PutGOK[T any](t *testing.T, router http.Handler, path string, body any) T { //nolint:ireturn
 	t.Helper()
 
 	return endpointWithReceiver[T](t, router, http.MethodPut, path, body, http.StatusOK, nil)
@@ -68,19 +68,19 @@ func PostConflict(t *testing.T, router http.Handler, path string, body any) {
 	endpoint(t, router, http.MethodPost, path, body, http.StatusConflict, nil)
 }
 
-func PostCreatedForm[T any](t *testing.T, router http.Handler, path string, body any, headers map[string]string) T {
+func PostCreatedForm[T any](t *testing.T, router http.Handler, path string, body any, headers map[string]string) T { //nolint:ireturn
 	t.Helper()
 
 	return endpointWithReceiver[T](t, router, http.MethodPost, path, body, http.StatusCreated, headers)
 }
 
-func PostGCreated[T any](t *testing.T, router http.Handler, path string, body any) T {
+func PostGCreated[T any](t *testing.T, router http.Handler, path string, body any) T { //nolint:ireturn
 	t.Helper()
 
 	return endpointWithReceiver[T](t, router, http.MethodPost, path, body, http.StatusCreated, nil)
 }
 
-func PostGOK[T any](t *testing.T, router http.Handler, path string, body any) T {
+func PostGOK[T any](t *testing.T, router http.Handler, path string, body any) T { //nolint:ireturn
 	t.Helper()
 
 	return endpointWithReceiver[T](t, router, http.MethodPost, path, body, http.StatusOK, nil)
@@ -96,7 +96,7 @@ func DeleteOK(t *testing.T, router http.Handler, path string, body any) {
 	endpoint(t, router, http.MethodDelete, path, body, http.StatusOK, nil)
 }
 
-func endpointWithReceiver[T any](t *testing.T, router http.Handler, method string,
+func endpointWithReceiver[T any](t *testing.T, router http.Handler, method string, //nolint:ireturn
 	path string, body any, expectedStatus int, headers map[string]string,
 ) T {
 	t.Helper()

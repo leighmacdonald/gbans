@@ -90,7 +90,7 @@ type ChatStatusChangePayload struct {
 	Reason string     `json:"reason"`
 }
 
-func NewPlayerqueue(repo Repository, persons person.Provider, serversUC servers.Servers,
+func NewPlayerqueue(ctx context.Context, repo Repository, persons person.Provider, serversUC servers.Servers,
 	state *state.State, chatLogs []ChatLog, config *config.Configuration, notif notification.Notifier,
 ) *Playerqueue {
 	return &Playerqueue{
@@ -101,7 +101,7 @@ func NewPlayerqueue(repo Repository, persons person.Provider, serversUC servers.
 		queue: New(100, 2, chatLogs, func() ([]Lobby, error) {
 			currentState := state.Current()
 
-			srvs, errServers := serversUC.Servers(context.Background(), servers.Query{
+			srvs, errServers := serversUC.Servers(ctx, servers.Query{
 				IncludeDisabled: false,
 			})
 
@@ -165,7 +165,7 @@ func (p Playerqueue) LeaveLobbies(client Client, servers []int) error {
 	return p.queue.Leave(client, servers)
 }
 
-func (p Playerqueue) Connect(ctx context.Context, user person.Info, conn *websocket.Conn) Client {
+func (p Playerqueue) Connect(ctx context.Context, user person.Info, conn *websocket.Conn) Client { //nolint:ireturn
 	return p.queue.Connect(ctx, user.GetSteamID(), user.GetName(), user.GetAvatar().Hash(), conn)
 }
 

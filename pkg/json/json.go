@@ -9,7 +9,7 @@ import (
 var ErrDecodeJSON = errors.New("failed to decode JSON")
 
 // Decode is a generic version of the stdlib json decoder.
-func Decode[T any](reader io.Reader) (T, error) {
+func Decode[T any](reader io.Reader) (T, error) { //nolint:ireturn
 	var value T
 	if err := json.NewDecoder(reader).Decode(&value); err != nil {
 		return value, errors.Join(err, ErrDecodeJSON)

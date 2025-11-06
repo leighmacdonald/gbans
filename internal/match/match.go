@@ -2,6 +2,7 @@ package match
 
 import (
 	"math"
+	"slices"
 	"sort"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"golang.org/x/exp/slices"
 )
 
 type TriggerType int
@@ -30,6 +30,7 @@ type Trigger struct {
 
 type QueryOpts struct {
 	query.Filter
+
 	SteamID   string     `json:"steam_id"`
 	ServerID  int        `json:"server_id"`
 	Map       string     `json:"map"`
@@ -74,16 +75,16 @@ type PlayerClassDetail struct {
 }
 
 type Player struct {
-	MatchPlayerID int64 `json:"match_player_id"`
 	CommonPlayerStats
-	Team      logparse.Team `json:"team"`
-	TimeStart time.Time     `json:"time_start"`
-	TimeEnd   time.Time     `json:"time_end"`
 
-	MedicStats  *Healer             `json:"medic_stats"`
-	Classes     []PlayerClassDetail `json:"classes"`
-	Killstreaks []PlayerKillstreak  `json:"killstreaks"`
-	Weapons     []PlayerWeapon      `json:"weapons"`
+	MatchPlayerID int64               `json:"match_player_id"`
+	Team          logparse.Team       `json:"team"`
+	TimeStart     time.Time           `json:"time_start"`
+	TimeEnd       time.Time           `json:"time_end"`
+	MedicStats    *Healer             `json:"medic_stats"`
+	Classes       []PlayerClassDetail `json:"classes"`
+	Killstreaks   []PlayerKillstreak  `json:"killstreaks"`
+	Weapons       []PlayerWeapon      `json:"weapons"`
 }
 
 func (player Player) BiggestKillstreak() *PlayerKillstreak {
@@ -221,6 +222,7 @@ func (match *Result) Healers() []*Player {
 
 type PlayerWeapon struct {
 	Weapon
+
 	Kills     int     `json:"kills"`
 	Damage    int     `json:"damage"`
 	Shots     int     `json:"shots"`
@@ -444,6 +446,7 @@ type CommonPlayerStats struct {
 type PlayerStats struct {
 	CommonPlayerStats
 	PlayerMedicStats
+
 	MatchesTotal int           `json:"matches_total"`
 	MatchesWon   int           `json:"matches_won"`
 	PlayTime     time.Duration `json:"play_time"`

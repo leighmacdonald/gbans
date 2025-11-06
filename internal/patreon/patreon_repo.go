@@ -80,7 +80,7 @@ func (r Repository) GetPatreonAuth(ctx context.Context) (string, string, error) 
 	if errScan := r.db.
 		QueryRow(ctx, query, args...).
 		Scan(&creatorAccessToken, &creatorRefreshToken); errScan != nil {
-		return "", "", errors.Join(errQuery, ErrQueryPatreon)
+		return "", "", errors.Join(errScan, ErrQueryPatreon)
 	}
 
 	return creatorAccessToken, creatorRefreshToken, nil
@@ -117,7 +117,7 @@ func (r Repository) GetTokens(ctx context.Context, steamID steamid.SteamID) (Cre
 
 	if err := row.Scan(&creds.PatreonID, &creds.AccessToken, &creds.RefreshToken, &creds.ExpiresIn, &creds.Scope, &creds.TokenType,
 		&creds.Version, &creds.CreatedOn, &creds.UpdatedOn); err != nil {
-		return Credential{}, database.DBErr(errRow)
+		return Credential{}, database.DBErr(err)
 	}
 
 	return creds, nil

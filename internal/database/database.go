@@ -70,7 +70,7 @@ func (tracer *dbQueryTracer) TraceQueryStart(
 func (tracer *dbQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, _ pgx.TraceQueryEndData) {
 }
 
-type postgresStore struct {
+type PgStore struct {
 	conn *pgxpool.Pool
 	// Use $ for pg based queries.
 	sb          sq.StatementBuilderType
@@ -80,7 +80,7 @@ type postgresStore struct {
 	logQueries  bool
 }
 
-func (db *postgresStore) WrapTx(ctx context.Context, txFunc func(pgx.Tx) error) error {
+func (db *PgStore) WrapTx(ctx context.Context, txFunc func(pgx.Tx) error) error {
 	transaction, errTx := db.Begin(ctx)
 	if errTx != nil {
 		return DBErr(errTx)
@@ -101,8 +101,8 @@ func (db *postgresStore) WrapTx(ctx context.Context, txFunc func(pgx.Tx) error) 
 	return nil
 }
 
-func New(dsn string, autoMigrate bool, logQueries bool) Database {
-	return &postgresStore{
+func New(dsn string, autoMigrate bool, logQueries bool) *PgStore {
+	return &PgStore{
 		sb:          sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 		dsn:         dsn,
 		autoMigrate: autoMigrate,
@@ -134,12 +134,12 @@ func DBErr(rootError error) error {
 	return rootError
 }
 
-func (db *postgresStore) Pool() *pgxpool.Pool {
+func (db *PgStore) Pool() *pgxpool.Pool {
 	return db.conn
 }
 
 // Connect sets up underlying required services.
-func (db *postgresStore) Connect(ctx context.Context) error {
+func (db *PgStore) Connect(ctx context.Context) error {
 	cfg, errConfig := pgxpool.ParseConfig(db.dsn)
 	if errConfig != nil {
 		return fmt.Errorf("unable to parse db config/dsn: %w", errConfig)
@@ -171,20 +171,20 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (db *postgresStore) SendBatch(ctx context.Context, batch *pgx.Batch) pgx.BatchResults { //nolint:ireturn
+func (db *PgStore) SendBatch(ctx context.Context, batch *pgx.Batch) pgx.BatchResults { //nolint:ireturn
 	return db.conn.SendBatch(ctx, batch)
 }
 
-func (db *postgresStore) Builder() sq.StatementBuilderType {
+func (db *PgStore) Builder() sq.StatementBuilderType {
 	return db.sb
 }
 
 //nolint:ireturn
-func (db *postgresStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
+func (db *PgStore) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
 	return db.conn.Query(ctx, query, args...) //nolint:wrapcheck
 }
 
-func (db *postgresStore) QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error) { //nolint:ireturn
+func (db *PgStore) QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error) { //nolint:ireturn
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return nil, DBErr(errQuery)
@@ -195,11 +195,11 @@ func (db *postgresStore) QueryBuilder(ctx context.Context, builder sq.SelectBuil
 	return rows, err //nolint:wrapcheck
 }
 
-func (db *postgresStore) QueryRow(ctx context.Context, query string, args ...any) pgx.Row { //nolint:ireturn
+func (db *PgStore) QueryRow(ctx context.Context, query string, args ...any) pgx.Row { //nolint:ireturn
 	return db.conn.QueryRow(ctx, query, args...)
 }
 
-func (db *postgresStore) QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error) { //nolint:ireturn
+func (db *PgStore) QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error) { //nolint:ireturn
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return nil, errQuery //nolint:wrapcheck
@@ -208,14 +208,14 @@ func (db *postgresStore) QueryRowBuilder(ctx context.Context, builder sq.SelectB
 	return db.conn.QueryRow(ctx, query, args...), nil
 }
 
-func (db *postgresStore) Exec(ctx context.Context, query string, args ...any) error {
+func (db *PgStore) Exec(ctx context.Context, query string, args ...any) error {
 	var err error
 	_, err = db.conn.Exec(ctx, query, args...)
 
 	return err //nolint:wrapcheck
 }
 
-func (db *postgresStore) ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error {
+func (db *PgStore) ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return DBErr(errQuery)
@@ -224,7 +224,7 @@ func (db *postgresStore) ExecInsertBuilder(ctx context.Context, builder sq.Inser
 	return db.Exec(ctx, query, args...) //nolint:wrapcheck
 }
 
-func (db *postgresStore) ExecDeleteBuilder(ctx context.Context, builder sq.DeleteBuilder) error {
+func (db *PgStore) ExecDeleteBuilder(ctx context.Context, builder sq.DeleteBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return errQuery //nolint:wrapcheck
@@ -233,7 +233,7 @@ func (db *postgresStore) ExecDeleteBuilder(ctx context.Context, builder sq.Delet
 	return db.Exec(ctx, query, args...) //nolint:wrapcheck
 }
 
-func (db *postgresStore) ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder) error {
+func (db *PgStore) ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return errQuery //nolint:wrapcheck
@@ -242,7 +242,7 @@ func (db *postgresStore) ExecUpdateBuilder(ctx context.Context, builder sq.Updat
 	return db.Exec(ctx, query, args...) //nolint:wrapcheck
 }
 
-func (db *postgresStore) ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error {
+func (db *PgStore) ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
 		return errQuery //nolint:wrapcheck
@@ -257,16 +257,16 @@ func (db *postgresStore) ExecInsertBuilderWithReturnValue(ctx context.Context, b
 	return nil
 }
 
-func (db *postgresStore) Begin(ctx context.Context) (pgx.Tx, error) { //nolint:ireturn
+func (db *PgStore) Begin(ctx context.Context) (pgx.Tx, error) { //nolint:ireturn
 	return db.conn.Begin(ctx) //nolint:wrapcheck
 }
 
-func (db *postgresStore) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) { //nolint:ireturn
+func (db *PgStore) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) { //nolint:ireturn
 	return db.conn.BeginTx(ctx, txOptions) //nolint:wrapcheck
 }
 
 // Close will close the underlying database connection if it exists.
-func (db *postgresStore) Close() error {
+func (db *PgStore) Close() error {
 	if db.conn != nil {
 		db.conn.Close()
 	}
@@ -274,7 +274,7 @@ func (db *postgresStore) Close() error {
 	return nil
 }
 
-func (db *postgresStore) GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error) {
+func (db *PgStore) GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error) {
 	countQuery, argsCount, errCountQuery := builder.ToSql()
 	if errCountQuery != nil {
 		return 0, errors.Join(errCountQuery, ErrCreateQuery)
@@ -290,7 +290,7 @@ func (db *postgresStore) GetCount(ctx context.Context, builder sq.SelectBuilder)
 	return count, nil
 }
 
-func (db *postgresStore) TruncateTable(ctx context.Context, table string) error {
+func (db *PgStore) TruncateTable(ctx context.Context, table string) error {
 	query, args, errQueryArgs := sq.Delete(table).ToSql()
 	if errQueryArgs != nil {
 		return DBErr(errQueryArgs)

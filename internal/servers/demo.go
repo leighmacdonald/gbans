@@ -39,6 +39,7 @@ var (
 
 type DemoFilter struct {
 	query.Filter
+
 	SteamID   string `json:"steam_id"`
 	ServerIDs []int  `json:"server_ids"` //nolint:tagliatelle
 	MapName   string `json:"map_name"`
@@ -385,7 +386,7 @@ func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails,
 
 	content, errContent := io.ReadAll(fileHandle)
 	if errContent != nil {
-		return nil, errors.Join(errDF, ErrDemoLoad)
+		return nil, errors.Join(errContent, ErrDemoLoad)
 	}
 
 	info, errInfo := fileHandle.Stat()
@@ -404,7 +405,7 @@ func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails,
 	}
 
 	if _, err := part.Write(content); err != nil {
-		return nil, errors.Join(errCreate, ErrDemoLoad)
+		return nil, errors.Join(err, ErrDemoLoad)
 	}
 
 	if errClose := writer.Close(); errClose != nil {

@@ -30,6 +30,7 @@ var ErrOpenClient = errors.New("failed to open client")
 // Entry represents a stac log entry and some associated meta data.
 type Entry struct {
 	logparse.StacEntry
+
 	Personaname string `json:"personaname"`
 	AvatarHash  string `json:"avatar_hash"`
 	Triggered   int    `json:"triggered"`
@@ -37,6 +38,7 @@ type Entry struct {
 
 type Query struct {
 	query.Filter
+
 	Name      string             `json:"name" schema:"name"`
 	SteamID   string             `json:"steam_id" schema:"steam_id"`
 	ServerID  int                `json:"server_id" schema:"server_id"`
@@ -114,7 +116,7 @@ func (a AntiCheat) BySteamID(ctx context.Context, steamID steamid.SteamID) ([]lo
 	return a.repo.DetectionsBySteamID(ctx, steamID)
 }
 
-func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) error {
+func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) error { //nolint:cyclop
 	results := map[steamid.SteamID]map[logparse.Detection]int{}
 	conf := a.config.Config()
 

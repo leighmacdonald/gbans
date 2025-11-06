@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,7 +24,6 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
-	"golang.org/x/exp/slices"
 )
 
 var (
@@ -87,6 +87,7 @@ type Anticheat struct {
 // Config is the root config container.
 type Config struct {
 	Static
+
 	General     General     `json:"general"`
 	Demo        Demo        `json:"demo"`
 	Filters     Filter      `json:"filters"`
@@ -487,7 +488,7 @@ func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 	}
 
 	req.Header.Add("Accept", "application/vnd.github+json")
-	req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
+	req.Header.Add("X-Github-Api-Version", "2022-11-28")
 
 	client := &http.Client{}
 

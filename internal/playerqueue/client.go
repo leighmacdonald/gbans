@@ -23,7 +23,7 @@ var (
 	ErrClosedConnection  = errors.New("closed connection")
 )
 
-func newClient(steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) Client {
+func newClient(steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) Client { //nolint:ireturn
 	client := &client{
 		steamID:      steamID,
 		name:         name,

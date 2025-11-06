@@ -50,6 +50,7 @@ type PersonIPRecord struct {
 type ConnectionHistoryQuery struct {
 	query.Filter
 	httphelper.SourceIDField
+
 	CIDR    string `json:"cidr,omitempty"`
 	ASN     int    `json:"asn,omitempty"`
 	Sid64   string `json:"sid64,omitempty"`
@@ -71,6 +72,7 @@ type PersonConnections []PersonConnection
 
 type DetailsQuery struct {
 	query.Filter
+
 	IP netip.Addr `json:"ip"`
 }
 

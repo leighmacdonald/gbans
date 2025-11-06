@@ -36,7 +36,7 @@ var (
 )
 
 // Migrate database schema.
-func (db *postgresStore) Migrate(ctx context.Context, action MigrationAction, dsn string) error {
+func (db *PgStore) Migrate(ctx context.Context, action MigrationAction, dsn string) error {
 	defer func() {
 		db.migrated = true
 	}()

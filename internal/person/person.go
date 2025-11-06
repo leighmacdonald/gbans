@@ -39,6 +39,7 @@ type SteamMember interface {
 
 type Query struct {
 	query.Filter
+
 	Personaname          string               `json:"personaname"`
 	IP                   string               `json:"ip"`
 	StaffOnly            bool                 `json:"staff_only"`

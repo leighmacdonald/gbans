@@ -312,7 +312,7 @@ func (g *GBans) setupPlayerQueue(ctx context.Context) {
 		slog.Error("Failed to warm playerqueue chatlogs", log.ErrAttr(errChatlogs))
 		chatlogs = []playerqueue.ChatLog{}
 	}
-	g.playerQueue = playerqueue.NewPlayerqueue(playerqueueRepo, g.persons, g.servers, g.states, chatlogs, g.config, g.notifications)
+	g.playerQueue = playerqueue.NewPlayerqueue(ctx, playerqueueRepo, g.persons, g.servers, g.states, chatlogs, g.config, g.notifications)
 }
 
 func (g *GBans) setupSentry() {
@@ -520,7 +520,7 @@ func (g *GBans) Close(ctx context.Context) error {
 	return nil
 }
 
-func (g GBans) firstTimeSetup(ctx context.Context) error {
+func (g *GBans) firstTimeSetup(ctx context.Context) error {
 	conf := g.config.Config()
 	_, errRootUser := g.persons.BySteamID(ctx, steamid.New(conf.Owner))
 	if errRootUser == nil {

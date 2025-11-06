@@ -184,7 +184,7 @@ func (match *Match) Healers() []*PlayerStats {
 
 // Apply is used to apply incoming event changes to the current match state
 // This is not threadsafe at all.
-func (match *Match) Apply(result *Results) error { //nolint:maintidx
+func (match *Match) Apply(result *Results) error { //nolint:maintidx,cyclop,funlen
 	// This first switch is used for events that can happen at any point in time during a game without
 	// having effects on things like player stats.
 	switch result.EventType {
@@ -450,7 +450,6 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 		}
 
 		match.suicide(evt)
-
 	case Killed:
 		evt, ok := result.Event.(KilledEvt)
 		if !ok {

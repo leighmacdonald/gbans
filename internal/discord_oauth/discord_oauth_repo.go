@@ -47,7 +47,7 @@ func (d Repository) GetUserDetail(ctx context.Context, steamID steamid.SteamID) 
 
 	if err := row.Scan(&detail.ID, &detail.Username, &detail.Avatar, &detail.PublicFlags, &detail.MfaEnabled, &detail.PremiumType,
 		&detail.CreatedOn, &detail.UpdatedOn); err != nil {
-		return UserDetail{}, database.DBErr(errRow)
+		return UserDetail{}, database.DBErr(err)
 	}
 
 	return detail, nil
@@ -90,7 +90,7 @@ func (d Repository) GetTokens(ctx context.Context, steamID steamid.SteamID) (Cre
 
 	if err := row.Scan(&creds.DiscordID, &creds.AccessToken, &creds.RefreshToken, &creds.ExpiresIn, &creds.Scope, &creds.TokenType,
 		&creds.CreatedOn, &creds.UpdatedOn); err != nil {
-		return Credential{}, database.DBErr(errRow)
+		return Credential{}, database.DBErr(err)
 	}
 
 	return creds, nil

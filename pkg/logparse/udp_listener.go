@@ -79,7 +79,7 @@ type ServerIDMap struct {
 // Start initiates the udp network log read loop. DNS names are used to
 // map the server logs to the internal known server id. The DNS is updated
 // every 60 minutes so that it remains up to date.
-func (remoteSrc *Listener) Start(ctx context.Context) {
+func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 	type newMsg struct {
 		source int64
 		body   string
@@ -240,9 +240,10 @@ func (remoteSrc *Listener) Start(ctx context.Context) {
 
 // ServerEvent is a flat struct encapsulating a parsed log event.
 type ServerEvent struct {
+	*Results
+
 	ServerID   int
 	ServerName string
-	*Results
 }
 
 var ErrLogParse = errors.New("failed to parse log message")

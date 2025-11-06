@@ -45,7 +45,7 @@ func errorHandler() gin.HandlerFunc {
 		ctx.Next()
 
 		// slog.HandlerName(2)
-		if err := ctx.Errors.Last(); err != nil {
+		if err := ctx.Errors.Last(); err != nil { //nolint:nestif
 			ctx.Abort()
 
 			var apiError APIError

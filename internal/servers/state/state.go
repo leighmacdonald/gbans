@@ -80,7 +80,7 @@ func (s ServerConfig) IPInternal(ctx context.Context) (net.IP, error) {
 	return ips[0], nil
 }
 
-func (s *ServerConfig) Addr() string {
+func (s ServerConfig) Addr() string {
 	return fmt.Sprintf("%s:%d", s.Host, s.Port)
 }
 

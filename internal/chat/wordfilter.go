@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -17,7 +18,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"golang.org/x/exp/slices"
 )
 
 var (
@@ -112,9 +112,10 @@ type UserWarning struct {
 }
 
 type NewUserWarning struct {
+	UserWarning
+
 	UserMessage Message
 	PlayerID    int
-	UserWarning
 }
 
 type Warnings interface {
@@ -123,6 +124,7 @@ type Warnings interface {
 
 type WordFilters struct {
 	*sync.RWMutex
+
 	repository  WordFilterRepository
 	wordFilters []Filter
 	notif       notification.Notifier

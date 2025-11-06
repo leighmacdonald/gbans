@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"sync"
@@ -16,7 +17,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v4/extra"
-	"golang.org/x/exp/slices"
 )
 
 const (
@@ -34,6 +34,7 @@ var (
 
 type Status struct {
 	extra.Status
+
 	Humans int
 	Bots   int
 }

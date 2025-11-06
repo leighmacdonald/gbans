@@ -158,6 +158,7 @@ type MessageVote struct {
 
 type ThreadWithSource struct {
 	Thread
+
 	Personaname          string               `json:"personaname"`
 	Avatarhash           string               `json:"avatarhash"`
 	PermissionLevel      permission.Privilege `json:"permission_level"`
