@@ -12,11 +12,11 @@ import (
 )
 
 type chatHandler struct {
-	chat *Chat
+	*Chat
 }
 
 func NewChatHandler(engine *gin.Engine, chat *Chat, authenticator httphelper.Authenticator) {
-	handler := chatHandler{chat: chat}
+	handler := chatHandler{Chat: chat}
 
 	// authed
 	authedGrp := engine.Group("/")
@@ -41,7 +41,7 @@ func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 		}
 
 		user, _ := session.CurrentUserProfile(ctx)
-		messages, errChat := h.chat.QueryChatHistory(ctx, user, req)
+		messages, errChat := h.QueryChatHistory(ctx, user, req)
 		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, httphelper.ErrInternal)))
 
@@ -64,7 +64,7 @@ func (h chatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
 			return
 		}
 
-		messages, errQuery := h.chat.GetPersonMessageContext(ctx, messageID, padding)
+		messages, errQuery := h.GetPersonMessageContext(ctx, messageID, padding)
 		if errQuery != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errQuery, httphelper.ErrInternal)))
 
