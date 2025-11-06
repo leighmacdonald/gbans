@@ -26,7 +26,7 @@ func NewLocalRepository(database database.Database, rootPath string) Repository 
 	return Repository{db: database, rootPath: rootPath}
 }
 
-func (l *Repository) Put(ctx context.Context, asset Asset, body io.ReadSeeker) (Asset, error) {
+func (l Repository) Put(ctx context.Context, asset Asset, body io.ReadSeeker) (Asset, error) {
 	existing, errExisting := l.getAssetByHash(ctx, asset.Hash)
 	if errExisting == nil {
 		return existing, nil

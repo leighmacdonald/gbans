@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseLog(t *testing.T) {
+func TestParseLog(t *testing.T) { //nolint:funlen
 	testLog1 := `<01:13:00>
 
 ----------

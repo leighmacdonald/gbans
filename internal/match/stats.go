@@ -24,6 +24,7 @@ type RankedResult struct {
 type WeaponsOverallResult struct {
 	Weapon
 	RankedResult
+
 	Kills        int64   `json:"kills"`
 	KillsPct     float64 `json:"kills_pct"`
 	Damage       int64   `json:"damage"`
@@ -71,6 +72,7 @@ type PlayerWeaponResult struct {
 
 type HealingOverallResult struct {
 	RankedResult
+
 	SteamID             steamid.SteamID `json:"steam_id"`
 	Personaname         string          `json:"personaname"`
 	AvatarHash          string          `json:"avatar_hash"`
@@ -110,6 +112,7 @@ type PlayerClass struct {
 
 type PlayerClassOverallResult struct {
 	PlayerClass
+
 	Kills              int64   `json:"kills"`
 	KA                 int64   `json:"ka"`
 	Assists            int64   `json:"assists"`

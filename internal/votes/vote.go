@@ -20,6 +20,7 @@ type Query struct {
 	query.Filter
 	httphelper.SourceIDField
 	httphelper.TargetIDField
+
 	ServerID int    `json:"server_id"`
 	Name     string `json:"name"`
 	Success  int    `json:"success"` // -1 = any, 0 = false, 1 = true

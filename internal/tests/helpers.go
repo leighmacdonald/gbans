@@ -58,6 +58,7 @@ func (s *StaticAuth) MiddlewareWS(level permission.Privilege) gin.HandlerFunc {
 // we need to build our custom image with extra extensions.
 type postgresContainer struct {
 	testcontainers.Container
+
 	dbName   string
 	user     string
 	password string
@@ -150,8 +151,7 @@ func (c *TestConfigRepo) Init(_ context.Context) error {
 
 func TestConfig(dsn string) *config.Configuration {
 	return config.NewConfiguration(config.Static{}, config.NewMemConfigRepository(config.Config{
-		Static: config.
-			Static{
+		Static: config.Static{
 			Owner: OwnerSID.String(),
 			//	SteamKey:            steamKey,
 			ExternalURL:         "http://example.com",

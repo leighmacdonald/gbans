@@ -14,7 +14,7 @@ type LastSeen struct {
 
 type Players struct {
 	Attributes []string `json:"attributes"`
-	LastSeen   LastSeen `json:"last_seen,omitempty"`
+	LastSeen   LastSeen `json:"last_seen"`
 	Steamid    any      `json:"steamid"`
 	Proof      []string `json:"proof,omitempty"`
 }

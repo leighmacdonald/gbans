@@ -68,8 +68,9 @@ func NewMembersList(parentID int64, members steamid.Collection) MembersList {
 }
 
 type Memberships struct {
-	members map[steamid.SteamID]steamid.Collection
 	*sync.RWMutex
+
+	members    map[steamid.SteamID]steamid.Collection
 	store      Repository
 	updateFreq time.Duration
 	tfAPI      *thirdparty.TFAPI

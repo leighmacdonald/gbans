@@ -56,16 +56,17 @@ type UserTokens struct {
 }
 
 type UserAuthClaims struct {
+	jwt.RegisteredClaims
+
 	// user context to prevent side-jacking
 	// https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking
 	Fingerprint string `json:"fingerprint"`
-	jwt.RegisteredClaims
 }
 
 type ServerAuthClaims struct {
-	ServerID int `json:"server_id"`
-	// A random string which is used to fingerprint and prevent side-jacking
 	jwt.RegisteredClaims
+
+	ServerID int `json:"server_id"`
 }
 
 type PersonAuth struct {
@@ -153,7 +154,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 		var token string
 
 		hdrToken, errToken := u.TokenFromHeader(ctx, level == permission.Guest)
-		if errToken != nil || hdrToken == "" {
+		if errToken != nil || hdrToken == "" { //nolint:nestif
 			ctx.Set(CtxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
 		} else {
 			token = hdrToken
@@ -263,7 +264,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 		var token string
 
 		queryToken, errToken := u.TokenFromQuery(ctx)
-		if errToken != nil || queryToken == "" {
+		if errToken != nil || queryToken == "" { //nolint:nestif
 			ctx.Set(CtxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
 		} else {
 			token = queryToken

@@ -253,6 +253,7 @@ func (b Ban) String() string {
 
 type BansQueryFilter struct {
 	httphelper.TargetIDField
+
 	Deleted bool `json:"deleted"`
 }
 

@@ -406,7 +406,7 @@ func ReadASNRecords(ctx context.Context, path string, ipv6 bool, onRecords ASNLo
 
 		asNum, errParseASNum := strconv.ParseUint(recordLine[3], 10, 64)
 		if errParseASNum != nil {
-			return errors.Join(errParseCIDR, ErrParseASN)
+			return errors.Join(errParseASNum, ErrParseASN)
 		}
 
 		records = append(records, ASNRecord{IPFrom: &ipFrom, IPTo: &ipTo, CIDR: network, ASNum: asNum, ASName: recordLine[4]})
@@ -633,7 +633,7 @@ func extractAndWriteFile(zipFile *zip.File, dest string) error {
 
 		outFile, errOpenFile := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, zipFile.Mode())
 		if errOpenFile != nil {
-			return errors.Join(errOpen, ErrOpenDest)
+			return errors.Join(errOpenFile, ErrOpenDest)
 		}
 
 		defer func() { _ = outFile.Close() }()

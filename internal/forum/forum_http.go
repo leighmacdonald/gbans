@@ -249,6 +249,7 @@ type CreateThreadRequest struct {
 
 type ThreadWithMessage struct {
 	Thread
+
 	Message Message `json:"message"`
 }
 
@@ -550,7 +551,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 
 		isThreadParent := messages[0].ForumMessageID == message.ForumMessageID
 
-		if isThreadParent {
+		if isThreadParent { //nolint:nestif
 			if err := f.ThreadDelete(ctx, message.ForumThreadID); err != nil {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 

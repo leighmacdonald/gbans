@@ -111,7 +111,7 @@ func (f *Connection) connect() error {
 }
 
 // configAndDialClient connects to the remote server with the config. client.Close must be called.
-func configAndDialClient(repo KeyStore, sshConfig config.SSH, address string) (storage.Storager, error) {
+func configAndDialClient(repo KeyStore, sshConfig config.SSH, address string) (storage.Storager, error) { //nolint:ireturn
 	clientConfig, errConfig := createConfig(repo, sshConfig)
 	if errConfig != nil {
 		return nil, errConfig
@@ -154,7 +154,7 @@ func createConfig(repo KeyStore, config config.SSH) (*ssh.ClientConfig, error) {
 	}, nil
 }
 
-func createSignerFromKey(config config.SSH) (ssh.Signer, error) {
+func createSignerFromKey(config config.SSH) (ssh.Signer, error) { //nolint:ireturn
 	fullPath, errPath := homedir.Expand(config.PrivateKeyPath)
 	if errPath != nil {
 		return nil, errors.Join(errPath, errHomeDir)

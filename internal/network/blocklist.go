@@ -42,11 +42,12 @@ type WhitelistIP struct {
 }
 
 type WhitelistSteam struct {
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
 	httphelper.SteamIDField
-	Personaname string `json:"personaname"`
-	AvatarHash  string `json:"avatar_hash"`
+
+	CreatedOn   time.Time `json:"created_on"`
+	UpdatedOn   time.Time `json:"updated_on"`
+	Personaname string    `json:"personaname"`
+	AvatarHash  string    `json:"avatar_hash"`
 }
 
 type CacheUpdater interface {

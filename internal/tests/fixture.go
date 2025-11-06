@@ -67,7 +67,7 @@ func NewFixture() *Fixture {
 	}
 }
 
-func (f *Fixture) CreateRouter() *gin.Engine {
+func (f Fixture) CreateRouter() *gin.Engine {
 	router, err := httphelper.CreateRouter(httphelper.RouterOpts{LogLevel: log.Error, Mode: gin.TestMode})
 	if err != nil {
 		panic(err)
@@ -76,7 +76,7 @@ func (f *Fixture) CreateRouter() *gin.Engine {
 	return router
 }
 
-func (f *Fixture) Reset(ctx context.Context) {
+func (f Fixture) Reset(ctx context.Context) {
 	const query = `DO
 $do$
 BEGIN

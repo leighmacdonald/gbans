@@ -34,6 +34,7 @@ type RequestMessageBodyMD struct {
 
 type ReportQueryFilter struct {
 	httphelper.SourceIDField
+
 	Deleted bool `json:"deleted"`
 }
 
@@ -109,10 +110,11 @@ func NewReport() Report {
 }
 
 type ReportWithAuthor struct {
+	Report
+
 	Author  person.Person `json:"author"`
 	Subject person.Person `json:"subject"`
 	// TODO FIX Demo    demo.DemoFile `json:"demo"`
-	Report
 }
 
 type ReportMessage struct {

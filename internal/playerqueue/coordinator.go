@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"golang.org/x/exp/slices"
 )
 
 // TODO Track a users desired minimum size for them to be counted towards play.
@@ -159,7 +159,7 @@ func (q *Coordinator) Join(client Client, servers []int) error {
 
 // Connect adds the user to the swarm. If a user exists with the same steamid exists, it will be replaced with
 // the new connection.
-func (q *Coordinator) Connect(ctx context.Context, steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) Client {
+func (q *Coordinator) Connect(ctx context.Context, steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) Client { //nolint:ireturn
 	q.mu.Lock()
 	defer q.mu.Unlock()
 

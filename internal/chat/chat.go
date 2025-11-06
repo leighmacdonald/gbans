@@ -33,6 +33,7 @@ var (
 type HistoryQueryFilter struct {
 	query.Filter
 	httphelper.SourceIDField
+
 	Personaname   string     `json:"personaname,omitempty"`
 	ServerID      int        `json:"server_id,omitempty"`
 	DateStart     *time.Time `json:"date_start,omitempty"`
@@ -72,6 +73,7 @@ type PersonMessages []Message
 
 type QueryChatHistoryResult struct {
 	Message
+
 	Pattern string `json:"pattern"`
 }
 
@@ -118,7 +120,7 @@ func NewChat(repo Repository, config *config.Configuration, filters WordFilters,
 	}
 }
 
-func (u Chat) Start(ctx context.Context, events *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]) {
+func (u *Chat) Start(ctx context.Context, events *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]) {
 	cleanupTicker := time.NewTicker(u.checkTimeout)
 	eventChan := make(chan logparse.ServerEvent)
 	if errRegister := events.Consume(eventChan, logparse.Connected, logparse.Say, logparse.SayTeam); errRegister != nil {
@@ -183,7 +185,7 @@ func (u *Chat) cleanupExpired() {
 	}
 }
 
-func (u Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason ban.Reason) error {
+func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason ban.Reason) error {
 	if msg == "" {
 		return nil
 	}
@@ -239,7 +241,7 @@ func (u Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, perso
 	return nil
 }
 
-func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) error {
+func (u *Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) error {
 	var (
 		errBan error
 		req    ban.Opts
@@ -302,7 +304,7 @@ func (u Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) 
 	return nil
 }
 
-func (u Chat) onWarningHandler(ctx context.Context, newWarning NewUserWarning) error {
+func (u *Chat) onWarningHandler(ctx context.Context, newWarning NewUserWarning) error {
 	msg := "[WARN] Please refrain from using slurs/toxicity (see: rules & MOTD). " +
 		"Further offenses will result in mutes/bans"
 
@@ -330,7 +332,7 @@ func (u Chat) onWarningHandler(ctx context.Context, newWarning NewUserWarning) e
 }
 
 // State returns a string key so its more easily portable to frontend js w/o using BigInt.
-func (u Chat) State() map[string][]UserWarning {
+func (u *Chat) State() map[string][]UserWarning {
 	u.warningMu.RLock()
 	defer u.warningMu.RUnlock()
 
@@ -345,7 +347,7 @@ func (u Chat) State() map[string][]UserWarning {
 	return out
 }
 
-func (u Chat) check(now time.Time) {
+func (u *Chat) check(now time.Time) {
 	u.warningMu.Lock()
 	defer u.warningMu.Unlock()
 
@@ -368,7 +370,7 @@ func (u Chat) check(now time.Time) {
 	}
 }
 
-func (u Chat) trigger(ctx context.Context, newWarn NewUserWarning) {
+func (u *Chat) trigger(ctx context.Context, newWarn NewUserWarning) {
 	if !newWarn.UserMessage.SteamID.Valid() {
 		return
 	}
@@ -416,23 +418,23 @@ func (u Chat) trigger(ctx context.Context, newWarn NewUserWarning) {
 	}
 }
 
-func (u Chat) GetPersonMessageByID(ctx context.Context, personMessageID int64) (Message, error) {
+func (u *Chat) GetPersonMessageByID(ctx context.Context, personMessageID int64) (Message, error) {
 	return u.repository.GetPersonMessageByID(ctx, personMessageID)
 }
 
-func (u Chat) WarningState() map[string][]UserWarning {
+func (u *Chat) WarningState() map[string][]UserWarning {
 	return u.State()
 }
 
-func (u Chat) GetPersonMessage(ctx context.Context, messageID int64) (QueryChatHistoryResult, error) {
+func (u *Chat) GetPersonMessage(ctx context.Context, messageID int64) (QueryChatHistoryResult, error) {
 	return u.repository.GetPersonMessage(ctx, messageID)
 }
 
-func (u Chat) AddChatHistory(ctx context.Context, message *Message) error {
+func (u *Chat) AddChatHistory(ctx context.Context, message *Message) error {
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u Chat) QueryChatHistory(ctx context.Context, user person.Info, req HistoryQueryFilter) ([]QueryChatHistoryResult, error) {
+func (u *Chat) QueryChatHistory(ctx context.Context, user person.Info, req HistoryQueryFilter) ([]QueryChatHistoryResult, error) {
 	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(permission.Moderator)) {
 		req.Limit = 100
 	}
@@ -446,7 +448,7 @@ func (u Chat) QueryChatHistory(ctx context.Context, user person.Info, req Histor
 	return u.repository.QueryChatHistory(ctx, req)
 }
 
-func (u Chat) GetPersonMessageContext(ctx context.Context, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error) {
+func (u *Chat) GetPersonMessageContext(ctx context.Context, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error) {
 	if paddedMessageCount > 100 || paddedMessageCount <= 0 {
 		paddedMessageCount = 100
 	}
@@ -459,6 +461,6 @@ func (u Chat) GetPersonMessageContext(ctx context.Context, messageID int64, padd
 	return u.repository.GetPersonMessageContext(ctx, msg.ServerID, messageID, paddedMessageCount)
 }
 
-func (u Chat) TopChatters(ctx context.Context, count uint64) ([]TopChatterResult, error) {
+func (u *Chat) TopChatters(ctx context.Context, count uint64) ([]TopChatterResult, error) {
 	return u.repository.TopChatters(ctx, count)
 }

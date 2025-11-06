@@ -1,83 +1,35 @@
 version: "2"
 linters:
-  default: none
-  enable:
-    - asasalint
-    - asciicheck
-    - bidichk
-    - bodyclose
-    - containedctx
-    - copyloopvar
-    - decorder
-    - dogsled
-    - dupword
-    - err113
-    - errcheck
-    - errchkjson
-    - errname
-    - errorlint
-    - forbidigo
-    - forcetypeassert
-    - ginkgolinter
-    - gocheckcompilerdirectives
-    - gochecknoglobals
-    - gochecknoinits
-    - gochecksumtype
-    - goconst
-    - gocritic
-    - godot
-    - goheader
-    - gomoddirectives
-    - gomodguard
-    - goprintffuncname
-    - gosec
-    - gosmopolitan
-    - govet
-    - grouper
-    - importas
-    - inamedparam
-    - ineffassign
-    - interfacebloat
-    - intrange
-    - loggercheck
-    - maintidx
-    - makezero
-    - mirror
-    - misspell
-    - musttag
-    - nakedret
-    - nilerr
-    - nilnil
-    - nlreturn
-    - noctx
-    - nonamedreturns
-    - nosprintfhostport
-    - perfsprint
-    - prealloc
-    - predeclared
-    - promlinter
-    - reassign
-    - revive
-    - rowserrcheck
-    - sloglint
-    - spancheck
-    - sqlclosecheck
-    - staticcheck
-    - tagliatelle
-    - testableexamples
-    - testifylint
-    - testpackage
-    - thelper
-    - unconvert
-    - unparam
-    # - unused
-    - usestdlibvars
-    - usetesting
-    - varnamelen
-    - wastedassign
-    - whitespace
-    - wrapcheck
+  default: all
+  disable:
+    - contextcheck
+    - dupl
+    - durationcheck
+    - exhaustive
+    - gocognit
+    - gocyclo
+    - funcorder
+    - lll
+    - exhaustruct
+    - mnd
+    - godoclint
+    - godox
+    - noinlineerr
+    - nolintlint
+    - paralleltest
+    - tagalign
+    - wsl_v5
+    - wsl
+    - unused
   settings:
+    cyclop:
+      # The maximal code complexity to report.
+      # Default: 10
+      max-complexity: 25
+
+    nestif:
+      # Minimal complexity of if statements to report.
+      min-complexity: 10
     varnamelen:
       ignore-decls:
         - t *testing.T
@@ -93,7 +45,7 @@ linters:
             - pkg: go.uber.org/zap
               desc: Replaced with log/slog
     funlen:
-      lines: 100
+      lines: 200
       statements: -1
     interfacebloat:
       max: 26
