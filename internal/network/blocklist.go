@@ -17,7 +17,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -73,7 +72,7 @@ func (b *Blocklists) Sync(ctx context.Context) {
 
 	waitGroup.Go(func() {
 		if err := b.bans.UpdateCache(ctx); err != nil {
-			slog.Error("failed to update banned group members", log.ErrAttr(err))
+			slog.Error("failed to update banned group members", slog.String("error", err.Error()))
 
 			return
 		}
@@ -83,7 +82,7 @@ func (b *Blocklists) Sync(ctx context.Context) {
 
 	waitGroup.Go(func() {
 		if err := b.UpdateCache(ctx); err != nil {
-			slog.Error("failed to update banned CIDR ranges", log.ErrAttr(err))
+			slog.Error("failed to update banned CIDR ranges", slog.String("error", err.Error()))
 
 			return
 		}
@@ -102,7 +101,7 @@ func (b *Blocklists) UpdateCache(ctx context.Context) error {
 
 	for _, list := range lists {
 		if err := b.updateSource(ctx, list); err != nil {
-			slog.Error("Failed to update cidr block source", log.ErrAttr(err))
+			slog.Error("Failed to update cidr block source", slog.String("error", err.Error()))
 		}
 	}
 

@@ -11,7 +11,6 @@ import (
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
 )
@@ -70,7 +69,7 @@ func errorHandler() gin.HandlerFunc {
 			args := []any{
 				slog.String("method", ctx.Request.Method),
 				slog.String("path", ctx.Request.URL.RawPath),
-				log.ErrAttr(err),
+				slog.String("error", err.Error()),
 			}
 
 			user, _ := session.CurrentUserProfile(ctx)

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/google/go-querystring/query"
-	gjson "github.com/leighmacdonald/gbans/pkg/json"
+	gjson "github.com/leighmacdonald/gbans/internal/json"
 	"github.com/stretchr/testify/require"
 )
 

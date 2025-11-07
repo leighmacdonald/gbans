@@ -5,7 +5,6 @@ package frontend
 import (
 	"embed"
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/gin-contrib/static"
@@ -28,8 +27,6 @@ func AddRoutes(engine *gin.Engine, _ string) error {
 
 	indexData, errIndex := embedFS.ReadFile("dist/index.html")
 	if errIndex != nil {
-		slog.Error("Failed to read index.html")
-
 		return errors.Join(errIndex, ErrContentRoot)
 	}
 

@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -124,14 +123,14 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 		ipAddr, errIP := netip.ParseAddr(req.IP)
 		if errIP != nil {
 			ctx.JSON(http.StatusOK, defaultValue)
-			slog.Error("Failed to parse IP", log.ErrAttr(errIP))
+			slog.Error("Failed to parse IP", slog.String("error", errIP.Error()))
 
 			return
 		}
 
 		banState, msg, errBS := s.sourcemod.GetBanState(ctx, steamID, ipAddr)
 		if errBS != nil {
-			slog.Error("failed to get ban state", log.ErrAttr(errBS))
+			slog.Error("failed to get ban state", slog.String("error", errBS.Error()))
 
 			// Fail Open
 			ctx.JSON(http.StatusOK, defaultValue)

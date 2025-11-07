@@ -28,6 +28,7 @@ import (
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord_oauth"
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/network/asn"
@@ -44,9 +45,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/sosodev/duration"
 )
 
 var (
@@ -115,7 +116,7 @@ type GBans struct {
 func NewGBans() (*GBans, error) {
 	staticConfig, errStatic := config.ReadStaticConfig()
 	if errStatic != nil {
-		slog.Error("Failed to read static config", log.ErrAttr(errStatic))
+		slog.Error("Failed to read static config", slog.String("error", errStatic.Error()))
 
 		return nil, errStatic
 	}
@@ -129,7 +130,7 @@ func NewGBans() (*GBans, error) {
 func (g *GBans) Init(ctx context.Context) error {
 	dbConn := database.New(g.staticConfig.DatabaseDSN, g.staticConfig.DatabaseAutoMigrate, g.staticConfig.DatabaseLogQueries)
 	if errConnect := dbConn.Connect(ctx); errConnect != nil {
-		slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
+		slog.Error("Cannot initialize database", slog.String("error", errConnect.Error()))
 
 		return errConnect
 	}
@@ -137,13 +138,13 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	g.config = config.NewConfiguration(g.staticConfig, config.NewRepository(g.database))
 	if err := g.config.Init(ctx); err != nil {
-		slog.Error("Failed to init config", log.ErrAttr(err))
+		slog.Error("Failed to init config", slog.String("error", err.Error()))
 
 		return err
 	}
 
 	if errConfig := g.config.Reload(ctx); errConfig != nil {
-		slog.Error("Failed to read config", log.ErrAttr(errConfig))
+		slog.Error("Failed to read config", slog.String("error", errConfig.Error()))
 
 		return errConfig
 	}
@@ -175,7 +176,7 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	wordFilters := chat.NewWordFilters(chat.NewWordFilterRepository(g.database), g.notifications, g.config)
 	if err := wordFilters.Import(ctx); err != nil {
-		slog.Error("Failed to load word filters", log.ErrAttr(err))
+		slog.Error("Failed to load word filters", slog.String("error", err.Error()))
 
 		return err
 	}
@@ -192,7 +193,7 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	assetRepo := asset.NewLocalRepository(g.database, conf.LocalStore.PathRoot)
 	if err := assetRepo.Init(ctx); err != nil {
-		slog.Error("Failed to init local asset repo", log.ErrAttr(err))
+		slog.Error("Failed to init local asset repo", slog.String("error", err.Error()))
 
 		return err
 	}
@@ -256,7 +257,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.config, g.persons)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
 	g.auth = auth.NewAuthentication(auth.NewRepository(g.database), g.config, g.persons, g.bans, g.servers, SentryDSN)
-	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), g.bans, g.config, g.persons, g.notifications)
+	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), g.config, g.notifications, g.onAnticheatBan)
 	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications, g.config, g.persons)
 	g.contests = contest.NewContests(contest.NewRepository(g.database))
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
@@ -264,7 +265,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications, g.config)
 
 	if err := g.firstTimeSetup(ctx); err != nil {
-		slog.Error("Failed to run first time setup", log.ErrAttr(err))
+		slog.Error("Failed to run first time setup", slog.String("error", err.Error()))
 
 		return err
 	}
@@ -309,7 +310,7 @@ func (g *GBans) setupPlayerQueue(ctx context.Context) {
 	// Pre-load some messages into queue message cache
 	chatlogs, errChatlogs := playerqueueRepo.Query(ctx, playerqueue.QueryOpts{Filter: query.Filter{Limit: 100}})
 	if errChatlogs != nil {
-		slog.Error("Failed to warm playerqueue chatlogs", log.ErrAttr(errChatlogs))
+		slog.Error("Failed to warm playerqueue chatlogs", slog.String("error", errChatlogs.Error()))
 		chatlogs = []playerqueue.ChatLog{}
 	}
 	g.playerQueue = playerqueue.NewPlayerqueue(ctx, playerqueueRepo, g.persons, g.servers, g.states, chatlogs, g.config, g.notifications)
@@ -348,7 +349,7 @@ func (g *GBans) StartBackground(ctx context.Context) {
 
 	go func() {
 		if err := g.states.Start(ctx); err != nil {
-			slog.Error("Failed to start state tracker", log.ErrAttr(err))
+			slog.Error("Failed to start state tracker", slog.String("error", err.Error()))
 		}
 	}()
 
@@ -378,7 +379,7 @@ func (g *GBans) StartBackground(ctx context.Context) {
 		case <-reportIntoTicker.C:
 			go func() {
 				if errMeta := g.reports.MetaStats(ctx); errMeta != nil {
-					slog.Error("Failed to generate meta stats", log.ErrAttr(errMeta))
+					slog.Error("Failed to generate meta stats", slog.String("error", errMeta.Error()))
 				}
 			}()
 		case <-blocklistTicker.C:
@@ -430,7 +431,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		Validators:        []func(*validator.Validate){originValidate},
 	})
 	if err != nil {
-		slog.Error("Could not setup router", log.ErrAttr(err))
+		slog.Error("Could not setup router", slog.String("error", err.Error()))
 
 		return err
 	}
@@ -475,7 +476,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		defer cancel()
 
 		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
-			slog.Error("Error shutting down http service", log.ErrAttr(errShutdown))
+			slog.Error("Error shutting down http service", slog.String("error", errShutdown.Error()))
 		}
 	}()
 
@@ -483,7 +484,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	errServe := httpServer.ListenAndServe()
 	if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
-		slog.Error("HTTP server returned error", log.ErrAttr(errServe))
+		slog.Error("HTTP server returned error", slog.String("error", errServe.Error()))
 	}
 
 	<-ctx.Done()
@@ -505,7 +506,7 @@ func (g *GBans) Close(ctx context.Context) error {
 
 	if g.database != nil {
 		if errClose := g.database.Close(); errClose != nil {
-			slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
+			slog.Error("Failed to close database cleanly", slog.String("error", errClose.Error()))
 		}
 	}
 
@@ -535,7 +536,7 @@ func (g *GBans) firstTimeSetup(ctx context.Context) error {
 	owner.PermissionLevel = permission.Admin
 
 	if errSave := g.persons.Save(ctx, &owner); errSave != nil {
-		slog.Error("Failed create new owner", log.ErrAttr(errSave))
+		slog.Error("Failed create new owner", slog.String("error", errSave.Error()))
 	}
 
 	article := news.Article{
@@ -560,7 +561,36 @@ func (g *GBans) firstTimeSetup(ctx context.Context) error {
 	}
 	_, errSave := g.wiki.Save(ctx, page)
 	if errSave != nil {
-		slog.Error("Failed save example wiki entry", log.ErrAttr(errSave))
+		slog.Error("Failed save example wiki entry", slog.String("error", errSave.Error()))
+	}
+
+	return nil
+}
+
+func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, dur time.Duration, count int) error {
+	conf := g.config.Config()
+	newBan, err := g.bans.Create(ctx, ban.Opts{
+		Origin:     ban.System,
+		SourceID:   steamid.New(conf.Static.Owner),
+		TargetID:   entry.SteamID,
+		Duration:   duration.FromTimeDuration(dur),
+		BanType:    ban.Banned,
+		Reason:     ban.Cheating,
+		ReasonText: "",
+		Note:       entry.Summary + "\n\nRaw log:\n" + entry.RawLog,
+		DemoName:   entry.DemoName,
+		DemoTick:   entry.DemoTick,
+		EvadeOk:    false,
+	})
+	if err != nil && !errors.Is(err, database.ErrDuplicate) {
+		slog.Error("Failed to ban cheater", slog.String("detection", string(entry.Detection)),
+			slog.Int64("steam_id", entry.SteamID.Int64()), slog.String("error", err.Error()))
+		return err
+	} else if newBan.BanID > 0 {
+		slog.Info("Banned cheater", slog.String("detection", string(entry.Detection)),
+			slog.Int64("steam_id", entry.SteamID.Int64()))
+		g.notifications.Send(notification.NewDiscord(g.config.Config().Discord.AnticheatChannelID,
+			anticheat.NewAnticheatTrigger(newBan, g.config.Config().Anticheat.Action, entry, count)))
 	}
 
 	return nil

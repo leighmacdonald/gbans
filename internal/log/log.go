@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"runtime"
 
 	"github.com/dotse/slug"
 	sentryslog "github.com/getsentry/sentry-go/slog"
@@ -87,20 +86,8 @@ func MustCreateLogger(ctx context.Context, debugLogPath string, level Level, use
 	return closer
 }
 
-func ErrAttr(err error) slog.Attr {
-	return slog.Any("reason", err)
-}
-
-func HandlerName(skip int) slog.Attr {
-	if pc, _, _, ok := runtime.Caller(skip); ok {
-		return slog.String("func", runtime.FuncForPC(pc).Name())
-	}
-
-	return slog.String("func", "unknown")
-}
-
 func Closer(closer io.Closer) {
 	if errClose := closer.Close(); errClose != nil {
-		slog.Error("Failed to close", ErrAttr(errClose))
+		slog.Error("Failed to close", slog.String("error", errClose.Error()))
 	}
 }

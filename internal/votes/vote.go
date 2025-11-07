@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -89,7 +88,7 @@ func (u Votes) Start(ctx context.Context) {
 
 	eventChan := make(chan logparse.ServerEvent)
 	if errRegister := u.broadcaster.Consume(eventChan, logparse.VoteSuccess, logparse.VoteFailed, logparse.VoteDetails); errRegister != nil {
-		slog.Warn("logWriter Tried to register duplicate reader channel", log.ErrAttr(errRegister))
+		slog.Warn("logWriter Tried to register duplicate reader channel", slog.String("error", errRegister.Error()))
 
 		return
 	}
@@ -193,7 +192,7 @@ func (u Votes) Start(ctx context.Context) {
 				}
 
 				if err := u.repository.AddResult(ctx, result); err != nil {
-					slog.Error("Failed to add vote result", log.ErrAttr(err))
+					slog.Error("Failed to add vote result", slog.String("error", err.Error()))
 				}
 
 				recent = append(recent, result)
@@ -202,12 +201,12 @@ func (u Votes) Start(ctx context.Context) {
 
 				source, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, result.SourceID)
 				if errSource != nil {
-					slog.Error("Failed to load vote source", log.ErrAttr(errSource), slog.String("steam_id", result.SourceID.String()))
+					slog.Error("Failed to load vote source", slog.String("error", errSource.Error()), slog.String("steam_id", result.SourceID.String()))
 				}
 
 				target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, result.SourceID)
 				if errTarget != nil {
-					slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
+					slog.Error("Failed to load vote target", slog.String("error", errSource.Error()), slog.String("steam_id", result.TargetID.String()))
 				}
 				conf := u.config.Config()
 				u.notif.Send(notification.NewDiscord(u.config.Config().Discord.VoteLogChannelID,

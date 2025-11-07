@@ -14,7 +14,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/mitchellh/go-homedir"
 	"github.com/viant/afs/scp"
 	"github.com/viant/afs/storage"
@@ -68,7 +67,7 @@ func (f *Connection) Close() {
 	}
 
 	if errClose := f.conn.Close(); errClose != nil {
-		slog.Error("failed to close scp client", log.ErrAttr(errClose))
+		slog.Error("failed to close scp client", slog.String("error", errClose.Error()))
 	}
 }
 

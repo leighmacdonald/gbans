@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 // Updater handles periodically updating a data source and caching the results via user supplied func.
@@ -37,7 +36,7 @@ func (c *Updater[T]) Data() T { //nolint:ireturn
 func (c *Updater[T]) update() {
 	newData, errUpdate := c.updateFn()
 	if errUpdate != nil && !errors.Is(errUpdate, database.ErrNoResult) {
-		slog.Error("Failed to update data source", log.ErrAttr(errUpdate))
+		slog.Error("Failed to update data source", slog.String("error", errUpdate.Error()))
 
 		return
 	}

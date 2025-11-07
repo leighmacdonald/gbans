@@ -13,9 +13,8 @@ import (
 	"github.com/austinbspencer/patreon-go-wrapper"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/json"
-	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/oauth"
+	"github.com/leighmacdonald/gbans/internal/json"
+	"github.com/leighmacdonald/gbans/internal/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/oauth2"
 )
@@ -98,7 +97,7 @@ func (p *Manager) sync(ctx context.Context) {
 
 	user, errUser := p.loadUser(client)
 	if errUser != nil {
-		slog.Error("Failed to load patreon user", log.ErrAttr(errUser))
+		slog.Error("Failed to load patreon user", slog.String("error", errUser.Error()))
 
 		return
 	}
@@ -156,14 +155,14 @@ func (p Patreon) Sync(ctx context.Context) {
 func (p Patreon) checkAuths(ctx context.Context) {
 	oldAuths, errOldAuths := p.repository.OldAuths(ctx)
 	if errOldAuths != nil {
-		slog.Error("Failed to load old auths", log.ErrAttr(errOldAuths))
+		slog.Error("Failed to load old auths", slog.String("error", errOldAuths.Error()))
 
 		return
 	}
 
 	for _, oldAuth := range oldAuths {
 		if err := p.refreshToken(ctx, oldAuth); err != nil {
-			slog.Error("Failed to refresh users patreon token", log.ErrAttr(err))
+			slog.Error("Failed to refresh users patreon token", slog.String("error", err.Error()))
 		}
 	}
 }
@@ -193,13 +192,13 @@ func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
 
 	defer func() {
 		if errClose := resp.Body.Close(); errClose != nil {
-			slog.Error("Failed to close response body", log.ErrAttr(errClose))
+			slog.Error("Failed to close response body", slog.String("error", errClose.Error()))
 		}
 	}()
 
 	creds, errDec := json.Decode[Credential](resp.Body)
 	if errDec != nil {
-		slog.Error("Failed to decode access token", log.ErrAttr(errDec))
+		slog.Error("Failed to decode access token", slog.String("error", errDec.Error()))
 
 		return errors.Join(errDec, httphelper.ErrRequestDecode)
 	}
@@ -278,13 +277,13 @@ func (p Patreon) OnOauthLogin(ctx context.Context, state string, code string) er
 
 	defer func() {
 		if errClose := resp.Body.Close(); errClose != nil {
-			slog.Error("Failed to close response body", log.ErrAttr(errClose))
+			slog.Error("Failed to close response body", slog.String("error", errClose.Error()))
 		}
 	}()
 
 	creds, errDec := json.Decode[Credential](resp.Body)
 	if errDec != nil {
-		slog.Error("Failed to decode access token", log.ErrAttr(errDec))
+		slog.Error("Failed to decode access token", slog.String("error", errDec.Error()))
 
 		return errors.Join(errDec, httphelper.ErrRequestDecode)
 	}

@@ -18,7 +18,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -199,7 +198,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 		if fullOk {
 			deleted, deletedOkErr := strconv.ParseBool(fullValue)
 			if deletedOkErr != nil {
-				slog.Error("Failed to parse ban full query value", log.ErrAttr(deletedOkErr))
+				slog.Error("Failed to parse ban full query value", slog.String("error", deletedOkErr.Error()))
 			} else {
 				deletedOk = deleted
 			}

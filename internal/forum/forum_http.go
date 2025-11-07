@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -313,12 +312,12 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 			// Drop created thread.
 			// TODO transaction
 			if errRollback := f.ThreadDelete(ctx, thread.ForumThreadID); errRollback != nil {
-				slog.Error("Failed to rollback new thread", log.ErrAttr(errRollback))
+				slog.Error("Failed to rollback new thread", slog.String("error", errRollback.Error()))
 			}
 
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSaveMessage, httphelper.ErrInternal)))
 
-			slog.Error("Failed to save new forum message", log.ErrAttr(errSaveMessage))
+			slog.Error("Failed to save new forum message", slog.String("error", errSaveMessage.Error()))
 
 			return
 		}
@@ -767,7 +766,7 @@ func (f *forumHandler) thread() gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, thread)
 
 		if err := f.ThreadIncrView(ctx, forumThreadID); err != nil {
-			slog.Error("Failed to increment thread view count", log.ErrAttr(err), slog.Int64("forum_thread_id", forumThreadID))
+			slog.Error("Failed to increment thread view count", slog.String("error", err.Error()), slog.Int64("forum_thread_id", forumThreadID))
 		}
 	}
 }

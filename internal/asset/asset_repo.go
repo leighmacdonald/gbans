@@ -13,7 +13,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -48,7 +47,7 @@ func (l Repository) Put(ctx context.Context, asset Asset, body io.ReadSeeker) (A
 
 	defer func() {
 		if errClose := file.Close(); errClose != nil {
-			slog.Error("failed to close asset file", log.ErrAttr(errClose))
+			slog.Error("failed to close asset file", slog.String("error", errClose.Error()))
 		}
 	}()
 

@@ -10,8 +10,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type srcdsPacket byte
@@ -87,14 +85,14 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 
 	connection, errListenUDP := net.ListenUDP("udp4", remoteSrc.udpAddr)
 	if errListenUDP != nil {
-		slog.Error("Failed to start log listener", log.ErrAttr(errListenUDP))
+		slog.Error("Failed to start log listener", slog.String("error", errListenUDP.Error()))
 
 		return
 	}
 
 	defer func() {
 		if errConnClose := connection.Close(); errConnClose != nil {
-			slog.Error("Failed to close connection cleanly", log.ErrAttr(errConnClose))
+			slog.Error("Failed to close connection cleanly", slog.String("error", errConnClose.Error()))
 		}
 	}()
 
@@ -121,7 +119,7 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 
 				readLen, remoteAddr, errReadUDP := connection.ReadFromUDP(buffer)
 				if errReadUDP != nil {
-					slog.Warn("UDP log read error", log.ErrAttr(errReadUDP))
+					slog.Warn("UDP log read error", slog.String("string", errReadUDP.Error()))
 
 					continue
 				}
@@ -139,7 +137,7 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 					if !rejected || time.Since(lastTime) > time.Minute*5 {
 						slog.Warn("Rejecting UDP packet from unknown source IP",
 							slog.String("ip", remoteAddr.IP.String()),
-							log.ErrAttr(ErrUnknownIP))
+							slog.String("string", ErrUnknownIP.Error()))
 						rejectsIP[remoteAddr.IP.String()] = time.Now()
 					}
 
@@ -171,7 +169,7 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 					secret, errConv := strconv.ParseInt(line[5:idx], 10, 32)
 					if errConv != nil {
 						slog.Error("Received malformed log message: Failed to parse secret",
-							log.ErrAttr(errConv))
+							slog.String("error", errConv.Error()))
 
 						errCount++
 
@@ -224,7 +222,7 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 			if errLogServerEvent != nil {
 				slog.Error("Failed to create serverEvent",
 					slog.String("body", logPayload.body),
-					log.ErrAttr(errLogServerEvent))
+					slog.String("error", errLogServerEvent.Error()))
 
 				continue
 			}

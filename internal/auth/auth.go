@@ -22,7 +22,6 @@ import (
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -162,7 +161,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 			if level >= permission.Guest {
 				fingerprint, errFingerprint := ctx.Cookie("fingerprint")
 				if errFingerprint != nil {
-					slog.Error("Failed to load fingerprint cookie", log.ErrAttr(errFingerprint))
+					slog.Error("Failed to load fingerprint cookie", slog.String("error", errFingerprint.Error()))
 					ctx.AbortWithStatus(http.StatusForbidden)
 
 					return
@@ -176,7 +175,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 						return
 					}
 
-					slog.Error("Failed to load sid from access token", log.ErrAttr(errFromToken))
+					slog.Error("Failed to load sid from access token", slog.String("error", errFromToken.Error()))
 					ctx.AbortWithStatus(http.StatusForbidden)
 
 					return
@@ -184,7 +183,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 
 				loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, sid)
 				if errGetPerson != nil {
-					slog.Error("Failed to load person during auth", log.ErrAttr(errGetPerson))
+					slog.Error("Failed to load person during auth", slog.String("error", errGetPerson.Error()))
 					ctx.AbortWithStatus(http.StatusForbidden)
 
 					return
@@ -210,7 +209,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 				})
 				if errBan != nil {
 					if !errors.Is(errBan, database.ErrNoResult) {
-						slog.Error("Failed to fetch authed user ban", log.ErrAttr(errBan))
+						slog.Error("Failed to fetch authed user ban", slog.String("error", errBan.Error()))
 					}
 				}
 
@@ -278,7 +277,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 						return
 					}
 
-					slog.Error("Failed to load sid from access token", log.ErrAttr(errFromToken))
+					slog.Error("Failed to load sid from access token", slog.String("error", errFromToken.Error()))
 					ctx.AbortWithStatus(http.StatusForbidden)
 
 					return
@@ -286,7 +285,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 
 				loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, sid)
 				if errGetPerson != nil {
-					slog.Error("Failed to load person during auth", log.ErrAttr(errGetPerson))
+					slog.Error("Failed to load person during auth", slog.String("error", errGetPerson.Error()))
 					ctx.AbortWithStatus(http.StatusForbidden)
 
 					return
@@ -304,7 +303,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 				})
 				if errBan != nil {
 					if !errors.Is(errBan, database.ErrNoResult) {
-						slog.Error("Failed to fetch authed user ban", log.ErrAttr(errBan))
+						slog.Error("Failed to fetch authed user ban", slog.String("error", errBan.Error()))
 					}
 				}
 

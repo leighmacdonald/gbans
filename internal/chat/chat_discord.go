@@ -9,8 +9,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/pkg/datetime"
 )
 
 func RegisterDiscordCommands(bot *bot.Bot, wordFilters WordFilters) {
