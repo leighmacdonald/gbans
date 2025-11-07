@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
@@ -45,7 +46,7 @@ type RequestReportCreate struct {
 	SourceID        steamid.SteamID `json:"source_id"`
 	TargetID        steamid.SteamID `json:"target_id"`
 	Description     string          `json:"description"`
-	Reason          Reason          `json:"reason"`
+	Reason          reason.Reason   `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
 	DemoID          int64           `json:"demo_id"`
 	DemoTick        int             `json:"demo_tick"`
@@ -81,7 +82,7 @@ type Report struct {
 	TargetID        steamid.SteamID `json:"target_id"`
 	Description     string          `json:"description"`
 	ReportStatus    ReportStatus    `json:"report_status"`
-	Reason          Reason          `json:"reason"`
+	Reason          reason.Reason   `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
 	Deleted         bool            `json:"deleted"`
 	DemoTick        int             `json:"demo_tick"`

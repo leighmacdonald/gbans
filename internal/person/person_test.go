@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestPerson(t *testing.T) {
-	personCase := person.NewPersons(person.NewRepository(fixture.Config.Config(), fixture.Database), tests.OwnerSID, nil)
+	personCase := person.NewPersons(person.NewRepository(fixture.Database, true), tests.OwnerSID, nil)
 
 	_, err := personCase.BySteamID(t.Context(), tests.UserSID)
 	require.Error(t, err)

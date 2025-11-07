@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
@@ -21,9 +20,36 @@ import (
 	"github.com/viant/afs/storage"
 )
 
+type Action string
+
+const (
+	ActionGag  Action = "gag"
+	ActionKick Action = "kick"
+	ActionBan  Action = "ban"
+)
+
 type OnEntry func(ctx context.Context, entry logparse.StacEntry, duration time.Duration, count int) error
 
 var ErrOpenClient = errors.New("failed to open client")
+
+type Config struct {
+	Enabled               bool   `mapstructure:"enabled" json:"enabled"`
+	Action                Action `mapstructure:"action" json:"action"`
+	Duration              int    `mapstructure:"duration" json:"duration"`
+	MaxAimSnap            int    `mapstructure:"max_aim_snap" json:"max_aim_snap"`
+	MaxPsilent            int    `mapstructure:"max_psilent" json:"max_psilent"`
+	MaxBhop               int    `mapstructure:"max_bhop" json:"max_bhop"`
+	MaxFakeAng            int    `mapstructure:"max_fake_ang" json:"max_fake_ang"`
+	MaxCmdNum             int    `mapstructure:"max_cmd_num" json:"max_cmd_num"`
+	MaxTooManyConnections int    `mapstructure:"max_too_many_connections" json:"max_too_many_connections"`
+	MaxCheatCvar          int    `mapstructure:"max_cheat_cvar" json:"max_cheat_cvar"`
+	MaxOOBVar             int    `mapstructure:"max_oob_var" json:"max_oob_var"`
+	MaxInvalidUserCmd     int    `mapstructure:"max_invalid_user_cmd" json:"max_invalid_user_cmd"`
+}
+
+type ConfigStore struct {
+	PathRoot string `json:"path_root"`
+}
 
 // Entry represents a stac log entry and some associated meta data.
 type Entry struct {
@@ -46,18 +72,19 @@ type Query struct {
 
 // AntiCheat handles parsing and processing of stac anti-cheat logs.
 type AntiCheat struct {
+	Config
+
 	parser  logparse.StacParser
 	repo    Repository
-	config  *config.Configuration
 	notif   notification.Notifier
 	handler OnEntry
 }
 
-func NewAntiCheat(repo Repository, config *config.Configuration, notif notification.Notifier, handler OnEntry) AntiCheat {
+func NewAntiCheat(repo Repository, config Config, notif notification.Notifier, handler OnEntry) AntiCheat {
 	return AntiCheat{
+		Config:  config,
 		parser:  logparse.NewStacParser(),
 		repo:    repo,
-		config:  config,
 		notif:   notif,
 		handler: handler,
 	}
@@ -115,7 +142,6 @@ func (a AntiCheat) BySteamID(ctx context.Context, steamID steamid.SteamID) ([]lo
 func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) error { //nolint:cyclop
 	var (
 		results       = map[steamid.SteamID]map[logparse.Detection]int{}
-		conf          = a.config.Config()
 		hasBeenBanned []steamid.SteamID
 	)
 	for _, entry := range entries {
@@ -133,23 +159,23 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 
 		switch entry.Detection {
 		case logparse.SilentAim:
-			isban = conf.Anticheat.MaxPsilent > 0 && results[entry.SteamID][entry.Detection] >= conf.Anticheat.MaxPsilent
+			isban = a.MaxPsilent > 0 && results[entry.SteamID][entry.Detection] >= a.MaxPsilent
 		case logparse.AimSnap:
-			isban = conf.Anticheat.MaxAimSnap > 0 && results[entry.SteamID][entry.Detection] >= conf.Anticheat.MaxAimSnap
+			isban = a.MaxAimSnap > 0 && results[entry.SteamID][entry.Detection] >= a.MaxAimSnap
 		case logparse.BHop:
-			isban = conf.Anticheat.MaxBhop > 0 && results[entry.SteamID][entry.Detection] >= conf.Anticheat.MaxBhop
+			isban = a.MaxBhop > 0 && results[entry.SteamID][entry.Detection] >= a.MaxBhop
 		case logparse.CmdNumSpike:
-			isban = conf.Anticheat.MaxCmdNum > 0 && results[entry.SteamID][entry.Detection] >= conf.Anticheat.MaxCmdNum
+			isban = a.MaxCmdNum > 0 && results[entry.SteamID][entry.Detection] >= a.MaxCmdNum
 		case logparse.EyeAngles:
-			isban = conf.Anticheat.MaxFakeAng > 0 && results[entry.SteamID][entry.Detection] >= conf.Anticheat.MaxFakeAng
+			isban = a.MaxFakeAng > 0 && results[entry.SteamID][entry.Detection] >= a.MaxFakeAng
 		case logparse.InvalidUserCmd:
-			isban = conf.Anticheat.MaxInvalidUserCmd > 0 && results[entry.SteamID][entry.Detection] >= conf.Anticheat.MaxInvalidUserCmd
+			isban = a.MaxInvalidUserCmd > 0 && results[entry.SteamID][entry.Detection] >= a.MaxInvalidUserCmd
 		case logparse.OOBCVar:
-			isban = conf.Anticheat.MaxOOBVar > 0 && results[entry.SteamID][entry.Detection] >= conf.Anticheat.MaxOOBVar
+			isban = a.MaxOOBVar > 0 && results[entry.SteamID][entry.Detection] >= a.MaxOOBVar
 		case logparse.CheatCVar:
-			isban = conf.Anticheat.MaxCheatCvar > 0 && results[entry.SteamID][entry.Detection] >= conf.Anticheat.MaxCheatCvar
+			isban = a.MaxCheatCvar > 0 && results[entry.SteamID][entry.Detection] >= a.MaxCheatCvar
 		case logparse.TooManyConnectiona:
-			isban = conf.Anticheat.MaxTooManyConnections > 0 && results[entry.SteamID][entry.Detection] >= conf.Anticheat.MaxTooManyConnections
+			isban = a.MaxTooManyConnections > 0 && results[entry.SteamID][entry.Detection] >= a.MaxTooManyConnections
 		default:
 			slog.Warn("Got unknown stac detection", slog.String("summary", entry.Summary))
 		}
@@ -159,8 +185,8 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 		}
 
 		var dur time.Duration
-		if conf.Anticheat.Duration > 0 {
-			dur = time.Duration(conf.Anticheat.Duration) * time.Second
+		if a.Duration > 0 {
+			dur = time.Duration(a.Duration) * time.Second
 		}
 
 		if err := a.handler(ctx, entry, dur, results[entry.SteamID][entry.Detection]); err != nil {

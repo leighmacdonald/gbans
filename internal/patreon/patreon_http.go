@@ -8,16 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type patreonHandler struct {
 	patreon Patreon
-	config  *config.Configuration
+	config  Config
 }
 
-func NewPatreonHandler(engine *gin.Engine, patreon Patreon, auth httphelper.Authenticator, config *config.Configuration) {
+func NewPatreonHandler(engine *gin.Engine, patreon Patreon, auth httphelper.Authenticator, config Config) {
 	handler := patreonHandler{
 		patreon: patreon,
 		config:  config,
@@ -89,9 +88,7 @@ func (h patreonHandler) onOAuth() gin.HandlerFunc {
 			slog.Debug("Successfully authenticated user over patreon")
 		}
 
-		conf := h.config.Config()
-
-		ctx.Redirect(http.StatusPermanentRedirect, conf.ExtURLRaw("/patreon"))
+		ctx.Redirect(http.StatusPermanentRedirect, "/patreon") // FIXME conf.ExtURLRaw("/patreon")
 	}
 }
 

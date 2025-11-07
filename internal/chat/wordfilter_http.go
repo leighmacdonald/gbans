@@ -7,17 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type wordFilterHandler struct {
 	filters WordFilters
 	chat    *Chat
-	config  *config.Configuration
+	config  Config
 }
 
-func NewWordFilterHandler(engine *gin.Engine, config *config.Configuration, wordFilters WordFilters, chat *Chat, auth httphelper.Authenticator) {
+func NewWordFilterHandler(engine *gin.Engine, config Config, wordFilters WordFilters, chat *Chat, auth httphelper.Authenticator) {
 	handler := wordFilterHandler{
 		config:  config,
 		filters: wordFilters,
@@ -137,7 +136,7 @@ func (h *wordFilterHandler) filterStates() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		state := h.chat.WarningState()
-		outputState := warningState{MaxWeight: h.config.Config().Filters.MaxWeight}
+		outputState := warningState{MaxWeight: h.config.MaxWeight}
 
 		for _, warn := range state {
 			outputState.Current = append(outputState.Current, warn...)

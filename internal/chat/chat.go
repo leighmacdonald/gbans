@@ -10,8 +10,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
@@ -21,13 +20,14 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/sosodev/duration"
 )
 
 var (
 	ErrWarnActionApply       = errors.New("failed to apply warning action")
 	ErrInvalidActionDuration = errors.New("invalid action duration")
 )
+
+type ExceedHandler func(ctx context.Context, warning NewUserWarning) error
 
 type HistoryQueryFilter struct {
 	query.Filter
@@ -77,10 +77,10 @@ type QueryChatHistoryResult struct {
 }
 
 type Chat struct {
+	Config
+
 	repository    Repository
 	wordFilters   WordFilters
-	bans          ban.Bans
-	config        *config.Configuration
 	persons       person.Provider
 	notifications notification.Notifier
 	state         *state.State
@@ -92,30 +92,25 @@ type Chat struct {
 	matchTimeout  time.Duration
 	checkTimeout  time.Duration
 	pingDiscord   bool
-
-	WarningChan chan NewUserWarning
+	exceedHandler ExceedHandler
+	WarningChan   chan NewUserWarning
 }
 
-func NewChat(repo Repository, config *config.Configuration, filters WordFilters,
-	bans ban.Bans, persons person.Provider, notifications notification.Notifier,
+func NewChat(repo Repository, config Config, filters WordFilters,
+	persons person.Provider, notifications notification.Notifier, actionHandler ExceedHandler,
 ) *Chat {
-	conf := config.Config()
-
+	// TODO decouple bans dep
 	return &Chat{
+		Config:        config,
 		repository:    repo,
 		wordFilters:   filters,
-		bans:          bans,
 		notifications: notifications,
 		persons:       persons,
-		pingDiscord:   conf.Filters.PingDiscord,
 		warnings:      make(map[steamid.SteamID][]UserWarning),
 		warningMu:     &sync.RWMutex{},
-		matchTimeout:  time.Duration(conf.Filters.MatchTimeout) * time.Second,
-		dry:           conf.Filters.Dry,
-		maxWeight:     conf.Filters.MaxWeight,
-		owner:         steamid.New(conf.Owner),
-		checkTimeout:  time.Duration(conf.Filters.CheckTimeout) * time.Second,
-		config:        config,
+		matchTimeout:  time.Duration(config.MatchTimeout) * time.Second,
+		exceedHandler: actionHandler,
+		checkTimeout:  time.Duration(config.CheckTimeout) * time.Second,
 	}
 }
 
@@ -152,7 +147,7 @@ func (u *Chat) handleEvent(ctx context.Context, evt logparse.ServerEvent) error 
 
 		connectMsg := "Player connected with username: " + connectEvent.Name
 
-		return u.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, false, connectEvent.CreatedOn, ban.Username)
+		return u.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, false, connectEvent.CreatedOn, reason.Username)
 	case logparse.Say:
 		fallthrough
 	case logparse.SayTeam:
@@ -161,7 +156,7 @@ func (u *Chat) handleEvent(ctx context.Context, evt logparse.ServerEvent) error 
 			return nil
 		}
 
-		return u.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.Team, sayEvent.CreatedOn, ban.Language)
+		return u.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.Team, sayEvent.CreatedOn, reason.Language)
 	}
 
 	return nil
@@ -184,7 +179,7 @@ func (u *Chat) cleanupExpired() {
 	}
 }
 
-func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason ban.Reason) error {
+func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason reason.Reason) error {
 	if msg == "" {
 		return nil
 	}
@@ -241,64 +236,10 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 }
 
 func (u *Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) error {
-	var (
-		errBan error
-		req    ban.Opts
-		newBan ban.Ban
-	)
-
-	if newWarning.MatchedFilter.Action == FilterActionBan || newWarning.MatchedFilter.Action == FilterActionMute {
-		dur, errDur := duration.Parse(newWarning.MatchedFilter.Duration)
-		if errDur != nil {
-			return errors.Join(errDur, ErrInvalidActionDuration)
-		}
-		req = ban.Opts{
-			TargetID:   newWarning.UserMessage.SteamID,
-			Reason:     newWarning.WarnReason,
-			ReasonText: "",
-			Note:       "Automatic warning ban",
-			Duration:   dur,
-		}
-	}
-
-	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, u.owner)
-	if errAdmin != nil {
-		return errAdmin
-	}
-
-	switch newWarning.MatchedFilter.Action {
-	case FilterActionMute:
-		req.BanType = ban.NoComm
-		newBan, errBan = u.bans.Create(ctx, req)
-	case FilterActionBan:
-		req.BanType = ban.Banned
-		newBan, errBan = u.bans.Create(ctx, req)
-	case FilterActionKick:
-		// Kicks are temporary, so should be done by Player ID to avoid
-		// missing players who weren't in the latest state update
-		// (otherwise, kicking players very shortly after they connect
-		// will usually fail).
-		errBan = u.state.KickPlayerID(ctx, newWarning.PlayerID, newWarning.ServerID, newWarning.WarnReason.String())
-	}
-
-	if errBan != nil {
+	newWarning.MatchedFilter.TriggerCount++
+	if errBan := u.exceedHandler(ctx, newWarning); errBan != nil {
 		return errors.Join(errBan, ErrWarnActionApply)
 	}
-
-	newWarning.MatchedFilter.TriggerCount++
-
-	_, errSave := u.wordFilters.Edit(ctx, admin, newWarning.MatchedFilter.FilterID, newWarning.MatchedFilter)
-	if errSave != nil {
-		return errSave
-	}
-
-	if !u.pingDiscord {
-		return nil
-	}
-
-	u.notifications.Send(notification.NewDiscord(
-		u.config.Config().Discord.WordFilterLogChannelID,
-		WarningMessage(newWarning, newBan)))
 
 	return nil
 }

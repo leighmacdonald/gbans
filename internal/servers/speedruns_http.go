@@ -6,21 +6,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type speedrunHandler struct {
-	speedruns Speedruns
-	config    *config.Configuration
+	Speedruns
 }
 
-func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, authenticator httphelper.Authenticator, config *config.Configuration, serversUC Servers, sentryDSN string) {
-	handler := speedrunHandler{
-		speedruns: speedruns,
-		config:    config,
-	}
+func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, authenticator httphelper.Authenticator, serversUC Servers, sentryDSN string) {
+	handler := speedrunHandler{Speedruns: speedruns}
 
 	guestGroup := engine.Group("/")
 	{
@@ -47,7 +42,7 @@ func (s *speedrunHandler) postSpeedrun() gin.HandlerFunc {
 			return
 		}
 
-		speedrun, errSpeedrun := s.speedruns.Save(ctx, sr)
+		speedrun, errSpeedrun := s.Save(ctx, sr)
 		if errSpeedrun != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSpeedrun, httphelper.ErrInternal)))
 
@@ -83,7 +78,7 @@ func (s *speedrunHandler) getByMap() gin.HandlerFunc {
 			return
 		}
 
-		runs, errRuns := s.speedruns.ByMap(ctx, query.MapName)
+		runs, errRuns := s.ByMap(ctx, query.MapName)
 		if errRuns != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errRuns, httphelper.ErrInternal)))
 
@@ -101,7 +96,7 @@ func (s *speedrunHandler) getSpeedrun() gin.HandlerFunc {
 			return
 		}
 
-		speedrun, errSpeedrun := s.speedruns.ByID(ctx, speedrunID)
+		speedrun, errSpeedrun := s.ByID(ctx, speedrunID)
 		if errSpeedrun != nil {
 			if errors.Is(errSpeedrun, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
@@ -128,7 +123,7 @@ func (s *speedrunHandler) getRecentChanges() gin.HandlerFunc {
 			return
 		}
 
-		top, errTop := s.speedruns.Recent(ctx, query.Count)
+		top, errTop := s.Recent(ctx, query.Count)
 		if errTop != nil {
 			if errors.Is(errTop, ErrValueOutOfRange) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, ErrValueOutOfRange))
@@ -155,7 +150,7 @@ func (s *speedrunHandler) getOverallTopN() gin.HandlerFunc {
 			return
 		}
 
-		top, errTop := s.speedruns.TopNOverall(ctx, query.Count)
+		top, errTop := s.TopNOverall(ctx, query.Count)
 		if errTop != nil {
 			if errors.Is(errTop, ErrValueOutOfRange) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, ErrValueOutOfRange))

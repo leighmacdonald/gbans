@@ -26,6 +26,12 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 )
 
+type Config struct {
+	Enabled   bool   `json:"enabled"`
+	CachePath string `json:"cache_path"`
+	Token     string `json:"token"`
+}
+
 const downloadURL = "https://www.ip2location.com/download/?token=%s&file=%s"
 
 type databaseName string

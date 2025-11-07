@@ -1,11 +1,11 @@
 package chat_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/tests"
@@ -16,12 +16,12 @@ func TestFilters(t *testing.T) {
 	var (
 		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		router        = fixture.CreateRouter()
-		bans          = ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
-		wordfilters   = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewNullNotifications(), fixture.Config)
-		chats         = chat.NewChat(chat.NewRepository(fixture.Database), fixture.Config, wordfilters, bans, fixture.Persons, notification.NewNullNotifications())
+		wordfilters   = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewNullNotifications(), fixture.Config.Config().Filters)
+		chats         = chat.NewChat(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, wordfilters,
+			fixture.Persons, notification.NewNullNotifications(), func(ctx context.Context, warning chat.NewUserWarning) error { return nil })
 	)
 
-	chat.NewWordFilterHandler(router, fixture.Config, wordfilters, chats, authenticator)
+	chat.NewWordFilterHandler(router, fixture.Config.Config().Filters, wordfilters, chats, authenticator)
 
 	// Make sure none exist yet
 	require.Empty(t, tests.GetGOK[[]chat.Filter](t, router, "/api/filters"))

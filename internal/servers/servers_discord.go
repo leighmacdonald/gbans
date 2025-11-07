@@ -11,7 +11,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -19,8 +18,8 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func RegisterDiscordCommands(bot *bot.Bot, state *state.State, persons person.Provider, servers Servers, network network.Networks, config config.Config) {
-	handler := DiscordHandler{state: state, persons: persons, servers: servers, network: network, config: config}
+func RegisterDiscordCommands(bot *bot.Bot, state *state.State, persons person.Provider, servers Servers, network network.Networks) {
+	handler := DiscordHandler{state: state, persons: persons, servers: servers, network: network}
 
 	bot.MustRegisterHandler("find", &discordgo.ApplicationCommand{
 		Name:                     "find",
@@ -155,7 +154,6 @@ type DiscordHandler struct {
 	persons person.Provider
 	servers Servers
 	network network.Networks
-	config  config.Config
 }
 
 func NewDiscordHandler(state *state.State) *DiscordHandler {
@@ -279,7 +277,7 @@ func (d DiscordHandler) onPSay(ctx context.Context, _ *discordgo.Session, intera
 }
 
 func (d DiscordHandler) onServers(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	return discordServersMessage(d.state.SortRegion(), d.config.ExtURLRaw("/servers")), nil
+	return discordServersMessage(d.state.SortRegion(), "/servers"), nil // FIXME external url
 }
 
 func (d DiscordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {

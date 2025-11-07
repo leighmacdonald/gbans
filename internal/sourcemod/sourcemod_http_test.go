@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -271,6 +271,6 @@ func testCheck(router *gin.Engine, authenticator *tests.StaticAuth) func(t *test
 			Name:     stringutil.SecureRandomString(12),
 		}
 		resp := tests.GetGOK[sourcemod.CheckResponse](t, router, "/api/sm/check", req)
-		require.Equal(t, ban.OK, resp.BanType)
+		require.Equal(t, bantype.OK, resp.BanType)
 	}
 }

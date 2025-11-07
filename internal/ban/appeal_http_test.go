@@ -7,6 +7,8 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/ban/bantype"
+	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/tests"
@@ -18,13 +20,15 @@ import (
 
 func TestHTTPAppeal(t *testing.T) {
 	var (
-		router  = fixture.CreateRouter()
-		bans    = ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
+		router = fixture.CreateRouter()
+		bans   = ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
+			fixture.Config.Config().Discord.BanLogChannelID,
+			steamid.New(fixture.Config.Config().Owner), nil, notification.NewNullNotifications())
 		persons = person.NewPersons(
-			person.NewRepository(fixture.Config.Config(), fixture.Database),
+			person.NewRepository(fixture.Database, true),
 			steamid.New(tests.OwnerSID),
 			fixture.TFApi)
-		appeals = ban.NewAppeals(ban.NewAppealRepository(fixture.Database), bans, persons, fixture.Config, notification.NewNullNotifications())
+		appeals = ban.NewAppeals(ban.NewAppealRepository(fixture.Database), bans, persons, notification.NewNullNotifications())
 		target  = steamid.RandSID64()
 	)
 
@@ -34,7 +38,7 @@ func TestHTTPAppeal(t *testing.T) {
 
 	testBan, errTestBan := bans.Create(t.Context(), ban.Opts{
 		SourceID: tests.OwnerSID, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),
-		BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
+		BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 	})
 
 	require.NoError(t, errTestBan)

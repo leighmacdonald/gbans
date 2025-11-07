@@ -8,11 +8,19 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/fs"
+	"github.com/leighmacdonald/gbans/internal/log"
+	"github.com/leighmacdonald/gbans/internal/network/ip2location"
+	"github.com/leighmacdonald/gbans/internal/network/scp"
+	"github.com/leighmacdonald/gbans/internal/patreon"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/testcontainers/testcontainers-go"
@@ -185,14 +193,14 @@ func TestConfig(dsn string) *config.Configuration {
 			ChatlogsEnabled: true,
 			DemosEnabled:    true,
 		},
-		Demo: config.Demo{
+		Demo: servers.DemoConfig{
 			DemoCleanupEnabled:  false,
 			DemoCleanupStrategy: "",
 			DemoCleanupMinPct:   0,
 			DemoCleanupMount:    "",
 			DemoCountLimit:      2,
 		},
-		Filters: config.Filter{
+		Filters: chat.Config{
 			Enabled:        true,
 			WarningTimeout: 10,
 			WarningLimit:   1,
@@ -202,25 +210,25 @@ func TestConfig(dsn string) *config.Configuration {
 			CheckTimeout:   10,
 			MatchTimeout:   10,
 		},
-		Discord: config.Discord{
+		Discord: discord.Config{
 			Enabled: false,
 		},
 		Clientprefs: config.Clientprefs{},
-		Log: config.Log{
+		Log: log.Config{
 			HTTPEnabled: false,
 			Level:       "error",
 		},
-		GeoLocation: config.IP2Location{
+		GeoLocation: ip2location.Config{
 			Enabled: false,
 		},
 		Debug: config.Debug{},
-		Patreon: config.Patreon{
+		Patreon: patreon.Config{
 			Enabled: false,
 		},
-		SSH: config.SSH{
+		SSH: scp.Config{
 			Enabled: false,
 		},
-		LocalStore: config.LocalStore{},
+		LocalStore: asset.Config{},
 		Exports:    config.Exports{},
 	}))
 }

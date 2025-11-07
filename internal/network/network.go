@@ -10,11 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/ip2location"
+	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -30,6 +29,14 @@ var (
 	ErrNetworkProxyUnknown          = errors.New("no proxy record")
 	ErrMissingParam                 = errors.New("failed to request at least one required parameter")
 )
+
+type Config struct {
+	SDREnabled    bool   `mapstructure:"sdr_enabled" json:"sdr_enabled"`
+	SDRDNSEnabled bool   `mapstructure:"sdr_dns_enabled" json:"sdr_dns_enabled"` // nolint:tagliatelle
+	CFKey         string `mapstructure:"cf_key" json:"cf_key"`
+	CFEmail       string `mapstructure:"cf_email" json:"cf_email"`
+	CFZoneID      string `mapstructure:"cf_zone_id" json:"cf_zone_id"`
+}
 
 // PersonIPRecord holds a composite result of the more relevant ip2location results.
 type PersonIPRecord struct {
@@ -113,18 +120,21 @@ type Proxy struct {
 }
 
 type Networks struct {
+	Config
+
+	geoConf    ip2location.Config
 	repository Repository
-	config     *config.Configuration
 	eb         *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 func NewNetworks(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository Repository, config *config.Configuration,
+	repository Repository, config Config, geoConf ip2location.Config,
 ) Networks {
 	return Networks{
+		Config:     config,
 		repository: repository,
 		eb:         broadcaster,
-		config:     config,
+		geoConf:    geoConf,
 	}
 }
 
@@ -186,8 +196,7 @@ func (u Networks) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]ASN, e
 }
 
 func (u Networks) importDatabase(ctx context.Context, dbName ip2location.DatabaseFile) error {
-	conf := u.config.Config()
-	filePath := path.Join(conf.GeoLocation.CachePath, string(dbName))
+	filePath := path.Join(u.geoConf.CachePath, string(dbName))
 
 	switch dbName {
 	case ip2location.GeoDatabaseLocationFile4:
@@ -202,9 +211,7 @@ func (u Networks) importDatabase(ctx context.Context, dbName ip2location.Databas
 }
 
 func (u Networks) RefreshLocationData(ctx context.Context) error {
-	conf := u.config.Config()
-
-	if errUpdate := ip2location.Update(ctx, conf.GeoLocation.CachePath, conf.GeoLocation.Token); errUpdate != nil {
+	if errUpdate := ip2location.Update(ctx, u.geoConf.CachePath, u.geoConf.Token); errUpdate != nil {
 		return errUpdate
 	}
 

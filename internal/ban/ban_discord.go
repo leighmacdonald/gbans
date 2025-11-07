@@ -10,6 +10,8 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
+	"github.com/leighmacdonald/gbans/internal/ban/bantype"
+	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/datetime"
@@ -30,20 +32,20 @@ type discordHandler struct {
 func RegisterDiscordCommands(bot *bot.Bot, bans Bans) {
 	var (
 		reasons = []*discordgo.ApplicationCommandOptionChoice{
-			{Name: External.String(), Value: External},
-			{Name: Cheating.String(), Value: Cheating},
-			{Name: Racism.String(), Value: Racism},
-			{Name: Harassment.String(), Value: Harassment},
-			{Name: Exploiting.String(), Value: Exploiting},
-			{Name: WarningsExceeded.String(), Value: WarningsExceeded},
-			{Name: Spam.String(), Value: Spam},
-			{Name: Language.String(), Value: Language},
-			{Name: Profile.String(), Value: Profile},
-			{Name: ItemDescriptions.String(), Value: ItemDescriptions},
-			{Name: BotHost.String(), Value: BotHost},
-			{Name: Evading.String(), Value: Evading},
-			{Name: Username.String(), Value: Username},
-			{Name: Custom.String(), Value: Custom},
+			{Name: reason.External.String(), Value: reason.External},
+			{Name: reason.Cheating.String(), Value: reason.Cheating},
+			{Name: reason.Racism.String(), Value: reason.Racism},
+			{Name: reason.Harassment.String(), Value: reason.Harassment},
+			{Name: reason.Exploiting.String(), Value: reason.Exploiting},
+			{Name: reason.WarningsExceeded.String(), Value: reason.WarningsExceeded},
+			{Name: reason.Spam.String(), Value: reason.Spam},
+			{Name: reason.Language.String(), Value: reason.Language},
+			{Name: reason.Profile.String(), Value: reason.Profile},
+			{Name: reason.ItemDescriptions.String(), Value: reason.ItemDescriptions},
+			{Name: reason.BotHost.String(), Value: reason.BotHost},
+			{Name: reason.Evading.String(), Value: reason.Evading},
+			{Name: reason.Username.String(), Value: reason.Username},
+			{Name: reason.Custom.String(), Value: reason.Custom},
 		}
 
 		optBanReason = &discordgo.ApplicationCommandOption{
@@ -191,8 +193,8 @@ func (h discordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 		Origin:     Bot,
 		SourceID:   author.SteamID,
 		TargetID:   steamid.New(opts.String(discord.OptUserIdentifier)),
-		BanType:    NoComm,
-		Reason:     Reason(reasonValueOpt.IntValue()),
+		BanType:    bantype.NoComm,
+		Reason:     reason.Reason(reasonValueOpt.IntValue()),
 		ReasonText: "",
 		Note:       opts[discord.OptNote].StringValue(),
 	}
@@ -225,8 +227,8 @@ func (h discordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 		Origin:     Bot,
 		SourceID:   author.SteamID,
 		TargetID:   steamid.New(opts[discord.OptUserIdentifier].StringValue()),
-		BanType:    Banned,
-		Reason:     Reason(opts[discord.OptBanReason].IntValue()),
+		BanType:    bantype.Banned,
+		Reason:     reason.Reason(opts[discord.OptBanReason].IntValue()),
 		ReasonText: "",
 		Note:       opts[discord.OptNote].StringValue(),
 	}
@@ -361,9 +363,9 @@ func CheckMessage(player person.Core, banPerson Ban, banURL string, author perso
 
 	if banPerson.BanID > 0 {
 		switch banPerson.BanType {
-		case Banned:
+		case bantype.Banned:
 			title += " (BANNED)"
-		case NoComm:
+		case bantype.NoComm:
 			title += " (MUTED)"
 		}
 	}
@@ -399,7 +401,7 @@ func CheckMessage(player person.Core, banPerson Ban, banURL string, author perso
 		numMutes, numBans := 0, 0
 
 		for _, oldBan := range oldBans {
-			if oldBan.BanType == Banned {
+			if oldBan.BanType == bantype.Banned {
 				numBans++
 			} else {
 				numMutes++
@@ -421,8 +423,8 @@ func CheckMessage(player person.Core, banPerson Ban, banURL string, author perso
 	)
 
 	if banPerson.BanID > 0 {
-		banned = banPerson.BanType == Banned
-		muted = banPerson.BanType == NoComm
+		banned = banPerson.BanType == bantype.Banned
+		muted = banPerson.BanType == bantype.NoComm
 		reason := banPerson.ReasonText
 
 		if len(reason) == 0 {
@@ -570,7 +572,7 @@ func SilenceEmbed(target person.Info) *discordgo.MessageEmbed {
 
 func ExpiredMessage(inBan Ban, person person.Info, banURL string) *discordgo.MessageEmbed {
 	banType := "Ban"
-	if inBan.BanType == NoComm {
+	if inBan.BanType == bantype.NoComm {
 		banType = "Mute"
 	}
 
@@ -585,7 +587,7 @@ func ExpiredMessage(inBan Ban, person person.Info, banURL string) *discordgo.Mes
 
 	msgEmbed.AddFieldsSteamID(person.GetSteamID())
 
-	if inBan.BanType == NoComm {
+	if inBan.BanType == bantype.NoComm {
 		msgEmbed.Embed().SetColor(discord.ColourWarn)
 	}
 
@@ -598,7 +600,7 @@ func CreateResponse(banSteam Ban) *discordgo.MessageEmbed {
 		colour int
 	)
 
-	if banSteam.BanType == NoComm {
+	if banSteam.BanType == bantype.NoComm {
 		title = fmt.Sprintf("User Muted (#%d)", banSteam.BanID)
 		colour = discord.ColourWarn
 	} else {

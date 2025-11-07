@@ -15,7 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/ip2location"
+	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/maruel/natural"
 )

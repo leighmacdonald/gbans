@@ -7,6 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
@@ -22,12 +23,12 @@ func TestReport(t *testing.T) {
 		// br     = ban.NewRepository(fixture.Database, fixture.Persons)
 		// bans    = ban.NewBans(br, fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
 		persons = person.NewPersons(
-			person.NewRepository(fixture.Config.Config(), fixture.Database),
+			person.NewRepository(fixture.Database, true),
 			steamid.New(tests.OwnerSID),
 			fixture.TFApi)
 		// appeals = ban.NewAppeals(ban.NewAppealRepository(fixture.Database), bans, persons, fixture.Config, notification.NewNullNotifications())
 		assets        = asset.NewAssets(asset.NewLocalRepository(fixture.Database, "./"))
-		demo          = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database), assets, fixture.Config)
+		demo          = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database), assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
 		reports       = ban.NewReports(ban.NewReportRepository(fixture.Database), fixture.Config, persons, demo, fixture.TFApi, notification.NewNullNotifications())
 		moderator     = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)
 		reporter      = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.User)
@@ -43,7 +44,7 @@ func TestReport(t *testing.T) {
 		SourceID:        reporter.SteamID,
 		TargetID:        target.SteamID,
 		Description:     stringutil.SecureRandomString(100),
-		Reason:          ban.Cheating,
+		Reason:          reason.Cheating,
 		ReasonText:      "",
 		DemoID:          0,
 		DemoTick:        0,
