@@ -12,10 +12,9 @@ import (
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/pkg/datetime"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
@@ -275,7 +274,7 @@ func (h discordHandler) onUnban(ctx context.Context, _ *discordgo.Session, inter
 
 	user, errUser := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errUser != nil {
-		slog.Warn("Could not fetch unbanned Person", slog.String("steam_id", steamID.String()), log.ErrAttr(errUser))
+		slog.Warn("Could not fetch unbanned Person", slog.String("steam_id", steamID.String()), slog.String("error", errUser.Error()))
 	}
 
 	return UnbanMessage("/FIXME", user), nil
@@ -298,7 +297,7 @@ func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 	bans, errGetBanBySID := h.bans.QueryOne(ctx, QueryOpts{EvadeOk: true, TargetID: sid})
 	if errGetBanBySID != nil {
 		if !errors.Is(errGetBanBySID, database.ErrNoResult) {
-			slog.Error("Failed to get ban by steamid", log.ErrAttr(errGetBanBySID))
+			slog.Error("Failed to get ban by steamid", slog.String("error", errGetBanBySID.Error()))
 
 			return nil, discord.ErrCommandFailed
 		}
@@ -307,7 +306,7 @@ func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 	oldBans, errOld := h.bans.Query(ctx, QueryOpts{})
 	if errOld != nil {
 		if !errors.Is(errOld, database.ErrNoResult) {
-			slog.Error("Failed to fetch old bans", log.ErrAttr(errOld))
+			slog.Error("Failed to fetch old bans", slog.String("error", errOld.Error()))
 		}
 	}
 
@@ -332,7 +331,7 @@ func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 		if bans.SourceID.Valid() {
 			ap, errGetProfile := h.persons.GetOrCreatePersonBySteamID(ctx, bans.SourceID)
 			if errGetProfile != nil {
-				slog.Error("Failed to load author for ban", log.ErrAttr(errGetProfile))
+				slog.Error("Failed to load author for ban", slog.String("error", errGetProfile.Error()))
 			} else {
 				authorProfile = ap
 			}

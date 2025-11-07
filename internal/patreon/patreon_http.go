@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type patreonHandler struct {
@@ -85,7 +84,7 @@ func (h patreonHandler) onOAuth() gin.HandlerFunc {
 		}
 
 		if err := h.patreon.OnOauthLogin(ctx, state, grantCode); err != nil {
-			slog.Error("Failed to handle oauth login", log.ErrAttr(err))
+			slog.Error("Failed to handle oauth login", slog.String("error", err.Error()))
 		} else {
 			slog.Debug("Successfully authenticated user over patreon")
 		}

@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/sync/errgroup"
@@ -271,10 +270,10 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 
 	if person.Expired() {
 		if err := UpdatePlayerSummary(ctx, &person, u.tfAPI); err != nil {
-			slog.Error("Failed to update player summary", log.ErrAttr(err))
+			slog.Error("Failed to update player summary", slog.String("error", err.Error()))
 		} else {
 			if errSave := u.Save(ctx, &person); errSave != nil {
-				slog.Error("Failed to save person summary", log.ErrAttr(errSave))
+				slog.Error("Failed to save person summary", slog.String("error", errSave.Error()))
 			}
 		}
 	}

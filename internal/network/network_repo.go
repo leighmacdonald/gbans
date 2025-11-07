@@ -13,8 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
-	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/internal/ip2location"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -170,7 +169,7 @@ func (r Repository) AddConnectionHistory(ctx context.Context, conn *PersonConnec
 	// Maybe ignore these and wait for connect call to create?
 	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, conn.SteamID)
 	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
-		slog.Error("Failed to fetch connecting person", slog.String("steam_id", conn.SteamID.String()), log.ErrAttr(errPerson))
+		slog.Error("Failed to fetch connecting person", slog.String("steam_id", conn.SteamID.String()), slog.String("error", errPerson.Error()))
 
 		return errPerson
 	}

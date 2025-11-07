@@ -11,8 +11,7 @@ import (
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/pkg/fs"
-	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/internal/fs"
 )
 
 func AddRoutes(engine *gin.Engine, root string) error {
@@ -30,7 +29,7 @@ func AddRoutes(engine *gin.Engine, root string) error {
 		engine.GET(rt, func(ctx *gin.Context) {
 			indexData, errIndex := os.ReadFile(path.Join(root, "index.html"))
 			if errIndex != nil {
-				slog.Error("failed to open index.html", log.ErrAttr(errIndex))
+				slog.Error("failed to open index.html", slog.String("error", errIndex.Error()))
 			}
 
 			ctx.Data(http.StatusOK, "text/html", indexData)

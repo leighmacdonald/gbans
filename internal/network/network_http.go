@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type NetworkHandler struct { //nolint:revive
@@ -43,7 +42,7 @@ func (h NetworkHandler) onAPIGetUpdateDB() gin.HandlerFunc {
 				updateInProgress.Store(true)
 
 				if err := h.networks.RefreshLocationData(ctx); err != nil {
-					slog.Error("Failed to update location data", log.ErrAttr(err))
+					slog.Error("Failed to update location data", slog.String("error", err.Error()))
 				}
 
 				updateInProgress.Store(false)

@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/servers/state"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 var (
@@ -95,7 +94,7 @@ func (c *ChangeDetector) sync(ctx context.Context) error {
 		curHostState, found := c.current[server.ServerID]
 		if !found || !curHostState.idAddr.Equal(currentIP) {
 			if err := c.provider.Update(ctx, currentIP, server.Address); err != nil && !errors.Is(err, errNoChange) {
-				slog.Error("Failed to update DNS record", slog.Int("server_id", server.ServerID), log.ErrAttr(err))
+				slog.Error("Failed to update DNS record", slog.Int("server_id", server.ServerID), slog.String("error", err.Error()))
 
 				continue
 			}
@@ -133,7 +132,7 @@ func (c *ChangeDetector) Start(ctx context.Context, updateFrequency time.Duratio
 		case <-ticker.C:
 			c.currentState = c.state.Current()
 			if err := c.sync(ctx); err != nil {
-				slog.Error("Failed to update DNS record", log.ErrAttr(err))
+				slog.Error("Failed to update DNS record", slog.String("error", err.Error()))
 			}
 		case <-ctx.Done():
 			return

@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -41,7 +40,7 @@ func NewMetrics(broadcaster *broadcaster.Broadcaster[logparse.EventType, logpars
 func (u Metrics) Start(ctx context.Context) {
 	eventChan := make(chan logparse.ServerEvent)
 	if errRegister := u.eb.Consume(eventChan); errRegister != nil {
-		slog.Error("Failed to register event consumer", log.ErrAttr(errRegister))
+		slog.Error("Failed to register event consumer", slog.String("error", errRegister.Error()))
 
 		return
 	}

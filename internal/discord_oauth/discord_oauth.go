@@ -12,9 +12,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/json"
-	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/oauth"
+	"github.com/leighmacdonald/gbans/internal/json"
+	"github.com/leighmacdonald/gbans/internal/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -79,7 +78,7 @@ func (d DiscordOAuth) RefreshTokens(ctx context.Context) error {
 			return nil
 		}
 
-		slog.Error("Failed to fetch old discord auth tokens", log.ErrAttr(errOld))
+		slog.Error("Failed to fetch old discord auth tokens", slog.String("error", errOld.Error()))
 
 		return errOld
 	}
@@ -92,7 +91,7 @@ func (d DiscordOAuth) RefreshTokens(ctx context.Context) error {
 		}
 
 		if err := d.repository.SaveTokens(ctx, newCreds); err != nil {
-			slog.Error("Failed to save refresh tokens", log.ErrAttr(err))
+			slog.Error("Failed to save refresh tokens", slog.String("error", err.Error()))
 
 			return err
 		}

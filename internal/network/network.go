@@ -14,9 +14,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -132,7 +131,7 @@ func NewNetworks(broadcaster *broadcaster.Broadcaster[logparse.EventType, logpar
 func (u Networks) Start(ctx context.Context) {
 	serverEventChan := make(chan logparse.ServerEvent)
 	if errRegister := u.eb.Consume(serverEventChan, logparse.Connected); errRegister != nil {
-		slog.Warn("logWriter Tried to register duplicate reader channel", log.ErrAttr(errRegister))
+		slog.Warn("logWriter Tried to register duplicate reader channel", slog.String("error", errRegister.Error()))
 
 		return
 	}
@@ -170,7 +169,7 @@ func (u Networks) Start(ctx context.Context) {
 
 			lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 			if errChat := u.repository.AddConnectionHistory(lCtx, &conn); errChat != nil {
-				slog.Error("Failed to add connection history", log.ErrAttr(errChat))
+				slog.Error("Failed to add connection history", slog.String("error", errChat.Error()))
 			}
 
 			cancel()
@@ -242,7 +241,7 @@ func (u Networks) QueryConnectionHistory(ctx context.Context, opts ConnectionHis
 
 		_, network, errNetwork := net.ParseCIDR(opts.CIDR)
 		if errNetwork != nil {
-			slog.Error("Received malformed CIDR", log.ErrAttr(errNetwork))
+			slog.Error("Received malformed CIDR", slog.String("error", errNetwork.Error()))
 
 			return nil, 0, ErrInvalidCIDR
 		}

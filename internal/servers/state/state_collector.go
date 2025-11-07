@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v4/extra"
 )
@@ -83,7 +82,7 @@ func (c *Collector) ExecRaw(ctx context.Context, addr string, password string, c
 	}
 
 	if errClose := conn.Close(); errClose != nil {
-		slog.Error("Could not close rcon connection", log.ErrAttr(errClose))
+		slog.Error("Could not close rcon connection", slog.String("error", errClose.Error()))
 	}
 
 	return resp, nil
@@ -205,7 +204,7 @@ func (c *Collector) setServerConfigs(ctx context.Context, configs []ServerConfig
 
 			addr, errResolve := ResolveIP(ctx, cfg.Host)
 			if errResolve != nil {
-				slog.Warn("Failed to resolve server ip", slog.String("addr", addr), log.ErrAttr(errResolve))
+				slog.Warn("Failed to resolve server ip", slog.String("addr", addr), slog.String("error", errResolve.Error()))
 				addr = cfg.Host
 			}
 
@@ -361,7 +360,7 @@ func (c *Collector) startStatus(ctx context.Context) {
 
 					maxVisible, errMaxVisible := c.maxVisiblePlayers(lCtx, conf.ServerID)
 					if errMaxVisible != nil {
-						slog.Warn("Got invalid max players value", log.ErrAttr(errMaxVisible), slog.Int("server_id", conf.ServerID))
+						slog.Warn("Got invalid max players value", slog.String("error", errMaxVisible.Error()), slog.Int("server_id", conf.ServerID))
 					}
 
 					c.onStatusUpdate(conf, status, maxVisible)
@@ -390,7 +389,7 @@ func (c *Collector) startStatus(ctx context.Context) {
 func (c *Collector) updateServerConfigs(ctx context.Context) {
 	servers, errServers := c.servers(ctx)
 	if errServers != nil && !errors.Is(errServers, database.ErrNoResult) {
-		slog.Error("Failed to fetch servers, cannot update State", log.ErrAttr(errServers))
+		slog.Error("Failed to fetch servers, cannot update State", slog.String("error", errServers.Error()))
 
 		return
 	}

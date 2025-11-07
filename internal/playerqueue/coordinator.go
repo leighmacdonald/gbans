@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -40,7 +39,7 @@ func New(chatLogHistorySize int, minQueueSize int, chatlogs []ChatLog, currentSt
 func (q *Coordinator) updateState() {
 	lobbies, errUpdate := q.validLobbies()
 	if errUpdate != nil {
-		slog.Error("Failed to update state", log.ErrAttr(errUpdate))
+		slog.Error("Failed to update state", slog.String("error", errUpdate.Error()))
 
 		return
 	}
@@ -48,7 +47,7 @@ func (q *Coordinator) updateState() {
 	q.replaceLobbies(lobbies)
 
 	if err := q.checkQueueCompat(); err != nil {
-		slog.Error("Failed to check queue compatibility", log.ErrAttr(err))
+		slog.Error("Failed to check queue compatibility", slog.String("error", err.Error()))
 	}
 }
 
@@ -359,7 +358,7 @@ func (q *Coordinator) Disconnect(client Client) {
 	q.mu.RUnlock()
 
 	if err := q.Leave(client, serverIDs); err != nil {
-		slog.Warn("Error leaving server queue", log.ErrAttr(err))
+		slog.Warn("Error leaving server queue", slog.String("error", err.Error()))
 	}
 
 	q.mu.Lock()

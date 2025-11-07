@@ -14,9 +14,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
+	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 

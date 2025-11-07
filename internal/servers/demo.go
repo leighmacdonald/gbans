@@ -21,10 +21,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
+	"github.com/leighmacdonald/gbans/internal/fs"
+	"github.com/leighmacdonald/gbans/internal/json"
+	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
-	"github.com/leighmacdonald/gbans/pkg/fs"
-	"github.com/leighmacdonald/gbans/pkg/json"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/ricochet2200/go-disk-usage/du"
 	"github.com/viant/afs/option"
@@ -166,7 +166,7 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 		demoDir := server.GamePath(instance, "tf/stv_demos/complete/")
 		filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
 		if errFilelist != nil {
-			slog.Error("remote list dir failed", log.ErrAttr(errFilelist),
+			slog.Error("remote list dir failed", slog.String("error", errFilelist.Error()),
 				slog.String("server", instance.ShortName), slog.String("path", demoDir))
 
 			return nil //nolint:nilerr
@@ -200,14 +200,14 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 
 			if errDemo := d.onDemoReceived(ctx, demo); errDemo != nil {
 				if !errors.Is(errDemo, asset.ErrAssetTooLarge) {
-					slog.Error("Failed to create new demo asset", log.ErrAttr(errDemo))
+					slog.Error("Failed to create new demo asset", slog.String("error", errDemo.Error()))
 
 					continue
 				}
 			}
 
 			if errDelete := client.Delete(ctx, demoPath); errDelete != nil {
-				slog.Error("Failed to cleanup demo", log.ErrAttr(errDelete), slog.String("path", demoPath))
+				slog.Error("Failed to cleanup demo", slog.String("error", errDelete.Error()), slog.String("path", demoPath))
 			}
 
 			slog.Info("Deleted demo on remote host", slog.String("path", demoPath))
@@ -234,7 +234,7 @@ func (d Demos) MarkArchived(ctx context.Context, demo *DemoFile) error {
 	demo.Archive = true
 
 	if err := d.repository.SaveDemo(ctx, demo); err != nil {
-		slog.Error("Failed to mark demo as archived", log.ErrAttr(err), slog.Int64("demo_id", demo.DemoID))
+		slog.Error("Failed to mark demo as archived", slog.String("error", err.Error()), slog.Int64("demo_id", demo.DemoID))
 	}
 
 	slog.Debug("Demo marked as archived", slog.Int64("demo_id", demo.DemoID))
@@ -307,7 +307,7 @@ func (d Demos) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64
 		// FIXME cascade delete does not work????
 		demoSize, errDrop := d.asset.Delete(ctx, demo.AssetID)
 		if errDrop != nil && !errors.Is(errDrop, asset.ErrDeleteAssetFile) {
-			slog.Error("Failed to remove demo asset", log.ErrAttr(errDrop),
+			slog.Error("Failed to remove demo asset", slog.String("error", errDrop.Error()),
 				slog.String("bucket", string(d.bucket)), slog.String("name", demo.Title))
 
 			continue
@@ -317,7 +317,7 @@ func (d Demos) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64
 			slog.Error("Failed to remove demo entry",
 				slog.Int64("demo_id", demo.DemoID),
 				slog.String("asset_id", demo.AssetID.String()),
-				log.ErrAttr(err))
+				slog.String("error", err.Error()))
 		}
 
 		size += demoSize
@@ -358,7 +358,7 @@ func (d Demos) Cleanup(ctx context.Context) {
 	slog.Debug("Old demos flushed", slog.Int("count", count), slog.String("size", humanize.Bytes(uint64(size)))) //nolint:gosec
 
 	if errOrphans := d.RemoveOrphans(ctx); errOrphans != nil {
-		slog.Error("Failed to execute orphans", log.ErrAttr(errOrphans))
+		slog.Error("Failed to execute orphans", slog.String("error", errOrphans.Error()))
 	}
 }
 
@@ -527,13 +527,13 @@ func (d Demos) RemoveOrphans(ctx context.Context) error {
 		}
 
 		if _, err := d.asset.Delete(ctx, demo.AssetID); err != nil {
-			slog.Error("Failed to remove orphan demo asset", log.ErrAttr(err))
+			slog.Error("Failed to remove orphan demo asset", slog.String("error", err.Error()))
 
 			continue
 		}
 
 		if err := d.repository.Delete(ctx, demo.DemoID); err != nil {
-			slog.Error("Failed to remove orphan demo entry", log.ErrAttr(err))
+			slog.Error("Failed to remove orphan demo entry", slog.String("error", err.Error()))
 
 			continue
 		}

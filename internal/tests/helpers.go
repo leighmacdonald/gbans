@@ -12,7 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/pkg/fs"
+	"github.com/leighmacdonald/gbans/internal/fs"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/testcontainers/testcontainers-go"

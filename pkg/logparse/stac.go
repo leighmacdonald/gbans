@@ -214,7 +214,9 @@ func (p StacParser) parseDetection(line string) Detection {
 
 // parseFileName transforms the log filename (eg: stac_052224.log) into a time.Time.
 func (p StacParser) parseFileName(logName string) (time.Time, error) {
-	value, errParse := time.Parse("stac_010206.log", logName)
+	const timeFmt = "stac_010206.log"
+
+	value, errParse := time.Parse(timeFmt, logName)
 	if errParse != nil {
 		return time.Time{}, errors.Join(errParse, ErrParseFileName)
 	}

@@ -23,7 +23,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 )
 
@@ -335,7 +334,7 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 			}
 
 			if errDownload := downloadDatabase(param); errDownload != nil {
-				slog.Error("Failed to download geo database", log.ErrAttr(errDownload))
+				slog.Error("Failed to download geo database", slog.String("error", errDownload.Error()))
 			}
 		}(param)
 	}

@@ -15,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/yohcop/openid-go"
 )
@@ -50,7 +49,6 @@ func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Con
 
 func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 	var (
-		handlerName    = log.HandlerName(1)
 		nonceStore     = openid.NewSimpleNonceStore()
 		discoveryCache = &noOpDiscoveryCache{}
 		oidRx          = regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
@@ -68,7 +66,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			values, errParse := url.Parse(fullURL)
 			if errParse != nil {
 				ctx.Redirect(302, referralURL)
-				slog.Error("Failed to parse url", log.ErrAttr(errParse), handlerName)
+				slog.Error("Failed to parse url", slog.String("error", errParse.Error()))
 
 				return
 			}
@@ -78,7 +76,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			openID, errVerify := openid.Verify(fullURL, discoveryCache, nonceStore)
 			if errVerify != nil {
 				ctx.Redirect(302, referralURL)
-				slog.Error("Error verifying openid auth response", log.ErrAttr(errVerify), handlerName)
+				slog.Error("Error verifying openid auth response", slog.String("error", errVerify.Error()))
 
 				return
 			}
@@ -89,7 +87,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		match := oidRx.FindStringSubmatch(idStr)
 		if match == nil || len(match) != 2 {
 			ctx.Redirect(302, referralURL)
-			slog.Error("Failed to match oid format provided", handlerName)
+			slog.Error("Failed to match oid format provided")
 
 			return
 		}
@@ -97,7 +95,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		sid := steamid.New(match[1])
 		if !sid.Valid() {
 			ctx.Redirect(302, referralURL)
-			slog.Error("Received invalid steamid", handlerName)
+			slog.Error("Received invalid steamid")
 
 			return
 		}
@@ -108,15 +106,15 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		fetchedPerson, errPerson := h.persons.BySteamID(ctx, sid)
 		if errPerson != nil {
 			ctx.Redirect(302, referralURL)
-			slog.Error("Failed to create or load user profile", log.ErrAttr(errPerson), handlerName)
+			slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
 		}
 
 		if fetchedPerson.Expired() {
 			if errGetProfile := person.UpdatePlayerSummary(ctx, &fetchedPerson, h.tfAPI); errGetProfile != nil {
-				slog.Error("Failed to fetch user profile on login", log.ErrAttr(errGetProfile), handlerName)
+				slog.Error("Failed to fetch user profile on login", slog.String("error", errGetProfile.Error()))
 			} else {
 				if errSave := h.persons.Save(ctx, &fetchedPerson); errSave != nil {
-					slog.Error("Failed to save summary update", log.ErrAttr(errSave), handlerName)
+					slog.Error("Failed to save summary update", slog.String("error", errSave.Error()))
 				}
 			}
 		}
@@ -124,7 +122,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		token, errToken := h.authentication.MakeToken(ctx, conf.HTTPCookieKey, sid)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
-			slog.Error("Failed to create access token pair", log.ErrAttr(errToken), handlerName)
+			slog.Error("Failed to create access token pair", slog.String("error", errToken.Error()))
 
 			return
 		}
@@ -144,7 +142,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
 			ctx.Redirect(302, referralURL)
-			slog.Error("Failed to parse ext url", log.ErrAttr(errExternal), handlerName)
+			slog.Error("Failed to parse ext url", slog.String("error", errExternal.Error()))
 
 			return
 		}
@@ -171,7 +169,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		slog.Info("User logged in",
 			slog.String("sid64", sid.String()),
 			slog.String("name", fetchedPerson.PersonaName),
-			slog.Int("permission_level", int(fetchedPerson.PermissionLevel)), handlerName)
+			slog.Int("permission_level", int(fetchedPerson.PermissionLevel)))
 	}
 }
 

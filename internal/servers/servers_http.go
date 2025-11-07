@@ -15,9 +15,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/ip2location"
 	"github.com/leighmacdonald/gbans/internal/servers/state"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/maruel/natural"
 )
 
@@ -47,7 +46,7 @@ func MiddlewareServer(servers Servers, sentryDSN string) gin.HandlerFunc {
 
 		server, errServer := servers.GetByPassword(ctx, reqAuthHeader)
 		if errServer != nil {
-			slog.Error("Failed to load server during auth", log.ErrAttr(errServer), slog.String("token", reqAuthHeader), slog.String("IP", ctx.ClientIP()))
+			slog.Error("Failed to load server during auth", slog.String("error", errServer.Error()), slog.String("token", reqAuthHeader), slog.String("IP", ctx.ClientIP()))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return

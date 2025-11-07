@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type serverQueueHandler struct {
@@ -113,18 +112,18 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 				case errors.Is(err, context.Canceled):
 					return
 				case errors.Is(err, ErrQueueIO):
-					slog.Debug("Client connection error", slog.String("client", client.ID()), log.ErrAttr(ErrQueueIO))
+					slog.Debug("Client connection error", slog.String("client", client.ID()), slog.String("error", ErrQueueIO.Error()))
 
 					return
 				default:
-					slog.Error("Error trying to handle websocket message", log.ErrAttr(err))
+					slog.Error("Error trying to handle websocket message", slog.String("error", err.Error()))
 
 					return
 				}
 			}
 
 			if errHandler := h.handleRequest(ctx, client, request, currentUser); errHandler != nil {
-				slog.Error("Error trying to handle websocket request", log.ErrAttr(errHandler))
+				slog.Error("Error trying to handle websocket request", slog.String("error", errHandler.Error()))
 
 				continue
 			}

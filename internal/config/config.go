@@ -16,13 +16,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/pkg/datetime"
-	"github.com/leighmacdonald/gbans/pkg/json"
-	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/go-viper/mapstructure/v2"
+	"github.com/leighmacdonald/gbans/internal/datetime"
+	"github.com/leighmacdonald/gbans/internal/json"
+	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/mitchellh/go-homedir"
-	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )
 
@@ -300,13 +300,13 @@ func (c *Configuration) Init(ctx context.Context) error {
 
 func (c *Configuration) Write(ctx context.Context, config Config) error {
 	if err := c.repository.Write(ctx, config); err != nil {
-		slog.Error("Failed to write new config", log.ErrAttr(err))
+		slog.Error("Failed to write new config", slog.String("error", err.Error()))
 
 		return err
 	}
 
 	if errReload := c.Reload(ctx); errReload != nil {
-		slog.Error("Failed to reload config", log.ErrAttr(errReload))
+		slog.Error("Failed to reload config", slog.String("error", errReload.Error()))
 
 		return errReload
 	}
@@ -499,7 +499,7 @@ func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			slog.Error("Failed to close github releases body", log.ErrAttr(err))
+			slog.Error("Failed to close github releases body", slog.String("error", err.Error()))
 		}
 	}()
 

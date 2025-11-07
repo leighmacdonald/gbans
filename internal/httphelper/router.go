@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"github.com/leighmacdonald/gbans/frontend"
-	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	sloggin "github.com/samber/slog-gin"
 	"github.com/sosodev/duration"

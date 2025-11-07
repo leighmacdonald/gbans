@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -260,7 +259,7 @@ func (h Sourcemod) AddGroupOverride(ctx context.Context, groupID int, name strin
 		return override, err
 	}
 
-	slog.Info("Added group override", log.ErrAttr(err), slog.Int("group_id", groupID), slog.String("name", name))
+	slog.Info("Added group override", slog.Int("group_id", groupID), slog.String("name", name))
 
 	return override, nil
 }

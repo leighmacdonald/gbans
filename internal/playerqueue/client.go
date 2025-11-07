@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"go.uber.org/ratelimit"
 )
@@ -95,7 +94,7 @@ func (c *client) Start(ctx context.Context) {
 			return
 		case msg := <-c.responseChan:
 			if errWrite := c.conn.WriteJSON(msg); errWrite != nil {
-				slog.Error("Failed to send message to client", log.ErrAttr(errWrite))
+				slog.Error("Failed to send message to client", slog.String("string", errWrite.Error()))
 			}
 		}
 	}
@@ -104,6 +103,6 @@ func (c *client) Start(ctx context.Context) {
 func (c *client) Close() {
 	slog.Debug("Closing client connection", slog.String("addr", c.conn.RemoteAddr().String()))
 	if errClose := c.conn.Close(); errClose != nil {
-		slog.Warn("Error closing client connection", log.ErrAttr(errClose))
+		slog.Warn("Error closing client connection", slog.String("error", errClose.Error()))
 	}
 }

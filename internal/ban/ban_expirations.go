@@ -9,7 +9,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 func NewExpirationMonitor(steam Bans, person person.Provider, notifications notification.Notifier, config *config.Configuration,
@@ -32,7 +31,7 @@ type ExpirationMonitor struct {
 func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 	expiredBans, errExpiredBans := monitor.steam.Expired(ctx)
 	if errExpiredBans != nil && !errors.Is(errExpiredBans, database.ErrNoResult) {
-		slog.Error("Failed to get expired expiredBans", log.ErrAttr(errExpiredBans))
+		slog.Error("Failed to get expired expiredBans", slog.String("error", errExpiredBans.Error()))
 
 		return
 	}
@@ -40,14 +39,14 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 	for _, expiredBan := range expiredBans {
 		ban := expiredBan
 		if errDrop := monitor.steam.Delete(ctx, &ban, false); errDrop != nil {
-			slog.Error("Failed to drop expired expiredBan", log.ErrAttr(errDrop))
+			slog.Error("Failed to drop expired expiredBan", slog.String("error", errDrop.Error()))
 
 			continue
 		}
 
 		person, errPerson := monitor.person.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
 		if errPerson != nil {
-			slog.Error("Failed to get expired Person", log.ErrAttr(errPerson))
+			slog.Error("Failed to get expired Person", slog.String("error", errPerson.Error()))
 
 			continue
 		}

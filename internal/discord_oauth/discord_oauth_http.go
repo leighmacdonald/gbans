@@ -12,7 +12,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type discordOAuthHandler struct {
@@ -80,7 +79,7 @@ func (h discordOAuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		}
 
 		if err := h.discord.HandleOAuthCode(ctx, code, state); err != nil {
-			slog.Error("Failed to get access token", log.ErrAttr(err))
+			slog.Error("Failed to get access token", slog.String("error", err.Error()))
 		}
 
 		ctx.Redirect(http.StatusTemporaryRedirect, h.config.ExtURLRaw("/settings?section=connections"))

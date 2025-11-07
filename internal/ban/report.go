@@ -17,7 +17,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/sliceutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -179,8 +178,6 @@ func NewReports(repository ReportRepository,
 func (r Reports) MetaStats(ctx context.Context) error {
 	reports, errReports := r.Reports(ctx)
 	if errReports != nil {
-		slog.Error("failed to fetch reports for report metadata", log.ErrAttr(errReports))
-
 		return errReports
 	}
 
@@ -480,7 +477,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 
 	if demo.DemoID > 0 && !demo.Archive {
 		if errMark := r.demos.MarkArchived(ctx, &demo); errMark != nil {
-			slog.Error("Failed to mark demo as archived", log.ErrAttr(errMark))
+			slog.Error("Failed to mark demo as archived", slog.String("error", errMark.Error()))
 		}
 	}
 

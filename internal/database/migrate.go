@@ -9,7 +9,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
-	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/internal/log"
 )
 
 // MigrationAction is the type of migration to perform.

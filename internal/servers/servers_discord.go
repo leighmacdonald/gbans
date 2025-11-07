@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/servers/state"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -213,7 +212,7 @@ func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, intera
 	players := d.state.Find(state.FindOpts{SteamID: target})
 
 	if len(players) == 0 {
-		return nil, ErrPlayerNotFound
+		return nil, state.ErrPlayerNotFound
 	}
 
 	var err error
@@ -236,7 +235,7 @@ func (d DiscordHandler) onSay(ctx context.Context, _ *discordgo.Session, interac
 
 	server, err := d.servers.GetByName(ctx, serverName)
 	if err != nil {
-		return nil, ErrUnknownServer
+		return nil, state.ErrUnknownServer
 	}
 
 	if errSay := d.state.Say(ctx, server.ServerID, msg); errSay != nil {
@@ -253,7 +252,7 @@ func (d DiscordHandler) onCSay(ctx context.Context, _ *discordgo.Session, intera
 
 	server, err := d.servers.GetByName(ctx, serverName)
 	if err != nil {
-		return nil, ErrUnknownServer
+		return nil, state.ErrUnknownServer
 	}
 
 	if errCSay := d.state.CSay(ctx, server.ServerID, msg); errCSay != nil {
@@ -289,7 +288,7 @@ func (d DiscordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, int
 	serverStates := d.state.ByName(serverName, false)
 
 	if len(serverStates) != 1 {
-		return nil, ErrUnknownServer
+		return nil, state.ErrUnknownServer
 	}
 
 	serverState := serverStates[0]
@@ -304,14 +303,14 @@ func (d DiscordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, int
 		for _, player := range serverState.Players {
 			address, errIP := netip.ParseAddr(player.IP.String())
 			if errIP != nil {
-				slog.Error("Failed to parse player ip", log.ErrAttr(errIP))
+				slog.Error("Failed to parse player ip", slog.String("error", errIP.Error()))
 
 				continue
 			}
 
 			network, errNetwork := d.network.QueryNetwork(ctx, address)
 			if errNetwork != nil {
-				slog.Error("Failed to get network info", log.ErrAttr(errNetwork))
+				slog.Error("Failed to get network info", slog.String("error", errNetwork.Error()))
 
 				continue
 			}

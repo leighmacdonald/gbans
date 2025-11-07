@@ -3,7 +3,7 @@ package datetime_test
 import (
 	"testing"
 
-	"github.com/leighmacdonald/gbans/pkg/datetime"
+	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/stretchr/testify/require"
 )
 

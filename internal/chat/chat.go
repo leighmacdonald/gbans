@@ -19,7 +19,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
@@ -124,7 +123,7 @@ func (u *Chat) Start(ctx context.Context, events *broadcaster.Broadcaster[logpar
 	cleanupTicker := time.NewTicker(u.checkTimeout)
 	eventChan := make(chan logparse.ServerEvent)
 	if errRegister := events.Consume(eventChan, logparse.Connected, logparse.Say, logparse.SayTeam); errRegister != nil {
-		slog.Warn("logWriter Tried to register duplicate reader channel", log.ErrAttr(errRegister))
+		slog.Warn("logWriter Tried to register duplicate reader channel", slog.String("error", errRegister.Error()))
 
 		return
 	}
@@ -215,7 +214,7 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 	}
 
 	if errSaveMatch := u.wordFilters.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
-		slog.Error("Failed to save message findMatch status", log.ErrAttr(errSaveMatch))
+		slog.Error("Failed to save message findMatch status", slog.String("error", errSaveMatch.Error()))
 	}
 
 	matchResult := matchedFilter[0]
@@ -409,11 +408,11 @@ func (u *Chat) trigger(ctx context.Context, newWarn NewUserWarning) {
 			slog.Int("weight", currentWeight))
 
 		if err := u.onWarningExceeded(ctx, newWarn); err != nil {
-			slog.Error("Failed to execute warning exceeded handler", log.ErrAttr(err))
+			slog.Error("Failed to execute warning exceeded handler", slog.String("error", err.Error()))
 		}
 	} else {
 		if err := u.onWarningHandler(ctx, newWarn); err != nil {
-			slog.Error("Failed to execute warning handler", log.ErrAttr(err))
+			slog.Error("Failed to execute warning handler", slog.String("error", err.Error()))
 		}
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"log/slog"
 
 	"github.com/leighmacdonald/gbans/internal/chat"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/spf13/cobra"
 )
@@ -57,7 +56,7 @@ func refreshFiltersCmd() *cobra.Command {
 			for {
 				messages, errMessages := app.chat.QueryChatHistory(ctx, admin, query)
 				if errMessages != nil {
-					slog.Error("Failed to load more messages", log.ErrAttr(errMessages))
+					slog.Error("Failed to load more messages", slog.String("error", errMessages.Error()))
 
 					break
 				}
@@ -66,7 +65,7 @@ func refreshFiltersCmd() *cobra.Command {
 					matched := app.wordFilters.Check(message.Body)
 					if len(matched) > 0 {
 						if errAdd := app.wordFilters.AddMessageFilterMatch(ctx, message.PersonMessageID, matched[0].FilterID); errAdd != nil {
-							slog.Error("Failed to add filter match", log.ErrAttr(errAdd))
+							slog.Error("Failed to add filter match", slog.String("error", errAdd.Error()))
 						}
 
 						matches++

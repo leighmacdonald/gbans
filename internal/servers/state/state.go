@@ -13,7 +13,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -226,7 +225,7 @@ func (s *State) updateSrcdsLogServers(ctx context.Context) {
 
 	servers, errServers := s.servers(serversCtx)
 	if errServers != nil {
-		slog.Error("Failed to update srcds log secrets", log.ErrAttr(errServers))
+		slog.Error("Failed to update srcds log secrets", slog.String("error", errServers.Error()))
 
 		return
 	}
@@ -244,7 +243,7 @@ func (s *State) updateSrcdsLogServers(ctx context.Context) {
 				slog.Error("Failed to convert ip", slog.String("address", ip.String()))
 			}
 		} else {
-			slog.Error("Failed to resolve server ip", log.ErrAttr(errIP))
+			slog.Error("Failed to resolve server ip", slog.String("error", errIP.Error()))
 		}
 
 		if internalIP, errIP := server.IPInternal(ctx); errIP == nil {
@@ -254,7 +253,7 @@ func (s *State) updateSrcdsLogServers(ctx context.Context) {
 				slog.Error("Failed to convert internal ip", slog.String("address", internalIP.String()))
 			}
 		} else {
-			slog.Error("Failed to resolve internal server ip", log.ErrAttr(errIP))
+			slog.Error("Failed to resolve internal server ip", slog.String("error", errIP.Error()))
 		}
 	}
 
@@ -479,7 +478,7 @@ func (s *State) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[
 				}
 
 				slog.Error("Failed to exec server command", slog.String("name", serverConf.DefaultHostname),
-					slog.Int("server_id", sid), log.ErrAttr(errExec))
+					slog.Int("server_id", sid), slog.String("error", errExec.Error()))
 
 				// Don't error out since we don't want a single servers potentially temporary issue to prevent the rest
 				// from executing.
@@ -498,7 +497,7 @@ func (s *State) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[
 	go func() {
 		err := errGroup.Wait()
 		if err != nil {
-			slog.Error("Failed to broadcast command", log.ErrAttr(err))
+			slog.Error("Failed to broadcast command", slog.String("error", err.Error()))
 		}
 
 		close(resultChan)

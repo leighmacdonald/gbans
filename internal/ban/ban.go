@@ -14,11 +14,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/pkg/datetime"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
 )
@@ -350,7 +349,7 @@ func (s Bans) Save(ctx context.Context, ban *Ban) error {
 			LatestOnly: true,
 		})
 		if errExisting != nil {
-			slog.Error("Failed to get existing ban", log.ErrAttr(errExisting))
+			slog.Error("Failed to get existing ban", slog.String("error", errExisting.Error()))
 
 			return errExisting
 		}
@@ -551,7 +550,7 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 	existing.ValidUntil = time.Now().Add(dur.ToTimeDuration())
 
 	if errSave := s.Save(ctx, &existing); errSave != nil {
-		slog.Error("Could not update previous ban.", log.ErrAttr(errSave))
+		slog.Error("Could not update previous ban.", slog.String("error", errSave.Error()))
 
 		return false, errSave
 	}
@@ -576,7 +575,7 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 			return true, nil
 		}
 
-		slog.Error("Could not save evade ban", log.ErrAttr(errSave))
+		slog.Error("Could not save evade ban", slog.String("error", errSave.Error()))
 
 		return false, errSave
 	}
