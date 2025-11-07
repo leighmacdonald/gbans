@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/mitchellh/go-homedir"
 	"github.com/viant/afs/scp"
@@ -30,6 +29,19 @@ var (
 	errKeyVerificationFailed  = errors.New("host key validation failed")
 	ErrInvalidAddress         = errors.New("invalid address")
 )
+
+type Config struct {
+	Enabled        bool   `json:"enabled"`
+	Username       string `json:"username"`
+	Port           int    `json:"port"`
+	PrivateKeyPath string `json:"private_key_path"`
+	Password       string `json:"password"`
+	UpdateInterval int    `json:"update_interval"`
+	Timeout        int    `json:"timeout"`
+	DemoPathFmt    string `json:"demo_path_fmt"`
+	StacPathFmt    string `json:"stac_path_fmt"`
+	// TODO configurable handling of host keys
+}
 
 // KeyStore is responsible for storing and retrieving host keys.
 type KeyStore interface {
@@ -50,10 +62,10 @@ type Connection struct {
 	handlers []ConnectionHandler
 	repo     KeyStore
 	conn     storage.Storager
-	config   config.SSH
+	config   Config
 }
 
-func NewConnection(database KeyStore, config config.SSH) Connection {
+func NewConnection(database KeyStore, config Config) Connection {
 	return Connection{repo: database, config: config}
 }
 
@@ -110,7 +122,7 @@ func (f *Connection) connect() error {
 }
 
 // configAndDialClient connects to the remote server with the config. client.Close must be called.
-func configAndDialClient(repo KeyStore, sshConfig config.SSH, address string) (storage.Storager, error) { //nolint:ireturn
+func configAndDialClient(repo KeyStore, sshConfig Config, address string) (storage.Storager, error) { //nolint:ireturn
 	clientConfig, errConfig := createConfig(repo, sshConfig)
 	if errConfig != nil {
 		return nil, errConfig
@@ -124,7 +136,7 @@ func configAndDialClient(repo KeyStore, sshConfig config.SSH, address string) (s
 	return client, nil
 }
 
-func createConfig(repo KeyStore, config config.SSH) (*ssh.ClientConfig, error) {
+func createConfig(repo KeyStore, config Config) (*ssh.ClientConfig, error) {
 	if config.Username == "" {
 		return nil, errUsername
 	}
@@ -153,7 +165,7 @@ func createConfig(repo KeyStore, config config.SSH) (*ssh.ClientConfig, error) {
 	}, nil
 }
 
-func createSignerFromKey(config config.SSH) (ssh.Signer, error) { //nolint:ireturn
+func createSignerFromKey(config Config) (ssh.Signer, error) { //nolint:ireturn
 	fullPath, errPath := homedir.Expand(config.PrivateKeyPath)
 	if errPath != nil {
 		return nil, errors.Join(errPath, errHomeDir)

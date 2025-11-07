@@ -49,6 +49,10 @@ type UserUploadedFile struct {
 	Name string                `form:"name"`
 }
 
+type Config struct {
+	PathRoot string `json:"path_root"`
+}
+
 type Asset struct {
 	AssetID   uuid.UUID       `json:"asset_id"`
 	Hash      []byte          `json:"-"` // 32 bytes

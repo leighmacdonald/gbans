@@ -7,16 +7,19 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
-	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func RegisterDiscordCommands(bot *bot.Bot, anticheat AntiCheat, config *config.Configuration) {
-	handler := discordHandler{anticheat: anticheat, config: config}
+type discordHandler struct {
+	anticheat AntiCheat
+	persons   person.Provider
+}
+
+func RegisterDiscordCommands(bot *bot.Bot, anticheat AntiCheat) {
+	handler := discordHandler{anticheat: anticheat}
 
 	bot.MustRegisterHandler("ac", &discordgo.ApplicationCommand{
 		Name:                     "anticheat",
@@ -38,12 +41,6 @@ func RegisterDiscordCommands(bot *bot.Bot, anticheat AntiCheat, config *config.C
 			},
 		},
 	}, handler.onAC)
-}
-
-type discordHandler struct {
-	anticheat AntiCheat
-	persons   person.Provider
-	config    *config.Configuration
 }
 
 func (h discordHandler) onAC(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
@@ -74,10 +71,10 @@ func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 		return nil, errQuery
 	}
 
-	return ACPlayerLogs(h.config, person, logs), nil
+	return ACPlayerLogs(person, logs), nil
 }
 
-func NewAnticheatTrigger(ban ban.Ban, action config.Action, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
+func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
 	embed := discord.NewEmbed("Player triggered anti-cheat response")
 	embed.Embed().
 		SetColor(discord.ColourSuccess).
@@ -92,14 +89,14 @@ func NewAnticheatTrigger(ban ban.Ban, action config.Action, entry logparse.StacE
 
 	embed = embed.AddFieldsSteamID(entry.SteamID)
 
-	if ban.Note != "" {
+	if note != "" {
 		embed.Emb.Description = "```\n" + entry.RawLog + "\n```"
 	}
 
 	return embed.Embed().MessageEmbed
 }
 
-func ACPlayerLogs(conf *config.Configuration, person person.Info, entries []Entry) *discordgo.MessageEmbed {
+func ACPlayerLogs(person person.Info, entries []Entry) *discordgo.MessageEmbed {
 	sid := person.GetSteamID()
 	emb := discord.NewEmbed()
 
@@ -118,7 +115,7 @@ func ACPlayerLogs(conf *config.Configuration, person person.Info, entries []Entr
 	emb.Embed().
 		SetTitle(fmt.Sprintf("Anticheat Detections (count: %d)", total)).
 		SetColor(discord.ColourSuccess).
-		SetAuthor(person.GetName(), person.GetAvatar().Small(), conf.ExtURL(person))
+		SetAuthor(person.GetName(), person.GetAvatar().Small(), person.Path())
 
 	j := 0
 	for server, count := range detections {

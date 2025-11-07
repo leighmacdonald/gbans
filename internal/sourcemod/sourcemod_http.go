@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -93,9 +93,9 @@ type CheckRequest struct {
 }
 
 type CheckResponse struct {
-	ClientID int      `json:"client_id"`
-	BanType  ban.Type `json:"ban_type"`
-	Msg      string   `json:"msg"`
+	ClientID int          `json:"client_id"`
+	BanType  bantype.Type `json:"ban_type"`
+	Msg      string       `json:"msg"`
 }
 
 func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
@@ -108,7 +108,7 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 
 		defaultValue := CheckResponse{
 			ClientID: req.ClientID,
-			BanType:  ban.OK,
+			BanType:  bantype.OK,
 			Msg:      "",
 		}
 		steamID := steamid.New(req.SteamID)
@@ -158,7 +158,7 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 				if evadeBanned {
 					defaultValue = CheckResponse{
 						ClientID: req.ClientID,
-						BanType:  ban.Banned,
+						BanType:  bantype.Banned,
 						Msg:      "Evasion ban",
 					}
 

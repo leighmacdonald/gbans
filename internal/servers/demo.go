@@ -18,7 +18,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/fs"
@@ -36,6 +35,22 @@ var (
 	ErrFailedOpenFile = errors.New("failed to open file")
 	ErrFailedReadFile = errors.New("failed to read file")
 )
+
+type DemoStrategy string
+
+const (
+	DemoStrategyPctFree DemoStrategy = "pctfree"
+	DemoStrategyCount   DemoStrategy = "count"
+)
+
+type DemoConfig struct {
+	DemoCleanupEnabled  bool         `json:"demo_cleanup_enabled"`
+	DemoCleanupStrategy DemoStrategy `json:"demo_cleanup_strategy"`
+	DemoCleanupMinPct   float32      `json:"demo_cleanup_min_pct"`
+	DemoCleanupMount    string       `json:"demo_cleanup_mount"`
+	DemoCountLimit      uint64       `json:"demo_count_limit"`
+	DemoParserURL       string       `json:"demo_parser_url"`
+}
 
 type DemoFilter struct {
 	query.Filter
@@ -120,20 +135,23 @@ type UploadedDemo struct {
 }
 
 type Demos struct {
+	DemoConfig
+
 	repository  DemoRepository
 	asset       asset.Assets
-	config      *config.Configuration
 	bucket      asset.Bucket
 	cleanupChan chan any
+	owner       steamid.SteamID
 }
 
-func NewDemos(bucket asset.Bucket, repository DemoRepository, assets asset.Assets, config *config.Configuration) Demos {
+func NewDemos(bucket asset.Bucket, repository DemoRepository, assets asset.Assets, config DemoConfig, owner steamid.SteamID) Demos {
 	return Demos{
+		DemoConfig:  config,
 		bucket:      bucket,
 		repository:  repository,
 		asset:       assets,
-		config:      config,
 		cleanupChan: make(chan any),
+		owner:       owner,
 	}
 }
 
@@ -142,7 +160,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		slog.Int("server_id", demo.ServerID),
 		slog.String("name", demo.Name))
 
-	demoAsset, errNewAsset := d.asset.Create(ctx, steamid.New(d.config.Config().Owner),
+	demoAsset, errNewAsset := d.asset.Create(ctx, steamid.New(d.owner),
 		asset.BucketDemo, demo.Name, bytes.NewReader(demo.Content), false)
 	if errNewAsset != nil {
 		return errNewAsset
@@ -330,13 +348,11 @@ func (d Demos) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64
 }
 
 func (d Demos) Cleanup(ctx context.Context) {
-	conf := d.config.Config()
-
-	if !conf.Demo.DemoCleanupEnabled {
+	if !d.DemoCleanupEnabled {
 		return
 	}
 
-	slog.Debug("Starting demo cleanup", slog.String("strategy", string(conf.Demo.DemoCleanupStrategy)))
+	slog.Debug("Starting demo cleanup", slog.String("strategy", string(d.DemoCleanupStrategy)))
 
 	var (
 		count int
@@ -344,15 +360,15 @@ func (d Demos) Cleanup(ctx context.Context) {
 		size  int64
 	)
 
-	switch conf.Demo.DemoCleanupStrategy {
-	case config.DemoStrategyPctFree:
-		count, size, err = d.TruncateBySpace(ctx, conf.Demo.DemoCleanupMount, conf.Demo.DemoCleanupMinPct)
-	case config.DemoStrategyCount:
-		count, size, err = d.TruncateByCount(ctx, conf.Demo.DemoCountLimit)
+	switch d.DemoCleanupStrategy {
+	case DemoStrategyPctFree:
+		count, size, err = d.TruncateBySpace(ctx, d.DemoCleanupMount, d.DemoCleanupMinPct)
+	case DemoStrategyCount:
+		count, size, err = d.TruncateByCount(ctx, d.DemoCountLimit)
 	}
 
 	if err != nil {
-		slog.Error("Error executing demo cleanup", slog.String("strategy", string(conf.Demo.DemoCleanupStrategy)))
+		slog.Error("Error executing demo cleanup", slog.String("strategy", string(d.DemoCleanupStrategy)))
 	}
 
 	slog.Debug("Old demos flushed", slog.Int("count", count), slog.String("size", humanize.Bytes(uint64(size)))) //nolint:gosec
@@ -412,7 +428,7 @@ func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails,
 		return nil, errors.Join(errClose, ErrDemoLoad)
 	}
 
-	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, d.config.Config().Demo.DemoParserURL, body)
+	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, d.DemoParserURL, body)
 	if errReq != nil {
 		return nil, errors.Join(errReq, ErrDemoLoad)
 	}

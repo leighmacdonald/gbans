@@ -10,19 +10,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type personHandler struct {
-	persons *Persons
-	config  *config.Configuration
+	*Persons
 }
 
-func NewPersonHandler(engine *gin.Engine, config *config.Configuration, persons *Persons, authenticator httphelper.Authenticator) {
-	handler := &personHandler{persons: persons, config: config}
+func NewPersonHandler(engine *gin.Engine, persons *Persons, authenticator httphelper.Authenticator) {
+	handler := &personHandler{Persons: persons}
 
 	engine.GET("/api/profile", handler.onAPIProfile())
 	engine.GET("/api/steam/validate", handler.onSteamValidate())
@@ -63,7 +61,7 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		person, errPerson := h.persons.BySteamID(ctx, steamID)
+		person, errPerson := h.BySteamID(ctx, steamID)
 		if errPerson != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errPerson, httphelper.ErrInternal)))
 
@@ -72,7 +70,7 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 
 		person.PermissionLevel = req.PermissionLevel
 
-		if err := h.persons.Save(ctx, &person); err != nil {
+		if err := h.Save(ctx, &person); err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
@@ -90,7 +88,7 @@ func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user, _ := session.CurrentUserProfile(ctx)
 
-		settings, err := h.persons.GetPersonSettings(ctx, user.GetSteamID())
+		settings, err := h.GetPersonSettings(ctx, user.GetSteamID())
 		if err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
@@ -110,7 +108,7 @@ func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 		}
 
 		user, _ := session.CurrentUserProfile(ctx)
-		settings, err := h.persons.SavePersonSettings(ctx, user, req)
+		settings, err := h.SavePersonSettings(ctx, user, req)
 		if err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
@@ -159,7 +157,7 @@ func (h personHandler) onSteamValidate() gin.HandlerFunc {
 			return
 		}
 
-		response, err := h.persons.QueryProfile(requestCtx, req.Query)
+		response, err := h.QueryProfile(requestCtx, req.Query)
 		if err != nil {
 			if errors.Is(err, steamid.ErrInvalidSID) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, steamid.ErrInvalidSID))
@@ -190,7 +188,7 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 			return
 		}
 
-		response, err := h.persons.QueryProfile(requestCtx, req.Query)
+		response, err := h.QueryProfile(requestCtx, req.Query)
 		if err != nil {
 			if errors.Is(err, steamid.ErrInvalidSID) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, steamid.ErrInvalidSID))
@@ -214,7 +212,7 @@ func (h personHandler) searchPlayers() gin.HandlerFunc {
 			return
 		}
 
-		people, errGetPeople := h.persons.GetPeople(ctx, query)
+		people, errGetPeople := h.GetPeople(ctx, query)
 		if errGetPeople != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetPeople, httphelper.ErrInternal)))
 

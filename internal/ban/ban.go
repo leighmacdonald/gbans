@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/ban/bantype"
+	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
@@ -35,96 +36,6 @@ var (
 	ErrBanDoesNotExist    = errors.New("ban does not exist")
 	ErrReasonInvalid      = errors.New("invalid reason")
 )
-
-// Type defines the state of the ban for a user, 0 being no ban.
-type Type int
-
-const (
-	// Unknown means the ban state could not be determined, failing-open to allowing players
-	// to connect.
-	Unknown Type = iota - 1
-	// OK Ban state is clean.
-	OK //nolint:varnamelen
-	// NoComm means the player cannot communicate while playing voice + chat.
-	NoComm
-	// Banned means the player cannot join the server at all.
-	Banned
-	// Network is used when a client connected from a banned CIDR block.
-	Network
-)
-
-func (bt Type) String() string {
-	switch bt {
-	case Network:
-		return "network"
-	case Unknown:
-		return "unknown"
-	case NoComm:
-		return "mute/gag"
-	case Banned:
-		return "banned"
-	case OK:
-		fallthrough
-	default:
-		return ""
-	}
-}
-
-// Reason defined a set of predefined ban reasons.
-type Reason int
-
-const (
-	Custom Reason = iota + 1
-	External
-	Cheating
-	Racism
-	Harassment
-	Exploiting
-	WarningsExceeded
-	Spam
-	Language
-	Profile
-	ItemDescriptions
-	BotHost
-	Evading
-	Username
-)
-
-func (r Reason) String() string {
-	return map[Reason]string{
-		Custom:           "Custom",
-		External:         "3rd party",
-		Cheating:         "Cheating",
-		Racism:           "Racism",
-		Harassment:       "Personal Harassment",
-		Exploiting:       "Exploiting",
-		WarningsExceeded: "Warnings Exceeded",
-		Spam:             "Spam",
-		Language:         "Language",
-		Profile:          "Profile",
-		ItemDescriptions: "Item Name or Descriptions",
-		BotHost:          "BotHost",
-		Evading:          "Evading",
-		Username:         "Inappropriate Username",
-	}[r]
-}
-
-var Reasons = []Reason{ //nolint:gochecknoglobals
-	External,
-	Cheating,
-	Racism,
-	Harassment,
-	Exploiting,
-	WarningsExceeded,
-	Spam,
-	Language,
-	Profile,
-	ItemDescriptions,
-	BotHost,
-	Evading,
-	Username,
-	Custom,
-}
 
 // Origin defines the origin of the ban or action.
 type Origin int
@@ -165,8 +76,8 @@ type Opts struct {
 	SourceID steamid.SteamID `json:"source_id" form:"source_id" binding:"required,steamid"`
 	// ISO8601
 	Duration   *duration.Duration `json:"duration" form:"duration" binding:"required,duration"`
-	BanType    Type               `json:"ban_type" form:"ban_type" binding:"required" oneof:"1,2,3"`
-	Reason     Reason             `json:"reason" form:"reason" binding:"required"`
+	BanType    bantype.Type       `json:"ban_type" form:"ban_type" binding:"required" oneof:"1,2,3"`
+	Reason     reason.Reason      `json:"reason" form:"reason" binding:"required"`
 	ReasonText string             `json:"reason_text" form:"reason_text" binding:"required_if=Reason 1"`
 	Origin     Origin             `json:"origin" form:"origin"`
 	ReportID   int64              `json:"report_id" form:"report_id" binding:"gte=0"`
@@ -183,7 +94,7 @@ func (opts *Opts) Validate() error {
 		return fmt.Errorf("%w: %w", ErrInvalidBanOpts, ErrInvalidBanDuration)
 	}
 
-	if opts.Reason == Custom && len(opts.ReasonText) < 3 {
+	if opts.Reason == reason.Custom && len(opts.ReasonText) < 3 {
 		return fmt.Errorf("%w: Custom reason must be at least 3 characters", ErrInvalidBanOpts)
 	}
 
@@ -210,9 +121,9 @@ type Ban struct {
 	EvadeOk  bool            `json:"evade_ok"`
 
 	// Reason defines the overall ban classification
-	BanType Type `json:"ban_type"`
+	BanType bantype.Type `json:"ban_type"`
 	// Reason defines the overall ban classification
-	Reason Reason `json:"reason"`
+	Reason reason.Reason `json:"reason"`
 	// ReasonText is returned to the client when kicked trying to join the server
 	ReasonText      string `json:"reason_text"`
 	UnbanReasonText string `json:"unban_reason_text"`
@@ -272,7 +183,7 @@ type QueryOpts struct {
 	BanID         int64
 	Deleted       bool
 	EvadeOk       bool
-	Reasons       []Reason
+	Reasons       []reason.Reason
 	Personaname   string
 	CIDR          string
 	CIDROnly      bool
@@ -298,22 +209,24 @@ type Stats struct {
 }
 
 type Bans struct {
-	repo    Repository
-	persons person.Provider
-	config  *config.Configuration
-	reports *Reports
-	notif   notification.Notifier
+	repo         Repository
+	persons      person.Provider
+	reports      *Reports
+	notif        notification.Notifier
+	logChannelID string
+	owner        steamid.SteamID
 }
 
-func NewBans(repository Repository, person person.Provider, config *config.Configuration, reports *Reports,
+func NewBans(repository Repository, person person.Provider, logChannelID string, owner steamid.SteamID, reports *Reports,
 	notif notification.Notifier,
 ) Bans {
 	return Bans{
-		repo:    repository,
-		persons: person,
-		config:  config,
-		reports: reports,
-		notif:   notif,
+		repo:         repository,
+		persons:      person,
+		reports:      reports,
+		notif:        notif,
+		logChannelID: logChannelID,
+		owner:        owner,
 	}
 }
 
@@ -422,7 +335,7 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 		expAt = datetime.FmtTimeShort(newBan.ValidUntil)
 	}
 
-	s.notif.Send(notification.NewDiscord(s.config.Config().Discord.BanLogChannelID,
+	s.notif.Send(notification.NewDiscord(s.logChannelID,
 		CreateResponse(newBan)))
 
 	s.notif.Send(notification.NewSiteUserWithAuthor(
@@ -493,7 +406,7 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		return false, errors.Join(err, ErrFetchPerson)
 	}
 
-	s.notif.Send(notification.NewDiscord(s.config.Config().Discord.BanLogChannelID, UnbanMessage(s.config.ExtURL(person), person)))
+	s.notif.Send(notification.NewDiscord(s.logChannelID, UnbanMessage(person.Path(), person)))
 
 	s.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
@@ -535,7 +448,7 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 		return false, errMatch
 	}
 
-	if existing.BanType == NoComm {
+	if existing.BanType == bantype.NoComm {
 		// Currently we do not ban for mute evasion.
 		// TODO make this configurable
 		return false, errMatch
@@ -555,17 +468,14 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 		return false, errSave
 	}
 
-	config := s.config.Config()
-	owner := steamid.New(config.Owner)
-
 	req := Opts{
-		SourceID: owner,
+		SourceID: s.owner,
 		TargetID: steamID,
 		Origin:   System,
 		Duration: dur,
-		BanType:  Banned,
-		Reason:   Evading,
-		Note:     fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, config.ExtURL(existing)),
+		BanType:  bantype.Banned,
+		Reason:   reason.Evading,
+		Note:     fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, existing.Path()),
 	}
 
 	_, errSave := s.Create(ctx, req)

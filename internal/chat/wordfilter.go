@@ -10,8 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/datetime"
@@ -98,17 +97,17 @@ func (f *Filter) Match(value string) bool {
 }
 
 type UserWarning struct {
-	WarnReason    ban.Reason `json:"warn_reason"`
-	Message       string     `json:"message"`
-	Matched       string     `json:"matched"`
-	MatchedFilter Filter     `json:"matched_filter"`
-	CreatedOn     time.Time  `json:"created_on"`
-	Personaname   string     `json:"personaname"`
-	Avatar        string     `json:"avatar"`
-	ServerName    string     `json:"server_name"`
-	ServerID      int        `json:"server_id"`
-	SteamID       string     `json:"steam_id"`
-	CurrentTotal  int        `json:"current_total"`
+	WarnReason    reason.Reason `json:"warn_reason"`
+	Message       string        `json:"message"`
+	Matched       string        `json:"matched"`
+	MatchedFilter Filter        `json:"matched_filter"`
+	CreatedOn     time.Time     `json:"created_on"`
+	Personaname   string        `json:"personaname"`
+	Avatar        string        `json:"avatar"`
+	ServerName    string        `json:"server_name"`
+	ServerID      int           `json:"server_id"`
+	SteamID       string        `json:"steam_id"`
+	CurrentTotal  int           `json:"current_total"`
 }
 
 type NewUserWarning struct {
@@ -122,16 +121,28 @@ type Warnings interface {
 	State() map[string][]UserWarning
 }
 
+type Config struct {
+	Enabled                bool   `json:"enabled"`
+	WarningTimeout         int    `json:"warning_timeout"`
+	WarningLimit           int    `json:"warning_limit"`
+	Dry                    bool   `json:"dry"`
+	PingDiscord            bool   `json:"ping_discord"`
+	MaxWeight              int    `json:"max_weight"`
+	CheckTimeout           int    `json:"check_timeout"`
+	MatchTimeout           int    `json:"match_timeout"`
+	WordFilterLogChannelID string `json:"string"`
+}
+
 type WordFilters struct {
 	*sync.RWMutex
 
 	repository  WordFilterRepository
 	wordFilters []Filter
 	notif       notification.Notifier
-	config      *config.Configuration
+	config      Config
 }
 
-func NewWordFilters(repository WordFilterRepository, notif notification.Notifier, config *config.Configuration) WordFilters {
+func NewWordFilters(repository WordFilterRepository, notif notification.Notifier, config Config) WordFilters {
 	return WordFilters{repository: repository, RWMutex: &sync.RWMutex{}, notif: notif, config: config}
 }
 
@@ -282,7 +293,7 @@ func (w *WordFilters) Create(ctx context.Context, user person.Info, opts Filter)
 
 	w.Add(newFilter)
 
-	w.notif.Send(notification.NewDiscord(w.config.Config().Discord.WordFilterLogChannelID, filterAddMessage(newFilter)))
+	// w.notif.Send(notification.NewDiscord(w.config.Config().Discord.WordFilterLogChannelID, filterAddMessage(newFilter)))
 
 	slog.Info("Created filter", slog.Int64("filter_id", newFilter.FilterID))
 
@@ -301,7 +312,7 @@ func (w *WordFilters) DropFilter(ctx context.Context, filterID int64) error {
 
 	w.Remove(filterID)
 
-	w.notif.Send(notification.NewDiscord(w.config.Config().Discord.WordFilterLogChannelID, filterDelMessage(filter)))
+	// w.notif.Send(notification.NewDiscord(w.config.Config().Discord.WordFilterLogChannelID, filterDelMessage(filter)))
 
 	slog.Info("Deleted filter", slog.Int64("filter_id", filterID))
 

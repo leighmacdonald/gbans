@@ -6,6 +6,8 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/ban/bantype"
+	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/tests"
@@ -28,15 +30,16 @@ func TestMain(m *testing.M) {
 func TestBan(t *testing.T) {
 	t.Parallel()
 	var (
-		br     = ban.NewRepository(fixture.Database, fixture.Persons)
-		bans   = ban.NewBans(br, fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
+		br   = ban.NewRepository(fixture.Database, fixture.Persons)
+		bans = ban.NewBans(br, fixture.Persons, fixture.Config.Config().Discord.BanLogChannelID,
+			steamid.New(fixture.Config.Config().Owner), nil, notification.NewNullNotifications())
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 	)
 
 	newBan, err := bans.Create(t.Context(), ban.Opts{
 		SourceID: source, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),
-		BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
+		BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 	})
 	require.NoError(t, err)
 	require.Positive(t, newBan.BanID)
@@ -49,18 +52,19 @@ func TestBan(t *testing.T) {
 func TestDuplicate(t *testing.T) {
 	t.Parallel()
 	var (
-		br     = ban.NewRepository(fixture.Database, fixture.Persons)
-		bans   = ban.NewBans(br, fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
+		br   = ban.NewRepository(fixture.Database, fixture.Persons)
+		bans = ban.NewBans(br, fixture.Persons, fixture.Config.Config().Discord.BanLogChannelID,
+			steamid.New(fixture.Config.Config().Owner), nil, notification.NewNullNotifications())
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 		opts   = []ban.Opts{
 			{
 				SourceID: source, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),
-				BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
+				BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 			},
 			{
 				SourceID: source, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),
-				BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
+				BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 			},
 		}
 	)
@@ -79,15 +83,16 @@ func TestDuplicate(t *testing.T) {
 func TestUnban(t *testing.T) {
 	t.Parallel()
 	var (
-		br     = ban.NewRepository(fixture.Database, fixture.Persons)
-		bans   = ban.NewBans(br, fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
+		br   = ban.NewRepository(fixture.Database, fixture.Persons)
+		bans = ban.NewBans(br, fixture.Persons, fixture.Config.Config().Discord.BanLogChannelID,
+			steamid.New(fixture.Config.Config().Owner), nil, notification.NewNullNotifications())
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 		author = fixture.CreateTestPerson(t.Context(), source, permission.Admin)
 	)
 	testBan, err := bans.Create(t.Context(), ban.Opts{
 		SourceID: source, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),
-		BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
+		BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 	})
 	require.NoError(t, err)
 

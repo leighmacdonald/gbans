@@ -12,6 +12,18 @@ import (
 	slogmulti "github.com/samber/slog-multi"
 )
 
+type Config struct {
+	Level Level `json:"level"`
+	// If set to a non-empty path, logs will also be written to the log file.
+	File string `json:"file"`
+	// Enable using the sloggin library for logging HTTP requests
+	HTTPEnabled bool `json:"http_enabled"`
+	// Enable support for OpenTelemetry by adding span/trace IDs
+	HTTPOtelEnabled bool `json:"http_otel_enabled"`
+	// Log level to use for http requests
+	HTTPLevel Level `json:"http_level"`
+}
+
 type Level string
 
 const (

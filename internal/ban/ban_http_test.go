@@ -7,6 +7,8 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/ban/bantype"
+	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -16,7 +18,9 @@ import (
 
 func TestHTTPBan(t *testing.T) {
 	router := fixture.CreateRouter()
-	bans := ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
+	bans := ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
+		fixture.Config.Config().Discord.BanLogChannelID, steamid.New(fixture.Config.Config().Owner),
+		nil, notification.NewNullNotifications())
 	ban.NewHandlerBans(router, bans, fixture.Config, &tests.StaticAuth{
 		Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin),
 	})
@@ -24,7 +28,7 @@ func TestHTTPBan(t *testing.T) {
 	for _, sid := range []steamid.SteamID{tests.GuestSID, tests.UserSID} {
 		createdBan = tests.PostGCreated[ban.Ban](t, router, "/api/bans", ban.Opts{
 			SourceID: tests.OwnerSID, TargetID: sid, Duration: duration.FromTimeDuration(time.Hour * 10),
-			BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
+			BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 		})
 	}
 	require.Positive(t, createdBan.BanID)
@@ -32,7 +36,7 @@ func TestHTTPBan(t *testing.T) {
 	require.Equal(t, tests.UserSID, createdBan.TargetID)
 	tests.PostConflict(t, router, "/api/bans", ban.Opts{
 		SourceID: tests.OwnerSID, TargetID: createdBan.TargetID, Duration: duration.FromTimeDuration(time.Hour * 10),
-		BanType: ban.Banned, Reason: ban.Cheating, Origin: ban.System,
+		BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 	})
 
 	require.Len(t, tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))}), 2)

@@ -1,13 +1,13 @@
 package chat_test
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -31,9 +31,9 @@ func TestMessages(t *testing.T) {
 		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		router        = fixture.CreateRouter()
 		server        = fixture.CreateTestServer(t.Context())
-		bans          = ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
-		filters       = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewNullNotifications(), fixture.Config)
-		chats         = chat.NewChat(chat.NewRepository(fixture.Database), fixture.Config, filters, bans, fixture.Persons, notification.NewNullNotifications())
+		filters       = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewNullNotifications(), fixture.Config.Config().Filters)
+		chats         = chat.NewChat(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters,
+			fixture.Persons, notification.NewNullNotifications(), func(ctx context.Context, warning chat.NewUserWarning) error { return nil })
 	)
 
 	chat.NewChatHandler(router, chats, authenticator)

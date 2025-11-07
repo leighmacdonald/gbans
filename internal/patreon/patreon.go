@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/austinbspencer/patreon-go-wrapper"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/oauth"
@@ -20,6 +19,15 @@ import (
 )
 
 var ErrQueryPatreon = errors.New("failed to query patreon")
+
+type Config struct {
+	Enabled             bool   `json:"enabled"`
+	IntegrationsEnabled bool   `json:"integrations_enabled"`
+	ClientID            string `json:"client_id"`
+	ClientSecret        string `json:"client_secret"`
+	CreatorAccessToken  string `json:"creator_access_token"`
+	CreatorRefreshToken string `json:"creator_refresh_token"`
+}
 
 type Credential struct {
 	SteamID      steamid.SteamID `json:"steam_id"`
@@ -35,26 +43,25 @@ type Credential struct {
 }
 
 type Manager struct {
+	Config
+
 	// patreonClient    *patreon.Client
 	patreonMu        *sync.RWMutex
 	patreonCampaigns patreon.Campaign
-	config           *config.Configuration
 }
 
-func NewPatreonManager(config *config.Configuration) Manager {
+func NewPatreonManager(config Config) Manager {
 	return Manager{
+		Config:    config,
 		patreonMu: &sync.RWMutex{},
-		config:    config,
 	}
 }
 
 // start https://www.patreon.com/portal/registration/register-clients
 func (p *Manager) createClient(ctx context.Context, accessToken string, refreshToken string) *patreon.Client {
-	config := p.config.Config()
-
 	oAuthConfig := oauth2.Config{
-		ClientID:     config.Patreon.ClientID,
-		ClientSecret: config.Patreon.ClientSecret,
+		ClientID:     p.ClientID,
+		ClientSecret: p.ClientSecret,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  patreon.AuthorizationURL,
 			TokenURL: patreon.AccessTokenURL,
@@ -88,12 +95,11 @@ func (p *Manager) loadUser(client *patreon.Client) (*patreon.UserResponse, error
 }
 
 func (p *Manager) sync(ctx context.Context) {
-	conf := p.config.Config()
-	if !conf.Patreon.Enabled {
+	if !p.Enabled {
 		return
 	}
 
-	client := p.createClient(ctx, conf.Patreon.CreatorAccessToken, conf.Patreon.CreatorRefreshToken)
+	client := p.createClient(ctx, p.CreatorAccessToken, p.CreatorRefreshToken)
 
 	user, errUser := p.loadUser(client)
 	if errUser != nil {
@@ -128,16 +134,17 @@ func (p *Manager) Campaigns() patreon.Campaign {
 }
 
 type Patreon struct {
+	Config
+
 	repository   Repository
 	manager      Manager
 	stateTracker *oauth.LoginStateTracker
-	cu           *config.Configuration
 }
 
-func NewPatreon(repository Repository, config *config.Configuration) Patreon {
+func NewPatreon(repository Repository, config Config) Patreon {
 	return Patreon{
+		Config:       config,
 		repository:   repository,
-		cu:           config,
 		manager:      NewPatreonManager(config),
 		stateTracker: oauth.NewLoginStateTracker(),
 	}
@@ -168,12 +175,10 @@ func (p Patreon) checkAuths(ctx context.Context) {
 }
 
 func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
-	conf := p.cu.Config()
-
 	form := url.Values{}
 	form.Add("grant_type", "refresh_token")
-	form.Add("client_id", conf.Patreon.ClientID)
-	form.Add("client_secret", conf.Patreon.ClientSecret)
+	form.Add("client_id", p.ClientID)
+	form.Add("client_secret", p.ClientSecret)
 	form.Add("refresh_token", auth.RefreshToken)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://www.patreon.com/api/oauth2/token", strings.NewReader(form.Encode()))
@@ -225,15 +230,14 @@ func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
 }
 
 func (p Patreon) CreateOAuthRedirect(steamID steamid.SteamID) string {
-	conf := p.cu.Config()
 	state := p.stateTracker.Create(steamID)
 
 	authURL, _ := url.Parse("https://www.patreon.com/oauth2/authorize")
 	values := authURL.Query()
-	values.Set("client_id", conf.Patreon.ClientID)
+	values.Set("client_id", p.ClientID)
 	values.Set("allow_signup", "false")
 	values.Set("response_type", "code")
-	values.Set("redirect_uri", conf.ExtURLRaw("/patreon/oauth"))
+	values.Set("redirect_uri", "/patreon/oauth") // FIXME conf.ExtURLRaw("/patreon/oauth")
 	values.Set("state", state)
 	values.Set("scope", "campaigns identity campaigns.members")
 
@@ -252,14 +256,12 @@ func (p Patreon) OnOauthLogin(ctx context.Context, state string, code string) er
 		return steamid.ErrInvalidSID
 	}
 
-	conf := p.cu.Config()
-
 	form := url.Values{}
 	form.Add("code", code)
 	form.Add("grant_type", "authorization_code")
-	form.Add("client_id", conf.Patreon.ClientID)
-	form.Add("client_secret", conf.Patreon.ClientSecret)
-	form.Add("redirect_uri", conf.ExtURLRaw("/patreon/oauth"))
+	form.Add("client_id", p.ClientID)
+	form.Add("client_secret", p.ClientSecret)
+	form.Add("redirect_uri", "/patreon/oauth") // FIXME conf.ExtURLRaw("/patreon/oauth")
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://www.patreon.com/api/oauth2/token", strings.NewReader(form.Encode()))
 	if err != nil {

@@ -10,18 +10,17 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type Repository struct {
-	conf config.Config
-	db   database.Database
+	centerProjectiles bool
+	db                database.Database
 }
 
-func NewRepository(conf config.Config, database database.Database) Repository {
-	return Repository{conf: conf, db: database}
+func NewRepository(database database.Database, centerProjectiles bool) Repository {
+	return Repository{db: database, centerProjectiles: centerProjectiles}
 }
 
 func (r *Repository) DropPerson(ctx context.Context, steamID steamid.SteamID) error {
@@ -219,7 +218,7 @@ func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Set
 		return settings, database.DBErr(errScan)
 	}
 
-	if r.conf.Clientprefs.CenterProjectiles {
+	if r.centerProjectiles {
 		rows, errRow := r.db.QueryBuilder(ctx, r.db.
 			Builder().
 			Select("name", "value").
@@ -314,7 +313,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 	value := ""
 
 	var errGameSettings error
-	if r.conf.Clientprefs.CenterProjectiles && settings.CenterProjectiles != nil {
+	if r.centerProjectiles && settings.CenterProjectiles != nil {
 		errGameSettings = database.DBErr(r.db.QueryRow(ctx, query,
 			settings.SteamID.Steam(false),
 			boolToStringDigit(*settings.CenterProjectiles)).Scan(&value))

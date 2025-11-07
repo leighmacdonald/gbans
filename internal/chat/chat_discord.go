@@ -8,7 +8,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
-	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
 )
@@ -125,7 +124,7 @@ func FilterCheckMessage(matches []Filter) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func WarningMessage(newWarning NewUserWarning, banSteam ban.Ban) *discordgo.MessageEmbed {
+func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.MessageEmbed {
 	msgEmbed := discord.NewEmbed("Language Warning")
 	msgEmbed.Embed().
 		SetDescription(newWarning.UserWarning.Message).
@@ -146,9 +145,9 @@ func WarningMessage(newWarning NewUserWarning, banSteam ban.Ban) *discordgo.Mess
 		expAt = expIn
 	)
 
-	if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
-		expIn = datetime.FmtDuration(banSteam.ValidUntil)
-		expAt = datetime.FmtTimeShort(banSteam.ValidUntil)
+	if validUntil.Year()-time.Now().Year() < 5 {
+		expIn = datetime.FmtDuration(validUntil)
+		expAt = datetime.FmtTimeShort(validUntil)
 	}
 
 	return msgEmbed.

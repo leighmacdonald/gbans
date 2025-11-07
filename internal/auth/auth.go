@@ -17,7 +17,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -90,23 +89,25 @@ const CtxKeyUserProfile = "user_profile"
 
 type Authentication struct {
 	auth      Repository
-	config    *config.Configuration
 	persons   *person.Persons
 	bans      ban.Bans
 	servers   servers.Servers
 	sentryDSN string
+	siteName  string
+	cookieKey string
 }
 
-func NewAuthentication(repository Repository, config *config.Configuration, persons *person.Persons,
+func NewAuthentication(repository Repository, siteName string, cookieKey string, persons *person.Persons,
 	bans ban.Bans, servers servers.Servers, sentryDSN string,
 ) *Authentication {
 	return &Authentication{
 		auth:      repository,
-		config:    config,
 		persons:   persons,
 		bans:      bans,
 		servers:   servers,
 		sentryDSN: sentryDSN,
+		siteName:  siteName,
+		cookieKey: cookieKey,
 	}
 }
 
@@ -147,8 +148,6 @@ func (u *Authentication) MakeToken(ctx *gin.Context, cookieKey string, sid steam
 }
 
 func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc {
-	cookieKey := u.config.Config().HTTPCookieKey
-
 	return func(ctx *gin.Context) {
 		var token string
 
@@ -167,7 +166,7 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					return
 				}
 
-				sid, errFromToken := u.Sid64FromJWTToken(token, cookieKey, fingerprint)
+				sid, errFromToken := u.Sid64FromJWTToken(token, u.cookieKey, fingerprint)
 				if errFromToken != nil {
 					if errors.Is(errFromToken, ErrExpired) {
 						ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -257,8 +256,6 @@ func (u *Authentication) TokenFromQuery(ctx *gin.Context) (string, error) {
 }
 
 func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFunc {
-	cookieKey := u.config.Config().HTTPCookieKey
-
 	return func(ctx *gin.Context) {
 		var token string
 
@@ -269,7 +266,7 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 			token = queryToken
 
 			if level >= permission.Guest {
-				sid, errFromToken := u.Sid64FromJWTTokenNoFP(token, cookieKey)
+				sid, errFromToken := u.Sid64FromJWTTokenNoFP(token, u.cookieKey)
 				if errFromToken != nil {
 					if errors.Is(errFromToken, ErrExpired) {
 						ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -347,11 +344,11 @@ func (u *Authentication) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (a
 
 func (u *Authentication) NewUserToken(steamID steamid.SteamID, cookieKey string, fingerPrint string, validDuration time.Duration) (string, error) {
 	nowTime := time.Now()
-	conf := u.config.Config()
+
 	claims := UserAuthClaims{
 		Fingerprint: FingerprintHash(fingerPrint),
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    conf.General.SiteName,
+			Issuer:    u.siteName,
 			Subject:   steamID.String(),
 			ExpiresAt: jwt.NewNumericDate(nowTime.Add(validDuration)),
 			IssuedAt:  jwt.NewNumericDate(nowTime),

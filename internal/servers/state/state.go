@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/extra"
@@ -172,7 +171,7 @@ type ServerProvider func(ctx context.Context) ([]ServerConfig, error)
 
 type State struct {
 	state       *Collector
-	config      *config.Configuration
+	logAddr     string
 	logListener *logparse.Listener
 	logFileChan chan LogFilePayload
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
@@ -181,11 +180,11 @@ type State struct {
 
 // NewState created a interface to interact with server state and exec rcon commands.
 func NewState(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	state *Collector, config *config.Configuration, servers ServerProvider,
+	state *Collector, logAddr string, servers ServerProvider,
 ) *State {
 	return &State{
 		state:       state,
-		config:      config,
+		logAddr:     logAddr,
 		broadcaster: broadcaster,
 		servers:     servers,
 		logFileChan: make(chan LogFilePayload),
@@ -193,9 +192,7 @@ func NewState(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.
 }
 
 func (s *State) Start(ctx context.Context) error {
-	conf := s.config.Config()
-
-	logSrc, errLogSrc := logparse.NewListener(conf.General.SrcdsLogAddr,
+	logSrc, errLogSrc := logparse.NewListener(s.logAddr,
 		func(_ logparse.EventType, event logparse.ServerEvent) {
 			s.broadcaster.Emit(event.EventType, event)
 		})

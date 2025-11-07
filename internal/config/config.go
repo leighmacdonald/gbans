@@ -17,9 +17,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/leighmacdonald/gbans/internal/anticheat"
+	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/datetime"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/log"
+	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/network/ip2location"
+	"github.com/leighmacdonald/gbans/internal/network/scp"
+	"github.com/leighmacdonald/gbans/internal/patreon"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/mitchellh/go-homedir"
@@ -69,39 +78,24 @@ func (s Static) Addr() string {
 	return net.JoinHostPort(s.HTTPHost, strconv.Itoa(int(s.HTTPPort)))
 }
 
-type Anticheat struct {
-	Enabled               bool   `mapstructure:"enabled" json:"enabled"`
-	Action                Action `mapstructure:"action" json:"action"`
-	Duration              int    `mapstructure:"duration" json:"duration"`
-	MaxAimSnap            int    `mapstructure:"max_aim_snap" json:"max_aim_snap"`
-	MaxPsilent            int    `mapstructure:"max_psilent" json:"max_psilent"`
-	MaxBhop               int    `mapstructure:"max_bhop" json:"max_bhop"`
-	MaxFakeAng            int    `mapstructure:"max_fake_ang" json:"max_fake_ang"`
-	MaxCmdNum             int    `mapstructure:"max_cmd_num" json:"max_cmd_num"`
-	MaxTooManyConnections int    `mapstructure:"max_too_many_connections" json:"max_too_many_connections"`
-	MaxCheatCvar          int    `mapstructure:"max_cheat_cvar" json:"max_cheat_cvar"`
-	MaxOOBVar             int    `mapstructure:"max_oob_var" json:"max_oob_var"`
-	MaxInvalidUserCmd     int    `mapstructure:"max_invalid_user_cmd" json:"max_invalid_user_cmd"`
-}
-
 // Config is the root config container.
 type Config struct {
 	Static
 
-	General     General     `json:"general"`
-	Demo        Demo        `json:"demo"`
-	Filters     Filter      `json:"filters"`
-	Discord     Discord     `json:"discord"`
-	Clientprefs Clientprefs `json:"clientprefs"`
-	Log         Log         `json:"log"`
-	GeoLocation IP2Location `json:"geo_location"`
-	Debug       Debug       `json:"debug"`
-	Patreon     Patreon     `json:"patreon"`
-	SSH         SSH         `json:"ssh"`
-	Network     Network     `json:"network"`
-	LocalStore  LocalStore  `json:"local_store"`
-	Exports     Exports     `json:"exports"`
-	Anticheat   Anticheat   `json:"anticheat"`
+	General     General            `json:"general"`
+	Demo        servers.DemoConfig `json:"demo"`
+	Filters     chat.Config        `json:"filters"`
+	Discord     discord.Config     `json:"discord"`
+	Clientprefs Clientprefs        `json:"clientprefs"`
+	Log         log.Config         `json:"log"`
+	GeoLocation ip2location.Config `json:"geo_location"`
+	Debug       Debug              `json:"debug"`
+	Patreon     patreon.Config     `json:"patreon"`
+	SSH         scp.Config         `json:"ssh"`
+	Network     network.Config     `json:"network"`
+	LocalStore  asset.Config       `json:"local_store"`
+	Exports     Exports            `json:"exports"`
+	Anticheat   anticheat.Config   `json:"anticheat"`
 }
 
 func (c Config) ExtURL(obj LinkablePath) string {
@@ -112,59 +106,14 @@ func (c Config) ExtURLRaw(path string, args ...any) string {
 	return strings.TrimRight(c.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
 }
 
-type Network struct {
-	SDREnabled    bool   `mapstructure:"sdr_enabled" json:"sdr_enabled"`
-	SDRDNSEnabled bool   `mapstructure:"sdr_dns_enabled" json:"sdr_dns_enabled"` // nolint:tagliatelle
-	CFKey         string `mapstructure:"cf_key" json:"cf_key"`
-	CFEmail       string `mapstructure:"cf_email" json:"cf_email"`
-	CFZoneID      string `mapstructure:"cf_zone_id" json:"cf_zone_id"`
-}
-
-type SSH struct {
-	Enabled        bool   `json:"enabled"`
-	Username       string `json:"username"`
-	Port           int    `json:"port"`
-	PrivateKeyPath string `json:"private_key_path"`
-	Password       string `json:"password"`
-	UpdateInterval int    `json:"update_interval"`
-	Timeout        int    `json:"timeout"`
-	DemoPathFmt    string `json:"demo_path_fmt"`
-	StacPathFmt    string `json:"stac_path_fmt"`
-	// TODO configurable handling of host keys
-}
-
 type Exports struct {
 	BDEnabled      bool   `json:"bd_enabled"`
 	ValveEnabled   bool   `json:"valve_enabled"`
 	AuthorizedKeys string `json:"authorized_keys"`
 }
 
-type Filter struct {
-	Enabled        bool `json:"enabled"`
-	WarningTimeout int  `json:"warning_timeout"`
-	WarningLimit   int  `json:"warning_limit"`
-	Dry            bool `json:"dry"`
-	PingDiscord    bool `json:"ping_discord"`
-	MaxWeight      int  `json:"max_weight"`
-	CheckTimeout   int  `json:"check_timeout"`
-	MatchTimeout   int  `json:"match_timeout"`
-}
-
-type LocalStore struct {
-	PathRoot string `json:"path_root"`
-}
-
 type Clientprefs struct {
 	CenterProjectiles bool `mapstructure:"center_projectiles"`
-}
-
-type Patreon struct {
-	Enabled             bool   `json:"enabled"`
-	IntegrationsEnabled bool   `json:"integrations_enabled"`
-	ClientID            string `json:"client_id"`
-	ClientSecret        string `json:"client_secret"`
-	CreatorAccessToken  string `json:"creator_access_token"`
-	CreatorRefreshToken string `json:"creator_refresh_token"`
 }
 
 type RunMode string
@@ -183,26 +132,11 @@ func (rm RunMode) String() string {
 	return string(rm)
 }
 
-type Action string
-
-const (
-	ActionGag  Action = "gag"
-	ActionKick Action = "kick"
-	ActionBan  Action = "ban"
-)
-
 type FileServeMode string
 
 const (
 	S3Mode    FileServeMode = "s3"
 	LocalMode FileServeMode = "local"
-)
-
-type DemoStrategy string
-
-const (
-	DemoStrategyPctFree DemoStrategy = "pctfree"
-	DemoStrategyCount   DemoStrategy = "count"
 )
 
 type General struct {
@@ -225,62 +159,11 @@ type General struct {
 	PlayerqueueEnabled bool          `json:"playerqueue_enabled"`
 }
 
-type Demo struct {
-	DemoCleanupEnabled  bool         `json:"demo_cleanup_enabled"`
-	DemoCleanupStrategy DemoStrategy `json:"demo_cleanup_strategy"`
-	DemoCleanupMinPct   float32      `json:"demo_cleanup_min_pct"`
-	DemoCleanupMount    string       `json:"demo_cleanup_mount"`
-	DemoCountLimit      uint64       `json:"demo_count_limit"`
-	DemoParserURL       string       `json:"demo_parser_url"`
-}
-
-type Discord struct {
-	Enabled                 bool   `json:"enabled"`
-	BotEnabled              bool   `json:"bot_enabled"`
-	IntegrationsEnabled     bool   `json:"integrations_enabled"`
-	AppID                   string `json:"app_id"`
-	AppSecret               string `json:"app_secret"`
-	LinkID                  string `json:"link_id"`
-	Token                   string `json:"token"`
-	GuildID                 string `json:"guild_id"`
-	LogChannelID            string `json:"log_channel_id"`
-	PublicLogChannelEnable  bool   `json:"public_log_channel_enable"`
-	PublicLogChannelID      string `json:"public_log_channel_id"`
-	PublicMatchLogChannelID string `json:"public_match_log_channel_id"`
-	VoteLogChannelID        string `json:"vote_log_channel_id"`
-	AppealLogChannelID      string `json:"appeal_log_channel_id"`
-	BanLogChannelID         string `json:"ban_log_channel_id"`
-	ForumLogChannelID       string `json:"forum_log_channel_id"`
-	WordFilterLogChannelID  string `json:"word_filter_log_channel_id"`
-	KickLogChannelID        string `json:"kick_log_channel_id"`
-	PlayerqueueChannelID    string `json:"playerqueue_channel_id"`
-	ModPingRoleID           string `json:"mod_ping_role_id"`
-	AnticheatChannelID      string `json:"anticheat_channel_id"`
-}
-
-type Log struct {
-	Level log.Level `json:"level"`
-	// If set to a non-empty path, logs will also be written to the log file.
-	File string `json:"file"`
-	// Enable using the sloggin library for logging HTTP requests
-	HTTPEnabled bool `json:"http_enabled"`
-	// Enable support for OpenTelemetry by adding span/trace IDs
-	HTTPOtelEnabled bool `json:"http_otel_enabled"`
-	// Log level to use for http requests
-	HTTPLevel log.Level `json:"http_level"`
-}
-
 type Debug struct {
 	SkipOpenIDValidation bool `json:"skip_open_id_validation"`
 	// Will send the `logaddress_add <ip>:<port>` rcon command to all enabled servers so that
 	// you can forward them to yourself for testing. This does not remove any existing entries.
 	AddRCONLogAddress string `json:"add_rcon_log_address"`
-}
-
-type IP2Location struct {
-	Enabled   bool   `json:"enabled"`
-	CachePath string `json:"cache_path"`
-	Token     string `json:"token"`
 }
 
 type Configuration struct {

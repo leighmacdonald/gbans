@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/ip2location"
+	"github.com/leighmacdonald/gbans/internal/network/ip2location"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 

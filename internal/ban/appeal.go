@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -84,12 +83,11 @@ type Appeals struct {
 	repository AppealRepository
 	bans       Bans
 	persons    person.Provider
-	config     *config.Configuration
 	notif      notification.Notifier
 }
 
-func NewAppeals(ar AppealRepository, bans Bans, persons person.Provider, config *config.Configuration, notif notification.Notifier) Appeals {
-	return Appeals{repository: ar, bans: bans, persons: persons, config: config, notif: notif}
+func NewAppeals(ar AppealRepository, bans Bans, persons person.Provider, notif notification.Notifier) Appeals {
+	return Appeals{repository: ar, bans: bans, persons: persons, notif: notif}
 }
 
 func (u *Appeals) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
@@ -129,11 +127,11 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.Info, banMe
 		return existing, errSave
 	}
 
-	if u.notif != nil {
-		conf := u.config.Config()
-		u.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, NewAppealMessage(existing.MessageMD,
-			conf.ExtURLRaw("/ban/%d", existing.BanID), curUser, conf.ExtURL(curUser))))
-	}
+	// if u.notif != nil {
+	// 	conf := u.config.Config()
+	// 	u.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, NewAppealMessage(existing.MessageMD,
+	// 		conf.ExtURLRaw("/ban/%d", existing.BanID), curUser, conf.ExtURL(curUser))))
+	// }
 
 	slog.Debug("Appeal message updated", slog.Int64("message_id", banMessageID))
 

@@ -8,7 +8,8 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/ban/bantype"
+	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -35,8 +36,8 @@ func (r Repository) QueryBanState(ctx context.Context, steamID steamid.SteamID, 
 	var (
 		banSource  *BanSource
 		banID      *int
-		banType    *ban.Type
-		reason     *ban.Reason
+		banType    *bantype.Type
+		reason     *reason.Reason
 		evadeOK    *bool
 		validUntil *time.Time
 		banSteamID *int64

@@ -55,7 +55,7 @@ func NewFixture() *Fixture {
 		TFApi:     api,
 		Config:    conf,
 		DSN:       testDB.dsn,
-		Persons:   person.NewPersons(person.NewRepository(conf.Config(), databaseConn), steamid.New(conf.Config().Owner), nil),
+		Persons:   person.NewPersons(person.NewRepository(databaseConn, conf.Config().Clientprefs.CenterProjectiles), steamid.New(conf.Config().Owner), nil),
 		Close: func() {
 			termCtx, termCancel := context.WithTimeout(context.Background(), time.Second*30)
 			defer termCancel()
@@ -99,7 +99,7 @@ $do$;`
 }
 
 func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID, perm permission.Privilege) personDomain.Core {
-	people := person.NewPersons(person.NewRepository(f.Config.Config(), f.Database), OwnerSID, nil)
+	people := person.NewPersons(person.NewRepository(f.Database, f.Config.Config().Clientprefs.CenterProjectiles), OwnerSID, nil)
 	person, errPerson := people.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPerson != nil {
 		panic(errPerson)
