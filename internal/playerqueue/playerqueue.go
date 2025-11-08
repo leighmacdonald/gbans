@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -91,13 +90,13 @@ type ChatStatusChangePayload struct {
 }
 
 func NewPlayerqueue(ctx context.Context, repo Repository, persons person.Provider, serversUC servers.Servers,
-	state *state.State, chatLogs []ChatLog, config *config.Configuration, notif notification.Notifier,
+	state *state.State, chatLogs []ChatLog, playerqueueChannelID string, notif notification.Notifier,
 ) *Playerqueue {
 	return &Playerqueue{
-		config:  config,
-		repo:    repo,
-		persons: persons,
-		notif:   notif,
+		playerqueueChannelID: playerqueueChannelID,
+		repo:                 repo,
+		persons:              persons,
+		notif:                notif,
 		queue: New(100, 2, chatLogs, func() ([]Lobby, error) {
 			currentState := state.Current()
 
@@ -133,11 +132,11 @@ func NewPlayerqueue(ctx context.Context, repo Repository, persons person.Provide
 }
 
 type Playerqueue struct {
-	repo    Repository
-	persons person.Provider
-	notif   notification.Notifier
-	config  *config.Configuration
-	queue   *Coordinator
+	repo                 Repository
+	persons              person.Provider
+	notif                notification.Notifier
+	playerqueueChannelID string
+	queue                *Coordinator
 }
 
 func (p Playerqueue) Start(ctx context.Context) {
@@ -200,7 +199,7 @@ func (p Playerqueue) Purge(ctx context.Context, authorID steamid.SteamID, messag
 		return errGetTarget
 	}
 
-	p.notif.Send(notification.NewDiscord(p.config.Config().Discord.PlayerqueueChannelID,
+	p.notif.Send(notification.NewDiscord(p.playerqueueChannelID,
 		NewPlayerqueuePurge(author, target, message, count)))
 
 	return nil
@@ -248,7 +247,7 @@ func (p Playerqueue) SetChatStatus(ctx context.Context, authorID steamid.SteamID
 		return errGetProfile
 	}
 
-	p.notif.Send(notification.NewDiscord(p.config.Config().Discord.PlayerqueueChannelID, NewPlayerqueueChatStatus(author, person, status, reason)))
+	p.notif.Send(notification.NewDiscord(p.playerqueueChannelID, NewPlayerqueueChatStatus(author, person, status, reason)))
 
 	slog.Info("Set chat status", slog.String("steam_id", person.SteamID.String()), slog.String("status", string(status)))
 

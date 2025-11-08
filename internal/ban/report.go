@@ -10,7 +10,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -155,24 +154,25 @@ type ReportMeta struct {
 }
 
 type Reports struct {
-	repository ReportRepository
-	config     *config.Configuration
-	persons    *person.Persons
-	demos      servers.Demos
-	tfAPI      *thirdparty.TFAPI
-	notif      notification.Notifier
+	repository    ReportRepository
+	persons       *person.Persons
+	demos         servers.Demos
+	tfAPI         *thirdparty.TFAPI
+	notif         notification.Notifier
+	logChannel    string
+	appealChannel string
 }
 
-func NewReports(repository ReportRepository,
-	config *config.Configuration, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI, notif notification.Notifier,
-) *Reports {
+func NewReports(repo ReportRepository, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI,
+	notif notification.Notifier, logChannel string, appealChannel string) *Reports {
 	return &Reports{
-		repository: repository,
-		config:     config,
-		persons:    persons,
-		demos:      demos,
-		tfAPI:      tfAPI,
-		notif:      notif,
+		repository:    repo,
+		persons:       persons,
+		demos:         demos,
+		tfAPI:         tfAPI,
+		notif:         notif,
+		logChannel:    logChannel,
+		appealChannel: appealChannel,
 	}
 }
 
@@ -215,8 +215,8 @@ func (r Reports) MetaStats(ctx context.Context) error {
 	}
 
 	r.notif.Send(notification.NewDiscord(
-		r.config.Config().Discord.LogChannelID,
-		ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports"))))
+		r.logChannel,
+		ReportStatsMessage(meta, "/admin/reports")))
 
 	return nil
 }
@@ -266,8 +266,8 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user perso
 	}
 
 	r.notif.Send(notification.NewDiscord(
-		r.config.Config().Discord.LogChannelID,
-		ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report))))
+		r.logChannel,
+		ReportStatusChangeMessage(report, fromStatus, report.Path())))
 
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
@@ -382,8 +382,8 @@ func (r Reports) DropMessage(ctx context.Context, curUser personDomain.Info, rep
 		return err
 	}
 
-	r.notif.Send(notification.NewDiscord(r.config.Config().Discord.AppealLogChannelID,
-		DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser))))
+	r.notif.Send(notification.NewDiscord(r.appealChannel,
+		DeleteReportMessage(existing, curUser, curUser.Path())))
 
 	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
 
@@ -487,15 +487,13 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 		return ReportWithAuthor{}, errReport
 	}
 
-	conf := r.config.Config()
 	demoURL := ""
 	if report.DemoID > 0 {
-		demoURL = conf.ExtURLRaw("/asset/%s", demo.AssetID.String())
+		demoURL = fmt.Sprintf("/asset/%s", demo.AssetID.String())
 	}
 
-	r.notif.Send(notification.NewDiscord(
-		conf.Discord.AppealLogChannelID,
-		NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)))
+	r.notif.Send(notification.NewDiscord(r.appealChannel,
+		NewInGameReportResponse(newReport, report.Path(), currentUser, currentUser.Path(), demoURL)))
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
@@ -537,11 +535,9 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 		return ReportMessage{}, errSave
 	}
 
-	conf := r.config.Config()
-
-	r.notif.Send(notification.NewDiscord(conf.Discord.AppealLogChannelID,
+	r.notif.Send(notification.NewDiscord(r.appealChannel,
 		EditReportMessageResponse(req.BodyMD, existing.MessageMD,
-			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))))
+			fmt.Sprintf("/report/%d", existing.ReportID), curUser, curUser.Path())))
 
 	slog.Info("Report message edited", slog.Int64("report_message_id", reportMessageID))
 
@@ -571,11 +567,8 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser pers
 		return ReportMessage{}, errSave
 	}
 
-	conf := r.config.Config()
-
-	r.notif.Send(notification.NewDiscord(
-		conf.Discord.AppealLogChannelID,
-		NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser))))
+	r.notif.Send(notification.NewDiscord(r.appealChannel,
+		NewReportMessageResponse(msg.MessageMD, report.Path(), curUser, curUser.Path())))
 
 	path := fmt.Sprintf("/report/%d", reportID)
 

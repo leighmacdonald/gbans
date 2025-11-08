@@ -12,28 +12,22 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
 type serverQueueHandler struct {
-	queue *Playerqueue
+	*Playerqueue
 }
 
-func NewPlayerqueueHandler(engine *gin.Engine, auth httphelper.Authenticator, configUC *config.Configuration,
-	playerQueue *Playerqueue,
-) {
-	conf := configUC.Config()
+func NewPlayerqueueHandler(engine *gin.Engine, auth httphelper.Authenticator, playerQueue *Playerqueue) {
 	var origins []string
-	if conf.General.Mode == config.ReleaseMode {
-		origins = []string{conf.ExternalURL}
-	}
+	// if conf.General.Mode == config.ReleaseMode {
+	// 	origins = []string{conf.ExternalURL}
+	// }
 
-	handler := &serverQueueHandler{
-		queue: playerQueue,
-	}
+	handler := &serverQueueHandler{Playerqueue: playerQueue}
 
 	authedGroup := engine.Group("/api/playerqueue")
 	{
@@ -68,7 +62,7 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.queue.SetChatStatus(ctx, currentUser.GetSteamID(), steamID, req.ChatStatus, req.Reason); err != nil {
+		if err := h.SetChatStatus(ctx, currentUser.GetSteamID(), steamID, req.ChatStatus, req.Reason); err != nil {
 			if errors.Is(err, httphelper.ErrPermissionDenied) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
@@ -102,8 +96,8 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 		}
 
 		// Connect to the coordinator with our connection
-		client := h.queue.Connect(ctx, currentUser, wsConn)
-		defer h.queue.Disconnect(client)
+		client := h.Connect(ctx, currentUser, wsConn)
+		defer h.Disconnect(client)
 
 		for {
 			request, err := h.handleWSMessage(client)
@@ -148,7 +142,7 @@ func (h *serverQueueHandler) handleRequest(ctx context.Context, client Client, p
 		if errUnmarshal := json.Unmarshal(payloadInbound.Payload, &p); errUnmarshal != nil {
 			return errors.Join(errUnmarshal, ErrQueueParseMessage)
 		}
-		err = h.queue.JoinLobbies(client, p.Servers)
+		err = h.JoinLobbies(client, p.Servers)
 
 	case LeaveQueue:
 		var p LeavePayload
@@ -156,7 +150,7 @@ func (h *serverQueueHandler) handleRequest(ctx context.Context, client Client, p
 			return errors.Join(errUnmarshal, ErrQueueParseMessage)
 		}
 
-		err = h.queue.LeaveLobbies(client, p.Servers)
+		err = h.LeaveLobbies(client, p.Servers)
 	case Message:
 		client.Limit()
 		var p MessageCreatePayload
@@ -164,7 +158,7 @@ func (h *serverQueueHandler) handleRequest(ctx context.Context, client Client, p
 			return errors.Join(errUnmarshal, ErrQueueParseMessage)
 		}
 
-		err = h.queue.AddMessage(ctx, p.BodyMD, user)
+		err = h.AddMessage(ctx, p.BodyMD, user)
 
 	default:
 		return ErrUnexpectedMessage
@@ -194,7 +188,7 @@ func (h *serverQueueHandler) purge() gin.HandlerFunc {
 			return
 		}
 
-		errPurge := h.queue.Purge(ctx, user.GetSteamID(), messageID, count)
+		errPurge := h.Purge(ctx, user.GetSteamID(), messageID, count)
 		if errPurge != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errPurge))
 

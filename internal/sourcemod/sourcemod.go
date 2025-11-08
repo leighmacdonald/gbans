@@ -13,7 +13,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -31,6 +30,10 @@ var (
 	ErrInvalidIP        = errors.New("invalid ip, could not parse")
 	ErrGetPerson        = errors.New("failed to fetch person result")
 )
+
+type Config struct {
+	CenterProjectiles bool `mapstructure:"center_projectiles"`
+}
 
 type BanSource string
 
@@ -133,18 +136,17 @@ type AdminGroups struct {
 	UpdatedOn    time.Time `json:"updated_on"`
 }
 
-type Config struct {
+type ConfigEntry struct {
 	CfgKey   string `json:"cfg_key"`
 	CfgValue string `json:"cfg_value"`
 }
 
-func New(repository Repository, linker config.Linker, person person.Provider) Sourcemod {
-	return Sourcemod{repository: repository, linker: linker, person: person}
+func New(repository Repository, person person.Provider) Sourcemod {
+	return Sourcemod{repository: repository, person: person}
 }
 
 type Sourcemod struct {
 	repository Repository
-	linker     config.Linker
 	person     person.Provider
 }
 
@@ -165,7 +167,7 @@ func (h Sourcemod) GetBanState(ctx context.Context, steamID steamid.SteamID, ip 
 
 	appealURL := "n/a"
 	if banState.BanSource == BanSourceSteam {
-		appealURL = h.linker.ExtURLRaw("/appeal/%d", banState.BanID)
+		appealURL = fmt.Sprintf("/appeal/%d", banState.BanID)
 	}
 
 	if banState.BanID > 0 && banState.BanType >= bantype.NoComm {

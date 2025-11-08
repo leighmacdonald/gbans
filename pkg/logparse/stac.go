@@ -135,7 +135,7 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 		}
 
 		//
-		if strings.Contains(line, " Player: ") {
+		if strings.Contains(line, "Player: ") {
 			matches := p.rePlayer.FindStringSubmatch(line)
 			current.SteamID = steamid.New(strings.Trim(matches[3], " "))
 			current.Name = matches[1]

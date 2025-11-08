@@ -19,6 +19,7 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -29,6 +30,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/mitchellh/go-homedir"
@@ -86,7 +88,7 @@ type Config struct {
 	Demo        servers.DemoConfig `json:"demo"`
 	Filters     chat.Config        `json:"filters"`
 	Discord     discord.Config     `json:"discord"`
-	Clientprefs Clientprefs        `json:"clientprefs"`
+	Clientprefs sourcemod.Config   `json:"clientprefs"`
 	Log         log.Config         `json:"log"`
 	GeoLocation ip2location.Config `json:"geo_location"`
 	Debug       Debug              `json:"debug"`
@@ -94,7 +96,7 @@ type Config struct {
 	SSH         scp.Config         `json:"ssh"`
 	Network     network.Config     `json:"network"`
 	LocalStore  asset.Config       `json:"local_store"`
-	Exports     Exports            `json:"exports"`
+	Exports     ban.Config         `json:"exports"`
 	Anticheat   anticheat.Config   `json:"anticheat"`
 }
 
@@ -104,16 +106,6 @@ func (c Config) ExtURL(obj LinkablePath) string {
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
 	return strings.TrimRight(c.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
-}
-
-type Exports struct {
-	BDEnabled      bool   `json:"bd_enabled"`
-	ValveEnabled   bool   `json:"valve_enabled"`
-	AuthorizedKeys string `json:"authorized_keys"`
-}
-
-type Clientprefs struct {
-	CenterProjectiles bool `mapstructure:"center_projectiles"`
 }
 
 type RunMode string

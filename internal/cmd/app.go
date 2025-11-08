@@ -215,7 +215,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.assets = asset.NewAssets(assetRepo)
 	g.servers = servers.NewServers(servers.NewRepository(g.database))
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, g.config.Config().Demo, steamid.New(g.config.Config().Owner))
-	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.config, g.persons, g.demos, g.tfapiClient, g.notifications)
+	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications, conf.Discord.LogChannelID, conf.Discord.AppealLogChannelID)
 
 	serverFetcher := func(ctx context.Context) ([]state.ServerConfig, error) {
 		servers, errServers := g.servers.Servers(ctx, servers.Query{})
@@ -251,14 +251,14 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
 	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications)
 	g.chatRepo = chat.NewRepository(g.database)
-	g.chat = chat.NewChat(g.chatRepo, g.config.Config().Filters, g.wordFilters, g.persons, g.notifications, func(ctx context.Context, warning chat.NewUserWarning) error {
+	g.chat = chat.NewChat(g.chatRepo, g.config.Config().Filters, g.wordFilters, g.persons, g.notifications, func(_ context.Context, _ chat.NewUserWarning) error {
 		panic("fixme")
 	})
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database))
 	g.patreon = patreon.NewPatreon(patreon.NewRepository(g.database), conf.Patreon)
-	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.config, g.persons)
+	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
 	g.auth = auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, SentryDSN)
 	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), g.config.Config().Anticheat, g.notifications, g.onAnticheatBan)
@@ -266,7 +266,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.contests = contest.NewContests(contest.NewRepository(g.database))
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons), g.tfapiClient)
-	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications, g.config)
+	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 
 	if err := g.firstTimeSetup(ctx); err != nil {
 		slog.Error("Failed to run first time setup", slog.String("error", err.Error()))
@@ -317,7 +317,7 @@ func (g *GBans) setupPlayerQueue(ctx context.Context) {
 		slog.Error("Failed to warm playerqueue chatlogs", slog.String("error", errChatlogs.Error()))
 		chatlogs = []playerqueue.ChatLog{}
 	}
-	g.playerQueue = playerqueue.NewPlayerqueue(ctx, playerqueueRepo, g.persons, g.servers, g.states, chatlogs, g.config, g.notifications)
+	g.playerQueue = playerqueue.NewPlayerqueue(ctx, playerqueueRepo, g.persons, g.servers, g.states, chatlogs, g.config.Config().Discord.PlayerqueueChannelID, g.notifications)
 }
 
 func (g *GBans) setupSentry() {
@@ -446,9 +446,9 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	auth.NewAuthHandler(router, g.auth, g.config, g.persons, g.tfapiClient)
 	ban.NewAppealHandler(router, g.appeals, g.auth)
 	ban.NewReportHandler(router, g.reports, g.auth)
-	ban.NewHandlerBans(router, g.bans, g.config, g.auth)
+	ban.NewHandlerBans(router, g.bans, g.auth, conf.Exports, conf.General.SiteName)
 	chat.NewChatHandler(router, g.chat, g.auth)
-	chat.NewWordFilterHandler(router, g.config.Config().Filters, g.wordFilters, g.chat, g.auth)
+	chat.NewWordFilterHandler(router, conf.Filters, g.wordFilters, g.chat, g.auth)
 	config.NewHandler(router, g.config, g.auth, BuildVersion)
 	contest.NewContestHandler(router, g.contests, g.assets, g.auth)
 	discordoauth.NewDiscordOAuthHandler(router, g.auth, g.config, g.persons, g.discordOAuth)
@@ -461,7 +461,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	notification.NewNotificationHandler(router, g.notifications, g.auth)
 	patreon.NewPatreonHandler(router, g.patreon, g.auth, g.config.Config().Patreon)
 	person.NewPersonHandler(router, g.persons, g.auth)
-	playerqueue.NewPlayerqueueHandler(router, g.auth, g.config, g.playerQueue)
+	playerqueue.NewPlayerqueueHandler(router, g.auth, g.playerQueue)
 	servers.NewDemoHandler(router, g.demos, g.auth)
 	servers.NewServersHandler(router, g.servers, g.states, g.auth)
 	servers.NewSpeedrunsHandler(router, g.speedruns, g.auth, g.servers, SentryDSN)
@@ -636,7 +636,7 @@ func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, du
 	conf := g.config.Config()
 	newBan, err := g.bans.Create(ctx, ban.Opts{
 		Origin:     ban.System,
-		SourceID:   steamid.New(conf.Static.Owner),
+		SourceID:   steamid.New(conf.Owner),
 		TargetID:   entry.SteamID,
 		Duration:   duration.FromTimeDuration(dur),
 		BanType:    bantype.Banned,

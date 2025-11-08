@@ -18,7 +18,7 @@ func TestFilters(t *testing.T) {
 		router        = fixture.CreateRouter()
 		wordfilters   = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewNullNotifications(), fixture.Config.Config().Filters)
 		chats         = chat.NewChat(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, wordfilters,
-			fixture.Persons, notification.NewNullNotifications(), func(ctx context.Context, warning chat.NewUserWarning) error { return nil })
+			fixture.Persons, notification.NewNullNotifications(), func(_ context.Context, _ chat.NewUserWarning) error { return nil })
 	)
 
 	chat.NewWordFilterHandler(router, fixture.Config.Config().Filters, wordfilters, chats, authenticator)

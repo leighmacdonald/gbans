@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -38,20 +37,19 @@ func init() { //nolint:gochecknoinits
 }
 
 type banHandler struct {
-	bans   Bans
-	config *config.Configuration
+	bans           Bans
+	siteName       string
+	authorizedKeys []string
 }
 
-func NewHandlerBans(engine *gin.Engine, bans Bans,
-	config *config.Configuration, authenticator httphelper.Authenticator,
-) {
-	handler := banHandler{bans: bans, config: config}
+func NewHandlerBans(engine *gin.Engine, bans Bans, authenticator httphelper.Authenticator, config Config, siteName string) {
+	handler := banHandler{bans: bans, authorizedKeys: strings.Split(config.AuthorizedKeys, ",")}
 
-	if config.Config().Exports.BDEnabled {
+	if config.BDEnabled {
 		engine.GET("/export/bans/tf2bd", handler.onAPIExportBansTF2BD())
 	}
 
-	if config.Config().Exports.ValveEnabled {
+	if config.ValveEnabled {
 		engine.GET("/export/bans/valve/steamid", handler.onAPIExportBansValveSteamID())
 	}
 
@@ -300,11 +298,9 @@ func (h banHandler) onStats() gin.HandlerFunc {
 
 func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authorizedKeys := strings.Split(h.config.Config().Exports.AuthorizedKeys, ",")
-
-		if len(authorizedKeys) > 0 {
+		if len(h.authorizedKeys) > 0 {
 			key, ok := ctx.GetQuery("key")
-			if !ok || !slices.Contains(authorizedKeys, key) {
+			if !ok || !slices.Contains(h.authorizedKeys, key) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 					"You do not have permission to access this resource. You can try contacting the administrator to obtain an api key."))
 
@@ -337,11 +333,9 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 
 func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authorizedKeys := strings.Split(h.config.Config().Exports.AuthorizedKeys, ",")
-
-		if len(authorizedKeys) > 0 {
+		if len(h.authorizedKeys) > 0 {
 			key, ok := ctx.GetQuery("key")
-			if !ok || !slices.Contains(authorizedKeys, key) {
+			if !ok || !slices.Contains(h.authorizedKeys, key) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
 					"You do not have permission to access this resource. You can try contacting the administrator to obtain an api key."))
 
@@ -366,15 +360,13 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 			filtered = append(filtered, curBan)
 		}
 
-		config := h.config.Config()
-
 		out := thirdparty.TF2BDSchema{
 			Schema: "https://raw.githubusercontent.com/PazerOP/tf2_bot_detector/master/schemas/v3/playerlist.schema.json",
 			FileInfo: thirdparty.FileInfo{
-				Authors:     []string{config.General.SiteName},
+				Authors:     []string{h.siteName},
 				Description: "Players permanently banned for cheating",
-				Title:       config.General.SiteName + " Cheater List",
-				UpdateURL:   h.config.ExtURLRaw("/export/bans/tf2bd"),
+				Title:       h.siteName + " Cheater List",
+				UpdateURL:   "/export/bans/tf2bd",
 			},
 			Players: []thirdparty.Players{},
 		}

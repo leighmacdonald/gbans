@@ -130,7 +130,7 @@ type Config struct {
 	MaxWeight              int    `json:"max_weight"`
 	CheckTimeout           int    `json:"check_timeout"`
 	MatchTimeout           int    `json:"match_timeout"`
-	WordFilterLogChannelID string `json:"string"`
+	WordFilterLogChannelID string `json:"word_filter_log_channel_id"`
 }
 
 type WordFilters struct {

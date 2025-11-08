@@ -5,19 +5,16 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
 )
 
-func NewExpirationMonitor(steam Bans, person person.Provider, notifications notification.Notifier, config *config.Configuration,
-) *ExpirationMonitor {
+func NewExpirationMonitor(steam Bans, person person.Provider, notifications notification.Notifier) *ExpirationMonitor {
 	return &ExpirationMonitor{
 		steam:         steam,
 		person:        person,
 		notifications: notifications,
-		config:        config,
 	}
 }
 
@@ -25,7 +22,6 @@ type ExpirationMonitor struct {
 	steam         Bans
 	person        person.Provider
 	notifications notification.Notifier
-	config        *config.Configuration
 }
 
 func (monitor *ExpirationMonitor) Update(ctx context.Context) {
