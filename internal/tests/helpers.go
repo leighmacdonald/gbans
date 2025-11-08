@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -21,6 +22,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/testcontainers/testcontainers-go"
@@ -213,7 +215,7 @@ func TestConfig(dsn string) *config.Configuration {
 		Discord: discord.Config{
 			Enabled: false,
 		},
-		Clientprefs: config.Clientprefs{},
+		Clientprefs: sourcemod.Config{},
 		Log: log.Config{
 			HTTPEnabled: false,
 			Level:       "error",
@@ -229,6 +231,6 @@ func TestConfig(dsn string) *config.Configuration {
 			Enabled: false,
 		},
 		LocalStore: asset.Config{},
-		Exports:    config.Exports{},
+		Exports:    ban.Config{},
 	}))
 }

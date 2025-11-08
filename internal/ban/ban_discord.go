@@ -12,7 +12,6 @@ import (
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -26,7 +25,6 @@ type discordHandler struct {
 	bans    Bans
 	persons person.Provider
 	discord person.DiscordPersonProvider
-	config  *config.Configuration
 }
 
 func RegisterDiscordCommands(bot *bot.Bot, bans Bans) {
@@ -324,7 +322,6 @@ func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 	var banURL string
 
 	var (
-		conf          = h.config.Config()
 		authorProfile person.Core
 	)
 
@@ -339,7 +336,7 @@ func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 			}
 		}
 
-		banURL = conf.ExtURL(bans)
+		banURL = bans.Path()
 	}
 
 	return CheckMessage(player, bans, banURL, authorProfile, oldBans), nil

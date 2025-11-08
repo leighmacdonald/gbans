@@ -140,7 +140,7 @@ func (a AntiCheat) BySteamID(ctx context.Context, steamID steamid.SteamID) ([]lo
 }
 
 func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) error { //nolint:cyclop
-	var (
+	var ( //nolint:prealloc
 		results       = map[steamid.SteamID]map[logparse.Detection]int{}
 		hasBeenBanned []steamid.SteamID
 	)

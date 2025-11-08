@@ -12,10 +12,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v4/extra"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
 )
 
-var fixture *tests.Fixture
+var fixture *tests.Fixture //nolint:gochecknoglobals
 
 func TestMain(m *testing.M) {
 	fixture = tests.NewFixture()
@@ -30,11 +32,18 @@ func TestAnticheat(t *testing.T) {
 		server    = fixture.CreateTestServer(t.Context())
 		router    = fixture.CreateRouter()
 		antiCheat = anticheat.NewAntiCheat(anticheat.NewRepository(fixture.Database), fixture.Config.Config().Anticheat, notification.NewNullNotifications(),
-			func(ctx context.Context, entry logparse.StacEntry, duration time.Duration, count int) error {
+			func(_ context.Context, _ logparse.StacEntry, _ time.Duration, _ int) error {
 				return nil
 			})
 	)
 
+	for _, sid := range extra.FindReaderSteamIDs(strings.NewReader(testData)) {
+		fixture.CreateTestPerson(t.Context(), sid, permission.User)
+	}
+
+	for _, sid := range []string{"STEAM_0:1:59129186", "STEAM_0:0:123751210", "STEAM_0:0:893704961", "STEAM_0:1:807960493"} {
+		fixture.CreateTestPerson(t.Context(), steamid.New(sid), permission.User)
+	}
 	anticheat.NewAnticheatHandler(router, auth, antiCheat)
 
 	entries, err := antiCheat.Import(t.Context(), "stac_052224.log", io.NopCloser(strings.NewReader(testData)), server.ServerID)

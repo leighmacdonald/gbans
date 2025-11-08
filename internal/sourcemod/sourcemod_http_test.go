@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 func TestSourcemod(t *testing.T) {
 	authenticator := &tests.StaticAuth{}
 	router := fixture.CreateRouter()
-	sourcemodUC := sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Config, fixture.Persons)
+	sourcemodUC := sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons)
 	sourcemod.NewHandler(router, authenticator, nil, sourcemodUC)
 
 	t.Run("admins", testAdmins(router, authenticator))
@@ -231,7 +231,7 @@ func testGroupImmunities(router *gin.Engine, authenticator *tests.StaticAuth, sm
 func TestSRCDS(t *testing.T) {
 	authenticator := &tests.StaticAuth{}
 	router := fixture.CreateRouter()
-	sm := sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Config, fixture.Persons)
+	sm := sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons)
 	sourcemod.NewHandler(router, authenticator, func(ctx *gin.Context) {
 		// Dummy server auth
 		ctx.Next()

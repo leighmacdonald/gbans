@@ -37,6 +37,12 @@ var (
 	ErrReasonInvalid      = errors.New("invalid reason")
 )
 
+type Config struct {
+	BDEnabled      bool   `json:"bd_enabled"`
+	ValveEnabled   bool   `json:"valve_enabled"`
+	AuthorizedKeys string `json:"authorized_keys"`
+}
+
 // Origin defines the origin of the ban or action.
 type Origin int
 
