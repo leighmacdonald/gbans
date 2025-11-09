@@ -37,13 +37,14 @@ func init() { //nolint:gochecknoinits
 }
 
 type banHandler struct {
-	bans           Bans
+	Bans
+
 	siteName       string
 	authorizedKeys []string
 }
 
 func NewHandlerBans(engine *gin.Engine, bans Bans, authenticator httphelper.Authenticator, config Config, siteName string) {
-	handler := banHandler{bans: bans, authorizedKeys: strings.Split(config.AuthorizedKeys, ",")}
+	handler := banHandler{Bans: bans, authorizedKeys: strings.Split(config.AuthorizedKeys, ","), siteName: siteName}
 
 	if config.BDEnabled {
 		engine.GET("/export/bans/tf2bd", handler.onAPIExportBansTF2BD())
@@ -91,7 +92,7 @@ func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson, banErr := h.bans.QueryOne(ctx, QueryOpts{BanID: banID, EvadeOk: true})
+		bannedPerson, banErr := h.QueryOne(ctx, QueryOpts{BanID: banID, EvadeOk: true})
 		if banErr != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, banErr))
 
@@ -108,7 +109,7 @@ func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
 		original := bannedPerson.AppealState
 		bannedPerson.AppealState = req.AppealState
 
-		if errSave := h.bans.Save(ctx, &bannedPerson); errSave != nil {
+		if errSave := h.Save(ctx, &bannedPerson); errSave != nil {
 			switch {
 			case errors.Is(errSave, ErrPersonTarget):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
@@ -130,7 +131,7 @@ func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
 
 		if req.AppealState == Accepted {
 			user, _ := session.CurrentUserProfile(ctx)
-			if _, err := h.bans.Unban(ctx, bannedPerson.TargetID, "Appeal accepted", user); err != nil {
+			if _, err := h.Unban(ctx, bannedPerson.TargetID, "Appeal accepted", user); err != nil {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal),
 					"Could not perform unban request"))
 
@@ -159,7 +160,7 @@ func (h banHandler) onBanCreate() gin.HandlerFunc {
 			req.SourceID = user.GetSteamID()
 		}
 
-		newBan, errBan := h.bans.Create(ctx, req)
+		newBan, errBan := h.Create(ctx, req)
 		if errBan != nil {
 			switch {
 			case errors.Is(errBan, database.ErrDuplicate):
@@ -203,7 +204,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 				deletedOk = deleted
 			}
 		}
-		bannedPerson, errGet := h.bans.QueryOne(ctx, QueryOpts{
+		bannedPerson, errGet := h.QueryOne(ctx, QueryOpts{
 			BanID:   banID,
 			Deleted: deletedOk,
 			EvadeOk: true,
@@ -284,7 +285,7 @@ func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
 func (h banHandler) onStats() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var stats Stats
-		if errGetStats := h.bans.Stats(ctx, &stats); errGetStats != nil {
+		if errGetStats := h.Stats(ctx, &stats); errGetStats != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetStats, httphelper.ErrInternal)))
 
 			return
@@ -309,7 +310,7 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 		}
 
 		// TODO limit to perm?
-		bans, errBans := h.bans.Query(ctx, QueryOpts{})
+		bans, errBans := h.Query(ctx, QueryOpts{})
 		if errBans != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
 
@@ -343,7 +344,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 			}
 		}
 
-		bans, errBans := h.bans.Query(ctx, QueryOpts{})
+		bans, errBans := h.Query(ctx, QueryOpts{})
 		if errBans != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
 
@@ -407,7 +408,7 @@ func (h banHandler) onQuery() gin.HandlerFunc {
 			return
 		}
 
-		bans, errBans := h.bans.Query(ctx, QueryOpts{
+		bans, errBans := h.Query(ctx, QueryOpts{
 			Deleted:       params.Deleted,
 			SourceID:      steamid.New(params.SourceID),
 			TargetID:      steamid.New(params.TargetID),
@@ -439,7 +440,7 @@ func (h banHandler) onBanDelete() gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson, errBan := h.bans.QueryOne(ctx, QueryOpts{BanID: banID, EvadeOk: true})
+		bannedPerson, errBan := h.QueryOne(ctx, QueryOpts{BanID: banID, EvadeOk: true})
 		if errBan != nil {
 			if errors.Is(errBan, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
@@ -453,7 +454,7 @@ func (h banHandler) onBanDelete() gin.HandlerFunc {
 		}
 
 		user, _ := session.CurrentUserProfile(ctx)
-		changed, errSave := h.bans.Unban(ctx, bannedPerson.TargetID, req.UnbanReasonText, user)
+		changed, errSave := h.Unban(ctx, bannedPerson.TargetID, req.UnbanReasonText, user)
 		if errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
@@ -499,7 +500,7 @@ func (h banHandler) onBanUpdate() gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson, banErr := h.bans.QueryOne(ctx, QueryOpts{BanID: banID, Deleted: true, EvadeOk: true})
+		bannedPerson, banErr := h.QueryOne(ctx, QueryOpts{BanID: banID, Deleted: true, EvadeOk: true})
 		if banErr != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound,
 				"Failed to find existing ban with id: %d", banID))
@@ -526,7 +527,7 @@ func (h banHandler) onBanUpdate() gin.HandlerFunc {
 		bannedPerson.EvadeOk = req.EvadeOk
 		bannedPerson.ValidUntil = req.ValidUntil
 
-		if errSave := h.bans.Save(ctx, &bannedPerson); errSave != nil {
+		if errSave := h.Save(ctx, &bannedPerson); errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return

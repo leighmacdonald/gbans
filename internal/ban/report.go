@@ -164,7 +164,8 @@ type Reports struct {
 }
 
 func NewReports(repo ReportRepository, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI,
-	notif notification.Notifier, logChannel string, appealChannel string) *Reports {
+	notif notification.Notifier, logChannel string, appealChannel string,
+) *Reports {
 	return &Reports{
 		repository:    repo,
 		persons:       persons,
@@ -489,7 +490,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 
 	demoURL := ""
 	if report.DemoID > 0 {
-		demoURL = fmt.Sprintf("/asset/%s", demo.AssetID.String())
+		demoURL = "/asset/" + demo.AssetID.String()
 	}
 
 	r.notif.Send(notification.NewDiscord(r.appealChannel,

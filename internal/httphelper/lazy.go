@@ -1,15 +1,15 @@
 package httphelper
 
-type LazyResult struct {
+type LazyResult[T any] struct {
 	Count int64 `json:"count"`
-	Data  any   `json:"data"`
+	Data  []T   `json:"data"`
 }
 
-func NewLazyResult(count int64, data any) LazyResult {
+func NewLazyResult[T any](count int64, data []T) LazyResult[T] {
 	if count == 0 {
 		// Return an empty list instead of null
-		return LazyResult{0, []any{}}
+		return LazyResult[T]{0, []T{}}
 	}
 
-	return LazyResult{Count: count, Data: data}
+	return LazyResult[T]{Count: count, Data: data}
 }

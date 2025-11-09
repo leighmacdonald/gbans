@@ -476,7 +476,6 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID 
 
 	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
 	intStats := map[string]gin.H{}
-
 	demoDetail, errDetail := d.SendAndParseDemo(ctx, asset.LocalPath)
 	if errDetail != nil {
 		return nil, errDetail
@@ -487,7 +486,6 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID 
 	}
 
 	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])
-
 	createdTime, errTime := time.Parse("20060102-150405", timeStr) // 20240511-211121
 	if errTime != nil {
 		slog.Warn("Failed to parse demo time, using current time", slog.String("time", timeStr))
