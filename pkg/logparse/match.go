@@ -749,7 +749,7 @@ func (match *Match) extinguishes(evt ExtinguishedEvt) {
 
 func (match *Match) damage(evt DamageEvt) {
 	player := match.player(evt.CreatedOn, evt.SID)
-	dmg := sliceutil.FirstNonZero(evt.Realdamage, evt.Damage)
+	dmg := sliceutil.FirstPositive(evt.Realdamage, evt.Damage)
 
 	weaponSum := player.getWeaponSum(evt.Weapon)
 	weaponSum.Damage += dmg
