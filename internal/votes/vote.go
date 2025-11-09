@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -43,22 +42,22 @@ type Result struct {
 }
 
 type Votes struct {
-	repository  Repository
-	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	notif       notification.Notifier
-	config      *config.Configuration
-	persons     person.Provider
+	repository   Repository
+	broadcaster  *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	notif        notification.Notifier
+	logChannelID string
+	persons      person.Provider
 }
 
 func NewVotes(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	notif notification.Notifier, config *config.Configuration, persons person.Provider,
+	notif notification.Notifier, logChannelID string, persons person.Provider,
 ) Votes {
 	return Votes{
-		repository:  repository,
-		broadcaster: broadcaster,
-		notif:       notif,
-		config:      config,
-		persons:     persons,
+		repository:   repository,
+		broadcaster:  broadcaster,
+		notif:        notif,
+		logChannelID: logChannelID,
+		persons:      persons,
 	}
 }
 
@@ -208,9 +207,7 @@ func (u Votes) Start(ctx context.Context) {
 				if errTarget != nil {
 					slog.Error("Failed to load vote target", slog.String("error", errSource.Error()), slog.String("steam_id", result.TargetID.String()))
 				}
-				conf := u.config.Config()
-				u.notif.Send(notification.NewDiscord(u.config.Config().Discord.VoteLogChannelID,
-					VoteResultMessage(&conf, result, source, target)))
+				u.notif.Send(notification.NewDiscord(u.logChannelID, VoteResultMessage(result, source, target)))
 			}
 		}
 	}

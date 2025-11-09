@@ -5,12 +5,11 @@ import (
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 )
 
-func VoteResultMessage(conf *config.Config, result Result, source person.Core, target person.Core) *discordgo.MessageEmbed {
+func VoteResultMessage(result Result, source person.Core, target person.Core) *discordgo.MessageEmbed {
 	msgEmbed := discord.NewEmbed("Vote Result")
 	if result.Success {
 		msgEmbed.Emb.Color = discord.ColourSuccess
@@ -23,7 +22,7 @@ func VoteResultMessage(conf *config.Config, result Result, source person.Core, t
 	}
 
 	msgEmbed.Emb.Author = &discordgo.MessageEmbedAuthor{
-		URL:     conf.ExtURL(source),
+		URL:     source.Path(),
 		Name:    source.GetName(),
 		IconURL: source.GetAvatar().Full(),
 	}
