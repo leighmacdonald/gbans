@@ -13,11 +13,11 @@ import (
 )
 
 type NetworkHandler struct { //nolint:revive
-	networks Networks
+	Networks
 }
 
 func NewNetworkHandler(engine *gin.Engine, networks Networks, authenticator httphelper.Authenticator) {
-	handler := NetworkHandler{networks: networks}
+	handler := NetworkHandler{Networks: networks}
 
 	modGrp := engine.Group("/")
 	{
@@ -41,7 +41,7 @@ func (h NetworkHandler) onAPIGetUpdateDB() gin.HandlerFunc {
 			go func() {
 				updateInProgress.Store(true)
 
-				if err := h.networks.RefreshLocationData(ctx); err != nil {
+				if err := h.RefreshLocationData(ctx); err != nil {
 					slog.Error("Failed to update location data", slog.String("error", err.Error()))
 				}
 
@@ -62,7 +62,7 @@ func (h NetworkHandler) onAPIQueryNetwork() gin.HandlerFunc {
 			return
 		}
 
-		details, err := h.networks.QueryNetwork(ctx, req.IP)
+		details, err := h.QueryNetwork(ctx, req.IP)
 		if err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
@@ -80,7 +80,7 @@ func (h NetworkHandler) onAPIQueryConnections() gin.HandlerFunc {
 			return
 		}
 
-		ipHist, totalCount, errIPHist := h.networks.QueryConnectionHistory(ctx, req)
+		ipHist, totalCount, errIPHist := h.QueryConnectionHistory(ctx, req)
 		if errIPHist != nil && !errors.Is(errIPHist, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errIPHist, httphelper.ErrInternal)))
 

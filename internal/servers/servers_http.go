@@ -88,10 +88,11 @@ func NewServersHandler(engine *gin.Engine, servers Servers, state *state.State, 
 	srvGrp := engine.Group("/")
 	{
 		admin := srvGrp.Use(authenticator.Middleware(permission.Admin))
+		// TODO remove one of these, they both do the same thing
 		admin.POST("/api/servers", handler.onAPIPostServer())
 		admin.PUT("/api/servers/:server_id", handler.onSave())
-		admin.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())
-		admin.GET("/api/servers_admin", handler.onAPIGetServersAdmin())
+		admin.DELETE("/api/servers/:server_id", handler.onDelete())
+		admin.GET("/api/servers_admin", handler.onGetAdmin())
 	}
 }
 
@@ -194,8 +195,8 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req Server
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindG[Server](ctx)
+		if !ok {
 			return
 		}
 
@@ -217,8 +218,8 @@ func (h *serversHandler) onSave() gin.HandlerFunc {
 			return
 		}
 
-		var req Server
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindG[Server](ctx)
+		if !ok {
 			return
 		}
 
@@ -235,7 +236,7 @@ func (h *serversHandler) onSave() gin.HandlerFunc {
 	}
 }
 
-func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
+func (h *serversHandler) onGetAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		servers, errServers := h.servers.Servers(ctx, Query{IncludeDisabled: true})
 		if errServers != nil {
@@ -252,7 +253,7 @@ func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 	}
 }
 
-func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
+func (h *serversHandler) onDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		serverID, idFound := httphelper.GetIntParam(ctx, "server_id")
 		if !idFound {

@@ -321,9 +321,7 @@ func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 
 	var banURL string
 
-	var (
-		authorProfile person.Core
-	)
+	var authorProfile person.Core
 
 	// TODO Show the longest remaining ban.
 	if bans.BanID > 0 {

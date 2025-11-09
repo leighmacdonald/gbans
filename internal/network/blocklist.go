@@ -55,14 +55,14 @@ type CacheUpdater interface {
 
 type Blocklists struct {
 	repository BlocklistRepository
-	bans       CacheUpdater
+	updater    CacheUpdater
 	cidrRx     *regexp.Regexp
 }
 
-func NewBlocklists(br BlocklistRepository, banUsecase CacheUpdater) Blocklists {
+func NewBlocklists(br BlocklistRepository, updater CacheUpdater) Blocklists {
 	return Blocklists{
 		repository: br,
-		bans:       banUsecase,
+		updater:    updater,
 		cidrRx:     regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$`),
 	}
 }
@@ -71,7 +71,7 @@ func (b *Blocklists) Sync(ctx context.Context) {
 	waitGroup := &sync.WaitGroup{}
 
 	waitGroup.Go(func() {
-		if err := b.bans.UpdateCache(ctx); err != nil {
+		if err := b.updater.UpdateCache(ctx); err != nil {
 			slog.Error("failed to update banned group members", slog.String("error", err.Error()))
 
 			return

@@ -41,7 +41,7 @@ func (h voteHandler) onVotes() gin.HandlerFunc {
 			votes = []Result{}
 		}
 
-		ctx.JSON(http.StatusOK, httphelper.LazyResult{
+		ctx.JSON(http.StatusOK, httphelper.LazyResult[Result]{
 			Count: count,
 			Data:  votes,
 		})

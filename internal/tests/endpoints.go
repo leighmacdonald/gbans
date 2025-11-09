@@ -86,6 +86,11 @@ func PostGOK[T any](t *testing.T, router http.Handler, path string, body any) T 
 	return endpointWithReceiver[T](t, router, http.MethodPost, path, body, http.StatusOK, nil)
 }
 
+func PostForbidden(t *testing.T, router http.Handler, path string, body any) {
+	t.Helper()
+	endpoint(t, router, http.MethodPost, path, body, http.StatusForbidden, nil)
+}
+
 func PostOK(t *testing.T, router http.Handler, path string, body any) {
 	t.Helper()
 	endpoint(t, router, http.MethodPost, path, body, http.StatusOK, nil)
