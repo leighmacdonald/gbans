@@ -18,7 +18,7 @@ type newsHandler struct {
 func NewNewsHandler(engine *gin.Engine, news News, auth httphelper.Authenticator) {
 	handler := newsHandler{news: news}
 
-	engine.POST("/api/news_latest", handler.onAPIGetNewsLatest())
+	engine.GET("/api/news_latest", handler.onAPIGetNewsLatest())
 
 	// editor
 	editorGrp := engine.Group("/")
@@ -27,7 +27,7 @@ func NewNewsHandler(engine *gin.Engine, news News, auth httphelper.Authenticator
 		editor.POST("/api/news", handler.onAPIPostNewsCreate())
 		editor.POST("/api/news/:news_id", handler.onAPIPostNewsUpdate())
 		editor.DELETE("/api/news/:news_id", handler.onAPIPostNewsDelete())
-		editor.POST("/api/news_all", handler.onAPIGetNewsAll())
+		editor.GET("/api/news_all", handler.onAPIGetNewsAll())
 	}
 }
 
@@ -48,7 +48,7 @@ func (h newsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 	}
 }
 
-type newsEditRequest struct {
+type NewsEditRequest struct {
 	Title       string `json:"title"`
 	BodyMD      string `json:"body_md"`
 	IsPublished bool   `json:"is_published"`
@@ -56,7 +56,7 @@ type newsEditRequest struct {
 
 func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req newsEditRequest
+		var req NewsEditRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -103,7 +103,7 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var req newsEditRequest
+		var req NewsEditRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -119,7 +119,7 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusAccepted, entry)
+		ctx.JSON(http.StatusOK, entry)
 
 		// h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
 		// 	discord.ChannelModLog,
