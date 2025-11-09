@@ -71,6 +71,11 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 		person.PermissionLevel = req.PermissionLevel
 
 		if err := h.Save(ctx, &person); err != nil {
+			if errors.Is(err, permission.ErrDenied) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, permission.ErrDenied))
+
+				return
+			}
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
@@ -141,13 +146,13 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 	}
 }
 
-func (h personHandler) onSteamValidate() gin.HandlerFunc {
-	type steamValidateResponse struct {
-		SteamID     string `json:"steam_id"`
-		Hash        string `json:"hash"`
-		Personaname string `json:"personaname"`
-	}
+type SteamValidateResponse struct {
+	SteamID     string `json:"steam_id"`
+	Hash        string `json:"hash"`
+	Personaname string `json:"personaname"`
+}
 
+func (h personHandler) onSteamValidate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 		defer cancelRequest()
@@ -170,7 +175,7 @@ func (h personHandler) onSteamValidate() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, steamValidateResponse{
+		ctx.JSON(http.StatusOK, SteamValidateResponse{
 			SteamID:     response.Player.SteamID.String(),
 			Hash:        response.Player.AvatarHash,
 			Personaname: response.Player.PersonaName,
