@@ -262,7 +262,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
 	g.auth = auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, SentryDSN)
 	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), g.config.Config().Anticheat, g.notifications, g.onAnticheatBan)
-	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications, g.config, g.persons)
+	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications, conf.Discord.VoteLogChannelID, g.persons)
 	g.contests = contest.NewContests(contest.NewRepository(g.database))
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons), g.tfapiClient)
