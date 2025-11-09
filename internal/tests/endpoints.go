@@ -15,10 +15,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func GetNotFound(t *testing.T, router http.Handler, path string) {
+func GetNotFound(t *testing.T, router http.Handler, path string, body ...any) {
 	t.Helper()
-
-	endpoint(t, router, http.MethodGet, path, nil, http.StatusNotFound, nil)
+	if len(body) > 0 {
+		endpoint(t, router, http.MethodGet, path, body[0], http.StatusNotFound, nil)
+	} else {
+		endpoint(t, router, http.MethodGet, path, nil, http.StatusNotFound, nil)
+	}
 }
 
 func GetGOK[T any](t *testing.T, router http.Handler, path string, body ...any) T { //nolint:ireturn

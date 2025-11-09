@@ -35,7 +35,6 @@ func TestParseFile(t *testing.T) {
 	t.Parallel()
 
 	logFilePath := path.Join("testdata", "log_1.log")
-
 	openFile, e := os.ReadFile(logFilePath)
 	if e != nil {
 		t.Fatalf("Failed to open test file: %s", logFilePath)
