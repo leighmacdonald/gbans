@@ -30,7 +30,7 @@ func (d dummyCache) UpdateCache(_ context.Context) error {
 
 func TestSources(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		blocklists    = network.NewBlocklists(network.NewBlocklistRepository(fixture.Database), dummyCache{})
 		networks      = network.NewNetworks(nil, network.NewRepository(fixture.Database, fixture.Persons),
 			fixture.Config.Config().Network, fixture.Config.Config().GeoLocation)
@@ -71,7 +71,7 @@ func TestSources(t *testing.T) {
 
 func TestWhitelistIP(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		blocklists    = network.NewBlocklists(network.NewBlocklistRepository(fixture.Database), dummyCache{})
 		networks      = network.NewNetworks(nil, network.NewRepository(fixture.Database, fixture.Persons),
 			fixture.Config.Config().Network, fixture.Config.Config().GeoLocation)
@@ -99,7 +99,7 @@ func TestWhitelistIP(t *testing.T) {
 
 func TestWhitelistSteam(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		router        = fixture.CreateRouter()
 		guest         = fixture.CreateTestPerson(t.Context(), tests.GuestSID, permission.User)
 	)

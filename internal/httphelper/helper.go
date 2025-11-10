@@ -16,6 +16,10 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+type ServerAuthenticator interface {
+	Middleware(ctx *gin.Context)
+}
+
 type Authenticator interface {
 	Middleware(level permission.Privilege) gin.HandlerFunc
 	MiddlewareWS(level permission.Privilege) gin.HandlerFunc

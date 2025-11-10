@@ -12,11 +12,11 @@ import (
 )
 
 type wikiHandler struct {
-	wiki Wiki
+	Wiki
 }
 
 func NewWikiHandler(engine *gin.Engine, wiki Wiki, ath httphelper.Authenticator) {
-	handler := &wikiHandler{wiki: wiki}
+	handler := &wikiHandler{wiki}
 
 	// optional
 	optGrp := engine.Group("/")
@@ -38,7 +38,7 @@ func (w *wikiHandler) savePage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		slug := ctx.Param("slug")
 		user, _ := session.CurrentUserProfile(ctx)
-		page, err := w.wiki.Page(ctx, slug)
+		page, err := w.Page(ctx, slug)
 		if err != nil {
 			switch {
 			case errors.Is(err, database.ErrNoResult):
@@ -69,7 +69,7 @@ func (w *wikiHandler) getPage() gin.HandlerFunc {
 			return
 		}
 		slugParam := ctx.Param("slug")
-		page, err := w.wiki.Page(ctx, slugParam)
+		page, err := w.Page(ctx, slugParam)
 		if err != nil && errors.Is(err, ErrSlugUnknown) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
@@ -86,7 +86,7 @@ func (w *wikiHandler) getPage() gin.HandlerFunc {
 		page.BodyMD = req.BodyMD
 		page.PermissionLevel = req.PermissionLevel
 
-		newPage, errSave := w.wiki.Save(ctx, page)
+		newPage, errSave := w.Save(ctx, page)
 		if errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 

@@ -21,7 +21,7 @@ func TestHTTPBan(t *testing.T) {
 	bans := ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
 		fixture.Config.Config().Discord.BanLogChannelID, steamid.New(fixture.Config.Config().Owner),
 		nil, notification.NewNullNotifications())
-	ban.NewHandlerBans(router, bans, &tests.StaticAuth{
+	ban.NewHandlerBans(router, bans, &tests.UserAuth{
 		Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin),
 	}, fixture.Config.Config().Exports, "")
 	var createdBan ban.Ban

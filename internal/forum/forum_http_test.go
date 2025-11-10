@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 
 func TestCategories(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{}
+		authenticator = &tests.UserAuth{}
 		router        = fixture.CreateRouter()
 		forumsUC      = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewNullNotifications())
 	)
@@ -66,7 +66,7 @@ func TestCategories(t *testing.T) {
 
 func TestForums(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{
+		authenticator = &tests.UserAuth{
 			Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator),
 		}
 		router   = fixture.CreateRouter()
@@ -105,7 +105,7 @@ func TestForums(t *testing.T) {
 func TestThreads(t *testing.T) {
 	// TODO tests permissions.
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		router        = fixture.CreateRouter()
 		forumsUC      = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewNullNotifications())
 	)

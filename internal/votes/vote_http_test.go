@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 
 func TestVotesHTTP(t *testing.T) {
 	var (
-		auth   = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
+		auth   = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
 		br     = broadcaster.New[logparse.EventType, logparse.ServerEvent]()
 		server = fixture.CreateTestServer(t.Context())
 		source = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)

@@ -32,7 +32,7 @@ func TestHTTPAppeal(t *testing.T) {
 		target  = steamid.RandSID64()
 	)
 
-	ban.NewAppealHandler(router, appeals, &tests.StaticAuth{
+	ban.NewAppealHandler(router, appeals, &tests.UserAuth{
 		Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin),
 	})
 

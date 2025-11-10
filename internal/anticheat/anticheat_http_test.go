@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 
 func TestAnticheat(t *testing.T) {
 	var (
-		auth      = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
+		auth      = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
 		server    = fixture.CreateTestServer(t.Context())
 		router    = fixture.CreateRouter()
 		antiCheat = anticheat.NewAntiCheat(anticheat.NewRepository(fixture.Database), fixture.Config.Config().Anticheat, notification.NewNullNotifications(),

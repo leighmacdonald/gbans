@@ -13,7 +13,7 @@ import (
 
 func TestServersHTTP(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)}
 		serversUC     = servers.NewServers(servers.NewRepository(fixture.Database))
 		router        = fixture.CreateRouter()
 		server        = servers.NewServer(stringutil.SecureRandomString(5), "1.2.3.4", 27015)

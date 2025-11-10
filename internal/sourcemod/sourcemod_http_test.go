@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestSourcemod(t *testing.T) {
-	authenticator := &tests.StaticAuth{}
+	authenticator := &tests.UserAuth{}
 	router := fixture.CreateRouter()
 	sourcemodUC := sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons)
 	sourcemod.NewHandler(router, authenticator, nil, sourcemodUC)
@@ -36,7 +36,7 @@ func TestSourcemod(t *testing.T) {
 	t.Run("group_immunities", testGroupImmunities(router, authenticator, sourcemodUC))
 }
 
-func testAdmins(router *gin.Engine, authenticator *tests.StaticAuth) func(t *testing.T) {
+func testAdmins(router *gin.Engine, authenticator *tests.UserAuth) func(t *testing.T) {
 	return func(t *testing.T) {
 		// Non-admin should be 403
 		tests.GetForbidden(t, router, "/api/smadmin/admins")
@@ -73,7 +73,7 @@ func testAdmins(router *gin.Engine, authenticator *tests.StaticAuth) func(t *tes
 	}
 }
 
-func testGroups(router *gin.Engine, authenticator *tests.StaticAuth) func(t *testing.T) {
+func testGroups(router *gin.Engine, authenticator *tests.UserAuth) func(t *testing.T) {
 	return func(t *testing.T) {
 		// Non-admin should be 403
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)
@@ -119,7 +119,7 @@ func testGroups(router *gin.Engine, authenticator *tests.StaticAuth) func(t *tes
 	}
 }
 
-func testGroupOverrides(router *gin.Engine, authenticator *tests.StaticAuth, sm sourcemod.Sourcemod) func(t *testing.T) {
+func testGroupOverrides(router *gin.Engine, authenticator *tests.UserAuth, sm sourcemod.Sourcemod) func(t *testing.T) {
 	return func(t *testing.T) {
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
 		group, errGroup := sm.AddGroup(t.Context(), stringutil.SecureRandomString(10), "abc", 100)
@@ -161,7 +161,7 @@ func testGroupOverrides(router *gin.Engine, authenticator *tests.StaticAuth, sm 
 	}
 }
 
-func testGlobalOverrides(router *gin.Engine, authenticator *tests.StaticAuth) func(t *testing.T) {
+func testGlobalOverrides(router *gin.Engine, authenticator *tests.UserAuth) func(t *testing.T) {
 	return func(t *testing.T) {
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
 		// group, errGroup := sm.AddGroup(t.Context(), stringutil.SecureRandomString(10), "abc", 100)
@@ -200,7 +200,7 @@ func testGlobalOverrides(router *gin.Engine, authenticator *tests.StaticAuth) fu
 	}
 }
 
-func testGroupImmunities(router *gin.Engine, authenticator *tests.StaticAuth, sm sourcemod.Sourcemod) func(t *testing.T) {
+func testGroupImmunities(router *gin.Engine, authenticator *tests.UserAuth, sm sourcemod.Sourcemod) func(t *testing.T) {
 	return func(t *testing.T) {
 		groupA, _ := sm.AddGroup(t.Context(), stringutil.SecureRandomString(10), "abc", 0)
 		groupB, _ := sm.AddGroup(t.Context(), stringutil.SecureRandomString(10), "abc", 0)
@@ -229,18 +229,19 @@ func testGroupImmunities(router *gin.Engine, authenticator *tests.StaticAuth, sm
 }
 
 func TestSRCDS(t *testing.T) {
-	authenticator := &tests.StaticAuth{}
-	router := fixture.CreateRouter()
-	sm := sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons)
-	sourcemod.NewHandler(router, authenticator, func(ctx *gin.Context) {
-		// Dummy server auth
-		ctx.Next()
-	}, sm)
+	var (
+		authenticator = &tests.UserAuth{}
+		router        = fixture.CreateRouter()
+		sm            = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons)
+	)
+
+	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sm)
+
 	t.Run("permissions", testPermissions(router, authenticator, sm))
 	t.Run("check", testCheck(router, authenticator))
 }
 
-func testPermissions(router *gin.Engine, _ *tests.StaticAuth, sourcemodUC sourcemod.Sourcemod) func(t *testing.T) {
+func testPermissions(router *gin.Engine, _ *tests.UserAuth, sourcemodUC sourcemod.Sourcemod) func(t *testing.T) {
 	return func(t *testing.T) {
 		admin, _ := sourcemodUC.AddAdmin(t.Context(), stringutil.SecureRandomString(10), sourcemod.AuthTypeSteam, tests.ModSID.String(), "abc", 0, "")
 		group, _ := sourcemodUC.AddGroup(t.Context(), stringutil.SecureRandomString(10), "abc", 0)
@@ -259,7 +260,7 @@ func testPermissions(router *gin.Engine, _ *tests.StaticAuth, sourcemodUC source
 	}
 }
 
-func testCheck(router *gin.Engine, authenticator *tests.StaticAuth) func(t *testing.T) {
+func testCheck(router *gin.Engine, authenticator *tests.UserAuth) func(t *testing.T) {
 	return func(t *testing.T) {
 		authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Moderator)
 

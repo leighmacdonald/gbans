@@ -12,11 +12,11 @@ import (
 )
 
 type mediaHandler struct {
-	assets Assets
+	Assets
 }
 
 func NewAssetHandler(engine *gin.Engine, assets Assets, authenticator httphelper.Authenticator) {
-	handler := mediaHandler{assets: assets}
+	handler := mediaHandler{Assets: assets}
 
 	optGrp := engine.Group("/")
 	{
@@ -53,7 +53,7 @@ func (h mediaHandler) saveAsset() gin.HandlerFunc {
 			req.Name = req.File.Filename
 		}
 		user, _ := session.CurrentUserProfile(ctx)
-		asset, errAsset := h.assets.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile, false)
+		asset, errAsset := h.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile, false)
 		if errAsset != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errAsset, httphelper.ErrInternal)))
 
@@ -71,7 +71,7 @@ func (h mediaHandler) getAsset() gin.HandlerFunc {
 			return
 		}
 
-		asset, reader, errGet := h.assets.Get(ctx, mediaID)
+		asset, reader, errGet := h.Get(ctx, mediaID)
 		if errGet != nil {
 			if errors.Is(errGet, ErrOpenFile) {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound, "Asset with this asset_id does not exist: %s", mediaID))

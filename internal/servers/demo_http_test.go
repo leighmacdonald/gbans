@@ -14,7 +14,7 @@ import (
 
 func TestDemos(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		assets        = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
 		demos         = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database),
 			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
