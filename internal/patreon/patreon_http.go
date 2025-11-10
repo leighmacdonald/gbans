@@ -16,7 +16,7 @@ type patreonHandler struct {
 	config Config
 }
 
-func NewPatreonHandler(engine *gin.Engine, patreon Patreon, auth httphelper.Authenticator, config Config) {
+func NewPatreonHandler(engine *gin.Engine, auth httphelper.Authenticator, patreon Patreon, config Config) {
 	handler := patreonHandler{
 		Patreon: patreon,
 		config:  config,

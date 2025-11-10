@@ -36,7 +36,7 @@ func TestSources(t *testing.T) {
 			fixture.Config.Config().Network, fixture.Config.Config().GeoLocation)
 		router = fixture.CreateRouter()
 	)
-	network.NewBlocklistHandler(router, blocklists, networks, authenticator)
+	network.NewBlocklistHandler(router, authenticator, blocklists, networks)
 
 	// No results
 	require.Empty(t, tests.GetGOK[[]network.CIDRBlockSource](t, router, "/api/block_list/sources"))
@@ -77,7 +77,7 @@ func TestWhitelistIP(t *testing.T) {
 			fixture.Config.Config().Network, fixture.Config.Config().GeoLocation)
 		router = fixture.CreateRouter()
 	)
-	network.NewBlocklistHandler(router, blocklists, networks, authenticator)
+	network.NewBlocklistHandler(router, authenticator, blocklists, networks)
 
 	require.Empty(t, tests.GetGOK[[]network.CIDRBlockWhitelistExport](t, router, "/api/block_list/whitelist/ip"))
 
@@ -103,11 +103,11 @@ func TestWhitelistSteam(t *testing.T) {
 		router        = fixture.CreateRouter()
 		guest         = fixture.CreateTestPerson(t.Context(), tests.GuestSID, permission.User)
 	)
-	network.NewBlocklistHandler(router,
+	network.NewBlocklistHandler(router, authenticator,
 		network.NewBlocklists(network.NewBlocklistRepository(fixture.Database), dummyCache{}),
 		network.NewNetworks(nil, network.NewRepository(fixture.Database, fixture.Persons),
 			fixture.Config.Config().Network, fixture.Config.Config().GeoLocation),
-		authenticator)
+	)
 
 	// Get empty set
 	require.Empty(t, tests.GetGOK[[]network.WhitelistSteam](t, router, "/api/block_list/whitelist/steam"))

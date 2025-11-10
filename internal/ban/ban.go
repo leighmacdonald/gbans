@@ -217,13 +217,13 @@ type Stats struct {
 type Bans struct {
 	repo         Repository
 	persons      person.Provider
-	reports      *Reports
+	reports      Reports
 	notif        notification.Notifier
 	logChannelID string
 	owner        steamid.SteamID
 }
 
-func NewBans(repository Repository, person person.Provider, logChannelID string, owner steamid.SteamID, reports *Reports,
+func NewBans(repository Repository, person person.Provider, logChannelID string, owner steamid.SteamID, reports Reports,
 	notif notification.Notifier,
 ) Bans {
 	return Bans{

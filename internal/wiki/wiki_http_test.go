@@ -28,7 +28,7 @@ func TestGetSlug(t *testing.T) {
 		page          = wiki.NewPage(slug, stringutil.SecureRandomString(1000))
 	)
 
-	wiki.NewWikiHandler(router, wuc, authenticator)
+	wiki.NewWikiHandler(router, authenticator, wuc)
 
 	authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.GuestSID, permission.Guest)
 	tests.GetNotFound(t, router, "/api/wiki/slug/"+slug)
@@ -57,7 +57,7 @@ func TestPutSlug(t *testing.T) {
 		router        = fixture.CreateRouter()
 		page          = wiki.NewPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(1000))
 	)
-	wiki.NewWikiHandler(router, wuc, authenticator)
+	wiki.NewWikiHandler(router, authenticator, wuc)
 
 	authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.GuestSID, permission.Guest)
 	tests.PutForbidden(t, router, "/api/wiki/slug/"+page.Slug, page)

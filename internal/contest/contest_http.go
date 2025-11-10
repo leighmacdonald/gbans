@@ -20,15 +20,12 @@ import (
 
 type contestHandler struct {
 	Contests
+
 	assets asset.Assets
 }
 
-func NewContestHandler(engine *gin.Engine, contests Contests, assets asset.Assets, authenticator httphelper.Authenticator,
-) {
-	handler := &contestHandler{
-		Contests: contests,
-		assets:   assets,
-	}
+func NewContestHandler(engine *gin.Engine, authenticator httphelper.Authenticator, contests Contests, assets asset.Assets) {
+	handler := &contestHandler{Contests: contests, assets: assets}
 
 	// opt
 	optGrp := engine.Group("/")

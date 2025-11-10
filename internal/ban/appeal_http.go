@@ -15,7 +15,7 @@ type appealHandler struct {
 	appeals Appeals
 }
 
-func NewAppealHandler(engine *gin.Engine, appeals Appeals, authenticator httphelper.Authenticator) {
+func NewAppealHandler(engine *gin.Engine, authenticator httphelper.Authenticator, appeals Appeals) {
 	handler := &appealHandler{appeals: appeals}
 	// authed
 	authedGrp := engine.Group("/")

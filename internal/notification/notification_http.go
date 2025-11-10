@@ -19,7 +19,7 @@ type notificationHandler struct {
 	*Notifications
 }
 
-func NewNotificationHandler(engine *gin.Engine, notifications *Notifications, auth httphelper.Authenticator) {
+func NewNotificationHandler(engine *gin.Engine, auth httphelper.Authenticator, notifications *Notifications) {
 	handler := notificationHandler{
 		Notifications: notifications,
 	}

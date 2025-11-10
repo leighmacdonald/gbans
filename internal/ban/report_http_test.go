@@ -37,7 +37,7 @@ func TestReport(t *testing.T) {
 		authenticator = &tests.UserAuth{Profile: moderator}
 	)
 
-	ban.NewReportHandler(router, reports, authenticator)
+	ban.NewReportHandler(router, authenticator, reports)
 
 	// Create a report
 	req := ban.RequestReportCreate{

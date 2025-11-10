@@ -43,7 +43,7 @@ type banHandler struct {
 	authorizedKeys []string
 }
 
-func NewHandlerBans(engine *gin.Engine, bans Bans, authenticator httphelper.Authenticator, config Config, siteName string) {
+func NewHandlerBans(engine *gin.Engine, authenticator httphelper.Authenticator, bans Bans, config Config, siteName string) {
 	handler := banHandler{Bans: bans, authorizedKeys: strings.Split(config.AuthorizedKeys, ","), siteName: siteName}
 
 	if config.BDEnabled {

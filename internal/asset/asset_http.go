@@ -15,7 +15,7 @@ type mediaHandler struct {
 	Assets
 }
 
-func NewAssetHandler(engine *gin.Engine, assets Assets, authenticator httphelper.Authenticator) {
+func NewAssetHandler(engine *gin.Engine, authenticator httphelper.Authenticator, assets Assets) {
 	handler := mediaHandler{Assets: assets}
 
 	optGrp := engine.Group("/")

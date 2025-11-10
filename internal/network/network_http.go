@@ -16,7 +16,7 @@ type NetworkHandler struct { //nolint:revive
 	Networks
 }
 
-func NewNetworkHandler(engine *gin.Engine, networks Networks, authenticator httphelper.Authenticator) {
+func NewNetworkHandler(engine *gin.Engine, authenticator httphelper.Authenticator, networks Networks) {
 	handler := NetworkHandler{Networks: networks}
 
 	modGrp := engine.Group("/")

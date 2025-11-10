@@ -5,12 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -20,21 +22,22 @@ import (
 
 func TestHTTPAppeal(t *testing.T) {
 	var (
-		router = fixture.CreateRouter()
-		bans   = ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
-			fixture.Config.Config().Discord.BanLogChannelID,
-			steamid.New(fixture.Config.Config().Owner), nil, notification.NewNullNotifications())
+		router  = fixture.CreateRouter()
 		persons = person.NewPersons(
 			person.NewRepository(fixture.Database, true),
 			steamid.New(tests.OwnerSID),
 			fixture.TFApi)
+		assets  = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		demos   = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database), assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		reports = ban.NewReports(ban.NewReportRepository(fixture.Database), persons, demos, fixture.TFApi, notification.NewNullNotifications(), "", "")
+		bans    = ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
+			fixture.Config.Config().Discord.BanLogChannelID,
+			steamid.New(fixture.Config.Config().Owner), reports, notification.NewNullNotifications())
 		appeals = ban.NewAppeals(ban.NewAppealRepository(fixture.Database), bans, persons, notification.NewNullNotifications())
 		target  = steamid.RandSID64()
 	)
 
-	ban.NewAppealHandler(router, appeals, &tests.UserAuth{
-		Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin),
-	})
+	ban.NewAppealHandler(router, &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)}, appeals)
 
 	testBan, errTestBan := bans.Create(t.Context(), ban.Opts{
 		SourceID: tests.OwnerSID, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),

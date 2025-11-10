@@ -19,7 +19,7 @@ type blocklistHandler struct {
 	networks Networks
 }
 
-func NewBlocklistHandler(engine *gin.Engine, blocklist Blocklists, networks Networks, ath httphelper.Authenticator) {
+func NewBlocklistHandler(engine *gin.Engine, ath httphelper.Authenticator, blocklist Blocklists, networks Networks) {
 	handler := blocklistHandler{Blocklists: blocklist, networks: networks}
 
 	// mod

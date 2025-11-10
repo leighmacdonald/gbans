@@ -14,9 +14,7 @@ type speedrunHandler struct {
 	Speedruns
 }
 
-func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns,
-	userAuth httphelper.Authenticator,
-	serverAuth httphelper.ServerAuthenticator, serversUC Servers) {
+func NewSpeedrunsHandler(engine *gin.Engine, userAuth httphelper.Authenticator, serverAuth httphelper.ServerAuthenticator, speedruns Speedruns) {
 	handler := speedrunHandler{Speedruns: speedruns}
 
 	guestGroup := engine.Group("/")

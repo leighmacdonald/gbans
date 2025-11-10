@@ -21,7 +21,7 @@ func TestFilters(t *testing.T) {
 			fixture.Persons, notification.NewNullNotifications(), func(_ context.Context, _ chat.NewUserWarning) error { return nil })
 	)
 
-	chat.NewWordFilterHandler(router, fixture.Config.Config().Filters, wordfilters, chats, authenticator)
+	chat.NewWordFilterHandler(router, authenticator, fixture.Config.Config().Filters, wordfilters, chats)
 
 	// Make sure none exist yet
 	require.Empty(t, tests.GetGOK[[]chat.Filter](t, router, "/api/filters"))

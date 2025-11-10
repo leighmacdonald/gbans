@@ -13,7 +13,7 @@ type voteHandler struct {
 	Votes
 }
 
-func NewVotesHandler(engine *gin.Engine, votes Votes, authenticator httphelper.Authenticator) {
+func NewVotesHandler(engine *gin.Engine, authenticator httphelper.Authenticator, votes Votes) {
 	handler := voteHandler{votes}
 
 	modGrp := engine.Group("/")

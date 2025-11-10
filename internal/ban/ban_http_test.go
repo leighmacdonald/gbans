@@ -5,11 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
@@ -17,13 +20,22 @@ import (
 )
 
 func TestHTTPBan(t *testing.T) {
-	router := fixture.CreateRouter()
-	bans := ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
-		fixture.Config.Config().Discord.BanLogChannelID, steamid.New(fixture.Config.Config().Owner),
-		nil, notification.NewNullNotifications())
-	ban.NewHandlerBans(router, bans, &tests.UserAuth{
-		Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin),
-	}, fixture.Config.Config().Exports, "")
+	var (
+		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		demos  = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database),
+			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
+			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
+			demos, fixture.TFApi, notification.NewNullNotifications(), "", "")
+
+		router = fixture.CreateRouter()
+		bans   = ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
+			fixture.Config.Config().Discord.BanLogChannelID, steamid.New(fixture.Config.Config().Owner),
+			reports, notification.NewNullNotifications())
+	)
+	ban.NewHandlerBans(router, &tests.UserAuth{Profile: fixture.CreateTestPerson(
+		t.Context(), tests.OwnerSID, permission.Admin)}, bans, fixture.Config.Config().Exports, "")
+
 	var createdBan ban.Ban
 	for _, sid := range []steamid.SteamID{tests.GuestSID, tests.UserSID} {
 		createdBan = tests.PostGCreated[ban.Ban](t, router, "/api/bans", ban.Opts{

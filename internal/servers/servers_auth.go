@@ -62,5 +62,4 @@ func (s ServerAuth) Middleware(ctx *gin.Context) {
 	}
 
 	ctx.Next()
-
 }

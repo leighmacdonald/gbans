@@ -21,7 +21,7 @@ type serversHandler struct {
 	state *state.State
 }
 
-func NewServersHandler(engine *gin.Engine, servers Servers, state *state.State, authenticator httphelper.Authenticator) {
+func NewServersHandler(engine *gin.Engine, authenticator httphelper.Authenticator, servers Servers, state *state.State) {
 	handler := &serversHandler{
 		Servers: servers,
 		state:   state,

@@ -13,8 +13,9 @@ type httpHandler struct {
 	*Configuration
 }
 
-func NewHandler(engine *gin.Engine, cu *Configuration, authenticator httphelper.Authenticator, version string) {
-	handler := httpHandler{Configuration: cu}
+func NewHandler(engine *gin.Engine, authenticator httphelper.Authenticator, cu *Configuration, version string) {
+	handler := httpHandler{cu}
+
 	engine.GET("/api/info", handler.onAppInfo(version))
 	engine.GET("/api/changelog", handler.onChangelog())
 

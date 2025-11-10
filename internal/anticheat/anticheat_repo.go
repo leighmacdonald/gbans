@@ -13,15 +13,15 @@ import (
 )
 
 func NewRepository(database database.Database) Repository {
-	return Repository{db: database}
+	return Repository{database}
 }
 
 type Repository struct {
-	db database.Database
+	database.Database
 }
 
 func (a Repository) Query(ctx context.Context, query Query) ([]Entry, error) {
-	builder := a.db.Builder().
+	builder := a.Builder().
 		Select("a.anticheat_id", "a.steam_id", "a.name", "a.detection", "a.summary", "a.demo_id", "a.demo_tick",
 			"a.server_id", "a.raw_log", "s.short_name", "p.personaname", "p.avatarhash", "a.created_on",
 			"RANK () OVER (PARTITION BY a.steam_id, a.detection ORDER BY a.created_on) triggered").
@@ -59,7 +59,7 @@ func (a Repository) Query(ctx context.Context, query Query) ([]Entry, error) {
 
 	builder = query.ApplyLimitOffsetDefault(builder)
 
-	rows, errRows := a.db.QueryBuilder(ctx, builder)
+	rows, errRows := a.QueryBuilder(ctx, builder)
 	if errRows != nil {
 		return nil, errRows
 	}
@@ -83,7 +83,7 @@ func (a Repository) Query(ctx context.Context, query Query) ([]Entry, error) {
 }
 
 func (a Repository) DetectionsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]logparse.StacEntry, error) {
-	rows, errRows := a.db.QueryBuilder(ctx, a.db.Builder().
+	rows, errRows := a.QueryBuilder(ctx, a.Builder().
 		Select("anticheat_id", "steam_id", "name", "detection", "summary", "demo_id", "server_id", "raw_log", "s.short_name").
 		From("anticheat").
 		LeftJoin("server s USING(server_id)").
@@ -109,7 +109,7 @@ func (a Repository) DetectionsBySteamID(ctx context.Context, steamID steamid.Ste
 }
 
 func (a Repository) DetectionsByType(ctx context.Context, detectionType logparse.Detection) ([]logparse.StacEntry, error) {
-	rows, errRows := a.db.QueryBuilder(ctx, a.db.Builder().
+	rows, errRows := a.QueryBuilder(ctx, a.Builder().
 		Select("anticheat_id", "steam_id", "name", "detection", "summary", "demo_id", "server_id", "raw_log", "s.short_name").
 		From("anticheat").
 		LeftJoin("server s USING(server_id)").
@@ -136,7 +136,7 @@ func (a Repository) DetectionsByType(ctx context.Context, detectionType logparse
 
 func (a Repository) SaveEntries(ctx context.Context, entries []logparse.StacEntry) error {
 	for _, entry := range entries {
-		if err := a.db.ExecInsertBuilder(ctx, a.db.Builder().
+		if err := a.ExecInsertBuilder(ctx, a.Builder().
 			Insert("anticheat").
 			SetMap(map[string]any{
 				"steam_id":   entry.SteamID.Int64(),
@@ -163,7 +163,7 @@ type demoIDMap struct {
 
 func (a Repository) getMissingIDMap(ctx context.Context, limit uint64) ([]demoIDMap, []string, error) {
 	// Find entries with no demo_id attached, but which also are marked with a specific demo
-	rows, errRows := a.db.QueryBuilder(ctx, a.db.Builder().
+	rows, errRows := a.QueryBuilder(ctx, a.Builder().
 		Select("anticheat_id", "demo_name").
 		From("anticheat").
 		Where(sq.And{sq.Eq{"demo_id": 0}, sq.NotEq{"demo_name": ""}}).
@@ -191,7 +191,7 @@ func (a Repository) getMissingIDMap(ctx context.Context, limit uint64) ([]demoID
 }
 
 func (a Repository) getDemoIDsByTitle(ctx context.Context, titles []string) ([]demoIDMap, error) {
-	demos, errDemos := a.db.QueryBuilder(ctx, a.db.Builder().
+	demos, errDemos := a.QueryBuilder(ctx, a.Builder().
 		Select("demo_id", "title").
 		From("demo").
 		Where(sq.Eq{"title": titles}))
@@ -217,7 +217,7 @@ func (a Repository) getDemoIDsByTitle(ctx context.Context, titles []string) ([]d
 
 func (a Repository) updateTitleMapping(ctx context.Context, titleMap []demoIDMap) error {
 	for _, tm := range titleMap {
-		if errExec := a.db.ExecUpdateBuilder(ctx, a.db.Builder().
+		if errExec := a.ExecUpdateBuilder(ctx, a.Builder().
 			Update("anticheat").
 			Set("demo_id", tm.demoID).
 			Where("anticheat_id", tm.anticheatID)); errExec != nil {

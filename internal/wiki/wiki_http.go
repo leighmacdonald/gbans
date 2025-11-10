@@ -15,7 +15,7 @@ type wikiHandler struct {
 	Wiki
 }
 
-func NewWikiHandler(engine *gin.Engine, wiki Wiki, ath httphelper.Authenticator) {
+func NewWikiHandler(engine *gin.Engine, ath httphelper.Authenticator, wiki Wiki) {
 	handler := &wikiHandler{wiki}
 
 	// optional
@@ -29,7 +29,6 @@ func NewWikiHandler(engine *gin.Engine, wiki Wiki, ath httphelper.Authenticator)
 	editorGrp := engine.Group("/")
 	{
 		editor := editorGrp.Use(ath.Middleware(permission.Editor))
-		// TODO use PUT and slug param
 		editor.PUT("/api/wiki/slug/:slug", handler.getPage())
 	}
 }

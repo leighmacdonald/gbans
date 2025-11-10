@@ -26,7 +26,7 @@ func TestConfigHTTP(t *testing.T) {
 		router        = fixture.CreateRouter()
 	)
 
-	config.NewHandler(router, conf, authenticator, "1.2.3")
+	config.NewHandler(router, authenticator, conf, "1.2.3")
 
 	saved := tests.PutGOK[config.Config](t, router, "/api/config", curConf)
 	require.Equal(t, curConf, saved)
