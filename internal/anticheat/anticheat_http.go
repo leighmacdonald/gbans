@@ -12,11 +12,11 @@ import (
 )
 
 type antiCheatHandler struct {
-	anticheat AntiCheat
+	AntiCheat
 }
 
 func NewAnticheatHandler(engine *gin.Engine, authenticator httphelper.Authenticator, anticheat AntiCheat) {
-	handler := &antiCheatHandler{anticheat: anticheat}
+	handler := &antiCheatHandler{AntiCheat: anticheat}
 	// mod
 	modGrp := engine.Group("/api/anticheat")
 	{
@@ -34,7 +34,7 @@ func (h antiCheatHandler) bySteamID() gin.HandlerFunc {
 			return
 		}
 
-		detections, errDetections := h.anticheat.BySteamID(ctx, steamID)
+		detections, errDetections := h.BySteamID(ctx, steamID)
 		if errDetections != nil && !errors.Is(errDetections, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDetections, httphelper.ErrInternal)))
 
@@ -52,7 +52,7 @@ func (h antiCheatHandler) byDetection() gin.HandlerFunc {
 			return
 		}
 
-		detections, errDetections := h.anticheat.DetectionsByType(ctx, logparse.Detection(detectionType))
+		detections, errDetections := h.DetectionsByType(ctx, logparse.Detection(detectionType))
 		if errDetections != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDetections, httphelper.ErrInternal)))
 
@@ -70,7 +70,7 @@ func (h antiCheatHandler) query() gin.HandlerFunc {
 			return
 		}
 
-		entries, errEntries := h.anticheat.Query(ctx, query)
+		entries, errEntries := h.Query(ctx, query)
 		if errEntries != nil && !errors.Is(errEntries, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEntries, httphelper.ErrInternal)))
 

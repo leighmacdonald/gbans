@@ -12,13 +12,13 @@ import (
 )
 
 type patreonHandler struct {
-	patreon Patreon
-	config  Config
+	Patreon
+	config Config
 }
 
 func NewPatreonHandler(engine *gin.Engine, patreon Patreon, auth httphelper.Authenticator, config Config) {
 	handler := patreonHandler{
-		patreon: patreon,
+		Patreon: patreon,
 		config:  config,
 	}
 
@@ -44,13 +44,13 @@ func (h patreonHandler) onLogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser, _ := session.CurrentUserProfile(ctx)
 
-		if err := h.patreon.Forget(ctx, currentUser.GetSteamID()); err != nil {
+		if err := h.Forget(ctx, currentUser.GetSteamID()); err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, errors.Join(err, httphelper.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{"url": h.patreon.CreateOAuthRedirect(currentUser.GetSteamID())})
+		ctx.JSON(http.StatusOK, gin.H{"url": h.CreateOAuthRedirect(currentUser.GetSteamID())})
 		sid := currentUser.GetSteamID()
 		slog.Debug("User removed their patreon credentials", slog.String("sid", sid.String()))
 	}
@@ -60,7 +60,7 @@ func (h patreonHandler) onLogin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser, _ := session.CurrentUserProfile(ctx)
 
-		ctx.JSON(http.StatusOK, gin.H{"url": h.patreon.CreateOAuthRedirect(currentUser.GetSteamID())})
+		ctx.JSON(http.StatusOK, gin.H{"url": h.CreateOAuthRedirect(currentUser.GetSteamID())})
 		sid := currentUser.GetSteamID()
 		slog.Debug("User tried to connect patreon", slog.String("sid", sid.String()))
 	}
@@ -82,7 +82,7 @@ func (h patreonHandler) onOAuth() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.patreon.OnOauthLogin(ctx, state, grantCode); err != nil {
+		if err := h.OnOauthLogin(ctx, state, grantCode); err != nil {
 			slog.Error("Failed to handle oauth login", slog.String("error", err.Error()))
 		} else {
 			slog.Debug("Successfully authenticated user over patreon")
@@ -94,7 +94,7 @@ func (h patreonHandler) onOAuth() gin.HandlerFunc {
 
 func (h patreonHandler) onAPIGetPatreonCampaigns() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, h.patreon.Campaign())
+		ctx.JSON(http.StatusOK, h.Campaign())
 	}
 }
 

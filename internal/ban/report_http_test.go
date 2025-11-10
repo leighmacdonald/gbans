@@ -34,7 +34,7 @@ func TestReport(t *testing.T) {
 		reporter      = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.User)
 		target        = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)
 		externalUser  = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)
-		authenticator = &tests.StaticAuth{Profile: moderator}
+		authenticator = &tests.UserAuth{Profile: moderator}
 	)
 
 	ban.NewReportHandler(router, reports, authenticator)

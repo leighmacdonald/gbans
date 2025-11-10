@@ -10,11 +10,11 @@ import (
 )
 
 type voteHandler struct {
-	votes Votes
+	Votes
 }
 
 func NewVotesHandler(engine *gin.Engine, votes Votes, authenticator httphelper.Authenticator) {
-	handler := voteHandler{votes: votes}
+	handler := voteHandler{votes}
 
 	modGrp := engine.Group("/")
 	{
@@ -30,7 +30,7 @@ func (h voteHandler) onVotes() gin.HandlerFunc {
 			return
 		}
 
-		votes, count, errVotes := h.votes.Query(ctx, req)
+		votes, count, errVotes := h.Query(ctx, req)
 		if errVotes != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errVotes, httphelper.ErrInternal)))
 

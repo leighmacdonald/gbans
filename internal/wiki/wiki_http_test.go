@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 
 func TestGetSlug(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{}
+		authenticator = &tests.UserAuth{}
 		wuc           = wiki.NewWiki(wiki.NewRepository(fixture.Database))
 		router        = fixture.CreateRouter()
 		slug          = stringutil.SecureRandomString(10)
@@ -52,7 +52,7 @@ func TestGetSlug(t *testing.T) {
 
 func TestPutSlug(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{}
+		authenticator = &tests.UserAuth{}
 		wuc           = wiki.NewWiki(wiki.NewRepository(fixture.Database))
 		router        = fixture.CreateRouter()
 		page          = wiki.NewPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(1000))

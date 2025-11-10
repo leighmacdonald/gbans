@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 
 func TestMessages(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		router        = fixture.CreateRouter()
 		server        = fixture.CreateTestServer(t.Context())
 		filters       = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewNullNotifications(), fixture.Config.Config().Filters)

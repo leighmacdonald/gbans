@@ -14,12 +14,14 @@ type speedrunHandler struct {
 	Speedruns
 }
 
-func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, authenticator httphelper.Authenticator, serversUC Servers, sentryDSN string) {
+func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns,
+	userAuth httphelper.Authenticator,
+	serverAuth httphelper.ServerAuthenticator, serversUC Servers) {
 	handler := speedrunHandler{Speedruns: speedruns}
 
 	guestGroup := engine.Group("/")
 	{
-		guest := guestGroup.Use(authenticator.Middleware(permission.Guest))
+		guest := guestGroup.Use(userAuth.Middleware(permission.Guest))
 		// Groups
 		// guest.GET("/api/speedruns/overall", handler.getOverall())
 		guest.GET("/api/speedruns/map", handler.getByMap())
@@ -30,7 +32,7 @@ func NewSpeedrunsHandler(engine *gin.Engine, speedruns Speedruns, authenticator 
 
 	srcdsGroup := engine.Group("/")
 	{
-		server := srcdsGroup.Use(MiddlewareServer(serversUC, sentryDSN))
+		server := srcdsGroup.Use(serverAuth.Middleware)
 		server.POST("/api/sm/speedruns", handler.postSpeedrun())
 	}
 }

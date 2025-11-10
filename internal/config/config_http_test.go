@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 func TestConfigHTTP(t *testing.T) {
 	var (
 		curConf       = fixture.Config.Config()
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)}
 		conf          = config.NewConfiguration(curConf.Static, config.NewRepository(fixture.Database))
 		router        = fixture.CreateRouter()
 	)

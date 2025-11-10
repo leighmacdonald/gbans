@@ -15,7 +15,7 @@ import (
 
 func TestNetworkHTTP(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		networks      = network.NewNetworks(nil, network.NewRepository(fixture.Database, fixture.Persons),
 			fixture.Config.Config().Network, fixture.Config.Config().GeoLocation)
 		router = fixture.CreateRouter()

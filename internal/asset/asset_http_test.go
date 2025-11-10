@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 
 func TestHTTPSaveAsset(t *testing.T) {
 	var (
-		auth = &tests.StaticAuth{
+		auth = &tests.UserAuth{
 			Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User),
 		}
 		router   = fixture.CreateRouter()
@@ -52,7 +52,7 @@ func TestHTTPSaveAsset(t *testing.T) {
 
 func TestHTTPGetAsset(t *testing.T) {
 	var (
-		auth = &tests.StaticAuth{
+		auth = &tests.UserAuth{
 			Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User),
 		}
 		router   = fixture.CreateRouter()

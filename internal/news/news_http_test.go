@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 
 func TestNewsHTTP(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)}
 		router        = fixture.CreateRouter()
 	)
 

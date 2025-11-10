@@ -14,7 +14,7 @@ import (
 
 func TestPersonHTTPQueries(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
 		persons       = person.NewPersons(person.NewRepository(fixture.Database, true), tests.OwnerSID, fixture.TFApi)
 		router        = fixture.CreateRouter()
 	)
@@ -34,7 +34,7 @@ func TestPersonHTTPQueries(t *testing.T) {
 
 func TestPersonHTTPProfile(t *testing.T) {
 	var (
-		authenticator = &tests.StaticAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
+		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
 		persons       = person.NewPersons(person.NewRepository(fixture.Database, true), tests.OwnerSID, fixture.TFApi)
 		router        = fixture.CreateRouter()
 	)
@@ -60,7 +60,7 @@ func TestPersonHTTPPermission(t *testing.T) {
 		user          = fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)
 		mod           = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)
 		admin         = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
-		authenticator = &tests.StaticAuth{Profile: user}
+		authenticator = &tests.UserAuth{Profile: user}
 		persons       = person.NewPersons(person.NewRepository(fixture.Database, true), tests.OwnerSID, fixture.TFApi)
 		router        = fixture.CreateRouter()
 	)

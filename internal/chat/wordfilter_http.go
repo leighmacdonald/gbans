@@ -11,16 +11,17 @@ import (
 )
 
 type wordFilterHandler struct {
-	filters WordFilters
-	chat    *Chat
-	config  Config
+	WordFilters
+
+	chat   *Chat
+	config Config
 }
 
 func NewWordFilterHandler(engine *gin.Engine, config Config, wordFilters WordFilters, chat *Chat, auth httphelper.Authenticator) {
 	handler := wordFilterHandler{
-		config:  config,
-		filters: wordFilters,
-		chat:    chat,
+		WordFilters: wordFilters,
+		config:      config,
+		chat:        chat,
 	}
 
 	// editor
@@ -38,7 +39,7 @@ func NewWordFilterHandler(engine *gin.Engine, config Config, wordFilters WordFil
 
 func (h *wordFilterHandler) queryFilters() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		words, errGetFilters := h.filters.GetFilters(ctx)
+		words, errGetFilters := h.GetFilters(ctx)
 		if errGetFilters != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetFilters, httphelper.ErrInternal)))
 
@@ -66,7 +67,7 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 		}
 
 		user, _ := session.CurrentUserProfile(ctx)
-		wordFilter, errEdit := h.filters.Edit(ctx, user, filterID, req)
+		wordFilter, errEdit := h.Edit(ctx, user, filterID, req)
 		if errEdit != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errEdit, httphelper.ErrInternal)))
 
@@ -85,7 +86,7 @@ func (h *wordFilterHandler) createFilter() gin.HandlerFunc {
 		}
 
 		user, _ := session.CurrentUserProfile(ctx)
-		wordFilter, errCreate := h.filters.Create(ctx, user, req)
+		wordFilter, errCreate := h.Create(ctx, user, req)
 		if errCreate != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCreate, httphelper.ErrInternal)))
 
@@ -103,7 +104,7 @@ func (h *wordFilterHandler) deleteFilter() gin.HandlerFunc {
 			return
 		}
 
-		if errDrop := h.filters.DropFilter(ctx, filterID); errDrop != nil {
+		if errDrop := h.DropFilter(ctx, filterID); errDrop != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errDrop))
 
 			return
@@ -120,7 +121,7 @@ func (h *wordFilterHandler) checkFilter() gin.HandlerFunc {
 			return
 		}
 
-		if matches := h.filters.Check(req.Query); matches == nil {
+		if matches := h.Check(req.Query); matches == nil {
 			ctx.JSON(http.StatusOK, []Filter{})
 		} else {
 			ctx.JSON(http.StatusOK, matches)
