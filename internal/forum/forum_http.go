@@ -19,7 +19,7 @@ type forumHandler struct {
 	Forums
 }
 
-func NewForumHandler(engine *gin.Engine, forums Forums, authenticator httphelper.Authenticator) {
+func NewForumHandler(engine *gin.Engine, authenticator httphelper.Authenticator, forums Forums) {
 	handler := &forumHandler{Forums: forums}
 
 	engine.GET("/api/forum/active_users", handler.onAPIActiveUsers())

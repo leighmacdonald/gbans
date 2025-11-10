@@ -9,18 +9,17 @@ import (
 )
 
 type Repository struct {
-	db database.Database
+	database.Database
 }
 
 func NewRepository(database database.Database) Repository {
-	return Repository{db: database}
+	return Repository{database}
 }
 
 func (r *Repository) Page(ctx context.Context, slug string) (Page, error) {
 	var page Page
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, r.db.
-		Builder().
+	row, errQuery := r.QueryRowBuilder(ctx, r.Builder().
 		Select("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").
 		From("wiki").
 		Where(sq.Eq{"lower(slug)": strings.ToLower(slug)}).
@@ -38,7 +37,7 @@ func (r *Repository) Page(ctx context.Context, slug string) (Page, error) {
 }
 
 func (r *Repository) Delete(ctx context.Context, slug string) error {
-	if errExec := r.db.ExecDeleteBuilder(ctx, r.db.Builder().
+	if errExec := r.ExecDeleteBuilder(ctx, r.Builder().
 		Delete("wiki").
 		Where(sq.Eq{"lower(slug)": strings.ToLower(slug)})); errExec != nil {
 		return database.DBErr(errExec)
@@ -51,7 +50,7 @@ func (r *Repository) Save(ctx context.Context, page *Page) error {
 	const query = `
 		INSERT INTO wiki (slug, body_md, revision, created_on, updated_on, permission_level)
 		VALUES ($1, $2, $3, $4, $5, $6)`
-	if errQueryRow := r.db.Exec(ctx, query, page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn, page.PermissionLevel); errQueryRow != nil {
+	if errQueryRow := r.Exec(ctx, query, page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn, page.PermissionLevel); errQueryRow != nil {
 		return database.DBErr(errQueryRow)
 	}
 

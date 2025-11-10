@@ -17,7 +17,7 @@ type wordFilterHandler struct {
 	config Config
 }
 
-func NewWordFilterHandler(engine *gin.Engine, config Config, wordFilters WordFilters, chat *Chat, auth httphelper.Authenticator) {
+func NewWordFilterHandler(engine *gin.Engine, auth httphelper.Authenticator, config Config, wordFilters WordFilters, chat *Chat) {
 	handler := wordFilterHandler{
 		WordFilters: wordFilters,
 		config:      config,

@@ -20,17 +20,17 @@ import (
 )
 
 type authHandler struct {
-	authentication *Authentication
-	config         *config.Configuration
-	persons        *person.Persons
-	tfAPI          *thirdparty.TFAPI
+	*Authentication
+	config  *config.Configuration
+	persons *person.Persons
+	tfAPI   *thirdparty.TFAPI
 }
 
 func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Configuration,
 	person *person.Persons, tfAPI *thirdparty.TFAPI,
 ) {
 	handler := &authHandler{
-		authentication: auth,
+		Authentication: auth,
 		config:         config,
 		persons:        person,
 		tfAPI:          tfAPI,
@@ -119,7 +119,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			}
 		}
 
-		token, errToken := h.authentication.MakeToken(ctx, conf.HTTPCookieKey, sid)
+		token, errToken := h.MakeToken(ctx, conf.HTTPCookieKey, sid)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
 			slog.Error("Failed to create access token pair", slog.String("error", errToken.Error()))
@@ -197,13 +197,13 @@ func (h *authHandler) onAPILogout() gin.HandlerFunc {
 			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
 
 		personAuth := PersonAuth{}
-		if errGet := h.authentication.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
+		if errGet := h.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, httphelper.ErrInternal)))
 
 			return
 		}
 
-		if errDelete := h.authentication.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
+		if errDelete := h.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDelete, httphelper.ErrInternal)))
 
 			return

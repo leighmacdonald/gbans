@@ -34,7 +34,7 @@ func TestVotesHTTP(t *testing.T) {
 		vote   = votes.NewVotes(votes.NewRepository(fixture.Database), br, notification.NewNullNotifications(), "", fixture.Persons)
 	)
 
-	votes.NewVotesHandler(router, vote, auth)
+	votes.NewVotesHandler(router, auth, vote)
 
 	// Perm check
 	tests.PostForbidden(t, router, "/api/votes", votes.Query{})

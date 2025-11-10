@@ -19,7 +19,7 @@ type personHandler struct {
 	*Persons
 }
 
-func NewPersonHandler(engine *gin.Engine, persons *Persons, authenticator httphelper.Authenticator) {
+func NewPersonHandler(engine *gin.Engine, authenticator httphelper.Authenticator, persons *Persons) {
 	handler := &personHandler{Persons: persons}
 
 	engine.GET("/api/profile", handler.onAPIProfile())

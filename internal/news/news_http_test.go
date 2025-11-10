@@ -32,7 +32,7 @@ func TestNewsHTTP(t *testing.T) {
 	require.Empty(t, tests.GetGOK[[]news.Article](t, router, "/api/news_latest"))
 
 	// Add one
-	req := news.NewsEditRequest{
+	req := news.EditRequest{
 		Title:       stringutil.SecureRandomString(10),
 		BodyMD:      stringutil.SecureRandomString(100),
 		IsPublished: true,
@@ -59,6 +59,6 @@ func TestNewsHTTP(t *testing.T) {
 	tests.DeleteOK(t, router, fmt.Sprintf("/api/news/%d", saved.NewsID), nil)
 
 	// Confirm delete
-	require.Len(t, tests.GetGOK[[]news.Article](t, router, "/api/news_latest"), 0)
-	require.Len(t, tests.GetGOK[[]news.Article](t, router, "/api/news_all"), 0)
+	require.Empty(t, tests.GetGOK[[]news.Article](t, router, "/api/news_latest"))
+	require.Empty(t, tests.GetGOK[[]news.Article](t, router, "/api/news_all"))
 }

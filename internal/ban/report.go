@@ -165,8 +165,8 @@ type Reports struct {
 
 func NewReports(repo ReportRepository, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI,
 	notif notification.Notifier, logChannel string, appealChannel string,
-) *Reports {
-	return &Reports{
+) Reports {
+	return Reports{
 		repository:    repo,
 		persons:       persons,
 		demos:         demos,

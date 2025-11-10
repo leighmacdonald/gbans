@@ -22,7 +22,7 @@ func TestDemos(t *testing.T) {
 		// server = fixture.CreateTestServer(t.Context())
 	)
 
-	servers.NewDemoHandler(router, demos, authenticator)
+	servers.NewDemoHandler(router, authenticator, demos)
 
 	// No demos
 	require.Empty(t, tests.PostGOK[[]servers.DemoFile](t, router, "/api/demos", nil))

@@ -48,7 +48,7 @@ func (h newsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 	}
 }
 
-type NewsEditRequest struct {
+type EditRequest struct {
 	Title       string `json:"title"`
 	BodyMD      string `json:"body_md"`
 	IsPublished bool   `json:"is_published"`
@@ -56,7 +56,7 @@ type NewsEditRequest struct {
 
 func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req NewsEditRequest
+		var req EditRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -103,7 +103,7 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var req NewsEditRequest
+		var req EditRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}

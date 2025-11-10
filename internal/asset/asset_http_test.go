@@ -32,7 +32,7 @@ func TestHTTPSaveAsset(t *testing.T) {
 		contentA = []byte(stringutil.SecureRandomString(20))
 	)
 
-	asset.NewAssetHandler(router, assets, auth)
+	asset.NewAssetHandler(router, auth, assets)
 
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
@@ -62,7 +62,7 @@ func TestHTTPGetAsset(t *testing.T) {
 		contentB = []byte(stringutil.SecureRandomString(20))
 	)
 
-	asset.NewAssetHandler(router, assets, auth)
+	asset.NewAssetHandler(router, auth, assets)
 
 	saved, errCreate := assets.Create(t.Context(), auth.Profile.SteamID, asset.BucketMedia, name, bytes.NewReader(contentA), false)
 	require.NoError(t, errCreate)

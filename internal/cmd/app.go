@@ -96,7 +96,7 @@ type GBans struct {
 	patreon        patreon.Patreon
 	persons        *person.Persons
 	playerQueue    *playerqueue.Playerqueue
-	reports        *ban.Reports
+	reports        ban.Reports
 	servers        servers.Servers
 	speedruns      servers.Speedruns
 	sourcemod      sourcemod.Sourcemod
@@ -438,36 +438,38 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		return err
 	}
 
+	// Create authentication middlewares
 	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, SentryDSN)
 	serverAuth := servers.NewServerAuth(g.servers, SentryDSN)
+
 	// Register all our handlers with router
 	anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)
-	asset.NewAssetHandler(router, g.assets, userAuth)
+	asset.NewAssetHandler(router, userAuth, g.assets)
 	auth.NewAuthHandler(router, userAuth, g.config, g.persons, g.tfapiClient)
-	ban.NewAppealHandler(router, g.appeals, userAuth)
-	ban.NewReportHandler(router, g.reports, userAuth)
-	ban.NewHandlerBans(router, g.bans, userAuth, conf.Exports, conf.General.SiteName)
+	ban.NewAppealHandler(router, userAuth, g.appeals)
+	ban.NewReportHandler(router, userAuth, g.reports)
+	ban.NewHandlerBans(router, userAuth, g.bans, conf.Exports, conf.General.SiteName)
 	chat.NewChatHandler(router, g.chat, userAuth)
-	chat.NewWordFilterHandler(router, conf.Filters, g.wordFilters, g.chat, userAuth)
-	config.NewHandler(router, g.config, userAuth, BuildVersion)
-	contest.NewContestHandler(router, g.contests, g.assets, userAuth)
+	chat.NewWordFilterHandler(router, userAuth, conf.Filters, g.wordFilters, g.chat)
+	config.NewHandler(router, userAuth, g.config, BuildVersion)
+	contest.NewContestHandler(router, userAuth, g.contests, g.assets)
 	discordoauth.NewDiscordOAuthHandler(router, userAuth, g.config, g.persons, g.discordOAuth)
-	forum.NewForumHandler(router, g.forums, userAuth)
+	forum.NewForumHandler(router, userAuth, g.forums)
 	// match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
 	metrics.NewMetricsHandler(router)
-	network.NewNetworkHandler(router, g.networks, userAuth)
-	network.NewBlocklistHandler(router, g.blocklists, g.networks, userAuth)
+	network.NewNetworkHandler(router, userAuth, g.networks)
+	network.NewBlocklistHandler(router, userAuth, g.blocklists, g.networks)
 	news.NewNewsHandler(router, g.news, userAuth)
-	notification.NewNotificationHandler(router, g.notifications, userAuth)
-	patreon.NewPatreonHandler(router, g.patreon, userAuth, g.config.Config().Patreon)
-	person.NewPersonHandler(router, g.persons, userAuth)
+	notification.NewNotificationHandler(router, userAuth, g.notifications)
+	patreon.NewPatreonHandler(router, userAuth, g.patreon, g.config.Config().Patreon)
+	person.NewPersonHandler(router, userAuth, g.persons)
 	playerqueue.NewPlayerqueueHandler(router, userAuth, g.playerQueue)
-	servers.NewDemoHandler(router, g.demos, userAuth)
-	servers.NewServersHandler(router, g.servers, g.states, userAuth)
-	servers.NewSpeedrunsHandler(router, g.speedruns, userAuth, serverAuth, g.servers)
+	servers.NewDemoHandler(router, userAuth, g.demos)
+	servers.NewServersHandler(router, userAuth, g.servers, g.states)
+	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)
 	sourcemod.NewHandler(router, userAuth, nil, g.sourcemod)
-	votes.NewVotesHandler(router, g.votes, userAuth)
-	wiki.NewWikiHandler(router, g.wiki, userAuth)
+	votes.NewVotesHandler(router, userAuth, g.votes)
+	wiki.NewWikiHandler(router, userAuth, g.wiki)
 
 	httpServer := httphelper.NewServer(conf.Addr(), router)
 

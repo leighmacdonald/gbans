@@ -28,7 +28,7 @@ func TestCategories(t *testing.T) {
 		forumsUC      = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewNullNotifications())
 	)
 
-	forum.NewForumHandler(router, forumsUC, authenticator)
+	forum.NewForumHandler(router, authenticator, forumsUC)
 
 	// Get the existing categories (empty)
 	authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)
@@ -73,7 +73,7 @@ func TestForums(t *testing.T) {
 		forumsUC = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewNullNotifications())
 	)
 
-	forum.NewForumHandler(router, forumsUC, authenticator)
+	forum.NewForumHandler(router, authenticator, forumsUC)
 	cat := &forum.Category{
 		Title:       stringutil.SecureRandomString(10),
 		Description: stringutil.SecureRandomString(100),
@@ -109,7 +109,7 @@ func TestThreads(t *testing.T) {
 		router        = fixture.CreateRouter()
 		forumsUC      = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewNullNotifications())
 	)
-	forum.NewForumHandler(router, forumsUC, authenticator)
+	forum.NewForumHandler(router, authenticator, forumsUC)
 
 	cat := &forum.Category{
 		Title:       stringutil.SecureRandomString(10),

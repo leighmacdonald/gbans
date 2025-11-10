@@ -13,7 +13,7 @@ type DemoHandler struct {
 	Demos
 }
 
-func NewDemoHandler(engine *gin.Engine, du Demos, authenticator httphelper.Authenticator) {
+func NewDemoHandler(engine *gin.Engine, authenticator httphelper.Authenticator, du Demos) {
 	handler := DemoHandler{Demos: du}
 
 	engine.POST("/api/demos", handler.onAPIPostDemosQuery())

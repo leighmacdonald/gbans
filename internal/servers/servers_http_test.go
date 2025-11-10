@@ -18,7 +18,7 @@ func TestServersHTTP(t *testing.T) {
 		router        = fixture.CreateRouter()
 		server        = servers.NewServer(stringutil.SecureRandomString(5), "1.2.3.4", 27015)
 	)
-	servers.NewServersHandler(router, serversUC, nil, authenticator)
+	servers.NewServersHandler(router, authenticator, serversUC, nil)
 
 	// None exist yet
 	require.Empty(t, tests.GetGOK[[]servers.Server](t, router, "/api/servers"))

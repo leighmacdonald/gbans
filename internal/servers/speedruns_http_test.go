@@ -24,19 +24,19 @@ func TestSpeedrunsHTTP(t *testing.T) {
 		speedruns  = servers.NewSpeedruns(servers.NewSpeedrunRepository(fixture.Database, fixture.Persons))
 	)
 
-	servers.NewSpeedrunsHandler(router, speedruns, userAuth, serverAuth, servers.NewServers(servers.NewRepository(fixture.Database)))
+	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, speedruns)
 
-	sr := genSpeedrun(24, 0, server.ServerID)
-	tests.PostGOK[servers.Speedrun](t, router, "/api/sm/speedruns", sr)
+	testSR := genSpeedrun(24, 0, server.ServerID)
+	tests.PostGOK[servers.Speedrun](t, router, "/api/sm/speedruns", testSR)
 
-	fetched := tests.GetGOK[servers.Speedrun](t, router, fmt.Sprintf("/api/speedruns/byid/%d", sr.SpeedrunID))
+	fetched := tests.GetGOK[servers.Speedrun](t, router, fmt.Sprintf("/api/speedruns/byid/%d", testSR.SpeedrunID))
 	require.Equal(t, 24, fetched.PlayerCount)
 
-	for i := range sr.PointCaptures {
-		require.Len(t, fetched.PointCaptures[i].Players, len(sr.PointCaptures[i].Players))
+	for i := range testSR.PointCaptures {
+		require.Len(t, fetched.PointCaptures[i].Players, len(testSR.PointCaptures[i].Players))
 	}
-	require.Equal(t, sr.ServerID, fetched.ServerID)
-	require.Equal(t, sr.SpeedrunID, fetched.SpeedrunID)
+	require.Equal(t, testSR.ServerID, fetched.ServerID)
+	require.Equal(t, testSR.SpeedrunID, fetched.SpeedrunID)
 
 	mapName := "pl_" + stringutil.SecureRandomString(8)
 	var srB servers.Speedrun
@@ -49,7 +49,7 @@ func TestSpeedrunsHTTP(t *testing.T) {
 	}
 
 	result := tests.GetGOK[map[string][]servers.Speedrun](t, router, "/api/speedruns/overall/top?count=10")
-	require.Len(t, result[sr.MapDetail.MapName], 10)
+	require.Len(t, result[testSR.MapDetail.MapName], 10)
 }
 
 func genSpeedrun(players int, bots int, serverID int) servers.Speedrun {

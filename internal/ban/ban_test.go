@@ -4,12 +4,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -30,9 +33,15 @@ func TestMain(m *testing.M) {
 func TestBan(t *testing.T) {
 	t.Parallel()
 	var (
+		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		demos  = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database),
+			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
+			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
+			demos, fixture.TFApi, notification.NewNullNotifications(), "", "")
 		br   = ban.NewRepository(fixture.Database, fixture.Persons)
 		bans = ban.NewBans(br, fixture.Persons, fixture.Config.Config().Discord.BanLogChannelID,
-			steamid.New(fixture.Config.Config().Owner), nil, notification.NewNullNotifications())
+			steamid.New(fixture.Config.Config().Owner), reports, notification.NewNullNotifications())
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 	)
@@ -52,9 +61,15 @@ func TestBan(t *testing.T) {
 func TestDuplicate(t *testing.T) {
 	t.Parallel()
 	var (
+		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		demos  = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database),
+			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
+			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
+			demos, fixture.TFApi, notification.NewNullNotifications(), "", "")
 		br   = ban.NewRepository(fixture.Database, fixture.Persons)
 		bans = ban.NewBans(br, fixture.Persons, fixture.Config.Config().Discord.BanLogChannelID,
-			steamid.New(fixture.Config.Config().Owner), nil, notification.NewNullNotifications())
+			steamid.New(fixture.Config.Config().Owner), reports, notification.NewNullNotifications())
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 		opts   = []ban.Opts{
@@ -83,9 +98,15 @@ func TestDuplicate(t *testing.T) {
 func TestUnban(t *testing.T) {
 	t.Parallel()
 	var (
+		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		demos  = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database),
+			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
+			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
+			demos, fixture.TFApi, notification.NewNullNotifications(), "", "")
 		br   = ban.NewRepository(fixture.Database, fixture.Persons)
 		bans = ban.NewBans(br, fixture.Persons, fixture.Config.Config().Discord.BanLogChannelID,
-			steamid.New(fixture.Config.Config().Owner), nil, notification.NewNullNotifications())
+			steamid.New(fixture.Config.Config().Owner), reports, notification.NewNullNotifications())
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 		author = fixture.CreateTestPerson(t.Context(), source, permission.Admin)

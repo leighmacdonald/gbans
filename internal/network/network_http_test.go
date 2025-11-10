@@ -21,7 +21,7 @@ func TestNetworkHTTP(t *testing.T) {
 		router = fixture.CreateRouter()
 		server = fixture.CreateTestServer(t.Context())
 	)
-	network.NewNetworkHandler(router, networks, authenticator)
+	network.NewNetworkHandler(router, authenticator, networks)
 	for _, addr := range []string{"1.2.3.4", "5.6.7.8"} {
 		require.NoError(t, networks.AddConnectionHistory(t.Context(), &network.PersonConnection{
 			ServerID:        server.ServerID,

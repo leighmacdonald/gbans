@@ -18,7 +18,7 @@ func TestPersonHTTPQueries(t *testing.T) {
 		persons       = person.NewPersons(person.NewRepository(fixture.Database, true), tests.OwnerSID, fixture.TFApi)
 		router        = fixture.CreateRouter()
 	)
-	person.NewPersonHandler(router, persons, authenticator)
+	person.NewPersonHandler(router, authenticator, persons)
 
 	profile := tests.GetGOK[person.ProfileResponse](t, router, "/api/profile?query=uncledane")
 	require.Equal(t, int64(76561198057999536), profile.Player.SteamID.Int64())
@@ -38,7 +38,7 @@ func TestPersonHTTPProfile(t *testing.T) {
 		persons       = person.NewPersons(person.NewRepository(fixture.Database, true), tests.OwnerSID, fixture.TFApi)
 		router        = fixture.CreateRouter()
 	)
-	person.NewPersonHandler(router, persons, authenticator)
+	person.NewPersonHandler(router, authenticator, persons)
 
 	profile := tests.GetGOK[personDomain.Core](t, router, "/api/current_profile")
 	require.Equal(t, authenticator.Profile.SteamID, profile.SteamID)
@@ -64,7 +64,7 @@ func TestPersonHTTPPermission(t *testing.T) {
 		persons       = person.NewPersons(person.NewRepository(fixture.Database, true), tests.OwnerSID, fixture.TFApi)
 		router        = fixture.CreateRouter()
 	)
-	person.NewPersonHandler(router, persons, authenticator)
+	person.NewPersonHandler(router, authenticator, persons)
 
 	tests.PutForbidden(t, router, fmt.Sprintf("/api/player/%s/permissions", tests.UserSID.String()), person.RequestPermissionLevelUpdate{
 		PermissionLevel: permission.Admin,
