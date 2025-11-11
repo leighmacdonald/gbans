@@ -91,8 +91,7 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	dockerRoot := fs.FindFile("docker", "gbans")
 
 	fromDockerfile := testcontainers.FromDockerfile{
-		Dockerfile: "postgres-ip4r.Dockerfile",
-
+		Dockerfile:    "postgres-ip4r.Dockerfile",
 		Context:       dockerRoot,
 		PrintBuildLog: false,
 		KeepImage:     true,

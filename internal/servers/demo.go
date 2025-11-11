@@ -434,7 +434,9 @@ func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails,
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Second * 60,
+	}
 	resp, errSend := client.Do(req) //nolint:bodyclose
 	if errSend != nil {
 		return nil, errors.Join(errSend, ErrDemoLoad)

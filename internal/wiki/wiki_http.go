@@ -22,18 +22,18 @@ func NewWikiHandler(engine *gin.Engine, ath httphelper.Authenticator, wiki Wiki)
 	optGrp := engine.Group("/")
 	{
 		opt := optGrp.Use(ath.Middleware(permission.Guest))
-		opt.GET("/api/wiki/slug/:slug", handler.savePage())
+		opt.GET("/api/wiki/slug/:slug", handler.page())
 	}
 
 	// editor
 	editorGrp := engine.Group("/")
 	{
 		editor := editorGrp.Use(ath.Middleware(permission.Editor))
-		editor.PUT("/api/wiki/slug/:slug", handler.getPage())
+		editor.PUT("/api/wiki/slug/:slug", handler.save())
 	}
 }
 
-func (w *wikiHandler) savePage() gin.HandlerFunc {
+func (w *wikiHandler) page() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		slug := ctx.Param("slug")
 		user, _ := session.CurrentUserProfile(ctx)
@@ -61,7 +61,7 @@ func (w *wikiHandler) savePage() gin.HandlerFunc {
 	}
 }
 
-func (w *wikiHandler) getPage() gin.HandlerFunc {
+func (w *wikiHandler) save() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req Page
 		if !httphelper.Bind(ctx, &req) {

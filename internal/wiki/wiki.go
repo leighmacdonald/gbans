@@ -75,10 +75,6 @@ func (w *Wiki) Page(ctx context.Context, slug string) (Page, error) {
 
 	page, errGetWikiSlug := w.repository.Page(ctx, slug)
 	if errGetWikiSlug != nil {
-		if errors.Is(errGetWikiSlug, database.ErrNoResult) {
-			return page, ErrSlugUnknown
-		}
-
 		return page, errGetWikiSlug
 	}
 
@@ -96,7 +92,7 @@ func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
 
 	page, errGetWikiSlug := w.Page(ctx, update.Slug)
 	if errGetWikiSlug != nil {
-		if errors.Is(errGetWikiSlug, ErrSlugUnknown) {
+		if errors.Is(errGetWikiSlug, database.ErrNoResult) {
 			page.CreatedOn = time.Now()
 			page.Slug = update.Slug
 		} else {

@@ -2,7 +2,6 @@ package anticheat
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 
@@ -136,18 +135,14 @@ func (a Repository) DetectionsByType(ctx context.Context, detectionType logparse
 
 func (a Repository) SaveEntries(ctx context.Context, entries []logparse.StacEntry) error {
 	for _, entry := range entries {
-		if err := a.ExecInsertBuilder(ctx, a.Builder().
-			Insert("anticheat").
-			SetMap(map[string]any{
-				"steam_id":   entry.SteamID.Int64(),
-				"name":       entry.Name,
-				"detection":  entry.Detection,
-				"summary":    entry.Summary,
-				"demo_id":    entry.DemoID,
-				"server_id":  entry.ServerID,
-				"raw_log":    entry.RawLog,
-				"created_on": entry.CreatedOn.Truncate(time.Second),
-			})); err != nil && !errors.Is(err, database.ErrDuplicate) {
+		const query = `
+			INSERT INTO anticheat (steam_id, name, detection, summary, demo_id, server_id, raw_log, created_on)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			ON CONFLICT (steam_id, created_on) DO UPDATE
+			SET name = $2, detection = $3, summary = $4, demo_id = $5, server_id = $6, raw_log = $7`
+
+		if err := a.Exec(ctx, query, entry.SteamID.Int64(), entry.Name, entry.Detection, entry.Summary,
+			entry.DemoID, entry.ServerID, entry.RawLog, entry.CreatedOn.Truncate(time.Second)); err != nil {
 			return database.DBErr(err)
 		}
 	}
