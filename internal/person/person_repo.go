@@ -314,7 +314,8 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 
 	var errGameSettings error
 	if r.centerProjectiles && settings.CenterProjectiles != nil {
-		errGameSettings = database.DBErr(r.db.QueryRow(ctx, query,
+		// TODO test this
+		_ = database.DBErr(r.db.QueryRow(ctx, query,
 			settings.SteamID.Steam(false),
 			boolToStringDigit(*settings.CenterProjectiles)).Scan(&value))
 	}

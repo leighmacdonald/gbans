@@ -48,7 +48,7 @@ func TestAnticheat(t *testing.T) {
 
 	entries, err := antiCheat.Import(t.Context(), "stac_052224.log", io.NopCloser(strings.NewReader(testData)), server.ServerID)
 	require.NoError(t, err)
-	require.Len(t, entries, 3)
+	require.Len(t, entries, 9)
 }
 
 const testData = `<01:13:00>

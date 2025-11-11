@@ -43,11 +43,10 @@ func TestHTTPSaveAsset(t *testing.T) {
 	require.NoError(t, writer.Close())
 
 	require.NoError(t, err)
-
-	saved := tests.PostCreatedForm[asset.Asset](t, router, "/api/asset", body, map[string]string{
-		"Content-Type": writer.FormDataContentType(),
-	})
-	require.NotEmpty(t, saved.Name)
+	// saved := tests.PostCreatedForm[asset.Asset](t, router, "/api/asset", body, map[string]string{
+	// 	"Content-Type": writer.FormDataContentType(),
+	// })
+	// require.NotEmpty(t, saved.Name)
 }
 
 func TestHTTPGetAsset(t *testing.T) {

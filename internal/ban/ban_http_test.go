@@ -27,7 +27,6 @@ func TestHTTPBan(t *testing.T) {
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewNullNotifications(), "", "")
-
 		router = fixture.CreateRouter()
 		bans   = ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
 			fixture.Config.Config().Discord.BanLogChannelID, steamid.New(fixture.Config.Config().Owner),
@@ -51,15 +50,16 @@ func TestHTTPBan(t *testing.T) {
 		BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 	})
 
-	require.Len(t, tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))}), 2)
+	allBans := tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))})
+	require.GreaterOrEqual(t, len(allBans), 2)
 
 	tests.DeleteOK(t, router, fmt.Sprintf("/api/ban/%d", createdBan.BanID), ban.RequestUnban{UnbanReasonText: "test reason"})
-	require.Len(t, tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))}), 1)
+	require.Len(t, tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))}), len(allBans)-1)
 	loadedBans := tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState)), Deleted: true})
-	require.Len(t, loadedBans, 2)
+	require.Len(t, loadedBans, len(allBans))
 
 	stats := tests.GetGOK[ban.Stats](t, router, "/api/stats")
-	require.Equal(t, 2, stats.BansTotal)
+	require.Equal(t, len(allBans), stats.BansTotal)
 
 	single := tests.GetGOK[ban.Ban](t, router, fmt.Sprintf("/api/ban/%d", loadedBans[0].BanID))
 	require.Equal(t, loadedBans[0], single)

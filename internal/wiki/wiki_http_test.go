@@ -1,6 +1,7 @@
 package wiki_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -24,7 +25,7 @@ func TestGetSlug(t *testing.T) {
 		authenticator = &tests.UserAuth{}
 		wuc           = wiki.NewWiki(wiki.NewRepository(fixture.Database))
 		router        = fixture.CreateRouter()
-		slug          = stringutil.SecureRandomString(10)
+		slug          = strings.ToLower(stringutil.SecureRandomString(10))
 		page          = wiki.NewPage(slug, stringutil.SecureRandomString(1000))
 	)
 
@@ -32,6 +33,8 @@ func TestGetSlug(t *testing.T) {
 
 	authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.GuestSID, permission.Guest)
 	tests.GetNotFound(t, router, "/api/wiki/slug/"+slug)
+
+	authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)
 
 	saved, err := wuc.Save(t.Context(), page)
 	require.NoError(t, err)
