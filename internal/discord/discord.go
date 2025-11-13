@@ -1,9 +1,11 @@
 package discord
 
 import (
+	"context"
 	"errors"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/discordgo-lipstick/bot"
 )
 
 var (
@@ -12,6 +14,22 @@ var (
 	ModPerms         = int64(discordgo.PermissionBanMembers)  //nolint:gochecknoglobals
 	UserPerms        = int64(discordgo.PermissionViewChannel) //nolint:gochecknoglobals
 )
+
+type Bot interface {
+	Send(channelID string, payload *discordgo.MessageEmbed) error
+	Start(ctx context.Context) error
+	Close()
+	MustRegisterHandler(cmd string, appCommand *discordgo.ApplicationCommand, handler bot.Handler)
+	Session() *discordgo.Session
+}
+
+type Discard struct{}
+
+func (d Discard) Send(_ string, _ *discordgo.MessageEmbed) error                               { return nil }
+func (d Discard) Start(_ context.Context) error                                                { return nil }
+func (d Discard) Session() *discordgo.Session                                                  { return nil }
+func (d Discard) Close()                                                                       {}
+func (d Discard) MustRegisterHandler(_ string, _ *discordgo.ApplicationCommand, _ bot.Handler) {}
 
 type Config struct {
 	Enabled                 bool   `json:"enabled"`

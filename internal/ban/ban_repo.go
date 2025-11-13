@@ -14,13 +14,17 @@ import (
 )
 
 type Repository struct {
-	db      database.Database
+	database.Database
+
 	persons person.Provider // TODO remove
 }
 
+func NewRepository(database database.Database, persons person.Provider) Repository {
+	return Repository{Database: database, persons: persons}
+}
+
 func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
-	builder := r.db.
-		Builder().
+	builder := r.Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.evade_ok",
 			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
@@ -75,7 +79,7 @@ func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 
 	var bans []Ban
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder)
+	rows, errQuery := r.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, database.DBErr(errQuery)
 	}
@@ -112,18 +116,13 @@ func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 	return bans, nil
 }
 
-func NewRepository(database database.Database, persons person.Provider) Repository {
-	return Repository{db: database, persons: persons}
-}
-
 func (r *Repository) TruncateCache(ctx context.Context) error {
 	// return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.Builder().Delete("steam_friends")))
-	return database.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.Builder().Delete("steam_group_members")))
+	return database.DBErr(r.ExecDeleteBuilder(ctx, r.Builder().Delete("steam_group_members")))
 }
 
 func (r *Repository) GetMembersList(ctx context.Context, parentID int64, list *MembersList) error {
-	row, err := r.db.QueryRowBuilder(ctx, r.db.
-		Builder().
+	row, err := r.QueryRowBuilder(ctx, r.Builder().
 		Select("members_id", "parent_id", "members", "created_on", "updated_on").
 		From("members").
 		Where(sq.Eq{"parent_id": parentID}))
@@ -140,13 +139,13 @@ func (r *Repository) SaveMembersList(ctx context.Context, list *MembersList) err
 
 		const update = `UPDATE members SET members = $2::jsonb, updated_on = $3 WHERE members_id = $1`
 
-		return database.DBErr(r.db.Exec(ctx, update, list.MembersID, list.Members, list.UpdatedOn))
+		return database.DBErr(r.Exec(ctx, update, list.MembersID, list.Members, list.UpdatedOn))
 	}
 
 	const insert = `INSERT INTO members (parent_id, members, created_on, updated_on)
 		VALUES ($1, $2::jsonb, $3, $4) RETURNING members_id`
 
-	return database.DBErr(r.db.QueryRow(ctx, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
+	return database.DBErr(r.QueryRow(ctx, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
 }
 
 func (r *Repository) InsertCache(ctx context.Context, groupID steamid.SteamID, entries []int64) error {
@@ -159,7 +158,7 @@ func (r *Repository) InsertCache(ctx context.Context, groupID steamid.SteamID, e
 		batch.Queue(query, entrySteamID, groupID.Int64(), now)
 	}
 
-	batchResults := r.db.SendBatch(ctx, &batch)
+	batchResults := r.SendBatch(ctx, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, database.ErrCloseBatch)
 	}
@@ -181,7 +180,7 @@ func (r *Repository) Stats(ctx context.Context, stats *Stats) error {
 		(SELECT COUNT(filter_id) FROM filtered_word) as filtered_words,
 		(SELECT COUNT(server_id) FROM server) as servers_total`
 
-	if errQuery := r.db.QueryRow(ctx, query).
+	if errQuery := r.QueryRow(ctx, query).
 		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth, &stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal, &stats.FilteredWords, &stats.ServersTotal); errQuery != nil {
 		return database.DBErr(errQuery)
 	}
@@ -191,7 +190,7 @@ func (r *Repository) Stats(ctx context.Context, stats *Stats) error {
 
 func (r *Repository) Delete(ctx context.Context, ban *Ban, hardDelete bool) error {
 	if hardDelete {
-		if errExec := r.db.Exec(ctx, `DELETE FROM ban WHERE ban_id = $1`, ban.BanID); errExec != nil {
+		if errExec := r.Exec(ctx, `DELETE FROM ban WHERE ban_id = $1`, ban.BanID); errExec != nil {
 			return database.DBErr(errExec)
 		}
 
@@ -251,7 +250,7 @@ func (r *Repository) insertBan(ctx context.Context, ban *Ban) error {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case WHEN $11 = 0 THEN null ELSE $11 END, $12, $13, $14, $15)
 		RETURNING ban_id`
 
-	errQuery := r.db.
+	errQuery := r.
 		QueryRow(ctx, query, ban.TargetID.Int64(), ban.SourceID.Int64(), ban.BanType, ban.Reason, ban.ReasonText,
 			ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Origin, ban.ReportID, ban.AppealState,
 			ban.EvadeOk, &ban.LastIP, &ban.CIDR).
@@ -270,8 +269,7 @@ func (r *Repository) updateBan(ctx context.Context, ban *Ban) error {
 		reportID = &ban.ReportID
 	}
 
-	query := r.db.
-		Builder().
+	query := r.Builder().
 		Update("ban").
 		Set("source_id", ban.SourceID.Int64()).
 		Set("target_id", ban.TargetID.Int64()).
@@ -291,12 +289,11 @@ func (r *Repository) updateBan(ctx context.Context, ban *Ban) error {
 		Set("cidr", ban.CIDR).
 		Where(sq.Eq{"ban_id": ban.BanID})
 
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, query))
+	return database.DBErr(r.ExecUpdateBuilder(ctx, query))
 }
 
 func (r *Repository) GetOlderThan(ctx context.Context, filter query.Filter, since time.Time) ([]Ban, error) {
-	query := r.db.
-		Builder().
+	query := r.Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.deleted",
 			"case WHEN b.report_id is null THEN 0 ELSE s.report_id END", "b.unban_reason_text", "b.is_enabled",
@@ -304,7 +301,7 @@ func (r *Repository) GetOlderThan(ctx context.Context, filter query.Filter, sinc
 		From("ban b").
 		Where(sq.And{sq.Lt{"b.updated_on": since}, sq.Eq{"b.deleted": false}})
 
-	rows, errQuery := r.db.QueryBuilder(ctx, filter.ApplyLimitOffsetDefault(query))
+	rows, errQuery := r.QueryBuilder(ctx, filter.ApplyLimitOffsetDefault(query))
 	if errQuery != nil {
 		return nil, database.DBErr(errQuery)
 	}

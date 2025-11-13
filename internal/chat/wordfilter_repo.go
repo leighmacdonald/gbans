@@ -9,11 +9,11 @@ import (
 )
 
 type WordFilterRepository struct {
-	db database.Database
+	database.Database
 }
 
 func NewWordFilterRepository(database database.Database) WordFilterRepository {
-	return WordFilterRepository{db: database}
+	return WordFilterRepository{Database: database}
 }
 
 func (r *WordFilterRepository) SaveFilter(ctx context.Context, filter *Filter) error {
@@ -30,7 +30,7 @@ func (r *WordFilterRepository) insertFilter(ctx context.Context, filter *Filter)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING filter_id`
 
-	if errQuery := r.db.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
+	if errQuery := r.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
 		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn, filter.Action, filter.Duration, filter.Weight).
 		Scan(&filter.FilterID); errQuery != nil {
 		return database.DBErr(errQuery)
@@ -40,8 +40,7 @@ func (r *WordFilterRepository) insertFilter(ctx context.Context, filter *Filter)
 }
 
 func (r *WordFilterRepository) updateFilter(ctx context.Context, filter *Filter) error {
-	query := r.db.
-		Builder().
+	query := r.Builder().
 		Update("filtered_word").
 		Set("author_id", filter.AuthorID.Int64()).
 		Set("pattern", filter.Pattern).
@@ -55,7 +54,7 @@ func (r *WordFilterRepository) updateFilter(ctx context.Context, filter *Filter)
 		Set("updated_on", filter.UpdatedOn).
 		Where(sq.Eq{"filter_id": filter.FilterID})
 
-	if err := r.db.ExecUpdateBuilder(ctx, query); err != nil {
+	if err := r.ExecUpdateBuilder(ctx, query); err != nil {
 		return database.DBErr(err)
 	}
 
@@ -63,11 +62,10 @@ func (r *WordFilterRepository) updateFilter(ctx context.Context, filter *Filter)
 }
 
 func (r *WordFilterRepository) DropFilter(ctx context.Context, filter Filter) error {
-	query := r.db.
-		Builder().
+	query := r.Builder().
 		Delete("filtered_word").
 		Where(sq.Eq{"filter_id": filter.FilterID})
-	if errExec := r.db.ExecDeleteBuilder(ctx, query); errExec != nil {
+	if errExec := r.ExecDeleteBuilder(ctx, query); errExec != nil {
 		return database.DBErr(errExec)
 	}
 
@@ -77,14 +75,13 @@ func (r *WordFilterRepository) DropFilter(ctx context.Context, filter Filter) er
 func (r *WordFilterRepository) GetFilterByID(ctx context.Context, filterID int64) (Filter, error) {
 	var filter Filter
 
-	query := r.db.
-		Builder().
+	query := r.Builder().
 		Select("filter_id", "author_id", "pattern", "is_regex",
 			"is_enabled", "trigger_count", "created_on", "updated_on", "action", "duration", "weight").
 		From("filtered_word").
 		Where(sq.Eq{"filter_id": filterID})
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, query)
+	row, errQuery := r.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
 		return filter, database.DBErr(errQuery)
 	}
@@ -105,13 +102,12 @@ func (r *WordFilterRepository) GetFilterByID(ctx context.Context, filterID int64
 }
 
 func (r *WordFilterRepository) GetFilters(ctx context.Context) ([]Filter, error) {
-	builder := r.db.
-		Builder().
+	builder := r.Builder().
 		Select("r.filter_id", "r.author_id", "r.pattern", "r.is_regex",
 			"r.is_enabled", "r.trigger_count", "r.created_on", "r.updated_on", "r.action", "r.duration", "r.weight").
 		From("filtered_word r")
 
-	rows, errExec := r.db.QueryBuilder(ctx, builder)
+	rows, errExec := r.QueryBuilder(ctx, builder)
 	if errExec != nil {
 		return nil, database.DBErr(errExec)
 	}
@@ -143,7 +139,7 @@ func (r *WordFilterRepository) GetFilters(ctx context.Context) ([]Filter, error)
 }
 
 func (r *WordFilterRepository) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
-	return database.DBErr(r.db.ExecInsertBuilder(ctx, r.db.Builder().
+	return database.DBErr(r.ExecInsertBuilder(ctx, r.Builder().
 		Insert("person_messages_filter").
 		Columns("person_message_id", "filter_id").
 		Values(messageID, filterID)))

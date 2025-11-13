@@ -21,6 +21,7 @@ import (
 
 type authHandler struct {
 	*Authentication
+
 	config  *config.Configuration
 	persons *person.Persons
 	tfAPI   *thirdparty.TFAPI

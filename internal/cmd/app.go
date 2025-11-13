@@ -27,6 +27,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/contest"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord/discord_oauth"
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -75,7 +76,6 @@ func Version() BuildInfo {
 
 type GBans struct {
 	anticheat      anticheat.AntiCheat
-	appeals        ban.Appeals
 	assets         asset.Assets
 	banExpirations *ban.ExpirationMonitor
 	bans           ban.Bans
@@ -83,7 +83,6 @@ type GBans struct {
 	chat           *chat.Chat
 	chatRepo       chat.Repository
 	config         *config.Configuration
-	contests       contest.Contests
 	database       database.Database
 	demos          servers.Demos
 	forums         forum.Forums
@@ -93,7 +92,6 @@ type GBans struct {
 	networks       network.Networks
 	news           news.News
 	notifications  *notification.Notifications
-	patreon        patreon.Patreon
 	persons        *person.Persons
 	playerQueue    *playerqueue.Playerqueue
 	reports        ban.Reports
@@ -107,14 +105,14 @@ type GBans struct {
 	wiki           wiki.Wiki
 	wordFilters    chat.WordFilters
 	sentry         *sentry.Client
-	bot            *bot.Bot
+	bot            discord.Bot
 
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 
 	logCloser func()
 }
 
-func NewGBans() (*GBans, error) {
+func New() (*GBans, error) {
 	staticConfig, errStatic := config.ReadStaticConfig()
 	if errStatic != nil {
 		slog.Error("Failed to read static config", slog.String("error", errStatic.Error()))
@@ -199,15 +197,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		return err
 	}
 
-	discord, errDiscord := bot.New(bot.Opts{
-		Token:   conf.Discord.Token,
-		AppID:   conf.Discord.AppID,
-		GuildID: conf.Discord.GuildID,
-	})
-	if errDiscord != nil {
-		return errDiscord
-	}
-	g.bot = discord
+	g.bot = g.mustCreateBot(conf.Discord)
 
 	members := ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons))
 
@@ -215,40 +205,10 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.servers = servers.NewServers(servers.NewRepository(g.database))
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, g.config.Config().Demo, steamid.New(g.config.Config().Owner))
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications, conf.Discord.LogChannelID, conf.Discord.AppealLogChannelID)
-
-	serverFetcher := func(ctx context.Context) ([]state.ServerConfig, error) {
-		servers, errServers := g.servers.Servers(ctx, servers.Query{})
-		if errServers != nil {
-			return nil, errServers
-		}
-
-		confs := make([]state.ServerConfig, len(servers))
-		for index, server := range servers {
-			confs[index] = state.ServerConfig{
-				ServerID:        server.ServerID,
-				Tag:             server.ShortName,
-				DefaultHostname: server.Name,
-				Host:            server.Address,
-				Port:            server.Port,
-				Enabled:         server.IsEnabled,
-				RconPassword:    server.RCON,
-				ReservedSlots:   server.ReservedSlots,
-				CC:              server.CC,
-				Region:          server.Region,
-				Latitude:        server.Latitude,
-				Longitude:       server.Longitude,
-				LogSecret:       server.LogSecret,
-			}
-		}
-
-		return confs, nil
-	}
-
-	g.states = state.NewState(g.broadcaster, state.NewCollector(serverFetcher), conf.General.SrcdsLogAddr, serverFetcher)
+	g.states = state.NewState(g.broadcaster, state.NewCollector(g.serverFetcher), conf.General.SrcdsLogAddr, g.serverFetcher)
 	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.BanLogChannelID, steamid.New(conf.Owner), g.reports, g.notifications)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), members) // TODO Does THE & work here?
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
-	g.appeals = ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications)
 	g.chatRepo = chat.NewRepository(g.database)
 	g.chat = chat.NewChat(g.chatRepo, g.config.Config().Filters, g.wordFilters, g.persons, g.notifications, func(_ context.Context, _ chat.NewUserWarning) error {
 		panic("fixme")
@@ -256,12 +216,10 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database))
-	g.patreon = patreon.NewPatreon(patreon.NewRepository(g.database), conf.Patreon)
 	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
 	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), g.config.Config().Anticheat, g.notifications, g.onAnticheatBan)
 	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications, conf.Discord.VoteLogChannelID, g.persons)
-	g.contests = contest.NewContests(contest.NewRepository(g.database))
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
@@ -289,16 +247,60 @@ func (g *GBans) Init(ctx context.Context) error {
 	return nil
 }
 
+func (g *GBans) serverFetcher(ctx context.Context) ([]state.ServerConfig, error) {
+	servers, errServers := g.servers.Servers(ctx, servers.Query{})
+	if errServers != nil {
+		return nil, errServers
+	}
+
+	confs := make([]state.ServerConfig, len(servers))
+	for index, server := range servers {
+		confs[index] = state.ServerConfig{
+			ServerID:        server.ServerID,
+			Tag:             server.ShortName,
+			DefaultHostname: server.Name,
+			Host:            server.Address,
+			Port:            server.Port,
+			Enabled:         server.IsEnabled,
+			RconPassword:    server.RCON,
+			ReservedSlots:   server.ReservedSlots,
+			CC:              server.CC,
+			Region:          server.Region,
+			Latitude:        server.Latitude,
+			Longitude:       server.Longitude,
+			LogSecret:       server.LogSecret,
+		}
+	}
+
+	return confs, nil
+}
+
+func (g *GBans) mustCreateBot(conf discord.Config) discord.Bot { //nolint:ireturn
+	if conf.BotEnabled {
+		discord, errDiscord := bot.New(bot.Opts{
+			Token:   conf.Token,
+			AppID:   conf.AppID,
+			GuildID: conf.GuildID,
+		})
+		if errDiscord != nil {
+			panic(errDiscord)
+		}
+
+		anticheat.RegisterDiscordCommands(discord, g.anticheat)
+		ban.RegisterDiscordCommands(discord, g.bans)
+		chat.RegisterDiscordCommands(discord, g.wordFilters)
+		servers.RegisterDiscordCommands(discord, g.states, g.persons, g.servers, g.networks)
+
+		return discord
+	}
+
+	return discord.Discard{}
+}
+
 func (g *GBans) startBot(ctx context.Context) error {
 	if !g.config.Config().Discord.Enabled {
 		return nil
 	}
-
-	anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
-	ban.RegisterDiscordCommands(g.bot, g.bans)
-	chat.RegisterDiscordCommands(g.bot, g.wordFilters)
-
-	servers.RegisterDiscordCommands(g.bot, g.states, g.persons, g.servers, g.networks)
 
 	if err := g.bot.Start(ctx); err != nil {
 		return err
@@ -446,13 +448,13 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)
 	asset.NewAssetHandler(router, userAuth, g.assets)
 	auth.NewAuthHandler(router, userAuth, g.config, g.persons, g.tfapiClient)
-	ban.NewAppealHandler(router, userAuth, g.appeals)
+	ban.NewAppealHandler(router, userAuth, ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications))
 	ban.NewReportHandler(router, userAuth, g.reports)
 	ban.NewHandlerBans(router, userAuth, g.bans, conf.Exports, conf.General.SiteName)
 	chat.NewChatHandler(router, g.chat, userAuth)
 	chat.NewWordFilterHandler(router, userAuth, conf.Filters, g.wordFilters, g.chat)
 	config.NewHandler(router, userAuth, g.config, BuildVersion)
-	contest.NewContestHandler(router, userAuth, g.contests, g.assets)
+	contest.NewContestHandler(router, userAuth, contest.NewContests(contest.NewRepository(g.database)), g.assets)
 	discordoauth.NewDiscordOAuthHandler(router, userAuth, g.config, g.persons, g.discordOAuth)
 	forum.NewForumHandler(router, userAuth, g.forums)
 	// match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
@@ -461,13 +463,13 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	network.NewBlocklistHandler(router, userAuth, g.blocklists, g.networks)
 	news.NewNewsHandler(router, g.news, userAuth)
 	notification.NewNotificationHandler(router, userAuth, g.notifications)
-	patreon.NewPatreonHandler(router, userAuth, g.patreon, g.config.Config().Patreon)
+	patreon.NewPatreonHandler(router, userAuth, patreon.NewPatreon(patreon.NewRepository(g.database), conf.Patreon), g.config.Config().Patreon)
 	person.NewPersonHandler(router, userAuth, g.persons)
 	playerqueue.NewPlayerqueueHandler(router, userAuth, g.playerQueue)
 	servers.NewDemoHandler(router, userAuth, g.demos)
 	servers.NewServersHandler(router, userAuth, g.servers, g.states)
 	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)
-	sourcemod.NewHandler(router, userAuth, nil, g.sourcemod)
+	sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod)
 	votes.NewVotesHandler(router, userAuth, g.votes)
 	wiki.NewWikiHandler(router, userAuth, g.wiki)
 
@@ -534,7 +536,7 @@ func (g *GBans) firstTimeSetup(ctx context.Context) error {
 		return nil
 	}
 
-	if !errors.Is(errRootUser, database.ErrNoResult) {
+	if !errors.Is(errRootUser, person.ErrPlayerDoesNotExist) {
 		return errRootUser
 	}
 

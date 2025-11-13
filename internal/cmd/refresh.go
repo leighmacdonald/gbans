@@ -24,7 +24,7 @@ func refreshFiltersCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
 
-			app, errApp := NewGBans()
+			app, errApp := New()
 			if errApp != nil {
 				return errApp
 			}

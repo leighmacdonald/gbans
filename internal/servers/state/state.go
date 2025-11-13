@@ -170,7 +170,7 @@ type ServerState struct {
 type ServerProvider func(ctx context.Context) ([]ServerConfig, error)
 
 type State struct {
-	state       *Collector
+	collector   *Collector
 	logAddr     string
 	logListener *logparse.Listener
 	logFileChan chan LogFilePayload
@@ -180,10 +180,10 @@ type State struct {
 
 // NewState created a interface to interact with server state and exec rcon commands.
 func NewState(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	state *Collector, logAddr string, servers ServerProvider,
+	col *Collector, logAddr string, servers ServerProvider,
 ) *State {
 	return &State{
-		state:       state,
+		collector:   col,
 		logAddr:     logAddr,
 		broadcaster: broadcaster,
 		servers:     servers,
@@ -203,7 +203,7 @@ func (s *State) Start(ctx context.Context) error {
 
 	s.logListener = logSrc
 
-	go s.state.Start(ctx)
+	go s.collector.Start(ctx)
 
 	// TODO run on server Config changes
 	s.updateSrcdsLogServers(ctx)
@@ -259,11 +259,11 @@ func (s *State) updateSrcdsLogServers(ctx context.Context) {
 }
 
 func (s *State) Current() []ServerState {
-	return s.state.Current()
+	return s.collector.Current()
 }
 
 func (s *State) Update(serverID int, update PartialStateUpdate) error {
-	return s.state.Update(serverID, update)
+	return s.collector.Update(serverID, update)
 }
 
 type FindOpts struct {
@@ -277,7 +277,7 @@ type FindOpts struct {
 func (s *State) Find(opts FindOpts) []PlayerServerInfo {
 	var found []PlayerServerInfo
 
-	current := s.state.Current()
+	current := s.collector.Current()
 
 	for server := range current {
 		for _, player := range current[server].Players {
@@ -321,7 +321,7 @@ func (s *State) Find(opts FindOpts) []PlayerServerInfo {
 
 func (s *State) SortRegion() map[string][]ServerState {
 	serverMap := map[string][]ServerState{}
-	for _, server := range s.state.Current() {
+	for _, server := range s.collector.Current() {
 		_, exists := serverMap[server.Region]
 		if !exists {
 			serverMap[server.Region] = []ServerState{}
@@ -334,7 +334,7 @@ func (s *State) SortRegion() map[string][]ServerState {
 }
 
 func (s *State) ByServerID(serverID int) (ServerState, bool) {
-	for _, server := range s.state.Current() {
+	for _, server := range s.collector.Current() {
 		if server.ServerID == serverID {
 			return server, true
 		}
@@ -346,7 +346,7 @@ func (s *State) ByServerID(serverID int) (ServerState, bool) {
 func (s *State) ByName(name string, wildcardOk bool) []ServerState {
 	var servers []ServerState
 
-	current := s.state.Current()
+	current := s.collector.Current()
 
 	if name == "*" && wildcardOk {
 		servers = append(servers, current...)
@@ -382,7 +382,7 @@ func (s *State) ServerIDsByName(name string, wildcardOk bool) []int {
 }
 
 func (s *State) FindExec(ctx context.Context, opts FindOpts, onFoundCmd func(info PlayerServerInfo) string) error {
-	currentState := s.state.Current()
+	currentState := s.collector.Current()
 	players := s.Find(opts)
 
 	if len(players) == 0 {
@@ -408,7 +408,7 @@ func (s *State) FindExec(ctx context.Context, opts FindOpts, onFoundCmd func(inf
 func (s *State) ExecServer(ctx context.Context, serverID int, cmd string) (string, error) {
 	var conf ServerConfig
 
-	for _, server := range s.state.Configs() {
+	for _, server := range s.collector.Configs() {
 		if server.ServerID == serverID {
 			conf = server
 
@@ -424,7 +424,7 @@ func (s *State) ExecServer(ctx context.Context, serverID int, cmd string) (strin
 }
 
 func (s *State) ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error) {
-	return s.state.ExecRaw(ctx, addr, password, cmd)
+	return s.collector.ExecRaw(ctx, addr, password, cmd)
 }
 
 func (s *State) LogAddressAdd(ctx context.Context, logAddress string) {
@@ -446,10 +446,12 @@ type broadcastResult struct {
 // Broadcast sends out rcon commands to all provided servers. If no servers are provided it will default to broadcasting
 // to every server.
 func (s *State) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string {
-	results := map[int]string{}
-	errGroup, egCtx := errgroup.WithContext(ctx)
-
-	configs := s.state.Configs()
+	var (
+		results         = map[int]string{}
+		errGroup, egCtx = errgroup.WithContext(ctx)
+		configs         = s.collector.Configs()
+		resultChan      = make(chan broadcastResult)
+	)
 
 	if len(serverIDs) == 0 {
 		for _, conf := range configs {
@@ -457,18 +459,16 @@ func (s *State) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[
 		}
 	}
 
-	resultChan := make(chan broadcastResult)
-
 	for _, serverID := range serverIDs {
 		sid := serverID
 
 		errGroup.Go(func() error {
-			serverConf, errServerConf := s.state.GetServer(sid)
+			serverConf, errServerConf := s.collector.GetServer(sid)
 			if errServerConf != nil {
 				return errServerConf
 			}
 
-			resp, errExec := s.state.ExecRaw(egCtx, serverConf.Addr(), serverConf.RconPassword, cmd)
+			resp, errExec := s.collector.ExecRaw(egCtx, serverConf.Addr(), serverConf.RconPassword, cmd)
 			if errExec != nil {
 				if errors.Is(errExec, context.Canceled) {
 					return nil

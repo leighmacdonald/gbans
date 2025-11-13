@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/sliceutil"
@@ -17,6 +16,16 @@ import (
 
 type Notifier interface {
 	Send(payload Payload)
+}
+
+type BotNotifier interface {
+	Send(channelID string, embed *discordgo.MessageEmbed) error
+}
+
+type DiscardBot struct{}
+
+func (n *DiscardBot) Send(_ string, _ *discordgo.MessageEmbed) error {
+	return nil
 }
 
 type NullNotifier struct{}
@@ -146,14 +155,14 @@ type NullNotifications struct{}
 
 func (n *NullNotifications) Send(_ Payload) {}
 
-func NewNotifications(repository Repository, discord *bot.Bot) *Notifications {
+func NewNotifications(repository Repository, discord BotNotifier) *Notifications {
 	return &Notifications{repository: repository, bot: discord}
 }
 
 type Notifications struct {
 	repository Repository
 	send       chan Payload
-	bot        *bot.Bot
+	bot        BotNotifier
 }
 
 func (n *Notifications) Send(payload Payload) {

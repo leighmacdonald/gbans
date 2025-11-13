@@ -11,11 +11,11 @@ import (
 )
 
 type AppealRepository struct {
-	db database.Database
+	database.Database
 }
 
 func NewAppealRepository(database database.Database) AppealRepository {
-	return AppealRepository{db: database}
+	return AppealRepository{Database: database}
 }
 
 func (r *AppealRepository) ByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
@@ -25,8 +25,7 @@ func (r *AppealRepository) ByActivity(ctx context.Context, opts AppealQueryFilte
 		constraints = append(constraints, sq.Eq{"b.deleted": false})
 	}
 
-	builder := r.db.
-		Builder().
+	builder := r.Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason", "b.reason_text",
 			"b.note", "b.valid_until", "b.origin", "b.created_on", "b.updated_on", "b.deleted",
 			"CASE WHEN b.report_id IS NULL THEN 0 ELSE b.report_id END",
@@ -46,7 +45,7 @@ func (r *AppealRepository) ByActivity(ctx context.Context, opts AppealQueryFilte
 		LeftJoin("person source on source.steam_id = b.source_id").
 		LeftJoin("person target on target.steam_id = b.target_id")
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder)
+	rows, errQuery := r.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, database.DBErr(errQuery)
 	}
@@ -102,8 +101,7 @@ func (r *AppealRepository) SaveMessage(ctx context.Context, message *AppealMessa
 func (r *AppealRepository) updateBanMessage(ctx context.Context, message *AppealMessage) error {
 	message.UpdatedOn = time.Now()
 
-	query := r.db.
-		Builder().
+	query := r.Builder().
 		Update("ban_appeal").
 		Set("deleted", message.Deleted).
 		Set("author_id", message.AuthorID.Int64()).
@@ -111,7 +109,7 @@ func (r *AppealRepository) updateBanMessage(ctx context.Context, message *Appeal
 		Set("message_md", message.MessageMD).
 		Where(sq.Eq{"ban_message_id": message.BanMessageID})
 
-	if errQuery := r.db.ExecUpdateBuilder(ctx, query); errQuery != nil {
+	if errQuery := r.ExecUpdateBuilder(ctx, query); errQuery != nil {
 		return database.DBErr(errQuery)
 	}
 
@@ -127,7 +125,7 @@ func (r *AppealRepository) insertBanMessage(ctx context.Context, message *Appeal
 	RETURNING ban_message_id
 	`
 
-	if errQuery := r.db.QueryRow(ctx, query,
+	if errQuery := r.QueryRow(ctx, query,
 		message.BanID,
 		message.AuthorID.Int64(),
 		message.MessageMD,
@@ -142,8 +140,7 @@ func (r *AppealRepository) insertBanMessage(ctx context.Context, message *Appeal
 }
 
 func (r *AppealRepository) Messages(ctx context.Context, banID int64) ([]AppealMessage, error) {
-	query := r.db.
-		Builder().
+	query := r.Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted",
 			"a.created_on", "a.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
 		From("ban_appeal a").
@@ -151,7 +148,7 @@ func (r *AppealRepository) Messages(ctx context.Context, banID int64) ([]AppealM
 		Where(sq.And{sq.Eq{"a.deleted": false}, sq.Eq{"a.ban_id": banID}}).
 		OrderBy("a.created_on")
 
-	rows, errQuery := r.db.QueryBuilder(ctx, query)
+	rows, errQuery := r.QueryBuilder(ctx, query)
 	if errQuery != nil {
 		if errors.Is(database.DBErr(errQuery), database.ErrNoResult) {
 			return nil, nil
@@ -196,8 +193,7 @@ func (r *AppealRepository) Messages(ctx context.Context, banID int64) ([]AppealM
 }
 
 func (r *AppealRepository) MessageByID(ctx context.Context, banMessageID int64) (AppealMessage, error) {
-	query := r.db.
-		Builder().
+	query := r.Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted", "a.created_on",
 			"a.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
 		From("ban_appeal a").
@@ -209,7 +205,7 @@ func (r *AppealRepository) MessageByID(ctx context.Context, banMessageID int64) 
 		message  AppealMessage
 	)
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, query)
+	row, errQuery := r.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
 		return message, database.DBErr(errQuery)
 	}
@@ -235,13 +231,12 @@ func (r *AppealRepository) MessageByID(ctx context.Context, banMessageID int64) 
 }
 
 func (r *AppealRepository) DropMessage(ctx context.Context, message *AppealMessage) error {
-	query := r.db.
-		Builder().
+	query := r.Builder().
 		Update("ban_appeal").
 		Set("deleted", true).
 		Where(sq.Eq{"ban_message_id": message.BanMessageID})
 
-	if errExec := r.db.ExecUpdateBuilder(ctx, query); errExec != nil {
+	if errExec := r.ExecUpdateBuilder(ctx, query); errExec != nil {
 		return database.DBErr(errExec)
 	}
 

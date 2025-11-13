@@ -18,7 +18,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func RegisterDiscordCommands(bot *bot.Bot, state *state.State, persons person.Provider, servers Servers, network network.Networks) {
+func RegisterDiscordCommands(bot discord.Bot, state *state.State, persons person.Provider, servers Servers, network network.Networks) {
 	handler := DiscordHandler{state: state, persons: persons, servers: servers, network: network}
 
 	bot.MustRegisterHandler("find", &discordgo.ApplicationCommand{
