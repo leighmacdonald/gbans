@@ -12,7 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 )
 
-func RegisterDiscordCommands(bot *bot.Bot, wordFilters WordFilters) {
+func RegisterDiscordCommands(bot discord.Bot, wordFilters WordFilters) {
 	handler := &discordHandler{wordFilters: wordFilters}
 
 	bot.MustRegisterHandler("filter", &discordgo.ApplicationCommand{

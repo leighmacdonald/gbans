@@ -100,9 +100,7 @@ func NewPlayerqueue(ctx context.Context, repo Repository, persons person.Provide
 		queue: New(100, 2, chatLogs, func() ([]Lobby, error) {
 			currentState := state.Current()
 
-			srvs, errServers := serversUC.Servers(ctx, servers.Query{
-				IncludeDisabled: false,
-			})
+			srvs, errServers := serversUC.Servers(ctx, servers.Query{IncludeDisabled: false})
 
 			if errServers != nil {
 				return nil, errServers

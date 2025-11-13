@@ -14,11 +14,11 @@ import (
 )
 
 type Repository struct {
-	db database.Database
+	database.Database
 }
 
 func NewRepository(db database.Database) Repository {
-	return Repository{db: db}
+	return Repository{Database: db}
 }
 
 func (r *Repository) SendSite(ctx context.Context, targetIDs steamid.Collection, severity Severity,
@@ -33,40 +33,39 @@ func (r *Repository) SendSite(ctx context.Context, targetIDs steamid.Collection,
 		batch.Queue(query, sid.Int64(), severity, message, link, time.Now(), authorID)
 	}
 
-	return database.DBErr(r.db.SendBatch(ctx, batch).Close())
+	return database.DBErr(r.SendBatch(ctx, batch).Close())
 }
 
 func (r *Repository) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
+	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
 func (r *Repository) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
+	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
 func (r *Repository) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
+	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
 func (r *Repository) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.Builder().
+	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
 func (r *Repository) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]UserNotification, error) {
-	builder := r.db.
-		Builder().
+	builder := r.Builder().
 		Select("r.person_notification_id", "r.steam_id", "r.read", "r.deleted", "r.severity",
 			"r.message", "r.link", "r.count", "r.created_on", "r.author_id",
 			"p.personaname", "p.permission_level", "p.discord_id", "p.avatarhash").
@@ -76,7 +75,7 @@ func (r *Repository) GetPersonNotifications(ctx context.Context, steamID steamid
 
 	constraints := sq.And{sq.Eq{"r.deleted": false}, sq.Eq{"r.steam_id": steamID.Int64()}}
 
-	rows, errRows := r.db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errRows := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errRows != nil {
 		return nil, database.DBErr(errRows)
 	}

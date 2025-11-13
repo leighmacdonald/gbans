@@ -15,17 +15,17 @@ import (
 )
 
 type Repository struct {
+	database.Database
+
 	centerProjectiles bool
-	db                database.Database
 }
 
 func NewRepository(database database.Database, centerProjectiles bool) Repository {
-	return Repository{db: database, centerProjectiles: centerProjectiles}
+	return Repository{Database: database, centerProjectiles: centerProjectiles}
 }
 
 func (r *Repository) DropPerson(ctx context.Context, steamID steamid.SteamID) error {
-	return database.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.
-		Builder().
+	return database.DBErr(r.ExecDeleteBuilder(ctx, r.Builder().
 		Delete("person").
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
@@ -46,7 +46,7 @@ func (r *Repository) Save(ctx context.Context, person *Person) error {
 			discord_id = $13, community_banned = $14,  vac_bans = $15, game_bans = $16, economy_ban = $17, days_since_last_ban = $18,
 			updated_on_steam = $19, muted =$20, playerqueue_chat_status =$21, playerqueue_chat_reason=$22, updated_on=$24`
 
-	return database.DBErr(r.db.Exec(ctx, query, person.SteamID.Int64(), person.VisibilityState,
+	return database.DBErr(r.Exec(ctx, query, person.SteamID.Int64(), person.VisibilityState,
 		person.ProfileState, person.PersonaName,
 		person.AvatarHash, person.PersonaState, person.RealName,
 		person.TimeCreated, person.LocCountryCode, person.LocStateCode,
@@ -66,8 +66,7 @@ func (r *Repository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steam
 	var ids steamid.Collection
 
 	// TODO
-	rows, errRows := r.db.QueryBuilder(ctx, r.db.
-		Builder().
+	rows, errRows := r.QueryBuilder(ctx, r.Builder().
 		Select("DISTINCT steam_id").
 		From("person_connections").
 		Where(sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String()))))
@@ -90,8 +89,7 @@ func (r *Repository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steam
 }
 
 func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
-	builder := r.db.
-		Builder().
+	builder := r.Builder().
 		Select("p.steam_id", "p.created_on", "p.updated_on",
 			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
 			"p.loccountrycode", "p.locstatecode", "p.loccityid", "p.permission_level", "p.discord_id",
@@ -164,7 +162,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
 
 	var people People
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(conditions))
+	rows, errQuery := r.QueryBuilder(ctx, builder.Where(conditions))
 	if errQuery != nil {
 		return nil, database.DBErr(errQuery)
 	}
@@ -194,8 +192,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
 func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Settings, error) {
 	var settings Settings
 
-	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
-		Builder().
+	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("person_settings_id", "forum_signature", "forum_profile_messages",
 			"stats_hidden", "created_on", "updated_on").
 		From("person_settings").
@@ -219,8 +216,7 @@ func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Set
 	}
 
 	if r.centerProjectiles {
-		rows, errRow := r.db.QueryBuilder(ctx, r.db.
-			Builder().
+		rows, errRow := r.QueryBuilder(ctx, r.Builder().
 			Select("name", "value").
 			From("sm_cookie_cache").
 			Join("sm_cookies ON cookie_id=id").
@@ -284,8 +280,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 	if settings.PersonSettingsID == 0 {
 		settings.CreatedOn = settings.UpdatedOn
 
-		errSiteSettings = database.DBErr(r.db.ExecInsertBuilderWithReturnValue(ctx, r.db.
-			Builder().
+		errSiteSettings = database.DBErr(r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
 			Insert("person_settings").
 			SetMap(map[string]any{
 				"steam_id":               settings.SteamID.Int64(),
@@ -298,8 +293,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 			Suffix("RETURNING person_settings_id"),
 			&settings.PersonSettingsID))
 	} else {
-		errSiteSettings = database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
-			Builder().
+		errSiteSettings = database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
 			Update("person_settings").
 			SetMap(map[string]any{
 				"forum_signature":        settings.ForumSignature,
@@ -315,7 +309,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 	var errGameSettings error
 	if r.centerProjectiles && settings.CenterProjectiles != nil {
 		// TODO test this
-		_ = database.DBErr(r.db.QueryRow(ctx, query,
+		_ = database.DBErr(r.QueryRow(ctx, query,
 			settings.SteamID.Steam(false),
 			boolToStringDigit(*settings.CenterProjectiles)).Scan(&value))
 	}

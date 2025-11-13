@@ -13,6 +13,7 @@ import (
 
 type patreonHandler struct {
 	Patreon
+
 	config Config
 }
 

@@ -14,11 +14,11 @@ import (
 )
 
 type BlocklistRepository struct {
-	db database.Database
+	database.Database
 }
 
 func NewBlocklistRepository(database database.Database) BlocklistRepository {
-	return BlocklistRepository{db: database}
+	return BlocklistRepository{Database: database}
 }
 
 func (b *BlocklistRepository) InsertCache(ctx context.Context, list CIDRBlockSource, entries []netip.Prefix) error {
@@ -31,7 +31,7 @@ func (b *BlocklistRepository) InsertCache(ctx context.Context, list CIDRBlockSou
 		batch.Queue(query, list.CIDRBlockSourceID, cidrRange, now)
 	}
 
-	batchResults := b.db.SendBatch(ctx, &batch)
+	batchResults := b.SendBatch(ctx, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, database.ErrCloseBatch)
 	}
@@ -40,13 +40,13 @@ func (b *BlocklistRepository) InsertCache(ctx context.Context, list CIDRBlockSou
 }
 
 func (b *BlocklistRepository) TruncateCachedEntries(ctx context.Context) error {
-	return database.DBErr(b.db.ExecDeleteBuilder(ctx, b.db.Builder().Delete("cidr_block_entries")))
+	return database.DBErr(b.ExecDeleteBuilder(ctx, b.Builder().Delete("cidr_block_entries")))
 }
 
 func (b *BlocklistRepository) CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (WhitelistSteam, error) {
 	now := time.Now()
 
-	if err := b.db.ExecInsertBuilder(ctx, b.db.Builder().Insert("person_whitelist").SetMap(map[string]any{
+	if err := b.ExecInsertBuilder(ctx, b.Builder().Insert("person_whitelist").SetMap(map[string]any{
 		"steam_id":   steamID.Int64(),
 		"created_on": now,
 		"updated_on": now,
@@ -71,8 +71,7 @@ func (b *BlocklistRepository) CreateSteamBlockWhitelists(ctx context.Context, st
 func (b *BlocklistRepository) GetSteamBlockWhitelists(ctx context.Context) ([]WhitelistSteam, error) {
 	blocks := make([]WhitelistSteam, 0)
 
-	rows, errRows := b.db.QueryBuilder(ctx, b.db.
-		Builder().
+	rows, errRows := b.QueryBuilder(ctx, b.Builder().
 		Select("w.steam_id", "p.personaname", "p.avatarhash", "w.created_on", "w.updated_on").
 		From("person_whitelist w").
 		LeftJoin("person p USING(steam_id)"))
@@ -108,8 +107,7 @@ func (b *BlocklistRepository) GetSteamBlockWhitelists(ctx context.Context) ([]Wh
 }
 
 func (b *BlocklistRepository) DeleteSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) error {
-	return database.DBErr(b.db.ExecDeleteBuilder(ctx, b.db.
-		Builder().
+	return database.DBErr(b.ExecDeleteBuilder(ctx, b.Builder().
 		Delete("person_whitelist").
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
@@ -117,8 +115,7 @@ func (b *BlocklistRepository) DeleteSteamBlockWhitelists(ctx context.Context, st
 func (b *BlocklistRepository) GetCIDRBlockSources(ctx context.Context) ([]CIDRBlockSource, error) {
 	blocks := make([]CIDRBlockSource, 0)
 
-	rows, errRows := b.db.QueryBuilder(ctx, b.db.
-		Builder().
+	rows, errRows := b.QueryBuilder(ctx, b.Builder().
 		Select("cidr_block_source_id", "name", "url", "enabled", "created_on", "updated_on").
 		From("cidr_block_source"))
 	if errRows != nil {
@@ -144,8 +141,7 @@ func (b *BlocklistRepository) GetCIDRBlockSources(ctx context.Context) ([]CIDRBl
 }
 
 func (b *BlocklistRepository) GetCIDRBlockSource(ctx context.Context, sourceID int, block *CIDRBlockSource) error {
-	row, errRow := b.db.QueryRowBuilder(ctx, b.db.
-		Builder().
+	row, errRow := b.QueryRowBuilder(ctx, b.Builder().
 		Select("cidr_block_source_id", "name", "url", "enabled", "created_on", "updated_on").
 		From("cidr_block_source").
 		Where(sq.Eq{"cidr_block_source_id": sourceID}))
@@ -166,8 +162,7 @@ func (b *BlocklistRepository) SaveCIDRBlockSources(ctx context.Context, block *C
 	block.UpdatedOn = now
 
 	if block.CIDRBlockSourceID > 0 {
-		return database.DBErr(b.db.ExecUpdateBuilder(ctx, b.db.
-			Builder().
+		return database.DBErr(b.ExecUpdateBuilder(ctx, b.Builder().
 			Update("cidr_block_source").
 			SetMap(map[string]any{
 				"name":       block.Name,
@@ -180,8 +175,7 @@ func (b *BlocklistRepository) SaveCIDRBlockSources(ctx context.Context, block *C
 
 	block.CreatedOn = now
 
-	return database.DBErr(b.db.ExecInsertBuilderWithReturnValue(ctx, b.db.
-		Builder().
+	return database.DBErr(b.ExecInsertBuilderWithReturnValue(ctx, b.Builder().
 		Insert("cidr_block_source").
 		SetMap(map[string]any{
 			"name":       block.Name,
@@ -194,8 +188,7 @@ func (b *BlocklistRepository) SaveCIDRBlockSources(ctx context.Context, block *C
 }
 
 func (b *BlocklistRepository) DeleteCIDRBlockSources(ctx context.Context, blockSourceID int) error {
-	return database.DBErr(b.db.ExecDeleteBuilder(ctx, b.db.
-		Builder().
+	return database.DBErr(b.ExecDeleteBuilder(ctx, b.Builder().
 		Delete("cidr_block_source").
 		Where(sq.Eq{"cidr_block_source_id": blockSourceID})))
 }
@@ -203,8 +196,7 @@ func (b *BlocklistRepository) DeleteCIDRBlockSources(ctx context.Context, blockS
 func (b *BlocklistRepository) GetCIDRBlockWhitelists(ctx context.Context) ([]WhitelistIP, error) {
 	whitelists := make([]WhitelistIP, 0)
 
-	rows, errRows := b.db.QueryBuilder(ctx, b.db.
-		Builder().
+	rows, errRows := b.QueryBuilder(ctx, b.Builder().
 		Select("cidr_block_whitelist_id", "address", "created_on", "updated_on").
 		From("cidr_block_whitelist"))
 	if errRows != nil {
@@ -230,8 +222,7 @@ func (b *BlocklistRepository) GetCIDRBlockWhitelists(ctx context.Context) ([]Whi
 }
 
 func (b *BlocklistRepository) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *WhitelistIP) error {
-	rows, errRow := b.db.QueryRowBuilder(ctx, b.db.
-		Builder().
+	rows, errRow := b.QueryRowBuilder(ctx, b.Builder().
 		Select("cidr_block_whitelist_id", "address", "created_on", "updated_on").
 		From("cidr_block_whitelist").
 		Where(sq.Eq{"cidr_block_whitelist_id": whitelistID}))
@@ -252,8 +243,7 @@ func (b *BlocklistRepository) SaveCIDRBlockWhitelist(ctx context.Context, whitel
 	whitelist.UpdatedOn = now
 
 	if whitelist.CIDRBlockWhitelistID > 0 {
-		return database.DBErr(b.db.ExecUpdateBuilder(ctx, b.db.
-			Builder().
+		return database.DBErr(b.ExecUpdateBuilder(ctx, b.Builder().
 			Update("cidr_block_whitelist").
 			SetMap(map[string]any{
 				"address":    whitelist.Address.String(),
@@ -263,8 +253,7 @@ func (b *BlocklistRepository) SaveCIDRBlockWhitelist(ctx context.Context, whitel
 
 	whitelist.CreatedOn = now
 
-	return database.DBErr(b.db.ExecInsertBuilderWithReturnValue(ctx, b.db.
-		Builder().
+	return database.DBErr(b.ExecInsertBuilderWithReturnValue(ctx, b.Builder().
 		Insert("cidr_block_whitelist").
 		SetMap(map[string]any{
 			"address":    whitelist.Address.String(),
@@ -275,8 +264,7 @@ func (b *BlocklistRepository) SaveCIDRBlockWhitelist(ctx context.Context, whitel
 }
 
 func (b *BlocklistRepository) DeleteCIDRBlockWhitelist(ctx context.Context, whitelistID int) error {
-	return database.DBErr(b.db.ExecDeleteBuilder(ctx, b.db.
-		Builder().
+	return database.DBErr(b.ExecDeleteBuilder(ctx, b.Builder().
 		Delete("cidr_block_whitelist").
 		Where(sq.Eq{"cidr_block_whitelist_id": whitelistID})))
 }

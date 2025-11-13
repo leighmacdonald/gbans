@@ -62,8 +62,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 		Short: "Starts the gbans web app",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
-
-			app, errApp := NewGBans()
+			app, errApp := New()
 			if errApp != nil {
 				return errApp
 			}
@@ -79,11 +78,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			app.StartBackground(ctx)
-
-			// _, _, err := slur.Calc(ctx, &chat.MessageProvider{Db: app.database})
-			// if err != nil {
-			// 	return err
-			// }
 
 			if errServe := app.Serve(ctx); errServe != nil {
 				return errServe

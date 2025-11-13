@@ -18,7 +18,7 @@ type discordHandler struct {
 	persons   person.Provider
 }
 
-func RegisterDiscordCommands(bot *bot.Bot, anticheat AntiCheat) {
+func RegisterDiscordCommands(bot discord.Bot, anticheat AntiCheat) {
 	handler := discordHandler{anticheat: anticheat}
 
 	bot.MustRegisterHandler("ac", &discordgo.ApplicationCommand{

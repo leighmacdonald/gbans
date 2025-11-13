@@ -12,17 +12,16 @@ import (
 )
 
 type Repository struct {
-	db database.Database
+	database.Database
 }
 
 func NewRepository(database database.Database) Repository {
-	return Repository{db: database}
+	return Repository{Database: database}
 }
 
 // todo move to srcds.
 func (r *Repository) GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
-	rows, errRows := r.db.QueryBuilder(ctx, r.db.
-		Builder().
+	rows, errRows := r.QueryBuilder(ctx, r.Builder().
 		Select("steam_id", "permission_level").
 		From("person").
 		Where(sq.GtOrEq{"permission_level": permission.Reserved}).
@@ -68,8 +67,7 @@ func (r *Repository) GetServerPermissions(ctx context.Context) ([]ServerPermissi
 }
 
 func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) {
-	builder := r.db.
-		Builder().
+	builder := r.Builder().
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
 			"s.token_created_on", "s.created_on", "s.updated_on", "s.reserved_slots", "s.is_enabled", "s.region", "s.cc",
 			"s.latitude", "s.longitude", "s.deleted", "s.log_secret", "s.enable_stats", "s.address_internal", "s.sdr_enabled").
@@ -101,7 +99,7 @@ func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) 
 		constraints = append(constraints, sq.Eq{"s.password": filter.Password})
 	}
 
-	rows, errQueryExec := r.db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errQueryExec := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errQueryExec != nil {
 		return []Server{}, database.DBErr(errQueryExec)
 	}
@@ -153,7 +151,7 @@ func (r *Repository) Save(ctx context.Context, server *Server) error {
       		deleted = $16, log_secret = $17, enable_stats = $18, address_internal = $19, sdr_enabled = $20
 		RETURNING server_id;`
 
-	err := r.db.QueryRow(ctx, query, server.ShortName, server.Name, server.Address, server.Port,
+	err := r.QueryRow(ctx, query, server.ShortName, server.Name, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal, &server.SDREnabled).

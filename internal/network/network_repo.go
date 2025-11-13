@@ -18,12 +18,13 @@ import (
 )
 
 type Repository struct {
-	db      database.Database
+	database.Database
+
 	persons person.Provider
 }
 
 func NewRepository(db database.Database, persons person.Provider) Repository {
-	return Repository{db: db, persons: persons}
+	return Repository{Database: db, persons: persons}
 }
 
 func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error) {
@@ -42,15 +43,14 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 		constraints = append(constraints, sq.Expr("ip_addr <<= ?::ip4r", opts.Network))
 	}
 
-	selectBuilder := r.db.Builder().
+	selectBuilder := r.Builder().
 		Select("distinct on (c.ip_addr) c.ip_addr", "c.person_connection_id", "c.persona_name",
 			"c.steam_id", "c.created_on", "c.server_id", "s.short_name", "s.name").
 		From("person_connections c").
 		LeftJoin("server s USING(server_id)").
 		Where(constraints)
 
-	builder := r.db.
-		Builder().
+	builder := r.Builder().
 		Select("x.*").
 		FromSelect(selectBuilder, "x")
 
@@ -60,7 +60,7 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 
 	var messages []PersonConnection
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errQuery := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
 		return nil, 0, database.DBErr(errQuery)
 	}
@@ -102,8 +102,7 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 		return []PersonConnection{}, 0, nil
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
+	count, errCount := r.GetCount(ctx, r.Builder().
 		Select("count(c.person_connection_id)").
 		From("person_connections c").
 		Where(constraints))
@@ -116,8 +115,7 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 }
 
 func (r Repository) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error) {
-	builder := r.db.
-		Builder().
+	builder := r.Builder().
 		Select(
 			"DISTINCT on (pn, pc.ip_addr) coalesce(pc.persona_name, pc.steam_id::text) as pn",
 			"pc.person_connection_id",
@@ -132,7 +130,7 @@ func (r Repository) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamI
 		Limit(limit)
 	builder = builder.Where(sq.Eq{"pc.steam_id": sid64.Int64()})
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder)
+	rows, errQuery := r.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, database.DBErr(errQuery)
 	}
@@ -174,7 +172,7 @@ func (r Repository) AddConnectionHistory(ctx context.Context, conn *PersonConnec
 		return errPerson
 	}
 
-	if errQuery := r.db.
+	if errQuery := r.
 		QueryRow(ctx, query, conn.SteamID.Int64(), conn.IPAddr.String(), conn.PersonaName, conn.CreatedOn, conn.ServerID).
 		Scan(&conn.PersonConnectionID); errQuery != nil {
 		return database.DBErr(errQuery)
@@ -184,8 +182,7 @@ func (r Repository) AddConnectionHistory(ctx context.Context, conn *PersonConnec
 }
 
 func (r Repository) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP {
-	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
-		Builder().
+	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("c.ip_addr").
 		From("person_connections c").
 		Where(sq.Eq{"c.steam_id": steamID.Int64()}).
@@ -208,13 +205,12 @@ func (r Repository) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.S
 }
 
 func (r Repository) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]ASN, error) {
-	query := r.db.
-		Builder().
+	query := r.Builder().
 		Select("cidr::text", "as_num", "as_name").
 		From("net_asn").
 		Where(sq.Eq{"as_num": asNum})
 
-	rows, errQuery := r.db.QueryBuilder(ctx, query)
+	rows, errQuery := r.QueryBuilder(ctx, query)
 	if errQuery != nil {
 		return nil, database.DBErr(errQuery)
 	}
@@ -245,8 +241,7 @@ func (r Repository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (AS
 
 	var asnRecord ASN
 
-	if errQuery := r.db.
-		QueryRow(ctx, query, ipAddr.String()).
+	if errQuery := r.QueryRow(ctx, query, ipAddr.String()).
 		Scan(&asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errQuery != nil {
 		return asnRecord, database.DBErr(errQuery)
 	}
@@ -262,7 +257,7 @@ func (r Repository) GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (L
 
 	var record Location
 
-	if errQuery := r.db.QueryRow(ctx, query, ipAddr.String()).
+	if errQuery := r.QueryRow(ctx, query, ipAddr.String()).
 		Scan(&record.CIDR, &record.CountryCode, &record.CountryName, &record.RegionName,
 			&record.CityName, &record.LatLong.Latitude, &record.LatLong.Longitude); errQuery != nil {
 		return record, database.DBErr(errQuery)
@@ -280,7 +275,7 @@ func (r Repository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (Prox
 
 	var proxyRecord Proxy
 
-	if errQuery := r.db.QueryRow(ctx, query, ipAddr.String()).
+	if errQuery := r.QueryRow(ctx, query, ipAddr.String()).
 		Scan(&proxyRecord.CIDR, &proxyRecord.ProxyType, &proxyRecord.CountryCode, &proxyRecord.CountryName, &proxyRecord.RegionName, &proxyRecord.CityName, &proxyRecord.ISP,
 			&proxyRecord.Domain, &proxyRecord.UsageType, &proxyRecord.ASN, &proxyRecord.AS, &proxyRecord.LastSeen, &proxyRecord.Threat); errQuery != nil {
 		return proxyRecord, database.DBErr(errQuery)
@@ -293,7 +288,7 @@ func (r Repository) LoadASN(ctx context.Context, truncate bool, records []ip2loc
 	if truncate {
 		slog.Debug("Truncating asn table")
 
-		if errTruncate := r.db.TruncateTable(ctx, "net_asn"); errTruncate != nil {
+		if errTruncate := r.TruncateTable(ctx, "net_asn"); errTruncate != nil {
 			return errTruncate
 		}
 	}
@@ -311,7 +306,7 @@ func (r Repository) LoadASN(ctx context.Context, truncate bool, records []ip2loc
 	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	batchResults := r.db.SendBatch(c, &batch)
+	batchResults := r.SendBatch(c, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, database.ErrCloseBatch)
 	}
@@ -323,7 +318,7 @@ func (r Repository) LoadLocation(ctx context.Context, truncate bool, records []i
 	if truncate {
 		slog.Debug("Truncating location table")
 
-		if errTruncate := r.db.TruncateTable(ctx, "net_location"); errTruncate != nil {
+		if errTruncate := r.TruncateTable(ctx, "net_location"); errTruncate != nil {
 			return errTruncate
 		}
 	}
@@ -341,7 +336,7 @@ func (r Repository) LoadLocation(ctx context.Context, truncate bool, records []i
 	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	batchResults := r.db.SendBatch(c, &batch)
+	batchResults := r.SendBatch(c, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, database.ErrCloseBatch)
 	}
@@ -353,7 +348,7 @@ func (r Repository) LoadProxies(ctx context.Context, truncate bool, records []ip
 	if truncate {
 		slog.Debug("Truncating proxy table")
 
-		if errTruncate := r.db.TruncateTable(ctx, "net_proxy"); errTruncate != nil {
+		if errTruncate := r.TruncateTable(ctx, "net_proxy"); errTruncate != nil {
 			return errTruncate
 		}
 	}
@@ -373,7 +368,7 @@ func (r Repository) LoadProxies(ctx context.Context, truncate bool, records []ip
 	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	batchResults := r.db.SendBatch(c, &batch)
+	batchResults := r.SendBatch(c, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, database.ErrCloseBatch)
 	}

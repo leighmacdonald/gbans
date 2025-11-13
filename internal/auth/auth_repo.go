@@ -10,16 +10,15 @@ import (
 )
 
 type Repository struct {
-	db database.Database
+	database.Database
 }
 
 func NewRepository(database database.Database) Repository {
-	return Repository{db: database}
+	return Repository{Database: database}
 }
 
 func (r Repository) SavePersonAuth(ctx context.Context, auth *PersonAuth) error {
-	query, args, errQuery := r.db.
-		Builder().
+	query, args, errQuery := r.Builder().
 		Insert("person_auth").
 		Columns("steam_id", "ip_addr", "refresh_token", "created_on").
 		Values(auth.SteamID.Int64(), auth.IPAddr.String(), auth.AccessToken, auth.CreatedOn).
@@ -30,26 +29,23 @@ func (r Repository) SavePersonAuth(ctx context.Context, auth *PersonAuth) error 
 		return database.DBErr(errQuery)
 	}
 
-	return database.DBErr(r.db.QueryRow(ctx, query, args...).Scan(&auth.PersonAuthID))
+	return database.DBErr(r.QueryRow(ctx, query, args...).Scan(&auth.PersonAuthID))
 }
 
 func (r Repository) DeletePersonAuth(ctx context.Context, authID int64) error {
-	return database.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.
-		Builder().
+	return database.DBErr(r.ExecDeleteBuilder(ctx, r.Builder().
 		Delete("person_auth").
 		Where(sq.Eq{"person_auth_id": authID})))
 }
 
 func (r Repository) PrunePersonAuth(ctx context.Context) error {
-	return database.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.
-		Builder().
+	return database.DBErr(r.ExecDeleteBuilder(ctx, r.Builder().
 		Delete("person_auth").
 		Where(sq.Gt{"created_on + interval '1 month'": time.Now()})))
 }
 
 func (r Repository) GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *PersonAuth) error {
-	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
-		Builder().
+	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on").
 		From("person_auth").
 		Where(sq.And{sq.Eq{"fingerprint": fingerprint}}))

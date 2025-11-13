@@ -9,11 +9,11 @@ import (
 )
 
 type Repository struct {
-	db database.Database
+	database.Database
 }
 
 func NewRepository(database database.Database) Repository {
-	return Repository{db: database}
+	return Repository{Database: database}
 }
 
 func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, error) {
@@ -39,7 +39,7 @@ func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, e
 		constraints = append(constraints, sq.Eq{"success": filter.Success == 1})
 	}
 
-	builder := r.db.Builder().
+	builder := r.Builder().
 		Select("v.vote_id", "v.server_id", "v.source_id",
 			"src.personaname", "src.avatarhash", "v.target_id", "tgt.personaname", "tgt.avatarhash",
 			"v.name", "v.success", "v.created_on", "s.short_name").
@@ -56,7 +56,7 @@ func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, e
 		"src.": {"personaname"},
 	}, "vote_id")
 
-	rows, errRows := r.db.QueryBuilder(ctx, builder)
+	rows, errRows := r.QueryBuilder(ctx, builder)
 	if errRows != nil {
 		return nil, 0, database.DBErr(errRows)
 	}
@@ -86,7 +86,7 @@ func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, e
 		results = append(results, result)
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.Builder().
+	count, errCount := r.GetCount(ctx, r.Builder().
 		Select("COUNT(v.vote_id)").
 		From("vote_result v").
 		Where(constraints))
@@ -98,7 +98,7 @@ func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, e
 }
 
 func (r Repository) AddResult(ctx context.Context, voteResult Result) error {
-	return database.DBErr(r.db.ExecInsertBuilder(ctx, r.db.Builder().
+	return database.DBErr(r.ExecInsertBuilder(ctx, r.Builder().
 		Insert("vote_result").
 		SetMap(map[string]any{
 			"server_id":  voteResult.ServerID,

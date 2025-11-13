@@ -91,6 +91,7 @@ func NewSpeedrunRepository(database database.Database, person person.Provider) S
 
 type SpeedrunRepository struct {
 	database.Database
+
 	person person.Provider
 }
 

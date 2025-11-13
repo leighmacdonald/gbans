@@ -27,7 +27,7 @@ type discordHandler struct {
 	discord person.DiscordPersonProvider
 }
 
-func RegisterDiscordCommands(bot *bot.Bot, bans Bans) {
+func RegisterDiscordCommands(bot discord.Bot, bans Bans) {
 	var (
 		reasons = []*discordgo.ApplicationCommandOptionChoice{
 			{Name: reason.External.String(), Value: reason.External},

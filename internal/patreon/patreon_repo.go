@@ -10,11 +10,11 @@ import (
 )
 
 type Repository struct {
-	db database.Database
+	database.Database
 }
 
 func NewRepository(database database.Database) Repository {
-	return Repository{db: database}
+	return Repository{Database: database}
 }
 
 func (r Repository) OldAuths(ctx context.Context) ([]Credential, error) {
@@ -22,7 +22,7 @@ func (r Repository) OldAuths(ctx context.Context) ([]Credential, error) {
                           expires_in, scope, token_type, version, created_on, updated_on FROM auth_patreon
 					WHERE to_timestamp(extract(epoch from updated_on) + expires_in) < (now() + interval '7 days');`
 
-	rows, errRows := r.db.Query(ctx, query)
+	rows, errRows := r.Query(ctx, query)
 	if errRows != nil {
 		return nil, database.DBErr(errRows)
 	}
@@ -43,7 +43,7 @@ func (r Repository) OldAuths(ctx context.Context) ([]Credential, error) {
 }
 
 func (r Repository) DeleteTokens(ctx context.Context, steamID steamid.SteamID) error {
-	query, vars, errQuery := r.db.Builder().
+	query, vars, errQuery := r.Builder().
 		Delete("auth_patreon").
 		Where(sq.Eq{"steam_id": steamID}).
 		ToSql()
@@ -51,20 +51,18 @@ func (r Repository) DeleteTokens(ctx context.Context, steamID steamid.SteamID) e
 		return database.DBErr(errQuery)
 	}
 
-	return r.db.Exec(ctx, query, vars...)
+	return r.Exec(ctx, query, vars...)
 }
 
 func (r Repository) SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error {
-	return database.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
-		Builder().
+	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("auth_patreon").
 		Set("creator_access_token", accessToken).
 		Set("creator_refresh_token", refreshToken)))
 }
 
 func (r Repository) GetPatreonAuth(ctx context.Context) (string, string, error) {
-	query, args, errQuery := r.db.
-		Builder().
+	query, args, errQuery := r.Builder().
 		Select("creator_access_token", "creator_refresh_token").
 		From("auth_patreon").
 		ToSql()
@@ -77,7 +75,7 @@ func (r Repository) GetPatreonAuth(ctx context.Context) (string, string, error) 
 		creatorRefreshToken string
 	)
 
-	if errScan := r.db.
+	if errScan := r.
 		QueryRow(ctx, query, args...).
 		Scan(&creatorAccessToken, &creatorRefreshToken); errScan != nil {
 		return "", "", errors.Join(errScan, ErrQueryPatreon)
@@ -96,13 +94,13 @@ func (r Repository) SaveTokens(ctx context.Context, creds Credential) error {
 				              expires_in = $5, scope = $6, token_type = $7, version = $8, updated_on = $10
 				`
 
-	return database.DBErr(r.db.Exec(ctx, query, creds.SteamID.Int64(), creds.PatreonID, creds.AccessToken, creds.RefreshToken,
+	return database.DBErr(r.Exec(ctx, query, creds.SteamID.Int64(), creds.PatreonID, creds.AccessToken, creds.RefreshToken,
 		creds.ExpiresIn, creds.Scope, creds.TokenType, creds.Version, creds.CreatedOn, creds.UpdatedOn,
 	))
 }
 
 func (r Repository) GetTokens(ctx context.Context, steamID steamid.SteamID) (Credential, error) {
-	row, errRow := r.db.QueryRowBuilder(ctx, r.db.Builder().
+	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
 		Select("patreon_id", "access_token", "refresh_token",
 			"expires_in", "scope", "token_type", "version", "created_on", "updated_on").
 		From("auth_patreon").

@@ -82,16 +82,20 @@ func (s Static) Addr() string {
 
 // Config is the root config container.
 type Config struct {
+	// Loaded from the config file.
 	Static
 
-	General     General            `json:"general"`
+	// General config opts.
+	General General `json:"general"`
+	Debug   Debug   `json:"debug"`
+
+	// Package configs.
 	Demo        servers.DemoConfig `json:"demo"`
 	Filters     chat.Config        `json:"filters"`
 	Discord     discord.Config     `json:"discord"`
 	Clientprefs sourcemod.Config   `json:"clientprefs"`
 	Log         log.Config         `json:"log"`
 	GeoLocation ip2location.Config `json:"geo_location"`
-	Debug       Debug              `json:"debug"`
 	Patreon     patreon.Config     `json:"patreon"`
 	SSH         scp.Config         `json:"ssh"`
 	Network     network.Config     `json:"network"`
