@@ -25,8 +25,8 @@ func NewVotesHandler(engine *gin.Engine, authenticator httphelper.Authenticator,
 
 func (h voteHandler) onVotes() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req Query
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[Query](ctx)
+		if !ok {
 			return
 		}
 

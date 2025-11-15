@@ -88,8 +88,8 @@ func (f *forumHandler) recentMessages() gin.HandlerFunc {
 
 func (f *forumHandler) onAPICreateForumCategory() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req CategoryRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CategoryRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -147,8 +147,8 @@ func (f *forumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
 			return
 		}
 
-		var req CategoryRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CategoryRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -177,8 +177,8 @@ type CreateForumRequest struct {
 
 func (f *forumHandler) onAPICreateForum() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req CreateForumRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CreateForumRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -217,8 +217,8 @@ func (f *forumHandler) onAPIUpdateForumForum() gin.HandlerFunc {
 			return
 		}
 
-		var req CreateForumRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CreateForumRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -263,8 +263,8 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 			return
 		}
 
-		var req CreateThreadRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CreateThreadRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -350,8 +350,8 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var req ThreadUpdate
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[ThreadUpdate](ctx)
+		if !ok {
 			return
 		}
 
@@ -459,8 +459,8 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var req MessageUpdate
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[MessageUpdate](ctx)
+		if !ok {
 			return
 		}
 
@@ -614,8 +614,8 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 			return
 		}
 
-		var req ThreadReply
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[ThreadReply](ctx)
+		if !ok {
 			return
 		}
 
@@ -708,15 +708,14 @@ func (f *forumHandler) overview() gin.HandlerFunc {
 func (f *forumHandler) threads() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser, _ := session.CurrentUserProfile(ctx)
-
 		f.Touch(currentUser)
 
-		var tqf ThreadQueryFilter
-		if !httphelper.Bind(ctx, &tqf) {
+		req, ok := httphelper.BindJSON[ThreadQueryFilter](ctx)
+		if !ok {
 			return
 		}
 
-		threads, errThreads := f.Threads(ctx, tqf)
+		threads, errThreads := f.Threads(ctx, req)
 		if errThreads != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errThreads, httphelper.ErrInternal)))
 
@@ -724,7 +723,7 @@ func (f *forumHandler) threads() gin.HandlerFunc {
 		}
 
 		var forum Forum
-		if err := f.Forum(ctx, tqf.ForumID, &forum); err != nil {
+		if err := f.Forum(ctx, req.ForumID, &forum); err != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
@@ -800,12 +799,12 @@ func (f *forumHandler) forum() gin.HandlerFunc {
 
 func (f *forumHandler) messages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var queryFilter ThreadMessagesQuery
-		if !httphelper.Bind(ctx, &queryFilter) {
+		req, ok := httphelper.BindJSON[ThreadMessagesQuery](ctx)
+		if !ok {
 			return
 		}
 
-		messages, errMessages := f.Messages(ctx, queryFilter)
+		messages, errMessages := f.Messages(ctx, req)
 		if errMessages != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMessages, httphelper.ErrInternal)))
 

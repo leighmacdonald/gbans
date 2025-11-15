@@ -56,8 +56,8 @@ type EditRequest struct {
 
 func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req EditRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[EditRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -103,8 +103,8 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var req EditRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[EditRequest](ctx)
+		if !ok {
 			return
 		}
 

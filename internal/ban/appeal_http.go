@@ -64,8 +64,8 @@ func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 			return
 		}
 
-		var req RequestBanMessage
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[RequestBanMessage](ctx)
+		if !ok {
 			return
 		}
 
@@ -95,8 +95,8 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 			return
 		}
 
-		var req RequestBanMessage
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[RequestBanMessage](ctx)
+		if !ok {
 			return
 		}
 
@@ -163,8 +163,8 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 
 func (h *appealHandler) onAPIGetAppeals() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req AppealQueryFilter
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[AppealQueryFilter](ctx)
+		if !ok {
 			return
 		}
 

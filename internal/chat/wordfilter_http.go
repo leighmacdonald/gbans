@@ -61,8 +61,8 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 			return
 		}
 
-		var req Filter
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[Filter](ctx)
+		if !ok {
 			return
 		}
 
@@ -80,8 +80,8 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 
 func (h *wordFilterHandler) createFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req Filter
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[Filter](ctx)
+		if !ok {
 			return
 		}
 
@@ -116,8 +116,8 @@ func (h *wordFilterHandler) deleteFilter() gin.HandlerFunc {
 
 func (h *wordFilterHandler) checkFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req httphelper.RequestQuery
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[httphelper.RequestQuery](ctx)
+		if !ok {
 			return
 		}
 

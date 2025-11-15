@@ -99,9 +99,8 @@ type CheckResponse struct {
 
 func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req CheckRequest
-
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CheckRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -214,8 +213,8 @@ type GroupImmunityRequest struct {
 
 func (s *Handler) onCreateGroupImmunity() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req GroupImmunityRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[GroupImmunityRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -282,8 +281,8 @@ func (s *Handler) onCreateGroupOverride() gin.HandlerFunc {
 			return
 		}
 
-		var req GroupOverrideRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[GroupOverrideRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -305,11 +304,10 @@ func (s *Handler) onSaveGroupOverride() gin.HandlerFunc {
 			return
 		}
 
-		var req GroupOverrideRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[GroupOverrideRequest](ctx)
+		if !ok {
 			return
 		}
-
 		override, errOverride := s.GroupOverride(ctx, groupOverrideID)
 		if errOverride != nil {
 			if errors.Is(errOverride, database.ErrNoResult) {
@@ -374,11 +372,10 @@ func (s *Handler) onSaveOverrides() gin.HandlerFunc {
 			return
 		}
 
-		var req OverrideRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[OverrideRequest](ctx)
+		if !ok {
 			return
 		}
-
 		override, errOverride := s.Override(ctx, overrideID)
 		if errOverride != nil {
 			if errors.Is(errOverride, database.ErrNoResult) {
@@ -409,11 +406,10 @@ func (s *Handler) onSaveOverrides() gin.HandlerFunc {
 
 func (s *Handler) onCreateOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req OverrideRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[OverrideRequest](ctx)
+		if !ok {
 			return
 		}
-
 		override, errCreate := s.AddOverride(ctx, req.Name, req.Type, req.Flags)
 		if errCreate != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errCreate))
@@ -470,8 +466,8 @@ func (s *Handler) onAddAdminGroup() gin.HandlerFunc {
 			return
 		}
 
-		var req groupRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[groupRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -529,8 +525,8 @@ func (s *Handler) onSaveSMAdmin() gin.HandlerFunc {
 			return
 		}
 
-		var req CreateAdminRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CreateAdminRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -580,8 +576,8 @@ type CreateAdminRequest struct {
 
 func (s *Handler) onCreateSMAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req CreateAdminRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CreateAdminRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -645,8 +641,8 @@ func (s *Handler) onSaveSMGroup() gin.HandlerFunc {
 			return
 		}
 
-		var req CreateGroupRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CreateGroupRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -667,8 +663,8 @@ func (s *Handler) onSaveSMGroup() gin.HandlerFunc {
 
 func (s *Handler) onCreateSMGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req CreateGroupRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CreateGroupRequest](ctx)
+		if !ok {
 			return
 		}
 

@@ -47,9 +47,8 @@ func NewReportHandler(engine *gin.Engine, authenticator httphelper.Authenticator
 func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser, _ := session.CurrentUserProfile(ctx)
-
-		var req RequestReportCreate
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[RequestReportCreate](ctx)
+		if !ok {
 			return
 		}
 
@@ -100,7 +99,6 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 func (h reportHandler) onAPIGetUserReports() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user, _ := session.CurrentUserProfile(ctx)
-
 		reports, errReports := h.BySteamID(ctx, user.GetSteamID())
 		if errReports != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errReports, httphelper.ErrInternal)))
@@ -114,10 +112,11 @@ func (h reportHandler) onAPIGetUserReports() gin.HandlerFunc {
 
 func (h reportHandler) onAPIGetAllReports() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req ReportQueryFilter
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
+		// TODO needed?
+		// req, ok := httphelper.BindGJSON[ReportQueryFilter](ctx)
+		// if !ok {
+		// 	return
+		// }
 
 		reports, errReports := h.Reports.Reports(ctx)
 		if errReports != nil {
@@ -137,8 +136,8 @@ func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 			return
 		}
 
-		var req RequestReportStatusUpdate
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[RequestReportStatusUpdate](ctx)
+		if !ok {
 			return
 		}
 
@@ -209,8 +208,8 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 			return
 		}
 
-		var req RequestMessageBodyMD
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[RequestMessageBodyMD](ctx)
+		if !ok {
 			return
 		}
 
@@ -233,8 +232,8 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 			return
 		}
 
-		var req RequestMessageBodyMD
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[RequestMessageBodyMD](ctx)
+		if !ok {
 			return
 		}
 

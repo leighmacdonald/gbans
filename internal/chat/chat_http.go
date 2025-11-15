@@ -35,8 +35,8 @@ func NewChatHandler(engine *gin.Engine, chat *Chat, authenticator httphelper.Aut
 
 func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req HistoryQueryFilter
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[HistoryQueryFilter](ctx)
+		if !ok {
 			return
 		}
 

@@ -76,8 +76,8 @@ type CreateSteamWhitelistRequest struct {
 
 func (b *blocklistHandler) onAPICreateWhitelistSteam() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req CreateSteamWhitelistRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CreateSteamWhitelistRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -180,8 +180,8 @@ type BlocklistCreateRequest struct {
 
 func (b *blocklistHandler) onAPIPostBlockListCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req BlocklistCreateRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[BlocklistCreateRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -210,8 +210,8 @@ func (b *blocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var req updateRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[updateRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -232,8 +232,8 @@ type CreateWhitelistIPRequest struct {
 
 func (b *blocklistHandler) onAPICreateWhitelistIP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req CreateWhitelistIPRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[CreateWhitelistIPRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -268,8 +268,8 @@ func (b *blocklistHandler) onAPIUpdateWhitelistIP() gin.HandlerFunc {
 			return
 		}
 
-		var req UpdateWhitelistIPRequest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[UpdateWhitelistIPRequest](ctx)
+		if !ok {
 			return
 		}
 
@@ -320,10 +320,12 @@ func (b *blocklistHandler) onAPIPostBlocklistCheck() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		var req checkReq
-		if !httphelper.Bind(ctx, &req) {
+		_, ok := httphelper.BindJSON[checkReq](ctx)
+		if !ok {
 			return
 		}
+
+		// TODO
 
 		ctx.JSON(http.StatusInternalServerError, checkResp{Blocked: false, Source: ""})
 	}

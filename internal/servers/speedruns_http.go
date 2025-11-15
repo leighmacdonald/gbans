@@ -37,12 +37,12 @@ func NewSpeedrunsHandler(engine *gin.Engine, userAuth httphelper.Authenticator, 
 
 func (s *speedrunHandler) postSpeedrun() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var sr Speedrun
-		if !httphelper.Bind(ctx, &sr) {
+		req, ok := httphelper.BindJSON[Speedrun](ctx)
+		if !ok {
 			return
 		}
 
-		speedrun, errSpeedrun := s.Save(ctx, sr)
+		speedrun, errSpeedrun := s.Save(ctx, req)
 		if errSpeedrun != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSpeedrun, httphelper.ErrInternal)))
 

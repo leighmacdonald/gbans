@@ -206,7 +206,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, g.config.Config().Demo, steamid.New(g.config.Config().Owner))
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications, conf.Discord.LogChannelID, conf.Discord.AppealLogChannelID)
 	g.states = state.NewState(g.broadcaster, state.NewCollector(g.serverFetcher), conf.General.SrcdsLogAddr, g.serverFetcher)
-	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.BanLogChannelID, steamid.New(conf.Owner), g.reports, g.notifications)
+	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.BanLogChannelID, conf.Discord.KickLogChannelID, steamid.New(conf.Owner), g.reports, g.notifications, g.states)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), members) // TODO Does THE & work here?
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
 	g.chatRepo = chat.NewRepository(g.database)
