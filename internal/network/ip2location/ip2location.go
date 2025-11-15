@@ -455,7 +455,7 @@ func ReadLocationRecords(ctx context.Context, path string, ipv6 bool, onRecords 
 
 	for {
 		recordLine, errReadLine := reader.Read()
-		if errors.Is(errReadLine, io.EOF) {
+		if errors.Is(errReadLine, io.EOF) || recordLine == nil {
 			return onRecords(ctx, first, records)
 		}
 
@@ -467,6 +467,10 @@ func ReadLocationRecords(ctx context.Context, path string, ipv6 bool, onRecords 
 		ipTo, errParseToIP := stringInt2ip(recordLine[1], ipv6)
 		if errParseToIP != nil {
 			return errors.Join(errParseToIP, ErrParseIP)
+		}
+
+		if ipFrom == nil || ipTo == nil {
+			return ErrParseIP
 		}
 
 		record := LocationRecord{
@@ -515,7 +519,7 @@ func ReadProxyRecords(ctx context.Context, path string, onRecords ProxyLoader) e
 
 	for {
 		recordLine, errReadLine := reader.Read()
-		if errors.Is(errReadLine, io.EOF) {
+		if errors.Is(errReadLine, io.EOF) || recordLine == nil {
 			if len(records) == 0 {
 				return nil
 			}

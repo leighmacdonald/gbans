@@ -14,12 +14,13 @@ import (
 )
 
 type discordHandler struct {
-	anticheat AntiCheat
-	persons   person.Provider
+	AntiCheat
+
+	persons person.Provider
 }
 
 func RegisterDiscordCommands(bot discord.Bot, anticheat AntiCheat) {
-	handler := discordHandler{anticheat: anticheat}
+	handler := discordHandler{AntiCheat: anticheat}
 
 	bot.MustRegisterHandler("ac", &discordgo.ApplicationCommand{
 		Name:                     "anticheat",
@@ -56,7 +57,12 @@ func (h discordHandler) onAC(ctx context.Context, session *discordgo.Session, in
 func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := bot.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
-	steamID, errResolveSID := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
+	uid, found := opts[discord.OptUserIdentifier]
+	if !found {
+		return nil, steamid.ErrInvalidSID
+	}
+
+	steamID, errResolveSID := steamid.Resolve(ctx, uid.StringValue())
 	if errResolveSID != nil || !steamID.Valid() {
 		return nil, steamid.ErrInvalidSID
 	}
@@ -66,7 +72,7 @@ func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 		return nil, errAuthor
 	}
 
-	logs, errQuery := h.anticheat.Query(ctx, Query{SteamID: steamID.String()})
+	logs, errQuery := h.Query(ctx, Query{SteamID: steamID.String()})
 	if errQuery != nil {
 		return nil, errQuery
 	}

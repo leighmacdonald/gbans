@@ -157,6 +157,10 @@ func (r *AppealRepository) Messages(ctx context.Context, banID int64) ([]AppealM
 
 	defer rows.Close()
 
+	if rows == nil {
+		return nil, database.ErrNoResult
+	}
+
 	var messages []AppealMessage
 
 	for rows.Next() {

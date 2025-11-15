@@ -48,7 +48,7 @@ func (r Repository) QueryBanState(ctx context.Context, steamID steamid.SteamID, 
 		return banState, errors.Join(errScan, database.ErrScanResult)
 	}
 
-	if banSource != nil {
+	if banSource != nil && banType != nil && reason != nil && validUntil != nil && banID != nil && evadeOK != nil {
 		banState.BanSource = *banSource
 		banState.BanID = *banID
 		banState.BanType = *banType

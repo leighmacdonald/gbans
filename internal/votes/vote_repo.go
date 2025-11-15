@@ -66,7 +66,7 @@ func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, e
 
 	for rows.Next() {
 		var (
-			sourceID *int64
+			sourceID int64
 			targetID *int64
 			result   Result
 		)
@@ -78,7 +78,7 @@ func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, e
 			return nil, 0, database.DBErr(errScan)
 		}
 
-		result.SourceID = steamid.New(*sourceID)
+		result.SourceID = steamid.New(sourceID)
 		if targetID != nil {
 			result.TargetID = steamid.New(*targetID)
 		}

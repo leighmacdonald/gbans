@@ -106,7 +106,7 @@ func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
 	page.PermissionLevel = update.PermissionLevel
 	page.BodyMD = update.BodyMD
 
-	if errSave := w.repository.Save(ctx, &page); errSave != nil {
+	if errSave := w.repository.Save(ctx, page); errSave != nil {
 		page.Revision--
 
 		return page, errSave

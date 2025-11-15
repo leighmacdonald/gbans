@@ -136,7 +136,9 @@ func (c *contestHandler) onAPIGetContestEntries() gin.HandlerFunc {
 func (c *contestHandler) onAPIPostContest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newContest, _ := NewContest("", "", time.Now(), time.Now(), false)
-		if !httphelper.BindJSONX(ctx, &newContest) {
+		if errBind := ctx.BindJSON(&newContest); errBind != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
+
 			return
 		}
 

@@ -834,11 +834,16 @@ func (match *Match) killed(evt KilledEvt) {
 	player := match.player(evt.CreatedOn, evt.SID)
 	player.addKill(evt.CreatedOn, evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
 
+	round := match.getRound()
+	if round == nil {
+		return
+	}
+
 	switch evt.Team {
 	case BLU:
-		match.getRound().KillsBlu++
+		round.KillsBlu++
 	case RED:
-		match.getRound().KillsRed++
+		round.KillsRed++
 	}
 }
 
@@ -1290,8 +1295,10 @@ func (player *PlayerStats) setPlayerClass(evtTime time.Time, class PlayerClass) 
 
 	player.onClassChangeOrGameEnd(evtTime)
 	player.currentClass = class
-	newStats := player.getClassStats()
-	newStats.startTime = evtTime
+
+	if newStats := player.getClassStats(); newStats != nil {
+		newStats.startTime = evtTime
+	}
 }
 
 func (player *PlayerStats) addKill(evtTime time.Time, target steamid.SteamID, weapon Weapon, sourcePos Pos, targetPos Pos) {

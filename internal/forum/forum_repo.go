@@ -137,7 +137,7 @@ func (f *Repository) Forums(ctx context.Context) ([]Forum, error) {
 			frm.LastThreadID = *lastID
 		}
 
-		if lastForumTheadID != nil {
+		if lastForumTheadID != nil && lastPersonaname != nil && lastAvatarhash != nil && lastCreatedOn != nil && lastTitle != nil {
 			frm.RecentForumThreadID = *lastForumTheadID
 			frm.RecentSourceID = lastSourceID.String()
 			frm.RecentPersonaname = *lastPersonaname
@@ -354,7 +354,7 @@ func (f *Repository) ForumThreads(ctx context.Context, filter ThreadQueryFilter)
 			return nil, database.DBErr(errScan)
 		}
 
-		if RecentForumMessageID != nil {
+		if RecentForumMessageID != nil && RecentCreatedOn != nil && RecentSteamID != nil && RecentPersonaname != nil && RecentAvatarHash != nil {
 			tws.RecentForumMessageID = *RecentForumMessageID
 			tws.RecentCreatedOn = *RecentCreatedOn
 			tws.RecentSteamID = *RecentSteamID
@@ -535,16 +535,17 @@ func (f *Repository) ForumMessageVoteApply(ctx context.Context, messageVote *Mes
 		Select("forum_message_vote_id", "forum_message_id", "source_id", "vote", "created_on", "updated_on").
 		From("forum_message_vote").
 		Where(sq.And{sq.Eq{"forum_message_id": messageVote.ForumMessageID}, sq.Eq{"source_id": messageVote.SourceID.Int64()}}))
-	if errRow != nil {
-		if !errors.Is(errRow, database.ErrNoResult) {
-			return database.DBErr(errRow)
-		}
+	if errRow != nil && !errors.Is(errRow, database.ErrNoResult) {
+		return database.DBErr(errRow)
 	}
 
-	errScan := database.DBErr(row.Scan(&existingVote.ForumMessageVoteID, &existingVote.ForumMessageID, &existingVote.SourceID,
-		&existingVote.Vote, &existingVote.CreatedOn, &existingVote.UpdatedOn))
-	if errScan != nil {
-		if !errors.Is(errScan, database.ErrNoResult) {
+	if row == nil {
+		return database.ErrNoResult
+	}
+
+	if errScan := row.Scan(&existingVote.ForumMessageVoteID, &existingVote.ForumMessageID, &existingVote.SourceID,
+		&existingVote.Vote, &existingVote.CreatedOn, &existingVote.UpdatedOn); errScan != nil {
+		if !errors.Is(database.DBErr(errScan), database.ErrNoResult) {
 			return database.DBErr(errScan)
 		}
 	}
