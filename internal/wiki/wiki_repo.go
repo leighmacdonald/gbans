@@ -46,7 +46,7 @@ func (r *Repository) Delete(ctx context.Context, slug string) error {
 	return nil
 }
 
-func (r *Repository) Save(ctx context.Context, page *Page) error {
+func (r *Repository) Save(ctx context.Context, page Page) error {
 	const query = `
 		INSERT INTO wiki (slug, body_md, revision, created_on, updated_on, permission_level)
 		VALUES ($1, $2, $3, $4, $5, $6)`

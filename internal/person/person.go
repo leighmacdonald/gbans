@@ -420,6 +420,9 @@ func (u *Persons) Drop(ctx context.Context, steamID steamid.SteamID) error {
 }
 
 func (u *Persons) Save(ctx context.Context, person *Person) error {
+	if person == nil {
+		return permission.ErrDenied
+	}
 	// Don't let owner un-admin themselves.
 	if person.SteamID == u.owner && person.PermissionLevel != permission.Admin {
 		return permission.ErrDenied

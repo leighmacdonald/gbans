@@ -196,8 +196,7 @@ func (a Repository) getDemoIDsByTitle(ctx context.Context, titles []string) ([]d
 
 	defer demos.Close()
 
-	var demoMaps []demoIDMap
-
+	demoMaps := []demoIDMap{}
 	for demos.Next() {
 		var m demoIDMap
 		if errScan := demos.Scan(&m.demoID, &m.title); errScan != nil {

@@ -103,7 +103,8 @@ func (r *Repository) GetPersonNotifications(ctx context.Context, steamID steamid
 
 		notif.SteamID = steamid.New(outSteamID)
 
-		if authorID != nil {
+		// TODO fixme
+		if authorID != nil && pLevel != nil && name != nil && avatarHash != nil && discordID != nil {
 			notif.Author = person.Core{
 				SteamID:         steamid.New(*authorID),
 				PermissionLevel: *pLevel,

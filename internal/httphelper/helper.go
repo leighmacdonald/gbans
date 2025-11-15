@@ -36,16 +36,6 @@ func BindJSON[T any](ctx *gin.Context) (T, bool) { //nolint:ireturn
 	return value, true
 }
 
-func BindJSONX(ctx *gin.Context, target any) bool {
-	if errBind := ctx.BindJSON(&target); errBind != nil {
-		SetError(ctx, NewAPIError(http.StatusBadRequest, ErrBadRequest))
-
-		return false
-	}
-
-	return true
-}
-
 // Set a Decoder instance as a package global, because it caches
 // meta-data about structs, and an instance can be shared safely.
 var Decoder = schema.NewDecoder() //nolint:gochecknoglobals

@@ -60,6 +60,9 @@ check: lint_golangci vulncheck lint_ts typecheck_ts
 vulncheck:
 	go tool govulncheck
 
+lint_nil:
+	nilaway -include-pkgs="github.com/leighmacdonald/gbans" -exclude-pkgs="github.com/jackc/pgx/v5" -test=false ./...
+
 lint_golangci:
 	golangci-lint run --timeout 3m ./...
 
