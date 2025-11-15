@@ -141,7 +141,7 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		req, ok := httphelper.BindG[Server](ctx)
+		req, ok := httphelper.BindJSON[Server](ctx)
 		if !ok {
 			return
 		}
@@ -164,7 +164,7 @@ func (h *serversHandler) onSave() gin.HandlerFunc {
 			return
 		}
 
-		req, ok := httphelper.BindG[Server](ctx)
+		req, ok := httphelper.BindJSON[Server](ctx)
 		if !ok {
 			return
 		}

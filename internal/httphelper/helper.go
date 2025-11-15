@@ -25,7 +25,7 @@ type Authenticator interface {
 	MiddlewareWS(level permission.Privilege) gin.HandlerFunc
 }
 
-func BindG[T any](ctx *gin.Context) (T, bool) { //nolint:ireturn
+func BindJSON[T any](ctx *gin.Context) (T, bool) { //nolint:ireturn
 	var value T
 	if errBind := ctx.BindJSON(&value); errBind != nil {
 		SetError(ctx, NewAPIError(http.StatusBadRequest, ErrBadRequest))
@@ -36,7 +36,7 @@ func BindG[T any](ctx *gin.Context) (T, bool) { //nolint:ireturn
 	return value, true
 }
 
-func Bind(ctx *gin.Context, target any) bool {
+func BindJSONX(ctx *gin.Context, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
 		SetError(ctx, NewAPIError(http.StatusBadRequest, ErrBadRequest))
 

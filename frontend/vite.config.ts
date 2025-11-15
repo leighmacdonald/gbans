@@ -80,7 +80,7 @@ export default defineConfig({
     },
 
     server: {
-        open: true,
+        open: false,
         port: 6007,
         cors: true,
         host: '0.0.0.0',

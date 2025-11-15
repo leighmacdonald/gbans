@@ -87,8 +87,8 @@ func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
 			return
 		}
 
-		var req SetStatusReq
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[SetStatusReq](ctx)
+		if !ok {
 			return
 		}
 
@@ -150,8 +150,8 @@ func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
 
 func (h banHandler) onBanCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req Opts
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[Opts](ctx)
+		if !ok {
 			return
 		}
 
@@ -435,8 +435,8 @@ func (h banHandler) onBanDelete() gin.HandlerFunc {
 			return
 		}
 
-		var req RequestUnban
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[RequestUnban](ctx)
+		if !ok {
 			return
 		}
 
@@ -488,8 +488,8 @@ func (h banHandler) onBanUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var req RequestBanUpdate
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[RequestBanUpdate](ctx)
+		if !ok {
 			return
 		}
 

@@ -51,12 +51,12 @@ func (h notificationHandler) onMarkAllRead() gin.HandlerFunc {
 
 func (h notificationHandler) onMarkRead() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var request messagesRequest
-		if !httphelper.Bind(ctx, &request) {
+		req, ok := httphelper.BindJSON[messagesRequest](ctx)
+		if !ok {
 			return
 		}
 
-		if len(request.MessageIDs) == 0 {
+		if len(req.MessageIDs) == 0 {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 				"No message_ids value provided"))
 
@@ -64,7 +64,7 @@ func (h notificationHandler) onMarkRead() gin.HandlerFunc {
 		}
 
 		user, _ := session.CurrentUserProfile(ctx)
-		if err := h.MarkMessagesRead(ctx, user.GetSteamID(), request.MessageIDs); err != nil && !errors.Is(err, database.ErrNoResult) {
+		if err := h.MarkMessagesRead(ctx, user.GetSteamID(), req.MessageIDs); err != nil && !errors.Is(err, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return
@@ -89,12 +89,12 @@ func (h notificationHandler) onDeleteAll() gin.HandlerFunc {
 
 func (h notificationHandler) onDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var request messagesRequest
-		if !httphelper.Bind(ctx, &request) {
+		req, ok := httphelper.BindJSON[messagesRequest](ctx)
+		if !ok {
 			return
 		}
 
-		if len(request.MessageIDs) == 0 {
+		if len(req.MessageIDs) == 0 {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 				"message_ids cannot be empty."))
 
@@ -102,7 +102,7 @@ func (h notificationHandler) onDelete() gin.HandlerFunc {
 		}
 
 		user, _ := session.CurrentUserProfile(ctx)
-		if err := h.DeleteMessages(ctx, user.GetSteamID(), request.MessageIDs); err != nil && !errors.Is(err, database.ErrNoResult) {
+		if err := h.DeleteMessages(ctx, user.GetSteamID(), req.MessageIDs); err != nil && !errors.Is(err, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
 			return

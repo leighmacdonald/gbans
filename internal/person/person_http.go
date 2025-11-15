@@ -56,8 +56,8 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		var req RequestPermissionLevelUpdate
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[RequestPermissionLevelUpdate](ctx)
+		if !ok {
 			return
 		}
 
@@ -106,9 +106,8 @@ func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 
 func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req SettingsUpdate
-
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[SettingsUpdate](ctx)
+		if !ok {
 			return
 		}
 
@@ -212,8 +211,8 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 func (h personHandler) searchPlayers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var query Query
-		if !httphelper.Bind(ctx, &query) {
+		query, ok := httphelper.BindJSON[Query](ctx)
+		if !ok {
 			return
 		}
 

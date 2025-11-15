@@ -63,8 +63,8 @@ func (w *wikiHandler) page() gin.HandlerFunc {
 
 func (w *wikiHandler) save() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req Page
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[Page](ctx)
+		if !ok {
 			return
 		}
 		slugParam := ctx.Param("slug")

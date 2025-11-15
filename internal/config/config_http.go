@@ -35,8 +35,8 @@ func (c httpHandler) onAPIGetConfig() gin.HandlerFunc {
 
 func (c httpHandler) onAPIPutConfig() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req Config
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[Config](ctx)
+		if !ok {
 			return
 		}
 

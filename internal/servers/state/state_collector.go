@@ -353,7 +353,7 @@ func (c *Collector) startStatus(ctx context.Context) {
 
 					status, errStatus := c.status(lCtx, conf.ServerID)
 					if errStatus != nil {
-						slog.Error("Failed to parse status", slog.String("error", errStatus.Error()))
+						slog.Error("Failed to parse status", slog.String("error", errStatus.Error()), slog.String("tag", conf.Tag))
 
 						return
 					}

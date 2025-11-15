@@ -136,7 +136,7 @@ func (c *contestHandler) onAPIGetContestEntries() gin.HandlerFunc {
 func (c *contestHandler) onAPIPostContest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newContest, _ := NewContest("", "", time.Now(), time.Now(), false)
-		if !httphelper.Bind(ctx, &newContest) {
+		if !httphelper.BindJSONX(ctx, &newContest) {
 			return
 		}
 
@@ -188,8 +188,8 @@ func (c *contestHandler) onAPIUpdateContest() gin.HandlerFunc {
 			return
 		}
 
-		var req Contest
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[Contest](ctx)
+		if !ok {
 			return
 		}
 
@@ -211,8 +211,8 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 			return
 		}
 
-		var req asset.UserUploadedFile
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[asset.UserUploadedFile](ctx)
+		if !ok {
 			return
 		}
 
@@ -309,8 +309,8 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 			return
 		}
 
-		var req entryReq
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[entryReq](ctx)
+		if !ok {
 			return
 		}
 

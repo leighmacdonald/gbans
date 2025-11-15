@@ -57,8 +57,8 @@ func (h NetworkHandler) onAPIGetUpdateDB() gin.HandlerFunc {
 
 func (h NetworkHandler) onAPIQueryNetwork() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req DetailsQuery
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[DetailsQuery](ctx)
+		if !ok {
 			return
 		}
 
@@ -75,8 +75,8 @@ func (h NetworkHandler) onAPIQueryNetwork() gin.HandlerFunc {
 
 func (h NetworkHandler) onAPIQueryConnections() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req ConnectionHistoryQuery
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[ConnectionHistoryQuery](ctx)
+		if !ok {
 			return
 		}
 

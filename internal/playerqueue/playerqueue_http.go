@@ -51,9 +51,8 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		currentUser, _ := session.CurrentUserProfile(ctx)
-
-		var req request
-		if !httphelper.Bind(ctx, &req) {
+		req, ok := httphelper.BindJSON[request](ctx)
+		if !ok {
 			return
 		}
 
