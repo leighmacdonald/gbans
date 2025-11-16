@@ -2,7 +2,7 @@ import {
     AppealQueryFilter,
     AppealState,
     AppealStateEnum,
-    BanPayload,
+    BanOpts,
     BanType,
     BanTypeEnum,
     BodyMDMessage,
@@ -93,8 +93,8 @@ export const apiGetAppeals = async (opts: AppealQueryFilter, abortController?: A
     return appeals.map(applyDateTime);
 };
 
-export const apiCreateBan = async (p: BanPayload) =>
-    transformTimeStampedDates(await apiCall<BanRecord, BanPayload>(`/api/bans`, 'POST', p));
+export const apiCreateBan = async (p: BanOpts) =>
+    transformTimeStampedDates(await apiCall<BanRecord, BanOpts>(`/api/bans`, 'POST', p));
 
 export const apiUpdateBanSteam = async (ban_id: number, payload: UpdateBanPayload) =>
     transformTimeStampedDates(await apiCall<BanRecord, UpdateBanPayload>(`/api/bans/${ban_id}`, 'POST', payload));

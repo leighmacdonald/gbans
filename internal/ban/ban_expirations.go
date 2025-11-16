@@ -58,7 +58,7 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 		// 	[]steamid.SteamID{person.SteamID},
 		// 	notification.SeverityInfo,
 		// 	"Your mute/ban period has expired",
-		// 	ban.Path()))
+		// 	link.Path(ban)))
 
 		slog.Info("Ban expired",
 			slog.String("reason", ban.Reason.String()),

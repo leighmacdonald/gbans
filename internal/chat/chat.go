@@ -27,7 +27,7 @@ var (
 	ErrInvalidActionDuration = errors.New("invalid action duration")
 )
 
-type ExceedHandler func(ctx context.Context, warning NewUserWarning) error
+type ExceedHandler func(ctx context.Context, exceeded bool, warning NewUserWarning) error
 
 type HistoryQueryFilter struct {
 	query.Filter
@@ -235,21 +235,8 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 	return nil
 }
 
-func (u *Chat) onWarningExceeded(ctx context.Context, newWarning NewUserWarning) error {
+func (u *Chat) saveWarning(ctx context.Context, newWarning NewUserWarning) error {
 	newWarning.MatchedFilter.TriggerCount++
-	if errBan := u.exceedHandler(ctx, newWarning); errBan != nil {
-		return errors.Join(errBan, ErrWarnActionApply)
-	}
-
-	return nil
-}
-
-func (u *Chat) onWarningHandler(ctx context.Context, newWarning NewUserWarning) error {
-	msg := "[WARN] Please refrain from using slurs/toxicity (see: rules & MOTD). " +
-		"Further offenses will result in mutes/bans"
-
-	newWarning.MatchedFilter.TriggerCount++
-
 	admin, errAdmin := u.persons.GetOrCreatePersonBySteamID(ctx, u.owner)
 	if errAdmin != nil {
 		return errAdmin
@@ -258,14 +245,6 @@ func (u *Chat) onWarningHandler(ctx context.Context, newWarning NewUserWarning) 
 	_, errSave := u.wordFilters.Edit(ctx, admin, newWarning.MatchedFilter.FilterID, newWarning.MatchedFilter)
 	if errSave != nil {
 		return errSave
-	}
-
-	if !newWarning.MatchedFilter.IsEnabled {
-		return nil
-	}
-
-	if errPSay := u.state.PSay(ctx, newWarning.UserMessage.SteamID, msg); errPSay != nil {
-		return errPSay
 	}
 
 	return nil
@@ -337,24 +316,21 @@ func (u *Chat) trigger(ctx context.Context, newWarn NewUserWarning) {
 	}
 
 	newWarn.CurrentTotal = currentWeight + newWarn.MatchedFilter.Weight
+	newWarn.MatchedFilter.TriggerCount++
 
 	u.warnings[newWarn.UserMessage.SteamID] = append(u.warnings[newWarn.UserMessage.SteamID], newWarn.UserWarning)
-
 	u.warningMu.Unlock()
 
-	if currentWeight > u.maxWeight {
-		slog.Info("Warn limit exceeded",
-			slog.String("sid64", newWarn.UserMessage.SteamID.String()),
-			slog.Int("count", count),
-			slog.Int("weight", currentWeight))
+	if err := u.saveWarning(ctx, newWarn); err != nil {
+		slog.Error("Failed to execute warning handler", slog.String("error", err.Error()))
 
-		if err := u.onWarningExceeded(ctx, newWarn); err != nil {
-			slog.Error("Failed to execute warning exceeded handler", slog.String("error", err.Error()))
-		}
-	} else {
-		if err := u.onWarningHandler(ctx, newWarn); err != nil {
-			slog.Error("Failed to execute warning handler", slog.String("error", err.Error()))
-		}
+		return
+	}
+
+	if errExceed := u.exceedHandler(ctx, currentWeight > u.maxWeight, newWarn); errExceed != nil {
+		slog.Error("Failed to execute exceed handler", slog.String("error", errExceed.Error()))
+
+		return
 	}
 }
 

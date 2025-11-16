@@ -9,15 +9,17 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/person"
 )
 
 type discordOAuthHandler struct {
+	DiscordOAuth
+
 	config  *config.Configuration
 	persons *person.Persons
-	discord DiscordOAuth
 }
 
 // NewDiscordOAuthHandler provides handlers for authentication with discord connect.
@@ -25,9 +27,9 @@ func NewDiscordOAuthHandler(engine *gin.Engine, auth httphelper.Authenticator, c
 	persons *person.Persons, discord DiscordOAuth,
 ) {
 	handler := discordOAuthHandler{
-		config:  config,
-		persons: persons,
-		discord: discord,
+		DiscordOAuth: discord,
+		config:       config,
+		persons:      persons,
 	}
 
 	engine.GET("/discord/oauth", handler.onOAuthDiscordCallback())
@@ -47,7 +49,7 @@ func (h discordOAuthHandler) onLogin() gin.HandlerFunc {
 		currentUser, _ := session.CurrentUserProfile(ctx)
 		sid := currentUser.GetSteamID()
 
-		loginURL, errURL := h.discord.CreateStatefulLoginURL(sid)
+		loginURL, errURL := h.CreateStatefulLoginURL(sid)
 		if errURL != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, errors.Join(errURL, httphelper.ErrBadRequest),
 				"Could not construct oauth login URL"))
@@ -65,7 +67,7 @@ func (h discordOAuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		code := ctx.Query("code")
 		if code == "" {
 			slog.Error("Failed to get code from query")
-			ctx.Redirect(http.StatusTemporaryRedirect, h.config.ExtURLRaw("/settings?section=connections"))
+			ctx.Redirect(http.StatusTemporaryRedirect, link.Raw("/settings?section=connections"))
 
 			return
 		}
@@ -73,16 +75,16 @@ func (h discordOAuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		state := ctx.Query("state")
 		if state == "" {
 			slog.Error("Failed to get state from query")
-			ctx.Redirect(http.StatusTemporaryRedirect, h.config.ExtURLRaw("/settings?section=connections"))
+			ctx.Redirect(http.StatusTemporaryRedirect, link.Raw("/settings?section=connections"))
 
 			return
 		}
 
-		if err := h.discord.HandleOAuthCode(ctx, code, state); err != nil {
+		if err := h.HandleOAuthCode(ctx, code, state); err != nil {
 			slog.Error("Failed to get access token", slog.String("error", err.Error()))
 		}
 
-		ctx.Redirect(http.StatusTemporaryRedirect, h.config.ExtURLRaw("/settings?section=connections"))
+		ctx.Redirect(http.StatusTemporaryRedirect, link.Raw("/settings?section=connections"))
 	}
 }
 
@@ -90,7 +92,7 @@ func (h discordOAuthHandler) onGetDiscordUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user, _ := session.CurrentUserProfile(ctx)
 
-		discord, errUser := h.discord.GetUserDetail(ctx, user.GetSteamID())
+		discord, errUser := h.GetUserDetail(ctx, user.GetSteamID())
 		if errUser != nil {
 			if errors.Is(errUser, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
@@ -112,7 +114,7 @@ func (h discordOAuthHandler) onLogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user, _ := session.CurrentUserProfile(ctx)
 
-		errUser := h.discord.Logout(ctx, user.GetSteamID())
+		errUser := h.Logout(ctx, user.GetSteamID())
 		if errUser != nil {
 			if errors.Is(errUser, database.ErrNoResult) {
 				ctx.JSON(http.StatusOK, gin.H{})

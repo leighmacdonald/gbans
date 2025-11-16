@@ -18,10 +18,10 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func RegisterDiscordCommands(bot discord.Bot, state *state.State, persons person.Provider, servers Servers, network network.Networks) {
+func RegisterDiscordCommands(service discord.Service, state *state.State, persons person.Provider, servers Servers, network network.Networks) {
 	handler := DiscordHandler{state: state, persons: persons, servers: servers, network: network}
 
-	bot.MustRegisterHandler("find", &discordgo.ApplicationCommand{
+	service.MustRegisterHandler("find", &discordgo.ApplicationCommand{
 		Name:                     "find",
 		DMPermission:             &discord.DmPerms,
 		DefaultMemberPermissions: &discord.ModPerms,
@@ -36,7 +36,7 @@ func RegisterDiscordCommands(bot discord.Bot, state *state.State, persons person
 		},
 	}, handler.onFind)
 
-	bot.MustRegisterHandler("players", &discordgo.ApplicationCommand{
+	service.MustRegisterHandler("players", &discordgo.ApplicationCommand{
 		Name:                     "players",
 		DMPermission:             &discord.DmPerms,
 		DefaultMemberPermissions: &discord.ModPerms,
@@ -51,7 +51,7 @@ func RegisterDiscordCommands(bot discord.Bot, state *state.State, persons person
 		},
 	}, handler.onPlayers)
 
-	bot.MustRegisterHandler("kick", &discordgo.ApplicationCommand{
+	service.MustRegisterHandler("kick", &discordgo.ApplicationCommand{
 		Name:                     "kick",
 		DMPermission:             &discord.DmPerms,
 		DefaultMemberPermissions: &discord.ModPerms,
@@ -72,7 +72,7 @@ func RegisterDiscordCommands(bot discord.Bot, state *state.State, persons person
 		},
 	}, handler.onKick)
 
-	bot.MustRegisterHandler("psay", &discordgo.ApplicationCommand{
+	service.MustRegisterHandler("psay", &discordgo.ApplicationCommand{
 		Name:                     "psay",
 		Description:              "Privately message a player",
 		DMPermission:             &discord.DmPerms,
@@ -93,7 +93,7 @@ func RegisterDiscordCommands(bot discord.Bot, state *state.State, persons person
 		},
 	}, handler.onPSay)
 
-	bot.MustRegisterHandler("csay", &discordgo.ApplicationCommand{
+	service.MustRegisterHandler("csay", &discordgo.ApplicationCommand{
 		Name:                     "csay",
 		Description:              "Send a centered message to the whole server",
 		DMPermission:             &discord.DmPerms,
@@ -114,7 +114,7 @@ func RegisterDiscordCommands(bot discord.Bot, state *state.State, persons person
 		},
 	}, handler.onCSay)
 
-	bot.MustRegisterHandler("say", &discordgo.ApplicationCommand{
+	service.MustRegisterHandler("say", &discordgo.ApplicationCommand{
 		Name:                     "say",
 		Description:              "Send a console message to the whole server",
 		DMPermission:             &discord.DmPerms,
@@ -135,7 +135,7 @@ func RegisterDiscordCommands(bot discord.Bot, state *state.State, persons person
 		},
 	}, handler.onSay)
 
-	bot.MustRegisterHandler("servers", &discordgo.ApplicationCommand{
+	service.MustRegisterHandler("servers", &discordgo.ApplicationCommand{
 		Name:                     "servers",
 		Description:              "Show the high level status of all servers",
 		DefaultMemberPermissions: &discord.UserPerms,

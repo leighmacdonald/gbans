@@ -12,6 +12,7 @@ import (
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -27,7 +28,7 @@ type discordHandler struct {
 	discord person.DiscordPersonProvider
 }
 
-func RegisterDiscordCommands(bot discord.Bot, bans Bans) {
+func RegisterDiscordCommands(bot discord.Service, bans Bans) {
 	var (
 		reasons = []*discordgo.ApplicationCommandOptionChoice{
 			{Name: reason.External.String(), Value: reason.External},
@@ -334,7 +335,7 @@ func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 			}
 		}
 
-		banURL = bans.Path()
+		banURL = link.Path(bans)
 	}
 
 	return CheckMessage(player, bans, banURL, authorProfile, oldBans), nil
@@ -505,7 +506,7 @@ func CheckMessage(player person.Core, banPerson Ban, banURL string, author perso
 	}
 
 	return msgEmbed.Embed().
-		SetURL(player.Path()).
+		SetURL(link.Path(player)).
 		SetColor(color).
 		SetImage(player.GetAvatar().Full()).
 		SetThumbnail(player.GetAvatar().Small()).

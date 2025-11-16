@@ -21,6 +21,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/json"
@@ -44,16 +45,6 @@ var (
 	ErrFormatConfig   = errors.New("config file format invalid")
 	ErrDecodeDuration = errors.New("failed to decode duration")
 )
-
-type LinkablePath interface {
-	// Path returns the HTTP path that is represented by the instance.
-	Path() string
-}
-
-type Linker interface {
-	ExtURL(obj LinkablePath) string
-	ExtURLRaw(path string, args ...any) string
-}
 
 // Static defines non-dynamic config values that cannot be changed during runtime. These
 // are loaded via the config file.
@@ -102,10 +93,6 @@ type Config struct {
 	LocalStore  asset.Config       `json:"local_store"`
 	Exports     ban.Config         `json:"exports"`
 	Anticheat   anticheat.Config   `json:"anticheat"`
-}
-
-func (c Config) ExtURL(obj LinkablePath) string {
-	return c.ExtURLRaw(obj.Path())
 }
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
@@ -193,14 +180,6 @@ func (c *Configuration) Write(ctx context.Context, config Config) error {
 	return nil
 }
 
-func (c *Configuration) ExtURL(obj LinkablePath) string {
-	return c.Config().ExtURL(obj)
-}
-
-func (c *Configuration) ExtURLRaw(path string, args ...any) string {
-	return c.Config().ExtURLRaw(path, args...)
-}
-
 func (c *Configuration) Config() Config {
 	c.configMu.RLock()
 	defer c.configMu.RUnlock()
@@ -215,6 +194,9 @@ func (c *Configuration) Reload(ctx context.Context) error {
 	}
 
 	config.Static = c.static
+
+	// Update the global base url.
+	link.BaseURL = config.ExternalURL
 
 	c.configMu.Lock()
 	c.currentConfig = config

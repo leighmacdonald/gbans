@@ -57,18 +57,13 @@ type Database interface {
 
 type dbQueryTracer struct{}
 
-func (tracer *dbQueryTracer) TraceQueryStart(
-	ctx context.Context,
-	_ *pgx.Conn,
-	data pgx.TraceQueryStartData,
-) context.Context {
+func (tracer *dbQueryTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
 	slog.Info("Executing command", slog.String("sql", data.SQL), slog.Any("args", data.Args))
 
 	return ctx
 }
 
-func (tracer *dbQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, _ pgx.TraceQueryEndData) {
-}
+func (tracer *dbQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, _ pgx.TraceQueryEndData) {}
 
 type PgStore struct {
 	conn *pgxpool.Pool

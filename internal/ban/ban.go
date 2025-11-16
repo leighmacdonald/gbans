@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
@@ -79,10 +80,10 @@ const Permanent = "Permanent"
 // It should not be instantiated directly, but instead use one of the composites that build
 // upon it.
 type Opts struct {
-	TargetID steamid.SteamID `json:"target_id" form:"target_id" binding:"required,steamid"`
-	SourceID steamid.SteamID `json:"source_id" form:"source_id" binding:"required,steamid"`
+	TargetID steamid.SteamID `json:"target_id" form:"target_id" binding:"required"`
+	SourceID steamid.SteamID `json:"source_id" form:"source_id" binding:"required"`
 	// ISO8601
-	Duration   *duration.Duration `json:"duration" form:"duration" binding:"required,duration"`
+	Duration   *duration.Duration `json:"duration" form:"duration" binding:"required"`
 	BanType    bantype.Type       `json:"ban_type" form:"ban_type" binding:"required" oneof:"1,2,3"`
 	Reason     reason.Reason      `json:"reason" form:"reason" binding:"required"`
 	ReasonText string             `json:"reason_text" form:"reason_text" binding:"required_if=Reason 1"`
@@ -116,8 +117,6 @@ func (opts *Opts) Validate() error {
 	return nil
 }
 
-// BanBase provides a common struct shared between all ban types, it should not be used
-// directly.
 type Ban struct {
 	// SteamID is the steamID of the banned person
 	TargetID steamid.SteamID `json:"target_id"`
@@ -290,13 +289,13 @@ func (s Bans) Save(ctx context.Context, ban *Ban) error {
 			[]permission.Privilege{permission.Moderator, permission.Admin},
 			notification.Info,
 			fmt.Sprintf("Ban appeal state changed: %s -> %s", oldState, ban.AppealState),
-			ban.Path()))
+			link.Path(ban)))
 
 		s.notif.Send(notification.NewSiteUser(
 			[]steamid.SteamID{ban.TargetID},
 			notification.Info,
 			fmt.Sprintf("Your mute/ban appeal status has changed: %s -> %s", oldState, ban.AppealState),
-			ban.Path()))
+			link.Path(ban)))
 	}
 
 	return nil
@@ -371,7 +370,7 @@ func (s Bans) sendBanNotification(ctx context.Context, newBan Ban, author person
 		notification.Info,
 		fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
 			newBan.Name, expIn, author.GetName()),
-		newBan.Path(),
+		link.Path(newBan),
 		author,
 	))
 
@@ -379,13 +378,14 @@ func (s Bans) sendBanNotification(ctx context.Context, newBan Ban, author person
 		[]steamid.SteamID{newBan.TargetID},
 		notification.Warn,
 		fmt.Sprintf("You have been %s, Reason: %s, Duration: %s, Ends: %s", newBan.BanType, newBan.Reason.String(), expIn, expAt),
-		newBan.Path(),
+		link.Path(newBan),
 	))
 
 	if s.state == nil {
 		return
 	}
 
+	//goland:noinspection ALL
 	switch newBan.BanType {
 	case bantype.Banned:
 		if errKick := s.state.Kick(ctx, newBan.TargetID, newBan.Reason.String()); errKick != nil && !errors.Is(errKick, state.ErrPlayerNotFound) {
@@ -424,26 +424,26 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		return false, errors.Join(errSave, ErrSaveBan)
 	}
 
-	person, err := s.persons.GetOrCreatePersonBySteamID(ctx, targetSID)
+	player, err := s.persons.GetOrCreatePersonBySteamID(ctx, targetSID)
 	if err != nil {
 		return false, errors.Join(err, ErrFetchPerson)
 	}
 
-	s.notif.Send(notification.NewDiscord(s.logChannelID, UnbanMessage(person.Path(), person)))
+	s.notif.Send(notification.NewDiscord(s.logChannelID, UnbanMessage(link.Path(player), player)))
 
 	s.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
-		fmt.Sprintf("A user has been unbanned: %s, Reason: %s", person.GetName(), reason),
-		person.Path(),
+		fmt.Sprintf("A user has been unbanned: %s, Reason: %s", player.GetName(), reason),
+		link.Path(player),
 		author,
 	))
 
 	s.notif.Send(notification.NewSiteUser(
-		[]steamid.SteamID{person.SteamID},
+		[]steamid.SteamID{player.SteamID},
 		notification.Info,
 		"You have been unmuted/unbanned",
-		person.Path(),
+		link.Path(player),
 	))
 
 	return true, nil
@@ -498,7 +498,7 @@ func (s Bans) CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, add
 		Duration: dur,
 		BanType:  bantype.Banned,
 		Reason:   reason.Evading,
-		Note:     fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, existing.Path()),
+		Note:     fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, link.Path(existing)),
 	}
 
 	_, errSave := s.Create(ctx, req)

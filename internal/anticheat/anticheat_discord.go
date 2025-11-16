@@ -7,6 +7,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -19,7 +20,7 @@ type discordHandler struct {
 	persons person.Provider
 }
 
-func RegisterDiscordCommands(bot discord.Bot, anticheat AntiCheat) {
+func RegisterDiscordCommands(bot discord.Service, anticheat AntiCheat) {
 	handler := discordHandler{AntiCheat: anticheat}
 
 	bot.MustRegisterHandler("ac", &discordgo.ApplicationCommand{
@@ -121,7 +122,7 @@ func ACPlayerLogs(person person.Info, entries []Entry) *discordgo.MessageEmbed {
 	emb.Embed().
 		SetTitle(fmt.Sprintf("Anticheat Detections (count: %d)", total)).
 		SetColor(discord.ColourSuccess).
-		SetAuthor(person.GetName(), person.GetAvatar().Small(), person.Path())
+		SetAuthor(person.GetName(), person.GetAvatar().Small(), link.Path(person))
 
 	j := 0
 	for server, count := range detections {

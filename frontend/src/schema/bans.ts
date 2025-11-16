@@ -34,17 +34,17 @@ export type BanReasonEnum = z.infer<typeof BanReasonEnum>;
 
 export const Duration = {
     dur15m: 'PT15M',
-    dur6h: 'T6H',
-    dur12h: 'T12H',
+    dur6h: 'P6H',
+    dur12h: 'P12H',
     dur24h: 'P1D',
     dur48h: 'P2D',
     dur72h: 'P3D',
     dur1w: 'P1W',
     dur2w: 'P2W',
-    dur1M: '1M',
-    dur6M: '6M',
-    dur1y: '1y',
-    durInf: '0',
+    dur1M: 'P1M',
+    dur6M: 'P6M',
+    dur1y: 'P1y',
+    durInf: 'P0',
     durCustom: ''
 } as const;
 
@@ -191,16 +191,20 @@ export type UnbanPayload = z.infer<typeof schemaUnbanPayload>;
 export const schemaBanPayload = z.object({
     reason: BanReasonEnum,
     reason_text: z.string(),
+    source_id: z.string().optional(),
     target_id: z.string(),
     duration: z.string(),
     note: z.string(),
     report_id: z.number().optional(),
     evade_ok: z.boolean(),
     ban_type: BanTypeEnum,
-    cidr: z.cidrv4().optional()
+    cidr: z.cidrv4().optional(),
+    demo_name: z.string(),
+    demo_tick: z.number(),
+    origin: OriginEnum
 });
 
-export type BanPayload = z.infer<typeof schemaBanPayload>;
+export type BanOpts = z.infer<typeof schemaBanPayload>;
 
 export const schemaSbBanRecord = z.object({
     ban_id: z.number(),

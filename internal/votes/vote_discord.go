@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 )
@@ -22,7 +23,7 @@ func VoteResultMessage(result Result, source person.Core, target person.Core) *d
 	}
 
 	msgEmbed.Emb.Author = &discordgo.MessageEmbedAuthor{
-		URL:     source.Path(),
+		URL:     link.Path(source),
 		Name:    source.GetName(),
 		IconURL: source.GetAvatar().Full(),
 	}

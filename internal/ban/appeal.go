@@ -198,7 +198,7 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, ban
 	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
 	// 	notification.SeverityInfo,
 	// 	"A new ban appeal message",
-	// 	bannedPerson.Path(),
+	// 	link.Path(bannedPerson),
 	// 	curUser))
 
 	// if curUser.SteamID != bannedPerson.TargetID {
@@ -206,7 +206,7 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, ban
 	// 		[]steamid.SteamID{bannedPerson.TargetID},
 	// 		notification.SeverityInfo,
 	// 		"A new ban appeal message",
-	// 		bannedPerson.Path()))
+	// 		link.Path(bannedPerson)))
 	// }
 
 	return msg, nil

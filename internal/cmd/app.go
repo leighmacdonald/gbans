@@ -81,7 +81,6 @@ type GBans struct {
 	bans           ban.Bans
 	blocklists     network.Blocklists
 	chat           *chat.Chat
-	chatRepo       chat.Repository
 	config         *config.Configuration
 	database       database.Database
 	demos          servers.Demos
@@ -105,13 +104,14 @@ type GBans struct {
 	wiki           wiki.Wiki
 	wordFilters    chat.WordFilters
 	sentry         *sentry.Client
-	bot            discord.Bot
+	bot            discord.Service
 
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 
 	logCloser func()
 }
 
+// New creates a new application instance.
 func New() (*GBans, error) {
 	staticConfig, errStatic := config.ReadStaticConfig()
 	if errStatic != nil {
@@ -135,18 +135,11 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 	g.database = dbConn
 
-	g.config = config.NewConfiguration(g.staticConfig, config.NewRepository(g.database))
-	if err := g.config.Init(ctx); err != nil {
-		slog.Error("Failed to init config", slog.String("error", err.Error()))
-
-		return err
-	}
-
-	if errConfig := g.config.Reload(ctx); errConfig != nil {
-		slog.Error("Failed to read config", slog.String("error", errConfig.Error()))
-
+	configuration, errConfig := g.createConfig(ctx)
+	if errConfig != nil {
 		return errConfig
 	}
+	g.config = configuration
 
 	// This is normally set by build time flags, but can be overwritten by the env var.
 	if SentryDSN == "" {
@@ -169,11 +162,10 @@ func (g *GBans) Init(ctx context.Context) error {
 		slog.String("commit", BuildCommit),
 		slog.String("date", BuildDate))
 
-	// weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
-
+	g.bot = g.mustCreateBot(conf.Discord)
 	g.notifications = notification.NewNotifications(notification.NewRepository(g.database), g.bot)
 
-	wordFilters := chat.NewWordFilters(chat.NewWordFilterRepository(g.database), g.notifications, g.config.Config().Filters)
+	wordFilters := chat.NewWordFilters(chat.NewWordFilterRepository(g.database), g.notifications, conf.Filters)
 	if err := wordFilters.Import(ctx); err != nil {
 		slog.Error("Failed to load word filters", slog.String("error", err.Error()))
 
@@ -181,14 +173,14 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 	g.wordFilters = wordFilters
 
-	tfapiClient, errClient := thirdparty.NewTFAPI("https://tf-api.roto.lol", &http.Client{Timeout: time.Second * 15})
+	tfapiClient, errClient := g.createAPIClient()
 	if errClient != nil {
 		return errClient
 	}
 	g.tfapiClient = tfapiClient
 
 	g.persons = person.NewPersons(person.NewRepository(g.database, conf.Clientprefs.CenterProjectiles), steamid.New(conf.Owner), g.tfapiClient)
-	g.networks = network.NewNetworks(g.broadcaster, network.NewRepository(g.database, g.persons), g.config.Config().Network, g.config.Config().GeoLocation)
+	g.networks = network.NewNetworks(g.broadcaster, network.NewRepository(g.database, g.persons), conf.Network, conf.GeoLocation)
 
 	assetRepo := asset.NewLocalRepository(g.database, conf.LocalStore.PathRoot)
 	if err := assetRepo.Init(ctx); err != nil {
@@ -197,28 +189,21 @@ func (g *GBans) Init(ctx context.Context) error {
 		return err
 	}
 
-	g.bot = g.mustCreateBot(conf.Discord)
-
-	members := ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons))
-
 	g.assets = asset.NewAssets(assetRepo)
 	g.servers = servers.NewServers(servers.NewRepository(g.database))
-	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, g.config.Config().Demo, steamid.New(g.config.Config().Owner))
+	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, conf.Demo, steamid.New(conf.Owner))
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications, conf.Discord.LogChannelID, conf.Discord.AppealLogChannelID)
 	g.states = state.NewState(g.broadcaster, state.NewCollector(g.serverFetcher), conf.General.SrcdsLogAddr, g.serverFetcher)
 	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.BanLogChannelID, conf.Discord.KickLogChannelID, steamid.New(conf.Owner), g.reports, g.notifications, g.states)
-	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), members) // TODO Does THE & work here?
+	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons))) // TODO Does THE & work here?
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
-	g.chatRepo = chat.NewRepository(g.database)
-	g.chat = chat.NewChat(g.chatRepo, g.config.Config().Filters, g.wordFilters, g.persons, g.notifications, func(_ context.Context, _ chat.NewUserWarning) error {
-		panic("fixme")
-	})
+	g.chat = chat.NewChat(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler)
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database))
 	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
-	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), g.config.Config().Anticheat, g.notifications, g.onAnticheatBan)
+	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan)
 	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications, conf.Discord.VoteLogChannelID, g.persons)
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons), g.tfapiClient)
@@ -245,6 +230,60 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (g *GBans) chatHandler(ctx context.Context, exceeded bool, newWarning chat.NewUserWarning) error {
+	if !newWarning.MatchedFilter.IsEnabled {
+		return nil
+	}
+
+	if !exceeded {
+		const msg = "[WARN] Please refrain from using slurs/toxicity (see: rules & MOTD). " +
+			"Further offenses will result in mutes/bans"
+
+		if errPSay := g.states.PSay(ctx, newWarning.UserMessage.SteamID, msg); errPSay != nil {
+			return errPSay
+		}
+
+		return nil
+	}
+
+	slog.Info("Warn limit exceeded",
+		slog.String("sid64", newWarning.UserMessage.SteamID.String()),
+		slog.Int("weight", newWarning.CurrentTotal))
+
+	return nil
+}
+
+func (g *GBans) createConfig(ctx context.Context) (*config.Configuration, error) {
+	conf := config.NewConfiguration(g.staticConfig, config.NewRepository(g.database))
+	if err := conf.Init(ctx); err != nil {
+		slog.Error("Failed to init config", slog.String("error", err.Error()))
+
+		return nil, err
+	}
+
+	if errConfig := conf.Reload(ctx); errConfig != nil {
+		slog.Error("Failed to read config", slog.String("error", errConfig.Error()))
+
+		return nil, errConfig
+	}
+
+	return conf, nil
+}
+
+func (g *GBans) createAPIClient() (*thirdparty.TFAPI, error) {
+	apiURL := os.Getenv("TFAPI_URL")
+	if apiURL == "" {
+		apiURL = "https://tf-api.roto.lol"
+	}
+
+	tfapiClient, errClient := thirdparty.NewTFAPI(apiURL, &http.Client{Timeout: time.Second * 15})
+	if errClient != nil {
+		return nil, errClient
+	}
+
+	return tfapiClient, nil
 }
 
 func (g *GBans) serverFetcher(ctx context.Context) ([]state.ServerConfig, error) {
@@ -275,7 +314,7 @@ func (g *GBans) serverFetcher(ctx context.Context) ([]state.ServerConfig, error)
 	return confs, nil
 }
 
-func (g *GBans) mustCreateBot(conf discord.Config) discord.Bot { //nolint:ireturn
+func (g *GBans) mustCreateBot(conf discord.Config) discord.Service { //nolint:ireturn
 	if conf.BotEnabled {
 		discord, errDiscord := bot.New(bot.Opts{
 			Token:   conf.Token,
@@ -298,10 +337,6 @@ func (g *GBans) mustCreateBot(conf discord.Config) discord.Bot { //nolint:iretur
 }
 
 func (g *GBans) startBot(ctx context.Context) error {
-	if !g.config.Config().Discord.Enabled {
-		return nil
-	}
-
 	if err := g.bot.Start(ctx); err != nil {
 		return err
 	}
@@ -401,13 +436,15 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	ctx, stop := signal.NotifyContext(rootCtx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	go func() {
-		if errStart := g.startBot(ctx); errStart != nil {
-			slog.Error("Failed to start bot", slog.String("error", errStart.Error()))
-		}
-	}()
-
 	conf := g.config.Config()
+
+	if conf.Discord.Enabled {
+		go func() {
+			if errStart := g.startBot(ctx); errStart != nil {
+				slog.Error("Failed to start bot", slog.String("error", errStart.Error()))
+			}
+		}()
+	}
 
 	originValidate := func(v *validator.Validate) {
 		var origin ban.Origin
@@ -502,7 +539,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	return nil
 }
 
-func (g *GBans) Close(ctx context.Context) error {
+func (g *GBans) Shutdown(ctx context.Context) error {
 	conf := g.config.Config()
 	if conf.Debug.AddRCONLogAddress != "" {
 		g.states.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)

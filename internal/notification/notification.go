@@ -156,13 +156,13 @@ type NullNotifications struct{}
 func (n *NullNotifications) Send(_ Payload) {}
 
 func NewNotifications(repository Repository, discord BotNotifier) *Notifications {
-	return &Notifications{repository: repository, bot: discord}
+	return &Notifications{repository: repository, discord: discord, send: make(chan Payload)}
 }
 
 type Notifications struct {
 	repository Repository
 	send       chan Payload
-	bot        BotNotifier
+	discord    BotNotifier
 }
 
 func (n *Notifications) Send(payload Payload) {
@@ -176,7 +176,7 @@ func (n *Notifications) Sender(ctx context.Context) {
 			return
 		case notif := <-n.send:
 			for _, channelID := range notif.DiscordChannels {
-				if errSend := n.bot.Send(channelID, notif.DiscordEmbed); errSend != nil {
+				if errSend := n.discord.Send(channelID, notif.DiscordEmbed); errSend != nil {
 					slog.Error("failed to send discord notification payload", slog.String("error", errSend.Error()))
 				}
 			}

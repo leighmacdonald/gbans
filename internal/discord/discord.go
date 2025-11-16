@@ -15,14 +15,25 @@ var (
 	UserPerms        = int64(discordgo.PermissionViewChannel) //nolint:gochecknoglobals
 )
 
-type Bot interface {
+// Service provides a interface for controlling the discord backend.
+type Service interface {
+	// Send handles sending messages to a channel.
 	Send(channelID string, payload *discordgo.MessageEmbed) error
+
+	// Start initiates the bot service. This is a blocking call.
 	Start(ctx context.Context) error
+
+	// Close the bot session.
 	Close()
+
+	// MustRegisterHandler allows the caller to register discord slash commands.
 	MustRegisterHandler(cmd string, appCommand *discordgo.ApplicationCommand, handler bot.Handler)
+
+	// Session returns the underlying discordgo session.
 	Session() *discordgo.Session
 }
 
+// Discard implements a dummy service that can be used when discord bot support is disabled.
 type Discard struct{}
 
 func (d Discard) Send(_ string, _ *discordgo.MessageEmbed) error                               { return nil }

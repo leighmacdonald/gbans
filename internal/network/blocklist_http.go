@@ -76,13 +76,13 @@ type CreateSteamWhitelistRequest struct {
 
 func (b *blocklistHandler) onAPICreateWhitelistSteam() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		req, ok := httphelper.BindJSON[CreateSteamWhitelistRequest](ctx)
-		if !ok {
+		req, valid := httphelper.BindJSON[CreateSteamWhitelistRequest](ctx)
+		if !valid {
 			return
 		}
 
-		steamID, ok := req.SteamID(ctx)
-		if !ok {
+		steamID, valid := req.SteamID(ctx)
+		if !valid {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, steamid.ErrInvalidSID))
 
 			return
