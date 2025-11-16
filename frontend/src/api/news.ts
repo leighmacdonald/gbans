@@ -3,10 +3,10 @@ import { transformTimeStampedDates, transformTimeStampedDatesList } from '../uti
 import { apiCall } from './common';
 
 export const apiGetNewsLatest = async (abortController?: AbortController) =>
-    transformTimeStampedDatesList(await apiCall<NewsEntry[]>(`/api/news_latest`, 'POST', undefined, abortController));
+    transformTimeStampedDatesList(await apiCall<NewsEntry[]>(`/api/news_latest`, 'GET', undefined, abortController));
 
 export const apiGetNewsAll = async (abortController?: AbortController) =>
-    transformTimeStampedDatesList(await apiCall<NewsEntry[]>(`/api/news_all`, 'POST', undefined, abortController));
+    transformTimeStampedDatesList(await apiCall<NewsEntry[]>(`/api/news_all`, 'GET', undefined, abortController));
 
 export const apiNewsCreate = async (title: string, body_md: string, is_published: boolean) =>
     transformTimeStampedDates(

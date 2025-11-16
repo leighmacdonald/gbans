@@ -8,9 +8,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod/v4';
 import { apiCreateBan, apiGetBanSteam, apiUpdateBanSteam, banTypeString } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
+import { useAuth } from '../../hooks/useAuth.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import {
-    BanPayload,
+    BanOpts,
     BanReason,
     BanReasons,
     banReasonsCollection,
@@ -18,7 +19,8 @@ import {
     BanTypeCollection,
     Duration,
     schemaBanPayload,
-    BanRecord
+    BanRecord,
+    Origin
 } from '../../schema/bans.ts';
 import { ErrorDetails } from '../ErrorDetails.tsx';
 import { Heading } from '../Heading';
@@ -26,6 +28,7 @@ import { LoadingPlaceholder } from '../LoadingPlaceholder.tsx';
 import { MarkdownField } from '../form/field/MarkdownField.tsx';
 
 export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
+    const { profile } = useAuth();
     const queryClient = useQueryClient();
     const {
         data: ban,
@@ -48,18 +51,19 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
 
     const mutation = useMutation({
         mutationKey: ['banSteam'],
-        mutationFn: async (values: BanPayload) => {
-            let updated: BanPayload;
+        mutationFn: async (values: BanOpts) => {
+            let banRecord: BanRecord;
             if (ban?.ban_id) {
-                updated = (await apiUpdateBanSteam(ban.ban_id, {
+                banRecord = await apiUpdateBanSteam(ban.ban_id, {
                     note: values.note,
                     ban_type: values.ban_type,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     evade_ok: values.evade_ok
-                })) as unknown as BanPayload; // TODO fix
+                });
             } else {
-                updated = (await apiCreateBan({
+                banRecord = await apiCreateBan({
+                    source_id: profile.steam_id,
                     note: values.note,
                     ban_type: values.ban_type,
                     duration: values.duration,
@@ -67,10 +71,14 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
                     reason_text: values.reason_text,
                     report_id: values.report_id,
                     target_id: values.target_id,
-                    evade_ok: values.evade_ok
-                })) as unknown as BanPayload;
+                    evade_ok: values.evade_ok,
+                    demo_name: '',
+                    demo_tick: 0,
+                    origin: Origin.Web,
+                    cidr: values.cidr
+                });
             }
-            queryClient.setQueryData(['ban', { ban_id }], updated);
+            queryClient.setQueryData(['ban', { ban_id }], banRecord);
         },
         onSuccess: async (banRecord) => {
             if (ban?.ban_id) {
@@ -93,7 +101,10 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
         duration: ban ? Duration.durCustom : Duration.dur2w,
         note: ban?.note ?? '',
         evade_ok: ban?.evade_ok ?? false,
-        cidr: ban?.cidr
+        cidr: ban?.cidr,
+        demo_name: '',
+        demo_tick: 0,
+        origin: Origin.Web
     };
 
     const form = useAppForm({

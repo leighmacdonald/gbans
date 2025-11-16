@@ -52,7 +52,7 @@ type Info interface {
 	GetName() string
 	GetAvatar() Avatar
 	GetSteamID() steamid.SteamID
-	Path() string // config.LinkablePath
+	Path() string // link.Linkable
 	HasPermission(permission permission.Privilege) bool
 	Permissions() permission.Privilege
 }

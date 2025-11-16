@@ -150,10 +150,16 @@ func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
 
 func (h banHandler) onBanCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		req, ok := httphelper.BindJSON[Opts](ctx)
-		if !ok {
+		var req Opts
+		if errBind := ctx.ShouldBindJSON(&req); errBind != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
+
 			return
 		}
+		//req, ok := httphelper.BindJSON[Opts](ctx)
+		//if !ok {
+		//	return
+		//}
 
 		user, _ := session.CurrentUserProfile(ctx)
 		if !req.SourceID.Valid() {

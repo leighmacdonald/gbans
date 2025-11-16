@@ -10,6 +10,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -268,13 +269,13 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user perso
 
 	r.notif.Send(notification.NewDiscord(
 		r.logChannel,
-		ReportStatusChangeMessage(report, fromStatus, report.Path())))
+		ReportStatusChangeMessage(report, fromStatus, link.Path(report))))
 
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		fmt.Sprintf("A report status has changed: %s -> %s", fromStatus, status),
-		report.Path(),
+		link.Path(report),
 		user,
 	))
 
@@ -282,7 +283,7 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user perso
 		[]steamid.SteamID{report.Author.SteamID},
 		notification.Info,
 		fmt.Sprintf("Your report status has changed: %s -> %s", fromStatus, status),
-		report.Path(),
+		link.Path(report),
 	))
 
 	slog.Info("Report status changed",
@@ -384,7 +385,7 @@ func (r Reports) DropMessage(ctx context.Context, curUser personDomain.Info, rep
 	}
 
 	r.notif.Send(notification.NewDiscord(r.appealChannel,
-		DeleteReportMessage(existing, curUser, curUser.Path())))
+		DeleteReportMessage(existing, curUser, link.Path(curUser))))
 
 	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
 
@@ -494,12 +495,12 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 	}
 
 	r.notif.Send(notification.NewDiscord(r.appealChannel,
-		NewInGameReportResponse(newReport, report.Path(), currentUser, currentUser.Path(), demoURL)))
+		NewInGameReportResponse(newReport, link.Path(report), currentUser, link.Path(currentUser), demoURL)))
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.GetName()),
-		newReport.Path(),
+		link.Path(newReport),
 		currentUser,
 	))
 
@@ -538,7 +539,7 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 
 	r.notif.Send(notification.NewDiscord(r.appealChannel,
 		EditReportMessageResponse(req.BodyMD, existing.MessageMD,
-			fmt.Sprintf("/report/%d", existing.ReportID), curUser, curUser.Path())))
+			fmt.Sprintf("/report/%d", existing.ReportID), curUser, link.Path(curUser))))
 
 	slog.Info("Report message edited", slog.Int64("report_message_id", reportMessageID))
 
@@ -569,7 +570,7 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser pers
 	}
 
 	r.notif.Send(notification.NewDiscord(r.appealChannel,
-		NewReportMessageResponse(msg.MessageMD, report.Path(), curUser, curUser.Path())))
+		NewReportMessageResponse(msg.MessageMD, link.Path(report), curUser, link.Path(curUser))))
 
 	path := fmt.Sprintf("/report/%d", reportID)
 

@@ -28,7 +28,7 @@ func netUpdateCmd() *cobra.Command {
 			}
 
 			defer func() {
-				if errClose := app.Close(ctx); errClose != nil {
+				if errClose := app.Shutdown(ctx); errClose != nil {
 					slog.Error("Error closing", slog.String("error", errClose.Error()))
 				}
 			}()

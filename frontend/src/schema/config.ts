@@ -73,29 +73,40 @@ export const schemaPatreon = z.object({
     creator_refresh_token: z.string()
 });
 
-export const schemaDiscord = z.object({
-    enabled: z.boolean(),
-    bot_enabled: z.boolean(),
-    integrations_enabled: z.boolean(),
-    app_id: z.string().refine((arg) => arg.length == 0 || arg.length == 18),
-    app_secret: z.string(),
-    link_id: z.string(),
-    token: z.string(),
-    guild_id: z.string(),
-    log_channel_id: z.string(),
-    public_log_channel_enable: z.boolean(),
-    public_log_channel_id: z.string(),
-    public_match_log_channel_id: z.string(),
-    mod_ping_role_id: z.string(),
-    vote_log_channel_id: z.string(),
-    appeal_log_channel_id: z.string(),
-    ban_log_channel_id: z.string(),
-    forum_log_channel_id: z.string(),
-    word_filter_log_channel_id: z.string(),
-    kick_log_channel_id: z.string(),
-    playerqueue_channel_id: z.string(),
-    anticheat_channel_id: z.string()
-});
+export const schemaDiscord = z
+    .object({
+        enabled: z.boolean(),
+        bot_enabled: z.boolean(),
+        integrations_enabled: z.boolean(),
+        app_id: z.string().refine((arg) => arg.length == 0 || arg.length == 18),
+        app_secret: z.string(),
+        link_id: z.string(),
+        token: z.string(),
+        guild_id: z.string(),
+        log_channel_id: z.string().default(''),
+        public_log_channel_enable: z.boolean().default(false),
+        public_log_channel_id: z.string().default(''),
+        public_match_log_channel_id: z.string().default(''),
+        mod_ping_role_id: z.string().default(''),
+        vote_log_channel_id: z.string().default(''),
+        appeal_log_channel_id: z.string().default(''),
+        ban_log_channel_id: z.string().default(''),
+        forum_log_channel_id: z.string().default(''),
+        word_filter_log_channel_id: z.string().default(''),
+        kick_log_channel_id: z.string().default(''),
+        playerqueue_channel_id: z.string().default(''),
+        anticheat_channel_id: z.string().default('')
+    })
+    .refine((data) => {
+        if (!data.bot_enabled) {
+            return true;
+        }
+        if (data.log_channel_id == '') {
+            return false;
+        }
+
+        return true;
+    });
 
 export const schemaLogging = z.object({
     level: z.enum(['debug', 'info', 'warn', 'error']),
