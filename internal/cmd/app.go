@@ -7,13 +7,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"reflect"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/go-playground/validator/v10"
 	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
@@ -162,6 +160,13 @@ func (g *GBans) Init(ctx context.Context) error {
 		slog.String("commit", BuildCommit),
 		slog.String("date", BuildDate))
 
+	tfapiClient, errClient := g.createAPIClient()
+	if errClient != nil {
+		return errClient
+	}
+	g.tfapiClient = tfapiClient
+
+	g.persons = person.NewPersons(person.NewRepository(g.database, conf.Clientprefs.CenterProjectiles), steamid.New(conf.Owner), g.tfapiClient)
 	g.bot = g.mustCreateBot(conf.Discord)
 	g.notifications = notification.NewNotifications(notification.NewRepository(g.database), g.bot)
 
@@ -173,13 +178,6 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 	g.wordFilters = wordFilters
 
-	tfapiClient, errClient := g.createAPIClient()
-	if errClient != nil {
-		return errClient
-	}
-	g.tfapiClient = tfapiClient
-
-	g.persons = person.NewPersons(person.NewRepository(g.database, conf.Clientprefs.CenterProjectiles), steamid.New(conf.Owner), g.tfapiClient)
 	g.networks = network.NewNetworks(g.broadcaster, network.NewRepository(g.database, g.persons), conf.Network, conf.GeoLocation)
 
 	assetRepo := asset.NewLocalRepository(g.database, conf.LocalStore.PathRoot)
@@ -192,10 +190,13 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.assets = asset.NewAssets(assetRepo)
 	g.servers = servers.NewServers(servers.NewRepository(g.database))
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, conf.Demo, steamid.New(conf.Owner))
-	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications, conf.Discord.LogChannelID, conf.Discord.AppealLogChannelID)
+	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
+		conf.Discord.LogChannelID, conf.Discord.SafeAppealLogChannelID())
 	g.states = state.NewState(g.broadcaster, state.NewCollector(g.serverFetcher), conf.General.SrcdsLogAddr, g.serverFetcher)
-	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.BanLogChannelID, conf.Discord.KickLogChannelID, steamid.New(conf.Owner), g.reports, g.notifications, g.states)
-	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database), ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons))) // TODO Does THE & work here?
+	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.SafeBanLogChannelID(),
+		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.states)
+	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database),
+		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons))) // TODO Does THE & work here?
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
 	g.chat = chat.NewChat(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler)
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
@@ -204,10 +205,18 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
 	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan)
-	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications, conf.Discord.VoteLogChannelID, g.persons)
+	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications,
+		conf.Discord.SafeVoteLogChannelID(), g.persons)
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
+
+	if conf.Discord.Enabled {
+		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
+		ban.RegisterDiscordCommands(g.bot, g.bans, g.persons, g.persons)
+		chat.RegisterDiscordCommands(g.bot, g.wordFilters)
+		servers.RegisterDiscordCommands(g.bot, g.states, g.persons, g.servers, g.networks)
+	}
 
 	if err := g.firstTimeSetup(ctx); err != nil {
 		slog.Error("Failed to run first time setup", slog.String("error", err.Error()))
@@ -325,11 +334,6 @@ func (g *GBans) mustCreateBot(conf discord.Config) discord.Service { //nolint:ir
 			panic(errDiscord)
 		}
 
-		anticheat.RegisterDiscordCommands(discord, g.anticheat)
-		ban.RegisterDiscordCommands(discord, g.bans)
-		chat.RegisterDiscordCommands(discord, g.wordFilters)
-		servers.RegisterDiscordCommands(discord, g.states, g.persons, g.servers, g.networks)
-
 		return discord
 	}
 
@@ -446,17 +450,6 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		}()
 	}
 
-	originValidate := func(v *validator.Validate) {
-		var origin ban.Origin
-		v.RegisterCustomTypeFunc(func(field reflect.Value) any {
-			if value, ok := field.Interface().(ban.Origin); ok {
-				return value
-			}
-
-			return nil
-		}, origin)
-	}
-
 	router, err := httphelper.CreateRouter(httphelper.RouterOpts{
 		HTTPLogEnabled:    conf.Log.HTTPEnabled,
 		LogLevel:          conf.Log.Level,
@@ -469,7 +462,6 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		StaticPath:        conf.HTTPStaticPath,
 		HTTPCORSEnabled:   conf.HTTPCORSEnabled,
 		CORSOrigins:       conf.HTTPCorsOrigins,
-		Validators:        []func(*validator.Validate){originValidate},
 	})
 	if err != nil {
 		slog.Error("Could not setup router", slog.String("error", err.Error()))

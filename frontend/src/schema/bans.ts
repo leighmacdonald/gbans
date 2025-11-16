@@ -34,8 +34,8 @@ export type BanReasonEnum = z.infer<typeof BanReasonEnum>;
 
 export const Duration = {
     dur15m: 'PT15M',
-    dur6h: 'P6H',
-    dur12h: 'P12H',
+    dur6h: 'PT6H',
+    dur12h: 'PT12H',
     dur24h: 'P1D',
     dur48h: 'P2D',
     dur72h: 'P3D',
@@ -43,7 +43,7 @@ export const Duration = {
     dur2w: 'P2W',
     dur1M: 'P1M',
     dur6M: 'P6M',
-    dur1y: 'P1y',
+    dur1y: 'P1Y',
     durInf: 'P0',
     durCustom: ''
 } as const;

@@ -67,12 +67,12 @@ const (
 
 type Person struct {
 	// TODO merge use of steamid & steam_id
-	SteamID               steamid.SteamID        `json:"steam_id"`
-	CreatedOn             time.Time              `json:"created_on"`
-	UpdatedOn             time.Time              `json:"updated_on"`
-	PermissionLevel       permission.Privilege   `json:"permission_level"`
-	Muted                 bool                   `json:"muted"`
-	isNew                 bool                   `json:"-"`
+	SteamID               steamid.SteamID      `json:"steam_id"`
+	CreatedOn             time.Time            `json:"created_on"`
+	UpdatedOn             time.Time            `json:"updated_on"`
+	PermissionLevel       permission.Privilege `json:"permission_level"`
+	Muted                 bool                 `json:"muted"`
+	isNew                 bool
 	DiscordID             string                 `json:"discord_id"`
 	PatreonID             string                 `json:"patreon_id"`
 	IPAddr                netip.Addr             `json:"-"` // TODO Allow json for admins endpoints
@@ -191,8 +191,8 @@ type People []Person
 func (p People) ToSteamIDCollection() steamid.Collection {
 	var collection steamid.Collection
 
-	for _, person := range p {
-		collection = append(collection, person.SteamID)
+	for _, player := range p {
+		collection = append(collection, player.SteamID)
 	}
 
 	return collection
@@ -200,8 +200,8 @@ func (p People) ToSteamIDCollection() steamid.Collection {
 
 func (p People) AsMap() map[steamid.SteamID]Person {
 	m := map[steamid.SteamID]Person{}
-	for _, person := range p {
-		m[person.SteamID] = person
+	for _, player := range p {
+		m[player.SteamID] = player
 	}
 
 	return m
@@ -263,27 +263,27 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 
 	_, _ = u.GetOrCreatePersonBySteamID(ctx, sid)
 
-	person, errGetProfile := u.BySteamID(ctx, sid)
+	player, errGetProfile := u.BySteamID(ctx, sid)
 	if errGetProfile != nil {
 		return resp, errGetProfile
 	}
 
-	if person.Expired() {
-		if err := UpdatePlayerSummary(ctx, &person, u.tfAPI); err != nil {
+	if player.Expired() {
+		if err := UpdatePlayerSummary(ctx, &player, u.tfAPI); err != nil {
 			slog.Error("Failed to update player summary", slog.String("error", err.Error()))
 		} else {
-			if errSave := u.Save(ctx, &person); errSave != nil {
+			if errSave := u.Save(ctx, &player); errSave != nil {
 				slog.Error("Failed to save person summary", slog.String("error", errSave.Error()))
 			}
 		}
 	}
 
-	friendList, errFetchFriends := u.tfAPI.Friends(ctx, person.SteamID)
+	friendList, errFetchFriends := u.tfAPI.Friends(ctx, player.SteamID)
 	if errFetchFriends == nil {
 		resp.Friends = friendList
 	}
 
-	resp.Player = &person
+	resp.Player = &player
 
 	settings, err := u.GetPersonSettings(ctx, sid)
 	if err != nil {
@@ -333,50 +333,49 @@ func (u *Persons) UpdateProfiles(ctx context.Context, _ pgx.Tx, people People) (
 		return 0, errors.Join(errFetch, ErrSteamAPI)
 	}
 
-	for _, curPerson := range people {
-		person := curPerson
-		person.isNew = false
-		person.UpdatedOnSteam = time.Now()
+	for _, player := range people {
+		player.isNew = false
+		player.UpdatedOnSteam = time.Now()
 
 		for _, newSummary := range summaries {
 			summary := newSummary
-			if person.SteamID.String() != summary.SteamId {
+			if player.SteamID.String() != summary.SteamId {
 				continue
 			}
 
-			person.AvatarHash = summary.AvatarHash
-			person.CommentPermission = summary.CommentPermission
-			person.LastLogoff = summary.LastLogoff
-			person.LocCityID = summary.LocCityId
-			person.LocCountryCode = summary.LocCountryCode
-			person.LocStateCode = summary.LocStateCode
-			person.PersonaName = summary.PersonaName
-			person.PersonaState = summary.PersonaState
-			person.PersonaStateFlags = summary.PersonaStateFlags
-			person.PrimaryClanID = summary.PrimaryClanId
-			person.ProfileState = summary.ProfileState
-			person.ProfileURL = summary.ProfileUrl
-			person.RealName = summary.RealName
-			person.TimeCreated = summary.TimeCreated
-			person.VisibilityState = summary.VisibilityState
+			player.AvatarHash = summary.AvatarHash
+			player.CommentPermission = summary.CommentPermission
+			player.LastLogoff = summary.LastLogoff
+			player.LocCityID = summary.LocCityId
+			player.LocCountryCode = summary.LocCountryCode
+			player.LocStateCode = summary.LocStateCode
+			player.PersonaName = summary.PersonaName
+			player.PersonaState = summary.PersonaState
+			player.PersonaStateFlags = summary.PersonaStateFlags
+			player.PrimaryClanID = summary.PrimaryClanId
+			player.ProfileState = summary.ProfileState
+			player.ProfileURL = summary.ProfileUrl
+			player.RealName = summary.RealName
+			player.TimeCreated = summary.TimeCreated
+			player.VisibilityState = summary.VisibilityState
 
 			break
 		}
 
 		for _, banState := range banStates {
-			if person.SteamID.String() != banState.SteamId {
+			if player.SteamID.String() != banState.SteamId {
 				continue
 			}
 
-			person.CommunityBanned = banState.CommunityBanned
-			person.VACBans = int(banState.NumberOfVacBans)
-			person.GameBans = int(banState.NumberOfGameBans)
-			person.EconomyBan = EconBanState(banState.EconomyBan)
-			person.CommunityBanned = banState.CommunityBanned
-			person.DaysSinceLastBan = int(banState.DaysSinceLastBan)
+			player.CommunityBanned = banState.CommunityBanned
+			player.VACBans = int(banState.NumberOfVacBans)
+			player.GameBans = int(banState.NumberOfGameBans)
+			player.EconomyBan = EconBanState(banState.EconomyBan)
+			player.CommunityBanned = banState.CommunityBanned
+			player.DaysSinceLastBan = int(banState.DaysSinceLastBan)
 		}
 
-		if errSavePerson := u.repo.Save(ctx, &person); errSavePerson != nil {
+		if errSavePerson := u.repo.Save(ctx, &player); errSavePerson != nil {
 			return 0, errors.Join(errSavePerson, ErrUpdatePerson)
 		}
 	}
@@ -442,8 +441,8 @@ func (u *Persons) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.
 	}
 
 	var coll steamid.Collection
-	for _, person := range people {
-		coll = append(coll, person.SteamID)
+	for _, player := range people {
+		coll = append(coll, player.SteamID)
 	}
 
 	return coll, nil
@@ -484,8 +483,18 @@ func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
 	return people[0], nil
 }
 
-func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (Person, error) {
-	return u.getFirst(ctx, Query{DiscordID: discordID})
+func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (person.Core, error) {
+	fetchedPerson, errGetPerson := u.getFirst(ctx, Query{DiscordID: discordID})
+	if errGetPerson != nil {
+		return person.Core{}, errGetPerson
+	}
+
+	return person.Core{
+		SteamID:         fetchedPerson.SteamID,
+		PermissionLevel: fetchedPerson.PermissionLevel,
+		Name:            fetchedPerson.PersonaName,
+		Avatarhash:      fetchedPerson.AvatarHash,
+	}, nil
 }
 
 func (u *Persons) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error) {

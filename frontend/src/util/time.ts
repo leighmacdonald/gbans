@@ -1,13 +1,47 @@
-import { formatDistance, parseISO, parseJSON } from 'date-fns';
+import { formatDistance, parseISO, parseJSON, interval, intervalToDuration, formatDuration } from 'date-fns';
 import { format } from 'date-fns/format';
 import { isAfter } from 'date-fns/fp';
+import { end, parse } from 'iso8601-duration';
 import { z } from 'zod/v4';
+import { Duration } from '../schema/bans.ts';
 import { DateRange, schemaTimeStamped, TimeStampedWithValidUntil } from '../schema/chrono.ts';
+import { logErr } from './errors.ts';
+
+export const Duration8601ToString = (bt: string) => {
+    switch (bt) {
+        case Duration.durInf:
+            return 'Permanent';
+        case Duration.durCustom:
+            return 'Custom';
+        default: {
+            let label = 'Unknown';
+            try {
+                const endDate = end(parse(bt));
+                if (!endDate) {
+                    break;
+                }
+                label = ``;
+
+                const inter = interval(new Date(), endDate);
+                const duration = intervalToDuration(inter);
+                return formatDuration(duration);
+            } catch (e) {
+                logErr(e);
+                label = `Invalid duration`;
+            }
+            return label;
+        }
+    }
+};
 
 export const durationToMs = (d: number) => d / 1000;
 
 export const durationToSec = (d: number) => d / 1000 / 1000;
 
+/**
+ * Converts a golang duration value to a string representation.
+ * @param d
+ */
 export const durationString = (d: number) => {
     const secs = durationToSec(d);
     let hours: number | string = Math.floor(secs / 3600);

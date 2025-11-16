@@ -28,8 +28,10 @@ type discordHandler struct {
 	discord person.DiscordPersonProvider
 }
 
-func RegisterDiscordCommands(bot discord.Service, bans Bans) {
+func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Provider, discordProv person.DiscordPersonProvider) {
 	var (
+		handler = &discordHandler{bans: bans, persons: persons, discord: discordProv}
+
 		reasons = []*discordgo.ApplicationCommandOptionChoice{
 			{Name: reason.External.String(), Value: reason.External},
 			{Name: reason.Cheating.String(), Value: reason.Cheating},
@@ -55,8 +57,6 @@ func RegisterDiscordCommands(bot discord.Service, bans Bans) {
 			Choices:     reasons,
 		}
 	)
-
-	handler := &discordHandler{bans: bans}
 
 	bot.MustRegisterHandler("ban", &discordgo.ApplicationCommand{
 		Name:                     "ban",
@@ -190,7 +190,7 @@ func (h discordHandler) onMute(ctx context.Context, _ *discordgo.Session, intera
 	}
 	banOpts := Opts{
 		Origin:     Bot,
-		SourceID:   author.SteamID,
+		SourceID:   author.GetSteamID(),
 		TargetID:   steamid.New(opts.String(discord.OptUserIdentifier)),
 		BanType:    bantype.NoComm,
 		Reason:     reason.Reason(reasonValueOpt.IntValue()),
@@ -224,7 +224,7 @@ func (h discordHandler) onBan(ctx context.Context, _ *discordgo.Session, interac
 
 	banOpts := Opts{
 		Origin:     Bot,
-		SourceID:   author.SteamID,
+		SourceID:   author.GetSteamID(),
 		TargetID:   steamid.New(opts[discord.OptUserIdentifier].StringValue()),
 		BanType:    bantype.Banned,
 		Reason:     reason.Reason(opts[discord.OptBanReason].IntValue()),
@@ -278,7 +278,7 @@ func (h discordHandler) onUnban(ctx context.Context, _ *discordgo.Session, inter
 		slog.Warn("Could not fetch unbanned Person", slog.String("steam_id", steamID.String()), slog.String("error", errUser.Error()))
 	}
 
-	return UnbanMessage("/FIXME", user), nil
+	return UnbanMessage(user), nil
 }
 
 func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
@@ -341,12 +341,12 @@ func (h discordHandler) onCheck(ctx context.Context, _ *discordgo.Session, inter
 	return CheckMessage(player, bans, banURL, authorProfile, oldBans), nil
 }
 
-func UnbanMessage(link string, person person.Info) *discordgo.MessageEmbed {
+func UnbanMessage(person person.Info) *discordgo.MessageEmbed {
 	msgEmbed := discord.NewEmbed("User Unbanned Successfully")
 	msgEmbed.Embed().
 		SetColor(discord.ColourSuccess).
 		SetImage(person.GetAvatar().Full()).
-		SetURL(link)
+		SetURL(link.Path(person))
 	msgEmbed.AddFieldsSteamID(person.GetSteamID())
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
@@ -421,19 +421,19 @@ func CheckMessage(player person.Core, banPerson Ban, banURL string, author perso
 	if banPerson.BanID > 0 {
 		banned = banPerson.BanType == bantype.Banned
 		muted = banPerson.BanType == bantype.NoComm
-		reason := banPerson.ReasonText
+		banReason := banPerson.ReasonText
 
-		if len(reason) == 0 {
+		if len(banReason) == 0 {
 			// in case authorProfile ban without authorProfile reason ever makes its way here, we make sure
 			// that Discord doesn't shit itself
-			reason = "none"
+			banReason = "none"
 		}
 
 		expiry = banPerson.ValidUntil
 		createdAt = banPerson.CreatedOn.Format(time.RFC3339)
 
 		msgEmbed.Embed().SetURL(banURL)
-		msgEmbed.Embed().AddField("Reason", reason)
+		msgEmbed.Embed().AddField("Reason", banReason)
 		msgEmbed.Embed().AddField("Created", datetime.FmtTimeShort(banPerson.CreatedOn)).MakeFieldInline()
 
 		if time.Until(expiry) > time.Hour*24*365*5 {
