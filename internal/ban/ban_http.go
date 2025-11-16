@@ -22,20 +22,6 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-func init() { //nolint:gochecknoinits
-	var b AppealState
-	httphelper.Decoder.RegisterConverter(&b, func(input string) reflect.Value {
-		var state AppealState
-		value, errValue := strconv.ParseInt(input, 10, 64)
-		if errValue != nil {
-			return reflect.Value{}
-		}
-		state = AppealState(value)
-
-		return reflect.ValueOf(&state)
-	})
-}
-
 type banHandler struct {
 	Bans
 
@@ -44,6 +30,17 @@ type banHandler struct {
 }
 
 func NewHandlerBans(engine *gin.Engine, authenticator httphelper.Authenticator, bans Bans, config Config, siteName string) {
+	var b AppealState
+	httphelper.Decoder.RegisterConverter(&b, func(input string) reflect.Value {
+		value, errValue := strconv.ParseInt(input, 10, 64)
+		if errValue != nil {
+			return reflect.Value{}
+		}
+		state := AppealState(value)
+
+		return reflect.ValueOf(&state)
+	})
+
 	handler := banHandler{Bans: bans, authorizedKeys: strings.Split(config.AuthorizedKeys, ","), siteName: siteName}
 
 	if config.BDEnabled {
@@ -150,16 +147,10 @@ func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
 
 func (h banHandler) onBanCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req Opts
-		if errBind := ctx.ShouldBindJSON(&req); errBind != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
-
+		req, ok := httphelper.BindJSON[Opts](ctx)
+		if !ok {
 			return
 		}
-		//req, ok := httphelper.BindJSON[Opts](ctx)
-		//if !ok {
-		//	return
-		//}
 
 		user, _ := session.CurrentUserProfile(ctx)
 		if !req.SourceID.Valid() {

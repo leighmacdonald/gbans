@@ -37,9 +37,9 @@ type RouterOpts struct {
 	StaticPath        string
 	HTTPCORSEnabled   bool
 	CORSOrigins       []string
-	Validators        []func(*validator.Validate)
 }
 
+// CreateRouter constructs a new router using gin.Engine with the provided RouterOpts.
 func CreateRouter(opts RouterOpts) (*gin.Engine, error) {
 	if opts.Mode != "" {
 		gin.SetMode(opts.Mode)
@@ -52,19 +52,8 @@ func CreateRouter(opts RouterOpts) (*gin.Engine, error) {
 	engine.Use(recoveryHandler())
 	engine.Use(errorHandler())
 
-	if validator, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		if err := validator.RegisterValidation("steamid", steamidValidator); err != nil {
-			return nil, errors.Join(err, ErrValidator)
-		}
-		if err := validator.RegisterValidation("asnum", asNumValidator); err != nil {
-			return nil, errors.Join(err, ErrValidator)
-		}
-		if err := validator.RegisterValidation("duration", durationValidator); err != nil {
-			return nil, errors.Join(err, ErrValidator)
-		}
-		for _, validatorFn := range opts.Validators {
-			validatorFn(validator)
-		}
+	if errReg := registerCustomValidators(); errReg != nil {
+		return nil, errReg
 	}
 
 	if opts.HTTPLogEnabled {
@@ -96,6 +85,24 @@ func CreateRouter(opts RouterOpts) (*gin.Engine, error) {
 	return engine, nil
 }
 
+// registerCustomValidators handles registering our custom request field type validators within the
+// validation engin that gin uses.
+func registerCustomValidators() error {
+	if instance, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		if err := instance.RegisterValidation("steamid", steamIDValidator); err != nil {
+			return errors.Join(err, ErrValidator)
+		}
+		if err := instance.RegisterValidation("asnum", asNumValidator); err != nil {
+			return errors.Join(err, ErrValidator)
+		}
+		if err := instance.RegisterValidation("duration", durationValidator); err != nil {
+			return errors.Join(err, ErrValidator)
+		}
+	}
+
+	return nil
+}
+
 func durationValidator(fl validator.FieldLevel) bool {
 	dur, ok := fl.Field().Interface().(duration.Duration)
 	if ok {
@@ -105,7 +112,7 @@ func durationValidator(fl validator.FieldLevel) bool {
 	return false
 }
 
-func steamidValidator(fl validator.FieldLevel) bool {
+func steamIDValidator(fl validator.FieldLevel) bool {
 	sid, ok := fl.Field().Interface().(steamid.SteamID)
 	if ok {
 		return sid.Valid()

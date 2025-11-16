@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/schema"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -27,8 +28,13 @@ type Authenticator interface {
 
 func BindJSON[T any](ctx *gin.Context) (T, bool) { //nolint:ireturn
 	var value T
-	if errBind := ctx.BindJSON(&value); errBind != nil {
-		SetError(ctx, NewAPIError(http.StatusBadRequest, ErrBadRequest))
+	if err := ctx.ShouldBindJSON(&value); err != nil {
+		var validationErrs validator.ValidationErrors
+		if errors.As(err, &validationErrs) {
+			SetError(ctx, NewAPIError(http.StatusBadRequest, validationErrs))
+		} else {
+			SetError(ctx, NewAPIError(http.StatusBadRequest, ErrBadRequest))
+		}
 
 		return value, false
 	}
@@ -36,7 +42,7 @@ func BindJSON[T any](ctx *gin.Context) (T, bool) { //nolint:ireturn
 	return value, true
 }
 
-// Set a Decoder instance as a package global, because it caches
+// Decoder is a package global because it caches
 // meta-data about structs, and an instance can be shared safely.
 var Decoder = schema.NewDecoder() //nolint:gochecknoglobals
 

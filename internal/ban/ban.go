@@ -80,21 +80,21 @@ const Permanent = "Permanent"
 // It should not be instantiated directly, but instead use one of the composites that build
 // upon it.
 type Opts struct {
-	TargetID steamid.SteamID `json:"target_id" form:"target_id" binding:"required"`
-	SourceID steamid.SteamID `json:"source_id" form:"source_id" binding:"required"`
+	TargetID steamid.SteamID `json:"target_id" binding:"required,steamid"`
+	SourceID steamid.SteamID `json:"source_id" binding:"required,steamid"`
 	// ISO8601
-	Duration   *duration.Duration `json:"duration" form:"duration" binding:"required"`
-	BanType    bantype.Type       `json:"ban_type" form:"ban_type" binding:"required" oneof:"1,2,3"`
-	Reason     reason.Reason      `json:"reason" form:"reason" binding:"required"`
-	ReasonText string             `json:"reason_text" form:"reason_text" binding:"required_if=Reason 1"`
-	Origin     Origin             `json:"origin" form:"origin"`
-	ReportID   int64              `json:"report_id" form:"report_id" binding:"gte=0"`
-	CIDR       *string            `json:"cidr" form:"cidr" binding:"omitnil,cidrv4"`
-	EvadeOk    bool               `json:"evade_ok" form:"evade_ok" `
-	Name       string             `json:"name" form:"name" `
-	DemoName   string             `json:"demo_name" form:"demo_name"`
-	DemoTick   int                `json:"demo_tick" form:"demo_tick" binding:"required_with=DemoName gte=1"`
-	Note       string             `json:"note" form:"note" binding:"max=100000"`
+	Duration   *duration.Duration `json:"duration" binding:"required,duration"`
+	BanType    bantype.Type       `json:"ban_type" binding:"required"`
+	Reason     reason.Reason      `json:"reason" binding:"required"`
+	ReasonText string             `json:"reason_text"`
+	Origin     Origin             `json:"origin" binding:"required"`
+	ReportID   int64              `json:"report_id" binding:"omitempty,gt=0"`
+	CIDR       *string            `json:"cidr"  binding:"omitnil,cidrv4"`
+	EvadeOk    bool               `json:"evade_ok"`
+	Name       string             `json:"name" binding:"max=36"`
+	DemoName   string             `json:"demo_name" binding:"omitempty,max=256"`
+	DemoTick   int                `json:"demo_tick" binding:"omitempty"`
+	Note       string             `json:"note" binding:"omitempty,max=100000"`
 }
 
 func (opts *Opts) Validate() error {
@@ -225,8 +225,8 @@ type Bans struct {
 	state         *state.State
 }
 
-func NewBans(repository Repository, person person.Provider, logChannelID string, kickChannelID string, owner steamid.SteamID, reports Reports,
-	notif notification.Notifier, state *state.State,
+func NewBans(repository Repository, person person.Provider, logChannelID string, kickChannelID string,
+	owner steamid.SteamID, reports Reports, notif notification.Notifier, state *state.State,
 ) Bans {
 	return Bans{
 		repo:          repository,
@@ -429,8 +429,7 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		return false, errors.Join(err, ErrFetchPerson)
 	}
 
-	s.notif.Send(notification.NewDiscord(s.logChannelID, UnbanMessage(link.Path(player), player)))
-
+	s.notif.Send(notification.NewDiscord(s.logChannelID, UnbanMessage(player)))
 	s.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
@@ -438,7 +437,6 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		link.Path(player),
 		author,
 	))
-
 	s.notif.Send(notification.NewSiteUser(
 		[]steamid.SteamID{player.SteamID},
 		notification.Info,

@@ -20,8 +20,10 @@ import {
     Duration,
     schemaBanPayload,
     BanRecord,
-    Origin
+    Origin,
+    DurationCollection
 } from '../../schema/bans.ts';
+import { Duration8601ToString } from '../../util/time.ts';
 import { ErrorDetails } from '../ErrorDetails.tsx';
 import { Heading } from '../Heading';
 import { LoadingPlaceholder } from '../LoadingPlaceholder.tsx';
@@ -183,6 +185,7 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
                                 }}
                             />
                         </Grid>
+
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'reason'}
@@ -228,14 +231,35 @@ export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
                             />
                         </Grid>
 
-                        <Grid size={{ xs: 6 }}>
+                        <Grid size={{ xs: 12 }}>
                             <form.AppField
                                 name={'duration'}
                                 children={(field) => {
-                                    return <field.TextField label={'Duration'} />;
+                                    return (
+                                        <field.SelectField
+                                            label={'Ban Action Type'}
+                                            items={DurationCollection}
+                                            renderItem={(bt) => {
+                                                return (
+                                                    <MenuItem value={bt} key={`bt-${bt}`}>
+                                                        {Duration8601ToString(bt)}
+                                                    </MenuItem>
+                                                );
+                                            }}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
+
+                        {/*<Grid size={{ xs: 6 }}>*/}
+                        {/*    <form.AppField*/}
+                        {/*        name={'duration'}*/}
+                        {/*        children={(field) => {*/}
+                        {/*            return <field.TextField label={'Duration'} />;*/}
+                        {/*        }}*/}
+                        {/*    />*/}
+                        {/*</Grid>*/}
 
                         <Grid size={{ xs: 12 }}>
                             <form.AppField
