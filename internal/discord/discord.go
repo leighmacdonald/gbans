@@ -17,6 +17,7 @@ var (
 type Service interface {
 	// Send handles sending messages to a channel.
 	Send(channelID string, payload *discordgo.MessageEmbed) error
+	SendNext(channelID string, message *discordgo.MessageSend) error
 
 	// Start initiates the bot service. This is a blocking call.
 	Start(ctx context.Context) error
@@ -27,21 +28,24 @@ type Service interface {
 	// MustRegisterHandler allows the caller to register discord slash commands.
 	// When using discord.CommandTypeModal, the responder must be defined. It will be called when responding
 	// to the modal data submission.
-	MustRegisterHandler(cmd string, appCommand *discordgo.ApplicationCommand, handler Handler, commandType CommandType, responder ...Handler)
+	MustRegisterHandler(cmd string, appCommand *discordgo.ApplicationCommand, handler Handler, commandType CommandType, responder ...Responder)
 
+	MustRegisterButton(prefix string, responder Responder)
 	// Session returns the underlying discordgo session.
 	Session() *discordgo.Session
 }
 
-// Discard implements a dummy service that can be used when discord bot support is disabled.
+// Discard implements a dummy service that can be used when discord bot support is disabled or for testing.
 type Discard struct{}
 
-func (d Discard) Send(_ string, _ *discordgo.MessageEmbed) error { return nil }
-func (d Discard) Start(_ context.Context) error                  { return nil }
-func (d Discard) Session() *discordgo.Session                    { return nil }
-func (d Discard) Close()                                         {}
-func (d Discard) MustRegisterHandler(_ string, _ *discordgo.ApplicationCommand, _ Handler, _ CommandType, _ ...Handler) {
+func (d Discard) Send(_ string, _ *discordgo.MessageEmbed) error    { return nil }
+func (d Discard) SendNext(_ string, _ *discordgo.MessageSend) error { return nil }
+func (d Discard) Start(_ context.Context) error                     { return nil }
+func (d Discard) Session() *discordgo.Session                       { return nil }
+func (d Discard) Close()                                            {}
+func (d Discard) MustRegisterHandler(_ string, _ *discordgo.ApplicationCommand, _ Handler, _ CommandType, _ ...Responder) {
 }
+func (d Discard) MustRegisterButton(_ string, _ Responder) {}
 
 type Config struct {
 	Enabled                 bool   `json:"enabled"`
@@ -152,11 +156,7 @@ const (
 	OptMessage          = "message"
 	OptDuration         = "duration"
 	OptBanReason        = "ban_reason"
-	OptUnbanReason      = "unban_reason"
-	OptBan              = "ban"
-	OptSteam            = "steam"
 	OptNote             = "note"
-	OptCIDR             = "cidr"
 	OptPattern          = "pattern"
 	OptIsRegex          = "is_regex"
 )

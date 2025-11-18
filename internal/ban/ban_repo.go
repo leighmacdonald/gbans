@@ -207,17 +207,6 @@ func (r *Repository) Delete(ctx context.Context, ban *Ban, hardDelete bool) erro
 // Save will insert or update the ban record
 // New records will have the Ban.BanID set automatically.
 func (r *Repository) Save(ctx context.Context, ban *Ban) error {
-	// Ensure the foreign keys are satisfied
-	_, errGetPerson := r.persons.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
-	if errGetPerson != nil {
-		return errors.Join(errGetPerson, ErrPersonTarget)
-	}
-
-	_, errGetAuthor := r.persons.GetOrCreatePersonBySteamID(ctx, ban.SourceID)
-	if errGetAuthor != nil {
-		return errors.Join(errGetAuthor, ErrPersonSource)
-	}
-
 	ban.UpdatedOn = time.Now()
 	if ban.BanID > 0 {
 		return r.updateBan(ctx, ban)
