@@ -1,6 +1,7 @@
 package discord
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -19,7 +20,7 @@ var ErrBind = errors.New("bind error")
 // Bind is responsible for binding the input values from a discord modal input into a struct
 // of the type T. Fields are mapped with the `id` field tag which has a int value which corresponds
 // to a unique `Component.ID` for each user input field in the modal.
-func Bind[T any](interaction *discordgo.InteractionCreate) (T, error) {
+func Bind[T any](ctx context.Context, interaction *discordgo.InteractionCreate) (T, error) {
 	values, errValues := mapInteractionValues(interaction)
 	if errValues != nil {
 		var value T
@@ -27,7 +28,7 @@ func Bind[T any](interaction *discordgo.InteractionCreate) (T, error) {
 		return value, errValues
 	}
 
-	return bindValues[T](values)
+	return bindValues[T](ctx, values)
 }
 
 // mapInteractionValues is responsible for transforming the interaction values into a map indexed by the unique
@@ -49,31 +50,14 @@ func mapInteractionValues(interaction *discordgo.InteractionCreate) (map[int]str
 
 						return values, nil
 					}
-
-					switch choice.ID {
-					case idSteamID:
-						values[choice.ID] = choice.Value
-					case idCIDR:
-						if choice.Value != "" {
-							values[choice.ID] = choice.Value
-						}
-					case idNotes:
-						values[choice.ID] = choice.Value
-					default:
-						continue
-					}
+					values[choice.ID] = choice.Value
 				}
 			}
 		case discordgo.LabelComponent:
 			row := component.(*discordgo.Label)
 			comp := row.Component.(*discordgo.SelectMenu)
-			switch comp.ID {
-			case idReason:
+			if len(comp.Values) > 0 {
 				values[comp.ID] = comp.Values[0]
-			case idDuration:
-				values[comp.ID] = comp.Values[0]
-			default:
-				continue
 			}
 		}
 	}
@@ -81,7 +65,7 @@ func mapInteractionValues(interaction *discordgo.InteractionCreate) (map[int]str
 	return values, nil
 }
 
-func bindValues[T any](values map[int]string) (T, error) {
+func bindValues[T any](ctx context.Context, values map[int]string) (T, error) {
 	var value T
 	// Use reflection to populate struct fields based on `id` tags
 	elem := reflect.ValueOf(&value).Elem()
@@ -103,24 +87,25 @@ func bindValues[T any](values map[int]string) (T, error) {
 			return value, fmt.Errorf("invalid id tag on field %s: %w", field.Name, errParse)
 		}
 
-		// Look up the value in our values map
 		val, exists := values[fieldID]
 		if !exists {
 			continue
 		}
 
-		// Set the field value based on its type
 		if !fieldValue.CanSet() {
 			continue
 		}
 
 		switch fieldValue.Interface().(type) {
-		case netip.Prefix:
+		case *netip.Prefix:
+			if val == "" {
+				continue
+			}
 			prefix, prefixErr := netip.ParsePrefix(val)
 			if prefixErr != nil {
 				return value, prefixErr
 			}
-			fieldValue.Set(reflect.ValueOf(prefix))
+			fieldValue.Set(reflect.ValueOf(&prefix))
 		case *duration.Duration:
 			durVal, errDur := duration.Parse(val)
 			if errDur != nil {
@@ -128,7 +113,10 @@ func bindValues[T any](values map[int]string) (T, error) {
 			}
 			fieldValue.Set(reflect.ValueOf(durVal))
 		case steamid.SteamID:
-			sid := steamid.New(val)
+			sid, errResolve := steamid.Resolve(ctx, val)
+			if errResolve != nil {
+				return value, errResolve
+			}
 			if !sid.Valid() {
 				return value, fmt.Errorf("%w: invalid steamid tag on field %s: %s", ErrBind, field.Name, val)
 			}

@@ -19,13 +19,9 @@ type Notifier interface {
 }
 
 type BotNotifier interface {
+	// Send is deprecated, use SendNext
 	Send(channelID string, embed *discordgo.MessageEmbed) error
-}
-
-type DiscardBot struct{}
-
-func (n *DiscardBot) Send(_ string, _ *discordgo.MessageEmbed) error {
-	return nil
+	SendNext(channelID string, message *discordgo.MessageSend) error
 }
 
 type NullNotifier struct{}
@@ -73,9 +69,11 @@ type Payload struct {
 	DiscordChannels []string
 	Severity        Severity
 	Message         string
-	DiscordEmbed    *discordgo.MessageEmbed
-	Link            string
-	Author          person.Core
+	// deprecated
+	DiscordEmbed *discordgo.MessageEmbed
+	MessageSend  *discordgo.MessageSend
+	Link         string
+	Author       person.Core
 }
 
 func (payload Payload) ValidationError() error {
@@ -92,6 +90,19 @@ func (payload Payload) ValidationError() error {
 	}
 
 	return nil
+}
+
+func NewDiscordNext(channel string, message *discordgo.MessageSend) Payload {
+	return Payload{
+		Types:           []MessageType{Discord},
+		Sids:            nil,
+		Groups:          nil,
+		DiscordChannels: []string{channel},
+		Severity:        Info,
+		Message:         "",
+		MessageSend:     message,
+		Link:            "",
+	}
 }
 
 func NewDiscord(channel string, embed *discordgo.MessageEmbed) Payload {
@@ -176,8 +187,16 @@ func (n *Notifications) Sender(ctx context.Context) {
 			return
 		case notif := <-n.send:
 			for _, channelID := range notif.DiscordChannels {
-				if errSend := n.discord.Send(channelID, notif.DiscordEmbed); errSend != nil {
-					slog.Error("failed to send discord notification payload", slog.String("error", errSend.Error()))
+				if notif.DiscordEmbed != nil {
+					if errSend := n.discord.Send(channelID, notif.DiscordEmbed); errSend != nil {
+						slog.Error("failed to send discord notification payload", slog.String("error", errSend.Error()))
+					}
+				} else if notif.MessageSend != nil {
+					if errSend := n.discord.SendNext(channelID, notif.MessageSend); errSend != nil {
+						slog.Error("failed to send discord notification payload", slog.String("error", errSend.Error()))
+					}
+				} else {
+					slog.Error("No message payload found")
 				}
 			}
 		}
