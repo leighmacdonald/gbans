@@ -12,6 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -51,12 +52,12 @@ func TestHTTPBan(t *testing.T) {
 		BanType: bantype.Banned, Reason: reason.Cheating, Origin: ban.System,
 	})
 
-	allBans := tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))})
+	allBans := tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr.To(int(ban.AnyState))})
 	require.GreaterOrEqual(t, len(allBans), 2)
 
 	tests.DeleteOK(t, router, fmt.Sprintf("/api/ban/%d", createdBan.BanID), ban.RequestUnban{UnbanReasonText: "test reason"})
-	require.Len(t, tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState))}), len(allBans)-1)
-	loadedBans := tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr(int(ban.AnyState)), Deleted: true})
+	require.Len(t, tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr.To(int(ban.AnyState))}), len(allBans)-1)
+	loadedBans := tests.GetGOK[[]ban.Ban](t, router, "/api/bans", ban.RequestQueryOpts{AppealState: ptr.To(int(ban.AnyState)), Deleted: true})
 	require.Len(t, loadedBans, len(allBans))
 
 	stats := tests.GetGOK[ban.Stats](t, router, "/api/stats")
@@ -72,8 +73,4 @@ func TestHTTPBan(t *testing.T) {
 	// require.Equal(t, ban.BotHost, update2.Reason)
 
 	tests.PostAccepted(t, router, fmt.Sprintf("/api/ban/%d/status", loadedBans[0].BanID), ban.SetStatusReq{AppealState: ban.Accepted})
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }
