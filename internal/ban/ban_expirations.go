@@ -40,16 +40,16 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 			continue
 		}
 
-		person, errPerson := monitor.person.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
+		player, errPerson := monitor.person.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
 		if errPerson != nil {
 			slog.Error("Failed to get expired Person", slog.String("error", errPerson.Error()))
 
 			continue
 		}
 
-		name := person.Name
+		name := player.Name
 		if name == "" {
-			name = person.SteamID.String()
+			name = player.SteamID.String()
 		}
 
 		// monitor.notifications.Enqueue(ctx, notification.NewDiscordNotification(monitor.config.Config().Discord.BanLogChannelID, discord.BanExpiresMessage(ban, person, monitor.config.ExtURL(ban))))

@@ -242,14 +242,14 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 			}
 		}
 		user, _ := session.CurrentUserProfile(ctx)
-		asset, errCreate := c.assets.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile, false)
+		mediaAsset, errCreate := c.assets.Create(ctx, user.GetSteamID(), "media", req.Name, mediaFile, false)
 		if errCreate != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errCreate, httphelper.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, asset)
+		ctx.JSON(http.StatusCreated, mediaAsset)
 	}
 }
 
@@ -332,21 +332,21 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 
 			if own >= contest.MaxSubmissions {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, ErrContestMaxEntries,
-					"You have already sumitted the max (%d) allowable items.", contest.MaxSubmissions))
+					"You have already submitted the max (%d) allowable items.", contest.MaxSubmissions))
 
 				return
 			}
 		}
 
 		curUser, _ := session.CurrentUserProfile(ctx)
-		asset, _, errAsset := c.assets.Get(ctx, req.AssetID)
+		existingAsset, _, errAsset := c.assets.Get(ctx, req.AssetID)
 		if errAsset != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errAsset, httphelper.ErrInternal)))
 
 			return
 		}
 
-		if asset.AuthorID != curUser.GetSteamID() {
+		if existingAsset.AuthorID != curUser.GetSteamID() {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
 
 			return

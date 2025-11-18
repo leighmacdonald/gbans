@@ -23,7 +23,6 @@ import (
 )
 
 var (
-	ErrInvalidReportID   = errors.New("invalid report id")
 	ErrReportStateUpdate = errors.New("failed to update report state")
 	ErrReportExists      = errors.New("duplicate user report")
 )

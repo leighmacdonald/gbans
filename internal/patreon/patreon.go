@@ -91,6 +91,10 @@ func (p *Manager) loadUser(client *patreon.Client) (*patreon.UserResponse, error
 		return nil, errors.Join(err, ErrQueryPatreon)
 	}
 
+	if user == nil {
+		return nil, ErrQueryPatreon
+	}
+
 	return user, nil
 }
 
@@ -104,6 +108,12 @@ func (p *Manager) sync(ctx context.Context) {
 	user, errUser := p.loadUser(client)
 	if errUser != nil {
 		slog.Error("Failed to load patreon user", slog.String("error", errUser.Error()))
+
+		return
+	}
+
+	if user == nil {
+		slog.Error("Failed to load user, nil result")
 
 		return
 	}
@@ -219,7 +229,9 @@ func (p Patreon) refreshToken(ctx context.Context, auth Credential) error {
 	if errUser != nil {
 		return errUser
 	}
-
+	if user == nil {
+		return ErrQueryPatreon
+	}
 	creds.PatreonID = user.Data.ID
 
 	if errSave := p.repository.SaveTokens(ctx, creds); errSave != nil {
@@ -301,7 +313,9 @@ func (p Patreon) OnOauthLogin(ctx context.Context, state string, code string) er
 	if errUser != nil {
 		return errUser
 	}
-
+	if user == nil {
+		return ErrQueryPatreon
+	}
 	creds.PatreonID = user.Data.ID
 
 	if errSave := p.repository.SaveTokens(ctx, creds); errSave != nil {

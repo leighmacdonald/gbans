@@ -67,9 +67,9 @@ func NewChangeDetector(dnsProvider Provider, state StateProvider, servers Server
 }
 
 func (c *ChangeDetector) findIP(serverID int) net.IP {
-	for _, state := range c.currentState {
-		if state.ServerID == serverID {
-			return net.ParseIP(state.IP)
+	for _, curState := range c.currentState {
+		if curState.ServerID == serverID {
+			return net.ParseIP(curState.IP)
 		}
 	}
 
@@ -79,12 +79,12 @@ func (c *ChangeDetector) findIP(serverID int) net.IP {
 // sync takes care of checking if the SDR ip of the game servers changes, and if so, it updates the DNS with the
 // new ip.
 func (c *ChangeDetector) sync(ctx context.Context) error {
-	servers, errServers := c.servers.Servers(ctx, servers.Query{SDROnly: true})
+	sdrServers, errServers := c.servers.Servers(ctx, servers.Query{SDROnly: true})
 	if errServers != nil {
 		return errServers
 	}
 
-	for _, server := range servers {
+	for _, server := range sdrServers {
 		currentIP := c.findIP(server.ServerID)
 		if currentIP == nil {
 			continue

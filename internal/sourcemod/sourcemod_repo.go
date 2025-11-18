@@ -37,22 +37,22 @@ func (r Repository) QueryBanState(ctx context.Context, steamID steamid.SteamID, 
 		banSource  *BanSource
 		banID      *int
 		banType    *bantype.Type
-		reason     *reason.Reason
+		banReason  *reason.Reason
 		evadeOK    *bool
 		validUntil *time.Time
 		banSteamID *int64
 	)
 
 	row := r.QueryRow(ctx, query, steamID.String(), ipAddr.String())
-	if errScan := row.Scan(&banSource, &banID, &banType, &reason, &evadeOK, &validUntil, &banSteamID); errScan != nil {
+	if errScan := row.Scan(&banSource, &banID, &banType, &banReason, &evadeOK, &validUntil, &banSteamID); errScan != nil {
 		return banState, errors.Join(errScan, database.ErrScanResult)
 	}
 
-	if banSource != nil && banType != nil && reason != nil && validUntil != nil && banID != nil && evadeOK != nil {
+	if banSource != nil && banType != nil && banReason != nil && validUntil != nil && banID != nil && evadeOK != nil {
 		banState.BanSource = *banSource
 		banState.BanID = *banID
 		banState.BanType = *banType
-		banState.Reason = *reason
+		banState.Reason = *banReason
 		banState.EvadeOK = *evadeOK
 		banState.ValidUntil = *validUntil
 

@@ -67,8 +67,6 @@ var (
 	ErrOpenDest      = errors.New("failed to open output file")
 	ErrCopyDest      = errors.New("failed to copy content to output file")
 	ErrInsecureZip   = errors.New("insecure zip extraction detected")
-	ErrFileList      = errors.New("failed to build file list for import")
-	ErrLoad          = errors.New("failed to load dataset")
 	ErrConvertString = errors.New("failed to convert value to string")
 	ErrParseLocation = errors.New("failed to parse location")
 	ErrAPIKey        = errors.New("invalid maxmind api key")
@@ -358,7 +356,11 @@ func ReadASNRecords(ctx context.Context, path string, ipv6 bool, onRecords ASNLo
 		return errors.Join(errOpen, ErrOpenFile)
 	}
 
-	defer asnFile.Close()
+	defer func() {
+		if err := asnFile.Close(); err != nil {
+			slog.Error("Failed to close ASN file", slog.String("error", err.Error()))
+		}
+	}()
 
 	var (
 		reader  = csv.NewReader(asnFile)
@@ -439,7 +441,11 @@ func ReadLocationRecords(ctx context.Context, path string, ipv6 bool, onRecords 
 		return errors.Join(errOpen, ErrOpenFile)
 	}
 
-	defer locationFile.Close()
+	defer func() {
+		if err := locationFile.Close(); err != nil {
+			slog.Error("Failed to close location file", slog.String("error", err.Error()))
+		}
+	}()
 
 	var (
 		reader  = csv.NewReader(locationFile)
@@ -503,15 +509,19 @@ func ReadLocationRecords(ctx context.Context, path string, ipv6 bool, onRecords 
 type ProxyLoader func(ctx context.Context, truncate bool, records []ProxyRecord) error
 
 func ReadProxyRecords(ctx context.Context, path string, onRecords ProxyLoader) error {
-	asnFile, errOpen := os.Open(path)
+	proxyFile, errOpen := os.Open(path)
 	if errOpen != nil {
 		return errors.Join(errOpen, ErrOpenFile)
 	}
 
-	defer asnFile.Close()
+	defer func() {
+		if err := proxyFile.Close(); err != nil {
+			slog.Error("Failed to close proxy file", slog.String("error", err.Error()))
+		}
+	}()
 
 	var (
-		reader  = csv.NewReader(asnFile)
+		reader  = csv.NewReader(proxyFile)
 		records []ProxyRecord
 		first   = true
 		total   int64

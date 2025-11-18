@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
@@ -62,14 +61,6 @@ type BuildInfo struct {
 	BuildVersion string
 	Commit       string
 	Date         string
-}
-
-func Version() BuildInfo {
-	return BuildInfo{
-		BuildVersion: BuildVersion,
-		Commit:       BuildCommit,
-		Date:         BuildDate,
-	}
 }
 
 type GBans struct {
@@ -197,7 +188,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.states)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database),
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons))) // TODO Does THE & work here?
-	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), g.config)
+	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.chat = chat.NewChat(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler)
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.NewMetrics(g.broadcaster)
@@ -296,14 +287,14 @@ func (g *GBans) createAPIClient() (*thirdparty.TFAPI, error) {
 }
 
 func (g *GBans) serverFetcher(ctx context.Context) ([]state.ServerConfig, error) {
-	servers, errServers := g.servers.Servers(ctx, servers.Query{})
+	knownServers, errServers := g.servers.Servers(ctx, servers.Query{})
 	if errServers != nil {
 		return nil, errServers
 	}
 
-	confs := make([]state.ServerConfig, len(servers))
-	for index, server := range servers {
-		confs[index] = state.ServerConfig{
+	configs := make([]state.ServerConfig, len(knownServers))
+	for index, server := range knownServers {
+		configs[index] = state.ServerConfig{
 			ServerID:        server.ServerID,
 			Tag:             server.ShortName,
 			DefaultHostname: server.Name,
@@ -320,12 +311,12 @@ func (g *GBans) serverFetcher(ctx context.Context) ([]state.ServerConfig, error)
 		}
 	}
 
-	return confs, nil
+	return configs, nil
 }
 
 func (g *GBans) mustCreateBot(conf discord.Config) discord.Service { //nolint:ireturn
 	if conf.BotEnabled {
-		discord, errDiscord := bot.New(bot.Opts{
+		discordBot, errDiscord := discord.New(discord.Opts{
 			Token:   conf.Token,
 			AppID:   conf.AppID,
 			GuildID: conf.GuildID,
@@ -334,7 +325,7 @@ func (g *GBans) mustCreateBot(conf discord.Config) discord.Service { //nolint:ir
 			panic(errDiscord)
 		}
 
-		return discord
+		return discordBot
 	}
 
 	return discord.Discard{}
@@ -349,14 +340,14 @@ func (g *GBans) startBot(ctx context.Context) error {
 }
 
 func (g *GBans) setupPlayerQueue(ctx context.Context) {
-	playerqueueRepo := playerqueue.NewRepository(g.database, g.persons)
+	playerQueueRepo := playerqueue.NewRepository(g.database, g.persons)
 	// Pre-load some messages into queue message cache
-	chatlogs, errChatlogs := playerqueueRepo.Query(ctx, playerqueue.QueryOpts{Filter: query.Filter{Limit: 100}})
+	chatlogs, errChatlogs := playerQueueRepo.Query(ctx, playerqueue.QueryOpts{Filter: query.Filter{Limit: 100}})
 	if errChatlogs != nil {
 		slog.Error("Failed to warm playerqueue chatlogs", slog.String("error", errChatlogs.Error()))
 		chatlogs = []playerqueue.ChatLog{}
 	}
-	g.playerQueue = playerqueue.NewPlayerqueue(ctx, playerqueueRepo, g.persons, g.servers, g.states, chatlogs, g.config.Config().Discord.PlayerqueueChannelID, g.notifications)
+	g.playerQueue = playerqueue.NewPlayerqueue(ctx, playerQueueRepo, g.persons, g.servers, g.states, chatlogs, g.config.Config().Discord.PlayerqueueChannelID, g.notifications)
 }
 
 func (g *GBans) setupSentry() {
@@ -696,7 +687,7 @@ func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, du
 }
 
 // downloadManager is responsible for connecting to the remote servers via ssh/scp and executing instructions.
-// Multiple handlers can be registered that will be ran for every update call.
+// Multiple handlers can be registered that will be run for every update call.
 func downloadManager(ctx context.Context, freq time.Duration, store database.Database, conf *config.Configuration, handlers ...scp.ConnectionHandler) {
 	var (
 		timeout     time.Duration
@@ -714,7 +705,7 @@ func downloadManager(ctx context.Context, freq time.Duration, store database.Dat
 	for {
 		select {
 		case <-ticker.C:
-			servers, errServers := repo.Servers(ctx)
+			knownServers, errServers := repo.Servers(ctx)
 			if errServers != nil {
 				if errors.Is(errServers, database.ErrNoResult) {
 					continue
@@ -725,7 +716,7 @@ func downloadManager(ctx context.Context, freq time.Duration, store database.Dat
 				continue
 			}
 
-			for _, server := range servers {
+			for _, server := range knownServers {
 				actualAddr := scp.HostPart(server.Address)
 				exists := false
 				for _, conn := range connections {

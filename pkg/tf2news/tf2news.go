@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -27,7 +28,7 @@ type FeedItem struct {
 	GameUpdate  bool
 }
 
-// Fetch retreives and parses the latest news items from the teamfortress.com RSS feed.
+// Fetch retrieves and parses the latest news items from the teamfortress.com RSS feed.
 func Fetch(ctx context.Context) ([]*FeedItem, error) {
 	client := &http.Client{Timeout: time.Second * 30}
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, feedURL, nil)
@@ -38,7 +39,11 @@ func Fetch(ctx context.Context) ([]*FeedItem, error) {
 	if errResp != nil {
 		return nil, fmt.Errorf("%w: %w", ErrFetch, errResp)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			slog.Error("Failed to close response body", slog.String("error", err.Error()))
+		}
+	}()
 
 	return FromReader(resp.Body)
 }

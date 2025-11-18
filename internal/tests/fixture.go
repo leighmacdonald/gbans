@@ -39,7 +39,9 @@ func NewFixture() *Fixture {
 	if errStore != nil {
 		panic(errStore)
 	}
-
+	if testDB == nil {
+		panic("nil test database")
+	}
 	databaseConn := database.New(testDB.dsn, true, false)
 	if err := databaseConn.Connect(testCtx); err != nil {
 		panic(err)
@@ -100,16 +102,16 @@ $do$;`
 
 func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID, perm permission.Privilege) personDomain.Core {
 	people := person.NewPersons(person.NewRepository(f.Database, f.Config.Config().Clientprefs.CenterProjectiles), OwnerSID, nil)
-	person, errPerson := people.GetOrCreatePersonBySteamID(ctx, steamID)
+	player, errPerson := people.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPerson != nil {
 		panic(errPerson)
 	}
 	full, _ := people.BySteamID(ctx, steamID)
 	full.PermissionLevel = perm
-	person.PermissionLevel = perm
+	player.PermissionLevel = perm
 	_ = people.Save(ctx, &full)
 
-	return person
+	return player
 }
 
 func (f Fixture) CreateTestServer(ctx context.Context) servers.Server {

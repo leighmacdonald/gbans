@@ -42,7 +42,7 @@ func RegisterDiscordCommands(bot discord.Service, anticheat AntiCheat) {
 				},
 			},
 		},
-	}, handler.onAC)
+	}, handler.onAC, discord.CommandTypeCLI)
 }
 
 func (h discordHandler) onAC(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
@@ -68,7 +68,7 @@ func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 		return nil, steamid.ErrInvalidSID
 	}
 
-	person, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+	player, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errAuthor != nil {
 		return nil, errAuthor
 	}
@@ -78,7 +78,7 @@ func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, in
 		return nil, errQuery
 	}
 
-	return ACPlayerLogs(person, logs), nil
+	return ACPlayerLogs(player, logs), nil
 }
 
 func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {

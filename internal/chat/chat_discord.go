@@ -18,7 +18,7 @@ func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
 	bot.MustRegisterHandler("filter", &discordgo.ApplicationCommand{
 		Name:                     "filter",
 		Description:              "Manage and test global word filters",
-		DMPermission:             &discord.DmPerms,
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: &discord.ModPerms,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -67,7 +67,7 @@ func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
 				},
 			},
 		},
-	}, handler.makeOnFilter)
+	}, handler.makeOnFilter, discord.CommandTypeCLI)
 }
 
 type discordHandler struct {
