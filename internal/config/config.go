@@ -118,7 +118,6 @@ func (rm RunMode) String() string {
 type FileServeMode string
 
 const (
-	S3Mode    FileServeMode = "s3"
 	LocalMode FileServeMode = "local"
 )
 

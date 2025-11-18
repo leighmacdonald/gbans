@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/json"
 	"github.com/leighmacdonald/gbans/internal/oauth"
@@ -54,12 +55,12 @@ type UserDetail struct {
 }
 
 type DiscordOAuth struct {
-	config     *config.Configuration
+	config     discord.Config
 	state      *oauth.LoginStateTracker
 	repository Repository
 }
 
-func NewOAuth(repository Repository, config *config.Configuration) DiscordOAuth {
+func NewOAuth(repository Repository, config discord.Config) DiscordOAuth {
 	return DiscordOAuth{
 		repository: repository,
 		config:     config,
@@ -103,11 +104,9 @@ func (d DiscordOAuth) RefreshTokens(ctx context.Context) error {
 }
 
 func (d DiscordOAuth) fetchRefresh(ctx context.Context, credentials Credential) (Credential, error) {
-	conf := d.config.Config()
-
 	form := url.Values{}
-	form.Set("client_id", conf.Discord.AppID)
-	form.Set("client_secret", conf.Discord.AppSecret)
+	form.Set("client_id", d.config.AppID)
+	form.Set("client_secret", d.config.AppSecret)
 	form.Set("refresh_token", credentials.RefreshToken)
 	form.Set("grant_type", "refresh_token")
 
@@ -170,11 +169,9 @@ func (d DiscordOAuth) Logout(ctx context.Context, steamID steamid.SteamID) error
 		return nil
 	}
 
-	conf := d.config.Config()
-
 	form := url.Values{}
-	form.Set("client_id", conf.Discord.AppID)
-	form.Set("client_secret", conf.Discord.AppSecret)
+	form.Set("client_id", d.config.AppID)
+	form.Set("client_secret", d.config.AppSecret)
 	form.Set("token", token.AccessToken)
 	form.Set("token_type_hint", "access_token")
 
@@ -198,18 +195,16 @@ func (d DiscordOAuth) Logout(ctx context.Context, steamID steamid.SteamID) error
 }
 
 func (d DiscordOAuth) CreateStatefulLoginURL(steamID steamid.SteamID) (string, error) {
-	config := d.config.Config()
-
 	inviteLink, errParse := url.Parse("https://discord.com/oauth2/authorize")
 	if errParse != nil {
 		return "", errors.Join(errParse, ErrValidateURL)
 	}
 
 	values := inviteLink.Query()
-	values.Set("client_id", config.Discord.AppID)
+	values.Set("client_id", d.config.AppID)
 	values.Set("scope", "identify")
 	values.Set("state", d.state.Create(steamID))
-	values.Set("redirect_uri", config.ExtURLRaw("/discord/oauth"))
+	values.Set("redirect_uri", link.Raw("/discord/oauth"))
 	values.Set("response_type", "code")
 
 	inviteLink.RawQuery = values.Encode()
@@ -286,12 +281,10 @@ func (d DiscordOAuth) fetchDiscordUser(ctx context.Context, client *http.Client,
 }
 
 func (d DiscordOAuth) fetchToken(ctx context.Context, client *http.Client, code string) (Credential, error) {
-	conf := d.config.Config()
-
 	form := url.Values{}
-	form.Set("client_id", conf.Discord.AppID)
-	form.Set("client_secret", conf.Discord.AppSecret)
-	form.Set("redirect_uri", conf.ExtURLRaw("/discord/oauth"))
+	form.Set("client_id", d.config.AppID)
+	form.Set("client_secret", d.config.AppSecret)
+	form.Set("redirect_uri", link.Raw("/discord/oauth"))
 	form.Set("code", code)
 	form.Set("grant_type", "authorization_code")
 	// form.Set("state", state.String())

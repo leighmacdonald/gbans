@@ -23,7 +23,7 @@ func RegisterDiscordCommands(service discord.Service, state *state.State, person
 
 	service.MustRegisterHandler("find", &discordgo.ApplicationCommand{
 		Name:                     "find",
-		DMPermission:             &discord.DmPerms,
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: &discord.ModPerms,
 		Description:              "Find a user on any of the servers",
 		Options: []*discordgo.ApplicationCommandOption{
@@ -34,11 +34,11 @@ func RegisterDiscordCommands(service discord.Service, state *state.State, person
 				Required:    true,
 			},
 		},
-	}, handler.onFind)
+	}, handler.onFind, discord.CommandTypeCLI)
 
 	service.MustRegisterHandler("players", &discordgo.ApplicationCommand{
 		Name:                     "players",
-		DMPermission:             &discord.DmPerms,
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: &discord.ModPerms,
 		Description:              "Show a table of the current players on the server",
 		Options: []*discordgo.ApplicationCommandOption{
@@ -49,11 +49,11 @@ func RegisterDiscordCommands(service discord.Service, state *state.State, person
 				Required:    true,
 			},
 		},
-	}, handler.onPlayers)
+	}, handler.onPlayers, discord.CommandTypeCLI)
 
 	service.MustRegisterHandler("kick", &discordgo.ApplicationCommand{
 		Name:                     "kick",
-		DMPermission:             &discord.DmPerms,
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: &discord.ModPerms,
 		Description:              "Kick a user from any server they are playing on",
 		Options: []*discordgo.ApplicationCommandOption{
@@ -70,12 +70,12 @@ func RegisterDiscordCommands(service discord.Service, state *state.State, person
 				Required:    true,
 			},
 		},
-	}, handler.onKick)
+	}, handler.onKick, discord.CommandTypeCLI)
 
 	service.MustRegisterHandler("psay", &discordgo.ApplicationCommand{
 		Name:                     "psay",
 		Description:              "Privately message a player",
-		DMPermission:             &discord.DmPerms,
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: &discord.ModPerms,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -91,12 +91,12 @@ func RegisterDiscordCommands(service discord.Service, state *state.State, person
 				Required:    true,
 			},
 		},
-	}, handler.onPSay)
+	}, handler.onPSay, discord.CommandTypeCLI)
 
 	service.MustRegisterHandler("csay", &discordgo.ApplicationCommand{
 		Name:                     "csay",
 		Description:              "Send a centered message to the whole server",
-		DMPermission:             &discord.DmPerms,
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: &discord.ModPerms,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -112,12 +112,12 @@ func RegisterDiscordCommands(service discord.Service, state *state.State, person
 				Required:    true,
 			},
 		},
-	}, handler.onCSay)
+	}, handler.onCSay, discord.CommandTypeCLI)
 
 	service.MustRegisterHandler("say", &discordgo.ApplicationCommand{
 		Name:                     "say",
 		Description:              "Send a console message to the whole server",
-		DMPermission:             &discord.DmPerms,
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: &discord.ModPerms,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
@@ -133,7 +133,7 @@ func RegisterDiscordCommands(service discord.Service, state *state.State, person
 				Required:    true,
 			},
 		},
-	}, handler.onSay)
+	}, handler.onSay, discord.CommandTypeCLI)
 
 	service.MustRegisterHandler("servers", &discordgo.ApplicationCommand{
 		Name:                     "servers",
@@ -146,7 +146,7 @@ func RegisterDiscordCommands(service discord.Service, state *state.State, person
 				Description: "Return the full status output including server versions and tags",
 			},
 		},
-	}, handler.onServers)
+	}, handler.onServers, discord.CommandTypeCLI)
 }
 
 type DiscordHandler struct {
@@ -306,7 +306,7 @@ func (d DiscordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, int
 				continue
 			}
 
-			network, errNetwork := d.network.QueryNetwork(ctx, address)
+			foundNetwork, errNetwork := d.network.QueryNetwork(ctx, address)
 			if errNetwork != nil {
 				slog.Error("Failed to get network info", slog.String("error", errNetwork.Error()))
 
@@ -314,13 +314,13 @@ func (d DiscordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, int
 			}
 
 			flag := ""
-			if network.Location.CountryCode != "" {
-				flag = fmt.Sprintf(":flag_%s: ", strings.ToLower(network.Location.CountryCode))
+			if foundNetwork.Location.CountryCode != "" {
+				flag = fmt.Sprintf(":flag_%s: ", strings.ToLower(foundNetwork.Location.CountryCode))
 			}
 
 			proxyStr := ""
-			if network.Proxy.ProxyType != "" {
-				proxyStr = fmt.Sprintf("Threat: %s | %s | %s", network.Proxy.ProxyType, network.Proxy.Threat, network.Proxy.UsageType)
+			if foundNetwork.Proxy.ProxyType != "" {
+				proxyStr = fmt.Sprintf("Threat: %s | %s | %s", foundNetwork.Proxy.ProxyType, foundNetwork.Proxy.Threat, foundNetwork.Proxy.UsageType)
 			}
 
 			rows = append(rows, fmt.Sprintf("%s`%s` `%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",

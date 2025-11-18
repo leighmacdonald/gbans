@@ -225,16 +225,16 @@ func (p Playerqueue) SetChatStatus(ctx context.Context, authorID steamid.SteamID
 		return errAuthor
 	}
 
-	person, errPerson := p.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+	player, errPerson := p.persons.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPerson != nil {
 		return errPerson
 	}
 
-	if author.PermissionLevel <= person.PermissionLevel {
+	if author.PermissionLevel <= player.PermissionLevel {
 		return permission.ErrDenied
 	}
 
-	if errSave := p.repo.SetChatStatus(ctx, person.SteamID, status); errSave != nil {
+	if errSave := p.repo.SetChatStatus(ctx, player.SteamID, status); errSave != nil {
 		return errSave
 	}
 
@@ -245,9 +245,9 @@ func (p Playerqueue) SetChatStatus(ctx context.Context, authorID steamid.SteamID
 		return errGetProfile
 	}
 
-	p.notif.Send(notification.NewDiscord(p.playerqueueChannelID, NewPlayerqueueChatStatus(author, person, status, reason)))
+	p.notif.Send(notification.NewDiscord(p.playerqueueChannelID, NewPlayerqueueChatStatus(author, player, status, reason)))
 
-	slog.Info("Set chat status", slog.String("steam_id", person.SteamID.String()), slog.String("status", string(status)))
+	slog.Info("Set chat status", slog.String("steam_id", player.SteamID.String()), slog.String("status", string(status)))
 
 	return nil
 }

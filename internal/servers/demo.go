@@ -482,7 +482,11 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID 
 	if errDetail != nil {
 		return nil, errDetail
 	}
+	if demoDetail == nil {
+		slog.Error("Failed to parse demo details, nil details")
 
+		return nil, nil
+	}
 	for key := range demoDetail.State.Users {
 		intStats[key] = gin.H{}
 	}

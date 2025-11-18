@@ -187,10 +187,8 @@ func (n *Notifications) Sender(ctx context.Context) {
 func (n *Notifications) SendSite(ctx context.Context, targetIDs steamid.Collection, severity Severity, message string, link string, author person.Info) error {
 	var authorID *int64
 	sid := author.GetSteamID()
-	if author != nil {
-		sid64 := sid.Int64()
-		authorID = &sid64
-	}
+	sid64 := sid.Int64()
+	authorID = &sid64
 
 	return n.repository.SendSite(ctx, sliceutil.Uniq(targetIDs), severity, message, link, authorID)
 }

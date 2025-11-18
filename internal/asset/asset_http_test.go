@@ -38,7 +38,9 @@ func TestHTTPSaveAsset(t *testing.T) {
 	writer := multipart.NewWriter(body)
 	// create a new form-data header name data and filename data.txt
 	dataPart, err := writer.CreateFormFile("file", name)
-	_, _ = dataPart.Write(contentA)
+	require.NoError(t, err)
+	_, errWrite := dataPart.Write(contentA)
+	require.NoError(t, errWrite)
 	_ = writer.WriteField("name", name)
 	require.NoError(t, writer.Close())
 
