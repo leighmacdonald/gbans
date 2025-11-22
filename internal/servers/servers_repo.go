@@ -137,8 +137,23 @@ func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) 
 	return servers, nil
 }
 
-// SaveServer updates or creates the server data in the database.
+// Save updates or creates the server data in the database.
 func (r *Repository) Save(ctx context.Context, server *Server) error {
+	if server.ServerID > 0 {
+		const update = `
+			UPDATE server SET 
+            	short_name = $1, name = $2, address = $3, port = $4, rcon = $5, token_created_on = $6, reserved_slots = $7,
+				updated_on = $8, password = $9, is_enabled = $10, region = $11, cc = $12, latitude = $13, longitude = $14,
+      			deleted = $15, log_secret = $16, enable_stats = $17, address_internal = $18, sdr_enabled = $19
+			WHERE server_id = $20`
+
+		return database.DBErr(r.Exec(ctx, update, server.ShortName, server.Name, server.Address, server.Port,
+			server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.UpdatedOn,
+			server.Password, server.IsEnabled, server.Region, server.CC,
+			server.Latitude, server.Longitude, server.Deleted, server.LogSecret, server.EnableStats,
+			server.AddressInternal, server.SDREnabled, server.ServerID))
+	}
+
 	const query = `
 		INSERT INTO server (
 		    short_name, name, address, port, rcon, token_created_on,

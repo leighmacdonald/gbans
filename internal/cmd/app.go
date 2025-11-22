@@ -379,7 +379,7 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go g.networks.Start(ctx)
 	go g.notifications.Sender(ctx)
 
-	go downloadManager(ctx, time.Minute*5, g.database, g.config, g.demos, g.anticheat)
+	go downloadManager(ctx, time.Minute*5, g.database, conf.SSH, g.demos, g.anticheat)
 
 	go func() {
 		if err := g.states.Start(ctx); err != nil {
@@ -387,44 +387,42 @@ func (g *GBans) StartBackground(ctx context.Context) {
 		}
 	}()
 
-	go func() {
+	if errSync := g.anticheat.SyncDemoIDs(ctx, 100); errSync != nil {
+		slog.Error("failed to sync anticheat demos")
+	}
+
+	go g.memberships.Update(ctx)
+	go g.banExpirations.Update(ctx)
+	go g.blocklists.Sync(ctx)
+	go g.demos.Cleanup(ctx)
+
+	membershipsTicker := time.NewTicker(12 * time.Hour)
+	expirationsTicker := time.NewTicker(60 * time.Second)
+	reportIntoTicker := time.NewTicker(24 * time.Hour)
+	blocklistTicker := time.NewTicker(6 * time.Hour)
+	demoTicker := time.NewTicker(15 * time.Minute)
+
+	select {
+	case <-ctx.Done():
+		return
+	case <-membershipsTicker.C:
+		go g.memberships.Update(ctx)
+	case <-expirationsTicker.C:
+		go g.banExpirations.Update(ctx)
+	case <-reportIntoTicker.C:
+		go func() {
+			if errMeta := g.reports.MetaStats(ctx); errMeta != nil {
+				slog.Error("Failed to generate meta stats", slog.String("error", errMeta.Error()))
+			}
+		}()
+	case <-blocklistTicker.C:
+		go g.blocklists.Sync(ctx)
+	case <-demoTicker.C:
+		go g.demos.Cleanup(ctx)
 		if errSync := g.anticheat.SyncDemoIDs(ctx, 100); errSync != nil {
 			slog.Error("failed to sync anticheat demos")
 		}
-
-		go g.memberships.Update(ctx)
-		go g.banExpirations.Update(ctx)
-		go g.blocklists.Sync(ctx)
-		go g.demos.Cleanup(ctx)
-
-		membershipsTicker := time.NewTicker(12 * time.Hour)
-		expirationsTicker := time.NewTicker(60 * time.Second)
-		reportIntoTicker := time.NewTicker(24 * time.Hour)
-		blocklistTicker := time.NewTicker(6 * time.Hour)
-		demoTicker := time.NewTicker(15 * time.Minute)
-
-		select {
-		case <-ctx.Done():
-			return
-		case <-membershipsTicker.C:
-			go g.memberships.Update(ctx)
-		case <-expirationsTicker.C:
-			go g.banExpirations.Update(ctx)
-		case <-reportIntoTicker.C:
-			go func() {
-				if errMeta := g.reports.MetaStats(ctx); errMeta != nil {
-					slog.Error("Failed to generate meta stats", slog.String("error", errMeta.Error()))
-				}
-			}()
-		case <-blocklistTicker.C:
-			go g.blocklists.Sync(ctx)
-		case <-demoTicker.C:
-			go g.demos.Cleanup(ctx)
-			if errSync := g.anticheat.SyncDemoIDs(ctx, 100); errSync != nil {
-				slog.Error("failed to sync anticheat demos")
-			}
-		}
-	}()
+	}
 }
 
 func (g *GBans) Serve(rootCtx context.Context) error {
@@ -678,9 +676,9 @@ func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, du
 		return err
 	} else if newBan.BanID > 0 {
 		slog.Info("Banned cheater", slog.String("detection", string(entry.Detection)),
-			slog.Int64("steam_id", entry.SteamID.Int64()))
-		g.notifications.Send(notification.NewDiscord(g.config.Config().Discord.AnticheatChannelID,
-			anticheat.NewAnticheatTrigger(newBan.Note, g.config.Config().Anticheat.Action, entry, count)))
+			slog.String("steam_id", entry.SteamID.String()))
+		g.notifications.Send(notification.NewDiscordNext(conf.Discord.AnticheatChannelID,
+			anticheat.NewAnticheatTrigger(newBan.Note, conf.Anticheat.Action, entry, count)))
 	}
 
 	return nil
@@ -688,9 +686,9 @@ func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, du
 
 // downloadManager is responsible for connecting to the remote servers via ssh/scp and executing instructions.
 // Multiple handlers can be registered that will be run for every update call.
-func downloadManager(ctx context.Context, freq time.Duration, store database.Database, conf *config.Configuration, handlers ...scp.ConnectionHandler) {
+func downloadManager(ctx context.Context, freq time.Duration, store database.Database, conf scp.Config, handlers ...scp.ConnectionHandler) {
 	var (
-		timeout     time.Duration
+		timeout     = time.Second * 120
 		connections []scp.Connection
 		repo        = scp.NewRepository(store)
 		ticker      = time.NewTicker(freq)
@@ -728,7 +726,7 @@ func downloadManager(ctx context.Context, freq time.Duration, store database.Dat
 				}
 
 				if !exists {
-					connection := scp.NewConnection(repo, conf.Config().SSH)
+					connection := scp.NewConnection(repo, conf, server)
 					for _, handler := range handlers {
 						connection.AddHandler(handler)
 					}

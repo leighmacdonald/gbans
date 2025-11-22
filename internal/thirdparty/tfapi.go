@@ -66,6 +66,21 @@ func (c TFAPI) MetaProfile(ctx context.Context, steamIDs steamid.Collection) ([]
 	return *resp.JSON200, nil
 }
 
+func (c TFAPI) SteamBans(ctx context.Context, steamIDs steamid.Collection) ([]SteamBan, error) {
+	resp, errResp := c.Client.SteamBansWithResponse(ctx, &SteamBansParams{
+		Steamids: strings.Join(steamIDs.ToStringSlice(), ","),
+	})
+	if errResp != nil {
+		return nil, errResp
+	}
+
+	if resp.JSON200 == nil {
+		return nil, ErrNoResult
+	}
+
+	return *resp.JSON200, nil
+}
+
 func (c TFAPI) Summaries(ctx context.Context, steamIDs steamid.Collection) ([]PlayerSummaryResponse, error) {
 	resp, errResp := c.Client.SteamSummariesWithResponse(ctx, &SteamSummariesParams{
 		Steamids: strings.Join(steamIDs.ToStringSlice(), ","),

@@ -90,10 +90,9 @@ func NewAntiCheat(repo Repository, config Config, notif notification.Notifier, h
 	}
 }
 
-func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo) error {
+func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo, config scp.Config) error {
 	for _, instance := range server.ServerIDs {
-		logDir := server.GamePath(instance, "tf/addons/sourcemod/logs/stac")
-
+		logDir := server.GamePath(config.StacPathFmt, instance)
 		filelist, errFilelist := client.List(ctx, logDir, option.NewPage(0, 1))
 		if errFilelist != nil {
 			slog.Error("remote list dir failed", slog.String("error", errFilelist.Error()),

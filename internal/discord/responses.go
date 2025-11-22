@@ -2,10 +2,8 @@ package discord
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/olekukonko/tablewriter"
 )
 
 const (
@@ -14,26 +12,6 @@ const (
 	ColourWarn    = 14327864
 	ColourError   = 13631488
 )
-
-func DefaultTable(writer io.Writer) *tablewriter.Table {
-	tbl := tablewriter.NewTable(writer)
-	// tbl.Configure(func(cfg *tablewriter.Config) {
-	// 	cfg.Header.Formatting = tw.AlignLeft
-	// })
-	// tbl.W(tablewriter.WithHeaderAlignment(tw.AlignLeft))
-	// tbl.Config().Header.Formatting = tablewriter.
-	// 	tbl.SetAutoFormatHeaders(true)
-	// tbl.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	// tbl.SetCenterSeparator("")
-	// tbl.SetColumnSeparator("")
-	// tbl.SetRowSeparator("")
-	// tbl.SetHeaderLine(false)
-	// tbl.SetTablePadding("")
-	// tbl.SetAutoMergeCells(true)
-	// tbl.SetAlignment(tablewriter.ALIGN_LEFT)
-
-	return tbl
-}
 
 func ErrorMessage(command string, err error) *discordgo.MessageEmbed {
 	return NewEmbed("Error Returned").Embed().

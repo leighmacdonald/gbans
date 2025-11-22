@@ -3,15 +3,15 @@ package anticheat
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type discordHandler struct {
@@ -23,7 +23,7 @@ type discordHandler struct {
 func RegisterDiscordCommands(bot discord.Service, anticheat AntiCheat) {
 	handler := discordHandler{AntiCheat: anticheat}
 
-	bot.MustRegisterHandler("ac", &discordgo.ApplicationCommand{
+	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "anticheat",
 		Description:              "Query Anticheat Logs",
 		DefaultMemberPermissions: &discord.ModPerms,
@@ -42,65 +42,83 @@ func RegisterDiscordCommands(bot discord.Service, anticheat AntiCheat) {
 				},
 			},
 		},
-	}, handler.onAC, discord.CommandTypeCLI)
+	}, handler.onAC)
 }
 
-func (h discordHandler) onAC(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h discordHandler) onAC(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
 	name := interaction.ApplicationCommandData().Options[0].Name
 	switch name {
 	case "player":
 		return h.onACPlayer(ctx, session, interaction)
 	default:
-		return nil, discord.ErrCommandFailed
+		return discord.ErrCommandFailed
 	}
 }
 
-func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := bot.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-
-	uid, found := opts[discord.OptUserIdentifier]
-	if !found {
-		return nil, steamid.ErrInvalidSID
-	}
-
-	steamID, errResolveSID := steamid.Resolve(ctx, uid.StringValue())
-	if errResolveSID != nil || !steamID.Valid() {
-		return nil, steamid.ErrInvalidSID
-	}
-
-	player, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
-	if errAuthor != nil {
-		return nil, errAuthor
-	}
-
-	logs, errQuery := h.Query(ctx, Query{SteamID: steamID.String()})
-	if errQuery != nil {
-		return nil, errQuery
-	}
-
-	return ACPlayerLogs(player, logs), nil
+func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	//opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	//
+	//uid, found := opts[discord.OptUserIdentifier]
+	//if !found {
+	//	return steamid.ErrInvalidSID
+	//}
+	//
+	//steamID, errResolveSID := steamid.Resolve(ctx, uid.StringValue())
+	//if errResolveSID != nil || !steamID.Valid() {
+	//	return steamid.ErrInvalidSID
+	//}
+	//
+	//player, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+	//if errAuthor != nil {
+	//	return errAuthor
+	//}
+	//
+	//logs, errQuery := h.Query(ctx, Query{SteamID: steamID.String()})
+	//if errQuery != nil {
+	//	return errQuery
+	//}
+	//
+	//return ACPlayerLogs(player, logs)
+	return nil
 }
 
-func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int) *discordgo.MessageEmbed {
-	embed := discord.NewEmbed("Player triggered anti-cheat response")
-	embed.Embed().
-		SetColor(discord.ColourSuccess).
-		AddField("Detection", string(entry.Detection)).
-		AddField("Count", strconv.Itoa(count)).
-		AddField("Action", string(action))
+func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int) *discordgo.MessageSend {
+	const acTemplate = `# Player triggered anti-cheat response
 
-	if entry.DemoName != "" {
-		embed.Emb.AddField("Demo Name", entry.DemoName)
-		embed.Emb.AddField("Demo Tick", strconv.Itoa(entry.DemoTick))
+Dection {{ .Detection }}
+Count: {{ .Count }}
+Action {{ .Action }}
+{{- if ne .Entry.DemoName "" }}
+Demo Name: {{ .Entry.DemoName }}
+Demo Tick: {{ .Entry.Tick }}
+{{ end }}
+{{ .Note  }}
+`
+	content, errContent := discord.Render("ac", acTemplate, struct {
+		Detection string
+		Count     int
+		Action    string
+		Note      string
+		Entry     logparse.StacEntry
+	}{
+		Detection: string(entry.Detection),
+		Count:     count,
+		Action:    string(action),
+		Note:      note,
+		Entry:     entry,
+	})
+	if errContent != nil {
+		slog.Error("Failed to render template", slog.String("error", errContent.Error()))
 	}
 
-	embed = embed.AddFieldsSteamID(entry.SteamID)
-
-	if note != "" {
-		embed.Emb.Description = "```\n" + entry.RawLog + "\n```"
-	}
-
-	return embed.Embed().MessageEmbed
+	return discord.NewMessageSend(
+		discordgo.Container{
+			AccentColor: ptr.To(discord.ColourSuccess),
+			Components: []discordgo.MessageComponent{
+				discordgo.TextDisplay{Content: content},
+			},
+		},
+	)
 }
 
 func ACPlayerLogs(person person.Info, entries []Entry) *discordgo.MessageEmbed {

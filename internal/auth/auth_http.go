@@ -110,16 +110,6 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
 		}
 
-		if fetchedPerson.Expired() {
-			if errGetProfile := person.UpdatePlayerSummary(ctx, &fetchedPerson, h.tfAPI); errGetProfile != nil {
-				slog.Error("Failed to fetch user profile on login", slog.String("error", errGetProfile.Error()))
-			} else {
-				if errSave := h.persons.Save(ctx, &fetchedPerson); errSave != nil {
-					slog.Error("Failed to save summary update", slog.String("error", errSave.Error()))
-				}
-			}
-		}
-
 		token, errToken := h.MakeToken(ctx, conf.HTTPCookieKey, sid)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)

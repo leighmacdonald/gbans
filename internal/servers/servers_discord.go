@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -19,134 +18,134 @@ import (
 )
 
 func RegisterDiscordCommands(service discord.Service, state *state.State, persons person.Provider, servers Servers, network network.Networks) {
-	handler := DiscordHandler{state: state, persons: persons, servers: servers, network: network}
-
-	service.MustRegisterHandler("find", &discordgo.ApplicationCommand{
-		Name:                     "find",
-		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
-		Description:              "Find a user on any of the servers",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptUserIdentifier,
-				Description: "SteamID in any format OR profile url",
-				Required:    true,
-			},
-		},
-	}, handler.onFind, discord.CommandTypeCLI)
-
-	service.MustRegisterHandler("players", &discordgo.ApplicationCommand{
-		Name:                     "players",
-		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
-		Description:              "Show a table of the current players on the server",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptServerIdentifier,
-				Description: "Short server name",
-				Required:    true,
-			},
-		},
-	}, handler.onPlayers, discord.CommandTypeCLI)
-
-	service.MustRegisterHandler("kick", &discordgo.ApplicationCommand{
-		Name:                     "kick",
-		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
-		Description:              "Kick a user from any server they are playing on",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptUserIdentifier,
-				Description: "SteamID in any format OR profile url",
-				Required:    true,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "reason",
-				Description: "Reason for the kick (shown to users on kick)",
-				Required:    true,
-			},
-		},
-	}, handler.onKick, discord.CommandTypeCLI)
-
-	service.MustRegisterHandler("psay", &discordgo.ApplicationCommand{
-		Name:                     "psay",
-		Description:              "Privately message a player",
-		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptUserIdentifier,
-				Description: "SteamID in any format OR profile url",
-				Required:    true,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptMessage,
-				Description: "Message to send",
-				Required:    true,
-			},
-		},
-	}, handler.onPSay, discord.CommandTypeCLI)
-
-	service.MustRegisterHandler("csay", &discordgo.ApplicationCommand{
-		Name:                     "csay",
-		Description:              "Send a centered message to the whole server",
-		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptServerIdentifier,
-				Description: "Short server name or `*` for all",
-				Required:    true,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptMessage,
-				Description: "Message to send",
-				Required:    true,
-			},
-		},
-	}, handler.onCSay, discord.CommandTypeCLI)
-
-	service.MustRegisterHandler("say", &discordgo.ApplicationCommand{
-		Name:                     "say",
-		Description:              "Send a console message to the whole server",
-		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptServerIdentifier,
-				Description: "Short server name",
-				Required:    true,
-			},
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptMessage,
-				Description: "Message to send",
-				Required:    true,
-			},
-		},
-	}, handler.onSay, discord.CommandTypeCLI)
-
-	service.MustRegisterHandler("servers", &discordgo.ApplicationCommand{
-		Name:                     "servers",
-		Description:              "Show the high level status of all servers",
-		DefaultMemberPermissions: &discord.UserPerms,
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionBoolean,
-				Name:        "full",
-				Description: "Return the full status output including server versions and tags",
-			},
-		},
-	}, handler.onServers, discord.CommandTypeCLI)
+	_ = DiscordHandler{state: state, persons: persons, servers: servers, network: network}
+	//
+	//service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
+	//	Name:                     "find",
+	//	Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+	//	DefaultMemberPermissions: &discord.ModPerms,
+	//	Description:              "Find a user on any of the servers",
+	//	Options: []*discordgo.ApplicationCommandOption{
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionString,
+	//			Name:        discord.OptUserIdentifier,
+	//			Description: "SteamID in any format OR profile url",
+	//			Required:    true,
+	//		},
+	//	},
+	//}, handler.onFind)
+	//
+	//service.MustRegisterCommandHandler("players", &discordgo.ApplicationCommand{
+	//	Name:                     "players",
+	//	Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+	//	DefaultMemberPermissions: &discord.ModPerms,
+	//	Description:              "Show a table of the current players on the server",
+	//	Options: []*discordgo.ApplicationCommandOption{
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionString,
+	//			Name:        discord.OptServerIdentifier,
+	//			Description: "Short server name",
+	//			Required:    true,
+	//		},
+	//	},
+	//}, handler.onPlayers)
+	//
+	//service.MustRegisterCommandHandler("kick", &discordgo.ApplicationCommand{
+	//	Name:                     "kick",
+	//	Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+	//	DefaultMemberPermissions: &discord.ModPerms,
+	//	Description:              "Kick a user from any server they are playing on",
+	//	Options: []*discordgo.ApplicationCommandOption{
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionString,
+	//			Name:        discord.OptUserIdentifier,
+	//			Description: "SteamID in any format OR profile url",
+	//			Required:    true,
+	//		},
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionString,
+	//			Name:        "reason",
+	//			Description: "Reason for the kick (shown to users on kick)",
+	//			Required:    true,
+	//		},
+	//	},
+	//}, handler.onKick)
+	//
+	//service.MustRegisterCommandHandler("psay", &discordgo.ApplicationCommand{
+	//	Name:                     "psay",
+	//	Description:              "Privately message a player",
+	//	Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+	//	DefaultMemberPermissions: &discord.ModPerms,
+	//	Options: []*discordgo.ApplicationCommandOption{
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionString,
+	//			Name:        discord.OptUserIdentifier,
+	//			Description: "SteamID in any format OR profile url",
+	//			Required:    true,
+	//		},
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionString,
+	//			Name:        discord.OptMessage,
+	//			Description: "Message to send",
+	//			Required:    true,
+	//		},
+	//	},
+	//}, handler.onPSay)
+	//
+	//service.MustRegisterCommandHandler("csay", &discordgo.ApplicationCommand{
+	//	Name:                     "csay",
+	//	Description:              "Send a centered message to the whole server",
+	//	Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+	//	DefaultMemberPermissions: &discord.ModPerms,
+	//	Options: []*discordgo.ApplicationCommandOption{
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionString,
+	//			Name:        discord.OptServerIdentifier,
+	//			Description: "Short server name or `*` for all",
+	//			Required:    true,
+	//		},
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionString,
+	//			Name:        discord.OptMessage,
+	//			Description: "Message to send",
+	//			Required:    true,
+	//		},
+	//	},
+	//}, handler.onCSay)
+	//
+	//service.MustRegisterCommandHandler("say", &discordgo.ApplicationCommand{
+	//	Name:                     "say",
+	//	Description:              "Send a console message to the whole server",
+	//	Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+	//	DefaultMemberPermissions: &discord.ModPerms,
+	//	Options: []*discordgo.ApplicationCommandOption{
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionString,
+	//			Name:        discord.OptServerIdentifier,
+	//			Description: "Short server name",
+	//			Required:    true,
+	//		},
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionString,
+	//			Name:        discord.OptMessage,
+	//			Description: "Message to send",
+	//			Required:    true,
+	//		},
+	//	},
+	//}, handler.onSay)
+	//
+	//service.MustRegisterCommandHandler("servers", &discordgo.ApplicationCommand{
+	//	Name:                     "servers",
+	//	Description:              "Show the high level status of all servers",
+	//	DefaultMemberPermissions: &discord.UserPerms,
+	//	Options: []*discordgo.ApplicationCommandOption{
+	//		{
+	//			Type:        discordgo.ApplicationCommandOptionBoolean,
+	//			Name:        "full",
+	//			Description: "Return the full status output including server versions and tags",
+	//		},
+	//	},
+	//}, handler.onServers)
 }
 
 type DiscordHandler struct {
@@ -163,7 +162,7 @@ func NewDiscordHandler(state *state.State) *DiscordHandler {
 }
 
 func (d DiscordHandler) onFind(ctx context.Context, _ *discordgo.Session, interation *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := bot.OptionMap(interation.ApplicationCommandData().Options)
+	opts := discord.OptionMap(interation.ApplicationCommandData().Options)
 	userIdentifier := opts[discord.OptUserIdentifier].StringValue()
 
 	var name string
@@ -199,7 +198,7 @@ func (d DiscordHandler) onFind(ctx context.Context, _ *discordgo.Session, intera
 }
 
 func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := bot.OptionMap(interaction.ApplicationCommandData().Options)
+	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 	// reason = ban.Reason(opts[discord.OptBanReason].IntValue())
 
 	target, errTarget := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
@@ -227,7 +226,7 @@ func (d DiscordHandler) onKick(ctx context.Context, _ *discordgo.Session, intera
 }
 
 func (d DiscordHandler) onSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := bot.OptionMap(interaction.ApplicationCommandData().Options)
+	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[discord.OptServerIdentifier].StringValue()
 	msg := opts[discord.OptMessage].StringValue()
 
@@ -244,7 +243,7 @@ func (d DiscordHandler) onSay(ctx context.Context, _ *discordgo.Session, interac
 }
 
 func (d DiscordHandler) onCSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := bot.OptionMap(interaction.ApplicationCommandData().Options)
+	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[discord.OptServerIdentifier].StringValue()
 	msg := opts[discord.OptMessage].StringValue()
 
@@ -261,7 +260,7 @@ func (d DiscordHandler) onCSay(ctx context.Context, _ *discordgo.Session, intera
 }
 
 func (d DiscordHandler) onPSay(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := bot.OptionMap(interaction.ApplicationCommandData().Options)
+	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 	msg := opts[discord.OptMessage].StringValue()
 
 	playerSid, errPlayerSid := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
@@ -281,7 +280,7 @@ func (d DiscordHandler) onServers(_ context.Context, _ *discordgo.Session, _ *di
 }
 
 func (d DiscordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := bot.OptionMap(interaction.ApplicationCommandData().Options)
+	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts[discord.OptServerIdentifier].StringValue()
 	serverStates := d.state.ByName(serverName, false)
 

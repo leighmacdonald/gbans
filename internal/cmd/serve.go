@@ -21,40 +21,6 @@ import (
 // 	return workers
 // }
 
-// func createPeriodicJobs() []*river.PeriodicJob {
-// 	jobs := []*river.PeriodicJob{
-// 		river.NewPeriodicJob(
-// 			river.PeriodicInterval(24*time.Hour),
-// 			func() (river.JobArgs, *river.InsertOpts) {
-// 				return auth.CleanupArgs{}, nil
-// 			},
-// 			&river.PeriodicJobOpts{RunOnStart: true}),
-
-// 		river.NewPeriodicJob(
-// 			river.PeriodicInterval(time.Hour),
-// 			func() (river.JobArgs, *river.InsertOpts) {
-// 				return patreon.AuthUpdateArgs{}, nil
-// 			},
-// 			&river.PeriodicJobOpts{RunOnStart: true}),
-
-// 		river.NewPeriodicJob(
-// 			river.PeriodicInterval(24*time.Hour),
-// 			func() (river.JobArgs, *river.InsertOpts) {
-// 				return report.MetaInfoArgs{}, nil
-// 			},
-// 			&river.PeriodicJobOpts{RunOnStart: true}),
-
-// 		river.NewPeriodicJob(
-// 			river.PeriodicInterval(time.Hour*12),
-// 			func() (river.JobArgs, *river.InsertOpts) {
-// 				return discord.TokenRefreshArgs{}, nil
-// 			},
-// 			&river.PeriodicJobOpts{RunOnStart: true}),
-// 	}
-
-// 	return jobs
-// }
-
 // serveCmd represents the serve command.
 func serveCmd() *cobra.Command { //nolint:maintidx
 	return &cobra.Command{
@@ -77,7 +43,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return errSetup
 			}
 
-			app.StartBackground(ctx)
+			go app.StartBackground(ctx)
 
 			if errServe := app.Serve(ctx); errServe != nil {
 				return errServe

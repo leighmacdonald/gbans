@@ -83,19 +83,19 @@ export const schemaDiscord = z
         link_id: z.string(),
         token: z.string(),
         guild_id: z.string(),
-        log_channel_id: z.string().default(''),
-        public_log_channel_enable: z.boolean().default(false),
-        public_log_channel_id: z.string().default(''),
-        public_match_log_channel_id: z.string().default(''),
-        mod_ping_role_id: z.string().default(''),
-        vote_log_channel_id: z.string().default(''),
-        appeal_log_channel_id: z.string().default(''),
-        ban_log_channel_id: z.string().default(''),
-        forum_log_channel_id: z.string().default(''),
-        word_filter_log_channel_id: z.string().default(''),
-        kick_log_channel_id: z.string().default(''),
-        playerqueue_channel_id: z.string().default(''),
-        anticheat_channel_id: z.string().default('')
+        log_channel_id: z.string(),
+        public_log_channel_enable: z.boolean(),
+        public_log_channel_id: z.string(),
+        public_match_log_channel_id: z.string(),
+        mod_ping_role_id: z.string(),
+        vote_log_channel_id: z.string(),
+        appeal_log_channel_id: z.string(),
+        ban_log_channel_id: z.string(),
+        forum_log_channel_id: z.string(),
+        word_filter_log_channel_id: z.string(),
+        kick_log_channel_id: z.string(),
+        playerqueue_channel_id: z.string(),
+        anticheat_channel_id: z.string()
     })
     .refine((data) => {
         if (!data.bot_enabled) {

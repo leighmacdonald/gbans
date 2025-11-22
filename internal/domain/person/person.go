@@ -3,6 +3,7 @@ package person
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -52,6 +53,10 @@ type Info interface {
 	GetName() string
 	GetAvatar() Avatar
 	GetSteamID() steamid.SteamID
+	GetDiscordID() string
+	GetVACBans() int
+	GetGameBans() int
+	GetTimeCreated() time.Time
 	Path() string // link.Linkable
 	HasPermission(permission permission.Privilege) bool
 	Permissions() permission.Privilege
@@ -65,6 +70,9 @@ type Core struct {
 	Avatarhash      string               `json:"avatarhash"`
 	DiscordID       string               `json:"discord_id"`
 	PatreonID       string               `json:"patreon_id"`
+	VacBans         int                  `json:"vac_bans"`
+	GameBans        int                  `json:"game_bans"`
+	TimeCreated     time.Time            `json:"time_created"`
 	BanID           int64                `json:"ban_id"`
 }
 
@@ -74,6 +82,18 @@ func (p Core) Permissions() permission.Privilege {
 
 func (p Core) HasPermission(privilege permission.Privilege) bool {
 	return p.PermissionLevel >= privilege
+}
+
+func (p Core) GetVACBans() int {
+	return p.VacBans
+}
+
+func (p Core) GetGameBans() int {
+	return p.GameBans
+}
+
+func (p Core) GetTimeCreated() time.Time {
+	return p.TimeCreated
 }
 
 func (p Core) GetName() string {
@@ -90,6 +110,10 @@ func (p Core) GetAvatar() Avatar {
 	}
 
 	return NewAvatar(p.Avatarhash)
+}
+
+func (p Core) GetDiscordID() string {
+	return p.DiscordID
 }
 
 func (p Core) GetSteamID() steamid.SteamID {

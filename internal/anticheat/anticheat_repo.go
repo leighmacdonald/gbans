@@ -52,7 +52,10 @@ func (a Repository) Query(ctx context.Context, query Query) ([]Entry, error) {
 
 	builder = query.ApplySafeOrder(builder, map[string][]string{
 		"p.": {"personaname", "avatarhash"},
-		"a.": {"anticheat_id", "steam_id", "name", "detection", "summary", "demo_id", "demo_tick", "server_id", "raw_log", "created_on"},
+		"a.": {
+			"anticheat_id", "steam_id", "name", "detection", "summary", "demo_id",
+			"demo_tick", "server_id", "raw_log", "created_on",
+		},
 		"s.": {"short_name"},
 	}, "a.created_on")
 
@@ -83,7 +86,8 @@ func (a Repository) Query(ctx context.Context, query Query) ([]Entry, error) {
 
 func (a Repository) DetectionsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]logparse.StacEntry, error) {
 	rows, errRows := a.QueryBuilder(ctx, a.Builder().
-		Select("anticheat_id", "steam_id", "name", "detection", "summary", "demo_id", "server_id", "raw_log", "s.short_name").
+		Select("anticheat_id", "steam_id", "name", "detection", "summary",
+			"demo_id", "server_id", "raw_log", "s.short_name").
 		From("anticheat").
 		LeftJoin("server s USING(server_id)").
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
@@ -109,7 +113,8 @@ func (a Repository) DetectionsBySteamID(ctx context.Context, steamID steamid.Ste
 
 func (a Repository) DetectionsByType(ctx context.Context, detectionType logparse.Detection) ([]logparse.StacEntry, error) {
 	rows, errRows := a.QueryBuilder(ctx, a.Builder().
-		Select("anticheat_id", "steam_id", "name", "detection", "summary", "demo_id", "server_id", "raw_log", "s.short_name").
+		Select("anticheat_id", "steam_id", "name", "detection", "summary",
+			"demo_id", "server_id", "raw_log", "s.short_name").
 		From("anticheat").
 		LeftJoin("server s USING(server_id)").
 		Where(sq.Eq{"detection": detectionType}))

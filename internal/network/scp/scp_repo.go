@@ -2,7 +2,7 @@ package scp
 
 import (
 	"context"
-	"path"
+	"fmt"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -14,12 +14,11 @@ type serverID struct {
 	ShortName string
 }
 
-func NewServerInfo(address string, addressInternal string, serversRoot string, serverIDs ...serverID) ServerInfo {
+func NewServerInfo(address string, addressInternal string, serverIDs ...serverID) ServerInfo {
 	return ServerInfo{
 		ServerIDs:       serverIDs,
 		Address:         address,
 		AddressInternal: addressInternal,
-		serversRoot:     serversRoot,
 	}
 }
 
@@ -29,11 +28,10 @@ type ServerInfo struct {
 	ServerIDs       []serverID
 	Address         string
 	AddressInternal string
-	serversRoot     string
 }
 
-func (s ServerInfo) GamePath(sid serverID, subDir string) string {
-	return path.Join(s.serversRoot, sid.ShortName, subDir)
+func (s ServerInfo) GamePath(pathFmt string, sid serverID) string {
+	return fmt.Sprintf(pathFmt, sid.ShortName)
 }
 
 func NewRepository(db database.Database) Repository {

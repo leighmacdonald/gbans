@@ -1,4 +1,4 @@
-import { useState, JSX, SyntheticEvent } from 'react';
+import { JSX, SyntheticEvent, useState } from 'react';
 import DescriptionIcon from '@mui/icons-material/Description';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import LanIcon from '@mui/icons-material/Lan';
@@ -26,7 +26,7 @@ import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { reportMessagesQueryOptions } from '../queries/reportMessages.ts';
 import { PermissionLevel } from '../schema/people.ts';
-import { ReportWithAuthor } from '../schema/report.ts';
+import { Report } from '../schema/report.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
@@ -40,7 +40,7 @@ import { PaginatorLocal } from './forum/PaginatorLocal.tsx';
 import { ChatTable } from './table/ChatTable.tsx';
 import { IPHistoryTable } from './table/IPHistoryTable.tsx';
 
-export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): JSX.Element => {
+export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element => {
     const theme = useTheme();
     const queryClient = useQueryClient();
     const { sendFlash, sendError } = useUserFlashCtx();
@@ -211,9 +211,9 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                 </Box>
                             </TabPanel>
                         </ContainerWithHeader>
-                        {report.demo.demo_id > 0 && (
+                        {report.demo_id > 0 && (
                             <ContainerWithHeaderAndButtons
-                                title={`Demo Details: ${report.demo.title}`}
+                                title={`Demo Details: ${report.demo_name}`}
                                 iconLeft={<VideocamIcon />}
                                 buttons={[
                                     <Button
@@ -230,12 +230,12 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                 ]}
                             >
                                 <Grid container padding={2}>
-                                    <Grid size={{ xs: 4 }}>
-                                        <Typography>Map:&nbsp;{report.demo.map_name}</Typography>
-                                    </Grid>
-                                    <Grid size={{ xs: 4 }}>
-                                        <Typography>Server:&nbsp;{report.demo.server_name_short}</Typography>
-                                    </Grid>
+                                    {/*<Grid size={{ xs: 4 }}>*/}
+                                    {/*    <Typography>Map:&nbsp;{report.demo.map_name}</Typography>*/}
+                                    {/*</Grid>*/}
+                                    {/*<Grid size={{ xs: 4 }}>*/}
+                                    {/*    <Typography>Server:&nbsp;{report.demo.server_name_short}</Typography>*/}
+                                    {/*</Grid>*/}
                                     <Grid size={{ xs: 2 }}>
                                         <Typography>Tick:&nbsp;{report.demo_tick}</Typography>
                                     </Grid>

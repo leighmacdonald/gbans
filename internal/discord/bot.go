@@ -1,12 +1,15 @@
 package discord
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"sync/atomic"
+	"text/template"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -17,6 +20,7 @@ import (
 var (
 	ErrConfig           = errors.New("configuration error")
 	ErrCommandInvalid   = errors.New("command invalid")
+	ErrCustomIDInvalid  = errors.New("custom_id invalid")
 	ErrSession          = errors.New("failed to start session")
 	ErrCommandSend      = errors.New("failed to send response")
 	ErrCommandDuplicate = errors.New("duplicate command")
@@ -28,22 +32,11 @@ const (
 	IDReason
 	IDDuration
 	IDNotes
-	IDUnbanReason
-)
-
-type CommandType int
-
-const (
-	CommandTypeCLI CommandType = iota
-	CommandTypeModal
+	IDBody
 )
 
 // Handler is a handler for responding to slash command interactions.
-type Handler func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
-
-// Responder is responsible for handling responses to Handler messages. This includes both modal data responses
-// and button component handlers.
-type Responder func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error
+type Handler func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error
 
 type Opts struct {
 	// Token must be set to the discord bot toke, without any "Bot " prefix.
@@ -58,6 +51,18 @@ type Opts struct {
 	UserAgent string
 }
 
+type Discord struct {
+	appID              string
+	guildID            string
+	session            *discordgo.Session
+	commandHandlers    map[string]Handler
+	prefixHandlers     map[string]Handler
+	commands           []*discordgo.ApplicationCommand
+	running            atomic.Bool
+	registeredCommands []*discordgo.ApplicationCommand
+	unregister         bool
+}
+
 func New(opts Opts) (*Discord, error) {
 	if opts.AppID == "" {
 		return nil, fmt.Errorf("%w: invalid discord app id", ErrConfig)
@@ -68,13 +73,11 @@ func New(opts Opts) (*Discord, error) {
 	}
 
 	bot := &Discord{
-		appID:            opts.AppID,
-		guildID:          opts.GuildID,
-		unregister:       opts.UnregisterOnClose,
-		commandHandlers:  make(map[string]Handler),
-		modalHandlers:    make(map[string]Handler),
-		responseHandlers: make(map[string]Responder),
-		buttonHandler:    make(map[string]Responder),
+		appID:           opts.AppID,
+		guildID:         opts.GuildID,
+		unregister:      opts.UnregisterOnClose,
+		commandHandlers: make(map[string]Handler),
+		prefixHandlers:  make(map[string]Handler),
 	}
 
 	session, errSession := discordgo.New("Bot " + opts.Token)
@@ -85,7 +88,7 @@ func New(opts Opts) (*Discord, error) {
 	if opts.UserAgent != "" {
 		session.UserAgent = opts.UserAgent
 	} else {
-		session.UserAgent = "discordgo-lipstick (https://github.com/leighmacdonald/discordgo-lipstick)"
+		session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
 	}
 
 	session.Identify.Intents |= discordgo.IntentsGuildMessages
@@ -100,20 +103,6 @@ func New(opts Opts) (*Discord, error) {
 	bot.session = session
 
 	return bot, nil
-}
-
-type Discord struct {
-	appID              string
-	guildID            string
-	session            *discordgo.Session
-	commandHandlers    map[string]Handler
-	modalHandlers      map[string]Handler
-	responseHandlers   map[string]Responder
-	buttonHandler      map[string]Responder
-	commands           []*discordgo.ApplicationCommand
-	running            atomic.Bool
-	registeredCommands []*discordgo.ApplicationCommand
-	unregister         bool
 }
 
 func (b *Discord) SendNext(channelID string, payload *discordgo.MessageSend) error {
@@ -174,48 +163,33 @@ func (b *Discord) Session() *discordgo.Session {
 	return b.session
 }
 
-func (b *Discord) MustRegisterButton(prefix string, responder Responder) {
-	b.buttonHandler[prefix] = responder
+// MustRegisterPrefixHandler takes a prefix and handler to execute when the prefix is matched. The prefix
+// is defined ban_unban_button_resp_.
+func (b *Discord) MustRegisterPrefixHandler(prefix string, handler Handler) {
+	_, found := b.prefixHandlers[prefix]
+	if found {
+		panic(ErrCommandDuplicate)
+	}
+
+	b.prefixHandlers[prefix] = handler
 }
 
-// MustRegisterHandler handles registering a slash command, and associated handler.
+// MustRegisterCommandHandler handles registering a slash command, and associated handler.
 // Calling this does not immediately register the command, but instead adds it to the list of
 // commands that will be bulk registered upon connection.
-func (b *Discord) MustRegisterHandler(cmdName string, appCommand *discordgo.ApplicationCommand, handler Handler,
-	commandType CommandType, responseHandler ...Responder,
-) {
-	switch commandType {
-	case CommandTypeCLI:
-		_, found := b.commandHandlers[cmdName]
-		if found {
+func (b *Discord) MustRegisterCommandHandler(appCommand *discordgo.ApplicationCommand, handler Handler) {
+	_, found := b.commandHandlers[appCommand.Name]
+	if found {
+		panic(ErrCommandDuplicate)
+	}
+	for _, cmd := range b.commands {
+		if cmd.Name == appCommand.Name {
 			panic(ErrCommandDuplicate)
 		}
-		for _, cmd := range b.commands {
-			if cmd.Name == appCommand.Name {
-				panic(ErrCommandDuplicate)
-			}
-		}
-
-		b.commandHandlers[cmdName] = handler
-	case CommandTypeModal:
-		if len(responseHandler) == 0 {
-			panic("discord.CommandTypeModal handlers must also supply a response handler")
-		}
-		_, found := b.modalHandlers[cmdName]
-		if found {
-			panic(ErrCommandDuplicate)
-		}
-		for _, cmd := range b.commands {
-			if cmd.Name == appCommand.Name {
-				panic(ErrCommandDuplicate)
-			}
-		}
-
-		b.modalHandlers[cmdName] = handler
 	}
-	if len(responseHandler) > 0 {
-		b.responseHandlers[cmdName+"_resp"] = responseHandler[0]
-	}
+
+	b.commandHandlers[appCommand.Name] = handler
+
 	b.commands = append(b.commands, appCommand)
 }
 
@@ -228,162 +202,66 @@ func (b *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	slog.Info("Discord state changed", slog.String("state", "disconnected"))
 }
 
-func (b *Discord) handleModalCmd(handler Handler, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	ctx, cancelCommand := context.WithTimeout(context.TODO(), time.Second*300)
-	defer cancelCommand()
-
-	if _, err := handler(ctx, session, interaction); err != nil {
-		if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
-			Components: []discordgo.MessageComponent{
-				discordgo.Container{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextDisplay{
-							Content: "test",
-						},
-					},
-				},
-			},
-		}); errFollow != nil {
-			slog.Error("Failed sending error response for interaction", slog.String("error", errFollow.Error()))
-		}
-
-		return
-	}
-}
-
-func (b *Discord) handleCLICmd(handler Handler, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	// sendPreResponse should be called for any commands that call external services or otherwise
-	// could not return a response instantly. discord will time out commands that don't respond within a
-	// very short timeout windows, ~2-3 seconds.
-	initialResponse := &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: "Calculating numberwang...",
-		},
-	}
-
-	if errRespond := session.InteractionRespond(interaction.Interaction, initialResponse); errRespond != nil {
-		if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
-			Content: errRespond.Error(),
-		}); errFollow != nil {
-			slog.Error("Failed sending error response for interaction", slog.String("error", errFollow.Error()))
-		}
-
-		return
-	}
-
-	commandCtx, cancelCommand := context.WithTimeout(context.Background(), time.Second*30)
-	defer cancelCommand()
-
-	response, errHandleCommand := handler(commandCtx, session, interaction)
-	if errHandleCommand != nil || response == nil {
-		if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
-			Embeds: []*discordgo.MessageEmbed{{Title: "Error", Description: errHandleCommand.Error()}},
-		}); errFollow != nil {
-			slog.Error("Failed sending error response for interaction", slog.String("error", errFollow.Error()))
-		}
-
-		return
-	}
-
-	if sendSendResponse := b.sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {
-		slog.Error("Failed sending success response for interaction", slog.String("error", sendSendResponse.Error()))
-	}
-}
-
-func (b *Discord) onAppCommand(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	command := interaction.ApplicationCommandData().Name
-	if handler, handlerFound := b.modalHandlers[command]; handlerFound {
-		b.handleModalCmd(handler, session, interaction)
-
-		return
-	}
-	if handler, handlerFound := b.commandHandlers[command]; handlerFound {
-		b.handleCLICmd(handler, session, interaction)
-	}
-
-	slog.Error("Got unknown discord command", slog.String("command", command))
-}
-
-// onModalSubmit handles responding to modal interaction.
-func (b *Discord) onModalSubmit(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	data := interaction.ModalSubmitData()
-	var handler Responder
-	for commandPrefix, responseHandler := range b.responseHandlers {
-		if strings.HasPrefix(data.CustomID, commandPrefix) {
-			handler = responseHandler
-
-			break
-		}
-	}
-
-	if handler == nil {
-		slog.Error("No modal submit handler found for command", slog.String("command", data.CustomID))
-
-		return
-	}
-
-	//if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-	//	Type: discordgo.InteractionResponsePong,
-	//	Data: &discordgo.InteractionResponseData{
-	//		//Content: "Calculating numberwang...",
-	//		Components: []discordgo.MessageComponent{
-	//			discordgo.Container{
-	//				Components: []discordgo.MessageComponent{
-	//					discordgo.TextDisplay{
-	//						Content: "test",
-	//					},
-	//				},
-	//			},
-	//		},
-	//	},
-	//}); err != nil {
-	//	slog.Error("Failed sending error response for interaction", slog.String("error", err.Error()))
-	//}
-
-	if errHandler := handler(ctx, session, interaction); errHandler != nil {
-		slog.Error("Failed sending error response for handler", slog.String("error", errHandler.Error()))
-		if _, errFollow := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
-			Components: &[]discordgo.MessageComponent{
-				discordgo.Container{
-					AccentColor: ptr.To(ColourError),
-					Components: []discordgo.MessageComponent{
-						discordgo.TextDisplay{
-							Content: fmt.Sprintf("Command Failed\n\n```%s```", errHandler.Error()),
-						},
-					},
-				},
-			},
-		}); errFollow != nil {
-			slog.Error("Failed sending error response for interaction", slog.String("error", errFollow.Error()))
-		}
-
-		return
-	}
-}
-
-func (b *Discord) onButton(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	var (
-		data    = interaction.MessageComponentData()
-		handler Responder
-	)
-	for prefix, buttonHandler := range b.buttonHandler {
-		if strings.HasPrefix(data.CustomID, prefix) {
-			handler = buttonHandler
-
-			break
-		}
-	}
-
-	if handler == nil {
-		slog.Info("No button handler found for command", slog.String("command", data.CustomID))
-
-		return
-	}
-
+func (b *Discord) handleModalCmd(ctx context.Context, handler Handler, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	if err := handler(ctx, session, interaction); err != nil {
-		slog.Error("Failed sending error response for interaction", slog.String("error", err.Error()))
+		slog.Error("Failed to handle modal command", slog.String("error", err.Error()))
+
+		if errFollow := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Flags: discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
+				Components: []discordgo.MessageComponent{
+					discordgo.Container{
+						AccentColor: ptr.To(ColourError),
+						Components: []discordgo.MessageComponent{
+							discordgo.TextDisplay{
+								Content: "Error executing command",
+							},
+						},
+					},
+				},
+			},
+		}); errFollow != nil {
+			slog.Error("Failed sending error response for interaction", slog.String("error", errFollow.Error()))
+		}
+
+		return
 	}
+}
+
+func (b *Discord) handleCLICmd(ctx context.Context, handler Handler, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+	errHandleCommand := handler(ctx, session, interaction)
+	if errHandleCommand != nil {
+		//_, _ = session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
+		//	Content: "error handling command",
+		//})
+		slog.Error("Failed handling command", slog.String("error", errHandleCommand.Error()))
+
+		return
+	}
+}
+
+func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+	command := interaction.ApplicationCommandData().Name
+	if handler, handlerFound := b.commandHandlers[command]; handlerFound {
+		b.handleCLICmd(ctx, handler, session, interaction)
+
+		return
+	}
+}
+
+func (b *Discord) findAndExecPrefixHandler(ctx context.Context, handlerName string, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+	for prefix, handler := range b.prefixHandlers {
+		if !strings.HasPrefix(handlerName, prefix) {
+			continue
+		}
+
+		b.handleModalCmd(ctx, handler, session, interaction)
+
+		return
+	}
+
+	slog.Error("Got unknown discord command", slog.String("command", handlerName))
 }
 
 func (b *Discord) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
@@ -394,10 +272,10 @@ func (b *Discord) onInteractionCreate(session *discordgo.Session, interaction *d
 	case discordgo.InteractionApplicationCommand:
 		b.onAppCommand(ctx, session, interaction)
 	case discordgo.InteractionMessageComponent:
-		b.onButton(ctx, session, interaction)
+		b.findAndExecPrefixHandler(ctx, interaction.MessageComponentData().CustomID, session, interaction)
 	case discordgo.InteractionApplicationCommandAutocomplete:
 	case discordgo.InteractionModalSubmit:
-		b.onModalSubmit(ctx, session, interaction)
+		b.findAndExecPrefixHandler(ctx, interaction.ModalSubmitData().CustomID, session, interaction)
 	}
 }
 
@@ -457,4 +335,56 @@ func (opts CommandOptions) String(key string) string {
 	}
 
 	return val
+}
+
+func Render(name string, templ string, context any) (string, error) {
+	var b bytes.Buffer
+	tmpl, err := template.New(name).Parse(templ)
+	if err != nil {
+		return "", err
+	}
+	if err = tmpl.Execute(&b, context); err != nil {
+		return "", err
+	}
+
+	return b.String(), nil
+}
+
+// CustomIDInt64 pulls out the suffix value as a int64.
+// eg: ban_unban_button_resp_1234 -> 1234
+func CustomIDInt64(idString string) (int64, error) {
+	parts := strings.Split(idString, "_")
+	if len(parts) < 2 {
+		return 0, ErrCustomIDInvalid
+	}
+	value, errID := strconv.ParseInt(parts[len(parts)-1], 10, 64)
+	if errID != nil {
+		return 0, errID
+	}
+
+	return value, nil
+}
+
+// AckInteraction acknowledges the interation immediately. It should be followed up by
+// an RespondInteraction to complete the response.
+func AckInteraction(session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsIsComponentsV2,
+			Components: []discordgo.MessageComponent{
+				discordgo.TextDisplay{Content: "Computering..."},
+			},
+		},
+	})
+}
+
+func RespondInteraction(session *discordgo.Session, interaction *discordgo.InteractionCreate, components ...discordgo.MessageComponent) error {
+	_, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
+		Flags:           discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsSuppressNotifications,
+		AllowedMentions: &discordgo.MessageAllowedMentions{},
+		Components:      &components,
+	})
+
+	return err
 }

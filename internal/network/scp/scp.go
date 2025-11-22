@@ -27,7 +27,6 @@ var (
 	errConnect                = errors.New("failed to connect to ssh server")
 	errHomeDir                = errors.New("failed to expand home dir")
 	errKeyVerificationFailed  = errors.New("host key validation failed")
-	ErrInvalidAddress         = errors.New("invalid address")
 )
 
 type Config struct {
@@ -50,7 +49,7 @@ type KeyStore interface {
 }
 
 type ConnectionHandler interface {
-	DownloadHandler(ctx context.Context, client storage.Storager, server ServerInfo) error
+	DownloadHandler(ctx context.Context, client storage.Storager, server ServerInfo, config Config) error
 }
 
 // Connection can be used to execute scp (ssh) operations on a remote host. It connects to all configured active
@@ -65,8 +64,8 @@ type Connection struct {
 	config   Config
 }
 
-func NewConnection(database KeyStore, config Config) Connection {
-	return Connection{repo: database, config: config}
+func NewConnection(database KeyStore, config Config, details ServerInfo) Connection {
+	return Connection{repo: database, config: config, details: details}
 }
 
 func (f *Connection) Address() string {
@@ -92,13 +91,13 @@ func (f *Connection) AddHandler(handler ConnectionHandler) {
 }
 
 func (f *Connection) Update(ctx context.Context) error {
-	if errConnect := f.connect(); errConnect != nil {
-		return errConnect
+	if err := f.connect(); err != nil {
+		return err
 	}
 
 	var errs error
 	for _, handler := range f.handlers {
-		if errHandler := handler.DownloadHandler(ctx, f.conn, f.details); errHandler != nil {
+		if errHandler := handler.DownloadHandler(ctx, f.conn, f.details, f.config); errHandler != nil {
 			errs = errors.Join(errHandler)
 		}
 	}

@@ -20,8 +20,8 @@ var ErrBind = errors.New("bind error")
 // Bind is responsible for binding the input values from a discord modal input into a struct
 // of the type T. Fields are mapped with the `id` field tag which has a int value which corresponds
 // to a unique `Component.ID` for each user input field in the modal.
-func Bind[T any](ctx context.Context, interaction *discordgo.InteractionCreate) (T, error) {
-	values, errValues := mapInteractionValues(interaction)
+func Bind[T any](ctx context.Context, components []discordgo.MessageComponent) (T, error) {
+	values, errValues := mapInteractionValues(components)
 	if errValues != nil {
 		var value T
 
@@ -33,11 +33,11 @@ func Bind[T any](ctx context.Context, interaction *discordgo.InteractionCreate) 
 
 // mapInteractionValues is responsible for transforming the interaction values into a map indexed by the unique
 // input ID integer.
-func mapInteractionValues(interaction *discordgo.InteractionCreate) (map[int]string, error) {
+func mapInteractionValues(components []discordgo.MessageComponent) (map[int]string, error) {
 	values := map[int]string{}
 
 	// Parse modal data into values map
-	for _, component := range interaction.ModalSubmitData().Components {
+	for _, component := range components {
 		switch component.Type() {
 		case discordgo.ActionsRowComponent:
 			row := component.(*discordgo.ActionsRow)

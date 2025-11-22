@@ -164,7 +164,7 @@ func (s *Servers) Server(ctx context.Context, serverID int) (Server, error) {
 		return Server{}, ErrNotFound
 	}
 
-	servers, err := s.repository.Query(ctx, Query{ServerID: serverID})
+	servers, err := s.repository.Query(ctx, Query{ServerID: serverID, IncludeDisabled: true})
 	if err != nil {
 		return Server{}, err
 	}
@@ -214,10 +214,6 @@ func (s *Servers) GetByPassword(ctx context.Context, serverPassword string) (Ser
 
 func (s *Servers) Save(ctx context.Context, server Server) (Server, error) {
 	if server.ServerID > 0 {
-		if _, errServer := s.Server(ctx, server.ServerID); errServer != nil {
-			return Server{}, errServer
-		}
-
 		server.UpdatedOn = time.Now()
 	}
 

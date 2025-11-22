@@ -25,12 +25,11 @@ type Service interface {
 	// Close the bot session.
 	Close()
 
-	// MustRegisterHandler allows the caller to register discord slash commands.
+	// MustRegisterCommandHandler allows the caller to register discord slash commands.
 	// When using discord.CommandTypeModal, the responder must be defined. It will be called when responding
 	// to the modal data submission.
-	MustRegisterHandler(cmd string, appCommand *discordgo.ApplicationCommand, handler Handler, commandType CommandType, responder ...Responder)
-
-	MustRegisterButton(prefix string, responder Responder)
+	MustRegisterCommandHandler(command *discordgo.ApplicationCommand, handler Handler)
+	MustRegisterPrefixHandler(prefix string, responder Handler)
 	// Session returns the underlying discordgo session.
 	Session() *discordgo.Session
 }
@@ -43,9 +42,9 @@ func (d Discard) SendNext(_ string, _ *discordgo.MessageSend) error { return nil
 func (d Discard) Start(_ context.Context) error                     { return nil }
 func (d Discard) Session() *discordgo.Session                       { return nil }
 func (d Discard) Close()                                            {}
-func (d Discard) MustRegisterHandler(_ string, _ *discordgo.ApplicationCommand, _ Handler, _ CommandType, _ ...Responder) {
+func (d Discard) MustRegisterCommandHandler(_ *discordgo.ApplicationCommand, _ Handler) {
 }
-func (d Discard) MustRegisterButton(_ string, _ Responder) {}
+func (d Discard) MustRegisterPrefixHandler(_ string, _ Handler) {}
 
 type Config struct {
 	Enabled                 bool   `json:"enabled"`
@@ -160,3 +159,21 @@ const (
 	OptPattern          = "pattern"
 	OptIsRegex          = "is_regex"
 )
+
+// OptionMap will take the recursive discord slash commands and flatten them into a simple
+// map.
+func OptionMap(options []*discordgo.ApplicationCommandInteractionDataOption) CommandOptions {
+	optionM := make(CommandOptions, len(options))
+	for _, opt := range options {
+		optionM[opt.Name] = opt
+	}
+
+	return optionM
+}
+
+func NewMessageSend(components ...discordgo.MessageComponent) *discordgo.MessageSend {
+	return &discordgo.MessageSend{
+		Flags:      discordgo.MessageFlagsIsComponentsV2,
+		Components: components,
+	}
+}

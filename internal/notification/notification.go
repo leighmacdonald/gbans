@@ -105,6 +105,7 @@ func NewDiscordNext(channel string, message *discordgo.MessageSend) Payload {
 	}
 }
 
+// NewDiscord is deprecated.
 func NewDiscord(channel string, embed *discordgo.MessageEmbed) Payload {
 	return Payload{
 		Types:           []MessageType{Discord},
