@@ -75,11 +75,18 @@ func (w *wikiHandler) save() gin.HandlerFunc {
 			return
 		}
 
-		// if !user.HasPermission(page.PermissionLevel) {
-		// 	httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, httphelper.ErrPermissionDenied)))
+		currentUser, errUser := session.CurrentUserProfile(ctx)
+		if errUser != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 
-		// 	return
-		// }
+			return
+		}
+
+		if !currentUser.HasPermission(permission.Moderator) {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, httphelper.ErrPermissionDenied)))
+
+			return
+		}
 
 		page.Slug = req.Slug
 		page.BodyMD = req.BodyMD

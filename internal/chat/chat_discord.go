@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/discordgo-lipstick/bot"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
 )
@@ -15,7 +14,7 @@ import (
 func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
 	handler := &discordHandler{wordFilters: wordFilters}
 
-	bot.MustRegisterHandler("filter", &discordgo.ApplicationCommand{
+	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "filter",
 		Description:              "Manage and test global word filters",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
@@ -67,44 +66,27 @@ func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
 				},
 			},
 		},
-	}, handler.makeOnFilter, discord.CommandTypeCLI)
+	}, handler.makeOnFilter)
 }
 
 type discordHandler struct {
 	wordFilters WordFilters
 }
 
-func (h discordHandler) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := bot.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	message := opts[discord.OptMessage].StringValue()
-
-	return FilterCheckMessage(h.wordFilters.Check(message)), nil
+func (h discordHandler) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	// opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+	// message := opts[discord.OptMessage].StringValue()
+	// return FilterCheckMessage(h.wordFilters.Check(message))
+	return nil
 }
 
-func (h discordHandler) makeOnFilter(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h discordHandler) makeOnFilter(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
 	switch interaction.ApplicationCommandData().Options[0].Name {
 	case "check":
 		return h.onFilterCheck(ctx, session, interaction)
 	default:
-		return nil, discord.ErrCommandFailed
+		return discord.ErrCommandFailed
 	}
-}
-
-func filterAddMessage(filter Filter) *discordgo.MessageEmbed {
-	msgEmbed := discord.NewEmbed("Filter Created Successfully").Embed().
-		SetColor(discord.ColourSuccess).
-		AddField("pattern", filter.Pattern).
-		Truncate()
-
-	return msgEmbed.MessageEmbed
-}
-
-func filterDelMessage(filter Filter) *discordgo.MessageEmbed {
-	return discord.NewEmbed("Filter Deleted Successfully").
-		Embed().
-		SetColor(discord.ColourSuccess).
-		AddField("filter", filter.Pattern).
-		Truncate().MessageEmbed
 }
 
 func FilterCheckMessage(matches []Filter) *discordgo.MessageEmbed {

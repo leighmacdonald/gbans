@@ -179,10 +179,10 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 	return nil
 }
 
-func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo) error {
+func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo, config scp.Config) error {
 	for _, instance := range server.ServerIDs {
-		demoDir := server.GamePath(instance, "tf/stv_demos/complete/")
-		filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
+		demoDir := server.GamePath(config.DemoPathFmt, instance)
+		filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 4))
 		if errFilelist != nil {
 			slog.Error("remote list dir failed", slog.String("error", errFilelist.Error()),
 				slog.String("server", instance.ShortName), slog.String("path", demoDir))
@@ -215,17 +215,18 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 
 			// need Seeker, but afs does not provide
 			demo := UploadedDemo{Name: file.Name(), ServerID: instance.ServerID, Content: data}
-
 			if errDemo := d.onDemoReceived(ctx, demo); errDemo != nil {
 				if !errors.Is(errDemo, asset.ErrAssetTooLarge) {
 					slog.Error("Failed to create new demo asset", slog.String("error", errDemo.Error()))
-
-					continue
 				}
+
+				continue
 			}
 
 			if errDelete := client.Delete(ctx, demoPath); errDelete != nil {
 				slog.Error("Failed to cleanup demo", slog.String("error", errDelete.Error()), slog.String("path", demoPath))
+
+				continue
 			}
 
 			slog.Info("Deleted demo on remote host", slog.String("path", demoPath))

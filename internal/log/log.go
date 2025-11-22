@@ -65,7 +65,7 @@ func MustCreateLogger(ctx context.Context, debugLogPath string, level Level, use
 	)
 	if useSentry {
 		handlers = append(handlers, sentryslog.Option{
-			Level:     slog.LevelDebug,
+			// EventLevel:     slog.LevelDebug,
 			AddSource: true,
 		}.NewSentryHandler(ctx))
 	}

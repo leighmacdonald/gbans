@@ -72,20 +72,20 @@ export const NotificationSeverity = {
 export const NotificationSeverityEnum = z.enum(NotificationSeverity);
 export type NotificationSeverityEnum = z.infer<typeof NotificationSeverityEnum>;
 
-export const schemaUserProfile = z
-    .object({
-        steam_id: z.string(),
-        permission_level: PermissionLevelEnum,
-        discord_id: z.string(),
-        patreon_id: z.string(),
-        name: z.string(),
-        avatarhash: z.string(),
-        ban_id: z.number(),
-        muted: z.boolean()
-        // playerqueue_chat_status: z.enum(['readwrite', 'readonly', 'noaccess']),
-        // playerqueue_chat_reason: z.string()
-    })
-    .merge(schemaTimeStamped);
+export const schemaUserProfile = z.object({
+    steam_id: z.string(),
+    permission_level: PermissionLevelEnum,
+    discord_id: z.string(),
+    patreon_id: z.string(),
+    name: z.string(),
+    avatarhash: z.string(),
+    ban_id: z.number(),
+    muted: z.boolean(),
+    created_on: z.date(),
+    updated_on: z.date()
+    // playerqueue_chat_status: z.enum(['readwrite', 'readonly', 'noaccess']),
+    // playerqueue_chat_reason: z.string()
+});
 
 export type UserProfile = z.infer<typeof schemaUserProfile>;
 

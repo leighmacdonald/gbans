@@ -36,7 +36,7 @@ export const apiCreateServer = async (opts: SaveServerOpts) =>
 
 export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) => {
     const resp = transformTimeStampedDates(
-        await apiCall<Server, SaveServerOpts>(`/api/servers/${server_id}`, 'POST', opts)
+        await apiCall<Server, SaveServerOpts>(`/api/servers/${server_id}`, 'PUT', opts)
     );
     resp.token_created_on = parseDateTime(resp.token_created_on as unknown as string);
     return resp;

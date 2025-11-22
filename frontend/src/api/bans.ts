@@ -3,11 +3,11 @@ import {
     AppealState,
     AppealStateEnum,
     BanOpts,
+    BanRecord,
     BanType,
     BanTypeEnum,
     BodyMDMessage,
     sbBanRecord,
-    BanRecord,
     UnbanPayload,
     UpdateBanPayload
 } from '../schema/bans.ts';
@@ -83,7 +83,7 @@ export function applyDateTime<T>(row: T & TimeStampedWithValidUntil) {
 }
 
 export const apiGetBanSteam = async (ban_id: number, deleted = false, abortController?: AbortController) => {
-    const resp = await apiCall<BanRecord>(`/api/bans/${ban_id}?deleted=${deleted}`, 'GET', undefined, abortController);
+    const resp = await apiCall<BanRecord>(`/api/ban/${ban_id}?deleted=${deleted}`, 'GET', undefined, abortController);
 
     return resp ? transformTimeStampedDates(resp) : undefined;
 };

@@ -780,6 +780,8 @@ func (match *Match) damage(evt DamageEvt) {
 			round.DamageRed += dmg
 		case BLU:
 			round.DamageBlu += dmg
+		default:
+			break
 		}
 	}
 }
@@ -844,6 +846,8 @@ func (match *Match) killed(evt KilledEvt) {
 		round.KillsBlu++
 	case RED:
 		round.KillsRed++
+	default:
+		break
 	}
 }
 
@@ -928,6 +932,8 @@ func (match *Match) medicCharge(evt ChargeDeployedEvt) {
 			round.UbersRed += amount
 		case BLU:
 			round.UbersBlu += amount
+		default:
+			break
 		}
 	}
 }
@@ -966,6 +972,8 @@ func (match *Match) roundScore(evt WTeamScoreEvt) {
 			round.Score.Red = evt.Score
 		case BLU:
 			round.Score.Blu = evt.Score
+		default:
+			break
 		}
 	}
 }
@@ -976,6 +984,8 @@ func (match *Match) finalScore(evt WTeamFinalScoreEvt) {
 		match.TeamScores.Red = evt.Score
 	case BLU:
 		match.TeamScores.Blu = evt.Score
+	default:
+		break
 	}
 }
 
@@ -1193,6 +1203,8 @@ func (player *PlayerStats) HealthPacks() int {
 			total += count * 2
 		case ItemHPLarge:
 			total += count * 4
+		default:
+			break
 		}
 	}
 

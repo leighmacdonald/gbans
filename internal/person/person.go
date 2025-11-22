@@ -66,7 +66,6 @@ const (
 )
 
 type Person struct {
-	// TODO merge use of steamid & steam_id
 	SteamID               steamid.SteamID      `json:"steam_id"`
 	CreatedOn             time.Time            `json:"created_on"`
 	UpdatedOn             time.Time            `json:"updated_on"`
@@ -99,6 +98,46 @@ type Person struct {
 	RealName              string                 `json:"real_name"`
 	TimeCreated           int64                  `json:"time_created"`
 	VisibilityState       int64                  `json:"visibility_state"`
+}
+
+func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBan thirdparty.SteamBan) Person {
+	p.PersonaName = summary.PersonaName
+	p.AvatarHash = summary.AvatarHash
+	p.LocCityID = summary.LocCityId
+	p.LocCountryCode = summary.LocCountryCode
+	p.LastLogoff = summary.LastLogoff
+	p.LocStateCode = summary.LocStateCode
+	p.VisibilityState = summary.VisibilityState
+	p.PersonaState = summary.PersonaState
+	p.PersonaStateFlags = summary.PersonaStateFlags
+	p.PrimaryClanID = summary.PrimaryClanId
+	p.ProfileState = summary.ProfileState
+	p.RealName = summary.RealName
+	p.TimeCreated = summary.TimeCreated
+	p.CommentPermission = summary.CommentPermission
+
+	p.VACBans = int(steamBan.NumberOfVacBans)
+	p.GameBans = int(steamBan.NumberOfGameBans)
+	p.DaysSinceLastBan = int(steamBan.DaysSinceLastBan)
+	p.CommunityBanned = steamBan.CommunityBanned
+	p.EconomyBan = EconBanState(steamBan.EconomyBan)
+
+	p.UpdatedOn = time.Now()
+	p.UpdatedOnSteam = time.Now()
+
+	return p
+}
+
+func (p Person) GetVACBans() int {
+	return p.VACBans
+}
+
+func (p Person) GetGameBans() int {
+	return p.GameBans
+}
+
+func (p Person) GetTimeCreated() time.Time {
+	return time.Unix(p.TimeCreated, 0)
 }
 
 func (p Person) Avatar() string {
@@ -156,6 +195,20 @@ func (p Person) Path() string {
 // LoggedIn checks for a valid steamID.
 func (p Person) LoggedIn() bool {
 	return p.SteamID.Valid() && p.SteamID.Int64() > 0
+}
+
+func (p Person) Core() person.Core {
+	return person.Core{
+		SteamID:         p.SteamID,
+		PermissionLevel: p.PermissionLevel,
+		Name:            p.GetName(),
+		Avatarhash:      p.AvatarHash,
+		DiscordID:       p.DiscordID,
+		PatreonID:       p.PatreonID,
+		VacBans:         p.VACBans,
+		GameBans:        p.GameBans,
+		TimeCreated:     p.CreatedOn,
+	}
 }
 
 type ProfileResponse struct {
@@ -278,10 +331,10 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 		}
 	}
 
-	friendList, errFetchFriends := u.tfAPI.Friends(ctx, player.SteamID)
-	if errFetchFriends == nil {
-		resp.Friends = friendList
-	}
+	//friendList, errFetchFriends := u.tfAPI.Friends(ctx, player.SteamID)
+	//if errFetchFriends == nil {
+	//	resp.Friends = friendList
+	//}
 
 	resp.Player = &player
 
@@ -462,12 +515,48 @@ func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.
 		}
 	}
 
+	if fetchedPerson.Expired() {
+		if errUpdate := u.updatePerson(ctx, &fetchedPerson); errUpdate != nil {
+			slog.Error("Failed to update steam profile data", slog.String("steamid", sid64.String()),
+				slog.String("error", errUpdate.Error()))
+		}
+	}
+
 	return person.Core{
 		SteamID:         fetchedPerson.SteamID,
 		PermissionLevel: fetchedPerson.PermissionLevel,
 		Name:            fetchedPerson.PersonaName,
 		Avatarhash:      fetchedPerson.AvatarHash,
+		DiscordID:       fetchedPerson.DiscordID,
+		PatreonID:       fetchedPerson.PatreonID,
+		GameBans:        fetchedPerson.GameBans,
+		VacBans:         fetchedPerson.VACBans,
+		TimeCreated:     time.Unix(fetchedPerson.TimeCreated, 0),
 	}, nil
+}
+
+func (u *Persons) updatePerson(ctx context.Context, person *Person) error {
+	summaries, errSummaries := u.tfAPI.Summaries(ctx, []steamid.SteamID{person.SteamID})
+	if errSummaries != nil {
+		return errSummaries
+	}
+
+	if len(summaries) != 1 {
+		return ErrSteamUpdate
+	}
+
+	vacInfo, errVacInfo := u.tfAPI.SteamBans(ctx, []steamid.SteamID{person.SteamID})
+	if errVacInfo != nil {
+		return errVacInfo
+	}
+
+	if len(vacInfo) != 1 {
+		return ErrSteamUpdate
+	}
+
+	person.ApplySteamInfo(summaries[0], vacInfo[0])
+
+	return u.Save(ctx, person)
 }
 
 func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
@@ -480,7 +569,14 @@ func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
 		return Person{}, ErrPlayerDoesNotExist
 	}
 
-	return people[0], nil
+	player := people[0]
+	if player.Expired() {
+		if errGetProfile := UpdatePlayerSummary(ctx, &player, u.tfAPI); errGetProfile != nil {
+			slog.Error("Failed to fetch user profile on login", slog.String("error", errGetProfile.Error()))
+		}
+	}
+
+	return player, nil
 }
 
 func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (person.Core, error) {
@@ -494,6 +590,11 @@ func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (p
 		PermissionLevel: fetchedPerson.PermissionLevel,
 		Name:            fetchedPerson.PersonaName,
 		Avatarhash:      fetchedPerson.AvatarHash,
+		PatreonID:       fetchedPerson.PatreonID,
+		GameBans:        fetchedPerson.GameBans,
+		VacBans:         fetchedPerson.VACBans,
+		TimeCreated:     time.Unix(fetchedPerson.TimeCreated, 0),
+		DiscordID:       fetchedPerson.DiscordID,
 	}, nil
 }
 

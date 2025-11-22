@@ -1,7 +1,6 @@
 import { z } from 'zod/v4';
-import { schemaTimeStamped } from './chrono.ts';
 
-export const schemaServer = schemaTimeStamped.extend({
+export const schemaServer = z.object({
     server_id: z.number(),
     short_name: z.string(),
     name: z.string(),
@@ -22,18 +21,20 @@ export const schemaServer = schemaTimeStamped.extend({
     log_secret: z.number(),
     token_created_on: z.date(),
     address_internal: z.string(),
-    sdr_enabled: z.boolean()
+    sdr_enabled: z.boolean(),
+    created_on: z.date(),
+    updated_on: z.date()
 });
 
 export type Server = z.infer<typeof schemaServer>;
 
 export const schemaBaseServer = z.object({
     server_id: z.number(),
-    host: z.string(),
+    address: z.string(),
     port: z.number(),
     ip: z.string(),
     name: z.string(),
-    name_short: z.string(),
+    short_name: z.string(),
     region: z.string(),
     cc: z.string(),
     players: z.number(),
@@ -64,9 +65,9 @@ export const schemaLocation = z.object({
 });
 
 export const schemaSaveServerOpts = z.object({
-    server_name_short: z.string(),
-    server_name: z.string(),
-    host: z.string(),
+    short_name: z.string(),
+    name: z.string(),
+    address: z.string(),
     port: z.number(),
     rcon: z.string(),
     password: z.string(),

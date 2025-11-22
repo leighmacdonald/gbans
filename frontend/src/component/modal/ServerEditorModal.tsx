@@ -47,7 +47,7 @@ const schema = z.object({
     reserved_slots: z.number().min(0).max(100),
     is_enabled: z.boolean(),
     enabled_stats: z.boolean(),
-    log_secret: z.number().min(100000).max(999999999),
+    log_secret: z.coerce.number().min(100000).max(999999999),
     address_internal: z.string(),
     sdr_enabled: z.boolean()
 });
@@ -77,9 +77,9 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
         mutationKey: ['adminServer'],
         mutationFn: async (values: ServerEditValues) => {
             const opts: SaveServerOpts = {
-                server_name_short: values.short_name,
-                server_name: values.name,
-                host: values.address,
+                short_name: values.short_name,
+                name: values.name,
+                address: values.address,
                 port: values.port,
                 password: values.password,
                 rcon: values.rcon,

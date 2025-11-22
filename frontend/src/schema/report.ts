@@ -3,7 +3,7 @@ import { z } from 'zod/v4';
 import { BanReasonEnum } from './bans.ts';
 import { schemaTimeStamped } from './chrono.ts';
 import { schemaDemoFile } from './demo.ts';
-import { schemaPerson } from './people.ts';
+import { schemaPerson, schemaUserProfile } from './people.ts';
 
 export const ReportStatus = {
     Any: -1,
@@ -64,7 +64,9 @@ export const schemaReport = schemaTimeStamped.extend({
     demo_name: z.string(),
     demo_tick: z.number(),
     demo_id: z.number(),
-    person_message_id: z.number()
+    person_message_id: z.number(),
+    author: schemaUserProfile,
+    subject: schemaUserProfile
 });
 
 export type Report = z.infer<typeof schemaReport>;

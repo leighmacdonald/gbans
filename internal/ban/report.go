@@ -55,11 +55,11 @@ type RequestReportCreate struct {
 type ReportStatus int
 
 const (
-	AnyStatus                        = -1
-	Opened              ReportStatus = 0
-	NeedMoreInfo                     = 1
-	ClosedWithoutAction              = 2
-	ClosedWithAction                 = 3
+	AnyStatus ReportStatus = iota - 1
+	Opened
+	NeedMoreInfo
+	ClosedWithoutAction
+	ClosedWithAction
 )
 
 func (status ReportStatus) String() string {
@@ -111,8 +111,8 @@ func NewReport() Report {
 type ReportWithAuthor struct {
 	Report
 
-	Author  person.Person `json:"author"`
-	Subject person.Person `json:"subject"`
+	Author  personDomain.Core `json:"author"`
+	Subject personDomain.Core `json:"subject"`
 	// TODO FIX Demo    demo.DemoFile `json:"demo"`
 }
 
@@ -234,14 +234,13 @@ func (r Reports) addAuthorsToReports(ctx context.Context, reports []Report) ([]R
 	}
 
 	peopleMap := people.AsMap()
-
 	userReports := make([]ReportWithAuthor, len(reports))
 
 	for i, report := range reports {
 		userReports[i] = ReportWithAuthor{
-			Author:  peopleMap[report.SourceID],
+			Author:  peopleMap[report.SourceID].Core(),
 			Report:  report,
-			Subject: peopleMap[report.TargetID],
+			Subject: peopleMap[report.TargetID].Core(),
 		}
 	}
 
@@ -266,9 +265,9 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user perso
 		return report, errSave
 	}
 
-	r.notif.Send(notification.NewDiscord(
+	r.notif.Send(notification.NewDiscordNext(
 		r.logChannel,
-		ReportStatusChangeMessage(report, fromStatus, link.Path(report))))
+		ReportStatusChangeMessage(report, fromStatus)))
 
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
@@ -350,8 +349,8 @@ func (r Reports) Report(ctx context.Context, curUser personDomain.Info, reportID
 	}
 
 	return ReportWithAuthor{
-		Author:  author,
-		Subject: target,
+		Author:  author.Core(),
+		Subject: target.Core(),
 		Report:  report,
 		// TODO FIX Demo:    demo,
 	}, nil
@@ -383,8 +382,8 @@ func (r Reports) DropMessage(ctx context.Context, curUser personDomain.Info, rep
 		return err
 	}
 
-	r.notif.Send(notification.NewDiscord(r.appealChannel,
-		DeleteReportMessage(existing, curUser, link.Path(curUser))))
+	r.notif.Send(notification.NewDiscordNext(r.appealChannel,
+		DeleteReportMessage(existing, curUser)))
 
 	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
 
@@ -488,14 +487,8 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 		return ReportWithAuthor{}, errReport
 	}
 
-	demoURL := ""
-	if report.DemoID > 0 {
-		demoURL = "/asset/" + demo.AssetID.String()
-	}
-
-	r.notif.Send(notification.NewDiscord(r.appealChannel,
-		NewInGameReportResponse(newReport, link.Path(report), currentUser, link.Path(currentUser), demoURL)))
-	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
+	go r.notif.Send(notification.NewDiscordNext(r.appealChannel, NewInGameReportResponse(newReport)))
+	go r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.GetName()),
@@ -536,7 +529,7 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 		return ReportMessage{}, errSave
 	}
 
-	r.notif.Send(notification.NewDiscord(r.appealChannel,
+	r.notif.Send(notification.NewDiscordNext(r.appealChannel,
 		EditReportMessageResponse(req.BodyMD, existing.MessageMD,
 			fmt.Sprintf("/report/%d", existing.ReportID), curUser, link.Path(curUser))))
 
@@ -568,16 +561,13 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser pers
 		return ReportMessage{}, errSave
 	}
 
-	r.notif.Send(notification.NewDiscord(r.appealChannel,
-		NewReportMessageResponse(msg.MessageMD, link.Path(report), curUser, link.Path(curUser))))
-
-	path := fmt.Sprintf("/report/%d", reportID)
+	go r.notif.Send(notification.NewDiscordNext(r.appealChannel, NewReportMessageResponse(report, msg)))
 
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		"A new report reply has been posted. Author: "+curUser.GetName(),
-		path,
+		link.Path(report),
 		curUser,
 	))
 
@@ -586,7 +576,7 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser pers
 			[]steamid.SteamID{report.Author.SteamID},
 			notification.Info,
 			"A new report reply has been posted",
-			path,
+			link.Path(report),
 		))
 	}
 

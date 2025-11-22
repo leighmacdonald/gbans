@@ -52,7 +52,7 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 			name = player.SteamID.String()
 		}
 
-		// monitor.notifications.Enqueue(ctx, notification.NewDiscordNotification(monitor.config.Config().Discord.BanLogChannelID, discord.BanExpiresMessage(ban, person, monitor.config.ExtURL(ban))))
+		// monitor.notifications.Send(notification.NewDiscordNext("", discord.BanExpiresMessage(ban, person, monitor.config.ExtURL(ban))))
 
 		// monitor.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
 		// 	[]steamid.SteamID{person.SteamID},
