@@ -19,7 +19,7 @@ type Notifier interface {
 }
 
 type BotNotifier interface {
-	SendNext(channelID string, message *discordgo.MessageSend) error
+	Send(channelID string, message *discordgo.MessageSend) error
 }
 
 type NullNotifier struct{}
@@ -169,7 +169,7 @@ func (n *Notifications) Sender(ctx context.Context) {
 		case notif := <-n.send:
 			for _, channelID := range notif.DiscordChannels {
 				if notif.MessageSend != nil {
-					if errSend := n.discord.SendNext(channelID, notif.MessageSend); errSend != nil {
+					if errSend := n.discord.Send(channelID, notif.MessageSend); errSend != nil {
 						slog.Error("failed to send discord notification payload", slog.String("error", errSend.Error()))
 					}
 				} else {
