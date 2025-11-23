@@ -52,7 +52,7 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 			name = player.SteamID.String()
 		}
 
-		// monitor.notifications.Send(notification.NewDiscordNext("", discord.BanExpiresMessage(ban, person, monitor.config.ExtURL(ban))))
+		// monitor.notifications.Send(notification.NewDiscord("", discord.BanExpiresMessage(ban, person, monitor.config.ExtURL(ban))))
 
 		// monitor.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
 		// 	[]steamid.SteamID{person.SteamID},
@@ -62,6 +62,6 @@ func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 
 		slog.Info("Ban expired",
 			slog.String("reason", ban.Reason.String()),
-			slog.Int64("sid64", ban.TargetID.Int64()), slog.String("name", name))
+			slog.String("sid64", ban.TargetID.String()), slog.String("name", name))
 	}
 }

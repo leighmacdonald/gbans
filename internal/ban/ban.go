@@ -363,7 +363,7 @@ func (s Bans) sendBanNotification(_ context.Context, newBan Ban, author person.C
 		expAt = datetime.FmtTimeShort(newBan.ValidUntil)
 	}
 
-	s.notif.Send(notification.NewDiscordNext(s.logChannelID, createBanResponse(newBan, target)))
+	s.notif.Send(notification.NewDiscord(s.logChannelID, createBanResponse(newBan, target)))
 
 	s.notif.Send(notification.NewSiteUserWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
@@ -429,7 +429,7 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		return false, errors.Join(err, ErrFetchPerson)
 	}
 
-	s.notif.Send(notification.NewDiscordNext(s.logChannelID, UnbanMessage(player)))
+	s.notif.Send(notification.NewDiscord(s.logChannelID, UnbanMessage(player)))
 	s.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,

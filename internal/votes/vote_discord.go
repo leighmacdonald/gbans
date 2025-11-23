@@ -1,41 +1,55 @@
 package votes
 
 import (
-	"fmt"
-	"strconv"
+	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/ptr"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
-func VoteResultMessage(result Result, source person.Core, target person.Core) *discordgo.MessageEmbed {
-	msgEmbed := discord.NewEmbed("Vote Result")
+func VoteResultMessage(result Result, source person.Core, target person.Core) *discordgo.MessageSend {
+	var colour int
 	if result.Success {
-		msgEmbed.Emb.Color = discord.ColourSuccess
+		colour = discord.ColourSuccess
 	} else {
-		msgEmbed.Emb.Color = discord.ColourWarn
+		colour = discord.ColourWarn
 	}
 
-	msgEmbed.Emb.Thumbnail = &discordgo.MessageEmbedThumbnail{
-		URL: target.GetAvatar().Full(),
+	const format = `# Vote Result
+Caller SID: {{ .SourceID }}
+Target Name: {{ .TargetName }}
+Target SID: {{ .TargetSID }}
+Code: {{ .Code }}
+Success: {{ .Success }}
+Server: {{ .ServerID }}
+`
+
+	body, errBody := discord.Render("vote_result", format, struct {
+		SourceID   string
+		TargetName string
+		TargetSID  string
+		Code       logparse.VoteCode
+		Success    bool
+		Server     int
+	}{
+		SourceID:   result.SourceID.String(),
+		TargetName: target.GetName(),
+		TargetSID:  result.TargetID.String(),
+		Code:       result.Code,
+		Success:    result.Success,
+		Server:     result.ServerID,
+	})
+	if errBody != nil {
+		slog.Error("Failed to render vote result message", slog.String("error", errBody.Error()))
 	}
 
-	msgEmbed.Emb.Author = &discordgo.MessageEmbedAuthor{
-		URL:     link.Path(source),
-		Name:    source.GetName(),
-		IconURL: source.GetAvatar().Full(),
-	}
-
-	msgEmbed.Embed().
-		AddField("Caller SID", result.SourceID.String()).
-		AddField("Target", target.GetName()).
-		AddField("Target SID", result.TargetID.String()).
-		AddField("Code", fmt.Sprintf("%d", result.Code)).
-		AddField("Success", strconv.FormatBool(result.Success)).
-		AddField("Server", strconv.FormatInt(int64(result.ServerID), 10)).
-		InlineAllFields()
-
-	return msgEmbed.Embed().Truncate().MessageEmbed
+	return discord.NewMessageSend(discordgo.Container{
+		AccentColor: ptr.To(colour),
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{Content: body},
+		},
+	})
 }

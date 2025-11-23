@@ -217,7 +217,7 @@ func (f Forums) CategorySave(ctx context.Context, category *Category) error {
 		slog.Info("Forum category updated", slog.String("title", category.Title))
 	}
 
-	f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategorySave(*category)))
+	go f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategorySave(*category)))
 
 	return nil
 }
@@ -231,7 +231,7 @@ func (f Forums) CategoryDelete(ctx context.Context, category Category) error {
 		return err
 	}
 
-	f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategoryDelete(category)))
+	go f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategoryDelete(category)))
 	slog.Info("Forum category deleted", slog.String("category", category.Title), slog.Int("forum_category_id", category.ForumCategoryID))
 
 	return nil

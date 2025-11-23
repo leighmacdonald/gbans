@@ -245,7 +245,7 @@ func (p Playerqueue) SetChatStatus(ctx context.Context, authorID steamid.SteamID
 		return errGetProfile
 	}
 
-	p.notif.Send(notification.NewDiscord(p.playerqueueChannelID, NewPlayerqueueChatStatus(author, player, status, reason)))
+	go p.notif.Send(notification.NewDiscord(p.playerqueueChannelID, NewPlayerqueueChatStatus(author, player, status, reason)))
 
 	slog.Info("Set chat status", slog.String("steam_id", player.SteamID.String()), slog.String("status", string(status)))
 

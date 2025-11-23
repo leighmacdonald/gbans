@@ -215,7 +215,7 @@ func (r Reports) MetaStats(ctx context.Context) error {
 		}
 	}
 
-	r.notif.Send(notification.NewDiscord(
+	go r.notif.Send(notification.NewDiscord(
 		r.logChannel,
 		ReportStatsMessage(meta, "/admin/reports")))
 
@@ -265,11 +265,11 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user perso
 		return report, errSave
 	}
 
-	r.notif.Send(notification.NewDiscordNext(
+	go r.notif.Send(notification.NewDiscord(
 		r.logChannel,
 		ReportStatusChangeMessage(report, fromStatus)))
 
-	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
+	go r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		fmt.Sprintf("A report status has changed: %s -> %s", fromStatus, status),
@@ -277,7 +277,7 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user perso
 		user,
 	))
 
-	r.notif.Send(notification.NewSiteUser(
+	go r.notif.Send(notification.NewSiteUser(
 		[]steamid.SteamID{report.Author.SteamID},
 		notification.Info,
 		fmt.Sprintf("Your report status has changed: %s -> %s", fromStatus, status),
@@ -382,7 +382,7 @@ func (r Reports) DropMessage(ctx context.Context, curUser personDomain.Info, rep
 		return err
 	}
 
-	r.notif.Send(notification.NewDiscordNext(r.appealChannel,
+	go r.notif.Send(notification.NewDiscord(r.appealChannel,
 		DeleteReportMessage(existing, curUser)))
 
 	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
@@ -487,7 +487,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 		return ReportWithAuthor{}, errReport
 	}
 
-	go r.notif.Send(notification.NewDiscordNext(r.appealChannel, NewInGameReportResponse(newReport)))
+	go r.notif.Send(notification.NewDiscord(r.appealChannel, newInGameReportResponse(newReport)))
 	go r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
@@ -529,7 +529,7 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 		return ReportMessage{}, errSave
 	}
 
-	r.notif.Send(notification.NewDiscordNext(r.appealChannel,
+	r.notif.Send(notification.NewDiscord(r.appealChannel,
 		EditReportMessageResponse(req.BodyMD, existing.MessageMD,
 			fmt.Sprintf("/report/%d", existing.ReportID), curUser, link.Path(curUser))))
 
@@ -561,7 +561,7 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser pers
 		return ReportMessage{}, errSave
 	}
 
-	go r.notif.Send(notification.NewDiscordNext(r.appealChannel, NewReportMessageResponse(report, msg)))
+	go r.notif.Send(notification.NewDiscord(r.appealChannel, NewReportMessageResponse(report, msg)))
 
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
