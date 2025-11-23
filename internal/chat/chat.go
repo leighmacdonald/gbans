@@ -22,10 +22,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-var (
-	ErrWarnActionApply       = errors.New("failed to apply warning action")
-	ErrInvalidActionDuration = errors.New("invalid action duration")
-)
+var ErrInvalidActionDuration = errors.New("invalid action duration")
 
 type ExceedHandler func(ctx context.Context, exceeded bool, warning NewUserWarning) error
 

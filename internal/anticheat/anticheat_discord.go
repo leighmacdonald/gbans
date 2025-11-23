@@ -2,16 +2,14 @@ package anticheat
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
-	"strconv"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type discordHandler struct {
@@ -55,31 +53,89 @@ func (h discordHandler) onAC(ctx context.Context, session *discordgo.Session, in
 	}
 }
 
-func (h discordHandler) onACPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) error {
-	//opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	//
-	//uid, found := opts[discord.OptUserIdentifier]
-	//if !found {
-	//	return steamid.ErrInvalidSID
-	//}
-	//
-	//steamID, errResolveSID := steamid.Resolve(ctx, uid.StringValue())
-	//if errResolveSID != nil || !steamID.Valid() {
-	//	return steamid.ErrInvalidSID
-	//}
-	//
-	//player, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
-	//if errAuthor != nil {
-	//	return errAuthor
-	//}
-	//
-	//logs, errQuery := h.Query(ctx, Query{SteamID: steamID.String()})
-	//if errQuery != nil {
-	//	return errQuery
-	//}
-	//
-	//return ACPlayerLogs(player, logs)
-	return nil
+func (h discordHandler) onACPlayer(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	if err := discord.AckInteraction(session, interaction); err != nil {
+		return err
+	}
+
+	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+
+	uid, found := opts[discord.OptUserIdentifier]
+	if !found {
+		return steamid.ErrInvalidSID
+	}
+
+	steamID, errResolveSID := steamid.Resolve(ctx, uid.StringValue())
+	if errResolveSID != nil || !steamID.Valid() {
+		return steamid.ErrInvalidSID
+	}
+
+	player, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+	if errAuthor != nil {
+		return errAuthor
+	}
+
+	logs, errQuery := h.Query(ctx, Query{SteamID: steamID.String()})
+	if errQuery != nil {
+		return errQuery
+	}
+
+	return discord.RespondUpdate(session, interaction, ACPlayerLogs(player, logs)...)
+}
+
+func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
+	total := 0
+	detections := map[logparse.Detection]int{}
+
+	for _, entry := range entries {
+		if _, ok := detections[entry.Detection]; !ok {
+			detections[entry.Detection] = 0
+		}
+
+		detections[entry.Detection]++
+		total++
+	}
+
+	servers := map[string]int{}
+	for _, entry := range entries {
+		if _, ok := servers[entry.ServerName]; !ok {
+			servers[entry.ServerName] = 0
+		}
+
+		servers[entry.ServerName]++
+	}
+
+	const format = `# Anticheat Detections (count: {{ .Count }}
+
+{{ range $key, $value := .Detections }}
+{{$key}}: {{ $value }}
+{{ end }}
+
+{{ range $key, $valie := .Servers }}
+{{$key}}: {{ $value }}
+{{ end }}
+
+`
+	content, err := discord.Render("ac_logs", format, struct {
+		Detections map[logparse.Detection]int
+		Servers    map[string]int
+	}{
+		Detections: detections,
+		Servers:    servers,
+	})
+	if err != nil {
+		slog.Error("Failed to render template", slog.String("error", err.Error()))
+
+		return nil
+	}
+
+	return []discordgo.MessageComponent{
+		discordgo.Container{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextDisplay{Content: content},
+			},
+		},
+	}
 }
 
 func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int) *discordgo.MessageSend {
@@ -117,60 +173,5 @@ Demo Tick: {{ .Entry.Tick }}
 			Components: []discordgo.MessageComponent{
 				discordgo.TextDisplay{Content: content},
 			},
-		},
-	)
-}
-
-func ACPlayerLogs(person person.Info, entries []Entry) *discordgo.MessageEmbed {
-	sid := person.GetSteamID()
-	emb := discord.NewEmbed()
-
-	total := 0
-	detections := map[logparse.Detection]int{}
-
-	for _, entry := range entries {
-		if _, ok := detections[entry.Detection]; !ok {
-			detections[entry.Detection] = 0
-		}
-
-		detections[entry.Detection]++
-		total++
-	}
-
-	emb.Embed().
-		SetTitle(fmt.Sprintf("Anticheat Detections (count: %d)", total)).
-		SetColor(discord.ColourSuccess).
-		SetAuthor(person.GetName(), person.GetAvatar().Small(), link.Path(person))
-
-	j := 0
-	for server, count := range detections {
-		emb.Embed().AddField("Detection: "+string(server), strconv.Itoa(count))
-		j++
-		if j < len(detections) {
-			emb.Emb.MakeFieldInline()
-		}
-	}
-
-	servers := map[string]int{}
-
-	for _, entry := range entries {
-		if _, ok := servers[entry.ServerName]; !ok {
-			servers[entry.ServerName] = 0
-		}
-
-		servers[entry.ServerName]++
-	}
-
-	i := 0
-	for server, count := range servers {
-		emb.Embed().AddField("Server: "+server, strconv.Itoa(count))
-		i++
-		if i < len(servers) {
-			emb.Emb.MakeFieldInline()
-		}
-	}
-
-	emb.AddFieldsSteamID(sid)
-
-	return emb.Embed().MessageEmbed
+		})
 }

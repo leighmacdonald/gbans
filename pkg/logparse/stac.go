@@ -14,7 +14,6 @@ import (
 )
 
 var (
-	ErrReadLog       = errors.New("failed to read stac log contents")
 	ErrParsePlayer   = errors.New("failed to parse player info")
 	ErrParseSummary  = errors.New("failed to parse summary info")
 	ErrParseFileName = errors.New("failed to parse file name")
@@ -84,6 +83,7 @@ func NewStacParser() StacParser {
 	}
 }
 
+// Parse handles reading and parsing the log file io.Reader.
 // Disabling OnPlayerRunCmd checks for 5.00 seconds.
 func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error) {
 	// Get the date from the file name eg: stac_052224.log

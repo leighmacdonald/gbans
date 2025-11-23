@@ -36,7 +36,6 @@ var (
 	ErrPersonTarget       = errors.New("failed to load target person")
 	ErrDuplicateBan       = errors.New("duplicate ban")
 	ErrBanDoesNotExist    = errors.New("ban does not exist")
-	ErrReasonInvalid      = errors.New("invalid reason")
 )
 
 type Config struct {
@@ -385,23 +384,23 @@ func (s Bans) sendBanNotification(_ context.Context, newBan Ban, author person.C
 		return
 	}
 
-	//goland:noinspection ALL
-	//switch newBan.BanType {
-	//case bantype.Banned:
+	// goland:noinspection ALL
+	// switch newBan.BanType {
+	// case bantype.Banned:
 	//	if errKick := s.state.Kick(ctx, newBan.TargetID, newBan.Reason.String()); errKick != nil && !errors.Is(errKick, state.ErrPlayerNotFound) {
 	//		slog.Error("Failed to kick player", slog.String("error", errKick.Error()),
 	//			slog.Int64("sid64", newBan.TargetID.Int64()))
 	//	} else {
 	//		s.notif.Send(notification.NewDiscord(s.kickChannelID, KickPlayerEmbed(target)))
 	//	}
-	//case bantype.NoComm:
+	// case bantype.NoComm:
 	//	if errSilence := s.state.Silence(ctx, newBan.TargetID, newBan.Reason.String()); errSilence != nil && !errors.Is(errSilence, state.ErrPlayerNotFound) {
 	//		slog.Error("Failed to silence player", slog.String("error", errSilence.Error()),
 	//			slog.Int64("sid64", newBan.TargetID.Int64()))
 	//	} else {
 	//		s.notif.Send(notification.NewDiscord(s.kickChannelID, MuteMessage(target.GetSteamID())))
 	//	}
-	//}
+	// }
 }
 
 // Unban will set the Current ban to now, making it expired.

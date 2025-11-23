@@ -73,27 +73,19 @@ func (h discordHandler) onReportReplyButton(ctx context.Context, session *discor
 		return errReport
 	}
 
-	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseModal,
-		Data: &discordgo.InteractionResponseData{
-			CustomID: fmt.Sprintf("report_reply_submit_resp_%d", reportID),
-			Title:    "Reply",
-			Flags:    discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
+	return discord.Respond(session, interaction, []discordgo.MessageComponent{
+		discordgo.TextDisplay{Content: report.Description},
+		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: report.Description},
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextInput{
-							ID:          discord.IDBody,
-							CustomID:    "reply_message_",
-							Label:       "Response",
-							Style:       discordgo.TextInputParagraph,
-							Placeholder: "Finally took a shower",
-							Required:    true,
-							MaxLength:   2000,
-							MinLength:   10,
-						},
-					},
+				discordgo.TextInput{
+					ID:          discord.IDBody,
+					CustomID:    "reply_message_",
+					Label:       "Response",
+					Style:       discordgo.TextInputParagraph,
+					Placeholder: "Finally took a shower",
+					Required:    true,
+					MaxLength:   2000,
+					MinLength:   10,
 				},
 			},
 		},
@@ -125,27 +117,19 @@ func (h discordHandler) onReportReplySubmit(ctx context.Context, session *discor
 		return errReport
 	}
 
-	_, errMsg := h.reports.CreateMessage(ctx, reportID, caller, RequestMessageBodyMD{BodyMD: req.BodyMD})
+	_, errMsg := h.reports.CreateMessage(ctx, reportID, caller, RequestMessageBodyMD(req))
 	if errMsg != nil {
 		return errMsg
 	}
 
-	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags: discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
-			Components: []discordgo.MessageComponent{
-				discordgo.Container{
-					AccentColor: ptr.To(discord.ColourSuccess),
-					Components: []discordgo.MessageComponent{
-						discordgo.TextDisplay{
-							Content: fmt.Sprintf("Reply successful [View](%s)", link.Path(report)),
-						},
-					},
-				},
+	return discord.Respond(session, interaction, []discordgo.MessageComponent{discordgo.Container{
+		AccentColor: ptr.To(discord.ColourSuccess),
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{
+				Content: fmt.Sprintf("Reply successful [View](%s)", link.Path(report)),
 			},
 		},
-	})
+	}})
 }
 
 func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus) *discordgo.MessageSend {

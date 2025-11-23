@@ -13,9 +13,8 @@ import (
 )
 
 var (
-	ErrUnknownServer  = errors.New("unknown server")
-	ErrGetServer      = errors.New("failed to get server")
-	ErrPlayerNotFound = errors.New("could not find player")
+	ErrUnknownServer = errors.New("unknown server")
+	ErrGetServer     = errors.New("failed to get server")
 )
 
 type Query struct {
@@ -33,8 +32,6 @@ type ServerInfoSafe struct {
 	ServerID       int    `json:"server_id"`
 	Colour         string `json:"colour"`
 }
-
-var ErrResolveIP = errors.New("failed to resolve address")
 
 type ServerPermission struct {
 	SteamID         steamid.SID          `json:"steam_id"`

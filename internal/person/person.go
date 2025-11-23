@@ -331,10 +331,10 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 		}
 	}
 
-	//friendList, errFetchFriends := u.tfAPI.Friends(ctx, player.SteamID)
-	//if errFetchFriends == nil {
-	//	resp.Friends = friendList
-	//}
+	// friendList, errFetchFriends := u.tfAPI.Friends(ctx, player.SteamID)
+	// if errFetchFriends == nil {
+	// 	resp.Friends = friendList
+	// }
 
 	resp.Player = &player
 
@@ -536,6 +536,9 @@ func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.
 }
 
 func (u *Persons) updatePerson(ctx context.Context, person *Person) error {
+	if u.tfAPI == nil {
+		return nil
+	}
 	summaries, errSummaries := u.tfAPI.Summaries(ctx, []steamid.SteamID{person.SteamID})
 	if errSummaries != nil {
 		return errSummaries

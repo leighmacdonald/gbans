@@ -31,7 +31,7 @@ export const ServerMarkers = () => {
                         }}
                         radius={50000}
                         color={'green'}
-                        key={s.name_short + `${i}`}
+                        key={s.short_name + `${i}`}
                     />
                 );
             }),

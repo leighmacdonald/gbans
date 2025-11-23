@@ -1,4 +1,4 @@
-package discord
+package discord_test
 
 import (
 	"net/netip"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ func TestBind(t *testing.T) {
 		5: "blah",
 	}
 
-	req, errReq := bindValues[t1](t.Context(), data)
+	req, errReq := discord.BindValues[t1](t.Context(), data)
 	require.NoError(t, errReq)
 
 	prefix := netip.MustParsePrefix("12.3.4.5/24")

@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
-func (h discordHandler) onAppealReplySubmit(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+func (h discordHandler) onAppealReplySubmit(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) error {
 	return nil
 }
 
@@ -54,8 +54,8 @@ func newAppealMessageDelete(msg AppealMessage) *discordgo.MessageSend {
 		discordgo.Container{
 			AccentColor: ptr.To(discord.ColourError),
 			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: fmt.Sprintf(`Appeal message deleted
-%s`, msg.MessageMD)},
+				discordgo.TextDisplay{Content: `# Appeal message deleted
+` + msg.MessageMD},
 			},
 		},
 		discordgo.ActionsRow{

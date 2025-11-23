@@ -20,14 +20,11 @@ import (
 )
 
 var (
-	ErrNetworkInvalidASNRecord      = errors.New("invalid asn record")
-	ErrNetworkInvalidLocationRecord = errors.New("invalid location record")
-	ErrNetworkInvalidProxyRecord    = errors.New("invalid proxy record")
-	ErrNetworkInvalidIP             = errors.New("invalid ip")
-	ErrNetworkLocationUnknown       = errors.New("unknown location record")
-	ErrNetworkASNUnknown            = errors.New("unknown asn record")
-	ErrNetworkProxyUnknown          = errors.New("no proxy record")
-	ErrMissingParam                 = errors.New("failed to request at least one required parameter")
+	ErrNetworkInvalidIP       = errors.New("invalid ip")
+	ErrNetworkLocationUnknown = errors.New("unknown location record")
+	ErrNetworkASNUnknown      = errors.New("unknown asn record")
+	ErrNetworkProxyUnknown    = errors.New("no proxy record")
+	ErrMissingParam           = errors.New("failed to request at least one required parameter")
 )
 
 type Config struct {

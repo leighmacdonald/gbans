@@ -143,7 +143,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		ctx.SetCookie(
 			FingerprintCookieName,
 			token.Fingerprint,
-			int(AuthTokenDuration.Seconds()),
+			int(TokenDuration.Seconds()),
 			"/api",
 			parsedExternal.Hostname(),
 			strings.HasPrefix(strings.ToLower(conf.ExternalURL), "https://"),

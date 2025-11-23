@@ -167,6 +167,7 @@ func (c *Cloudflare) findRecord(ctx context.Context, addr string) (string, net.I
 	return "", nil, ErrRecordNotFound
 }
 
+// Update handles upating the DNS records with cloudflare.
 // https://developers.cloudflare.com/api/go/resources/dns/subresources/records/methods/update/
 func (c *Cloudflare) Update(ctx context.Context, newIP net.IP, dnsAddr string) error {
 	recordID, recordIP, errRecordID := c.findRecord(ctx, dnsAddr)

@@ -16,8 +16,7 @@ var (
 // Service provides a interface for controlling the discord backend.
 type Service interface {
 	// Send handles sending messages to a channel.
-	Send(channelID string, payload *discordgo.MessageEmbed) error
-	SendNext(channelID string, message *discordgo.MessageSend) error
+	Send(channelID string, message *discordgo.MessageSend) error
 
 	// Start initiates the bot service. This is a blocking call.
 	Start(ctx context.Context) error
@@ -29,19 +28,18 @@ type Service interface {
 	// When using discord.CommandTypeModal, the responder must be defined. It will be called when responding
 	// to the modal data submission.
 	MustRegisterCommandHandler(command *discordgo.ApplicationCommand, handler Handler)
+
+	// MustRegisterPrefixHandler is similar to MustRegisterCommandHandler, however instead of exact command names
+	// it matches IDs in the various response types.
 	MustRegisterPrefixHandler(prefix string, responder Handler)
-	// Session returns the underlying discordgo session.
-	Session() *discordgo.Session
 }
 
 // Discard implements a dummy service that can be used when discord bot support is disabled or for testing.
 type Discard struct{}
 
-func (d Discard) Send(_ string, _ *discordgo.MessageEmbed) error    { return nil }
-func (d Discard) SendNext(_ string, _ *discordgo.MessageSend) error { return nil }
-func (d Discard) Start(_ context.Context) error                     { return nil }
-func (d Discard) Session() *discordgo.Session                       { return nil }
-func (d Discard) Close()                                            {}
+func (d Discard) Send(_ string, _ *discordgo.MessageSend) error { return nil }
+func (d Discard) Start(_ context.Context) error                 { return nil }
+func (d Discard) Close()                                        {}
 func (d Discard) MustRegisterCommandHandler(_ *discordgo.ApplicationCommand, _ Handler) {
 }
 func (d Discard) MustRegisterPrefixHandler(_ string, _ Handler) {}
@@ -153,9 +151,6 @@ const (
 	OptUserIdentifier   = "user_identifier"
 	OptServerIdentifier = "server_identifier"
 	OptMessage          = "message"
-	OptDuration         = "duration"
-	OptBanReason        = "ban_reason"
-	OptNote             = "note"
 	OptPattern          = "pattern"
 	OptIsRegex          = "is_regex"
 )

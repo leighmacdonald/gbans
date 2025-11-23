@@ -1,6 +1,6 @@
 package link
 
-var BaseURL = "http://localhost:6006"
+var BaseURL = "http://localhost:6006" //nolint:gochecknoglobals
 
 type Linkable interface {
 	// Path returns the HTTP path that is represented by the instance.

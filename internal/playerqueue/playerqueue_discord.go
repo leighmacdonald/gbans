@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
-func NewPlayerqueueChatStatus(author person.Info, target person.Info, status ChatStatus, reason string) *discordgo.MessageSend {
+func NewPlayerqueueChatStatus(_ person.Info, target person.Info, status ChatStatus, reason string) *discordgo.MessageSend {
 	colour := discord.ColourError
 	switch status {
 	case Readwrite:

@@ -20,58 +20,60 @@ var ErrBind = errors.New("bind error")
 // Bind is responsible for binding the input values from a discord modal input into a struct
 // of the type T. Fields are mapped with the `id` field tag which has a int value which corresponds
 // to a unique `Component.ID` for each user input field in the modal.
-func Bind[T any](ctx context.Context, components []discordgo.MessageComponent) (T, error) {
-	values, errValues := mapInteractionValues(components)
-	if errValues != nil {
-		var value T
-
-		return value, errValues
-	}
-
-	return bindValues[T](ctx, values)
+func Bind[T any](ctx context.Context, components []discordgo.MessageComponent) (T, error) { //nolint:ireturn
+	return BindValues[T](ctx, mapInteractionValues(components))
 }
 
 // mapInteractionValues is responsible for transforming the interaction values into a map indexed by the unique
 // input ID integer.
-func mapInteractionValues(components []discordgo.MessageComponent) (map[int]string, error) {
+func mapInteractionValues(components []discordgo.MessageComponent) map[int]string { //nolint:ireturn
 	values := map[int]string{}
 
 	// Parse modal data into values map
 	for _, component := range components {
 		switch component.Type() {
 		case discordgo.ActionsRowComponent:
-			row := component.(*discordgo.ActionsRow)
+			row, castOK := component.(*discordgo.ActionsRow)
+			if !castOK {
+				continue
+			}
 			for _, comp := range row.Components {
-				switch comp.Type() {
+				switch comp.Type() { //nolint:gocritic
 				case discordgo.TextInputComponent:
 					choice, ok := comp.(*discordgo.TextInput)
 					if !ok {
 						slog.Error("Failed to cast to textinput")
 
-						return values, nil
+						return values
 					}
 					values[choice.ID] = choice.Value
 				}
 			}
 		case discordgo.LabelComponent:
-			row := component.(*discordgo.Label)
-			comp := row.Component.(*discordgo.SelectMenu)
+			row, castOK := component.(*discordgo.Label)
+			if !castOK {
+				continue
+			}
+			comp, castMenu := row.Component.(*discordgo.SelectMenu)
+			if !castMenu {
+				continue
+			}
 			if len(comp.Values) > 0 {
 				values[comp.ID] = comp.Values[0]
 			}
 		}
 	}
 
-	return values, nil
-}
+	return values
+} //nolint:ireturn
 
-func bindValues[T any](ctx context.Context, values map[int]string) (T, error) {
+func BindValues[T any](ctx context.Context, values map[int]string) (T, error) { //nolint:ireturn
 	var value T
 	// Use reflection to populate struct fields based on `id` tags
 	elem := reflect.ValueOf(&value).Elem()
 	elemType := elem.Type()
 
-	for i := 0; i < elemType.NumField(); i++ {
+	for i := range elemType.NumField() {
 		field := elemType.Field(i)
 		fieldValue := elem.Field(i)
 
@@ -103,19 +105,19 @@ func bindValues[T any](ctx context.Context, values map[int]string) (T, error) {
 			}
 			prefix, prefixErr := netip.ParsePrefix(val)
 			if prefixErr != nil {
-				return value, prefixErr
+				return value, fmt.Errorf("%w: %w: %s:%s", ErrBind, prefixErr, field.Name, val)
 			}
 			fieldValue.Set(reflect.ValueOf(&prefix))
 		case *duration.Duration:
 			durVal, errDur := duration.Parse(val)
 			if errDur != nil {
-				return value, errDur
+				return value, fmt.Errorf("%w: %w: %s:%s", ErrBind, errDur, field.Name, val)
 			}
 			fieldValue.Set(reflect.ValueOf(durVal))
 		case steamid.SteamID:
 			sid, errResolve := steamid.Resolve(ctx, val)
 			if errResolve != nil {
-				return value, errResolve
+				return value, fmt.Errorf("%w: %w: %s:%s", ErrBind, errResolve, field.Name, val)
 			}
 			if !sid.Valid() {
 				return value, fmt.Errorf("%w: invalid steamid tag on field %s: %s", ErrBind, field.Name, val)
@@ -128,7 +130,7 @@ func bindValues[T any](ctx context.Context, values map[int]string) (T, error) {
 			}
 			fieldValue.Set(reflect.ValueOf(reason.Reason(intVal)))
 		case string:
-			if reflect.TypeOf(val).AssignableTo(fieldValue.Type()) {
+			if reflect.TypeOf(val).AssignableTo(fieldValue.Type()) { // nolint:modernize
 				fieldValue.Set(reflect.ValueOf(val))
 			}
 		default:
