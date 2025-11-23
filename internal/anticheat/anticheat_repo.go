@@ -201,6 +201,7 @@ func (a Repository) getDemoIDsByTitle(ctx context.Context, titles []string) ([]d
 
 	defer demos.Close()
 
+	//goland:noinspection ALL
 	demoMaps := []demoIDMap{}
 	for demos.Next() {
 		var m demoIDMap

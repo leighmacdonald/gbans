@@ -118,6 +118,7 @@ const (
 	VoteCodeFailQuorum         VoteCode = 4 // VOTE_FAILED_QUORUM_FAILURE - Not Enough Votes
 )
 
+// VoteFailEvt represents a vote failing event.
 // L 04/15/2024 - 22:38:57: Vote succeeded "Kick Pain in a Box".
 type VoteFailEvt struct {
 	TimeStamp
@@ -132,6 +133,7 @@ type VoteSuccessEvt struct {
 	Name string `json:"name" mapstructure:"name"`
 }
 
+// VoteKickDetailsEvt contains details on a vote kick event
 // L 04/15/2024 - 22:38:57: Kick Vote details:  VoteInitiatorSteamID: [U:1:8169544]  VoteTargetSteamID: [U:1:30511445]  Valid: 1  BIndividual: 1  Name: Pain in a Box  Proxy: 0.
 type VoteKickDetailsEvt struct {
 	TimeStamp

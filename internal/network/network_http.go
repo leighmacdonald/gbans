@@ -12,12 +12,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
-type NetworkHandler struct { //nolint:revive
+type Handler struct {
 	Networks
 }
 
-func NewNetworkHandler(engine *gin.Engine, authenticator httphelper.Authenticator, networks Networks) {
-	handler := NetworkHandler{Networks: networks}
+func NewHandler(engine *gin.Engine, authenticator httphelper.Authenticator, networks Networks) {
+	handler := Handler{Networks: networks}
 
 	modGrp := engine.Group("/")
 	{
@@ -33,7 +33,7 @@ func NewNetworkHandler(engine *gin.Engine, authenticator httphelper.Authenticato
 	}
 }
 
-func (h NetworkHandler) onAPIGetUpdateDB() gin.HandlerFunc {
+func (h Handler) onAPIGetUpdateDB() gin.HandlerFunc {
 	updateInProgress := atomic.Bool{}
 
 	return func(ctx *gin.Context) {
@@ -55,7 +55,7 @@ func (h NetworkHandler) onAPIGetUpdateDB() gin.HandlerFunc {
 	}
 }
 
-func (h NetworkHandler) onAPIQueryNetwork() gin.HandlerFunc {
+func (h Handler) onAPIQueryNetwork() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		req, ok := httphelper.BindJSON[DetailsQuery](ctx)
 		if !ok {
@@ -73,7 +73,7 @@ func (h NetworkHandler) onAPIQueryNetwork() gin.HandlerFunc {
 	}
 }
 
-func (h NetworkHandler) onAPIQueryConnections() gin.HandlerFunc {
+func (h Handler) onAPIQueryConnections() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		req, ok := httphelper.BindJSON[ConnectionHistoryQuery](ctx)
 		if !ok {

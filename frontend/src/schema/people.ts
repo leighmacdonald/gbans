@@ -82,8 +82,8 @@ export const schemaUserProfile = z.object({
     ban_id: z.number(),
     muted: z.boolean(),
     created_on: z.date(),
-    updated_on: z.date()
-    // playerqueue_chat_status: z.enum(['readwrite', 'readonly', 'noaccess']),
+    updated_on: z.date(),
+    playerqueue_chat_status: z.enum(['readwrite', 'readonly', 'noaccess']).default('readwrite')
     // playerqueue_chat_reason: z.string()
 });
 

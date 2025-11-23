@@ -33,7 +33,7 @@ func TestHTTPAppeal(t *testing.T) {
 		bans    = ban.NewBans(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
 			fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.KickLogChannelID,
 			steamid.New(fixture.Config.Config().Owner), reports, notification.NewNullNotifications(), nil)
-		appeals = ban.NewAppeals(ban.NewAppealRepository(fixture.Database), bans, persons, notification.NewNullNotifications())
+		appeals = ban.NewAppeals(ban.NewAppealRepository(fixture.Database), bans, persons, notification.NewNullNotifications(), fixture.Config.Config().Discord.LogChannelID)
 		target  = steamid.RandSID64()
 	)
 

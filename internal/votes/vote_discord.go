@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
-func VoteResultMessage(result Result, source person.Core, target person.Core) *discordgo.MessageSend {
+func VoteResultMessage(result Result, _ person.Core, target person.Core) *discordgo.MessageSend {
 	var colour int
 	if result.Success {
 		colour = discord.ColourSuccess

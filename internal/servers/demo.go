@@ -34,6 +34,7 @@ var (
 	ErrDemoLoad       = errors.New("could not load demo file")
 	ErrFailedOpenFile = errors.New("failed to open file")
 	ErrFailedReadFile = errors.New("failed to read file")
+	ErrParse          = errors.New("could not parse demo")
 )
 
 type DemoStrategy string
@@ -401,6 +402,8 @@ func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails,
 		return nil, errors.Join(errDF, ErrDemoLoad)
 	}
 
+	defer log.Closer(fileHandle)
+
 	content, errContent := io.ReadAll(fileHandle)
 	if errContent != nil {
 		return nil, errors.Join(errContent, ErrDemoLoad)
@@ -410,8 +413,6 @@ func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails,
 	if errInfo != nil {
 		return nil, errors.Join(errInfo, ErrDemoLoad)
 	}
-
-	log.Closer(fileHandle)
 
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
@@ -484,10 +485,11 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID 
 		return nil, errDetail
 	}
 	if demoDetail == nil {
-		slog.Error("Failed to parse demo details, nil details")
+		slog.Error("Failed to parse demo details, nil details", slog.String("path", asset.LocalPath))
 
-		return nil, nil
+		return nil, ErrParse
 	}
+
 	for key := range demoDetail.State.Users {
 		intStats[key] = gin.H{}
 	}

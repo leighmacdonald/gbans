@@ -44,8 +44,8 @@ export function AuthProvider({
                 discord_id: '',
                 created_on: new Date(),
                 updated_on: new Date(),
-                patreon_id: ''
-                // playerqueue_chat_status: 'noaccess',
+                patreon_id: '',
+                playerqueue_chat_status: 'noaccess'
                 //  playerqueue_chat_reason: ''
             });
         }

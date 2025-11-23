@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v4/extra"
 )
@@ -75,14 +76,11 @@ func (c *Collector) ExecRaw(ctx context.Context, addr string, password string, c
 	if errConn != nil {
 		return "", errors.Join(errConn, ErrFailedToDialRCON)
 	}
+	defer log.Closer(conn)
 
 	resp, errExec := conn.Exec(cmd)
 	if errExec != nil {
 		return "", errors.Join(errExec, ErrRCONCommand)
-	}
-
-	if errClose := conn.Close(); errClose != nil {
-		slog.Error("Could not close rcon connection", slog.String("error", errClose.Error()))
 	}
 
 	return resp, nil

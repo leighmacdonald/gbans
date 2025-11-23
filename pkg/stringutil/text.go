@@ -1,14 +1,12 @@
-// Package util provides some useful functions that don't fit anywhere else.
+// Package stringutil provides some string based helpers.
 package stringutil
 
 import (
 	"crypto/rand"
-	"fmt"
 	"math/big"
 	"strings"
 
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 // StringChunkDelimited is used to split a multiline string into strings with a max size defined as chunkSize.
@@ -49,21 +47,6 @@ func StringChunkDelimited(data string, chunkSize int, sep ...string) []string {
 	return results
 }
 
-func SanitizeLog(s string) string {
-	for _, char := range []string{"\n", "\r"} {
-		s = strings.ReplaceAll(s, char, "")
-	}
-
-	return s
-}
-
-func DiffString(s1, s2 string) string {
-	dmp := diffmatchpatch.New()
-	diffs := dmp.DiffPrettyText(dmp.DiffMain(s1, s2, true))
-
-	return fmt.Sprintf("```diff\n%s```", diffs)
-}
-
 func SanitizeUGC(body string) string {
 	return bluemonday.UGCPolicy().Sanitize(body)
 }
@@ -83,14 +66,4 @@ func SecureRandomString(n int) string {
 	}
 
 	return string(ret)
-}
-
-func ToLowerSlice(stringSlice []string) []string {
-	lowerSlice := make([]string, len(stringSlice))
-
-	for i := range stringSlice {
-		lowerSlice[i] = strings.ToLower(stringSlice[i])
-	}
-
-	return lowerSlice
 }

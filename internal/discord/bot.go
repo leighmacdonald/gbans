@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
@@ -25,6 +24,7 @@ var (
 	ErrSession          = errors.New("failed to start session")
 	ErrCommandSend      = errors.New("failed to send response")
 	ErrCommandDuplicate = errors.New("duplicate command")
+	ErrTemplate         = errors.New("template error")
 )
 
 const (
@@ -34,6 +34,13 @@ const (
 	IDDuration
 	IDNotes
 	IDBody
+)
+
+const (
+	ColourSuccess = 302673
+	ColourInfo    = 3581519
+	ColourWarn    = 14327864
+	ColourError   = 13631488
 )
 
 // Handler is a handler for responding to slash command interactions.
@@ -106,24 +113,12 @@ func New(opts Opts) (*Discord, error) {
 	return bot, nil
 }
 
-func (b *Discord) SendNext(channelID string, payload *discordgo.MessageSend) error {
+func (b *Discord) Send(channelID string, payload *discordgo.MessageSend) error {
 	if !b.running.Load() || b.session == nil {
 		return nil
 	}
 
 	if _, errSend := b.session.ChannelMessageSendComplex(channelID, payload); errSend != nil {
-		return errors.Join(errSend, ErrCommandSend)
-	}
-
-	return nil
-}
-
-func (b *Discord) Send(channelID string, payload *discordgo.MessageEmbed) error {
-	if !b.running.Load() || b.session == nil {
-		return nil
-	}
-
-	if _, errSend := b.session.ChannelMessageSendEmbed(channelID, payload); errSend != nil {
 		return errors.Join(errSend, ErrCommandSend)
 	}
 
@@ -158,10 +153,6 @@ func (b *Discord) Close() {
 	if err := b.session.Close(); err != nil {
 		slog.Error("failed to close discord session cleanly", slog.String("error", err.Error()))
 	}
-}
-
-func (b *Discord) Session() *discordgo.Session {
-	return b.session
 }
 
 // MustRegisterPrefixHandler takes a prefix and handler to execute when the prefix is matched. The prefix
@@ -230,22 +221,14 @@ func (b *Discord) handleModalCmd(ctx context.Context, handler Handler, session *
 	}
 }
 
-func (b *Discord) handleCLICmd(ctx context.Context, handler Handler, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	errHandleCommand := handler(ctx, session, interaction)
-	if errHandleCommand != nil {
-		//_, _ = session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
-		//	Content: "error handling command",
-		//})
-		slog.Error("Failed handling command", slog.String("error", errHandleCommand.Error()))
-
-		return
-	}
-}
-
 func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	command := interaction.ApplicationCommandData().Name
 	if handler, handlerFound := b.commandHandlers[command]; handlerFound {
-		b.handleCLICmd(ctx, handler, session, interaction)
+		if errHandleCommand := handler(ctx, session, interaction); errHandleCommand != nil {
+			slog.Error("Failed handling command", slog.String("error", errHandleCommand.Error()))
+
+			return
+		}
 
 		return
 	}
@@ -327,16 +310,16 @@ func (opts CommandOptions) String(key string) string {
 }
 
 func Render(name string, templ string, context any) (string, error) {
-	var b bytes.Buffer
+	var buffer bytes.Buffer
 	tmpl, err := template.New(name).Parse(templ)
 	if err != nil {
-		return "", err
+		return "", errors.Join(err, ErrTemplate)
 	}
-	if err = tmpl.Execute(&b, context); err != nil {
-		return "", err
+	if err = tmpl.Execute(&buffer, context); err != nil {
+		return "", errors.Join(err, ErrTemplate)
 	}
 
-	return b.String(), nil
+	return buffer.String(), nil
 }
 
 // CustomIDInt64 pulls out the suffix value as a int64.
@@ -348,34 +331,52 @@ func CustomIDInt64(idString string) (int64, error) {
 	}
 	value, errID := strconv.ParseInt(parts[len(parts)-1], 10, 64)
 	if errID != nil {
-		return 0, errID
+		return 0, errors.Join(errID, ErrCustomIDInvalid)
 	}
 
 	return value, nil
 }
 
 // AckInteraction acknowledges the interation immediately. It should be followed up by
-// an RespondInteraction to complete the response.
+// an RespondUpdate to complete the response.
 func AckInteraction(session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
-	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Flags: discordgo.MessageFlagsIsComponentsV2,
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: "Computering..."},
-			},
+			Flags:      discordgo.MessageFlagsIsComponentsV2,
+			Components: []discordgo.MessageComponent{discordgo.TextDisplay{Content: "Computering..."}},
 		},
-	})
+	}); err != nil {
+		return errors.Join(err, ErrCommandSend)
+	}
+
+	return nil
 }
 
-func RespondInteraction(session *discordgo.Session, interaction *discordgo.InteractionCreate, components ...discordgo.MessageComponent) error {
-	_, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
+func Respond(session *discordgo.Session, interaction *discordgo.InteractionCreate, components []discordgo.MessageComponent) error {
+	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags:      discordgo.MessageFlagsIsComponentsV2,
+			Components: components,
+		},
+	}); err != nil {
+		return errors.Join(err, ErrCommandSend)
+	}
+
+	return nil
+}
+
+func RespondUpdate(session *discordgo.Session, interaction *discordgo.InteractionCreate, components ...discordgo.MessageComponent) error {
+	if _, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
 		Flags:           discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsSuppressNotifications,
 		AllowedMentions: &discordgo.MessageAllowedMentions{},
 		Components:      &components,
-	})
+	}); err != nil {
+		return errors.Join(err, ErrCommandSend)
+	}
 
-	return err
+	return nil
 }
 
 func Autocomplete(session *discordgo.Session, interaction *discordgo.InteractionCreate, choices []*discordgo.ApplicationCommandOptionChoice) error {
@@ -383,10 +384,31 @@ func Autocomplete(session *discordgo.Session, interaction *discordgo.Interaction
 		return choices[i].Name < choices[j].Name
 	})
 
-	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+		Data: &discordgo.InteractionResponseData{Choices: choices},
+	}); err != nil {
+		return errors.Join(err, ErrCommandSend)
+	}
+
+	return nil
+}
+
+func Error(session *discordgo.Session, interaction *discordgo.InteractionCreate, err error) {
+	if errResp := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Choices: choices,
+			Flags: discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
+			Components: []discordgo.MessageComponent{
+				discordgo.Container{
+					AccentColor: ptr.To(ColourError),
+					Components: []discordgo.MessageComponent{
+						discordgo.TextDisplay{Content: err.Error()},
+					},
+				},
+			},
 		},
-	})
+	}); errResp != nil {
+		slog.Error("Failed to send error response", slog.String("error", errResp.Error()))
+	}
 }

@@ -17,7 +17,7 @@ func NewGroupMemberships(tfAPI *thirdparty.TFAPI, repo Repository) *GroupMembers
 	return &GroupMemberships{tfAPI: tfAPI, repo: repo}
 }
 
-// groupMemberUpdater updates the current members of banned Steam groups in the database.
+// UpdateCache updates the current members of banned Steam groups in the database.
 func (g GroupMemberships) UpdateCache(ctx context.Context) error {
 	bans, errBans := g.repo.Query(ctx, QueryOpts{GroupsOnly: true})
 	if errBans != nil {

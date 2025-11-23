@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	AuthTokenDuration     = time.Hour * 24 * 31
+	TokenDuration         = time.Hour * 24 * 31
 	FingerprintCookieName = "fingerprint"
 )
 
@@ -128,7 +128,7 @@ func (u *Authentication) MakeToken(ctx *gin.Context, cookieKey string, sid steam
 
 	fingerprint := stringutil.SecureRandomString(40)
 
-	accessToken, errAccess := u.NewUserToken(sid, cookieKey, fingerprint, AuthTokenDuration)
+	accessToken, errAccess := u.NewUserToken(sid, cookieKey, fingerprint, TokenDuration)
 	if errAccess != nil {
 		return UserTokens{}, errors.Join(errAccess, ErrCreateToken)
 	}

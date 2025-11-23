@@ -74,7 +74,7 @@ type discordHandler struct {
 	wordFilters WordFilters
 }
 
-func (h discordHandler) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+func (h discordHandler) onFilterCheck(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) error {
 	// opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	// message := opts[discord.OptMessage].StringValue()
 	// return FilterCheckMessage(h.wordFilters.Check(message))

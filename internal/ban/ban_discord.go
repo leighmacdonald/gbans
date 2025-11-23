@@ -77,7 +77,7 @@ func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Prov
 	}, handler.onCheck)
 }
 
-var durationMap = map[string]string{
+var durationMap = map[string]string{ //nolint:gochecknoglobals
 	"15 Mins":   "PT15M",
 	"6 Hours":   "PT6H",
 	"12 Hours":  "PT12H",
@@ -142,7 +142,7 @@ func (h discordHandler) createBanMuteModal(isBan bool) func(_ context.Context, s
 		return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseModal,
 			Data: &discordgo.InteractionResponseData{
-				CustomID: prefix + "_modal_" + interaction.Interaction.Member.User.ID,
+				CustomID: prefix + "_modal_" + interaction.Member.User.ID,
 				Title:    title,
 				Flags:    discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
 				Components: []discordgo.MessageComponent{
@@ -269,7 +269,7 @@ func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Se
 		content = fmt.Sprintf("Mute successful [View](%s)", link.Path(createdBan))
 	}
 
-	return discord.RespondInteraction(session, interaction,
+	return discord.RespondUpdate(session, interaction,
 		discordgo.Container{
 			AccentColor: ptr.To(discord.ColourSuccess),
 			Components: []discordgo.MessageComponent{
@@ -302,7 +302,7 @@ func (h discordHandler) onUnbanButton(ctx context.Context, session *discordgo.Se
 	if errID != nil {
 		return errID
 	}
-	ban, errBan := h.Bans.QueryOne(ctx, QueryOpts{BanID: banID})
+	ban, errBan := h.QueryOne(ctx, QueryOpts{BanID: banID})
 	if errBan != nil {
 		return errBan
 	}
@@ -337,27 +337,19 @@ func (h discordHandler) showUnban(_ context.Context, session *discordgo.Session,
 		}
 	}
 
-	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseModal,
-		Data: &discordgo.InteractionResponseData{
-			CustomID: "unban_resp_" + interaction.Interaction.Member.User.ID,
-			Title:    "Unban Player",
-			Flags:    discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
+	return discord.Respond(session, interaction, []discordgo.MessageComponent{
+		component,
+		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
-				component,
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextInput{
-							ID:          discord.IDNotes,
-							CustomID:    "unban_reason",
-							Label:       "Reason",
-							Style:       discordgo.TextInputParagraph,
-							Placeholder: "Finally took a shower",
-							Required:    true,
-							MaxLength:   2000,
-							MinLength:   0,
-						},
-					},
+				discordgo.TextInput{
+					ID:          discord.IDNotes,
+					CustomID:    "unban_reason",
+					Label:       "Reason",
+					Style:       discordgo.TextInputParagraph,
+					Placeholder: "Finally took a shower",
+					Required:    true,
+					MaxLength:   2000,
+					MinLength:   0,
 				},
 			},
 		},
@@ -392,7 +384,7 @@ func (h discordHandler) onUnbanResponse(ctx context.Context, session *discordgo.
 		return ErrBanDoesNotExist
 	}
 
-	return discord.RespondInteraction(session, interaction,
+	return discord.RespondUpdate(session, interaction,
 		discordgo.Container{
 			AccentColor: ptr.To(discord.ColourSuccess),
 			Components: []discordgo.MessageComponent{
@@ -512,7 +504,7 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 		})
 	}
 
-	return discord.RespondInteraction(session, interaction,
+	return discord.RespondUpdate(session, interaction,
 		discordgo.Container{
 			AccentColor: &colour,
 			Components: []discordgo.MessageComponent{
@@ -637,7 +629,7 @@ func DeleteReportMessage(existing ReportMessage, _ person.Info) *discordgo.Messa
 	)
 }
 
-func EditReportMessageResponse(body string, oldBody string, link string, author person.Info, authorURL string) *discordgo.MessageSend {
+func EditReportMessageResponse(body string, oldBody string, _ string, _ person.Info, _ string) *discordgo.MessageSend {
 	return discord.NewMessageSend(
 		discordgo.TextDisplay{Content: "New report message edited"},
 		discordgo.Container{
@@ -654,7 +646,7 @@ func EditReportMessageResponse(body string, oldBody string, link string, author 
 		})
 }
 
-func ReportStatsMessage(meta ReportMeta, url string) *discordgo.MessageSend {
+func ReportStatsMessage(meta ReportMeta, _ string) *discordgo.MessageSend {
 	const format = `# Current Open Report Counts
 New: {{ .New }}
 Total Open: {{ .TotalOpen }}
@@ -688,6 +680,7 @@ Open >7 Days: {{ .Open1Week }}
 	if errBody != nil {
 		slog.Error("Failed to render report stats", slog.String("error", errBody.Error()))
 	}
+
 	return discord.NewMessageSend(discordgo.Container{
 		AccentColor: ptr.To(colour),
 		Components: []discordgo.MessageComponent{

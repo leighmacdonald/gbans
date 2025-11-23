@@ -34,10 +34,8 @@ type Listener struct {
 }
 
 var (
-	ErrResolve    = errors.New("failed to resolve UDP address")
-	ErrRateLimit  = errors.New("rate limited")
-	ErrUnknownIP  = errors.New("unknown source ip")
-	ErrSecretAuth = errors.New("failed secret auth")
+	ErrResolve   = errors.New("failed to resolve UDP address")
+	ErrUnknownIP = errors.New("unknown source ip")
 )
 
 func NewListener(logAddr string, onEvent LogEventHandler) (*Listener, error) {

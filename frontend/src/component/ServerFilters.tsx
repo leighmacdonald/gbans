@@ -5,8 +5,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import { SelectChangeEvent } from '@mui/material/Select';
-import Select from '@mui/material/Select';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Slider from '@mui/material/Slider';
 import Switch from '@mui/material/Switch';
 import { styled } from '@mui/material/styles';
@@ -91,7 +90,7 @@ export const ServerFilters = () => {
                 }
                 return 0;
             }
-            return ('' + a.name_short).localeCompare(b.name_short);
+            return ('' + a.short_name).localeCompare(b.short_name);
         });
         if (!filterByRegion && !selectedRegion.includes('any')) {
             s = s.filter((srv) => selectedRegion.includes(srv.region));

@@ -40,12 +40,10 @@ func (h Avatar) Hash() string {
 }
 
 type Provider interface {
-	// FIXME Retuning a interface for now.
 	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Core, error)
 }
 
 type DiscordPersonProvider interface {
-	// FIXME Retuning a interface for now.
 	GetPersonByDiscordID(ctx context.Context, discordID string) (Core, error)
 }
 

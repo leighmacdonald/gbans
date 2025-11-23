@@ -253,8 +253,8 @@ func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
 			return
 		}
 
+		//goland:noinspection ALL
 		records := []BDSourceBansRecord{}
-
 		resp, errResp := client.BansSearchWithResponse(ctx, &thirdparty.BansSearchParams{Steamids: steamID.String()})
 		if errResp != nil {
 			return

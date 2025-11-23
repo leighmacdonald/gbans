@@ -82,8 +82,8 @@ func (r *Repository) GetPersonNotifications(ctx context.Context, steamID steamid
 
 	defer rows.Close()
 
+	//goland:noinspection ALL
 	notifications := []UserNotification{}
-
 	for rows.Next() {
 		var (
 			notif      UserNotification

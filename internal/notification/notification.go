@@ -19,8 +19,6 @@ type Notifier interface {
 }
 
 type BotNotifier interface {
-	// Send is deprecated, use SendNext
-	Send(channelID string, embed *discordgo.MessageEmbed) error
 	SendNext(channelID string, message *discordgo.MessageSend) error
 }
 

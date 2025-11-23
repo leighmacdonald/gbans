@@ -25,7 +25,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	discordoauth "github.com/leighmacdonald/gbans/internal/discord/discord_oauth"
+	discordoauth "github.com/leighmacdonald/gbans/internal/discord/oauth"
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/log"
@@ -477,7 +477,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	forum.NewForumHandler(router, userAuth, g.forums)
 	// match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
 	metrics.NewMetricsHandler(router)
-	network.NewNetworkHandler(router, userAuth, g.networks)
+	network.NewHandler(router, userAuth, g.networks)
 	network.NewBlocklistHandler(router, userAuth, g.blocklists, g.networks)
 	news.NewNewsHandler(router, g.news, userAuth)
 	notification.NewNotificationHandler(router, userAuth, g.notifications)

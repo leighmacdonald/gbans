@@ -100,7 +100,7 @@ export const ServerList = () => {
                         onClick={() => {
                             navigator.clipboard
                                 .writeText(
-                                    `connect ${selectedServers[info.row.index].host}:${selectedServers[info.row.index].port}`
+                                    `connect ${selectedServers[info.row.index].address}:${selectedServers[info.row.index].port}`
                                 )
                                 .then(() => {
                                     sendFlash('success', 'Copied address to clipboard');

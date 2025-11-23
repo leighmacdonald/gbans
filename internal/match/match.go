@@ -16,8 +16,8 @@ import (
 type TriggerType int
 
 const (
-	MatchTriggerStart TriggerType = 1
-	MatchTriggerEnd   TriggerType = 2
+	TriggerStart TriggerType = 1
+	TriggerEnd   TriggerType = 2
 )
 
 type Trigger struct {
