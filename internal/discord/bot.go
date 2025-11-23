@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -274,31 +275,10 @@ func (b *Discord) onInteractionCreate(session *discordgo.Session, interaction *d
 	case discordgo.InteractionMessageComponent:
 		b.findAndExecPrefixHandler(ctx, interaction.MessageComponentData().CustomID, session, interaction)
 	case discordgo.InteractionApplicationCommandAutocomplete:
+		b.onAutoComplete(ctx, session, interaction)
 	case discordgo.InteractionModalSubmit:
 		b.findAndExecPrefixHandler(ctx, interaction.ModalSubmitData().CustomID, session, interaction)
 	}
-}
-
-func (b *Discord) sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response *discordgo.MessageEmbed) error {
-	resp := &discordgo.InteractionResponseData{
-		Embeds: []*discordgo.MessageEmbed{response},
-	}
-
-	_, errResponseErr := session.InteractionResponseEdit(interaction, &discordgo.WebhookEdit{
-		Embeds: &resp.Embeds,
-	})
-
-	if errResponseErr != nil {
-		if _, errResp := session.FollowupMessageCreate(interaction, true, &discordgo.WebhookParams{
-			Content: "Something went wrong: " + errResponseErr.Error(),
-		}); errResp != nil {
-			return errors.Join(errResp, ErrCommandSend)
-		}
-
-		return nil
-	}
-
-	return nil
 }
 
 func (b *Discord) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
@@ -319,6 +299,15 @@ func (b *Discord) overwriteCommands() error {
 	b.registeredCommands = commands
 
 	return nil
+}
+
+func (b *Discord) onAutoComplete(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+	data := interaction.ApplicationCommandData()
+	if len(data.Options) == 0 || data.Options[0].Name == "" {
+		return
+	}
+
+	b.findAndExecPrefixHandler(ctx, data.Options[0].Name, session, interaction)
 }
 
 type CommandOptions map[string]*discordgo.ApplicationCommandInteractionDataOption
@@ -387,4 +376,17 @@ func RespondInteraction(session *discordgo.Session, interaction *discordgo.Inter
 	})
 
 	return err
+}
+
+func Autocomplete(session *discordgo.Session, interaction *discordgo.InteractionCreate, choices []*discordgo.ApplicationCommandOptionChoice) error {
+	sort.Slice(choices, func(i, j int) bool {
+		return choices[i].Name < choices[j].Name
+	})
+
+	return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+		Data: &discordgo.InteractionResponseData{
+			Choices: choices,
+		},
+	})
 }

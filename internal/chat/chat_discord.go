@@ -3,12 +3,13 @@ package chat
 import (
 	"context"
 	"fmt"
-	"strconv"
+	"log/slog"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/datetime"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
 func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
@@ -106,21 +107,14 @@ func FilterCheckMessage(matches []Filter) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.MessageEmbed {
-	msgEmbed := discord.NewEmbed("Language Warning")
-	msgEmbed.Embed().
-		SetDescription(newWarning.UserWarning.Message).
-		SetColor(discord.ColourWarn).
-		AddField("Filter ID", strconv.FormatInt(newWarning.MatchedFilter.FilterID, 10)).
-		AddField("Matched", newWarning.Matched).
-		AddField("ServerStore", newWarning.UserMessage.ServerName).InlineAllFields().
-		AddField("Pattern", newWarning.MatchedFilter.Pattern)
-
-	// TODO
-	// msgEmbed.
-	// 	AddFieldsSteamID(newWarning.UserMessage.SteamID).
-	// 	Embed().
-	// 	AddField("Name", banSteam.SourcePersonaname)
+func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.MessageSend {
+	const format = `# Language Warning
+FilterID: {{ .FilterID }}
+Matched: {{ .Matched }}
+Server: {{ .Server }}
+Pattern: {{ .Pattern }}
+Expires In: {{ .ExpiresIn }}
+Expires At: {{ .ExpiresAt }}`
 
 	var (
 		expIn = "Permanent"
@@ -132,9 +126,29 @@ func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.
 		expAt = datetime.FmtTimeShort(validUntil)
 	}
 
-	return msgEmbed.
-		Embed().
-		AddField("Expires In", expIn).
-		AddField("Expires At", expAt).
-		MessageEmbed
+	content, err := discord.Render("lang_warn", format, struct {
+		FilterID  int64
+		Matched   string
+		Server    string
+		Pattern   string
+		ExpiresIn string
+		ExpiresAt string
+	}{
+		FilterID:  newWarning.MatchedFilter.FilterID,
+		Matched:   newWarning.Matched,
+		Server:    newWarning.UserMessage.ServerName,
+		Pattern:   newWarning.MatchedFilter.Pattern,
+		ExpiresIn: expIn,
+		ExpiresAt: expAt,
+	})
+	if err != nil {
+		slog.Error("Failed to render warning message", slog.String("error", err.Error()))
+	}
+
+	return discord.NewMessageSend(discordgo.Container{
+		AccentColor: ptr.To(discord.ColourInfo),
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{Content: content},
+		},
+	})
 }

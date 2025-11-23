@@ -69,11 +69,9 @@ type Payload struct {
 	DiscordChannels []string
 	Severity        Severity
 	Message         string
-	// deprecated
-	DiscordEmbed *discordgo.MessageEmbed
-	MessageSend  *discordgo.MessageSend
-	Link         string
-	Author       person.Core
+	MessageSend     *discordgo.MessageSend
+	Link            string
+	Author          person.Core
 }
 
 func (payload Payload) ValidationError() error {
@@ -81,7 +79,7 @@ func (payload Payload) ValidationError() error {
 		return ErrDiscordChannelsEmpty
 	}
 
-	if slices.Contains(payload.Types, Discord) && payload.DiscordEmbed == nil {
+	if slices.Contains(payload.Types, Discord) && payload.MessageSend == nil {
 		return ErrDiscordEmbedNil
 	}
 
@@ -92,7 +90,7 @@ func (payload Payload) ValidationError() error {
 	return nil
 }
 
-func NewDiscordNext(channel string, message *discordgo.MessageSend) Payload {
+func NewDiscord(channel string, message *discordgo.MessageSend) Payload {
 	return Payload{
 		Types:           []MessageType{Discord},
 		Sids:            nil,
@@ -105,20 +103,6 @@ func NewDiscordNext(channel string, message *discordgo.MessageSend) Payload {
 	}
 }
 
-// NewDiscord is deprecated.
-func NewDiscord(channel string, embed *discordgo.MessageEmbed) Payload {
-	return Payload{
-		Types:           []MessageType{Discord},
-		Sids:            nil,
-		Groups:          nil,
-		DiscordChannels: []string{channel},
-		Severity:        Info,
-		Message:         "",
-		DiscordEmbed:    embed,
-		Link:            "",
-	}
-}
-
 func NewSiteUser(recipients steamid.Collection, severity Severity, message string, link string) Payload {
 	return Payload{
 		Types:           []MessageType{User},
@@ -127,7 +111,6 @@ func NewSiteUser(recipients steamid.Collection, severity Severity, message strin
 		DiscordChannels: nil,
 		Severity:        severity,
 		Message:         message,
-		DiscordEmbed:    nil,
 		Link:            link,
 	}
 }
@@ -147,7 +130,6 @@ func NewSiteGroup(groups []permission.Privilege, severity Severity, message stri
 		DiscordChannels: nil,
 		Severity:        severity,
 		Message:         message,
-		DiscordEmbed:    nil,
 		Link:            link,
 	}
 }
@@ -188,11 +170,7 @@ func (n *Notifications) Sender(ctx context.Context) {
 			return
 		case notif := <-n.send:
 			for _, channelID := range notif.DiscordChannels {
-				if notif.DiscordEmbed != nil {
-					if errSend := n.discord.Send(channelID, notif.DiscordEmbed); errSend != nil {
-						slog.Error("failed to send discord notification payload", slog.String("error", errSend.Error()))
-					}
-				} else if notif.MessageSend != nil {
+				if notif.MessageSend != nil {
 					if errSend := n.discord.SendNext(channelID, notif.MessageSend); errSend != nil {
 						slog.Error("failed to send discord notification payload", slog.String("error", errSend.Error()))
 					}

@@ -2,10 +2,12 @@ package ban
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -24,6 +26,11 @@ type AppealMessage struct {
 	Avatarhash      string               `json:"avatarhash"`
 	Personaname     string               `json:"personaname"`
 	PermissionLevel permission.Privilege `json:"permission_level"`
+}
+
+func (am AppealMessage) Path() string {
+	// TODO link to msg direct #.
+	return fmt.Sprintf("/ban/%d", am.BanID)
 }
 
 func NewBanAppealMessage(banID int64, authorID steamid.SteamID, message string) AppealMessage {
@@ -80,18 +87,20 @@ type AppealQueryFilter struct {
 }
 
 type Appeals struct {
-	repository AppealRepository
-	bans       Bans
-	persons    person.Provider
-	notif      notification.Notifier
+	AppealRepository
+
+	bans         Bans
+	persons      person.Provider
+	notif        notification.Notifier
+	logChannelID string
 }
 
-func NewAppeals(ar AppealRepository, bans Bans, persons person.Provider, notif notification.Notifier) Appeals {
-	return Appeals{repository: ar, bans: bans, persons: persons, notif: notif}
+func NewAppeals(ar AppealRepository, bans Bans, persons person.Provider, notif notification.Notifier, logChannelID string) Appeals {
+	return Appeals{AppealRepository: ar, bans: bans, persons: persons, notif: notif, logChannelID: logChannelID}
 }
 
 func (u *Appeals) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error) {
-	return u.repository.ByActivity(ctx, opts)
+	return u.ByActivity(ctx, opts)
 }
 
 func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.Info, banMessageID int64, newMsg string) (AppealMessage, error) {
@@ -123,15 +132,15 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.Info, banMe
 
 	existing.MessageMD = newMsg
 
-	if errSave := u.repository.SaveMessage(ctx, &existing); errSave != nil {
+	if errSave := u.SaveMessage(ctx, &existing); errSave != nil {
 		return existing, errSave
 	}
 
-	// if u.notif != nil {
-	// 	conf := u.config.Config()
-	// 	u.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, NewAppealMessage(existing.MessageMD,
-	// 		conf.ExtURLRaw("/ban/%d", existing.BanID), curUser, conf.ExtURL(curUser))))
-	// }
+	if u.notif != nil {
+		content := fmt.Sprintf(`# Appeal message edited
+%s`, newMsg)
+		go u.notif.Send(notification.NewDiscord(u.logChannelID, newAppealMessageResponse(existing, content)))
+	}
 
 	slog.Debug("Appeal message updated", slog.Int64("message_id", banMessageID))
 
@@ -179,7 +188,7 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, ban
 	msg.Personaname = curUser.GetName()
 	msg.Avatarhash = curUser.GetAvatar().Hash()
 
-	if errSave := u.repository.SaveMessage(ctx, &msg); errSave != nil {
+	if errSave := u.SaveMessage(ctx, &msg); errSave != nil {
 		return AppealMessage{}, errSave
 	}
 
@@ -189,25 +198,23 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, ban
 		return AppealMessage{}, errUpdate
 	}
 
-	// conf := u.config.Config()
+	go u.notif.Send(notification.NewDiscord(u.logChannelID, newAppealMessageResponse(msg, fmt.Sprintf(`# New report message posted
+%s`, msg.MessageMD))))
 
-	// u.notifications.Enqueue(ctx, notification.NewDiscordNotification(discord.ChannelModAppealLog, discord.NewAppealMessage(msg.MessageMD,
-	// 	conf.ExtURL(bannedPerson.Ban), curUser, conf.ExtURL(curUser))))
+	go u.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
+		[]permission.Privilege{permission.Moderator, permission.Admin},
+		notification.Info,
+		"A new ban appeal message",
+		link.Path(bannedPerson),
+		curUser))
 
-	// u.notifications.Enqueue(ctx, notification.NewSiteGroupNotificationWithAuthor(
-	// 	[]permission.Privilege{permission.PModerator, permission.PAdmin},
-	// 	notification.SeverityInfo,
-	// 	"A new ban appeal message",
-	// 	link.Path(bannedPerson),
-	// 	curUser))
-
-	// if curUser.SteamID != bannedPerson.TargetID {
-	// 	u.notifications.Enqueue(ctx, notification.NewSiteUserNotification(
-	// 		[]steamid.SteamID{bannedPerson.TargetID},
-	// 		notification.SeverityInfo,
-	// 		"A new ban appeal message",
-	// 		link.Path(bannedPerson)))
-	// }
+	if curUser.GetSteamID() != bannedPerson.TargetID {
+		go u.notif.Send(notification.NewSiteUser(
+			[]steamid.SteamID{bannedPerson.TargetID},
+			notification.Info,
+			"A new ban appeal message",
+			link.Path(bannedPerson)))
+	}
 
 	return msg, nil
 }
@@ -226,11 +233,11 @@ func (u *Appeals) Messages(ctx context.Context, userProfile person.Info, banID i
 		return nil, permission.ErrDenied
 	}
 
-	return u.repository.Messages(ctx, banID)
+	return u.AppealRepository.Messages(ctx, banID)
 }
 
 func (u *Appeals) MessageByID(ctx context.Context, banMessageID int64) (AppealMessage, error) {
-	return u.repository.MessageByID(ctx, banMessageID)
+	return u.AppealRepository.MessageByID(ctx, banMessageID)
 }
 
 func (u *Appeals) DropMessage(ctx context.Context, curUser person.Info, banMessageID int64) error {
@@ -243,13 +250,11 @@ func (u *Appeals) DropMessage(ctx context.Context, curUser person.Info, banMessa
 		return permission.ErrDenied
 	}
 
-	if errDrop := u.repository.DropMessage(ctx, &existing); errDrop != nil {
+	if errDrop := u.AppealRepository.DropMessage(ctx, &existing); errDrop != nil {
 		return errDrop
 	}
 
-	// u.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-	// 	discord.ChannelModAppealLog,
-	// 	discord.DeleteAppealMessage(&existing, curUser, u.config.ExtURL(curUser))))
+	go u.notif.Send(notification.NewDiscord(u.logChannelID, newAppealMessageDelete(existing)))
 
 	slog.Info("Appeal message deleted", slog.Int64("ban_message_id", banMessageID))
 

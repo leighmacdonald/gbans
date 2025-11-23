@@ -15,7 +15,7 @@ Reason: **%s%s**
 Target: **[%s](%s)** Steam ID: **%s**
 Author: **[%s](%s)** Steam ID: **%s**`
 
-func NewInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
+func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
 	msg := fmt.Sprintf(reportTemplate,
 		report.Reason.String(), report.ReasonText,
 		report.Subject.GetName(), link.Path(report.Subject), report.Subject.SteamID.String(),

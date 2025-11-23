@@ -1,14 +1,15 @@
 package playerqueue
 
 import (
-	"strconv"
+	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
-func NewPlayerqueueChatStatus(author person.Info, target person.Info, status ChatStatus, reason string) *discordgo.MessageEmbed {
+func NewPlayerqueueChatStatus(author person.Info, target person.Info, status ChatStatus, reason string) *discordgo.MessageSend {
 	colour := discord.ColourError
 	switch status {
 	case Readwrite:
@@ -19,37 +20,63 @@ func NewPlayerqueueChatStatus(author person.Info, target person.Info, status Cha
 
 	sid := target.GetSteamID()
 
-	return discord.NewEmbed("Updated chat status").
-		Embed().
-		SetColor(colour).
-		SetAuthor(author.GetName(), author.GetAvatar().Small()).
-		AddField("Status", string(status)).
-		AddField("Reason", reason).
-		AddField("Name", target.GetName()).
-		AddField("SteamID", sid.String()).
-		SetThumbnail(target.GetAvatar().Medium()).
-		MessageEmbed
+	const foramt = `# Updated chat status
+Status: {{.Status}}
+Reason: {{.Reason}}
+Name: {{.Name}}
+SteamID: {{.SteamID}}`
+
+	content, err := discord.Render("queue_chat_status", foramt, struct {
+		Status  string
+		Reason  string
+		Name    string
+		SteamID string
+	}{
+		Status:  string(status),
+		Reason:  reason,
+		Name:    target.GetName(),
+		SteamID: sid.String(),
+	})
+	if err != nil {
+		slog.Error("Failed to render queue_chat_status message", slog.String("error", err.Error()))
+	}
+
+	return discord.NewMessageSend(discordgo.Container{
+		AccentColor: ptr.To(colour),
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{Content: content},
+		},
+	})
 }
 
-func NewPlayerqueueMessage(author person.Info, msg string) *discordgo.MessageEmbed {
-	return discord.NewEmbed().
-		Embed().
-		SetColor(discord.ColourInfo).
-		SetAuthor(author.GetName(), author.GetAvatar().Small()).
-		SetDescription(msg).MessageEmbed
-}
-
-func NewPlayerqueuePurge(author person.Info, target person.Info, chatLog ChatLog, count int) *discordgo.MessageEmbed {
+func NewPlayerqueuePurge(_ person.Info, target person.Info, chatLog ChatLog, count int) *discordgo.MessageSend {
+	const format = `# Player queue message purge
+Message: {{.Message}}
+Count: {{.Count}}
+Name: {{.Name}}
+SteamID: {{.SteamID}}
+`
 	sid := target.GetSteamID()
 
-	return discord.NewEmbed().
-		Embed().
-		SetColor(discord.ColourInfo).
-		SetAuthor(author.GetName(), author.GetAvatar().Small()).
-		SetThumbnail(target.GetAvatar().Medium()).
-		AddField("Message", chatLog.BodyMD).
-		AddField("Count", strconv.Itoa(count)).
-		AddField("Name", target.GetName()).
-		AddField("SteamID", sid.String()).
-		MessageEmbed
+	body, errBody := discord.Render("queue_msg_purge", format, struct {
+		Message string
+		Count   int
+		Name    string
+		SteamID string
+	}{
+		Message: chatLog.BodyMD,
+		Count:   count,
+		Name:    target.GetName(),
+		SteamID: sid.String(),
+	})
+	if errBody != nil {
+		slog.Error("Failed to render message", slog.String("error", errBody.Error()))
+	}
+
+	return discord.NewMessageSend(discordgo.Container{
+		AccentColor: ptr.To(discord.ColourError),
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{Content: body},
+		},
+	})
 }

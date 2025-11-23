@@ -654,28 +654,46 @@ func EditReportMessageResponse(body string, oldBody string, link string, author 
 		})
 }
 
-func ReportStatsMessage(meta ReportMeta, url string) *discordgo.MessageEmbed {
-	msgEmbed := discord.NewEmbed("User Report Stats")
-	msgEmbed.
-		Embed().
-		SetColor(discord.ColourSuccess).
-		SetURL(url)
-
+func ReportStatsMessage(meta ReportMeta, url string) *discordgo.MessageSend {
+	const format = `# Current Open Report Counts
+New: {{ .New }}
+Total Open: {{ .TotalOpen }}
+Total Closed: {{ .TotalClosed }}
+Open >1 Day: {{ .Open1Day }}
+Open >3 Days: {{ .Open3Days }}
+Open >7 Days: {{ .Open1Week }}
+`
+	colour := discord.ColourSuccess
 	if meta.OpenWeek > 0 {
-		msgEmbed.Embed().SetColor(discord.ColourError)
+		colour = discord.ColourError
 	} else if meta.Open3Days > 0 {
-		msgEmbed.Embed().SetColor(discord.ColourWarn)
+		colour = discord.ColourWarn
 	}
 
-	return msgEmbed.
-		Embed().
-		SetDescription("Current Open Report Counts").
-		AddField("New", fmt.Sprintf(" %d", meta.Open1Day)).MakeFieldInline().
-		AddField("Total Open", fmt.Sprintf(" %d", meta.TotalOpen)).MakeFieldInline().
-		AddField("Total Closed", fmt.Sprintf(" %d", meta.TotalClosed)).MakeFieldInline().
-		AddField(">1 Day", fmt.Sprintf(" %d", meta.Open1Day)).MakeFieldInline().
-		AddField(">3 Days", fmt.Sprintf(" %d", meta.Open3Days)).MakeFieldInline().
-		AddField(">1 Week", fmt.Sprintf(" %d", meta.OpenWeek)).MakeFieldInline().
-		Truncate().
-		MessageEmbed
+	body, errBody := discord.Render("report_stats", format, struct {
+		New         int
+		TotalOpen   int
+		TotalClosed int
+		Open1Day    int
+		Open3Days   int
+		Open1Week   int
+	}{
+		New:         meta.Open1Day,
+		TotalOpen:   meta.TotalOpen,
+		TotalClosed: meta.TotalClosed,
+		Open1Day:    meta.Open1Day,
+		Open3Days:   meta.Open3Days,
+		Open1Week:   meta.OpenWeek,
+	})
+	if errBody != nil {
+		slog.Error("Failed to render report stats", slog.String("error", errBody.Error()))
+	}
+	return discord.NewMessageSend(discordgo.Container{
+		AccentColor: ptr.To(colour),
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{
+				Content: body,
+			},
+		},
+	})
 }

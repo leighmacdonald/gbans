@@ -18,8 +18,8 @@ import (
 )
 
 func RegisterDiscordCommands(service discord.Service, state *state.State, persons person.Provider, servers Servers, network network.Networks) {
-	_ = DiscordHandler{state: state, persons: persons, servers: servers, network: network}
-	//
+	handler := DiscordHandler{state: state, persons: persons, servers: servers, network: network}
+
 	//service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 	//	Name:                     "find",
 	//	Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
@@ -34,22 +34,24 @@ func RegisterDiscordCommands(service discord.Service, state *state.State, person
 	//		},
 	//	},
 	//}, handler.onFind)
-	//
-	//service.MustRegisterCommandHandler("players", &discordgo.ApplicationCommand{
-	//	Name:                     "players",
-	//	Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-	//	DefaultMemberPermissions: &discord.ModPerms,
-	//	Description:              "Show a table of the current players on the server",
-	//	Options: []*discordgo.ApplicationCommandOption{
-	//		{
-	//			Type:        discordgo.ApplicationCommandOptionString,
-	//			Name:        discord.OptServerIdentifier,
-	//			Description: "Short server name",
-	//			Required:    true,
-	//		},
-	//	},
-	//}, handler.onPlayers)
-	//
+
+	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
+		Name:                     "players",
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+		DefaultMemberPermissions: &discord.UserPerms,
+		Description:              "Show a table of the current players on the server",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:         discordgo.ApplicationCommandOptionString,
+				Name:         "server_name",
+				Description:  "Short server name",
+				Required:     true,
+				Autocomplete: true,
+			},
+		},
+	}, handler.onPlayers)
+	service.MustRegisterPrefixHandler("server_name", handler.serverAutocomplete)
+
 	//service.MustRegisterCommandHandler("kick", &discordgo.ApplicationCommand{
 	//	Name:                     "kick",
 	//	Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
@@ -155,10 +157,36 @@ type DiscordHandler struct {
 	network network.Networks
 }
 
-func NewDiscordHandler(state *state.State) *DiscordHandler {
-	return &DiscordHandler{
-		state: state,
+func (d DiscordHandler) serverAutocomplete(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	servers, errServers := d.servers.Servers(ctx, Query{})
+	if errServers != nil {
+		return errServers
 	}
+
+	var (
+		data    = interaction.ApplicationCommandData()
+		choices []*discordgo.ApplicationCommandOptionChoice
+		value   string
+	)
+
+	if len(data.Options) > 0 {
+		value = strings.ToLower(fmt.Sprintf("%s", data.Options[0].Value))
+	}
+
+	for _, server := range servers {
+		if value == "" || strings.Contains(server.ShortName, value) || strings.Contains(server.Name, value) {
+			choices = append(choices, &discordgo.ApplicationCommandOptionChoice{
+				Name:  server.ShortName + " - " + server.Name,
+				Value: server.ShortName,
+			})
+		}
+
+		if len(choices) == 25 {
+			break
+		}
+	}
+
+	return discord.Autocomplete(session, interaction, choices)
 }
 
 func (d DiscordHandler) onFind(ctx context.Context, _ *discordgo.Session, interation *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
@@ -279,13 +307,17 @@ func (d DiscordHandler) onServers(_ context.Context, _ *discordgo.Session, _ *di
 	return discordServersMessage(d.state.SortRegion(), "/servers"), nil // FIXME external url
 }
 
-func (d DiscordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (d DiscordHandler) onPlayers(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	if err := discord.AckInteraction(session, interaction); err != nil {
+		return err
+	}
+
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
-	serverName := opts[discord.OptServerIdentifier].StringValue()
+	serverName := opts["server_name"].StringValue()
 	serverStates := d.state.ByName(serverName, false)
 
 	if len(serverStates) != 1 {
-		return nil, state.ErrUnknownServer
+		return state.ErrUnknownServer
 	}
 
 	serverState := serverStates[0]
@@ -322,12 +354,12 @@ func (d DiscordHandler) onPlayers(ctx context.Context, _ *discordgo.Session, int
 				proxyStr = fmt.Sprintf("Threat: %s | %s | %s", foundNetwork.Proxy.ProxyType, foundNetwork.Proxy.Threat, foundNetwork.Proxy.UsageType)
 			}
 
-			rows = append(rows, fmt.Sprintf("%s`%s` `%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",
-				flag, player.SID.Steam3(), player.Ping, player.Name, player.SID.String(), proxyStr))
+			rows = append(rows, fmt.Sprintf("%s`%s` `%s` `%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",
+				flag, player.SID.Steam3(), player.ConnectedTime.String(), player.Ping, player.Name, player.SID.String(), proxyStr))
 		}
 	}
 
-	return discordPlayersMessage(rows, serverState.MaxPlayers, serverState.Name), nil
+	return discord.RespondInteraction(session, interaction, discordPlayersMessage(rows, serverState.MaxPlayers, serverState.Name)...)
 }
 
 type discordFoundPlayer struct {
@@ -462,17 +494,18 @@ func discordServersMessage(currentStateRegion map[string][]state.ServerState, se
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func discordPlayersMessage(rows []string, maxPlayers int, serverName string) *discordgo.MessageEmbed {
-	msgEmbed := discord.NewEmbed(fmt.Sprintf("%s Current Players: %d / %d", serverName, len(rows), maxPlayers))
+func discordPlayersMessage(rows []string, maxPlayers int, serverName string) []discordgo.MessageComponent {
+	body := "No players"
 	if len(rows) > 0 {
-		msgEmbed.Embed().SetDescription(strings.Join(rows, "\n"))
-		msgEmbed.Embed().SetColor(discord.ColourSuccess)
-	} else {
-		msgEmbed.Embed().SetDescription("No players :(")
-		msgEmbed.Embed().SetColor(discord.ColourError)
+		body = strings.Join(rows, "\n")
 	}
+	content := fmt.Sprintf(`# %s 
+### Current Players: %d / %d
+%s`, serverName, len(rows), maxPlayers, body)
 
-	return msgEmbed.Embed().MessageEmbed
+	return []discordgo.MessageComponent{
+		discordgo.TextDisplay{Content: content},
+	}
 }
 
 func discordKickMessage(players []state.PlayerServerInfo) *discordgo.MessageEmbed {

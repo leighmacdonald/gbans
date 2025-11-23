@@ -466,7 +466,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)
 	asset.NewAssetHandler(router, userAuth, g.assets)
 	auth.NewAuthHandler(router, userAuth, g.config, g.persons, g.tfapiClient)
-	ban.NewAppealHandler(router, userAuth, ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications))
+	ban.NewAppealHandler(router, userAuth, ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.LogChannelID))
 	ban.NewReportHandler(router, userAuth, g.reports)
 	ban.NewHandlerBans(router, userAuth, g.bans, conf.Exports, conf.General.SiteName)
 	chat.NewChatHandler(router, g.chat, userAuth)
@@ -648,7 +648,7 @@ func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) erro
 		return nil
 	}
 
-	g.notifications.Send(notification.NewDiscord(g.config.Config().Filters.WordFilterLogChannelID,
+	go g.notifications.Send(notification.NewDiscord(g.config.Config().Filters.WordFilterLogChannelID,
 		chat.WarningMessage(warning, newBan.ValidUntil)))
 
 	return nil
@@ -677,7 +677,7 @@ func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, du
 	} else if newBan.BanID > 0 {
 		slog.Info("Banned cheater", slog.String("detection", string(entry.Detection)),
 			slog.String("steam_id", entry.SteamID.String()))
-		g.notifications.Send(notification.NewDiscordNext(conf.Discord.AnticheatChannelID,
+		g.notifications.Send(notification.NewDiscord(conf.Discord.AnticheatChannelID,
 			anticheat.NewAnticheatTrigger(newBan.Note, conf.Anticheat.Action, entry, count)))
 	}
 
