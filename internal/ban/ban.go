@@ -38,6 +38,8 @@ var (
 	ErrBanDoesNotExist    = errors.New("ban does not exist")
 )
 
+const maxCIDRHosts = 256 * 256
+
 type Config struct {
 	BDEnabled      bool   `json:"bd_enabled"`
 	ValveEnabled   bool   `json:"valve_enabled"`
@@ -106,14 +108,25 @@ func (opts *Opts) Validate() error {
 	}
 
 	if opts.CIDR != nil {
-		// TODO dont ban too many people, limit to /24 ?
-		_, _, errCIDR := net.ParseCIDR(*opts.CIDR)
+		_, ipnet, errCIDR := net.ParseCIDR(*opts.CIDR)
 		if errCIDR != nil {
 			return fmt.Errorf("%w: Invalid CIDR", ErrInvalidBanOpts)
+		}
+
+		if count := AddressCount(ipnet); count > maxCIDRHosts {
+			return fmt.Errorf("%w: Invalid CIDR, too many hosts: %d", ErrInvalidBanOpts, count)
 		}
 	}
 
 	return nil
+}
+
+// AddressCount returns the number of distinct host addresses within the given
+// CIDR range.
+func AddressCount(network *net.IPNet) uint64 {
+	prefixLen, bits := network.Mask.Size()
+
+	return 1 << (uint64(bits) - uint64(prefixLen))
 }
 
 type Ban struct {
