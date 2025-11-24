@@ -26,14 +26,28 @@ func (q *seedQueue) allowed(serverID int, steamID steamid.SteamID) bool {
 
 	req, found := q.servers[serverID]
 	if !found {
-		q.servers[serverID] = seedRequest{
-			SteamID:   steamID,
-			CreatedOn: time.Now(),
+		// Check if the user has sent anything on other servers to prevent them being able to
+		// cycle through servers spamming the command.
+		for _, existingRequest := range q.servers {
+			if existingRequest.SteamID.Equal(steamID) {
+				req = existingRequest
+
+				break
+			}
 		}
 
-		return true
+		// No existing one found, allow it.
+		if !req.SteamID.Valid() {
+			q.servers[serverID] = seedRequest{
+				SteamID:   steamID,
+				CreatedOn: time.Now(),
+			}
+
+			return true
+		}
 	}
 
+	// Check if found request is expired.
 	if time.Since(req.CreatedOn) > q.minTime {
 		delete(q.servers, serverID)
 
