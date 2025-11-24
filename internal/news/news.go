@@ -53,12 +53,15 @@ func (u News) Save(ctx context.Context, entry *Article) error {
 	if err := u.repository.Save(ctx, entry); err != nil {
 		return err
 	}
-	if isNew {
-		go u.notifications.Send(notification.NewDiscord(u.logChannelID,
-			NewNewsMessage(entry.BodyMD, entry.Title)))
-	} else {
-		go u.notifications.Send(notification.NewDiscord(u.logChannelID,
-			EditNewsMessages(entry.BodyMD, entry.Title)))
+
+	if entry.IsPublished {
+		if isNew {
+			go u.notifications.Send(notification.NewDiscord(u.logChannelID,
+				NewNewsMessage(entry.BodyMD, entry.Title)))
+		} else {
+			go u.notifications.Send(notification.NewDiscord(u.logChannelID,
+				EditNewsMessages(entry.BodyMD, entry.Title)))
+		}
 	}
 
 	return nil

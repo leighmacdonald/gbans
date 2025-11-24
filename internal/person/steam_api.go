@@ -29,10 +29,6 @@ func FetchPlayerBans(ctx context.Context, tfAPI *thirdparty.TFAPI, steamIDs []st
 		hasErr    = int32(0)
 	)
 
-	if len(steamIDs) == 0 {
-		return results, nil
-	}
-
 	for index := 0; index < len(steamIDs); index += chunkSize {
 		waitGroup.Go(func() {
 			var (

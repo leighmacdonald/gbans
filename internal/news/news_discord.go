@@ -18,7 +18,7 @@ func NewNewsMessage(body string, title string) *discordgo.MessageSend {
 	})
 }
 
-func EditNewsMessages(title string, body string) *discordgo.MessageSend {
+func EditNewsMessages(body string, title string) *discordgo.MessageSend {
 	const format = `# %s
 %s`
 

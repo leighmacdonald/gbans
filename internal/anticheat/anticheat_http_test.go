@@ -34,7 +34,7 @@ func TestAnticheat(t *testing.T) {
 		antiCheat = anticheat.NewAntiCheat(anticheat.NewRepository(fixture.Database), fixture.Config.Config().Anticheat, notification.NewNullNotifications(),
 			func(_ context.Context, _ logparse.StacEntry, _ time.Duration, _ int) error {
 				return nil
-			})
+			}, fixture.Persons)
 	)
 
 	for _, sid := range extra.FindReaderSteamIDs(strings.NewReader(testData)) {

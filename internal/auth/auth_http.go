@@ -101,10 +101,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			return
 		}
 
-		// TODO FIX
-		_, _ = h.persons.GetOrCreatePersonBySteamID(ctx, sid)
-
-		fetchedPerson, errPerson := h.persons.BySteamID(ctx, sid)
+		fetchedPerson, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, sid)
 		if errPerson != nil {
 			ctx.Redirect(302, referralURL)
 			slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
@@ -159,7 +156,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 
 		slog.Info("User logged in",
 			slog.String("sid64", sid.String()),
-			slog.String("name", fetchedPerson.PersonaName),
+			slog.String("name", fetchedPerson.GetName()),
 			slog.Int("permission_level", int(fetchedPerson.PermissionLevel)))
 	}
 }

@@ -474,16 +474,16 @@ func discordServersMessage(currentStateRegion map[string][]state.ServerState) []
 {{ . }}
 {{ end }}
 `
-	var (
+	var ( //nolint:prealloc
 		stats       = map[string]float64{}
 		used, total = 0, 0
 		regionNames = make([]string, 9)
+		rows        []string
 	)
 
 	for k := range currentStateRegion {
 		regionNames = append(regionNames, k)
 	}
-	var rows []string
 
 	sort.Strings(regionNames)
 
@@ -535,7 +535,7 @@ func discordServersMessage(currentStateRegion map[string][]state.ServerState) []
 		Rows: rows,
 	})
 	if errContent != nil {
-		slog.Error("Failed to render servers message", errContent.Error())
+		slog.Error("Failed to render servers message", slog.String("error", errContent.Error()))
 	}
 
 	colour := discord.ColourSuccess

@@ -166,6 +166,10 @@ func (b Ban) String() string {
 	return fmt.Sprintf("SID: %d Origin: %s Reason: %s Type: %v", b.TargetID.Int64(), b.Origin, b.ReasonText, b.BanType)
 }
 
+func (b Ban) Expired() bool {
+	return time.Now().After(b.ValidUntil)
+}
+
 type BansQueryFilter struct {
 	httphelper.TargetIDField
 

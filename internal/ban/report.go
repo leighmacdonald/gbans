@@ -254,7 +254,7 @@ func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user perso
 	}
 
 	if report.ReportStatus == status {
-		return report, database.ErrDuplicate // TODO proper specific error
+		return report, fmt.Errorf("%w: No status change", ErrReportStateUpdate)
 	}
 
 	fromStatus := report.ReportStatus
