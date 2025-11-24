@@ -46,6 +46,7 @@ public void OnPluginStart()
 	RegConsoleCmd("gb_help", onCmdHelp, "Get a list of gbans commands");
 	RegConsoleCmd("gb_mod", onCmdMod, "Ping a moderator");
 	RegConsoleCmd("mod", onCmdMod, "Ping a moderator");
+	RegConsoleCmd("seed", onCmdSeed, "Send a seed request to discord");
 	RegConsoleCmd("report", onCmdReport, "Report a player");
 	RegConsoleCmd("autoteam", onCmdAutoTeamAction);
 

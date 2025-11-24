@@ -22,6 +22,7 @@ func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
 }
 
+// QueryBanState is used for querying a players current active ban status.
 // FIXME check_ban no longer functional.
 func (r Repository) QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (PlayerBanState, error) {
 	const query = `

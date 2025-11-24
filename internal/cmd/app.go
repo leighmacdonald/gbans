@@ -193,7 +193,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
-	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons)
+	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafePublicLogChannelID())
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
 	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan, g.persons)
 	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications,
@@ -487,7 +487,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	servers.NewDemoHandler(router, userAuth, g.demos)
 	servers.NewServersHandler(router, userAuth, g.servers, g.states)
 	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)
-	sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod)
+	sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod, g.servers, g.notifications)
 	votes.NewVotesHandler(router, userAuth, g.votes)
 	wiki.NewWikiHandler(router, userAuth, g.wiki)
 

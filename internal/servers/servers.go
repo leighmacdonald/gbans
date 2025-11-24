@@ -84,9 +84,10 @@ type Server struct {
 	LogSecret   int     `json:"log_secret"`
 	EnableStats bool    `json:"enable_stats"`
 	// TokenCreatedOn is set when changing the token
-	TokenCreatedOn time.Time `json:"token_created_on"`
-	CreatedOn      time.Time `json:"created_on"`
-	UpdatedOn      time.Time `json:"updated_on"`
+	TokenCreatedOn     time.Time `json:"token_created_on"`
+	CreatedOn          time.Time `json:"created_on"`
+	UpdatedOn          time.Time `json:"updated_on"`
+	DiscordSeedRoleIDs []string  `json:"discord_seed_role_ids"`
 }
 
 func (s Server) Addr() string {

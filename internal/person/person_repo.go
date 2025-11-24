@@ -61,6 +61,7 @@ func normalizeStringLikeQuery(input string) string {
 	return fmt.Sprintf("%%%s%%", strings.ToLower(strings.Trim(space.ReplaceAllString(input, "%"), "%")))
 }
 
+// GetSteamsAtAddress fetches all known steam ids which have connected from the provided ip address.
 // TODO move to network or srcds?
 func (r *Repository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
 	var ids steamid.Collection

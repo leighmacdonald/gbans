@@ -13,6 +13,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -23,13 +25,16 @@ type EvadeChecker interface {
 type Handler struct {
 	Sourcemod
 
-	persons person.Provider
-	evades  EvadeChecker
+	notifier notification.Notifier
+	persons  person.Provider
+	evades   EvadeChecker
+	servers  servers.Servers
 }
 
-// MiddlewareServer(servers, sentryDSN).
-func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth httphelper.ServerAuthenticator, sourcemod Sourcemod) {
-	handler := Handler{Sourcemod: sourcemod}
+func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth httphelper.ServerAuthenticator,
+	sourcemod Sourcemod, servers servers.Servers, notifier notification.Notifier,
+) {
+	handler := Handler{Sourcemod: sourcemod, servers: servers, notifier: notifier}
 
 	adminGroup := engine.Group("/")
 	{
@@ -68,10 +73,11 @@ func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth ht
 	srcdsGroup := engine.Group("/")
 	{
 		server := srcdsGroup.Use(serverAuth.Middleware)
-		server.GET("/api/sm/check", handler.onAPICheckPlayer())
+		server.POST("/api/sm/check", handler.onAPICheckPlayer())
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())
 		server.GET("/api/sm/groups", handler.onAPIGetServerGroups())
+		server.GET("/api/sm/seed", handler.onAPIGetSeed())
 
 		// Duplicated since we need to authenticate via server middleware
 		// server.POST("/api/sm/bans/steam/create", handler.onAPIPostBanSteamCreate())
@@ -899,5 +905,37 @@ func (s *Handler) onAPIGetServerUsers() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, smResp)
+	}
+}
+
+func (s *Handler) onAPIGetSeed() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		steamIDString, found := ctx.GetQuery("steam_id")
+		if !found {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
+
+			return
+		}
+		steamID := steamid.New(steamIDString)
+		if !steamID.Valid() {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusBadRequest, httphelper.ErrBadRequest))
+
+			return
+		}
+
+		server, errServer := s.servers.Server(ctx, ctx.GetInt("server_id"))
+		if errServer != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
+
+			return
+		}
+
+		if !s.seedRequest(server, steamID) {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusTooManyRequests, httphelper.ErrNotFound))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
 	}
 }

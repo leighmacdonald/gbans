@@ -96,7 +96,7 @@ func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
 			page.CreatedOn = time.Now()
 			page.Slug = update.Slug
 		} else {
-			return page, httphelper.ErrInternal // TODO better error
+			return page, errGetWikiSlug
 		}
 	} else {
 		page = page.NewRevision()

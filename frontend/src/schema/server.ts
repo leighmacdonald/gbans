@@ -23,7 +23,8 @@ export const schemaServer = z.object({
     address_internal: z.string(),
     sdr_enabled: z.boolean(),
     created_on: z.date(),
-    updated_on: z.date()
+    updated_on: z.date(),
+    discord_seed_role_ids: z.array(z.string())
 });
 
 export type Server = z.infer<typeof schemaServer>;
@@ -80,7 +81,8 @@ export const schemaSaveServerOpts = z.object({
     enable_stats: z.boolean(),
     log_secret: z.number(),
     address_internal: z.string(),
-    sdr_enabled: z.boolean()
+    sdr_enabled: z.boolean(),
+    discord_seed_role_ids: z.array(z.string())
 });
 
 export type SaveServerOpts = z.infer<typeof schemaSaveServerOpts>;

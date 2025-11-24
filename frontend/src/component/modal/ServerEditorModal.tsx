@@ -28,6 +28,7 @@ type ServerEditValues = {
     is_enabled: boolean;
     enabled_stats: boolean;
     log_secret: number;
+    discord_seed_role_ids: string;
 };
 
 const schema = z.object({
@@ -49,7 +50,8 @@ const schema = z.object({
     enabled_stats: z.boolean(),
     log_secret: z.coerce.number().min(100000).max(999999999),
     address_internal: z.string(),
-    sdr_enabled: z.boolean()
+    sdr_enabled: z.boolean(),
+    discord_seed_role_ids: z.string()
 });
 
 export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server }) => {
@@ -70,7 +72,8 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
         enabled_stats: server?.enable_stats ?? true,
         log_secret: server?.log_secret ?? Math.floor(Math.random() * 89999999 + 10000000),
         address_internal: server?.address_internal ?? '',
-        sdr_enabled: server?.sdr_enabled ?? false
+        sdr_enabled: server?.sdr_enabled ?? false,
+        discord_seed_role_ids: server?.discord_seed_role_ids.join(',') ?? ''
     };
 
     const mutation = useMutation({
@@ -92,7 +95,8 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 enable_stats: values.enabled_stats,
                 log_secret: values.log_secret,
                 address_internal: values.address_internal,
-                sdr_enabled: values.sdr_enabled
+                sdr_enabled: values.sdr_enabled,
+                discord_seed_role_ids: values.discord_seed_role_ids.split(',')
             };
             if (server?.server_id) {
                 modal.resolve(await apiSaveServer(server.server_id, opts));
@@ -265,6 +269,15 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 name={'enabled_stats'}
                                 children={(field) => {
                                     return <field.CheckboxField label={'Stats Enabled'} />;
+                                }}
+                            />
+                        </Grid>
+
+                        <Grid size={{ xs: 12 }}>
+                            <form.AppField
+                                name={'discord_seed_role_ids'}
+                                children={(field) => {
+                                    return <field.TextField label={'Discord Seed Channel(s) (comma seperated)'} />;
                                 }}
                             />
                         </Grid>

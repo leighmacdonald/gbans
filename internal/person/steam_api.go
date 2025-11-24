@@ -20,6 +20,7 @@ const (
 
 var ErrSteamUpdate = errors.New("failed to update data from steam")
 
+// FetchPlayerBans batch fetches player bans in groups of 100.
 // TODO remove and just call client direct? Not sure if the batching is really required.
 func FetchPlayerBans(ctx context.Context, tfAPI *thirdparty.TFAPI, steamIDs []steamid.SteamID) ([]thirdparty.SteamBan, error) {
 	var (
