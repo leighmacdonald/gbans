@@ -9,13 +9,19 @@ import (
 	"net/netip"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/ptr"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -141,13 +147,72 @@ type ConfigEntry struct {
 	CfgValue string `json:"cfg_value"`
 }
 
-func New(repository Repository, person person.Provider) Sourcemod {
-	return Sourcemod{repository: repository, person: person}
+func New(repository Repository, person person.Provider, notifier notification.Notifier, seedChannelID string) Sourcemod {
+	return Sourcemod{
+		seedChannelID: seedChannelID,
+		repository:    repository,
+		person:        person,
+		notifier:      notifier,
+		seedQueue: &seedQueue{
+			minTime: time.Second * 300,
+			servers: make(map[int]seedRequest),
+			mu:      &sync.Mutex{},
+		},
+	}
 }
 
 type Sourcemod struct {
-	repository Repository
-	person     person.Provider
+	seedChannelID string
+	repository    Repository
+	person        person.Provider
+	seedQueue     *seedQueue
+	notifier      notification.Notifier
+}
+
+func (h Sourcemod) seedRequest(server servers.Server, steamID steamid.SteamID) bool {
+	const format = `# Seed Request
+{{ .Name }}
+connect {{ .Path }}
+
+{{- range .Roles }}<@&{{ . }}> {{end}}
+`
+
+	if !h.seedQueue.allowed(server.ServerID, steamID) {
+		return false
+	}
+
+	if len(server.DiscordSeedRoleIDs) > 0 {
+		content, errContent := discord.Render("seed_req", format, struct {
+			Name  string
+			Path  string
+			Roles []string
+		}{
+			Name:  server.ShortName,
+			Path:  server.Addr(),
+			Roles: server.DiscordSeedRoleIDs,
+		})
+
+		if errContent != nil {
+			slog.Error("Failed to render content", slog.String("error", errContent.Error()))
+
+			return false
+		}
+
+		msg := discord.NewMessageSend(discordgo.Container{
+			AccentColor: ptr.To(discord.ColourSuccess),
+			Components: []discordgo.MessageComponent{
+				discordgo.TextDisplay{Content: content},
+			},
+		})
+
+		go h.notifier.Send(notification.NewDiscord(h.seedChannelID, msg))
+
+		return true
+	}
+
+	slog.Error("No seed channel found", slog.String("server", server.ShortName))
+
+	return false
 }
 
 func (h Sourcemod) GetBanState(ctx context.Context, steamID steamid.SteamID, ip netip.Addr) (PlayerBanState, string, error) {

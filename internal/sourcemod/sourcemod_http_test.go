@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
+	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -24,10 +26,14 @@ func TestMain(m *testing.M) {
 }
 
 func TestSourcemod(t *testing.T) {
-	authenticator := &tests.UserAuth{}
-	router := fixture.CreateRouter()
-	sourcemodUC := sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons)
-	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sourcemodUC)
+	var (
+		authenticator = &tests.UserAuth{}
+		router        = fixture.CreateRouter()
+		sourcemodUC   = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewNullNotifications(), "")
+		serversUC     = servers.NewServers(servers.NewRepository(fixture.Database))
+	)
+
+	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sourcemodUC, serversUC, notification.NewNullNotifications())
 
 	t.Run("admins", testAdmins(router, authenticator))
 	t.Run("groups", testGroups(router, authenticator))
@@ -232,10 +238,11 @@ func TestSRCDS(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{}
 		router        = fixture.CreateRouter()
-		sm            = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons)
+		serversUC     = servers.NewServers(servers.NewRepository(fixture.Database))
+		sm            = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewNullNotifications(), "")
 	)
 
-	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sm)
+	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sm, serversUC, notification.NewNullNotifications())
 
 	t.Run("permissions", testPermissions(router, authenticator, sm))
 	t.Run("check", testCheck(router, authenticator))
