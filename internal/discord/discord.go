@@ -13,6 +13,11 @@ var (
 	UserPerms        = int64(discordgo.PermissionViewChannel) //nolint:gochecknoglobals
 )
 
+const (
+	iconURL      = "https://cdn.discordapp.com/avatars/758536119397646370/6a371d1a481a72c512244ba9853f7eff.webp?size=128"
+	providerName = "gbans"
+)
+
 // Service provides a interface for controlling the discord backend.
 type Service interface {
 	// Send handles sending messages to a channel.

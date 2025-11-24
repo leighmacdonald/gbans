@@ -56,6 +56,9 @@ func FetchPlayerBans(ctx context.Context, tfAPI *thirdparty.TFAPI, steamIDs []st
 		})
 	}
 
+	resultsMu.RLock()
+	defer resultsMu.RUnlock()
+
 	if hasErr > 0 {
 		return nil, ErrSteamBans
 	}

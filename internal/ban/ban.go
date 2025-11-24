@@ -86,7 +86,7 @@ type Opts struct {
 	BanType    bantype.Type       `json:"ban_type" binding:"required"`
 	Reason     reason.Reason      `json:"reason" binding:"required"`
 	ReasonText string             `json:"reason_text"`
-	Origin     Origin             `json:"origin" binding:"required"`
+	Origin     Origin             `json:"origin" binding:"oneof=0 1 2 3"`
 	ReportID   int64              `json:"report_id" binding:"omitempty,gt=0"`
 	CIDR       *string            `json:"cidr"  binding:"omitnil,cidrv4"`
 	EvadeOk    bool               `json:"evade_ok"`
