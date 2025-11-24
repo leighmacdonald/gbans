@@ -153,7 +153,7 @@ func New(repository Repository, person person.Provider, notifier notification.No
 		repository:    repository,
 		person:        person,
 		notifier:      notifier,
-		seedQueue: &seedQueue{
+		seedQueue: &SeedQueue{
 			minTime: time.Second * 300,
 			servers: make(map[int]seedRequest),
 			mu:      &sync.Mutex{},
@@ -165,7 +165,7 @@ type Sourcemod struct {
 	seedChannelID string
 	repository    Repository
 	person        person.Provider
-	seedQueue     *seedQueue
+	seedQueue     *SeedQueue
 	notifier      notification.Notifier
 }
 
@@ -177,7 +177,7 @@ connect {{ .Path }}
 {{- range .Roles }}<@&{{ . }}> {{end}}
 `
 
-	if !h.seedQueue.allowed(server.ServerID, steamID) {
+	if !h.seedQueue.Allowed(server.ServerID, steamID) {
 		return false
 	}
 

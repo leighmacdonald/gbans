@@ -21,7 +21,7 @@ import (
 
 const (
 	authURL  = "https://www.patreon.com/oauth2/authorize"
-	tokenURL = "https://www.patreon.com/api/oauth2/token"
+	tokenURL = "https://www.patreon.com/api/oauth2/token" //nolint:gosec
 )
 
 var ErrQueryPatreon = errors.New("failed to query patreon")

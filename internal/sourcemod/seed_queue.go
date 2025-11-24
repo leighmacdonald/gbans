@@ -8,19 +8,27 @@ import (
 )
 
 type seedRequest struct {
-	SteamID   steamid.SteamID `json:"steamid"`
-	CreatedOn time.Time       `json:"created_on"`
+	steamID   steamid.SteamID
+	createdOn time.Time
 }
 
-// seedQueue is responsible for keeping track of users who use the !seed command. Servers are only
-// allowed to send a seed request once every 5 minutes by default.
-type seedQueue struct {
+// SeedQueue is responsible for keeping track of users who use the !seed command. Servers are only
+// Allowed to send a seed request once every 5 minutes by default.
+type SeedQueue struct {
 	servers map[int]seedRequest
 	minTime time.Duration
 	mu      *sync.Mutex
 }
 
-func (q *seedQueue) allowed(serverID int, steamID steamid.SteamID) bool {
+func NewSeedQueue() SeedQueue {
+	return SeedQueue{
+		servers: map[int]seedRequest{},
+		minTime: time.Second * 300,
+		mu:      &sync.Mutex{},
+	}
+}
+
+func (q *SeedQueue) Allowed(serverID int, steamID steamid.SteamID) bool {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -29,27 +37,20 @@ func (q *seedQueue) allowed(serverID int, steamID steamid.SteamID) bool {
 		// Check if the user has sent anything on other servers to prevent them being able to
 		// cycle through servers spamming the command.
 		for _, existingRequest := range q.servers {
-			if existingRequest.SteamID.Equal(steamID) {
+			if existingRequest.steamID.Equal(steamID) {
 				req = existingRequest
 
 				break
 			}
 		}
-
-		// No existing one found, allow it.
-		if !req.SteamID.Valid() {
-			q.servers[serverID] = seedRequest{
-				SteamID:   steamID,
-				CreatedOn: time.Now(),
-			}
-
-			return true
-		}
 	}
 
 	// Check if found request is expired.
-	if time.Since(req.CreatedOn) > q.minTime {
-		delete(q.servers, serverID)
+	if !req.steamID.Valid() || time.Since(req.createdOn) > q.minTime {
+		q.servers[serverID] = seedRequest{
+			steamID:   steamID,
+			createdOn: time.Now(),
+		}
 
 		return true
 	}
