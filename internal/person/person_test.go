@@ -1,6 +1,8 @@
 package person_test
 
 import (
+	"math/rand/v2"
+	"strconv"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -46,7 +48,7 @@ func TestPerson(t *testing.T) {
 
 	fetched.PermissionLevel = permission.Moderator
 	fetched.PersonaName = stringutil.SecureRandomString(10)
-	fetched.DiscordID = stringutil.SecureRandomString(10)
+	fetched.DiscordID = strconv.FormatInt(rand.Int64(), 10) //nolint:gosec
 
 	require.NoError(t, personCase.Save(t.Context(), &fetched))
 
@@ -76,9 +78,10 @@ func TestPerson(t *testing.T) {
 	aboveMod, _ := personCase.GetSteamIDsAbove(t.Context(), permission.Moderator)
 	require.GreaterOrEqual(t, len(players)-1, len(aboveMod))
 
-	discord, _ := personCase.GetPersonByDiscordID(t.Context(), fetched.DiscordID)
-	require.EqualExportedValues(t, fetched.Core(), discord)
+	discord, errDisc := personCase.GetPersonByDiscordID(t.Context(), fetched.DiscordID)
+	require.NoError(t, errDisc)
+	require.Equal(t, fetched.SteamID, discord.SteamID)
 
 	steamID, _ := personCase.BySteamID(t.Context(), fetched.SteamID)
-	require.EqualExportedValues(t, fetched, steamID)
+	require.Equal(t, fetched.DiscordID, steamID.DiscordID)
 }

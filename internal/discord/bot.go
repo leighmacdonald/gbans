@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
@@ -311,7 +312,12 @@ func (opts CommandOptions) String(key string) string {
 
 func Render(name string, templ string, context any) (string, error) {
 	var buffer bytes.Buffer
-	tmpl, err := template.New(name).Parse(templ)
+	tmpl, err := template.New(name).
+		Funcs(template.FuncMap{
+			"linkPath": link.Path,
+			"linkRaw":  link.Raw,
+		}).
+		Parse(templ)
 	if err != nil {
 		return "", errors.Join(err, ErrTemplate)
 	}
@@ -345,6 +351,22 @@ func AckInteraction(session *discordgo.Session, interaction *discordgo.Interacti
 		Data: &discordgo.InteractionResponseData{
 			Flags:      discordgo.MessageFlagsIsComponentsV2,
 			Components: []discordgo.MessageComponent{discordgo.TextDisplay{Content: "Computering..."}},
+		},
+	}); err != nil {
+		return errors.Join(err, ErrCommandSend)
+	}
+
+	return nil
+}
+
+func RespondModal(session *discordgo.Session, interaction *discordgo.InteractionCreate, cid string, title string, components ...discordgo.MessageComponent) error {
+	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID:   cid,
+			Title:      title,
+			Flags:      discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
+			Components: components,
 		},
 	}); err != nil {
 		return errors.Join(err, ErrCommandSend)

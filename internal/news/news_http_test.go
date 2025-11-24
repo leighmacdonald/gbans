@@ -6,6 +6,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/news"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
@@ -26,7 +27,8 @@ func TestNewsHTTP(t *testing.T) {
 		router        = fixture.CreateRouter()
 	)
 
-	news.NewNewsHandler(router, news.NewNews(news.NewRepository(fixture.Database)), authenticator)
+	news.NewNewsHandler(router, news.NewNews(news.NewRepository(fixture.Database),
+		notification.NewNullNotifications(), ""), authenticator)
 
 	// No news yet
 	require.Empty(t, tests.GetGOK[[]news.Article](t, router, "/api/news_latest"))

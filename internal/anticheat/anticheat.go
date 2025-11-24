@@ -12,6 +12,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -77,16 +78,18 @@ type AntiCheat struct {
 	parser  logparse.StacParser
 	repo    Repository
 	notif   notification.Notifier
+	persons person.Provider
 	handler OnEntry
 }
 
-func NewAntiCheat(repo Repository, config Config, notif notification.Notifier, handler OnEntry) AntiCheat {
+func NewAntiCheat(repo Repository, config Config, notif notification.Notifier, handler OnEntry, persons person.Provider) AntiCheat {
 	return AntiCheat{
 		Config:  config,
 		parser:  logparse.NewStacParser(),
 		repo:    repo,
 		notif:   notif,
 		handler: handler,
+		persons: persons,
 	}
 }
 
@@ -115,8 +118,10 @@ func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager,
 			slog.Debug("Importing stac log", slog.String("name", file.Name()), slog.String("server", instance.ShortName))
 			entries, errImport := a.Import(ctx, file.Name(), reader, instance.ServerID)
 			if errImport != nil && !errors.Is(errImport, database.ErrDuplicate) {
-				slog.Error("Failed to import stac logs", slog.String("error", errImport.Error()))
-			} else if len(entries) > 0 {
+				return errImport
+			}
+
+			if len(entries) > 0 {
 				if errHandle := a.Handle(ctx, entries); errHandle != nil {
 					slog.Error("Failed to handle stac logs", slog.String("error", errHandle.Error()))
 				}
@@ -145,6 +150,10 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 	)
 	for _, entry := range entries {
 		if _, ok := results[entry.SteamID]; !ok {
+			_, err := a.persons.GetOrCreatePersonBySteamID(ctx, entry.SteamID)
+			if err != nil {
+				return err
+			}
 			results[entry.SteamID] = map[logparse.Detection]int{}
 		}
 

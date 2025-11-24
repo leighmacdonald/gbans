@@ -37,6 +37,7 @@ func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Prov
 	bot.MustRegisterPrefixHandler("report_reply_button", handler.onReportReplyButton)
 	bot.MustRegisterPrefixHandler("report_reply_submit", handler.onReportReplySubmit)
 	bot.MustRegisterPrefixHandler("ban_modal", handler.onBanResponse)
+	bot.MustRegisterPrefixHandler("ban_create_button", handler.onBanButton)
 	bot.MustRegisterPrefixHandler("mute_modal", handler.onBanResponse)
 
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
@@ -44,14 +45,14 @@ func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Prov
 		Description:              "Create Steam / CIDR ban",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: &discord.ModPerms,
-	}, handler.createBanMuteModal(true))
+	}, handler.createBanModal)
 
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "mute",
 		Description:              "Mute a player",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: &discord.ModPerms,
-	}, handler.createBanMuteModal(false))
+	}, handler.createMuteModal)
 
 	bot.MustRegisterPrefixHandler("unban_resp", handler.onUnbanResponse)
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
@@ -128,94 +129,102 @@ type banModalOpts struct {
 	Note     string             `id:"5"`
 }
 
-func (h discordHandler) createBanMuteModal(isBan bool) func(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
-	title := "Ban Player"
-	prefix := "ban"
-	if !isBan {
-		title = "Mute Player"
-		prefix = "mute"
+func (h discordHandler) createBanModal(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	return h.showBan(ctx, session, interaction, "Ban Player", "ban_modal_"+interaction.Member.User.ID, "")
+}
+
+func (h discordHandler) createMuteModal(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	return h.showBan(ctx, session, interaction, "Mute Player", "mute_modal_"+interaction.Member.User.ID, "")
+}
+
+func (h discordHandler) onBanButton(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	steamID, errID := discord.CustomIDInt64(interaction.MessageComponentData().CustomID)
+	if errID != nil {
+		return errID
 	}
 
-	return func(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
-		minItems := 1
+	sid := steamid.New(steamID)
 
-		return session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseModal,
-			Data: &discordgo.InteractionResponseData{
-				CustomID: prefix + "_modal_" + interaction.Member.User.ID,
-				Title:    title,
-				Flags:    discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
-				Components: []discordgo.MessageComponent{
-					discordgo.ActionsRow{
-						Components: []discordgo.MessageComponent{
-							discordgo.TextInput{
-								ID:          discord.IDSteamID,
-								CustomID:    "steamid",
-								Label:       "SteamID or Profile URL",
-								Style:       discordgo.TextInputShort,
-								Placeholder: "76561197960542812",
-								Required:    true,
-								MaxLength:   64,
-								MinLength:   0,
-							},
-						},
-					},
-					discordgo.Label{
-						Label: "Reason",
-						Component: discordgo.SelectMenu{
-							ID:          discord.IDReason,
-							CustomID:    "reason",
-							Placeholder: "Select a reason",
-							MaxValues:   1,
-							MinValues:   &minItems,
-							MenuType:    discordgo.StringSelectMenu,
-							Options:     createBanOpts(),
-						},
-					},
-					discordgo.ActionsRow{
-						Components: []discordgo.MessageComponent{
-							discordgo.TextInput{
-								ID:          discord.IDCIDR,
-								CustomID:    "cidr",
-								Label:       "IP/CIDR Ban",
-								Style:       discordgo.TextInputShort,
-								Placeholder: "1.2.3.4/32, 100.100.100.0/24",
-								Required:    false,
-								MaxLength:   20,
-								MinLength:   0,
-							},
-						},
-					},
-					discordgo.Label{
-						Label: "Duration",
-						Component: discordgo.SelectMenu{
-							ID:          discord.IDDuration,
-							CustomID:    "duration",
-							Placeholder: "Select a duration",
-							MaxValues:   1,
-							MinValues:   &minItems,
-							MenuType:    discordgo.StringSelectMenu,
-							Options:     createDurationOpts(),
-						},
-					},
-					discordgo.ActionsRow{
-						Components: []discordgo.MessageComponent{
-							discordgo.TextInput{
-								ID:          discord.IDNotes,
-								CustomID:    "notes",
-								Label:       "Extended moderator only notes",
-								Style:       discordgo.TextInputParagraph,
-								Placeholder: "",
-								Required:    false,
-								MaxLength:   2000,
-								MinLength:   0,
-							},
-						},
-					},
+	return h.showBan(ctx, session, interaction, "Ban Player", "ban_modal_"+sid.String(), sid.String())
+}
+
+func (h discordHandler) showBan(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, title string, prefix string, sid string) error {
+	minItems := 1
+
+	var sidComp discordgo.MessageComponent
+	if sid == "" {
+		sidComp = discordgo.TextInput{
+			ID:          discord.IDSteamID,
+			CustomID:    "steamid",
+			Label:       "SteamID or Profile URL",
+			Style:       discordgo.TextInputShort,
+			Placeholder: "76561197960542812",
+			Required:    true,
+			MaxLength:   64,
+			MinLength:   0,
+			Value:       sid,
+		}
+	} else {
+		sidComp = discordgo.TextDisplay{
+			Content: sid,
+		}
+	}
+
+	return discord.RespondModal(session, interaction, prefix, title,
+		sidComp,
+		discordgo.Label{
+			Label: "Reason",
+			Component: discordgo.SelectMenu{
+				ID:          discord.IDReason,
+				CustomID:    "reason",
+				Placeholder: "Select a reason",
+				MaxValues:   1,
+				MinValues:   &minItems,
+				MenuType:    discordgo.StringSelectMenu,
+				Options:     createBanOpts(),
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextInput{
+					ID:          discord.IDCIDR,
+					CustomID:    "cidr",
+					Label:       "IP/CIDR Ban",
+					Style:       discordgo.TextInputShort,
+					Placeholder: "1.2.3.4/32, 100.100.100.0/24",
+					Required:    false,
+					MaxLength:   20,
+					MinLength:   0,
 				},
 			},
-		})
-	}
+		},
+		discordgo.Label{
+			Label: "Duration",
+			Component: discordgo.SelectMenu{
+				ID:          discord.IDDuration,
+				CustomID:    "duration",
+				Placeholder: "Select a duration",
+				MaxValues:   1,
+				MinValues:   &minItems,
+				MenuType:    discordgo.StringSelectMenu,
+				Options:     createDurationOpts(),
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextInput{
+					ID:          discord.IDNotes,
+					CustomID:    "notes",
+					Label:       "Extended moderator only notes",
+					Style:       discordgo.TextInputParagraph,
+					Placeholder: "",
+					Required:    false,
+					MaxLength:   2000,
+					MinLength:   0,
+				},
+			},
+		},
+	)
 }
 
 func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -315,45 +324,43 @@ func (h discordHandler) onUnban(ctx context.Context, session *discordgo.Session,
 }
 
 func (h discordHandler) showUnban(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, steamID string) error {
-	var component discordgo.MessageComponent
-	if steamID == "" {
-		component = discordgo.ActionsRow{
+	components := []discordgo.MessageComponent{
+		discordgo.Container{
 			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          discord.IDSteamID,
-					CustomID:    "steamid",
-					Label:       "SteamID or Profile URL",
-					Style:       discordgo.TextInputShort,
-					Placeholder: "76561197960542812",
-					Required:    true,
-					MaxLength:   64,
-					MinLength:   0,
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.TextInput{
+							ID:          discord.IDSteamID,
+							CustomID:    "steamid",
+							Label:       "SteamID or Profile URL",
+							Style:       discordgo.TextInputShort,
+							Placeholder: "76561197960542812",
+							Required:    true,
+							MaxLength:   64,
+							MinLength:   0,
+							Value:       steamID,
+						},
+					},
 				},
-			},
-		}
-	} else {
-		component = discordgo.TextDisplay{
-			Content: steamID,
-		}
-	}
-
-	return discord.Respond(session, interaction, []discordgo.MessageComponent{
-		component,
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          discord.IDNotes,
-					CustomID:    "unban_reason",
-					Label:       "Reason",
-					Style:       discordgo.TextInputParagraph,
-					Placeholder: "Finally took a shower",
-					Required:    true,
-					MaxLength:   2000,
-					MinLength:   0,
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.TextInput{
+							ID:          discord.IDNotes,
+							CustomID:    "unban_reason",
+							Label:       "Reason",
+							Style:       discordgo.TextInputParagraph,
+							Placeholder: "Finally took a shower",
+							Required:    true,
+							MaxLength:   2000,
+							MinLength:   0,
+						},
+					},
 				},
 			},
 		},
-	})
+	}
+
+	return discord.Respond(session, interaction, components)
 }
 
 type UnbanRequestModal struct {
@@ -410,10 +417,10 @@ Notes: {{ .Ban.Note }}
 {{else}}
 No Ban Found!
 {{ end }}
-### History
-{{ range .Old }}
-- {{ . }}
-{{ end}}`
+### Ban History
+{{- range .Old }}
+- [#{{ .BanID }}]({{ linkPath . }}) {{ .Reason.String }} ({{ .CreatedOn.Format "2006-01-02" }})
+{{- end}}`
 
 type checkContext struct {
 	Author  person.Core
@@ -441,28 +448,27 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 		return discord.ErrCommandFailed
 	}
 
-	activeBan, errGetBanBySID := h.QueryOne(ctx, QueryOpts{EvadeOk: true, TargetID: sid})
-	if errGetBanBySID != nil {
-		if !errors.Is(errGetBanBySID, database.ErrNoResult) {
-			slog.Error("Failed to get ban by steamid", slog.String("error", errGetBanBySID.Error()))
-
-			return discord.ErrCommandFailed
-		}
-	}
-
-	var author person.Core
-	if activeBan.BanID > 0 {
-		autheur, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, activeBan.SourceID)
-		if errAuthor != nil {
-			return errAuthor
-		}
-		author = autheur
-	}
-
-	oldBans, errOld := h.Query(ctx, QueryOpts{TargetID: sid})
+	bans, errOld := h.Query(ctx, QueryOpts{TargetID: sid, Deleted: true})
 	if errOld != nil {
 		if !errors.Is(errOld, database.ErrNoResult) {
 			slog.Error("Failed to fetch old bans", slog.String("error", errOld.Error()))
+		}
+	}
+	var (
+		author    person.Core
+		activeBan Ban
+		expired   []Ban
+	)
+	for _, ban := range bans {
+		if !ban.Expired() {
+			activeBan = ban
+			autheur, errAuthor := h.persons.GetOrCreatePersonBySteamID(ctx, activeBan.SourceID)
+			if errAuthor != nil {
+				return errAuthor
+			}
+			author = autheur
+		} else {
+			expired = append(expired, ban)
 		}
 	}
 
@@ -470,7 +476,7 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 		Author:  author,
 		Player:  player,
 		Ban:     activeBan,
-		Old:     oldBans,
+		Old:     expired,
 		SteamID: player.SteamID.String(),
 	})
 	if errContent != nil {
@@ -519,11 +525,17 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 			},
 		},
 		discordgo.ActionsRow{
-			Components: append(btn, discordgo.Button{
-				Label: "🔗 Link",
-				URL:   link.Path(player),
-				Style: discordgo.LinkButton,
-			}),
+			Components: append(btn,
+				discordgo.Button{
+					Label: "🔗 Link",
+					URL:   link.Path(player),
+					Style: discordgo.LinkButton,
+				},
+				discordgo.Button{
+					Label: "🔧 Steam",
+					URL:   "https://steamcommunity.com/profiles/" + player.SteamID.String(),
+					Style: discordgo.LinkButton,
+				}),
 		})
 }
 

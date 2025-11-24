@@ -9,6 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
 )
 
 type newsHandler struct {
@@ -117,9 +118,9 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, entry)
 
-		// h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		// 	discord.ChannelModLog,
-		// 	message.EditNewsMessages(entry.Title, entry.BodyMD)))
+		go h.notifications.Send(notification.NewDiscord(
+			h.logChannelID,
+			EditNewsMessages(entry.BodyMD, entry.Title)))
 	}
 }
 
