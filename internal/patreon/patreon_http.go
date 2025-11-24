@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 )
 
@@ -89,7 +90,7 @@ func (h patreonHandler) onOAuth() gin.HandlerFunc {
 			slog.Debug("Successfully authenticated user over patreon")
 		}
 
-		ctx.Redirect(http.StatusPermanentRedirect, "/patreon") // FIXME conf.ExtURLRaw("/patreon")
+		ctx.Redirect(http.StatusPermanentRedirect, link.Raw("/patreon"))
 	}
 }
 

@@ -187,7 +187,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.SafeBanLogChannelID(),
 		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.states)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database),
-		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons))) // TODO Does THE & work here?
+		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.chat = chat.NewChat(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler)
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
