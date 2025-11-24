@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
 )
 
 type Article struct {
@@ -18,11 +19,13 @@ type Article struct {
 }
 
 type News struct {
-	repository Repository
+	repository    Repository
+	notifications notification.Notifier
+	logChannelID  string
 }
 
-func NewNews(repository Repository) News {
-	return News{repository: repository}
+func NewNews(repository Repository, notifications notification.Notifier, logChannelID string) News {
+	return News{repository: repository, notifications: notifications, logChannelID: logChannelID}
 }
 
 func (u News) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]Article, error) {
@@ -46,7 +49,19 @@ func (u News) Save(ctx context.Context, entry *Article) error {
 		return httphelper.ErrTooShort
 	}
 
-	return u.repository.Save(ctx, entry)
+	isNew := entry.NewsID > 0
+	if err := u.repository.Save(ctx, entry); err != nil {
+		return err
+	}
+	if isNew {
+		go u.notifications.Send(notification.NewDiscord(u.logChannelID,
+			NewNewsMessage(entry.BodyMD, entry.Title)))
+	} else {
+		go u.notifications.Send(notification.NewDiscord(u.logChannelID,
+			EditNewsMessages(entry.BodyMD, entry.Title)))
+	}
+
+	return nil
 }
 
 func (u News) DropNewsArticle(ctx context.Context, newsID int) error {

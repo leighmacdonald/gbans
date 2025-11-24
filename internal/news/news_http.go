@@ -76,10 +76,6 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, entry)
-
-		// h.notifications.Enqueue(ctx, notification.NewDiscordNotification(
-		// 	discord.ChannelModLog,
-		// 	message.NewNewsMessage(req.BodyMD, req.Title)))
 	}
 }
 

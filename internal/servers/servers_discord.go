@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -310,7 +311,7 @@ func (d DiscordHandler) onPSay(ctx context.Context, session *discordgo.Session, 
 }
 
 func (d DiscordHandler) onServers(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
-	return discord.Respond(session, interaction, discordServersMessage(d.state.SortRegion(), "/servers"))
+	return discord.Respond(session, interaction, discordServersMessage(d.state.SortRegion()))
 }
 
 func (d DiscordHandler) onPlayers(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -467,19 +468,22 @@ func mapRegion(region string) string {
 	}
 }
 
-func discordServersMessage(currentStateRegion map[string][]state.ServerState, serversURL string) []discordgo.MessageComponent {
+func discordServersMessage(currentStateRegion map[string][]state.ServerState) []discordgo.MessageComponent {
+	const format = `# Current Server Populations
+{{ range .Rows }}
+{{ . }}
+{{ end }}
+`
 	var (
 		stats       = map[string]float64{}
 		used, total = 0, 0
 		regionNames = make([]string, 9)
 	)
 
-	msgEmbed := discord.NewEmbed("Current ServerStore Populations")
-	msgEmbed.Embed().SetURL(serversURL)
-
 	for k := range currentStateRegion {
 		regionNames = append(regionNames, k)
 	}
+	var rows []string
 
 	sort.Strings(regionNames)
 
@@ -511,7 +515,7 @@ func discordServersMessage(currentStateRegion map[string][]state.ServerState, se
 
 		msg := strings.Join(counts, "    ")
 		if msg != "" {
-			msgEmbed.Embed().AddField(mapRegion(region), fmt.Sprintf("```%s```", msg))
+			rows = append(rows, mapRegion(region)+fmt.Sprintf("```%s```", msg))
 		}
 	}
 
@@ -520,21 +524,39 @@ func discordServersMessage(currentStateRegion map[string][]state.ServerState, se
 			continue
 		}
 
-		msgEmbed.Embed().AddField(mapRegion(statName), fmt.Sprintf("%.2f%%", (stats[statName]/stats[statName+"total"])*100)).MakeFieldInline()
+		rows = append(rows, "**"+mapRegion(statName)+"** "+fmt.Sprintf("%.2f%%", (stats[statName]/stats[statName+"total"])*100))
 	}
 
-	msgEmbed.Embed().AddField("Global", fmt.Sprintf("%d/%d %.2f%%", used, total, float64(used)/float64(total)*100)).MakeFieldInline()
+	rows = append(rows, "Global"+fmt.Sprintf("%d/%d %.2f%%", used, total, float64(used)/float64(total)*100))
 
+	content, errContent := discord.Render("servers", format, struct {
+		Rows []string
+	}{
+		Rows: rows,
+	})
+	if errContent != nil {
+		slog.Error("Failed to render servers message", errContent.Error())
+	}
+
+	colour := discord.ColourSuccess
 	if total == 0 {
-		msgEmbed.Embed().SetColor(discord.ColourError)
-		msgEmbed.Embed().SetDescription("No server states available")
+		colour = discord.ColourError
 	}
 
 	return []discordgo.MessageComponent{
 		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourSuccess),
+			AccentColor: ptr.To(colour),
 			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: "todo..."},
+				discordgo.TextDisplay{Content: content},
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Style: discordgo.LinkButton,
+					Label: "View Servers",
+					URL:   link.Raw("/servers"),
+				},
 			},
 		},
 	}
@@ -580,47 +602,3 @@ UserID: {{ .Player.UserID }}
 		},
 	}
 }
-
-// func NewInGameReportResponse(report ban.ReportWithAuthor, reportURL string, author domain.PersonInfo, authorURL string, _ string) *discordgo.MessageEmbed {
-// 	msgEmbed := message.NewEmbed("New User Report Created")
-// 	msgEmbed.
-// 		Embed().
-// 		SetDescription(report.Description).
-// 		SetColor(message.ColourSuccess).
-// 		SetURL(reportURL)
-
-// 	msgEmbed.AddAuthorPersonInfo(author, authorURL)
-
-// 	name := author.GetName()
-
-// 	if name == "" {
-// 		name = report.TargetID.String()
-// 	}
-
-// 	msgEmbed.
-// 		Embed().
-// 		AddField("Subject", name).
-// 		AddField("Reason", report.Reason.String())
-
-// 	if report.ReasonText != "" {
-// 		msgEmbed.Embed().AddField("Custom Reason", report.ReasonText)
-// 	}
-
-// 	return msgEmbed.AddFieldsSteamID(report.TargetID).Embed().Truncate().MessageEmbed
-// }
-
-// func discordPingModMessage(author domain.PersonInfo, authorURL string, reason string, server Server, roleID string, connect string) *discordgo.MessageEmbed {
-// 	msgEmbed := message.NewEmbed("New User In-Game Report")
-// 	msgEmbed.
-// 		Embed().
-// 		SetDescription(fmt.Sprintf("%s | <@&%s>", reason, roleID)).
-// 		AddField("server", server.Name)
-
-// 	if connect != "" {
-// 		msgEmbed.Embed().AddField("connect", connect)
-// 	}
-
-// 	msgEmbed.AddAuthorPersonInfo(author, authorURL).Embed().Truncate()
-
-// 	return msgEmbed.Embed().MessageEmbed
-// }

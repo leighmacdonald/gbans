@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestPerson(t *testing.T) {
-	personCase := person.NewPersons(person.NewRepository(fixture.Database, true), tests.OwnerSID, nil)
+	personCase := person.NewPersons(person.NewRepository(fixture.Database, true), tests.OwnerSID, fixture.TFApi)
 
 	_, err := personCase.BySteamID(t.Context(), steamid.RandSID64())
 	require.Error(t, err)
@@ -77,7 +77,7 @@ func TestPerson(t *testing.T) {
 	require.GreaterOrEqual(t, len(players)-1, len(aboveMod))
 
 	discord, _ := personCase.GetPersonByDiscordID(t.Context(), fetched.DiscordID)
-	require.EqualExportedValues(t, fetched, discord)
+	require.EqualExportedValues(t, fetched.Core(), discord)
 
 	steamID, _ := personCase.BySteamID(t.Context(), fetched.SteamID)
 	require.EqualExportedValues(t, fetched, steamID)

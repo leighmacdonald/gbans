@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -90,21 +89,40 @@ func (h discordHandler) makeOnFilter(ctx context.Context, session *discordgo.Ses
 	}
 }
 
-func FilterCheckMessage(matches []Filter) *discordgo.MessageEmbed {
-	msgEmbed := discord.NewEmbed()
-	if len(matches) == 0 {
-		msgEmbed.Embed().SetTitle("No Matches Found")
-		msgEmbed.Embed().SetColor(discord.ColourSuccess)
-	} else {
-		msgEmbed.Embed().SetTitle("Matched Found")
-		msgEmbed.Embed().SetColor(discord.ColourWarn)
+const format = ` # Title
+{{range .Matches }}
+ID: {{ .FilterID }} Pattern: {{ .Pattern }}
+{{end}}
+`
 
-		for _, match := range matches {
-			msgEmbed.Embed().AddField(fmt.Sprintf("Matched ID: %d", match.FilterID), match.Pattern)
-		}
+func FilterCheckMessage(matches []Filter) *discordgo.MessageSend {
+	var colour int
+	var title string
+	if len(matches) == 0 {
+		title = "No Matches Found"
+		colour = discord.ColourSuccess
+	} else {
+		title = "Matched Found"
+		colour = discord.ColourWarn
 	}
 
-	return msgEmbed.Embed().Truncate().MessageEmbed
+	content, err := discord.Render("lang_check", format, struct {
+		Title   string
+		Matches []Filter
+	}{
+		Title:   title,
+		Matches: matches,
+	})
+	if err != nil {
+		slog.Error("Failed to render check message", slog.String("error", err.Error()))
+	}
+
+	return discord.NewMessageSend(discordgo.Container{
+		AccentColor: ptr.To(colour),
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{Content: content},
+		},
+	})
 }
 
 func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.MessageSend {
