@@ -126,7 +126,7 @@ func (opts *Opts) Validate() error {
 func AddressCount(network *net.IPNet) uint64 {
 	prefixLen, bits := network.Mask.Size()
 
-	return 1 << (uint64(bits) - uint64(prefixLen))
+	return 1 << (uint64(bits) - uint64(prefixLen)) //nolint:gosec
 }
 
 type Ban struct {

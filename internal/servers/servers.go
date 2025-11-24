@@ -87,7 +87,7 @@ type Server struct {
 	TokenCreatedOn     time.Time `json:"token_created_on"`
 	CreatedOn          time.Time `json:"created_on"`
 	UpdatedOn          time.Time `json:"updated_on"`
-	DiscordSeedRoleIDs []string  `json:"discord_seed_role_ids"`
+	DiscordSeedRoleIDs []string  `json:"discord_seed_role_ids"` //nolint:tagliatelle
 }
 
 func (s Server) Addr() string {
