@@ -2,15 +2,13 @@ package discord
 
 import (
 	"context"
-	"errors"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-var (
-	ErrCommandFailed = errors.New("command failed")           //nolint:gochecknoglobals
-	ModPerms         = int64(discordgo.PermissionBanMembers)  //nolint:gochecknoglobals
-	UserPerms        = int64(discordgo.PermissionViewChannel) //nolint:gochecknoglobals
+const (
+	ModPerms  = int64(discordgo.PermissionBanMembers)
+	UserPerms = int64(discordgo.PermissionViewChannel)
 )
 
 const (
@@ -37,6 +35,12 @@ type Service interface {
 	// MustRegisterPrefixHandler is similar to MustRegisterCommandHandler, however instead of exact command names
 	// it matches IDs in the various response types.
 	MustRegisterPrefixHandler(prefix string, responder Handler)
+
+	// CreateRole handles creating a new role within the guild.
+	CreateRole(name string) (string, error)
+
+	// Roles returns a slice of all roles within the guild.
+	Roles() ([]*discordgo.Role, error)
 }
 
 // Discard implements a dummy service that can be used when discord bot support is disabled or for testing.
@@ -48,6 +52,8 @@ func (d Discard) Close()                                        {}
 func (d Discard) MustRegisterCommandHandler(_ *discordgo.ApplicationCommand, _ Handler) {
 }
 func (d Discard) MustRegisterPrefixHandler(_ string, _ Handler) {}
+func (d Discard) CreateRole(_ string) (string, error)           { return "", nil }
+func (d Discard) Roles() ([]*discordgo.Role, error)             { return nil, nil }
 
 type Config struct {
 	Enabled                 bool   `json:"enabled"`

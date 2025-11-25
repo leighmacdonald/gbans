@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"sort"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -26,6 +25,8 @@ var (
 	ErrCommandSend      = errors.New("failed to send response")
 	ErrCommandDuplicate = errors.New("duplicate command")
 	ErrTemplate         = errors.New("template error")
+	ErrCommandFailed    = errors.New("command failed")
+	ErrRole             = errors.New("failed to create/fetch roles")
 )
 
 const (
@@ -182,8 +183,28 @@ func (b *Discord) MustRegisterCommandHandler(appCommand *discordgo.ApplicationCo
 	}
 
 	b.commandHandlers[appCommand.Name] = handler
-
 	b.commands = append(b.commands, appCommand)
+}
+
+func (b *Discord) Roles() ([]*discordgo.Role, error) {
+	roles, errRoles := b.session.GuildRoles(b.guildID)
+	if errRoles != nil {
+		return nil, errors.Join(errRoles, ErrRole)
+	}
+
+	return roles, errors.Join(errRoles, ErrRole)
+}
+
+func (b *Discord) CreateRole(name string) (string, error) {
+	role, errRole := b.session.GuildRoleCreate(b.guildID, &discordgo.RoleParams{
+		Name:        name,
+		Mentionable: ptr.To(true),
+	})
+	if errRole != nil {
+		return "", errors.Join(errRole, ErrRole)
+	}
+
+	return role.ID, nil
 }
 
 func (b *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
@@ -389,11 +410,13 @@ func Respond(session *discordgo.Session, interaction *discordgo.InteractionCreat
 	return nil
 }
 
-func RespondUpdate(session *discordgo.Session, interaction *discordgo.InteractionCreate, components ...discordgo.MessageComponent) error {
-	if _, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
-		Flags:           discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsSuppressNotifications,
-		AllowedMentions: &discordgo.MessageAllowedMentions{},
-		Components:      &components,
+func RespondPrivate(session *discordgo.Session, interaction *discordgo.InteractionCreate, components []discordgo.MessageComponent) error {
+	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags:      discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
+			Components: components,
+		},
 	}); err != nil {
 		return errors.Join(err, ErrCommandSend)
 	}
@@ -401,14 +424,11 @@ func RespondUpdate(session *discordgo.Session, interaction *discordgo.Interactio
 	return nil
 }
 
-func Autocomplete(session *discordgo.Session, interaction *discordgo.InteractionCreate, choices []*discordgo.ApplicationCommandOptionChoice) error {
-	sort.Slice(choices, func(i, j int) bool {
-		return choices[i].Name < choices[j].Name
-	})
-
-	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionApplicationCommandAutocompleteResult,
-		Data: &discordgo.InteractionResponseData{Choices: choices},
+func RespondUpdate(session *discordgo.Session, interaction *discordgo.InteractionCreate, components ...discordgo.MessageComponent) error {
+	if _, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
+		Flags:           discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsSuppressNotifications,
+		AllowedMentions: &discordgo.MessageAllowedMentions{},
+		Components:      &components,
 	}); err != nil {
 		return errors.Join(err, ErrCommandSend)
 	}

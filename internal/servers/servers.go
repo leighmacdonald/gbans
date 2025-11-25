@@ -4,9 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"net"
+	"strings"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -104,6 +108,18 @@ func (s Server) AddrInternalOrDefault() string {
 
 func (s Server) Slots(statusSlots int) int {
 	return statusSlots - s.ReservedSlots
+}
+
+func (s Server) Connect() string {
+	addr := s.Address
+	ipAddr, errAddr := net.ResolveIPAddr("ip4", s.Address)
+	if errAddr != nil {
+		slog.Error("Failed to resole server ip", slog.String("error", errAddr.Error()))
+	} else {
+		addr = ipAddr.String()
+	}
+
+	return fmt.Sprintf("steam://run/440//+connect %s:%d", addr, s.Port)
 }
 
 // SafeServer provides a server struct stripped of any sensitive info suitable for public-facing
@@ -220,4 +236,28 @@ func (s *Servers) Save(ctx context.Context, server Server) (Server, error) {
 	}
 
 	return s.Server(ctx, server.ServerID)
+}
+
+func (s *Servers) AutoCompleteServers(ctx context.Context, query string) ([]discord.AutoCompleteValuer, error) {
+	activeServers, errServer := s.Servers(ctx, Query{})
+	if errServer != nil {
+		return nil, errServer
+	}
+	query = strings.ToLower(query)
+	var values []discord.AutoCompleteValuer //nolint:prealloc
+	for _, server := range activeServers {
+		if query == "" ||
+			strings.Contains(strings.ToLower(server.Name), query) ||
+			strings.Contains(strings.ToLower(server.ShortName), query) {
+			values = append(values, discord.NewAutoCompleteValue(server.Name, server.ShortName))
+		}
+	}
+
+	return values, nil
+}
+
+func ShortNamePrefix(name string) string {
+	pieces := strings.Split(name, "-")
+
+	return strings.Join(pieces[0:len(pieces)-1], "-")
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -207,6 +208,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		ban.RegisterDiscordCommands(g.bot, g.bans, g.persons, g.persons)
 		chat.RegisterDiscordCommands(g.bot, g.wordFilters)
 		servers.RegisterDiscordCommands(g.bot, g.states, g.persons, g.servers, g.networks)
+		sourcemod.RegisterDiscordCommands(g.bot, g.sourcemod, g.servers)
 	}
 
 	if err := g.firstTimeSetup(ctx); err != nil {
@@ -224,9 +226,67 @@ func (g *GBans) Init(ctx context.Context) error {
 	// Config
 	g.setupPlayerQueue(ctx)
 
+	if errRoles := g.createDiscordRoles(ctx); errRoles != nil {
+		slog.Error("Failed to register discord roles", slog.String("error", errRoles.Error()))
+	}
+
 	asnBlocker := asn.NewBlocker(asn.NewRepository(g.database))
 	if err := asnBlocker.Save(ctx, asn.NewBlock(13335, "idk")); err != nil {
 		panic(err)
+	}
+
+	return nil
+}
+
+// createDiscordRoles handles creating discord roles used for seeding requests from servers.
+// Names are normalized, removing the trailing digit, so that a single region shares the same single role.
+// Given a list of short server names, eg: xyz-1, zyz-2, abc-1, abc-2, tuv-1
+// It will create the following, normalized set of roles: zyz, abc, tuv.
+func (g *GBans) createDiscordRoles(ctx context.Context) error {
+	conf := g.config.Config().Discord
+	if !conf.BotEnabled {
+		return nil
+	}
+
+	curServers, errServers := g.servers.Servers(ctx, servers.Query{})
+	if errServers != nil {
+		return errServers
+	}
+
+	curRoles, errRoles := g.bot.Roles()
+	if errRoles != nil {
+		return errRoles
+	}
+
+	names := map[string]string{}
+	for _, server := range curServers {
+		name := servers.ShortNamePrefix(server.ShortName)
+		existingID := ""
+		for _, role := range curRoles {
+			if strings.EqualFold(role.Name, name) {
+				existingID = role.ID
+			}
+		}
+
+		roleID, found := names[name]
+		if !found {
+			var validID string
+			if existingID == "" {
+				newRoleID, err := g.bot.CreateRole(name)
+				if err != nil {
+					return err
+				}
+				roleID = newRoleID
+			} else {
+				roleID = existingID
+			}
+			names[name] = validID
+		}
+
+		server.DiscordSeedRoleIDs = []string{roleID}
+		if _, errSave := g.servers.Save(ctx, server); errSave != nil {
+			return errSave
+		}
 	}
 
 	return nil

@@ -169,7 +169,7 @@ type Sourcemod struct {
 	notifier      notification.Notifier
 }
 
-func (h Sourcemod) seedRequest(server servers.Server, steamID steamid.SteamID) bool {
+func (h Sourcemod) seedRequest(server servers.Server, userID string) bool {
 	const format = `# Seed Request
 {{ .Name }}
 connect {{ .Path }}
@@ -177,7 +177,7 @@ connect {{ .Path }}
 {{- range .Roles }}<@&{{ . }}> {{end}}
 `
 
-	if !h.seedQueue.Allowed(server.ServerID, steamID) {
+	if !h.seedQueue.Allowed(server.ServerID, userID) {
 		return false
 	}
 

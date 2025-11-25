@@ -930,7 +930,7 @@ func (s *Handler) onAPIGetSeed() gin.HandlerFunc {
 			return
 		}
 
-		if !s.seedRequest(server, steamID) {
+		if !s.seedRequest(server, steamID.String()) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusTooManyRequests, httphelper.ErrNotFound))
 
 			return

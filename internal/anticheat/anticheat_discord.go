@@ -24,7 +24,7 @@ func RegisterDiscordCommands(bot discord.Service, anticheat AntiCheat) {
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "anticheat",
 		Description:              "Query Anticheat Logs",
-		DefaultMemberPermissions: &discord.ModPerms,
+		DefaultMemberPermissions: ptr.To(discord.ModPerms),
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        "player",

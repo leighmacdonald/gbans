@@ -15,13 +15,13 @@ func TestSeedQueue_Allowed(t *testing.T) {
 
 	synctest.Test(t, func(t *testing.T) {
 		// Allow first.
-		require.True(t, seedQueue.Allowed(100, tests.UserSID))
+		require.True(t, seedQueue.Allowed(100, tests.UserSID.String()))
 		// Block second attempt.
-		require.False(t, seedQueue.Allowed(100, tests.UserSID))
+		require.False(t, seedQueue.Allowed(100, tests.UserSID.String()))
 		// Allow it to timeout and do it again.
 		time.Sleep(time.Minute * 10)
-		require.True(t, seedQueue.Allowed(100, tests.UserSID))
+		require.True(t, seedQueue.Allowed(100, tests.UserSID.String()))
 		// Try it as another user before timeout.
-		require.False(t, seedQueue.Allowed(100, tests.ModSID))
+		require.False(t, seedQueue.Allowed(100, tests.ModSID.String()))
 	})
 }

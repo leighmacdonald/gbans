@@ -3,12 +3,10 @@ package sourcemod
 import (
 	"sync"
 	"time"
-
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type seedRequest struct {
-	steamID   steamid.SteamID
+	userID    string
 	createdOn time.Time
 }
 
@@ -28,7 +26,7 @@ func NewSeedQueue() SeedQueue {
 	}
 }
 
-func (q *SeedQueue) Allowed(serverID int, steamID steamid.SteamID) bool {
+func (q *SeedQueue) Allowed(serverID int, userID string) bool {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -37,7 +35,7 @@ func (q *SeedQueue) Allowed(serverID int, steamID steamid.SteamID) bool {
 		// Check if the user has sent anything on other servers to prevent them being able to
 		// cycle through servers spamming the command.
 		for _, existingRequest := range q.servers {
-			if existingRequest.steamID.Equal(steamID) {
+			if existingRequest.userID == userID {
 				req = existingRequest
 
 				break
@@ -46,9 +44,9 @@ func (q *SeedQueue) Allowed(serverID int, steamID steamid.SteamID) bool {
 	}
 
 	// Check if found request is expired.
-	if !req.steamID.Valid() || time.Since(req.createdOn) > q.minTime {
+	if req.userID == "" || time.Since(req.createdOn) > q.minTime {
 		q.servers[serverID] = seedRequest{
-			steamID:   steamID,
+			userID:    userID,
 			createdOn: time.Now(),
 		}
 
