@@ -2,6 +2,7 @@ package servers
 
 import (
 	"errors"
+	"log/slog"
 	"math"
 	"net/http"
 	"sort"
@@ -29,6 +30,7 @@ func NewServersHandler(engine *gin.Engine, authenticator httphelper.Authenticato
 
 	engine.GET("/api/servers/state", handler.onAPIGetServerStates())
 	engine.GET("/api/servers", handler.onAPIGetServers())
+	engine.GET("/connect/:server_id", handler.onConnect())
 
 	// admin
 	srvGrp := engine.Group("/")
@@ -224,5 +226,30 @@ func (h *serversHandler) onDelete() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+func (h *serversHandler) onConnect() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		serverID, idFound := httphelper.GetIntParam(ctx, "server_id")
+		if !idFound {
+			return
+		}
+
+		server, errServer := h.Server(ctx, serverID)
+		if errServer != nil {
+			switch {
+			case errors.Is(errServer, ErrNotFound):
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, ErrNotFound))
+			default:
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, httphelper.ErrInternal))
+			}
+
+			return
+		}
+
+		slog.Debug("Redirecting user to game server", slog.String("url", server.Connect()))
+
+		ctx.Redirect(http.StatusTemporaryRedirect, server.Connect())
 	}
 }

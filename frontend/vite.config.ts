@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
+
 // https://vitejs.dev/config/
 export default defineConfig({
     base: '/',
@@ -86,6 +87,11 @@ export default defineConfig({
         host: '0.0.0.0',
         allowedHosts: true, // WARN You should set __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS instead
         proxy: {
+            '/connect': {
+                target: 'http://gbans.localhost:6006',
+                changeOrigin: true,
+                secure: false
+            },
             '/discord/oauth': {
                 target: 'http://gbans.localhost:6006',
                 changeOrigin: true,

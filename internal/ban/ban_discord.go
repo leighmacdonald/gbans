@@ -44,14 +44,14 @@ func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Prov
 		Name:                     "ban",
 		Description:              "Create Steam / CIDR ban",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
+		DefaultMemberPermissions: ptr.To(discord.ModPerms),
 	}, handler.createBanModal)
 
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "mute",
 		Description:              "Mute a player",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
+		DefaultMemberPermissions: ptr.To(discord.ModPerms),
 	}, handler.createMuteModal)
 
 	bot.MustRegisterPrefixHandler("unban_resp", handler.onUnbanResponse)
@@ -59,13 +59,13 @@ func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Prov
 		Name:                     "unban",
 		Description:              "Unban users",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
+		DefaultMemberPermissions: ptr.To(discord.ModPerms),
 	}, handler.onUnban)
 
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "check",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
+		DefaultMemberPermissions: ptr.To(discord.ModPerms),
 		Description:              "Get ban status for a steam id",
 		Options: []*discordgo.ApplicationCommandOption{
 			{

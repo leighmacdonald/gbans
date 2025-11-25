@@ -18,7 +18,7 @@ func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
 		Name:                     "filter",
 		Description:              "Manage and test global word filters",
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-		DefaultMemberPermissions: &discord.ModPerms,
+		DefaultMemberPermissions: ptr.To(discord.ModPerms),
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        "add",
