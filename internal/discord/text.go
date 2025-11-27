@@ -7,7 +7,9 @@ import (
 	"regexp"
 	"text/template"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config/link"
+	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
 type TextProcessor func(text string) string
@@ -42,5 +44,47 @@ func HydrateLinks() TextProcessor {
 
 	return func(text string) string {
 		return extURLRegex.ReplaceAllString(text, fmt.Sprintf(`[$1](%s$2)`, link.Raw("")))
+	}
+}
+
+func Heading(text string) discordgo.TextDisplay {
+	return discordgo.TextDisplay{
+		Content: "### " + text,
+	}
+}
+
+func BodyColouredText(colour int, text string) discordgo.Container {
+	return discordgo.Container{
+		AccentColor: ptr.To(colour),
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{Content: text},
+		},
+	}
+}
+
+func BodyText(text string) discordgo.Container {
+	return discordgo.Container{
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{Content: text},
+		},
+	}
+}
+
+func BodyColour(colour int, components ...discordgo.MessageComponent) discordgo.Container {
+	return discordgo.Container{
+		AccentColor: ptr.To(colour),
+		Components:  components,
+	}
+}
+
+func Body(components ...discordgo.MessageComponent) discordgo.Container {
+	return discordgo.Container{
+		Components: components,
+	}
+}
+
+func Buttons(buttons ...discordgo.MessageComponent) discordgo.ActionsRow {
+	return discordgo.ActionsRow{
+		Components: buttons,
 	}
 }

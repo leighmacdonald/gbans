@@ -20,12 +20,8 @@ func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
 		return nil
 	}
 
-	return discord.NewMessageSend(
-		discordgo.Container{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		},
+	return discord.NewMessage(
+		discord.BodyText(content),
 		discordgo.Section{
 			Components: []discordgo.MessageComponent{
 				discordgo.TextDisplay{Content: report.Description},
@@ -35,25 +31,22 @@ func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
 				Description: ptr.To(report.Subject.GetName()),
 			},
 		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    "🔨 Reply",
-					CustomID: fmt.Sprintf("report_reply_button_resp_%d", report.ReportID),
-					Style:    discordgo.SecondaryButton,
-				},
-				discordgo.Button{
-					Label:    "✏️ Set State",
-					CustomID: fmt.Sprintf("report_state_button_resp_%d", report.ReportID),
-					Style:    discordgo.SecondaryButton,
-				},
-				discordgo.Button{
-					Label: "🔎 View",
-					URL:   link.Path(report),
-					Style: discordgo.LinkButton,
-				},
+		discord.Buttons(
+			discordgo.Button{
+				Label:    "🔨 Reply",
+				CustomID: fmt.Sprintf("report_reply_button_resp_%d", report.ReportID),
+				Style:    discordgo.SecondaryButton,
 			},
-		})
+			discordgo.Button{
+				Label:    "✏️ Set State",
+				CustomID: fmt.Sprintf("report_state_button_resp_%d", report.ReportID),
+				Style:    discordgo.SecondaryButton,
+			},
+			discordgo.Button{
+				Label: "🔎 View",
+				URL:   link.Path(report),
+				Style: discordgo.LinkButton,
+			}))
 }
 
 func (h discordHandler) onReportReplyButton(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -121,14 +114,10 @@ func (h discordHandler) onReportReplySubmit(ctx context.Context, session *discor
 		return errMsg
 	}
 
-	return discord.Respond(session, interaction, []discordgo.MessageComponent{discordgo.Container{
-		AccentColor: ptr.To(discord.ColourSuccess),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{
-				Content: fmt.Sprintf("Reply successful [View](%s)", link.Path(report)),
-			},
-		},
-	}})
+	return discord.Respond(session, interaction, []discordgo.MessageComponent{
+		discord.BodyColouredText(discord.ColourSuccess,
+			fmt.Sprintf("Reply successful [View](%s)", link.Path(report))),
+	})
 }
 
 func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus) *discordgo.MessageSend {
@@ -137,16 +126,15 @@ func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus)
 		return nil
 	}
 
-	return discord.NewMessageSend(
+	return discord.NewMessage(
 		discordgo.TextDisplay{Content: content},
 		discordgo.TextDisplay{Content: fmt.Sprintf("Changed from %s to %s", fromStatus.String(), report.ReportStatus.String())},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{discordgo.Button{
-				Label: "🔎 View Report",
-				URL:   link.Path(report),
-				Style: discordgo.LinkButton,
-			}},
+		discord.Buttons(discordgo.Button{
+			Label: "🔎 View Report",
+			URL:   link.Path(report),
+			Style: discordgo.LinkButton,
 		},
+		),
 	)
 }
 
@@ -158,30 +146,26 @@ func NewReportMessageResponse(report ReportWithAuthor, msg ReportMessage) *disco
 		return nil
 	}
 
-	return discord.NewMessageSend(
-		discordgo.TextDisplay{Content: content},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    "💬 Reply",
-					CustomID: fmt.Sprintf("report_reply_button_resp_%d", report.ReportID),
-					Style:    discordgo.PrimaryButton,
-				},
-				discordgo.Button{
-					Label:    "❌️ Delete",
-					CustomID: fmt.Sprintf("report_delete_button_resp_%d", report.ReportID),
-					Style:    discordgo.SecondaryButton,
-				},
-				discordgo.Button{
-					Label:    "🚦 Status",
-					CustomID: fmt.Sprintf("report_status_button_resp_%d", report.ReportID),
-					Style:    discordgo.SecondaryButton,
-				},
-				discordgo.Button{
-					Label: "🔎 View",
-					URL:   link.Path(report),
-					Style: discordgo.LinkButton,
-				},
+	return discord.NewMessage(
+		discord.BodyText(content),
+		discord.Buttons(discordgo.Button{
+			Label:    "💬 Reply",
+			CustomID: fmt.Sprintf("report_reply_button_resp_%d", report.ReportID),
+			Style:    discordgo.PrimaryButton,
+		},
+			discordgo.Button{
+				Label:    "❌️ Delete",
+				CustomID: fmt.Sprintf("report_delete_button_resp_%d", report.ReportID),
+				Style:    discordgo.SecondaryButton,
 			},
-		})
+			discordgo.Button{
+				Label:    "🚦 Status",
+				CustomID: fmt.Sprintf("report_status_button_resp_%d", report.ReportID),
+				Style:    discordgo.SecondaryButton,
+			},
+			discordgo.Button{
+				Label: "🔎 View",
+				URL:   link.Path(report),
+				Style: discordgo.LinkButton,
+			}))
 }

@@ -289,31 +289,24 @@ func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Se
 	}
 
 	return discord.RespondUpdate(session, interaction,
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourSuccess),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
+		discord.BodyColouredText(discord.ColourSuccess, content),
+		discord.Buttons(
+			discordgo.Button{
+				Label:    "🗑️ Unban",
+				CustomID: fmt.Sprintf("ban_unban_button_resp_%d", createdBan.BanID),
+				Style:    discordgo.SuccessButton,
 			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    "🗑️ Unban",
-					CustomID: fmt.Sprintf("ban_unban_button_resp_%d", createdBan.BanID),
-					Style:    discordgo.SuccessButton,
-				},
-				discordgo.Button{
-					Label:    "🔨 Edit",
-					CustomID: fmt.Sprintf("ban_edit_button_resp_%d", createdBan.BanID),
-					Style:    discordgo.SecondaryButton,
-				},
-				discordgo.Button{
-					Label: "🔗 Link",
-					URL:   link.Path(createdBan),
-					Style: discordgo.LinkButton,
-				},
+			discordgo.Button{
+				Label:    "🔨 Edit",
+				CustomID: fmt.Sprintf("ban_edit_button_resp_%d", createdBan.BanID),
+				Style:    discordgo.SecondaryButton,
 			},
-		})
+			discordgo.Button{
+				Label: "🔗 Link",
+				URL:   link.Path(createdBan),
+				Style: discordgo.LinkButton,
+			},
+		))
 }
 
 func (h discordHandler) onUnbanButton(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -402,14 +395,7 @@ func (h discordHandler) onUnbanResponse(ctx context.Context, session *discordgo.
 	}
 
 	return discord.RespondUpdate(session, interaction,
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourSuccess),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{
-					Content: "Unban successful",
-				},
-			},
-		})
+		discord.BodyColouredText(discord.ColourSuccess, "Unban successful"))
 }
 
 type checkContext struct {
@@ -514,19 +500,17 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 				discordgo.TextDisplay{Content: content},
 			},
 		},
-		discordgo.ActionsRow{
-			Components: append(btn,
-				discordgo.Button{
-					Label: "🔗 Link",
-					URL:   link.Path(player),
-					Style: discordgo.LinkButton,
-				},
-				discordgo.Button{
-					Label: "🔧 Steam",
-					URL:   "https://steamcommunity.com/profiles/" + player.SteamID.String(),
-					Style: discordgo.LinkButton,
-				}),
-		})
+		discord.Buttons(append(btn,
+			discordgo.Button{
+				Label: "🔗 Link",
+				URL:   link.Path(player),
+				Style: discordgo.LinkButton,
+			},
+			discordgo.Button{
+				Label: "🔧 Steam",
+				URL:   "https://steamcommunity.com/profiles/" + player.SteamID.String(),
+				Style: discordgo.LinkButton,
+			})...))
 }
 
 func UnbanMessage(person person.Info) *discordgo.MessageSend {
@@ -535,21 +519,13 @@ func UnbanMessage(person person.Info) *discordgo.MessageSend {
 		return nil
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		AccentColor: ptr.To(discord.ColourSuccess),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: content},
-			discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.Button{
-						Label: "🔗 Link",
-						URL:   link.Path(person),
-						Style: discordgo.LinkButton,
-					},
-				},
-			},
-		},
-	})
+	return discord.NewMessage(
+		discord.BodyColouredText(discord.ColourSuccess, content),
+		discord.Buttons(discordgo.Button{
+			Label: "🔗 Link",
+			URL:   link.Path(person),
+			Style: discordgo.LinkButton,
+		}))
 }
 
 func createBanResponse(ban Ban, player person.Core) *discordgo.MessageSend {
@@ -575,52 +551,42 @@ func createBanResponse(ban Ban, player person.Core) *discordgo.MessageSend {
 		return nil
 	}
 
-	msg := &discordgo.MessageSend{
-		Flags: discordgo.MessageFlagsIsComponentsV2,
-		Components: []discordgo.MessageComponent{
-			discordgo.Container{
-				AccentColor: ptr.To(discord.ColourError),
-				Components: []discordgo.MessageComponent{
-					discordgo.Section{
-						Components: []discordgo.MessageComponent{
-							discordgo.TextDisplay{Content: content},
-						},
-						Accessory: discordgo.Thumbnail{
-							Media:       discordgo.UnfurledMediaItem{URL: player.GetAvatar().Full()},
-							Description: ptr.To(fmt.Sprintf("Profile Picure [%s]", player.Avatarhash)),
-						},
+	return discord.NewMessage(
+		discordgo.Container{
+			AccentColor: ptr.To(discord.ColourError),
+			Components: []discordgo.MessageComponent{
+				discordgo.Section{
+					Components: []discordgo.MessageComponent{
+						discordgo.TextDisplay{Content: content},
 					},
-				},
-			},
-
-			discordgo.ActionsRow{
-				Components: []discordgo.MessageComponent{
-					discordgo.Button{
-						Label:    "🗑️ Unban",
-						CustomID: fmt.Sprintf("ban_unban_button_resp_%d", ban.BanID),
-						Style:    discordgo.SuccessButton,
-					},
-					discordgo.Button{
-						Label:    "🔨 Edit",
-						CustomID: fmt.Sprintf("ban_edit_button_resp_%d", ban.BanID),
-						Style:    discordgo.SecondaryButton,
-					},
-					discordgo.Button{
-						Label: "🔎 View",
-						URL:   link.Path(ban),
-						Style: discordgo.LinkButton,
-					},
-					discordgo.Button{
-						Label: "🌐 Steam",
-						URL:   "https://steamcommunity.com/profiles/" + ban.TargetID.String(),
-						Style: discordgo.LinkButton,
+					Accessory: discordgo.Thumbnail{
+						Media:       discordgo.UnfurledMediaItem{URL: player.GetAvatar().Full()},
+						Description: ptr.To(fmt.Sprintf("Profile Picure [%s]", player.Avatarhash)),
 					},
 				},
 			},
 		},
-	}
-
-	return msg
+		discord.Buttons(
+			discordgo.Button{
+				Label:    "🗑️ Unban",
+				CustomID: fmt.Sprintf("ban_unban_button_resp_%d", ban.BanID),
+				Style:    discordgo.SuccessButton,
+			},
+			discordgo.Button{
+				Label:    "🔨 Edit",
+				CustomID: fmt.Sprintf("ban_edit_button_resp_%d", ban.BanID),
+				Style:    discordgo.SecondaryButton,
+			},
+			discordgo.Button{
+				Label: "🔎 View",
+				URL:   link.Path(ban),
+				Style: discordgo.LinkButton,
+			},
+			discordgo.Button{
+				Label: "🌐 Steam",
+				URL:   "https://steamcommunity.com/profiles/" + ban.TargetID.String(),
+				Style: discordgo.LinkButton,
+			}))
 }
 
 func DeleteReportMessage(existing ReportMessage, _ person.Info) *discordgo.MessageSend {
@@ -629,15 +595,10 @@ func DeleteReportMessage(existing ReportMessage, _ person.Info) *discordgo.Messa
 		return nil
 	}
 
-	return discord.NewMessageSend(
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourWarn),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-				discordgo.TextDisplay{Content: existing.MessageMD},
-			},
-		},
-	)
+	return discord.NewMessage(
+		discord.BodyColour(discord.ColourWarn),
+		discordgo.TextDisplay{Content: content},
+		discordgo.TextDisplay{Content: existing.MessageMD})
 }
 
 func EditReportMessageResponse(body string, oldBody string, _ string, _ person.Info, _ string) *discordgo.MessageSend {
@@ -646,20 +607,10 @@ func EditReportMessageResponse(body string, oldBody string, _ string, _ person.I
 		return nil
 	}
 
-	return discord.NewMessageSend(
-		discordgo.TextDisplay{Content: content},
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourWarn),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: oldBody},
-			},
-		},
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourSuccess),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: body},
-			},
-		})
+	return discord.NewMessage(
+		discord.Body(discordgo.TextDisplay{Content: content}),
+		discord.BodyColouredText(discord.ColourWarn, oldBody),
+		discord.BodyColouredText(discord.ColourSuccess, body))
 }
 
 func ReportStatsMessage(meta ReportMeta, _ string) *discordgo.MessageSend {
@@ -689,12 +640,5 @@ func ReportStatsMessage(meta ReportMeta, _ string) *discordgo.MessageSend {
 		slog.Error("Failed to render report stats", slog.String("error", errBody.Error()))
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		AccentColor: ptr.To(colour),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{
-				Content: body,
-			},
-		},
-	})
+	return discord.NewMessage(discord.BodyColouredText(colour, body))
 }

@@ -356,12 +356,9 @@ func discordFindMessage(found []discordFoundPlayer) []discordgo.MessageComponent
 		slog.Error("Failed to render player find", slog.String("error", err.Error()))
 	}
 
-	return []discordgo.MessageComponent{discordgo.Container{
-		AccentColor: ptr.To(discord.ColourSuccess),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: content},
-		},
-	}}
+	return []discordgo.MessageComponent{
+		discord.BodyColouredText(discord.ColourSuccess, content),
+	}
 }
 
 func discordSayMessage(server string, msg string) []discordgo.MessageComponent {
@@ -377,12 +374,7 @@ func discordSayMessage(server string, msg string) []discordgo.MessageComponent {
 	}
 
 	return []discordgo.MessageComponent{
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourSuccess),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		},
+		discord.BodyColouredText(discord.ColourSuccess, content),
 	}
 }
 
@@ -396,12 +388,7 @@ func discordCSayMessage(server string, msg string) []discordgo.MessageComponent 
 	}
 
 	return []discordgo.MessageComponent{
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourSuccess),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		},
+		discord.BodyColouredText(discord.ColourSuccess, content),
 	}
 }
 
@@ -415,12 +402,7 @@ func discordPSayMessage(player steamid.SteamID, msg string) []discordgo.MessageC
 	}
 
 	return []discordgo.MessageComponent{
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourSuccess),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		},
+		discord.BodyColouredText(discord.ColourSuccess, content),
 	}
 }
 
@@ -519,21 +501,12 @@ func discordServersMessage(currentStateRegion map[string][]state.ServerState) []
 	}
 
 	return []discordgo.MessageComponent{
-		discordgo.Container{
-			AccentColor: ptr.To(colour),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Style: discordgo.LinkButton,
-					Label: "View Servers",
-					URL:   link.Raw("/servers"),
-				},
-			},
-		},
+		discord.BodyColouredText(colour, content),
+		discord.Buttons(discordgo.Button{
+			Style: discordgo.LinkButton,
+			Label: "View Servers",
+			URL:   link.Raw("/servers"),
+		}),
 	}
 }
 
@@ -546,9 +519,7 @@ func discordPlayersMessage(rows []string, maxPlayers int, serverName string) []d
 ### Current Players: %d / %d
 %s`, serverName, len(rows), maxPlayers, body)
 
-	return []discordgo.MessageComponent{
-		discordgo.TextDisplay{Content: content},
-	}
+	return []discordgo.MessageComponent{discord.BodyText(content)}
 }
 
 func discordKickMessage(players []state.PlayerServerInfo) []discordgo.MessageComponent {
@@ -562,11 +533,6 @@ func discordKickMessage(players []state.PlayerServerInfo) []discordgo.MessageCom
 	}
 
 	return []discordgo.MessageComponent{
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourSuccess),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		},
+		discord.BodyColouredText(discord.ColourSuccess, content),
 	}
 }

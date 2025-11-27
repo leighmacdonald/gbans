@@ -108,12 +108,7 @@ func FilterCheckMessage(matches []Filter) *discordgo.MessageSend {
 		slog.Error("Failed to render check message", slog.String("error", err.Error()))
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		AccentColor: ptr.To(colour),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: content},
-		},
-	})
+	return discord.NewMessage(discord.BodyColouredText(colour, content))
 }
 
 func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.MessageSend {
@@ -146,10 +141,5 @@ func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.
 		slog.Error("Failed to render warning message", slog.String("error", err.Error()))
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		AccentColor: ptr.To(discord.ColourInfo),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: content},
-		},
-	})
+	return discord.NewMessage(discord.BodyColouredText(discord.ColourInfo, content))
 }

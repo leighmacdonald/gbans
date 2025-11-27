@@ -7,7 +7,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
@@ -41,10 +40,5 @@ func VoteResultMessage(result Result, _ person.Core, target person.Core) *discor
 		slog.Error("Failed to render vote result message", slog.String("error", errBody.Error()))
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		AccentColor: ptr.To(colour),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: body},
-		},
-	})
+	return discord.NewMessage(discord.BodyColouredText(colour, body))
 }

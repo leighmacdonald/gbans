@@ -38,7 +38,7 @@ func NewPlayerqueueChatStatus(_ person.Info, target person.Info, status ChatStat
 		slog.Error("Failed to render queue_chat_status message", slog.String("error", err.Error()))
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
+	return discord.NewMessage(discordgo.Container{
 		AccentColor: ptr.To(colour),
 		Components: []discordgo.MessageComponent{
 			discordgo.TextDisplay{Content: content},
@@ -64,7 +64,7 @@ func NewPlayerqueuePurge(_ person.Info, target person.Info, chatLog ChatLog, cou
 		slog.Error("Failed to render message", slog.String("error", errBody.Error()))
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
+	return discord.NewMessage(discordgo.Container{
 		AccentColor: ptr.To(discord.ColourError),
 		Components: []discordgo.MessageComponent{
 			discordgo.TextDisplay{Content: body},

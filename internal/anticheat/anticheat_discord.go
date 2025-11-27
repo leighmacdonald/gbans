@@ -149,7 +149,7 @@ func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, c
 		slog.Error("Failed to render template", slog.String("error", errContent.Error()))
 	}
 
-	return discord.NewMessageSend(
+	return discord.NewMessage(
 		discordgo.Container{
 			AccentColor: ptr.To(discord.ColourSuccess),
 			Components: []discordgo.MessageComponent{

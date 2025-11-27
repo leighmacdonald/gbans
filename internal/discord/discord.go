@@ -219,7 +219,7 @@ func SuccessMsg(session *discordgo.Session, interaction *discordgo.InteractionCr
 	})
 }
 
-func NewMessageSend(components ...discordgo.MessageComponent) *discordgo.MessageSend {
+func NewMessage(components ...discordgo.MessageComponent) *discordgo.MessageSend {
 	return &discordgo.MessageSend{
 		Flags:      discordgo.MessageFlagsIsComponentsV2,
 		Components: components,

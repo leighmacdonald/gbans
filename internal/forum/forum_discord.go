@@ -6,7 +6,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
 //go:embed forum_discord.tmpl
@@ -26,12 +25,7 @@ func discordCategorySave(category Category) *discordgo.MessageSend {
 		slog.Error("Failed to render forum_cat_save template", slog.String("error", err.Error()))
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		AccentColor: ptr.To(discord.ColourSuccess),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: content},
-		},
-	})
+	return discord.NewMessage(discord.BodyColouredText(discord.ColourSuccess, content))
 }
 
 func discordCategoryDelete(category Category) *discordgo.MessageSend {
@@ -48,12 +42,7 @@ func discordCategoryDelete(category Category) *discordgo.MessageSend {
 		slog.Error("Failed to render forum_cat_deleted template", slog.String("error", err.Error()))
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		AccentColor: ptr.To(discord.ColourError),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: content},
-		},
-	})
+	return discord.NewMessage(discord.BodyColouredText(discord.ColourError, content))
 }
 
 func discordForumMessageSaved(forumMessage Message) *discordgo.MessageSend {
@@ -68,12 +57,7 @@ func discordForumMessageSaved(forumMessage Message) *discordgo.MessageSend {
 		slog.Error("Failed to render forum_message_saved template", slog.String("error", err.Error()))
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		AccentColor: ptr.To(discord.ColourSuccess),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: content},
-		},
-	})
+	return discord.NewMessage(discord.BodyColouredText(discord.ColourSuccess, content))
 }
 
 func discordForumSaved(forumMessage Forum) *discordgo.MessageSend {
@@ -88,10 +72,5 @@ func discordForumSaved(forumMessage Forum) *discordgo.MessageSend {
 		slog.Error("Failed to render forum_forum_saved template", slog.String("error", err.Error()))
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		AccentColor: ptr.To(discord.ColourSuccess),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: content},
-		},
-	})
+	return discord.NewMessage(discord.BodyColouredText(discord.ColourSuccess, content))
 }
