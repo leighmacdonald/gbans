@@ -18,6 +18,7 @@ func pageCreated(page Page) *discordgo.MessageSend {
 	}
 
 	return discord.NewMessageSend(
+		discordgo.TextDisplay{Content: "### Wiki Created: " + page.Slug},
 		discordgo.Container{
 			Components: []discordgo.MessageComponent{
 				discordgo.TextDisplay{Content: content},
@@ -37,6 +38,7 @@ func pageEdited(page Page, _ Page) *discordgo.MessageSend {
 	}
 
 	return discord.NewMessageSend(
+		discordgo.TextDisplay{Content: "### Wiki Edited: " + page.Slug},
 		discordgo.Container{
 			Components: []discordgo.MessageComponent{
 				discordgo.TextDisplay{Content: content},
