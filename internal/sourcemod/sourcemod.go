@@ -197,7 +197,7 @@ func (h Sourcemod) seedRequest(server servers.Server, userID string) bool {
 			return false
 		}
 
-		go h.notifier.Send(notification.NewDiscord(h.seedChannelID, discord.NewMessageSend(
+		go h.notifier.Send(notification.NewDiscord(h.seedChannelID, discord.NewMessage(
 			discordgo.Container{
 				AccentColor: ptr.To(discord.ColourSuccess),
 				Components: []discordgo.MessageComponent{

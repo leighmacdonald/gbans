@@ -17,18 +17,10 @@ func pageCreated(page Page) *discordgo.MessageSend {
 		return nil
 	}
 
-	return discord.NewMessageSend(
-		discordgo.TextDisplay{Content: "### Wiki Created: " + page.Slug},
-		discordgo.Container{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.Button{Label: "View", Style: discordgo.LinkButton, URL: link.Path(page)},
-			},
-		})
+	return discord.NewMessage(
+		discord.Heading("Wiki Created: "+page.Slug),
+		discord.BodyText(content),
+		discord.Buttons(discordgo.Button{Label: "View", Style: discordgo.LinkButton, URL: link.Path(page)}))
 }
 
 func pageEdited(page Page, _ Page) *discordgo.MessageSend {
@@ -37,16 +29,9 @@ func pageEdited(page Page, _ Page) *discordgo.MessageSend {
 		return nil
 	}
 
-	return discord.NewMessageSend(
-		discordgo.TextDisplay{Content: "### Wiki Edited: " + page.Slug},
-		discordgo.Container{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.Button{Label: "View", Style: discordgo.LinkButton, URL: link.Path(page)},
-			},
-		})
+	return discord.NewMessage(
+		discord.Heading("Wiki Edited: "+page.Slug),
+		discord.BodyText(content),
+		discord.Buttons(discordgo.Button{Label: "View", Style: discordgo.LinkButton, URL: link.Path(page)}),
+	)
 }

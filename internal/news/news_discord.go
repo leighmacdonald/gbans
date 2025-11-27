@@ -19,11 +19,9 @@ func NewNewsMessage(body string, title string) *discordgo.MessageSend {
 		return nil
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: content},
-		},
-	})
+	return discord.NewMessage(
+		discord.Heading("News posted"),
+		discord.BodyText(content))
 }
 
 func EditNewsMessages(body string, title string) *discordgo.MessageSend {
@@ -35,9 +33,7 @@ func EditNewsMessages(body string, title string) *discordgo.MessageSend {
 		return nil
 	}
 
-	return discord.NewMessageSend(discordgo.Container{
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: content},
-		},
-	})
+	return discord.NewMessage(
+		discord.Heading("News edited"),
+		discord.BodyText(content))
 }
