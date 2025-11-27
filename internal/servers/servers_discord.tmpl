@@ -1,0 +1,44 @@
+{{define "find"}}
+    # Player(s) Found
+    {{ range .Found }}
+        Name: {{ .Player.Player.Name }}
+        Server: {{ .Server.ShortName }}
+        SteamID: {{ .Player.Player.SID }}
+        Connect: connect {{ .Server.Addr }}
+    {{ end }}
+{{end}}
+
+{{define "say"}}
+    # Sent chat message successfully
+    Server: {{ .Server }}
+    Message: {{ .Message }}
+{{end}}
+
+{{define "csay"}}
+    # Sent centered message successfully
+    Server: {{ .Server }}
+    Message: {{ .Message }}
+{{end}}
+
+{{define "psay"}}
+    # Sent private message successfully
+    Player: {{ .Player }}
+    Message: {{ .Message }}
+{{end}}
+
+{{define "servers"}}
+    # Current Server Populations
+    {{ range .Rows }}
+        {{ . }}
+    {{ end }}
+{{end}}
+
+{{define "user_kick"}}
+    # User Kicked
+    {{range .Players }}
+        Name: {{ .Player.Name }}
+        SteamID: {{ .Player.SID }}
+        UserID: {{ .Player.UserID }}
+    {{ end }}
+{{end}}
+}}

@@ -195,7 +195,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
 	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafePublicLogChannelID())
-	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database))
+	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID(), conf.Discord.LogChannelID)
 	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan, g.persons)
 	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications,
 		conf.Discord.SafeVoteLogChannelID(), g.persons)

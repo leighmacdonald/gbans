@@ -170,26 +170,25 @@ type Sourcemod struct {
 }
 
 func (h Sourcemod) seedRequest(server servers.Server, userID string) bool {
-	const format = `# Seed Request
-{{ .Name }}
-connect {{ .Path }}
-
-{{- range .Roles }}<@&{{ . }}> {{end}}
-`
-
 	if !h.seedQueue.Allowed(server.ServerID, userID) {
 		return false
 	}
 
 	if len(server.DiscordSeedRoleIDs) > 0 {
-		content, errContent := discord.Render("seed_req", format, struct {
-			Name  string
-			Path  string
-			Roles []string
+		content, errContent := discord.Render("seed_req", templateContent, struct {
+			Name    string
+			Short   string
+			Connect string
+			Link    string
+			CC      string
+			Roles   []string
 		}{
-			Name:  server.ShortName,
-			Path:  server.Addr(),
-			Roles: server.DiscordSeedRoleIDs,
+			Name:    server.Name,
+			Short:   server.ShortName,
+			CC:      server.CC,
+			Connect: server.Addr(),
+			Link:    server.Connect(),
+			Roles:   server.DiscordSeedRoleIDs,
 		})
 
 		if errContent != nil {
@@ -198,14 +197,21 @@ connect {{ .Path }}
 			return false
 		}
 
-		msg := discord.NewMessageSend(discordgo.Container{
-			AccentColor: ptr.To(discord.ColourSuccess),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		})
-
-		go h.notifier.Send(notification.NewDiscord(h.seedChannelID, msg))
+		go h.notifier.Send(notification.NewDiscord(h.seedChannelID, discord.NewMessageSend(
+			discordgo.Container{
+				AccentColor: ptr.To(discord.ColourSuccess),
+				Components: []discordgo.MessageComponent{
+					discordgo.TextDisplay{Content: content},
+				},
+			}, discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label: "Connect",
+						Style: discordgo.LinkButton,
+						URL:   server.Connect(),
+					},
+				},
+			})))
 
 		return true
 	}
@@ -631,6 +637,20 @@ func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType
 
 func (h Sourcemod) Admins(ctx context.Context) ([]Admin, error) {
 	return h.repository.Admins(ctx)
+}
+
+func (h Sourcemod) AdminBySteamID(ctx context.Context, steamID steamid.SteamID) (Admin, error) {
+	admins, errAdmins := h.Admins(ctx)
+	if errAdmins != nil {
+		return Admin{}, errors.Join(errAdmins, database.ErrNoResult)
+	}
+	for _, admin := range admins {
+		if admin.SteamID.Equal(steamID) {
+			return admin, nil
+		}
+	}
+
+	return Admin{}, nil
 }
 
 func (h Sourcemod) Groups(ctx context.Context) ([]Groups, error) {

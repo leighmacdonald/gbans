@@ -25,7 +25,7 @@ func TestCategories(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{}
 		router        = fixture.CreateRouter()
-		forumsUC      = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewNullNotifications())
+		forumsUC      = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewDiscard())
 	)
 
 	forum.NewForumHandler(router, authenticator, forumsUC)
@@ -70,7 +70,7 @@ func TestForums(t *testing.T) {
 			Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator),
 		}
 		router   = fixture.CreateRouter()
-		forumsUC = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewNullNotifications())
+		forumsUC = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewDiscard())
 	)
 
 	forum.NewForumHandler(router, authenticator, forumsUC)
@@ -107,7 +107,7 @@ func TestThreads(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		router        = fixture.CreateRouter()
-		forumsUC      = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewNullNotifications())
+		forumsUC      = forum.NewForums(forum.NewRepository(fixture.Database), fixture.Config, notification.NewDiscard())
 	)
 	forum.NewForumHandler(router, authenticator, forumsUC)
 

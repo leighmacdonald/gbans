@@ -29,11 +29,11 @@ func TestSourcemod(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{}
 		router        = fixture.CreateRouter()
-		sourcemodUC   = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewNullNotifications(), "")
+		sourcemodUC   = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewDiscard(), "")
 		serversUC     = servers.NewServers(servers.NewRepository(fixture.Database))
 	)
 
-	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sourcemodUC, serversUC, notification.NewNullNotifications())
+	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sourcemodUC, serversUC, notification.NewDiscard())
 
 	t.Run("admins", testAdmins(router, authenticator))
 	t.Run("groups", testGroups(router, authenticator))
@@ -239,10 +239,10 @@ func TestSRCDS(t *testing.T) {
 		authenticator = &tests.UserAuth{}
 		router        = fixture.CreateRouter()
 		serversUC     = servers.NewServers(servers.NewRepository(fixture.Database))
-		sm            = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewNullNotifications(), "")
+		sm            = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewDiscard(), "")
 	)
 
-	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sm, serversUC, notification.NewNullNotifications())
+	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sm, serversUC, notification.NewDiscard())
 
 	t.Run("permissions", testPermissions(router, authenticator, sm))
 	t.Run("check", testCheck(router, authenticator))

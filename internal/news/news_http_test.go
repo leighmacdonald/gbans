@@ -28,7 +28,7 @@ func TestNewsHTTP(t *testing.T) {
 	)
 
 	news.NewNewsHandler(router, news.NewNews(news.NewRepository(fixture.Database),
-		notification.NewNullNotifications(), ""), authenticator)
+		notification.NewDiscard(), ""), authenticator)
 
 	// No news yet
 	require.Empty(t, tests.GetGOK[[]news.Article](t, router, "/api/news_latest"))

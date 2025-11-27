@@ -139,22 +139,23 @@ func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity 
 	return payload
 }
 
-func NewNullNotifications() *NullNotifications {
-	return &NullNotifications{}
+func NewDiscard() *Discard {
+	return &Discard{}
 }
 
-type NullNotifications struct{}
+type Discard struct{}
 
-func (n *NullNotifications) Send(_ Payload) {}
+func (n *Discard) Send(_ Payload) {}
 
 func NewNotifications(repository Repository, discord BotNotifier) *Notifications {
-	return &Notifications{repository: repository, discord: discord, send: make(chan Payload)}
+	return &Notifications{Repository: repository, discord: discord, send: make(chan Payload)}
 }
 
 type Notifications struct {
-	repository Repository
-	send       chan Payload
-	discord    BotNotifier
+	Repository
+
+	send    chan Payload
+	discord BotNotifier
 }
 
 func (n *Notifications) Send(payload Payload) {
@@ -186,11 +187,11 @@ func (n *Notifications) SendSite(ctx context.Context, targetIDs steamid.Collecti
 	sid64 := sid.Int64()
 	authorID = &sid64
 
-	return n.repository.SendSite(ctx, sliceutil.Uniq(targetIDs), severity, message, link, authorID)
+	return n.Repository.SendSite(ctx, sliceutil.Uniq(targetIDs), severity, message, link, authorID)
 }
 
 func (n *Notifications) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]UserNotification, error) {
-	return n.repository.GetPersonNotifications(ctx, steamID)
+	return n.Repository.GetPersonNotifications(ctx, steamID)
 }
 
 func (n *Notifications) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
@@ -198,11 +199,11 @@ func (n *Notifications) MarkMessagesRead(ctx context.Context, steamID steamid.St
 		return nil
 	}
 
-	return n.repository.MarkMessagesRead(ctx, steamID, ids)
+	return n.Repository.MarkMessagesRead(ctx, steamID, ids)
 }
 
 func (n *Notifications) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
-	return n.repository.MarkAllRead(ctx, steamID)
+	return n.Repository.MarkAllRead(ctx, steamID)
 }
 
 func (n *Notifications) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
@@ -210,9 +211,9 @@ func (n *Notifications) DeleteMessages(ctx context.Context, steamID steamid.Stea
 		return nil
 	}
 
-	return n.repository.DeleteMessages(ctx, steamID, ids)
+	return n.Repository.DeleteMessages(ctx, steamID, ids)
 }
 
 func (n *Notifications) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
-	return n.repository.DeleteAll(ctx, steamID)
+	return n.Repository.DeleteAll(ctx, steamID)
 }

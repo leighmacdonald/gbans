@@ -1,9 +1,18 @@
 package discord
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"fmt"
+	"html/template"
+	"log/slog"
+	"strconv"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config/link"
+	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
 const (
@@ -33,7 +42,7 @@ type Service interface {
 	MustRegisterCommandHandler(command *discordgo.ApplicationCommand, handler Handler)
 
 	// MustRegisterPrefixHandler is similar to MustRegisterCommandHandler, however instead of exact command names
-	// it matches IDs in the various response types.
+	// it matches IDs in the various response types.co
 	MustRegisterPrefixHandler(prefix string, responder Handler)
 
 	// CreateRole handles creating a new role within the guild.
@@ -41,6 +50,9 @@ type Service interface {
 
 	// Roles returns a slice of all roles within the guild.
 	Roles() ([]*discordgo.Role, error)
+
+	MustRegisterTemplate(namespace string, body []byte)
+	RenderTemplate(namespace string, name string, args any) (string, error)
 }
 
 // Discard implements a dummy service that can be used when discord bot support is disabled or for testing.
@@ -51,112 +63,11 @@ func (d Discard) Start(_ context.Context) error                 { return nil }
 func (d Discard) Close()                                        {}
 func (d Discard) MustRegisterCommandHandler(_ *discordgo.ApplicationCommand, _ Handler) {
 }
-func (d Discard) MustRegisterPrefixHandler(_ string, _ Handler) {}
-func (d Discard) CreateRole(_ string) (string, error)           { return "", nil }
-func (d Discard) Roles() ([]*discordgo.Role, error)             { return nil, nil }
-
-type Config struct {
-	Enabled                 bool   `json:"enabled"`
-	BotEnabled              bool   `json:"bot_enabled"`
-	IntegrationsEnabled     bool   `json:"integrations_enabled"`
-	AppID                   string `json:"app_id"`
-	AppSecret               string `json:"app_secret"`
-	LinkID                  string `json:"link_id"`
-	Token                   string `json:"token"`
-	GuildID                 string `json:"guild_id"`
-	PublicLogChannelEnable  bool   `json:"public_log_channel_enable"`
-	LogChannelID            string `json:"log_channel_id"`
-	PublicLogChannelID      string `json:"public_log_channel_id"`
-	PublicMatchLogChannelID string `json:"public_match_log_channel_id"`
-	VoteLogChannelID        string `json:"vote_log_channel_id"`
-	AppealLogChannelID      string `json:"appeal_log_channel_id"`
-	BanLogChannelID         string `json:"ban_log_channel_id"`
-	ForumLogChannelID       string `json:"forum_log_channel_id"`
-	KickLogChannelID        string `json:"kick_log_channel_id"`
-	PlayerqueueChannelID    string `json:"playerqueue_channel_id"`
-	ModPingRoleID           string `json:"mod_ping_role_id"`
-	AnticheatChannelID      string `json:"anticheat_channel_id"`
-}
-
-func (c Config) SafePublicLogChannelID() string {
-	if c.PublicLogChannelID != "" {
-		return c.PublicLogChannelID
-	}
-
-	return c.LogChannelID
-}
-
-func (c Config) SafePublicMatchLogChannelID() string {
-	if c.PublicMatchLogChannelID != "" {
-		return c.PublicMatchLogChannelID
-	}
-
-	return c.LogChannelID
-}
-
-func (c Config) SafeVoteLogChannelID() string {
-	if c.VoteLogChannelID != "" {
-		return c.VoteLogChannelID
-	}
-
-	return c.LogChannelID
-}
-
-func (c Config) SafeAppealLogChannelID() string {
-	if c.AppealLogChannelID != "" {
-		return c.AppealLogChannelID
-	}
-
-	return c.LogChannelID
-}
-
-func (c Config) SafeBanLogChannelID() string {
-	if c.BanLogChannelID != "" {
-		return c.BanLogChannelID
-	}
-
-	return c.LogChannelID
-}
-
-func (c Config) SafeForumLogChannelID() string {
-	if c.ForumLogChannelID != "" {
-		return c.ForumLogChannelID
-	}
-
-	return c.LogChannelID
-}
-
-func (c Config) SafeKickLogChannelID() string {
-	if c.KickLogChannelID != "" {
-		return c.KickLogChannelID
-	}
-
-	return c.LogChannelID
-}
-
-func (c Config) SafePlayerqueueChannelID() string {
-	if c.PlayerqueueChannelID != "" {
-		return c.PlayerqueueChannelID
-	}
-
-	return c.LogChannelID
-}
-
-func (c Config) SafeModPingRoleID() string {
-	if c.ModPingRoleID != "" {
-		return c.ModPingRoleID
-	}
-
-	return c.LogChannelID
-}
-
-func (c Config) SafeAnticheatChannelID() string {
-	if c.AnticheatChannelID != "" {
-		return c.AnticheatChannelID
-	}
-
-	return c.LogChannelID
-}
+func (d Discard) MustRegisterPrefixHandler(_ string, _ Handler)            {}
+func (d Discard) CreateRole(_ string) (string, error)                      { return "", nil }
+func (d Discard) Roles() ([]*discordgo.Role, error)                        { return nil, nil }
+func (d Discard) MustRegisterTemplate(string, []byte)                      {}
+func (d Discard) RenderTemplate(_ string, _ string, _ any) (string, error) { return "", nil }
 
 const (
 	OptUserIdentifier   = "user_identifier"
@@ -175,6 +86,158 @@ func OptionMap(options []*discordgo.ApplicationCommandInteractionDataOption) Com
 	}
 
 	return optionM
+}
+
+type CommandOptions map[string]*discordgo.ApplicationCommandInteractionDataOption
+
+func (opts CommandOptions) String(key string) string {
+	root, found := opts[key]
+	if !found {
+		return ""
+	}
+
+	val, ok := root.Value.(string)
+	if !ok {
+		return ""
+	}
+
+	return val
+}
+
+func Render(name string, templ []byte, context any) (string, error) {
+	var buffer bytes.Buffer
+	tmpl, err := template.New(name).
+		Funcs(template.FuncMap{
+			"linkPath": link.Path,
+			"linkRaw":  link.Raw,
+		}).
+		Parse(string(templ))
+	if err != nil {
+		return "", errors.Join(err, ErrTemplate)
+	}
+	if err = tmpl.Execute(&buffer, context); err != nil {
+		return "", errors.Join(err, ErrTemplate)
+	}
+
+	return buffer.String(), nil
+}
+
+// CustomIDInt64 pulls out the suffix value as a int64.
+// eg: ban_unban_button_resp_1234 -> 1234
+func CustomIDInt64(idString string) (int64, error) {
+	parts := strings.Split(idString, "_")
+	if len(parts) < 2 {
+		return 0, ErrCustomIDInvalid
+	}
+	value, errID := strconv.ParseInt(parts[len(parts)-1], 10, 64)
+	if errID != nil {
+		return 0, errors.Join(errID, ErrCustomIDInvalid)
+	}
+
+	return value, nil
+}
+
+// AckInteraction acknowledges the interation immediately. It should be followed up by
+// an RespondUpdate to complete the response.
+func AckInteraction(session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags:      discordgo.MessageFlagsIsComponentsV2,
+			Components: []discordgo.MessageComponent{discordgo.TextDisplay{Content: "Computering..."}},
+		},
+	}); err != nil {
+		return errors.Join(err, ErrCommandSend)
+	}
+
+	return nil
+}
+
+func RespondModal(session *discordgo.Session, interaction *discordgo.InteractionCreate, cid string, title string, components ...discordgo.MessageComponent) error {
+	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID:   cid,
+			Title:      title,
+			Flags:      discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
+			Components: components,
+		},
+	}); err != nil {
+		return errors.Join(err, ErrCommandSend)
+	}
+
+	return nil
+}
+
+func Respond(session *discordgo.Session, interaction *discordgo.InteractionCreate, components []discordgo.MessageComponent) error {
+	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags:      discordgo.MessageFlagsIsComponentsV2,
+			Components: components,
+		},
+	}); err != nil {
+		return errors.Join(err, ErrCommandSend)
+	}
+
+	return nil
+}
+
+func RespondPrivate(session *discordgo.Session, interaction *discordgo.InteractionCreate, components ...discordgo.MessageComponent) error {
+	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags:      discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
+			Components: components,
+		},
+	}); err != nil {
+		return errors.Join(err, ErrCommandSend)
+	}
+
+	return nil
+}
+
+// RespondUpdate handles updaing a previous acknowledged interaction with a new set of components.
+func RespondUpdate(session *discordgo.Session, interaction *discordgo.InteractionCreate, components ...discordgo.MessageComponent) error {
+	if _, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
+		Flags:           discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsSuppressNotifications,
+		AllowedMentions: &discordgo.MessageAllowedMentions{},
+		Components:      &components,
+	}); err != nil {
+		return errors.Join(err, ErrCommandSend)
+	}
+
+	return nil
+}
+
+// Error is responsible for responding with a generic error message format.
+func Error(session *discordgo.Session, interaction *discordgo.InteractionCreate, err error) {
+	if errResponse := RespondPrivate(session, interaction, discordgo.Container{
+		AccentColor: ptr.To(ColourError),
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{Content: fmt.Sprintf(`🚨 Command Error 🚨
+
+    %s
+`, err.Error())},
+		},
+	}); errResponse != nil {
+		slog.Error("Failed to send error response", slog.String("error", errResponse.Error()))
+	}
+}
+
+// Success sends a generic success response.
+func Success(session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	return SuccessMsg(session, interaction, "✨ Command Successful ✨")
+}
+
+// SuccessMsg sends a success response with a custom message.
+func SuccessMsg(session *discordgo.Session, interaction *discordgo.InteractionCreate, msg string) error {
+	return RespondPrivate(session, interaction, discordgo.Container{
+		AccentColor: ptr.To(ColourSuccess),
+		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{Content: msg},
+		},
+	})
 }
 
 func NewMessageSend(components ...discordgo.MessageComponent) *discordgo.MessageSend {

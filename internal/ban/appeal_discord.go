@@ -50,12 +50,18 @@ func newAppealMessageResponse(msg AppealMessage, title string) *discordgo.Messag
 }
 
 func newAppealMessageDelete(msg AppealMessage) *discordgo.MessageSend {
+	content, errContent := discord.Render("appeal_message_deleted", templateBody, struct {
+		Msg AppealMessage
+	}{Msg: msg})
+	if errContent != nil {
+		return nil
+	}
+
 	return discord.NewMessageSend(
 		discordgo.Container{
 			AccentColor: ptr.To(discord.ColourError),
 			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: `# Appeal message deleted
-` + msg.MessageMD},
+				discordgo.TextDisplay{Content: content},
 			},
 		},
 		discordgo.ActionsRow{

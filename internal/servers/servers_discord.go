@@ -2,6 +2,7 @@ package servers
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -18,6 +19,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+//go:embed servers_discord.tmpl
+var templateBody []byte
 
 func RegisterDiscordCommands(service discord.Service, state *state.State,
 	persons person.Provider, servers Servers, network network.Networks,
@@ -345,18 +349,9 @@ type discordFoundPlayer struct {
 }
 
 func discordFindMessage(found []discordFoundPlayer) []discordgo.MessageComponent {
-	const format = `# Player(s) Found
-{{ range .Found }}
-Name: {{ .Player.Player.Name }}
-Server: {{ .Server.ShortName }}
-SteamID: {{ .Player.Player.SID }}
-Connect: connect {{ .Server.Addr }}
-{{ end }}`
-	content, err := discord.Render("player_find", format, struct {
+	content, err := discord.Render("find", templateBody, struct {
 		Found []discordFoundPlayer
-	}{
-		Found: found,
-	})
+	}{Found: found})
 	if err != nil {
 		slog.Error("Failed to render player find", slog.String("error", err.Error()))
 	}
@@ -370,45 +365,60 @@ Connect: connect {{ .Server.Addr }}
 }
 
 func discordSayMessage(server string, msg string) []discordgo.MessageComponent {
-	msg = fmt.Sprintf(`# Sent chat message successfully
-Server: %s
-Message: %s`, server, msg)
+	content, errContent := discord.Render("say", templateBody, struct {
+		Server  string
+		Message string
+	}{
+		Server:  server,
+		Message: msg,
+	})
+	if errContent != nil {
+		return nil
+	}
 
 	return []discordgo.MessageComponent{
 		discordgo.Container{
 			AccentColor: ptr.To(discord.ColourSuccess),
 			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: msg},
+				discordgo.TextDisplay{Content: content},
 			},
 		},
 	}
 }
 
 func discordCSayMessage(server string, msg string) []discordgo.MessageComponent {
-	msg = fmt.Sprintf(`# Sent console message successfully
-Server: %s
-Message: %s`, server, msg)
+	content, errContent := discord.Render("csay", templateBody, struct {
+		Server  string
+		Message string
+	}{Server: server, Message: msg})
+	if errContent != nil {
+		return nil
+	}
 
 	return []discordgo.MessageComponent{
 		discordgo.Container{
 			AccentColor: ptr.To(discord.ColourSuccess),
 			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: msg},
+				discordgo.TextDisplay{Content: content},
 			},
 		},
 	}
 }
 
 func discordPSayMessage(player steamid.SteamID, msg string) []discordgo.MessageComponent {
-	msg = fmt.Sprintf(`# Sent private message successfully
-Player: %s
-Message: %s`, player.String(), msg)
+	content, errContent := discord.Render("psay", templateBody, struct {
+		Player  string
+		Message string
+	}{Player: player.String(), Message: msg})
+	if errContent != nil {
+		return nil
+	}
 
 	return []discordgo.MessageComponent{
 		discordgo.Container{
 			AccentColor: ptr.To(discord.ColourSuccess),
 			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: msg},
+				discordgo.TextDisplay{Content: content},
 			},
 		},
 	}
@@ -439,11 +449,6 @@ func mapRegion(region string) string {
 }
 
 func discordServersMessage(currentStateRegion map[string][]state.ServerState) []discordgo.MessageComponent {
-	const format = `# Current Server Populations
-{{ range .Rows }}
-{{ . }}
-{{ end }}
-`
 	var ( //nolint:prealloc
 		stats       = map[string]float64{}
 		used, total = 0, 0
@@ -499,7 +504,7 @@ func discordServersMessage(currentStateRegion map[string][]state.ServerState) []
 
 	rows = append(rows, "Global"+fmt.Sprintf("%d/%d %.2f%%", used, total, float64(used)/float64(total)*100))
 
-	content, errContent := discord.Render("servers", format, struct {
+	content, errContent := discord.Render("servers", templateBody, struct {
 		Rows []string
 	}{
 		Rows: rows,
@@ -547,14 +552,7 @@ func discordPlayersMessage(rows []string, maxPlayers int, serverName string) []d
 }
 
 func discordKickMessage(players []state.PlayerServerInfo) []discordgo.MessageComponent {
-	const format = `# User Kicked
-{{range .Players }}
-Name: {{ .Player.Name }}
-SteamID: {{ .Player.SID }}
-UserID: {{ .Player.UserID }}
-{{ end }}
-`
-	content, err := discord.Render("user_kick", format, struct {
+	content, err := discord.Render("user_kick", templateBody, struct {
 		Players []state.PlayerServerInfo
 	}{
 		Players: players,

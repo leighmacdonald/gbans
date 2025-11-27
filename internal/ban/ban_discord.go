@@ -2,6 +2,7 @@ package ban
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -22,6 +23,9 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
 )
+
+//go:embed ban_discord.tmpl
+var templateBody []byte
 
 type discordHandler struct {
 	Bans
@@ -154,7 +158,7 @@ func (h discordHandler) showBan(_ context.Context, session *discordgo.Session, i
 	var sidComp discordgo.MessageComponent
 	if sid == "" {
 		sidComp = discordgo.TextInput{
-			ID:          discord.IDSteamID,
+			ID:          int(discord.IDSteamID),
 			CustomID:    "steamid",
 			Label:       "SteamID or Profile URL",
 			Style:       discordgo.TextInputShort,
@@ -175,7 +179,7 @@ func (h discordHandler) showBan(_ context.Context, session *discordgo.Session, i
 		discordgo.Label{
 			Label: "Reason",
 			Component: discordgo.SelectMenu{
-				ID:          discord.IDReason,
+				ID:          int(discord.IDReason),
 				CustomID:    "reason",
 				Placeholder: "Select a reason",
 				MaxValues:   1,
@@ -187,7 +191,7 @@ func (h discordHandler) showBan(_ context.Context, session *discordgo.Session, i
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				discordgo.TextInput{
-					ID:          discord.IDCIDR,
+					ID:          int(discord.IDCIDR),
 					CustomID:    "cidr",
 					Label:       "IP/CIDR Ban",
 					Style:       discordgo.TextInputShort,
@@ -201,7 +205,7 @@ func (h discordHandler) showBan(_ context.Context, session *discordgo.Session, i
 		discordgo.Label{
 			Label: "Duration",
 			Component: discordgo.SelectMenu{
-				ID:          discord.IDDuration,
+				ID:          int(discord.IDDuration),
 				CustomID:    "duration",
 				Placeholder: "Select a duration",
 				MaxValues:   1,
@@ -213,7 +217,7 @@ func (h discordHandler) showBan(_ context.Context, session *discordgo.Session, i
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				discordgo.TextInput{
-					ID:          discord.IDNotes,
+					ID:          int(discord.IDNotes),
 					CustomID:    "notes",
 					Label:       "Extended moderator only notes",
 					Style:       discordgo.TextInputParagraph,
@@ -273,9 +277,15 @@ func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Se
 		return discord.ErrCommandFailed
 	}
 
-	content := fmt.Sprintf("Ban successful [View](%s)", link.Path(createdBan))
-	if !strings.HasPrefix(interaction.ModalSubmitData().CustomID, "ban") {
-		content = fmt.Sprintf("Mute successful [View](%s)", link.Path(createdBan))
+	content, errContent := discord.Render("ban_success", templateBody, struct {
+		Link string
+		Mute bool
+	}{
+		Link: link.Path(createdBan),
+		Mute: banOpts.BanType == bantype.NoComm,
+	})
+	if errContent != nil {
+		return errContent
 	}
 
 	return discord.RespondUpdate(session, interaction,
@@ -330,7 +340,7 @@ func (h discordHandler) showUnban(_ context.Context, session *discordgo.Session,
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.TextInput{
-							ID:          discord.IDSteamID,
+							ID:          int(discord.IDSteamID),
 							CustomID:    "steamid",
 							Label:       "SteamID or Profile URL",
 							Style:       discordgo.TextInputShort,
@@ -345,7 +355,7 @@ func (h discordHandler) showUnban(_ context.Context, session *discordgo.Session,
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.TextInput{
-							ID:          discord.IDNotes,
+							ID:          int(discord.IDNotes),
 							CustomID:    "unban_reason",
 							Label:       "Reason",
 							Style:       discordgo.TextInputParagraph,
@@ -402,26 +412,6 @@ func (h discordHandler) onUnbanResponse(ctx context.Context, session *discordgo.
 		})
 }
 
-const checkTemplate = `# {{ .Player.GetName }}
-{{if gt .Ban.BanID 0 }}
-### {{if eq .Ban.BanType 2}}Ban{{ else }}Mute{{ end }} #{{ .Ban.BanID }}
-Reason: **{{ .Ban.Reason.String }}**
-Expires: **{{ .Ban.ValidUntil.Format "2006-01-02 15:04:05" }}**
-Remaining: **123**
-Evade Ok: {{ .Ban.EvadeOk }}
-Author: {{ if ne .Author.GetDiscordID "" }}<@{{ .Author.GetDiscordID }}>{{else}}**{{ .Author.GetName }}**{{ end }}
-Name: {{ .Ban.Name }}
-Vac Bans: {{ .Player.VacBans }}
-Game Bans: {{ .Player.GameBans }}
-Notes: {{ .Ban.Note }}
-{{else}}
-No Ban Found!
-{{ end }}
-### Ban History
-{{- range .Old }}
-- [#{{ .BanID }}]({{ linkPath . }}) {{ .Reason.String }} ({{ .CreatedOn.Format "2006-01-02" }})
-{{- end}}`
-
 type checkContext struct {
 	Author  person.Core
 	Player  person.Core
@@ -472,7 +462,7 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 		}
 	}
 
-	content, errContent := discord.Render("check", checkTemplate, checkContext{
+	content, errContent := discord.Render("check", templateBody, checkContext{
 		Author:  author,
 		Player:  player,
 		Ban:     activeBan,
@@ -540,10 +530,15 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 }
 
 func UnbanMessage(person person.Info) *discordgo.MessageSend {
+	content, errContent := discord.Render("unban_response", templateBody, nil)
+	if errContent != nil {
+		return nil
+	}
+
 	return discord.NewMessageSend(discordgo.Container{
 		AccentColor: ptr.To(discord.ColourSuccess),
 		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: "# User Unbanned Successfully"},
+			discordgo.TextDisplay{Content: content},
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.Button{
@@ -558,28 +553,27 @@ func UnbanMessage(person person.Info) *discordgo.MessageSend {
 }
 
 func createBanResponse(ban Ban, player person.Core) *discordgo.MessageSend {
-	var title string
-	if ban.BanType == bantype.NoComm {
-		title = fmt.Sprintf("User Muted (#%d)", ban.BanID)
-	} else {
-		title = fmt.Sprintf("User Banned (#%d)", ban.BanID)
-	}
-
 	expIn := Permanent
 	expAt := Permanent
-
 	if ban.ValidUntil.Year()-time.Now().Year() < 5 {
 		expIn = datetime.FmtDuration(ban.ValidUntil)
 		expAt = datetime.FmtTimeShort(ban.ValidUntil)
 	}
-	// TODO use template
-	msgContent := fmt.Sprintf(`# %s
 
-Name: %s
-Steam ID: %s
-Expires In: %s
-Expires At: %s
-`, title, player.GetName(), ban.TargetID.String(), expIn, expAt)
+	content, errContent := discord.Render("ban_response", templateBody, struct {
+		Ban    Ban
+		Player person.Core
+		ExpIn  string
+		ExpAt  string
+	}{
+		Ban:    ban,
+		Player: player,
+		ExpIn:  expIn,
+		ExpAt:  expAt,
+	})
+	if errContent != nil {
+		return nil
+	}
 
 	msg := &discordgo.MessageSend{
 		Flags: discordgo.MessageFlagsIsComponentsV2,
@@ -589,7 +583,7 @@ Expires At: %s
 				Components: []discordgo.MessageComponent{
 					discordgo.Section{
 						Components: []discordgo.MessageComponent{
-							discordgo.TextDisplay{Content: msgContent},
+							discordgo.TextDisplay{Content: content},
 						},
 						Accessory: discordgo.Thumbnail{
 							Media:       discordgo.UnfurledMediaItem{URL: player.GetAvatar().Full()},
@@ -630,11 +624,16 @@ Expires At: %s
 }
 
 func DeleteReportMessage(existing ReportMessage, _ person.Info) *discordgo.MessageSend {
+	content, errContent := discord.Render("report_message_deleted", templateBody, nil)
+	if errContent != nil {
+		return nil
+	}
+
 	return discord.NewMessageSend(
 		discordgo.Container{
 			AccentColor: ptr.To(discord.ColourWarn),
 			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: "#User report message deleted"},
+				discordgo.TextDisplay{Content: content},
 				discordgo.TextDisplay{Content: existing.MessageMD},
 			},
 		},
@@ -642,8 +641,13 @@ func DeleteReportMessage(existing ReportMessage, _ person.Info) *discordgo.Messa
 }
 
 func EditReportMessageResponse(body string, oldBody string, _ string, _ person.Info, _ string) *discordgo.MessageSend {
+	content, errContent := discord.Render("report_message_edited", templateBody, nil)
+	if errContent != nil {
+		return nil
+	}
+
 	return discord.NewMessageSend(
-		discordgo.TextDisplay{Content: "New report message edited"},
+		discordgo.TextDisplay{Content: content},
 		discordgo.Container{
 			AccentColor: ptr.To(discord.ColourWarn),
 			Components: []discordgo.MessageComponent{
@@ -659,14 +663,6 @@ func EditReportMessageResponse(body string, oldBody string, _ string, _ person.I
 }
 
 func ReportStatsMessage(meta ReportMeta, _ string) *discordgo.MessageSend {
-	const format = `# Current Open Report Counts
-New: {{ .New }}
-Total Open: {{ .TotalOpen }}
-Total Closed: {{ .TotalClosed }}
-Open >1 Day: {{ .Open1Day }}
-Open >3 Days: {{ .Open3Days }}
-Open >7 Days: {{ .Open1Week }}
-`
 	colour := discord.ColourSuccess
 	if meta.OpenWeek > 0 {
 		colour = discord.ColourError
@@ -674,7 +670,7 @@ Open >7 Days: {{ .Open1Week }}
 		colour = discord.ColourWarn
 	}
 
-	body, errBody := discord.Render("report_stats", format, struct {
+	body, errBody := discord.Render("report_stats", templateBody, struct {
 		New         int
 		TotalOpen   int
 		TotalClosed int

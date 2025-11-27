@@ -1,6 +1,7 @@
 package forum
 
 import (
+	_ "embed"
 	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
@@ -8,12 +9,11 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
+//go:embed forum_discord.tmpl
+var templateBody []byte
+
 func discordCategorySave(category Category) *discordgo.MessageSend {
-	const format = `# Forum Category Saved
-Category: {{ .Category }}
-ID: {{ .ID }}
-Description: {{ .Description }}`
-	content, err := discord.Render("forum_cat_save", format, struct {
+	content, err := discord.Render("forum_cat_save", templateBody, struct {
 		Category    string
 		ID          int
 		Description string
@@ -35,12 +35,7 @@ Description: {{ .Description }}`
 }
 
 func discordCategoryDelete(category Category) *discordgo.MessageSend {
-	const format = `# Forum Category Deleted
-Category: {{ .Category }}
-ID: {{ .ID }}
-Description: {{ .Description }}`
-
-	content, err := discord.Render("forum_cat_deleted", format, struct {
+	content, err := discord.Render("forum_cat_deleted", templateBody, struct {
 		Category    string
 		ID          int
 		Description string
@@ -62,11 +57,7 @@ Description: {{ .Description }}`
 }
 
 func discordForumMessageSaved(forumMessage Message) *discordgo.MessageSend {
-	const format = `# Forum Message Created/Edited
-Category: {{ .Category }}
-Body: {{ .Body }}`
-
-	content, err := discord.Render("forum_forum_message_saved", format, struct {
+	content, err := discord.Render("forum_message_created", templateBody, struct {
 		Category string
 		Body     string
 	}{
@@ -86,10 +77,7 @@ Body: {{ .Body }}`
 }
 
 func discordForumSaved(forumMessage Forum) *discordgo.MessageSend {
-	const format = `# Forum Created/Edited
-Forum: {{.Forum}}
-Description: {{.Description}}`
-	content, err := discord.Render("forum_forum_saved", format, struct {
+	content, err := discord.Render("forum_forum_saved", templateBody, struct {
 		Forum       string
 		Description string
 	}{

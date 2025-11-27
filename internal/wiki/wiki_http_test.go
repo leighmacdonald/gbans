@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -23,7 +24,7 @@ func TestMain(m *testing.M) {
 func TestGetSlug(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{}
-		wuc           = wiki.NewWiki(wiki.NewRepository(fixture.Database))
+		wuc           = wiki.NewWiki(wiki.NewRepository(fixture.Database), notification.NewDiscard(), "", "")
 		router        = fixture.CreateRouter()
 		slug          = strings.ToLower(stringutil.SecureRandomString(10))
 		page          = wiki.NewPage(slug, stringutil.SecureRandomString(1000))
@@ -56,7 +57,7 @@ func TestGetSlug(t *testing.T) {
 func TestPutSlug(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{}
-		wuc           = wiki.NewWiki(wiki.NewRepository(fixture.Database))
+		wuc           = wiki.NewWiki(wiki.NewRepository(fixture.Database), notification.NewDiscard(), "", "")
 		router        = fixture.CreateRouter()
 		page          = wiki.NewPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(1000))
 	)

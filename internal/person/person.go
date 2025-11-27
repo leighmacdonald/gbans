@@ -509,7 +509,6 @@ func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.
 	fetchedPerson, errGetPerson := u.BySteamID(ctx, sid64)
 	if errGetPerson != nil && errors.Is(errGetPerson, ErrPlayerDoesNotExist) {
 		fetchedPerson = New(sid64)
-
 		if err := u.repo.Save(ctx, &fetchedPerson); err != nil {
 			return person.Core{}, err
 		}

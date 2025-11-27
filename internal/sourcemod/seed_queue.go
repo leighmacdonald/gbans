@@ -1,9 +1,12 @@
 package sourcemod
 
 import (
+	"errors"
 	"sync"
 	"time"
 )
+
+var ErrReqTooSoon = errors.New("⏱️ request is not available yet")
 
 type seedRequest struct {
 	userID    string

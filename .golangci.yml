@@ -9,6 +9,7 @@ linters:
     - gocognit
     - gocyclo
     - funcorder
+    - ireturn
     - lll
     - exhaustruct
     - mnd

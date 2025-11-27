@@ -10,21 +10,20 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
-const reportTemplate = `# New User Report Created
-Reason: **%s%s** 
-Target: **[%s](%s)** Steam ID: **%s**
-Author: **[%s](%s)** Steam ID: **%s**`
-
 func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
-	msg := fmt.Sprintf(reportTemplate,
-		report.Reason.String(), report.ReasonText,
-		report.Subject.GetName(), link.Path(report.Subject), report.Subject.SteamID.String(),
-		report.Author.GetName(), link.Path(report.Subject), report.Author.SteamID.String())
+	content, errContent := discord.Render("report_new", templateBody, struct {
+		Report ReportWithAuthor
+	}{
+		Report: report,
+	})
+	if errContent != nil {
+		return nil
+	}
 
 	return discord.NewMessageSend(
 		discordgo.Container{
 			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: msg},
+				discordgo.TextDisplay{Content: content},
 			},
 		},
 		discordgo.Section{
@@ -78,7 +77,7 @@ func (h discordHandler) onReportReplyButton(ctx context.Context, session *discor
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				discordgo.TextInput{
-					ID:          discord.IDBody,
+					ID:          int(discord.IDBody),
 					CustomID:    "reply_message_",
 					Label:       "Response",
 					Style:       discordgo.TextInputParagraph,
@@ -133,8 +132,13 @@ func (h discordHandler) onReportReplySubmit(ctx context.Context, session *discor
 }
 
 func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus) *discordgo.MessageSend {
+	content, errContent := discord.Render("report_status_change", templateBody, nil)
+	if errContent != nil {
+		return nil
+	}
+
 	return discord.NewMessageSend(
-		discordgo.TextDisplay{Content: "# Report status changed"},
+		discordgo.TextDisplay{Content: content},
 		discordgo.TextDisplay{Content: fmt.Sprintf("Changed from %s to %s", fromStatus.String(), report.ReportStatus.String())},
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{discordgo.Button{
@@ -147,9 +151,15 @@ func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus)
 }
 
 func NewReportMessageResponse(report ReportWithAuthor, msg ReportMessage) *discordgo.MessageSend {
+	content, errContent := discord.Render("report_message_new", templateBody, struct {
+		Message string
+	}{Message: msg.MessageMD})
+	if errContent != nil {
+		return nil
+	}
+
 	return discord.NewMessageSend(
-		discordgo.TextDisplay{Content: "# New report message posted"},
-		discordgo.TextDisplay{Content: msg.MessageMD},
+		discordgo.TextDisplay{Content: content},
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				discordgo.Button{

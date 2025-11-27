@@ -250,6 +250,6 @@ func (h *serversHandler) onConnect() gin.HandlerFunc {
 
 		slog.Debug("Redirecting user to game server", slog.String("url", server.Connect()))
 
-		ctx.Redirect(http.StatusTemporaryRedirect, server.Connect())
+		ctx.Redirect(http.StatusTemporaryRedirect, server.SteamLink())
 	}
 }
