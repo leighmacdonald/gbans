@@ -1,17 +1,14 @@
 package discord
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
@@ -102,24 +99,6 @@ func (opts CommandOptions) String(key string) string {
 	}
 
 	return val
-}
-
-func Render(name string, templ []byte, context any) (string, error) {
-	var buffer bytes.Buffer
-	tmpl, err := template.New(name).
-		Funcs(template.FuncMap{
-			"linkPath": link.Path,
-			"linkRaw":  link.Raw,
-		}).
-		Parse(string(templ))
-	if err != nil {
-		return "", errors.Join(err, ErrTemplate)
-	}
-	if err = tmpl.Execute(&buffer, context); err != nil {
-		return "", errors.Join(err, ErrTemplate)
-	}
-
-	return buffer.String(), nil
 }
 
 // CustomIDInt64 pulls out the suffix value as a int64.
