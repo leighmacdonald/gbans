@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -111,15 +112,18 @@ func (s Server) Slots(statusSlots int) int {
 }
 
 func (s Server) Connect() string {
-	addr := s.Address
-	ipAddr, errAddr := net.ResolveIPAddr("ip4", s.Address)
-	if errAddr != nil {
-		slog.Error("Failed to resole server ip", slog.String("error", errAddr.Error()))
-	} else {
-		addr = ipAddr.String()
+	return link.Raw(fmt.Sprintf("/connect/%d", s.ServerID))
+}
+
+func (s Server) SteamLink() string {
+	ipAddr, err := net.ResolveIPAddr("ip4", s.Address)
+	if err != nil {
+		slog.Error("Failed to resolve ip4", slog.String("error", err.Error()))
+
+		return fmt.Sprintf("steam://run/440//+connect %s:%d", s.Address, s.Port)
 	}
 
-	return fmt.Sprintf("steam://run/440//+connect %s:%d", addr, s.Port)
+	return fmt.Sprintf("steam://run/440//+connect %s:%d", ipAddr.String(), s.Port)
 }
 
 // SafeServer provides a server struct stripped of any sensitive info suitable for public-facing

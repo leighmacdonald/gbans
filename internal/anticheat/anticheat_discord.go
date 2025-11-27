@@ -2,6 +2,7 @@ package anticheat
 
 import (
 	"context"
+	_ "embed"
 	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
@@ -11,6 +12,9 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+//go:embed anticheat_discord.tmpl
+var templateBody []byte
 
 type discordHandler struct {
 	AntiCheat
@@ -105,18 +109,7 @@ func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
 		servers[entry.ServerName]++
 	}
 
-	const format = `# Anticheat Detections (count: {{ .Count }}
-
-{{ range $key, $value := .Detections }}
-{{$key}}: {{ $value }}
-{{ end }}
-
-{{ range $key, $valie := .Servers }}
-{{$key}}: {{ $value }}
-{{ end }}
-
-`
-	content, err := discord.Render("ac_logs", format, struct {
+	content, err := discord.Render("ac_logs", templateBody, struct {
 		Detections map[logparse.Detection]int
 		Servers    map[string]int
 	}{
@@ -139,18 +132,7 @@ func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
 }
 
 func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int) *discordgo.MessageSend {
-	const acTemplate = `# Player triggered anti-cheat response
-
-Dection {{ .Detection }}
-Count: {{ .Count }}
-Action {{ .Action }}
-{{- if ne .Entry.DemoName "" }}
-Demo Name: {{ .Entry.DemoName }}
-Demo Tick: {{ .Entry.Tick }}
-{{ end }}
-{{ .Note  }}
-`
-	content, errContent := discord.Render("ac", acTemplate, struct {
+	content, errContent := discord.Render("ac_trigger", templateBody, struct {
 		Detection string
 		Count     int
 		Action    string

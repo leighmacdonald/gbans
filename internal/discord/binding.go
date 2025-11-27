@@ -15,6 +15,26 @@ import (
 	"github.com/sosodev/duration"
 )
 
+// ModalLabelID defines the value used for both the unique ID value of a
+// discordgo.MessageComponent ID field and the subsequent mapping of its value to a struct
+// field with the matching tagName struct tag value set.
+type ModalLabelID int
+
+const (
+	IDSteamID ModalLabelID = iota + 1
+	IDCIDR
+	IDReason
+	IDDuration
+	IDNotes
+	IDBody
+	IDImmunityLevel
+	IDAlias
+	IDFlags
+	IDGroupID
+)
+
+const tagName = "id"
+
 var ErrBind = errors.New("bind error")
 
 // Bind is responsible for binding the input values from a discord modal input into a struct
@@ -26,7 +46,7 @@ func Bind[T any](ctx context.Context, components []discordgo.MessageComponent) (
 
 // mapInteractionValues is responsible for transforming the interaction values into a map indexed by the unique
 // input ID integer.
-func mapInteractionValues(components []discordgo.MessageComponent) map[int]string { //nolint:ireturn
+func mapInteractionValues(components []discordgo.MessageComponent) map[int]string {
 	values := map[int]string{}
 
 	// Parse modal data into values map
@@ -65,20 +85,23 @@ func mapInteractionValues(components []discordgo.MessageComponent) map[int]strin
 	}
 
 	return values
-} //nolint:ireturn
+}
 
+// BindValues handles mapping the input options into the T response type. It Uses reflection to populate struct fields
+// based on `id` tags and their values defined using ModalLabelID.
 func BindValues[T any](ctx context.Context, values map[int]string) (T, error) { //nolint:ireturn
-	var value T
-	// Use reflection to populate struct fields based on `id` tags
-	elem := reflect.ValueOf(&value).Elem()
-	elemType := elem.Type()
+	var (
+		value    T
+		elem     = reflect.ValueOf(&value).Elem()
+		elemType = elem.Type()
+	)
 
 	for i := range elemType.NumField() {
 		field := elemType.Field(i)
 		fieldValue := elem.Field(i)
 
-		// Get the `id` tag
-		idTag := field.Tag.Get("id")
+		// Get the tag value
+		idTag := field.Tag.Get(tagName)
 		if idTag == "" {
 			continue
 		}
@@ -86,23 +109,16 @@ func BindValues[T any](ctx context.Context, values map[int]string) (T, error) { 
 		// Parse the id tag as an integer
 		fieldID, errParse := strconv.Atoi(idTag)
 		if errParse != nil {
-			return value, fmt.Errorf("invalid id tag on field %s: %w", field.Name, errParse)
+			return value, fmt.Errorf("invalid %s tag on field %s: %w", idTag, field.Name, errParse)
 		}
 
 		val, exists := values[fieldID]
-		if !exists {
-			continue
-		}
-
-		if !fieldValue.CanSet() {
+		if !exists || val == "" || !fieldValue.CanSet() {
 			continue
 		}
 
 		switch fieldValue.Interface().(type) {
 		case *netip.Prefix:
-			if val == "" {
-				continue
-			}
 			prefix, prefixErr := netip.ParsePrefix(val)
 			if prefixErr != nil {
 				return value, fmt.Errorf("%w: %w: %s:%s", ErrBind, prefixErr, field.Name, val)
@@ -133,8 +149,20 @@ func BindValues[T any](ctx context.Context, values map[int]string) (T, error) { 
 			if reflect.TypeOf(val).AssignableTo(fieldValue.Type()) { // nolint:modernize
 				fieldValue.Set(reflect.ValueOf(val))
 			}
+		case int:
+			intVal, errVal := strconv.Atoi(val)
+			if errVal != nil {
+				return value, fmt.Errorf("%w: invalid reason tag on field %s: %w", ErrBind, field.Name, errVal)
+			}
+			fieldValue.Set(reflect.ValueOf(intVal))
+		case int64:
+			intVal, errVal := strconv.ParseInt(val, 10, 64)
+			if errVal != nil {
+				return value, fmt.Errorf("%w: invalid reason tag on field %s: %w", ErrBind, field.Name, errVal)
+			}
+			fieldValue.Set(reflect.ValueOf(intVal))
 		default:
-			return value, fmt.Errorf("%w: unahndled type: %s", ErrBind, field.Name)
+			return value, fmt.Errorf("%w: unhandled type: %s", ErrBind, field.Name)
 		}
 	}
 

@@ -1,0 +1,9 @@
+{{define "seed_req"}}
+    # 🌱 {{ if .CC }}:flag_{{ .CC }}: {{end}}Seed Request 🌱
+
+    ### {{ .Name }}
+
+    `connect {{ .Connect }}`
+
+    {{ range .Roles }}{{ if .}}<@&{{ . }}> {{end}}{{end}}
+{{end}}

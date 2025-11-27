@@ -11,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/microcosm-cc/bluemonday"
 )
 
@@ -47,6 +48,10 @@ func (page Page) NewRevision() Page {
 	return newPage
 }
 
+func (page Page) Path() string {
+	return "/wiki/" + page.Slug
+}
+
 func NewPage(slug string, body string) Page {
 	now := time.Now()
 
@@ -60,11 +65,15 @@ func NewPage(slug string, body string) Page {
 }
 
 type Wiki struct {
-	repository Repository
+	Repository
+
+	notif           notification.Notifier
+	publicChannelID string
+	channelID       string
 }
 
-func NewWiki(repository Repository) Wiki {
-	return Wiki{repository: repository}
+func NewWiki(repository Repository, notif notification.Notifier, publicChannelID string, channelID string) Wiki {
+	return Wiki{Repository: repository, notif: notif, publicChannelID: publicChannelID, channelID: channelID}
 }
 
 func (w *Wiki) Page(ctx context.Context, slug string) (Page, error) {
@@ -73,7 +82,7 @@ func (w *Wiki) Page(ctx context.Context, slug string) (Page, error) {
 		slug = slug[1:]
 	}
 
-	page, errGetWikiSlug := w.repository.Page(ctx, slug)
+	page, errGetWikiSlug := w.Repository.Page(ctx, slug)
 	if errGetWikiSlug != nil {
 		return page, errGetWikiSlug
 	}
@@ -82,7 +91,7 @@ func (w *Wiki) Page(ctx context.Context, slug string) (Page, error) {
 }
 
 func (w *Wiki) Delete(ctx context.Context, slug string) error {
-	return w.repository.Delete(ctx, slug)
+	return w.Repository.Delete(ctx, slug)
 }
 
 func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
@@ -90,6 +99,7 @@ func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
 		return Page{}, httphelper.ErrInvalidParameter
 	}
 
+	var previous Page
 	page, errGetWikiSlug := w.Page(ctx, update.Slug)
 	if errGetWikiSlug != nil {
 		if errors.Is(errGetWikiSlug, database.ErrNoResult) {
@@ -98,6 +108,7 @@ func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
 		} else {
 			return page, errGetWikiSlug
 		}
+		previous = page
 	} else {
 		page = page.NewRevision()
 	}
@@ -106,10 +117,16 @@ func (w *Wiki) Save(ctx context.Context, update Page) (Page, error) {
 	page.PermissionLevel = update.PermissionLevel
 	page.BodyMD = update.BodyMD
 
-	if errSave := w.repository.Save(ctx, page); errSave != nil {
+	if errSave := w.Repository.Save(ctx, page); errSave != nil {
 		page.Revision--
 
 		return page, errSave
+	}
+
+	if page.Revision == 1 {
+		go w.notif.Send(notification.NewDiscord(w.publicChannelID, pageCreated(page)))
+	} else {
+		go w.notif.Send(notification.NewDiscord(w.channelID, pageEdited(page, previous)))
 	}
 
 	return page, nil

@@ -1,0 +1,16 @@
+{{define "filter_check"}}
+    # Matches {{ if .Matches }}Found{{else}}Not Found{{end}}
+    {{range .Matches }}
+        ID: {{ .FilterID }} Pattern: {{ .Pattern }}
+    {{end}}
+{{end}}
+
+{{define "filter_warning"}}
+    # Language Warning
+    FilterID: {{ .FilterID }}
+    Matched: {{ .Matched }}
+    Server: {{ .Server }}
+    Pattern: {{ .Pattern }}
+    Expires In: {{ .ExpiresIn }}
+    Expires At: {{ .ExpiresAt }}
+{{end}}

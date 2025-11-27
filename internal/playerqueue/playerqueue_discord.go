@@ -1,6 +1,7 @@
 package playerqueue
 
 import (
+	_ "embed"
 	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
@@ -8,6 +9,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
+
+//go:embed playerqueue_discord.tmpl
+var templateBody []byte
 
 func NewPlayerqueueChatStatus(_ person.Info, target person.Info, status ChatStatus, reason string) *discordgo.MessageSend {
 	colour := discord.ColourError
@@ -19,14 +23,7 @@ func NewPlayerqueueChatStatus(_ person.Info, target person.Info, status ChatStat
 	}
 
 	sid := target.GetSteamID()
-
-	const foramt = `# Updated chat status
-Status: {{.Status}}
-Reason: {{.Reason}}
-Name: {{.Name}}
-SteamID: {{.SteamID}}`
-
-	content, err := discord.Render("queue_chat_status", foramt, struct {
+	content, err := discord.Render("chat_status_update", templateBody, struct {
 		Status  string
 		Reason  string
 		Name    string
@@ -50,15 +47,9 @@ SteamID: {{.SteamID}}`
 }
 
 func NewPlayerqueuePurge(_ person.Info, target person.Info, chatLog ChatLog, count int) *discordgo.MessageSend {
-	const format = `# Player queue message purge
-Message: {{.Message}}
-Count: {{.Count}}
-Name: {{.Name}}
-SteamID: {{.SteamID}}
-`
 	sid := target.GetSteamID()
 
-	body, errBody := discord.Render("queue_msg_purge", format, struct {
+	body, errBody := discord.Render("chat_purge", templateBody, struct {
 		Message string
 		Count   int
 		Name    string

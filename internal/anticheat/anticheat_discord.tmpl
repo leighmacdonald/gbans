@@ -1,0 +1,24 @@
+{{define "ac_logs"}}
+    # Anticheat Detections (count: {{ .Count }}
+
+    {{ range $key, $value := .Detections }}
+        {{$key}}: {{ $value }}
+    {{ end }}
+
+    {{ range $key, $value := .Servers }}
+        {{$key}}: {{ $value }}
+    {{ end }}
+{{end}}
+
+{{define "ac_trigger"}}
+    # Player triggered anti-cheat response
+
+    Dection {{ .Detection }}
+    Count: {{ .Count }}
+    Action {{ .Action }}
+    {{- if ne .Entry.DemoName "" }}
+        Demo Name: {{ .Entry.DemoName }}
+        Demo Tick: {{ .Entry.Tick }}
+    {{ end }}
+    {{ .Note  }}
+{{end}}

@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	_ "embed"
 	"log/slog"
 	"time"
 
@@ -10,6 +11,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
+
+//go:embed chat_discord.tmpl
+var templateBody []byte
 
 func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
 	handler := &discordHandler{wordFilters: wordFilters}
@@ -89,30 +93,17 @@ func (h discordHandler) makeOnFilter(ctx context.Context, session *discordgo.Ses
 	}
 }
 
-const format = ` # Title
-{{range .Matches }}
-ID: {{ .FilterID }} Pattern: {{ .Pattern }}
-{{end}}
-`
-
 func FilterCheckMessage(matches []Filter) *discordgo.MessageSend {
 	var colour int
-	var title string
 	if len(matches) == 0 {
-		title = "No Matches Found"
 		colour = discord.ColourSuccess
 	} else {
-		title = "Matched Found"
 		colour = discord.ColourWarn
 	}
 
-	content, err := discord.Render("lang_check", format, struct {
-		Title   string
+	content, err := discord.Render("filter_check", templateBody, struct {
 		Matches []Filter
-	}{
-		Title:   title,
-		Matches: matches,
-	})
+	}{Matches: matches})
 	if err != nil {
 		slog.Error("Failed to render check message", slog.String("error", err.Error()))
 	}
@@ -126,14 +117,6 @@ func FilterCheckMessage(matches []Filter) *discordgo.MessageSend {
 }
 
 func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.MessageSend {
-	const format = `# Language Warning
-FilterID: {{ .FilterID }}
-Matched: {{ .Matched }}
-Server: {{ .Server }}
-Pattern: {{ .Pattern }}
-Expires In: {{ .ExpiresIn }}
-Expires At: {{ .ExpiresAt }}`
-
 	var (
 		expIn = "Permanent"
 		expAt = expIn
@@ -144,7 +127,7 @@ Expires At: {{ .ExpiresAt }}`
 		expAt = datetime.FmtTimeShort(validUntil)
 	}
 
-	content, err := discord.Render("lang_warn", format, struct {
+	content, err := discord.Render("filter_warning", templateBody, struct {
 		FilterID  int64
 		Matched   string
 		Server    string

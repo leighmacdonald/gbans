@@ -1,0 +1,25 @@
+{{define "forum_cat_save"}}
+    # Forum Category Saved
+    Category: {{ .Category }}
+    ID: {{ .ID }}
+    Description: {{ .Description }}
+{{end}}
+
+{{define "forum_cat_deleted"}}
+    # Forum Category Deleted
+    Category: {{ .Category }}
+    ID: {{ .ID }}
+    Description: {{ .Description }}
+{{end}}
+
+{{define "forum_message_created"}}
+    # Forum Message Created/Edited
+    Category: {{ .Category }}
+    Body: {{ .Body }}
+{{end}}
+
+{{define "forum_saved"}}
+    # Forum Created/Edited
+    Forum: {{.Forum}}
+    Description: {{.Description}}
+{{end}}

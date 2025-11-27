@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -39,8 +39,22 @@ func Autocomplete(completer AutoCompleter) func(context.Context, *discordgo.Sess
 			query   string
 		)
 
+		// TODO come up with a real solution that will work for more than a single option.
+		// T stuct with tags with paths? 0.0.1  -> 2 levels deep, second value.
 		if len(data.Options) > 0 {
-			query = strings.ToLower(fmt.Sprintf("%s", data.Options[0].Value))
+			var val any
+			if len(data.Options[0].Options) > 0 {
+				if len(data.Options[0].Options[0].Options) > 0 {
+					val = data.Options[0].Options[0].Options[0].Value
+				} else {
+					val = data.Options[0].Options[0].Value
+				}
+			} else {
+				val = data.Options[0].Value
+			}
+			if val != nil {
+				query = strings.ToLower(fmt.Sprintf("%s", val))
+			}
 		}
 
 		values, errValues := completer(ctx, query)
@@ -55,14 +69,13 @@ func Autocomplete(completer AutoCompleter) func(context.Context, *discordgo.Sess
 					Value: autoValue.Value(),
 				})
 			}
-
 			if len(choices) == 25 {
 				break
 			}
 		}
 
-		sort.Slice(choices, func(i, j int) bool {
-			return choices[i].Name < choices[j].Name
+		slices.SortFunc(choices, func(i, j *discordgo.ApplicationCommandOptionChoice) int {
+			return strings.Compare(strings.ToLower(i.Name), strings.ToLower(j.Name))
 		})
 
 		if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{

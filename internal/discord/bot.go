@@ -6,14 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"text/template"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
@@ -27,15 +26,6 @@ var (
 	ErrTemplate         = errors.New("template error")
 	ErrCommandFailed    = errors.New("command failed")
 	ErrRole             = errors.New("failed to create/fetch roles")
-)
-
-const (
-	IDSteamID = iota + 1
-	IDCIDR
-	IDReason
-	IDDuration
-	IDNotes
-	IDBody
 )
 
 const (
@@ -71,6 +61,8 @@ type Discord struct {
 	running            atomic.Bool
 	registeredCommands []*discordgo.ApplicationCommand
 	unregister         bool
+	templates          map[string]*template.Template
+	mutex              *sync.RWMutex
 }
 
 func New(opts Opts) (*Discord, error) {
@@ -83,11 +75,13 @@ func New(opts Opts) (*Discord, error) {
 	}
 
 	bot := &Discord{
+		mutex:           &sync.RWMutex{},
 		appID:           opts.AppID,
 		guildID:         opts.GuildID,
 		unregister:      opts.UnregisterOnClose,
 		commandHandlers: make(map[string]Handler),
 		prefixHandlers:  make(map[string]Handler),
+		templates:       make(map[string]*template.Template),
 	}
 
 	session, errSession := discordgo.New("Bot " + opts.Token)
@@ -113,6 +107,34 @@ func New(opts Opts) (*Discord, error) {
 	bot.session = session
 
 	return bot, nil
+}
+
+func (b *Discord) MustRegisterTemplate(namespace string, body []byte) {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	textTemplate, errParse := template.New(namespace).Parse(string(body))
+	if errParse != nil {
+		panic(errParse)
+	}
+
+	b.templates[namespace] = textTemplate
+}
+
+func (b *Discord) RenderTemplate(namespace string, name string, args any) (string, error) {
+	b.mutex.RLock()
+	defer b.mutex.RUnlock()
+
+	textTemplate, found := b.templates[namespace]
+	if !found {
+		return "", fmt.Errorf("%w: unknown template namespace %s", ErrTemplate, namespace)
+	}
+	var outBuff bytes.Buffer
+	if errExec := textTemplate.ExecuteTemplate(&outBuff, name, args); errExec != nil {
+		return "", errors.Join(errExec, ErrCommandFailed)
+	}
+
+	return outBuff.String(), nil
 }
 
 func (b *Discord) Send(channelID string, payload *discordgo.MessageSend) error {
@@ -216,43 +238,16 @@ func (b *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	slog.Info("Discord state changed", slog.String("state", "disconnected"))
 }
 
-func (b *Discord) handleModalCmd(ctx context.Context, handler Handler, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	if err := handler(ctx, session, interaction); err != nil {
-		slog.Error("Failed to handle modal command", slog.String("error", err.Error()))
-
-		if errFollow := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Flags: discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
-				Components: []discordgo.MessageComponent{
-					discordgo.Container{
-						AccentColor: ptr.To(ColourError),
-						Components: []discordgo.MessageComponent{
-							discordgo.TextDisplay{
-								Content: "Error executing command",
-							},
-						},
-					},
-				},
-			},
-		}); errFollow != nil {
-			slog.Error("Failed sending error response for interaction", slog.String("error", errFollow.Error()))
-		}
-
-		return
-	}
-}
-
 func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	command := interaction.ApplicationCommandData().Name
-	if handler, handlerFound := b.commandHandlers[command]; handlerFound {
-		if errHandleCommand := handler(ctx, session, interaction); errHandleCommand != nil {
-			slog.Error("Failed handling command", slog.String("error", errHandleCommand.Error()))
-
-			return
-		}
-
+	handler, handlerFound := b.commandHandlers[command]
+	if !handlerFound {
 		return
+	}
+	if errHandleCommand := handler(ctx, session, interaction); errHandleCommand != nil {
+		slog.Error("Failed handling command",
+			slog.String("command", command),
+			slog.String("error", errHandleCommand.Error()))
 	}
 }
 
@@ -262,7 +257,9 @@ func (b *Discord) findAndExecPrefixHandler(ctx context.Context, handlerName stri
 			continue
 		}
 
-		b.handleModalCmd(ctx, handler, session, interaction)
+		if err := handler(ctx, session, interaction); err != nil {
+			Error(session, interaction, err)
+		}
 
 		return
 	}
@@ -313,144 +310,4 @@ func (b *Discord) onAutoComplete(ctx context.Context, session *discordgo.Session
 	}
 
 	b.findAndExecPrefixHandler(ctx, data.Options[0].Name, session, interaction)
-}
-
-type CommandOptions map[string]*discordgo.ApplicationCommandInteractionDataOption
-
-func (opts CommandOptions) String(key string) string {
-	root, found := opts[key]
-	if !found {
-		return ""
-	}
-
-	val, ok := root.Value.(string)
-	if !ok {
-		return ""
-	}
-
-	return val
-}
-
-func Render(name string, templ string, context any) (string, error) {
-	var buffer bytes.Buffer
-	tmpl, err := template.New(name).
-		Funcs(template.FuncMap{
-			"linkPath": link.Path,
-			"linkRaw":  link.Raw,
-		}).
-		Parse(templ)
-	if err != nil {
-		return "", errors.Join(err, ErrTemplate)
-	}
-	if err = tmpl.Execute(&buffer, context); err != nil {
-		return "", errors.Join(err, ErrTemplate)
-	}
-
-	return buffer.String(), nil
-}
-
-// CustomIDInt64 pulls out the suffix value as a int64.
-// eg: ban_unban_button_resp_1234 -> 1234
-func CustomIDInt64(idString string) (int64, error) {
-	parts := strings.Split(idString, "_")
-	if len(parts) < 2 {
-		return 0, ErrCustomIDInvalid
-	}
-	value, errID := strconv.ParseInt(parts[len(parts)-1], 10, 64)
-	if errID != nil {
-		return 0, errors.Join(errID, ErrCustomIDInvalid)
-	}
-
-	return value, nil
-}
-
-// AckInteraction acknowledges the interation immediately. It should be followed up by
-// an RespondUpdate to complete the response.
-func AckInteraction(session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
-	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags:      discordgo.MessageFlagsIsComponentsV2,
-			Components: []discordgo.MessageComponent{discordgo.TextDisplay{Content: "Computering..."}},
-		},
-	}); err != nil {
-		return errors.Join(err, ErrCommandSend)
-	}
-
-	return nil
-}
-
-func RespondModal(session *discordgo.Session, interaction *discordgo.InteractionCreate, cid string, title string, components ...discordgo.MessageComponent) error {
-	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseModal,
-		Data: &discordgo.InteractionResponseData{
-			CustomID:   cid,
-			Title:      title,
-			Flags:      discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
-			Components: components,
-		},
-	}); err != nil {
-		return errors.Join(err, ErrCommandSend)
-	}
-
-	return nil
-}
-
-func Respond(session *discordgo.Session, interaction *discordgo.InteractionCreate, components []discordgo.MessageComponent) error {
-	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags:      discordgo.MessageFlagsIsComponentsV2,
-			Components: components,
-		},
-	}); err != nil {
-		return errors.Join(err, ErrCommandSend)
-	}
-
-	return nil
-}
-
-func RespondPrivate(session *discordgo.Session, interaction *discordgo.InteractionCreate, components []discordgo.MessageComponent) error {
-	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags:      discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
-			Components: components,
-		},
-	}); err != nil {
-		return errors.Join(err, ErrCommandSend)
-	}
-
-	return nil
-}
-
-func RespondUpdate(session *discordgo.Session, interaction *discordgo.InteractionCreate, components ...discordgo.MessageComponent) error {
-	if _, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
-		Flags:           discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsSuppressNotifications,
-		AllowedMentions: &discordgo.MessageAllowedMentions{},
-		Components:      &components,
-	}); err != nil {
-		return errors.Join(err, ErrCommandSend)
-	}
-
-	return nil
-}
-
-func Error(session *discordgo.Session, interaction *discordgo.InteractionCreate, err error) {
-	if errResp := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags: discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
-			Components: []discordgo.MessageComponent{
-				discordgo.Container{
-					AccentColor: ptr.To(ColourError),
-					Components: []discordgo.MessageComponent{
-						discordgo.TextDisplay{Content: err.Error()},
-					},
-				},
-			},
-		},
-	}); errResp != nil {
-		slog.Error("Failed to send error response", slog.String("error", errResp.Error()))
-	}
 }

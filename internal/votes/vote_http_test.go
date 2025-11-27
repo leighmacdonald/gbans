@@ -31,7 +31,7 @@ func TestVotesHTTP(t *testing.T) {
 		source = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)
 		target = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)
 		router = fixture.CreateRouter()
-		vote   = votes.NewVotes(votes.NewRepository(fixture.Database), br, notification.NewNullNotifications(), "", fixture.Persons)
+		vote   = votes.NewVotes(votes.NewRepository(fixture.Database), br, notification.NewDiscard(), "", fixture.Persons)
 	)
 
 	votes.NewVotesHandler(router, auth, vote)

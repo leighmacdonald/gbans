@@ -1,6 +1,7 @@
 package votes
 
 import (
+	_ "embed"
 	"log/slog"
 
 	"github.com/bwmarrin/discordgo"
@@ -10,6 +11,9 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
+//go:embed vote_discord.tmpl
+var templateBody []byte
+
 func VoteResultMessage(result Result, _ person.Core, target person.Core) *discordgo.MessageSend {
 	var colour int
 	if result.Success {
@@ -18,16 +22,7 @@ func VoteResultMessage(result Result, _ person.Core, target person.Core) *discor
 		colour = discord.ColourWarn
 	}
 
-	const format = `# Vote Result
-Caller SID: {{ .SourceID }}
-Target Name: {{ .TargetName }}
-Target SID: {{ .TargetSID }}
-Code: {{ .Code }}
-Success: {{ .Success }}
-Server: {{ .ServerID }}
-`
-
-	body, errBody := discord.Render("vote_result", format, struct {
+	body, errBody := discord.Render("vote_result", templateBody, struct {
 		SourceID   string
 		TargetName string
 		TargetSID  string

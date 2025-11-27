@@ -2,16 +2,24 @@ package sourcemod
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
-	"log/slog"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+//go:embed sourcemod_discord.tmpl
+var templateContent []byte
 
 type discordHandler struct {
 	sourcemod Sourcemod
@@ -20,6 +28,8 @@ type discordHandler struct {
 
 func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, servers servers.Servers) {
 	handler := discordHandler{sourcemod: sourcemod, servers: servers}
+
+	service.MustRegisterTemplate("sourcemod", templateContent)
 
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "seed",
@@ -43,45 +53,138 @@ func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, serve
 	}, handler.onSeed)
 	service.MustRegisterPrefixHandler("target_server", discord.Autocomplete(servers.AutoCompleteServers))
 
-	// service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
-	//	Name:                     "sourcemod",
-	//	Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
-	//	DefaultMemberPermissions: &discord.ModPerms,
-	//	Description:              "Update sourcemod configurations",
-	//	Options: []*discordgo.ApplicationCommandOption{
-	//		{
-	//			Name:        "admins",
-	//			Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
-	//			Description: "SteamID in any format OR profile url",
-	//			Options: []*discordgo.ApplicationCommandOption{
-	//				{
-	//					Name:        "edit",
-	//					Type:        discordgo.ApplicationCommandOptionSubCommand,
-	//					Description: "Edit admin",
-	//					Options: []*discordgo.ApplicationCommandOption{
-	//						{Name: "Steamid"},
-	//					},
-	//				},
-	//			},
-	//		},
-	//		{
-	//			Name:        "groups",
-	//			Description: "Sourcemod Groups",
-	//			Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
-	//			Options: []*discordgo.ApplicationCommandOption{
-	//				{
-	//					Name:        "edit",
-	//					Type:        discordgo.ApplicationCommandOptionSubCommand,
-	//					Description: "Edit Group",
-	//				},
-	//			},
-	//		},
-	//	},
-	// }, handler.onSourcemod)
+	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
+		Name:                     "sourcemod",
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+		DefaultMemberPermissions: ptr.To(discord.ModPerms),
+		Description:              "Update sourcemod configurations",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "admins",
+				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+				Description: "SteamID in any format OR profile url",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Name:        "edit",
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Description: "Edit admin",
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Name:         "steamid",
+								Description:  "SteamID or Profile URL",
+								Type:         discordgo.ApplicationCommandOptionString,
+								Autocomplete: true,
+							},
+						},
+					},
+				},
+			},
+			{
+				Name:        "groups",
+				Description: "Sourcemod Groups",
+				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Name:        "edit",
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Description: "Edit Group",
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Name:         "group",
+								Description:  "Sourcemod Permission Group",
+								Type:         discordgo.ApplicationCommandOptionString,
+								Autocomplete: true,
+							},
+						},
+					},
+				},
+			},
+		},
+	}, handler.onSourcemod)
+	service.MustRegisterPrefixHandler("sourcemod_admins_edit_modal", handler.onSourcemodAdminsEditModal)
+	service.MustRegisterPrefixHandler("admins", discord.Autocomplete(handler.adminCompleter()))
+	service.MustRegisterPrefixHandler("groups", discord.Autocomplete(handler.groupCompleter()))
+}
+
+func (h discordHandler) adminCompleter() func(ctx context.Context, query string) ([]discord.AutoCompleteValuer, error) {
+	var (
+		admins     []Admin
+		lastUpdate time.Time
+		mutex      sync.RWMutex
+	)
+
+	return func(ctx context.Context, query string) ([]discord.AutoCompleteValuer, error) {
+		mutex.RLock()
+		curAdmins := admins
+		expired := time.Since(lastUpdate) > time.Minute || len(admins) == 0
+		mutex.RUnlock()
+
+		if expired {
+			update, errUpdate := h.sourcemod.Admins(ctx)
+			if errUpdate != nil {
+				return nil, errUpdate
+			}
+			mutex.Lock()
+			admins = update
+			lastUpdate = time.Now()
+			mutex.Unlock()
+		}
+
+		query = strings.ToLower(query)
+		var values []discord.AutoCompleteValuer
+		for _, admin := range curAdmins {
+			if query == "" ||
+				admin.SteamID.Equal(steamid.New(query)) ||
+				strings.Contains(strings.ToLower(admin.Name), query) {
+				values = append(values, discord.NewAutoCompleteValue(admin.Name+" "+admin.SteamID.String(), admin.SteamID.String()))
+			}
+		}
+
+		return values, nil
+	}
+}
+
+func (h discordHandler) groupCompleter() func(ctx context.Context, query string) ([]discord.AutoCompleteValuer, error) {
+	var (
+		groups     []Groups
+		lastUpdate time.Time
+		mutex      sync.RWMutex
+	)
+
+	return func(ctx context.Context, query string) ([]discord.AutoCompleteValuer, error) {
+		mutex.RLock()
+		curGroups := groups
+		expired := time.Since(lastUpdate) > time.Minute || len(groups) == 0
+		mutex.RUnlock()
+
+		if expired {
+			mutex.Lock()
+			update, errUpdate := h.sourcemod.Groups(ctx)
+			if errUpdate != nil {
+				return nil, errUpdate
+			}
+			groups = update
+			lastUpdate = time.Now()
+			mutex.Unlock()
+		}
+
+		query = strings.ToLower(query)
+		var values []discord.AutoCompleteValuer
+		for _, group := range curGroups {
+			if query == "" ||
+				strconv.Itoa(group.GroupID) == query ||
+				strings.Contains(strings.ToLower(group.Name), query) {
+				values = append(values, discord.NewAutoCompleteValue(
+					fmt.Sprintf("%s [#%d]", group.Name, group.GroupID),
+					strconv.Itoa(group.GroupID)))
+			}
+		}
+
+		return values, nil
+	}
 }
 
 func (h discordHandler) onSourcemod(ctx context.Context, session *discordgo.Session, interation *discordgo.InteractionCreate) error {
-	slog.Info("Got sm command")
 	data := interation.ApplicationCommandData()
 	if len(data.Options) == 0 || len(data.Options[0].Options) == 0 {
 		return fmt.Errorf("%w: invalid options", discord.ErrCommandFailed)
@@ -105,20 +208,204 @@ func (h discordHandler) onSourcemod(ctx context.Context, session *discordgo.Sess
 	return fmt.Errorf("%w: unknown command", discord.ErrCommandFailed)
 }
 
-func (h discordHandler) onAdminsEdit(ctx context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate, opts discord.CommandOptions) error {
-	sid, errResolveSID := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
-	if errResolveSID != nil || !sid.Valid() {
-		return steamid.ErrInvalidSID
+func (h discordHandler) onAdminsEdit(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, opts discord.CommandOptions) error {
+	var (
+		requestedSID string
+		alias        string
+		flags        string
+		immunity     string
+	)
+
+	sidOption, found := opts["steamid"]
+	if found {
+		sid, errResolveSID := steamid.Resolve(ctx, sidOption.StringValue())
+		if errResolveSID != nil || !sid.Valid() {
+			return steamid.ErrInvalidSID
+		}
+		requestedSID = sid.String()
+
+		if admin, errAdmin := h.sourcemod.AdminBySteamID(ctx, sid); errAdmin == nil {
+			alias = admin.Name
+			flags = admin.Flags
+			immunity = strconv.Itoa(admin.Immunity)
+		}
 	}
 
-	return nil
+	groupEdit := "sourcemod_admins_edit_modal"
+
+	return discord.RespondModal(session, interaction, groupEdit, "Edit sourcemod admin settings",
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextInput{
+					ID:          int(discord.IDSteamID),
+					CustomID:    "steamid",
+					Label:       "SteamID or Profile URL",
+					Style:       discordgo.TextInputShort,
+					Placeholder: "76561197960542812",
+					Required:    true,
+					MaxLength:   64,
+					MinLength:   0,
+					Value:       requestedSID,
+				},
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextInput{
+					ID:          int(discord.IDAlias),
+					CustomID:    "alias",
+					Label:       "Player Alias",
+					Style:       discordgo.TextInputShort,
+					Placeholder: "Bob Bobbins",
+					Value:       alias,
+				},
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextInput{
+					ID:          int(discord.IDFlags),
+					CustomID:    "flags",
+					Label:       "Flag Set",
+					Style:       discordgo.TextInputShort,
+					Placeholder: "abcdef",
+					Required:    true,
+					Value:       flags,
+					MaxLength:   10,
+					MinLength:   1,
+				},
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextInput{
+					ID:          int(discord.IDImmunityLevel),
+					CustomID:    "immunity",
+					Label:       "Immunity Level",
+					Style:       discordgo.TextInputShort,
+					Placeholder: "100",
+					MaxLength:   3,
+					Value:       immunity,
+				},
+			},
+		},
+	)
 }
 
-func (h discordHandler) onGroupsEdit(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate, _ discord.CommandOptions) error {
-	return nil
+type adminEditModal struct {
+	SteamID  steamid.SteamID `id:"1"`
+	Alias    string          `id:"8"`
+	Flags    string          `id:"9"`
+	Immunity int             `id:"7"`
 }
 
-var ErrReqTooSoon = errors.New("⏱️ request is not available yet")
+func (h discordHandler) onSourcemodAdminsEditModal(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	data := interaction.ModalSubmitData()
+	request, errReqiest := discord.Bind[adminEditModal](ctx, data.Components)
+	if errReqiest != nil {
+		return errReqiest
+	}
+
+	admins, errAdmins := h.sourcemod.Admins(ctx)
+	if errAdmins != nil && !errors.Is(errAdmins, database.ErrNoResult) {
+		return errAdmins
+	}
+
+	var admin Admin
+	for _, curAdmin := range admins {
+		if curAdmin.SteamID.Equal(request.SteamID) {
+			admin = curAdmin
+
+			break
+		}
+	}
+
+	admin.SteamID = request.SteamID
+	admin.Name = request.Alias
+	admin.Flags = request.Flags
+	admin.Immunity = request.Immunity
+	admin.AuthType = AuthTypeSteam
+
+	_, errSave := h.sourcemod.SaveAdmin(ctx, admin)
+	if errSave != nil {
+		return errSave
+	}
+
+	return discord.Success(session, interaction)
+}
+
+func (h discordHandler) onGroupsEdit(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, opts discord.CommandOptions) error {
+	var (
+		alias    string
+		flags    string
+		immunity string
+		customID = "sourcemod_group_edit_modal"
+	)
+
+	gidOption, found := opts["groupid"]
+	if found && gidOption.StringValue() != "" {
+		gid, errGID := strconv.Atoi(gidOption.StringValue())
+		if errGID != nil {
+			return errors.Join(errGID, discord.ErrCommandInvalid)
+		}
+
+		group, errGroup := h.sourcemod.GetGroupByID(ctx, gid)
+		if errGroup != nil {
+			return errGroup
+		}
+
+		alias = group.Name
+		flags = group.Flags
+		immunity = strconv.Itoa(group.ImmunityLevel)
+		customID += "_" + strconv.Itoa(gid)
+	}
+
+	return discord.RespondModal(session, interaction,
+		customID,
+		"Edit sourcemod admin settings",
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextInput{
+					ID:          int(discord.IDAlias),
+					CustomID:    "alias",
+					Label:       "Group Alias/Name",
+					Style:       discordgo.TextInputShort,
+					Placeholder: "Bob Bobbins",
+					Value:       alias,
+					Required:    true,
+				},
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextInput{
+					ID:          int(discord.IDFlags),
+					CustomID:    "flags",
+					Label:       "Flag Set",
+					Style:       discordgo.TextInputShort,
+					Placeholder: "abcdef",
+					Required:    true,
+					Value:       flags,
+					MaxLength:   10,
+					MinLength:   1,
+				},
+			},
+		},
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextInput{
+					ID:          int(discord.IDImmunityLevel),
+					CustomID:    "immunity",
+					Label:       "Immunity Level",
+					Style:       discordgo.TextInputShort,
+					Placeholder: "100",
+					MaxLength:   3,
+					Value:       immunity,
+				},
+			},
+		},
+	)
+}
 
 func (h discordHandler) onSeed(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
 	data := discord.OptionMap(interaction.ApplicationCommandData().Options)
@@ -133,7 +420,5 @@ func (h discordHandler) onSeed(ctx context.Context, session *discordgo.Session, 
 		return nil
 	}
 
-	return discord.RespondPrivate(session, interaction, []discordgo.MessageComponent{
-		discordgo.TextDisplay{Content: "Success"},
-	})
+	return discord.Success(session, interaction)
 }

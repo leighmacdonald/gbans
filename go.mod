@@ -44,6 +44,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/samber/slog-gin v1.18.0
 	github.com/samber/slog-multi v1.6.0
+	github.com/sergi/go-diff v1.4.0
 	github.com/sosodev/duration v1.3.1
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
