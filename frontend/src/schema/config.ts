@@ -92,10 +92,11 @@ export const schemaDiscord = z
         appeal_log_channel_id: z.string(),
         ban_log_channel_id: z.string(),
         forum_log_channel_id: z.string(),
-        word_filter_log_channel_id: z.string(),
+        word_filter_log_channel_id: z.string().optional(),
         kick_log_channel_id: z.string(),
         playerqueue_channel_id: z.string(),
-        anticheat_channel_id: z.string()
+        anticheat_channel_id: z.string(),
+        seed_channel_id: z.string()
     })
     .refine((data) => {
         if (!data.bot_enabled) {

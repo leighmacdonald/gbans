@@ -275,9 +275,10 @@ type FindOpts struct {
 
 // Find searches the current server state for players matching at least one of the provided criteria.
 func (s *State) Find(opts FindOpts) []PlayerServerInfo {
-	var found []PlayerServerInfo
-
-	current := s.collector.Current()
+	var (
+		found   []PlayerServerInfo
+		current = s.collector.Current()
+	)
 
 	for server := range current {
 		for _, player := range current[server].Players {

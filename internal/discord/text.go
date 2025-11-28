@@ -88,3 +88,98 @@ func Buttons(buttons ...discordgo.MessageComponent) discordgo.ActionsRow {
 		Components: buttons,
 	}
 }
+
+func ModalInputRow(id ModalLabelID, customID string, label string, placeholder string, value string, minLen int, maxLen int) discordgo.ActionsRow {
+	return discordgo.ActionsRow{
+		Components: []discordgo.MessageComponent{
+			discordgo.TextInput{
+				ID:          int(id),
+				CustomID:    customID,
+				Label:       label,
+				Style:       discordgo.TextInputShort,
+				Placeholder: placeholder,
+				Value:       value,
+				MinLength:   minLen,
+				MaxLength:   maxLen,
+			},
+		},
+	}
+}
+
+func ModalInputRowRequired(id ModalLabelID, customID string, label string, placeholder string, value string, minLen int, maxLen int) discordgo.ActionsRow {
+	return discordgo.ActionsRow{
+		Components: []discordgo.MessageComponent{
+			discordgo.TextInput{
+				ID:          int(id),
+				CustomID:    customID,
+				Label:       label,
+				Style:       discordgo.TextInputShort,
+				Placeholder: placeholder,
+				Value:       value,
+				Required:    true,
+				MinLength:   minLen,
+				MaxLength:   maxLen,
+			},
+		},
+	}
+}
+
+func ModalInputRows(id ModalLabelID, customID string, label string, placeholder string, value string, minLen int, maxLen int) discordgo.ActionsRow {
+	return discordgo.ActionsRow{
+		Components: []discordgo.MessageComponent{
+			discordgo.TextInput{
+				ID:          int(id),
+				CustomID:    customID,
+				Label:       label,
+				Style:       discordgo.TextInputParagraph,
+				Placeholder: placeholder,
+				Value:       value,
+				MinLength:   minLen,
+				MaxLength:   maxLen,
+			},
+		},
+	}
+}
+
+func ModalInputRowsRequired(id ModalLabelID, customID string, label string, placeholder string, value string, minLen int, maxLen int) discordgo.ActionsRow {
+	return discordgo.ActionsRow{
+		Components: []discordgo.MessageComponent{
+			discordgo.TextInput{
+				ID:          int(id),
+				CustomID:    customID,
+				Label:       label,
+				Style:       discordgo.TextInputParagraph,
+				Placeholder: placeholder,
+				Value:       value,
+				Required:    true,
+				MinLength:   minLen,
+				MaxLength:   maxLen,
+			},
+		},
+	}
+}
+
+func Button(style discordgo.ButtonStyle, label string, customID string) discordgo.Button {
+	return discordgo.Button{Style: style, Label: label, CustomID: customID}
+}
+
+func Link(label string, url string) discordgo.Button {
+	return discordgo.Button{Style: discordgo.LinkButton, Label: label, URL: url}
+}
+
+func SelectOption(labelID ModalLabelID, label string, customID string, placeholder string,
+	minValues int, maxVakues int, options []discordgo.SelectMenuOption,
+) discordgo.Label {
+	return discordgo.Label{
+		Label: label,
+		Component: discordgo.SelectMenu{
+			ID:          int(labelID),
+			CustomID:    customID,
+			Placeholder: placeholder,
+			MaxValues:   maxVakues,
+			MinValues:   &minValues,
+			MenuType:    discordgo.StringSelectMenu,
+			Options:     options,
+		},
+	}
+}

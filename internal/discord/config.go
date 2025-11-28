@@ -21,11 +21,20 @@ type Config struct {
 	PlayerqueueChannelID    string `json:"playerqueue_channel_id"`
 	ModPingRoleID           string `json:"mod_ping_role_id"`
 	AnticheatChannelID      string `json:"anticheat_channel_id"`
+	SeedChannelID           string `json:"seed_channel_id"`
 }
 
 func (c Config) SafePublicLogChannelID() string {
 	if c.PublicLogChannelID != "" {
 		return c.PublicLogChannelID
+	}
+
+	return c.LogChannelID
+}
+
+func (c Config) SafeSeedChannelID() string {
+	if c.SeedChannelID != "" {
+		return c.SeedChannelID
 	}
 
 	return c.LogChannelID

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	_ "embed"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -13,11 +14,15 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/yohcop/openid-go"
 )
+
+//go:embed auth_discord.tmpl
+var templateBody []byte
 
 type authHandler struct {
 	*Authentication
@@ -25,16 +30,18 @@ type authHandler struct {
 	config  *config.Configuration
 	persons *person.Persons
 	tfAPI   *thirdparty.TFAPI
+	notif   notification.Notifier
 }
 
 func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Configuration,
-	person *person.Persons, tfAPI *thirdparty.TFAPI,
+	person *person.Persons, tfAPI *thirdparty.TFAPI, notif notification.Notifier,
 ) {
 	handler := &authHandler{
 		Authentication: auth,
 		config:         config,
 		persons:        person,
 		tfAPI:          tfAPI,
+		notif:          notif,
 	}
 
 	engine.GET("/auth/callback", handler.onSteamOIDCCallback())
@@ -150,9 +157,11 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 
 		sentry.AddBreadcrumb(&sentry.Breadcrumb{
 			Category: "auth",
-			Message:  "User logged in " + fetchedPerson.SteamID.String(),
+			Message:  "" + fetchedPerson.SteamID.String(),
 			Level:    sentry.LevelWarning,
 		})
+
+		go h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, loginMessage(fetchedPerson)))
 
 		slog.Info("User logged in",
 			slog.String("sid64", sid.String()),
@@ -208,6 +217,8 @@ func (h *authHandler) onAPILogout() gin.HandlerFunc {
 		sentry.ConfigureScope(func(scope *sentry.Scope) {
 			scope.SetUser(sentry.User{})
 		})
+
+		go h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, logoutMessage(personAuth.SteamID.String())))
 	}
 }
 

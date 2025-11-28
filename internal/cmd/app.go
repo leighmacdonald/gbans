@@ -194,7 +194,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
-	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafePublicLogChannelID())
+	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), g.states)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID(), conf.Discord.LogChannelID)
 	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan, g.persons)
 	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications,
@@ -260,7 +260,7 @@ func (g *GBans) createDiscordRoles(ctx context.Context) error {
 
 	names := map[string]string{}
 	for _, server := range curServers {
-		name := servers.ShortNamePrefix(server.ShortName)
+		name := "seeder-" + servers.ShortNamePrefix(server.ShortName)
 		existingID := ""
 		for _, role := range curRoles {
 			if strings.EqualFold(role.Name, name) {
@@ -269,8 +269,7 @@ func (g *GBans) createDiscordRoles(ctx context.Context) error {
 		}
 
 		roleID, found := names[name]
-		if !found {
-			var validID string
+		if !found || roleID == "" {
 			if existingID == "" {
 				newRoleID, err := g.bot.CreateRole(name)
 				if err != nil {
@@ -280,7 +279,7 @@ func (g *GBans) createDiscordRoles(ctx context.Context) error {
 			} else {
 				roleID = existingID
 			}
-			names[name] = validID
+			names[name] = roleID
 		}
 
 		server.DiscordSeedRoleIDs = []string{roleID}
@@ -525,7 +524,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	// Register all our handlers with router
 	anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)
 	asset.NewAssetHandler(router, userAuth, g.assets)
-	auth.NewAuthHandler(router, userAuth, g.config, g.persons, g.tfapiClient)
+	auth.NewAuthHandler(router, userAuth, g.config, g.persons, g.tfapiClient, g.notifications)
 	ban.NewAppealHandler(router, userAuth, ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.LogChannelID))
 	ban.NewReportHandler(router, userAuth, g.reports)
 	ban.NewHandlerBans(router, userAuth, g.bans, conf.Exports, conf.General.SiteName)

@@ -233,63 +233,12 @@ func (h discordHandler) onAdminsEdit(ctx context.Context, session *discordgo.Ses
 
 	groupEdit := "sourcemod_admins_edit_modal"
 
-	return discord.RespondModal(session, interaction, groupEdit, "Edit sourcemod admin settings",
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          int(discord.IDSteamID),
-					CustomID:    "steamid",
-					Label:       "SteamID or Profile URL",
-					Style:       discordgo.TextInputShort,
-					Placeholder: "76561197960542812",
-					Required:    true,
-					MaxLength:   64,
-					MinLength:   0,
-					Value:       requestedSID,
-				},
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          int(discord.IDAlias),
-					CustomID:    "alias",
-					Label:       "Player Alias",
-					Style:       discordgo.TextInputShort,
-					Placeholder: "Bob Bobbins",
-					Value:       alias,
-				},
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          int(discord.IDFlags),
-					CustomID:    "flags",
-					Label:       "Flag Set",
-					Style:       discordgo.TextInputShort,
-					Placeholder: "abcdef",
-					Required:    true,
-					Value:       flags,
-					MaxLength:   10,
-					MinLength:   1,
-				},
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          int(discord.IDImmunityLevel),
-					CustomID:    "immunity",
-					Label:       "Immunity Level",
-					Style:       discordgo.TextInputShort,
-					Placeholder: "100",
-					MaxLength:   3,
-					Value:       immunity,
-				},
-			},
-		},
-	)
+	return discord.RespondModal(session, interaction, groupEdit,
+		"Edit sourcemod admin settings",
+		discord.ModalInputRowRequired(discord.IDSteamID, "steamid", "SteamID or Profile URL", "76561197960542812", requestedSID, 0, 64),
+		discord.ModalInputRowRequired(discord.IDAlias, "alias", "Player Alias", "Bob Bobbins", alias, 0, 0),
+		discord.ModalInputRowRequired(discord.IDFlags, "flags", "Flag Set", "abcdef", flags, 1, 10),
+		discord.ModalInputRowRequired(discord.IDImmunityLevel, "immunity", "Immunity Level", "100", immunity, 0, 3))
 }
 
 type adminEditModal struct {
@@ -360,50 +309,11 @@ func (h discordHandler) onGroupsEdit(ctx context.Context, session *discordgo.Ses
 		customID += "_" + strconv.Itoa(gid)
 	}
 
-	return discord.RespondModal(session, interaction,
-		customID,
+	return discord.RespondModal(session, interaction, customID,
 		"Edit sourcemod admin settings",
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          int(discord.IDAlias),
-					CustomID:    "alias",
-					Label:       "Group Alias/Name",
-					Style:       discordgo.TextInputShort,
-					Placeholder: "Bob Bobbins",
-					Value:       alias,
-					Required:    true,
-				},
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          int(discord.IDFlags),
-					CustomID:    "flags",
-					Label:       "Flag Set",
-					Style:       discordgo.TextInputShort,
-					Placeholder: "abcdef",
-					Required:    true,
-					Value:       flags,
-					MaxLength:   10,
-					MinLength:   1,
-				},
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          int(discord.IDImmunityLevel),
-					CustomID:    "immunity",
-					Label:       "Immunity Level",
-					Style:       discordgo.TextInputShort,
-					Placeholder: "100",
-					MaxLength:   3,
-					Value:       immunity,
-				},
-			},
-		},
+		discord.ModalInputRowRequired(discord.IDAlias, "alias", "Group Alias/Name", "Bob Bobbins", alias, 0, 0),
+		discord.ModalInputRowRequired(discord.IDFlags, "flags", "Flag Set", "abcdef", flags, 1, 10),
+		discord.ModalInputRow(discord.IDImmunityLevel, "immunity", "Immunity Level", "100", immunity, 0, 3),
 	)
 }
 
