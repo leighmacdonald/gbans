@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.source="https://github.com/leighmacdonald/gbans"
 EXPOSE 6006
 EXPOSE 27715/udp
 
-HEALTHCHECK CMD curl --fail http://localhost:6006/health || exit 1
+HEALTHCHECK --interval=1m CMD curl --fail http://localhost:6006/health || exit 1
 
 RUN apk add --no-cache dumb-init
 WORKDIR /app
