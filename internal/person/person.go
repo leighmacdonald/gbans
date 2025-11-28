@@ -285,10 +285,10 @@ type SettingsUpdate struct {
 type Persons struct {
 	owner steamid.SteamID
 	repo  Repository
-	tfAPI *thirdparty.TFAPI
+	tfAPI thirdparty.APIProvider
 }
 
-func NewPersons(repository Repository, owner steamid.SteamID, tfAPI *thirdparty.TFAPI) *Persons {
+func NewPersons(repository Repository, owner steamid.SteamID, tfAPI thirdparty.APIProvider) *Persons {
 	return &Persons{repo: repository, owner: owner, tfAPI: tfAPI}
 }
 

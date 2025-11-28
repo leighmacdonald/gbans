@@ -89,7 +89,7 @@ type GBans struct {
 	sourcemod      sourcemod.Sourcemod
 	states         *state.State
 	staticConfig   config.Static
-	tfapiClient    *thirdparty.TFAPI
+	tfapiClient    thirdparty.APIProvider
 	votes          votes.Votes
 	wiki           wiki.Wiki
 	wordFilters    chat.WordFilters
@@ -331,7 +331,7 @@ func (g *GBans) createConfig(ctx context.Context) (*config.Configuration, error)
 	return conf, nil
 }
 
-func (g *GBans) createAPIClient() (*thirdparty.TFAPI, error) {
+func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) { //noling:ireturn
 	apiURL := os.Getenv("TFAPI_URL")
 	if apiURL == "" {
 		apiURL = "https://tf-api.roto.lol"

@@ -73,7 +73,7 @@ func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth ht
 	srcdsGroup := engine.Group("/")
 	{
 		server := srcdsGroup.Use(serverAuth.Middleware)
-		server.POST("/api/sm/check", handler.onAPICheckPlayer())
+		server.GET("/api/sm/check", handler.onAPICheckPlayer())
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())
 		server.GET("/api/sm/groups", handler.onAPIGetServerGroups())
@@ -91,10 +91,10 @@ type ServerAuthResp struct {
 }
 
 type CheckRequest struct {
-	SteamID  string `json:"steam_id"`
-	ClientID int    `json:"client_id"`
-	IP       string `json:"ip"`
-	Name     string `json:"name"`
+	SteamID  string `query:"steam_id"`
+	ClientID int    `query:"client_id"`
+	IP       string `query:"ip"`
+	Name     string `query:"name"`
 }
 
 type CheckResponse struct {
