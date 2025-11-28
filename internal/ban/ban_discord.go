@@ -176,58 +176,10 @@ func (h discordHandler) showBan(_ context.Context, session *discordgo.Session, i
 
 	return discord.RespondModal(session, interaction, prefix, title,
 		sidComp,
-		discordgo.Label{
-			Label: "Reason",
-			Component: discordgo.SelectMenu{
-				ID:          int(discord.IDReason),
-				CustomID:    "reason",
-				Placeholder: "Select a reason",
-				MaxValues:   1,
-				MinValues:   &minItems,
-				MenuType:    discordgo.StringSelectMenu,
-				Options:     createBanOpts(),
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          int(discord.IDCIDR),
-					CustomID:    "cidr",
-					Label:       "IP/CIDR Ban",
-					Style:       discordgo.TextInputShort,
-					Placeholder: "1.2.3.4/32, 100.100.100.0/24",
-					Required:    false,
-					MaxLength:   20,
-					MinLength:   0,
-				},
-			},
-		},
-		discordgo.Label{
-			Label: "Duration",
-			Component: discordgo.SelectMenu{
-				ID:          int(discord.IDDuration),
-				CustomID:    "duration",
-				Placeholder: "Select a duration",
-				MaxValues:   1,
-				MinValues:   &minItems,
-				MenuType:    discordgo.StringSelectMenu,
-				Options:     createDurationOpts(),
-			},
-		},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          int(discord.IDNotes),
-					CustomID:    "notes",
-					Label:       "Extended moderator only notes",
-					Style:       discordgo.TextInputParagraph,
-					Placeholder: "",
-					Required:    false,
-					MaxLength:   2000,
-					MinLength:   0,
-				},
-			},
-		},
+		discord.SelectOption(discord.IDReason, "Reason", "reason", "Select a reason", minItems, 1, createBanOpts()),
+		discord.ModalInputRow(discord.IDCIDR, "cidr", "IP/CIDR Ban", "1.2.3.4/32, 100.100.100.0/24", "", 0, 20),
+		discord.SelectOption(discord.IDReason, "Duration", "duration", "Select a duration", minItems, 1, createDurationOpts()),
+		discord.ModalInputRows(discord.IDNotes, "notes", "Notes", "", "", 0, 0),
 	)
 }
 
@@ -291,22 +243,9 @@ func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Se
 	return discord.RespondUpdate(session, interaction,
 		discord.BodyColouredText(discord.ColourSuccess, content),
 		discord.Buttons(
-			discordgo.Button{
-				Label:    "🗑️ Unban",
-				CustomID: fmt.Sprintf("ban_unban_button_resp_%d", createdBan.BanID),
-				Style:    discordgo.SuccessButton,
-			},
-			discordgo.Button{
-				Label:    "🔨 Edit",
-				CustomID: fmt.Sprintf("ban_edit_button_resp_%d", createdBan.BanID),
-				Style:    discordgo.SecondaryButton,
-			},
-			discordgo.Button{
-				Label: "🔗 Link",
-				URL:   link.Path(createdBan),
-				Style: discordgo.LinkButton,
-			},
-		))
+			discord.Button(discordgo.SuccessButton, "🗑️ Unban", fmt.Sprintf("ban_unban_button_resp_%d", createdBan.BanID)),
+			discord.Button(discordgo.SecondaryButton, "🔨 Edit", fmt.Sprintf("ban_edit_button_resp_%d", createdBan.BanID)),
+			discord.Link("🔗 Link", link.Path(createdBan))))
 }
 
 func (h discordHandler) onUnbanButton(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -327,43 +266,12 @@ func (h discordHandler) onUnban(ctx context.Context, session *discordgo.Session,
 }
 
 func (h discordHandler) showUnban(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, steamID string) error {
-	components := []discordgo.MessageComponent{
-		discordgo.Container{
-			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextInput{
-							ID:          int(discord.IDSteamID),
-							CustomID:    "steamid",
-							Label:       "SteamID or Profile URL",
-							Style:       discordgo.TextInputShort,
-							Placeholder: "76561197960542812",
-							Required:    true,
-							MaxLength:   64,
-							MinLength:   0,
-							Value:       steamID,
-						},
-					},
-				},
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextInput{
-							ID:          int(discord.IDNotes),
-							CustomID:    "unban_reason",
-							Label:       "Reason",
-							Style:       discordgo.TextInputParagraph,
-							Placeholder: "Finally took a shower",
-							Required:    true,
-							MaxLength:   2000,
-							MinLength:   0,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	return discord.Respond(session, interaction, components)
+	return discord.Respond(session, interaction,
+		discord.ModalInputRowRequired(discord.IDSteamID, "steamid", "SteamID or Profile URL",
+			"76561197960542812", steamID, 0, 64),
+		discord.ModalInputRowRequired(discord.IDNotes, "unban_reason", "Reason",
+			"Finally took a shower", "", 0, 2000),
+	)
 }
 
 type UnbanRequestModal struct {
@@ -468,49 +376,28 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 	var btn []discordgo.MessageComponent
 	if activeBan.BanID > 0 {
 		btn = append(btn,
-			discordgo.Button{
-				Label:    "🗑️ Unban",
-				CustomID: fmt.Sprintf("ban_unban_button_resp_%d", activeBan.BanID),
-				Style:    discordgo.SuccessButton,
-			},
-			discordgo.Button{
-				Label: "🔎 View",
-				URL:   link.Path(activeBan),
-				Style: discordgo.LinkButton,
-			})
+			discord.Button(discordgo.SuccessButton, "🗑️ Unban", fmt.Sprintf("ban_unban_button_resp_%d", activeBan.BanID)),
+			discord.Link("🔎 View", link.Path(activeBan)))
 	} else {
-		btn = append(btn, discordgo.Button{
-			Label:    "🔨 Ban",
-			CustomID: fmt.Sprintf("ban_create_button_resp_%d", player.SteamID.Int64()),
-			Style:    discordgo.DangerButton,
-		})
+		btn = append(btn,
+			discord.Button(discordgo.DangerButton, "🔨 Ban", fmt.Sprintf("ban_create_button_resp_%d", player.SteamID.Int64())),
+		)
 	}
 
 	return discord.RespondUpdate(session, interaction,
-		discordgo.Container{
-			AccentColor: &colour,
-			Components: []discordgo.MessageComponent{
-				discordgo.MediaGallery{
-					Items: []discordgo.MediaGalleryItem{
-						{
-							Media: discordgo.UnfurledMediaItem{URL: player.GetAvatar().Full()},
-						},
+		discord.BodyColour(
+			colour,
+			discordgo.MediaGallery{
+				Items: []discordgo.MediaGalleryItem{
+					{
+						Media: discordgo.UnfurledMediaItem{URL: player.GetAvatar().Full()},
 					},
 				},
-				discordgo.TextDisplay{Content: content},
 			},
-		},
+			discordgo.TextDisplay{Content: content}),
 		discord.Buttons(append(btn,
-			discordgo.Button{
-				Label: "🔗 Link",
-				URL:   link.Path(player),
-				Style: discordgo.LinkButton,
-			},
-			discordgo.Button{
-				Label: "🔧 Steam",
-				URL:   "https://steamcommunity.com/profiles/" + player.SteamID.String(),
-				Style: discordgo.LinkButton,
-			})...))
+			discord.Link("🔗 Link", link.Path(player)),
+			discord.Link("🔧 Steam", "https://steamcommunity.com/profiles/"+player.SteamID.String()))...))
 }
 
 func UnbanMessage(person person.Info) *discordgo.MessageSend {
@@ -521,11 +408,7 @@ func UnbanMessage(person person.Info) *discordgo.MessageSend {
 
 	return discord.NewMessage(
 		discord.BodyColouredText(discord.ColourSuccess, content),
-		discord.Buttons(discordgo.Button{
-			Label: "🔗 Link",
-			URL:   link.Path(person),
-			Style: discordgo.LinkButton,
-		}))
+		discord.Buttons(discord.Link("🔗 Link", link.Path(person))))
 }
 
 func createBanResponse(ban Ban, player person.Core) *discordgo.MessageSend {
@@ -552,41 +435,20 @@ func createBanResponse(ban Ban, player person.Core) *discordgo.MessageSend {
 	}
 
 	return discord.NewMessage(
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourError),
+		discord.BodyColour(discord.ColourError, discordgo.Section{
 			Components: []discordgo.MessageComponent{
-				discordgo.Section{
-					Components: []discordgo.MessageComponent{
-						discordgo.TextDisplay{Content: content},
-					},
-					Accessory: discordgo.Thumbnail{
-						Media:       discordgo.UnfurledMediaItem{URL: player.GetAvatar().Full()},
-						Description: ptr.To(fmt.Sprintf("Profile Picure [%s]", player.Avatarhash)),
-					},
-				},
+				discordgo.TextDisplay{Content: content},
 			},
-		},
+			Accessory: discordgo.Thumbnail{
+				Media:       discordgo.UnfurledMediaItem{URL: player.GetAvatar().Full()},
+				Description: ptr.To(fmt.Sprintf("Profile Picure [%s]", player.Avatarhash)),
+			},
+		}),
 		discord.Buttons(
-			discordgo.Button{
-				Label:    "🗑️ Unban",
-				CustomID: fmt.Sprintf("ban_unban_button_resp_%d", ban.BanID),
-				Style:    discordgo.SuccessButton,
-			},
-			discordgo.Button{
-				Label:    "🔨 Edit",
-				CustomID: fmt.Sprintf("ban_edit_button_resp_%d", ban.BanID),
-				Style:    discordgo.SecondaryButton,
-			},
-			discordgo.Button{
-				Label: "🔎 View",
-				URL:   link.Path(ban),
-				Style: discordgo.LinkButton,
-			},
-			discordgo.Button{
-				Label: "🌐 Steam",
-				URL:   "https://steamcommunity.com/profiles/" + ban.TargetID.String(),
-				Style: discordgo.LinkButton,
-			}))
+			discord.Button(discordgo.SuccessButton, "🗑️ Unban", fmt.Sprintf("ban_unban_button_resp_%d", ban.BanID)),
+			discord.Button(discordgo.SecondaryButton, "🔨 Edit", fmt.Sprintf("ban_edit_button_resp_%d", ban.BanID)),
+			discord.Link("🔎 View", link.Path(ban)),
+			discord.Link("🌐 Steam", "https://steamcommunity.com/profiles/"+ban.TargetID.String())))
 }
 
 func DeleteReportMessage(existing ReportMessage, _ person.Info) *discordgo.MessageSend {
@@ -596,9 +458,11 @@ func DeleteReportMessage(existing ReportMessage, _ person.Info) *discordgo.Messa
 	}
 
 	return discord.NewMessage(
-		discord.BodyColour(discord.ColourWarn),
-		discordgo.TextDisplay{Content: content},
-		discordgo.TextDisplay{Content: existing.MessageMD})
+		discord.BodyColour(
+			discord.ColourWarn,
+			discordgo.TextDisplay{Content: content},
+			discordgo.TextDisplay{Content: existing.MessageMD}),
+	)
 }
 
 func EditReportMessageResponse(body string, oldBody string, _ string, _ person.Info, _ string) *discordgo.MessageSend {

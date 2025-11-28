@@ -18,26 +18,11 @@ func newAppealMessageResponse(msg AppealMessage, title string) *discordgo.Messag
 		discord.Heading(title),
 		discord.BodyText(msg.MessageMD),
 		discord.Buttons(
-			discordgo.Button{
-				Label:    "💬 Reply",
-				CustomID: fmt.Sprintf("appeal_reply_button_resp_%d", msg.BanID),
-				Style:    discordgo.PrimaryButton,
-			},
-			discordgo.Button{
-				Label:    "❌️ Delete",
-				CustomID: fmt.Sprintf("appeal_delete_button_resp_%d", msg.BanMessageID),
-				Style:    discordgo.DangerButton,
-			},
-			discordgo.Button{
-				Label:    "🚦 Status",
-				CustomID: fmt.Sprintf("appeal_status_button_resp_%d", msg.BanID),
-				Style:    discordgo.SecondaryButton,
-			},
-			discordgo.Button{
-				Label: "🔎 View",
-				URL:   link.Path(msg),
-				Style: discordgo.LinkButton,
-			}))
+			discord.Button(discordgo.PrimaryButton, "💬 Reply", fmt.Sprintf("appeal_reply_button_resp_%d", msg.BanID)),
+			discord.Button(discordgo.DangerButton, "❌️ Delete", fmt.Sprintf("appeal_delete_button_resp_%d", msg.BanMessageID)),
+			discord.Button(discordgo.SecondaryButton, "🚦 Status", fmt.Sprintf("appeal_status_button_resp_%d", msg.BanID)),
+			discord.Link("🔎 View", link.Path(msg)),
+		))
 }
 
 func newAppealMessageDelete(msg AppealMessage) *discordgo.MessageSend {
@@ -50,11 +35,6 @@ func newAppealMessageDelete(msg AppealMessage) *discordgo.MessageSend {
 
 	return discord.NewMessage(
 		discord.BodyColouredText(discord.ColourError, content),
-		discord.Buttons(
-			discordgo.Button{
-				Label: "🔎 View",
-				URL:   link.Path(msg),
-				Style: discordgo.LinkButton,
-			}),
+		discord.Buttons(discord.Link("🔎 View", link.Path(msg))),
 	)
 }

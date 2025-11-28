@@ -223,7 +223,7 @@ func (d DiscordHandler) onKick(ctx context.Context, session *discordgo.Session, 
 		}
 	}
 
-	return discord.Respond(session, interaction, discordKickMessage(players))
+	return discord.Respond(session, interaction, discordKickMessage(players)...)
 }
 
 func (d DiscordHandler) onSay(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -240,7 +240,7 @@ func (d DiscordHandler) onSay(ctx context.Context, session *discordgo.Session, i
 		return discord.ErrCommandFailed
 	}
 
-	return discord.Respond(session, interaction, discordSayMessage(serverName, msg))
+	return discord.Respond(session, interaction, discordSayMessage(serverName, msg)...)
 }
 
 func (d DiscordHandler) onCSay(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -263,7 +263,7 @@ func (d DiscordHandler) onCSay(ctx context.Context, session *discordgo.Session, 
 		return discord.ErrCommandFailed
 	}
 
-	return discord.Respond(session, interaction, discordCSayMessage(server.Name, msg))
+	return discord.Respond(session, interaction, discordCSayMessage(server.Name, msg)...)
 }
 
 func (d DiscordHandler) onPSay(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -281,11 +281,11 @@ func (d DiscordHandler) onPSay(ctx context.Context, session *discordgo.Session, 
 		return discord.ErrCommandFailed
 	}
 
-	return discord.Respond(session, interaction, discordPSayMessage(playerSid, msg))
+	return discord.Respond(session, interaction, discordPSayMessage(playerSid, msg)...)
 }
 
 func (d DiscordHandler) onServers(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
-	return discord.Respond(session, interaction, discordServersMessage(d.state.SortRegion()))
+	return discord.Respond(session, interaction, discordServersMessage(d.state.SortRegion())...)
 }
 
 func (d DiscordHandler) onPlayers(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -502,11 +502,7 @@ func discordServersMessage(currentStateRegion map[string][]state.ServerState) []
 
 	return []discordgo.MessageComponent{
 		discord.BodyColouredText(colour, content),
-		discord.Buttons(discordgo.Button{
-			Style: discordgo.LinkButton,
-			Label: "View Servers",
-			URL:   link.Raw("/servers"),
-		}),
+		discord.Buttons(discord.Link("View Servers", link.Raw("/servers"))),
 	}
 }
 

@@ -29,7 +29,7 @@ func TestSourcemod(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{}
 		router        = fixture.CreateRouter()
-		sourcemodUC   = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewDiscard(), "")
+		sourcemodUC   = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewDiscard(), "", nil)
 		serversUC     = servers.NewServers(servers.NewRepository(fixture.Database))
 	)
 
@@ -239,7 +239,7 @@ func TestSRCDS(t *testing.T) {
 		authenticator = &tests.UserAuth{}
 		router        = fixture.CreateRouter()
 		serversUC     = servers.NewServers(servers.NewRepository(fixture.Database))
-		sm            = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewDiscard(), "")
+		sm            = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewDiscard(), "", nil)
 	)
 
 	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sm, serversUC, notification.NewDiscard())

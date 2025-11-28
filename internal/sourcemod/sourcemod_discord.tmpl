@@ -1,9 +1,11 @@
 {{define "seed_req"}}
-    # 🌱 {{ if .CC }}:flag_{{ .CC }}: {{end}}Seed Request 🌱
+# 🌱 Seed Request
 
-    ### {{ .Name }}
+### {{ if .CC }}:flag_{{ .CC }}: {{end}}{{ .Name }}
 
-    `connect {{ .Connect }}`
+Players: {{ .State.PlayerCount }}/{{ .State.MaxPlayers }}
 
-    {{ range .Roles }}{{ if .}}<@&{{ . }}> {{end}}{{end}}
+`connect {{ .Connect }}`
+
+{{ range .Roles }}{{ if .}}<@&{{ . }}> {{end}}{{end}}
 {{end}}

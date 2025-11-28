@@ -122,13 +122,7 @@ func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
 		return nil
 	}
 
-	return []discordgo.MessageComponent{
-		discordgo.Container{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		},
-	}
+	return []discordgo.MessageComponent{discord.BodyText(content)}
 }
 
 func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int) *discordgo.MessageSend {
@@ -149,11 +143,5 @@ func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, c
 		slog.Error("Failed to render template", slog.String("error", errContent.Error()))
 	}
 
-	return discord.NewMessage(
-		discordgo.Container{
-			AccentColor: ptr.To(discord.ColourSuccess),
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-		})
+	return discord.NewMessage(discord.BodyColouredText(discord.ColourSuccess, content))
 }

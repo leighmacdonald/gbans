@@ -1,6 +1,8 @@
 ALTER TABLE server
     ADD COLUMN IF NOT EXISTS discord_seed_role_ids text[] DEFAULT '{}' NOT NULL;
 
+ALTER TABLE config ADD COLUMN IF NOT EXISTS discord_seed_channel_id TEXT default '' NOT NULL ;
+
 CREATE OR REPLACE FUNCTION check_ban(steam text, ip text,
                                      OUT out_ban_source text,
                                      OUT out_ban_id int,

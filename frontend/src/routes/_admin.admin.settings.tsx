@@ -1423,7 +1423,15 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-
+                    <Grid size={{ xs: 12 }}>
+                        <SubHeading>A channel which shows player server seeding requests.</SubHeading>
+                        <form.AppField
+                            name={'seed_channel_id'}
+                            children={(field) => {
+                                return <field.TextField label={'Seed request channel ID'} />;
+                            }}
+                        />
+                    </Grid>
                     <Grid size={{ xs: 12 }}>
                         <form.AppForm>
                             <ButtonGroup>

@@ -214,13 +214,14 @@ func (b *Discord) Roles() ([]*discordgo.Role, error) {
 		return nil, errors.Join(errRoles, ErrRole)
 	}
 
-	return roles, errors.Join(errRoles, ErrRole)
+	return roles, nil
 }
 
 func (b *Discord) CreateRole(name string) (string, error) {
 	role, errRole := b.session.GuildRoleCreate(b.guildID, &discordgo.RoleParams{
 		Name:        name,
 		Mentionable: ptr.To(true),
+		Hoist:       ptr.To(false),
 	})
 	if errRole != nil {
 		return "", errors.Join(errRole, ErrRole)

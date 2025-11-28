@@ -148,7 +148,7 @@ func RespondModal(session *discordgo.Session, interaction *discordgo.Interaction
 	return nil
 }
 
-func Respond(session *discordgo.Session, interaction *discordgo.InteractionCreate, components []discordgo.MessageComponent) error {
+func Respond(session *discordgo.Session, interaction *discordgo.InteractionCreate, components ...discordgo.MessageComponent) error {
 	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{

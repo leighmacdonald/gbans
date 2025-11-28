@@ -65,23 +65,10 @@ func (h discordHandler) onReportReplyButton(ctx context.Context, session *discor
 		return errReport
 	}
 
-	return discord.Respond(session, interaction, []discordgo.MessageComponent{
-		discordgo.TextDisplay{Content: report.Description},
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextInput{
-					ID:          int(discord.IDBody),
-					CustomID:    "reply_message_",
-					Label:       "Response",
-					Style:       discordgo.TextInputParagraph,
-					Placeholder: "Finally took a shower",
-					Required:    true,
-					MaxLength:   2000,
-					MinLength:   10,
-				},
-			},
-		},
-	})
+	return discord.Respond(session, interaction,
+		discord.BodyText(report.Description),
+		discord.ModalInputRowsRequired(discord.IDBody, "reply_message_", "Response", "Finally took a shower", "", 10, 2000),
+	)
 }
 
 type replyRequestModal struct {
@@ -114,10 +101,9 @@ func (h discordHandler) onReportReplySubmit(ctx context.Context, session *discor
 		return errMsg
 	}
 
-	return discord.Respond(session, interaction, []discordgo.MessageComponent{
-		discord.BodyColouredText(discord.ColourSuccess,
-			fmt.Sprintf("Reply successful [View](%s)", link.Path(report))),
-	})
+	return discord.Respond(session, interaction, discord.BodyColouredText(discord.ColourSuccess,
+		fmt.Sprintf("Reply successful [View](%s)", link.Path(report))),
+	)
 }
 
 func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus) *discordgo.MessageSend {
@@ -129,13 +115,7 @@ func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus)
 	return discord.NewMessage(
 		discordgo.TextDisplay{Content: content},
 		discordgo.TextDisplay{Content: fmt.Sprintf("Changed from %s to %s", fromStatus.String(), report.ReportStatus.String())},
-		discord.Buttons(discordgo.Button{
-			Label: "🔎 View Report",
-			URL:   link.Path(report),
-			Style: discordgo.LinkButton,
-		},
-		),
-	)
+		discord.Buttons(discord.Link("🔎 View Report", link.Path(report))))
 }
 
 func NewReportMessageResponse(report ReportWithAuthor, msg ReportMessage) *discordgo.MessageSend {
@@ -148,24 +128,9 @@ func NewReportMessageResponse(report ReportWithAuthor, msg ReportMessage) *disco
 
 	return discord.NewMessage(
 		discord.BodyText(content),
-		discord.Buttons(discordgo.Button{
-			Label:    "💬 Reply",
-			CustomID: fmt.Sprintf("report_reply_button_resp_%d", report.ReportID),
-			Style:    discordgo.PrimaryButton,
-		},
-			discordgo.Button{
-				Label:    "❌️ Delete",
-				CustomID: fmt.Sprintf("report_delete_button_resp_%d", report.ReportID),
-				Style:    discordgo.SecondaryButton,
-			},
-			discordgo.Button{
-				Label:    "🚦 Status",
-				CustomID: fmt.Sprintf("report_status_button_resp_%d", report.ReportID),
-				Style:    discordgo.SecondaryButton,
-			},
-			discordgo.Button{
-				Label: "🔎 View",
-				URL:   link.Path(report),
-				Style: discordgo.LinkButton,
-			}))
+		discord.Buttons(
+			discord.Button(discordgo.PrimaryButton, "💬 Reply", fmt.Sprintf("report_reply_button_resp_%d", report.ReportID)),
+			discord.Button(discordgo.SecondaryButton, "❌️ Delete", fmt.Sprintf("report_delete_button_resp_%d", report.ReportID)),
+			discord.Button(discordgo.SecondaryButton, "🚦 Status", fmt.Sprintf("report_status_button_resp_%d", report.ReportID)),
+			discord.Link("🔎 View", link.Path(report))))
 }
