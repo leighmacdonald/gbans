@@ -3,7 +3,6 @@ package tests
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +24,7 @@ type Fixture struct {
 	Database  database.Database
 	Config    *config.Configuration
 	Persons   personDomain.Provider
-	TFApi     *thirdparty.TFAPI
+	TFApi     thirdparty.APIProvider
 	DSN       string
 	Close     func()
 }
@@ -47,9 +46,8 @@ func NewFixture() *Fixture {
 		panic(err)
 	}
 
-	api, _ := thirdparty.NewTFAPI("https://tf-api.roto.lol", &http.Client{Timeout: time.Second * 15})
-
 	conf := TestConfig(testDB.dsn)
+	api := FakeTFAPI{}
 
 	return &Fixture{
 		container: testDB,
@@ -57,7 +55,10 @@ func NewFixture() *Fixture {
 		TFApi:     api,
 		Config:    conf,
 		DSN:       testDB.dsn,
-		Persons:   person.NewPersons(person.NewRepository(databaseConn, conf.Config().Clientprefs.CenterProjectiles), steamid.New(conf.Config().Owner), api),
+		Persons: person.NewPersons(
+			person.NewRepository(databaseConn, conf.Config().Clientprefs.CenterProjectiles),
+			steamid.New(conf.Config().Owner),
+			api),
 		Close: func() {
 			termCtx, termCancel := context.WithTimeout(context.Background(), time.Second*30)
 			defer termCancel()
@@ -117,17 +118,18 @@ func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID, 
 func (f Fixture) CreateTestServer(ctx context.Context) servers.Server {
 	serverCase := servers.NewServers(servers.NewRepository(f.Database))
 	server, errServer := serverCase.Save(ctx, servers.Server{
-		Name:      stringutil.SecureRandomString(10),
-		ShortName: stringutil.SecureRandomString(3),
-		Address:   stringutil.SecureRandomString(10),
-		Password:  stringutil.SecureRandomString(10),
-		LogSecret: 12345678,
-		Port:      27015,
-		RCON:      stringutil.SecureRandomString(10),
-		IsEnabled: true,
-		Region:    "eu",
-		CreatedOn: time.Now(),
-		UpdatedOn: time.Now(),
+		Name:               stringutil.SecureRandomString(10),
+		ShortName:          stringutil.SecureRandomString(3),
+		Address:            stringutil.SecureRandomString(10),
+		Password:           stringutil.SecureRandomString(10),
+		LogSecret:          12345678,
+		Port:               27015,
+		RCON:               stringutil.SecureRandomString(10),
+		IsEnabled:          true,
+		Region:             "eu",
+		CreatedOn:          time.Now(),
+		UpdatedOn:          time.Now(),
+		DiscordSeedRoleIDs: []string{},
 	})
 	if errServer != nil {
 		panic(errServer)

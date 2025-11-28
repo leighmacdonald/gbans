@@ -3,7 +3,6 @@ package person
 import (
 	"context"
 	"errors"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -22,7 +21,7 @@ var ErrSteamUpdate = errors.New("failed to update data from steam")
 
 // FetchPlayerBans batch fetches player bans in groups of 100.
 // TODO remove and just call client direct? Not sure if the batching is really required.
-func FetchPlayerBans(ctx context.Context, tfAPI *thirdparty.TFAPI, steamIDs []steamid.SteamID) ([]thirdparty.SteamBan, error) {
+func FetchPlayerBans(ctx context.Context, tfAPI thirdparty.APIProvider, steamIDs []steamid.SteamID) ([]thirdparty.SteamBan, error) {
 	var (
 		waitGroup = &sync.WaitGroup{}
 		results   []thirdparty.SteamBan
@@ -38,17 +37,15 @@ func FetchPlayerBans(ctx context.Context, tfAPI *thirdparty.TFAPI, steamIDs []st
 				ids        = steamIDs[index : index+int(maxResults)] // nolint:gosec
 			)
 
-			bans, errGetPlayerBans := tfAPI.Client.SteamBansWithResponse(ctx, &thirdparty.SteamBansParams{
-				Steamids: strings.Join(steamid.Collection(ids).ToStringSlice(), ","),
-			})
-			if errGetPlayerBans != nil || bans.JSON200 == nil {
+			bans, errGetPlayerBans := tfAPI.SteamBans(ctx, ids)
+			if errGetPlayerBans != nil {
 				atomic.AddInt32(&hasErr, 1)
 
 				return
 			}
 
 			resultsMu.Lock()
-			results = append(results, *bans.JSON200...)
+			results = append(results, bans...)
 			resultsMu.Unlock()
 		})
 	}
@@ -69,7 +66,7 @@ var (
 	ErrSteamBans       = errors.New("failed to fetch player bans")
 )
 
-func UpdatePlayerSummary(ctx context.Context, personUpdate *Person, tfAPI *thirdparty.TFAPI) error {
+func UpdatePlayerSummary(ctx context.Context, personUpdate *Person, tfAPI thirdparty.APIProvider) error {
 	errGroup, errCtx := errgroup.WithContext(ctx)
 
 	errGroup.Go(func() error {

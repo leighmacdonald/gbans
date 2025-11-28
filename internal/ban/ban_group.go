@@ -73,10 +73,10 @@ type Memberships struct {
 	members    map[steamid.SteamID]steamid.Collection
 	store      Repository
 	updateFreq time.Duration
-	tfAPI      *thirdparty.TFAPI
+	tfAPI      thirdparty.APIProvider
 }
 
-func NewMemberships(db Repository, tfAPI *thirdparty.TFAPI) *Memberships {
+func NewMemberships(db Repository, tfAPI thirdparty.APIProvider) *Memberships {
 	return &Memberships{
 		RWMutex:    &sync.RWMutex{},
 		store:      db,

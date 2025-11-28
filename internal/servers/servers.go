@@ -46,17 +46,18 @@ type ServerPermission struct {
 
 func NewServer(shortName string, address string, port uint16) Server {
 	return Server{
-		ShortName:      shortName,
-		Address:        address,
-		Port:           port,
-		RCON:           stringutil.SecureRandomString(10),
-		ReservedSlots:  0,
-		Password:       stringutil.SecureRandomString(10),
-		IsEnabled:      true,
-		EnableStats:    true,
-		TokenCreatedOn: time.Unix(0, 0),
-		CreatedOn:      time.Now(),
-		UpdatedOn:      time.Now(),
+		ShortName:          shortName,
+		Address:            address,
+		Port:               port,
+		RCON:               stringutil.SecureRandomString(10),
+		ReservedSlots:      0,
+		Password:           stringutil.SecureRandomString(10),
+		IsEnabled:          true,
+		EnableStats:        true,
+		TokenCreatedOn:     time.Unix(0, 0),
+		CreatedOn:          time.Now(),
+		UpdatedOn:          time.Now(),
+		DiscordSeedRoleIDs: []string{},
 	}
 }
 

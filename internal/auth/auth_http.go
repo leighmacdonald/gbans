@@ -29,12 +29,12 @@ type authHandler struct {
 
 	config  *config.Configuration
 	persons *person.Persons
-	tfAPI   *thirdparty.TFAPI
+	tfAPI   thirdparty.APIProvider
 	notif   notification.Notifier
 }
 
 func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Configuration,
-	person *person.Persons, tfAPI *thirdparty.TFAPI, notif notification.Notifier,
+	person *person.Persons, tfAPI thirdparty.APIProvider, notif notification.Notifier,
 ) {
 	handler := &authHandler{
 		Authentication: auth,

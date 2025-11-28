@@ -9,11 +9,11 @@ import (
 )
 
 type GroupMemberships struct {
-	tfAPI *thirdparty.TFAPI
+	tfAPI thirdparty.APIProvider
 	repo  Repository
 }
 
-func NewGroupMemberships(tfAPI *thirdparty.TFAPI, repo Repository) *GroupMemberships {
+func NewGroupMemberships(tfAPI thirdparty.APIProvider, repo Repository) *GroupMemberships {
 	return &GroupMemberships{tfAPI: tfAPI, repo: repo}
 }
 

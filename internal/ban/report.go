@@ -157,13 +157,13 @@ type Reports struct {
 	repository    ReportRepository
 	persons       *person.Persons
 	demos         servers.Demos
-	tfAPI         *thirdparty.TFAPI
+	tfAPI         thirdparty.APIProvider
 	notif         notification.Notifier
 	logChannel    string
 	appealChannel string
 }
 
-func NewReports(repo ReportRepository, persons *person.Persons, demos servers.Demos, tfAPI *thirdparty.TFAPI,
+func NewReports(repo ReportRepository, persons *person.Persons, demos servers.Demos, tfAPI thirdparty.APIProvider,
 	notif notification.Notifier, logChannel string, appealChannel string,
 ) Reports {
 	return Reports{

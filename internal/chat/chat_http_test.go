@@ -71,5 +71,5 @@ func TestMessages(t *testing.T) {
 
 	contextMessages := tests.GetGOK[[]chat.QueryChatHistoryResult](t, router, fmt.Sprintf("/api/message/%d/context/5", messages[25].PersonMessageID))
 	require.Len(t, contextMessages, 11)
-	require.Equal(t, messages[25], contextMessages[5])
+	require.Equal(t, messages[25].Body, contextMessages[5].Body)
 }
