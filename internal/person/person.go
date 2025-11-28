@@ -115,13 +115,11 @@ func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBa
 	p.RealName = summary.RealName
 	p.TimeCreated = summary.TimeCreated
 	p.CommentPermission = summary.CommentPermission
-
 	p.VACBans = int(steamBan.NumberOfVacBans)
 	p.GameBans = int(steamBan.NumberOfGameBans)
 	p.DaysSinceLastBan = int(steamBan.DaysSinceLastBan)
 	p.CommunityBanned = steamBan.CommunityBanned
 	p.EconomyBan = EconBanState(steamBan.EconomyBan)
-
 	p.UpdatedOn = time.Now()
 	p.UpdatedOnSteam = time.Now()
 

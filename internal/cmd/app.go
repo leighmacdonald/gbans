@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
@@ -550,6 +551,8 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	votes.NewVotesHandler(router, userAuth, g.votes)
 	wiki.NewWikiHandler(router, userAuth, g.wiki)
 
+	router.GET("/health", g.healthCheck)
+
 	httpServer := httphelper.NewServer(conf.Addr(), router)
 
 	go func() {
@@ -741,6 +744,22 @@ func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, du
 	}
 
 	return nil
+}
+
+func (g *GBans) healthCheck(ctx *gin.Context) {
+	serverStates := g.states.Current()
+	if len(serverStates) > 0 {
+		for _, server := range serverStates {
+			if server.MaxPlayers > 0 {
+				ctx.String(http.StatusOK, "😎")
+
+				return
+			}
+		}
+		ctx.String(http.StatusServiceUnavailable, "🙅🏻‍♀️")
+	} else {
+		ctx.String(http.StatusOK, "😎")
+	}
 }
 
 // downloadManager is responsible for connecting to the remote servers via ssh/scp and executing instructions.
