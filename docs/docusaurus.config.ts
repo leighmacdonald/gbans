@@ -3,6 +3,12 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
+  future:{
+    v4: {
+      useCssCascadeLayers: true,
+      removeLegacyPostBuildHeadAttribute: true,
+    }
+  },
   title: 'gbans',
   tagline: 'Game server management and community functions for Team Fortress 2',
   favicon: 'img/favicon.ico',
