@@ -1,79 +1,70 @@
 {{define "ban_success"}}
-    {{ if .Mute }}Mute{{ else }}Ban{{ end }} successful [View]({{ .Link }})
+{{ if .Mute }}Mute{{ else }}Ban{{ end }} successful [View]({{ .Link }})
 {{end}}
 
 {{define "check"}}
-    # {{ .Player.GetName }}
-    {{if gt .Ban.BanID 0 }}
-        ### {{if eq .Ban.BanType 2}}Ban{{ else }}Mute{{ end }} #{{ .Ban.BanID }}
-        Reason: **{{ .Ban.Reason.String }}**
-        Expires: **{{ .Ban.ValidUntil.Format "2006-01-02 15:04:05" }}**
-        Remaining: **123**
-        Evade Ok: {{ .Ban.EvadeOk }}
-        Author: {{ if ne .Author.GetDiscordID "" }}<@{{ .Author.GetDiscordID }}>{{else}}**{{ .Author.GetName }}**{{ end }}
-        Name: {{ .Ban.Name }}
-        Vac Bans: {{ .Player.VacBans }}
-        Game Bans: {{ .Player.GameBans }}
-        Notes: {{ .Ban.Note }}
-    {{else}}
-        No Ban Found!
-    {{ end }}
-    ### Ban History
-    {{- range .Old }}
-        - [#{{ .BanID }}]({{ linkPath . }}) {{ .Reason.String }} ({{ .CreatedOn.Format "2006-01-02" }})
-    {{- end}}
+SteamID: {{.Player.GetSteamIDString }}
+Name: {{ .Player.GetName }}
+Time Created: {{ .Player.GetTimeCreated.Format "2006-01-02" }}
+Vac Bans: {{ .Player.GetVACBans }}
+Game Bans: {{ .Player.GetGameBans }}
+
+Permissions: {{ .Player.Permissions.String }}
+
+{{if gt .Ban.BanID 0 }}
+### {{if eq .Ban.BanType 2}}Ban{{ else }}Mute{{ end }} #{{ .Ban.BanID }}
+Reason: **{{ .Ban.Reason.String }}**
+Expires: **{{ .Ban.ValidUntil.Format "2006-01-02 15:04:05" }}**
+Remaining: **123**
+Evade Ok: {{ .Ban.EvadeOk }}
+Author: {{ if ne .Author.GetDiscordID "" }}<@{{ .Author.GetDiscordID }}>{{else}}**{{ .Author.GetName }}**{{ end }}
+Name: {{ .Ban.Name }}
+
+Notes: {{ .Ban.Note }}
+{{else}}
+No Ban Found!
+{{ end }}
+### Ban History
+{{- range .Old }}
+- [#{{ .BanID }}]({{ linkPath . }}) {{ .Reason.String }} ({{ .CreatedOn.Format "2006-01-02" }})
+{{- end}}
 {{end}}
 
 {{define "report_stats"}}
-    # Current Open Report Counts
+# Current Open Report Counts
 
-    New: {{ .New }}
-    Total Open: {{ .TotalOpen }}
-    Total Closed: {{ .TotalClosed }}
-    Open >1 Day: {{ .Open1Day }}
-    Open >3 Days: {{ .Open3Days }}
-    Open >7 Days: {{ .Open1Week }}
-{{end}}
-
-{{define "report_message_edited"}}
-    # Report message edited
+New: {{ .New }}
+Total Open: {{ .TotalOpen }}
+Total Closed: {{ .TotalClosed }}
+Open >1 Day: {{ .Open1Day }}
+Open >3 Days: {{ .Open3Days }}
+Open >7 Days: {{ .Open1Week }}
 {{end}}
 
 {{define "report_message_deleted"}}
-    # User report message deleted
+# User report message deleted
 {{end}}
 
 {{define "ban_response"}}
-    # User {{ if eq .Ban.BanType 2 }}Muted{{else}}Ban{{end}} (#{{ .Ban.BanID}})
+# User {{ if eq .Ban.BanType 2 }}Banned{{else}}Muted{{end}} (#{{ .Ban.BanID}})
 
-    Name: {{ .Player.GetName }}
-    Steam ID: {{ .Ban.TargetID.String }}
-    Expires In: {{ .ExpIn }}
-    Expires At: {{ .ExpAt }}
-{{end}}
-
-{{define "unban_response"}}
-    # User Unbanned Successfully
+Name: **{{ .Player.GetName }}**
+Steam ID: **{{ .SteamID }}**
+Expires In: **{{ .ExpIn }}**
+Expires At: **{{ .ExpAt }}**
 {{end}}
 
 
 {{define "report_new"}}
-    # New User Report Created
-    Reason: **{{if .Report.ReasonText}}{{ .Report.ReasonText}}{{else}}{{.Report.Reason.String }}{{end}}**
-    Target: **[{{ .Report.Subject.GetName }}]({{ .Report.Subject.Link }})** Steam ID: **{{ .Report.Subject.SteamID.String }}**
-    Author: **[{{ .Report.Author.GetName }}]({{ .Report.Author.Link }})** Steam ID: **{{ .Report.Author.SteamID.String }}**
+Reason: **{{if .Report.ReasonText}}{{ .Report.ReasonText}}{{else}}{{.Report.Reason.String }}{{end}}**
+Target: **[{{ .Report.Subject.GetName }}]({{ .Report.Subject.Link }})** Steam ID: **{{ .Report.Subject.SteamID.String }}**
+Author: **[{{ .Report.Author.GetName }}]({{ .Report.Author.Link }})** Steam ID: **{{ .Report.Author.SteamID.String }}**
 {{end}}
 
 {{define "report_status_change"}}
-    # Report status changed
+# Report status changed
 {{end}}
 
 {{define "report_message_new"}}
-    # New report message posted
-    {{ .Message }}
-{{end}}
-
-{{define "appeal_message_deleted"}}
-    # Appeal message deleted
-    {{ .MessageMD }}
+{{ .Message }}
 {{end}}

@@ -243,7 +243,7 @@ func (w *WordFilters) Edit(ctx context.Context, user person.Info, filterID int64
 	w.Remove(filterID)
 	w.Add(existingFilter)
 
-	slog.Info("Filter updated", slog.Int64("filter_id", filterID))
+	slog.Info("filter updated", slog.Int64("filter_id", filterID))
 
 	return existingFilter, nil
 }

@@ -21,6 +21,7 @@ func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
 	}
 
 	return discord.NewMessage(
+		discord.Heading("New Report Created"),
 		discord.BodyText(content),
 		discordgo.Section{
 			Components: []discordgo.MessageComponent{
@@ -127,6 +128,7 @@ func NewReportMessageResponse(report ReportWithAuthor, msg ReportMessage) *disco
 	}
 
 	return discord.NewMessage(
+		discord.Heading("New Report Message Posted"),
 		discord.BodyText(content),
 		discord.Buttons(
 			discord.Button(discordgo.PrimaryButton, "💬 Reply", fmt.Sprintf("report_reply_button_resp_%d", report.ReportID)),

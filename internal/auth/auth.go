@@ -91,14 +91,14 @@ type Authentication struct {
 	auth      Repository
 	persons   *person.Persons
 	bans      ban.Bans
-	servers   servers.Servers
+	servers   *servers.Servers
 	sentryDSN string
 	siteName  string
 	cookieKey string
 }
 
 func NewAuthentication(repository Repository, siteName string, cookieKey string, persons *person.Persons,
-	bans ban.Bans, servers servers.Servers, sentryDSN string,
+	bans ban.Bans, servers *servers.Servers, sentryDSN string,
 ) *Authentication {
 	return &Authentication{
 		auth:      repository,

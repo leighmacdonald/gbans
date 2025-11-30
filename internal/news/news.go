@@ -57,10 +57,10 @@ func (u News) Save(ctx context.Context, entry *Article) error {
 	if entry.IsPublished {
 		if isNew {
 			go u.notifications.Send(notification.NewDiscord(u.logChannelID,
-				NewNewsMessage(entry.BodyMD, entry.Title)))
+				newNewsMessage(entry.BodyMD, entry.Title)))
 		} else {
 			go u.notifications.Send(notification.NewDiscord(u.logChannelID,
-				EditNewsMessages(entry.BodyMD, entry.Title)))
+				editNewsMessages(entry.BodyMD, entry.Title)))
 		}
 	}
 

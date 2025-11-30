@@ -23,10 +23,10 @@ var templateContent []byte
 
 type discordHandler struct {
 	sourcemod Sourcemod
-	servers   servers.Servers
+	servers   *servers.Servers
 }
 
-func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, servers servers.Servers) {
+func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, servers *servers.Servers) {
 	handler := discordHandler{sourcemod: sourcemod, servers: servers}
 
 	service.MustRegisterTemplate("sourcemod", templateContent)
@@ -324,7 +324,7 @@ func (h discordHandler) onSeed(ctx context.Context, session *discordgo.Session, 
 		return errServer
 	}
 
-	if !h.sourcemod.seedRequest(server, interaction.Member.User.ID) {
+	if !h.sourcemod.seedRequest(ctx, server, interaction.Member.User.ID) {
 		discord.Error(session, interaction, ErrReqTooSoon)
 
 		return nil

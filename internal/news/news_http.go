@@ -120,7 +120,7 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 
 		go h.notifications.Send(notification.NewDiscord(
 			h.logChannelID,
-			EditNewsMessages(entry.BodyMD, entry.Title)))
+			editNewsMessages(entry.BodyMD, entry.Title)))
 	}
 }
 

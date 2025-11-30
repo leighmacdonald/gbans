@@ -51,7 +51,7 @@ func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
 					{
 						Type:        discordgo.ApplicationCommandOptionInteger,
 						Name:        "filter",
-						Description: "Filter ID",
+						Description: "filter ID",
 						Required:    true,
 					},
 				},

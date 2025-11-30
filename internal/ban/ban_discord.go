@@ -157,17 +157,8 @@ func (h discordHandler) showBan(_ context.Context, session *discordgo.Session, i
 
 	var sidComp discordgo.MessageComponent
 	if sid == "" {
-		sidComp = discordgo.TextInput{
-			ID:          int(discord.IDSteamID),
-			CustomID:    "steamid",
-			Label:       "SteamID or Profile URL",
-			Style:       discordgo.TextInputShort,
-			Placeholder: "76561197960542812",
-			Required:    true,
-			MaxLength:   64,
-			MinLength:   0,
-			Value:       sid,
-		}
+		sidComp = discord.ModalInputRowRequired(discord.IDSteamID, "steamid",
+			"SteamID or Profile URL", "76561197960542812", sid, 0, 64)
 	} else {
 		sidComp = discordgo.TextDisplay{
 			Content: sid,
@@ -178,7 +169,7 @@ func (h discordHandler) showBan(_ context.Context, session *discordgo.Session, i
 		sidComp,
 		discord.SelectOption(discord.IDReason, "Reason", "reason", "Select a reason", minItems, 1, createBanOpts()),
 		discord.ModalInputRow(discord.IDCIDR, "cidr", "IP/CIDR Ban", "1.2.3.4/32, 100.100.100.0/24", "", 0, 20),
-		discord.SelectOption(discord.IDReason, "Duration", "duration", "Select a duration", minItems, 1, createDurationOpts()),
+		discord.SelectOption(discord.IDDuration, "Duration", "duration", "Select a duration", minItems, 1, createDurationOpts()),
 		discord.ModalInputRows(discord.IDNotes, "notes", "Notes", "", "", 0, 0),
 	)
 }
@@ -306,9 +297,9 @@ func (h discordHandler) onUnbanResponse(ctx context.Context, session *discordgo.
 		discord.BodyColouredText(discord.ColourSuccess, "Unban successful"))
 }
 
-type checkContext struct {
-	Author  person.Core
-	Player  person.Core
+type checkView struct {
+	Author  person.Info
+	Player  person.Info
 	SteamID string
 	Ban     Ban
 	Old     []Ban
@@ -339,7 +330,7 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 		}
 	}
 	var (
-		author    person.Core
+		author    person.Info
 		activeBan Ban
 		expired   []Ban
 	)
@@ -356,7 +347,7 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 		}
 	}
 
-	content, errContent := discord.Render("check", templateBody, checkContext{
+	content, errContent := discord.Render("check", templateBody, checkView{
 		Author:  author,
 		Player:  player,
 		Ban:     activeBan,
@@ -385,6 +376,7 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 	}
 
 	return discord.RespondUpdate(session, interaction,
+		discord.Heading("Player Check: %s", player.GetName()),
 		discord.BodyColour(
 			colour,
 			discordgo.MediaGallery{
@@ -400,18 +392,31 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 			discord.Link("🔧 Steam", "https://steamcommunity.com/profiles/"+player.SteamID.String()))...))
 }
 
-func UnbanMessage(person person.Info) *discordgo.MessageSend {
-	content, errContent := discord.Render("unban_response", templateBody, nil)
-	if errContent != nil {
-		return nil
-	}
-
+func unbanMessage(person person.Info, reason string) *discordgo.MessageSend {
 	return discord.NewMessage(
-		discord.BodyColouredText(discord.ColourSuccess, content),
+		discord.Heading("User Unbanned Successfully: %s", person.GetName()),
+		discord.BodyColour(discord.ColourSuccess, discordgo.MediaGallery{
+			Items: []discordgo.MediaGalleryItem{
+				{
+					Media: discordgo.UnfurledMediaItem{URL: person.GetAvatar().Full()},
+				},
+			},
+		},
+			discordgo.TextDisplay{Content: reason}),
 		discord.Buttons(discord.Link("🔗 Link", link.Path(person))))
 }
 
-func createBanResponse(ban Ban, player person.Core) *discordgo.MessageSend {
+type banResponseView struct {
+	Ban           Ban
+	Player        person.Info
+	Author        person.Info
+	SteamIDAuthor string
+	SteamID       string
+	ExpIn         string
+	ExpAt         string
+}
+
+func createBanResponse(ban Ban, author person.Info, player person.Info) *discordgo.MessageSend {
 	expIn := Permanent
 	expAt := Permanent
 	if ban.ValidUntil.Year()-time.Now().Year() < 5 {
@@ -419,18 +424,18 @@ func createBanResponse(ban Ban, player person.Core) *discordgo.MessageSend {
 		expAt = datetime.FmtTimeShort(ban.ValidUntil)
 	}
 
-	content, errContent := discord.Render("ban_response", templateBody, struct {
-		Ban    Ban
-		Player person.Core
-		ExpIn  string
-		ExpAt  string
-	}{
-		Ban:    ban,
-		Player: player,
-		ExpIn:  expIn,
-		ExpAt:  expAt,
+	content, errContent := discord.Render("ban_response", templateBody, banResponseView{
+		Ban:           ban,
+		Player:        player,
+		Author:        author,
+		SteamIDAuthor: author.GetSteamIDString(),
+		SteamID:       player.GetSteamIDString(),
+		ExpIn:         expIn,
+		ExpAt:         expAt,
 	})
 	if errContent != nil {
+		slog.Error("Failed to render ban body", slog.String("error", errContent.Error()))
+
 		return nil
 	}
 
@@ -441,7 +446,7 @@ func createBanResponse(ban Ban, player person.Core) *discordgo.MessageSend {
 			},
 			Accessory: discordgo.Thumbnail{
 				Media:       discordgo.UnfurledMediaItem{URL: player.GetAvatar().Full()},
-				Description: ptr.To(fmt.Sprintf("Profile Picure [%s]", player.Avatarhash)),
+				Description: ptr.To(fmt.Sprintf("Profile Picure [%s]", player.GetAvatar().Hash())),
 			},
 		}),
 		discord.Buttons(
@@ -451,30 +456,42 @@ func createBanResponse(ban Ban, player person.Core) *discordgo.MessageSend {
 			discord.Link("🌐 Steam", "https://steamcommunity.com/profiles/"+ban.TargetID.String())))
 }
 
-func DeleteReportMessage(existing ReportMessage, _ person.Info) *discordgo.MessageSend {
-	content, errContent := discord.Render("report_message_deleted", templateBody, nil)
+type deleteReportMessageView struct {
+	Existing ReportMessage
+	Person   person.Info
+}
+
+func DeleteReportMessage(existing ReportMessage, person person.Info) *discordgo.MessageSend {
+	content, errContent := discord.Render("report_message_deleted", templateBody, deleteReportMessageView{
+		Existing: existing,
+		Person:   person,
+	})
 	if errContent != nil {
 		return nil
 	}
 
 	return discord.NewMessage(
-		discord.BodyColour(
-			discord.ColourWarn,
-			discordgo.TextDisplay{Content: content},
-			discordgo.TextDisplay{Content: existing.MessageMD}),
+		discord.Heading("Report Message Deleted"),
+		discord.BodyColouredText(discord.ColourWarn, content),
+		discord.Buttons(discord.Link("🔎 View", link.Path(existing))),
 	)
 }
 
-func EditReportMessageResponse(body string, oldBody string, _ string, _ person.Info, _ string) *discordgo.MessageSend {
-	content, errContent := discord.Render("report_message_edited", templateBody, nil)
-	if errContent != nil {
-		return nil
-	}
-
+func EditReportMessageResponse(body string, oldBody string, link string, _ person.Info, _ string) *discordgo.MessageSend {
 	return discord.NewMessage(
-		discord.Body(discordgo.TextDisplay{Content: content}),
+		discord.Heading("Report Message Edited"),
 		discord.BodyColouredText(discord.ColourWarn, oldBody),
-		discord.BodyColouredText(discord.ColourSuccess, body))
+		discord.BodyColouredText(discord.ColourSuccess, body),
+		discord.Buttons(discord.Link("🔎 View", link)))
+}
+
+type reportStatsView struct {
+	New         int
+	TotalOpen   int
+	TotalClosed int
+	Open1Day    int
+	Open3Days   int
+	Open1Week   int
 }
 
 func ReportStatsMessage(meta ReportMeta, _ string) *discordgo.MessageSend {
@@ -485,14 +502,7 @@ func ReportStatsMessage(meta ReportMeta, _ string) *discordgo.MessageSend {
 		colour = discord.ColourWarn
 	}
 
-	body, errBody := discord.Render("report_stats", templateBody, struct {
-		New         int
-		TotalOpen   int
-		TotalClosed int
-		Open1Day    int
-		Open3Days   int
-		Open1Week   int
-	}{
+	body, errBody := discord.Render("report_stats", templateBody, reportStatsView{
 		New:         meta.Open1Day,
 		TotalOpen:   meta.TotalOpen,
 		TotalClosed: meta.TotalClosed,
@@ -504,5 +514,8 @@ func ReportStatsMessage(meta ReportMeta, _ string) *discordgo.MessageSend {
 		slog.Error("Failed to render report stats", slog.String("error", errBody.Error()))
 	}
 
-	return discord.NewMessage(discord.BodyColouredText(colour, body))
+	return discord.NewMessage(
+		discord.Heading("Report Stats"),
+		discord.BodyColouredText(colour, body),
+		discord.Buttons(discord.Link("Reports", link.Raw("/admin/reports"))))
 }

@@ -41,13 +41,21 @@ var ErrBind = errors.New("bind error")
 // of the type T. Fields are mapped with the `id` field tag which has a int value which corresponds
 // to a unique `Component.ID` for each user input field in the modal.
 func Bind[T any](ctx context.Context, components []discordgo.MessageComponent) (T, error) { //nolint:ireturn
-	return BindValues[T](ctx, mapInteractionValues(components))
+	values, errValues := mapInteractionValues(components)
+	if errValues != nil {
+		var value T
+
+		return value, errValues
+	}
+	return BindValues[T](ctx, values)
 }
 
 // mapInteractionValues is responsible for transforming the interaction values into a map indexed by the unique
 // input ID integer.
-func mapInteractionValues(components []discordgo.MessageComponent) map[int]string {
+func mapInteractionValues(components []discordgo.MessageComponent) (map[int]string, error) {
 	values := map[int]string{}
+	// e := buildModalValueMap(values, components...)
+	// return values, e
 
 	// Parse modal data into values map
 	for _, component := range components {
@@ -64,7 +72,7 @@ func mapInteractionValues(components []discordgo.MessageComponent) map[int]strin
 					if !ok {
 						slog.Error("Failed to cast to textinput")
 
-						return values
+						return values, nil
 					}
 					values[choice.ID] = choice.Value
 				}
@@ -84,7 +92,54 @@ func mapInteractionValues(components []discordgo.MessageComponent) map[int]strin
 		}
 	}
 
-	return values
+	return values, nil
+}
+
+// buildModalValueMap recursively finds all of the values of the components returned from a modal.
+func buildModalValueMap(results map[int]string, components ...discordgo.MessageComponent) error {
+	for _, component := range components {
+		switch component.Type() {
+		case discordgo.TextInputComponent:
+			choice, ok := component.(*discordgo.TextInput)
+			if !ok {
+				return fmt.Errorf("%w: Failed to cast to textinput", ErrBind)
+			}
+			results[choice.ID] = choice.Value
+		case discordgo.SelectMenuComponent:
+			selectMenu, castMenu := component.(*discordgo.SelectMenu)
+			if !castMenu {
+				return fmt.Errorf("%w: Failed to cast to SelectMenu", ErrBind)
+			}
+			if len(selectMenu.Values) > 0 {
+				results[selectMenu.ID] = selectMenu.Values[0]
+			}
+		case discordgo.SectionComponent:
+			section, castMenu := component.(*discordgo.Section)
+			if !castMenu {
+				return fmt.Errorf("%w: Failed to cast to Section", ErrBind)
+			}
+
+			return buildModalValueMap(results, section.Components...)
+		case discordgo.ContainerComponent:
+			container, castMenu := component.(*discordgo.Container)
+			if !castMenu {
+				return fmt.Errorf("%w: Failed to cast to Container", ErrBind)
+			}
+
+			return buildModalValueMap(results, container.Components...)
+		case discordgo.LabelComponent:
+			label, castMenu := component.(*discordgo.Label)
+			if !castMenu {
+				return fmt.Errorf("%w: Failed to cast to Label", ErrBind)
+			}
+
+			return buildModalValueMap(results, label.Component)
+		default:
+			continue
+		}
+	}
+
+	return nil
 }
 
 // BindValues handles mapping the input options into the T response type. It Uses reflection to populate struct fields

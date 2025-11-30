@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -80,7 +79,6 @@ type Chat struct {
 	wordFilters   WordFilters
 	persons       person.Provider
 	notifications notification.Notifier
-	state         *state.State
 	warningMu     *sync.RWMutex
 	dry           bool
 	maxWeight     int

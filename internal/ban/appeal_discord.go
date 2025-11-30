@@ -13,28 +13,22 @@ func (h discordHandler) onAppealReplySubmit(_ context.Context, _ *discordgo.Sess
 	return nil
 }
 
-func newAppealMessageResponse(msg AppealMessage, title string) *discordgo.MessageSend {
+func newAppealMessageResponse(msg AppealMessage) *discordgo.MessageSend {
 	return discord.NewMessage(
-		discord.Heading(title),
+		discord.Heading("Appeal Message Edited"),
 		discord.BodyText(msg.MessageMD),
 		discord.Buttons(
 			discord.Button(discordgo.PrimaryButton, "💬 Reply", fmt.Sprintf("appeal_reply_button_resp_%d", msg.BanID)),
 			discord.Button(discordgo.DangerButton, "❌️ Delete", fmt.Sprintf("appeal_delete_button_resp_%d", msg.BanMessageID)),
-			discord.Button(discordgo.SecondaryButton, "🚦 Status", fmt.Sprintf("appeal_status_button_resp_%d", msg.BanID)),
+			// discord.Button(discordgo.SecondaryButton, "🚦 Status", fmt.Sprintf("appeal_status_button_resp_%d", msg.BanID)),
 			discord.Link("🔎 View", link.Path(msg)),
 		))
 }
 
 func newAppealMessageDelete(msg AppealMessage) *discordgo.MessageSend {
-	content, errContent := discord.Render("appeal_message_deleted", templateBody, struct {
-		Msg AppealMessage
-	}{Msg: msg})
-	if errContent != nil {
-		return nil
-	}
-
 	return discord.NewMessage(
-		discord.BodyColouredText(discord.ColourError, content),
+		discord.Heading("Appeal Message Deleted"),
+		discord.BodyColouredText(discord.ColourError, msg.MessageMD),
 		discord.Buttons(discord.Link("🔎 View", link.Path(msg))),
 	)
 }

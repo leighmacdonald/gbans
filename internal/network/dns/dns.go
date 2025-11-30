@@ -12,7 +12,6 @@ import (
 	"github.com/cloudflare/cloudflare-go/v4/option"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/gbans/internal/servers/state"
 )
 
 var (
@@ -28,7 +27,7 @@ type Provider interface {
 }
 
 type StateProvider interface {
-	Current() []state.ServerState
+	Current() []servers.State
 }
 
 type ServerProvider interface {
@@ -56,7 +55,7 @@ type hostState struct {
 type ChangeDetector struct {
 	provider     Provider
 	state        StateProvider
-	currentState []state.ServerState
+	currentState []servers.State
 	servers      ServerProvider
 	current      map[int]hostState
 	started      bool

@@ -11,12 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewServerAuth(servers Servers, sentryDSN string) *ServerAuth {
+func NewServerAuth(servers *Servers, sentryDSN string) *ServerAuth {
 	return &ServerAuth{servers: servers, sentryDSN: sentryDSN}
 }
 
 type ServerAuth struct {
-	servers   Servers
+	servers   *Servers
 	sentryDSN string
 }
 

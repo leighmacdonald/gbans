@@ -1,6 +1,6 @@
 {
-  "name": "gbans",
-  "version": "0.0.0",
+  "name": "gbans-docs",
+  "version": "v0.7.33",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@docusaurus/core": "3.9.2",
+    "@docusaurus/faster": "^3.9.2",
     "@docusaurus/preset-classic": "3.9.2",
     "@docusaurus/theme-classic": "^3.9.2",
     "@mdx-js/react": "^3.1.1",
