@@ -13,6 +13,15 @@ import (
 //go:embed vote_discord.tmpl
 var templateBody []byte
 
+type voteResultView struct {
+	SourceID   string
+	TargetName string
+	TargetSID  string
+	Code       logparse.VoteCode
+	Success    bool
+	Server     int
+}
+
 func VoteResultMessage(result Result, _ person.Core, target person.Core) *discordgo.MessageSend {
 	var colour int
 	if result.Success {
@@ -21,14 +30,7 @@ func VoteResultMessage(result Result, _ person.Core, target person.Core) *discor
 		colour = discord.ColourWarn
 	}
 
-	body, errBody := discord.Render("vote_result", templateBody, struct {
-		SourceID   string
-		TargetName string
-		TargetSID  string
-		Code       logparse.VoteCode
-		Success    bool
-		Server     int
-	}{
+	body, errBody := discord.Render("vote_result", templateBody, voteResultView{
 		SourceID:   result.SourceID.String(),
 		TargetName: target.GetName(),
 		TargetSID:  result.TargetID.String(),

@@ -41,7 +41,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
@@ -85,10 +84,9 @@ type GBans struct {
 	persons        *person.Persons
 	playerQueue    *playerqueue.Playerqueue
 	reports        ban.Reports
-	servers        servers.Servers
+	servers        *servers.Servers
 	speedruns      servers.Speedruns
 	sourcemod      sourcemod.Sourcemod
-	states         *state.State
 	staticConfig   config.Static
 	tfapiClient    thirdparty.APIProvider
 	votes          votes.Votes
@@ -181,13 +179,16 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 
 	g.assets = asset.NewAssets(assetRepo)
-	g.servers = servers.NewServers(servers.NewRepository(g.database))
+
+	var errServer error
+	if g.servers, errServer = servers.NewServers(servers.NewRepository(g.database), g.broadcaster, ""); errServer != nil {
+		return errServer
+	}
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, conf.Demo, steamid.New(conf.Owner))
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
 		conf.Discord.LogChannelID, conf.Discord.SafeAppealLogChannelID())
-	g.states = state.NewState(g.broadcaster, state.NewCollector(g.serverFetcher), conf.General.SrcdsLogAddr, g.serverFetcher)
 	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.SafeBanLogChannelID(),
-		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.states)
+		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database),
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
@@ -195,7 +196,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.NewMetrics(g.broadcaster)
 	g.news = news.NewNews(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
-	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), g.states)
+	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), g.servers)
 	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID(), conf.Discord.LogChannelID)
 	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan, g.persons)
 	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications,
@@ -208,7 +209,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
 		ban.RegisterDiscordCommands(g.bot, g.bans, g.persons, g.persons)
 		chat.RegisterDiscordCommands(g.bot, g.wordFilters)
-		servers.RegisterDiscordCommands(g.bot, g.states, g.persons, g.servers, g.networks)
+		servers.RegisterDiscordCommands(g.bot, g.persons, g.servers, g.networks)
 		sourcemod.RegisterDiscordCommands(g.bot, g.sourcemod, g.servers)
 	}
 
@@ -300,9 +301,10 @@ func (g *GBans) chatHandler(ctx context.Context, exceeded bool, newWarning chat.
 	if !exceeded {
 		const msg = "[WARN] Please refrain from using slurs/toxicity (see: rules & MOTD). " +
 			"Further offenses will result in mutes/bans"
-
-		if errPSay := g.states.PSay(ctx, newWarning.UserMessage.SteamID, msg); errPSay != nil {
-			return errPSay
+		if result, found := g.servers.FindPlayer(servers.FindOpts{SteamID: newWarning.UserMessage.SteamID}); found {
+			if errPSay := result.Server.Say(ctx, servers.PSay, msg, newWarning.UserMessage.SteamID); errPSay != nil {
+				return errPSay
+			}
 		}
 
 		return nil
@@ -346,34 +348,6 @@ func (g *GBans) createAPIClient() (thirdparty.APIProvider, error) { //noling:ire
 	return tfapiClient, nil
 }
 
-func (g *GBans) serverFetcher(ctx context.Context) ([]state.ServerConfig, error) {
-	knownServers, errServers := g.servers.Servers(ctx, servers.Query{})
-	if errServers != nil {
-		return nil, errServers
-	}
-
-	configs := make([]state.ServerConfig, len(knownServers))
-	for index, server := range knownServers {
-		configs[index] = state.ServerConfig{
-			ServerID:        server.ServerID,
-			Tag:             server.ShortName,
-			DefaultHostname: server.Name,
-			Host:            server.Address,
-			Port:            server.Port,
-			Enabled:         server.IsEnabled,
-			RconPassword:    server.RCON,
-			ReservedSlots:   server.ReservedSlots,
-			CC:              server.CC,
-			Region:          server.Region,
-			Latitude:        server.Latitude,
-			Longitude:       server.Longitude,
-			LogSecret:       server.LogSecret,
-		}
-	}
-
-	return configs, nil
-}
-
 func (g *GBans) mustCreateBot(conf discord.Config) discord.Service { //nolint:ireturn
 	if conf.BotEnabled {
 		discordBot, errDiscord := discord.New(discord.Opts{
@@ -407,7 +381,7 @@ func (g *GBans) setupPlayerQueue(ctx context.Context) {
 		slog.Error("Failed to warm playerqueue chatlogs", slog.String("error", errChatlogs.Error()))
 		chatlogs = []playerqueue.ChatLog{}
 	}
-	g.playerQueue = playerqueue.NewPlayerqueue(ctx, playerQueueRepo, g.persons, g.servers, g.states, chatlogs, g.config.Config().Discord.PlayerqueueChannelID, g.notifications)
+	g.playerQueue = playerqueue.NewPlayerqueue(ctx, playerQueueRepo, g.persons, g.servers, chatlogs, g.config.Config().Discord.PlayerqueueChannelID, g.notifications)
 }
 
 func (g *GBans) setupSentry() {
@@ -428,7 +402,9 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	conf := g.config.Config()
 
 	if conf.Debug.AddRCONLogAddress != "" {
-		go g.states.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+		g.servers.Each(func(server *servers.Server) error {
+			return server.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+		})
 	}
 
 	go g.chat.Start(ctx, g.broadcaster)
@@ -442,7 +418,7 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go downloadManager(ctx, time.Minute*5, g.database, conf.SSH, g.demos, g.anticheat)
 
 	go func() {
-		if err := g.states.Start(ctx); err != nil {
+		if err := g.servers.Start(ctx, servers.DefaultStatusUpdateFreq); err != nil {
 			slog.Error("Failed to start state tracker", slog.String("error", err.Error()))
 		}
 	}()
@@ -545,7 +521,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	person.NewPersonHandler(router, userAuth, g.persons)
 	playerqueue.NewPlayerqueueHandler(router, userAuth, g.playerQueue)
 	servers.NewDemoHandler(router, userAuth, g.demos)
-	servers.NewServersHandler(router, userAuth, g.servers, g.states)
+	servers.NewServersHandler(router, userAuth, g.servers)
 	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)
 	sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod, g.servers, g.notifications)
 	votes.NewVotesHandler(router, userAuth, g.votes)
@@ -585,7 +561,9 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 func (g *GBans) Shutdown(ctx context.Context) error {
 	conf := g.config.Config()
 	if conf.Debug.AddRCONLogAddress != "" {
-		g.states.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
+		g.servers.Each(func(server *servers.Server) error {
+			return server.LogAddressDel(ctx, conf.Debug.AddRCONLogAddress)
+		})
 	}
 
 	if g.bot != nil {
@@ -657,7 +635,6 @@ func (g *GBans) firstTimeSetup(ctx context.Context) error {
 
 func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) error {
 	var dur *duration.Duration
-
 	if warning.MatchedFilter.Action == chat.FilterActionBan || warning.MatchedFilter.Action == chat.FilterActionMute {
 		parsedDur, errDur := duration.Parse(warning.MatchedFilter.Duration)
 		if errDur != nil {
@@ -689,7 +666,9 @@ func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) erro
 		// missing players who weren't in the latest state update
 		// (otherwise, kicking players very shortly after they connect
 		// will usually fail).
-		errBan = g.states.KickPlayerID(ctx, warning.PlayerID, warning.ServerID, warning.WarnReason.String())
+		if result, found := g.servers.FindPlayer(servers.FindOpts{SteamID: warning.UserMessage.SteamID}); found {
+			errBan = result.Server.Kick(ctx, result.Player.SID, warning.WarnReason.String())
+		}
 	}
 
 	if errBan != nil {
@@ -747,7 +726,7 @@ func (g *GBans) onAnticheatBan(ctx context.Context, entry logparse.StacEntry, du
 }
 
 func (g *GBans) healthCheck(ctx *gin.Context) {
-	serverStates := g.states.Current()
+	serverStates := g.servers.Current()
 	if len(serverStates) > 0 {
 		for _, server := range serverStates {
 			if server.MaxPlayers > 0 {

@@ -22,7 +22,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -148,13 +147,13 @@ type ConfigEntry struct {
 	CfgValue string `json:"cfg_value"`
 }
 
-func New(repository Repository, person person.Provider, notifier notification.Notifier, seedChannelID string, state *state.State) Sourcemod {
+func New(repository Repository, person person.Provider, notifier notification.Notifier, seedChannelID string, servers *servers.Servers) Sourcemod {
 	return Sourcemod{
 		seedChannelID: seedChannelID,
 		repository:    repository,
 		person:        person,
 		notifier:      notifier,
-		state:         state,
+		servers:       servers,
 		seedQueue: &SeedQueue{
 			minTime: time.Second * 300,
 			servers: make(map[int]seedRequest),
@@ -169,15 +168,15 @@ type Sourcemod struct {
 	person        person.Provider
 	seedQueue     *SeedQueue
 	notifier      notification.Notifier
-	state         *state.State
+	servers       *servers.Servers
 }
 
-func (h Sourcemod) seedRequest(server servers.Server, userID string) bool {
+func (h Sourcemod) seedRequest(ctx context.Context, server servers.Server, userID string) bool {
 	if !h.seedQueue.Allowed(server.ServerID, userID) {
 		return false
 	}
 
-	curState, _ := h.state.ByServerID(server.ServerID)
+	_, _ = h.servers.Server(ctx, server.ServerID)
 	if len(server.DiscordSeedRoleIDs) > 0 {
 		content, errContent := discord.Render("seed_req", templateContent, struct {
 			Name    string
@@ -186,7 +185,7 @@ func (h Sourcemod) seedRequest(server servers.Server, userID string) bool {
 			Link    string
 			CC      string
 			Roles   []string
-			State   state.ServerState
+			State   servers.State
 		}{
 			Name:    server.Name,
 			Short:   server.ShortName,
@@ -194,7 +193,7 @@ func (h Sourcemod) seedRequest(server servers.Server, userID string) bool {
 			Connect: server.Addr(),
 			Link:    server.Connect(),
 			Roles:   server.DiscordSeedRoleIDs,
-			State:   curState,
+			// State:   curState.S, TODO
 		})
 
 		if errContent != nil {

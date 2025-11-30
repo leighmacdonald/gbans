@@ -137,9 +137,7 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.Info, banMe
 	}
 
 	if u.notif != nil {
-		content := `# Appeal message edited
-` + newMsg
-		go u.notif.Send(notification.NewDiscord(u.logChannelID, newAppealMessageResponse(existing, content)))
+		go u.notif.Send(notification.NewDiscord(u.logChannelID, newAppealMessageResponse(existing)))
 	}
 
 	slog.Debug("Appeal message updated", slog.Int64("message_id", banMessageID))
@@ -198,8 +196,7 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, ban
 		return AppealMessage{}, errUpdate
 	}
 
-	go u.notif.Send(notification.NewDiscord(u.logChannelID, newAppealMessageResponse(msg, `# New report message posted
-`+msg.MessageMD)))
+	go u.notif.Send(notification.NewDiscord(u.logChannelID, newAppealMessageResponse(msg)))
 
 	go u.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},

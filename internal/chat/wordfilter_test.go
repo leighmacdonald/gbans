@@ -6,7 +6,7 @@ package chat_test
 // 	creds := loginUser(moderator)
 
 // 	// Shouldn't be filters already
-// 	var filters []chat.Filter
+// 	var filters []chat.filter
 // 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/filters", nil, http.StatusOK, &authTokens{user: creds}, &filters)
 // 	require.Empty(t, filters)
 
@@ -14,7 +14,7 @@ package chat_test
 // 	req, errReq := chat.NewFilter(moderator.SteamID, "test", true, chat.FilterActionMute, "1d", 1)
 // 	require.NoError(t, errReq)
 
-// 	var created chat.Filter
+// 	var created chat.filter
 // 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filters", req, http.StatusOK, &authTokens{user: creds}, &created)
 // 	require.Positive(t, created.FilterID)
 
@@ -27,7 +27,7 @@ package chat_test
 // 	edit.Pattern = "blah"
 // 	edit.IsRegex = false
 
-// 	var edited chat.Filter
+// 	var edited chat.filter
 // 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/filters/%d", edit.FilterID), edit, http.StatusOK, &authTokens{user: creds}, &edited)
 // 	require.Equal(t, edit.FilterID, edited.FilterID)
 // 	require.Equal(t, edit.AuthorID, edited.AuthorID)
@@ -41,7 +41,7 @@ package chat_test
 // 	require.NotEqual(t, edit.UpdatedOn, edited.UpdatedOn)
 
 // 	// Match it
-// 	var matched []chat.Filter
+// 	var matched []chat.filter
 // 	testEndpointWithReceiver(t, router, http.MethodPost, "/api/filter_match", httphelper.RequestQuery{Query: edited.Pattern}, http.StatusOK, &authTokens{user: creds}, &matched)
 // 	require.NotEmpty(t, matched)
 // 	require.Equal(t, matched[0].FilterID, edited.FilterID)

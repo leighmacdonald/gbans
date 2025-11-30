@@ -11,12 +11,14 @@ import (
 //go:embed forum_discord.tmpl
 var templateBody []byte
 
+type catSaveView struct {
+	Category    string
+	ID          int
+	Description string
+}
+
 func discordCategorySave(category Category) *discordgo.MessageSend {
-	content, err := discord.Render("forum_cat_save", templateBody, struct {
-		Category    string
-		ID          int
-		Description string
-	}{
+	content, err := discord.Render("forum_cat_save", templateBody, catSaveView{
 		Category:    category.Title,
 		ID:          category.ForumCategoryID,
 		Description: category.Description,
@@ -29,11 +31,7 @@ func discordCategorySave(category Category) *discordgo.MessageSend {
 }
 
 func discordCategoryDelete(category Category) *discordgo.MessageSend {
-	content, err := discord.Render("forum_cat_deleted", templateBody, struct {
-		Category    string
-		ID          int
-		Description string
-	}{
+	content, err := discord.Render("forum_cat_deleted", templateBody, catSaveView{
 		Category:    category.Title,
 		ID:          category.ForumCategoryID,
 		Description: category.Description,
@@ -45,11 +43,13 @@ func discordCategoryDelete(category Category) *discordgo.MessageSend {
 	return discord.NewMessage(discord.BodyColouredText(discord.ColourError, content))
 }
 
+type messageSaveView struct {
+	Category string
+	Body     string
+}
+
 func discordForumMessageSaved(forumMessage Message) *discordgo.MessageSend {
-	content, err := discord.Render("forum_message_created", templateBody, struct {
-		Category string
-		Body     string
-	}{
+	content, err := discord.Render("forum_message_created", templateBody, messageSaveView{
 		Category: forumMessage.Title,
 		Body:     forumMessage.BodyMD,
 	})
@@ -60,11 +60,13 @@ func discordForumMessageSaved(forumMessage Message) *discordgo.MessageSend {
 	return discord.NewMessage(discord.BodyColouredText(discord.ColourSuccess, content))
 }
 
+type forumSaveView struct {
+	Forum       string
+	Description string
+}
+
 func discordForumSaved(forumMessage Forum) *discordgo.MessageSend {
-	content, err := discord.Render("forum_forum_saved", templateBody, struct {
-		Forum       string
-		Description string
-	}{
+	content, err := discord.Render("forum_forum_saved", templateBody, forumSaveView{
 		Forum:       forumMessage.Title,
 		Description: forumMessage.Description,
 	})

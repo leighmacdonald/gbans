@@ -1,6 +1,7 @@
 {
     "name": "gbans",
     "version": "v0.7.33",
+    "private": true,
     "description": "gbans",
     "repository": "github.com/leighmacdonald/gbans",
     "author": "Leigh MacDonald",

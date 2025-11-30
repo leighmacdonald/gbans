@@ -16,17 +16,14 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/ptr"
-	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 //go:embed servers_discord.tmpl
 var templateBody []byte
 
-func RegisterDiscordCommands(service discord.Service, state *state.State,
-	persons person.Provider, servers Servers, network network.Networks,
-) {
-	handler := DiscordHandler{state: state, persons: persons, servers: servers, network: network}
+func RegisterDiscordCommands(service discord.Service, persons person.Provider, servers *Servers, network network.Networks) {
+	handler := DiscordHandler{persons: persons, servers: servers, network: network}
 
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "find",
@@ -159,9 +156,8 @@ func RegisterDiscordCommands(service discord.Service, state *state.State,
 }
 
 type DiscordHandler struct {
-	state   *state.State
 	persons person.Provider
-	servers Servers
+	servers *Servers
 	network network.Networks
 }
 
@@ -174,56 +170,36 @@ func (d DiscordHandler) onFind(ctx context.Context, session *discordgo.Session, 
 		return steamid.ErrDecodeSID
 	}
 
-	players := d.state.Find(state.FindOpts{SteamID: steamID})
-	if len(players) == 0 {
+	results := d.servers.FindPlayers(FindOpts{SteamID: steamID})
+	if len(results) == 0 {
 		return steamid.ErrDecodeSID
 	}
 
-	found := make([]discordFoundPlayer, len(players))
-
-	for index, player := range players {
-		server, errServer := d.servers.Server(ctx, player.ServerID)
-		if errServer != nil {
-			return errors.Join(errServer, ErrGetServer)
-		}
-
-		_, errPerson := d.persons.GetOrCreatePersonBySteamID(ctx, player.Player.SID)
-		if errPerson != nil {
-			return errPerson
-		}
-
-		found[index] = discordFoundPlayer{Player: player, Server: server}
-	}
-
-	return discord.RespondUpdate(session, interation, discordFindMessage(found)...)
+	return discord.RespondUpdate(session, interation, discordFindMessage(results)...)
 }
 
 func (d DiscordHandler) onKick(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
-	// reason = ban.Reason(opts[discord.OptBanReason].IntValue())
-
 	target, errTarget := steamid.Resolve(ctx, opts[discord.OptUserIdentifier].StringValue())
 	if errTarget != nil || !target.Valid() {
 		return steamid.ErrDecodeSID
 	}
 
-	players := d.state.Find(state.FindOpts{SteamID: target})
-
-	if len(players) == 0 {
-		return state.ErrPlayerNotFound
+	results := d.servers.FindPlayers(FindOpts{SteamID: target})
+	if len(results) == 0 {
+		return ErrPlayerNotFound
 	}
 
 	var err error
-
-	for _, player := range players {
-		if errKick := d.state.Kick(ctx, player.Player.SID, ""); errKick != nil {
+	for _, result := range results {
+		if errKick := result.Server.Kick(ctx, result.Player.SID, "No reason set"); errKick != nil {
 			err = errors.Join(err, errKick)
 
 			continue
 		}
 	}
 
-	return discord.Respond(session, interaction, discordKickMessage(players)...)
+	return discord.Respond(session, interaction, discordKickMessage(results)...)
 }
 
 func (d DiscordHandler) onSay(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -233,10 +209,10 @@ func (d DiscordHandler) onSay(ctx context.Context, session *discordgo.Session, i
 
 	server, err := d.servers.GetByName(ctx, serverName)
 	if err != nil {
-		return state.ErrUnknownServer
+		return ErrUnknownServer
 	}
 
-	if errSay := d.state.Say(ctx, server.ServerID, msg); errSay != nil {
+	if _, errSay := server.Exec(ctx, "", msg); errSay != nil {
 		return discord.ErrCommandFailed
 	}
 
@@ -252,14 +228,14 @@ func (d DiscordHandler) onCSay(ctx context.Context, session *discordgo.Session, 
 
 	server, err := d.servers.GetByName(ctx, serverName)
 	if err != nil {
-		return state.ErrUnknownServer
+		return ErrUnknownServer
 	}
 
 	if len(msg) == 0 {
 		return discord.ErrCommandFailed
 	}
 
-	if errCSay := d.state.CSay(ctx, server.ServerID, msg); errCSay != nil {
+	if errCSay := server.Say(ctx, CSay, msg); errCSay != nil {
 		return discord.ErrCommandFailed
 	}
 
@@ -277,15 +253,22 @@ func (d DiscordHandler) onPSay(ctx context.Context, session *discordgo.Session, 
 		return errors.Join(errPlayerSid, steamid.ErrDecodeSID)
 	}
 
-	if errPSay := d.state.PSay(ctx, playerSid, msg); errPSay != nil {
+	results := d.servers.FindPlayers(FindOpts{SteamID: playerSid})
+	if len(results) == 0 {
 		return discord.ErrCommandFailed
+	}
+
+	for _, result := range results {
+		if errPSay := result.Server.Say(ctx, PSay, msg, playerSid); errPSay != nil {
+			return discord.ErrCommandFailed
+		}
 	}
 
 	return discord.Respond(session, interaction, discordPSayMessage(playerSid, msg)...)
 }
 
 func (d DiscordHandler) onServers(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
-	return discord.Respond(session, interaction, discordServersMessage(d.state.SortRegion())...)
+	return discord.Respond(session, interaction, discordServersMessage(d.servers.servers.sortRegion())...)
 }
 
 func (d DiscordHandler) onPlayers(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -295,22 +278,19 @@ func (d DiscordHandler) onPlayers(ctx context.Context, session *discordgo.Sessio
 
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
 	serverName := opts["server_name"].StringValue()
-	serverStates := d.state.ByName(serverName, false)
-
-	if len(serverStates) != 1 {
-		return state.ErrUnknownServer
+	server, errServers := d.servers.GetByName(ctx, serverName)
+	if errServers != nil {
+		return errServers
 	}
-
-	serverState := serverStates[0]
 
 	var rows []string
 
-	if len(serverState.Players) > 0 {
-		sort.SliceStable(serverState.Players, func(i, j int) bool {
-			return serverState.Players[i].Name < serverState.Players[j].Name
+	if len(server.state.Players) > 0 {
+		sort.SliceStable(server.state.Players, func(i, j int) bool {
+			return server.state.Players[i].Name < server.state.Players[j].Name
 		})
 
-		for _, player := range serverState.Players {
+		for _, player := range server.state.Players {
 			address, errIP := netip.ParseAddr(player.IP.String())
 			if errIP != nil {
 				slog.Error("Failed to parse player ip", slog.String("error", errIP.Error()))
@@ -340,17 +320,12 @@ func (d DiscordHandler) onPlayers(ctx context.Context, session *discordgo.Sessio
 		}
 	}
 
-	return discord.RespondUpdate(session, interaction, discordPlayersMessage(rows, serverState.MaxPlayers, serverState.Name)...)
+	return discord.RespondUpdate(session, interaction, discordPlayersMessage(rows, server.state.MaxPlayers, server.Name)...)
 }
 
-type discordFoundPlayer struct {
-	Player state.PlayerServerInfo
-	Server Server
-}
-
-func discordFindMessage(found []discordFoundPlayer) []discordgo.MessageComponent {
+func discordFindMessage(found []FindResult) []discordgo.MessageComponent {
 	content, err := discord.Render("find", templateBody, struct {
-		Found []discordFoundPlayer
+		Found []FindResult
 	}{Found: found})
 	if err != nil {
 		slog.Error("Failed to render player find", slog.String("error", err.Error()))
@@ -430,7 +405,7 @@ func mapRegion(region string) string {
 	}
 }
 
-func discordServersMessage(currentStateRegion map[string][]state.ServerState) []discordgo.MessageComponent {
+func discordServersMessage(currentStateRegion map[string][]*Server) []discordgo.MessageComponent {
 	var ( //nolint:prealloc
 		stats       = map[string]float64{}
 		used, total = 0, 0
@@ -448,26 +423,22 @@ func discordServersMessage(currentStateRegion map[string][]state.ServerState) []
 		var counts []string
 
 		for _, curState := range currentStateRegion[region] {
-			if !curState.Enabled {
-				continue
-			}
-
 			_, ok := stats[region]
 			if !ok {
 				stats[region] = 0
 				stats[region+"total"] = 0
 			}
 
-			maxPlayers := curState.MaxPlayers - curState.ReservedSlots
+			maxPlayers := curState.state.MaxPlayers - curState.ReservedSlots
 			if maxPlayers <= 0 {
 				maxPlayers = 32 - curState.ReservedSlots
 			}
 
-			stats[region] += float64(curState.PlayerCount)
+			stats[region] += float64(curState.state.PlayerCount)
 			stats[region+"total"] += float64(maxPlayers)
-			used += curState.PlayerCount
+			used += curState.state.PlayerCount
 			total += maxPlayers
-			counts = append(counts, fmt.Sprintf("%s:   %2d/%2d  ", curState.NameShort, curState.PlayerCount, maxPlayers))
+			counts = append(counts, fmt.Sprintf("%s:   %2d/%2d  ", curState.ShortName, curState.state.PlayerCount, maxPlayers))
 		}
 
 		msg := strings.Join(counts, "    ")
@@ -518,9 +489,9 @@ func discordPlayersMessage(rows []string, maxPlayers int, serverName string) []d
 	return []discordgo.MessageComponent{discord.BodyText(content)}
 }
 
-func discordKickMessage(players []state.PlayerServerInfo) []discordgo.MessageComponent {
+func discordKickMessage(players []FindResult) []discordgo.MessageComponent {
 	content, err := discord.Render("user_kick", templateBody, struct {
-		Players []state.PlayerServerInfo
+		Players []FindResult
 	}{
 		Players: players,
 	})

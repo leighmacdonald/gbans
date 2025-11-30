@@ -5,22 +5,39 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"net"
+	"sort"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/stringutil"
+	"github.com/leighmacdonald/gbans/pkg/broadcaster"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 var (
-	ErrUnknownServer = errors.New("unknown server")
-	ErrGetServer     = errors.New("failed to get server")
+	ErrGetServer         = errors.New("failed to get server")
+	ErrExecRCON          = errors.New("failed to execute rcon command")
+	ErrResolveIP         = errors.New("failed to resolve address")
+	ErrUpdateFreq        = errors.New("update freq must be >= 5s")
+	ErrStatusParse       = errors.New("failed to parse status response")
+	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
+	ErrMaxPlayerParse    = errors.New("failed to parse sv_visiblemaxplayers response")
+	ErrDNSResolve        = errors.New("failed to resolve server dns")
 )
+
+const (
+	maxPlayersSupported     = 101
+	DefaultStatusUpdateFreq = time.Second * 20
+)
+
+type ServerFunc func(server *Server) error
 
 type Query struct {
 	ServerID        int    `query:"server_id"`
@@ -44,117 +61,178 @@ type ServerPermission struct {
 	Flags           string               `json:"flags"`
 }
 
-func NewServer(shortName string, address string, port uint16) Server {
-	return Server{
-		ShortName:          shortName,
-		Address:            address,
-		Port:               port,
-		RCON:               stringutil.SecureRandomString(10),
-		ReservedSlots:      0,
-		Password:           stringutil.SecureRandomString(10),
-		IsEnabled:          true,
-		EnableStats:        true,
-		TokenCreatedOn:     time.Unix(0, 0),
-		CreatedOn:          time.Now(),
-		UpdatedOn:          time.Now(),
-		DiscordSeedRoleIDs: []string{},
-	}
-}
-
-type Server struct {
-	// Auto generated id
-	ServerID int `json:"server_id"`
-	// ShortName is a short reference name for the server eg: us-1
-	// This is used as a unique identifier for servers and is used for many different things such as paths,
-	// so it's best to keep it short and without whitespace.
-	ShortName string `json:"short_name"`
-	Name      string `json:"name"`
-	// Address is the ip of the server
-	Address string `json:"address"`
-	// Internal/VPN network. When defined it's used for things like pulling demos over ssh.
-	AddressInternal string `json:"address_internal"`
-	SDREnabled      bool   `json:"sdr_enabled"`
-	// Port is the port of the server
-	Port uint16 `json:"port"`
-	// RCON is the RCON password for the server
-	RCON          string `json:"rcon"`
-	ReservedSlots int    `json:"reserved_slots"`
-	// Password is what the server uses to generate a token to make authenticated calls (permanent Refresh token)
-	Password    string  `json:"password"`
-	IsEnabled   bool    `json:"is_enabled"`
-	Deleted     bool    `json:"deleted"`
-	Region      string  `json:"region"`
-	CC          string  `json:"cc"`
-	Latitude    float64 `json:"latitude"`
-	Longitude   float64 `json:"longitude"`
-	LogSecret   int     `json:"log_secret"`
-	EnableStats bool    `json:"enable_stats"`
-	// TokenCreatedOn is set when changing the token
-	TokenCreatedOn     time.Time `json:"token_created_on"`
-	CreatedOn          time.Time `json:"created_on"`
-	UpdatedOn          time.Time `json:"updated_on"`
-	DiscordSeedRoleIDs []string  `json:"discord_seed_role_ids"` //nolint:tagliatelle
-}
-
-func (s Server) Addr() string {
-	return fmt.Sprintf("%s:%d", s.Address, s.Port)
-}
-
-func (s Server) AddrInternalOrDefault() string {
-	if s.AddressInternal != "" {
-		return s.AddressInternal
+func NewServers(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent], logAddr string) (*Servers, error) {
+	logSrc, errLogSrc := logparse.NewListener(logAddr,
+		func(_ logparse.EventType, event logparse.ServerEvent) {
+			broadcaster.Emit(event.EventType, event)
+		})
+	if errLogSrc != nil {
+		return nil, errLogSrc
 	}
 
-	return s.Address
-}
-
-func (s Server) Slots(statusSlots int) int {
-	return statusSlots - s.ReservedSlots
-}
-
-func (s Server) Connect() string {
-	return link.Raw(fmt.Sprintf("/connect/%d", s.ServerID))
-}
-
-func (s Server) SteamLink() string {
-	ipAddr, err := net.ResolveIPAddr("ip4", s.Address)
-	if err != nil {
-		slog.Error("Failed to resolve ip4", slog.String("error", err.Error()))
-
-		return fmt.Sprintf("steam://run/440//+connect %s:%d", s.Address, s.Port)
-	}
-
-	return fmt.Sprintf("steam://run/440//+connect %s:%d", ipAddr.String(), s.Port)
-}
-
-// SafeServer provides a server struct stripped of any sensitive info suitable for public-facing
-// services.
-type SafeServer struct {
-	ServerID   int      `json:"server_id"`
-	Host       string   `json:"host"`
-	Port       uint16   `json:"port"`
-	IP         string   `json:"ip"`
-	Name       string   `json:"name"`
-	NameShort  string   `json:"name_short"`
-	Region     string   `json:"region"`
-	CC         string   `json:"cc"`
-	Players    int      `json:"players"`
-	MaxPlayers int      `json:"max_players"`
-	Bots       int      `json:"bots"`
-	Map        string   `json:"map"`
-	GameTypes  []string `json:"game_types"`
-	Latitude   float64  `json:"latitude"`
-	Longitude  float64  `json:"longitude"`
-	Distance   float64  `json:"distance"`
-	Humans     int      `json:"humans"`
-}
-
-func NewServers(repository Repository) Servers {
-	return Servers{repository: repository}
+	return &Servers{
+		Repository:  repository,
+		logListener: logSrc,
+		logFileChan: make(chan LogFilePayload),
+		servers:     Collection{},
+		serversMu:   &sync.RWMutex{},
+		broadcaster: broadcaster,
+	}, nil
 }
 
 type Servers struct {
-	repository Repository
+	Repository
+
+	logListener *logparse.Listener
+	logFileChan chan LogFilePayload
+	servers     Collection
+	serversMu   *sync.RWMutex
+	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
+}
+
+func (s *Servers) Broadcast(ctx context.Context, cmd string, args ...any) {
+	if cmd == "" {
+		return
+	}
+	s.servers.broadcast(ctx, fmt.Sprintf(cmd, args...))
+}
+
+func (s *Servers) FindPlayers(opts FindOpts) []FindResult {
+	return s.servers.find(opts)
+}
+
+func (s *Servers) FindPlayer(opts FindOpts) (FindResult, bool) {
+	results := s.servers.find(opts)
+	if len(results) == 0 {
+		return FindResult{}, false
+	}
+
+	return results[0], true
+}
+
+func (s *Servers) Start(ctx context.Context, updateFreq time.Duration) error {
+	if updateFreq < time.Second*5 {
+		return ErrUpdateFreq
+	}
+
+	var (
+		ticker  = time.NewTicker(updateFreq)
+		timeOut = time.Duration(float64(updateFreq) * 0.8)
+	)
+
+	go s.logListener.Start(ctx)
+
+	for {
+		select {
+		case <-ticker.C:
+			timeout, cancel := context.WithTimeout(ctx, timeOut)
+			if err := s.updateStates(timeout); err != nil {
+				slog.Error("Failed to update server states", slog.String("error", err.Error()))
+			}
+			cancel()
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
+	radianLat1 := math.Pi * lat1 / 180
+	radianLat2 := math.Pi * lat2 / 180
+	theta := lng1 - lng2
+	radianTheta := math.Pi * theta / 180
+
+	dist := math.Sin(radianLat1)*math.Sin(radianLat2) + math.Cos(radianLat1)*math.Cos(radianLat2)*math.Cos(radianTheta)
+	if dist > 1 {
+		dist = 1
+	}
+
+	dist = math.Acos(dist)
+	dist = dist * 180 / math.Pi
+	dist = dist * 60 * 1.1515
+	dist *= 1.609344 // convert to km
+
+	return dist
+}
+
+func (s *Servers) Current() []SafeServer {
+	var curState []SafeServer //nolint:prealloc
+
+	s.serversMu.RLock()
+	defer s.serversMu.RUnlock()
+
+	for _, srv := range s.servers {
+		if !srv.Deleted && srv.IsEnabled {
+			curState = append(curState, SafeServer{
+				Host: srv.Address,
+				Port: srv.Port,
+				// TODO
+				// IP:         srv.IP(),
+				Name:       srv.Name,
+				NameShort:  srv.ShortName,
+				Region:     srv.Region,
+				CC:         srv.CC,
+				ServerID:   srv.ServerID,
+				Players:    len(srv.state.Players),
+				MaxPlayers: srv.state.MaxPlayers,
+				Bots:       srv.state.Bots,
+				Humans:     srv.state.Humans,
+				Map:        srv.state.Map,
+				Tags:       srv.state.Tags,
+				GameTypes:  []string{},
+				Latitude:   srv.Latitude,
+				Longitude:  srv.Longitude,
+			})
+		}
+	}
+
+	sort.SliceStable(curState, func(i, j int) bool {
+		return curState[i].NameShort < curState[j].NameShort
+	})
+
+	return curState
+}
+
+func (s *Servers) updateStates(ctx context.Context) error {
+	var (
+		waitGroup  = &sync.WaitGroup{}
+		successful = atomic.Int32{}
+		existing   = atomic.Int32{}
+		startTIme  = time.Now()
+	)
+
+	for _, server := range s.servers {
+		waitGroup.Go(func() {
+			if err := server.updateStatus(ctx); err != nil {
+				slog.Error("Failed to parse status", slog.String("error", err.Error()),
+					slog.String("server", server.ShortName))
+
+				return
+			}
+
+			if time.Since(server.lastMaxPlayersUpdate) > time.Hour {
+				if err := server.updateMaxVisiblePlayers(ctx); err != nil {
+					slog.Warn("Got invalid max players value", slog.String("error", err.Error()),
+						slog.String("server", server.ShortName))
+
+					return
+				}
+			}
+			successful.Add(1)
+		})
+	}
+
+	waitGroup.Wait()
+
+	if fail := len(s.servers) - int(successful.Load()); fail > 0 {
+		slog.Debug("RCON update cycle complete",
+			slog.Int("success", int(successful.Load())),
+			slog.Int("existing", int(existing.Load())),
+			slog.Int("fail", fail),
+			slog.Duration("duration", time.Since(startTIme)))
+	}
+
+	return nil
 }
 
 // Delete performs a soft delete of the server. We use soft deleted because we dont wand to delete all the relationships
@@ -171,7 +249,7 @@ func (s *Servers) Delete(ctx context.Context, serverID int) error {
 
 	server.Deleted = true
 
-	if err := s.repository.Save(ctx, &server); err != nil {
+	if err := s.Repository.Save(ctx, &server); err != nil {
 		return err
 	}
 
@@ -183,7 +261,7 @@ func (s *Servers) Server(ctx context.Context, serverID int) (Server, error) {
 		return Server{}, ErrNotFound
 	}
 
-	servers, err := s.repository.Query(ctx, Query{ServerID: serverID, IncludeDisabled: true})
+	servers, err := s.Query(ctx, Query{ServerID: serverID, IncludeDisabled: true})
 	if err != nil {
 		return Server{}, err
 	}
@@ -196,15 +274,15 @@ func (s *Servers) Server(ctx context.Context, serverID int) (Server, error) {
 }
 
 func (s *Servers) ServerPermissions(ctx context.Context) ([]ServerPermission, error) {
-	return s.repository.GetServerPermissions(ctx)
+	return s.GetServerPermissions(ctx)
 }
 
 func (s *Servers) Servers(ctx context.Context, filter Query) ([]Server, error) {
-	return s.repository.Query(ctx, filter)
+	return s.Query(ctx, filter)
 }
 
 func (s *Servers) GetByName(ctx context.Context, serverName string) (Server, error) {
-	server, errServer := s.repository.Query(ctx, Query{ShortName: serverName})
+	server, errServer := s.Query(ctx, Query{ShortName: serverName})
 
 	if errServer != nil {
 		return Server{}, errServer
@@ -218,7 +296,7 @@ func (s *Servers) GetByName(ctx context.Context, serverName string) (Server, err
 }
 
 func (s *Servers) GetByPassword(ctx context.Context, serverPassword string) (Server, error) {
-	server, errServer := s.repository.Query(ctx, Query{Password: serverPassword})
+	server, errServer := s.Query(ctx, Query{Password: serverPassword})
 
 	if errServer != nil {
 		return Server{}, errServer
@@ -236,7 +314,7 @@ func (s *Servers) Save(ctx context.Context, server Server) (Server, error) {
 		server.UpdatedOn = time.Now()
 	}
 
-	if err := s.repository.Save(ctx, &server); err != nil {
+	if err := s.Repository.Save(ctx, &server); err != nil {
 		return Server{}, err
 	}
 
@@ -261,8 +339,39 @@ func (s *Servers) AutoCompleteServers(ctx context.Context, query string) ([]disc
 	return values, nil
 }
 
+func (s *Servers) Each(serverFn ServerFunc) {
+	s.serversMu.RLock()
+	defer s.serversMu.RUnlock()
+
+	waitGroup := &sync.WaitGroup{}
+	for _, server := range s.servers {
+		waitGroup.Go(func() {
+			if err := serverFn(server); err != nil {
+				slog.Error("Failed to execute server fn",
+					slog.String("server", server.ShortName),
+					slog.String("error", err.Error()))
+			}
+		})
+	}
+	waitGroup.Wait()
+}
+
 func ShortNamePrefix(name string) string {
 	pieces := strings.Split(name, "-")
 
 	return strings.Join(pieces[0:len(pieces)-1], "-")
+}
+
+func ResolveIP(ctx context.Context, addr string) (string, error) {
+	ipAddr := net.ParseIP(addr)
+	if ipAddr != nil {
+		return ipAddr.String(), nil
+	}
+
+	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", addr)
+	if errResolve != nil || len(ips) == 0 {
+		return "", errors.Join(errResolve, ErrDNSResolve)
+	}
+
+	return ips[0].String(), nil
 }

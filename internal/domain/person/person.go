@@ -51,6 +51,7 @@ type Info interface {
 	GetName() string
 	GetAvatar() Avatar
 	GetSteamID() steamid.SteamID
+	GetSteamIDString() string
 	GetDiscordID() string
 	GetVACBans() int
 	GetGameBans() int
@@ -116,6 +117,10 @@ func (p Core) GetDiscordID() string {
 
 func (p Core) GetSteamID() steamid.SteamID {
 	return p.SteamID
+}
+
+func (p Core) GetSteamIDString() string {
+	return p.SteamID.String()
 }
 
 func (p Core) Path() string {

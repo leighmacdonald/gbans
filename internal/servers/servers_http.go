@@ -3,7 +3,6 @@ package servers
 import (
 	"errors"
 	"log/slog"
-	"math"
 	"net/http"
 	"sort"
 
@@ -12,20 +11,16 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/network/ip2location"
-	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/maruel/natural"
 )
 
 type serversHandler struct {
-	Servers
-
-	state *state.State
+	*Servers
 }
 
-func NewServersHandler(engine *gin.Engine, authenticator httphelper.Authenticator, servers Servers, state *state.State) {
+func NewServersHandler(engine *gin.Engine, authenticator httphelper.Authenticator, servers *Servers) {
 	handler := &serversHandler{
 		Servers: servers,
-		state:   state,
 	}
 
 	engine.GET("/api/servers/state", handler.onAPIGetServerStates())
@@ -73,54 +68,16 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 		LatLong ip2location.LatLong `json:"lat_long"`
 	}
 
-	distance := func(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
-		radianLat1 := math.Pi * lat1 / 180
-		radianLat2 := math.Pi * lat2 / 180
-		theta := lng1 - lng2
-		radianTheta := math.Pi * theta / 180
-
-		dist := math.Sin(radianLat1)*math.Sin(radianLat2) + math.Cos(radianLat1)*math.Cos(radianLat2)*math.Cos(radianTheta)
-		if dist > 1 {
-			dist = 1
-		}
-
-		dist = math.Acos(dist)
-		dist = dist * 180 / math.Pi
-		dist = dist * 60 * 1.1515
-		dist *= 1.609344 // convert to km
-
-		return dist
-	}
-
 	return func(ctx *gin.Context) {
 		var (
 			lat = httphelper.GetDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
 			lon = httphelper.GetDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 			// region := ctx.GetHeader("cf-region-code")
-			curState = h.state.Current()
-			servers  []SafeServer
+			servers = h.Current()
 		)
 
-		for _, srv := range curState {
-			servers = append(servers, SafeServer{
-				Host:       srv.Host,
-				Port:       srv.Port,
-				IP:         srv.IP,
-				Name:       srv.Name,
-				NameShort:  srv.NameShort,
-				Region:     srv.Region,
-				CC:         srv.CC,
-				ServerID:   srv.ServerID,
-				Players:    srv.PlayerCount,
-				MaxPlayers: srv.MaxPlayers,
-				Bots:       srv.Bots,
-				Humans:     srv.Humans,
-				Map:        srv.Map,
-				GameTypes:  []string{},
-				Latitude:   srv.Latitude,
-				Longitude:  srv.Longitude,
-				Distance:   distance(srv.Latitude, srv.Longitude, lat, lon),
-			})
+		for index, srv := range servers {
+			servers[index].Distance = distance(srv.Latitude, srv.Longitude, lat, lon)
 		}
 
 		sort.Slice(servers, func(i, j int) bool {

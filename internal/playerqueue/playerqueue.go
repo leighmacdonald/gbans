@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/servers"
-	"github.com/leighmacdonald/gbans/internal/servers/state"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -89,8 +88,8 @@ type ChatStatusChangePayload struct {
 	Reason string     `json:"reason"`
 }
 
-func NewPlayerqueue(ctx context.Context, repo Repository, persons person.Provider, serversUC servers.Servers,
-	state *state.State, chatLogs []ChatLog, playerqueueChannelID string, notif notification.Notifier,
+func NewPlayerqueue(ctx context.Context, repo Repository, persons person.Provider,
+	serversUC *servers.Servers, chatLogs []ChatLog, playerqueueChannelID string, notif notification.Notifier,
 ) *Playerqueue {
 	return &Playerqueue{
 		playerqueueChannelID: playerqueueChannelID,
@@ -98,7 +97,7 @@ func NewPlayerqueue(ctx context.Context, repo Repository, persons person.Provide
 		persons:              persons,
 		notif:                notif,
 		queue: New(100, 2, chatLogs, func() ([]Lobby, error) {
-			currentState := state.Current()
+			currentState := serversUC.Current()
 
 			srvs, errServers := serversUC.Servers(ctx, servers.Query{IncludeDisabled: false})
 
@@ -117,7 +116,7 @@ func NewPlayerqueue(ctx context.Context, repo Repository, persons person.Provide
 						lobby.Title = serverState.Name
 						lobby.CC = serverState.CC
 						lobby.MaxPlayers = serverState.MaxPlayers
-						lobby.PlayerCount = serverState.PlayerCount
+						// lobby.PlayerCount = len(srv.)
 					}
 				}
 

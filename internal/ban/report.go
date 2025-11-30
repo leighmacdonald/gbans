@@ -129,6 +129,10 @@ type ReportMessage struct {
 	PermissionLevel permission.Privilege `json:"permission_level"`
 }
 
+func (m ReportMessage) Path() string {
+	return fmt.Sprintf("/report/%d#%d", m.ReportID, m.ReportMessageID)
+}
+
 func NewReportMessage(reportID int64, authorID steamid.SteamID, messageMD string) ReportMessage {
 	now := time.Now()
 
@@ -531,7 +535,7 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 
 	r.notif.Send(notification.NewDiscord(r.appealChannel,
 		EditReportMessageResponse(req.BodyMD, existing.MessageMD,
-			fmt.Sprintf("/report/%d", existing.ReportID), curUser, link.Path(curUser))))
+			link.Path(existing), curUser, link.Path(curUser))))
 
 	slog.Info("Report message edited", slog.Int64("report_message_id", reportMessageID))
 

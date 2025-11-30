@@ -47,9 +47,9 @@ func HydrateLinks() TextProcessor {
 	}
 }
 
-func Heading(text string) discordgo.TextDisplay {
+func Heading(format string, args ...any) discordgo.TextDisplay {
 	return discordgo.TextDisplay{
-		Content: "### " + text,
+		Content: "### " + fmt.Sprintf(format, args...),
 	}
 }
 

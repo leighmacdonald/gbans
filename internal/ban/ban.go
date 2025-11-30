@@ -20,7 +20,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/servers/state"
+	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
 )
@@ -238,11 +238,11 @@ type Bans struct {
 	logChannelID  string
 	kickChannelID string
 	owner         steamid.SteamID
-	state         *state.State
+	servers       *servers.Servers
 }
 
 func NewBans(repository Repository, person person.Provider, logChannelID string, kickChannelID string,
-	owner steamid.SteamID, reports Reports, notif notification.Notifier, state *state.State,
+	owner steamid.SteamID, reports Reports, notif notification.Notifier, servers *servers.Servers,
 ) Bans {
 	return Bans{
 		repo:          repository,
@@ -252,7 +252,7 @@ func NewBans(repository Repository, person person.Provider, logChannelID string,
 		logChannelID:  logChannelID,
 		owner:         owner,
 		kickChannelID: kickChannelID,
-		state:         state,
+		servers:       servers,
 	}
 }
 
@@ -379,9 +379,8 @@ func (s Bans) sendBanNotification(_ context.Context, newBan Ban, author person.C
 		expAt = datetime.FmtTimeShort(newBan.ValidUntil)
 	}
 
-	s.notif.Send(notification.NewDiscord(s.logChannelID, createBanResponse(newBan, target)))
-
-	s.notif.Send(notification.NewSiteUserWithAuthor(
+	go s.notif.Send(notification.NewDiscord(s.logChannelID, createBanResponse(newBan, author, target)))
+	go s.notif.Send(notification.NewSiteUserWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
 		fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
@@ -389,15 +388,14 @@ func (s Bans) sendBanNotification(_ context.Context, newBan Ban, author person.C
 		link.Path(newBan),
 		author,
 	))
-
-	s.notif.Send(notification.NewSiteUser(
+	go s.notif.Send(notification.NewSiteUser(
 		[]steamid.SteamID{newBan.TargetID},
 		notification.Warn,
 		fmt.Sprintf("You have been %s, Reason: %s, Duration: %s, Ends: %s", newBan.BanType, newBan.Reason.String(), expIn, expAt),
 		link.Path(newBan),
 	))
 
-	if s.state == nil {
+	if s.servers == nil {
 		return
 	}
 
@@ -445,7 +443,7 @@ func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason strin
 		return false, errors.Join(err, ErrFetchPerson)
 	}
 
-	s.notif.Send(notification.NewDiscord(s.logChannelID, UnbanMessage(player)))
+	s.notif.Send(notification.NewDiscord(s.logChannelID, unbanMessage(player, reason)))
 	s.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,

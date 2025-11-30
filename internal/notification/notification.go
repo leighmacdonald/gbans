@@ -43,7 +43,7 @@ type UserNotification struct {
 	Message              string          `json:"message"`
 	Link                 string          `json:"link"`
 	Count                int             `json:"count"`
-	Author               person.Core     `json:"author"`
+	Author               person.Info     `json:"author"`
 	CreatedOn            time.Time       `json:"created_on"`
 }
 
@@ -69,7 +69,7 @@ type Payload struct {
 	Message         string
 	MessageSend     *discordgo.MessageSend
 	Link            string
-	Author          person.Core
+	Author          person.Info
 }
 
 func (payload Payload) ValidationError() error {

@@ -28,11 +28,11 @@ type Handler struct {
 	notifier notification.Notifier
 	persons  person.Provider
 	evades   EvadeChecker
-	servers  servers.Servers
+	servers  *servers.Servers
 }
 
 func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth httphelper.ServerAuthenticator,
-	sourcemod Sourcemod, servers servers.Servers, notifier notification.Notifier,
+	sourcemod Sourcemod, servers *servers.Servers, notifier notification.Notifier,
 ) {
 	handler := Handler{Sourcemod: sourcemod, servers: servers, notifier: notifier}
 
@@ -930,7 +930,7 @@ func (s *Handler) onAPIGetSeed() gin.HandlerFunc {
 			return
 		}
 
-		if !s.seedRequest(server, steamID.String()) {
+		if !s.seedRequest(ctx, server, steamID.String()) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusTooManyRequests, httphelper.ErrNotFound))
 
 			return
