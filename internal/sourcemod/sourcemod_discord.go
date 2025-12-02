@@ -29,8 +29,30 @@ type discordHandler struct {
 func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, servers *servers.Servers) {
 	handler := discordHandler{sourcemod: sourcemod, servers: servers}
 
-	service.MustRegisterTemplate("sourcemod", templateContent)
+	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
+		Name:                     "rcon",
+		Description:              "Send an rcon command",
+		DefaultMemberPermissions: ptr.To(discord.AdminPerms),
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:         discordgo.ApplicationCommandOptionString,
+				Name:         "target_server",
+				Description:  "Short server name",
+				Required:     true,
+				Autocomplete: true,
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "command",
+				Description: "Command to run",
+				Required:    true,
+				MinLength:   ptr.To(1),
+			},
+		},
+	}, handler.onRCON)
 
+	service.MustRegisterTemplate("sourcemod", templateContent)
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "seed",
 		Description:              "Request a server seed ping",
@@ -331,4 +353,25 @@ func (h discordHandler) onSeed(ctx context.Context, session *discordgo.Session, 
 	}
 
 	return discord.Success(session, interaction)
+}
+
+func (h discordHandler) onRCON(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	if err := discord.AckInteraction(session, interaction); err != nil {
+		return err
+	}
+	data := discord.OptionMap(interaction.ApplicationCommandData().Options)
+	server, errServer := h.servers.GetByName(ctx, data["target_server"].StringValue())
+	if errServer != nil {
+		return errServer
+	}
+	command := data["command"].StringValue()
+
+	resp, errResp := server.Exec(ctx, command)
+	if errResp != nil {
+		return errResp
+	}
+
+	return discord.RespondUpdate(session, interaction,
+		discord.Heading("RCON Command: %s", command),
+		discord.BodyColouredText(discord.ColourInfo, "```"+resp+"```"))
 }
