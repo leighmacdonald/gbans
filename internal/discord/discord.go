@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	ModPerms  = int64(discordgo.PermissionBanMembers)
-	UserPerms = int64(discordgo.PermissionViewChannel)
+	AdminPerms = int64(discordgo.PermissionAdministrator)
+	ModPerms   = int64(discordgo.PermissionBanMembers)
+	UserPerms  = int64(discordgo.PermissionViewChannel)
 )
 
 const (
