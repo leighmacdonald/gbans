@@ -5,7 +5,7 @@ ALTER TABLE config
     ADD COLUMN IF NOT EXISTS discord_seed_channel_id TEXT default '' NOT NULL;
 
 ALTER TABLE config
-    ADD COLUMN IF NOT EXISTS ssh_host_key_strategy TEXT default 0 NOT NULL;
+    ADD COLUMN IF NOT EXISTS ssh_host_key_strategy INT default 0 NOT NULL;
 
 CREATE OR REPLACE FUNCTION check_ban(steam text, ip text,
                                      OUT out_ban_source text,
