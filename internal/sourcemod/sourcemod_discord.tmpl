@@ -9,3 +9,14 @@ Players: {{ .State.PlayerCount }}/{{ .State.MaxPlayers }}
 
 {{ range .Roles }}{{ if .}}<@&{{ . }}> {{end}}{{end}}
 {{end}}
+
+{{define "check_blocked"}}
+BanID: **[#{{ .BanID }}]({{ . | linkPath }})**
+SteamID: **{{ .SteamID  | sidString }}**
+IP Addr: **{{ .IP }}**
+Ban Source: **{{ .BanSource }}**
+Ban Type: **{{ .BanType.String }}**
+Reason: **{{ .Reason }}**
+Valid Until: **{{ .ValidUntil | timeString }}**
+Remaining: **{{ .ValidUntil | untilString }}**
+{{end}}

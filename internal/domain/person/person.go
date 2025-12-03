@@ -41,6 +41,7 @@ func (h Avatar) Hash() string {
 
 type Provider interface {
 	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Core, error)
+	EnsurePerson(ctx context.Context, steamID steamid.SteamID) error
 }
 
 type DiscordPersonProvider interface {
