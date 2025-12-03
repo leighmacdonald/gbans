@@ -257,7 +257,8 @@ func (h discordHandler) onUnban(ctx context.Context, session *discordgo.Session,
 }
 
 func (h discordHandler) showUnban(_ context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, steamID string) error {
-	return discord.Respond(session, interaction,
+	return discord.RespondModal(session, interaction,
+		"unban_resp", "Unban Player",
 		discord.ModalInputRowRequired(discord.IDSteamID, "steamid", "SteamID or Profile URL",
 			"76561197960542812", steamID, 0, 64),
 		discord.ModalInputRowRequired(discord.IDNotes, "unban_reason", "Reason",
@@ -440,15 +441,7 @@ func createBanResponse(ban Ban, author person.Info, player person.Info) *discord
 	}
 
 	return discord.NewMessage(
-		discord.BodyColour(discord.ColourError, discordgo.Section{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-			Accessory: discordgo.Thumbnail{
-				Media:       discordgo.UnfurledMediaItem{URL: player.GetAvatar().Full()},
-				Description: ptr.To(fmt.Sprintf("Profile Picure [%s]", player.GetAvatar().Hash())),
-			},
-		}),
+		discord.BodyTextWithThumbnail(discord.ColourError, discord.PlayerThumbnail(player), content),
 		discord.Buttons(
 			discord.Button(discordgo.SuccessButton, "🗑️ Unban", fmt.Sprintf("ban_unban_button_resp_%d", ban.BanID)),
 			discord.Button(discordgo.SecondaryButton, "🔨 Edit", fmt.Sprintf("ban_edit_button_resp_%d", ban.BanID)),

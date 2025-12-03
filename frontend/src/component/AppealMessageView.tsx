@@ -109,7 +109,7 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
             addSuffix: true
         });
         return (
-            <Card elevation={1}>
+            <Card elevation={1} id={`msg-${message.ban_message_id}`}>
                 <CardHeader
                     sx={{
                         backgroundColor: theme.palette.background.paper

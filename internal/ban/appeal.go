@@ -29,8 +29,7 @@ type AppealMessage struct {
 }
 
 func (am AppealMessage) Path() string {
-	// TODO link to msg direct #.
-	return fmt.Sprintf("/ban/%d", am.BanID)
+	return fmt.Sprintf("/ban/%d#msg-%d", am.BanID, am.BanMessageID)
 }
 
 func NewBanAppealMessage(banID int64, authorID steamid.SteamID, message string) AppealMessage {

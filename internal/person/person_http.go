@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
-	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -125,23 +124,21 @@ func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 
 func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user, _ := session.CurrentUserProfile(ctx)
-		sid := user.GetSteamID()
-		if !sid.Valid() {
+		user, errProfile := session.CurrentUserProfile(ctx)
+		if errProfile != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, steamid.ErrInvalidSID))
+
+			return
+		}
+
+		if sid := user.GetSteamID(); !sid.Valid() {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, steamid.ErrInvalidSID))
 
 			return
 		}
 
 		// TODO custom profile query
-		ctx.JSON(http.StatusOK, person.Core{
-			SteamID:         user.GetSteamID(),
-			Name:            user.GetName(),
-			Avatarhash:      user.GetAvatar().Hash(),
-			PermissionLevel: user.Permissions(),
-			DiscordID:       user.DiscordID,
-			//	DiscordID:       user.DiscordID,
-		})
+		ctx.JSON(http.StatusOK, user)
 	}
 }
 

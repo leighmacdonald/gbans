@@ -1,7 +1,6 @@
 package discord
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -29,7 +28,7 @@ type Service interface {
 	Send(channelID string, message *discordgo.MessageSend) error
 
 	// Start initiates the bot service. This is a blocking call.
-	Start(ctx context.Context) error
+	Start() error
 
 	// Close the bot session.
 	Close()
@@ -57,7 +56,7 @@ type Service interface {
 type Discard struct{}
 
 func (d Discard) Send(_ string, _ *discordgo.MessageSend) error { return nil }
-func (d Discard) Start(_ context.Context) error                 { return nil }
+func (d Discard) Start() error                                  { return nil }
 func (d Discard) Close()                                        {}
 func (d Discard) MustRegisterCommandHandler(_ *discordgo.ApplicationCommand, _ Handler) {
 }

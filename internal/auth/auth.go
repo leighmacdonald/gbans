@@ -202,14 +202,9 @@ func (u *Authentication) Middleware(level permission.Privilege) gin.HandlerFunc 
 					return
 				}
 
-				bannedPerson, errBan := u.bans.QueryOne(ctx, ban.QueryOpts{
-					TargetID: sid,
-					EvadeOk:  true,
-				})
-				if errBan != nil {
-					if !errors.Is(errBan, database.ErrNoResult) {
-						slog.Error("Failed to fetch authed user ban", slog.String("error", errBan.Error()))
-					}
+				bannedPerson, errBan := u.bans.QueryOne(ctx, ban.QueryOpts{TargetID: sid, EvadeOk: true})
+				if errBan != nil && !errors.Is(errBan, database.ErrNoResult) {
+					slog.Error("Failed to fetch authed user ban", slog.String("error", errBan.Error()))
 				}
 
 				profile := personDomain.Core{
@@ -260,78 +255,80 @@ func (u *Authentication) MiddlewareWS(level permission.Privilege) gin.HandlerFun
 		var token string
 
 		queryToken, errToken := u.TokenFromQuery(ctx)
-		if errToken != nil || queryToken == "" { //nolint:nestif
+		if errToken != nil || queryToken == "" {
 			ctx.Set(CtxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
-		} else {
-			token = queryToken
+			ctx.Next()
 
-			if level >= permission.Guest {
-				sid, errFromToken := u.Sid64FromJWTTokenNoFP(token, u.cookieKey)
-				if errFromToken != nil {
-					if errors.Is(errFromToken, ErrExpired) {
-						ctx.AbortWithStatus(http.StatusUnauthorized)
-
-						return
-					}
-
-					slog.Error("Failed to load sid from access token", slog.String("error", errFromToken.Error()))
-					ctx.AbortWithStatus(http.StatusForbidden)
-
-					return
-				}
-
-				loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, sid)
-				if errGetPerson != nil {
-					slog.Error("Failed to load person during auth", slog.String("error", errGetPerson.Error()))
-					ctx.AbortWithStatus(http.StatusForbidden)
-
-					return
-				}
-
-				if level > loggedInPerson.PermissionLevel {
-					ctx.AbortWithStatus(http.StatusForbidden)
-
-					return
-				}
-
-				bannedPerson, errBan := u.bans.QueryOne(ctx, ban.QueryOpts{
-					TargetID: sid,
-					EvadeOk:  true,
-				})
-				if errBan != nil {
-					if !errors.Is(errBan, database.ErrNoResult) {
-						slog.Error("Failed to fetch authed user ban", slog.String("error", errBan.Error()))
-					}
-				}
-
-				profile := personDomain.Core{
-					SteamID:         loggedInPerson.SteamID,
-					PermissionLevel: loggedInPerson.PermissionLevel,
-					DiscordID:       loggedInPerson.DiscordID,
-					PatreonID:       loggedInPerson.PatreonID,
-					Name:            loggedInPerson.PersonaName,
-					Avatarhash:      loggedInPerson.AvatarHash,
-					BanID:           bannedPerson.BanID,
-				}
-
-				ctx.Set(CtxKeyUserProfile, profile)
-
-				if u.sentryDSN != "" {
-					if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
-						hub.WithScope(func(scope *sentry.Scope) {
-							scope.SetUser(sentry.User{
-								ID:        sid.String(),
-								IPAddress: ctx.ClientIP(),
-								Username:  loggedInPerson.PersonaName,
-							})
-						})
-					}
-				}
-			} else {
-				ctx.Set(CtxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
-			}
+			return
 		}
 
+		token = queryToken
+
+		if level >= permission.Guest {
+			sid, errFromToken := u.Sid64FromJWTTokenNoFP(token, u.cookieKey)
+			if errFromToken != nil {
+				if errors.Is(errFromToken, ErrExpired) {
+					ctx.AbortWithStatus(http.StatusUnauthorized)
+
+					return
+				}
+
+				slog.Error("Failed to load sid from access token", slog.String("error", errFromToken.Error()))
+				ctx.AbortWithStatus(http.StatusForbidden)
+
+				return
+			}
+
+			loggedInPerson, errGetPerson := u.persons.BySteamID(ctx, sid)
+			if errGetPerson != nil {
+				slog.Error("Failed to load person during auth", slog.String("error", errGetPerson.Error()))
+				ctx.AbortWithStatus(http.StatusForbidden)
+
+				return
+			}
+
+			if level > loggedInPerson.PermissionLevel {
+				ctx.AbortWithStatus(http.StatusForbidden)
+
+				return
+			}
+
+			bannedPerson, errBan := u.bans.QueryOne(ctx, ban.QueryOpts{
+				TargetID: sid,
+				EvadeOk:  true,
+			})
+			if errBan != nil {
+				if !errors.Is(errBan, database.ErrNoResult) {
+					slog.Error("Failed to fetch authed user ban", slog.String("error", errBan.Error()))
+				}
+			}
+
+			profile := personDomain.Core{
+				SteamID:         loggedInPerson.SteamID,
+				PermissionLevel: loggedInPerson.PermissionLevel,
+				DiscordID:       loggedInPerson.DiscordID,
+				PatreonID:       loggedInPerson.PatreonID,
+				Name:            loggedInPerson.PersonaName,
+				Avatarhash:      loggedInPerson.AvatarHash,
+				BanID:           bannedPerson.BanID,
+			}
+
+			ctx.Set(CtxKeyUserProfile, profile)
+
+			if u.sentryDSN != "" {
+				if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+					hub.WithScope(func(scope *sentry.Scope) {
+						scope.SetUser(sentry.User{
+							ID:        sid.String(),
+							IPAddress: ctx.ClientIP(),
+							Username:  loggedInPerson.PersonaName,
+						})
+					})
+				}
+			}
+		} else {
+			ctx.Set(CtxKeyUserProfile, personDomain.Core{PermissionLevel: permission.Guest, Name: "Guest"})
+		}
 		ctx.Next()
 	}
 }

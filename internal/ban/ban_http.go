@@ -191,9 +191,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 		}
 
 		deletedOk := false
-
-		fullValue, fullOk := ctx.GetQuery("deleted")
-		if fullOk {
+		if fullValue, fullOk := ctx.GetQuery("deleted"); fullOk {
 			deleted, deletedOkErr := strconv.ParseBool(fullValue)
 			if deletedOkErr != nil {
 				slog.Error("Failed to parse ban full query value", slog.String("error", deletedOkErr.Error()))
@@ -201,11 +199,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 				deletedOk = deleted
 			}
 		}
-		bannedPerson, errGet := h.QueryOne(ctx, QueryOpts{
-			BanID:   banID,
-			Deleted: deletedOk,
-			EvadeOk: true,
-		})
+		bannedPerson, errGet := h.QueryOne(ctx, QueryOpts{BanID: banID, Deleted: deletedOk, EvadeOk: true})
 		if errGet != nil {
 			if errors.Is(errGet, database.ErrNoResult) {
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
