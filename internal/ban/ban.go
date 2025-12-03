@@ -231,6 +231,10 @@ type Stats struct {
 	ServersTotal  int `json:"servers_total"`
 }
 
+type LastIPProvider interface {
+	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
+}
+
 type Bans struct {
 	repo          Repository
 	persons       person.Provider
@@ -240,10 +244,12 @@ type Bans struct {
 	kickChannelID string
 	owner         steamid.SteamID
 	servers       *servers.Servers
+	ipProvider    LastIPProvider
 }
 
 func New(repository Repository, person person.Provider, logChannelID string, kickChannelID string,
 	owner steamid.SteamID, reports Reports, notif notification.Notifier, servers *servers.Servers,
+	ipProvider LastIPProvider,
 ) Bans {
 	return Bans{
 		repo:          repository,
@@ -254,6 +260,7 @@ func New(repository Repository, person person.Provider, logChannelID string, kic
 		owner:         owner,
 		kickChannelID: kickChannelID,
 		servers:       servers,
+		ipProvider:    ipProvider,
 	}
 }
 
@@ -262,14 +269,13 @@ func (s Bans) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 }
 
 func (s Bans) QueryOne(ctx context.Context, opts QueryOpts) (Ban, error) {
-	// TODO FIXME
 	results, errResults := s.repo.Query(ctx, opts)
 	if errResults != nil {
 		return Ban{}, errResults
 	}
 
 	if len(results) == 0 {
-		return Ban{}, database.ErrNoResult
+		return Ban{}, ErrBanDoesNotExist
 	}
 
 	return results[0], nil
@@ -324,10 +330,12 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 	if errValidate := opts.Validate(); errValidate != nil {
 		return Ban{}, errValidate
 	}
-
+	var lastIP string
+	if ipAddr := s.ipProvider.GetPlayerMostRecentIP(ctx, opts.TargetID); ipAddr != nil {
+		lastIP = ipAddr.String()
+	}
 	newBan := Ban{
-		// TODO set last ip
-		// LastIP:     opts.LastIP,
+		LastIP:     &lastIP,
 		EvadeOk:    opts.EvadeOk,
 		BanType:    opts.BanType,
 		Reason:     opts.Reason,

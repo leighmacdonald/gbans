@@ -29,17 +29,25 @@ var (
 	errKeyVerificationFailed  = errors.New("host key validation failed")
 )
 
+type HostKeyStrategy int
+
+const (
+	KeyAutoAccept HostKeyStrategy = iota
+	KeyAutoAcceptFirst
+	KeyIgnoreAll
+)
+
 type Config struct {
-	Enabled        bool   `json:"enabled"`
-	Username       string `json:"username"`
-	Port           int    `json:"port"`
-	PrivateKeyPath string `json:"private_key_path"`
-	Password       string `json:"password"`
-	UpdateInterval int    `json:"update_interval"`
-	Timeout        int    `json:"timeout"`
-	DemoPathFmt    string `json:"demo_path_fmt"`
-	StacPathFmt    string `json:"stac_path_fmt"`
-	// TODO configurable handling of host keys
+	Enabled         bool            `json:"enabled"`
+	Username        string          `json:"username"`
+	Port            int             `json:"port"`
+	PrivateKeyPath  string          `json:"private_key_path"`
+	HostKeyStrategy HostKeyStrategy `json:"host_key_strategy"`
+	Password        string          `json:"password"`
+	UpdateInterval  int             `json:"update_interval"`
+	Timeout         int             `json:"timeout"`
+	DemoPathFmt     string          `json:"demo_path_fmt"`
+	StacPathFmt     string          `json:"stac_path_fmt"`
 }
 
 // KeyStore is responsible for storing and retrieving host keys.
@@ -159,7 +167,7 @@ func createConfig(repo KeyStore, config Config) (*ssh.ClientConfig, error) {
 	return &ssh.ClientConfig{
 		User:            config.Username,
 		Auth:            authMethod,
-		HostKeyCallback: trustedHostKeyCallback(repo),
+		HostKeyCallback: trustedHostKeyCallback(repo, config.HostKeyStrategy),
 		Timeout:         time.Duration(config.Timeout) * time.Second,
 	}, nil
 }
@@ -197,32 +205,34 @@ func createSignerFromKey(config Config) (ssh.Signer, error) { //nolint:ireturn
 // Subsequent connections will require the same key or be rejected. If you want to skip the auto
 // trust of the first key seen, you must insert the host keys into the database manually into the
 // host_key table.
-func trustedHostKeyCallback(repo KeyStore) func(hostname string, addr net.Addr, pubKey ssh.PublicKey) error {
+func trustedHostKeyCallback(repo KeyStore, strategy HostKeyStrategy) func(hostname string, addr net.Addr, pubKey ssh.PublicKey) error {
 	return func(hostname string, addr net.Addr, pubKey ssh.PublicKey) error {
 		slog.Debug("SSH Connect", slog.String("hostname", hostname), slog.String("addr", addr.String()))
-
+		pubKeyString := keyString(pubKey)
 		trustedPubKeyString, errKey := repo.GetHostKey(context.Background(), addr.String())
 		if errKey != nil && !errors.Is(errKey, database.ErrNoResult) {
 			return errKey
 		}
 
-		pubKeyString := keyString(pubKey)
+		switch strategy {
+		case KeyAutoAccept:
+			return repo.SetHostKey(context.Background(), addr.String(), pubKeyString)
+		case KeyAutoAcceptFirst:
+			if trustedPubKeyString == "" {
+				return repo.SetHostKey(context.Background(), addr.String(), pubKeyString)
+			}
+			if trustedPubKeyString != pubKeyString {
+				slog.Error("Host key validation failed", slog.String("hostname", hostname))
 
-		if trustedPubKeyString == "" {
-			if errSet := repo.SetHostKey(context.Background(), addr.String(), pubKeyString); errSet != nil {
-				return errSet
+				return errKeyVerificationFailed
 			}
 
-			trustedPubKeyString = pubKeyString
+			return nil
+		case KeyIgnoreAll:
+			fallthrough
+		default:
+			return nil
 		}
-
-		if trustedPubKeyString != pubKeyString {
-			slog.Error("Host key validation failed", slog.String("hostname", hostname))
-
-			return errKeyVerificationFailed
-		}
-
-		return nil
 	}
 }
 

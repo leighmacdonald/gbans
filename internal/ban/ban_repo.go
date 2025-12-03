@@ -9,18 +9,15 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
-	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type Repository struct {
 	database.Database
-
-	persons person.Provider // TODO remove
 }
 
-func NewRepository(database database.Database, persons person.Provider) Repository {
-	return Repository{Database: database, persons: persons}
+func NewRepository(database database.Database) Repository {
+	return Repository{Database: database}
 }
 
 func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
@@ -226,12 +223,6 @@ func (r *Repository) Save(ctx context.Context, ban *Ban) error {
 	} else if len(existing) > 0 && ban.BanType <= existing[0].BanType {
 		return database.ErrDuplicate
 	}
-
-	// TODO Use trigger / stored proc
-	// if lastIP := r.network.GetPlayerMostRecentIP(ctx, ban.TargetID); lastIP != nil {
-	// 	last := lastIP.String()
-	// 	ban.LastIP = &last
-	// }
 
 	return r.insertBan(ctx, ban)
 }

@@ -6,10 +6,12 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/dotse/slug"
 	sentryslog "github.com/getsentry/sentry-go/slog"
 	slogmulti "github.com/samber/slog-multi"
+	"golang.org/x/text/language"
 )
 
 type Config struct {
@@ -33,8 +35,8 @@ const (
 	Error Level = "error"
 )
 
-// ToSlogLevel maps our levels to the equivalent slog level.
-func ToSlogLevel(level Level) slog.Level {
+// slog maps our levels to the equivalent slog level.
+func (level Level) slog() slog.Level {
 	switch level {
 	case Debug:
 		return slog.LevelDebug
@@ -58,8 +60,10 @@ func MustCreateLogger(ctx context.Context, debugLogPath string, level Level, use
 		closer = func() {}
 		opts   = slug.HandlerOptions{
 			HandlerOptions: slog.HandlerOptions{
-				Level: ToSlogLevel(level),
+				Level: level.slog(),
 			},
+			Language:   language.English,
+			TimeFormat: time.DateTime,
 		}
 		handlers []slog.Handler
 	)

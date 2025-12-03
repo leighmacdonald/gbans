@@ -237,7 +237,7 @@ func (c *Contests) EntryVote(ctx context.Context, contestID uuid.UUID, contestEn
 	}
 
 	if !contest.Voting || !contest.DownVotes && !vote {
-		return httphelper.ErrBadRequest // tODO proper error
+		return httphelper.ErrBadRequest // TODO proper error
 	}
 
 	if err := c.repository.ContestEntryVote(ctx, contestEntryID, user.GetSteamID(), vote); err != nil {

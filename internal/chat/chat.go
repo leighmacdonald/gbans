@@ -94,7 +94,6 @@ type Chat struct {
 func New(repo Repository, config Config, filters WordFilters,
 	persons person.Provider, notifications notification.Notifier, actionHandler ExceedHandler,
 ) *Chat {
-	// TODO decouple bans dep
 	return &Chat{
 		Config:        config,
 		repository:    repo,
