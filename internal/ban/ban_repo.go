@@ -37,6 +37,10 @@ func (r *Repository) Query(ctx context.Context, opts QueryOpts) ([]Ban, error) {
 
 	var ands sq.And
 
+	if opts.BanID > 0 {
+		ands = append(ands, sq.Eq{"b.ban_id": opts.BanID})
+	}
+
 	if !opts.Deleted {
 		ands = append(ands, sq.Eq{"b.deleted": false})
 	}

@@ -15,7 +15,7 @@ func (h discordHandler) onAppealReplySubmit(_ context.Context, _ *discordgo.Sess
 
 func newAppealMessageResponse(msg AppealMessage) *discordgo.MessageSend {
 	return discord.NewMessage(
-		discord.Heading("Appeal Message Edited"),
+		discord.Heading("Appeal Message Create/Edited"),
 		discord.BodyText(msg.MessageMD),
 		discord.Buttons(
 			discord.Button(discordgo.PrimaryButton, "💬 Reply", fmt.Sprintf("appeal_reply_button_resp_%d", msg.BanID)),

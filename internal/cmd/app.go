@@ -370,12 +370,10 @@ func (g *GBans) mustCreateBot(conf discord.Config) discord.Service { //nolint:ir
 	return discord.Discard{}
 }
 
-func (g *GBans) startBot(ctx context.Context) error {
-	if err := g.bot.Start(ctx); err != nil {
-		return err
+func (g *GBans) startBot() {
+	if errStart := g.bot.Start(); errStart != nil {
+		slog.Error("Failed to start bot", slog.String("error", errStart.Error()))
 	}
-
-	return nil
 }
 
 func (g *GBans) setupPlayerQueue(ctx context.Context) {
@@ -473,11 +471,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	conf := g.config.Config()
 
 	if conf.Discord.Enabled {
-		go func() {
-			if errStart := g.startBot(ctx); errStart != nil {
-				slog.Error("Failed to start bot", slog.String("error", errStart.Error()))
-			}
-		}()
+		go g.startBot()
 	}
 
 	router, err := httphelper.CreateRouter(httphelper.RouterOpts{

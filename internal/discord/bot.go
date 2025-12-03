@@ -150,7 +150,7 @@ func (b *Discord) Send(channelID string, payload *discordgo.MessageSend) error {
 	return nil
 }
 
-func (b *Discord) Start(_ context.Context) error {
+func (b *Discord) Start() error {
 	if b.running.Load() {
 		return nil
 	}
@@ -240,7 +240,9 @@ func (b *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	slog.Info("Discord state changed", slog.String("state", "disconnected"))
 }
 
-func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session,
+	interaction *discordgo.InteractionCreate,
+) {
 	command := interaction.ApplicationCommandData().Name
 	handler, handlerFound := b.commandHandlers[command]
 	if !handlerFound {
@@ -253,7 +255,9 @@ func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session, 
 	}
 }
 
-func (b *Discord) findAndExecPrefixHandler(ctx context.Context, handlerName string, session *discordgo.Session, interaction *discordgo.InteractionCreate) {
+func (b *Discord) findAndExecPrefixHandler(ctx context.Context, handlerName string, session *discordgo.Session,
+	interaction *discordgo.InteractionCreate,
+) {
 	for prefix, handler := range b.prefixHandlers {
 		if !strings.HasPrefix(handlerName, prefix) {
 			continue

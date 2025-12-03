@@ -1,7 +1,8 @@
 ALTER TABLE server
     ADD COLUMN IF NOT EXISTS discord_seed_role_ids text[] DEFAULT '{}' NOT NULL;
 
-ALTER TABLE config ADD COLUMN IF NOT EXISTS discord_seed_channel_id TEXT default '' NOT NULL ;
+ALTER TABLE config
+    ADD COLUMN IF NOT EXISTS discord_seed_channel_id TEXT default '' NOT NULL;
 
 CREATE OR REPLACE FUNCTION check_ban(steam text, ip text,
                                      OUT out_ban_source text,
@@ -30,19 +31,11 @@ BEGIN
     FROM ban
     WHERE deleted = false
       AND valid_until > now()
-      AND target_id = in_steam_id;
-
-    IF out_ban_id > 0 THEN
-        return;
-    END IF;
-
-    SELECT 'ban_steam', ban_id, ban_type, reason, evade_ok, valid_until
-    INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
-    FROM ban
-    WHERE deleted = false
-      AND valid_until > now()
-      AND last_ip IS NOT NULL
-      AND last_ip::inet <<= ip::inet;
+      AND (
+        target_id = in_steam_id
+        OR (NOT evade_ok AND ip::ip4 <<= cidr)
+        OR (last_ip IS NOT NULL AND last_ip::inet <<= ip::inet)
+      );
 
     IF out_ban_id > 0 THEN
         return;
@@ -79,17 +72,6 @@ BEGIN
     if out_ban_id > 0 AND NOT (is_whitelist_addr OR is_whitelist_sid) then
         return;
     end if;
-
-    --     SELECT 'ban_asn', 1, 2, 17, false, NOW() + (INTERVAL '10 years')
---     INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
---     FROM ban_asn
---              LEFT JOIN net_asn na on ban_asn.as_num = na.as_num
---     WHERE ip::ip4 <<= na.ip_range;
---
---     if out_ban_id > 0 AND NOT (is_whitelist_addr OR is_whitelist_sid) then
---         return;
---     end if;
-
 END
 $func$ LANGUAGE plpgsql;
 

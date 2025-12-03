@@ -10,6 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config/link"
+	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -100,6 +101,28 @@ func Body(components ...discordgo.MessageComponent) discordgo.Container {
 	return discordgo.Container{
 		Components: components,
 	}
+}
+
+type AvatarProvider interface {
+	GetAvatar() person.Avatar
+}
+
+func PlayerThumbnail(avatar AvatarProvider) discordgo.Thumbnail {
+	return discordgo.Thumbnail{
+		Media:       discordgo.UnfurledMediaItem{URL: avatar.GetAvatar().Full()},
+		Description: ptr.To(fmt.Sprintf("Profile Picure [%s]", avatar.GetAvatar().Hash())),
+	}
+}
+
+func BodyTextWithThumbnail(colour int, accessory discordgo.MessageComponent, content string) discordgo.Container {
+	return BodyColour(
+		colour,
+		discordgo.Section{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextDisplay{Content: content},
+			},
+			Accessory: accessory,
+		})
 }
 
 func Buttons(buttons ...discordgo.MessageComponent) discordgo.ActionsRow {
