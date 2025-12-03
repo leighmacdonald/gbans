@@ -114,7 +114,7 @@ func (b *Discord) MustRegisterTemplate(namespace string, body []byte) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
-	textTemplate, errParse := template.New(namespace).Parse(string(body))
+	textTemplate, errParse := template.New(namespace).Funcs(createFuncMap()).Parse(string(body))
 	if errParse != nil {
 		panic(errParse)
 	}

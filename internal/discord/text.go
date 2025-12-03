@@ -6,21 +6,42 @@ import (
 	"fmt"
 	"regexp"
 	"text/template"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/ptr"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type TextProcessor func(text string) string
 
+func sidString(steamID steamid.SteamID) string {
+	return steamID.String()
+}
+
+func timeString(t time.Time) string {
+	return t.Format("Mon Jan _2 15:04:05 2006")
+}
+
+func untilString(t time.Time) string {
+	return time.Until(t).Round(time.Second).String()
+}
+
+func createFuncMap() template.FuncMap {
+	return template.FuncMap{
+		"linkPath":    link.Path,
+		"linkRaw":     link.Raw,
+		"sidString":   sidString,
+		"timeString":  timeString,
+		"untilString": untilString,
+	}
+}
+
 func Render(name string, templ []byte, context any, textProcessor ...TextProcessor) (string, error) {
 	var buffer bytes.Buffer
 	tmpl, err := template.New(name).
-		Funcs(template.FuncMap{
-			"linkPath": link.Path,
-			"linkRaw":  link.Raw,
-		}).
+		Funcs(createFuncMap()).
 		Parse(string(templ))
 	if err != nil {
 		return "", errors.Join(err, ErrTemplate)

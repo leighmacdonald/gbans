@@ -11,10 +11,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -22,19 +20,28 @@ type EvadeChecker interface {
 	CheckEvadeStatus(ctx context.Context, steamID steamid.SteamID, address netip.Addr) (bool, error)
 }
 
+type PersonEnsurer interface {
+	EnsurePerson(ctx context.Context, steamID steamid.SteamID) error
+}
+
 type Handler struct {
 	Sourcemod
 
-	notifier notification.Notifier
-	persons  person.Provider
-	evades   EvadeChecker
-	servers  *servers.Servers
+	notifier     notification.Notifier
+	persons      PersonEnsurer
+	evades       EvadeChecker
+	logChannelID string
 }
 
 func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth httphelper.ServerAuthenticator,
-	sourcemod Sourcemod, servers *servers.Servers, notifier notification.Notifier,
+	sourcemod Sourcemod, notifier notification.Notifier, logChannelID string, persons PersonEnsurer,
 ) {
-	handler := Handler{Sourcemod: sourcemod, servers: servers, notifier: notifier}
+	handler := Handler{
+		Sourcemod:    sourcemod,
+		notifier:     notifier,
+		logChannelID: logChannelID,
+		persons:      persons,
+	}
 
 	adminGroup := engine.Group("/")
 	{
@@ -73,7 +80,7 @@ func NewHandler(engine *gin.Engine, auth httphelper.Authenticator, serverAuth ht
 	srcdsGroup := engine.Group("/")
 	{
 		server := srcdsGroup.Use(serverAuth.Middleware)
-		server.GET("/api/sm/check", handler.onAPICheckPlayer())
+		server.POST("/api/sm/check", handler.onAPICheckPlayer())
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())
 		server.GET("/api/sm/groups", handler.onAPIGetServerGroups())
@@ -91,10 +98,10 @@ type ServerAuthResp struct {
 }
 
 type CheckRequest struct {
-	SteamID  string `query:"steam_id"`
-	ClientID int    `query:"client_id"`
-	IP       string `query:"ip"`
-	Name     string `query:"name"`
+	SteamID  string `json:"steam_id"`
+	ClientID int    `json:"client_id"`
+	IP       string `json:"ip"`
+	Name     string `json:"name"`
 }
 
 type CheckResponse struct {
@@ -143,8 +150,7 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 		}
 
 		if banState.BanID != 0 {
-			_, errPlayer := s.persons.GetOrCreatePersonBySteamID(ctx, steamID)
-			if errPlayer != nil {
+			if errPlayer := s.persons.EnsurePerson(ctx, steamID); errPlayer != nil {
 				slog.Error("Failed to load or create player on connect")
 				ctx.JSON(http.StatusOK, defaultValue)
 
@@ -160,17 +166,9 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 				}
 
 				if evadeBanned {
-					defaultValue = CheckResponse{
-						ClientID: req.ClientID,
-						BanType:  bantype.Banned,
-						Msg:      "Evasion ban",
-					}
-
-					ctx.JSON(http.StatusOK, defaultValue)
-
-					// s.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-					// 	domain.ChannelKickLog,
-					// 	discord.KickPlayerOnConnectEmbed(steamID, req.Name, player, banState.BanSource)))
+					defaultValue = CheckResponse{ClientID: req.ClientID, BanType: bantype.Banned, Msg: "Evasion ban"}
+					ctx.JSON(http.StatusForbidden, defaultValue)
+					go s.notifier.Send(notification.NewDiscord(s.logChannelID, newCheckDenyMessage(banState)))
 
 					return
 				}
@@ -182,11 +180,8 @@ func (s *Handler) onAPICheckPlayer() gin.HandlerFunc {
 				return
 			}
 
-			ctx.JSON(http.StatusOK, CheckResponse{
-				ClientID: req.ClientID,
-				BanType:  banState.BanType,
-				Msg:      msg,
-			})
+			ctx.JSON(http.StatusForbidden, CheckResponse{ClientID: req.ClientID, BanType: banState.BanType, Msg: msg})
+			go s.notifier.Send(notification.NewDiscord(s.logChannelID, newCheckDenyMessage(banState)))
 
 			return
 		}

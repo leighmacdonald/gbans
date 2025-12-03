@@ -662,3 +662,11 @@ func (u *Persons) SavePersonSettings(ctx context.Context, user person.Info, upda
 
 	return settings, nil
 }
+
+func (u *Persons) EnsurePerson(ctx context.Context, steamID steamid.SteamID) error {
+	if _, err := u.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
+		return err
+	}
+
+	return nil
+}

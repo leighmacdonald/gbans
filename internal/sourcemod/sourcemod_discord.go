@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
@@ -373,4 +374,14 @@ func (h discordHandler) onRCON(ctx context.Context, session *discordgo.Session, 
 	return discord.RespondUpdate(session, interaction,
 		discord.Heading("RCON Command: %s", command),
 		discord.BodyColouredText(discord.ColourInfo, "```"+resp+"```"))
+}
+
+func newCheckDenyMessage(banState PlayerBanState) *discordgo.MessageSend {
+	content, errContent := discord.Render("check_blocked", templateContent, banState)
+	if errContent != nil {
+		slog.Error("Error creating check blocked message", slog.String("error", errContent.Error()))
+	}
+
+	return discord.NewMessage(discord.Heading("Player Denied Connection"),
+		discord.BodyColouredText(discord.ColourWarn, content))
 }

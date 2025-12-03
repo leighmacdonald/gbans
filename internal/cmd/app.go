@@ -528,7 +528,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	servers.NewDemoHandler(router, userAuth, g.demos)
 	servers.NewServersHandler(router, userAuth, g.servers)
 	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)
-	sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod, g.servers, g.notifications)
+	sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod, g.notifications, conf.Discord.SafeKickLogChannelID(), g.persons)
 	votes.NewVotesHandler(router, userAuth, g.votes)
 	wiki.NewWikiHandler(router, userAuth, g.wiki)
 

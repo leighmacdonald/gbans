@@ -8,7 +8,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -30,10 +29,9 @@ func TestSourcemod(t *testing.T) {
 		authenticator = &tests.UserAuth{}
 		router        = fixture.CreateRouter()
 		sourcemodUC   = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewDiscard(), "", nil)
-		serversUC, _  = servers.New(servers.NewRepository(fixture.Database), nil, "")
 	)
 
-	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sourcemodUC, serversUC, notification.NewDiscard())
+	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sourcemodUC, notification.NewDiscard(), "", fixture.Persons)
 
 	t.Run("admins", testAdmins(router, authenticator))
 	t.Run("groups", testGroups(router, authenticator))
@@ -238,11 +236,10 @@ func TestSRCDS(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{}
 		router        = fixture.CreateRouter()
-		serversUC, _  = servers.New(servers.NewRepository(fixture.Database), nil, "")
 		sm            = sourcemod.New(sourcemod.NewRepository(fixture.Database), fixture.Persons, notification.NewDiscard(), "", nil)
 	)
 
-	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sm, serversUC, notification.NewDiscard())
+	sourcemod.NewHandler(router, authenticator, &tests.ServerAuth{}, sm, notification.NewDiscard(), "", fixture.Persons)
 
 	t.Run("permissions", testPermissions(router, authenticator, sm))
 	t.Run("check", testCheck(router, authenticator))

@@ -15,6 +15,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
+	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
@@ -60,7 +61,12 @@ type PlayerBanState struct {
 	BanType    bantype.Type    `json:"ban_type"`
 	Reason     reason.Reason   `json:"reason"`
 	EvadeOK    bool            `json:"evade_ok"`
+	IP         netip.Addr      `json:"ip"`
 	ValidUntil time.Time       `json:"valid_until"`
+}
+
+func (p PlayerBanState) Path() string {
+	return fmt.Sprintf("/ban/%d", p.BanID)
 }
 
 type AuthType string
@@ -226,26 +232,22 @@ func (h Sourcemod) seedRequest(ctx context.Context, server servers.Server, userI
 	return false
 }
 
-func (h Sourcemod) GetBanState(ctx context.Context, steamID steamid.SteamID, ip netip.Addr) (PlayerBanState, string, error) {
-	banState, errBanState := h.repository.QueryBanState(ctx, steamID, ip)
+func (h Sourcemod) GetBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (PlayerBanState, string, error) {
+	const format = "Banned\nReason: %s (%s)\nUntil: %s\nAppeal: %s"
+
+	banState, errBanState := h.repository.QueryBanState(ctx, steamID, ipAddr)
 	if errBanState != nil || banState.BanID == 0 {
 		return banState, "", errBanState
 	}
-
-	const format = "Banned\nReason: %s (%s)\nUntil: %s\nAppeal: %s"
+	banState.IP = ipAddr
 
 	var msg string
-
 	validUntil := banState.ValidUntil.Format(time.ANSIC)
 	if banState.ValidUntil.After(time.Now().AddDate(5, 0, 0)) {
 		validUntil = "Permanent"
 	}
 
-	appealURL := "n/a"
-	if banState.BanSource == BanSourceSteam {
-		appealURL = fmt.Sprintf("/appeal/%d", banState.BanID)
-	}
-
+	appealURL := link.Raw(fmt.Sprintf("/appeal/%d", banState.BanID))
 	if banState.BanID > 0 && banState.BanType >= bantype.NoComm {
 		switch banState.BanSource {
 		case BanSourceSteam:
