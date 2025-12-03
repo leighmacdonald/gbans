@@ -87,7 +87,6 @@ func (c *client) ID() string {
 }
 
 func (c *client) Start(ctx context.Context) {
-	// TODO refactor this so there is none of this logic under domain.
 	for {
 		select {
 		case <-ctx.Done():

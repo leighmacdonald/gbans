@@ -13,12 +13,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 var (
@@ -79,12 +77,6 @@ type ServerInfoSafe struct {
 	ServerName     string `json:"server_name"`
 	ServerID       int    `json:"server_id"`
 	Colour         string `json:"colour"`
-}
-
-type ServerPermission struct {
-	SteamID         steamid.SID          `json:"steam_id"`
-	PermissionLevel permission.Privilege `json:"permission_level"`
-	Flags           string               `json:"flags"`
 }
 
 type Servers struct {
@@ -290,10 +282,6 @@ func (s *Servers) Server(ctx context.Context, serverID int) (Server, error) {
 	}
 
 	return servers[0], nil
-}
-
-func (s *Servers) ServerPermissions(ctx context.Context) ([]ServerPermission, error) {
-	return s.GetServerPermissions(ctx)
 }
 
 func (s *Servers) Servers(ctx context.Context, filter Query) ([]Server, error) {
