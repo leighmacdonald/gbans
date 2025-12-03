@@ -181,25 +181,25 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.assets = asset.NewAssets(assetRepo)
 
 	var errServer error
-	if g.servers, errServer = servers.NewServers(servers.NewRepository(g.database), g.broadcaster, ""); errServer != nil {
+	if g.servers, errServer = servers.New(servers.NewRepository(g.database), g.broadcaster, ""); errServer != nil {
 		return errServer
 	}
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, conf.Demo, steamid.New(conf.Owner))
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
-		conf.Discord.LogChannelID, conf.Discord.SafeAppealLogChannelID())
-	g.bans = ban.NewBans(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.SafeBanLogChannelID(),
+		conf.Discord.SafeAppealLogChannelID())
+	g.bans = ban.New(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.SafeBanLogChannelID(),
 		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database),
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
-	g.chat = chat.NewChat(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler)
-	g.forums = forum.NewForums(forum.NewRepository(g.database), g.config, g.notifications)
-	g.metrics = metrics.NewMetrics(g.broadcaster)
-	g.news = news.NewNews(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
+	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler)
+	g.forums = forum.New(forum.NewRepository(g.database), g.config, g.notifications)
+	g.metrics = metrics.New(g.broadcaster)
+	g.news = news.New(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
 	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), g.servers)
-	g.wiki = wiki.NewWiki(wiki.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID(), conf.Discord.LogChannelID)
-	g.anticheat = anticheat.NewAntiCheat(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan, g.persons)
-	g.votes = votes.NewVotes(votes.NewRepository(g.database), g.broadcaster, g.notifications,
+	g.wiki = wiki.New(wiki.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID(), conf.Discord.LogChannelID)
+	g.anticheat = anticheat.New(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan, g.persons)
+	g.votes = votes.New(votes.NewRepository(g.database), g.broadcaster, g.notifications,
 		conf.Discord.SafeVoteLogChannelID(), g.persons)
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons), g.tfapiClient)
@@ -209,7 +209,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
 		ban.RegisterDiscordCommands(g.bot, g.bans, g.persons, g.persons)
 		chat.RegisterDiscordCommands(g.bot, g.wordFilters)
-		servers.RegisterDiscordCommands(g.bot, g.persons, g.servers, g.networks)
+		servers.RegisterDiscordCommands(g.bot, g.persons, g.servers, g.networks, g.notifications, conf.Discord.SafeKickLogChannelID())
 		sourcemod.RegisterDiscordCommands(g.bot, g.sourcemod, g.servers)
 	}
 
@@ -302,7 +302,12 @@ func (g *GBans) chatHandler(ctx context.Context, exceeded bool, newWarning chat.
 		const msg = "[WARN] Please refrain from using slurs/toxicity (see: rules & MOTD). " +
 			"Further offenses will result in mutes/bans"
 		if result, found := g.servers.FindPlayer(servers.FindOpts{SteamID: newWarning.UserMessage.SteamID}); found {
-			if errPSay := result.Server.Say(ctx, servers.PSay, msg, newWarning.UserMessage.SteamID); errPSay != nil {
+			opts := servers.SayOpts{
+				Type:    servers.PSay,
+				Message: msg,
+				Targets: []steamid.SteamID{newWarning.UserMessage.SteamID},
+			}
+			if errPSay := result.Server.Say(ctx, opts); errPSay != nil {
 				return errPSay
 			}
 		}
@@ -546,8 +551,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	slog.Info("Starting HTTP server", slog.String("address", conf.Addr()), slog.String("url", conf.ExternalURL))
 
-	errServe := httpServer.ListenAndServe()
-	if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
+	if errServe := httpServer.ListenAndServe(); errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
 		slog.Error("HTTP server returned error", slog.String("error", errServe.Error()))
 	}
 

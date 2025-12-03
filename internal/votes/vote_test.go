@@ -20,6 +20,6 @@ func TestVotes(t *testing.T) {
 	server := testFixture.CreateTestServer(t.Context())
 	p1 := testFixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
 	p2 := testFixture.CreateTestPerson(t.Context(), tests.GuestSID, permission.Guest)
-	vuc := votes.NewVotes(votes.NewRepository(testFixture.Database), events, notification.NullNotifier{}, "", nil)
+	vuc := votes.New(votes.NewRepository(testFixture.Database), events, notification.NullNotifier{}, "", nil)
 	require.NoError(t, vuc.Add(t.Context(), p1.SteamID, p2.SteamID, "kick", false, server.ServerID, logparse.VoteCodeFailNoOutnumberYes))
 }

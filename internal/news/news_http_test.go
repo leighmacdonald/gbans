@@ -27,7 +27,7 @@ func TestNewsHTTP(t *testing.T) {
 		router        = fixture.CreateRouter()
 	)
 
-	news.NewNewsHandler(router, news.NewNews(news.NewRepository(fixture.Database),
+	news.NewNewsHandler(router, news.New(news.NewRepository(fixture.Database),
 		notification.NewDiscard(), ""), authenticator)
 
 	// No news yet

@@ -24,7 +24,7 @@ type News struct {
 	logChannelID  string
 }
 
-func NewNews(repository Repository, notifications notification.Notifier, logChannelID string) News {
+func New(repository Repository, notifications notification.Notifier, logChannelID string) News {
 	return News{repository: repository, notifications: notifications, logChannelID: logChannelID}
 }
 

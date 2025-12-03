@@ -123,7 +123,7 @@ func AckInteraction(session *discordgo.Session, interaction *discordgo.Interacti
 	if err := session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Flags:      discordgo.MessageFlagsIsComponentsV2,
+			Flags:      discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
 			Components: []discordgo.MessageComponent{discordgo.TextDisplay{Content: "Computering..."}},
 		},
 	}); err != nil {
@@ -180,9 +180,9 @@ func RespondPrivate(session *discordgo.Session, interaction *discordgo.Interacti
 // RespondUpdate handles updaing a previous acknowledged interaction with a new set of components.
 func RespondUpdate(session *discordgo.Session, interaction *discordgo.InteractionCreate, components ...discordgo.MessageComponent) error {
 	if _, err := session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
-		Flags:           discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsSuppressNotifications,
-		AllowedMentions: &discordgo.MessageAllowedMentions{},
-		Components:      &components,
+		Flags: discordgo.MessageFlagsIsComponentsV2 | discordgo.MessageFlagsEphemeral,
+		// AllowedMentions: &discordgo.MessageAllowedMentions{},
+		Components: &components,
 	}); err != nil {
 		return errors.Join(err, ErrCommandSend)
 	}

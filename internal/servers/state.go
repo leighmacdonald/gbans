@@ -2,6 +2,7 @@ package servers
 
 import (
 	"errors"
+	"net"
 	"time"
 
 	"github.com/leighmacdonald/steamid/v4/extra"
@@ -36,7 +37,7 @@ type Status struct {
 	Bots   int
 }
 
-type State struct {
+type state struct {
 	// IP is a distinct entry vs host since steam no longer allows steam:// protocol handler links to use a fqdn
 	IP         string `json:"ip"`
 	Port       uint16 `json:"port"`
@@ -48,7 +49,8 @@ type State struct {
 	Protocol      uint8     `json:"protocol"`
 	Map           string    `json:"map"`
 	// Name of the folder containing the game files.
-	Folder string `json:"folder"`
+	Folder   string `json:"folder"`
+	ServerOS string `json:"server_os"`
 	// Full name of the game.
 	Game string `json:"game"`
 	// Steam Application ID of game.
@@ -80,11 +82,25 @@ type State struct {
 	// Name of the spectator server for SourceTV.
 	STVName string `json:"stv_name"`
 	// A collection of the comma delimited values of sv_tags
-	Tags    []string       `json:"tags"`
-	Players []extra.Player `json:"players"`
+	Tags    []string  `json:"tags"`
+	Players []*Player `json:"players"`
 	// How many human players in the server
 	Humans int `json:"humans"`
 	// HasSynchronizedDNS tracks if the server has done its initial DNS update cycle. This is required
 	// for future change detection and updates.
-	HasSynchronizedDNS bool `json:"has_synchronized_dns"`
+	HasSynchronizedDNS bool              `json:"has_synchronized_dns"`
+	Rules              map[string]string `json:"rules"`
+}
+
+type Player struct {
+	UserID        int
+	Name          string
+	SID           steamid.SteamID
+	ConnectedTime time.Duration
+	Ping          int
+	Loss          int
+	State         string
+	IP            net.IP
+	Port          int
+	Score         int
 }

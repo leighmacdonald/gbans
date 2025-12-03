@@ -113,7 +113,7 @@ func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) 
 
 	for rows.Next() {
 		var (
-			server    Server
+			server    = NewServer("", "", 0)
 			tokenDate *time.Time
 		)
 

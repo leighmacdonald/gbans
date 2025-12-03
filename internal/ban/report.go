@@ -158,26 +158,24 @@ type ReportMeta struct {
 }
 
 type Reports struct {
-	repository    ReportRepository
-	persons       *person.Persons
-	demos         servers.Demos
-	tfAPI         thirdparty.APIProvider
-	notif         notification.Notifier
-	logChannel    string
-	appealChannel string
+	repository ReportRepository
+	persons    *person.Persons
+	demos      servers.Demos
+	tfAPI      thirdparty.APIProvider
+	notif      notification.Notifier
+	logChannel string
 }
 
 func NewReports(repo ReportRepository, persons *person.Persons, demos servers.Demos, tfAPI thirdparty.APIProvider,
-	notif notification.Notifier, logChannel string, appealChannel string,
+	notif notification.Notifier, logChannel string,
 ) Reports {
 	return Reports{
-		repository:    repo,
-		persons:       persons,
-		demos:         demos,
-		tfAPI:         tfAPI,
-		notif:         notif,
-		logChannel:    logChannel,
-		appealChannel: appealChannel,
+		repository: repo,
+		persons:    persons,
+		demos:      demos,
+		tfAPI:      tfAPI,
+		notif:      notif,
+		logChannel: logChannel,
 	}
 }
 
@@ -386,7 +384,7 @@ func (r Reports) DropMessage(ctx context.Context, curUser personDomain.Info, rep
 		return err
 	}
 
-	go r.notif.Send(notification.NewDiscord(r.appealChannel,
+	go r.notif.Send(notification.NewDiscord(r.logChannel,
 		DeleteReportMessage(existing, curUser)))
 
 	slog.Info("Deleted report message", slog.Int64("report_message_id", reportMessageID))
@@ -491,7 +489,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 		return ReportWithAuthor{}, errReport
 	}
 
-	go r.notif.Send(notification.NewDiscord(r.appealChannel, newInGameReportResponse(newReport)))
+	go r.notif.Send(notification.NewDiscord(r.logChannel, newInGameReportResponse(newReport)))
 	go r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},
 		notification.Info,
@@ -533,7 +531,7 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 		return ReportMessage{}, errSave
 	}
 
-	r.notif.Send(notification.NewDiscord(r.appealChannel,
+	r.notif.Send(notification.NewDiscord(r.logChannel,
 		EditReportMessageResponse(req.BodyMD, existing.MessageMD,
 			link.Path(existing), curUser, link.Path(curUser))))
 
@@ -565,7 +563,7 @@ func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser pers
 		return ReportMessage{}, errSave
 	}
 
-	go r.notif.Send(notification.NewDiscord(r.appealChannel, NewReportMessageResponse(report, msg)))
+	go r.notif.Send(notification.NewDiscord(r.logChannel, NewReportMessageResponse(report, msg)))
 
 	r.notif.Send(notification.NewSiteGroupNotificationWithAuthor(
 		[]permission.Privilege{permission.Moderator, permission.Admin},

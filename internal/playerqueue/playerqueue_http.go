@@ -95,17 +95,17 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 		}
 
 		// Connect to the coordinator with our connection
-		client := h.Connect(ctx, currentUser, wsConn)
-		defer h.Disconnect(client)
+		clientConn := h.Connect(ctx, currentUser, wsConn)
+		defer h.Disconnect(clientConn)
 
 		for {
-			request, err := h.handleWSMessage(client)
+			request, err := h.handleWSMessage(clientConn)
 			if err != nil {
 				switch {
 				case errors.Is(err, context.Canceled):
 					return
 				case errors.Is(err, ErrQueueIO):
-					slog.Debug("Client connection error", slog.String("client", client.ID()), slog.String("error", ErrQueueIO.Error()))
+					slog.Debug("Client connection error", slog.String("client", clientConn.ID()), slog.String("error", ErrQueueIO.Error()))
 
 					return
 				default:
@@ -115,7 +115,7 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 				}
 			}
 
-			if errHandler := h.handleRequest(ctx, client, request, currentUser); errHandler != nil {
+			if errHandler := h.handleRequest(ctx, clientConn, request, currentUser); errHandler != nil {
 				slog.Error("Error trying to handle websocket request", slog.String("error", errHandler.Error()))
 
 				continue

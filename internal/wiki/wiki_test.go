@@ -35,7 +35,7 @@ func TestWiki(t *testing.T) {
 	testDB := tests.NewFixture()
 	defer testDB.Close()
 
-	wikiCase := wiki.NewWiki(wiki.NewRepository(testDB.Database), notification.NewDiscard(), "", "")
+	wikiCase := wiki.New(wiki.NewRepository(testDB.Database), notification.NewDiscard(), "", "")
 	page := wiki.NewPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
 	saved, errSave := wikiCase.Save(t.Context(), page)
 	require.NoError(t, errSave)

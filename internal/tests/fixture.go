@@ -116,7 +116,7 @@ func (f Fixture) CreateTestPerson(ctx context.Context, steamID steamid.SteamID, 
 }
 
 func (f Fixture) CreateTestServer(ctx context.Context) servers.Server {
-	serverCase := servers.NewServers(servers.NewRepository(f.Database))
+	serverCase, _ := servers.New(servers.NewRepository(f.Database), nil, "")
 	server, errServer := serverCase.Save(ctx, servers.Server{
 		Name:               stringutil.SecureRandomString(10),
 		ShortName:          stringutil.SecureRandomString(3),

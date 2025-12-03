@@ -82,7 +82,7 @@ type AntiCheat struct {
 	handler OnEntry
 }
 
-func NewAntiCheat(repo Repository, config Config, notif notification.Notifier, handler OnEntry, persons person.Provider) AntiCheat {
+func New(repo Repository, config Config, notif notification.Notifier, handler OnEntry, persons person.Provider) AntiCheat {
 	return AntiCheat{
 		Config:  config,
 		parser:  logparse.NewStacParser(),

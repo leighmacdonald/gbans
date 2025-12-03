@@ -80,7 +80,7 @@ type discordHandler struct {
 func (h discordHandler) onFilterCheck(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) error {
 	// opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	// message := opts[discord.OptMessage].StringValue()
-	// return FilterCheckMessage(h.wordFilters.Check(message))
+	// return filterCheckMessage(h.wordFilters.Check(message))
 	return nil
 }
 
@@ -93,7 +93,7 @@ func (h discordHandler) makeOnFilter(ctx context.Context, session *discordgo.Ses
 	}
 }
 
-func FilterCheckMessage(matches []Filter) *discordgo.MessageSend {
+func filterCheckMessage(matches []Filter) *discordgo.MessageSend {
 	var colour int
 	if len(matches) == 0 {
 		colour = discord.ColourSuccess

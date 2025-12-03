@@ -41,18 +41,12 @@ var ErrBind = errors.New("bind error")
 // of the type T. Fields are mapped with the `id` field tag which has a int value which corresponds
 // to a unique `Component.ID` for each user input field in the modal.
 func Bind[T any](ctx context.Context, components []discordgo.MessageComponent) (T, error) { //nolint:ireturn
-	values, errValues := mapInteractionValues(components)
-	if errValues != nil {
-		var value T
-
-		return value, errValues
-	}
-	return BindValues[T](ctx, values)
+	return BindValues[T](ctx, mapInteractionValues(components))
 }
 
 // mapInteractionValues is responsible for transforming the interaction values into a map indexed by the unique
 // input ID integer.
-func mapInteractionValues(components []discordgo.MessageComponent) (map[int]string, error) {
+func mapInteractionValues(components []discordgo.MessageComponent) map[int]string {
 	values := map[int]string{}
 	// e := buildModalValueMap(values, components...)
 	// return values, e
@@ -72,7 +66,7 @@ func mapInteractionValues(components []discordgo.MessageComponent) (map[int]stri
 					if !ok {
 						slog.Error("Failed to cast to textinput")
 
-						return values, nil
+						return values
 					}
 					values[choice.ID] = choice.Value
 				}
@@ -92,7 +86,7 @@ func mapInteractionValues(components []discordgo.MessageComponent) (map[int]stri
 		}
 	}
 
-	return values, nil
+	return values
 }
 
 // buildModalValueMap recursively finds all of the values of the components returned from a modal.

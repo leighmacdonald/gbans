@@ -91,7 +91,7 @@ type Chat struct {
 	WarningChan   chan NewUserWarning
 }
 
-func NewChat(repo Repository, config Config, filters WordFilters,
+func New(repo Repository, config Config, filters WordFilters,
 	persons person.Provider, notifications notification.Notifier, actionHandler ExceedHandler,
 ) *Chat {
 	// TODO decouple bans dep

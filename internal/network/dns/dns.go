@@ -26,15 +26,12 @@ type Provider interface {
 	Update(ctx context.Context, ip net.IP, addr string) error
 }
 
-type StateProvider interface {
-	Current() []servers.State
-}
-
 type ServerProvider interface {
 	Servers(ctx context.Context, filter servers.Query) ([]servers.Server, error)
+	Current() []*servers.Server
 }
 
-func MonitorChanges(ctx context.Context, conf config.Config, state StateProvider, server ServerProvider) {
+func MonitorChanges(ctx context.Context, conf config.Config, server ServerProvider) {
 	if conf.Network.CFKey == "" || conf.Network.CFEmail == "" || conf.Network.CFZoneID == "" {
 		slog.Warn("Cloudflare DNS configuration is missing, unable to update DNS records")
 
@@ -42,7 +39,7 @@ func MonitorChanges(ctx context.Context, conf config.Config, state StateProvider
 	}
 
 	dnsProvider := NewCloudflare(conf.Network.CFZoneID, conf.Network.CFKey, conf.Network.CFEmail)
-	detector := NewChangeDetector(dnsProvider, state, server)
+	detector := NewChangeDetector(dnsProvider, server)
 	detector.Start(ctx, time.Second*10)
 }
 
@@ -53,27 +50,29 @@ type hostState struct {
 }
 
 type ChangeDetector struct {
-	provider     Provider
-	state        StateProvider
-	currentState []servers.State
-	servers      ServerProvider
-	current      map[int]hostState
-	started      bool
+	provider Provider
+	servers  ServerProvider
+	current  map[int]hostState
+	started  bool
 }
 
-func NewChangeDetector(dnsProvider Provider, state StateProvider, servers ServerProvider) *ChangeDetector {
-	return &ChangeDetector{provider: dnsProvider, state: state, servers: servers, current: map[int]hostState{}}
-}
-
-func (c *ChangeDetector) findIP(serverID int) net.IP {
-	for _, curState := range c.currentState {
-		if curState.ServerID == serverID {
-			return net.ParseIP(curState.IP)
-		}
+func NewChangeDetector(dnsProvider Provider, servers ServerProvider) *ChangeDetector {
+	return &ChangeDetector{
+		provider: dnsProvider,
+		servers:  servers,
+		current:  map[int]hostState{},
 	}
-
-	return nil
 }
+
+// func (c *ChangeDetector) findIP(serverID int) net.IP {
+//	for _, curState := range c.currentState {
+//		if curState.ServerID == serverID {
+//			return net.ParseIP(curState.IP)
+//		}
+//	}
+//
+//	return nil
+// }
 
 // sync takes care of checking if the SDR ip of the game servers changes, and if so, it updates the DNS with the
 // new ip.
@@ -84,8 +83,8 @@ func (c *ChangeDetector) sync(ctx context.Context) error {
 	}
 
 	for _, server := range sdrServers {
-		currentIP := c.findIP(server.ServerID)
-		if currentIP == nil {
+		currentIP, errIP := server.IP()
+		if errIP != nil || currentIP == nil {
 			continue
 		}
 
@@ -129,7 +128,6 @@ func (c *ChangeDetector) Start(ctx context.Context, updateFrequency time.Duratio
 	for {
 		select {
 		case <-ticker.C:
-			c.currentState = c.state.Current()
 			if err := c.sync(ctx); err != nil {
 				slog.Error("Failed to update DNS record", slog.String("error", err.Error()))
 			}

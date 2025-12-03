@@ -72,7 +72,7 @@ type Wiki struct {
 	channelID       string
 }
 
-func NewWiki(repository Repository, notif notification.Notifier, publicChannelID string, channelID string) Wiki {
+func New(repository Repository, notif notification.Notifier, publicChannelID string, channelID string) Wiki {
 	return Wiki{Repository: repository, notif: notif, publicChannelID: publicChannelID, channelID: channelID}
 }
 

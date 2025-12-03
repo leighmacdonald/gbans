@@ -14,11 +14,11 @@ import (
 func TestServersHTTP(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)}
-		serversUC     = servers.NewServers(servers.NewRepository(fixture.Database))
+		serversUC, _  = servers.New(servers.NewRepository(fixture.Database), nil, "")
 		router        = fixture.CreateRouter()
 		server        = servers.NewServer(stringutil.SecureRandomString(5), "1.2.3.4", 27015)
 	)
-	servers.NewServersHandler(router, authenticator, serversUC, nil)
+	servers.NewServersHandler(router, authenticator, serversUC)
 
 	// None exist yet
 	require.Empty(t, tests.GetGOK[[]servers.Server](t, router, "/api/servers"))

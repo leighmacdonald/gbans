@@ -41,10 +41,10 @@ require (
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/prometheus/client_golang v1.23.2
 	github.com/ricochet2200/go-disk-usage/du v0.0.0-20210707232629-ac9918953285
+	github.com/rumblefrog/go-a2s v1.0.2
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/samber/slog-gin v1.18.0
 	github.com/samber/slog-multi v1.6.0
-	github.com/sergi/go-diff v1.4.0
 	github.com/sosodev/duration v1.3.1
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0

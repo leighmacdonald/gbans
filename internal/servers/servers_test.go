@@ -19,7 +19,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestServers(t *testing.T) {
-	serversCase := servers.NewServers(servers.NewRepository(fixture.Database))
+	serversCase, _ := servers.New(servers.NewRepository(fixture.Database), nil, "")
 
 	t.Run("no servers", func(t *testing.T) {
 		// no results yet
