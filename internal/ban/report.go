@@ -429,16 +429,6 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 	if errTarget != nil {
 		return ReportWithAuthor{}, errTarget
 	}
-	// TODO readd
-	// if personTarget.Expired() {
-	// 	if err := person.UpdatePlayerSummary(ctx, &personTarget, r.tfAPI); err != nil {
-	// 		slog.Error("Failed to update target player", log.ErrAttr(err))
-	// 	} else {
-	// 		if errSave := r.persons.Save(ctx, &personTarget); errSave != nil {
-	// 			slog.Error("Failed to save target player update", log.ErrAttr(err))
-	// 		}
-	// 	}
-	// }
 
 	// Ensure the user doesn't already have an open report against the user
 	existing, errReports := r.ReportBySteamID(ctx, personSource.SteamID, req.TargetID)

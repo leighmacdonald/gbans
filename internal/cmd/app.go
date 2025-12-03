@@ -188,7 +188,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
 		conf.Discord.SafeAppealLogChannelID())
 	g.bans = ban.New(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.SafeBanLogChannelID(),
-		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers)
+		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers, g.networks)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database),
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)

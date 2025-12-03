@@ -59,7 +59,8 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 
 		       local_store_path_root,
 
-		       ssh_enabled, ssh_username, ssh_password, ssh_port, ssh_private_key_path, ssh_update_interval, ssh_timeout, ssh_demo_path_fmt, ssh_stac_path_fmt,
+		       ssh_enabled, ssh_username, ssh_password, ssh_port, ssh_private_key_path, ssh_update_interval, ssh_timeout, 
+		       ssh_demo_path_fmt, ssh_stac_path_fmt, ssh_host_key_strategy,
 
 		       exports_bd_enabled, exports_valve_enabled, exports_authorized_keys,
 
@@ -93,7 +94,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 			&cfg.Debug.SkipOpenIDValidation, &cfg.Debug.AddRCONLogAddress,
 			&cfg.LocalStore.PathRoot,
 			&cfg.SSH.Enabled, &cfg.SSH.Username, &cfg.SSH.Password, &cfg.SSH.Port, &cfg.SSH.PrivateKeyPath, &cfg.SSH.UpdateInterval,
-			&cfg.SSH.Timeout, &cfg.SSH.DemoPathFmt, &cfg.SSH.StacPathFmt,
+			&cfg.SSH.Timeout, &cfg.SSH.DemoPathFmt, &cfg.SSH.StacPathFmt, &cfg.SSH.HostKeyStrategy,
 			&cfg.Exports.BDEnabled, &cfg.Exports.ValveEnabled, &authorizedKeys,
 			&cfg.Anticheat.Enabled, &cfg.Anticheat.Action, &cfg.Anticheat.Duration, &cfg.Anticheat.MaxAimSnap, &cfg.Anticheat.MaxPsilent,
 			&cfg.Anticheat.MaxBhop, &cfg.Anticheat.MaxFakeAng, &cfg.Anticheat.MaxCmdNum, &cfg.Anticheat.MaxTooManyConnections,
@@ -212,6 +213,7 @@ func (c *Repository) Write(ctx context.Context, config Config) error {
 			"ssh_timeout":                         config.SSH.Timeout,
 			"ssh_demo_path_fmt":                   config.SSH.DemoPathFmt,
 			"ssh_stac_path_fmt":                   config.SSH.StacPathFmt,
+			"ssh_host_key_strategy":               config.SSH.HostKeyStrategy,
 			"exports_bd_enabled":                  config.Exports.BDEnabled,
 			"exports_valve_enabled":               config.Exports.ValveEnabled,
 			"exports_authorized_keys":             strings.Split(config.Exports.AuthorizedKeys, ","),
