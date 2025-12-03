@@ -184,7 +184,7 @@ type Forums struct {
 	config  *config.Configuration
 }
 
-func NewForums(repository Repository, config *config.Configuration, notif notification.Notifier) Forums {
+func New(repository Repository, config *config.Configuration, notif notification.Notifier) Forums {
 	return Forums{repo: repository, tracker: NewTracker(), config: config, notif: notif}
 }
 

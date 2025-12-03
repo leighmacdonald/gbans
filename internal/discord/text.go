@@ -54,12 +54,10 @@ func Heading(format string, args ...any) discordgo.TextDisplay {
 }
 
 func BodyColouredText(colour int, text string) discordgo.Container {
-	return discordgo.Container{
-		AccentColor: ptr.To(colour),
-		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: text},
-		},
-	}
+	body := BodyText(text)
+	body.AccentColor = ptr.To(colour)
+
+	return body
 }
 
 func BodyText(text string) discordgo.Container {
@@ -71,10 +69,10 @@ func BodyText(text string) discordgo.Container {
 }
 
 func BodyColour(colour int, components ...discordgo.MessageComponent) discordgo.Container {
-	return discordgo.Container{
-		AccentColor: ptr.To(colour),
-		Components:  components,
-	}
+	body := Body(components...)
+	body.AccentColor = ptr.To(colour)
+
+	return body
 }
 
 func Body(components ...discordgo.MessageComponent) discordgo.Container {

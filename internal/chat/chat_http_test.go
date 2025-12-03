@@ -32,7 +32,7 @@ func TestMessages(t *testing.T) {
 		router        = fixture.CreateRouter()
 		server        = fixture.CreateTestServer(t.Context())
 		filters       = chat.NewWordFilters(chat.NewWordFilterRepository(fixture.Database), notification.NewDiscard(), fixture.Config.Config().Filters)
-		chats         = chat.NewChat(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters,
+		chats         = chat.New(chat.NewRepository(fixture.Database), fixture.Config.Config().Filters, filters,
 			fixture.Persons, notification.NewDiscard(), func(_ context.Context, _ bool, _ chat.NewUserWarning) error { return nil })
 	)
 

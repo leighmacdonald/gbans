@@ -21,7 +21,7 @@ func TestReport(t *testing.T) {
 	var (
 		router = fixture.CreateRouter()
 		// br     = ban.NewRepository(fixture.Database, fixture.Persons)
-		// bans    = ban.NewBans(br, fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
+		// bans    = ban.New(br, fixture.Persons, fixture.Config, nil, notification.NewNullNotifications())
 		persons = person.NewPersons(
 			person.NewRepository(fixture.Database, true),
 			steamid.New(tests.OwnerSID),
@@ -29,7 +29,7 @@ func TestReport(t *testing.T) {
 		// appeals = ban.NewAppeals(ban.NewAppealRepository(fixture.Database), bans, persons, fixture.Config, notification.NewNullNotifications())
 		assets        = asset.NewAssets(asset.NewLocalRepository(fixture.Database, "./"))
 		demo          = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database), assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
-		reports       = ban.NewReports(ban.NewReportRepository(fixture.Database), persons, demo, fixture.TFApi, notification.NewDiscard(), "", "")
+		reports       = ban.NewReports(ban.NewReportRepository(fixture.Database), persons, demo, fixture.TFApi, notification.NewDiscard(), "")
 		moderator     = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)
 		reporter      = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.User)
 		target        = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)

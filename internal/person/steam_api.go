@@ -50,6 +50,8 @@ func FetchPlayerBans(ctx context.Context, tfAPI thirdparty.APIProvider, steamIDs
 		})
 	}
 
+	waitGroup.Wait()
+
 	resultsMu.RLock()
 	defer resultsMu.RUnlock()
 

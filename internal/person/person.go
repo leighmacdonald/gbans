@@ -189,6 +189,7 @@ func (p Person) GetSteamID() steamid.SteamID {
 func (p Person) GetSteamIDString() string {
 	return p.SteamID.String()
 }
+
 func (p Person) Path() string {
 	return fmt.Sprintf("/profile/%d", p.SteamID.Int64())
 }

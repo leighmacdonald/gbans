@@ -17,6 +17,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config/link"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/datetime"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -241,7 +242,7 @@ type Bans struct {
 	servers       *servers.Servers
 }
 
-func NewBans(repository Repository, person person.Provider, logChannelID string, kickChannelID string,
+func New(repository Repository, person person.Provider, logChannelID string, kickChannelID string,
 	owner steamid.SteamID, reports Reports, notif notification.Notifier, servers *servers.Servers,
 ) Bans {
 	return Bans{
@@ -370,7 +371,7 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 	return s.QueryOne(ctx, QueryOpts{BanID: newBan.BanID, EvadeOk: true})
 }
 
-func (s Bans) sendBanNotification(_ context.Context, newBan Ban, author person.Core, target person.Core) {
+func (s Bans) sendBanNotification(ctx context.Context, newBan Ban, author person.Core, target person.Core) {
 	expIn := Permanent
 	expAt := Permanent
 
@@ -398,24 +399,31 @@ func (s Bans) sendBanNotification(_ context.Context, newBan Ban, author person.C
 	if s.servers == nil {
 		return
 	}
+	result, found := s.servers.FindPlayer(servers.FindOpts{SteamID: newBan.TargetID})
+	if !found {
+		return
+	}
 
-	// goland:noinspection ALL
-	// switch newBan.BanType {
-	// case bantype.Banned:
-	//	if errKick := s.state.Kick(ctx, newBan.TargetID, newBan.Reason.String()); errKick != nil && !errors.Is(errKick, state.ErrPlayerNotFound) {
-	//		slog.Error("Failed to kick player", slog.String("error", errKick.Error()),
-	//			slog.Int64("sid64", newBan.TargetID.Int64()))
-	//	} else {
-	//		s.notif.Send(notification.NewDiscord(s.kickChannelID, KickPlayerEmbed(target)))
-	//	}
-	// case bantype.NoComm:
-	//	if errSilence := s.state.Silence(ctx, newBan.TargetID, newBan.Reason.String()); errSilence != nil && !errors.Is(errSilence, state.ErrPlayerNotFound) {
-	//		slog.Error("Failed to silence player", slog.String("error", errSilence.Error()),
-	//			slog.Int64("sid64", newBan.TargetID.Int64()))
-	//	} else {
-	//		s.notif.Send(notification.NewDiscord(s.kickChannelID, MuteMessage(target.GetSteamID())))
-	//	}
-	// }
+	switch newBan.BanType {
+	case bantype.Banned:
+		if errKick := result.Server.Kick(ctx, newBan.TargetID, newBan.Reason.String()); errKick != nil && !errors.Is(errKick, servers.ErrPlayerNotFound) {
+			slog.Error("Failed to kick player", slog.String("error", errKick.Error()),
+				slog.Int64("sid64", newBan.TargetID.Int64()))
+		}
+		s.notif.Send(notification.NewDiscord(s.kickChannelID, discord.NewMessage(
+			discord.Heading("User Kicked [%s]", result.Server.ShortName),
+			discord.BodyColouredText(discord.ColourInfo, result.Player.Name))))
+	case bantype.NoComm:
+		if errSilence := result.Server.Silence(ctx, newBan.TargetID, newBan.Reason.String()); errSilence != nil && !errors.Is(errSilence, servers.ErrPlayerNotFound) {
+			slog.Error("Failed to silence player", slog.String("error", errSilence.Error()),
+				slog.Int64("sid64", newBan.TargetID.Int64()))
+		}
+		s.notif.Send(notification.NewDiscord(s.kickChannelID, discord.NewMessage(
+			discord.Heading("User Muted [%s]", result.Server.ShortName),
+			discord.BodyColouredText(discord.ColourInfo, result.Player.Name))))
+	default:
+		slog.Error("Unknown ban type")
+	}
 }
 
 // Unban will set the Current ban to now, making it expired.

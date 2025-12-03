@@ -185,7 +185,7 @@ func (h Sourcemod) seedRequest(ctx context.Context, server servers.Server, userI
 			Link    string
 			CC      string
 			Roles   []string
-			State   servers.State
+			// State   servers.state
 		}{
 			Name:    server.Name,
 			Short:   server.ShortName,

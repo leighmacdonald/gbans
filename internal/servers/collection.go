@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/ryanuber/go-glob"
 	"golang.org/x/sync/errgroup"
@@ -28,7 +27,7 @@ type FindOpts struct {
 
 type FindResult struct {
 	Server *Server
-	Player extra.Player
+	Player *Player
 }
 
 type Collection []*Server

@@ -10,6 +10,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+const maxChoices = 25
+
 type AutoCompleteValuer interface {
 	Name() string
 	Value() string
@@ -69,7 +71,7 @@ func Autocomplete(completer AutoCompleter) func(context.Context, *discordgo.Sess
 					Value: autoValue.Value(),
 				})
 			}
-			if len(choices) == 25 {
+			if len(choices) == maxChoices {
 				break
 			}
 		}

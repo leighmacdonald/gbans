@@ -18,7 +18,7 @@ func pageCreated(page Page) *discordgo.MessageSend {
 	}
 
 	return discord.NewMessage(
-		discord.Heading("Wiki Created: "+page.Slug),
+		discord.Heading("Wiki Created: %s", page.Slug),
 		discord.BodyText(content),
 		discord.Buttons(discordgo.Button{Label: "View", Style: discordgo.LinkButton, URL: link.Path(page)}))
 }
@@ -30,7 +30,7 @@ func pageEdited(page Page, _ Page) *discordgo.MessageSend {
 	}
 
 	return discord.NewMessage(
-		discord.Heading("Wiki Edited: "+page.Slug),
+		discord.Heading("Wiki Edited: %s", page.Slug),
 		discord.BodyText(content),
 		discord.Buttons(discordgo.Button{Label: "View", Style: discordgo.LinkButton, URL: link.Path(page)}),
 	)

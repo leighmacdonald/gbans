@@ -49,7 +49,7 @@ type Votes struct {
 	persons      person.Provider
 }
 
-func NewVotes(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
+func New(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	notif notification.Notifier, logChannelID string, persons person.Provider,
 ) Votes {
 	return Votes{

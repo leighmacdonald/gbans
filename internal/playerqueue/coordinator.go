@@ -160,27 +160,24 @@ func (q *Coordinator) Join(client Client, servers []int) error {
 // the new connection.
 func (q *Coordinator) Connect(ctx context.Context, steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) Client { //nolint:ireturn
 	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	client := newClient(steamID, name, avatarHash, conn)
-
+	clientConn := newClient(steamID, name, avatarHash, conn)
 	for i := range q.clients {
-		if q.clients[i].SteamID() == client.SteamID() {
+		if q.clients[i].SteamID() == clientConn.SteamID() {
 			q.clients[i].Close()
 
 			break
 		}
 	}
+	q.clients = append(q.clients, clientConn)
+	q.mu.Unlock()
 
-	q.clients = append(q.clients, client)
-
-	go client.Start(ctx)
-	if client.HasMessageAccess() {
-		go q.sendClientChatHistory(client)
+	go clientConn.Start(ctx)
+	if clientConn.HasMessageAccess() {
+		go q.sendClientChatHistory(clientConn)
 	}
 	go q.updateClientStates(true)
 
-	return client
+	return clientConn
 }
 
 func (q *Coordinator) replaceLobbies(lobbies []Lobby) {
@@ -401,18 +398,21 @@ func (q *Coordinator) Message(message ChatLog) {
 // broadcast sends a domain.Response payload to multiple clients. If no clients are specified, all
 // clients will receive the payload.
 func (q *Coordinator) broadcast(payload Response, targetClients ...Client) {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
+
 	if len(targetClients) == 0 {
 		targetClients = q.clients
 	}
 
-	for _, client := range targetClients {
+	for _, targetClient := range targetClients {
 		slog.Debug("Sending message to client", slog.Int("op", int(payload.Op)),
-			slog.String("client", client.ID()))
+			slog.String("client", targetClient.ID()))
 		// Make sure we skip physically sending messages to clients without at least read access to the chat messages.
-		if payload.Op == Message && !client.HasMessageAccess() {
+		if payload.Op == Message && !targetClient.HasMessageAccess() {
 			continue
 		}
-		go client.Send(payload)
+		go targetClient.Send(payload)
 	}
 }
 

@@ -365,7 +365,6 @@ func (h discordHandler) onRCON(ctx context.Context, session *discordgo.Session, 
 		return errServer
 	}
 	command := data["command"].StringValue()
-
 	resp, errResp := server.Exec(ctx, command)
 	if errResp != nil {
 		return errResp

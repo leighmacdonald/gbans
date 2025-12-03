@@ -31,7 +31,7 @@ func TestAnticheat(t *testing.T) {
 		auth      = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
 		server    = fixture.CreateTestServer(t.Context())
 		router    = fixture.CreateRouter()
-		antiCheat = anticheat.NewAntiCheat(anticheat.NewRepository(fixture.Database), fixture.Config.Config().Anticheat, notification.NewDiscard(),
+		antiCheat = anticheat.New(anticheat.NewRepository(fixture.Database), fixture.Config.Config().Anticheat, notification.NewDiscard(),
 			func(_ context.Context, _ logparse.StacEntry, _ time.Duration, _ int) error {
 				return nil
 			}, fixture.Persons)

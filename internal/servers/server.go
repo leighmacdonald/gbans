@@ -8,6 +8,7 @@ import (
 	"net"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config/link"
@@ -16,19 +17,17 @@ import (
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/rumblefrog/go-a2s"
 )
 
 var (
 	maxPlayersRx = regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`)
 	playersRx    = regexp.MustCompile(`players\s: (\d+)\s+humans,\s+(\d+)\s+bots\s\((\d+)\s+max`)
+	ErrA2S       = errors.New("a2s query failed")
 )
 
-type SayType int
-
 const (
-	Say SayType = iota
-	PSay
-	CSay
+	serverQueryTimeout = time.Second * 5
 )
 
 // SafeServer provides a server struct stripped of any sensitive info suitable for public-facing
@@ -55,6 +54,8 @@ type SafeServer struct {
 }
 
 type Server struct {
+	*sync.RWMutex
+
 	// Auto generated id
 	ServerID int `json:"server_id"`
 	// ShortName is a short reference name for the server eg: us-1
@@ -89,13 +90,16 @@ type Server struct {
 	DiscordSeedRoleIDs []string  `json:"discord_seed_role_ids"` //nolint:tagliatelle
 
 	resolvedIP           net.IP
+	resolvedIPInternal   net.IP
 	lastMaxPlayersUpdate time.Time
-	state                *State
+	lastA2SUpdate        time.Time
+	state                *state
 }
 
 func NewServer(shortName string, address string, port uint16) Server {
 	return Server{
-		state:              &State{},
+		RWMutex:            &sync.RWMutex{},
+		state:              &state{Rules: map[string]string{}},
 		ShortName:          shortName,
 		Address:            address,
 		Port:               port,
@@ -111,54 +115,100 @@ func NewServer(shortName string, address string, port uint16) Server {
 	}
 }
 
-func (s *Server) IP(ctx context.Context) (string, error) {
-	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", s.Address)
-	if errResolve != nil || len(ips) == 0 {
-		return "", errors.Join(errResolve, ErrResolveIP)
+func (s *Server) IP() (net.IP, error) {
+	s.RLock()
+	if s.resolvedIP != nil {
+		s.RUnlock()
+
+		return s.resolvedIP, nil
 	}
 
-	return ResolveIP(ctx, s.Address)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	ips := resolveIP(ctx, s.Address)
+	if ips == nil {
+		s.RUnlock()
+
+		return nil, ErrResolveIP
+	}
+	s.RUnlock()
+
+	s.Lock()
+	s.resolvedIP = ips
+	s.Unlock()
+
+	return ips, nil
 }
 
-func (s *Server) IPInternal(ctx context.Context) (string, error) {
-	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", s.AddressInternal)
-	if errResolve != nil || len(ips) == 0 {
-		return "", errors.Join(errResolve, ErrResolveIP)
+func (s *Server) IPInternal() (net.IP, error) {
+	s.RLock()
+	if s.resolvedIPInternal != nil {
+		s.RUnlock()
+
+		return s.resolvedIPInternal, nil
 	}
 
-	return ResolveIP(ctx, s.Address)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	ips := resolveIP(ctx, s.AddressInternal)
+	if ips == nil {
+		s.RUnlock()
+
+		return nil, ErrResolveIP
+	}
+	s.RUnlock()
+	s.Lock()
+	s.resolvedIPInternal = ips
+	s.Unlock()
+
+	return ips, nil
 }
 
 func (s *Server) LogAddressAdd(ctx context.Context, logAddress string) error {
-	return s.ExecDiscard(ctx, "logaddress_add %s", logAddress)
+	return s.ExecDiscardF(ctx, "logaddress_add %s", logAddress)
 }
 
 func (s *Server) LogAddressDel(ctx context.Context, logAddress string) error {
-	return s.ExecDiscard(ctx, "logaddress_add %s", logAddress)
+	return s.ExecDiscardF(ctx, "logaddress_add %s", logAddress)
 }
 
-func (s *Server) Say(ctx context.Context, sayType SayType, message string, steamIDs ...steamid.SteamID) error {
-	var cmd string
-	switch sayType {
+type SayOpts struct {
+	Type    SayType
+	Message string
+	Targets []steamid.SteamID
+	Colour  SayColour
+}
+
+func (s *Server) Say(ctx context.Context, opts SayOpts) error {
+	switch opts.Type {
 	case Say:
-		cmd = "sm_say"
+		return s.ExecDiscardF(ctx, "sm_say %s", opts.Message)
 	case CSay:
-		cmd = "sm_csay"
+		return s.ExecDiscardF(ctx, "sm_csay %s", opts.Message)
+	case TSay:
+		return s.ExecDiscardF(ctx, `sm_tsay "%s" "%s"`, opts.Colour, opts.Message)
 	case PSay:
-		if len(steamIDs) == 0 || len(steamIDs) > 100 {
+		if len(opts.Targets) == 0 || len(opts.Targets) > 100 {
 			return fmt.Errorf("%w: invalid steamid count for psay", ErrExecRCON)
 		}
-
-		return s.ExecDiscard(ctx, `sm_psay "#%s" "%s"`, cmd, message)
+		for _, target := range opts.Targets {
+			return s.ExecDiscardF(ctx, `sm_psay "#%s" "%s"`, target.Steam(false), opts.Message)
+		}
 	default:
 		return fmt.Errorf("%w: invalid say type", ErrExecRCON)
 	}
 
-	return s.ExecDiscard(ctx, "%s %s", cmd, message)
+	return nil
 }
 
-func (s *Server) ExecDiscard(ctx context.Context, command string, args ...any) error {
-	resp, err := s.Exec(ctx, command, args...)
+func (s *Server) ExecDiscardF(ctx context.Context, command string, args ...any) error {
+	return s.ExecDiscard(ctx, fmt.Sprintf(command, args...))
+}
+
+func (s *Server) ExecDiscard(ctx context.Context, command string) error {
+	resp, err := s.Exec(ctx, command)
 	if err != nil {
 		return err
 	}
@@ -169,18 +219,27 @@ func (s *Server) ExecDiscard(ctx context.Context, command string, args ...any) e
 	return nil
 }
 
-func (s *Server) Exec(ctx context.Context, command string, args ...any) (string, error) {
+func (s *Server) ExecF(ctx context.Context, command string, args ...any) (string, error) {
+	return s.Exec(ctx, fmt.Sprintf(command, args...))
+}
+
+func (s *Server) Exec(ctx context.Context, command string) (string, error) {
 	if command == "" {
 		return "", fmt.Errorf("%w: empty command", ErrExecRCON)
 	}
 
-	conn, errConn := rcon.Dial(ctx, s.Addr(), s.RCON, time.Second*5)
+	s.RLock()
+	addr := s.Addr()
+	passwd := s.RCON
+	s.RUnlock()
+
+	conn, errConn := rcon.Dial(ctx, addr, passwd, serverQueryTimeout)
 	if errConn != nil {
 		return "", fmt.Errorf("%w: %w", ErrExecRCON, errConn)
 	}
 	defer log.Closer(conn)
 
-	resp, errExec := conn.Exec(fmt.Sprintf(command, args))
+	resp, errExec := conn.Exec(command)
 	if errExec != nil {
 		return "", fmt.Errorf("%w: %w", ErrExecRCON, errExec)
 	}
@@ -194,7 +253,7 @@ func (s *Server) Kick(ctx context.Context, target steamid.SteamID, reason string
 		return steamid.ErrInvalidSID
 	}
 
-	return s.ExecDiscard(ctx, `sm_kick "#%s" %s`, target.Steam(false), reason)
+	return s.ExecDiscardF(ctx, `sm_kick "#%s" %s`, target.Steam(false), reason)
 }
 
 // KickPlayerID will kick the steam id from whatever server it is connected to.
@@ -208,7 +267,7 @@ func (s *Server) Silence(ctx context.Context, target steamid.SteamID, reason str
 		return steamid.ErrInvalidSID
 	}
 
-	return s.ExecDiscard(ctx, `sm_silence "#%s" %s`, target.Steam(false), reason)
+	return s.ExecDiscardF(ctx, `sm_silence "#%s" %s`, target.Steam(false), reason)
 }
 
 func (s *Server) Addr() string {
@@ -242,8 +301,72 @@ func (s *Server) SteamLink() string {
 	return fmt.Sprintf("steam://run/440//+connect %s:%d", ipAddr.String(), s.Port)
 }
 
+func (s *Server) updateA2S() error {
+	s.RLock()
+	addr := s.Addr()
+	s.RUnlock()
+
+	client, errClient := a2s.NewClient(addr, a2s.TimeoutOption(serverQueryTimeout))
+	if errClient != nil {
+		return fmt.Errorf("%w: %w", ErrA2S, errClient)
+	}
+	defer func() {
+		if errClose := client.Close(); errClose != nil {
+			slog.Error("Failed to close a2s client", slog.String("error", errClose.Error()))
+		}
+	}()
+
+	serverInfo, errQuery := client.QueryInfo()
+	if errQuery != nil {
+		return fmt.Errorf("%w: %w", ErrA2S, errQuery)
+	}
+
+	serverPlayer, errPlayer := client.QueryPlayer()
+	if errPlayer != nil {
+		return fmt.Errorf("%w: %w", ErrA2S, errPlayer)
+	}
+
+	serverRules, errRules := client.QueryRules()
+	if errRules != nil {
+		return fmt.Errorf("%w: %w", ErrA2S, errRules)
+	}
+
+	s.Lock()
+	defer s.Unlock()
+
+	s.state.Protocol = serverInfo.Protocol
+	s.state.Folder = serverInfo.Folder
+	s.state.Game = serverInfo.Game
+	s.state.AppID = serverInfo.ID
+	s.state.Version = serverInfo.Version
+	s.state.VAC = serverInfo.VAC
+	s.state.Bots = int(serverInfo.Bots)
+	s.state.ServerOS = serverInfo.ServerOS.String()
+	s.state.Password = !serverInfo.Visibility
+	s.state.PlayerCount = int(serverInfo.Players)
+	if serverInfo.SourceTV != nil {
+		s.state.STVPort = serverInfo.SourceTV.Port
+		s.state.STVName = serverInfo.SourceTV.Name
+	}
+
+	for _, player := range serverPlayer.Players {
+		for _, p := range s.state.Players {
+			if p.Name == player.Name {
+				p.Score = int(player.Score)
+
+				break
+			}
+		}
+	}
+
+	s.state.Rules = serverRules.Rules
+	s.lastA2SUpdate = time.Now()
+
+	return nil
+}
+
 func (s *Server) updateStatus(ctx context.Context) error {
-	statusResp, errStatus := s.Exec(ctx, "status")
+	statusResp, errStatus := s.ExecF(ctx, "status")
 	if errStatus != nil {
 		return errStatus
 	}
@@ -282,20 +405,41 @@ func (s *Server) updateStatus(ctx context.Context) error {
 		status.PlayersMax = maxPlayers
 	}
 
-	s.state.PlayerCount = status.PlayersCount
-	s.state.Bots = status.Bots
-	s.state.Players = status.Players
-	s.state.MaxPlayers = status.PlayersMax
+	s.Lock()
+	defer s.Unlock()
+
+	// s.state.PlayerCount = status.PlayersCount
+	// s.state.Bots = status.Bots
+	players := make([]*Player, len(status.Players))
+	for index, player := range status.Players {
+		players[index] = &Player{
+			UserID:        player.UserID,
+			Name:          player.Name,
+			SID:           player.SID,
+			ConnectedTime: player.ConnectedTime,
+			Ping:          player.Ping,
+			Loss:          player.Loss,
+			State:         player.State,
+			IP:            player.IP,
+			Port:          player.Port,
+			Score:         0,
+		}
+	}
+	s.state.Players = players
+	if s.state.MaxPlayers == 0 && status.PlayersMax > 0 {
+		// Prefer the sv_visiblemaxplayers value
+		s.state.MaxPlayers = status.PlayersMax
+	}
 	s.state.Map = status.Map
 	s.state.IP = status.IPInfo.FakeIP
 	s.state.IPPublic = status.IPInfo.PublicIP
-	s.state.Port = uint16(status.IPInfo.FakePort)
-	s.state.PortPublic = uint16(status.IPInfo.PublicPort)
+	s.state.Port = uint16(status.IPInfo.FakePort)         //nolint:gosec
+	s.state.PortPublic = uint16(status.IPInfo.PublicPort) //nolint:gosec
 	s.state.Tags = status.Tags
 	s.state.Edicts = status.Edicts
 	s.state.Version = status.Version
 	s.state.STVIP = status.IPInfo.SourceTVIP
-	s.state.STVPort = uint16(status.IPInfo.SourceTVFPort)
+	s.state.STVPort = uint16(status.IPInfo.SourceTVFPort) //nolint:gosec
 	if status.ServerName != "" {
 		s.Name = status.ServerName
 	}
@@ -304,7 +448,7 @@ func (s *Server) updateStatus(ctx context.Context) error {
 }
 
 func (s *Server) updateMaxVisiblePlayers(ctx context.Context) error {
-	maxPlayersResp, errMaxPlayers := s.Exec(ctx, "sv_visiblemaxplayers")
+	maxPlayersResp, errMaxPlayers := s.ExecF(ctx, "sv_visiblemaxplayers")
 	if errMaxPlayers != nil {
 		return errMaxPlayers
 	}
@@ -323,8 +467,52 @@ func (s *Server) updateMaxVisiblePlayers(ctx context.Context) error {
 		maxPlayers = -1
 	}
 
-	s.state.MaxPlayers = int(maxPlayers)
+	s.Lock()
+	if maxPlayers > 0 {
+		s.state.MaxPlayers = int(maxPlayers)
+	}
 	s.lastMaxPlayersUpdate = time.Now()
+	s.Unlock()
 
 	return nil
+}
+
+func (s *Server) updateState(ctx context.Context) {
+	s.RLock()
+	lastA2SUpdate := s.lastMaxPlayersUpdate
+	lastPlayersUpdate := s.lastMaxPlayersUpdate
+	s.RUnlock()
+
+	waitGroup := &sync.WaitGroup{}
+
+	waitGroup.Go(func() {
+		if err := s.updateStatus(ctx); err != nil {
+			slog.Error("Failed to parse status", slog.String("error", err.Error()),
+				slog.String("server", s.ShortName))
+		}
+	})
+
+	if time.Since(lastA2SUpdate) > time.Second*60 {
+		waitGroup.Go(func() {
+			if err := s.updateA2S(); err != nil {
+				slog.Error("Failed to update a2s", slog.String("error", err.Error()),
+					slog.String("server", s.ShortName))
+
+				return
+			}
+		})
+	}
+
+	if time.Since(lastPlayersUpdate) > time.Hour {
+		waitGroup.Go(func() {
+			if err := s.updateMaxVisiblePlayers(ctx); err != nil {
+				slog.Warn("Got invalid max players value", slog.String("error", err.Error()),
+					slog.String("server", s.ShortName))
+
+				return
+			}
+		})
+	}
+
+	waitGroup.Wait()
 }

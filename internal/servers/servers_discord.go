@@ -15,6 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -22,8 +23,32 @@ import (
 //go:embed servers_discord.tmpl
 var templateBody []byte
 
-func RegisterDiscordCommands(service discord.Service, persons person.Provider, servers *Servers, network network.Networks) {
-	handler := DiscordHandler{persons: persons, servers: servers, network: network}
+type DiscordHandler struct {
+	persons       person.Provider
+	servers       *Servers
+	network       network.Networks
+	notifier      notification.Notifier
+	kickChannelID string
+}
+
+func RegisterDiscordCommands(service discord.Service, persons person.Provider, servers *Servers,
+	network network.Networks, notifier notification.Notifier, kickChannelID string,
+) {
+	handler := DiscordHandler{
+		persons:       persons,
+		servers:       servers,
+		network:       network,
+		notifier:      notifier,
+		kickChannelID: kickChannelID,
+	}
+
+	serverAutoCompleteOption := &discordgo.ApplicationCommandOption{
+		Type:         discordgo.ApplicationCommandOptionString,
+		Name:         "server_name",
+		Description:  "Short server name",
+		Required:     true,
+		Autocomplete: true,
+	}
 
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "find",
@@ -45,15 +70,7 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: ptr.To(discord.UserPerms),
 		Description:              "Show a table of the current players on the server",
-		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:         discordgo.ApplicationCommandOptionString,
-				Name:         "server_name",
-				Description:  "Short server name",
-				Required:     true,
-				Autocomplete: true,
-			},
-		},
+		Options:                  []*discordgo.ApplicationCommandOption{serverAutoCompleteOption},
 	}, handler.onPlayers)
 	service.MustRegisterPrefixHandler("server_name", discord.Autocomplete(servers.AutoCompleteServers))
 
@@ -105,12 +122,7 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: ptr.To(discord.ModPerms),
 		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptServerIdentifier,
-				Description: "Short server name or `*` for all",
-				Required:    true,
-			},
+			serverAutoCompleteOption,
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        discord.OptMessage,
@@ -126,12 +138,7 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
 		DefaultMemberPermissions: ptr.To(discord.ModPerms),
 		Options: []*discordgo.ApplicationCommandOption{
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        discord.OptServerIdentifier,
-				Description: "Short server name",
-				Required:    true,
-			},
+			serverAutoCompleteOption,
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        discord.OptMessage,
@@ -153,12 +160,6 @@ func RegisterDiscordCommands(service discord.Service, persons person.Provider, s
 			},
 		},
 	}, handler.onServers)
-}
-
-type DiscordHandler struct {
-	persons person.Provider
-	servers *Servers
-	network network.Networks
 }
 
 func (d DiscordHandler) onFind(ctx context.Context, session *discordgo.Session, interation *discordgo.InteractionCreate) error {
@@ -184,6 +185,10 @@ func (d DiscordHandler) onKick(ctx context.Context, session *discordgo.Session, 
 	if errTarget != nil || !target.Valid() {
 		return steamid.ErrDecodeSID
 	}
+	reason := opts["reason"].StringValue()
+	if err := discord.AckInteraction(session, interaction); err != nil {
+		return err
+	}
 
 	results := d.servers.FindPlayers(FindOpts{SteamID: target})
 	if len(results) == 0 {
@@ -192,14 +197,23 @@ func (d DiscordHandler) onKick(ctx context.Context, session *discordgo.Session, 
 
 	var err error
 	for _, result := range results {
-		if errKick := result.Server.Kick(ctx, result.Player.SID, "No reason set"); errKick != nil {
+		if errKick := result.Server.Kick(ctx, result.Player.SID, reason); errKick != nil {
 			err = errors.Join(err, errKick)
 
 			continue
 		}
+		d.notifier.Send(notification.NewDiscord(d.kickChannelID, discord.NewMessage(
+			discord.Heading("User Kicked [%s]", result.Server.ShortName),
+			discord.BodyColouredText(discord.ColourInfo, result.Player.Name))))
 	}
 
-	return discord.Respond(session, interaction, discordKickMessage(results)...)
+	if len(results) > 0 {
+		return discord.RespondUpdate(session, interaction,
+			discord.BodyColouredText(discord.ColourSuccess, fmt.Sprintf("Kick successful [Kicked: %d]", len(results))))
+	}
+
+	return discord.RespondUpdate(session, interaction,
+		discord.BodyColouredText(discord.ColourError, "No matching users found"))
 }
 
 func (d DiscordHandler) onSay(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -212,7 +226,7 @@ func (d DiscordHandler) onSay(ctx context.Context, session *discordgo.Session, i
 		return ErrUnknownServer
 	}
 
-	if _, errSay := server.Exec(ctx, "", msg); errSay != nil {
+	if errSay := server.Say(ctx, SayOpts{Type: Say, Message: msg}); errSay != nil {
 		return discord.ErrCommandFailed
 	}
 
@@ -235,7 +249,7 @@ func (d DiscordHandler) onCSay(ctx context.Context, session *discordgo.Session, 
 		return discord.ErrCommandFailed
 	}
 
-	if errCSay := server.Say(ctx, CSay, msg); errCSay != nil {
+	if errCSay := server.Say(ctx, SayOpts{Type: CSay, Message: msg}); errCSay != nil {
 		return discord.ErrCommandFailed
 	}
 
@@ -259,7 +273,8 @@ func (d DiscordHandler) onPSay(ctx context.Context, session *discordgo.Session, 
 	}
 
 	for _, result := range results {
-		if errPSay := result.Server.Say(ctx, PSay, msg, playerSid); errPSay != nil {
+		sayOpts := SayOpts{Type: PSay, Message: msg, Targets: []steamid.SteamID{playerSid}}
+		if errPSay := result.Server.Say(ctx, sayOpts); errPSay != nil {
 			return discord.ErrCommandFailed
 		}
 	}

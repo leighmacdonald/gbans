@@ -176,22 +176,3 @@ func ParseDuration(value string) (time.Duration, error) {
 
 	return duration, nil
 }
-
-func CalcDuration(durationString string, validUntil time.Time) (time.Duration, error) {
-	if durationString == "custom" {
-		dur := time.Until(validUntil)
-		if dur < 0 {
-			return 0, ErrInvalidDuration
-		}
-
-		return dur, nil
-	}
-
-	// TODO "real" time parsing
-	dur, errDuration := ParseDuration(durationString)
-	if errDuration != nil {
-		return 0, errDuration
-	}
-
-	return dur, nil
-}

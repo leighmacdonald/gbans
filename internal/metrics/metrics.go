@@ -30,7 +30,7 @@ type Metrics struct {
 	eb        *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewMetrics(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]) Metrics {
+func New(broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]) Metrics {
 	collector := newMetricCollector()
 
 	return Metrics{collector: collector, eb: broadcaster}

@@ -29,12 +29,38 @@ var (
 	ErrStatusParse       = errors.New("failed to parse status response")
 	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
 	ErrMaxPlayerParse    = errors.New("failed to parse sv_visiblemaxplayers response")
-	ErrDNSResolve        = errors.New("failed to resolve server dns")
 )
 
 const (
 	maxPlayersSupported     = 101
 	DefaultStatusUpdateFreq = time.Second * 20
+)
+
+type SayType int
+
+const (
+	Say SayType = iota
+	PSay
+	CSay
+	TSay
+)
+
+type SayColour string
+
+const (
+	White     SayColour = "white"
+	Red       SayColour = "red"
+	Green     SayColour = "green"
+	Blue      SayColour = "blue"
+	Yellow    SayColour = "yellow"
+	Purple    SayColour = "purple"
+	Cyan      SayColour = "cyan"
+	Orange    SayColour = "orange"
+	Pink      SayColour = "pink"
+	Olive     SayColour = "olive"
+	Lime      SayColour = "lime"
+	Violet    SayColour = "violet"
+	LightBlue SayColour = "lightblue"
 )
 
 type ServerFunc func(server *Server) error
@@ -61,7 +87,17 @@ type ServerPermission struct {
 	Flags           string               `json:"flags"`
 }
 
-func NewServers(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent], logAddr string) (*Servers, error) {
+type Servers struct {
+	Repository
+
+	logListener *logparse.Listener
+	logFileChan chan LogFilePayload
+	servers     Collection
+	serversMu   *sync.RWMutex
+	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
+}
+
+func New(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent], logAddr string) (*Servers, error) {
 	logSrc, errLogSrc := logparse.NewListener(logAddr,
 		func(_ logparse.EventType, event logparse.ServerEvent) {
 			broadcaster.Emit(event.EventType, event)
@@ -80,14 +116,44 @@ func NewServers(repository Repository, broadcaster *broadcaster.Broadcaster[logp
 	}, nil
 }
 
-type Servers struct {
-	Repository
+func (s *Servers) Current() []SafeServer {
+	var curState []SafeServer //nolint:prealloc
 
-	logListener *logparse.Listener
-	logFileChan chan LogFilePayload
-	servers     Collection
-	serversMu   *sync.RWMutex
-	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	s.serversMu.RLock()
+	defer s.serversMu.RUnlock()
+
+	for _, srv := range s.servers {
+		if !srv.Deleted && srv.IsEnabled {
+			srv.RLock()
+			curState = append(curState, SafeServer{
+				Host: srv.Address,
+				Port: srv.Port,
+				// TODO
+				// IP:         srv.IP(),
+				Name:       srv.Name,
+				NameShort:  srv.ShortName,
+				Region:     srv.Region,
+				CC:         srv.CC,
+				ServerID:   srv.ServerID,
+				Players:    srv.state.PlayerCount,
+				MaxPlayers: srv.state.MaxPlayers,
+				Bots:       srv.state.Bots,
+				Humans:     srv.state.Humans,
+				Map:        srv.state.Map,
+				Tags:       srv.state.Tags,
+				GameTypes:  []string{},
+				Latitude:   srv.Latitude,
+				Longitude:  srv.Longitude,
+			})
+			srv.RUnlock()
+		}
+	}
+
+	sort.SliceStable(curState, func(i, j int) bool {
+		return curState[i].NameShort < curState[j].NameShort
+	})
+
+	return curState
 }
 
 func (s *Servers) Broadcast(ctx context.Context, cmd string, args ...any) {
@@ -136,63 +202,6 @@ func (s *Servers) Start(ctx context.Context, updateFreq time.Duration) error {
 	}
 }
 
-func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
-	radianLat1 := math.Pi * lat1 / 180
-	radianLat2 := math.Pi * lat2 / 180
-	theta := lng1 - lng2
-	radianTheta := math.Pi * theta / 180
-
-	dist := math.Sin(radianLat1)*math.Sin(radianLat2) + math.Cos(radianLat1)*math.Cos(radianLat2)*math.Cos(radianTheta)
-	if dist > 1 {
-		dist = 1
-	}
-
-	dist = math.Acos(dist)
-	dist = dist * 180 / math.Pi
-	dist = dist * 60 * 1.1515
-	dist *= 1.609344 // convert to km
-
-	return dist
-}
-
-func (s *Servers) Current() []SafeServer {
-	var curState []SafeServer //nolint:prealloc
-
-	s.serversMu.RLock()
-	defer s.serversMu.RUnlock()
-
-	for _, srv := range s.servers {
-		if !srv.Deleted && srv.IsEnabled {
-			curState = append(curState, SafeServer{
-				Host: srv.Address,
-				Port: srv.Port,
-				// TODO
-				// IP:         srv.IP(),
-				Name:       srv.Name,
-				NameShort:  srv.ShortName,
-				Region:     srv.Region,
-				CC:         srv.CC,
-				ServerID:   srv.ServerID,
-				Players:    len(srv.state.Players),
-				MaxPlayers: srv.state.MaxPlayers,
-				Bots:       srv.state.Bots,
-				Humans:     srv.state.Humans,
-				Map:        srv.state.Map,
-				Tags:       srv.state.Tags,
-				GameTypes:  []string{},
-				Latitude:   srv.Latitude,
-				Longitude:  srv.Longitude,
-			})
-		}
-	}
-
-	sort.SliceStable(curState, func(i, j int) bool {
-		return curState[i].NameShort < curState[j].NameShort
-	})
-
-	return curState
-}
-
 func (s *Servers) updateStates(ctx context.Context) error {
 	var (
 		waitGroup  = &sync.WaitGroup{}
@@ -201,23 +210,33 @@ func (s *Servers) updateStates(ctx context.Context) error {
 		startTIme  = time.Now()
 	)
 
+	servers, errServers := s.Servers(ctx, Query{})
+	if errServers != nil {
+		return errServers
+	}
+
+	var valid []*Server
+	s.serversMu.Lock()
+	for _, server := range servers {
+		found := false
+		for _, existingServer := range s.servers {
+			if existingServer.ServerID == server.ServerID {
+				valid = append(valid, existingServer)
+				found = true
+
+				break
+			}
+		}
+		if !found {
+			valid = append(valid, &server)
+		}
+	}
+	s.servers = valid
+	s.serversMu.Unlock()
+
 	for _, server := range s.servers {
 		waitGroup.Go(func() {
-			if err := server.updateStatus(ctx); err != nil {
-				slog.Error("Failed to parse status", slog.String("error", err.Error()),
-					slog.String("server", server.ShortName))
-
-				return
-			}
-
-			if time.Since(server.lastMaxPlayersUpdate) > time.Hour {
-				if err := server.updateMaxVisiblePlayers(ctx); err != nil {
-					slog.Warn("Got invalid max players value", slog.String("error", err.Error()),
-						slog.String("server", server.ShortName))
-
-					return
-				}
-			}
+			server.updateState(ctx)
 			successful.Add(1)
 		})
 	}
@@ -330,6 +349,7 @@ func (s *Servers) AutoCompleteServers(ctx context.Context, query string) ([]disc
 	var values []discord.AutoCompleteValuer //nolint:prealloc
 	for _, server := range activeServers {
 		if query == "" ||
+			query == "*" ||
 			strings.Contains(strings.ToLower(server.Name), query) ||
 			strings.Contains(strings.ToLower(server.ShortName), query) {
 			values = append(values, discord.NewAutoCompleteValue(server.Name, server.ShortName))
@@ -362,16 +382,34 @@ func ShortNamePrefix(name string) string {
 	return strings.Join(pieces[0:len(pieces)-1], "-")
 }
 
-func ResolveIP(ctx context.Context, addr string) (string, error) {
-	ipAddr := net.ParseIP(addr)
-	if ipAddr != nil {
-		return ipAddr.String(), nil
+func resolveIP(ctx context.Context, addr string) net.IP {
+	if ipAddr := net.ParseIP(addr); ipAddr != nil {
+		return ipAddr
 	}
 
 	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", addr)
 	if errResolve != nil || len(ips) == 0 {
-		return "", errors.Join(errResolve, ErrDNSResolve)
+		return nil
 	}
 
-	return ips[0].String(), nil
+	return ips[0]
+}
+
+func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
+	radianLat1 := math.Pi * lat1 / 180
+	radianLat2 := math.Pi * lat2 / 180
+	theta := lng1 - lng2
+	radianTheta := math.Pi * theta / 180
+
+	dist := math.Sin(radianLat1)*math.Sin(radianLat2) + math.Cos(radianLat1)*math.Cos(radianLat2)*math.Cos(radianTheta)
+	if dist > 1 {
+		dist = 1
+	}
+
+	dist = math.Acos(dist)
+	dist = dist * 180 / math.Pi
+	dist = dist * 60 * 1.1515
+	dist *= 1.609344 // convert to km
+
+	return dist
 }
