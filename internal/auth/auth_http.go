@@ -15,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/yohcop/openid-go"
@@ -27,19 +26,17 @@ var templateBody []byte
 type authHandler struct {
 	*Authentication
 
-	config  *config.Configuration
-	persons *person.Persons
-	tfAPI   thirdparty.APIProvider
-	notif   notification.Notifier
+	config *config.Configuration
+	tfAPI  thirdparty.APIProvider
+	notif  notification.Notifier
 }
 
 func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Configuration,
-	person *person.Persons, tfAPI thirdparty.APIProvider, notif notification.Notifier,
+	tfAPI thirdparty.APIProvider, notif notification.Notifier,
 ) {
 	handler := &authHandler{
 		Authentication: auth,
 		config:         config,
-		persons:        person,
 		tfAPI:          tfAPI,
 		notif:          notif,
 	}
@@ -142,7 +139,6 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			return
 		}
 
-		// TODO max age checks
 		ctx.SetSameSite(http.SameSiteStrictMode)
 		ctx.SetCookie(
 			FingerprintCookieName,

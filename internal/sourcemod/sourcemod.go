@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/config/link"
@@ -90,6 +91,12 @@ const (
 	OverrideAccessAllow OverrideAccess = "allow"
 	OverrideAccessDeny  OverrideAccess = "deny"
 )
+
+type ServerPermission struct {
+	SteamID         steamid.SID          `json:"steam_id"`
+	PermissionLevel permission.Privilege `json:"permission_level"`
+	Flags           string               `json:"flags"`
+}
 
 type Admin struct {
 	AdminID   int             `json:"admin_id"`

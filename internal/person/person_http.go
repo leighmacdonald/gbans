@@ -137,7 +137,6 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 			return
 		}
 
-		// TODO custom profile query
 		ctx.JSON(http.StatusOK, user)
 	}
 }

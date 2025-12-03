@@ -74,7 +74,7 @@ type Person struct {
 	isNew                 bool
 	DiscordID             string                 `json:"discord_id"`
 	PatreonID             string                 `json:"patreon_id"`
-	IPAddr                netip.Addr             `json:"-"` // TODO Allow json for admins endpoints
+	IPAddr                netip.Addr             `json:"-"`
 	CommunityBanned       bool                   `json:"community_banned"`
 	VACBans               int                    `json:"vac_bans"`
 	GameBans              int                    `json:"game_bans"`

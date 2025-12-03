@@ -6,9 +6,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type Repository struct {
@@ -17,54 +15,6 @@ type Repository struct {
 
 func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
-}
-
-// GetServerPermissions fetches the server permissions.
-// todo move to srcds.
-func (r *Repository) GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
-	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("steam_id", "permission_level").
-		From("person").
-		Where(sq.GtOrEq{"permission_level": permission.Reserved}).
-		OrderBy("permission_level desc"))
-	if errRows != nil {
-		return nil, database.DBErr(errRows)
-	}
-
-	defer rows.Close()
-
-	var perms []ServerPermission
-
-	for rows.Next() {
-		var (
-			sid   steamid.SteamID
-			perm  permission.Privilege
-			flags string
-		)
-
-		if errScan := rows.Scan(&sid, &perm); errScan != nil {
-			return nil, database.DBErr(errScan)
-		}
-
-		switch perm {
-		case permission.Reserved:
-			flags = "a"
-		case permission.Editor:
-			flags = "aj"
-		case permission.Moderator:
-			flags = "abcdegjk"
-		case permission.Admin:
-			flags = "z"
-		}
-
-		perms = append(perms, ServerPermission{
-			SteamID:         sid.Steam(false),
-			PermissionLevel: perm,
-			Flags:           flags,
-		})
-	}
-
-	return perms, nil
 }
 
 func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) {

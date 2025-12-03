@@ -187,10 +187,10 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, conf.Demo, steamid.New(conf.Owner))
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
 		conf.Discord.SafeAppealLogChannelID())
-	g.bans = ban.New(ban.NewRepository(g.database, g.persons), g.persons, conf.Discord.SafeBanLogChannelID(),
+	g.bans = ban.New(ban.NewRepository(g.database), g.persons, conf.Discord.SafeBanLogChannelID(),
 		conf.Discord.SafeKickLogChannelID(), steamid.New(conf.Owner), g.reports, g.notifications, g.servers, g.networks)
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database),
-		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database, g.persons)))
+		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler)
 	g.forums = forum.New(forum.NewRepository(g.database), g.config, g.notifications)
@@ -202,7 +202,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.votes = votes.New(votes.NewRepository(g.database), g.broadcaster, g.notifications,
 		conf.Discord.SafeVoteLogChannelID(), g.persons)
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
-	g.memberships = ban.NewMemberships(ban.NewRepository(g.database, g.persons), g.tfapiClient)
+	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 
 	if conf.Discord.Enabled {
@@ -500,7 +500,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	// Register all our handlers with router
 	anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)
 	asset.NewAssetHandler(router, userAuth, g.assets)
-	auth.NewAuthHandler(router, userAuth, g.config, g.persons, g.tfapiClient, g.notifications)
+	auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications)
 	ban.NewAppealHandler(router, userAuth, ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.LogChannelID))
 	ban.NewReportHandler(router, userAuth, g.reports)
 	ban.NewHandlerBans(router, userAuth, g.bans, conf.Exports, conf.General.SiteName)
