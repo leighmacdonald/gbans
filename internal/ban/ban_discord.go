@@ -82,47 +82,42 @@ func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Prov
 	}, handler.onCheck)
 }
 
-var durationMap = map[string]string{ //nolint:gochecknoglobals
-	"15 Mins":   "PT15M",
-	"6 Hours":   "PT6H",
-	"12 Hours":  "PT12H",
-	"1 Day":     "P1D",
-	"2 Days":    "P2D",
-	"3 Days":    "P3D",
-	"1 Week":    "P1W",
-	"2 Weeks":   "P2W",
-	"1 Month":   "P1M",
-	"3 Months":  "P3M",
-	"6 Months":  "P6M",
-	"1 Year":    "P1Y",
-	"Permanent": "P0",
-	"Custom":    "custom",
-}
-
 func createBanOpts() []discordgo.SelectMenuOption {
-	banOpts := make([]discordgo.SelectMenuOption, len(reason.Reasons))
-	for index, op := range reason.Reasons {
-		banOpts[index] = discordgo.SelectMenuOption{
-			Label: op.String(),
-			Value: strconv.Itoa(int(op)),
-		}
+	return []discordgo.SelectMenuOption{
+		{Label: reason.BotHost.String(), Value: strconv.Itoa(int(reason.BotHost))},
+		{Label: reason.Cheating.String(), Value: strconv.Itoa(int(reason.Cheating))},
+		{Label: reason.Custom.String(), Value: strconv.Itoa(int(reason.Custom))},
+		{Label: reason.Evading.String(), Value: strconv.Itoa(int(reason.Evading))},
+		{Label: reason.Exploiting.String(), Value: strconv.Itoa(int(reason.Exploiting))},
+		{Label: reason.External.String(), Value: strconv.Itoa(int(reason.External))},
+		{Label: reason.Harassment.String(), Value: strconv.Itoa(int(reason.Harassment))},
+		{Label: reason.ItemDescriptions.String(), Value: strconv.Itoa(int(reason.ItemDescriptions))},
+		{Label: reason.Language.String(), Value: strconv.Itoa(int(reason.Language))},
+		{Label: reason.Profile.String(), Value: strconv.Itoa(int(reason.Profile))},
+		{Label: reason.Racism.String(), Value: strconv.Itoa(int(reason.Racism))},
+		{Label: reason.Spam.String(), Value: strconv.Itoa(int(reason.Spam))},
+		{Label: reason.Username.String(), Value: strconv.Itoa(int(reason.Username))},
+		{Label: reason.WarningsExceeded.String(), Value: strconv.Itoa(int(reason.WarningsExceeded))},
 	}
-
-	return banOpts
 }
 
 func createDurationOpts() []discordgo.SelectMenuOption {
-	var index int
-	durationOpts := make([]discordgo.SelectMenuOption, len(durationMap))
-	for label, value := range durationMap {
-		durationOpts[index] = discordgo.SelectMenuOption{
-			Label: label,
-			Value: value,
-		}
-		index++
+	return []discordgo.SelectMenuOption{
+		{Label: "15 Mins", Value: "PT15M"},
+		{Label: "6 Hours", Value: "PT6H"},
+		{Label: "12 Hours", Value: "PT12H"},
+		{Label: "1 Day", Value: "P1D"},
+		{Label: "2 Days", Value: "P2D"},
+		{Label: "3 Days", Value: "P3D"},
+		{Label: "1 Week", Value: "P1W"},
+		{Label: "2 Weeks", Value: "P2W"},
+		{Label: "1 Month", Value: "P1M"},
+		{Label: "3 Months", Value: "P3M"},
+		{Label: "6 Months", Value: "P6M"},
+		{Label: "1 Year", Value: "P1Y"},
+		{Label: "Permanent", Value: "P0"},
+		{Label: "Custom", Value: "custom"},
 	}
-
-	return durationOpts
 }
 
 type banModalOpts struct {
@@ -189,22 +184,22 @@ func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Se
 		banType = bantype.NoComm
 	}
 
-	banOpts := Opts{
-		Origin:     Bot,
-		SourceID:   author.GetSteamID(),
-		BanType:    banType,
-		ReasonText: "",
-	}
-
 	values, errValues := discord.Bind[banModalOpts](ctx, interaction.ModalSubmitData().Components)
 	if errValues != nil {
 		return errValues
 	}
 
-	banOpts.TargetID = values.TargetID
-	banOpts.Reason = values.Reason
-	banOpts.Duration = values.Duration
-	banOpts.Note = values.Note
+	banOpts := Opts{
+		Origin:     Bot,
+		SourceID:   author.GetSteamID(),
+		BanType:    banType,
+		ReasonText: "",
+		TargetID:   values.TargetID,
+		Reason:     values.Reason,
+		Duration:   values.Duration,
+		Note:       values.Note,
+	}
+
 	if values.CIDR != nil {
 		prefix := values.CIDR.String()
 		banOpts.CIDR = &prefix
