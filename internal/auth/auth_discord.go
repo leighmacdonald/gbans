@@ -6,24 +6,28 @@ import (
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 )
 
-func loginMessage(fetchedPerson personDomain.Core) *discordgo.MessageSend {
-	content, errContent := discord.Render("auth_login", templateBody, struct {
-		Person personDomain.Core
-	}{Person: fetchedPerson})
-	if errContent != nil {
-		return nil
-	}
-
-	return discord.NewMessage(discord.BodyColouredText(discord.ColourSuccess, content))
+type loginInfo struct {
+	Person personDomain.Info
 }
 
-func logoutMessage(steamID string) *discordgo.MessageSend {
-	content, errContent := discord.Render("auth_logout", templateBody, struct {
-		SteamID string
-	}{SteamID: steamID})
+func loginMessage(fetchedPerson personDomain.Info) *discordgo.MessageSend {
+	content, errContent := discord.Render("login_info", templateBody, loginInfo{Person: fetchedPerson})
 	if errContent != nil {
 		return nil
 	}
 
-	return discord.NewMessage(discord.BodyColouredText(discord.ColourSuccess, content))
+	return discord.NewMessage(
+		discord.Heading("User logged in"),
+		discord.BodyTextWithThumbnail(discord.ColourInfo, discord.PlayerThumbnail(fetchedPerson), content))
+}
+
+func logoutMessage(fetchedPerson personDomain.Info) *discordgo.MessageSend {
+	content, errContent := discord.Render("login_info", templateBody, loginInfo{Person: fetchedPerson})
+	if errContent != nil {
+		return nil
+	}
+
+	return discord.NewMessage(
+		discord.Heading("User logged out"),
+		discord.BodyTextWithThumbnail(discord.ColourInfo, discord.PlayerThumbnail(fetchedPerson), content))
 }

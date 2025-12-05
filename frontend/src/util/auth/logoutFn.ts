@@ -1,11 +1,13 @@
-import { logoutKey, profileKey, accessTokenKey } from '../../auth.tsx';
+import { apiLogout } from '../../api';
+import { accessTokenKey, logoutKey, profileKey } from '../../auth.tsx';
+import { log } from '../errors.ts';
 
 export const logoutFn = async () => {
-    // try {
-    //     await apiCall<EmptyBody>('/api/auth/logout', 'GET', undefined);
-    // } catch (e) {
-    //     console.log(`Error calling logout handler:${e}`);
-    // }
+    try {
+        await apiLogout();
+    } catch (error) {
+        log(error);
+    }
     localStorage.removeItem(profileKey);
     localStorage.removeItem(accessTokenKey);
     localStorage.setItem(logoutKey, Date.now().toString());

@@ -21,6 +21,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
@@ -330,12 +331,12 @@ func (s Bans) Create(ctx context.Context, opts Opts) (Ban, error) {
 	if errValidate := opts.Validate(); errValidate != nil {
 		return Ban{}, errValidate
 	}
-	var lastIP string
+	var lastIP *string
 	if ipAddr := s.ipProvider.GetPlayerMostRecentIP(ctx, opts.TargetID); ipAddr != nil {
-		lastIP = ipAddr.String()
+		lastIP = ptr.To(ipAddr.String())
 	}
 	newBan := Ban{
-		LastIP:     &lastIP,
+		LastIP:     lastIP,
 		EvadeOk:    opts.EvadeOk,
 		BanType:    opts.BanType,
 		Reason:     opts.Reason,

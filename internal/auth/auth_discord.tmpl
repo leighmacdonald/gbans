@@ -1,7 +1,7 @@
-{{define "auth_login"}}
-    User logged in {{ .Person.SteamID.String }}
-{{end}}
-
-{{define "auth_logout"}}
-    User logged out {{ .SteamID }}
+{{define "login_info"}}
+SteamID: **{{ .Person.GetSteamID | sidString }}**
+Name: ** {{.Person.GetName }}**
+Permissions: **{{.Person.Permissions.String }}**
+Vac Bans: **{{.Person.VacBans }}**
+Game Bans: **{{.Person.GameBans }}**
 {{end}}

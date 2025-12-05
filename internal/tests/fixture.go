@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -136,4 +137,10 @@ func (f Fixture) CreateTestServer(ctx context.Context) servers.Server {
 	}
 
 	return server
+}
+
+type EmptyIPProvider struct{}
+
+func (e EmptyIPProvider) GetPlayerMostRecentIP(_ context.Context, _ steamid.SteamID) net.IP {
+	return nil
 }

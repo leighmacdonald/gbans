@@ -27,12 +27,13 @@ func TestHTTPAppeal(t *testing.T) {
 			person.NewRepository(fixture.Database, true),
 			steamid.New(tests.OwnerSID),
 			fixture.TFApi)
-		assets  = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
-		demos   = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database), assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
-		reports = ban.NewReports(ban.NewReportRepository(fixture.Database), persons, demos, fixture.TFApi, notification.NewDiscard(), "")
-		bans    = ban.New(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
+		assets         = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		demos          = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database), assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		reports        = ban.NewReports(ban.NewReportRepository(fixture.Database), persons, demos, fixture.TFApi, notification.NewDiscard(), "")
+		serversCase, _ = servers.New(servers.NewRepository(fixture.Database), nil, "")
+		bans           = ban.New(ban.NewRepository(fixture.Database), fixture.Persons,
 			fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.KickLogChannelID,
-			steamid.New(fixture.Config.Config().Owner), reports, notification.NewDiscard(), nil)
+			steamid.New(fixture.Config.Config().Owner), reports, notification.NewDiscard(), serversCase, tests.EmptyIPProvider{})
 		appeals = ban.NewAppeals(ban.NewAppealRepository(fixture.Database), bans, persons, notification.NewDiscard(), fixture.Config.Config().Discord.LogChannelID)
 		target  = steamid.RandSID64()
 	)

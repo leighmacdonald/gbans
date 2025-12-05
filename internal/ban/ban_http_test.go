@@ -28,11 +28,11 @@ func TestHTTPBan(t *testing.T) {
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewDiscard(), "")
-		router = fixture.CreateRouter()
-		bans   = ban.New(ban.NewRepository(fixture.Database, fixture.Persons), fixture.Persons,
-			fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.BanLogChannelID,
-			steamid.New(fixture.Config.Config().Owner),
-			reports, notification.NewDiscard(), nil)
+		router         = fixture.CreateRouter()
+		serversCase, _ = servers.New(servers.NewRepository(fixture.Database), nil, "")
+		bans           = ban.New(ban.NewRepository(fixture.Database), fixture.Persons,
+			fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.KickLogChannelID,
+			steamid.New(fixture.Config.Config().Owner), reports, notification.NewDiscard(), serversCase, tests.EmptyIPProvider{})
 	)
 	ban.NewHandlerBans(router, &tests.UserAuth{Profile: fixture.CreateTestPerson(
 		t.Context(), tests.OwnerSID, permission.Admin)}, bans, fixture.Config.Config().Exports, "")
