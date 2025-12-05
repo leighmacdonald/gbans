@@ -15,13 +15,13 @@ import {
     BanReason,
     BanReasons,
     banReasonsCollection,
+    BanRecord,
     BanType,
     BanTypeCollection,
     Duration,
-    schemaBanPayload,
-    BanRecord,
+    DurationCollection,
     Origin,
-    DurationCollection
+    schemaBanPayload
 } from '../../schema/bans.ts';
 import { Duration8601ToString } from '../../util/time.ts';
 import { ErrorDetails } from '../ErrorDetails.tsx';
@@ -29,278 +29,280 @@ import { Heading } from '../Heading';
 import { LoadingPlaceholder } from '../LoadingPlaceholder.tsx';
 import { MarkdownField } from '../form/field/MarkdownField.tsx';
 
-export const BanModal = NiceModal.create(({ ban_id }: { ban_id?: number }) => {
-    const { profile } = useAuth();
-    const queryClient = useQueryClient();
-    const {
-        data: ban,
-        isLoading,
-        isError,
-        error
-    } = useQuery({
-        queryKey: ['ban', { ban_id }],
-        queryFn: async () => {
-            if (ban_id && ban_id > 0) {
-                return await apiGetBanSteam(Number(ban_id), true);
-            }
+export const BanModal = NiceModal.create(
+    ({ ban_id, reportId, steamId }: { ban_id?: number; reportId?: number; steamId?: string }) => {
+        const { profile } = useAuth();
+        const queryClient = useQueryClient();
+        const {
+            data: ban,
+            isLoading,
+            isError,
+            error
+        } = useQuery({
+            queryKey: ['ban', { ban_id }],
+            queryFn: async () => {
+                if (ban_id && ban_id > 0) {
+                    return await apiGetBanSteam(Number(ban_id), true);
+                }
 
-            return {} as BanRecord;
+                return {} as BanRecord;
+            }
+        });
+
+        const { sendFlash, sendError } = useUserFlashCtx();
+        const modal = useModal();
+
+        const mutation = useMutation({
+            mutationKey: ['banSteam'],
+            mutationFn: async (values: BanOpts) => {
+                let banRecord: BanRecord;
+                if (ban?.ban_id) {
+                    banRecord = await apiUpdateBanSteam(ban.ban_id, {
+                        note: values.note,
+                        ban_type: values.ban_type,
+                        reason: values.reason,
+                        reason_text: values.reason_text,
+                        evade_ok: values.evade_ok
+                    });
+                } else {
+                    banRecord = await apiCreateBan({
+                        source_id: profile.steam_id,
+                        note: values.note,
+                        ban_type: values.ban_type,
+                        duration: values.duration,
+                        reason: values.reason,
+                        reason_text: values.reason_text,
+                        report_id: values.report_id,
+                        target_id: values.target_id,
+                        evade_ok: values.evade_ok,
+                        demo_name: '',
+                        demo_tick: 0,
+                        origin: Origin.Web,
+                        cidr: values.cidr
+                    });
+                }
+                queryClient.setQueryData(['ban', { ban_id }], banRecord);
+            },
+            onSuccess: async (banRecord) => {
+                if (ban?.ban_id) {
+                    sendFlash('success', 'Updated ban successfully');
+                } else {
+                    sendFlash('success', 'Created ban successfully');
+                }
+                modal.resolve(banRecord);
+                await modal.hide();
+            },
+            onError: sendError
+        });
+
+        const defaultValues: z.infer<typeof schemaBanPayload> = {
+            report_id: ban?.report_id ?? reportId ?? 0,
+            target_id: ban?.target_id ?? steamId ?? '',
+            ban_type: ban?.ban_type ?? BanType.Banned,
+            reason: ban?.reason ?? BanReason.Cheating,
+            reason_text: ban?.reason_text ?? '',
+            duration: ban ? Duration.durCustom : Duration.dur2w,
+            note: ban?.note ?? '',
+            evade_ok: ban?.evade_ok ?? false,
+            cidr: ban?.cidr,
+            demo_name: '',
+            demo_tick: 0,
+            origin: Origin.Reported
+        };
+
+        const form = useAppForm({
+            onSubmit: async ({ value }) => {
+                mutation.mutate(value);
+            },
+            defaultValues,
+            validators: {
+                onSubmit: schemaBanPayload
+            }
+        });
+
+        if (isLoading) {
+            return <LoadingPlaceholder />;
         }
-    });
 
-    const { sendFlash, sendError } = useUserFlashCtx();
-    const modal = useModal();
-
-    const mutation = useMutation({
-        mutationKey: ['banSteam'],
-        mutationFn: async (values: BanOpts) => {
-            let banRecord: BanRecord;
-            if (ban?.ban_id) {
-                banRecord = await apiUpdateBanSteam(ban.ban_id, {
-                    note: values.note,
-                    ban_type: values.ban_type,
-                    reason: values.reason,
-                    reason_text: values.reason_text,
-                    evade_ok: values.evade_ok
-                });
-            } else {
-                banRecord = await apiCreateBan({
-                    source_id: profile.steam_id,
-                    note: values.note,
-                    ban_type: values.ban_type,
-                    duration: values.duration,
-                    reason: values.reason,
-                    reason_text: values.reason_text,
-                    report_id: values.report_id,
-                    target_id: values.target_id,
-                    evade_ok: values.evade_ok,
-                    demo_name: '',
-                    demo_tick: 0,
-                    origin: Origin.Web,
-                    cidr: values.cidr
-                });
-            }
-            queryClient.setQueryData(['ban', { ban_id }], banRecord);
-        },
-        onSuccess: async (banRecord) => {
-            if (ban?.ban_id) {
-                sendFlash('success', 'Updated ban successfully');
-            } else {
-                sendFlash('success', 'Created ban successfully');
-            }
-            modal.resolve(banRecord);
-            await modal.hide();
-        },
-        onError: sendError
-    });
-
-    const defaultValues: z.infer<typeof schemaBanPayload> = {
-        report_id: ban?.report_id ?? 0,
-        target_id: ban?.target_id ?? '',
-        ban_type: ban?.ban_type ?? BanType.Banned,
-        reason: ban?.reason ?? BanReason.Cheating,
-        reason_text: ban?.reason_text ?? '',
-        duration: ban ? Duration.durCustom : Duration.dur2w,
-        note: ban?.note ?? '',
-        evade_ok: ban?.evade_ok ?? false,
-        cidr: ban?.cidr,
-        demo_name: '',
-        demo_tick: 0,
-        origin: Origin.Web
-    };
-
-    const form = useAppForm({
-        onSubmit: async ({ value }) => {
-            mutation.mutate(value);
-        },
-        defaultValues,
-        validators: {
-            onSubmit: schemaBanPayload
+        if (isError) {
+            return <ErrorDetails error={error} />;
         }
-    });
 
-    if (isLoading) {
-        return <LoadingPlaceholder />;
-    }
+        return (
+            <Dialog fullWidth {...muiDialogV5(modal)}>
+                <form
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        await form.handleSubmit();
+                    }}
+                >
+                    <DialogTitle component={Heading} iconLeft={<DirectionsRunIcon />}>
+                        {Number(ban_id) > 0 ? 'Edit Ban' : 'Create Ban'}
+                    </DialogTitle>
 
-    if (isError) {
-        return <ErrorDetails error={error} />;
-    }
+                    <DialogContent>
+                        <Grid container spacing={2}>
+                            <Grid size={{ xs: 12 }}>
+                                <form.AppField
+                                    name={'target_id'}
+                                    children={(field) => {
+                                        return (
+                                            <field.SteamIDField
+                                                label={'Target Steam ID Or Group ID'}
+                                                disabled={Boolean(ban?.ban_id)}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
 
-    return (
-        <Dialog fullWidth {...muiDialogV5(modal)}>
-            <form
-                onSubmit={async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    await form.handleSubmit();
-                }}
-            >
-                <DialogTitle component={Heading} iconLeft={<DirectionsRunIcon />}>
-                    {Number(ban_id) > 0 ? 'Edit Ban' : 'Create Ban'}
-                </DialogTitle>
+                            <Grid size={{ xs: 12 }}>
+                                <form.AppField
+                                    name={'cidr'}
+                                    children={(field) => {
+                                        return <field.TextField label={'IP/CIDR'} />;
+                                    }}
+                                />
+                            </Grid>
 
-                <DialogContent>
-                    <Grid container spacing={2}>
-                        <Grid size={{ xs: 12 }}>
-                            <form.AppField
-                                name={'target_id'}
-                                children={(field) => {
-                                    return (
-                                        <field.SteamIDField
-                                            label={'Target Steam ID Or Group ID'}
-                                            disabled={Boolean(ban?.ban_id)}
-                                        />
-                                    );
-                                }}
-                            />
-                        </Grid>
+                            <Grid size={{ xs: 12 }}>
+                                <form.AppField
+                                    name={'ban_type'}
+                                    children={(field) => {
+                                        return (
+                                            <field.SelectField
+                                                label={'Ban Action Type'}
+                                                items={BanTypeCollection}
+                                                renderItem={(bt) => {
+                                                    return (
+                                                        <MenuItem value={bt} key={`bt-${bt}`}>
+                                                            {banTypeString(bt)}
+                                                        </MenuItem>
+                                                    );
+                                                }}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
 
-                        <Grid size={{ xs: 12 }}>
-                            <form.AppField
-                                name={'cidr'}
-                                children={(field) => {
-                                    return <field.TextField label={'IP/CIDR'} />;
-                                }}
-                            />
-                        </Grid>
-
-                        <Grid size={{ xs: 12 }}>
-                            <form.AppField
-                                name={'ban_type'}
-                                children={(field) => {
-                                    return (
-                                        <field.SelectField
-                                            label={'Ban Action Type'}
-                                            items={BanTypeCollection}
-                                            renderItem={(bt) => {
-                                                return (
-                                                    <MenuItem value={bt} key={`bt-${bt}`}>
-                                                        {banTypeString(bt)}
-                                                    </MenuItem>
-                                                );
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
-                        </Grid>
-
-                        <Grid size={{ xs: 12 }}>
-                            <form.AppField
-                                name={'reason'}
-                                children={(field) => {
-                                    return (
-                                        <field.SelectField
-                                            label={'Reason'}
-                                            items={banReasonsCollection}
-                                            renderItem={(br) => {
-                                                return (
-                                                    <MenuItem value={br} key={`br-${br}`}>
-                                                        {BanReasons[br]}
-                                                    </MenuItem>
-                                                );
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                            <form.AppField
-                                name={'reason_text'}
-                                validators={{
-                                    onSubmit: ({ value, fieldApi }) => {
-                                        if (fieldApi.form.getFieldValue('reason') != BanReason.Custom) {
-                                            if (value.length == 0) {
-                                                return undefined;
+                            <Grid size={{ xs: 12 }}>
+                                <form.AppField
+                                    name={'reason'}
+                                    children={(field) => {
+                                        return (
+                                            <field.SelectField
+                                                label={'Reason'}
+                                                items={banReasonsCollection}
+                                                renderItem={(br) => {
+                                                    return (
+                                                        <MenuItem value={br} key={`br-${br}`}>
+                                                            {BanReasons[br]}
+                                                        </MenuItem>
+                                                    );
+                                                }}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12 }}>
+                                <form.AppField
+                                    name={'reason_text'}
+                                    validators={{
+                                        onSubmit: ({ value, fieldApi }) => {
+                                            if (fieldApi.form.getFieldValue('reason') != BanReason.Custom) {
+                                                if (value.length == 0) {
+                                                    return undefined;
+                                                }
+                                                return 'Must use custom ban reason';
                                             }
-                                            return 'Must use custom ban reason';
+                                            const result = z.string().min(5).safeParse(value);
+                                            if (!result.success) {
+                                                return result.error.message;
+                                            }
+
+                                            return undefined;
                                         }
-                                        const result = z.string().min(5).safeParse(value);
-                                        if (!result.success) {
-                                            return result.error.message;
-                                        }
+                                    }}
+                                    children={(field) => {
+                                        return <field.TextField label={'Custom Ban Reason'} />;
+                                    }}
+                                />
+                            </Grid>
 
-                                        return undefined;
-                                    }
-                                }}
-                                children={(field) => {
-                                    return <field.TextField label={'Custom Ban Reason'} />;
-                                }}
-                            />
-                        </Grid>
+                            <Grid size={{ xs: 12 }}>
+                                <form.AppField
+                                    name={'duration'}
+                                    children={(field) => {
+                                        return (
+                                            <field.SelectField
+                                                label={'Ban Action Type'}
+                                                items={DurationCollection}
+                                                renderItem={(bt) => {
+                                                    return (
+                                                        <MenuItem value={bt} key={`bt-${bt}`}>
+                                                            {Duration8601ToString(bt)}
+                                                        </MenuItem>
+                                                    );
+                                                }}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
 
-                        <Grid size={{ xs: 12 }}>
-                            <form.AppField
-                                name={'duration'}
-                                children={(field) => {
-                                    return (
-                                        <field.SelectField
-                                            label={'Ban Action Type'}
-                                            items={DurationCollection}
-                                            renderItem={(bt) => {
-                                                return (
-                                                    <MenuItem value={bt} key={`bt-${bt}`}>
-                                                        {Duration8601ToString(bt)}
-                                                    </MenuItem>
-                                                );
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
-                        </Grid>
+                            {/*<Grid size={{ xs: 6 }}>*/}
+                            {/*    <form.AppField*/}
+                            {/*        name={'duration'}*/}
+                            {/*        children={(field) => {*/}
+                            {/*            return <field.TextField label={'Duration'} />;*/}
+                            {/*        }}*/}
+                            {/*    />*/}
+                            {/*</Grid>*/}
 
-                        {/*<Grid size={{ xs: 6 }}>*/}
-                        {/*    <form.AppField*/}
-                        {/*        name={'duration'}*/}
-                        {/*        children={(field) => {*/}
-                        {/*            return <field.TextField label={'Duration'} />;*/}
-                        {/*        }}*/}
-                        {/*    />*/}
-                        {/*</Grid>*/}
+                            <Grid size={{ xs: 12 }}>
+                                <form.AppField
+                                    name={'evade_ok'}
+                                    children={(field) => {
+                                        return <field.CheckboxField label={'IP Evading Allowed'} />;
+                                    }}
+                                />
+                            </Grid>
 
-                        <Grid size={{ xs: 12 }}>
-                            <form.AppField
-                                name={'evade_ok'}
-                                children={(field) => {
-                                    return <field.CheckboxField label={'IP Evading Allowed'} />;
-                                }}
-                            />
+                            <Grid size={{ xs: 12 }}>
+                                <form.AppField
+                                    name={'note'}
+                                    children={(props) => {
+                                        return (
+                                            <MarkdownField
+                                                {...props}
+                                                value={props.state.value}
+                                                multiline={true}
+                                                rows={10}
+                                                label={'Mod Notes'}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
                         </Grid>
-
-                        <Grid size={{ xs: 12 }}>
-                            <form.AppField
-                                name={'note'}
-                                children={(props) => {
-                                    return (
-                                        <MarkdownField
-                                            {...props}
-                                            value={props.state.value}
-                                            multiline={true}
-                                            rows={10}
-                                            label={'Mod Notes'}
-                                        />
-                                    );
-                                }}
-                            />
+                    </DialogContent>
+                    <DialogActions>
+                        <Grid container>
+                            <Grid size={{ xs: 12 }}>
+                                <form.AppForm>
+                                    <ButtonGroup>
+                                        <form.ResetButton />
+                                        <form.SubmitButton />
+                                    </ButtonGroup>
+                                </form.AppForm>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </DialogContent>
-                <DialogActions>
-                    <Grid container>
-                        <Grid size={{ xs: 12 }}>
-                            <form.AppForm>
-                                <ButtonGroup>
-                                    <form.ResetButton />
-                                    <form.SubmitButton />
-                                </ButtonGroup>
-                            </form.AppForm>
-                        </Grid>
-                    </Grid>
-                </DialogActions>
-            </form>
-        </Dialog>
-    );
-});
+                    </DialogActions>
+                </form>
+            </Dialog>
+        );
+    }
+);

@@ -60,6 +60,7 @@ const (
 	Web
 	// InGame is a ban using the sourcemod plugin.
 	InGame
+	Reported
 )
 
 func (s Origin) String() string {
@@ -72,6 +73,8 @@ func (s Origin) String() string {
 		return "Web"
 	case InGame:
 		return "In-Game"
+	case Reported:
+		return "Reported"
 	default:
 		return "Unknown"
 	}

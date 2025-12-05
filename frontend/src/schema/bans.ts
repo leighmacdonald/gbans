@@ -5,7 +5,8 @@ export const Origin = {
     System: 0,
     Bot: 1,
     Web: 2,
-    InGame: 3
+    InGame: 3,
+    Reported: 4
 } as const;
 
 export const OriginEnum = z.enum(Origin);
