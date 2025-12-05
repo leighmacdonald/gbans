@@ -160,6 +160,8 @@ func (s *Servers) FindPlayers(opts FindOpts) []FindResult {
 }
 
 func (s *Servers) FindPlayer(opts FindOpts) (FindResult, bool) {
+	s.serversMu.RLock()
+	defer s.serversMu.RUnlock()
 	results := s.servers.find(opts)
 	if len(results) == 0 {
 		return FindResult{}, false

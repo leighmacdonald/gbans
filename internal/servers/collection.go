@@ -98,6 +98,7 @@ func (c Collection) find(opts FindOpts) []FindResult {
 	var found []FindResult
 
 	for _, server := range c {
+		server.RLock()
 		for _, player := range server.state.Players {
 			matched := false
 			if opts.SteamID.Valid() && player.SID == opts.SteamID {
@@ -132,6 +133,7 @@ func (c Collection) find(opts FindOpts) []FindResult {
 				found = append(found, FindResult{Player: player, Server: server})
 			}
 		}
+		server.RUnlock()
 	}
 
 	return found
