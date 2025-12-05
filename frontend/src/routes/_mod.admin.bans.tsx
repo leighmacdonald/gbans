@@ -40,6 +40,7 @@ import {
 import { schemaBanQueryOpts } from '../schema/query.ts';
 import { initColumnFilter, initPagination, isPermanentBan, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
+import { emptyOrNullString } from '../util/types.ts';
 
 const searchSchema = z.object({
     pageIndex: z.number().optional().catch(0),
@@ -62,8 +63,6 @@ export const Route = createFileRoute('/_mod/admin/bans')({
     validateSearch: (search) => searchSchema.parse(search)
 });
 
-const queryKey = ['steamBans'];
-
 function AdminBans() {
     const queryClient = useQueryClient();
     const navigate = useNavigate({ from: Route.fullPath });
@@ -74,18 +73,16 @@ function AdminBans() {
     const { sendFlash } = useUserFlashCtx();
 
     const { data: bans, isLoading } = useQuery({
-        queryKey: queryKey,
+        queryKey: ['bans'],
         queryFn: async () => {
-            return await apiGetBans({
-                deleted: false
-            });
+            return await apiGetBans({ deleted: true });
         }
     });
 
     const onNewBanSteam = async () => {
         try {
             const ban = await NiceModal.show<BanRecord>(ModalBan, {});
-            queryClient.setQueryData(queryKey, [...(bans ?? []), ban]);
+            queryClient.setQueryData(['bans'], [...(bans ?? []), ban]);
         } catch (e) {
             sendFlash('error', `Error trying to set up ban: ${e}`);
         }
@@ -148,7 +145,7 @@ function AdminBans() {
                     personaName: ban.target_personaname
                 });
                 queryClient.setQueryData(
-                    queryKey,
+                    ['bans'],
                     (bans ?? []).filter((b) => b.ban_id != ban.ban_id)
                 );
                 sendFlash('success', 'Unbanned player successfully');
@@ -165,7 +162,7 @@ function AdminBans() {
                     existing: ban
                 });
                 queryClient.setQueryData(
-                    queryKey,
+                    ['bans'],
                     (bans ?? []).map((b) => (b.ban_id == updated.ban_id ? updated : b))
                 );
             } catch (e) {
@@ -175,6 +172,23 @@ function AdminBans() {
 
         return makeColumns(onEdit, onUnban);
     }, [bans, queryClient, sendFlash]);
+
+    const filtered = useMemo(() => {
+        return bans?.filter((b) => {
+            if (!search.deleted && b.deleted) {
+                return false;
+            }
+            if (search.cidr_only && emptyOrNullString(b.cidr)) {
+                return false;
+            }
+
+            if (search.reason && search.reason >= 0 && b.reason != search.reason) {
+                return false;
+            }
+
+            return true;
+        });
+    }, [bans, search]);
 
     return (
         <Grid container spacing={2}>
@@ -307,7 +321,7 @@ function AdminBans() {
                                 columnFilters={columnFilters}
                                 pagination={pagination}
                                 setPagination={setPagination}
-                                data={bans ?? []}
+                                data={filtered ?? []}
                                 isLoading={isLoading}
                                 columns={columns}
                                 sorting={sorting}
