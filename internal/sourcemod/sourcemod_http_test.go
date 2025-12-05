@@ -275,7 +275,7 @@ func testCheck(router *gin.Engine, authenticator *tests.UserAuth) func(t *testin
 			IP:       "1.2.3.4",
 			Name:     stringutil.SecureRandomString(12),
 		}
-		resp := tests.GetGOK[sourcemod.CheckResponse](t, router, "/api/sm/check", req)
+		resp := tests.PostGOK[sourcemod.CheckResponse](t, router, "/api/sm/check", req)
 		require.Equal(t, bantype.OK, resp.BanType)
 	}
 }

@@ -127,6 +127,61 @@ func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, serve
 	service.MustRegisterPrefixHandler("sourcemod_admins_edit_modal", handler.onSourcemodAdminsEditModal)
 	service.MustRegisterPrefixHandler("admins", discord.Autocomplete(handler.adminCompleter()))
 	service.MustRegisterPrefixHandler("groups", discord.Autocomplete(handler.groupCompleter()))
+
+	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
+		Name:                     "cvar",
+		Description:              "Request a server seed ping",
+		DefaultMemberPermissions: ptr.To(discord.UserPerms),
+		Contexts:                 &[]discordgo.InteractionContextType{discordgo.InteractionContextGuild},
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "set",
+				Description: "Set cvar value",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:         discordgo.ApplicationCommandOptionString,
+						Name:         "target_server",
+						Description:  "Short server name",
+						Required:     true,
+						Autocomplete: true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "cvar",
+						Description: "CVAR name",
+						Required:    true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "value",
+						Description: "New CVAR value",
+						Required:    true,
+					},
+				},
+			},
+			{
+				Type:        discordgo.ApplicationCommandOptionSubCommand,
+				Name:        "get",
+				Description: "Get cvar value",
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Type:         discordgo.ApplicationCommandOptionString,
+						Name:         "target_server",
+						Description:  "Short server name",
+						Required:     true,
+						Autocomplete: true,
+					},
+					{
+						Type:        discordgo.ApplicationCommandOptionString,
+						Name:        "cvar",
+						Description: "CVAR name",
+						Required:    true,
+					},
+				},
+			},
+		},
+	}, handler.onCVAR)
 }
 
 func (h discordHandler) adminCompleter() func(ctx context.Context, query string) ([]discord.AutoCompleteValuer, error) {
@@ -207,8 +262,8 @@ func (h discordHandler) groupCompleter() func(ctx context.Context, query string)
 	}
 }
 
-func (h discordHandler) onSourcemod(ctx context.Context, session *discordgo.Session, interation *discordgo.InteractionCreate) error {
-	data := interation.ApplicationCommandData()
+func (h discordHandler) onSourcemod(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	data := interaction.ApplicationCommandData()
 	if len(data.Options) == 0 || len(data.Options[0].Options) == 0 {
 		return fmt.Errorf("%w: invalid options", discord.ErrCommandFailed)
 	}
@@ -219,12 +274,12 @@ func (h discordHandler) onSourcemod(ctx context.Context, session *discordgo.Sess
 	case "admins":
 		switch subCmd.Name { //nolint:gocritic
 		case "edit":
-			return h.onAdminsEdit(ctx, session, interation, opts)
+			return h.onAdminsEdit(ctx, session, interaction, opts)
 		}
 	case "groups":
 		switch subCmd.Name { //nolint:gocritic
 		case "edit":
-			return h.onGroupsEdit(ctx, session, interation, opts)
+			return h.onGroupsEdit(ctx, session, interaction, opts)
 		}
 	}
 
@@ -373,6 +428,63 @@ func (h discordHandler) onRCON(ctx context.Context, session *discordgo.Session, 
 
 	return discord.RespondUpdate(session, interaction,
 		discord.Heading("RCON Command: %s", command),
+		discord.BodyColouredText(discord.ColourInfo, "```"+resp+"```"))
+}
+
+func (h discordHandler) onCVAR(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
+	data := interaction.ApplicationCommandData()
+	if len(data.Options) == 0 || len(data.Options[0].Options) == 0 {
+		return fmt.Errorf("%w: invalid options", discord.ErrCommandFailed)
+	}
+	group := data.Options[0]
+	subCmd := group.Options[0]
+	opts := discord.OptionMap(subCmd.Options)
+	switch group.Name { //nolint:gocritic
+	case "set":
+		return h.onCVARSet(ctx, session, interaction, opts)
+	case "get":
+		return h.onCVARGet(ctx, session, interaction, opts)
+	default:
+		return fmt.Errorf("%w: unknown cvar command", discord.ErrCommandFailed)
+	}
+}
+
+func (h discordHandler) onCVARSet(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, opts discord.CommandOptions) error {
+	if err := discord.AckInteraction(session, interaction); err != nil {
+		return err
+	}
+	server, errServer := h.servers.GetByName(ctx, opts["target_server"].StringValue())
+	if errServer != nil {
+		return errServer
+	}
+	cvar := opts["cvar"].StringValue()
+	value := opts["value"].StringValue()
+	resp, errResp := server.Exec(ctx, fmt.Sprintf("%s \"%s\"", cvar, value))
+	if errResp != nil {
+		return errResp
+	}
+
+	return discord.RespondUpdate(session, interaction,
+		discord.Heading("CVAR Set Successfully: %s", cvar),
+		discord.BodyColouredText(discord.ColourInfo, "```"+resp+"```"))
+}
+
+func (h discordHandler) onCVARGet(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate, opts discord.CommandOptions) error {
+	if err := discord.AckInteraction(session, interaction); err != nil {
+		return err
+	}
+	server, errServer := h.servers.GetByName(ctx, opts["target_server"].StringValue())
+	if errServer != nil {
+		return errServer
+	}
+	cvar := opts["cvar"].StringValue()
+	resp, errResp := server.Exec(ctx, cvar)
+	if errResp != nil {
+		return errResp
+	}
+
+	return discord.RespondUpdate(session, interaction,
+		discord.Heading("CVAR Fetched Successfully: %s", cvar),
 		discord.BodyColouredText(discord.ColourInfo, "```"+resp+"```"))
 }
 

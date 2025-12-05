@@ -189,32 +189,47 @@ func (h *authHandler) onAPILogout() gin.HandlerFunc {
 		ctx.SetCookie(FingerprintCookieName, "", -1, "/api",
 			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
 
-		personAuth := PersonAuth{}
-		if errGet := h.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, httphelper.ErrInternal)))
+		token, errToken := h.TokenFromHeader(ctx, false)
+		if errToken != nil {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
 		}
 
-		if errDelete := h.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDelete, httphelper.ErrInternal)))
+		sid, errFromToken := h.Sid64FromJWTToken(token, h.cookieKey, fingerprint)
+		if errFromToken != nil {
+			if errors.Is(errFromToken, ErrExpired) {
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+
+				return
+			}
+
+			slog.Error("Failed to load sid from access token", slog.String("error", errFromToken.Error()))
+			ctx.AbortWithStatus(http.StatusForbidden)
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{})
 
-		sentry.AddBreadcrumb(&sentry.Breadcrumb{
-			Category: "auth",
-			Message:  "User logged out " + personAuth.SteamID.String(),
-			Level:    sentry.LevelWarning,
-		})
+		go func(steamID steamid.SteamID) {
+			sentry.AddBreadcrumb(&sentry.Breadcrumb{
+				Category: "auth",
+				Message:  "User logged out " + steamID.String(),
+				Level:    sentry.LevelWarning,
+			})
 
-		sentry.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetUser(sentry.User{})
-		})
+			sentry.ConfigureScope(func(scope *sentry.Scope) {
+				scope.SetUser(sentry.User{})
+			})
+			player, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+			if errPerson != nil {
+				slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
 
-		go h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, logoutMessage(personAuth.SteamID.String())))
+				return
+			}
+			h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, logoutMessage(player)))
+		}(sid)
 	}
 }
 

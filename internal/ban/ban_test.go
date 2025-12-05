@@ -39,9 +39,10 @@ func TestBan(t *testing.T) {
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewDiscard(), "")
-		br   = ban.NewRepository(fixture.Database, fixture.Persons)
-		bans = ban.New(br, fixture.Persons, fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.KickLogChannelID,
-			steamid.New(fixture.Config.Config().Owner), reports, notification.NewDiscard(), nil)
+		serversCase, _ = servers.New(servers.NewRepository(fixture.Database), nil, "")
+		bans           = ban.New(ban.NewRepository(fixture.Database), fixture.Persons,
+			fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.KickLogChannelID,
+			steamid.New(fixture.Config.Config().Owner), reports, notification.NewDiscard(), serversCase, tests.EmptyIPProvider{})
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 	)
@@ -67,10 +68,10 @@ func TestDuplicate(t *testing.T) {
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewDiscard(), "")
-		br   = ban.NewRepository(fixture.Database, fixture.Persons)
-		bans = ban.New(br, fixture.Persons, fixture.Config.Config().Discord.BanLogChannelID,
-			fixture.Config.Config().Discord.KickLogChannelID,
-			steamid.New(fixture.Config.Config().Owner), reports, notification.NewDiscard(), nil)
+		serversCase, _ = servers.New(servers.NewRepository(fixture.Database), nil, "")
+		bans           = ban.New(ban.NewRepository(fixture.Database), fixture.Persons,
+			fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.KickLogChannelID,
+			steamid.New(fixture.Config.Config().Owner), reports, notification.NewDiscard(), serversCase, tests.EmptyIPProvider{})
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 		opts   = []ban.Opts{
@@ -105,10 +106,10 @@ func TestUnban(t *testing.T) {
 		reports = ban.NewReports(ban.NewReportRepository(fixture.Database),
 			person.NewPersons(person.NewRepository(fixture.Database, true), steamid.New(tests.OwnerSID), fixture.TFApi),
 			demos, fixture.TFApi, notification.NewDiscard(), "")
-		br   = ban.NewRepository(fixture.Database, fixture.Persons)
-		bans = ban.New(br, fixture.Persons, fixture.Config.Config().Discord.BanLogChannelID,
-			fixture.Config.Config().Discord.BanLogChannelID,
-			steamid.New(fixture.Config.Config().Owner), reports, notification.NewDiscard(), nil)
+		serversCase, _ = servers.New(servers.NewRepository(fixture.Database), nil, "")
+		bans           = ban.New(ban.NewRepository(fixture.Database), fixture.Persons,
+			fixture.Config.Config().Discord.BanLogChannelID, fixture.Config.Config().Discord.KickLogChannelID,
+			steamid.New(fixture.Config.Config().Owner), reports, notification.NewDiscard(), serversCase, tests.EmptyIPProvider{})
 		source = steamid.RandSID64()
 		target = steamid.RandSID64()
 		author = fixture.CreateTestPerson(t.Context(), source, permission.Admin)

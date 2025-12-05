@@ -31,6 +31,8 @@ export const apiGetProfile = async (query: string, abortController?: AbortContro
 
 export const apiGetCurrentProfile = async () => apiCall<UserProfile>(`/api/current_profile`, 'GET', undefined);
 
+export const apiLogout = async () => await apiCall(`/api/auth/logout`);
+
 export const apiSearchPeople = async (opts: PlayerQuery, abortController?: AbortController) => {
     const people = await apiCall<LazyResult<Person>>(`/api/players`, 'POST', opts, abortController);
     people.data = people.data.map(transformTimeStampedDates);
