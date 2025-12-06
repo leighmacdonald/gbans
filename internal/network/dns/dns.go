@@ -83,11 +83,7 @@ func (c *ChangeDetector) sync(ctx context.Context) error {
 	}
 
 	for _, server := range sdrServers {
-		currentIP, errIP := server.IP()
-		if errIP != nil || currentIP == nil {
-			continue
-		}
-
+		currentIP := server.IP
 		// Updated either on the first invocation, or on changes only.
 		curHostState, found := c.current[server.ServerID]
 		if !found || !curHostState.idAddr.Equal(currentIP) {

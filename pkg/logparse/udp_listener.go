@@ -21,50 +21,36 @@ const (
 	s2aLogString2 srcdsPacket = 0x53
 )
 
+// PacketAuthenticator is responsible for validating the incoming packet secret.
+type PacketAuthenticator func(secret int64, clientIP net.IP) (int, string, error)
+
 type LogEventHandler func(EventType, ServerEvent)
 
 // Listener handles reading inbound srcds log packets.
 type Listener struct {
 	*sync.RWMutex
 
-	udpAddr   *net.UDPAddr
-	secretMap map[int]ServerIDMap // index = logsecret key
-	serverMap map[netip.Addr]bool // index = server ip address
-	onEvent   func(EventType, ServerEvent)
+	packetAuth PacketAuthenticator
+	udpAddr    *net.UDPAddr
+	secretMap  map[int]ServerIDMap // index = logsecret key
+	serverMap  map[netip.Addr]bool // index = server ip address
+	onEvent    func(EventType, ServerEvent)
 }
 
-var (
-	ErrResolve   = errors.New("failed to resolve UDP address")
-	ErrUnknownIP = errors.New("unknown source ip")
-)
+var ErrResolve = errors.New("failed to resolve UDP address")
 
-func NewListener(logAddr string, onEvent LogEventHandler) (*Listener, error) {
+func NewListener(logAddr string, onEvent LogEventHandler, authenticator PacketAuthenticator) (*Listener, error) {
 	listenAddress, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Join(errResolveUDP, ErrResolve)
 	}
 
 	return &Listener{
-		RWMutex:   &sync.RWMutex{},
-		onEvent:   onEvent,
-		udpAddr:   listenAddress,
-		secretMap: map[int]ServerIDMap{},
-		serverMap: map[netip.Addr]bool{},
+		RWMutex:    &sync.RWMutex{},
+		onEvent:    onEvent,
+		udpAddr:    listenAddress,
+		packetAuth: authenticator,
 	}, nil
-}
-
-func (remoteSrc *Listener) SetSecrets(secrets map[int]ServerIDMap) {
-	remoteSrc.Lock()
-	defer remoteSrc.Unlock()
-
-	remoteSrc.secretMap = secrets
-}
-
-func (remoteSrc *Listener) SetServers(servers map[netip.Addr]bool) {
-	remoteSrc.Lock()
-	defer remoteSrc.Unlock()
-
-	remoteSrc.serverMap = servers
 }
 
 type ServerIDMap struct {
@@ -77,8 +63,9 @@ type ServerIDMap struct {
 // every 60 minutes so that it remains up to date.
 func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 	type newMsg struct {
-		source int64
-		body   string
+		body       string
+		serverID   int
+		serverName string
 	}
 
 	connection, errListenUDP := net.ListenUDP("udp4", remoteSrc.udpAddr)
@@ -101,7 +88,6 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 		count          = uint64(0)
 		insecureCount  = uint64(0)
 		errCount       = uint64(0)
-		rejectsIP      = map[string]time.Time{} // IP -> last reject time
 		msgIngressChan = make(chan newMsg)
 	)
 
@@ -120,26 +106,6 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 					slog.Warn("UDP log read error", slog.String("string", errReadUDP.Error()))
 
 					continue
-				}
-
-				// IP Check: Ensure the packet originates from a known server IP
-				knownIP := false
-				if addr, addrOk := netip.AddrFromSlice(remoteAddr.IP); addrOk {
-					remoteSrc.RLock()
-					_, knownIP = remoteSrc.serverMap[addr]
-					remoteSrc.RUnlock()
-				}
-
-				if !knownIP {
-					lastTime, rejected := rejectsIP[remoteAddr.IP.String()]
-					if !rejected || time.Since(lastTime) > time.Minute*5 {
-						slog.Warn("Rejecting UDP packet from unknown source IP",
-							slog.String("ip", remoteAddr.IP.String()),
-							slog.String("string", ErrUnknownIP.Error()))
-						rejectsIP[remoteAddr.IP.String()] = time.Now()
-					}
-
-					continue // Discard packet
 				}
 
 				switch srcdsPacket(buffer[4]) {
@@ -174,7 +140,13 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 						continue
 					}
 
-					msgIngressChan <- newMsg{source: secret, body: line[idx : readLen-2]}
+					// IP Check: Ensure the packet originates from a known server IP
+					serverID, serverName, errAuth := remoteSrc.packetAuth(secret, remoteAddr.IP)
+					if errAuth != nil {
+						continue
+					}
+
+					msgIngressChan <- newMsg{body: line[idx : readLen-2], serverID: serverID, serverName: serverName}
 
 					count++
 
@@ -194,29 +166,13 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 	}()
 
 	parser := NewLogParser()
-	rejects := map[int]time.Time{}
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case logPayload := <-msgIngressChan:
-			remoteSrc.RLock()
-			server, found := remoteSrc.secretMap[int(logPayload.source)]
-			remoteSrc.RUnlock()
-
-			if !found {
-				lastTime, ok := rejects[int(logPayload.source)]
-				if !ok || time.Since(lastTime) > time.Minute*5 {
-					slog.Warn("Rejecting unknown secret log author")
-
-					rejects[int(logPayload.source)] = time.Now()
-				}
-
-				continue
-			}
-
-			event, errLogServerEvent := logToServerEvent(parser, server.ServerID, server.ServerName, logPayload.body)
+			event, errLogServerEvent := logToServerEvent(parser, logPayload.serverID, logPayload.serverName, logPayload.body)
 			if errLogServerEvent != nil {
 				slog.Error("Failed to create serverEvent",
 					slog.String("body", logPayload.body),
@@ -226,17 +182,18 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 			}
 
 			if event.EventType == Say || event.EventType == SayTeam {
-				slog.Info("Got chat message", slog.String("body", logPayload.body), slog.String("server", server.ServerName))
+				slog.Debug("Got chat message", slog.String("body", logPayload.body),
+					slog.String("server_name", logPayload.serverName))
 			}
 
-			remoteSrc.onEvent(event.EventType, event)
+			go remoteSrc.onEvent(event.EventType, event)
 		}
 	}
 }
 
 // ServerEvent is a flat struct encapsulating a parsed log event.
 type ServerEvent struct {
-	*Results
+	Results
 
 	ServerID   int
 	ServerName string
@@ -245,10 +202,7 @@ type ServerEvent struct {
 var ErrLogParse = errors.New("failed to parse log message")
 
 func logToServerEvent(parser *LogParser, serverID int, serverName string, msg string) (ServerEvent, error) {
-	event := ServerEvent{
-		ServerID:   serverID,
-		ServerName: serverName,
-	}
+	event := ServerEvent{ServerID: serverID, ServerName: serverName}
 
 	parseResult, errParse := parser.Parse(msg)
 	if errParse != nil {

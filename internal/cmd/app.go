@@ -181,7 +181,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.assets = asset.NewAssets(assetRepo)
 
 	var errServer error
-	if g.servers, errServer = servers.New(servers.NewRepository(g.database), g.broadcaster, ""); errServer != nil {
+	if g.servers, errServer = servers.New(servers.NewRepository(g.database), g.broadcaster, conf.General.SrcdsLogAddr); errServer != nil {
 		return errServer
 	}
 	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, conf.Demo, steamid.New(conf.Owner))
@@ -192,7 +192,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.blocklists = network.NewBlocklists(network.NewBlocklistRepository(g.database),
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
-	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler)
+	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
 	g.forums = forum.New(forum.NewRepository(g.database), g.config, g.notifications)
 	g.metrics = metrics.New(g.broadcaster)
 	g.news = news.New(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
@@ -687,7 +687,7 @@ func (g *GBans) onChatBan(ctx context.Context, warning chat.NewUserWarning) erro
 		return nil
 	}
 
-	go g.notifications.Send(notification.NewDiscord(g.config.Config().Filters.WordFilterLogChannelID,
+	go g.notifications.Send(notification.NewDiscord(g.config.Config().Discord.SafeWordFilterLogChannelID(),
 		chat.WarningMessage(warning, newBan.ValidUntil)))
 
 	return nil

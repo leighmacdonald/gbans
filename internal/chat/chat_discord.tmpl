@@ -14,3 +14,7 @@
     Expires In: {{ .ExpiresIn }}
     Expires At: {{ .ExpiresAt }}
 {{end}}
+
+{{define "chat_message"}}
+`{{ .Msg.ServerName }}` [{{ .Msg.PersonaName }}]( {{ .Player | linkPath }}){{ if .Msg.Team}} (Team){{end}}: {{ .Msg.Body }}
+{{end}}
