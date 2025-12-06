@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/netip"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -285,13 +286,15 @@ type SettingsUpdate struct {
 }
 
 type Persons struct {
-	owner steamid.SteamID
-	repo  Repository
-	tfAPI thirdparty.APIProvider
+	owner          steamid.SteamID
+	repo           Repository
+	tfAPI          thirdparty.APIProvider
+	knownPersonsMu *sync.RWMutex
+	knownPersons   map[steamid.SteamID]bool
 }
 
 func NewPersons(repository Repository, owner steamid.SteamID, tfAPI thirdparty.APIProvider) *Persons {
-	return &Persons{repo: repository, owner: owner, tfAPI: tfAPI}
+	return &Persons{repo: repository, owner: owner, tfAPI: tfAPI, knownPersons: map[steamid.SteamID]bool{}, knownPersonsMu: &sync.RWMutex{}}
 }
 
 func (u *Persons) CanAlter(ctx context.Context, sourceID steamid.SteamID, targetID steamid.SteamID) (bool, error) {
@@ -316,7 +319,9 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 		return resp, steamid.ErrInvalidSID
 	}
 
-	_, _ = u.GetOrCreatePersonBySteamID(ctx, sid)
+	if err := u.EnsurePerson(ctx, sid); err != nil {
+		return resp, err
+	}
 
 	player, errGetProfile := u.BySteamID(ctx, sid)
 	if errGetProfile != nil {
@@ -664,9 +669,22 @@ func (u *Persons) SavePersonSettings(ctx context.Context, user person.Info, upda
 }
 
 func (u *Persons) EnsurePerson(ctx context.Context, steamID steamid.SteamID) error {
-	if _, err := u.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
+	u.knownPersonsMu.RLock()
+	_, exists := u.knownPersons[steamID]
+	if exists {
+		u.knownPersonsMu.RUnlock()
+
+		return nil
+	}
+	u.knownPersonsMu.RUnlock()
+
+	if err := u.EnsurePerson(ctx, steamID); err != nil {
 		return err
 	}
+
+	u.knownPersonsMu.Lock()
+	u.knownPersons[steamID] = true
+	u.knownPersonsMu.Unlock()
 
 	return nil
 }

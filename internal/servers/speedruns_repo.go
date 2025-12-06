@@ -202,7 +202,7 @@ func (r *SpeedrunRepository) updateSpeedrunRank(ctx context.Context, transaction
 
 func (r *SpeedrunRepository) insertPlayers(ctx context.Context, players []SpeedrunParticipant) error {
 	for _, player := range players {
-		if _, errPlayer := r.person.GetOrCreatePersonBySteamID(ctx, player.SteamID); errPlayer != nil {
+		if errPlayer := r.person.EnsurePerson(ctx, player.SteamID); errPlayer != nil {
 			return errPlayer
 		}
 	}

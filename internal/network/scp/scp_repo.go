@@ -55,7 +55,11 @@ func (r Repository) GetHostKey(ctx context.Context, addr string) (string, error)
 }
 
 func (r Repository) SetHostKey(ctx context.Context, addr string, key string) error {
-	const query = `INSERT INTO host_key (address, key, created_on) VALUES ($1, $2, $3)`
+	const query = `
+		INSERT INTO host_key (address, key, created_on) 
+		VALUES ($1, $2, $3) 
+		ON CONFLICT (address) 
+		    DO UPDATE SET address = $1, key = $2, created_on = $3`
 	if err := r.db.Exec(ctx, query, addr, key, time.Now()); err != nil {
 		return database.DBErr(err)
 	}

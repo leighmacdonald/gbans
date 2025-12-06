@@ -11,7 +11,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
-	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -178,8 +177,7 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 		return nil
 	}
 
-	_, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, person.SID)
-	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
+	if errPerson := u.persons.EnsurePerson(ctx, person.SID); errPerson != nil {
 		return errPerson
 	}
 

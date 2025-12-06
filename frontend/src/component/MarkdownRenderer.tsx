@@ -1,7 +1,7 @@
 import { JSX, useMemo } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { MuiMarkdown } from 'mui-markdown';
+import { MuiMarkdown, Options } from 'mui-markdown';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { ImageBox } from './ImageBox.tsx';
 import RouterLink from './RouterLink.tsx';
@@ -49,8 +49,8 @@ const MDLink = ({ children, href, title }: MDLnkProps) => {
     );
 };
 
-const mdRenderOpts = {
-    disableParsingRawHTML: false,
+const mdRenderOpts: Options = {
+    disableParsingRawHTML: true,
     overrides: {
         a: {
             component: MDLink
