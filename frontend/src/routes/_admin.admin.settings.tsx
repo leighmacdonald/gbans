@@ -1362,6 +1362,15 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
                     <Grid size={{ xs: 12 }}>
+                        <SubHeading>Output ingame chat messages logs.</SubHeading>
+                        <form.AppField
+                            name={'chat_log_channel_id'}
+                            children={(field) => {
+                                return <field.TextField label={'In game chat log channel ID'} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>New appeals and appeal messages are shown here.</SubHeading>
                         <form.AppField
                             name={'appeal_log_channel_id'}

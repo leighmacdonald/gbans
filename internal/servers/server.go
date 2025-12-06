@@ -18,16 +18,12 @@ import (
 	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/rumblefrog/go-a2s"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
 	maxPlayersRx = regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`)
 	playersRx    = regexp.MustCompile(`players\s: (\d+)\s+humans,\s+(\d+)\s+bots\s\((\d+)\s+max`)
-	ErrA2S       = errors.New("a2s query failed")
-)
-
-const (
-	serverQueryTimeout = time.Second * 5
 )
 
 // SafeServer provides a server struct stripped of any sensitive info suitable for public-facing
@@ -62,7 +58,8 @@ type Server struct {
 	// This is used as a unique identifier for servers and is used for many different things such as paths,
 	// so it's best to keep it short and without whitespace.
 	ShortName string `json:"short_name"`
-	Name      string `json:"name"`
+	// Name holds a default hostname. But its replaced with any updated title as they come in.
+	Name string `json:"name"`
 	// Address is the ip of the server
 	Address string `json:"address"`
 	// Internal/VPN network. When defined it's used for things like pulling demos over ssh.
@@ -73,27 +70,39 @@ type Server struct {
 	// RCON is the RCON password for the server
 	RCON          string `json:"rcon"`
 	ReservedSlots int    `json:"reserved_slots"`
-	// Password is what the server uses to generate a token to make authenticated calls (permanent Refresh token)
-	Password    string  `json:"password"`
-	IsEnabled   bool    `json:"is_enabled"`
-	Deleted     bool    `json:"deleted"`
-	Region      string  `json:"region"`
-	CC          string  `json:"cc"`
-	Latitude    float64 `json:"latitude"`
-	Longitude   float64 `json:"longitude"`
-	LogSecret   int     `json:"log_secret"`
-	EnableStats bool    `json:"enable_stats"`
+	// Password is what the sourcemod plugin on each server uses to generate a token to make authenticated calls.
+	// This is *NOT* the general game server password (sv_password)
+	Password  string `json:"password"`
+	IsEnabled bool   `json:"is_enabled"`
+	Deleted   bool   `json:"deleted"`
+	Region    string `json:"region"`
+	// CC is the 2 letter country code. Used for flags emojis.
+	CC string `json:"cc"`
+	// Physical Latitude location
+	Latitude float64 `json:"latitude"`
+	// Physical Longitude location
+	Longitude float64 `json:"longitude"`
+	// LogSecret is a unique integer used to "authenticate" UDP log packets.
+	LogSecret   int  `json:"log_secret"`
+	EnableStats bool `json:"enable_stats"`
 	// TokenCreatedOn is set when changing the token
-	TokenCreatedOn     time.Time `json:"token_created_on"`
-	CreatedOn          time.Time `json:"created_on"`
-	UpdatedOn          time.Time `json:"updated_on"`
-	DiscordSeedRoleIDs []string  `json:"discord_seed_role_ids"` //nolint:tagliatelle
+	TokenCreatedOn time.Time `json:"token_created_on"`
+	CreatedOn      time.Time `json:"created_on"`
+	UpdatedOn      time.Time `json:"updated_on"`
+	// DiscordSeedRoleIDs stores the discord role IDs for those who which to be notified of seed requests.
+	DiscordSeedRoleIDs []string `json:"discord_seed_role_ids"` //nolint:tagliatelle
+	// IP is distinct from Address as it can only contain a real IP and not DNS name like Address.
+	IP net.IP `json:"ip"`
+	// IPInternal works identical to IP except it uses the internal/VPN address from AddressInternal.
+	// This is never exposed to client facing systems and is meant for when you want to communicate over
+	// a VPN to the RCOn port instead of having it exposed publicly.
+	IPInternal net.IP `json:"-"`
 
-	resolvedIP           net.IP
-	resolvedIPInternal   net.IP
 	lastMaxPlayersUpdate time.Time
 	lastA2SUpdate        time.Time
-	state                *state
+
+	// state holds all information we know about the current dynamic game state of the server.
+	state *state
 }
 
 func NewServer(shortName string, address string, port uint16) Server {
@@ -115,55 +124,76 @@ func NewServer(shortName string, address string, port uint16) Server {
 	}
 }
 
-func (s *Server) IP() (net.IP, error) {
-	s.RLock()
-	if s.resolvedIP != nil {
-		s.RUnlock()
+func (s *Server) resolveAll() error {
+	waitGroup := errgroup.Group{}
+	waitGroup.Go(s.resolveIP)
+	waitGroup.Go(s.resolveIPInternal)
 
-		return s.resolvedIP, nil
+	if err := waitGroup.Wait(); err != nil {
+		return fmt.Errorf("%w: %w", ErrResolveIP, err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	ips := resolveIP(ctx, s.Address)
-	if ips == nil {
-		s.RUnlock()
-
-		return nil, ErrResolveIP
-	}
-	s.RUnlock()
-
-	s.Lock()
-	s.resolvedIP = ips
-	s.Unlock()
-
-	return ips, nil
+	return nil
 }
 
-func (s *Server) IPInternal() (net.IP, error) {
+func (s *Server) resolveIP() error {
+	// Future: Make sure this is able to keep up with SDR changes.
 	s.RLock()
-	if s.resolvedIPInternal != nil {
+	if s.IP != nil {
 		s.RUnlock()
 
-		return s.resolvedIPInternal, nil
+		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ipAddr := net.ParseIP(s.Address)
+	if ipAddr == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), dnsResolveTimeout)
+		defer cancel()
 
-	ips := resolveIP(ctx, s.AddressInternal)
-	if ips == nil {
+		ipAddr = resolveIP(ctx, s.Address)
+	}
+
+	if ipAddr == nil {
 		s.RUnlock()
 
-		return nil, ErrResolveIP
+		return ErrResolveIP
 	}
 	s.RUnlock()
+
 	s.Lock()
-	s.resolvedIPInternal = ips
+	s.IP = ipAddr
 	s.Unlock()
 
-	return ips, nil
+	return nil
+}
+
+func (s *Server) resolveIPInternal() error {
+	s.RLock()
+	if s.AddressInternal == "" || s.IPInternal != nil {
+		s.RUnlock()
+
+		return nil
+	}
+
+	ipAddr := net.ParseIP(s.AddressInternal)
+	if ipAddr == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), dnsResolveTimeout)
+		defer cancel()
+
+		ipAddr = resolveIP(ctx, s.AddressInternal)
+	}
+	if ipAddr == nil {
+		s.RUnlock()
+
+		return ErrResolveIP
+	}
+	s.RUnlock()
+
+	s.Lock()
+	s.IPInternal = ipAddr
+	s.Unlock()
+
+	return nil
 }
 
 func (s *Server) LogAddressAdd(ctx context.Context, logAddress string) error {

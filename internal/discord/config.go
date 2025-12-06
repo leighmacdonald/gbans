@@ -22,6 +22,8 @@ type Config struct {
 	ModPingRoleID           string `json:"mod_ping_role_id"`
 	AnticheatChannelID      string `json:"anticheat_channel_id"`
 	SeedChannelID           string `json:"seed_channel_id"`
+	WordFilterLogChannelID  string `json:"word_filter_log_channel_id"`
+	ChatLogChannelID        string `json:"chat_log_channel_id"`
 }
 
 func (c Config) SafePublicLogChannelID() string {
@@ -107,6 +109,22 @@ func (c Config) SafeModPingRoleID() string {
 func (c Config) SafeAnticheatChannelID() string {
 	if c.AnticheatChannelID != "" {
 		return c.AnticheatChannelID
+	}
+
+	return c.LogChannelID
+}
+
+func (c Config) SafeWordFilterLogChannelID() string {
+	if c.WordFilterLogChannelID != "" {
+		return c.WordFilterLogChannelID
+	}
+
+	return c.LogChannelID
+}
+
+func (c Config) SafeChatLogChannelID() string {
+	if c.ChatLogChannelID != "" {
+		return c.ChatLogChannelID
 	}
 
 	return c.LogChannelID

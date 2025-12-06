@@ -219,6 +219,7 @@ func trustedHostKeyCallback(repo KeyStore, strategy HostKeyStrategy) func(hostna
 			if trustedPubKeyString != pubKeyString {
 				return repo.SetHostKey(context.Background(), addr.String(), pubKeyString)
 			}
+
 			return nil
 		case KeyAutoAcceptFirst:
 			if trustedPubKeyString == "" {

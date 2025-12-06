@@ -96,7 +96,8 @@ export const schemaDiscord = z
         kick_log_channel_id: z.string(),
         playerqueue_channel_id: z.string(),
         anticheat_channel_id: z.string(),
-        seed_channel_id: z.string()
+        seed_channel_id: z.string(),
+        chat_log_channel_id: z.string()
     })
     .refine((data) => {
         if (!data.bot_enabled) {

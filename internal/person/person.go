@@ -678,7 +678,7 @@ func (u *Persons) EnsurePerson(ctx context.Context, steamID steamid.SteamID) err
 	}
 	u.knownPersonsMu.RUnlock()
 
-	if err := u.EnsurePerson(ctx, steamID); err != nil {
+	if _, err := u.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
 		return err
 	}
 
