@@ -97,10 +97,10 @@ export const apiCreateBan = async (p: BanOpts) =>
     transformTimeStampedDates(await apiCall<BanRecord, BanOpts>(`/api/bans`, 'POST', p));
 
 export const apiUpdateBanSteam = async (ban_id: number, payload: UpdateBanPayload) =>
-    transformTimeStampedDates(await apiCall<BanRecord, UpdateBanPayload>(`/api/bans/${ban_id}`, 'POST', payload));
+    transformTimeStampedDates(await apiCall<BanRecord, UpdateBanPayload>(`/api/ban/${ban_id}`, 'POST', payload));
 
 export const apiDeleteBan = async (ban_id: number, unban_reason_text: string) =>
-    await apiCall<null, UnbanPayload>(`/api/bans/${ban_id}`, 'DELETE', {
+    await apiCall<null, UnbanPayload>(`/api/ban/${ban_id}`, 'DELETE', {
         unban_reason_text
     });
 

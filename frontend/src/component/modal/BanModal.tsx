@@ -5,6 +5,8 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { formatDuration, formatISO9075 } from 'date-fns';
+import { intervalToDuration } from 'date-fns/intervalToDuration';
 import { z } from 'zod/v4';
 import { apiCreateBan, apiGetBanSteam, apiUpdateBanSteam, banTypeString } from '../../api';
 import { useAppForm } from '../../contexts/formContext.tsx';
@@ -30,7 +32,7 @@ import { LoadingPlaceholder } from '../LoadingPlaceholder.tsx';
 import { MarkdownField } from '../form/field/MarkdownField.tsx';
 
 export const BanModal = NiceModal.create(
-    ({ ban_id, reportId, steamId }: { ban_id?: number; reportId?: number; steamId?: string }) => {
+    ({ banId, reportId, steamId }: { banId?: number; reportId?: number; steamId?: string }) => {
         const { profile } = useAuth();
         const queryClient = useQueryClient();
         const {
@@ -39,10 +41,10 @@ export const BanModal = NiceModal.create(
             isError,
             error
         } = useQuery({
-            queryKey: ['ban', { ban_id }],
+            queryKey: ['ban', { banId }],
             queryFn: async () => {
-                if (ban_id && ban_id > 0) {
-                    return await apiGetBanSteam(Number(ban_id), true);
+                if (banId && banId > 0) {
+                    return await apiGetBanSteam(Number(banId), true);
                 }
 
                 return {} as BanRecord;
@@ -62,7 +64,9 @@ export const BanModal = NiceModal.create(
                         ban_type: values.ban_type,
                         reason: values.reason,
                         reason_text: values.reason_text,
-                        evade_ok: values.evade_ok
+                        evade_ok: values.evade_ok,
+                        cidr: values.cidr,
+                        duration: values.duration
                     });
                 } else {
                     banRecord = await apiCreateBan({
@@ -81,7 +85,7 @@ export const BanModal = NiceModal.create(
                         cidr: values.cidr
                     });
                 }
-                queryClient.setQueryData(['ban', { ban_id }], banRecord);
+                queryClient.setQueryData(['ban', { banId }], banRecord);
             },
             onSuccess: async (banRecord) => {
                 if (ban?.ban_id) {
@@ -104,7 +108,7 @@ export const BanModal = NiceModal.create(
             duration: ban ? Duration.durCustom : Duration.dur2w,
             note: ban?.note ?? '',
             evade_ok: ban?.evade_ok ?? false,
-            cidr: ban?.cidr,
+            cidr: ban?.cidr ?? '',
             demo_name: '',
             demo_tick: 0,
             origin: Origin.Reported
@@ -138,7 +142,7 @@ export const BanModal = NiceModal.create(
                     }}
                 >
                     <DialogTitle component={Heading} iconLeft={<DirectionsRunIcon />}>
-                        {Number(ban_id) > 0 ? 'Edit Ban' : 'Create Ban'}
+                        {Number(banId) > 0 ? 'Edit Ban' : 'Create Ban'}
                     </DialogTitle>
 
                     <DialogContent>
@@ -233,12 +237,23 @@ export const BanModal = NiceModal.create(
                             </Grid>
 
                             <Grid size={{ xs: 12 }}>
+                                {ban && (
+                                    <>
+                                        <p>
+                                            Expires In:{' '}
+                                            {formatDuration(
+                                                intervalToDuration({ start: new Date(), end: ban?.valid_until })
+                                            )}
+                                        </p>
+                                        <p>Expires On: {formatISO9075(ban?.valid_until)}</p>
+                                    </>
+                                )}
                                 <form.AppField
                                     name={'duration'}
                                     children={(field) => {
                                         return (
                                             <field.SelectField
-                                                label={'Ban Action Type'}
+                                                label={'Duration'}
                                                 items={DurationCollection}
                                                 renderItem={(bt) => {
                                                     return (

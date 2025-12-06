@@ -199,7 +199,7 @@ export const schemaBanPayload = z.object({
     report_id: z.number().optional(),
     evade_ok: z.boolean(),
     ban_type: BanTypeEnum,
-    cidr: z.cidrv4().optional(),
+    cidr: z.string(),
     demo_name: z.string(),
     demo_tick: z.number(),
     origin: OriginEnum
@@ -231,8 +231,9 @@ export const schemaUpdateBanPayload = z.object({
     reason: BanReasonEnum,
     reason_text: z.string(),
     note: z.string(),
-    valid_until: z.date().optional(),
+    duration: z.string(),
     evade_ok: z.boolean(),
+    cidr: z.string().optional(),
     ban_type: BanTypeEnum
 });
 

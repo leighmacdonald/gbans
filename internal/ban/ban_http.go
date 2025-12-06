@@ -20,6 +20,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/sosodev/duration"
 )
 
 type banHandler struct {
@@ -469,7 +470,8 @@ type RequestBanUpdate struct {
 	ReasonText string          `json:"reason_text"`
 	Note       string          `json:"note"`
 	EvadeOk    bool            `json:"evade_ok"`
-	ValidUntil time.Time       `json:"valid_until"`
+	Duration   string          `json:"duration"`
+	CIDR       string          `json:"cidr"`
 }
 
 func (h banHandler) onBanUpdate() gin.HandlerFunc {
@@ -481,13 +483,6 @@ func (h banHandler) onBanUpdate() gin.HandlerFunc {
 
 		req, ok := httphelper.BindJSON[RequestBanUpdate](ctx)
 		if !ok {
-			return
-		}
-
-		if time.Since(req.ValidUntil) > 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
-				"Valid until date cannot be in the past."))
-
 			return
 		}
 
@@ -512,11 +507,26 @@ func (h banHandler) onBanUpdate() gin.HandlerFunc {
 			bannedPerson.ReasonText = ""
 		}
 
+		if req.Duration != "" {
+			dur, errDur := duration.Parse(req.Duration)
+			if errDur != nil {
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
+					"Invalid duration provided"))
+
+				return
+			}
+
+			bannedPerson.ValidUntil = time.Now().Add(dur.ToTimeDuration())
+		}
+
 		bannedPerson.Note = req.Note
 		bannedPerson.BanType = req.BanType
 		bannedPerson.Reason = reason.Reason(req.Reason)
 		bannedPerson.EvadeOk = req.EvadeOk
-		bannedPerson.ValidUntil = req.ValidUntil
+
+		if req.CIDR != "" {
+			bannedPerson.CIDR = &req.CIDR
+		}
 
 		if errSave := h.Save(ctx, &bannedPerson); errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))

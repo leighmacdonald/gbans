@@ -61,10 +61,6 @@ Target: **[{{ .Report.Subject.GetName }}]({{ .Report.Subject.Link }})** Steam ID
 Author: **[{{ .Report.Author.GetName }}]({{ .Report.Author.Link }})** Steam ID: **{{ .Report.Author.SteamID.String }}**
 {{end}}
 
-{{define "report_status_change"}}
-# Report status changed
-{{end}}
-
 {{define "report_message_new"}}
 {{ .Message }}
 {{end}}

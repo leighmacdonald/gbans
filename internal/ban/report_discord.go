@@ -108,14 +108,10 @@ func (h discordHandler) onReportReplySubmit(ctx context.Context, session *discor
 }
 
 func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus) *discordgo.MessageSend {
-	content, errContent := discord.Render("report_status_change", templateBody, nil)
-	if errContent != nil {
-		return nil
-	}
-
 	return discord.NewMessage(
-		discordgo.TextDisplay{Content: content},
-		discordgo.TextDisplay{Content: fmt.Sprintf("Changed from %s to %s", fromStatus.String(), report.ReportStatus.String())},
+		discord.Heading("Report Status Changed"),
+		discord.BodyColouredText(discord.ColourSuccess,
+			fmt.Sprintf("Changed from %s to %s", fromStatus.String(), report.ReportStatus.String())),
 		discord.Buttons(discord.Link("🔎 View Report", link.Path(report))))
 }
 

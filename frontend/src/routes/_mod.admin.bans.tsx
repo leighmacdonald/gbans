@@ -175,6 +175,9 @@ function AdminBans() {
 
     const filtered = useMemo(() => {
         return bans?.filter((b) => {
+            if (!b) {
+                return false;
+            }
             if (!search.deleted && b.deleted) {
                 return false;
             }
