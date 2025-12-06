@@ -14,6 +14,8 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+// Notifier is responsible for routing message payloads to the appropriate backends.
+// Currently supports discord and website notifications.
 type Notifier interface {
 	Send(payload Payload)
 }
@@ -47,7 +49,7 @@ type UserNotification struct {
 	CreatedOn            time.Time       `json:"created_on"`
 }
 
-type MessageType int
+type MessageType int // TODO discord dms
 
 const (
 	User MessageType = iota

@@ -95,7 +95,7 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 		}
 
 		// Connect to the coordinator with our connection
-		clientConn := h.Connect(ctx, currentUser, wsConn)
+		clientConn := h.Connect(currentUser, wsConn)
 		defer h.Disconnect(clientConn)
 
 		for {

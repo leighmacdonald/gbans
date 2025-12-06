@@ -1,7 +1,6 @@
 package playerqueue
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"slices"
@@ -158,7 +157,7 @@ func (q *Coordinator) Join(client Client, servers []int) error {
 
 // Connect adds the user to the swarm. If a user exists with the same steamid exists, it will be replaced with
 // the new connection.
-func (q *Coordinator) Connect(ctx context.Context, steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) Client { //nolint:ireturn
+func (q *Coordinator) Connect(steamID steamid.SteamID, name string, avatarHash string, conn *websocket.Conn) Client { //nolint:ireturn
 	q.mu.Lock()
 	clientConn := newClient(steamID, name, avatarHash, conn)
 	for i := range q.clients {
@@ -171,7 +170,7 @@ func (q *Coordinator) Connect(ctx context.Context, steamID steamid.SteamID, name
 	q.clients = append(q.clients, clientConn)
 	q.mu.Unlock()
 
-	go clientConn.Start(ctx)
+	go clientConn.Start()
 	if clientConn.HasMessageAccess() {
 		go q.sendClientChatHistory(clientConn)
 	}

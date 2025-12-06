@@ -44,7 +44,7 @@ type Client interface {
 	// Close disconnects the underlying connection
 	Close()
 	// Start begins the clients response sender worker
-	Start(ctx context.Context)
+	Start()
 	Send(response Response)
 	// HasMessageAccess checks if the user has at least readonly access to chat logs
 	HasMessageAccess() bool
@@ -161,8 +161,8 @@ func (p Playerqueue) LeaveLobbies(client Client, servers []int) error {
 	return p.queue.Leave(client, servers)
 }
 
-func (p Playerqueue) Connect(ctx context.Context, user person.Info, conn *websocket.Conn) Client { //nolint:ireturn
-	return p.queue.Connect(ctx, user.GetSteamID(), user.GetName(), user.GetAvatar().Hash(), conn)
+func (p Playerqueue) Connect(user person.Info, conn *websocket.Conn) Client { //nolint:ireturn
+	return p.queue.Connect(user.GetSteamID(), user.GetName(), user.GetAvatar().Hash(), conn)
 }
 
 func (p Playerqueue) Disconnect(client Client) {

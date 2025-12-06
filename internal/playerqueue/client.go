@@ -1,7 +1,6 @@
 package playerqueue
 
 import (
-	"context"
 	"errors"
 	"log/slog"
 	"time"
@@ -86,15 +85,12 @@ func (c *client) ID() string {
 	return c.conn.RemoteAddr().String()
 }
 
-func (c *client) Start(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
+func (c *client) Start() {
+	for msg := range c.responseChan {
+		if errWrite := c.conn.WriteJSON(msg); errWrite != nil {
+			slog.Error("Failed to send message to client", slog.String("string", errWrite.Error()))
+
 			return
-		case msg := <-c.responseChan:
-			if errWrite := c.conn.WriteJSON(msg); errWrite != nil {
-				slog.Error("Failed to send message to client", slog.String("string", errWrite.Error()))
-			}
 		}
 	}
 }
