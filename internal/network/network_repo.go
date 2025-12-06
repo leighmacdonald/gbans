@@ -165,8 +165,8 @@ func (r Repository) AddConnectionHistory(ctx context.Context, conn *PersonConnec
 		RETURNING person_connection_id`
 
 	// Maybe ignore these and wait for connect call to create?
-	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, conn.SteamID)
-	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
+
+	if errPerson := r.persons.EnsurePerson(ctx, conn.SteamID); errPerson != nil {
 		slog.Error("Failed to fetch connecting person", slog.String("steam_id", conn.SteamID.String()), slog.String("error", errPerson.Error()))
 
 		return errPerson

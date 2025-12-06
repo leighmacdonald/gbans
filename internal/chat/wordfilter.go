@@ -122,15 +122,14 @@ type Warnings interface {
 }
 
 type Config struct {
-	Enabled                bool   `json:"enabled"`
-	WarningTimeout         int    `json:"warning_timeout"`
-	WarningLimit           int    `json:"warning_limit"`
-	Dry                    bool   `json:"dry"`
-	PingDiscord            bool   `json:"ping_discord"`
-	MaxWeight              int    `json:"max_weight"`
-	CheckTimeout           int    `json:"check_timeout"`
-	MatchTimeout           int    `json:"match_timeout"`
-	WordFilterLogChannelID string `json:"word_filter_log_channel_id"`
+	Enabled        bool `json:"enabled"`
+	WarningTimeout int  `json:"warning_timeout"`
+	WarningLimit   int  `json:"warning_limit"`
+	Dry            bool `json:"dry"`
+	PingDiscord    bool `json:"ping_discord"`
+	MaxWeight      int  `json:"max_weight"`
+	CheckTimeout   int  `json:"check_timeout"`
+	MatchTimeout   int  `json:"match_timeout"`
 }
 
 type WordFilters struct {

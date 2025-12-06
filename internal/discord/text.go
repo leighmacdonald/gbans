@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"text/template"
 	"time"
@@ -37,6 +38,16 @@ func createFuncMap() template.FuncMap {
 		"timeString":  timeString,
 		"untilString": untilString,
 	}
+}
+
+func RenderText(name string, templ []byte, context any, textProcessor ...TextProcessor) discordgo.TextDisplay {
+	content, errContent := Render(name, templ, context, textProcessor...)
+	if errContent != nil {
+		slog.Error("Failed to render text", slog.String("error", errContent.Error()))
+		content = "Failed to render :("
+	}
+
+	return discordgo.TextDisplay{Content: content}
 }
 
 func Render(name string, templ []byte, context any, textProcessor ...TextProcessor) (string, error) {

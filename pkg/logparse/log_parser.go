@@ -733,7 +733,7 @@ type Results struct {
 // Parse will parse the log line into a known type and values.
 //
 //nolint:gocognit,funlen,maintidx,cyclop
-func (p *LogParser) Parse(logLine string) (*Results, error) {
+func (p *LogParser) Parse(logLine string) (Results, error) {
 	for _, parser := range p.rxParsers {
 		matchMap, found := reSubMatchMap(parser.Rx, strings.TrimSuffix(strings.TrimSuffix(logLine, "\n"), "\r"))
 		if !found {
@@ -758,189 +758,189 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 		case CaptureBlocked:
 			var t CaptureBlockedEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case LogStart:
 			var t LogStartEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case CVAR:
 			var t CVAREvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case RCON:
 			var t RCONEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case Entered:
 			var t EnteredEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case JoinedTeam:
 			var t JoinedTeamEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case ChangeClass:
 			var t ChangeClassEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case SpawnedAs:
 			var t SpawnedAsEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case Suicide:
 			var t SuicideEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case WRoundStart:
 			var t WRoundStartEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case MedicDeath:
 			var t MedicDeathEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case Killed:
 			var t KilledEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case KilledCustom:
 			var t CustomKilledEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case KillAssist:
 			var t KillAssistEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case Healed:
 			var t HealedEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case Extinguished:
 			var t ExtinguishedEvt
 			if errUnmarshal = p.unmarshal(values, &t); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = t
 		case PointCaptured:
 			var parsedEvent PointCapturedEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case Connected:
 			var parsedEvent ConnectedEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case KilledObject:
 			var parsedEvent KilledObjectEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case CarryObject:
 			var parsedEvent CarryObjectEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case DetonatedObject:
 			var parsedEvent DetonatedObjectEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case DropObject:
 			var parsedEvent DropObjectEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case BuiltObject:
 			var parsedEvent BuiltObjectEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WRoundWin:
 			var parsedEvent WRoundWinEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WRoundLen:
 			var parsedEvent WRoundLenEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WTeamScore:
 			var parsedEvent WTeamScoreEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case Say:
 			var parsedEvent SayEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			parsedEvent.Team = false
@@ -948,7 +948,7 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 		case SayTeam:
 			var parsedEvent SayEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			parsedEvent.Team = true
@@ -956,203 +956,203 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 		case Domination:
 			var parsedEvent DominationEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case Disconnected:
 			var parsedEvent DisconnectedEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case Revenge:
 			var parsedEvent RevengeEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WRoundOvertime:
 			var parsedEvent WRoundOvertimeEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WGameOver:
 			var parsedEvent WGameOverEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WTeamFinalScore:
 			var parsedEvent WTeamFinalScoreEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case LogStop:
 			var parsedEvent LogStopEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WPaused:
 			var parsedEvent WPausedEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WResumed:
 			var parsedEvent WResumedEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WIntermissionWinLimit:
 			var parsedEvent WIntermissionWinLimitEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case FirstHealAfterSpawn:
 			var parsedEvent FirstHealAfterSpawnEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case ChargeReady:
 			var parsedEvent ChargeReadyEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case ChargeDeployed:
 			var parsedEvent ChargeDeployedEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case ChargeEnded:
 			var parsedEvent ChargeEndedEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case MedicDeathEx:
 			var parsedEvent MedicDeathExEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case LostUberAdv:
 			var parsedEvent LostUberAdvantageEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case EmptyUber:
 			var parsedEvent EmptyUberEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case Pickup:
 			var parsedEvent PickupEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case ShotFired:
 			var parsedEvent ShotFiredEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case ShotHit:
 			var parsedEvent ShotHitEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case Damage:
 			var parsedEvent DamageEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case JarateAttack:
 			var parsedEvent JarateAttackEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WMiniRoundWin:
 			var parsedEvent WMiniRoundWinEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WMiniRoundLen:
 			var parsedEvent WMiniRoundLenEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WRoundSetupBegin:
 			var parsedEvent WRoundSetupBeginEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WMiniRoundSelected:
 			var parsedEvent WMiniRoundSelectedEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case WMiniRoundStart:
 			var parsedEvent WMiniRoundStartEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case MilkAttack:
 			var parsedEvent MilkAttackEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case GasAttack:
 			var parsedEvent GasAttackEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
@@ -1161,56 +1161,56 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 		case VoteSuccess:
 			var parsedEvent VoteSuccessEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case VoteFailed:
 			var parsedEvent VoteFailEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case VoteDetails:
 			var parsedEvent VoteKickDetailsEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		case MapStarted:
 			var parsedEvent MapStartedEvt
 			if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
-				return nil, errUnmarshal
+				return Results{}, errUnmarshal
 			}
 
 			event = parsedEvent
 		}
 
-		return &Results{parser.Type, event}, nil
+		return Results{parser.Type, event}, nil
 	}
 
 	matchMap, found := reSubMatchMap(p.rxUnhandled, logLine)
 	if found {
 		var parsedEvent IgnoredMsgEvt
 		if errUnmarshal := p.unmarshal(matchMap, &parsedEvent); errUnmarshal != nil {
-			return nil, errUnmarshal
+			return Results{}, errUnmarshal
 		}
 
 		parsedEvent.Message = logLine
 
-		return &Results{IgnoredMsg, parsedEvent}, nil
+		return Results{IgnoredMsg, parsedEvent}, nil
 	}
 
 	var parsedEvent UnknownMsgEvt
 	if errUnmarshal := p.unmarshal(matchMap, &parsedEvent); errUnmarshal != nil {
-		return nil, errUnmarshal
+		return Results{}, errUnmarshal
 	}
 
 	parsedEvent.Message = logLine
 
-	return &Results{UnknownMsg, parsedEvent}, nil
+	return Results{UnknownMsg, parsedEvent}, nil
 }
 
 func (p *LogParser) decodeTeam() func(reflect.Type, reflect.Type, any) (any, error) {

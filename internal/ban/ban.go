@@ -596,8 +596,7 @@ func (s Bans) UpdateGroupCache(ctx context.Context) error {
 			}
 
 			// Statisfy FK
-			_, errCreate := s.persons.GetOrCreatePersonBySteamID(ctx, steamID)
-			if errCreate != nil {
+			if errCreate := s.persons.EnsurePerson(ctx, steamID); errCreate != nil {
 				return errCreate
 			}
 		}

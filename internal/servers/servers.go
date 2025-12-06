@@ -23,6 +23,7 @@ var (
 	ErrGetServer         = errors.New("failed to get server")
 	ErrExecRCON          = errors.New("failed to execute rcon command")
 	ErrResolveIP         = errors.New("failed to resolve address")
+	ErrA2S               = errors.New("a2s query failed")
 	ErrUpdateFreq        = errors.New("update freq must be >= 5s")
 	ErrStatusParse       = errors.New("failed to parse status response")
 	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
@@ -32,6 +33,8 @@ var (
 const (
 	maxPlayersSupported     = 101
 	DefaultStatusUpdateFreq = time.Second * 20
+	serverQueryTimeout      = time.Second * 5
+	dnsResolveTimeout       = time.Second * 5
 )
 
 type SayType int
@@ -90,22 +93,43 @@ type Servers struct {
 }
 
 func New(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent], logAddr string) (*Servers, error) {
-	logSrc, errLogSrc := logparse.NewListener(logAddr,
-		func(_ logparse.EventType, event logparse.ServerEvent) {
-			broadcaster.Emit(event.EventType, event)
-		})
-	if errLogSrc != nil {
-		return nil, errLogSrc
-	}
-
-	return &Servers{
+	servers := &Servers{
 		Repository:  repository,
-		logListener: logSrc,
 		logFileChan: make(chan LogFilePayload),
 		servers:     Collection{},
 		serversMu:   &sync.RWMutex{},
 		broadcaster: broadcaster,
-	}, nil
+	}
+	logSrc, errLogSrc := logparse.NewListener(logAddr,
+		func(_ logparse.EventType, event logparse.ServerEvent) {
+			broadcaster.Emit(event.EventType, event)
+		}, servers.secretAuth)
+	if errLogSrc != nil {
+		return nil, errLogSrc
+	}
+
+	servers.logListener = logSrc
+
+	return servers, nil
+}
+
+func (s *Servers) secretAuth(secret int64, ipAddr net.IP) (int, string, error) {
+	s.serversMu.RLock()
+	defer s.serversMu.RUnlock()
+
+	server, found := s.servers.bySecret(secret)
+	if !found {
+		return 0, "", ErrNotFound
+	}
+
+	server.RLock()
+	defer server.RUnlock()
+	if !server.IP.Equal(ipAddr) ||
+		(server.IPInternal != nil && server.IPInternal.Equal(ipAddr)) {
+		return 0, "", ErrNotFound
+	}
+
+	return server.ServerID, server.ShortName, nil
 }
 
 func (s *Servers) Current() []SafeServer {
@@ -118,10 +142,9 @@ func (s *Servers) Current() []SafeServer {
 		if !srv.Deleted && srv.IsEnabled {
 			srv.RLock()
 			curState = append(curState, SafeServer{
-				Host: srv.Address,
-				Port: srv.Port,
-				// TODO
-				// IP:         srv.IP(),
+				Host:       srv.Address,
+				Port:       srv.Port,
+				IP:         srv.IP.String(),
 				Name:       srv.Name,
 				NameShort:  srv.ShortName,
 				Region:     srv.Region,
@@ -222,6 +245,12 @@ func (s *Servers) updateStates(ctx context.Context) error {
 			}
 		}
 		if !found {
+			if err := server.resolveAll(); err != nil {
+				slog.Error("Failed to resolve server IPs",
+					slog.String("error", err.Error()), slog.String("server", server.ShortName))
+
+				continue
+			}
 			valid = append(valid, &server)
 		}
 	}

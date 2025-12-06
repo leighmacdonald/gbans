@@ -42,7 +42,7 @@ func TestParseFile(t *testing.T) {
 
 	var (
 		parser  = logparse.NewLogParser()
-		results = make(map[int]*logparse.Results)
+		results = make(map[int]logparse.Results)
 	)
 
 	for i, line := range strings.Split(string(openFile), "\n") {

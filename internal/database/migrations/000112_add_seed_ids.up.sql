@@ -1,3 +1,5 @@
+UPDATE wiki SET body_md = replace(body_md, '<br>', '<br />');
+
 ALTER TABLE server
     ADD COLUMN IF NOT EXISTS discord_seed_role_ids text[] DEFAULT '{}' NOT NULL;
 
@@ -6,6 +8,9 @@ ALTER TABLE config
 
 ALTER TABLE config
     ADD COLUMN IF NOT EXISTS ssh_host_key_strategy INT default 0 NOT NULL;
+
+ALTER TABLE config
+    ADD COLUMN IF NOT EXISTS discord_chat_log_channel_id TEXT default '' NOT NULL;
 
 CREATE OR REPLACE FUNCTION check_ban(steam text, ip text,
                                      OUT out_ban_source text,

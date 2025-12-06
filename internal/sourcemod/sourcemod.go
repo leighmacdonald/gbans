@@ -597,7 +597,7 @@ func (h Sourcemod) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
 	var steamID steamid.SteamID
 	if admin.AuthType == AuthTypeSteam {
 		steamID = steamid.New(realIdentity)
-		if _, err := h.person.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
+		if err := h.person.EnsurePerson(ctx, steamID); err != nil {
 			return Admin{}, ErrGetPerson
 		}
 
@@ -630,7 +630,7 @@ func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType
 	var steamID steamid.SteamID
 	if authType == AuthTypeSteam {
 		steamID = steamid.New(realIdentity)
-		if _, err := h.person.GetOrCreatePersonBySteamID(ctx, steamID); err != nil {
+		if err := h.person.EnsurePerson(ctx, steamID); err != nil {
 			return Admin{}, ErrGetPerson
 		}
 

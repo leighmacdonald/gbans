@@ -170,13 +170,11 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, ban
 		return AppealMessage{}, permission.ErrDenied
 	}
 
-	_, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, bannedPerson.TargetID)
-	if errTarget != nil {
+	if errTarget := u.persons.EnsurePerson(ctx, bannedPerson.TargetID); errTarget != nil {
 		return AppealMessage{}, errTarget
 	}
 
-	_, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, bannedPerson.SourceID)
-	if errSource != nil {
+	if errSource := u.persons.EnsurePerson(ctx, bannedPerson.SourceID); errSource != nil {
 		return AppealMessage{}, errSource
 	}
 

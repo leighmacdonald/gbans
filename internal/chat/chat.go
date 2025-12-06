@@ -11,8 +11,8 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
-	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -89,10 +89,11 @@ type Chat struct {
 	pingDiscord   bool
 	exceedHandler ExceedHandler
 	WarningChan   chan NewUserWarning
+	logChannelID  string
 }
 
 func New(repo Repository, config Config, filters WordFilters,
-	persons person.Provider, notifications notification.Notifier, actionHandler ExceedHandler,
+	persons person.Provider, notifications notification.Notifier, actionHandler ExceedHandler, logChannelID string,
 ) *Chat {
 	return &Chat{
 		Config:        config,
@@ -100,6 +101,7 @@ func New(repo Repository, config Config, filters WordFilters,
 		wordFilters:   filters,
 		notifications: notifications,
 		persons:       persons,
+		logChannelID:  logChannelID,
 		warnings:      make(map[steamid.SteamID][]UserWarning),
 		warningMu:     &sync.RWMutex{},
 		matchTimeout:  time.Duration(config.MatchTimeout) * time.Second,
@@ -178,20 +180,26 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 		return nil
 	}
 
-	_, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, person.SID)
-	if errPerson != nil && !errors.Is(errPerson, database.ErrDuplicate) {
+	player, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, person.SID)
+	if errPerson != nil {
 		return errPerson
 	}
 
 	userMsg := Message{
 		SteamID:     person.SID,
 		PersonaName: strings.ToValidUTF8(person.Name, "_"),
-		ServerName:  evt.ServerName,
 		ServerID:    evt.ServerID,
+		ServerName:  evt.ServerName,
 		Body:        strings.ToValidUTF8(msg, "_"),
 		Team:        team,
 		CreatedOn:   created,
 	}
+
+	u.notifications.Send(notification.NewDiscord(u.logChannelID, discord.NewMessage(
+		discord.RenderText("chat_message", templateBody, map[string]any{
+			"Msg":    userMsg,
+			"Player": player,
+		}))))
 
 	if errChat := u.AddChatHistory(ctx, &userMsg); errChat != nil {
 		return errChat
