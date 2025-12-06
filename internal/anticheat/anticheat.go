@@ -150,8 +150,7 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 	)
 	for _, entry := range entries {
 		if _, ok := results[entry.SteamID]; !ok {
-			_, err := a.persons.GetOrCreatePersonBySteamID(ctx, entry.SteamID)
-			if err != nil {
+			if err := a.persons.EnsurePerson(ctx, entry.SteamID); err != nil {
 				return err
 			}
 			results[entry.SteamID] = map[logparse.Detection]int{}

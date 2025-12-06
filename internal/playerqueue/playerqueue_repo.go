@@ -55,8 +55,7 @@ func (r Repository) Delete(ctx context.Context, messageID ...int64) error {
 
 func (r Repository) Save(ctx context.Context, message ChatLog) (ChatLog, error) {
 	// Ensure player exists
-	_, errPlayer := r.persons.GetOrCreatePersonBySteamID(ctx, steamid.New(message.SteamID))
-	if errPlayer != nil {
+	if errPlayer := r.persons.EnsurePerson(ctx, steamid.New(message.SteamID)); errPlayer != nil {
 		return ChatLog{}, errPlayer
 	}
 
