@@ -38,7 +38,8 @@ func TestHTTPAppeal(t *testing.T) {
 		target  = steamid.RandSID64()
 	)
 
-	ban.NewAppealHandler(router, &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)}, appeals)
+	authenticator := &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)}
+	ban.NewAppealHandler(router, authenticator, appeals)
 
 	testBan, errTestBan := bans.Create(t.Context(), ban.Opts{
 		SourceID: tests.OwnerSID, TargetID: target, Duration: duration.FromTimeDuration(time.Hour * 10),
@@ -57,8 +58,10 @@ func TestHTTPAppeal(t *testing.T) {
 	require.Equal(t, newMessage.BodyMD, createdMessage.MessageMD)
 
 	// Try and create a message as non target user or mod
-	// TODO fix other users being allowed
-	// tests.EndpointReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), newMessage, http.StatusForbidden, tokens, &createdMessage)
+	authenticator.Profile = fixture.CreateTestPerson(t.Context(), steamid.RandSID64(), permission.User)
+	tests.PostForbidden(t, router, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), ban.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)})
+
+	authenticator.Profile = fixture.CreateTestPerson(t.Context(), tests.OwnerSID, permission.Admin)
 
 	// Get appeals
 	require.NotEmpty(t, tests.PostGOK[[]ban.AppealOverview](t, router, "/api/appeals", ban.AppealQueryFilter{Deleted: false}))

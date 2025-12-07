@@ -149,7 +149,12 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, ban
 		return AppealMessage{}, httphelper.ErrInvalidParameter
 	}
 
-	if !httphelper.HasPrivilege(curUser, steamid.Collection{curUser.GetSteamID()}, permission.Moderator) {
+	ban, errBan := u.bans.QueryOne(ctx, QueryOpts{BanID: banID})
+	if errBan != nil {
+		return AppealMessage{}, httphelper.ErrInvalidParameter
+	}
+
+	if !httphelper.HasPrivilege(curUser, steamid.Collection{ban.TargetID}, permission.Moderator) {
 		return AppealMessage{}, permission.ErrDenied
 	}
 

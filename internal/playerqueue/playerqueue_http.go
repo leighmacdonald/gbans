@@ -62,8 +62,8 @@ func (h *serverQueueHandler) status() gin.HandlerFunc {
 		}
 
 		if err := h.SetChatStatus(ctx, currentUser.GetSteamID(), steamID, req.ChatStatus, req.Reason); err != nil {
-			if errors.Is(err, httphelper.ErrPermissionDenied) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
+			if errors.Is(err, permission.ErrDenied) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, permission.ErrDenied))
 
 				return
 			}

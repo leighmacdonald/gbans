@@ -23,10 +23,10 @@ declare module '@tanstack/react-router' {
 if (import.meta.env.VITE_SENTRY_DSN != '') {
     const target = `^https://${window.location.origin}/api`;
 
-    // TODO instrumentation for tanstack router, not currently officially supported
     Sentry.init({
         environment: import.meta.env.MODE,
         attachStacktrace: true,
+        enableLogs: true,
         dsn: import.meta.env.VITE_SENTRY_DSN,
         release: import.meta.env.VITE_BUILD_VERSION,
         integrations: [
@@ -39,7 +39,7 @@ if (import.meta.env.VITE_SENTRY_DSN != '') {
             })
         ],
         // Performance Monitoring
-        tracesSampleRate: 1.0, //  Capture 100% of the transactions
+        tracesSampleRate: 0.1, //  Capture 100% of the transactions
         tracePropagationTargets: ['localhost', target],
         // Session Replay
         replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.

@@ -214,7 +214,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 		}
 
 		if !httphelper.HasPrivilege(user, steamid.Collection{bannedPerson.TargetID}, permission.Moderator) {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
 				"You do not have permission to access this ban."))
 
 			return
@@ -294,7 +294,7 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 		if len(h.authorizedKeys) > 0 {
 			key, ok := ctx.GetQuery("key")
 			if !ok || !slices.Contains(h.authorizedKeys, key) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
 					"You do not have permission to access this resource. You can try contacting the administrator to obtain an api key."))
 
 				return
@@ -329,7 +329,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 		if len(h.authorizedKeys) > 0 {
 			key, ok := ctx.GetQuery("key")
 			if !ok || !slices.Contains(h.authorizedKeys, key) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
 					"You do not have permission to access this resource. You can try contacting the administrator to obtain an api key."))
 
 				return

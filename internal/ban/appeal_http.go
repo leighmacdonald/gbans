@@ -72,6 +72,11 @@ func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 		user, _ := session.CurrentUserProfile(ctx)
 		msg, errSave := h.appeals.CreateBanMessage(ctx, user, banID, req.BodyMD)
 		if errSave != nil {
+			if errors.Is(errSave, permission.ErrDenied) {
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(errSave, permission.ErrDenied)))
+
+				return
+			}
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
 
 			return
@@ -108,7 +113,7 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
 					"Invalid message body"))
 			case errors.Is(errSave, permission.ErrDenied):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
 					"Not allowed to edit message."))
 			case errors.Is(errSave, database.ErrDuplicate):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, database.ErrDuplicate,
@@ -144,7 +149,7 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 		if err := h.appeals.DropMessage(ctx, curUser, banMessageID); err != nil {
 			switch {
 			case errors.Is(err, permission.ErrDenied):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
 					"You are not allowed to delete this message."))
 			case errors.Is(err, database.ErrNoResult):
 				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, database.ErrNoResult,
