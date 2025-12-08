@@ -47,9 +47,6 @@ type Service interface {
 
 	// Roles returns a slice of all roles within the guild.
 	Roles() ([]*discordgo.Role, error)
-
-	MustRegisterTemplate(namespace string, body []byte)
-	RenderTemplate(namespace string, name string, args any) (string, error)
 }
 
 // Discard implements a dummy service that can be used when discord bot support is disabled or for testing.
@@ -60,11 +57,9 @@ func (d Discard) Start() error                                  { return nil }
 func (d Discard) Close()                                        {}
 func (d Discard) MustRegisterCommandHandler(_ *discordgo.ApplicationCommand, _ Handler) {
 }
-func (d Discard) MustRegisterPrefixHandler(_ string, _ Handler)            {}
-func (d Discard) CreateRole(_ string) (string, error)                      { return "", nil }
-func (d Discard) Roles() ([]*discordgo.Role, error)                        { return nil, nil }
-func (d Discard) MustRegisterTemplate(string, []byte)                      {}
-func (d Discard) RenderTemplate(_ string, _ string, _ any) (string, error) { return "", nil }
+func (d Discard) MustRegisterPrefixHandler(_ string, _ Handler) {}
+func (d Discard) CreateRole(_ string) (string, error)           { return "", nil }
+func (d Discard) Roles() ([]*discordgo.Role, error)             { return nil, nil }
 
 const (
 	OptUserIdentifier   = "user_identifier"

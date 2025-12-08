@@ -16,6 +16,8 @@ import (
 var templateBody []byte
 
 func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {
+	discord.MustRegisterTemplate(templateBody)
+
 	handler := &discordHandler{wordFilters: wordFilters}
 
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
@@ -101,7 +103,7 @@ func filterCheckMessage(matches []Filter) *discordgo.MessageSend {
 		colour = discord.ColourWarn
 	}
 
-	content, err := discord.Render("filter_check", templateBody, struct {
+	content, err := discord.RenderTemplate("filter_check", struct {
 		Matches []Filter
 	}{Matches: matches})
 	if err != nil {
@@ -122,7 +124,7 @@ func WarningMessage(newWarning NewUserWarning, validUntil time.Time) *discordgo.
 		expAt = datetime.FmtTimeShort(validUntil)
 	}
 
-	content, err := discord.Render("filter_warning", templateBody, struct {
+	content, err := discord.RenderTemplate("filter_warning", struct {
 		FilterID  int64
 		Matched   string
 		Server    string

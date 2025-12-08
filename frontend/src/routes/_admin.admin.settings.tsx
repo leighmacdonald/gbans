@@ -1,4 +1,4 @@
-import { PropsWithChildren, ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
@@ -26,6 +26,9 @@ import { z } from 'zod/v4';
 import { apiGetDemoCleanup, apiGetNetworkUpdateDB } from '../api';
 import { apiGetSettings, apiSaveSettings } from '../api/admin.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
+import { SubHeading } from '../component/SubHeading.tsx';
+import { TabButton } from '../component/TabButton.tsx';
+import { TabSection } from '../component/TabSection.tsx';
 import { Title } from '../component/Title';
 import { CheckboxField } from '../component/form/field/CheckboxField.tsx';
 import { useAppForm } from '../contexts/formContext.tsx';
@@ -97,53 +100,6 @@ type tabs =
     | 'ssh'
     | 'exports';
 
-type TabButtonProps<Tabs> = {
-    label: string;
-    tab: Tabs;
-    onClick: (tab: Tabs) => void;
-    currentTab: Tabs;
-    icon: ReactNode;
-};
-
-export const TabButton = <Tabs,>({ currentTab, tab, label, onClick, icon }: TabButtonProps<Tabs>) => {
-    return (
-        <Button
-            color={currentTab == tab ? 'secondary' : 'primary'}
-            onClick={() => onClick(tab)}
-            variant={'contained'}
-            startIcon={icon}
-            fullWidth
-            title={label}
-            style={{ justifyContent: 'flex-start' }}
-        >
-            {label}
-        </Button>
-    );
-};
-
-export const TabSection = <Tabs,>({
-    children,
-    tab,
-    currentTab,
-    label,
-    description
-}: PropsWithChildren & {
-    tab: Tabs;
-    currentTab: Tabs;
-    label: string;
-    description: string;
-}) => {
-    return (
-        <Grid size={{ xs: 8, sm: 9, md: 10 }} display={tab == currentTab ? undefined : 'none'} marginTop={1}>
-            <Typography variant={'h1'}>{label}</Typography>
-            <Typography variant={'subtitle1'} marginBottom={2}>
-                {description}
-            </Typography>
-            {children}
-        </Grid>
-    );
-};
-
 const ConfigContainer = ({ children }: { children: ReactNode[] }) => {
     return (
         <Grid container spacing={4}>
@@ -151,12 +107,6 @@ const ConfigContainer = ({ children }: { children: ReactNode[] }) => {
         </Grid>
     );
 };
-
-export const SubHeading = ({ children }: PropsWithChildren) => (
-    <Typography variant={'subtitle1'} padding={1}>
-        {children}
-    </Typography>
-);
 
 function AdminSettings() {
     const { sendFlash, sendError } = useUserFlashCtx();

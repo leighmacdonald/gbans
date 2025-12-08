@@ -175,8 +175,8 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
             cell: (info) => (
                 <PersonCell
                     steam_id={info.row.original.subject.steam_id}
-                    personaname={info.row.original.subject.personaname}
-                    avatar_hash={info.row.original.subject.avatarhash}
+                    personaname={info.row.original.subject.persona_name}
+                    avatar_hash={info.row.original.subject.avatar_hash}
                 />
             )
         }),

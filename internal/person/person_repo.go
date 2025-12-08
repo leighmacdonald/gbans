@@ -10,6 +10,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -112,8 +113,9 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
 		builder = builder.OrderBy("p.updated_on_steam ASC")
 		conditions = append(conditions, sq.Lt{"p.updated_on_steam": query.SteamUpdateOlderThan})
 	}
-
-	if query.WithPermissions > 0 {
+	if query.StaffOnly {
+		conditions = append(conditions, sq.GtOrEq{"p.permission_level": permission.Reserved})
+	} else if query.WithPermissions > 0 {
 		conditions = append(conditions, sq.GtOrEq{"p.permission_level": query.WithPermissions})
 	}
 

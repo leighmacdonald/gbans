@@ -11,7 +11,7 @@ import (
 )
 
 func newInGameReportResponse(report ReportWithAuthor) *discordgo.MessageSend {
-	content, errContent := discord.Render("report_new", templateBody, struct {
+	content, errContent := discord.RenderTemplate("report_new", struct {
 		Report ReportWithAuthor
 	}{
 		Report: report,
@@ -116,7 +116,7 @@ func ReportStatusChangeMessage(report ReportWithAuthor, fromStatus ReportStatus)
 }
 
 func NewReportMessageResponse(report ReportWithAuthor, msg ReportMessage) *discordgo.MessageSend {
-	content, errContent := discord.Render("report_message_new", templateBody, struct {
+	content, errContent := discord.RenderTemplate("report_message_new", struct {
 		Message string
 	}{Message: msg.MessageMD})
 	if errContent != nil {

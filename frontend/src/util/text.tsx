@@ -3,9 +3,9 @@ import { Person } from '../schema/people.ts';
 
 export const filterPerson = (people: Person[], query: string): Person[] => {
     return people.filter((friend) => {
-        if (friend.personaname.toLowerCase().includes(query)) {
+        if (friend.persona_name.toLowerCase().includes(query)) {
             return true;
-        } else if (friend.steamid.toString() == query) {
+        } else if (friend.steam_id == query) {
             return true;
         }
         // TODO convert steamids from other formats to query

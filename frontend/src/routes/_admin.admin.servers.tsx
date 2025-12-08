@@ -35,10 +35,10 @@ import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/time.ts';
 
 const serversSearchSchema = z.object({
-    pageIndex: z.number().optional().catch(0),
-    pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
-    sortOrder: z.enum(['desc', 'asc']).optional().catch('desc'),
-    sortColumn: z
+    page_index: z.number().optional().catch(0),
+    page_size: z.number().optional().catch(RowsPerPage.TwentyFive),
+    sort_order: z.enum(['desc', 'asc']).optional().catch('desc'),
+    sort_column: z
         .enum(['server_id', 'short_name', 'name', 'address', 'port', 'region', 'cc', 'enable_stats', 'is_enabled'])
         .optional()
 });

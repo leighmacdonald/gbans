@@ -32,9 +32,9 @@ import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.
 import { renderDate, renderDateTime } from '../util/time.ts';
 
 const peopleSearchSchema = commonTableSearchSchema.extend({
-    sortColumn: z.enum(['vac_bans', 'steam_id', 'timecreated', 'personaname', 'created_on']).optional(),
+    sortColumn: z.enum(['vac_bans', 'steam_id', 'time_created', 'persona_name', 'created_on']).optional(),
     steam_id: z.string().catch(''),
-    personaname: z.string().catch(''),
+    persona_name: z.string().catch(''),
     staff_only: z.boolean().catch(false)
 });
 
@@ -48,12 +48,12 @@ function AdminPeople() {
     const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
     const { hasPermission } = useRouteContext({ from: '/_mod/admin/people' });
-    const { steam_id, staff_only, pageIndex, personaname, sortColumn, pageSize, sortOrder } = Route.useSearch();
+    const { steam_id, staff_only, pageIndex, persona_name, sortColumn, pageSize, sortOrder } = Route.useSearch();
     const { data: people, isLoading } = useQuery({
-        queryKey: ['people', { pageSize, pageIndex, sortColumn, sortOrder, personaname, steam_id }],
+        queryKey: ['people', { pageSize, pageIndex, sortColumn, sortOrder, persona_name, steam_id }],
         queryFn: async () => {
             return await apiSearchPeople({
-                personaname: personaname ?? '',
+                personaname: persona_name ?? '',
                 desc: (sortOrder ?? 'desc') == 'desc',
                 offset: (pageIndex ?? 0) * (pageSize ?? defaultRows),
                 limit: pageSize ?? defaultRows,
@@ -83,13 +83,13 @@ function AdminPeople() {
         validators: {
             onChange: z.object({
                 steam_id: z.string(),
-                personaname: z.string(),
+                persona_name: z.string(),
                 staff_only: z.boolean()
             })
         },
         defaultValues: {
             steam_id: steam_id ?? '',
-            personaname: personaname ?? '',
+            persona_name: persona_name ?? '',
             staff_only: staff_only ?? false
         }
     });
@@ -125,7 +125,7 @@ function AdminPeople() {
 
                             <Grid size={{ xs: 6, md: 4 }}>
                                 <form.AppField
-                                    name={'personaname'}
+                                    name={'persona_name'}
                                     children={(field) => {
                                         return <field.TextField label={'Name'} />;
                                     }}
@@ -197,8 +197,8 @@ const PeopleTable = ({
                         <PersonCell
                             showCopy={true}
                             steam_id={people.data[info.row.index].steam_id}
-                            personaname={people.data[info.row.index].personaname}
-                            avatar_hash={people.data[info.row.index].avatarhash}
+                            personaname={people.data[info.row.index].persona_name}
+                            avatar_hash={people.data[info.row.index].avatar_hash}
                         />
                     );
                 }
@@ -226,7 +226,7 @@ const PeopleTable = ({
                 cell: (info) => <Typography variant={'body1'}>{info.getValue() ? 'Yes' : 'No'}</Typography>
             },
             {
-                accessorKey: 'timecreated',
+                accessorKey: 'time_created',
                 header: 'Account Created',
                 size: 100,
                 cell: (info) => <Typography>{renderDate(fromUnixTime(info.getValue() as number))}</Typography>

@@ -13,6 +13,10 @@ import (
 //go:embed vote_discord.tmpl
 var templateBody []byte
 
+func RegisterDiscordCommands(_ discord.Service) {
+	discord.MustRegisterTemplate(templateBody)
+}
+
 type voteResultView struct {
 	SourceID   string
 	TargetName string
@@ -30,7 +34,7 @@ func VoteResultMessage(result Result, _ person.Core, target person.Core) *discor
 		colour = discord.ColourWarn
 	}
 
-	body, errBody := discord.Render("vote_result", templateBody, voteResultView{
+	body, errBody := discord.RenderTemplate("vote_result", voteResultView{
 		SourceID:   result.SourceID.String(),
 		TargetName: target.GetName(),
 		TargetSID:  result.TargetID.String(),

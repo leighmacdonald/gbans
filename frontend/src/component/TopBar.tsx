@@ -134,7 +134,7 @@ export const TopBar = () => {
                 icon: <StorageIcon sx={topColourOpts} />
             });
         }
-        if (appInfo.forums_enabled && hasPermission(PermissionLevel.Moderator)) {
+        if (appInfo.forums_enabled) {
             items.push({
                 to: '/forums',
                 text: 'Forums',
@@ -482,7 +482,7 @@ export const TopBar = () => {
                                     <>
                                         <Tooltip title="User Settings">
                                             <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                                <Avatar alt={profile.name} src={profile.avatarhash} />
+                                                <Avatar alt={profile.name} src={profile.avatar_hash} />
                                             </IconButton>
                                         </Tooltip>
                                         <Menu

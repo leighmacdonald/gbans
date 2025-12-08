@@ -34,6 +34,8 @@ type DiscordHandler struct {
 func RegisterDiscordCommands(service discord.Service, persons person.Provider, servers *Servers,
 	network network.Networks, notifier notification.Notifier, kickChannelID string,
 ) {
+	discord.MustRegisterTemplate(templateBody)
+
 	handler := DiscordHandler{
 		persons:       persons,
 		servers:       servers,
@@ -339,7 +341,7 @@ func (d DiscordHandler) onPlayers(ctx context.Context, session *discordgo.Sessio
 }
 
 func discordFindMessage(found []FindResult) []discordgo.MessageComponent {
-	content, err := discord.Render("find", templateBody, struct {
+	content, err := discord.RenderTemplate("find", struct {
 		Found []FindResult
 	}{Found: found})
 	if err != nil {
@@ -352,7 +354,7 @@ func discordFindMessage(found []FindResult) []discordgo.MessageComponent {
 }
 
 func discordSayMessage(server string, msg string) []discordgo.MessageComponent {
-	content, errContent := discord.Render("say", templateBody, struct {
+	content, errContent := discord.RenderTemplate("say", struct {
 		Server  string
 		Message string
 	}{
@@ -369,7 +371,7 @@ func discordSayMessage(server string, msg string) []discordgo.MessageComponent {
 }
 
 func discordCSayMessage(server string, msg string) []discordgo.MessageComponent {
-	content, errContent := discord.Render("csay", templateBody, struct {
+	content, errContent := discord.RenderTemplate("csay", struct {
 		Server  string
 		Message string
 	}{Server: server, Message: msg})
@@ -383,7 +385,7 @@ func discordCSayMessage(server string, msg string) []discordgo.MessageComponent 
 }
 
 func discordPSayMessage(player steamid.SteamID, msg string) []discordgo.MessageComponent {
-	content, errContent := discord.Render("psay", templateBody, struct {
+	content, errContent := discord.RenderTemplate("psay", struct {
 		Player  string
 		Message string
 	}{Player: player.String(), Message: msg})
@@ -472,7 +474,7 @@ func discordServersMessage(currentStateRegion map[string][]*Server) []discordgo.
 
 	rows = append(rows, "Global"+fmt.Sprintf("%d/%d %.2f%%", used, total, float64(used)/float64(total)*100))
 
-	content, errContent := discord.Render("servers", templateBody, struct {
+	content, errContent := discord.RenderTemplate("servers", struct {
 		Rows []string
 	}{
 		Rows: rows,
@@ -497,7 +499,7 @@ func discordPlayersMessage(rows []string, maxPlayers int, serverName string) []d
 	if len(rows) > 0 {
 		body = strings.Join(rows, "\n")
 	}
-	content := fmt.Sprintf(`# %s 
+	content := fmt.Sprintf(`# %s
 ### Current Players: %d / %d
 %s`, serverName, len(rows), maxPlayers, body)
 
@@ -505,7 +507,7 @@ func discordPlayersMessage(rows []string, maxPlayers int, serverName string) []d
 }
 
 func discordKickMessage(players []FindResult) []discordgo.MessageComponent {
-	content, err := discord.Render("user_kick", templateBody, struct {
+	content, err := discord.RenderTemplate("user_kick", struct {
 		Players []FindResult
 	}{
 		Players: players,

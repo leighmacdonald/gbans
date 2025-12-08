@@ -16,7 +16,7 @@ import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import {
     ColumnDef,
     getCoreRowModel,
@@ -405,7 +405,7 @@ const NotificationsTable = ({
                         <PersonCell
                             steam_id={info.row.original.author.steam_id}
                             personaname={info.row.original.author?.name}
-                            avatar_hash={info.row.original.author?.avatarhash}
+                            avatar_hash={info.row.original.author?.avatar_hash}
                         />
                     ) : (
                         ''

@@ -73,8 +73,8 @@ export type Report = z.infer<typeof schemaReport>;
 
 export const schemaBasicUserInfo = z.object({
     steam_id: z.string(),
-    personaname: z.string(),
-    avatarhash: z.string()
+    persona_name: z.string(),
+    avatar_hash: z.string()
 });
 
 export const schemaBanAppealMessage = schemaTimeStamped.extend({

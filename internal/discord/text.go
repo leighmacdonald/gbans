@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"sync"
 	"text/template"
 	"time"
 
@@ -15,6 +16,42 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+var (
+	templatedMutex sync.RWMutex
+	templates      *template.Template
+)
+
+func MustRegisterTemplate(body []byte) {
+	templatedMutex.Lock()
+	defer templatedMutex.Unlock()
+
+	if templates == nil {
+		templates = template.New("").Funcs(createFuncMap())
+	}
+
+	if _, errParse := templates.Parse(string(body)); errParse != nil {
+		// panic(errParse)
+		slog.Error("Failed to parse template", slog.String("error", errParse.Error()))
+	}
+}
+
+func RenderTemplate(template string, args any, textProcessor ...TextProcessor) (string, error) {
+	templatedMutex.RLock()
+	defer templatedMutex.RUnlock()
+
+	var outBuff bytes.Buffer
+	if errExec := templates.ExecuteTemplate(&outBuff, template, args); errExec != nil {
+		return "Failed to render :(", errors.Join(errExec, ErrCommandFailed)
+	}
+
+	body := outBuff.String()
+	for _, processor := range textProcessor {
+		body = processor(body)
+	}
+
+	return body, nil
+}
 
 type TextProcessor func(text string) string
 
@@ -40,34 +77,14 @@ func createFuncMap() template.FuncMap {
 	}
 }
 
-func RenderText(name string, templ []byte, context any, textProcessor ...TextProcessor) discordgo.TextDisplay {
-	content, errContent := Render(name, templ, context, textProcessor...)
+func RenderText(template string, context any, textProcessor ...TextProcessor) discordgo.TextDisplay {
+	content, errContent := RenderTemplate(template, context, textProcessor...)
 	if errContent != nil {
 		slog.Error("Failed to render text", slog.String("error", errContent.Error()))
 		content = "Failed to render :("
 	}
 
 	return discordgo.TextDisplay{Content: content}
-}
-
-func Render(name string, templ []byte, context any, textProcessor ...TextProcessor) (string, error) {
-	var buffer bytes.Buffer
-	tmpl, err := template.New(name).
-		Funcs(createFuncMap()).
-		Parse(string(templ))
-	if err != nil {
-		return "", errors.Join(err, ErrTemplate)
-	}
-	if err = tmpl.Execute(&buffer, context); err != nil {
-		return "", errors.Join(err, ErrTemplate)
-	}
-
-	body := buffer.String()
-	for _, processor := range textProcessor {
-		body = processor(body)
-	}
-
-	return body, nil
 }
 
 // HydrateLinks will transform relative markdown links into full urls, eg:
@@ -125,7 +142,25 @@ func PlayerThumbnail(avatar AvatarProvider) discordgo.Thumbnail {
 	}
 }
 
+// BodyTextWithThumbnail renders a body with thumbnail
+// deprecated in favour of BodyTextWithThumbnailT.
 func BodyTextWithThumbnail(colour int, accessory discordgo.MessageComponent, content string) discordgo.Container {
+	return BodyColour(
+		colour,
+		discordgo.Section{
+			Components: []discordgo.MessageComponent{
+				discordgo.TextDisplay{Content: content},
+			},
+			Accessory: accessory,
+		})
+}
+
+func BodyTextWithThumbnailT(colour int, accessory discordgo.MessageComponent, template string, view any, textProcessor ...TextProcessor) discordgo.Container {
+	content, err := RenderTemplate(template, view, textProcessor...)
+	if err != nil {
+		slog.Error("Failed to render template", slog.String("error", err.Error()))
+	}
+
 	return BodyColour(
 		colour,
 		discordgo.Section{

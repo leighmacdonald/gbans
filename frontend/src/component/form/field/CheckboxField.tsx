@@ -5,10 +5,11 @@ import FormGroup from '@mui/material/FormGroup';
 import { useFieldContext } from '../../../contexts/formContext.tsx';
 
 type Props = {
+    readonly disabled?: boolean;
     readonly label?: string;
 };
 
-export const CheckboxField = ({ label }: Props) => {
+export const CheckboxField = ({ label, disabled = false }: Props) => {
     const field = useFieldContext<boolean>();
 
     return (
@@ -23,6 +24,7 @@ export const CheckboxField = ({ label }: Props) => {
                             onBlur={field.handleBlur}
                             checked={Boolean(field.state.value)}
                             name={field.name}
+                            disabled={disabled}
                         />
                     }
                     label={label}

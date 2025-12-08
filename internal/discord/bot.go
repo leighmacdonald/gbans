@@ -1,7 +1,6 @@
 package discord
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"text/template"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -61,8 +59,8 @@ type Discord struct {
 	running            atomic.Bool
 	registeredCommands []*discordgo.ApplicationCommand
 	unregister         bool
-	templates          map[string]*template.Template
-	mutex              *sync.RWMutex
+
+	mutex *sync.RWMutex
 }
 
 func New(opts Opts) (*Discord, error) {
@@ -81,7 +79,6 @@ func New(opts Opts) (*Discord, error) {
 		unregister:      opts.UnregisterOnClose,
 		commandHandlers: make(map[string]Handler),
 		prefixHandlers:  make(map[string]Handler),
-		templates:       make(map[string]*template.Template),
 	}
 
 	session, errSession := discordgo.New("Bot " + opts.Token)
@@ -108,34 +105,6 @@ func New(opts Opts) (*Discord, error) {
 	bot.session = session
 
 	return bot, nil
-}
-
-func (b *Discord) MustRegisterTemplate(namespace string, body []byte) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-
-	textTemplate, errParse := template.New(namespace).Funcs(createFuncMap()).Parse(string(body))
-	if errParse != nil {
-		panic(errParse)
-	}
-
-	b.templates[namespace] = textTemplate
-}
-
-func (b *Discord) RenderTemplate(namespace string, name string, args any) (string, error) {
-	b.mutex.RLock()
-	defer b.mutex.RUnlock()
-
-	textTemplate, found := b.templates[namespace]
-	if !found {
-		return "", fmt.Errorf("%w: unknown template namespace %s", ErrTemplate, namespace)
-	}
-	var outBuff bytes.Buffer
-	if errExec := textTemplate.ExecuteTemplate(&outBuff, name, args); errExec != nil {
-		return "", errors.Join(errExec, ErrCommandFailed)
-	}
-
-	return outBuff.String(), nil
 }
 
 func (b *Discord) Send(channelID string, payload *discordgo.MessageSend) error {

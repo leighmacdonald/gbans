@@ -191,7 +191,7 @@ func (h Sourcemod) seedRequest(ctx context.Context, server servers.Server, userI
 
 	_, _ = h.servers.Server(ctx, server.ServerID)
 	if len(server.DiscordSeedRoleIDs) > 0 {
-		content, errContent := discord.Render("seed_req", templateContent, struct {
+		content, errContent := discord.RenderTemplate("seed_req", struct {
 			Name    string
 			Short   string
 			Connect string

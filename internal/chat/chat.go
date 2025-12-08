@@ -196,7 +196,7 @@ func (u *Chat) handleMessage(ctx context.Context, evt logparse.ServerEvent, pers
 	}
 
 	u.notifications.Send(notification.NewDiscord(u.logChannelID, discord.NewMessage(
-		discord.RenderText("chat_message", templateBody, map[string]any{
+		discord.RenderText("chat_message", map[string]any{
 			"Msg":    userMsg,
 			"Player": player,
 		}))))

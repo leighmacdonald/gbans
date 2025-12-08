@@ -42,8 +42,8 @@ func (w *wikiHandler) page() gin.HandlerFunc {
 			switch {
 			case errors.Is(err, database.ErrNoResult):
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, errors.Join(err, httphelper.ErrNotFound)))
-			case errors.Is(err, httphelper.ErrPermissionDenied):
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, httphelper.ErrPermissionDenied)))
+			case errors.Is(err, permission.ErrDenied):
+				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, permission.ErrDenied)))
 			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
 			}
@@ -52,7 +52,7 @@ func (w *wikiHandler) page() gin.HandlerFunc {
 		}
 
 		if !user.HasPermission(page.PermissionLevel) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, httphelper.ErrPermissionDenied)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, permission.ErrDenied)))
 
 			return
 		}
@@ -83,7 +83,7 @@ func (w *wikiHandler) save() gin.HandlerFunc {
 		}
 
 		if !currentUser.HasPermission(permission.Moderator) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, httphelper.ErrPermissionDenied)))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, errors.Join(err, permission.ErrDenied)))
 
 			return
 		}

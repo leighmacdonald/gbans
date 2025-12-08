@@ -23,6 +23,8 @@ type discordHandler struct {
 }
 
 func RegisterDiscordCommands(bot discord.Service, anticheat AntiCheat) {
+	discord.MustRegisterTemplate(templateBody)
+
 	handler := discordHandler{AntiCheat: anticheat}
 
 	bot.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
@@ -109,7 +111,7 @@ func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
 		servers[entry.ServerName]++
 	}
 
-	content, err := discord.Render("ac_logs", templateBody, struct {
+	content, err := discord.RenderTemplate("ac_logs", struct {
 		Detections map[logparse.Detection]int
 		Servers    map[string]int
 	}{
@@ -126,7 +128,7 @@ func ACPlayerLogs(_ person.Info, entries []Entry) []discordgo.MessageComponent {
 }
 
 func NewAnticheatTrigger(note string, action Action, entry logparse.StacEntry, count int) *discordgo.MessageSend {
-	content, errContent := discord.Render("ac_trigger", templateBody, struct {
+	content, errContent := discord.RenderTemplate("ac_trigger", struct {
 		Detection string
 		Count     int
 		Action    string

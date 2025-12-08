@@ -13,9 +13,12 @@
 {{end}}
 
 {{define "forum_message_created"}}
-    # Forum Message Created/Edited
-    Category: {{ .Category }}
-    Body: {{ .Body }}
+🗂️ {{ .Parents.Category.Title }}
+💬 [{{ .Parents.Forum.Title }}]({{ .Parents.Forum | linkPath }})
+{{if .Parents.Thread.Sticky}}📌 {{end}}{{ if .Parents.Thread.Locked }}🔒 {{end}}🧵[{{ .Parents.Thread.Title }}]({{ .Parents.Thread | linkPath }}) - #{{.Parents.Thread.Replies }}
+🪡 Posted by: [{{ .Author.GetName }}]({{ .Author | linkPath }})
+
+{{ .Msg.BodyMD }}
 {{end}}
 
 {{define "forum_saved"}}

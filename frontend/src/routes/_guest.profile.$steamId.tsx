@@ -45,14 +45,14 @@ function ProfilePage() {
 
     return (
         <Grid container spacing={2}>
-            {profile.player.personaname ? <Title>{profile.player.personaname}</Title> : null}
+            {profile.player.persona_name ? <Title>{profile.player.persona_name}</Title> : null}
             <Grid size={{ xs: 12, md: 8 }}>
                 <ContainerWithHeader title={'Profile'}>
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 4 }}>
                             <Avatar
                                 variant={'square'}
-                                src={avatarHashToURL(profile.player.avatarhash)}
+                                src={avatarHashToURL(profile.player.avatar_hash)}
                                 alt={'Profile Avatar'}
                                 sx={{ width: '100%', height: '100%', minHeight: 240 }}
                             />
@@ -64,22 +64,22 @@ function ProfilePage() {
                                     display="inline"
                                     style={{ wordBreak: 'break-word', whiteSpace: 'pre-line' }}
                                 >
-                                    {profile.player.personaname}
+                                    {profile.player.persona_name}
                                 </Typography>
                                 <Typography variant={'body1'}>
                                     First Seen: {renderDateTime(profile.player.created_on)}
                                 </Typography>
-                                {!emptyOrNullString(profile.player.locstatecode) ||
-                                    (!emptyOrNullString(profile.player.loccountrycode) && (
+                                {!emptyOrNullString(profile.player.loc_state_code) ||
+                                    (!emptyOrNullString(profile.player.loc_country_code) && (
                                         <Typography variant={'body1'}>
-                                            {[profile.player.locstatecode, profile.player.loccountrycode]
+                                            {[profile.player.loc_state_code, profile.player.loc_country_code]
                                                 .filter((x) => x)
                                                 .join(',')}
                                         </Typography>
                                     ))}
-                                {isValidSteamDate(fromUnixTime(profile.player.timecreated)) && (
+                                {isValidSteamDate(fromUnixTime(profile.player.time_created)) && (
                                     <Typography variant={'body1'}>
-                                        Created: {format(fromUnixTime(profile.player.timecreated), 'yyyy-MM-dd')}
+                                        Created: {format(fromUnixTime(profile.player.time_created), 'yyyy-MM-dd')}
                                     </Typography>
                                 )}
                             </Stack>

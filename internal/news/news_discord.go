@@ -10,13 +10,17 @@ import (
 //go:embed news_discord.tmpl
 var templateBody []byte
 
+func RegisterDiscordCommands(_ discord.Service) {
+	discord.MustRegisterTemplate(templateBody)
+}
+
 type newsView struct {
 	Title string
 	Body  string
 }
 
 func newNewsMessage(body string, title string) *discordgo.MessageSend {
-	content, errContent := discord.Render("news_update", templateBody, newsView{Title: title, Body: body})
+	content, errContent := discord.RenderTemplate("news_update", newsView{Title: title, Body: body})
 	if errContent != nil {
 		return nil
 	}
@@ -27,7 +31,7 @@ func newNewsMessage(body string, title string) *discordgo.MessageSend {
 }
 
 func editNewsMessages(body string, title string) *discordgo.MessageSend {
-	content, errContent := discord.Render("news_update", templateBody, newsView{Title: title, Body: body})
+	content, errContent := discord.RenderTemplate("news_update", newsView{Title: title, Body: body})
 	if errContent != nil {
 		return nil
 	}

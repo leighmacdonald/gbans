@@ -49,7 +49,7 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<PersonIcon />}>
-                    Person Editor: {person.personaname}
+                    Person Editor: {person.persona_name}
                 </DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2}>

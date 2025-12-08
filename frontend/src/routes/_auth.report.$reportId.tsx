@@ -167,11 +167,11 @@ function ReportView() {
                                         }}
                                     >
                                         <ListItemAvatar>
-                                            <Avatar src={avatarHashToURL(report?.author.avatarhash)}>
+                                            <Avatar src={avatarHashToURL(report?.author.avatar_hash)}>
                                                 <SendIcon />
                                             </Avatar>
                                         </ListItemAvatar>
-                                        <ListItemText primary={report?.author.personaname} secondary={'Author'} />
+                                        <ListItemText primary={report?.author.persona_name} secondary={'Author'} />
                                     </ListItem>
                                     {report?.reason && (
                                         <ListItem

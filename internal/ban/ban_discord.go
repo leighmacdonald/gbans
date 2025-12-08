@@ -35,6 +35,8 @@ type discordHandler struct {
 }
 
 func RegisterDiscordCommands(bot discord.Service, bans Bans, persons person.Provider, discordProv person.DiscordPersonProvider) {
+	discord.MustRegisterTemplate(templateBody)
+
 	handler := &discordHandler{Bans: bans, persons: persons, discord: discordProv}
 
 	bot.MustRegisterPrefixHandler("ban_unban_button", handler.onUnbanButton)
@@ -215,13 +217,7 @@ func (h discordHandler) onBanResponse(ctx context.Context, session *discordgo.Se
 		return discord.ErrCommandFailed
 	}
 
-	content, errContent := discord.Render("ban_success", templateBody, struct {
-		Link string
-		Mute bool
-	}{
-		Link: link.Path(createdBan),
-		Mute: banOpts.BanType == bantype.NoComm,
-	})
+	content, errContent := discord.RenderTemplate("ban_success", templateBody)
 	if errContent != nil {
 		return errContent
 	}
@@ -343,7 +339,7 @@ func (h discordHandler) onCheck(ctx context.Context, session *discordgo.Session,
 		}
 	}
 
-	content, errContent := discord.Render("check", templateBody, checkView{
+	content, errContent := discord.RenderTemplate("check", checkView{
 		Author:  author,
 		Player:  player,
 		Ban:     activeBan,
@@ -420,7 +416,7 @@ func createBanResponse(ban Ban, author person.Info, player person.Info) *discord
 		expAt = datetime.FmtTimeShort(ban.ValidUntil)
 	}
 
-	content, errContent := discord.Render("ban_response", templateBody, banResponseView{
+	content, errContent := discord.RenderTemplate("ban_response", banResponseView{
 		Ban:           ban,
 		Player:        player,
 		Author:        author,
@@ -450,7 +446,7 @@ type deleteReportMessageView struct {
 }
 
 func DeleteReportMessage(existing ReportMessage, person person.Info) *discordgo.MessageSend {
-	content, errContent := discord.Render("report_message_deleted", templateBody, deleteReportMessageView{
+	content, errContent := discord.RenderTemplate("report_message_deleted", deleteReportMessageView{
 		Existing: existing,
 		Person:   person,
 	})
@@ -490,7 +486,7 @@ func ReportStatsMessage(meta ReportMeta, _ string) *discordgo.MessageSend {
 		colour = discord.ColourWarn
 	}
 
-	body, errBody := discord.Render("report_stats", templateBody, reportStatsView{
+	body, errBody := discord.RenderTemplate("report_stats", reportStatsView{
 		New:         meta.Open1Day,
 		TotalOpen:   meta.TotalOpen,
 		TotalClosed: meta.TotalClosed,

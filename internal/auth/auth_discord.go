@@ -11,7 +11,7 @@ type loginInfo struct {
 }
 
 func loginMessage(fetchedPerson personDomain.Info) *discordgo.MessageSend {
-	content, errContent := discord.Render("login_info", templateBody, loginInfo{Person: fetchedPerson})
+	content, errContent := discord.RenderTemplate("login_info", loginInfo{Person: fetchedPerson})
 	if errContent != nil {
 		return nil
 	}
@@ -22,7 +22,7 @@ func loginMessage(fetchedPerson personDomain.Info) *discordgo.MessageSend {
 }
 
 func logoutMessage(fetchedPerson personDomain.Info) *discordgo.MessageSend {
-	content, errContent := discord.Render("login_info", templateBody, loginInfo{Person: fetchedPerson})
+	content, errContent := discord.RenderTemplate("login_info", loginInfo{Person: fetchedPerson})
 	if errContent != nil {
 		return nil
 	}

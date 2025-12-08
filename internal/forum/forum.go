@@ -7,6 +7,7 @@ package forum
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -85,9 +86,13 @@ type Forum struct {
 	UpdatedOn           time.Time            `json:"updated_on"`
 }
 
-func (forum Forum) NewThread(title string, sourceID steamid.SteamID) Thread {
+func (f Forum) Path() string {
+	return fmt.Sprintf("/forums/%d", f.ForumID)
+}
+
+func (f Forum) NewThread(title string, sourceID steamid.SteamID) Thread {
 	return Thread{
-		ForumID:   forum.ForumID,
+		ForumID:   f.ForumID,
 		SourceID:  sourceID,
 		Title:     title,
 		CreatedOn: time.Now(),
@@ -111,10 +116,14 @@ type Thread struct {
 	UpdatedOn       time.Time            `json:"updated_on"`
 }
 
-func (thread Thread) NewMessage(sourceID steamid.SteamID, body string) Message {
+func (t Thread) Path() string {
+	return fmt.Sprintf("/forums/thread/%d", t.ForumThreadID)
+}
+
+func (t Thread) NewMessage(sourceID steamid.SteamID, body string) Message {
 	return Message{
 		ForumMessageID: 0,
-		ForumThreadID:  thread.ForumThreadID,
+		ForumThreadID:  t.ForumThreadID,
 		SourceID:       sourceID,
 		BodyMD:         stringutil.SanitizeUGC(body),
 		CreatedOn:      time.Now(),
@@ -137,9 +146,13 @@ type Message struct {
 	UpdatedOn       time.Time            `json:"updated_on"`
 }
 
-func (message Message) NewVote(sourceID steamid.SteamID, vote Vote) MessageVote {
+func (m Message) Path() string {
+	return fmt.Sprintf("/forums/thread/%d/#%d", m.ForumThreadID, m.ForumMessageID)
+}
+
+func (m Message) NewVote(sourceID steamid.SteamID, vote Vote) MessageVote {
 	return MessageVote{
-		ForumMessageID: message.ForumMessageID,
+		ForumMessageID: m.ForumMessageID,
 		SourceID:       sourceID,
 		Vote:           vote,
 		CreatedOn:      time.Now(),
@@ -180,12 +193,13 @@ const (
 type Forums struct {
 	repo    Repository
 	tracker *Tracker
+	persons person.Provider
 	notif   notification.Notifier
 	config  *config.Configuration
 }
 
-func New(repository Repository, config *config.Configuration, notif notification.Notifier) Forums {
-	return Forums{repo: repository, tracker: NewTracker(), config: config, notif: notif}
+func New(repository Repository, config *config.Configuration, notif notification.Notifier, persons person.Provider) Forums {
+	return Forums{repo: repository, tracker: NewTracker(), config: config, notif: notif, persons: persons}
 }
 
 func (f Forums) Start(ctx context.Context) {
@@ -315,6 +329,31 @@ func (f Forums) ForumIncrMessageCount(ctx context.Context, forumID int, incr boo
 	return f.repo.ForumIncrMessageCount(ctx, forumID, incr)
 }
 
+type parents struct {
+	Thread   Thread
+	Forum    Forum
+	Category Category
+}
+
+func (f Forums) getParents(ctx context.Context, forumThreadID int64) (parents, error) {
+	var thread Thread
+	if err := f.Thread(ctx, forumThreadID, &thread); err != nil {
+		return parents{}, err
+	}
+
+	var forum Forum
+	if err := f.Forum(ctx, thread.ForumID, &forum); err != nil {
+		return parents{}, err
+	}
+
+	var category Category
+	if err := f.Category(ctx, forum.ForumCategoryID, &category); err != nil {
+		return parents{}, err
+	}
+
+	return parents{Thread: thread, Forum: forum, Category: category}, nil
+}
+
 func (f Forums) MessageSave(ctx context.Context, fMessage *Message) error {
 	isNew := fMessage.ForumMessageID == 0
 
@@ -322,7 +361,19 @@ func (f Forums) MessageSave(ctx context.Context, fMessage *Message) error {
 		return err
 	}
 
-	f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordForumMessageSaved(*fMessage)))
+	parent, errParents := f.getParents(ctx, fMessage.ForumThreadID)
+	if errParents != nil {
+		return errParents
+	}
+
+	author, errAuthor := f.persons.GetOrCreatePersonBySteamID(ctx, fMessage.SourceID)
+	if errAuthor != nil {
+		return errAuthor
+	}
+
+	go f.notif.Send(notification.NewDiscord(
+		f.config.Config().Discord.ForumLogChannelID,
+		discordForumMessageSaved(parent, author, fMessage)))
 
 	if isNew {
 		slog.Info("Created new forum message", slog.Int64("forum_thread_id", fMessage.ForumThreadID))

@@ -18,7 +18,7 @@ import { ensureFeatureEnabled } from '../util/features.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 
 const searchSchema = commonTableSearchSchema.extend({
-    sortColumn: z
+    sort_column: z
         .enum([
             'person_message_id',
             'steam_id',

@@ -1,5 +1,4 @@
 import { z } from 'zod/v4';
-import { schemaTimeStamped } from './chrono.ts';
 import { schemaQueryFilter } from './query.ts';
 
 export const PermissionLevel = {
@@ -78,7 +77,7 @@ export const schemaUserProfile = z.object({
     discord_id: z.string(),
     patreon_id: z.string(),
     name: z.string(),
-    avatarhash: z.string(),
+    avatar_hash: z.string(),
     ban_id: z.number(),
     muted: z.boolean(),
     created_on: z.date(),
@@ -104,35 +103,42 @@ export const schemaUserNotification = z.object({
 
 export type UserNotification = z.infer<typeof schemaUserNotification>;
 
-export const schemaPerson = z
-    .object({
-        // PlayerSummaries shape
-        steamid: z.string(),
-        communityvisibilitystate: communityVisibilityStateEnum,
-        profilestate: profileStateEnum,
-        personaname: z.string(),
-        profileurl: z.string(),
-        avatarmedium: z.string(),
-        avatarhash: z.string(),
-        personastate: z.number(),
-        realname: z.string(),
-        primaryclanid: z.string(), // ? should be number
-        timecreated: z.number(),
-        personastateflags: z.number(),
-        loccountrycode: z.string(),
-        locstatecode: z.string(),
-        loccityid: z.number(),
+export const schemaPerson = z.object({
+    steam_id: z.string(),
+    permission_level: PermissionLevelEnum,
+    discord_id: z.string(),
+    patreon_id: z.string(),
+    name: z.string(),
+    avatar_hash: z.string(),
+    ban_id: z.number(),
+    muted: z.boolean(),
+    created_on: z.date(),
+    updated_on: z.date(),
+    playerqueue_chat_status: z.enum(['readwrite', 'readonly', 'noaccess']).default('readwrite'),
+    // PlayerSummaries shape
+    community_visibility_state: communityVisibilityStateEnum,
+    profile_state: profileStateEnum,
+    persona_name: z.string(),
+    profile_url: z.string(),
+    avatar_medium: z.string(),
+    persona_state: z.number(),
+    realname: z.string(),
+    primary_clan_id: z.string(), // ? should be number
+    time_created: z.number(),
+    persona_state_flags: z.number(),
+    loc_country_code: z.string(),
+    loc_state_code: z.string(),
+    loc_city_id: z.number(),
 
-        // BanStates
-        community_banned: z.boolean(),
-        vac_bans: z.number(),
-        game_bans: z.number(),
-        economy_ban: z.string(),
-        days_since_last_ban: z.number(),
-        updated_on_steam: z.date(),
-        ip_addr: z.string()
-    })
-    .merge(schemaUserProfile);
+    // BanStates
+    community_banned: z.boolean(),
+    vac_bans: z.number(),
+    game_bans: z.number(),
+    economy_ban: z.string(),
+    days_since_last_ban: z.number(),
+    updated_on_steam: z.date(),
+    ip_addr: z.string()
+});
 
 export type Person = z.infer<typeof schemaPerson>;
 
@@ -144,16 +150,16 @@ export const schemaSteamValidate = z.object({
 
 export type SteamValidate = z.infer<typeof schemaSteamValidate>;
 
-export const schemaPersonSettings = z
-    .object({
-        person_settings_id: z.number(),
-        steam_id: z.string(),
-        forum_signature: z.string(),
-        forum_profile_messages: z.boolean(),
-        stats_hidden: z.boolean(),
-        center_projectiles: z.boolean()
-    })
-    .merge(schemaTimeStamped);
+export const schemaPersonSettings = z.object({
+    person_settings_id: z.number(),
+    steam_id: z.string(),
+    forum_signature: z.string(),
+    forum_profile_messages: z.boolean(),
+    stats_hidden: z.boolean(),
+    center_projectiles: z.boolean(),
+    created_on: z.date(),
+    updated_on: z.date()
+});
 
 export type PersonSettings = z.infer<typeof schemaPersonSettings>;
 
@@ -302,13 +308,13 @@ export const schemaPermissionUpdate = z.object({
 });
 export type PermissionUpdate = z.infer<typeof schemaPermissionUpdate>;
 
-export const schemaDiscordUser = z
-    .object({
-        username: z.string(),
-        id: z.string(),
-        avatar: z.string(),
-        mfa_enabled: z.boolean()
-    })
-    .merge(schemaTimeStamped);
+export const schemaDiscordUser = z.object({
+    username: z.string(),
+    id: z.string(),
+    avatar: z.string(),
+    mfa_enabled: z.boolean(),
+    created_on: z.date(),
+    updated_on: z.date()
+});
 
 export type DiscordUser = z.infer<typeof schemaDiscordUser>;

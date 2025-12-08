@@ -193,7 +193,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		ban.NewGroupMemberships(tfapiClient, ban.NewRepository(g.database)))
 	g.discordOAuth = discordoauth.NewOAuth(discordoauth.NewRepository(g.database), conf.Discord)
 	g.chat = chat.New(chat.NewRepository(g.database), conf.Filters, g.wordFilters, g.persons, g.notifications, g.chatHandler, conf.Discord.SafeChatLogChannelID())
-	g.forums = forum.New(forum.NewRepository(g.database), g.config, g.notifications)
+	g.forums = forum.New(forum.NewRepository(g.database), g.config, g.notifications, g.persons)
 	g.metrics = metrics.New(g.broadcaster)
 	g.news = news.New(news.NewRepository(g.database), g.notifications, conf.Discord.SafePublicLogChannelID())
 	g.sourcemod = sourcemod.New(sourcemod.NewRepository(g.database), g.persons, g.notifications, conf.Discord.SafeSeedChannelID(), g.servers)
@@ -209,8 +209,13 @@ func (g *GBans) Init(ctx context.Context) error {
 		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
 		ban.RegisterDiscordCommands(g.bot, g.bans, g.persons, g.persons)
 		chat.RegisterDiscordCommands(g.bot, g.wordFilters)
+		forum.RegisterDiscordCommands(g.bot)
+		news.RegisterDiscordCommands(g.bot)
+		playerqueue.RegisterDiscordCommands(g.bot)
 		servers.RegisterDiscordCommands(g.bot, g.persons, g.servers, g.networks, g.notifications, conf.Discord.SafeKickLogChannelID())
 		sourcemod.RegisterDiscordCommands(g.bot, g.sourcemod, g.servers)
+		votes.RegisterDiscordCommands(g.bot)
+		wiki.RegisterDiscordCommands(g.bot)
 	}
 
 	if err := g.firstTimeSetup(ctx); err != nil {

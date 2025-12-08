@@ -9,8 +9,10 @@ import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod/v4';
 import { apiCreateThread } from '../../api/forum.ts';
 import { useAppForm } from '../../contexts/formContext.tsx';
+import { useAuth } from '../../hooks/useAuth.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Forum, ForumThread } from '../../schema/forum.ts';
+import { PermissionLevel } from '../../schema/people.ts';
 import { logErr } from '../../util/errors';
 import { mdEditorRef } from '../form/field/MarkdownField.tsx';
 import { ModalConfirm, ModalForumThreadCreator } from './index';
@@ -29,6 +31,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
     const theme = useTheme();
     const modal = useModal();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const { hasPermission } = useAuth();
 
     const onClose = useCallback(
         async (_: unknown, reason: 'escapeKeyDown' | 'backdropClick') => {
@@ -118,19 +121,29 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                                 }}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12 }}>
+                        <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'sticky'}
                                 children={(field) => {
-                                    return <field.CheckboxField label={'Stickied'} />;
+                                    return (
+                                        <field.CheckboxField
+                                            label={'Stickied'}
+                                            disabled={!hasPermission(PermissionLevel.Editor)}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>
-                        <Grid size={{ xs: 12 }}>
+                        <Grid size={{ xs: 6 }}>
                             <form.AppField
                                 name={'locked'}
                                 children={(field) => {
-                                    return <field.CheckboxField label={'Locked'} />;
+                                    return (
+                                        <field.CheckboxField
+                                            label={'Locked'}
+                                            disabled={!hasPermission(PermissionLevel.Editor)}
+                                        />
+                                    );
                                 }}
                             />
                         </Grid>

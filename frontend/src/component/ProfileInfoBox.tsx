@@ -34,7 +34,7 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                 <Grid size={{ xs: 12 }}>
                     <Avatar
                         variant={'square'}
-                        src={avatarHashToURL(profile.player.avatarhash)}
+                        src={avatarHashToURL(profile.player.avatar_hash)}
                         alt={'Profile Avatar'}
                         sx={{ width: '100%', height: '100%' }}
                     />
@@ -46,7 +46,7 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                             display="inline"
                             style={{ wordBreak: 'break-word', whiteSpace: 'pre-line' }}
                         >
-                            {profile.player.personaname}
+                            {profile.player.persona_name}
                         </Typography>
                     </Box>
                 </Grid>
@@ -55,21 +55,21 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                     <Typography variant={'body1'}>First Seen: {renderDateTime(profile.player.created_on)}</Typography>
                 </Grid>
 
-                {!emptyOrNullString(profile.player.locstatecode) ||
-                    (!emptyOrNullString(profile.player.loccountrycode) && (
+                {!emptyOrNullString(profile.player.loc_state_code) ||
+                    (!emptyOrNullString(profile.player.loc_country_code) && (
                         <Grid size={{ xs: 12 }}>
                             <Typography variant={'body1'}>
-                                {[profile.player.locstatecode, profile.player.loccountrycode]
+                                {[profile.player.loc_state_code, profile.player.loc_country_code]
                                     .filter((x) => x)
                                     .join(',')}
                             </Typography>
                         </Grid>
                     ))}
 
-                {isValidSteamDate(fromUnixTime(profile.player.timecreated)) && (
+                {isValidSteamDate(fromUnixTime(profile.player.time_created)) && (
                     <Grid size={{ xs: 12 }}>
                         <Typography variant={'body1'}>
-                            Created: {format(fromUnixTime(profile.player.timecreated), 'yyyy-MM-dd')}
+                            Created: {format(fromUnixTime(profile.player.time_created), 'yyyy-MM-dd')}
                         </Typography>
                     </Grid>
                 )}

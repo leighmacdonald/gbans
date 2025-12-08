@@ -378,7 +378,7 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 		}
 
 		if thread.SourceID != currentUser.GetSteamID() && !currentUser.HasPermission(permission.Moderator) {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
 				"You do not have access to edit this."))
 
 			return
@@ -478,7 +478,7 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 		}
 
 		if message.SourceID != currentUser.GetSteamID() && !currentUser.HasPermission(permission.Moderator) {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
 				"You do not have permission to edit this message."))
 
 			return
@@ -635,13 +635,6 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 			return
 		}
 
-		var message Message
-		if errFetch := f.Message(ctx, newMessage.ForumMessageID, &message); errFetch != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errFetch, httphelper.ErrInternal)))
-
-			return
-		}
-
 		if errIncr := f.ForumIncrMessageCount(ctx, thread.ForumID, true); errIncr != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errIncr, httphelper.ErrInternal)))
 
@@ -730,7 +723,7 @@ func (f *forumHandler) threads() gin.HandlerFunc {
 		}
 
 		if !currentUser.HasPermission(forum.PermissionLevel) {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, httphelper.ErrPermissionDenied,
+			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
 				"You do not have permission to access this forum."))
 
 			return
@@ -788,7 +781,7 @@ func (f *forumHandler) forum() gin.HandlerFunc {
 		}
 
 		if !currentUser.HasPermission(forum.PermissionLevel) {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, httphelper.ErrPermissionDenied))
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, permission.ErrDenied))
 
 			return
 		}

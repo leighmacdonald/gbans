@@ -37,7 +37,7 @@ export function AuthProvider({
             setProfile({
                 steam_id: '',
                 permission_level: PermissionLevel.Guest,
-                avatarhash: defaultAvatarHash,
+                avatar_hash: defaultAvatarHash,
                 name: '',
                 ban_id: 0,
                 muted: false,

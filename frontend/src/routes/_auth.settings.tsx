@@ -33,6 +33,9 @@ import {
 } from '../api';
 import { apiGetPatreonLogin, apiGetPatreonLogout } from '../api/patreon.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { SubHeading } from '../component/SubHeading.tsx';
+import { TabButton } from '../component/TabButton.tsx';
+import { TabSection } from '../component/TabSection.tsx';
 import { Title } from '../component/Title.tsx';
 import { mdEditorRef } from '../component/form/field/MarkdownField.tsx';
 import { ModalConfirm } from '../component/modal';
@@ -41,7 +44,6 @@ import { useAppForm } from '../contexts/formContext.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { PermissionLevel, PersonSettings } from '../schema/people.ts';
 import { logErr } from '../util/errors.ts';
-import { SubHeading, TabButton, TabSection } from './_admin.admin.settings.tsx';
 
 const settingsSchema = z.object({
     section: z.enum(['general', 'forums', 'connections', 'game']).optional().default('general')

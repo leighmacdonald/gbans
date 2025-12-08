@@ -549,6 +549,8 @@ func (d Demos) RemoveOrphans(ctx context.Context) error {
 			continue
 		}
 
+		slog.Debug("Removing orphan demo", slog.Int64("demo_id", demo.DemoID),
+			slog.String("title", demo.Title), slog.String("asset_id", demo.AssetID.String()))
 		if _, err := d.asset.Delete(ctx, demo.AssetID); err != nil {
 			slog.Error("Failed to remove orphan demo asset", slog.String("error", err.Error()))
 

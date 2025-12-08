@@ -20,7 +20,7 @@ import (
 )
 
 //go:embed sourcemod_discord.tmpl
-var templateContent []byte
+var templateBody []byte
 
 type discordHandler struct {
 	sourcemod Sourcemod
@@ -28,6 +28,8 @@ type discordHandler struct {
 }
 
 func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, servers *servers.Servers) {
+	discord.MustRegisterTemplate(templateBody)
+
 	handler := discordHandler{sourcemod: sourcemod, servers: servers}
 
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
@@ -53,7 +55,6 @@ func RegisterDiscordCommands(service discord.Service, sourcemod Sourcemod, serve
 		},
 	}, handler.onRCON)
 
-	service.MustRegisterTemplate("sourcemod", templateContent)
 	service.MustRegisterCommandHandler(&discordgo.ApplicationCommand{
 		Name:                     "seed",
 		Description:              "Request a server seed ping",
@@ -489,7 +490,7 @@ func (h discordHandler) onCVARGet(ctx context.Context, session *discordgo.Sessio
 }
 
 func newCheckDenyMessage(banState PlayerBanState) *discordgo.MessageSend {
-	content, errContent := discord.Render("check_blocked", templateContent, banState)
+	content, errContent := discord.RenderTemplate("check_blocked", banState)
 	if errContent != nil {
 		slog.Error("Error creating check blocked message", slog.String("error", errContent.Error()))
 	}

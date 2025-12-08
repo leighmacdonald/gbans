@@ -225,8 +225,8 @@ const makeColumns = () => {
                 <PersonCell
                     showCopy={true}
                     steam_id={info.row.original.author.steam_id}
-                    personaname={info.row.original.author.personaname}
-                    avatar_hash={info.row.original.author.avatarhash}
+                    personaname={info.row.original.author.persona_name}
+                    avatar_hash={info.row.original.author.avatar_hash}
                 />
             )
         }),
@@ -237,8 +237,8 @@ const makeColumns = () => {
                 <PersonCell
                     showCopy={true}
                     steam_id={info.row.original.subject.steam_id}
-                    personaname={info.row.original.subject.personaname}
-                    avatar_hash={info.row.original.subject.avatarhash}
+                    personaname={info.row.original.subject.persona_name}
+                    avatar_hash={info.row.original.subject.avatar_hash}
                 />
             )
         }),

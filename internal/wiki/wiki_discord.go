@@ -11,8 +11,12 @@ import (
 //go:embed wiki_discord.tmpl
 var templateBody []byte
 
+func RegisterDiscordCommands(_ discord.Service) {
+	discord.MustRegisterTemplate(templateBody)
+}
+
 func pageCreated(page Page) *discordgo.MessageSend {
-	content, errContent := discord.Render("wiki_created", templateBody, page, discord.HydrateLinks())
+	content, errContent := discord.RenderTemplate("wiki_created", page, discord.HydrateLinks())
 	if errContent != nil {
 		return nil
 	}
@@ -24,7 +28,7 @@ func pageCreated(page Page) *discordgo.MessageSend {
 }
 
 func pageEdited(page Page, _ Page) *discordgo.MessageSend {
-	content, errContent := discord.Render("wiki_edited", templateBody, page, discord.HydrateLinks())
+	content, errContent := discord.RenderTemplate("wiki_edited", page, discord.HydrateLinks())
 	if errContent != nil {
 		return nil
 	}

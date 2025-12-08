@@ -13,6 +13,10 @@ import (
 //go:embed playerqueue_discord.tmpl
 var templateBody []byte
 
+func RegisterDiscordCommands(_ discord.Service) {
+	discord.MustRegisterTemplate(templateBody)
+}
+
 func NewPlayerqueueChatStatus(_ person.Info, target person.Info, status ChatStatus, reason string) *discordgo.MessageSend {
 	colour := discord.ColourError
 	switch status {
@@ -23,7 +27,7 @@ func NewPlayerqueueChatStatus(_ person.Info, target person.Info, status ChatStat
 	}
 
 	sid := target.GetSteamID()
-	content, err := discord.Render("chat_status_update", templateBody, struct {
+	content, err := discord.RenderTemplate("chat_status_update", struct {
 		Status  string
 		Reason  string
 		Name    string
@@ -49,7 +53,7 @@ func NewPlayerqueueChatStatus(_ person.Info, target person.Info, status ChatStat
 func NewPlayerqueuePurge(_ person.Info, target person.Info, chatLog ChatLog, count int) *discordgo.MessageSend {
 	sid := target.GetSteamID()
 
-	body, errBody := discord.Render("chat_purge", templateBody, struct {
+	body, errBody := discord.RenderTemplate("chat_purge", struct {
 		Message string
 		Count   int
 		Name    string
