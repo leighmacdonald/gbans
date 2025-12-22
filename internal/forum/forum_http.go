@@ -513,72 +513,17 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 			return
 		}
 
-		var message Message
-		if err := f.Message(ctx, forumMessageID, &message); err != nil {
-			if errors.Is(err, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, httphelper.ErrNotFound, "Forum message does not exist"))
-			} else {
+		currentUser, _ := session.CurrentUserProfile(ctx)
+		if err := f.MessageDelete(ctx, currentUser, forumMessageID); err != nil {
+			switch {
+			case errors.Is(err, database.ErrNoResult):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound, "Forum message does not exist"))
+			case errors.Is(err, ErrThreadLocked):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, ErrThreadLocked, "Thread is locked"))
+			case errors.Is(err, permission.ErrDenied):
+				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, ErrThreadLocked, "Permission denied"))
+			default:
 				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
-			}
-
-			return
-		}
-
-		var thread Thread
-		if err := f.Thread(ctx, message.ForumThreadID, &thread); err != nil {
-			if errors.Is(err, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, httphelper.ErrNotFound))
-			} else {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
-			}
-
-			return
-		}
-
-		if thread.Locked {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusForbidden, ErrThreadLocked))
-
-			return
-		}
-
-		messages, errMessage := f.Messages(ctx, ThreadMessagesQuery{ForumThreadID: message.ForumThreadID})
-		if errMessage != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errMessage, httphelper.ErrInternal)))
-
-			return
-		}
-
-		isThreadParent := messages[0].ForumMessageID == message.ForumMessageID
-
-		if isThreadParent { //nolint:nestif
-			if err := f.ThreadDelete(ctx, message.ForumThreadID); err != nil {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal)))
-
-				return
-			}
-
-			// Delete the thread if it's the first message
-			var forum Forum
-			if errForum := f.Forum(ctx, thread.ForumID, &forum); errForum != nil {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errForum, httphelper.ErrInternal)))
-
-				return
-			}
-
-			forum.CountThreads--
-
-			if errSave := f.ForumSave(ctx, &forum); errSave != nil {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
-
-				return
-			}
-
-			slog.Error("Thread deleted due to parent deletion", slog.Int64("forum_thread_id", thread.ForumThreadID))
-		} else {
-			if errDelete := f.MessageDelete(ctx, message.ForumMessageID); errDelete != nil {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDelete, httphelper.ErrInternal)))
-
-				return
 			}
 		}
 
@@ -631,12 +576,6 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 		newMessage := thread.NewMessage(currentUser.GetSteamID(), req.BodyMD)
 		if errSave := f.MessageSave(ctx, &newMessage); errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
-
-			return
-		}
-
-		if errIncr := f.ForumIncrMessageCount(ctx, thread.ForumID, true); errIncr != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errIncr, httphelper.ErrInternal)))
 
 			return
 		}

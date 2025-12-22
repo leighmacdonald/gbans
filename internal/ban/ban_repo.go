@@ -168,8 +168,7 @@ func (r *Repository) InsertCache(ctx context.Context, groupID steamid.SteamID, e
 }
 
 func (r *Repository) Stats(ctx context.Context, stats *Stats) error {
-	const sqlQuery = `
-	SELECT
+	const sqlQuery = `SELECT
 		(SELECT COUNT(ban_id) FROM ban) as bans_total,
 		(SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 DAY')) as bans_day,
 	    (SELECT COUNT(ban_id) FROM ban WHERE created_on >= (now() - INTERVAL '1 DAY')) as bans_week,

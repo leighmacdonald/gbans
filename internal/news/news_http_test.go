@@ -2,6 +2,7 @@ package news_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -16,9 +17,10 @@ var fixture *tests.Fixture //nolint:gochecknoglobals
 
 func TestMain(m *testing.M) {
 	fixture = tests.NewFixture()
-	defer fixture.Close()
+	code := m.Run()
+	fixture.Close()
 
-	m.Run()
+	os.Exit(code)
 }
 
 func TestNewsHTTP(t *testing.T) {

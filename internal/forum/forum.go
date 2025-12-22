@@ -13,8 +13,9 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -191,15 +192,15 @@ const (
 )
 
 type Forums struct {
-	repo    Repository
-	tracker *Tracker
-	persons person.Provider
-	notif   notification.Notifier
-	config  *config.Configuration
+	repo      Repository
+	tracker   *Tracker
+	persons   person.Provider
+	notif     notification.Notifier
+	channelID string
 }
 
-func New(repository Repository, config *config.Configuration, notif notification.Notifier, persons person.Provider) Forums {
-	return Forums{repo: repository, tracker: NewTracker(), config: config, notif: notif, persons: persons}
+func New(repository Repository, notif notification.Notifier, persons person.Provider, channelID string) Forums {
+	return Forums{repo: repository, tracker: NewTracker(), notif: notif, persons: persons, channelID: channelID}
 }
 
 func (f Forums) Start(ctx context.Context) {
@@ -231,7 +232,7 @@ func (f Forums) CategorySave(ctx context.Context, category *Category) error {
 		slog.Info("Forum category updated", slog.String("title", category.Title))
 	}
 
-	go f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategorySave(*category)))
+	go f.notif.Send(notification.NewDiscord(f.channelID, discordCategorySave(*category)))
 
 	return nil
 }
@@ -245,7 +246,7 @@ func (f Forums) CategoryDelete(ctx context.Context, category Category) error {
 		return err
 	}
 
-	go f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordCategoryDelete(category)))
+	go f.notif.Send(notification.NewDiscord(f.channelID, discordCategoryDelete(category)))
 	slog.Info("Forum category deleted", slog.String("category", category.Title), slog.Int("forum_category_id", category.ForumCategoryID))
 
 	return nil
@@ -262,7 +263,7 @@ func (f Forums) ForumSave(ctx context.Context, forum *Forum) error {
 		return err
 	}
 
-	f.notif.Send(notification.NewDiscord(f.config.Config().Discord.ForumLogChannelID, discordForumSaved(*forum)))
+	f.notif.Send(notification.NewDiscord(f.channelID, discordForumSaved(*forum)))
 
 	if isNew {
 		slog.Info("New forum created", slog.String("title", forum.Title))
@@ -371,11 +372,14 @@ func (f Forums) MessageSave(ctx context.Context, fMessage *Message) error {
 		return errAuthor
 	}
 
-	go f.notif.Send(notification.NewDiscord(
-		f.config.Config().Discord.ForumLogChannelID,
+	go f.notif.Send(notification.NewDiscord(f.channelID,
 		discordForumMessageSaved(parent, author, fMessage)))
 
 	if isNew {
+		if errIncr := f.ForumIncrMessageCount(ctx, parent.Forum.ForumID, true); errIncr != nil {
+			return errIncr
+		}
+
 		slog.Info("Created new forum message", slog.Int64("forum_thread_id", fMessage.ForumThreadID))
 	} else {
 		slog.Info("Forum message edited", slog.Int64("forum_thread_id", fMessage.ForumThreadID))
@@ -389,6 +393,10 @@ func (f Forums) RecentActivity(ctx context.Context, limit uint64, permissionLeve
 }
 
 func (f Forums) Message(ctx context.Context, messageID int64, forumMessage *Message) error {
+	if messageID <= 0 {
+		return database.ErrNoResult
+	}
+
 	return f.repo.ForumMessage(ctx, messageID, forumMessage)
 }
 
@@ -396,7 +404,56 @@ func (f Forums) Messages(ctx context.Context, filters ThreadMessagesQuery) ([]Me
 	return f.repo.ForumMessages(ctx, filters)
 }
 
-func (f Forums) MessageDelete(ctx context.Context, messageID int64) error {
+func (f Forums) MessageDelete(ctx context.Context, person person.Info, messageID int64) error {
+	var message Message
+	if err := f.Message(ctx, messageID, &message); err != nil {
+		return err
+	}
+
+	var thread Thread
+	if err := f.Thread(ctx, message.ForumThreadID, &thread); err != nil {
+		return err
+	}
+
+	if thread.Locked {
+		return ErrThreadLocked
+	}
+
+	if !httphelper.HasPrivilege(person, steamid.Collection{message.SourceID}, permission.Editor) {
+		return permission.ErrDenied
+	}
+
+	messages, errMessage := f.Messages(ctx, ThreadMessagesQuery{ForumThreadID: message.ForumThreadID})
+	if errMessage != nil {
+		return errMessage
+	}
+
+	isThreadParent := messages[0].ForumMessageID == message.ForumMessageID
+
+	if isThreadParent { //nolint:nestif
+		if err := f.ThreadDelete(ctx, message.ForumThreadID); err != nil {
+			return err
+		}
+
+		// Delete the thread if it's the first message
+		var forum Forum
+		if errForum := f.Forum(ctx, thread.ForumID, &forum); errForum != nil {
+			return errForum
+		}
+
+		forum.CountThreads--
+
+		if errSave := f.ForumSave(ctx, &forum); errSave != nil {
+			return errSave
+		}
+
+		slog.Error("Thread deleted due to parent deletion", slog.Int64("forum_thread_id", thread.ForumThreadID))
+	} else {
+		if errDelete := f.MessageDelete(ctx, person, message.ForumMessageID); errDelete != nil {
+			return errDelete
+		}
+	}
+
 	if err := f.repo.ForumMessageDelete(ctx, messageID); err != nil {
 		return err
 	}

@@ -59,7 +59,7 @@ type messageSaveView struct {
 func discordForumMessageSaved(parent parents, author person.Info, forumMessage *Message) *discordgo.MessageSend {
 	return discord.NewMessage(
 		discord.Heading("Forum Message Created/Edited"),
-		discord.BodyTextWithThumbnailT(discord.ColourSuccess,
+		discord.BodyTextWithThumbnail(discord.ColourSuccess,
 			discord.PlayerThumbnail(author), "forum_message_created", messageSaveView{
 				Parents: parent, Author: author, Msg: forumMessage,
 			}),

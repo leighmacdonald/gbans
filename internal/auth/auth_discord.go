@@ -11,23 +11,15 @@ type loginInfo struct {
 }
 
 func loginMessage(fetchedPerson personDomain.Info) *discordgo.MessageSend {
-	content, errContent := discord.RenderTemplate("login_info", loginInfo{Person: fetchedPerson})
-	if errContent != nil {
-		return nil
-	}
-
 	return discord.NewMessage(
 		discord.Heading("User logged in"),
-		discord.BodyTextWithThumbnail(discord.ColourInfo, discord.PlayerThumbnail(fetchedPerson), content))
+		discord.BodyTextWithThumbnail(discord.ColourInfo,
+			discord.PlayerThumbnail(fetchedPerson), "login_info", loginInfo{Person: fetchedPerson}))
 }
 
 func logoutMessage(fetchedPerson personDomain.Info) *discordgo.MessageSend {
-	content, errContent := discord.RenderTemplate("login_info", loginInfo{Person: fetchedPerson})
-	if errContent != nil {
-		return nil
-	}
-
 	return discord.NewMessage(
 		discord.Heading("User logged out"),
-		discord.BodyTextWithThumbnail(discord.ColourInfo, discord.PlayerThumbnail(fetchedPerson), content))
+		discord.BodyTextWithThumbnail(discord.ColourInfo,
+			discord.PlayerThumbnail(fetchedPerson), "login_info", loginInfo{Person: fetchedPerson}))
 }

@@ -2,6 +2,7 @@ package forum_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -16,16 +17,17 @@ var fixture *tests.Fixture //nolint:gochecknoglobals
 
 func TestMain(m *testing.M) {
 	fixture = tests.NewFixture()
-	defer fixture.Close()
+	retCode := m.Run()
+	fixture.Close()
 
-	m.Run()
+	os.Exit(retCode)
 }
 
 func TestCategories(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{}
 		router        = fixture.CreateRouter()
-		forumsUC      = forum.New(forum.NewRepository(fixture.Database), fixture.Config, notification.NewDiscard(), fixture.Persons)
+		forumsUC      = forum.New(forum.NewRepository(fixture.Database), notification.NewDiscard(), fixture.Persons, "")
 	)
 
 	forum.NewForumHandler(router, authenticator, forumsUC)
@@ -70,7 +72,7 @@ func TestForums(t *testing.T) {
 			Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator),
 		}
 		router   = fixture.CreateRouter()
-		forumsUC = forum.New(forum.NewRepository(fixture.Database), fixture.Config, notification.NewDiscard(), fixture.Persons)
+		forumsUC = forum.New(forum.NewRepository(fixture.Database), notification.NewDiscard(), fixture.Persons, "")
 	)
 
 	forum.NewForumHandler(router, authenticator, forumsUC)
@@ -107,7 +109,7 @@ func TestThreads(t *testing.T) {
 	var (
 		authenticator = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		router        = fixture.CreateRouter()
-		forumsUC      = forum.New(forum.NewRepository(fixture.Database), fixture.Config, notification.NewDiscard(), fixture.Persons)
+		forumsUC      = forum.New(forum.NewRepository(fixture.Database), notification.NewDiscard(), fixture.Persons, "")
 	)
 	forum.NewForumHandler(router, authenticator, forumsUC)
 

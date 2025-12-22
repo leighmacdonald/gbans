@@ -416,23 +416,19 @@ func createBanResponse(ban Ban, author person.Info, player person.Info) *discord
 		expAt = datetime.FmtTimeShort(ban.ValidUntil)
 	}
 
-	content, errContent := discord.RenderTemplate("ban_response", banResponseView{
-		Ban:           ban,
-		Player:        player,
-		Author:        author,
-		SteamIDAuthor: author.GetSteamIDString(),
-		SteamID:       player.GetSteamIDString(),
-		ExpIn:         expIn,
-		ExpAt:         expAt,
-	})
-	if errContent != nil {
-		slog.Error("Failed to render ban body", slog.String("error", errContent.Error()))
-
-		return nil
-	}
-
 	return discord.NewMessage(
-		discord.BodyTextWithThumbnail(discord.ColourError, discord.PlayerThumbnail(player), content),
+		discord.BodyTextWithThumbnail(discord.ColourError,
+			discord.PlayerThumbnail(player),
+			"ban_response",
+			banResponseView{
+				Ban:           ban,
+				Player:        player,
+				Author:        author,
+				SteamIDAuthor: author.GetSteamIDString(),
+				SteamID:       player.GetSteamIDString(),
+				ExpIn:         expIn,
+				ExpAt:         expAt,
+			}),
 		discord.Buttons(
 			discord.Button(discordgo.SuccessButton, "🗑️ Unban", fmt.Sprintf("ban_unban_button_resp_%d", ban.BanID)),
 			discord.Button(discordgo.SecondaryButton, "🔨 Edit", fmt.Sprintf("ban_edit_button_resp_%d", ban.BanID)),

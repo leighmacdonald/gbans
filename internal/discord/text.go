@@ -17,6 +17,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+//nolint:gochecknoglobals
 var (
 	templatedMutex sync.RWMutex
 	templates      *template.Template
@@ -142,20 +143,8 @@ func PlayerThumbnail(avatar AvatarProvider) discordgo.Thumbnail {
 	}
 }
 
-// BodyTextWithThumbnail renders a body with thumbnail
-// deprecated in favour of BodyTextWithThumbnailT.
-func BodyTextWithThumbnail(colour int, accessory discordgo.MessageComponent, content string) discordgo.Container {
-	return BodyColour(
-		colour,
-		discordgo.Section{
-			Components: []discordgo.MessageComponent{
-				discordgo.TextDisplay{Content: content},
-			},
-			Accessory: accessory,
-		})
-}
-
-func BodyTextWithThumbnailT(colour int, accessory discordgo.MessageComponent, template string, view any, textProcessor ...TextProcessor) discordgo.Container {
+// BodyTextWithThumbnail renders a template body with an accompanying thumbnail.
+func BodyTextWithThumbnail(colour int, accessory discordgo.MessageComponent, template string, view any, textProcessor ...TextProcessor) discordgo.Container {
 	content, err := RenderTemplate(template, view, textProcessor...)
 	if err != nil {
 		slog.Error("Failed to render template", slog.String("error", err.Error()))
