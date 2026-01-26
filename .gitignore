@@ -58,5 +58,6 @@ frontend/.tanstack
 TODO*
 *.csv
 __*
-
+.direnv
+*.dump
 result
