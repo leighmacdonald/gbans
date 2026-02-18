@@ -1,24 +1,24 @@
-import { ReactNode } from 'react';
-import Box from '@mui/material/Box';
+import Box from "@mui/material/Box";
+import type { ReactNode } from "react";
 
 export interface TabPanelProps {
-    children?: ReactNode;
-    index: number;
-    value: number;
+	children?: ReactNode;
+	index: number;
+	value: number;
 }
 
 export const TabPanel = (props: TabPanelProps) => {
-    const { children, value, index, ...other } = props;
+	const { children, value, index, ...other } = props;
 
-    return (
-        <div
-            role="tabpanel"
-            hidden={value !== index}
-            id={`tabpanel-${index}`}
-            aria-labelledby={`ab-${index}`}
-            {...other}
-        >
-            {value === index && <Box sx={{ p: 0 }}>{children}</Box>}
-        </div>
-    );
+	return (
+		<div
+			role="tabpanel"
+			hidden={value !== index}
+			id={`tabpanel-${index}`}
+			aria-labelledby={`ab-${index}`}
+			{...other}
+		>
+			{value === index && <Box sx={{ p: 0 }}>{children}</Box>}
+		</div>
+	);
 };

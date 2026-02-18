@@ -11,13 +11,17 @@ pkgs.mkShell {
   hardeningDisable = [ "fortify" ];
   buildInputs = with pkgs; [
     go_1_25
-    libpcap
-    gcc
+    # libpcap
+    # gcc
     golangci-lint
     goreleaser
-    gnumake
     nilaway
     nodejs_24
     pnpm_10
+    just
+    just-lsp
+    nil
+    nixd
+    govulncheck
   ];
 }

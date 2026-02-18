@@ -1,25 +1,29 @@
-import { NewsEntry } from '../schema/news.ts';
-import { transformTimeStampedDates, transformTimeStampedDatesList } from '../util/time.ts';
-import { apiCall } from './common';
+import type { NewsEntry } from "../schema/news.ts";
+import { transformTimeStampedDates, transformTimeStampedDatesList } from "../util/time.ts";
+import { apiCall } from "./common";
 
 export const apiGetNewsLatest = async (abortController?: AbortController) =>
-    transformTimeStampedDatesList(await apiCall<NewsEntry[]>(`/api/news_latest`, 'GET', undefined, abortController));
+	transformTimeStampedDatesList(await apiCall<NewsEntry[]>(`/api/news_latest`, "GET", undefined, abortController));
 
 export const apiGetNewsAll = async (abortController?: AbortController) =>
-    transformTimeStampedDatesList(await apiCall<NewsEntry[]>(`/api/news_all`, 'GET', undefined, abortController));
+	transformTimeStampedDatesList(await apiCall<NewsEntry[]>(`/api/news_all`, "GET", undefined, abortController));
 
 export const apiNewsCreate = async (title: string, body_md: string, is_published: boolean) =>
-    transformTimeStampedDates(
-        await apiCall<NewsEntry>(`/api/news`, 'POST', { title, body_md, is_published: is_published })
-    );
+	transformTimeStampedDates(
+		await apiCall<NewsEntry>(`/api/news`, "POST", {
+			title,
+			body_md,
+			is_published: is_published,
+		}),
+	);
 
 export const apiNewsSave = async (entry: NewsEntry) =>
-    transformTimeStampedDates(
-        await apiCall<NewsEntry>(`/api/news/${entry.news_id}`, 'POST', {
-            title: entry.title,
-            body_md: entry.body_md,
-            is_published: entry.is_published
-        })
-    );
+	transformTimeStampedDates(
+		await apiCall<NewsEntry>(`/api/news/${entry.news_id}`, "POST", {
+			title: entry.title,
+			body_md: entry.body_md,
+			is_published: entry.is_published,
+		}),
+	);
 
-export const apiNewsDelete = async (news_id: number) => await apiCall<NewsEntry>(`/api/news/${news_id}`, 'DELETE');
+export const apiNewsDelete = async (news_id: number) => await apiCall<NewsEntry>(`/api/news/${news_id}`, "DELETE");

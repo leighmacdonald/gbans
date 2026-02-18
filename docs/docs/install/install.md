@@ -65,7 +65,7 @@ instructions:
 Precompiled binaries will be provided once the project is in a more stable state. It's recommended to use the docker
 images as they are currently the only tested usecase.
 
-- [make](https://www.gnu.org/software/make/) Not strictly required but provides predefined build commands
+- [just](https://github.com/casey/just) Not strictly required but provides predefined build commands
 - [golang 1.24+](https://golang.org/) Version >=1.23 is required.
 - [PostgreSQL](https://www.postgresql.org/) Version 16 is the only version currently tested against. All non-EOL
   versions should be supported.
@@ -94,7 +94,7 @@ Build the projects, replace SM_ROOT with the path to your sourcemod installation
 cfg folders inside).
 
 ```shell
-SM_ROOT=~/sourcemod make
+SM_ROOT=~/sourcemod just
 ````
 
 You should now have a binary located at `./build/$platform/gbans`

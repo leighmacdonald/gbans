@@ -1,0 +1,29 @@
+all: install build
+
+install:
+    pnpm install --frozen-lockfile
+
+build:
+    pnpm run build
+
+watch:
+    pnpm run watch
+
+serve:
+    pnpm run serve
+
+update:
+    pnpm update -i
+
+test:
+    pnpm run test
+
+typecheck:
+    pnpm run typecheck
+
+lint:
+    pnpm run check
+
+clean:
+    rm -rf dist
+    rm -rf node_modules

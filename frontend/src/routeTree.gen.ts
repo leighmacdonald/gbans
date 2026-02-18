@@ -356,6 +356,7 @@ const AuthLogsSteamIdRoute = AuthLogsSteamIdRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof GuestIndexRoute
   '/chatlogs': typeof AuthChatlogsRoute
   '/forums': typeof AuthForumsRouteWithChildren
   '/logout': typeof AuthLogoutRoute
@@ -372,7 +373,6 @@ export interface FileRoutesByFullPath {
   '/servers': typeof GuestServersRoute
   '/stv': typeof GuestStvRoute
   '/wiki': typeof GuestWikiRouteWithChildren
-  '/': typeof GuestIndexRoute
   '/admin/game-admins': typeof AdminAdminGameAdminsRoute
   '/admin/servers': typeof AdminAdminServersRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
@@ -396,10 +396,10 @@ export interface FileRoutesByFullPath {
   '/forums/': typeof AuthForumsIndexRoute
   '/report/': typeof AuthReportIndexRoute
   '/stats/': typeof AuthStatsIndexRoute
-  '/login': typeof GuestLoginIndexRoute
-  '/speedruns': typeof GuestSpeedrunsIndexRoute
+  '/login/': typeof GuestLoginIndexRoute
+  '/speedruns/': typeof GuestSpeedrunsIndexRoute
   '/wiki/': typeof GuestWikiIndexRoute
-  '/logs/$steamId': typeof AuthLogsSteamIdRoute
+  '/logs/$steamId/': typeof AuthLogsSteamIdRoute
   '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForum_thread_idRoute
   '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeapon_idRoute
   '/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
@@ -408,9 +408,10 @@ export interface FileRoutesByFullPath {
   '/admin/network/ipInfo': typeof ModAdminNetworkIpInfoRoute
   '/admin/network/iphist': typeof ModAdminNetworkIphistRoute
   '/admin/network/playersbyip': typeof ModAdminNetworkPlayersbyipRoute
-  '/admin/network': typeof ModAdminNetworkIndexRoute
+  '/admin/network/': typeof ModAdminNetworkIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof GuestIndexRoute
   '/chatlogs': typeof AuthChatlogsRoute
   '/logout': typeof AuthLogoutRoute
   '/notifications': typeof AuthNotificationsRoute
@@ -423,7 +424,6 @@ export interface FileRoutesByTo {
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
   '/stv': typeof GuestStvRoute
-  '/': typeof GuestIndexRoute
   '/admin/game-admins': typeof AdminAdminGameAdminsRoute
   '/admin/servers': typeof AdminAdminServersRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
@@ -524,6 +524,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/chatlogs'
     | '/forums'
     | '/logout'
@@ -540,7 +541,6 @@ export interface FileRouteTypes {
     | '/servers'
     | '/stv'
     | '/wiki'
-    | '/'
     | '/admin/game-admins'
     | '/admin/servers'
     | '/admin/settings'
@@ -564,10 +564,10 @@ export interface FileRouteTypes {
     | '/forums/'
     | '/report/'
     | '/stats/'
-    | '/login'
-    | '/speedruns'
+    | '/login/'
+    | '/speedruns/'
     | '/wiki/'
-    | '/logs/$steamId'
+    | '/logs/$steamId/'
     | '/forums/thread/$forum_thread_id'
     | '/stats/weapon/$weapon_id'
     | '/speedruns/id/$speedrunId'
@@ -576,9 +576,10 @@ export interface FileRouteTypes {
     | '/admin/network/ipInfo'
     | '/admin/network/iphist'
     | '/admin/network/playersbyip'
-    | '/admin/network'
+    | '/admin/network/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/chatlogs'
     | '/logout'
     | '/notifications'
@@ -591,7 +592,6 @@ export interface FileRouteTypes {
     | '/privacy-policy'
     | '/servers'
     | '/stv'
-    | '/'
     | '/admin/game-admins'
     | '/admin/servers'
     | '/admin/settings'
@@ -701,28 +701,28 @@ declare module '@tanstack/react-router' {
     '/_mod': {
       id: '/_mod'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof ModRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_guest': {
       id: '/_guest'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof GuestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth': {
       id: '/_auth'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_admin': {
       id: '/_admin'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -855,14 +855,14 @@ declare module '@tanstack/react-router' {
     '/_guest/speedruns/': {
       id: '/_guest/speedruns/'
       path: '/speedruns'
-      fullPath: '/speedruns'
+      fullPath: '/speedruns/'
       preLoaderRoute: typeof GuestSpeedrunsIndexRouteImport
       parentRoute: typeof GuestRoute
     }
     '/_guest/login/': {
       id: '/_guest/login/'
       path: '/login'
-      fullPath: '/login'
+      fullPath: '/login/'
       preLoaderRoute: typeof GuestLoginIndexRouteImport
       parentRoute: typeof GuestRoute
     }
@@ -1030,7 +1030,7 @@ declare module '@tanstack/react-router' {
     '/_mod/admin/network/': {
       id: '/_mod/admin/network/'
       path: '/admin/network'
-      fullPath: '/admin/network'
+      fullPath: '/admin/network/'
       preLoaderRoute: typeof ModAdminNetworkIndexRouteImport
       parentRoute: typeof ModRoute
     }
@@ -1093,7 +1093,7 @@ declare module '@tanstack/react-router' {
     '/_auth/logs/$steamId/': {
       id: '/_auth/logs/$steamId/'
       path: '/logs/$steamId'
-      fullPath: '/logs/$steamId'
+      fullPath: '/logs/$steamId/'
       preLoaderRoute: typeof AuthLogsSteamIdRouteImport
       parentRoute: typeof AuthRoute
     }

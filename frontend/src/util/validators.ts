@@ -1,7 +1,7 @@
-import SteamID from 'steamid';
-import { apiGetProfile } from '../api';
-import { logErr } from './errors';
-import { emptyOrNullString } from './types';
+import SteamID from "steamid";
+import { apiGetProfile } from "../api";
+import { logErr } from "./errors";
+import { emptyOrNullString } from "./types";
 
 const profileIDRx = new RegExp(/https:\/\/steamcommunity.com\/profiles\/(\d+)\/?/);
 
@@ -23,69 +23,69 @@ const hasWhiteSpace = (s: string) => /\s/.test(s);
  * @param individualOnly Only consider ids belonging to individuals in public universe as valid
  */
 export const steamIDOrEmptyString = async (input: string, individualOnly: boolean = true) => {
-    const steamIdInput = input.trim();
+	const steamIdInput = input.trim();
 
-    if (emptyOrNullString(steamIdInput)) {
-        return '';
-    } else if (hasWhiteSpace(steamIdInput)) {
-        return '';
-    }
+	if (emptyOrNullString(steamIdInput)) {
+		return "";
+	} else if (hasWhiteSpace(steamIdInput)) {
+		return "";
+	}
 
-    let steamId = '';
+	let steamId = "";
 
-    // Initial basic check for bare steam ids
-    try {
-        const sid = new SteamID(steamId);
-        if (individualOnly ? sid.isValidIndividual() : sid.isValid()) {
-            return sid.getSteamID64();
-        }
-    } catch {
-        // ignored
-    }
+	// Initial basic check for bare steam ids
+	try {
+		const sid = new SteamID(steamId);
+		if (individualOnly ? sid.isValidIndividual() : sid.isValid()) {
+			return sid.getSteamID64();
+		}
+	} catch {
+		// ignored
+	}
 
-    // Check for vanity url and test it against api
-    const vanity = profileVanityRx.exec(steamIdInput);
-    if (vanity != null) {
-        try {
-            const resp = await apiGetProfile(vanity[1]);
-            steamId = resp.player.steam_id;
-        } catch (e) {
-            logErr(e);
-            return '';
-        }
-    }
+	// Check for vanity url and test it against api
+	const vanity = profileVanityRx.exec(steamIdInput);
+	if (vanity != null) {
+		try {
+			const resp = await apiGetProfile(vanity[1]);
+			steamId = resp.player.steam_id;
+		} catch (e) {
+			logErr(e);
+			return "";
+		}
+	}
 
-    // Check for steamid in profile url
-    if (steamId == '') {
-        const matches = profileIDRx.exec(steamIdInput);
-        if (matches != null) {
-            steamId = matches[1];
-        }
-    }
+	// Check for steamid in profile url
+	if (steamId === "") {
+		const matches = profileIDRx.exec(steamIdInput);
+		if (matches != null) {
+			steamId = matches[1];
+		}
+	}
 
-    // Attempt to verify as a vanity name if its bare string
-    if (steamId == '') {
-        try {
-            const resp = await apiGetProfile(steamIdInput);
-            steamId = resp.player.steam_id;
-        } catch (e) {
-            logErr(e);
-            return '';
-        }
-    }
+	// Attempt to verify as a vanity name if its bare string
+	if (steamId === "") {
+		try {
+			const resp = await apiGetProfile(steamIdInput);
+			steamId = resp.player.steam_id;
+		} catch (e) {
+			logErr(e);
+			return "";
+		}
+	}
 
-    // Validate any parsed steamid value
-    if (steamId != '') {
-        try {
-            const sid = new SteamID(steamId);
-            if (individualOnly ? sid.isValidIndividual() : sid.isValid()) {
-                return sid.getSteamID64();
-            }
-        } catch (e) {
-            logErr(e);
-            return '';
-        }
-    }
+	// Validate any parsed steamid value
+	if (steamId !== "") {
+		try {
+			const sid = new SteamID(steamId);
+			if (individualOnly ? sid.isValidIndividual() : sid.isValid()) {
+				return sid.getSteamID64();
+			}
+		} catch (e) {
+			logErr(e);
+			return "";
+		}
+	}
 
-    return steamId;
+	return steamId;
 };

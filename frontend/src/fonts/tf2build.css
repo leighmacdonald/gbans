@@ -1,14 +1,14 @@
 @font-face {
-    font-family: 'TF2 Build';
-    src: url('TF2Build.eot');
-    src:
-        local('TF2 Build'),
-        local('TF2Build'),
-        url('TF2Build.eot?#iefix') format('embedded-opentype'),
-        url('TF2Build.woff2') format('woff2'),
-        url('TF2Build.woff') format('woff'),
-        url('TF2Build.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
+	font-family: "TF2 Build";
+	src: url("TF2Build.eot");
+	src:
+		local("TF2 Build"),
+		local("TF2Build"),
+		url("TF2Build.eot?#iefix") format("embedded-opentype"),
+		url("TF2Build.woff2") format("woff2"),
+		url("TF2Build.woff") format("woff"),
+		url("TF2Build.ttf") format("truetype");
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
 }
