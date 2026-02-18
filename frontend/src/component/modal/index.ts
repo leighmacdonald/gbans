@@ -86,4 +86,5 @@ export const ModalQueueStatus = "modal-queue-status";
 	[ModalNewsEditor, NewsEditModal],
 ].map((value) => {
 	NiceModal.register(value[0] as string, value[1] as never);
+	return value;
 });

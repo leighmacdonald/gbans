@@ -166,9 +166,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 											</Stack>
 										</Stack>
 									</Stack>
-								) : (
-									<></>
-								)}
+								) : null}
 							</Grid>
 						</Grid>
 					);

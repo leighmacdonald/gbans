@@ -19,7 +19,6 @@ import { DataTable } from "./DataTable.tsx";
 type FullTableProps<T> = {
 	data: T[];
 	isLoading: boolean;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	columns: ColumnDef<T, any>[];
 	columnFilters?: ColumnFiltersState;
 	pagination: PaginationState;

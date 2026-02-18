@@ -21,7 +21,7 @@
 		"watch": "vite build --watch",
 		"serve": "vite --open",
 		"build": "vite build",
-		"format": "biome format --write",
+		"fmt": "biome format --write",
 		"check": "biome check  --write",
 		"ci": "biome ci",
 		"test": "vitest run",

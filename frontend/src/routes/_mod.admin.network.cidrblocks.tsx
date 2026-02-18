@@ -236,7 +236,7 @@ function AdminNetworkCIDRBlocks() {
 				title="Admin Network CIDR"
 				iconLeft={<WifiOffIcon />}
 				buttons={[
-					<ButtonGroup size={"small"}>
+					<ButtonGroup size={"small"} key={"heading-icons"}>
 						<Button
 							startIcon={<AddIcon />}
 							variant={"contained"}

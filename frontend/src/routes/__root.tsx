@@ -47,11 +47,11 @@ function Root() {
 		initialTheme ? initialTheme : prefersDarkMode ? "dark" : "light",
 	);
 
-	const updateMode = (prevMode: PaletteMode): PaletteMode => {
+	const updateMode = useCallback((prevMode: PaletteMode): PaletteMode => {
 		const m = prevMode === "light" ? "dark" : ("light" as PaletteMode);
 		localStorage.setItem("theme", m);
 		return m;
-	};
+	}, []);
 
 	const colorMode = useMemo(
 		() => ({

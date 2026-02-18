@@ -27,7 +27,7 @@ function Changelogs() {
 		<Grid container spacing={2}>
 			{!isLoading &&
 				(changelogs ?? []).map((changelog) => (
-					<Grid size={{ xs: 12 }}>
+					<Grid size={{ xs: 12 }} key={changelog.id}>
 						<ContainerWithHeader
 							title={
 								<Stack direction={"row"}>

@@ -17,7 +17,7 @@ export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
 	const sid = new SteamID(steam_id);
 
 	if (steam_id === "") {
-		return <></>;
+		return;
 	}
 
 	return (

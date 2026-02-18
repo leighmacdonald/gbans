@@ -102,9 +102,7 @@ export const ChatTable = ({
 						<Tooltip title={"Message already flagged"}>
 							<FlagIcon color={"error"} />
 						</Tooltip>
-					) : (
-						<></>
-					),
+					) : null,
 			},
 			{
 				id: "actions",

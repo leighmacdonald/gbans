@@ -555,9 +555,7 @@ const ConnectionsSection = ({
 							</Button>
 						</Grid>
 					)
-				) : (
-					<></>
-				)}
+				) : null}
 				{appInfo.discord_enabled ? (
 					!isLoading && user?.username ? (
 						<Grid size={{ xs: 12 }}>
@@ -583,9 +581,7 @@ const ConnectionsSection = ({
 							</Button>
 						</Grid>
 					)
-				) : (
-					<></>
-				)}
+				) : null}
 			</Grid>
 		</TabSection>
 	);

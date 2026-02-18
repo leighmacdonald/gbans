@@ -26,7 +26,7 @@ export const DesktopNotifications = ({
 			.filter((n) => n.person_notification_id > newest)
 			.map((n) => {
 				setNewest(n.person_notification_id);
-				new Notification("New Notification Received", {
+				return new Notification("New Notification Received", {
 					body: n.message,
 					// timestamp: Math.floor(n.created_on.getTime()), chrome only
 					silent: true,
@@ -36,5 +36,5 @@ export const DesktopNotifications = ({
 			});
 	}, [isLoading, newest, notifications]);
 
-	return <></>;
+	return null;
 };

@@ -25,7 +25,7 @@ import {
 	type RowSelectionState,
 	useReactTable,
 } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
 	apiGetNotifications,
 	apiNotificationsDelete,
@@ -71,13 +71,13 @@ function NotificationsPage() {
 		},
 	});
 
-	const selectedToIds = () => {
+	const selectedToIds = useCallback(() => {
 		if (!notifications) {
 			return [];
 		}
 
 		return Object.keys(rowSelection).map((s) => notifications[Number(s)].person_notification_id);
-	};
+	}, [notifications, rowSelection]);
 
 	const onMarkAllRead = useMutation({
 		mutationKey: ["notifications"],
@@ -143,7 +143,7 @@ function NotificationsPage() {
 		onError: sendError,
 	});
 
-	const onConfirmDeleteSelected = async () => {
+	const onConfirmDeleteSelected = useCallback(async () => {
 		const ids = selectedToIds();
 		if (ids?.length === 0) {
 			return;
@@ -156,9 +156,9 @@ function NotificationsPage() {
 			return;
 		}
 		onDeleteSelected.mutate(ids);
-	};
+	}, [onDeleteSelected, selectedToIds]);
 
-	const onConfirmDeleteAll = async () => {
+	const onConfirmDeleteAll = useCallback(async () => {
 		if (!notifications) {
 			return;
 		}
@@ -170,7 +170,8 @@ function NotificationsPage() {
 			return;
 		}
 		onDeleteAll.mutate();
-	};
+	}, [notifications, onDeleteAll]);
+
 	const newMessages = useMemo(() => {
 		return notifications?.filter((n) => !n.read).length;
 	}, [notifications]);

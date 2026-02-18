@@ -23,6 +23,7 @@ export const RenderedMarkdownBox = ({ bodyHTML, readonly, setEditMode }: Markdow
 						},
 					};
 				}}
+				// biome-ignore lint/security/noDangerouslySetInnerHtml: already sanitized when rendered
 				dangerouslySetInnerHTML={{ __html: bodyHTML }}
 			/>
 			{!readonly && (

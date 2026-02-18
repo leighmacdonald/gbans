@@ -9,6 +9,9 @@ build:
 watch:
     pnpm run watch
 
+fmt:
+    pnpm run fmt
+
 serve:
     pnpm run serve
 

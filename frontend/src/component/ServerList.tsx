@@ -41,17 +41,18 @@ export const ServerList = () => {
 		return selectedServers.map((s) => ({ ...s, copy: "", connect: "" }));
 	}, [selectedServers]);
 
-	const isQueued = (server_id: number) => {
-		try {
-			return Boolean(
-				lobbies.find((s) => s.server_id === server_id)?.members?.find((m) => m.steam_id === profile.steam_id),
-			);
-		} catch {
-			return false;
-		}
-	};
-
 	const columns = useMemo(() => {
+		const isQueued = (server_id: number) => {
+			try {
+				return Boolean(
+					lobbies
+						.find((s) => s.server_id === server_id)
+						?.members?.find((m) => m.steam_id === profile.steam_id),
+				);
+			} catch {
+				return false;
+			}
+		};
 		return [
 			columnHelper.accessor("cc", {
 				header: "CC",
@@ -180,10 +181,10 @@ export const ServerList = () => {
 		columnHelper.accessor,
 		columnHelper.display,
 		hasPermission,
-		isQueued,
 		joinQueue,
 		leaveQueue,
 		sendFlash,
+		profile.steam_id,
 	]);
 
 	const opts: TableOptions<ServerRow> = {

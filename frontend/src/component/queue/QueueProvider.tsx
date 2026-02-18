@@ -1,5 +1,5 @@
 import { useModal } from "@ebay/nice-modal-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import { type QueueRequest, websocketURL } from "../../api";
 import { useAuth } from "../../hooks/useAuth.ts";
@@ -53,6 +53,80 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
 		shouldReconnect: () => true,
 	});
 
+	const updateState = useCallback((state: ClientStatePayload) => {
+		if (state.update_users) {
+			setUsers(state.users);
+		}
+		if (state.update_servers) {
+			setLobbies(state.lobbies);
+		}
+	}, []);
+
+	const purgeMessages = useCallback((message_ids: number[]) => {
+		setMessages((prevState) => prevState.filter((m) => !message_ids.includes(m.message_id)));
+	}, []);
+
+	const startGame = useCallback(
+		async (gameStart: GameStartPayload) => {
+			const audio = new Audio(killsound.default);
+			try {
+				await audio.play();
+			} catch (e) {
+				logErr(e);
+			}
+
+			await modal.show({ gameStart });
+		},
+		[modal],
+	);
+
+	const handleIncomingOperation = useCallback(
+		async (request: QueueRequest<never>) => {
+			switch (request.op) {
+				case Operation.StateUpdate: {
+					updateState(request.payload as ClientStatePayload);
+					break;
+				}
+
+				case Operation.Message: {
+					setMessages((prev) => {
+						try {
+							const messages = (request.payload as MessagePayload).messages.map(transformCreatedOnDate);
+							let all = [...prev, ...messages];
+							if (all.length > 100) {
+								all = all.slice(all.length - 100, 100);
+							}
+							return all;
+						} catch (e) {
+							logErr(e);
+							return prev;
+						}
+					});
+					break;
+				}
+
+				case Operation.StartGame: {
+					await startGame(request.payload as GameStartPayload);
+					break;
+				}
+
+				case Operation.Purge: {
+					purgeMessages((request.payload as PurgePayload).message_ids);
+					break;
+				}
+				case Operation.ChatStatusChange: {
+					const pl = request.payload as ChatStatusChangePayload;
+					setChatStatus(pl.status);
+					if (pl.status === "noaccess") {
+						setMessages([]);
+					}
+					setReason(pl.reason);
+				}
+			}
+		},
+		[updateState, purgeMessages, startGame],
+	);
+
 	useEffect(() => {
 		switch (readyState) {
 			case ReadyState.OPEN:
@@ -95,74 +169,6 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
 		}
 		handleIncomingOperation(request).catch(logErr);
 	}, [lastJsonMessage, handleIncomingOperation]);
-
-	const handleIncomingOperation = async (request: QueueRequest<never>) => {
-		switch (request.op) {
-			case Operation.StateUpdate: {
-				updateState(request.payload as ClientStatePayload);
-				break;
-			}
-
-			case Operation.Message: {
-				setMessages((prev) => {
-					try {
-						const messages = (request.payload as MessagePayload).messages.map(transformCreatedOnDate);
-						let all = [...prev, ...messages];
-						if (all.length > 100) {
-							all = all.slice(all.length - 100, 100);
-						}
-						return all;
-					} catch (e) {
-						logErr(e);
-						return prev;
-					}
-				});
-				break;
-			}
-
-			case Operation.StartGame: {
-				await startGame(request.payload as GameStartPayload);
-				break;
-			}
-
-			case Operation.Purge: {
-				purgeMessages((request.payload as PurgePayload).message_ids);
-				break;
-			}
-			case Operation.ChatStatusChange: {
-				const pl = request.payload as ChatStatusChangePayload;
-				setChatStatus(pl.status);
-				if (pl.status === "noaccess") {
-					setMessages([]);
-				}
-				setReason(pl.reason);
-			}
-		}
-	};
-
-	const updateState = (state: ClientStatePayload) => {
-		if (state.update_users) {
-			setUsers(state.users);
-		}
-		if (state.update_servers) {
-			setLobbies(state.lobbies);
-		}
-	};
-
-	const purgeMessages = (message_ids: number[]) => {
-		setMessages((prevState) => prevState.filter((m) => !message_ids.includes(m.message_id)));
-	};
-
-	const startGame = async (gameStart: GameStartPayload) => {
-		const audio = new Audio(killsound.default);
-		try {
-			await audio.play();
-		} catch (e) {
-			logErr(e);
-		}
-
-		await modal.show({ gameStart });
-	};
 
 	const sendMessage = (body_md: string) => {
 		sendJsonMessage<QueueRequest<MessageCreatePayload>>({

@@ -31,6 +31,7 @@ export const getSpeedrun = async (speedrun_id: number): Promise<SpeedrunResult> 
 		p.players = p.players.sort((a, b) => {
 			return a.duration > b.duration ? 1 : -1;
 		});
+		return p;
 	});
 	return r;
 };
