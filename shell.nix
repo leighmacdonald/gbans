@@ -23,5 +23,6 @@ pkgs.mkShell {
     nil
     nixd
     govulncheck
+    zellij
   ];
 }

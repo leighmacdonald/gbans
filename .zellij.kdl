@@ -1,0 +1,18 @@
+layout {
+    pane split_direction="horizontal" {
+        pane command="just" {
+            args "db"
+        }
+
+        pane command="just" {
+            args "serve"
+        }
+
+        pane command="just" {
+            args "run_forever"
+        }
+    }
+    // pane size=1 borderless=true {
+    //     plugin location="zellij:compact-bar"
+    // }
+}
