@@ -8,15 +8,15 @@ type Props = {
 	label: string; // Make it required
 } & TextFieldProps;
 
-export const TextField = <TData = string>(props: Props) => {
-	const field = useFieldContext<TData>();
+export const TextField = (props: Props) => {
+	const field = useFieldContext<string>();
 	const errors = useStore(field.store, (state) => state.meta.errors);
 
 	return (
 		<MUITextField.default
 			{...props}
 			fullWidth
-			onChange={(e) => field.handleChange(e.target.value as TData)}
+			onChange={(e) => field.handleChange(e.target.value)}
 			defaultValue={field.state.value}
 			error={errors.length > 0}
 			helperText={renderHelpText(errors, props.helperText)}

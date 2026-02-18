@@ -7,7 +7,7 @@
 		"defaultBranch": "master"
 	},
 	"files": {
-		"includes": ["**", "!!**/dist"]
+		"includes": ["**", "!!**/dist", "!src/routeTree.gen.ts"]
 	},
 	"formatter": {
 		"enabled": true,
@@ -22,7 +22,8 @@
 			"recommended": true,
 			"a11y": "off",
 			"correctness": {
-				// TODO remove
+				// TODO tanstack form uses the children field using a function with argument, not a standard jsx component.
+				// https://github.com/biomejs/biome/discussions/3698
 				"noChildrenProp": "off"
 			}
 		},

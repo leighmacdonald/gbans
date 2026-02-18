@@ -12,7 +12,7 @@ import Stack from "@mui/material/Stack";
 import TableCell from "@mui/material/TableCell";
 import Typography from "@mui/material/Typography";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { createColumnHelper, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
@@ -35,6 +35,7 @@ import { PersonCell } from "../component/PersonCell.tsx";
 import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { VCenterBox } from "../component/VCenterBox.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { CIDRBlockSource, WhitelistIP, WhitelistSteam } from "../schema/network.ts";
 import { PermissionLevel } from "../schema/people.ts";
@@ -54,9 +55,7 @@ function AdminNetworkCIDRBlocks() {
 	const queryClient = useQueryClient();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const confirmModal = useModal(ModalConfirm);
-	const { hasPermission } = useRouteContext({
-		from: "/_mod/admin/network/cidrblocks",
-	});
+	const { hasPermission } = useAuth();
 
 	const { data: blockSources, isLoading: isLoadingBlockSources } = useQuery({
 		queryKey: ["networkBlockListSources"],
@@ -311,7 +310,7 @@ function AdminNetworkCIDRBlocks() {
 				title={"IP Whitelists"}
 				iconLeft={<PublicOffIcon />}
 				buttons={[
-					<ButtonGroup size={"small"}>
+					<ButtonGroup size={"small"} key="ip-whitelist-buttons">
 						<Button
 							startIcon={<AddIcon />}
 							variant={"contained"}
@@ -341,7 +340,7 @@ function AdminNetworkCIDRBlocks() {
 				title={"Steam Whitelists"}
 				iconLeft={<PersonOffIcon />}
 				buttons={[
-					<ButtonGroup size={"small"}>
+					<ButtonGroup size={"small"} key={"steam-whitelist-buttons"}>
 						<Button
 							startIcon={<AddIcon />}
 							variant={"contained"}

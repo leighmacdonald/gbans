@@ -30,7 +30,7 @@ import { checkFeatureEnabled } from "../util/features.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
 type RouterContext = {
-	auth: AuthContextProps;
+	auth?: AuthContextProps;
 	queryClient: QueryClient;
 };
 

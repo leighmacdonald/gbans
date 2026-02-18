@@ -12,7 +12,7 @@ import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { apiCreateThreadReply, apiDeleteMessage, apiGetThread, apiGetThreadMessages } from "../api/forum.ts";
 import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
@@ -24,6 +24,7 @@ import RouterLink from "../component/RouterLink.tsx";
 import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { ForumMessage, ForumThread } from "../schema/forum.ts";
 import { PermissionLevel } from "../schema/people.ts";
@@ -41,9 +42,7 @@ export const Route = createFileRoute("/_auth/forums/thread/$forum_thread_id")({
 });
 
 function ForumThreadPage() {
-	const { hasPermission, permissionLevel } = useRouteContext({
-		from: "/_auth/forums/thread/$forum_thread_id",
-	});
+	const { hasPermission, permissionLevel } = useAuth();
 	const { forum_thread_id } = Route.useParams();
 	const { pageIndex } = Route.useSearch();
 	const { sendFlash, sendError } = useUserFlashCtx();

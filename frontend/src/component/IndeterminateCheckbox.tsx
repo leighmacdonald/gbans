@@ -4,10 +4,11 @@ export function IndeterminateCheckbox({
 	indeterminate,
 	...rest
 }: { indeterminate?: boolean } & HTMLProps<HTMLInputElement>) {
-	const ref = useRef<HTMLInputElement>(null!);
+	const ref = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		if (typeof indeterminate === "boolean") {
+			if (!ref.current) return;
 			ref.current.indeterminate = !rest.checked && indeterminate;
 		}
 	}, [indeterminate, rest.checked]);

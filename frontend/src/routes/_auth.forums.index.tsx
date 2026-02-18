@@ -10,7 +10,7 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { apiGetForumOverview } from "../api/forum.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
@@ -25,6 +25,7 @@ import RouterLink from "../component/RouterLink.tsx";
 import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { Forum, ForumCategory } from "../schema/forum.ts";
 import { PermissionLevel } from "../schema/people.ts";
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/_auth/forums/")({
 });
 
 const CategoryBlock = ({ category }: { category: ForumCategory }) => {
-	const { hasPermission } = useRouteContext({ from: "/_auth/forums/" });
+	const { hasPermission } = useAuth();
 
 	const onEdit = useCallback(async () => {
 		try {
@@ -179,7 +180,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 function ForumOverview() {
 	const { sendFlash } = useUserFlashCtx();
 	const { appInfo } = useAppInfoCtx();
-	const { hasPermission } = useRouteContext({ from: "/_auth/forums/" });
+	const { hasPermission } = useAuth();
 	const { data: overview, isLoading } = useQuery({
 		queryKey: ["forumOverview"],
 		queryFn: async () => {

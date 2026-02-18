@@ -7,7 +7,7 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { fromUnixTime } from "date-fns";
 import { useMemo } from "react";
@@ -20,6 +20,7 @@ import { PersonCell } from "../component/PersonCell.tsx";
 import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import {
 	communityVisibilityState,
@@ -47,7 +48,7 @@ function AdminPeople() {
 	const { sendFlash } = useUserFlashCtx();
 	const defaultRows = RowsPerPage.TwentyFive;
 	const navigate = useNavigate({ from: Route.fullPath });
-	const { hasPermission } = useRouteContext({ from: "/_mod/admin/people" });
+	const { hasPermission } = useAuth();
 	const { steam_id, staff_only, pageIndex, persona_name, sortColumn, pageSize, sortOrder } = Route.useSearch();
 	const { data: people, isLoading } = useQuery({
 		queryKey: ["people", { pageSize, pageIndex, sortColumn, sortOrder, persona_name, steam_id }],
