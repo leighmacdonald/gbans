@@ -1,88 +1,88 @@
 .light-editor {
-    --accentBase: #dabdab;
-    --accentBgSubtle: var(--tomato-2);
-    --accentBg: #452c22;
-    --accentBgHover: #6a4535;
-    --accentBgActive: var(--tomato-5);
-    --accentLine: var(--tomato-6);
-    --accentBorder: var(--tomato-7);
-    --accentBorderHover: var(--tomato-8);
-    --accentSolid: var(--tomato-9);
-    --accentSolidHover: var(--tomato-10);
-    --accentText: #f5e7de;
-    --accentTextContrast: var(--tomato-12);
+	--accentBase: #dabdab;
+	--accentBgSubtle: var(--tomato-2);
+	--accentBg: #452c22;
+	--accentBgHover: #6a4535;
+	--accentBgActive: var(--tomato-5);
+	--accentLine: var(--tomato-6);
+	--accentBorder: var(--tomato-7);
+	--accentBorderHover: var(--tomato-8);
+	--accentSolid: var(--tomato-9);
+	--accentSolidHover: var(--tomato-10);
+	--accentText: #f5e7de;
+	--accentTextContrast: var(--tomato-12);
 
-    --baseBase: #395c78;
-    --baseBgSubtle: #395c78;
-    --baseBg: #dabdab;
-    --baseBgHover: #f5e7de;
-    --baseBgActive: #f5e7de;
-    --baseLine: var(--mauve-6);
-    --baseBorder: var(--mauve-7);
-    --baseBorderHover: var(--mauve-8);
-    --baseSolid: var(--mauve-9);
-    --baseSolidHover: var(--mauve-10);
-    --baseText: #34302d;
-    --baseTextContrast: #222;
+	--baseBase: #395c78;
+	--baseBgSubtle: #395c78;
+	--baseBg: #dabdab;
+	--baseBgHover: #f5e7de;
+	--baseBgActive: #f5e7de;
+	--baseLine: var(--mauve-6);
+	--baseBorder: var(--mauve-7);
+	--baseBorderHover: var(--mauve-8);
+	--baseSolid: var(--mauve-9);
+	--baseSolidHover: var(--mauve-10);
+	--baseText: #34302d;
+	--baseTextContrast: #222;
 
-    font-family: 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
-    --font-mono: ui-monospace, SFMono-Regular, Menlo, Mchonaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+	font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+	--font-mono: ui-monospace, SFMono-Regular, Menlo, Mchonaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-    color: #111;
-    --basePageBg: #dabdab;
-    line-height: 1;
+	color: #111;
+	--basePageBg: #dabdab;
+	line-height: 1;
 }
 
 .dark-editor {
-    --accentBase: var(--tomato-1);
-    --accentBgSubtle: var(--tomato-2);
-    --accentBg: #452c22;
-    --accentBgHover: var(--tomato-4);
-    --accentBgActive: var(--tomato-5);
-    --accentLine: var(--tomato-6);
-    --accentBorder: var(--tomato-7);
-    --accentBorderHover: var(--tomato-8);
-    --accentSolid: var(--tomato-9);
-    --accentSolidHover: var(--tomato-10);
-    --accentText: var(--tomato-11);
-    --accentTextContrast: var(--tomato-12);
+	--accentBase: var(--tomato-1);
+	--accentBgSubtle: var(--tomato-2);
+	--accentBg: #452c22;
+	--accentBgHover: var(--tomato-4);
+	--accentBgActive: var(--tomato-5);
+	--accentLine: var(--tomato-6);
+	--accentBorder: var(--tomato-7);
+	--accentBorderHover: var(--tomato-8);
+	--accentSolid: var(--tomato-9);
+	--accentSolidHover: var(--tomato-10);
+	--accentText: var(--tomato-11);
+	--accentTextContrast: var(--tomato-12);
 
-    --baseBase: #f5e7de;
-    --baseBgSubtle: #395c78;
-    --baseBg: #452c22;
-    --baseBgHover: #f5e7de;
-    --baseBgActive: #6a4535;
-    --baseLine: var(--mauve-6);
-    --baseBorder: var(--mauve-7);
-    --baseBorderHover: var(--mauve-8);
-    --baseSolid: var(--mauve-9);
-    --baseSolidHover: var(--mauve-10);
-    --baseText: var(--mauve-11);
-    --baseTextContrast: var(--mauve-12);
+	--baseBase: #f5e7de;
+	--baseBgSubtle: #395c78;
+	--baseBg: #452c22;
+	--baseBgHover: #f5e7de;
+	--baseBgActive: #6a4535;
+	--baseLine: var(--mauve-6);
+	--baseBorder: var(--mauve-7);
+	--baseBorderHover: var(--mauve-8);
+	--baseSolid: var(--mauve-9);
+	--baseSolidHover: var(--mauve-10);
+	--baseText: var(--mauve-11);
+	--baseTextContrast: var(--mauve-12);
 
-    color: #f5e7de;
-    --basePageBg: #452c22;
-    line-height: 1;
+	color: #f5e7de;
+	--basePageBg: #452c22;
+	line-height: 1;
 }
 
 .mdxeditor-root-contenteditable-dark {
-    background-color: #452c22;
+	background-color: #452c22;
 }
 .mdxeditor-root-contenteditable-light {
-    background-color: #dabdab;
+	background-color: #dabdab;
 }
 .mdxeditor-popup-container {
-    z-index: 1600;
+	z-index: 1600;
 }
 
 .md-content-editable {
-    line-height: 1rem;
-    min-height: 500px;
-    overflow-y: auto;
-    overflow-x: auto;
+	line-height: 1rem;
+	min-height: 500px;
+	overflow-y: auto;
+	overflow-x: auto;
 
-    img {
-        max-width: 100%;
-        max-height: 100%;
-    }
+	img {
+		max-width: 100%;
+		max-height: 100%;
+	}
 }

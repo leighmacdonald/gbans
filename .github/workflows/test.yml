@@ -40,15 +40,21 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: "frontend/pnpm-lock.yaml"
 
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+
+      - name: Run Biome
+        working-directory: ./frontend
+        run: biome ci .
+
       - name: Install modules
         working-directory: ./frontend
         run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
-      - name: Prettier
-        run: make lint_ts
-
       - name: TypeScript
-        run: make typecheck_ts
+        run: just typecheck_ts
 
   lint-golangci:
     runs-on: ubuntu-latest
@@ -74,7 +80,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Backend tests
-        run: make test-go
+        run: just test-go
 
   frontend-test:
     needs: [lint-ts]
@@ -101,4 +107,4 @@ jobs:
         run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
       - name: Frontend tests
-        run: make test-ts
+        run: just test-ts

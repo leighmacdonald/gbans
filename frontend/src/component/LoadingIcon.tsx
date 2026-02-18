@@ -1,5 +1,5 @@
-import CircularProgress from '@mui/material/CircularProgress';
+import CircularProgress from "@mui/material/CircularProgress";
 
 export const LoadingIcon = () => {
-    return <CircularProgress sx={{ color: 'text.primary' }} size={20} />;
+	return <CircularProgress sx={{ color: "text.primary" }} size={20} />;
 };

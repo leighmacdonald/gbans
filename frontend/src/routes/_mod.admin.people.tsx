@@ -1,280 +1,283 @@
-import { useMemo } from 'react';
-import NiceModal from '@ebay/nice-modal-react';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
-import ButtonGroup from '@mui/material/ButtonGroup';
-import Grid from '@mui/material/Grid';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { fromUnixTime } from 'date-fns';
-import { z } from 'zod/v4';
-import { apiSearchPeople } from '../api';
-import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { PersonCell } from '../component/PersonCell.tsx';
-import { Title } from '../component/Title';
-import { Paginator } from '../component/forum/Paginator.tsx';
-import { ModalPersonEditor } from '../component/modal';
-import { DataTable } from '../component/table/DataTable.tsx';
-import { useAppForm } from '../contexts/formContext.tsx';
-import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import NiceModal from "@ebay/nice-modal-react";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import ButtonGroup from "@mui/material/ButtonGroup";
+import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate, useRouteContext } from "@tanstack/react-router";
+import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { fromUnixTime } from "date-fns";
+import { useMemo } from "react";
+import { z } from "zod/v4";
+import { apiSearchPeople } from "../api";
+import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
+import { Paginator } from "../component/forum/Paginator.tsx";
+import { ModalPersonEditor } from "../component/modal";
+import { PersonCell } from "../component/PersonCell.tsx";
+import { Title } from "../component/Title";
+import { DataTable } from "../component/table/DataTable.tsx";
+import { useAppForm } from "../contexts/formContext.tsx";
+import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import {
-    communityVisibilityState,
-    PermissionLevel,
-    PermissionLevelEnum,
-    permissionLevelString,
-    Person
-} from '../schema/people.ts';
-import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
-import { renderDate, renderDateTime } from '../util/time.ts';
+	communityVisibilityState,
+	PermissionLevel,
+	type PermissionLevelEnum,
+	type Person,
+	permissionLevelString,
+} from "../schema/people.ts";
+import { commonTableSearchSchema, type LazyResult, RowsPerPage } from "../util/table.ts";
+import { renderDate, renderDateTime } from "../util/time.ts";
 
 const peopleSearchSchema = commonTableSearchSchema.extend({
-    sortColumn: z.enum(['vac_bans', 'steam_id', 'time_created', 'persona_name', 'created_on']).optional(),
-    steam_id: z.string().catch(''),
-    persona_name: z.string().catch(''),
-    staff_only: z.boolean().catch(false)
+	sortColumn: z.enum(["vac_bans", "steam_id", "time_created", "persona_name", "created_on"]).optional(),
+	steam_id: z.string().catch(""),
+	persona_name: z.string().catch(""),
+	staff_only: z.boolean().catch(false),
 });
 
-export const Route = createFileRoute('/_mod/admin/people')({
-    component: AdminPeople,
-    validateSearch: (search) => peopleSearchSchema.parse(search)
+export const Route = createFileRoute("/_mod/admin/people")({
+	component: AdminPeople,
+	validateSearch: (search) => peopleSearchSchema.parse(search),
 });
 
 function AdminPeople() {
-    const { sendFlash } = useUserFlashCtx();
-    const defaultRows = RowsPerPage.TwentyFive;
-    const navigate = useNavigate({ from: Route.fullPath });
-    const { hasPermission } = useRouteContext({ from: '/_mod/admin/people' });
-    const { steam_id, staff_only, pageIndex, persona_name, sortColumn, pageSize, sortOrder } = Route.useSearch();
-    const { data: people, isLoading } = useQuery({
-        queryKey: ['people', { pageSize, pageIndex, sortColumn, sortOrder, persona_name, steam_id }],
-        queryFn: async () => {
-            return await apiSearchPeople({
-                personaname: persona_name ?? '',
-                desc: (sortOrder ?? 'desc') == 'desc',
-                offset: (pageIndex ?? 0) * (pageSize ?? defaultRows),
-                limit: pageSize ?? defaultRows,
-                staff_only: staff_only ?? false,
-                order_by: sortColumn ?? 'created_on',
-                target_id: steam_id ?? '',
-                ip: ''
-            });
-        }
-    });
+	const { sendFlash } = useUserFlashCtx();
+	const defaultRows = RowsPerPage.TwentyFive;
+	const navigate = useNavigate({ from: Route.fullPath });
+	const { hasPermission } = useRouteContext({ from: "/_mod/admin/people" });
+	const { steam_id, staff_only, pageIndex, persona_name, sortColumn, pageSize, sortOrder } = Route.useSearch();
+	const { data: people, isLoading } = useQuery({
+		queryKey: ["people", { pageSize, pageIndex, sortColumn, sortOrder, persona_name, steam_id }],
+		queryFn: async () => {
+			return await apiSearchPeople({
+				personaname: persona_name ?? "",
+				desc: (sortOrder ?? "desc") === "desc",
+				offset: (pageIndex ?? 0) * (pageSize ?? defaultRows),
+				limit: pageSize ?? defaultRows,
+				staff_only: staff_only ?? false,
+				order_by: sortColumn ?? "created_on",
+				target_id: steam_id ?? "",
+				ip: "",
+			});
+		},
+	});
 
-    const onEditPerson = async (person: Person) => {
-        try {
-            await NiceModal.show<Person>(ModalPersonEditor, {
-                person
-            });
-            sendFlash('success', 'Updated permission level successfully');
-        } catch (e) {
-            sendFlash('error', `${e}`);
-        }
-    };
+	const onEditPerson = async (person: Person) => {
+		try {
+			await NiceModal.show<Person>(ModalPersonEditor, {
+				person,
+			});
+			sendFlash("success", "Updated permission level successfully");
+		} catch (e) {
+			sendFlash("error", `${e}`);
+		}
+	};
 
-    const form = useAppForm({
-        onSubmit: async ({ value }) => {
-            await navigate({ to: '/admin/people', search: (prev) => ({ ...prev, ...value }) });
-        },
-        validators: {
-            onChange: z.object({
-                steam_id: z.string(),
-                persona_name: z.string(),
-                staff_only: z.boolean()
-            })
-        },
-        defaultValues: {
-            steam_id: steam_id ?? '',
-            persona_name: persona_name ?? '',
-            staff_only: staff_only ?? false
-        }
-    });
+	const form = useAppForm({
+		onSubmit: async ({ value }) => {
+			await navigate({
+				to: "/admin/people",
+				search: (prev) => ({ ...prev, ...value }),
+			});
+		},
+		validators: {
+			onChange: z.object({
+				steam_id: z.string(),
+				persona_name: z.string(),
+				staff_only: z.boolean(),
+			}),
+		},
+		defaultValues: {
+			steam_id: steam_id ?? "",
+			persona_name: persona_name ?? "",
+			staff_only: staff_only ?? false,
+		},
+	});
 
-    const clear = async () => {
-        await navigate({
-            to: '/admin/people',
-            search: (prev) => ({ ...prev, steam_id: '', personaname: '' })
-        });
-    };
+	const clear = async () => {
+		await navigate({
+			to: "/admin/people",
+			search: (prev) => ({ ...prev, steam_id: "", personaname: "" }),
+		});
+	};
 
-    return (
-        <Grid container spacing={2}>
-            <Title>People</Title>
-            <Grid size={{ xs: 12 }}>
-                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
-                    <form
-                        onSubmit={async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            await form.handleSubmit();
-                        }}
-                    >
-                        <Grid container spacing={2}>
-                            <Grid size={{ xs: 6, md: 4 }}>
-                                <form.AppField
-                                    name={'steam_id'}
-                                    children={(field) => {
-                                        return <field.SteamIDField label={'Steam ID'} />;
-                                    }}
-                                />
-                            </Grid>
+	return (
+		<Grid container spacing={2}>
+			<Title>People</Title>
+			<Grid size={{ xs: 12 }}>
+				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
+					<form
+						onSubmit={async (e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							await form.handleSubmit();
+						}}
+					>
+						<Grid container spacing={2}>
+							<Grid size={{ xs: 6, md: 4 }}>
+								<form.AppField
+									name={"steam_id"}
+									children={(field) => {
+										return <field.SteamIDField label={"Steam ID"} />;
+									}}
+								/>
+							</Grid>
 
-                            <Grid size={{ xs: 6, md: 4 }}>
-                                <form.AppField
-                                    name={'persona_name'}
-                                    children={(field) => {
-                                        return <field.TextField label={'Name'} />;
-                                    }}
-                                />
-                            </Grid>
+							<Grid size={{ xs: 6, md: 4 }}>
+								<form.AppField
+									name={"persona_name"}
+									children={(field) => {
+										return <field.TextField label={"Name"} />;
+									}}
+								/>
+							</Grid>
 
-                            <Grid size={{ xs: 6, md: 4 }}>
-                                <form.AppField
-                                    name={'staff_only'}
-                                    children={(field) => {
-                                        return <field.CheckboxField label={'Staff Only'} />;
-                                    }}
-                                />
-                            </Grid>
+							<Grid size={{ xs: 6, md: 4 }}>
+								<form.AppField
+									name={"staff_only"}
+									children={(field) => {
+										return <field.CheckboxField label={"Staff Only"} />;
+									}}
+								/>
+							</Grid>
 
-                            <Grid size={{ xs: 12 }}>
-                                <form.AppForm>
-                                    <ButtonGroup>
-                                        <form.ClearButton onClick={clear} />
-                                        <form.ResetButton />
-                                        <form.SubmitButton />
-                                    </ButtonGroup>
-                                </form.AppForm>
-                            </Grid>
-                        </Grid>
-                    </form>
-                </ContainerWithHeader>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-                <ContainerWithHeader title={'Player Search'} iconLeft={<PersonSearchIcon />}>
-                    <PeopleTable
-                        people={people ?? { data: [], count: 0 }}
-                        isLoading={isLoading}
-                        isAdmin={hasPermission(PermissionLevel.Admin)}
-                        onEditPerson={onEditPerson}
-                    />
-                    <Paginator
-                        page={pageIndex ?? 0}
-                        rows={pageSize ?? defaultRows}
-                        data={people}
-                        path={'/admin/people'}
-                    />
-                </ContainerWithHeader>
-            </Grid>
-        </Grid>
-    );
+							<Grid size={{ xs: 12 }}>
+								<form.AppForm>
+									<ButtonGroup>
+										<form.ClearButton onClick={clear} />
+										<form.ResetButton />
+										<form.SubmitButton />
+									</ButtonGroup>
+								</form.AppForm>
+							</Grid>
+						</Grid>
+					</form>
+				</ContainerWithHeader>
+			</Grid>
+			<Grid size={{ xs: 12 }}>
+				<ContainerWithHeader title={"Player Search"} iconLeft={<PersonSearchIcon />}>
+					<PeopleTable
+						people={people ?? { data: [], count: 0 }}
+						isLoading={isLoading}
+						isAdmin={hasPermission(PermissionLevel.Admin)}
+						onEditPerson={onEditPerson}
+					/>
+					<Paginator
+						page={pageIndex ?? 0}
+						rows={pageSize ?? defaultRows}
+						data={people}
+						path={"/admin/people"}
+					/>
+				</ContainerWithHeader>
+			</Grid>
+		</Grid>
+	);
 }
 
 const PeopleTable = ({
-    people,
-    isLoading,
-    isAdmin,
-    onEditPerson
+	people,
+	isLoading,
+	isAdmin,
+	onEditPerson,
 }: {
-    people: LazyResult<Person>;
-    isLoading: boolean;
-    isAdmin: boolean;
-    onEditPerson: (person: Person) => Promise<void>;
+	people: LazyResult<Person>;
+	isLoading: boolean;
+	isAdmin: boolean;
+	onEditPerson: (person: Person) => Promise<void>;
 }) => {
-    const columns = useMemo<ColumnDef<Person>[]>(
-        () => [
-            {
-                accessorKey: 'source_id',
-                header: 'Profile',
-                cell: (info) => {
-                    return typeof people.data[info.row.index] === 'undefined' ? (
-                        ''
-                    ) : (
-                        <PersonCell
-                            showCopy={true}
-                            steam_id={people.data[info.row.index].steam_id}
-                            personaname={people.data[info.row.index].persona_name}
-                            avatar_hash={people.data[info.row.index].avatar_hash}
-                        />
-                    );
-                }
-            },
-            {
-                accessorKey: 'communityvisibilitystate',
-                header: 'Visibility',
-                size: 50,
-                cell: (info) => (
-                    <Typography variant={'body1'}>
-                        {info.getValue() == communityVisibilityState.Public ? 'Public' : 'Private'}
-                    </Typography>
-                )
-            },
-            {
-                accessorKey: 'vac_bans',
-                header: 'Vac Ban',
-                size: 50,
-                cell: (info) => <Typography variant={'body1'}>{info.getValue() ? 'Yes' : 'No'}</Typography>
-            },
-            {
-                accessorKey: 'community_banned',
-                header: 'Comm. Ban',
-                size: 50,
-                cell: (info) => <Typography variant={'body1'}>{info.getValue() ? 'Yes' : 'No'}</Typography>
-            },
-            {
-                accessorKey: 'time_created',
-                header: 'Account Created',
-                size: 100,
-                cell: (info) => <Typography>{renderDate(fromUnixTime(info.getValue() as number))}</Typography>
-            },
-            {
-                accessorKey: 'created_on',
-                header: 'First Seen',
-                size: 100,
-                cell: (info) => <Typography>{renderDateTime(info.getValue() as Date)}</Typography>
-            },
-            {
-                accessorKey: 'permission_level',
-                header: 'Perms',
-                size: 80,
-                cell: (info) => (
-                    <Typography>
-                        {permissionLevelString(
-                            info.row.original
-                                ? info.row.original.permission_level
-                                : (PermissionLevel.Guest as PermissionLevelEnum)
-                        )}
-                    </Typography>
-                )
-            },
-            {
-                id: 'actions',
-                header: 'Edit',
-                size: 30,
-                cell: (info) => {
-                    return isAdmin ? (
-                        <IconButton color={'warning'} onClick={() => onEditPerson(info.row.original)}>
-                            <VpnKeyIcon />
-                        </IconButton>
-                    ) : (
-                        <></>
-                    );
-                }
-            }
-        ],
-        [isAdmin, onEditPerson, people.data]
-    );
-    const table = useReactTable({
-        data: people.data,
-        columns: columns,
-        getCoreRowModel: getCoreRowModel(),
-        manualPagination: true,
-        autoResetPageIndex: true
-    });
+	const columns = useMemo<ColumnDef<Person>[]>(
+		() => [
+			{
+				accessorKey: "source_id",
+				header: "Profile",
+				cell: (info) => {
+					return typeof people.data[info.row.index] === "undefined" ? (
+						""
+					) : (
+						<PersonCell
+							showCopy={true}
+							steam_id={people.data[info.row.index].steam_id}
+							personaname={people.data[info.row.index].persona_name}
+							avatar_hash={people.data[info.row.index].avatar_hash}
+						/>
+					);
+				},
+			},
+			{
+				accessorKey: "communityvisibilitystate",
+				header: "Visibility",
+				size: 50,
+				cell: (info) => (
+					<Typography variant={"body1"}>
+						{info.getValue() === communityVisibilityState.Public ? "Public" : "Private"}
+					</Typography>
+				),
+			},
+			{
+				accessorKey: "vac_bans",
+				header: "Vac Ban",
+				size: 50,
+				cell: (info) => <Typography variant={"body1"}>{info.getValue() ? "Yes" : "No"}</Typography>,
+			},
+			{
+				accessorKey: "community_banned",
+				header: "Comm. Ban",
+				size: 50,
+				cell: (info) => <Typography variant={"body1"}>{info.getValue() ? "Yes" : "No"}</Typography>,
+			},
+			{
+				accessorKey: "time_created",
+				header: "Account Created",
+				size: 100,
+				cell: (info) => <Typography>{renderDate(fromUnixTime(info.getValue() as number))}</Typography>,
+			},
+			{
+				accessorKey: "created_on",
+				header: "First Seen",
+				size: 100,
+				cell: (info) => <Typography>{renderDateTime(info.getValue() as Date)}</Typography>,
+			},
+			{
+				accessorKey: "permission_level",
+				header: "Perms",
+				size: 80,
+				cell: (info) => (
+					<Typography>
+						{permissionLevelString(
+							info.row.original
+								? info.row.original.permission_level
+								: (PermissionLevel.Guest as PermissionLevelEnum),
+						)}
+					</Typography>
+				),
+			},
+			{
+				id: "actions",
+				header: "Edit",
+				size: 30,
+				cell: (info) => {
+					return isAdmin ? (
+						<IconButton color={"warning"} onClick={() => onEditPerson(info.row.original)}>
+							<VpnKeyIcon />
+						</IconButton>
+					) : (
+						<></>
+					);
+				},
+			},
+		],
+		[isAdmin, onEditPerson, people.data],
+	);
+	const table = useReactTable({
+		data: people.data,
+		columns: columns,
+		getCoreRowModel: getCoreRowModel(),
+		manualPagination: true,
+		autoResetPageIndex: true,
+	});
 
-    return <DataTable table={table} isLoading={isLoading} />;
+	return <DataTable table={table} isLoading={isLoading} />;
 };

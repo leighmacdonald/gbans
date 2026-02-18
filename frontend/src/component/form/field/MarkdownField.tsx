@@ -1,54 +1,54 @@
-import { createRef, useMemo } from 'react';
 import {
-    AdmonitionDirectiveDescriptor,
-    BoldItalicUnderlineToggles,
-    codeBlockPlugin,
-    CodeToggle,
-    directivesPlugin,
-    frontmatterPlugin,
-    imagePlugin,
-    InsertImage,
-    InsertTable,
-    InsertThematicBreak,
-    linkDialogPlugin,
-    linkPlugin,
-    listsPlugin,
-    ListsToggle,
-    MDXEditor,
-    MDXEditorMethods,
-    quotePlugin,
-    tablePlugin,
-    thematicBreakPlugin,
-    toolbarPlugin,
-    UndoRedo
-} from '@mdxeditor/editor';
-import { headingsPlugin } from '@mdxeditor/editor';
-import '@mdxeditor/editor/style.css';
-import FormHelperText from '@mui/material/FormHelperText';
-import Stack from '@mui/material/Stack';
-import { TextFieldProps } from '@mui/material/TextField';
-import { useTheme } from '@mui/material/styles';
-import * as Sentry from '@sentry/react';
-import { useStore } from '@tanstack/react-form';
-import { apiSaveAsset, assetURL } from '../../../api/media.ts';
-import { useFieldContext } from '../../../contexts/formContext.tsx';
-import { useUserFlashCtx } from '../../../hooks/useUserFlashCtx.ts';
-import { logErr } from '../../../util/errors.ts';
-import { errorDialog } from '../../ErrorBoundary.tsx';
-import './MarkdownField.css';
-import { renderHelpText } from './renderHelpText.ts';
+	AdmonitionDirectiveDescriptor,
+	BoldItalicUnderlineToggles,
+	CodeToggle,
+	codeBlockPlugin,
+	directivesPlugin,
+	frontmatterPlugin,
+	headingsPlugin,
+	InsertImage,
+	InsertTable,
+	InsertThematicBreak,
+	imagePlugin,
+	ListsToggle,
+	linkDialogPlugin,
+	linkPlugin,
+	listsPlugin,
+	MDXEditor,
+	type MDXEditorMethods,
+	quotePlugin,
+	tablePlugin,
+	thematicBreakPlugin,
+	toolbarPlugin,
+	UndoRedo,
+} from "@mdxeditor/editor";
+import { createRef, useMemo } from "react";
+import "@mdxeditor/editor/style.css";
+import FormHelperText from "@mui/material/FormHelperText";
+import Stack from "@mui/material/Stack";
+import { useTheme } from "@mui/material/styles";
+import type { TextFieldProps } from "@mui/material/TextField";
+import * as Sentry from "@sentry/react";
+import { useStore } from "@tanstack/react-form";
+import { apiSaveAsset, assetURL } from "../../../api/media.ts";
+import { useFieldContext } from "../../../contexts/formContext.tsx";
+import { useUserFlashCtx } from "../../../hooks/useUserFlashCtx.ts";
+import { logErr } from "../../../util/errors.ts";
+import { errorDialog } from "../../ErrorBoundary.tsx";
+import "./MarkdownField.css";
+import { renderHelpText } from "./renderHelpText.ts";
 
 export type MDBodyFieldProps = {
-    fileUpload?: boolean;
-    minHeight?: number;
-    rows?: number;
-    label: string;
-    placeholder?: string;
+	fileUpload?: boolean;
+	minHeight?: number;
+	rows?: number;
+	label: string;
+	placeholder?: string;
 } & TextFieldProps;
 
 const imageUploadHandler = async (media: File) => {
-    const resp = await apiSaveAsset(media);
-    return assetURL(resp);
+	const resp = await apiSaveAsset(media);
+	return assetURL(resp);
 };
 
 /**
@@ -65,78 +65,78 @@ export const mdEditorRef = createRef<MDXEditorMethods>();
  *
  */
 export const MarkdownField = (props: MDBodyFieldProps) => {
-    const field = useFieldContext<string>();
-    const errors = useStore(field.store, (state) => state.meta.errors);
+	const field = useFieldContext<string>();
+	const errors = useStore(field.store, (state) => state.meta.errors);
 
-    const { sendFlash } = useUserFlashCtx();
-    const theme = useTheme();
+	const { sendFlash } = useUserFlashCtx();
+	const theme = useTheme();
 
-    const onError = (payload: { error: string; source: string }) => {
-        logErr(payload);
-        sendFlash('error', payload.error);
-    };
+	const onError = (payload: { error: string; source: string }) => {
+		logErr(payload);
+		sendFlash("error", payload.error);
+	};
 
-    const classes = useMemo(() => {
-        if (theme.mode == 'dark') {
-            return 'dark-theme md-editor dark-editor mdxeditor-root-contenteditable-dark';
-        } else {
-            return 'md-editor light-editor mdxeditor-root-contenteditable-light';
-        }
-    }, [theme.mode]);
+	const classes = useMemo(() => {
+		if (theme.mode === "dark") {
+			return "dark-theme md-editor dark-editor mdxeditor-root-contenteditable-dark";
+		} else {
+			return "md-editor light-editor mdxeditor-root-contenteditable-light";
+		}
+	}, [theme.mode]);
 
-    const errInfo = useMemo(() => {
-        return (
-            <FormHelperText error={errors.length > 0}>
-                {renderHelpText(errors, 'Editor supports markdown only, no bbcode or html tags.')}
-            </FormHelperText>
-        );
-    }, [errors]);
+	const errInfo = useMemo(() => {
+		return (
+			<FormHelperText error={errors.length > 0}>
+				{renderHelpText(errors, "Editor supports markdown only, no bbcode or html tags.")}
+			</FormHelperText>
+		);
+	}, [errors]);
 
-    return (
-        <Sentry.ErrorBoundary showDialog={true} fallback={errorDialog}>
-            <MDXEditor
-                contentEditableClassName={'md-content-editable'}
-                className={classes}
-                autoFocus={true}
-                markdown={field.state.value}
-                placeholder={props.placeholder ?? 'Message (Min length: 10 characters)'}
-                plugins={[
-                    toolbarPlugin({
-                        toolbarContents: () => (
-                            <Stack direction={'row'}>
-                                <UndoRedo />
-                                <BoldItalicUnderlineToggles />
-                                <CodeToggle />
-                                <InsertImage />
-                                <InsertTable />
-                                <InsertThematicBreak />
-                                <ListsToggle />
-                            </Stack>
-                        )
-                    }),
-                    listsPlugin(),
-                    quotePlugin(),
-                    headingsPlugin(),
-                    linkPlugin(),
-                    linkDialogPlugin(),
-                    imagePlugin({ imageUploadHandler }), // TODO custom MUI image selector
-                    tablePlugin(),
-                    thematicBreakPlugin(),
-                    frontmatterPlugin(),
-                    codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
-                    directivesPlugin({
-                        directiveDescriptors: [AdmonitionDirectiveDescriptor]
-                    })
-                    // https://github.com/mdx-editor/editor/issues/491
-                    // markdownShortcutPlugin()
-                ]}
-                onError={onError}
-                onChange={(v) => {
-                    field.setValue(v);
-                }}
-                ref={mdEditorRef}
-            />
-            {errInfo}
-        </Sentry.ErrorBoundary>
-    );
+	return (
+		<Sentry.ErrorBoundary showDialog={true} fallback={errorDialog}>
+			<MDXEditor
+				contentEditableClassName={"md-content-editable"}
+				className={classes}
+				autoFocus={true}
+				markdown={field.state.value}
+				placeholder={props.placeholder ?? "Message (Min length: 10 characters)"}
+				plugins={[
+					toolbarPlugin({
+						toolbarContents: () => (
+							<Stack direction={"row"}>
+								<UndoRedo />
+								<BoldItalicUnderlineToggles />
+								<CodeToggle />
+								<InsertImage />
+								<InsertTable />
+								<InsertThematicBreak />
+								<ListsToggle />
+							</Stack>
+						),
+					}),
+					listsPlugin(),
+					quotePlugin(),
+					headingsPlugin(),
+					linkPlugin(),
+					linkDialogPlugin(),
+					imagePlugin({ imageUploadHandler }), // TODO custom MUI image selector
+					tablePlugin(),
+					thematicBreakPlugin(),
+					frontmatterPlugin(),
+					codeBlockPlugin({ defaultCodeBlockLanguage: "txt" }),
+					directivesPlugin({
+						directiveDescriptors: [AdmonitionDirectiveDescriptor],
+					}),
+					// https://github.com/mdx-editor/editor/issues/491
+					// markdownShortcutPlugin()
+				]}
+				onError={onError}
+				onChange={(v) => {
+					field.setValue(v);
+				}}
+				ref={mdEditorRef}
+			/>
+			{errInfo}
+		</Sentry.ErrorBoundary>
+	);
 };

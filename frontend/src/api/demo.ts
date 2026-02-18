@@ -1,10 +1,10 @@
-import { DemoFile } from '../schema/demo.ts';
-import { transformCreatedOnDate } from '../util/time.ts';
-import { apiCall } from './common';
+import type { DemoFile } from "../schema/demo.ts";
+import { transformCreatedOnDate } from "../util/time.ts";
+import { apiCall } from "./common";
 
 export const apiGetDemos = async () => {
-    const resp = await apiCall<DemoFile[]>('/api/demos', 'POST', undefined);
-    return resp.map(transformCreatedOnDate);
+	const resp = await apiCall<DemoFile[]>("/api/demos", "POST", undefined);
+	return resp.map(transformCreatedOnDate);
 };
 
-export const apiGetDemoCleanup = async () => await apiCall('/api/demos/cleanup');
+export const apiGetDemoCleanup = async () => await apiCall("/api/demos/cleanup");

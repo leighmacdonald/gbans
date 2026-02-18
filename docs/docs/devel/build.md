@@ -9,23 +9,26 @@ follow to produce a working build.
 Sentry is an application that handles performance monitoring and error tracking in a fairly
 easy to use web interface.
 
-We take the sentry recommended approach of splitting the backend and frontend components of 
+We take the sentry recommended approach of splitting the backend and frontend 
+components of 
 the project into distinct sentry projects.  
 
-If you do not set `SENTRY_DSN/SENTRY_AUTH_TOKEN` env vars when building, then support will be effectively disabled.
+If you do not set `SENTRY_DSN/SENTRY_AUTH_TOKEN` env vars when building, then 
+support will be effectively disabled.
 
 ### Backend Configuration
 
-When building you should set `SENTRY_DSN=<YOUR_SENTRY_DSN>` when calling goreleaser to embed the value into 
+When building you should set `SENTRY_DSN=<YOUR_SENTRY_DSN>` when calling goreleaser 
+to embed the value into 
 the binary. If you prefer to instead set this at runtime you can also set the same env var when running the 
 gbans binary.
 
 ### Frontend Configuration
 
 For frontend integration you can add your `SENTRY_*` values to `frontend/.env.sentry-build-plugin` or otherwise
-set them when calling `make frontend`. This will embed them into the sentry plugin.
+set them when calling `just frontend`. This will embed them into the sentry plugin.
 
-```
+```shell
 SENTRY_AUTH_TOKEN="<SENTRY_AUTH_TOKEN>"
 SENTRY_URL="<SENTRY_URL>"
 SENTRY_ORG="<SENTRY_ORG>"
@@ -50,7 +53,7 @@ having a `GITHUB_TOKEN` via running under github-actions.
 
 Alternatively you can manually build the components without goreleaser.
 
-    make frontend
+    just frontend
     go build -tags release -ldflags="-s -w \
         -X 'github.com/leighmacdonald/gbans/internal/app.SentryDSN=master' \
         -X 'github.com/leighmacdonald/gbans/internal/app.BuildVersion="master"' \
