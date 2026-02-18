@@ -14,9 +14,6 @@ buildp: frontend
 builds: frontend
     goreleaser release --clean --snapshot
 
-watch:
-    just -f frontend/justfile watch
-
 generate:
     go generate ./...
 
@@ -27,7 +24,10 @@ frontend:
     just -f frontend/justfile
 
 run:
-    go run -race main.go
+    go run -race . serve
+
+run_forever:
+    while true; do go run -race . serve; sleep 1; done
 
 sourcemod:
     just -f sourcemod/justfile sourcemod
@@ -70,14 +70,6 @@ clean:
     just -f frontend/justfile clean
     rm -rf ./sourcemod/plugins/gbans.smx
 
-docker_test:
-    docker compose -f docker/docker-compose-test.yml up --force-recreate -V --remove-orphans
-    docker compose -f docker/docker-compose-test.yml rm -f
-
-up_postgres:
-    docker-compose --project-name dev -f docker/docker-compose-dev.yml down -v
-    docker-compose --project-name dev -f docker/docker-compose-dev.yml up postgres --remove-orphans --renew-anon-volumes
-
 docker_dump:
     docker exec gbans-postgres pg_dump -U gbans > gbans.sql
 
@@ -99,3 +91,9 @@ docs_deploy:
 
 docs_build:
     just -f docs/justfile build
+
+db:
+    pushd docker && ./dev_db.sh
+
+dev:
+    zellij --layout .zellij.kdl
