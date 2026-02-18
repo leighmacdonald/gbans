@@ -95,7 +95,7 @@ export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
 	};
 
 	if (deleted) {
-		return <></>;
+		return;
 	}
 
 	if (editing) {

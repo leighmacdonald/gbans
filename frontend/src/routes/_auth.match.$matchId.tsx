@@ -401,18 +401,16 @@ const MatchPlayersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
 			size: 250,
 			cell: (info) => (
 				<TableCellSmall>
-					{info.getValue() ? (
-						info.getValue().map((pc) => (
-							<div style={{ display: "inline-block", padding: 0 }}>
-								<PlayerClassHoverStats
-									key={`pc-${players[info.row.index].steam_id}-${pc.player_class}`}
-									stats={pc}
-								/>
-							</div>
-						))
-					) : (
-						<></>
-					)}
+					{info.getValue()
+						? info.getValue().map((pc) => (
+								<div style={{ display: "inline-block", padding: 0 }} key={`pchs-${pc.match_player_id}`}>
+									<PlayerClassHoverStats
+										key={`pc-${players[info.row.index].steam_id}-${pc.player_class}`}
+										stats={pc}
+									/>
+								</div>
+							))
+						: null}
 				</TableCellSmall>
 			),
 		}),

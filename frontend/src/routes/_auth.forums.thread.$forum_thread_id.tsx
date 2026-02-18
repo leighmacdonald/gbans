@@ -215,7 +215,7 @@ function ForumThreadPage() {
 				</Paper>
 			);
 		} else {
-			return <></>;
+			return null;
 		}
 	}, [permissionLevel, thread?.forum_thread_id, thread?.locked, form]);
 

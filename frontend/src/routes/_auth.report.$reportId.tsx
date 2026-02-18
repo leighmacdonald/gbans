@@ -62,7 +62,7 @@ function ReportView() {
 
 	const renderBan = useMemo(() => {
 		if (isLoadingBan || !ban || ban.ban_id === 0) {
-			return <></>;
+			return;
 		}
 
 		return (

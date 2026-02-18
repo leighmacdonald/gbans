@@ -22,7 +22,6 @@ export const ServerFilters = () => {
 		pos,
 		setSelectedServers,
 		setFilterByRegion,
-		setServers,
 		filterByRegion,
 		selectedRegion,
 		setSelectedRegion,

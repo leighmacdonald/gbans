@@ -134,6 +134,7 @@ function AdminFilters() {
 
 			selectedFiltersIds.map((f) => {
 				deleteMutation.mutate(f as number);
+				return f;
 			});
 			queryClient.setQueryData(
 				["filters"],

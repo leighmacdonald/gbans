@@ -263,9 +263,7 @@ const PeopleTable = ({
 						<IconButton color={"warning"} onClick={() => onEditPerson(info.row.original)}>
 							<VpnKeyIcon />
 						</IconButton>
-					) : (
-						<></>
-					);
+					) : null;
 				},
 			},
 		],

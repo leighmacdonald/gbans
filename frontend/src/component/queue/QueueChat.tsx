@@ -48,10 +48,6 @@ export const QueueChat = () => {
 	);
 	const isMod = hasPermission(PermissionLevel.Moderator);
 
-	if (!isMod || profile.playerqueue_chat_status === "noaccess") {
-		return <></>;
-	}
-
 	const mq = useMemo(() => {
 		if (matches || !showPeople) {
 			return { xs: 12 };
@@ -75,6 +71,10 @@ export const QueueChat = () => {
 
 		return { readonly: readonly, label: "", reason: "" };
 	}, [isReady, sending, profile.playerqueue_chat_status, reason, chatStatus]);
+
+	if (!isMod || profile.playerqueue_chat_status === "noaccess") {
+		return;
+	}
 
 	return (
 		<Collapse in={showChat && chatStatus !== "noaccess"}>

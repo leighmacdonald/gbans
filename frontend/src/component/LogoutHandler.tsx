@@ -9,5 +9,5 @@ export const LogoutHandler = () => {
 		}
 	});
 
-	return <></>;
+	return;
 };

@@ -272,9 +272,7 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
 							/>
 						</VCenterBox>
 					</Stack>
-				) : (
-					<></>
-				)}
+				) : null}
 			</Grid>
 		</Grid>
 	);

@@ -27,7 +27,7 @@ export const SourceBansList = ({ steam_id, is_reporter }: SourceBansListProps) =
 	});
 
 	if (!bans) {
-		return <></>;
+		return;
 	}
 
 	return (
