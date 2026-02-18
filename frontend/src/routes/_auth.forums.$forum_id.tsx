@@ -24,6 +24,7 @@ import RouterLink from "../component/RouterLink.tsx";
 import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { AppError } from "../error.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { Forum, ForumThread } from "../schema/forum.ts";
 import { PermissionLevel } from "../schema/people.ts";
@@ -74,9 +75,12 @@ function ForumPage() {
 	const { forum_id } = Route.useParams();
 	const { forum, threads } = Route.useLoaderData();
 	const modalCreate = useModal(ModalForumThreadCreator);
-	const { hasPermission } = useRouteContext({
+	const { hasPermission } = useAuth();
+
+	useRouteContext({
 		from: "/_auth/forums/$forum_id",
 	});
+
 	const { sendFlash } = useUserFlashCtx();
 	const navigate = useNavigate();
 

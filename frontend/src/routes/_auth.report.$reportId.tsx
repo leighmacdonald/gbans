@@ -13,7 +13,7 @@ import ListItemText from "@mui/material/ListItemText";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { apiGetBanBySteam, apiGetReport, appealStateString } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
@@ -23,6 +23,7 @@ import { ReportViewComponent } from "../component/ReportViewComponent.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { Title } from "../component/Title";
+import { useAuth } from "../hooks/useAuth.ts";
 import { BanReasons, BanType } from "../schema/bans.ts";
 import { PermissionLevel } from "../schema/people.ts";
 import { ReportStatus, reportStatusColour, reportStatusString } from "../schema/report.ts";
@@ -37,9 +38,7 @@ function ReportView() {
 	const { reportId } = Route.useParams();
 	const theme = useTheme();
 
-	const { hasPermission } = useRouteContext({
-		from: "/_auth/report/$reportId",
-	});
+	const { hasPermission } = useAuth();
 
 	const navigate = useNavigate();
 

@@ -26,8 +26,9 @@ export const log = (msg: unknown, level: Level = Level.err): void => {
 export const logErr = (exception: unknown): void => {
 	if (Object.hasOwn(exception as object, "name")) {
 		if ((exception as Error).name !== "AbortError") {
-			return log(exception, Level.err);
+			log(exception, Level.err);
+			return;
 		}
 	}
-	return log(exception, Level.err);
+	log(exception, Level.err);
 };

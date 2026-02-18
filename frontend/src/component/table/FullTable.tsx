@@ -19,7 +19,7 @@ import { DataTable } from "./DataTable.tsx";
 type FullTableProps<T> = {
 	data: T[];
 	isLoading: boolean;
-	columns: ColumnDef<T, any>[];
+	columns: ColumnDef<T, unknown>[];
 	columnFilters?: ColumnFiltersState;
 	pagination: PaginationState;
 	setPagination: OnChangeFn<PaginationState>;

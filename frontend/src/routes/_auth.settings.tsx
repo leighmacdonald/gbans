@@ -41,6 +41,7 @@ import { TabSection } from "../component/TabSection.tsx";
 import { Title } from "../component/Title.tsx";
 import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 import { useAppForm } from "../contexts/formContext.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { PermissionLevel, type PersonSettings } from "../schema/people.ts";
 import { logErr } from "../util/errors.ts";
@@ -73,7 +74,7 @@ type userSettingTabs = "general" | "connections" | "forums" | "game";
 
 function ProfileSettings() {
 	const { sendFlash, sendError } = useUserFlashCtx();
-	const { profile, hasPermission } = Route.useRouteContext();
+	const { profile, hasPermission } = useAuth();
 	const settings = useLoaderData({ from: "/_auth/settings" }) as PersonSettings;
 	const { section } = Route.useSearch();
 	const [tab, setTab] = useState<userSettingTabs>(section);
@@ -441,7 +442,7 @@ const ConnectionsSection = ({
 	patreon_id: string;
 }) => {
 	const queryClient = useQueryClient();
-	const { profile, login } = Route.useRouteContext();
+	const { profile, login } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
 	const confirmModal = useModal(ModalConfirm);
 	const { appInfo } = useAppInfoCtx();

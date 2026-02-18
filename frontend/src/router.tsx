@@ -11,7 +11,6 @@ export const newRouter = (queryClient: QueryClient) => {
 		routeTree,
 		defaultPreload: "intent",
 		context: {
-			auth: undefined!,
 			queryClient,
 		},
 		defaultPendingComponent: LoadingPlaceholder,

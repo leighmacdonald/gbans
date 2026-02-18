@@ -30,7 +30,7 @@ export const Title = ({ children }: TitleProps) => {
 		}
 
 		return () => {
-			document.title = originalTitle.current!;
+			document.title = originalTitle.current ?? document.title;
 		};
 	}, [children, appInfo.site_name]);
 	return null;
