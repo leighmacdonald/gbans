@@ -4,7 +4,7 @@ import { PermissionLevel } from "../schema/people.ts";
 export const Route = createFileRoute("/_mod")({
 	beforeLoad: ({ context, location }) => {
 		// If the user is logged out, redirect them to the login page
-		if (!context.auth.isAuthenticated()) {
+		if (!context.auth?.isAuthenticated()) {
 			throw redirect({
 				to: "/login",
 				search: {
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_mod")({
 			});
 		}
 
-		if (!context.auth.hasPermission(PermissionLevel.Moderator)) {
+		if (!context.auth?.hasPermission(PermissionLevel.Moderator)) {
 			throw redirect({ to: "/permission" });
 		}
 

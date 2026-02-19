@@ -18,11 +18,11 @@ import { useTheme } from "@mui/material/styles";
 import Tab from "@mui/material/Tab";
 import Typography from "@mui/material/Typography";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouteContext } from "@tanstack/react-router";
 import { type JSX, type SyntheticEvent, useState } from "react";
 import { z } from "zod/v4";
 import { apiCreateReportMessage, apiGetConnections, apiGetMessages } from "../api";
 import { useAppForm } from "../contexts/formContext.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { reportMessagesQueryOptions } from "../queries/reportMessages.ts";
 import { PermissionLevel } from "../schema/people.ts";
@@ -45,9 +45,7 @@ export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element
 	const queryClient = useQueryClient();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const [value, setValue] = useState<number>(0);
-	const { hasPermission } = useRouteContext({
-		from: "/_auth/report/$reportId",
-	});
+	const { hasPermission } = useAuth();
 
 	const [chatPagination, setChatPagination] = useState({
 		pageIndex: 0, //initial page index

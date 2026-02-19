@@ -10,7 +10,7 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { queryOptions } from "@tanstack/react-query";
-import { createFileRoute, useLoaderData, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import { format, fromUnixTime } from "date-fns";
 import { apiGetProfile } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
@@ -19,6 +19,7 @@ import { PlayerWeaponsStatListContainer } from "../component/PlayerWeaponsStatLi
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { Title } from "../component/Title";
 import { PlayerClassStatsTable } from "../component/table/PlayerClassStatsTable.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import type { PlayerProfile } from "../schema/people.ts";
 import { createExternalLinks } from "../util/history.ts";
 import { avatarHashToURL } from "../util/text.tsx";
@@ -40,9 +41,7 @@ export const Route = createFileRoute("/_guest/profile/$steamId")({
 });
 
 function ProfilePage() {
-	const { profile: userProfile, isAuthenticated } = useRouteContext({
-		from: "/_guest/profile/$steamId",
-	});
+	const { profile: userProfile, isAuthenticated } = useAuth();
 	const profile = useLoaderData({
 		from: "/_guest/profile/$steamId",
 	}) as PlayerProfile;

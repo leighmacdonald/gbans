@@ -4,6 +4,7 @@ import { createFileRoute, useLayoutEffect, useRouter } from "@tanstack/react-rou
 import { useEffect } from "react";
 import { z } from "zod/v4";
 import { apiGetCurrentProfile } from "../api";
+import { useAuth } from "../hooks/useAuth.ts";
 import { writeAccessToken } from "../util/auth/writeAccessToken.ts";
 
 export const Route = createFileRoute("/_guest/login/success")({
@@ -16,9 +17,7 @@ export const Route = createFileRoute("/_guest/login/success")({
 
 function LoginSteamSuccess() {
 	const router = useRouter();
-	const { login } = Route.useRouteContext({
-		select: ({ auth }) => auth,
-	});
+	const { login } = useAuth();
 	const search = Route.useSearch();
 
 	const { data: profile } = useQuery({

@@ -13,7 +13,7 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
 	createColumnHelper,
 	getCoreRowModel,
@@ -38,6 +38,7 @@ import RouterLink from "../component/RouterLink.tsx";
 import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { BanReason, BanReasons, banReasonsReportCollection } from "../schema/bans.ts";
 import {
@@ -63,8 +64,7 @@ export const Route = createFileRoute("/_auth/report/")({
 });
 
 function ReportCreate() {
-	const { profile } = useRouteContext({ from: "/_auth/report/" });
-
+	const { profile } = useAuth();
 	const canReport = useMemo(() => {
 		return profile.steam_id && profile.ban_id === 0;
 	}, [profile]);

@@ -4,9 +4,10 @@ import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { createFileRoute, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod/v4";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import steamLogo from "../icons/steam_login_lg.png";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
 
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/_guest/login/")({
 export function LoginPage() {
 	const message = "To access this page, please login using your steam account below.";
 	const title = "Permission Denied";
-	const { isAuthenticated } = useRouteContext({ from: "/_guest/login/" });
+	const { isAuthenticated } = useAuth();
 	const { redirect } = Route.useSearch();
 
 	return (

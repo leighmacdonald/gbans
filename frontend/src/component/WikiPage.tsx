@@ -6,11 +6,12 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useLoaderData, useRouteContext } from "@tanstack/react-router";
+import { useLoaderData } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiSaveWikiPage } from "../api/wiki.ts";
 import { useAppForm } from "../contexts/formContext.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import {
 	PermissionLevel,
@@ -31,7 +32,7 @@ interface WikiValues {
 export const WikiPage = ({ slug = "home", path }: { slug: string; path: "/_guest/wiki/" | "/_guest/wiki/$slug" }) => {
 	const [editMode, setEditMode] = useState<boolean>(false);
 	const queryClient = useQueryClient();
-	const { hasPermission } = useRouteContext({ from: path });
+	const { hasPermission } = useAuth();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const page = useLoaderData({ from: path }) as Page;
 
@@ -83,7 +84,7 @@ export const WikiPage = ({ slug = "home", path }: { slug: string; path: "/_guest
 		},
 		validators: {
 			onChange: z.object({
-				permission_level: z.nativeEnum(PermissionLevel),
+				permission_level: z.enum(PermissionLevel),
 				body_md: z.string(),
 			}),
 		},

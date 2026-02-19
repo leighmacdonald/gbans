@@ -9,7 +9,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
 import {
@@ -31,6 +31,7 @@ import { SourceBansList } from "../component/SourceBansList.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { AppError, ErrorCode } from "../error.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { AppealState, BanReasons } from "../schema/bans.ts";
 import { PermissionLevel } from "../schema/people.ts";
@@ -58,9 +59,7 @@ export const Route = createFileRoute("/_auth/ban/$ban_id")({
 });
 
 function BanPage() {
-	const { permissionLevel, profile } = useRouteContext({
-		from: "/_auth/ban/$ban_id",
-	});
+	const { permissionLevel, profile } = useAuth();
 	const ban = Route.useLoaderData();
 	const { sendFlash } = useUserFlashCtx();
 

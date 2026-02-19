@@ -9,12 +9,12 @@ import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useMutation } from "@tanstack/react-query";
-import { useRouteContext } from "@tanstack/react-router";
 import { isAfter } from "date-fns/fp";
 import { useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiSaveThreadMessage } from "../../api/forum.ts";
 import { useAppForm } from "../../contexts/formContext.tsx";
+import { useAuth } from "../../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import type { ForumMessage } from "../../schema/forum.ts";
 import { PermissionLevel, permissionLevelString } from "../../schema/people.ts";
@@ -37,9 +37,7 @@ export const ThreadMessageContainer = ({
 	isFirstMessage: boolean;
 }) => {
 	const [edit, setEdit] = useState(false);
-	const { hasPermission, profile } = useRouteContext({
-		from: "/_auth/forums/thread/$forum_thread_id",
-	});
+	const { hasPermission, profile } = useAuth();
 	const { sendError } = useUserFlashCtx();
 	const theme = useTheme();
 

@@ -12,11 +12,12 @@ import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
-import { createFileRoute, useNavigate, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { NewsView } from "../component/NewsView";
 import RouterLink from "../component/RouterLink.tsx";
 import { Title } from "../component/Title.tsx";
 import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
+import { useAuth } from "../hooks/useAuth.ts";
 
 export const Route = createFileRoute("/_guest/")({
 	component: Index,
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/_guest/")({
 function Index() {
 	const navigate = useNavigate();
 	const { appInfo } = useAppInfoCtx();
-	const { profile } = useRouteContext({ from: "/_guest/" });
+	const { profile } = useAuth();
 
 	return (
 		<>
