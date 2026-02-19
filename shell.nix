@@ -24,5 +24,7 @@ pkgs.mkShell {
     nixd
     govulncheck
     zellij
+    air
+    delve
   ];
 }

@@ -29,6 +29,9 @@ run:
 run_forever:
     while true; do go run -race . serve; sleep 1; done
 
+air:
+    while true; do air -c .air.toml -- serve; sleep 1; done
+
 sourcemod:
     just -f sourcemod/justfile sourcemod
 
