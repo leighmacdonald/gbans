@@ -12,7 +12,7 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 import { isAfter } from "date-fns/fp";
@@ -27,6 +27,7 @@ import { ModalAssetViewer, ModalContestEntry, ModalContestEntryDelete } from "..
 import { PersonCell } from "../component/PersonCell.tsx";
 import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
+import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { type Asset, MediaTypes, mediaType } from "../schema/asset.ts";
 import type { ContestEntry } from "../schema/contest.ts";
@@ -47,9 +48,7 @@ function Contest() {
 	const { contest_id } = Route.useParams();
 	const [entries, setEntries] = useState<ContestEntry[]>([]);
 	const [entriesLoading, setEntriesLoading] = useState(false);
-	const { hasPermission, profile } = useRouteContext({
-		from: "/_auth/contests/$contest_id",
-	});
+	const { hasPermission, profile } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
 
 	const {

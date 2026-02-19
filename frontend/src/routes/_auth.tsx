@@ -3,7 +3,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 export const Route = createFileRoute("/_auth")({
 	beforeLoad: ({ context, location }) => {
 		// If the user is logged out, redirect them to the login page
-		if (!context.auth.isAuthenticated()) {
+		if (!context.auth?.isAuthenticated()) {
 			throw redirect({
 				to: "/login",
 				search: {

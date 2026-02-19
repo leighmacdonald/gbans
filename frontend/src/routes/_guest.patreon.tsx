@@ -16,6 +16,7 @@ import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderA
 import { ImageBox } from "../component/ImageBox.tsx";
 import { MarkDownRenderer } from "../component/MarkdownRenderer.tsx";
 import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
+import { useAuth } from "../hooks/useAuth.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 
 const patreonSearchSchema = z.object({
@@ -39,7 +40,8 @@ export const Route = createFileRoute("/_guest/patreon")({
 });
 
 function Patreon() {
-	const { isAuthenticated, queryClient, profile } = Route.useRouteContext();
+	const { queryClient } = Route.useRouteContext();
+	const { isAuthenticated, profile } = useAuth();
 	const { campaign } = Route.useLoaderData();
 	const theme = useTheme();
 	const { appInfo } = useAppInfoCtx();
