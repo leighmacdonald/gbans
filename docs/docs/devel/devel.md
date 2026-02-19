@@ -10,10 +10,6 @@
 
 `just bump_deps` Can be used to update both go and js/ts libraries.
 
-## Start Backend
+## Run a local development environment
 
-`just dev` Run the backend server. By default, listens on http://localhost:6006/. 
-
-## Start Frontend
-
-`just serve` Start the vite frontend development web server. This should open http://localhost:6007/ automatically.
+`just dev` Run the database, backend and frontend watch commands under zellij.
