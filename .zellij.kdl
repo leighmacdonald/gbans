@@ -9,7 +9,7 @@ layout {
         }
 
         pane command="just" {
-            args "run_forever"
+            args "air"
         }
     }
     // pane size=1 borderless=true {

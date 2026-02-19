@@ -61,3 +61,4 @@ __*
 .direnv
 *.dump
 result
+tmp
