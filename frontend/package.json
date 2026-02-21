@@ -71,7 +71,7 @@
 		"leaflet": "^1.9.4",
 		"markdown-to-jsx": "^9.7.4",
 		"material-ui-popup-state": "^5.3.6",
-		"minimatch": "^10.2.1",
+		"minimatch": "^10.2.2",
 		"mui-markdown": "^2.1.1",
 		"mui-nested-menu": "^4.0.3",
 		"pretty-bytes": "^7.1.0",
