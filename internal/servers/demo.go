@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"path"
 	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -77,18 +77,18 @@ type DemoMetaData struct {
 }
 
 type DemoFile struct {
-	DemoID          int64            `json:"demo_id"`
-	ServerID        int              `json:"server_id"`
-	ServerNameShort string           `json:"server_name_short"`
-	ServerNameLong  string           `json:"server_name_long"`
-	Title           string           `json:"title"`
-	CreatedOn       time.Time        `json:"created_on"`
-	Downloads       int64            `json:"downloads"`
-	Size            int64            `json:"size"`
-	MapName         string           `json:"map_name"`
-	Archive         bool             `json:"archive"` // When true, will not get auto deleted when flushing old demos
-	Stats           map[string]gin.H `json:"stats"`
-	AssetID         uuid.UUID        `json:"asset_id"`
+	DemoID          int64                     `json:"demo_id"`
+	ServerID        int                       `json:"server_id"`
+	ServerNameShort string                    `json:"server_name_short"`
+	ServerNameLong  string                    `json:"server_name_long"`
+	Title           string                    `json:"title"`
+	CreatedOn       time.Time                 `json:"created_on"`
+	Downloads       int64                     `json:"downloads"`
+	Size            int64                     `json:"size"`
+	MapName         string                    `json:"map_name"`
+	Archive         bool                      `json:"archive"` // When true, will not get auto deleted when flushing old demos
+	Stats           map[string]map[string]any `json:"stats"`
+	AssetID         uuid.UUID                 `json:"asset_id"`
 }
 
 type DemoInfo struct {
@@ -374,12 +374,22 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID 
 	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
 		return nil, ErrGetServer
 	}
+	var (
+		demo       *demoparse.Demo
+		err        error
+		filename   = asset.Name
+		compressed = false
+		mapName    string
+	)
 
-	namePartsAll := strings.Split(asset.Name, "-")
+	if strings.HasSuffix(asset.Name, zstd.Extension) {
+		compressed = true
+		filename = strings.TrimSuffix(filename, zstd.Extension)
+	}
 
-	var mapName string
+	namePartsAll := strings.Split(filename, "-")
 
-	if strings.Contains(asset.Name, "workshop-") {
+	if strings.Contains(filename, "workshop-") {
 		// 20231221-042605-workshop-cp_overgrown_rc8-ugc503939302.dem
 		mapName = namePartsAll[3]
 	} else {
@@ -388,17 +398,32 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID 
 		mapName = nameParts[0]
 	}
 
-	demo, errDemo := demoparse.SubmitFile(ctx, d.DemoParserURL, asset.LocalPath)
-	if errDemo != nil {
-		return nil, errDemo
+	if compressed {
+		input, errInput := os.Open(asset.LocalPath)
+		if errInput != nil {
+			return nil, errors.Join(errInput, zstd.ErrDecompress)
+		}
+
+		var buf bytes.Buffer
+		if err := zstd.Decompress(input, bufio.NewWriter(&buf)); err != nil {
+			return nil, err
+		}
+
+		demo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.LocalPath, bytes.NewReader(buf.Bytes()))
+	} else {
+		demo, err = demoparse.SubmitFile(ctx, d.DemoParserURL, asset.LocalPath)
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
-	intStats := map[string]gin.H{}
+	intStats := map[string]map[string]any{}
 
 	for _, key := range demo.SteamIDs() {
 		if key.Valid() {
-			intStats[key.String()] = gin.H{}
+			intStats[key.String()] = map[string]any{}
 		}
 	}
 
