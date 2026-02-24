@@ -1,7 +1,11 @@
 layout {
     pane split_direction="horizontal" {
-        pane command="just" {
+        pane command="just" size="16%" {
             args "db"
+        }
+
+        pane command="just" size="16%" {
+            args "demostats_serve"
         }
 
         pane command="just" {

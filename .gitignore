@@ -62,3 +62,5 @@ __*
 *.dump
 result
 tmp
+schema.json
+id_stv*

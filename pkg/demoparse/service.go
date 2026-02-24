@@ -13,34 +13,32 @@ import (
 
 var ErrDemoSubmit = errors.New("could not submit demo file")
 
-func Submit(ctx context.Context, url string, path string) (*Demo, error) {
+func SubmitFile(ctx context.Context, url string, path string) (*Demo, error) {
 	fileHandle, errDF := os.Open(path)
 	if errDF != nil {
 		return nil, errors.Join(errDF, ErrDemoSubmit)
 	}
-
-	content, errContent := io.ReadAll(fileHandle)
-	if errContent != nil {
-		return nil, errors.Join(errDF, ErrDemoSubmit)
-	}
-
-	info, errInfo := fileHandle.Stat()
-	if errInfo != nil {
-		return nil, errors.Join(errInfo, ErrDemoSubmit)
-	}
-
 	defer fileHandle.Close()
 
+	return Submit(ctx, url, fileHandle.Name(), fileHandle)
+}
+
+func Submit(ctx context.Context, url string, name string, reader io.Reader) (*Demo, error) {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 
-	part, errCreate := writer.CreateFormFile("file", info.Name())
+	part, errCreate := writer.CreateFormFile("file", name)
 	if errCreate != nil {
 		return nil, errors.Join(errCreate, ErrDemoSubmit)
 	}
 
+	content, errContent := io.ReadAll(reader)
+	if errContent != nil {
+		return nil, errors.Join(errContent, ErrDemoSubmit)
+	}
+
 	if _, err := part.Write(content); err != nil {
-		return nil, errors.Join(errCreate, ErrDemoSubmit)
+		return nil, errors.Join(err, ErrDemoSubmit)
 	}
 
 	if errClose := writer.Close(); errClose != nil {

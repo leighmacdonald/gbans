@@ -1,7 +1,6 @@
 package auth
 
 import (
-	_ "embed"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -19,9 +18,6 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/yohcop/openid-go"
 )
-
-//go:embed auth_discord.tmpl
-var templateBody []byte
 
 type authHandler struct {
 	*Authentication

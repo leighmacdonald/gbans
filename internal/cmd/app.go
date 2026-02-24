@@ -423,7 +423,7 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go g.networks.Start(ctx)
 	go g.notifications.Sender(ctx)
 
-	go downloadManager(ctx, time.Minute*5, g.database, conf.SSH, g.demos, g.anticheat)
+	go downloadManager(ctx, g.database, conf.SSH, g.demos, g.anticheat)
 
 	go func() {
 		if err := g.servers.Start(ctx, servers.DefaultStatusUpdateFreq); err != nil {
@@ -746,12 +746,11 @@ func (g *GBans) healthCheck(ctx *gin.Context) {
 
 // downloadManager is responsible for connecting to the remote servers via ssh/scp and executing instructions.
 // Multiple handlers can be registered that will be run for every update call.
-func downloadManager(ctx context.Context, freq time.Duration, store database.Database, conf scp.Config, handlers ...scp.ConnectionHandler) {
+func downloadManager(ctx context.Context, store database.Database, conf scp.Config, handlers ...scp.ConnectionHandler) {
 	var (
-		timeout     = time.Second * 120
 		connections []scp.Connection
 		repo        = scp.NewRepository(store)
-		ticker      = time.NewTicker(freq)
+		ticker      = time.NewTicker(time.Duration(conf.UpdateInterval) * time.Second)
 	)
 
 	defer func() {
@@ -796,14 +795,13 @@ func downloadManager(ctx context.Context, freq time.Duration, store database.Dat
 
 			slog.Debug("Updating SCP handlers")
 			start := time.Now()
-			lCtx, cancel := context.WithTimeout(ctx, timeout)
 
 			// No errgroup since we want to continue on errors.
 			waitGroup := &sync.WaitGroup{}
 
 			for _, handler := range connections {
 				waitGroup.Go(func() {
-					if err := handler.Update(lCtx); err != nil {
+					if err := handler.Update(ctx); err != nil {
 						slog.Error("Error running scp handler", slog.String("error", err.Error()))
 					}
 				})
@@ -812,7 +810,6 @@ func downloadManager(ctx context.Context, freq time.Duration, store database.Dat
 			waitGroup.Wait()
 
 			slog.Debug("SCP Update complete", slog.Duration("duration", time.Since(start)))
-			cancel()
 		case <-ctx.Done():
 			return
 		}

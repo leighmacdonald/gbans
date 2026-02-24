@@ -1,10 +1,19 @@
 package auth
 
 import (
+	_ "embed"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 )
+
+//go:embed auth_discord.tmpl
+var templateBody []byte
+
+func RegisterDiscordCommands(_ discord.Service) {
+	discord.MustRegisterTemplate(templateBody)
+}
 
 type loginInfo struct {
 	Person personDomain.Info

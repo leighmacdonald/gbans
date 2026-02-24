@@ -7,9 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"mime/multipart"
-	"net/http"
-	"os"
 	"path"
 	"strings"
 	"time"
@@ -21,9 +18,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/fs"
-	"github.com/leighmacdonald/gbans/internal/json"
-	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/ricochet2200/go-disk-usage/du"
 	"github.com/viant/afs/option"
@@ -99,36 +95,6 @@ type DemoInfo struct {
 	AssetID uuid.UUID
 }
 
-type DemoPlayer struct {
-	Classes struct{} `json:"classes"`
-	Name    string   `json:"name"`
-	UserID  int      `json:"userId"`  //nolint:tagliatelle
-	SteamID string   `json:"steamId"` //nolint:tagliatelle
-	Team    string   `json:"team"`
-}
-
-type DemoHeader struct {
-	DemoType string  `json:"demo_type"`
-	Version  int     `json:"version"`
-	Protocol int     `json:"protocol"`
-	Server   string  `json:"server"`
-	Nick     string  `json:"nick"`
-	Map      string  `json:"map"`
-	Game     string  `json:"game"`
-	Duration float64 `json:"duration"`
-	Ticks    int     `json:"ticks"`
-	Frames   int     `json:"frames"`
-	Signon   int     `json:"signon"`
-}
-
-type DemoDetails struct {
-	State struct {
-		PlayerSummaries struct{}              `json:"player_summaries"`
-		Users           map[string]DemoPlayer `json:"users"`
-	} `json:"state"`
-	Header DemoHeader `json:"header"`
-}
-
 type UploadedDemo struct {
 	Name     string
 	ServerID int
@@ -183,7 +149,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo, config scp.Config) error {
 	for _, instance := range server.ServerIDs {
 		demoDir := server.GamePath(config.DemoPathFmt, instance)
-		filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 4))
+		filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
 		if errFilelist != nil {
 			slog.Error("remote list dir failed", slog.String("error", errFilelist.Error()),
 				slog.String("server", instance.ShortName), slog.String("path", demoDir))
@@ -396,70 +362,6 @@ func (d Demos) GetDemos(ctx context.Context) ([]DemoFile, error) {
 	return d.repository.GetDemos(ctx)
 }
 
-func (d Demos) SendAndParseDemo(ctx context.Context, path string) (*DemoDetails, error) {
-	fileHandle, errDF := os.Open(path)
-	if errDF != nil {
-		return nil, errors.Join(errDF, ErrDemoLoad)
-	}
-
-	defer log.Closer(fileHandle)
-
-	content, errContent := io.ReadAll(fileHandle)
-	if errContent != nil {
-		return nil, errors.Join(errContent, ErrDemoLoad)
-	}
-
-	info, errInfo := fileHandle.Stat()
-	if errInfo != nil {
-		return nil, errors.Join(errInfo, ErrDemoLoad)
-	}
-
-	body := new(bytes.Buffer)
-	writer := multipart.NewWriter(body)
-
-	part, errCreate := writer.CreateFormFile("file", info.Name())
-	if errCreate != nil {
-		return nil, errors.Join(errCreate, ErrDemoLoad)
-	}
-
-	if _, err := part.Write(content); err != nil {
-		return nil, errors.Join(err, ErrDemoLoad)
-	}
-
-	if errClose := writer.Close(); errClose != nil {
-		return nil, errors.Join(errClose, ErrDemoLoad)
-	}
-
-	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, d.DemoParserURL, body)
-	if errReq != nil {
-		return nil, errors.Join(errReq, ErrDemoLoad)
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-
-	client := &http.Client{
-		Timeout: time.Second * 60,
-	}
-	resp, errSend := client.Do(req) //nolint:bodyclose
-	if errSend != nil {
-		return nil, errors.Join(errSend, ErrDemoLoad)
-	}
-
-	defer log.Closer(resp.Body)
-
-	// TODO remove this extra copy once this feature doesnt have much need for debugging/inspection.
-	rawBody, errRead := io.ReadAll(resp.Body)
-	if errRead != nil {
-		return nil, errors.Join(errRead, ErrDemoLoad)
-	}
-
-	demo, errDecode := json.Decode[DemoDetails](bytes.NewReader(rawBody))
-	if errDecode != nil {
-		return nil, errors.Join(errDecode, ErrDemoLoad)
-	}
-
-	return &demo, nil
-}
-
 func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID int) (*DemoFile, error) {
 	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
 		return nil, ErrGetServer
@@ -478,20 +380,18 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID 
 		mapName = nameParts[0]
 	}
 
+	demo, errDemo := demoparse.SubmitFile(ctx, d.DemoParserURL, asset.LocalPath)
+	if errDemo != nil {
+		return nil, errDemo
+	}
+
 	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
 	intStats := map[string]gin.H{}
-	demoDetail, errDetail := d.SendAndParseDemo(ctx, asset.LocalPath)
-	if errDetail != nil {
-		return nil, errDetail
-	}
-	if demoDetail == nil {
-		slog.Error("Failed to parse demo details, nil details", slog.String("path", asset.LocalPath))
 
-		return nil, ErrParse
-	}
-
-	for key := range demoDetail.State.Users {
-		intStats[key] = gin.H{}
+	for _, key := range demo.SteamIDs() {
+		if key.Valid() {
+			intStats[key.String()] = gin.H{}
+		}
 	}
 
 	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])
