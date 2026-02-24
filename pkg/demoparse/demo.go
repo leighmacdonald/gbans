@@ -163,10 +163,10 @@ type PlayerSummary struct {
 }
 
 type RoundSummary struct {
-	Winner        string `json:"winner"`
-	IsStalemate   bool   `json:"is_stalemate"`
-	IsSuddenDeath bool   `json:"is_sudden_death"`
-	Time          int    `json:"time"` // seconds
+	Winner        string  `json:"winner"`
+	IsStalemate   bool    `json:"is_stalemate"`
+	IsSuddenDeath bool    `json:"is_sudden_death"`
+	Time          float64 `json:"time"` // seconds
 
 	Duration float64         `json:"duration"`
 	Mvps     []string        `json:"mvps"`
