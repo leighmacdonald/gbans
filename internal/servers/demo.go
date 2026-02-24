@@ -1,6 +1,7 @@
 package servers
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -20,6 +21,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/fs"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/pkg/demoparse"
+	"github.com/leighmacdonald/gbans/pkg/zstd"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/ricochet2200/go-disk-usage/du"
 	"github.com/viant/afs/option"
@@ -127,15 +129,21 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		slog.Int("server_id", demo.ServerID),
 		slog.String("name", demo.Name))
 
+	// TOOO make these interfaces less clunky for compressed data.
+	var compressed bytes.Buffer
+	if err := zstd.Compress(bytes.NewReader(demo.Content), bufio.NewWriter(&compressed)); err != nil {
+		return err
+	}
+
 	demoAsset, errNewAsset := d.asset.Create(ctx, steamid.New(d.owner),
-		asset.BucketDemo, demo.Name, bytes.NewReader(demo.Content), false)
+		asset.BucketDemo, demo.Name+zstd.Extension, bytes.NewReader(compressed.Bytes()), false)
 	if errNewAsset != nil {
 		return errNewAsset
 	}
 
 	_, errDemo := d.CreateFromAsset(ctx, demoAsset, demo.ServerID)
 	if errDemo != nil {
-		// Cleanup the asset not attached to a demo
+		// Cleanup the asset not attached to a valid demo
 		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
 			return errors.Join(errDelete, errDelete)
 		}
