@@ -118,7 +118,7 @@ func (f *Connection) connect() error {
 		return nil
 	}
 
-	client, errClient := configAndDialClient(f.repo, f.config, net.JoinHostPort(f.details.Address, strconv.Itoa(f.config.Port)))
+	client, errClient := configAndDialClient(f.repo, f.config, net.JoinHostPort(f.details.InternalOrDefaultAddress(), strconv.Itoa(f.config.Port)))
 	if errClient != nil {
 		return errClient
 	}

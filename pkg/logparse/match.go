@@ -1204,7 +1204,7 @@ func (player *PlayerStats) HealthPacks() int {
 		case ItemHPLarge:
 			total += count * 4
 		default:
-			break
+			continue
 		}
 	}
 

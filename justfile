@@ -1,3 +1,5 @@
+set dotenv-load := true
+
 all: frontend sourcemod buildp
 
 fmt:
@@ -97,6 +99,10 @@ docs_build:
 
 db:
     pushd docker && ./dev_db.sh
+
+demostats_serve:
+    ../tf2_demostats/target/release/tf2_demostats update --api-key $STEAM_KEY
+    ../tf2_demostats/target/release/tf2_demostats serve
 
 dev:
     zellij --layout .zellij.kdl
