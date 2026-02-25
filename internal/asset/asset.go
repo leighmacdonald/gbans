@@ -16,7 +16,6 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofrs/uuid/v5"
-	zstdreader "github.com/klauspost/compress/zstd"
 	"github.com/leighmacdonald/gbans/pkg/zstd"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -69,10 +68,7 @@ type Asset struct {
 	CreatedOn time.Time       `json:"created_on"`
 	UpdatedOn time.Time       `json:"updated_on"`
 	LocalPath string          `json:"-"`
-	wasRead   bool
-	file      *os.File
-	decoder   *zstdreader.Decoder
-	reader    io.Reader
+	content   []byte
 }
 
 func (a *Asset) HashString() string {
@@ -81,20 +77,6 @@ func (a *Asset) HashString() string {
 
 func (a *Asset) IsCompressed() bool {
 	return strings.HasSuffix(a.Name, zstd.Extension)
-}
-
-// Close releases the underlying file and decoder.
-func (a *Asset) Close() error {
-	if a.decoder != nil {
-		a.decoder.Close()
-	}
-	if a.file != nil {
-		if errClose := a.file.Close(); errClose != nil {
-			return errors.Join(errClose, ErrCloseFile)
-		}
-	}
-
-	return nil
 }
 
 // String provides the name of the file, with any compression extension removed.
@@ -107,38 +89,30 @@ func (a *Asset) String() string {
 }
 
 // Read implements io.Reader, handling transparently decompressing on the fly as required.
-func (a *Asset) Read(receiver []byte) (int, error) {
+func (a *Asset) Read() ([]byte, error) {
 	if a.LocalPath == "" {
-		return 0, ErrOpenFile
+		return nil, ErrOpenFile
 	}
 
-	if a.reader == nil {
-		input, errInput := os.Open(a.LocalPath)
-		if errInput != nil {
-			return 0, errors.Join(errInput, zstd.ErrDecompress)
-		}
-		a.file = input
-		if a.IsCompressed() {
-			reader, errReader := zstdreader.NewReader(a.file)
-			if errReader != nil {
-				return 0, errors.Join(errReader, ErrCopyFileContent)
-			}
-			a.reader = reader
-		} else {
-			a.reader = input
-		}
+	input, errInput := os.Open(a.LocalPath)
+	if errInput != nil {
+		return nil, errors.Join(errInput, zstd.ErrDecompress)
 	}
 
-	count, err := a.reader.Read(receiver)
-	if err != nil {
-		if errors.Is(err, io.EOF) {
-			return count, io.EOF
-		}
-
-		return count, errors.Join(err, ErrCopyFileContent)
+	content, errReadAll := io.ReadAll(input)
+	if errReadAll != nil {
+		return nil, errReadAll
 	}
 
-	return count, nil
+	if a.IsCompressed() {
+		uContent, errD := zstd.Decompress(content)
+		if errD != nil {
+			return nil, errD
+		}
+		content = uContent
+	}
+
+	return content, nil
 }
 
 type Assets struct {
@@ -175,6 +149,8 @@ func (s Assets) Create(ctx context.Context, author steamid.SteamID, bucket Bucke
 
 	slog.Debug("Created new asset",
 		slog.String("name", asset.Name), slog.String("asset_id", asset.AssetID.String()))
+
+	content.Seek(0, 0)
 
 	return newAsset, nil
 }
