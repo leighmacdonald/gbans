@@ -20,22 +20,31 @@ func SubmitFile(ctx context.Context, url string, path string) (*Demo, error) {
 	}
 	defer fileHandle.Close()
 
-	return Submit(ctx, url, fileHandle.Name(), fileHandle)
+	content, errRead := io.ReadAll(fileHandle)
+	if errRead != nil {
+		return nil, errors.Join(errRead, ErrDemoSubmit)
+	}
+
+	return Submit(ctx, url, fileHandle.Name(), content)
 }
 
-func Submit(ctx context.Context, url string, name string, reader io.Reader) (*Demo, error) {
+func Submit(ctx context.Context, url string, name string, content []byte) (*Demo, error) {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
+
+	f, _ := os.Create("blah.dem")
+	f.Write(content)
+	f.Close()
 
 	part, errCreate := writer.CreateFormFile("file", name)
 	if errCreate != nil {
 		return nil, errors.Join(errCreate, ErrDemoSubmit)
 	}
 
-	content, errContent := io.ReadAll(reader)
-	if errContent != nil {
-		return nil, errors.Join(errContent, ErrDemoSubmit)
-	}
+	// content, errContent := io.ReadAll(reader)
+	// if errContent != nil && !errors.Is(errContent, io.ErrUnexpectedEOF) {
+	// 	return nil, errors.Join(errContent, ErrDemoSubmit)
+	// }
 
 	if _, err := part.Write(content); err != nil {
 		return nil, errors.Join(err, ErrDemoSubmit)

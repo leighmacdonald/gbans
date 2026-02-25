@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
+	"github.com/leighmacdonald/gbans/pkg/zstd"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,4 +40,38 @@ func TestAssets(t *testing.T) {
 
 	_, _, errFetchedNotFound := assetCase.Get(t.Context(), saved.AssetID)
 	require.Error(t, errFetchedNotFound)
+}
+
+func TestAssetReader(t *testing.T) {
+	for idx := range 2 {
+		data := []byte(stringutil.SecureRandomString(25_000_000))
+
+		tempFile, err := os.CreateTemp("", "test.dem")
+		require.NoError(t, err)
+		filename := "test.dem"
+		if idx == 0 {
+			compressed := zstd.Compress(data)
+			filename = "test.dem.zstd"
+			_, e := tempFile.Write(compressed)
+			require.NoError(t, e)
+		} else {
+			_, e := tempFile.Write(data)
+			require.NoError(t, e)
+		}
+		require.NoError(t, tempFile.Close())
+
+		testAsset := asset.Asset{
+			Name:      filename,
+			Size:      int64(len(data)),
+			LocalPath: tempFile.Name(),
+		}
+
+		require.Equal(t, idx == 0, testAsset.IsCompressed())
+
+		for range 2 {
+			fetchedData, err := testAsset.Read()
+			require.NoError(t, err)
+			require.Equal(t, data, fetchedData)
+		}
+	}
 }

@@ -91,18 +91,19 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	dockerRoot := fs.FindFile("docker", "gbans")
 
 	fromDockerfile := testcontainers.FromDockerfile{
-		Dockerfile: "postgres-ip4r.Dockerfile",
-		Context:    dockerRoot,
-		KeepImage:  true,
+		Dockerfile:    "postgres-ip4r.Dockerfile",
+		Context:       dockerRoot,
+		KeepImage:     true,
+		PrintBuildLog: true,
 	}
 
 	cont, errContainer := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			FromDockerfile: fromDockerfile,
-
 			HostConfigModifier: func(config *container.HostConfig) {
 				config.AutoRemove = false
 			},
+
 			Env: map[string]string{
 				"POSTGRES_DB":       dbName,
 				"POSTGRES_USER":     username,

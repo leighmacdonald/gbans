@@ -1,7 +1,6 @@
 package servers
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -129,18 +128,15 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		slog.String("name", demo.Name))
 
 	// TOOO make these interfaces less clunky for compressed data.
-	var compressed bytes.Buffer
-	if err := zstd.Compress(bytes.NewReader(demo.Content), bufio.NewWriter(&compressed)); err != nil {
-		return err
-	}
+	compressed := zstd.Compress(demo.Content)
 
 	demoAsset, errNewAsset := d.asset.Create(ctx, steamid.New(d.owner),
-		asset.BucketDemo, demo.Name+zstd.Extension, bytes.NewReader(compressed.Bytes()), false)
+		asset.BucketDemo, demo.Name+zstd.Extension, bytes.NewReader(compressed), false)
 	if errNewAsset != nil {
 		return errNewAsset
 	}
 
-	_, errDemo := d.CreateFromAsset(ctx, demoAsset, demo.ServerID)
+	_, errDemo := d.CreateFromAsset(ctx, &demoAsset, demo.ServerID)
 	if errDemo != nil {
 		// Cleanup the asset not attached to a valid demo
 		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
@@ -369,7 +365,7 @@ func (d Demos) GetDemos(ctx context.Context) ([]DemoFile, error) {
 	return d.repository.GetDemos(ctx)
 }
 
-func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID int) (*DemoFile, error) {
+func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID int) (*DemoFile, error) {
 	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
 		return nil, ErrGetServer
 	}
@@ -391,7 +387,12 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID 
 		mapName = nameParts[0]
 	}
 
-	demo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.LocalPath, &asset)
+	content, err := asset.Read()
+	if err != nil {
+		return nil, err
+	}
+
+	demo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.String(), content)
 	if err != nil {
 		return nil, err
 	}
@@ -474,7 +475,9 @@ func (d Demos) RemoveOrphans(ctx context.Context) error {
 			continue
 		}
 
+		// TODO delete empty folders
 		slog.Warn("Removed orphan demo file", slog.String("filename", demo.Title))
+
 	}
 
 	return nil
