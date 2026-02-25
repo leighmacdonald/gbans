@@ -1,5 +1,9 @@
 set dotenv-load := true
 
+alias c := check
+alias f := fmt
+alias d := dev
+
 all: frontend sourcemod buildp
 
 fmt: fmt-go fmt-md
@@ -11,7 +15,7 @@ fmt-go:
 fmt-md:
     markdownlint-cli2 -c .markdownlint-cli2.yaml --fix
 
-lint-md:
+lint_md:
     markdownlint-cli2 -c .markdownlint-cli2.yaml
 
 bump_deps:
@@ -57,7 +61,7 @@ test-ts:
 test-go:
     go test -race ./...
 
-check: lint_golangci vulncheck lint_ts typecheck_ts
+check: lint_golangci vulncheck lint_ts typecheck_ts lint_md
 
 vulncheck:
     govulncheck
