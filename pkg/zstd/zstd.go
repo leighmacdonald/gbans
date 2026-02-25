@@ -10,8 +10,7 @@ import (
 const Extension = ".zstd"
 
 var (
-	ErrCompress   = errors.New("failed to compress data")
-	ErrDecompress = errors.New("failed to decompress data")
+	ErrCompress = errors.New("failed to compress data")
 
 	NewReader = zstd.NewReader //nolint:gochecknoglobals
 )
