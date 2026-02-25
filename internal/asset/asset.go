@@ -118,7 +118,7 @@ func (a *Asset) Read(receiver []byte) (int, error) {
 	if a.reader == nil {
 		input, errInput := os.Open(a.LocalPath)
 		if errInput != nil {
-			return 0, errors.Join(errInput, zstd.ErrDecompress)
+			return 0, errors.Join(errInput, ErrOpenFile)
 		}
 		a.file = input
 		if a.IsCompressed() {
