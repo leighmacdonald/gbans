@@ -1,18 +1,14 @@
 package asset
 
 import (
-	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/auth/session"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/zstd"
 )
 
 type mediaHandler struct {
@@ -99,23 +95,8 @@ func (h mediaHandler) getAsset() gin.HandlerFunc {
 			}
 		}
 
-		filename := asset.Name
-		// Decompress it before sending out if its a zstd file
-		if strings.HasSuffix(filename, zstd.Extension) {
-			filename = strings.TrimSuffix(asset.Name, zstd.Extension)
-
-			var decompressed bytes.Buffer
-			if errDecompress := zstd.Decompress(reader, bufio.NewWriter(&decompressed)); errDecompress != nil {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errDecompress, httphelper.ErrInternal)))
-
-				return
-			}
-
-			reader = bytes.NewReader(decompressed.Bytes())
-		}
-
 		header := map[string]string{
-			"Content-Disposition": fmt.Sprintf(`attachment; filename="%s"`, filename),
+			"Content-Disposition": fmt.Sprintf(`attachment; filename="%s"`, asset.String()),
 		}
 
 		ctx.DataFromReader(http.StatusOK, asset.Size, asset.MimeType, reader, header)
