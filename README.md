@@ -121,10 +121,8 @@ like:
 There is also a docker-compose config you can use which provides the database as
 well.
 
-```bash
-  docker-compose -f docker/docker-compose.yml up --build --remove-orphans \
+    docker-compose -f docker/docker-compose.yml up --build --remove-orphans \
     --abort-on-container-exit --exit-code-from gbans
-```
 
 ## Documentation
 
@@ -132,11 +130,11 @@ For installation, configuration and usage instruction, developer notes, please
 see the [docs](https://leighmacdonald.github.io/gbans/docs/INTRO).
 
 ## Contributors
-
+<!-- markdownlint-disable -->
 <!-- readme: contributors -start -->
 <table>
-	<tbody>
-		<tr>
+ <tbody>
+  <tr>
             <td align="center">
                 <a href="https://github.com/leighmacdonald">
                     <img src="https://avatars.githubusercontent.com/u/591973?v=4" width="100;" alt="leighmacdonald"/>
@@ -179,8 +177,8 @@ see the [docs](https://leighmacdonald.github.io/gbans/docs/INTRO).
                     <sub><b>Naleksuh</b></sub>
                 </a>
             </td>
-		</tr>
-		<tr>
+  </tr>
+  <tr>
             <td align="center">
                 <a href="https://github.com/camp3r101">
                     <img src="https://avatars.githubusercontent.com/u/10223311?v=4" width="100;" alt="camp3r101"/>
@@ -202,7 +200,8 @@ see the [docs](https://leighmacdonald.github.io/gbans/docs/INTRO).
                     <sub><b>Thomas Durieux</b></sub>
                 </a>
             </td>
-		</tr>
-	<tbody>
+  </tr>
+ <tbody>
 </table>
 <!-- readme: contributors -end -->
+<!-- markdownlint-restore -->

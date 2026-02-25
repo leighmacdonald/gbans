@@ -46,20 +46,20 @@ described below.
 
 This config file should be places in `tf/addons/sourcemod/configs/gbans.cfg`.
 
-```
+```json
 "gbans"
 {
-	// Remote gban server host
-	"host"	"https://example.com"
-
-	// Remote gban server port
-	"port"	"443"
-
-	// Unique server name for this server, the same as a "server-id"
-	"server_name"	"example-1"
-
-	// The authentication token used to retrieve a auth token
-	"server_key"	"YOUR_SERVER_PASSWORD"
+  // Remote gban server host
+  "host" "https://example.com"
+  
+  // Remote gban server port
+  "port" "443"
+  
+  // Unique server name for this server, the same as a "server-id"
+  "server_name" "example-1"
+  
+  // The authentication token used to retrieve a auth token
+  "server_key" "YOUR_SERVER_PASSWORD"
 }
 ```
 
@@ -92,7 +92,7 @@ Care should be taken to restrict these channels to permissions as appropriate.
 
 To enable discord connections, You must also set an oauth2 redirect (Oauth2 -> Redirects -> Add) to point to your own server.
 
-    https://example.com/discord/oauth
+`https://example.com/discord/oauth`
 
 ## IP2Location
 

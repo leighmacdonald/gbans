@@ -16,11 +16,10 @@ TODO
 
 :::
 
-
 :::info
 
-At some point in the future we plan to introduce a special "stats only" mode of gbans which is designed to 
-effectively act as a replacement for hlstatx, without all the extra community aspects enabled. Even with our incomplete 
+At some point in the future we plan to introduce a special "stats only" mode of gbans which is designed to
+effectively act as a replacement for hlstatx, without all the extra community aspects enabled. Even with our incomplete
 stats system, we had many operators asking if this would be a potential option.
 
 :::

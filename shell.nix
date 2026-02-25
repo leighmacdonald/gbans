@@ -26,5 +26,6 @@ pkgs.mkShell {
     zellij
     air
     delve
+    markdownlint-cli2
   ];
 }
