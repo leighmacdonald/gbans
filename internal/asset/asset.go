@@ -9,12 +9,15 @@ import (
 	"io"
 	"log/slog"
 	"mime/multipart"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofrs/uuid/v5"
+	zstdreader "github.com/klauspost/compress/zstd"
+	"github.com/leighmacdonald/gbans/pkg/zstd"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -34,7 +37,8 @@ var (
 	ErrUUIDInvalid        = errors.New("invalid uuid")
 	ErrAssetTooLarge      = errors.New("asset exceeds max allowed size")
 	ErrDeleteAssetFile    = errors.New("failed to remove asset from local store")
-	ErrOpenFile           = errors.New("could not open output file")
+	ErrOpenFile           = errors.New("could not open asset file")
+	ErrCloseFile          = errors.New("could not close asset file")
 )
 
 type Bucket string
@@ -62,13 +66,79 @@ type Asset struct {
 	Name      string          `json:"name"`
 	Size      int64           `json:"size"`
 	IsPrivate bool            `json:"is_private"`
-	LocalPath string          `json:"-"`
 	CreatedOn time.Time       `json:"created_on"`
 	UpdatedOn time.Time       `json:"updated_on"`
+	LocalPath string          `json:"-"`
+	wasRead   bool
+	file      *os.File
+	decoder   *zstdreader.Decoder
+	reader    io.Reader
 }
 
-func (a Asset) HashString() string {
+func (a *Asset) HashString() string {
 	return hex.EncodeToString(a.Hash)
+}
+
+func (a *Asset) IsCompressed() bool {
+	return strings.HasSuffix(a.Name, zstd.Extension)
+}
+
+// Close releases the underlying file and decoder.
+func (a *Asset) Close() error {
+	if a.decoder != nil {
+		a.decoder.Close()
+	}
+	if a.file != nil {
+		if errClose := a.file.Close(); errClose != nil {
+			return errors.Join(errClose, ErrCloseFile)
+		}
+	}
+
+	return nil
+}
+
+// String provides the name of the file, with any compression extension removed.
+func (a *Asset) String() string {
+	if a.IsCompressed() {
+		return strings.TrimSuffix(a.Name, zstd.Extension)
+	}
+
+	return a.Name
+}
+
+// Read implements io.Reader, handling transparently decompressing on the fly as required.
+func (a *Asset) Read(receiver []byte) (int, error) {
+	if a.LocalPath == "" {
+		return 0, ErrOpenFile
+	}
+
+	if a.reader == nil {
+		input, errInput := os.Open(a.LocalPath)
+		if errInput != nil {
+			return 0, errors.Join(errInput, zstd.ErrDecompress)
+		}
+		a.file = input
+		if a.IsCompressed() {
+			reader, errReader := zstdreader.NewReader(a.file)
+			if errReader != nil {
+				return 0, errors.Join(errReader, ErrCopyFileContent)
+			}
+			a.reader = reader
+		} else {
+			a.reader = input
+		}
+	}
+
+	count, err := a.reader.Read(receiver)
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return count, io.EOF
+		}
+
+		return count, errors.Join(err, ErrCopyFileContent)
+	}
+
+	return count, nil
 }
 
 type Assets struct {

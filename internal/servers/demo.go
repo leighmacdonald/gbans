@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 	"path"
 	"strings"
 	"time"
@@ -375,17 +374,11 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID 
 		return nil, ErrGetServer
 	}
 	var (
-		demo       *demoparse.Demo
-		err        error
-		filename   = asset.Name
-		compressed = false
-		mapName    string
+		demo     *demoparse.Demo
+		err      error
+		filename = asset.Name
+		mapName  string
 	)
-
-	if strings.HasSuffix(asset.Name, zstd.Extension) {
-		compressed = true
-		filename = strings.TrimSuffix(filename, zstd.Extension)
-	}
 
 	namePartsAll := strings.Split(filename, "-")
 
@@ -398,22 +391,7 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset asset.Asset, serverID 
 		mapName = nameParts[0]
 	}
 
-	if compressed {
-		input, errInput := os.Open(asset.LocalPath)
-		if errInput != nil {
-			return nil, errors.Join(errInput, zstd.ErrDecompress)
-		}
-
-		var buf bytes.Buffer
-		if err := zstd.Decompress(input, bufio.NewWriter(&buf)); err != nil {
-			return nil, err
-		}
-
-		demo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.LocalPath, bytes.NewReader(buf.Bytes()))
-	} else {
-		demo, err = demoparse.SubmitFile(ctx, d.DemoParserURL, asset.LocalPath)
-	}
-
+	demo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.LocalPath, &asset)
 	if err != nil {
 		return nil, err
 	}

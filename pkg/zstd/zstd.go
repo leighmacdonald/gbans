@@ -36,7 +36,7 @@ func Compress(input io.Reader, output io.Writer) error {
 	return nil
 }
 
-func Decompress(input io.Reader, output io.Writer) error {
+func Xecompress(input io.Reader, output io.Writer) error {
 	reader, errReader := zstd.NewReader(input)
 	if errReader != nil {
 		return errors.Join(errReader, ErrDecompress)
