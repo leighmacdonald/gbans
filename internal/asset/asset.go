@@ -68,7 +68,10 @@ type Asset struct {
 	CreatedOn time.Time       `json:"created_on"`
 	UpdatedOn time.Time       `json:"updated_on"`
 	LocalPath string          `json:"-"`
-	content   []byte
+	wasRead   bool
+	file      *os.File
+	decoder   io.ReadCloser
+	reader    io.Reader
 }
 
 func (a *Asset) HashString() string {
@@ -77,6 +80,24 @@ func (a *Asset) HashString() string {
 
 func (a *Asset) IsCompressed() bool {
 	return strings.HasSuffix(a.Name, zstd.Extension)
+}
+
+// Close releases the underlying file and decoder.
+func (a *Asset) Close() error {
+	if a.decoder != nil {
+		a.decoder.Close()
+		a.decoder = nil
+	}
+	if a.file != nil {
+		if errClose := a.file.Close(); errClose != nil {
+			return errors.Join(errClose, ErrCloseFile)
+		}
+		a.file = nil
+	}
+
+	a.reader = nil
+
+	return nil
 }
 
 // String provides the name of the file, with any compression extension removed.
@@ -89,30 +110,40 @@ func (a *Asset) String() string {
 }
 
 // Read implements io.Reader, handling transparently decompressing on the fly as required.
-func (a *Asset) Read() ([]byte, error) {
+func (a *Asset) Read(receiver []byte) (int, error) {
 	if a.LocalPath == "" {
-		return nil, ErrOpenFile
+		return 0, ErrOpenFile
 	}
 
-	input, errInput := os.Open(a.LocalPath)
-	if errInput != nil {
-		return nil, errors.Join(errInput, zstd.ErrDecompress)
-	}
-
-	content, errReadAll := io.ReadAll(input)
-	if errReadAll != nil {
-		return nil, errReadAll
-	}
-
-	if a.IsCompressed() {
-		uContent, errD := zstd.Decompress(content)
-		if errD != nil {
-			return nil, errD
+	if a.reader == nil {
+		input, errInput := os.Open(a.LocalPath)
+		if errInput != nil {
+			return 0, errors.Join(errInput, zstd.ErrDecompress)
 		}
-		content = uContent
+		a.file = input
+		if a.IsCompressed() {
+			reader, errReader := zstd.NewReader(a.file)
+			if errReader != nil {
+				return 0, errors.Join(errReader, ErrCopyFileContent)
+			}
+			a.reader = reader
+		} else {
+			a.reader = input
+		}
 	}
 
-	return content, nil
+	count, err := a.reader.Read(receiver)
+	if err != nil {
+		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+			_ = a.Close()
+
+			return count, io.EOF
+		}
+
+		return count, errors.Join(err, ErrCopyFileContent)
+	}
+
+	return count, nil
 }
 
 type Assets struct {
@@ -150,7 +181,9 @@ func (s Assets) Create(ctx context.Context, author steamid.SteamID, bucket Bucke
 	slog.Debug("Created new asset",
 		slog.String("name", asset.Name), slog.String("asset_id", asset.AssetID.String()))
 
-	content.Seek(0, 0)
+	if _, err := content.Seek(0, 0); err != nil {
+		return Asset{}, errors.Join(err, ErrCreateAddFile)
+	}
 
 	return newAsset, nil
 }

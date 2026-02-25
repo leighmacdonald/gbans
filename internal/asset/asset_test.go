@@ -45,14 +45,14 @@ func TestAssets(t *testing.T) {
 func TestAssetReader(t *testing.T) {
 	for idx := range 2 {
 		data := []byte(stringutil.SecureRandomString(25_000_000))
-
-		tempFile, err := os.CreateTemp("", "test.dem")
+		tempFile, err := os.CreateTemp(t.TempDir(), "test.dem")
 		require.NoError(t, err)
 		filename := "test.dem"
 		if idx == 0 {
-			compressed := zstd.Compress(data)
+			compressed := new(bytes.Buffer)
+			require.NoError(t, zstd.Compress(bytes.NewReader(data), compressed))
 			filename = "test.dem.zstd"
-			_, e := tempFile.Write(compressed)
+			_, e := tempFile.Write(compressed.Bytes())
 			require.NoError(t, e)
 		} else {
 			_, e := tempFile.Write(data)
@@ -69,7 +69,7 @@ func TestAssetReader(t *testing.T) {
 		require.Equal(t, idx == 0, testAsset.IsCompressed())
 
 		for range 2 {
-			fetchedData, err := testAsset.Read()
+			fetchedData, err := io.ReadAll(&testAsset)
 			require.NoError(t, err)
 			require.Equal(t, data, fetchedData)
 		}

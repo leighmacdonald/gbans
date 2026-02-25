@@ -1,6 +1,7 @@
 package servers
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -128,10 +129,13 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		slog.String("name", demo.Name))
 
 	// TOOO make these interfaces less clunky for compressed data.
-	compressed := zstd.Compress(demo.Content)
+	var compressed bytes.Buffer
+	if err := zstd.Compress(bytes.NewReader(demo.Content), bufio.NewWriter(&compressed)); err != nil {
+		return err
+	}
 
 	demoAsset, errNewAsset := d.asset.Create(ctx, steamid.New(d.owner),
-		asset.BucketDemo, demo.Name+zstd.Extension, bytes.NewReader(compressed), false)
+		asset.BucketDemo, demo.Name+zstd.Extension, bytes.NewReader(compressed.Bytes()), false)
 	if errNewAsset != nil {
 		return errNewAsset
 	}
@@ -167,7 +171,7 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 
 			demoPath := path.Join(demoDir, file.Name())
 
-			slog.Info("Downloading demo", slog.String("name", file.Name()), slog.String("server", instance.ShortName))
+			slog.Debug("Downloading demo", slog.String("name", file.Name()), slog.String("server", instance.ShortName))
 
 			reader, err := client.Open(ctx, demoPath)
 			if err != nil {
@@ -199,7 +203,7 @@ func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, ser
 				continue
 			}
 
-			slog.Info("Deleted demo on remote host", slog.String("path", demoPath))
+			slog.Debug("Deleted demo on remote host", slog.String("path", demoPath))
 		}
 	}
 
@@ -387,12 +391,7 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		mapName = nameParts[0]
 	}
 
-	content, err := asset.Read()
-	if err != nil {
-		return nil, err
-	}
-
-	demo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.String(), content)
+	demo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.String(), asset)
 	if err != nil {
 		return nil, err
 	}
@@ -477,7 +476,6 @@ func (d Demos) RemoveOrphans(ctx context.Context) error {
 
 		// TODO delete empty folders
 		slog.Warn("Removed orphan demo file", slog.String("filename", demo.Title))
-
 	}
 
 	return nil
