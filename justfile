@@ -2,9 +2,17 @@ set dotenv-load := true
 
 all: frontend sourcemod buildp
 
-fmt:
+fmt: fmt-go fmt-md
+
+fmt-go:
     golangci-lint fmt
     just -f frontend/justfile fmt
+
+fmt-md:
+    markdownlint-cli2 -c .markdownlint-cli2.yaml --fix
+
+lint-md:
+    markdownlint-cli2 -c .markdownlint-cli2.yaml
 
 bump_deps:
     go get -u ./...

@@ -4,13 +4,14 @@ This covers functionality available through the gbans plugin as well as some rec
 
 ## In-Game Commands
 
-| Command    | Perms        | Description                                                                                                                                |
-|------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| gb_mod     |              | Sends a notification to discord (if its enabled) to the users belonging to the group configured in the "mod ping role id" discord setting. |
-| gb_ban     | ADMFLAG_BAN  | Ban a user using in-game menu.                                                                                                             |
-| gb_reload  | ADMFLAG_ROOT | Reinitializes some parts of the plugin such as authentication password.                                                                    |
-| gb_version |              | Shows the current plugin version.                                                                                                          |
-| report     |              | Report a user.                                                                                                                             |
+| Command    | Perms        | Description                                                                          |
+|------------|--------------|--------------------------------------------------------------------------------------|
+| gb_mod     |              | Sends a notification to discord (if its enabled) to the users belonging to the group |
+|            |              | configured in the "mod ping role id" discord setting.                                |
+| gb_ban     | ADMFLAG_BAN  | Ban a user using in-game menu.                                                       |
+| gb_reload  | ADMFLAG_ROOT | Reinitializes some parts of the plugin such as authentication password.              |
+| gb_version |              | Shows the current plugin version.                                                    |
+| report     |              | Report a user.                                                                       |
 
 ## Convars
 
@@ -33,26 +34,20 @@ This covers functionality available through the gbans plugin as well as some rec
 
 ## Creating a sourcemod database user for clientprefs
 
-It's recommended, but not required, to create a secondary less-privileged user, especially when using servers remote to the
-gbans instance. Below is an example of creating a restricted user that only has access to the tables, and functions, required
-for operation.
+It's recommended, but not required, to create a secondary less-privileged user, especially when using servers remote to
+the gbans instance. Below is an example of creating a restricted user that only has access to the tables, and
+functions, required for operation.
 
 If you are using the official docker images, you must ensure that you enable the md5 authentication method when creating
 the image. This can be achieved by defining the env var `POSTGRES_HOST_AUTH_METHOD=md5` when building your image. This
-will automatically apply the following values under your `pg_hba.conf`.
-
-```
-host all all all md5
-```
+will automatically apply the following values under your `pg_hba.conf`. `host all all all md5`
 
 If you are not using docker, you can of course just manually edit this file. Its usually located at `/var/lib/postgresql/data/pg_hba.conf`.
 
-Note that this is only the default method and you should consider a more restrictive set of parameters, such as limiting the database, role and hosts
-that are allowed to connect. For example, we could restrict access like so:
+Note that this is only the default method and you should consider a more restrictive set of parameters, such as limiting
+the database, role and hosts that are allowed to connect. For example, we could restrict access like so:
 
-```
-host gbans sourcemod 10.20.30.0/24 md5
-```
+`host gbans sourcemod 10.20.30.0/24 md5`
 
 See the postgres docs on [pg_hba.conf](https://www.postgresql.org/docs/current/auth-pg-hba-conf.html) for more details.
 
@@ -74,26 +69,25 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON sm_cookie_cache, sm_cookies TO sourcemod
 GRANT CREATE ON SCHEMA public TO sourcemod; -- extension will bail if not set it seems :(.
 GRANT USAGE, SELECT ON SEQUENCE sm_cookies_id_seq TO sourcemod;
 -- Required if you get "Failed to create function" errors
--- ALTER FUNCTION add_or_update_cookie(in_player varchar, in_cookie integer, in_value varchar, in_time integer) OWNER TO sourcemod;
+-- ALTER FUNCTION add_or_update_cookie(in_player varchar, in_cookie integer, in_value varchar, in_time integer) 
+-- OWNER TO sourcemod;
 GRANT EXECUTE ON FUNCTION check_ban TO sourcemod;
 ```
 
-
-
 Next you can setup your sourcemod databases.cfg with this user.
 
-```
-    "Databases"
-    {
-    	"default"
-        {
-            "driver"        "pgsql"
-            "host"          "localhost"
-            "database"      "gbans"
-            "user"          "sourcemod"
-            "pass"          "<your-password>"
-            "timeout"       "60"
-            "port"          "5432"
-        }
-    }   
+```vdf
+  "Databases"
+  {
+    "default"
+      {
+          "driver"        "pgsql"
+          "host"          "localhost"
+          "database"      "gbans"
+          "user"          "sourcemod"
+          "pass"          "<your-password>"
+          "timeout"       "60"
+          "port"          "5432"
+      }
+  }   
 ```

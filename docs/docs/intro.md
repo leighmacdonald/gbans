@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Intro
 
-gbans is a system for handling Team Fortress 2 server administration in a centralized manner. It is primarily written 
+gbans is a system for handling Team Fortress 2 server administration in a centralized manner. It is primarily written
 in golang, TypeScript and sourcepawn and consists of several major components:
 
 :::warning
@@ -33,7 +33,8 @@ guarentee yet. Version 1.0 is our target for a very complete and more seamless u
 - [Discord](https://discord.com/) integration (Bot + OAuth)
 - Flagging and automatic action for flagged words
 - Web UI for managing sourcemod users, groups, permissions and overrides.
-- [Sourcemod SQL Admins](https://wiki.alliedmods.net/SQL_Admins_(SourceMod)) compatibility. We use the same database schema as the base sourcemod sql admins, so you can also use the built in sql-admins* plugins to edits these in game.
+- [Sourcemod SQL Admins](https://wiki.alliedmods.net/SQL_Admins_(SourceMod)) compatibility. We use the same database
+  schema as the base sourcemod sql admins, so you can also use the built in sql-admins* plugins to edits these in game.
 
 Most of these features have some level of being toggled on/off so you can choose what features suits your setup best.
 
