@@ -455,7 +455,7 @@ export const TopBar = () => {
 									<Tooltip title="Steam Login">
 										<Button
 											component={Link}
-											href={generateOIDCLink(window.location.pathname)}
+											href={generateOIDCLink()}
 											variant={"text"}
 											sx={{ backgroundColor: "inherit" }}
 										>

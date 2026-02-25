@@ -12,9 +12,9 @@ require (
 	github.com/dotse/slug v0.1.1
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gabriel-vasile/mimetype v1.4.13
-	github.com/getsentry/sentry-go v0.42.0
-	github.com/getsentry/sentry-go/gin v0.42.0
-	github.com/getsentry/sentry-go/slog v0.42.0
+	github.com/getsentry/sentry-go v0.43.0
+	github.com/getsentry/sentry-go/gin v0.43.0
+	github.com/getsentry/sentry-go/slog v0.43.0
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-contrib/pprof v1.5.3
 	github.com/gin-contrib/static v1.1.5
@@ -23,7 +23,7 @@ require (
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
-	github.com/gomarkdown/markdown v0.0.0-20250810172220-2e2c11897d1a
+	github.com/gomarkdown/markdown v0.0.0-20260217112301-37c66b85d6ab
 	github.com/google/go-querystring v1.2.0
 	github.com/gorilla/schema v1.4.1
 	github.com/gorilla/websocket v1.5.3
@@ -45,7 +45,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/samber/slog-gin v1.21.0
 	github.com/samber/slog-multi v1.7.1
-	github.com/sosodev/duration v1.3.1
+	github.com/sosodev/duration v1.4.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
@@ -55,7 +55,7 @@ require (
 	github.com/yohcop/openid-go v1.0.1
 	go.uber.org/ratelimit v0.3.1
 	golang.org/x/crypto v0.48.0
-	golang.org/x/exp v0.0.0-20260212183809-81e46e3db34a
+	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa
 	golang.org/x/oauth2 v0.35.0
 	golang.org/x/sync v0.19.0
 )
@@ -89,7 +89,7 @@ require (
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/ebitengine/purego v0.9.1 // indirect
+	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
@@ -118,7 +118,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/joho/godotenv v1.5.1
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.18.4
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect

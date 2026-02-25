@@ -1,4 +1,5 @@
-export const generateOIDCLink = (returnPath: string): string => {
+export const generateOIDCLink = (returnPath?: string): string => {
+	returnPath = returnPath ?? window.location.pathname;
 	let returnUrl = window.location.hostname;
 	if (window.location.port !== "") {
 		returnUrl = `${returnUrl}:${window.location.port}`;

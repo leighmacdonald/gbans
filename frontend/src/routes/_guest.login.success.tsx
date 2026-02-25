@@ -1,7 +1,7 @@
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useLayoutEffect, useRouter } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useEffect, useLayoutEffect } from "react";
 import { z } from "zod/v4";
 import { apiGetCurrentProfile } from "../api";
 import { useAuth } from "../hooks/useAuth.ts";
