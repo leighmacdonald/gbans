@@ -64,3 +64,5 @@ result
 tmp
 schema.json
 id_stv*
+*.dem
+*.json
