@@ -13,12 +13,13 @@ export default defineConfig({
 		copyPublicDir: true,
 		sourcemap: true,
 		rollupOptions: {
-			treeshake: "recommended",
+			treeshake: "smallest",
 			output: {
 				//esModule: false,
 				manualChunks(id) {
 					const chunks = [
 						"sentry",
+						"sentry/react",
 						"react-leaflet",
 						"icons-material",
 						"leaflet",
@@ -38,7 +39,6 @@ export default defineConfig({
 						"tanstack/react-query",
 						"tanstack/react-router",
 						"tanstack/react-table",
-						"core-js",
 						"eslint",
 						"markdown-to-jsx",
 						"mui-markdown",
@@ -47,7 +47,6 @@ export default defineConfig({
 						"minimatch",
 						"zod",
 						"video-react",
-						"typescript",
 						"steamid",
 						"js-cookie",
 						"file-type",
@@ -55,7 +54,6 @@ export default defineConfig({
 						"base64-js",
 						"mui-nested-menu",
 						"react",
-						"react-modal-image",
 						"react-scrollable-feed",
 						"react-timer-hook",
 						"react-use-websocket",
@@ -63,14 +61,6 @@ export default defineConfig({
 
 					if (id.includes("node_modules")) {
 						return (chunks.find((c) => id.includes(c)) ?? "vendor").replace("/", "-");
-					}
-
-					if (id.includes("modal")) {
-						return "modal";
-					}
-
-					if (id.includes(".png")) {
-						return "pngs";
 					}
 
 					return null;
@@ -131,8 +121,11 @@ export default defineConfig({
 	},
 
 	plugins: [
-		react(),
-		tanstackRouter(),
+		tanstackRouter({
+			target: "react",
+			autoCodeSplitting: true,
+		}),
+		react(), // Must come *after* tanstackRouter
 		createHtmlPlugin({
 			entry: "./src/index.tsx",
 			template: "index.html",

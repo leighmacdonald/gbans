@@ -33,11 +33,7 @@ export const ErrorDetails = ({ error }: { error: AppError | unknown }) => {
 							flexWrap="wrap"
 							padding={2}
 						>
-							<Button
-								sx={{ alignSelf: "center" }}
-								component={Link}
-								href={generateOIDCLink(window.location.pathname)}
-							>
+							<Button sx={{ alignSelf: "center" }} component={Link} href={generateOIDCLink()}>
 								<img src={steamLogo} alt={"Steam Login"} />
 							</Button>
 						</Stack>

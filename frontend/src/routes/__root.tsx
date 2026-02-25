@@ -36,6 +36,14 @@ type RouterContext = {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
 	component: Root,
+	head: (_ctx) => ({
+		meta: [
+			{
+				name: "description",
+				content: "gbans is a web application for managing Team Fortress 2 communities",
+			},
+		],
+	}),
 });
 
 function Root() {
