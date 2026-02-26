@@ -53,6 +53,7 @@ func (c httpHandler) onAPIPutConfig() gin.HandlerFunc {
 
 type AppInfo struct {
 	SiteName           string `json:"site_name"`
+	SiteDescription    string `json:"site_description"`
 	AssetURL           string `json:"asset_url"`
 	LinkID             string `json:"link_id"`
 	AppVersion         string `json:"app_version"`

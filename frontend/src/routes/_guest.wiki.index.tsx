@@ -3,14 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { apiGetWikiPage } from "../api/wiki.ts";
 import { WikiPage } from "../component/WikiPage.tsx";
 import { PermissionLevel } from "../schema/people.ts";
-import type { Page } from "../schema/wiki.ts";
 import { logErr } from "../util/errors.ts";
 
 export const Route = createFileRoute("/_guest/wiki/")({
 	component: Wiki,
-	head: () => ({
-		meta: [{ name: "description", content: "Contests" }, { title: "Contests" }],
-	}),
 	loader: async ({ context, abortController }) => {
 		const queryOpts = queryOptions({
 			queryKey: ["wiki", { slug: "home" }],
@@ -24,15 +20,19 @@ export const Route = createFileRoute("/_guest/wiki/")({
 						body_md: "",
 						slug: "home",
 						permission_level: PermissionLevel.Guest,
-					} as Page;
+					};
 				}
 			},
 		});
 
-		return context.queryClient.fetchQuery(queryOpts);
+		return { page: context.queryClient.fetchQuery(queryOpts), appInfo: context.appInfo };
 	},
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "Contests" }, { title: `Contests - ${loaderData?.appInfo.site_name}` }],
+	}),
 });
 
 function Wiki() {
-	return <WikiPage slug={"home"} path={"/_guest/wiki/"} />;
+	const { appInfo } = Route.useLoaderData();
+	return <WikiPage slug={"home"} path={"/_guest/wiki/"} assetURL={appInfo.asset_url} />;
 }

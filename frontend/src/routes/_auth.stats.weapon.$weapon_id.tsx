@@ -18,8 +18,14 @@ import { defaultFloatFmtPct, humanCount } from "../util/text.tsx";
 
 export const Route = createFileRoute("/_auth/stats/weapon/$weapon_id")({
 	component: StatsWeapon,
-	head: () => ({
-		meta: [{ name: "description", content: "Weapon Stats" }, { title: "Weapon Stats" }],
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Weapon Stats" },
+			{ title: `Weapon Stats - ${loaderData?.appInfo.site_name}` },
+		],
 	}),
 });
 

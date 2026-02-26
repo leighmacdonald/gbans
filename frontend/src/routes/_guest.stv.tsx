@@ -40,13 +40,10 @@ const demosSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_guest/stv")({
 	component: STV,
-	head: () => ({
-		meta: [{ name: "description", content: "Search and download SourceTV recordings" }, { title: "SourceTV" }],
-	}),
-	beforeLoad: () => {
-		ensureFeatureEnabled("demos_enabled");
-	},
 	validateSearch: (search) => demosSchema.parse(search),
+	beforeLoad: ({ context }) => {
+		ensureFeatureEnabled(context.appInfo.demos_enabled);
+	},
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
@@ -54,6 +51,7 @@ export const Route = createFileRoute("/_guest/stv")({
 		});
 
 		return {
+			appInfo: context.appInfo,
 			servers: unsorted.sort((a, b) => {
 				if (a.server_name > b.server_name) {
 					return 1;
@@ -65,6 +63,12 @@ export const Route = createFileRoute("/_guest/stv")({
 			}),
 		};
 	},
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Search and download SourceTV recordings" },
+			{ title: `SourceTV - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 const schema = z.object({

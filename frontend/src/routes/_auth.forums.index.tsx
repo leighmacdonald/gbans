@@ -24,7 +24,6 @@ import { ForumCategoryEditorModal } from "../component/modal/ForumCategoryEditor
 import { ForumForumEditorModal } from "../component/modal/ForumForumEditorModal.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { VCenterBox } from "../component/VCenterBox.tsx";
-import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { ForumCategory } from "../schema/forum.ts";
@@ -35,8 +34,11 @@ import { renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/forums/")({
 	component: ForumOverview,
-	head: () => ({
-		meta: [{ name: "description", content: "Forums" }, { title: "Forums" }],
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "Forums" }, { title: `Forums - ${loaderData?.appInfo.site_name}` }],
 	}),
 });
 
@@ -181,7 +183,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 
 function ForumOverview() {
 	const { sendFlash } = useUserFlashCtx();
-	const { appInfo } = useAppInfoCtx();
+	const { appInfo } = Route.useLoaderData();
 	const { hasPermission } = useAuth();
 	const { data: overview, isLoading } = useQuery({
 		queryKey: ["forumOverview"],

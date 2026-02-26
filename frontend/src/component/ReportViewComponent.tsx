@@ -40,7 +40,7 @@ import { TabPanel } from "./TabPanel";
 import { ChatTable } from "./table/ChatTable.tsx";
 import { IPHistoryTable } from "./table/IPHistoryTable.tsx";
 
-export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element => {
+export const ReportViewComponent = ({ report, assetURL }: { report: Report; assetURL: string }): JSX.Element => {
 	const theme = useTheme();
 	const queryClient = useQueryClient();
 	const { sendFlash, sendError } = useUserFlashCtx();
@@ -153,7 +153,7 @@ export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element
 							<TabPanel value={value} index={0}>
 								{report && (
 									<Box minHeight={300}>
-										<MarkDownRenderer body_md={report.description} />
+										<MarkDownRenderer body_md={report.description} assetURL={assetURL} />
 									</Box>
 								)}
 							</TabPanel>
@@ -263,7 +263,11 @@ export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element
 						{!isLoadingMessages &&
 							messages &&
 							messages.map((m) => (
-								<ReportMessageView message={m} key={`report-msg-${m.report_message_id}`} />
+								<ReportMessageView
+									message={m}
+									key={`report-msg-${m.report_message_id}`}
+									assetURL={assetURL}
+								/>
 							))}
 						<Paper elevation={1}>
 							<form

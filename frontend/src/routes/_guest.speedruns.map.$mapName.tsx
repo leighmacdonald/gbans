@@ -25,12 +25,18 @@ import { durationString, renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/speedruns/map/$mapName")({
 	component: SpeedrunsMap,
-	head: () => ({
-		meta: [{ name: "description", content: "Map Speedruns" }, { title: "Speedruns" }],
-	}),
-	beforeLoad: () => {
-		ensureFeatureEnabled("speedruns_enabled");
+	beforeLoad: ({ context }) => {
+		ensureFeatureEnabled(context.appInfo.speedruns_enabled);
 	},
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Map Speedruns" },
+			{ title: `Speedruns - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 function SpeedrunsMap() {

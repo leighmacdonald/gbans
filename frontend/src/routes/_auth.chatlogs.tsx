@@ -41,19 +41,20 @@ const searchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_auth/chatlogs")({
 	component: ChatLogs,
+	validateSearch: (search) => searchSchema.parse(search),
 	head: () => ({
 		meta: [{ name: "description", content: "Browse in-game chat logs" }, { title: "Chat Logs" }],
 	}),
-	beforeLoad: () => {
-		ensureFeatureEnabled("chatlogs_enabled");
+	beforeLoad: ({ context }) => {
+		ensureFeatureEnabled(context.appInfo.chatlogs_enabled);
 	},
-	validateSearch: (search) => searchSchema.parse(search),
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
 			queryFn: apiGetServers,
 		});
 		return {
+			appInfo: context.appInfo,
 			servers: unsorted.sort((a, b) => {
 				if (a.server_name > b.server_name) {
 					return 1;

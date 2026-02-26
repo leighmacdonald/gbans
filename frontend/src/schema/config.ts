@@ -26,6 +26,7 @@ export const schemaSentry = z.object({
 
 export const schemaGeneral = z.object({
 	site_name: z.string().min(1).max(32),
+	site_description: z.string().max(155),
 	file_serve_mode: z.enum(["local"]),
 	mode: z.enum(["release", "debug", "test"]),
 	srcds_log_addr: z.string(),

@@ -22,6 +22,12 @@ export const Route = createFileRoute("/_guest/login/")({
 		// Otherwise, return the user in context
 		return context.auth;
 	},
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "Login" }, { title: `Login - ${loaderData?.appInfo.site_name}` }],
+	}),
 });
 
 export function LoginPage() {

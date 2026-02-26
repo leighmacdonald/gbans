@@ -5,13 +5,15 @@ import { ErrorDetails } from "./component/ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./component/LoadingPlaceholder.tsx";
 import { AppError, ErrorCode } from "./error.tsx";
 import { routeTree } from "./routeTree.gen.ts";
+import type { appInfoDetail } from "./schema/app.ts";
 
-export const newRouter = (queryClient: QueryClient) => {
+export const newRouter = (queryClient: QueryClient, appInfo: appInfoDetail) => {
 	return createRouter({
 		routeTree,
 		defaultPreload: "intent",
 		context: {
 			queryClient,
+			appInfo,
 		},
 		defaultPendingComponent: LoadingPlaceholder,
 		defaultErrorComponent: () => {

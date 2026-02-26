@@ -5,12 +5,17 @@ import Typography from "@mui/material/Typography";
 import { createFileRoute } from "@tanstack/react-router";
 import type { PropsWithChildren } from "react";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 
 export const Route = createFileRoute("/_guest/privacy-policy")({
 	component: PrivacyPolicy,
-	head: () => ({
-		meta: [{ name: "description", content: "Privacy Policy" }, { title: "Privacy Policy" }],
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Privacy Policy" },
+			{ title: `Privacy Policy - ${loaderData?.appInfo.site_name}` },
+		],
 	}),
 });
 
@@ -26,7 +31,7 @@ const PPBox = ({ heading, children }: { heading: string } & PropsWithChildren) =
 };
 
 function PrivacyPolicy() {
-	const { appInfo } = useAppInfoCtx();
+	const { appInfo } = Route.useLoaderData();
 
 	return (
 		<ContainerWithHeader title={"Privacy Policy"} padding={2} iconLeft={<PolicyIcon />}>

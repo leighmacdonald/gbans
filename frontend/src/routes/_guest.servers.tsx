@@ -31,12 +31,18 @@ import { sum } from "../util/lists.ts";
 
 export const Route = createFileRoute("/_guest/servers")({
 	component: Servers,
-	head: () => ({
-		meta: [{ name: "description", content: "Server Browser" }, { title: "Servers" }],
-	}),
-	beforeLoad: () => {
-		ensureFeatureEnabled("servers_enabled");
+	beforeLoad: ({ context }) => {
+		ensureFeatureEnabled(context.appInfo.servers_enabled);
 	},
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Server Browser" },
+			{ title: `Servers - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 function LinearProgressWithLabel(props: LinearProgressProps & { value: number }) {

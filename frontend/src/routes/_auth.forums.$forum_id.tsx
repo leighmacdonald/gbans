@@ -43,9 +43,6 @@ const forumThreadsQueryKey = (forum_id: string | number) => {
 
 export const Route = createFileRoute("/_auth/forums/$forum_id")({
 	component: ForumPage,
-	head: () => ({
-		meta: [{ name: "description", content: "Forum" }, { title: "Forum" }],
-	}),
 	loader: async ({ context, params }) => {
 		const { forum_id } = params;
 		const forumQueryOpts = {
@@ -63,8 +60,14 @@ export const Route = createFileRoute("/_auth/forums/$forum_id")({
 		};
 
 		const threads = await context.queryClient.fetchQuery(threadsQueryOpts);
-		return { forum, threads };
+		return { forum, threads, appInfo: context.appInfo };
 	},
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: loaderData?.forum.description },
+			{ title: `Forum - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 	errorComponent: ({ error }) => {
 		if (error instanceof AppError) {
 			return <ErrorDetails error={error} />;

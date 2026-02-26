@@ -24,12 +24,15 @@ import { renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/contests")({
 	component: Contests,
-	head: () => ({
-		meta: [{ name: "description", content: "Contests" }, { title: "Contests" }],
-	}),
-	beforeLoad: () => {
-		ensureFeatureEnabled("contests_enabled");
+	beforeLoad: ({ context }) => {
+		ensureFeatureEnabled(context.appInfo.contests_enabled);
 	},
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "Contests" }, { title: `Contests - ${loaderData?.appInfo.site_name}` }],
+	}),
 });
 
 function Contests() {

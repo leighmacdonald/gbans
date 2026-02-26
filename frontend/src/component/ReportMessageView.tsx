@@ -24,9 +24,10 @@ import { MarkDownRenderer } from "./MarkdownRenderer";
 
 export interface ReportMessageViewProps {
 	message: ReportMessage;
+	assetURL: string;
 }
 
-export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
+export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps) => {
 	const theme = useTheme();
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
@@ -156,7 +157,7 @@ export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
 					subheader={d1}
 				/>
 
-				<MarkDownRenderer body_md={message.message_md} />
+				<MarkDownRenderer body_md={message.message_md} assetURL={assetURL} />
 
 				<Menu
 					anchorEl={anchorEl}

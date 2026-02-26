@@ -13,10 +13,10 @@ fmt-go:
     just -f frontend/justfile fmt
 
 fmt-md:
-    markdownlint-cli2 -c .markdownlint-cli2.yaml --fix
+    markdownlint-cli2 --fix
 
 lint_md:
-    markdownlint-cli2 -c .markdownlint-cli2.yaml
+    markdownlint-cli2
 
 bump_deps:
     go get -u ./...

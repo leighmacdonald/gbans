@@ -41,9 +41,6 @@ const searchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/anticheat")({
 	component: AdminAnticheat,
-	head: () => ({
-		meta: [{ name: "description", content: "Anti-Cheat Logs" }, { title: "Anti-Cheat Logs" }],
-	}),
 	validateSearch: (search) => searchSchema.parse(search),
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
@@ -51,6 +48,7 @@ export const Route = createFileRoute("/_mod/admin/anticheat")({
 			queryFn: apiGetServers,
 		});
 		return {
+			appInfo: context.appInfo,
 			servers: unsorted.sort((a, b) => {
 				if (a.server_name > b.server_name) {
 					return 1;
@@ -62,6 +60,12 @@ export const Route = createFileRoute("/_mod/admin/anticheat")({
 			}),
 		};
 	},
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Anti-Cheat Logs" },
+			{ title: `Anti-Cheat Logs - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 const columnHelper = createColumnHelper<StacEntry>();

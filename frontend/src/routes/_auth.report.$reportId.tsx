@@ -31,17 +31,22 @@ import { renderDateTime, renderTimeDistance } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/report/$reportId")({
 	component: ReportView,
-	head: () => ({
-		meta: [{ name: "description", content: "View a report" }, { title: "Report" }],
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "View a report" },
+			{ title: `Report - ${loaderData?.appInfo.site_name}` },
+		],
 	}),
 });
 
 function ReportView() {
 	const { reportId } = Route.useParams();
+	const { appInfo } = Route.useLoaderData();
 	const theme = useTheme();
-
 	const { hasPermission } = useAuth();
-
 	const navigate = useNavigate();
 
 	const { data: report, isLoading: isLoadingReport } = useQuery({
@@ -142,7 +147,9 @@ function ReportView() {
 
 	return (
 		<Grid container spacing={2}>
-			<Grid size={{ xs: 12, md: 8 }}>{report && <ReportViewComponent report={report} />}</Grid>
+			<Grid size={{ xs: 12, md: 8 }}>
+				{report && <ReportViewComponent report={report} assetURL={appInfo.asset_url} />}
+			</Grid>
 			<Grid size={{ xs: 12, md: 4 }}>
 				<div>
 					<Grid container spacing={2}>

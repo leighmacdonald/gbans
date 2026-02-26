@@ -13,11 +13,20 @@ import { renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/changelog")({
 	component: Changelogs,
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Git Changelogs" },
+			{ title: `Changelog - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 function Changelogs() {
 	const theme = useTheme();
-
+	const { appInfo } = Route.useLoaderData();
 	const { data: changelogs, isLoading } = useQuery({
 		queryKey: ["changelogs"],
 		queryFn: getChangelogs,
@@ -46,7 +55,7 @@ function Changelogs() {
 							}
 							iconLeft={<NewReleasesIcon />}
 						>
-							<MarkDownRenderer body_md={changelog.body} />
+							<MarkDownRenderer body_md={changelog.body} assetURL={appInfo.asset_url} />
 						</ContainerWithHeader>
 					</Grid>
 				))}

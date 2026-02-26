@@ -29,7 +29,15 @@ interface WikiValues {
 	permission_level: PermissionLevelEnum;
 }
 
-export const WikiPage = ({ slug = "home", path }: { slug: string; path: "/_guest/wiki/" | "/_guest/wiki/$slug" }) => {
+export const WikiPage = ({
+	slug = "home",
+	path,
+	assetURL,
+}: {
+	slug: string;
+	path: "/_guest/wiki/" | "/_guest/wiki/$slug";
+	assetURL: string;
+}) => {
 	const [editMode, setEditMode] = useState<boolean>(false);
 	const queryClient = useQueryClient();
 	const { hasPermission } = useAuth();
@@ -152,7 +160,7 @@ export const WikiPage = ({ slug = "home", path }: { slug: string; path: "/_guest
 		<Grid container spacing={2}>
 			<Grid size={{ xs: editMode ? 6 : 12 }}>
 				<ContainerWithHeaderAndButtons title={page?.slug ?? ""} iconLeft={<ArticleIcon />} buttons={buttons}>
-					<MarkDownRenderer body_md={page?.body_md ?? ""} />
+					<MarkDownRenderer body_md={page?.body_md ?? ""} assetURL={assetURL} />
 				</ContainerWithHeaderAndButtons>
 			</Grid>
 		</Grid>

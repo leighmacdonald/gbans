@@ -15,25 +15,30 @@ import Stack from "@mui/material/Stack";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { NewsView } from "../component/NewsView";
 import RouterLink from "../component/RouterLink.tsx";
-import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 import { useAuth } from "../hooks/useAuth.ts";
 
 export const Route = createFileRoute("/_guest/")({
 	component: Index,
-	head: () => ({
-		meta: [{ name: "description", content: "Home" }, { title: "Home" }],
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: loaderData?.appInfo.site_description },
+			{ title: `Home - ${loaderData?.appInfo.site_name}` },
+		],
 	}),
 });
 
 function Index() {
 	const navigate = useNavigate();
-	const { appInfo } = useAppInfoCtx();
+	const { appInfo } = Route.useLoaderData();
 	const { profile } = useAuth();
 
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12, sm: 12, md: 9 }}>
-				<NewsView itemsPerPage={3} />
+				<NewsView itemsPerPage={3} assetURL={appInfo.asset_url} />
 			</Grid>
 			<Grid size={{ xs: 12, sm: 12, md: 3 }}>
 				<Stack spacing={3}>

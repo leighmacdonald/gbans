@@ -48,8 +48,14 @@ import { RowsPerPage } from "../util/table.ts";
 
 export const Route = createFileRoute("/_auth/notifications")({
 	component: NotificationsPage,
-	head: () => ({
-		meta: [{ name: "description", content: "User Notifications" }, { title: "Notifications" }],
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "User Notifications" },
+			{ title: `Notifications - ${loaderData?.appInfo.site_name}` },
+		],
 	}),
 });
 

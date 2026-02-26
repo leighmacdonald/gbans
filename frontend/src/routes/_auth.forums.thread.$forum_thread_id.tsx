@@ -38,28 +38,35 @@ const forumThreadSearchSchema = commonTableSearchSchema;
 
 export const Route = createFileRoute("/_auth/forums/thread/$forum_thread_id")({
 	component: ForumThreadPage,
-	head: () => ({
-		meta: [{ name: "description", content: "Thread" }, { title: "Thread" }],
-	}),
 	validateSearch: (search) => forumThreadSearchSchema.parse(search),
+	loader: async ({ context, params }) => {
+		const thread = await context.queryClient.fetchQuery({
+			queryKey: ["forumThread", { forum_thread_id: Number(params.forum_thread_id) }],
+			queryFn: async () => {
+				return await apiGetThread(Number(params.forum_thread_id));
+			},
+		});
+
+		return { thread, appInfo: context.appInfo };
+	},
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: loaderData?.thread?.title },
+			{ title: `Thread - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 function ForumThreadPage() {
 	const { hasPermission, permissionLevel } = useAuth();
 	const { forum_thread_id } = Route.useParams();
+	const { thread, appInfo } = Route.useLoaderData();
 	const { pageIndex } = Route.useSearch();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
 	const confirmModal = useModal(ConfirmationModal);
 	const navigate = useNavigate();
 	const theme = useTheme();
-
-	const { data: thread, isLoading: isLoadingThread } = useQuery({
-		queryKey: ["forumThread", { forum_thread_id: Number(forum_thread_id) }],
-		queryFn: async () => {
-			return await apiGetThread(Number(forum_thread_id));
-		},
-	});
 
 	const { data: messages, isLoading: isLoadingMessages } = useQuery({
 		queryKey: ["threadMessages", { forum_thread_id }],
@@ -68,7 +75,6 @@ function ForumThreadPage() {
 				forum_thread_id: Number(forum_thread_id),
 			});
 		},
-		enabled: !isLoadingThread && Boolean(thread),
 	});
 
 	const [pagination, setPagination] = useState({
@@ -253,6 +259,7 @@ function ForumThreadPage() {
 			) : (
 				(messages ?? []).map((m) => (
 					<ThreadMessageContainer
+						assetURL={appInfo.asset_url}
 						onSave={onSave}
 						message={m}
 						key={`thread-message-id-${m.forum_message_id}`}

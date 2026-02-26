@@ -11,6 +11,7 @@ import * as Sentry from "@sentry/react";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
+import { getAppInfo as apiGetAppInfo } from "../api/app.ts";
 import type { AuthContextProps } from "../auth.tsx";
 import { BackgroundImageProvider } from "../component/BackgroundImageProvider.tsx";
 import { type Flash, Flashes } from "../component/Flashes.tsx";
@@ -24,6 +25,7 @@ import { ColourModeContext } from "../contexts/ColourModeContext.tsx";
 import { UserFlashCtx } from "../contexts/UserFlashCtx.tsx";
 import { type ApiError, isApiError } from "../error.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
+import type { appInfoDetail } from "../schema/app.ts";
 import { PermissionLevel } from "../schema/people.ts";
 import { createThemeByMode } from "../theme.ts";
 import { checkFeatureEnabled } from "../util/features.ts";
@@ -32,16 +34,23 @@ import { emptyOrNullString } from "../util/types.ts";
 type RouterContext = {
 	auth?: AuthContextProps;
 	queryClient: QueryClient;
+	appInfo: appInfoDetail;
 };
 
 export const Route = createRootRouteWithContext<RouterContext>()({
 	component: Root,
-	head: () => ({
+	loader: async ({ context }) => {
+		const appInfo = await context.queryClient.fetchQuery({ queryKey: ["appInfo"], queryFn: apiGetAppInfo });
+		return { appInfo };
+	},
+	head: ({ loaderData }) => ({
 		meta: [
-			{ title: "gbans" },
+			{ title: loaderData?.appInfo.site_name ?? "gbans" },
 			{
 				name: "description",
-				content: "gbans is a web application for managing Team Fortress 2 communities",
+				content:
+					loaderData?.appInfo.site_description ??
+					"gbans is a web application for managing Team Fortress 2 communities",
 			},
 		],
 	}),
@@ -51,6 +60,7 @@ function Root() {
 	const initialTheme = (localStorage.getItem("theme") as PaletteMode) || "light";
 	const { hasPermission } = useAuth();
 	const [flashes, setFlashes] = useState<Flash[]>([]);
+	const { appInfo } = Route.useLoaderData();
 	const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 	const [mode, setMode] = useState<"light" | "dark">(
 		initialTheme ? initialTheme : prefersDarkMode ? "dark" : "light",
@@ -127,7 +137,7 @@ function Root() {
 									<CssBaseline />
 									<HeadContent />
 									<Container maxWidth={"lg"}>
-										<TopBar />
+										<TopBar appInfo={appInfo} />
 										<div
 											style={{
 												marginTop: 24,
@@ -137,7 +147,7 @@ function Root() {
 												hasPermission(PermissionLevel.Moderator) && <QueueChat />}
 											<Outlet />
 										</div>
-										<Footer />
+										<Footer appInfo={appInfo} />
 									</Container>
 									<Flashes />
 								</NiceModal.Provider>

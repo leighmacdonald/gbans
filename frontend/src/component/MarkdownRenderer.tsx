@@ -2,7 +2,6 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { MuiMarkdown, type Options } from "mui-markdown";
 import { type JSX, useMemo } from "react";
-import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 import { ImageBox } from "./ImageBox.tsx";
 import RouterLink from "./RouterLink.tsx";
 
@@ -76,12 +75,18 @@ const mdRenderOpts: Options = {
 	},
 };
 
-export const MarkDownRenderer = ({ body_md, minHeight }: { body_md: string; minHeight?: number }) => {
-	const { appInfo } = useAppInfoCtx();
-
+export const MarkDownRenderer = ({
+	body_md,
+	minHeight,
+	assetURL,
+}: {
+	body_md: string;
+	assetURL: string;
+	minHeight?: number;
+}) => {
 	const links = useMemo(() => {
-		return renderLinks(body_md, appInfo.asset_url);
-	}, [appInfo.asset_url, body_md]);
+		return renderLinks(body_md, assetURL);
+	}, [assetURL, body_md]);
 
 	return (
 		<Box padding={2} maxWidth={"100%"} minHeight={minHeight}>

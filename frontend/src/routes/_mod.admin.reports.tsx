@@ -13,7 +13,6 @@ import { apiGetReports } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { Title } from "../component/Title";
 import { FullTable } from "../component/table/FullTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { BanReasons } from "../schema/bans.ts";
@@ -39,9 +38,6 @@ const reportsSearchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/reports")({
 	component: AdminReports,
-	head: () => ({
-		meta: [{ name: "description", content: "Reports" }, { title: "Reports" }],
-	}),
 	validateSearch: (search) => reportsSearchSchema.parse(search),
 	loader: async ({ context, abortController }) => {
 		const reports = await context.queryClient.fetchQuery({
@@ -50,14 +46,17 @@ export const Route = createFileRoute("/_mod/admin/reports")({
 				return apiGetReports({ deleted: false }, abortController);
 			},
 		});
-		return reports ?? [];
+		return { reports: reports ?? [], appInfo: context.appInfo };
 	},
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "Reports" }, { title: `Reports - ${loaderData?.appInfo.site_name}` }],
+	}),
 });
 
 function AdminReports() {
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
-	const reports = Route.useLoaderData();
+	const { reports } = Route.useLoaderData();
 
 	const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
 	const [sorting] = useState<SortingState>(

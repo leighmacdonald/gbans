@@ -123,6 +123,7 @@ const (
 
 type General struct {
 	SiteName           string        `json:"site_name"`
+	SiteDescription    string        `json:"site_description"`
 	Mode               RunMode       `json:"mode"`
 	FileServeMode      FileServeMode `json:"file_serve_mode"`
 	SrcdsLogAddr       string        `json:"srcds_log_addr"`

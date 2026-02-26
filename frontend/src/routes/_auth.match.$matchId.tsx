@@ -41,12 +41,16 @@ import { PageNotFound } from "./_auth.page-not-found.tsx";
 
 export const Route = createFileRoute("/_auth/match/$matchId")({
 	component: MatchPage,
+	beforeLoad: ({ context }) => {
+		ensureFeatureEnabled(context.appInfo.stats_enabled);
+	},
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+
 	head: () => ({
 		meta: [{ name: "description", content: "Match details" }, { title: "Match" }],
 	}),
-	beforeLoad: () => {
-		ensureFeatureEnabled("stats_enabled");
-	},
 });
 
 interface PlayerClassHoverStatsProps {

@@ -52,10 +52,13 @@ const schema = z.object({
 
 export const Route = createFileRoute("/_mod/admin/appeals")({
 	component: AdminAppeals,
-	head: () => ({
-		meta: [{ name: "description", content: "Appeals" }, { title: "Appeals" }],
-	}),
 	validateSearch: (search) => appealSearchSchema.parse(search),
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "Appeals" }, { title: `Appeals - ${loaderData?.appInfo.site_name}` }],
+	}),
 });
 
 function AdminAppeals() {

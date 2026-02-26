@@ -30,11 +30,13 @@ export const ThreadMessageContainer = ({
 	message,
 	onDelete,
 	onSave,
+	assetURL,
 }: {
 	message: ForumMessage;
 	onDelete: (message: ForumMessage) => Promise<void>;
 	onSave: (message: ForumMessage) => Promise<void>;
 	isFirstMessage: boolean;
+	assetURL: string;
 }) => {
 	const [edit, setEdit] = useState(false);
 	const { hasPermission, profile } = useAuth();
@@ -167,12 +169,12 @@ export const ThreadMessageContainer = ({
 								</Grid>
 							</Grid>
 							<Grid size={{ xs: 12 }} padding={1}>
-								<MarkDownRenderer body_md={message.body_md} />
+								<MarkDownRenderer body_md={message.body_md} assetURL={assetURL} />
 
 								{message.signature !== "" && (
 									<>
 										<Divider />
-										<MarkDownRenderer body_md={message.signature} />
+										<MarkDownRenderer body_md={message.signature} assetURL={assetURL} />
 									</>
 								)}
 							</Grid>

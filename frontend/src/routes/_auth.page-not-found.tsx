@@ -4,6 +4,12 @@ import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_auth/page-not-found")({
 	component: PageNotFound,
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [{ title: `Page Not Found - ${loaderData?.appInfo.site_name}` }],
+	}),
 });
 
 // interface PageNotFoundProps {

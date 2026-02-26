@@ -45,8 +45,14 @@ const ipHistorySearchSchema = z.object({
 
 export const Route = createFileRoute("/_mod/admin/network/cidrblocks")({
 	component: AdminNetworkCIDRBlocks,
-	head: () => ({
-		meta: [{ name: "description", content: "CIDR Network Blocks" }, { title: "CIDR Network Blocks" }],
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "CIDR Network Blocks" },
+			{ title: `CIDR Network Blocks - ${loaderData?.appInfo.site_name}` },
+		],
 	}),
 	validateSearch: (search) => ipHistorySearchSchema.parse(search),
 });

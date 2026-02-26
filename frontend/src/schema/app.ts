@@ -2,6 +2,7 @@ import { z } from "zod/v4";
 
 export const schemaAppInfoDetail = z.object({
 	site_name: z.string(),
+	site_description: z.string(),
 	app_version: z.string(),
 	link_id: z.string(),
 	sentry_dns_web: z.string(),

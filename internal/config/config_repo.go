@@ -36,7 +36,7 @@ func (c *Repository) Config() Config {
 
 func (c *Repository) Read(ctx context.Context) (Config, error) {
 	const query = `
-		SELECT general_site_name, general_mode, general_file_serve_mode, general_srcds_log_addr, general_asset_url,
+		SELECT general_site_name, general_site_description, general_mode, general_file_serve_mode, general_srcds_log_addr, general_asset_url,
 		       general_default_route, general_news_enabled, general_forums_enabled, general_contests_enabled, general_wiki_enabled,
 		       general_stats_enabled, general_servers_enabled, general_reports_enabled,general_chatlogs_enabled, general_demos_enabled, general_speedruns_enabled, general_playerqueue_enabled,
 
@@ -51,7 +51,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 		       discord_bot_enabled, discord_integrations_enabled, discord_vote_log_channel_id ,discord_appeal_log_channel_id,
 		       discord_ban_log_channel_id, discord_forum_log_channel_id, discord_word_filter_log_channel_id, discord_kick_log_channel_id, discord_playerqueue_channel_id,
 			   discord_seed_channel_id, discord_chat_log_channel_id,
-			   
+
 		       logging_level, logging_file, logging_http_enabled, logging_http_otel_enabled, logging_http_level,
 
 		       ip2location_enabled, ip2location_cache_path, ip2location_token,
@@ -60,7 +60,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 
 		       local_store_path_root,
 
-		       ssh_enabled, ssh_username, ssh_password, ssh_port, ssh_private_key_path, ssh_update_interval, ssh_timeout, 
+		       ssh_enabled, ssh_username, ssh_password, ssh_port, ssh_private_key_path, ssh_update_interval, ssh_timeout,
 		       ssh_demo_path_fmt, ssh_stac_path_fmt, ssh_host_key_strategy,
 
 		       exports_bd_enabled, exports_valve_enabled, exports_authorized_keys,
@@ -78,7 +78,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 	)
 
 	err := c.QueryRow(ctx, query).
-		Scan(&cfg.General.SiteName, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr, &cfg.General.AssetURL,
+		Scan(&cfg.General.SiteName, &cfg.General.SiteDescription, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr, &cfg.General.AssetURL,
 			&cfg.General.DefaultRoute, &cfg.General.NewsEnabled, &cfg.General.ForumsEnabled, &cfg.General.ContestsEnabled, &cfg.General.WikiEnabled,
 			&cfg.General.StatsEnabled, &cfg.General.ServersEnabled, &cfg.General.ReportsEnabled, &cfg.General.ChatlogsEnabled, &cfg.General.DemosEnabled, &cfg.General.SpeedrunsEnabled,
 			&cfg.General.PlayerqueueEnabled,
@@ -137,6 +137,7 @@ func (c *Repository) Write(ctx context.Context, config Config) error {
 		Update("config").
 		SetMap(map[string]any{
 			"general_site_name":                   config.General.SiteName,
+			"general_site_description":            config.General.SiteDescription,
 			"general_mode":                        config.General.Mode,
 			"general_file_serve_mode":             config.General.FileServeMode,
 			"general_srcds_log_addr":              config.General.SrcdsLogAddr,

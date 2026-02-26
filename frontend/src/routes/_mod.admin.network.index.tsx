@@ -7,8 +7,14 @@ import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_mod/admin/network/")({
 	component: AdminNetwork,
-	head: () => ({
-		meta: [{ name: "description", content: "Various network querying tools" }, { title: "Network History Tools" }],
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Various network querying tools" },
+			{ title: `Network History Tools - ${loaderData?.appInfo.site_name}` },
+		],
 	}),
 });
 
