@@ -19,7 +19,9 @@ import type { SMAdmin, SMGroups } from "../../schema/sourcemod.ts";
 import { initPagination, RowsPerPage } from "../../util/table.ts";
 import { renderDateTime } from "../../util/time.ts";
 import { ContainerWithHeaderAndButtons } from "./../ContainerWithHeaderAndButtons.tsx";
-import { ModalConfirm, ModalSMAdminEditor, ModalSMGroupSelect } from "../modal";
+import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
+import { SMAdminEditorModal } from "../modal/SMAdminEditorModal.tsx";
+import { SMGroupSelectModal } from "../modal/SMGroupSelectModal.tsx";
 import { FullTable } from "./FullTable.tsx";
 import { TableCellString } from "./TableCellString.tsx";
 
@@ -38,9 +40,9 @@ export const SMAdminsTable = ({
 
 	const onCreateAdmin = async () => {
 		try {
-			const admin = await NiceModal.show<SMAdmin>(ModalSMAdminEditor, {
+			const admin = (await NiceModal.show(SMAdminEditorModal, {
 				groups,
-			});
+			})) as SMAdmin;
 			queryClient.setQueryData(["serverAdmins"], [...(admins ?? []), admin]);
 			sendFlash("success", `Admin created successfully: ${admin.name}`);
 		} catch (e) {
@@ -102,10 +104,10 @@ export const SMAdminsTable = ({
 	const adminColumns = useMemo(() => {
 		const onEdit = async (admin: SMAdmin) => {
 			try {
-				const edited = await NiceModal.show<SMAdmin>(ModalSMAdminEditor, {
+				const edited = (await NiceModal.show(SMAdminEditorModal, {
 					admin,
 					groups,
-				});
+				})) as SMAdmin;
 				queryClient.setQueryData(
 					["serverAdmins"],
 					(admins ?? []).map((a) => {
@@ -119,10 +121,10 @@ export const SMAdminsTable = ({
 		};
 		const onDelete = async (admin: SMAdmin) => {
 			try {
-				const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete admin?",
 					children: "This cannot be undone",
-				});
+				})) as boolean;
 				if (!confirmed) {
 					return;
 				}
@@ -135,9 +137,9 @@ export const SMAdminsTable = ({
 		const onAddGroup = async (admin: SMAdmin) => {
 			try {
 				const existingGroupIds = admin.groups.map((g) => g.group_id);
-				const group = await NiceModal.show<SMGroups>(ModalSMGroupSelect, {
+				const group = (await NiceModal.show(SMGroupSelectModal, {
 					groups: groups?.filter((g) => !existingGroupIds.includes(g.group_id)),
-				});
+				})) as SMGroups;
 				addGroupMutation.mutate({ admin, group });
 			} catch (e) {
 				sendError(e);
@@ -147,9 +149,9 @@ export const SMAdminsTable = ({
 		const onDelGroup = async (admin: SMAdmin) => {
 			try {
 				const existingGroupIds = admin.groups.map((g) => g.group_id);
-				const group = await NiceModal.show<SMGroups>(ModalSMGroupSelect, {
+				const group = (await NiceModal.show(SMGroupSelectModal, {
 					groups: groups?.filter((g) => existingGroupIds.includes(g.group_id)),
-				});
+				})) as SMGroups;
 				delGroupMutation.mutate({ admin, group });
 			} catch (e) {
 				sendError(e);

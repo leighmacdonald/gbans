@@ -23,7 +23,9 @@ import { InfoBar } from "../component/InfoBar.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { LoadingSpinner } from "../component/LoadingSpinner.tsx";
 import { MarkDownRenderer } from "../component/MarkdownRenderer.tsx";
-import { ModalAssetViewer, ModalContestEntry, ModalContestEntryDelete } from "../component/modal";
+import { AssetViewer } from "../component/modal/AssetViewer.tsx";
+import { ContestEntryDeleteModal } from "../component/modal/ContestEntryDeleteModal.tsx";
+import { ContestEntryModal } from "../component/modal/ContestEntryModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
@@ -58,13 +60,13 @@ function Contest() {
 	} = useQuery({
 		queryKey: ["contest", { contest_id }],
 		queryFn: async () => {
-			return await apiContest(Number(contest_id));
+			return await apiContest(contest_id);
 		},
 	});
 
 	const onEnter = useCallback(async (contest_id: string) => {
 		try {
-			await NiceModal.show(ModalContestEntry, { contest_id });
+			await NiceModal.show(ContestEntryModal, { contest_id });
 		} catch (e) {
 			logErr(e);
 		}
@@ -109,13 +111,13 @@ function Contest() {
 	);
 
 	const onViewAsset = useCallback(async (asset: Asset) => {
-		await NiceModal.show(ModalAssetViewer, asset);
+		await NiceModal.show(AssetViewer, asset);
 	}, []);
 
 	const onDeleteEntry = useCallback(
 		async (contest_entry_id: string) => {
 			try {
-				await NiceModal.show(ModalContestEntryDelete, {
+				await NiceModal.show(ContestEntryDeleteModal, {
 					contest_entry_id,
 				});
 				setEntries((prevState) => {

@@ -54,6 +54,8 @@ export default defineConfig({
 						"base64-js",
 						"mui-nested-menu",
 						"react",
+						"react-dom",
+						"react-dom/client",
 						"react-scrollable-feed",
 						"react-timer-hook",
 						"react-use-websocket",

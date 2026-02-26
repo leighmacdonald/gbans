@@ -13,7 +13,8 @@ import { useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiGetNewsAll, apiNewsDelete } from "../api/news.ts";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
-import { ModalConfirm, ModalNewsEditor } from "../component/modal";
+import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
+import { NewsEditModal } from "../component/modal/NewsEditModal.tsx";
 import { Title } from "../component/Title";
 import { FullTable } from "../component/table/FullTable.tsx";
 import { TableCellBool } from "../component/table/TableCellBool.tsx";
@@ -50,7 +51,7 @@ function AdminNews() {
 
 	const onCreate = async () => {
 		try {
-			const newEntry = await NiceModal.show<NewsEntry>(ModalNewsEditor);
+			const newEntry = await NiceModal.show(NewsEditModal);
 			queryClient.setQueryData(["newsList"], [...(news ?? []), newEntry]);
 			sendFlash("success", `Entry created successfully`);
 		} catch (e) {
@@ -79,7 +80,7 @@ function AdminNews() {
 
 		const onDelete = async (entry: NewsEntry) => {
 			try {
-				const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+				const confirmed = await NiceModal.show(ConfirmationModal, {
 					title: "Delete news entry?",
 					children: "This cannot be undone",
 				});
@@ -94,9 +95,9 @@ function AdminNews() {
 
 		const onEdit = async (entry: NewsEntry) => {
 			try {
-				const editedEntry = await NiceModal.show<NewsEntry>(ModalNewsEditor, {
+				const editedEntry = (await NiceModal.show(NewsEditModal, {
 					entry: entry,
-				});
+				})) as NewsEntry;
 				queryClient.setQueryData(
 					["newsList"],
 					news?.map((e) => (e.news_id === editedEntry.news_id ? editedEntry : e)),

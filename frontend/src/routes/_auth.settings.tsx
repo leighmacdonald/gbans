@@ -34,7 +34,7 @@ import {
 import { apiGetPatreonLogin, apiGetPatreonLogout } from "../api/patreon.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
-import { ModalConfirm } from "../component/modal";
+import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { SubHeading } from "../component/SubHeading.tsx";
 import { TabButton } from "../component/TabButton.tsx";
 import { TabSection } from "../component/TabSection.tsx";
@@ -444,7 +444,7 @@ const ConnectionsSection = ({
 	const queryClient = useQueryClient();
 	const { profile, login } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
-	const confirmModal = useModal(ModalConfirm);
+	const confirmModal = useModal(ConfirmationModal);
 	const { appInfo } = useAppInfoCtx();
 
 	const { data: user, isLoading } = useQuery({

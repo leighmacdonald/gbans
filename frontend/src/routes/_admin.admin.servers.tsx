@@ -23,7 +23,7 @@ import { z } from "zod/v4";
 import { apiGetServersAdmin } from "../api";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
-import { ModalServerEditor } from "../component/modal";
+import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
 import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellBool } from "../component/table/TableCellBool.tsx";
@@ -66,7 +66,7 @@ function AdminServers() {
 
 	const onCreate = async () => {
 		try {
-			const newServer = await NiceModal.show<Server>(ModalServerEditor, {});
+			const newServer = (await NiceModal.show(ServerEditorModal, {})) as Server;
 			queryClient.setQueryData(["serversAdmin"], [...(servers ?? []), newServer]);
 			sendFlash("success", "Server created successfully");
 		} catch (e) {
@@ -76,9 +76,9 @@ function AdminServers() {
 
 	const onEdit = async (server: Server) => {
 		try {
-			const editedServer = await NiceModal.show<Server>(ModalServerEditor, {
+			const editedServer = (await NiceModal.show(ServerEditorModal, {
 				server,
-			});
+			})) as Server;
 			queryClient.setQueryData(
 				["serversAdmin"],
 				(servers ?? []).map((s) => {

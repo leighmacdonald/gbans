@@ -30,7 +30,8 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { IndeterminateCheckbox } from "../component/IndeterminateCheckbox.tsx";
-import { ModalConfirm, ModalFilterEditor } from "../component/modal";
+import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
+import { FilterEditModal } from "../component/modal/FilterEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
@@ -83,7 +84,7 @@ function AdminFilters() {
 
 	const onCreate = useCallback(async () => {
 		try {
-			const resp = await NiceModal.show<Filter>(ModalFilterEditor, {});
+			const resp = (await NiceModal.show(FilterEditModal, {})) as Filter;
 			queryClient.setQueryData(["filters"], [...(filters ?? []), resp]);
 		} catch (e) {
 			sendFlash("error", `${e}`);
@@ -93,7 +94,7 @@ function AdminFilters() {
 	const onEdit = useCallback(async () => {
 		try {
 			const filter = findSelectedRow(rowSelection, filters ?? []);
-			const resp = await NiceModal.show<Filter>(ModalFilterEditor, { filter });
+			const resp = (await NiceModal.show(FilterEditModal, { filter })) as Filter;
 
 			queryClient.setQueryData(
 				["filters"],
@@ -124,9 +125,9 @@ function AdminFilters() {
 		}
 
 		try {
-			const confirmed = await NiceModal.show(ModalConfirm, {
+			const confirmed = (await NiceModal.show(ConfirmationModal, {
 				title: `Are you sure you want to delete ${selectedFiltersIds.length} filter(s)?`,
-			});
+			})) as boolean;
 
 			if (!confirmed) {
 				return;

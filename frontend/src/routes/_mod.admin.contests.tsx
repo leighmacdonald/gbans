@@ -19,7 +19,7 @@ import { z } from "zod/v4";
 import { apiContests } from "../api";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
-import { ModalContestEditor } from "../component/modal";
+import { ContestEditor } from "../component/modal/ContestEditor.tsx";
 import { Title } from "../component/Title.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellBool } from "../component/table/TableCellBool.tsx";
@@ -53,7 +53,7 @@ function AdminContests() {
 
 	const onEditContest = useCallback(async (contest?: Contest) => {
 		try {
-			await NiceModal.show<Contest>(ModalContestEditor, { contest });
+			await NiceModal.show(ContestEditor, { contest });
 		} catch (e) {
 			logErr(e);
 		}

@@ -20,7 +20,7 @@
 	"scripts": {
 		"preinstall": "npx only-allow pnpm",
 		"watch": "vite build --watch",
-		"serve": "vite --open",
+		"serve": "vite --force",
 		"build": "vite build",
 		"fmt": "biome format --write",
 		"check": "biome check --write --max-diagnostics 10000",

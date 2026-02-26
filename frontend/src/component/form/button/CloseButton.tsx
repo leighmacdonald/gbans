@@ -3,7 +3,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import Button, { type ButtonProps } from "@mui/material/Button";
 import { type ReactNode, useCallback } from "react";
 import { useFormContext } from "../../../contexts/formContext.tsx";
-import { ModalConfirm } from "../../modal";
+import { ConfirmationModal } from "../../modal/ConfirmationModal.tsx";
 
 type Props = {
 	label?: string;
@@ -16,12 +16,12 @@ type Props = {
 
 export const CloseButton = (props: Props) => {
 	const form = useFormContext();
-	const modal = useModal(ModalConfirm);
+	const modal = useModal(ConfirmationModal);
 
 	const onClick = useCallback(async () => {
 		if (form.state.isDirty) {
 			try {
-				const confirmed = await NiceModal.show(ModalConfirm, {
+				const confirmed = await NiceModal.show(ConfirmationModal, {
 					title: `Are you sure you want to close? You have unsaved changes.`,
 				});
 

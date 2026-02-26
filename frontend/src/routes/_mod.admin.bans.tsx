@@ -24,7 +24,8 @@ import { z } from "zod/v4";
 import { apiGetBans } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
-import { ModalBan, ModalUnban } from "../component/modal";
+import { BanModal } from "../component/modal/BanModal.tsx";
+import { UnbanModal } from "../component/modal/UnbanModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import { Title } from "../component/Title";
@@ -86,7 +87,7 @@ function AdminBans() {
 
 	const onNewBanSteam = async () => {
 		try {
-			const ban = await NiceModal.show<BanRecord>(ModalBan, {});
+			const ban = (await NiceModal.show(BanModal, {})) as BanRecord;
 			queryClient.setQueryData(["bans"], [...(bans ?? []), ban]);
 		} catch (e) {
 			sendFlash("error", `Error trying to set up ban: ${e}`);
@@ -145,7 +146,7 @@ function AdminBans() {
 	const columns = useMemo(() => {
 		const onUnban = async (ban: BanRecord) => {
 			try {
-				await NiceModal.show(ModalUnban, {
+				await NiceModal.show(UnbanModal, {
 					banId: ban.ban_id,
 					personaName: ban.target_personaname,
 				});
@@ -161,11 +162,11 @@ function AdminBans() {
 
 		const onEdit = async (ban: BanRecord) => {
 			try {
-				const updated = await NiceModal.show<BanRecord>(ModalBan, {
+				const updated = (await NiceModal.show(BanModal, {
 					banId: ban.ban_id,
 					personaName: ban.target_personaname,
 					existing: ban,
-				});
+				})) as BanRecord;
 				queryClient.setQueryData(
 					["bans"],
 					(bans ?? []).map((b) => (b.ban_id === updated.ban_id ? updated : b)),

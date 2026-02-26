@@ -4,7 +4,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import { type Breakpoint, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import Button from "@mui/material/Button";
 import type { PropsWithChildren } from "react";
-import { ModalConfirm } from "./index.ts";
 
 export interface ConfirmationModalProps {
 	title?: string;
@@ -14,7 +13,7 @@ export interface ConfirmationModalProps {
 
 export const ConfirmationModal = NiceModal.create(
 	({ children, title, size, fullWidth }: ConfirmationModalProps & PropsWithChildren) => {
-		const modal = useModal(ModalConfirm);
+		const modal = useModal();
 
 		const accept = async () => {
 			modal.resolve(true);

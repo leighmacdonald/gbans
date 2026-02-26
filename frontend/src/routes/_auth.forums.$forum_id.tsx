@@ -19,7 +19,8 @@ import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { ForumRowLink } from "../component/forum/ForumRowLink.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { VCenteredElement } from "../component/Heading.tsx";
-import { ModalForumForumEditor, ModalForumThreadCreator } from "../component/modal";
+import { ForumForumEditorModal } from "../component/modal/ForumForumEditorModal.tsx";
+import { ForumThreadCreatorModal } from "../component/modal/ForumThreadCreatorModal.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
@@ -74,7 +75,7 @@ function ForumPage() {
 	const queryClient = useQueryClient();
 	const { forum_id } = Route.useParams();
 	const { forum, threads } = Route.useLoaderData();
-	const modalCreate = useModal(ModalForumThreadCreator);
+	const modalCreate = useModal(ForumThreadCreatorModal);
 	const { hasPermission } = useAuth();
 
 	useRouteContext({
@@ -101,9 +102,9 @@ function ForumPage() {
 
 	const onEditForum = useCallback(async () => {
 		try {
-			const editedForum = await NiceModal.show<Forum>(ModalForumForumEditor, {
+			const editedForum = (await NiceModal.show(ForumForumEditorModal, {
 				forum,
-			});
+			})) as Forum;
 			queryClient.setQueryData(forumQueryKey(forum_id), editedForum);
 		} catch (e) {
 			logErr(e);

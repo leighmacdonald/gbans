@@ -12,5 +12,5 @@ export const apiSaveAsset = async (file: File, name = "") => {
 	return transformTimeStampedDates(await apiCall<Asset>(`/api/asset`, "POST", imageData, undefined, true));
 };
 
-export const apiSaveContestEntryMedia = async (contest_id: number, upload: UserUploadedFile) =>
+export const apiSaveContestEntryMedia = async (contest_id: string, upload: UserUploadedFile) =>
 	await apiCall<Asset, UserUploadedFile>(`/api/contests/${contest_id}/upload`, "POST", upload);

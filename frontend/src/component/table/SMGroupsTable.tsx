@@ -19,7 +19,9 @@ import { logErr } from "../../util/errors";
 import { initPagination, RowsPerPage } from "../../util/table";
 import { renderDateTime } from "../../util/time.ts";
 import { ContainerWithHeaderAndButtons } from "../ContainerWithHeaderAndButtons";
-import { ModalConfirm, ModalSMGroupEditor, ModalSMGroupOverrides } from "../modal";
+import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
+import { SMGroupEditorModal } from "../modal/SMGroupEditorModal.tsx";
+import { SMGroupOverridesModal } from "../modal/SMGroupOverridesModal.tsx";
 import { FullTable } from "./FullTable";
 import { TableCellString } from "./TableCellString";
 
@@ -30,7 +32,7 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
 
 	const onCreateGroup = async () => {
 		try {
-			const group = await NiceModal.show<SMGroups>(ModalSMGroupEditor);
+			const group = (await NiceModal.show(SMGroupEditorModal)) as SMGroups;
 			queryClient.setQueryData(["serverGroups"], [...(groups ?? []), group]);
 			sendFlash("success", `Group created successfully: ${group.name}`);
 		} catch (e) {
@@ -57,15 +59,15 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
 
 	const groupColumns = useMemo(() => {
 		const onOverride = async (group: SMGroups) => {
-			await NiceModal.show<SMAdmin>(ModalSMGroupOverrides, { group });
+			(await NiceModal.show(SMGroupOverridesModal, { group })) as SMAdmin;
 		};
 
 		const onDeleteGroup = async (group: SMGroups) => {
 			try {
-				const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete group?",
 					children: "This cannot be undone",
-				});
+				})) as boolean;
 				if (!confirmed) {
 					return;
 				}
@@ -76,9 +78,9 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
 		};
 		const onEditGroup = async (group: SMGroups) => {
 			try {
-				const editedGroup = await NiceModal.show<SMGroups>(ModalSMGroupEditor, {
+				const editedGroup = (await NiceModal.show(SMGroupEditorModal, {
 					group,
-				});
+				})) as SMGroups;
 				queryClient.setQueryData(
 					["serverGroups"],
 					(groups ?? []).map((g) => {

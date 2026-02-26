@@ -19,7 +19,7 @@ import { Heading } from "../Heading";
 import { LinearProgressWithLabel } from "../LinearProgresWithLabel";
 import { LoadingSpinner } from "../LoadingSpinner";
 
-export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id: number }) => {
+export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id: string }) => {
 	const [userUpload, setUserUpload] = useState<Nullable<UserUploadedFile>>();
 	const [submittedOnce, setSubmittedOnce] = useState(false);
 	const [progress, setProgress] = useState(0);

@@ -66,3 +66,10 @@ schema.json
 id_stv*
 *.dem
 *.json
+!frontend/package.json
+!frontend/tsconfig.json
+!frontend/tsconfig.node.json
+!.golangci.yml
+!.goreleaser.yaml
+!.markdownlint-cli2.yaml
+!.envrc
