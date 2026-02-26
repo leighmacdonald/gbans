@@ -10,7 +10,6 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader";
 import { FmtWhenGt } from "../component/FmtWhenGT.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { PersonCell } from "../component/PersonCell";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import type { PlayerWeaponStats } from "../schema/stats.ts";
@@ -19,6 +18,9 @@ import { defaultFloatFmtPct, humanCount } from "../util/text.tsx";
 
 export const Route = createFileRoute("/_auth/stats/weapon/$weapon_id")({
 	component: StatsWeapon,
+	head: () => ({
+		meta: [{ name: "description", content: "Weapon Stats" }, { title: "Weapon Stats" }],
+	}),
 });
 
 function StatsWeapon() {
@@ -30,7 +32,6 @@ function StatsWeapon() {
 
 	return (
 		<Grid container spacing={2}>
-			{data?.weapon?.name ? <Title>{data?.weapon?.name}</Title> : null}
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader
 					title={`Top 250 Weapon Users: ${isLoading ? "Loading..." : data?.weapon?.name}`}

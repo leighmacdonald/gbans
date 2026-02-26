@@ -30,7 +30,6 @@ import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { IPWhitelistEditorModal } from "../component/modal/IPWhitelistEditorModal.tsx";
 import { SteamWhitelistEditorModal } from "../component/modal/SteamWhitelistEditorModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -46,6 +45,9 @@ const ipHistorySearchSchema = z.object({
 
 export const Route = createFileRoute("/_mod/admin/network/cidrblocks")({
 	component: AdminNetworkCIDRBlocks,
+	head: () => ({
+		meta: [{ name: "description", content: "CIDR Network Blocks" }, { title: "CIDR Network Blocks" }],
+	}),
 	validateSearch: (search) => ipHistorySearchSchema.parse(search),
 });
 
@@ -228,7 +230,6 @@ function AdminNetworkCIDRBlocks() {
 
 	return (
 		<Stack spacing={2}>
-			<Title>Admin Network CIDR</Title>
 			<ContainerWithHeaderAndButtons
 				title="Admin Network CIDR"
 				iconLeft={<WifiOffIcon />}

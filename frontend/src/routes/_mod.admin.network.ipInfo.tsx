@@ -20,7 +20,6 @@ import { z } from "zod/v4";
 import { apiGetNetworkDetails } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
-import { Title } from "../component/Title.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { getFlagEmoji } from "../util/emoji.ts";
 import { emptyOrNullString } from "../util/types.ts";
@@ -35,6 +34,9 @@ const schema = z.object({
 
 export const Route = createFileRoute("/_mod/admin/network/ipInfo")({
 	component: AdminNetworkInfo,
+	head: () => ({
+		meta: [{ name: "description", content: "IP Info" }, { title: "IP Info" }],
+	}),
 	validateSearch: (search) => searchSchema.parse(search),
 });
 
@@ -99,7 +101,6 @@ function AdminNetworkInfo() {
 	};
 	return (
 		<Grid container spacing={2}>
-			<Title>IP Info</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form

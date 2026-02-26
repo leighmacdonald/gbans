@@ -20,7 +20,6 @@ import { z } from "zod/v4";
 import { apiGetDemos, apiGetServers } from "../api";
 import { ButtonLink } from "../component/ButtonLink.tsx";
 import { ContainerWithHeader } from "../component/ContainerWithHeader";
-import { Title } from "../component/Title.tsx";
 import { FullTable } from "../component/table/FullTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -41,6 +40,9 @@ const demosSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_guest/stv")({
 	component: STV,
+	head: () => ({
+		meta: [{ name: "description", content: "Search and download SourceTV recordings" }, { title: "SourceTV" }],
+	}),
 	beforeLoad: () => {
 		ensureFeatureEnabled("demos_enabled");
 	},
@@ -216,7 +218,6 @@ function STV() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>SourceTV</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form

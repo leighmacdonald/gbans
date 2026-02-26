@@ -3,17 +3,18 @@ import { createFileRoute } from "@tanstack/react-router";
 import { HealersOverallContainer } from "../component/HealersOverallContainer.tsx";
 import { MapUsageContainer } from "../component/MapUsageContainer.tsx";
 import { PlayersOverallContainer } from "../component/PlayersOverallContainer.tsx";
-import { Title } from "../component/Title";
 import { WeaponsStatListContainer } from "../component/WeaponsStatListContainer.tsx";
 
 export const Route = createFileRoute("/_auth/stats/")({
 	component: Stats,
+	head: () => ({
+		meta: [{ name: "description", content: "Stats" }, { title: "Stats" }],
+	}),
 });
 
 function Stats() {
 	return (
 		<Grid container spacing={2}>
-			<Title>Stats</Title>
 			<Grid size={{ xs: 12 }}>
 				<PlayersOverallContainer />
 			</Grid>

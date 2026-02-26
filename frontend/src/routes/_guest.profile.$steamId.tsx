@@ -17,7 +17,6 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { PlayerStatsOverallContainer } from "../component/PlayerStatsOverallContainer.tsx";
 import { PlayerWeaponsStatListContainer } from "../component/PlayerWeaponsStatListContainer.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
-import { Title } from "../component/Title";
 import { PlayerClassStatsTable } from "../component/table/PlayerClassStatsTable.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import type { PlayerProfile } from "../schema/people.ts";
@@ -28,6 +27,9 @@ import { emptyOrNullString } from "../util/types.ts";
 
 export const Route = createFileRoute("/_guest/profile/$steamId")({
 	component: ProfilePage,
+	head: () => ({
+		meta: [{ name: "description", content: "Player Profile" }, { title: "Profile" }],
+	}),
 	loader: async ({ context, abortController, params }) => {
 		const { steamId } = params;
 
@@ -48,7 +50,6 @@ function ProfilePage() {
 
 	return (
 		<Grid container spacing={2}>
-			{profile.player.persona_name ? <Title>{profile.player.persona_name}</Title> : null}
 			<Grid size={{ xs: 12, md: 8 }}>
 				<ContainerWithHeader title={"Profile"}>
 					<Grid container spacing={2}>

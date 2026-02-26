@@ -8,7 +8,6 @@ import { z } from "zod/v4";
 import { apiGetConnections } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader";
 import { Paginator } from "../component/forum/Paginator.tsx";
-import { Title } from "../component/Title";
 import { IPHistoryTable } from "../component/table/IPHistoryTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { commonTableSearchSchema, RowsPerPage } from "../util/table.ts";
@@ -21,6 +20,9 @@ const ipHistorySearchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/network/iphist")({
 	component: AdminNetworkPlayerIPHistory,
+	head: () => ({
+		meta: [{ name: "description", content: "Player IP History" }, { title: "Player IP History" }],
+	}),
 	validateSearch: (search) => ipHistorySearchSchema.parse(search),
 });
 
@@ -73,7 +75,6 @@ function AdminNetworkPlayerIPHistory() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>Player IP History</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form

@@ -22,7 +22,6 @@ import { ReportModPanel } from "../component/ReportModPanel.tsx";
 import { ReportViewComponent } from "../component/ReportViewComponent.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
-import { Title } from "../component/Title";
 import { useAuth } from "../hooks/useAuth.ts";
 import { BanReasons, BanType } from "../schema/bans.ts";
 import { PermissionLevel } from "../schema/people.ts";
@@ -32,6 +31,9 @@ import { renderDateTime, renderTimeDistance } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/report/$reportId")({
 	component: ReportView,
+	head: () => ({
+		meta: [{ name: "description", content: "View a report" }, { title: "Report" }],
+	}),
 });
 
 function ReportView() {
@@ -140,7 +142,6 @@ function ReportView() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>Report</Title>
 			<Grid size={{ xs: 12, md: 8 }}>{report && <ReportViewComponent report={report} />}</Grid>
 			<Grid size={{ xs: 12, md: 4 }}>
 				<div>

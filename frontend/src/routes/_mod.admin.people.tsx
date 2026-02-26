@@ -17,7 +17,6 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { Paginator } from "../component/forum/Paginator.tsx";
 import { PersonEditModal } from "../component/modal/PersonEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -41,6 +40,9 @@ const peopleSearchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/people")({
 	component: AdminPeople,
+	head: () => ({
+		meta: [{ name: "description", content: "People" }, { title: "People" }],
+	}),
 	validateSearch: (search) => peopleSearchSchema.parse(search),
 });
 
@@ -107,7 +109,6 @@ function AdminPeople() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>People</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form

@@ -13,7 +13,6 @@ import { apiVotesQuery } from "../api/votes.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { Title } from "../component/Title";
 import { FullTable } from "../component/table/FullTable.tsx";
 import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
@@ -30,6 +29,9 @@ const votesSearchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/votes")({
 	component: AdminVotes,
+	head: () => ({
+		meta: [{ name: "description", content: "Votes" }, { title: "Votes" }],
+	}),
 	validateSearch: (search) => votesSearchSchema.parse(search),
 });
 
@@ -92,7 +94,6 @@ function AdminVotes() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>Votes</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form

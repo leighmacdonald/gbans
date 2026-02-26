@@ -22,7 +22,6 @@ import { VCenteredElement } from "../component/Heading.tsx";
 import { ForumForumEditorModal } from "../component/modal/ForumForumEditorModal.tsx";
 import { ForumThreadCreatorModal } from "../component/modal/ForumThreadCreatorModal.tsx";
 import RouterLink from "../component/RouterLink.tsx";
-import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { AppError } from "../error.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -44,6 +43,9 @@ const forumThreadsQueryKey = (forum_id: string | number) => {
 
 export const Route = createFileRoute("/_auth/forums/$forum_id")({
 	component: ForumPage,
+	head: () => ({
+		meta: [{ name: "description", content: "Forum" }, { title: "Forum" }],
+	}),
 	loader: async ({ context, params }) => {
 		const { forum_id } = params;
 		const forumQueryOpts = {
@@ -146,7 +148,6 @@ function ForumPage() {
 
 	return (
 		<ContainerWithHeaderAndButtons title={forum.title} iconLeft={<MessageIcon />} buttons={headerButtons}>
-			<Title>Forums</Title>
 			<Stack spacing={2}>
 				{threads.map((t) => {
 					return <ForumThreadRow thread={t} key={`ft-${t.forum_thread_id}`} />;

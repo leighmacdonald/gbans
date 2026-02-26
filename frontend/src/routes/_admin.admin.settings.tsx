@@ -30,7 +30,6 @@ import { CheckboxField } from "../component/form/field/CheckboxField.tsx";
 import { SubHeading } from "../component/SubHeading.tsx";
 import { TabButton } from "../component/TabButton.tsx";
 import { TabSection } from "../component/TabSection.tsx";
-import { Title } from "../component/Title";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import {
@@ -74,6 +73,9 @@ const settingsSchema = z.object({
 
 export const Route = createFileRoute("/_admin/admin/settings")({
 	component: AdminSettings,
+	head: () => ({
+		meta: [{ name: "description", content: "Edit Core System Settings" }, { title: "System Settings" }],
+	}),
 	validateSearch: (search) => settingsSchema.parse(search),
 	loader: ({ context }) => {
 		return context.queryClient.fetchQuery({
@@ -139,126 +141,116 @@ function AdminSettings() {
 	);
 
 	return (
-		<>
-			<Title>Edit Settings</Title>
+		<ContainerWithHeaderAndButtons title={"System Settings"} iconLeft={<DeveloperBoardIcon />}>
+			<Grid container spacing={2}>
+				<Grid size={{ xs: 4, sm: 3, md: 2 }} padding={0}>
+					<Stack spacing={1} padding={2}>
+						<TabButton
+							tab={"general"}
+							onClick={onTabClick}
+							icon={<SettingsIcon />}
+							currentTab={tab}
+							label={"General"}
+						/>
+						<TabButton
+							tab={"filters"}
+							onClick={onTabClick}
+							icon={<AddModeratorIcon />}
+							currentTab={tab}
+							label={"Filters"}
+						/>
+						<TabButton
+							tab={"demo"}
+							onClick={onTabClick}
+							icon={<EmergencyRecordingIcon />}
+							currentTab={tab}
+							label={"Demos"}
+						/>
+						<TabButton
+							tab={"discord"}
+							onClick={onTabClick}
+							icon={<HeadsetMicIcon />}
+							currentTab={tab}
+							label={"Discord"}
+						/>
+						<TabButton
+							tab={"logging"}
+							onClick={onTabClick}
+							icon={<GradingIcon />}
+							currentTab={tab}
+							label={"Logging"}
+						/>
+						<TabButton
+							tab={"geo_location"}
+							onClick={onTabClick}
+							icon={<TravelExploreIcon />}
+							currentTab={tab}
+							label={"GeoDB"}
+						/>
+						<TabButton
+							tab={"debug"}
+							onClick={onTabClick}
+							icon={<BugReportIcon />}
+							currentTab={tab}
+							label={"Debug"}
+						/>
+						<TabButton
+							tab={"local_store"}
+							onClick={onTabClick}
+							icon={<WebAssetIcon />}
+							currentTab={tab}
+							label={"Assets"}
+						/>
+						<TabButton
+							tab={"network"}
+							onClick={onTabClick}
+							icon={<LanIcon />}
+							currentTab={tab}
+							label={"Network"}
+						/>
+						<TabButton
+							tab={"anticheat"}
+							onClick={onTabClick}
+							icon={<LanIcon />}
+							currentTab={tab}
+							label={"Anticheat"}
+						/>
+						<TabButton tab={"ssh"} onClick={onTabClick} icon={<LanIcon />} currentTab={tab} label={"SSH"} />
+						<TabButton
+							tab={"patreon"}
+							onClick={onTabClick}
+							icon={<PaymentIcon />}
+							currentTab={tab}
+							label={"Patreon"}
+						/>
+						<TabButton
+							tab={"exports"}
+							onClick={onTabClick}
+							icon={<ShareIcon />}
+							currentTab={tab}
+							label={"Exports"}
+						/>
 
-			<ContainerWithHeaderAndButtons title={"System Settings"} iconLeft={<DeveloperBoardIcon />}>
-				<Grid container spacing={2}>
-					<Grid size={{ xs: 4, sm: 3, md: 2 }} padding={0}>
-						<Stack spacing={1} padding={2}>
-							<TabButton
-								tab={"general"}
-								onClick={onTabClick}
-								icon={<SettingsIcon />}
-								currentTab={tab}
-								label={"General"}
-							/>
-							<TabButton
-								tab={"filters"}
-								onClick={onTabClick}
-								icon={<AddModeratorIcon />}
-								currentTab={tab}
-								label={"Filters"}
-							/>
-							<TabButton
-								tab={"demo"}
-								onClick={onTabClick}
-								icon={<EmergencyRecordingIcon />}
-								currentTab={tab}
-								label={"Demos"}
-							/>
-							<TabButton
-								tab={"discord"}
-								onClick={onTabClick}
-								icon={<HeadsetMicIcon />}
-								currentTab={tab}
-								label={"Discord"}
-							/>
-							<TabButton
-								tab={"logging"}
-								onClick={onTabClick}
-								icon={<GradingIcon />}
-								currentTab={tab}
-								label={"Logging"}
-							/>
-							<TabButton
-								tab={"geo_location"}
-								onClick={onTabClick}
-								icon={<TravelExploreIcon />}
-								currentTab={tab}
-								label={"GeoDB"}
-							/>
-							<TabButton
-								tab={"debug"}
-								onClick={onTabClick}
-								icon={<BugReportIcon />}
-								currentTab={tab}
-								label={"Debug"}
-							/>
-							<TabButton
-								tab={"local_store"}
-								onClick={onTabClick}
-								icon={<WebAssetIcon />}
-								currentTab={tab}
-								label={"Assets"}
-							/>
-							<TabButton
-								tab={"network"}
-								onClick={onTabClick}
-								icon={<LanIcon />}
-								currentTab={tab}
-								label={"Network"}
-							/>
-							<TabButton
-								tab={"anticheat"}
-								onClick={onTabClick}
-								icon={<LanIcon />}
-								currentTab={tab}
-								label={"Anticheat"}
-							/>
-							<TabButton
-								tab={"ssh"}
-								onClick={onTabClick}
-								icon={<LanIcon />}
-								currentTab={tab}
-								label={"SSH"}
-							/>
-							<TabButton
-								tab={"patreon"}
-								onClick={onTabClick}
-								icon={<PaymentIcon />}
-								currentTab={tab}
-								label={"Patreon"}
-							/>
-							<TabButton
-								tab={"exports"}
-								onClick={onTabClick}
-								icon={<ShareIcon />}
-								currentTab={tab}
-								label={"Exports"}
-							/>
-
-							<Typography padding={1}>
-								Note that many settings will not take effect until app restart.
-							</Typography>
-						</Stack>
-					</Grid>
-					<GeneralSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<FiltersSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<DemosSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<PatreonSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<DiscordSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<LoggingSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<GeoLocationSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<LocalStoreSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<NetworkSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<AnticheatSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<SSHSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<ExportsSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<DebugSection tab={tab} settings={settings} mutate={mutation.mutate} />
+						<Typography padding={1}>
+							Note that many settings will not take effect until app restart.
+						</Typography>
+					</Stack>
 				</Grid>
-			</ContainerWithHeaderAndButtons>
-		</>
+				<GeneralSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<FiltersSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<DemosSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<PatreonSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<DiscordSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<LoggingSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<GeoLocationSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<LocalStoreSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<NetworkSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<AnticheatSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<SSHSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<ExportsSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<DebugSection tab={tab} settings={settings} mutate={mutation.mutate} />
+			</Grid>
+		</ContainerWithHeaderAndButtons>
 	);
 }
 

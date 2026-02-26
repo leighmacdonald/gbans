@@ -28,7 +28,6 @@ import { BanModal } from "../component/modal/BanModal.tsx";
 import { UnbanModal } from "../component/modal/UnbanModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { Title } from "../component/Title";
 import { FullTable } from "../component/table/FullTable.tsx";
 import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
@@ -66,6 +65,9 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/_mod/admin/bans")({
 	component: AdminBans,
+	head: () => ({
+		meta: [{ name: "description", content: "Bans" }, { title: "Bans" }],
+	}),
 	validateSearch: (search) => searchSchema.parse(search),
 });
 
@@ -80,6 +82,7 @@ function AdminBans() {
 
 	const { data: bans, isLoading } = useQuery({
 		queryKey: ["bans"],
+
 		queryFn: async () => {
 			return await apiGetBans({ deleted: true });
 		},
@@ -201,7 +204,6 @@ function AdminBans() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>Bans</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form

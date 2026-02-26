@@ -33,7 +33,6 @@ import { IndeterminateCheckbox } from "../component/IndeterminateCheckbox.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { FilterEditModal } from "../component/modal/FilterEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
@@ -54,6 +53,9 @@ const filterSearchSchema = z.object({
 
 export const Route = createFileRoute("/_mod/admin/filters")({
 	component: AdminFilters,
+	head: () => ({
+		meta: [{ name: "description", content: "Filtered Words" }, { title: "Filtered Words" }],
+	}),
 	validateSearch: (search) => filterSearchSchema.parse(search),
 });
 
@@ -150,7 +152,6 @@ function AdminFilters() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>Filtered Words</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeaderAndButtons
 					title={`Word Filters ${Object.values(rowSelection).length ? `Selected: ${Object.values(rowSelection).length}` : ""}`}

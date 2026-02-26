@@ -12,7 +12,6 @@ import { apiGetConnections } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { Paginator } from "../component/forum/Paginator.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import type { PersonConnection } from "../schema/people.ts";
@@ -27,6 +26,9 @@ const playersByIPSearchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/network/playersbyip")({
 	component: AdminNetworkPlayersByCIDR,
+	head: () => ({
+		meta: [{ name: "description", content: "Find players by IP address" }, { title: "Players By IP" }],
+	}),
 	validateSearch: (search) => playersByIPSearchSchema.parse(search),
 });
 
@@ -76,7 +78,6 @@ function AdminNetworkPlayersByCIDR() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>Players by IP</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form

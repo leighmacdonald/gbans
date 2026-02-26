@@ -21,7 +21,6 @@ import { QueueHelp } from "../component/queue/QueueHelp.tsx";
 import { ServerFilters } from "../component/ServerFilters.tsx";
 import { ServerList } from "../component/ServerList.tsx";
 import { ServerMap } from "../component/ServerMap.tsx";
-import { Title } from "../component/Title.tsx";
 import { MapStateCtx } from "../contexts/MapStateCtx.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useMapStateCtx } from "../hooks/useMapStateCtx.ts";
@@ -32,6 +31,9 @@ import { sum } from "../util/lists.ts";
 
 export const Route = createFileRoute("/_guest/servers")({
 	component: Servers,
+	head: () => ({
+		meta: [{ name: "description", content: "Server Browser" }, { title: "Servers" }],
+	}),
 	beforeLoad: () => {
 		ensureFeatureEnabled("servers_enabled");
 	},
@@ -167,57 +169,54 @@ function Servers() {
 		},
 	});
 	return (
-		<>
-			<Title>Servers</Title>
-			<MapStateCtx.Provider
-				value={{
-					servers,
-					setServers,
-					customRange,
-					setCustomRange,
-					pos,
-					setPos,
-					selectedServers,
-					setSelectedServers,
-					filterByRegion,
-					setFilterByRegion,
-					showOpenOnly,
-					setShowOpenOnly,
-					selectedRegion,
-					setSelectedRegion,
-				}}
-			>
-				<Stack spacing={3}>
-					<Paper elevation={3}>
-						<ServerMap />
-					</Paper>
-					<ServerFilters />
-					{showHelp && <QueueHelp />}
-					<ContainerWithHeaderAndButtons
-						title={`Servers (${selectedServers.length}/${servers.length})`}
-						buttons={
-							!hasPermission(PermissionLevel.Moderator)
-								? []
-								: [
-										<Tooltip title={"Toggle server queue help"} key={"help-queue-button"}>
-											<IconButton
-												color={"default"}
-												onClick={() => {
-													setShowHelp((prevState) => !prevState);
-												}}
-											>
-												{showHelp ? <HelpIcon /> : <HelpOutlineIcon />}
-											</IconButton>
-										</Tooltip>,
-									]
-						}
-						iconLeft={<StorageIcon />}
-					>
-						<ServerList />
-					</ContainerWithHeaderAndButtons>
-					<ServerStats />
-				</Stack>
-			</MapStateCtx.Provider>
-		</>
+		<MapStateCtx.Provider
+			value={{
+				servers,
+				setServers,
+				customRange,
+				setCustomRange,
+				pos,
+				setPos,
+				selectedServers,
+				setSelectedServers,
+				filterByRegion,
+				setFilterByRegion,
+				showOpenOnly,
+				setShowOpenOnly,
+				selectedRegion,
+				setSelectedRegion,
+			}}
+		>
+			<Stack spacing={3}>
+				<Paper elevation={3}>
+					<ServerMap />
+				</Paper>
+				<ServerFilters />
+				{showHelp && <QueueHelp />}
+				<ContainerWithHeaderAndButtons
+					title={`Servers (${selectedServers.length}/${servers.length})`}
+					buttons={
+						!hasPermission(PermissionLevel.Moderator)
+							? []
+							: [
+									<Tooltip title={"Toggle server queue help"} key={"help-queue-button"}>
+										<IconButton
+											color={"default"}
+											onClick={() => {
+												setShowHelp((prevState) => !prevState);
+											}}
+										>
+											{showHelp ? <HelpIcon /> : <HelpOutlineIcon />}
+										</IconButton>
+									</Tooltip>,
+								]
+					}
+					iconLeft={<StorageIcon />}
+				>
+					<ServerList />
+				</ContainerWithHeaderAndButtons>
+				<ServerStats />
+			</Stack>
+		</MapStateCtx.Provider>
 	);
 }

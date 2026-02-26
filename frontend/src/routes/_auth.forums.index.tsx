@@ -23,7 +23,6 @@ import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { ForumCategoryEditorModal } from "../component/modal/ForumCategoryEditorModal.tsx";
 import { ForumForumEditorModal } from "../component/modal/ForumForumEditorModal.tsx";
 import RouterLink from "../component/RouterLink.tsx";
-import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -36,6 +35,9 @@ import { renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/forums/")({
 	component: ForumOverview,
+	head: () => ({
+		meta: [{ name: "description", content: "Forums" }, { title: "Forums" }],
+	}),
 });
 
 const CategoryBlock = ({ category }: { category: ForumCategory }) => {
@@ -70,7 +72,6 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 
 	return (
 		<ContainerWithHeaderAndButtons title={category.title} iconLeft={<CategoryIcon />} buttons={buttons}>
-			<Title>Forums</Title>
 			<Stack
 				spacing={1}
 				sx={{

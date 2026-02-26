@@ -22,7 +22,6 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import {
@@ -53,6 +52,9 @@ const schema = z.object({
 
 export const Route = createFileRoute("/_mod/admin/appeals")({
 	component: AdminAppeals,
+	head: () => ({
+		meta: [{ name: "description", content: "Appeals" }, { title: "Appeals" }],
+	}),
 	validateSearch: (search) => appealSearchSchema.parse(search),
 });
 
@@ -119,7 +121,6 @@ function AdminAppeals() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>Appeals</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form

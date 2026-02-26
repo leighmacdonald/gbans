@@ -9,7 +9,6 @@ import { z } from "zod/v4";
 import { apiGetMessages, apiGetServers } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { Paginator } from "../component/forum/Paginator.tsx";
-import { Title } from "../component/Title.tsx";
 import { ChatTable } from "../component/table/ChatTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -42,6 +41,9 @@ const searchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_auth/chatlogs")({
 	component: ChatLogs,
+	head: () => ({
+		meta: [{ name: "description", content: "Browse in-game chat logs" }, { title: "Chat Logs" }],
+	}),
 	beforeLoad: () => {
 		ensureFeatureEnabled("chatlogs_enabled");
 	},
@@ -142,123 +144,119 @@ function ChatLogs() {
 		await form.handleSubmit();
 	};
 	return (
-		<>
-			<Title>Chat Logs</Title>
+		<Grid container spacing={2}>
+			<Grid size={{ xs: 12 }}>
+				<ContainerWithHeader title={"Chat Filters"} iconLeft={<FilterAltIcon />}>
+					<form
+						onSubmit={async (e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							await form.handleSubmit();
+						}}
+					>
+						<Grid container padding={2} spacing={2} justifyContent={"center"} alignItems={"center"}>
+							<Grid size={{ xs: 6, md: 3 }}>
+								<form.AppField
+									name={"persona_name"}
+									children={(field) => {
+										return <field.TextField label={"Name"} />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 6, md: 3 }}>
+								<form.AppField
+									name={"steam_id"}
+									children={(field) => {
+										return <field.SteamIDField />;
+									}}
+								/>
+							</Grid>
+							<Grid size={{ xs: 6, md: 3 }}>
+								<form.AppField
+									name={"body"}
+									children={(field) => {
+										return <field.TextField label={"Message"} />;
+									}}
+								/>
+							</Grid>
 
-			<Grid container spacing={2}>
-				<Grid size={{ xs: 12 }}>
-					<ContainerWithHeader title={"Chat Filters"} iconLeft={<FilterAltIcon />}>
-						<form
-							onSubmit={async (e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								await form.handleSubmit();
-							}}
-						>
-							<Grid container padding={2} spacing={2} justifyContent={"center"} alignItems={"center"}>
-								<Grid size={{ xs: 6, md: 3 }}>
-									<form.AppField
-										name={"persona_name"}
-										children={(field) => {
-											return <field.TextField label={"Name"} />;
-										}}
-									/>
-								</Grid>
-								<Grid size={{ xs: 6, md: 3 }}>
-									<form.AppField
-										name={"steam_id"}
-										children={(field) => {
-											return <field.SteamIDField />;
-										}}
-									/>
-								</Grid>
-								<Grid size={{ xs: 6, md: 3 }}>
-									<form.AppField
-										name={"body"}
-										children={(field) => {
-											return <field.TextField label={"Message"} />;
-										}}
-									/>
-								</Grid>
-
-								<Grid size={{ xs: 6, md: 3 }}>
-									<form.AppField
-										name={"server_id"}
-										children={(field) => {
-											return (
-												<field.SelectField
-													label={"Servers"}
-													items={servers}
-													renderItem={(s) => {
-														return (
-															<MenuItem value={s.server_id} key={s.server_id}>
-																{s.server_name}
-															</MenuItem>
-														);
-													}}
-												/>
-											);
-										}}
-									/>
-								</Grid>
-								{hasPermission(PermissionLevel.Moderator) && (
-									<>
-										<Grid size={{ xs: "auto" }}>
-											<form.AppField
-												name={"flagged_only"}
-												children={(field) => {
-													return <field.CheckboxField label={"Flagged Only"} />;
-												}}
-											/>
-										</Grid>
-										<Grid size={{ xs: "auto" }}>
-											<form.AppField
-												name={"auto_refresh"}
-												children={(field) => {
+							<Grid size={{ xs: 6, md: 3 }}>
+								<form.AppField
+									name={"server_id"}
+									children={(field) => {
+										return (
+											<field.SelectField
+												label={"Servers"}
+												items={servers}
+												renderItem={(s) => {
 													return (
-														<field.SelectField
-															label={"Action"}
-															items={[0, 10000, 30000, 60000, 300000]}
-															renderItem={(fa) => {
-																return (
-																	<MenuItem value={fa} key={`fa-${fa}`}>
-																		{fa / 1000} secs
-																	</MenuItem>
-																);
-															}}
-														/>
+														<MenuItem value={s.server_id} key={s.server_id}>
+															{s.server_name}
+														</MenuItem>
 													);
 												}}
 											/>
-										</Grid>
-									</>
-								)}
-
-								<Grid size={{ xs: 12 }}>
-									<form.AppForm>
-										<ButtonGroup>
-											<form.ClearButton onClick={clear} />
-											<form.ResetButton />
-											<form.SubmitButton />
-										</ButtonGroup>
-									</form.AppForm>
-								</Grid>
+										);
+									}}
+								/>
 							</Grid>
-						</form>
-					</ContainerWithHeader>
-				</Grid>
-				<Grid size={{ xs: 12 }}>
-					<ContainerWithHeader iconLeft={<ChatIcon />} title={"Chat Logs"}>
-						<ChatTable messages={messages ?? []} isLoading={isLoading} />
-						<Paginator
-							page={search.pageIndex ?? 0}
-							rows={search.pageSize ?? defaultRows}
-							path={"/chatlogs"}
-							data={{ data: [], count: -1 }}
-						/>
-					</ContainerWithHeader>
-				</Grid>
+							{hasPermission(PermissionLevel.Moderator) && (
+								<>
+									<Grid size={{ xs: "auto" }}>
+										<form.AppField
+											name={"flagged_only"}
+											children={(field) => {
+												return <field.CheckboxField label={"Flagged Only"} />;
+											}}
+										/>
+									</Grid>
+									<Grid size={{ xs: "auto" }}>
+										<form.AppField
+											name={"auto_refresh"}
+											children={(field) => {
+												return (
+													<field.SelectField
+														label={"Action"}
+														items={[0, 10000, 30000, 60000, 300000]}
+														renderItem={(fa) => {
+															return (
+																<MenuItem value={fa} key={`fa-${fa}`}>
+																	{fa / 1000} secs
+																</MenuItem>
+															);
+														}}
+													/>
+												);
+											}}
+										/>
+									</Grid>
+								</>
+							)}
+
+							<Grid size={{ xs: 12 }}>
+								<form.AppForm>
+									<ButtonGroup>
+										<form.ClearButton onClick={clear} />
+										<form.ResetButton />
+										<form.SubmitButton />
+									</ButtonGroup>
+								</form.AppForm>
+							</Grid>
+						</Grid>
+					</form>
+				</ContainerWithHeader>
 			</Grid>
-		</>
+			<Grid size={{ xs: 12 }}>
+				<ContainerWithHeader iconLeft={<ChatIcon />} title={"Chat Logs"}>
+					<ChatTable messages={messages ?? []} isLoading={isLoading} />
+					<Paginator
+						page={search.pageIndex ?? 0}
+						rows={search.pageSize ?? defaultRows}
+						path={"/chatlogs"}
+						data={{ data: [], count: -1 }}
+					/>
+				</ContainerWithHeader>
+			</Grid>
+		</Grid>
 	);
 }

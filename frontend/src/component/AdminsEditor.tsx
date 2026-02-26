@@ -1,4 +1,3 @@
-import { Title } from "@mui/icons-material";
 import { Stack } from "@mui/system";
 import { useQuery } from "@tanstack/react-query";
 import { apiGetSMAdmins, apiGetSMGroupImmunities, apiGetSMGroups, apiGetSMOverrides } from "../api";
@@ -37,22 +36,15 @@ export function AdminsEditor() {
 	});
 
 	return (
-		<>
-			<Title>Game Admins</Title>
-			<Stack spacing={2}>
-				<SMAdminsTable
-					admins={admins ?? []}
-					groups={groups ?? []}
-					isLoading={isLoadingAdmins || isLoadingGroups}
-				/>
-				<SMGroupsTable groups={groups ?? []} isLoading={isLoadingGroups} />
-				<SMOverridesTable overrides={overrides ?? []} isLoading={isLoadingOverrides} />
-				<SMImmunityTable
-					immunities={immunities ?? []}
-					groups={groups ?? []}
-					isLoading={isLoadingImmunities || isLoadingGroups}
-				/>
-			</Stack>
-		</>
+		<Stack spacing={2}>
+			<SMAdminsTable admins={admins ?? []} groups={groups ?? []} isLoading={isLoadingAdmins || isLoadingGroups} />
+			<SMGroupsTable groups={groups ?? []} isLoading={isLoadingGroups} />
+			<SMOverridesTable overrides={overrides ?? []} isLoading={isLoadingOverrides} />
+			<SMImmunityTable
+				immunities={immunities ?? []}
+				groups={groups ?? []}
+				isLoading={isLoadingImmunities || isLoadingGroups}
+			/>
+		</Stack>
 	);
 }

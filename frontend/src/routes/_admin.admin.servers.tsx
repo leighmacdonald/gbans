@@ -24,7 +24,6 @@ import { apiGetServersAdmin } from "../api";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
@@ -46,6 +45,9 @@ const serversSearchSchema = z.object({
 export const Route = createFileRoute("/_admin/admin/servers")({
 	component: AdminServers,
 	validateSearch: (search) => serversSearchSchema.parse(search),
+	head: () => ({
+		meta: [{ name: "description", content: "Server Editor" }, { title: "Edit Servers" }],
+	}),
 });
 
 function AdminServers() {
@@ -92,7 +94,6 @@ function AdminServers() {
 	};
 	return (
 		<Grid container spacing={2}>
-			<Title>Edit Servers</Title>
 			<Grid size={{ xs: 12 }}>
 				<Stack spacing={2}>
 					<ContainerWithHeaderAndButtons

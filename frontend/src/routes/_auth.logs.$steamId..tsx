@@ -12,7 +12,6 @@ import { z } from "zod/v4";
 import { apiGetMatches } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import type { MatchSummary } from "../schema/stats.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
@@ -29,6 +28,9 @@ const matchSummarySchema = z.object({
 
 export const Route = createFileRoute("/_auth/logs/$steamId/")({
 	component: MatchListPage,
+	head: () => ({
+		meta: [{ name: "description", content: "Match History" }, { title: "Match History" }],
+	}),
 	beforeLoad: () => {
 		ensureFeatureEnabled("stats_enabled");
 	},
@@ -56,7 +58,6 @@ function MatchListPage() {
 
 	return (
 		<Grid container>
-			<Title>Match History</Title>
 			<Grid size={{ xs: 12 }}>
 				<MatchSummaryTable matches={matches?.data ?? []} count={matches?.count ?? 0} isLoading={isLoading} />
 			</Grid>

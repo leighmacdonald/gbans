@@ -18,7 +18,6 @@ import { apiGetAnticheatLogs, apiGetServers } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { Title } from "../component/Title";
 import { FullTable } from "../component/table/FullTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
@@ -42,6 +41,9 @@ const searchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/anticheat")({
 	component: AdminAnticheat,
+	head: () => ({
+		meta: [{ name: "description", content: "Anti-Cheat Logs" }, { title: "Anti-Cheat Logs" }],
+	}),
 	validateSearch: (search) => searchSchema.parse(search),
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
@@ -227,7 +229,6 @@ function AdminAnticheat() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>Anticheat Logs</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form

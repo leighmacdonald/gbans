@@ -20,7 +20,6 @@ import { apiContests } from "../api";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { ContestEditor } from "../component/modal/ContestEditor.tsx";
-import { Title } from "../component/Title.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
@@ -37,6 +36,9 @@ const contestsSearchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/contests")({
 	component: AdminContests,
+	head: () => ({
+		meta: [{ name: "description", content: "Contests" }, { title: "Contests" }],
+	}),
 	validateSearch: (search) => contestsSearchSchema.parse(search),
 });
 
@@ -90,7 +92,6 @@ function AdminContests() {
 				</Button>,
 			]}
 		>
-			<Title>Contests</Title>
 			<ContestTable
 				contests={contests ?? []}
 				isLoading={isLoading}
