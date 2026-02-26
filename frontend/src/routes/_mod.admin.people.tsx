@@ -15,7 +15,7 @@ import { z } from "zod/v4";
 import { apiSearchPeople } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { Paginator } from "../component/forum/Paginator.tsx";
-import { ModalPersonEditor } from "../component/modal";
+import { PersonEditModal } from "../component/modal/PersonEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
@@ -68,7 +68,7 @@ function AdminPeople() {
 
 	const onEditPerson = async (person: Person) => {
 		try {
-			await NiceModal.show<Person>(ModalPersonEditor, {
+			await NiceModal.show(PersonEditModal, {
 				person,
 			});
 			sendFlash("success", "Updated permission level successfully");

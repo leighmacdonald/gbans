@@ -12,7 +12,7 @@ import { useAppForm } from "../../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
 import type { ForumThread } from "../../schema/forum.ts";
 import { logErr } from "../../util/errors";
-import { ModalConfirm } from "./index";
+import { ConfirmationModal } from "./ConfirmationModal.tsx";
 
 type ThreadEditValues = {
 	title: string;
@@ -22,7 +22,7 @@ type ThreadEditValues = {
 
 export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: ForumThread }) => {
 	const modal = useModal();
-	const confirmModal = useModal(ModalConfirm);
+	const confirmModal = useModal(ConfirmationModal);
 	const { sendFlash, sendError } = useUserFlashCtx();
 
 	const onDelete = useCallback(async () => {

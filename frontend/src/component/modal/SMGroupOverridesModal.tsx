@@ -23,7 +23,8 @@ import { renderDateTime } from "../../util/time.ts";
 import { Heading } from "../Heading";
 import { FullTable } from "../table/FullTable.tsx";
 import { TableCellString } from "../table/TableCellString.tsx";
-import { ModalConfirm, ModalSMGroupOverridesEditor } from "./index.ts";
+import { ConfirmationModal } from "./ConfirmationModal.tsx";
+import { SMGroupOverrideEditorModal } from "./SMGroupOverrideEditorModal.tsx";
 
 const overrideColumnHelper = createColumnHelper<SMGroupOverrides>();
 
@@ -99,7 +100,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
 
 	const onCreate = async () => {
 		try {
-			const created = await NiceModal.show<SMGroupOverrides>(ModalSMGroupOverridesEditor, { group });
+			const created = (await NiceModal.show(SMGroupOverrideEditorModal, { group })) as SMGroupOverrides;
 			queryClient.setQueryData(
 				["serverGroupOverrides", { group_id: group.group_id }],
 				[...(overrides ?? []), created],
@@ -130,7 +131,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
 	const columns = useMemo(() => {
 		const onEdit = async (override: SMGroupOverrides) => {
 			try {
-				const edited = await NiceModal.show<SMGroupOverrides>(ModalSMGroupOverridesEditor, { override });
+				const edited = (await NiceModal.show(SMGroupOverrideEditorModal, { override })) as SMGroupOverrides;
 				queryClient.setQueryData(
 					["serverGroupOverrides", { group_id: group.group_id }],
 					(overrides ?? []).map((o) => {
@@ -146,7 +147,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
 
 		const onDelete = async (groupOverride: SMGroupOverrides) => {
 			try {
-				const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+				const confirmed = await NiceModal.show(ConfirmationModal, {
 					title: "Delete override?",
 					children: "This cannot be undone",
 				});

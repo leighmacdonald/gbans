@@ -17,7 +17,8 @@ import { logErr } from "../../util/errors";
 import { initPagination, RowsPerPage } from "../../util/table";
 import { renderDateTime } from "../../util/time.ts";
 import { ContainerWithHeaderAndButtons } from "../ContainerWithHeaderAndButtons";
-import { ModalConfirm, ModalSMGroupImmunityEditor } from "../modal";
+import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
+import { SMGroupImmunityCreateModal } from "../modal/SMGroupImmunityCreateModal.tsx";
 import { FullTable } from "./FullTable";
 import { TableCellString } from "./TableCellString";
 
@@ -36,7 +37,7 @@ export const SMImmunityTable = ({
 
 	const onCreateImmunity = async () => {
 		try {
-			const immunity = await NiceModal.show<SMGroupImmunity>(ModalSMGroupImmunityEditor, { groups });
+			const immunity = (await NiceModal.show(SMGroupImmunityCreateModal, { groups })) as SMGroupImmunity;
 			queryClient.setQueryData(["serverImmunities"], [...(immunities ?? []), immunity]);
 			sendFlash("success", `Group immunity created successfully: ${immunity.group_immunity_id}`);
 		} catch (e) {
@@ -66,10 +67,10 @@ export const SMImmunityTable = ({
 	const immunityColumns = useMemo(() => {
 		const onDelete = async (immunity: SMGroupImmunity) => {
 			try {
-				const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete group immunity?",
 					children: "This cannot be undone",
-				});
+				})) as boolean;
 				if (!confirmed) {
 					return;
 				}

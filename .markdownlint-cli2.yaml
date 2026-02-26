@@ -1,0 +1,14 @@
+config:
+  line-length:
+    enabled: true
+    line_length: 120
+
+gitignore: true
+globs:
+  - "frontend/*.md"
+  - "sourcemod/**/*.md"
+  - "internal/**/*.md"
+  - "pkg/**/*.md"
+  - "docs/**/*.md"
+  - "internal/**/*.md"
+  - "*.md"

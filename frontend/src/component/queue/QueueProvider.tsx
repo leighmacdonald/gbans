@@ -24,7 +24,7 @@ import {
 import { readAccessToken } from "../../util/auth/readAccessToken.ts";
 import { logErr } from "../../util/errors.ts";
 import { transformCreatedOnDate } from "../../util/time.ts";
-import { ModalQueueJoin } from "../modal";
+import { QueueJoinModal } from "../modal/QueueJoinModal.tsx";
 
 /**
  * QueueProvider provides a high level context for server queueing. The intention is to allow users to
@@ -43,7 +43,7 @@ export const QueueProvider = ({ children }: { children: ReactNode }) => {
 	const [chatStatus, setChatStatus] = useState<ChatStatus>(profile.playerqueue_chat_status);
 	const [reason, setReason] = useState<string>("");
 
-	const modal = useModal(ModalQueueJoin);
+	const modal = useModal(QueueJoinModal, {});
 
 	const { readyState, sendJsonMessage, lastJsonMessage } = useWebSocket(websocketURL(), {
 		queryParams: { token: isAuthenticated() ? readAccessToken() : "" },

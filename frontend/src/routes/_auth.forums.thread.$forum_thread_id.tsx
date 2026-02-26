@@ -19,7 +19,8 @@ import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
 import { ThreadMessageContainer } from "../component/forum/ForumThreadMessageContainer.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
-import { ModalConfirm, ModalForumThreadEditor } from "../component/modal";
+import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
+import { ForumThreadEditorModal } from "../component/modal/ForumThreadEditorModal.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
@@ -47,7 +48,7 @@ function ForumThreadPage() {
 	const { pageIndex } = Route.useSearch();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
-	const confirmModal = useModal(ModalConfirm);
+	const confirmModal = useModal(ConfirmationModal);
 	const navigate = useNavigate();
 	const theme = useTheme();
 
@@ -96,9 +97,9 @@ function ForumThreadPage() {
 
 	const onEditThread = useCallback(async () => {
 		try {
-			const newThread = await NiceModal.show<ForumThread>(ModalForumThreadEditor, {
+			const newThread = (await NiceModal.show(ForumThreadEditorModal, {
 				thread: thread,
-			});
+			})) as ForumThread;
 
 			if (newThread.forum_thread_id > 0) {
 				queryClient.setQueryData(["forumThread", { forum_thread_id: Number(forum_thread_id) }], newThread);

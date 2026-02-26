@@ -15,7 +15,7 @@ import type { Forum, ForumThread } from "../../schema/forum.ts";
 import { PermissionLevel } from "../../schema/people.ts";
 import { logErr } from "../../util/errors";
 import { mdEditorRef } from "../form/field/MarkdownField.tsx";
-import { ModalConfirm, ModalForumThreadCreator } from "./index";
+import { ConfirmationModal } from "./ConfirmationModal.tsx";
 
 type ForumThreadEditorValues = {
 	title: string;
@@ -25,8 +25,8 @@ type ForumThreadEditorValues = {
 };
 
 export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: Forum }) => {
-	const threadModal = useModal(ModalForumThreadCreator);
-	const confirmModal = useModal(ModalConfirm);
+	const threadModal = useModal(ForumThreadCreatorModal);
+	const confirmModal = useModal(ConfirmationModal);
 	const { sendError } = useUserFlashCtx();
 	const theme = useTheme();
 	const modal = useModal();

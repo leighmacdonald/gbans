@@ -36,7 +36,7 @@ import {
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { IndeterminateCheckbox } from "../component/IndeterminateCheckbox.tsx";
-import { ModalConfirm } from "../component/modal";
+import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { Title } from "../component/Title.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
@@ -148,10 +148,10 @@ function NotificationsPage() {
 		if (ids?.length === 0) {
 			return;
 		}
-		const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+		const confirmed = (await NiceModal.show(ConfirmationModal, {
 			title: `Delete ${ids.length} notifications?`,
 			children: "This cannot be undone",
-		});
+		})) as boolean;
 		if (!confirmed) {
 			return;
 		}
@@ -162,10 +162,10 @@ function NotificationsPage() {
 		if (!notifications) {
 			return;
 		}
-		const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+		const confirmed = (await NiceModal.show(ConfirmationModal, {
 			title: `Delete all ${notifications.length} notifications?`,
 			children: "This cannot be undone",
-		});
+		})) as boolean;
 		if (!confirmed) {
 			return;
 		}

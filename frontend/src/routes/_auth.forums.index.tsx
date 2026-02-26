@@ -20,14 +20,15 @@ import { ForumRecentUserActivity } from "../component/forum/ForumRecentUserActiv
 import { ForumRowLink } from "../component/forum/ForumRowLink.tsx";
 import { VCenteredElement } from "../component/Heading.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
-import { ModalForumCategoryEditor, ModalForumForumEditor } from "../component/modal";
+import { ForumCategoryEditorModal } from "../component/modal/ForumCategoryEditorModal.tsx";
+import { ForumForumEditorModal } from "../component/modal/ForumForumEditorModal.tsx";
 import RouterLink from "../component/RouterLink.tsx";
 import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import type { Forum, ForumCategory } from "../schema/forum.ts";
+import type { ForumCategory } from "../schema/forum.ts";
 import { PermissionLevel } from "../schema/people.ts";
 import { logErr } from "../util/errors.ts";
 import { avatarHashToURL, humanCount } from "../util/text.tsx";
@@ -42,7 +43,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 
 	const onEdit = useCallback(async () => {
 		try {
-			await NiceModal.show(ModalForumCategoryEditor, {
+			await NiceModal.show(ForumCategoryEditorModal, {
 				category,
 			});
 		} catch (e) {
@@ -190,7 +191,7 @@ function ForumOverview() {
 
 	const onNewCategory = useCallback(async () => {
 		try {
-			await NiceModal.show<ForumCategory>(ModalForumCategoryEditor, {});
+			await NiceModal.show(ForumCategoryEditorModal, {});
 			sendFlash("success", "Created new category successfully");
 		} catch (e) {
 			logErr(e);
@@ -199,7 +200,7 @@ function ForumOverview() {
 
 	const onNewForum = useCallback(async () => {
 		try {
-			await NiceModal.show<Forum>(ModalForumForumEditor, {
+			await NiceModal.show(ForumForumEditorModal, {
 				categories: overview?.categories ?? [],
 			});
 			sendFlash("success", "Created new forum successfully");

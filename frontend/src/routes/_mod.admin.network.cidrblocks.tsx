@@ -25,12 +25,10 @@ import {
 	apiGetCIDRBlockListsSteamWhitelist,
 } from "../api";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
-import {
-	ModalCIDRBlockEditor,
-	ModalCIDRWhitelistEditor,
-	ModalConfirm,
-	ModalSteamWhitelistEditor,
-} from "../component/modal";
+import { CIDRBlockEditorModal } from "../component/modal/CIDRBlockEditorModal.tsx";
+import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
+import { IPWhitelistEditorModal } from "../component/modal/IPWhitelistEditorModal.tsx";
+import { SteamWhitelistEditorModal } from "../component/modal/SteamWhitelistEditorModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
@@ -54,7 +52,7 @@ export const Route = createFileRoute("/_mod/admin/network/cidrblocks")({
 function AdminNetworkCIDRBlocks() {
 	const queryClient = useQueryClient();
 	const { sendFlash, sendError } = useUserFlashCtx();
-	const confirmModal = useModal(ModalConfirm);
+	const confirmModal = useModal(ConfirmationModal);
 	const { hasPermission } = useAuth();
 
 	const { data: blockSources, isLoading: isLoadingBlockSources } = useQuery({
@@ -81,9 +79,9 @@ function AdminNetworkCIDRBlocks() {
 	const onIPWhitelistDeleteEdit = useCallback(
 		async (source?: WhitelistIP) => {
 			try {
-				const newSource = await NiceModal.show<WhitelistIP>(ModalCIDRWhitelistEditor, {
+				const newSource = (await NiceModal.show(IPWhitelistEditorModal, {
 					source,
-				});
+				})) as WhitelistIP;
 
 				queryClient.setQueryData(
 					["networkBlockListSourcesAdd"],
@@ -166,9 +164,9 @@ function AdminNetworkCIDRBlocks() {
 	const onEditBlockSource = useCallback(
 		async (source?: CIDRBlockSource) => {
 			try {
-				const updated = await NiceModal.show<CIDRBlockSource>(ModalCIDRBlockEditor, {
+				const updated = (await NiceModal.show(CIDRBlockEditorModal, {
 					source,
-				});
+				})) as CIDRBlockSource;
 
 				queryClient.setQueryData(
 					["networkBlockListSources"],
@@ -196,7 +194,7 @@ function AdminNetworkCIDRBlocks() {
 
 	const onSteamWhitelistEdit = useCallback(async () => {
 		try {
-			const newSource = await NiceModal.show<WhitelistSteam>(ModalSteamWhitelistEditor, {});
+			const newSource = (await NiceModal.show(SteamWhitelistEditorModal, {})) as WhitelistSteam;
 
 			queryClient.setQueryData(
 				["networkSteamWhitelist"],

@@ -17,7 +17,8 @@ import { logErr } from "../../util/errors";
 import { initPagination, RowsPerPage } from "../../util/table";
 import { renderDateTime } from "../../util/time";
 import { ContainerWithHeaderAndButtons } from "../ContainerWithHeaderAndButtons";
-import { ModalConfirm, ModalSMOverridesEditor } from "../modal";
+import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
+import { SMOverrideEditorModal } from "../modal/SMOverrideEditorModal.tsx";
 import { FullTable } from "./FullTable";
 import { TableCellString } from "./TableCellString";
 
@@ -28,7 +29,7 @@ export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverri
 
 	const onCreateOverride = async () => {
 		try {
-			const override = await NiceModal.show<SMOverrides>(ModalSMOverridesEditor, {});
+			const override = (await NiceModal.show(SMOverrideEditorModal, {})) as SMOverrides;
 			queryClient.setQueryData(["serverOverrides"], [...(overrides ?? []), override]);
 			sendFlash("success", `Group created successfully: ${override.name}`);
 		} catch (e) {
@@ -58,7 +59,7 @@ export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverri
 	const overridesColumns = useMemo(() => {
 		const onEdit = async (override: SMOverrides) => {
 			try {
-				const edited = await NiceModal.show<SMOverrides>(ModalSMOverridesEditor, { override });
+				const edited = (await NiceModal.show(SMOverrideEditorModal, { override })) as SMOverrides;
 				queryClient.setQueryData(
 					["serverOverrides"],
 					(overrides ?? []).map((o) => {
@@ -74,10 +75,10 @@ export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverri
 
 		const onDelete = async (override: SMOverrides) => {
 			try {
-				const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete override?",
 					children: "This cannot be undone",
-				});
+				})) as boolean;
 				if (!confirmed) {
 					return;
 				}

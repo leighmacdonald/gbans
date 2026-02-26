@@ -13,7 +13,7 @@ export const apiContests = async () => {
 	return resp.map(transformDateRange).map(transformTimeStampedDates);
 };
 
-export const apiContest = async (contest_id: number) => {
+export const apiContest = async (contest_id: string) => {
 	const contest = await apiCall<Contest>(`/api/contests/${contest_id}`, "GET");
 	return transformDateRange(contest);
 };
