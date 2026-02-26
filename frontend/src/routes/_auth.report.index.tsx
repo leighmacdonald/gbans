@@ -59,10 +59,16 @@ const searchSchemaReport = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_auth/report/")({
 	component: ReportCreate,
-	head: () => ({
-		meta: [{ name: "description", content: "Create a new player report" }, { title: "Create Report" }],
-	}),
 	validateSearch: (search) => searchSchemaReport.parse(search),
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Create a new player report" },
+			{ title: `Create Report - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 function ReportCreate() {

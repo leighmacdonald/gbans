@@ -40,16 +40,20 @@ import { PageNotFound } from "./_auth.page-not-found.tsx";
 
 export const Route = createFileRoute("/_auth/contests/$contest_id")({
 	component: Contest,
-	head: () => ({
-		meta: [{ name: "description", content: "Contests" }, { title: "Contest" }],
-	}),
-	beforeLoad: () => {
-		ensureFeatureEnabled("contests_enabled");
+	beforeLoad: ({ context }) => {
+		ensureFeatureEnabled(context.appInfo.contests_enabled);
 	},
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "Contests" }, { title: `Contests - ${loaderData?.appInfo.site_name}` }],
+	}),
 });
 
 function Contest() {
 	const { contest_id } = Route.useParams();
+	const { appInfo } = Route.useLoaderData();
 	const [entries, setEntries] = useState<ContestEntry[]>([]);
 	const [entriesLoading, setEntriesLoading] = useState(false);
 	const { hasPermission, profile } = useAuth();
@@ -235,6 +239,7 @@ function Contest() {
 														<Grid size={{ xs: 8 }} padding={2}>
 															<Typography variant={"subtitle1"}>Description</Typography>
 															<MarkDownRenderer
+																assetURL={appInfo.asset_url}
 																body_md={
 																	entry.description !== ""
 																		? entry.description

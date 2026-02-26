@@ -7,10 +7,12 @@ import * as Sentry from "@sentry/react";
 import { QueryClient } from "@tanstack/react-query";
 import { App } from "./App.tsx";
 import "./fonts/tf2build.css";
+import { getAppInfo } from "./api/app.ts";
 import { newRouter } from "./router.tsx";
 
 const queryClient = new QueryClient();
-const router = newRouter(queryClient);
+const appInfo = await queryClient.fetchQuery({ queryKey: ["appInfo"], queryFn: getAppInfo });
+const router = newRouter(queryClient, appInfo);
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
@@ -48,6 +50,7 @@ if (import.meta.env.VITE_SENTRY_DSN !== "") {
 }
 
 const AppProfiler = Sentry.withProfiler(App, { name: "gbans" });
+//const appInfo = await queryClient.fetchQuery({ queryKey: ["appInfo"], queryFn: apiGetAppInfo });
 
 const container = document.getElementById("root");
 if (container) {

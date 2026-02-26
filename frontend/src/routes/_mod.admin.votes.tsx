@@ -29,10 +29,13 @@ const votesSearchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/votes")({
 	component: AdminVotes,
-	head: () => ({
-		meta: [{ name: "description", content: "Votes" }, { title: "Votes" }],
-	}),
 	validateSearch: (search) => votesSearchSchema.parse(search),
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "Votes" }, { title: `Votes - ${loaderData?.appInfo.site_name}` }],
+	}),
 });
 
 function AdminVotes() {

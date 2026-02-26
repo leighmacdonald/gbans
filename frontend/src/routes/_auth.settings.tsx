@@ -38,7 +38,6 @@ import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { SubHeading } from "../component/SubHeading.tsx";
 import { TabButton } from "../component/TabButton.tsx";
 import { TabSection } from "../component/TabSection.tsx";
-import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
@@ -51,18 +50,23 @@ const settingsSchema = z.object({
 
 export const Route = createFileRoute("/_auth/settings")({
 	component: ProfileSettings,
-	head: () => ({
-		meta: [{ name: "description", content: "User Settings" }, { title: "User Settings" }],
-	}),
 	validateSearch: (search) => settingsSchema.parse(search),
 	loader: async ({ context }) => {
-		return await context.queryClient.ensureQueryData({
+		const settings = await context.queryClient.fetchQuery({
 			queryKey: ["settings"],
 			queryFn: async () => {
 				return await apiGetPersonSettings();
 			},
 		});
+
+		return { settings, appInfo: context.appInfo };
 	},
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "User Settings" },
+			{ title: `User Settings - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 interface SettingsValues {
@@ -77,11 +81,10 @@ type userSettingTabs = "general" | "connections" | "forums" | "game";
 function ProfileSettings() {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const { profile, hasPermission } = useAuth();
-	const settings = useLoaderData({ from: "/_auth/settings" }) as PersonSettings;
+	const { settings, appInfo } = useLoaderData({ from: "/_auth/settings" });
 	const { section } = Route.useSearch();
 	const [tab, setTab] = useState<userSettingTabs>(section);
 	const navigate = useNavigate();
-	const { appInfo } = useAppInfoCtx();
 
 	const mutation = useMutation({
 		mutationFn: async (values: SettingsValues) => {
@@ -443,7 +446,7 @@ const ConnectionsSection = ({
 	const { profile, login } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
 	const confirmModal = useModal(ConfirmationModal);
-	const { appInfo } = useAppInfoCtx();
+	const { appInfo } = Route.useLoaderData();
 
 	const { data: user, isLoading } = useQuery({
 		queryKey: ["discordProfile", { steamID: profile.steam_id }],

@@ -5,13 +5,10 @@ import { ErrorDetails } from "../component/ErrorDetails.tsx";
 import { WikiPage } from "../component/WikiPage.tsx";
 import { AppError } from "../error.tsx";
 import { PermissionLevel } from "../schema/people.ts";
-import type { Page } from "../schema/wiki.ts";
 
 export const Route = createFileRoute("/_guest/wiki/$slug")({
 	component: Wiki,
-	head: () => ({
-		meta: [{ name: "description", content: "Wiki" }, { title: "Wiki" }],
-	}),
+
 	loader: async ({ context, abortController, params }) => {
 		const { slug } = params;
 		const queryOpts = queryOptions({
@@ -21,20 +18,26 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 			},
 		});
 		try {
-			return await context.queryClient.fetchQuery(queryOpts);
+			return { page: await context.queryClient.fetchQuery(queryOpts), appInfo: context.appInfo };
 		} catch (e) {
 			if (e instanceof AppError) {
 				// Mostly meant for handling permission denied error
 				throw e;
 			}
 			return {
-				revision: 0,
-				body_md: "",
-				slug: slug,
-				permission_level: PermissionLevel.Guest,
-			} as Page;
+				appInfo: context.appInfo,
+				page: {
+					revision: 0,
+					body_md: "",
+					slug: slug,
+					permission_level: PermissionLevel.Guest,
+				},
+			};
 		}
 	},
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "Wiki" }, { title: `Wiki - ${loaderData?.appInfo.site_name}` }],
+	}),
 	errorComponent: ({ error }) => {
 		if (error instanceof AppError) {
 			return <ErrorDetails error={error} />;
@@ -45,5 +48,7 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 
 function Wiki() {
 	const { slug } = Route.useParams();
-	return <WikiPage slug={slug} path={"/_guest/wiki/$slug"} />;
+	const { appInfo } = Route.useLoaderData();
+
+	return <WikiPage slug={slug} path={"/_guest/wiki/$slug"} assetURL={appInfo.asset_url} />;
 }

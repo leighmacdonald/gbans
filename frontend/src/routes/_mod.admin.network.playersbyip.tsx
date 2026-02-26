@@ -26,10 +26,16 @@ const playersByIPSearchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/network/playersbyip")({
 	component: AdminNetworkPlayersByCIDR,
-	head: () => ({
-		meta: [{ name: "description", content: "Find players by IP address" }, { title: "Players By IP" }],
-	}),
 	validateSearch: (search) => playersByIPSearchSchema.parse(search),
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Find players by IP address" },
+			{ title: `Players By IP - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 function AdminNetworkPlayersByCIDR() {

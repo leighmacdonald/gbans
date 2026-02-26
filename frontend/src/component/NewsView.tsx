@@ -10,9 +10,10 @@ import { SplitHeading } from "./SplitHeading";
 
 export interface NewsViewProps {
 	itemsPerPage: number;
+	assetURL: string;
 }
 
-export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
+export const NewsView = ({ itemsPerPage, assetURL }: NewsViewProps) => {
 	const [page, setPage] = useState<number>(0);
 
 	const { data: articles, isLoading } = useQuery({
@@ -32,7 +33,7 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
 					return (
 						<Paper elevation={1} key={`news_${article.news_id}`}>
 							<SplitHeading left={article.title} right={renderDate(article.created_on)} />
-							<MarkDownRenderer body_md={article.body_md} />
+							<MarkDownRenderer body_md={article.body_md} assetURL={assetURL} />
 						</Paper>
 					);
 				})}

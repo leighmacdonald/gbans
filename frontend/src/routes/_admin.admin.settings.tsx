@@ -73,18 +73,22 @@ const settingsSchema = z.object({
 
 export const Route = createFileRoute("/_admin/admin/settings")({
 	component: AdminSettings,
-	head: () => ({
-		meta: [{ name: "description", content: "Edit Core System Settings" }, { title: "System Settings" }],
-	}),
 	validateSearch: (search) => settingsSchema.parse(search),
-	loader: ({ context }) => {
-		return context.queryClient.fetchQuery({
+	loader: async ({ context }) => {
+		const settings = await context.queryClient.fetchQuery({
 			queryKey: ["settings"],
 			queryFn: async () => {
 				return await apiGetSettings();
 			},
 		});
+		return { settings, appInfo: context.appInfo };
 	},
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Edit Core System Settings" },
+			{ title: `System Settings - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 type tabs =
@@ -112,7 +116,7 @@ const ConfigContainer = ({ children }: { children: ReactNode[] }) => {
 
 function AdminSettings() {
 	const { sendFlash, sendError } = useUserFlashCtx();
-	const settings = Route.useLoaderData();
+	const { settings } = Route.useLoaderData();
 	const { section } = Route.useSearch();
 	const navigate = useNavigate();
 	const [tab, setTab] = useState<tabs>(section);
@@ -289,10 +293,21 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"site_name"}
 							children={(field) => {
-								return <field.TextField label={"Global Site Name"} />;
+								return <field.TextField label={"Site Name"} />;
 							}}
 						/>
 					</Grid>
+
+					<Grid size={{ xs: 12 }}>
+						<SubHeading>Description of the community</SubHeading>
+						<form.AppField
+							name={"site_description"}
+							children={(field) => {
+								return <field.TextField label={"Description"} />;
+							}}
+						/>
+					</Grid>
+
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>If you have an asset under a different subdir you should change this.</SubHeading>
 						<form.AppField

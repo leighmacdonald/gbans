@@ -36,10 +36,13 @@ const contestsSearchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/contests")({
 	component: AdminContests,
-	head: () => ({
-		meta: [{ name: "description", content: "Contests" }, { title: "Contests" }],
-	}),
 	validateSearch: (search) => contestsSearchSchema.parse(search),
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "Contests" }, { title: `Contests - ${loaderData?.appInfo.site_name}` }],
+	}),
 });
 
 function AdminContests() {

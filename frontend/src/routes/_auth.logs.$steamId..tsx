@@ -28,14 +28,16 @@ const matchSummarySchema = z.object({
 
 export const Route = createFileRoute("/_auth/logs/$steamId/")({
 	component: MatchListPage,
+	validateSearch: (search) => matchSummarySchema.parse(search),
+	beforeLoad: ({ context }) => {
+		ensureFeatureEnabled(context.appInfo.stats_enabled);
+	},
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
 	head: () => ({
 		meta: [{ name: "description", content: "Match History" }, { title: "Match History" }],
 	}),
-	beforeLoad: () => {
-		ensureFeatureEnabled("stats_enabled");
-	},
-
-	validateSearch: (search) => matchSummarySchema.parse(search),
 });
 
 function MatchListPage() {

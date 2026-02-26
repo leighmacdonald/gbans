@@ -50,11 +50,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { type MenuItemData, NestedDropdown } from "mui-nested-menu";
 import { type JSX, type MouseEvent, useCallback, useMemo, useState } from "react";
 import { apiGetNotifications } from "../api";
-import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useColourModeCtx } from "../hooks/useColourModeCtx.ts";
 import { useQueueCtx } from "../hooks/useQueueCtx.ts";
 import steamLogo from "../icons/steam_login_sm.png";
+import type { appInfoDetail } from "../schema/app.ts";
 import { PermissionLevel, type UserNotification } from "../schema/people.ts";
 import { tf2Fonts } from "../theme";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
@@ -69,9 +69,8 @@ interface menuRoute {
 	icon: JSX.Element;
 }
 
-export const TopBar = () => {
+export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 	const { profile, hasPermission, isAuthenticated } = useAuth();
-	const { appInfo } = useAppInfoCtx();
 	const { users, showChat, setShowChat } = useQueueCtx();
 
 	const { data: notifications, isLoading } = useQuery({

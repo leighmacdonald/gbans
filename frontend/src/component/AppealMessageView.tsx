@@ -23,10 +23,11 @@ import { MarkDownRenderer } from "./MarkdownRenderer";
 
 interface AppealMessageViewProps {
 	message: BanAppealMessage;
+	assetURL: string;
 	onDelete: (report_message_id: number) => void;
 }
 
-export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps) => {
+export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessageViewProps) => {
 	const theme = useTheme();
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
@@ -128,7 +129,7 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
 					subheader={d1}
 				/>
 
-				<MarkDownRenderer body_md={message.message_md} />
+				<MarkDownRenderer body_md={message.message_md} assetURL={assetURL} />
 
 				<Menu
 					anchorEl={anchorEl}

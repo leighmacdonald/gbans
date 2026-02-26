@@ -19,7 +19,6 @@ import { PlayerWeaponsStatListContainer } from "../component/PlayerWeaponsStatLi
 import { SteamIDList } from "../component/SteamIDList.tsx";
 import { PlayerClassStatsTable } from "../component/table/PlayerClassStatsTable.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import type { PlayerProfile } from "../schema/people.ts";
 import { createExternalLinks } from "../util/history.ts";
 import { avatarHashToURL } from "../util/text.tsx";
 import { isValidSteamDate, renderDateTime } from "../util/time.ts";
@@ -27,26 +26,30 @@ import { emptyOrNullString } from "../util/types.ts";
 
 export const Route = createFileRoute("/_guest/profile/$steamId")({
 	component: ProfilePage,
-	head: () => ({
-		meta: [{ name: "description", content: "Player Profile" }, { title: "Profile" }],
-	}),
 	loader: async ({ context, abortController, params }) => {
 		const { steamId } = params;
 
-		return context.queryClient.fetchQuery(
+		const profile = await context.queryClient.fetchQuery(
 			queryOptions({
 				queryKey: ["profile", { steamId }],
 				queryFn: async () => await apiGetProfile(steamId, abortController),
 			}),
 		);
+		return { profile, appInfo: context.appInfo };
 	},
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Player Profile" },
+			{ title: `Profile - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 function ProfilePage() {
 	const { profile: userProfile, isAuthenticated } = useAuth();
-	const profile = useLoaderData({
+	const { profile } = useLoaderData({
 		from: "/_guest/profile/$steamId",
-	}) as PlayerProfile;
+	});
 
 	return (
 		<Grid container spacing={2}>

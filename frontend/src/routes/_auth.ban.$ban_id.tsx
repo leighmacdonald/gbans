@@ -40,9 +40,10 @@ import { renderDateTime, renderTimeDistance } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/ban/$ban_id")({
 	component: BanPage,
-	loader: ({ context, abortController, params }) => {
+
+	loader: async ({ context, abortController, params }) => {
 		const { ban_id } = params;
-		return context.queryClient.fetchQuery({
+		const ban = await context.queryClient.fetchQuery({
 			queryKey: ["ban", { ban_id }],
 			queryFn: async () => {
 				const ban = await apiGetBanSteam(Number(ban_id), true, abortController);
@@ -52,15 +53,22 @@ export const Route = createFileRoute("/_auth/ban/$ban_id")({
 				return ban;
 			},
 		});
+		return { ban, appInfo: context.appInfo };
 	},
 	errorComponent: (e) => {
 		return <ErrorDetails error={e.error} />;
 	},
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: loaderData?.appInfo.site_description },
+			{ title: `Ban #${loaderData?.ban.ban_id} - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 function BanPage() {
 	const { permissionLevel, profile } = useAuth();
-	const ban = Route.useLoaderData();
+	const { ban, appInfo } = Route.useLoaderData();
 	const { sendFlash } = useUserFlashCtx();
 
 	const queryClient = useQueryClient();
@@ -145,7 +153,12 @@ function BanPage() {
 					)}
 
 					{(messages ?? []).map((m) => (
-						<AppealMessageView onDelete={onDelete} message={m} key={`ban-appeal-msg-${m.ban_message_id}`} />
+						<AppealMessageView
+							onDelete={onDelete}
+							message={m}
+							key={`ban-appeal-msg-${m.ban_message_id}`}
+							assetURL={appInfo.asset_url}
+						/>
 					))}
 					{canPost && (
 						<Paper elevation={1}>
@@ -240,7 +253,7 @@ function BanPage() {
 
 					{permissionLevel() >= PermissionLevel.Moderator && ban.note !== "" && (
 						<ContainerWithHeader title={"Mod Notes"} iconLeft={<DocumentScannerIcon />}>
-							<MarkDownRenderer body_md={ban.note} />
+							<MarkDownRenderer body_md={ban.note} assetURL={appInfo.asset_url} />
 						</ContainerWithHeader>
 					)}
 

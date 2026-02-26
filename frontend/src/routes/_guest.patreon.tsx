@@ -15,7 +15,6 @@ import { apiGetPatreonCampaigns, apiGetPatreonLogin } from "../api/patreon.ts";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { ImageBox } from "../component/ImageBox.tsx";
 import { MarkDownRenderer } from "../component/MarkdownRenderer.tsx";
-import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 import { useAuth } from "../hooks/useAuth.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 
@@ -25,9 +24,10 @@ const patreonSearchSchema = z.object({
 
 export const Route = createFileRoute("/_guest/patreon")({
 	component: Patreon,
-	beforeLoad: () => {
-		ensureFeatureEnabled("patreon_enabled");
+	beforeLoad: ({ context }) => {
+		ensureFeatureEnabled(context.appInfo.patreon_enabled);
 	},
+
 	validateSearch: (search) => patreonSearchSchema.parse(search),
 	loader: async ({ context }) => {
 		const campaign = await context.queryClient.fetchQuery({
@@ -35,16 +35,21 @@ export const Route = createFileRoute("/_guest/patreon")({
 			queryFn: apiGetPatreonCampaigns,
 		});
 
-		return { campaign };
+		return { campaign, appInfo: context.appInfo };
 	},
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Patreon Capaigns" },
+			{ title: `Patreon - ${loaderData?.appInfo.site_name}` },
+		],
+	}),
 });
 
 function Patreon() {
 	const { queryClient } = Route.useRouteContext();
 	const { isAuthenticated, profile } = useAuth();
-	const { campaign } = Route.useLoaderData();
+	const { campaign, appInfo } = Route.useLoaderData();
 	const theme = useTheme();
-	const { appInfo } = useAppInfoCtx();
 	const followCallback = async () => {
 		const result = await queryClient.fetchQuery({
 			queryKey: ["callback"],
@@ -92,9 +97,12 @@ function Patreon() {
 									/>
 								</Paper>
 
-								<MarkDownRenderer body_md={campaign.attributes.summary} />
+								<MarkDownRenderer body_md={campaign.attributes.summary} assetURL={appInfo.asset_url} />
 
-								<MarkDownRenderer body_md={campaign.attributes.thanks_msg} />
+								<MarkDownRenderer
+									body_md={campaign.attributes.thanks_msg}
+									assetURL={appInfo.asset_url}
+								/>
 							</Stack>
 						</Grid>
 						<Grid size={{ xs: 12 }}>

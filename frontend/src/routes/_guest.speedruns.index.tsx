@@ -31,8 +31,14 @@ import { durationString, renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/speedruns/")({
 	component: SpeedrunsOverall,
-	head: () => ({
-		meta: [{ name: "description", content: "Speedruns Overall Results" }, { title: "Speedruns" }],
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Speedruns Overall Results" },
+			{ title: `Speedruns - ${loaderData?.appInfo.site_name}` },
+		],
 	}),
 });
 

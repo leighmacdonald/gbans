@@ -5,11 +5,10 @@ import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { type JSX, useMemo } from "react";
-import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
+import type { appInfoDetail } from "../schema/app.ts";
 import RouterLink from "./RouterLink.tsx";
 
-export const Footer = (): JSX.Element => {
-	const { appInfo } = useAppInfoCtx();
+export const Footer = ({ appInfo }: { appInfo: appInfoDetail }): JSX.Element => {
 	const theme = useTheme();
 
 	const gbansUrl = useMemo(() => {

@@ -34,10 +34,13 @@ const schema = z.object({
 
 export const Route = createFileRoute("/_mod/admin/network/ipInfo")({
 	component: AdminNetworkInfo,
-	head: () => ({
-		meta: [{ name: "description", content: "IP Info" }, { title: "IP Info" }],
-	}),
 	validateSearch: (search) => searchSchema.parse(search),
+	loader: ({ context }) => ({
+		appInfo: context.appInfo,
+	}),
+	head: ({ loaderData }) => ({
+		meta: [{ name: "description", content: "IP Info" }, { title: `IP Info - ${loaderData?.appInfo.site_name}` }],
+	}),
 });
 
 const InfoRow = ({ label, children }: { label: string; children: ReactNode }) => {
