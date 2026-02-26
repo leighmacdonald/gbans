@@ -4,16 +4,17 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/system/Box";
 import { createFileRoute } from "@tanstack/react-router";
-import { Title } from "../component/Title";
 
 export const Route = createFileRoute("/_mod/admin/network/")({
 	component: AdminNetwork,
+	head: () => ({
+		meta: [{ name: "description", content: "Various network querying tools" }, { title: "Network History Tools" }],
+	}),
 });
 
 function AdminNetwork() {
 	return (
 		<Grid container spacing={2}>
-			<Title>IP History</Title>
 			<Grid size={{ xs: 6, md: 6 }}>
 				<Link href={`/admin/network/ip_hist`}>
 					<Paper component={Box} padding={2}>

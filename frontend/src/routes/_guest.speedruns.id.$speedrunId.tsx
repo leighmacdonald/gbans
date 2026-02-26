@@ -21,7 +21,6 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import type { SpeedrunParticipant, SpeedrunPointCaptures } from "../schema/speedrun.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
@@ -30,6 +29,9 @@ import { durationString, renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/speedruns/id/$speedrunId")({
 	component: SpeedrunDetail,
+	head: () => ({
+		meta: [{ name: "description", content: "Speedrun details" }, { title: "Speedrun" }],
+	}),
 	beforeLoad: () => {
 		ensureFeatureEnabled("speedruns_enabled");
 	},
@@ -55,7 +57,6 @@ function SpeedrunDetail() {
 
 	return (
 		<>
-			<Title>{`Speedruns: ${speedrunId}`}</Title>
 			{isLoading && <LoadingPlaceholder height={400} />}
 
 			{!isLoading && speedrun && (

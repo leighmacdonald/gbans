@@ -38,7 +38,6 @@ import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { SubHeading } from "../component/SubHeading.tsx";
 import { TabButton } from "../component/TabButton.tsx";
 import { TabSection } from "../component/TabSection.tsx";
-import { Title } from "../component/Title.tsx";
 import { useAppInfoCtx } from "../contexts/AppInfoCtx.ts";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -52,6 +51,9 @@ const settingsSchema = z.object({
 
 export const Route = createFileRoute("/_auth/settings")({
 	component: ProfileSettings,
+	head: () => ({
+		meta: [{ name: "description", content: "User Settings" }, { title: "User Settings" }],
+	}),
 	validateSearch: (search) => settingsSchema.parse(search),
 	loader: async ({ context }) => {
 		return await context.queryClient.ensureQueryData({
@@ -103,61 +105,57 @@ function ProfileSettings() {
 	};
 
 	return (
-		<>
-			<Title>User Settings</Title>
-
-			<ContainerWithHeader title={"User Settings"} iconLeft={<ConstructionIcon />}>
-				<Grid container spacing={2}>
-					<Grid size={{ xs: 4, sm: 3, md: 2 }} padding={0}>
-						<Stack spacing={1} padding={2}>
+		<ContainerWithHeader title={"User Settings"} iconLeft={<ConstructionIcon />}>
+			<Grid container spacing={2}>
+				<Grid size={{ xs: 4, sm: 3, md: 2 }} padding={0}>
+					<Stack spacing={1} padding={2}>
+						<TabButton
+							tab={"general"}
+							onClick={onTabClick}
+							icon={<SettingsIcon />}
+							currentTab={tab}
+							label={"General"}
+						/>
+						<TabButton
+							tab={"game"}
+							onClick={onTabClick}
+							icon={<SportsEsportsIcon />}
+							currentTab={tab}
+							label={"Gameplay"}
+						/>
+						{hasPermission(PermissionLevel.Moderator) && (
 							<TabButton
-								tab={"general"}
+								tab={"forums"}
 								onClick={onTabClick}
-								icon={<SettingsIcon />}
+								icon={<ForumIcon />}
 								currentTab={tab}
-								label={"General"}
+								label={"Forums"}
 							/>
+						)}
+						{(appInfo.patreon_enabled || appInfo.discord_enabled) && (
 							<TabButton
-								tab={"game"}
+								tab={"connections"}
 								onClick={onTabClick}
-								icon={<SportsEsportsIcon />}
+								icon={<CableIcon />}
 								currentTab={tab}
-								label={"Gameplay"}
+								label={"Connections"}
 							/>
-							{hasPermission(PermissionLevel.Moderator) && (
-								<TabButton
-									tab={"forums"}
-									onClick={onTabClick}
-									icon={<ForumIcon />}
-									currentTab={tab}
-									label={"Forums"}
-								/>
-							)}
-							{(appInfo.patreon_enabled || appInfo.discord_enabled) && (
-								<TabButton
-									tab={"connections"}
-									onClick={onTabClick}
-									icon={<CableIcon />}
-									currentTab={tab}
-									label={"Connections"}
-								/>
-							)}
-						</Stack>
-					</Grid>
-					<GeneralSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					<GameplaySection tab={tab} settings={settings} mutate={mutation.mutate} />
-					{hasPermission(PermissionLevel.Moderator) && (
-						<ForumSection tab={tab} settings={settings} mutate={mutation.mutate} />
-					)}
-					<ConnectionsSection
-						tab={tab}
-						settings={settings}
-						mutate={mutation.mutate}
-						patreon_id={profile.patreon_id}
-					/>
+						)}
+					</Stack>
 				</Grid>
-			</ContainerWithHeader>
-		</>
+				<GeneralSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<GameplaySection tab={tab} settings={settings} mutate={mutation.mutate} />
+				{hasPermission(PermissionLevel.Moderator) && (
+					<ForumSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				)}
+				<ConnectionsSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+					patreon_id={profile.patreon_id}
+				/>
+			</Grid>
+		</ContainerWithHeader>
 	);
 }
 

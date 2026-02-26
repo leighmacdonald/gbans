@@ -27,7 +27,6 @@ import { AssetViewer } from "../component/modal/AssetViewer.tsx";
 import { ContestEntryDeleteModal } from "../component/modal/ContestEntryDeleteModal.tsx";
 import { ContestEntryModal } from "../component/modal/ContestEntryModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
@@ -41,6 +40,9 @@ import { PageNotFound } from "./_auth.page-not-found.tsx";
 
 export const Route = createFileRoute("/_auth/contests/$contest_id")({
 	component: Contest,
+	head: () => ({
+		meta: [{ name: "description", content: "Contests" }, { title: "Contest" }],
+	}),
 	beforeLoad: () => {
 		ensureFeatureEnabled("contests_enabled");
 	},
@@ -142,7 +144,6 @@ function Contest() {
 	) : (
 		contest && (
 			<Grid container spacing={3}>
-				<Title>{contest?.title ?? "Contest"}</Title>
 				<Grid size={{ xs: 8 }}>
 					<ContainerWithHeader
 						title={`Contest: ${contest?.title}`}

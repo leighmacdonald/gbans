@@ -22,7 +22,6 @@ import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { ForumThreadEditorModal } from "../component/modal/ForumThreadEditorModal.tsx";
 import RouterLink from "../component/RouterLink.tsx";
-import { Title } from "../component/Title";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -39,6 +38,9 @@ const forumThreadSearchSchema = commonTableSearchSchema;
 
 export const Route = createFileRoute("/_auth/forums/thread/$forum_thread_id")({
 	component: ForumThreadPage,
+	head: () => ({
+		meta: [{ name: "description", content: "Thread" }, { title: "Thread" }],
+	}),
 	validateSearch: (search) => forumThreadSearchSchema.parse(search),
 });
 
@@ -221,8 +223,6 @@ function ForumThreadPage() {
 
 	return (
 		<Stack spacing={1}>
-			{thread?.title ? <Title>{thread?.title}</Title> : null}
-
 			<Stack direction={"row"}>
 				{hasPermission(PermissionLevel.Moderator) && (
 					<IconButton color={"warning"} onClick={onEditThread}>

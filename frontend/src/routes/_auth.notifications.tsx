@@ -38,7 +38,6 @@ import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { IndeterminateCheckbox } from "../component/IndeterminateCheckbox.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { Title } from "../component/Title.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
@@ -49,6 +48,9 @@ import { RowsPerPage } from "../util/table.ts";
 
 export const Route = createFileRoute("/_auth/notifications")({
 	component: NotificationsPage,
+	head: () => ({
+		meta: [{ name: "description", content: "User Notifications" }, { title: "Notifications" }],
+	}),
 });
 
 function NotificationsPage() {
@@ -172,9 +174,9 @@ function NotificationsPage() {
 		onDeleteAll.mutate();
 	}, [notifications, onDeleteAll]);
 
-	const newMessages = useMemo(() => {
-		return notifications?.filter((n) => !n.read).length;
-	}, [notifications]);
+	// const newMessages = useMemo(() => {
+	// 	return notifications?.filter((n) => !n.read).length;
+	// }, [notifications]);
 
 	const buttons = useMemo(() => {
 		if (breakMatched) {
@@ -288,42 +290,39 @@ function NotificationsPage() {
 	]);
 
 	return (
-		<>
-			<Title>{`Notifications (${newMessages})`}</Title>
-			<Grid container spacing={2}>
-				<Grid size={{ xs: 12 }}>
-					<ContainerWithHeaderAndButtons
-						iconLeft={<EmailIcon />}
-						title={`Notifications  ${Object.values(rowSelection).length ? `(Selected: ${Object.values(rowSelection).length})` : ""}`}
-						buttons={[buttons]}
-					>
-						<NotificationsTable
-							notifications={notifications ?? []}
-							isLoading={isLoading}
-							rowSelection={rowSelection}
-							setRowSelection={setRowSelection}
-							pagination={pagination}
-							setPagination={setPagination}
-						/>
-						<PaginatorLocal
-							onRowsChange={(rows) => {
-								setPagination((prev) => {
-									return { ...prev, pageSize: rows };
-								});
-							}}
-							onPageChange={(page) => {
-								setPagination((prev) => {
-									return { ...prev, pageIndex: page };
-								});
-							}}
-							count={notifications?.length ?? 0}
-							rows={pagination.pageSize}
-							page={pagination.pageIndex}
-						/>
-					</ContainerWithHeaderAndButtons>
-				</Grid>
+		<Grid container spacing={2}>
+			<Grid size={{ xs: 12 }}>
+				<ContainerWithHeaderAndButtons
+					iconLeft={<EmailIcon />}
+					title={`Notifications  ${Object.values(rowSelection).length ? `(Selected: ${Object.values(rowSelection).length})` : ""}`}
+					buttons={[buttons]}
+				>
+					<NotificationsTable
+						notifications={notifications ?? []}
+						isLoading={isLoading}
+						rowSelection={rowSelection}
+						setRowSelection={setRowSelection}
+						pagination={pagination}
+						setPagination={setPagination}
+					/>
+					<PaginatorLocal
+						onRowsChange={(rows) => {
+							setPagination((prev) => {
+								return { ...prev, pageSize: rows };
+							});
+						}}
+						onPageChange={(page) => {
+							setPagination((prev) => {
+								return { ...prev, pageIndex: page };
+							});
+						}}
+						count={notifications?.length ?? 0}
+						rows={pagination.pageSize}
+						page={pagination.pageIndex}
+					/>
+				</ContainerWithHeaderAndButtons>
 			</Grid>
-		</>
+		</Grid>
 	);
 }
 

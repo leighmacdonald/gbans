@@ -2,15 +2,16 @@ import { queryOptions } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { apiGetWikiPage } from "../api/wiki.ts";
 import { ErrorDetails } from "../component/ErrorDetails.tsx";
-import { Title } from "../component/Title.tsx";
 import { WikiPage } from "../component/WikiPage.tsx";
 import { AppError } from "../error.tsx";
 import { PermissionLevel } from "../schema/people.ts";
 import type { Page } from "../schema/wiki.ts";
-import { toTitleCase } from "../util/text.tsx";
 
 export const Route = createFileRoute("/_guest/wiki/$slug")({
 	component: Wiki,
+	head: () => ({
+		meta: [{ name: "description", content: "Wiki" }, { title: "Wiki" }],
+	}),
 	loader: async ({ context, abortController, params }) => {
 		const { slug } = params;
 		const queryOpts = queryOptions({
@@ -44,10 +45,5 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 
 function Wiki() {
 	const { slug } = Route.useParams();
-	return (
-		<>
-			<Title>{toTitleCase(slug.replace(/-/g, " "))}</Title>
-			<WikiPage slug={slug} path={"/_guest/wiki/$slug"} />
-		</>
-	);
+	return <WikiPage slug={slug} path={"/_guest/wiki/$slug"} />;
 }

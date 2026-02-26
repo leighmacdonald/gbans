@@ -14,7 +14,6 @@ import { useState } from "react";
 import { apiContests } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader";
 import { TextLink } from "../component/TextLink.tsx";
-import { Title } from "../component/Title.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
@@ -25,6 +24,9 @@ import { renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/contests")({
 	component: Contests,
+	head: () => ({
+		meta: [{ name: "description", content: "Contests" }, { title: "Contests" }],
+	}),
 	beforeLoad: () => {
 		ensureFeatureEnabled("contests_enabled");
 	},
@@ -53,7 +55,6 @@ function Contests() {
 
 	return (
 		<Grid container>
-			<Title>Contests</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Contests"} iconLeft={<InsightsIcon />}>
 					<ContestsTable

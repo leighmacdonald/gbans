@@ -15,7 +15,6 @@ import { apiGetNewsAll, apiNewsDelete } from "../api/news.ts";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { NewsEditModal } from "../component/modal/NewsEditModal.tsx";
-import { Title } from "../component/Title";
 import { FullTable } from "../component/table/FullTable.tsx";
 import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
@@ -31,6 +30,9 @@ const newsSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/news")({
 	component: AdminNews,
+	head: () => ({
+		meta: [{ name: "description", content: "News" }, { title: "News" }],
+	}),
 	validateSearch: (search) => newsSchema.parse(search),
 });
 
@@ -180,7 +182,6 @@ function AdminNews() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>News</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeaderAndButtons
 					title={"News Entries"}

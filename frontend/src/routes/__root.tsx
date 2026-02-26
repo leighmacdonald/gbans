@@ -9,7 +9,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import * as Sentry from "@sentry/react";
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import type { AuthContextProps } from "../auth.tsx";
 import { BackgroundImageProvider } from "../component/BackgroundImageProvider.tsx";
@@ -36,8 +36,9 @@ type RouterContext = {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
 	component: Root,
-	head: (_ctx) => ({
+	head: () => ({
 		meta: [
+			{ title: "gbans" },
 			{
 				name: "description",
 				content: "gbans is a web application for managing Team Fortress 2 communities",
@@ -91,6 +92,7 @@ function Root() {
 				},
 			]);
 		},
+
 		[flashes],
 	);
 
@@ -107,6 +109,7 @@ function Root() {
 
 			Sentry.captureException(error);
 		},
+
 		[sendFlash],
 	);
 
@@ -116,12 +119,13 @@ function Root() {
 				<LocalizationProvider dateAdapter={AdapterDateFns}>
 					<ColourModeContext.Provider value={colorMode}>
 						<ThemeProvider theme={theme}>
+							<Scripts />
 							<BackgroundImageProvider />
 							<NotificationsProvider>
 								<NiceModal.Provider>
 									<LogoutHandler />
 									<CssBaseline />
-
+									<HeadContent />
 									<Container maxWidth={"lg"}>
 										<TopBar />
 										<div

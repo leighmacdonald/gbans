@@ -25,7 +25,6 @@ import { Heading } from "../component/Heading.tsx";
 import { LoadingSpinner } from "../component/LoadingSpinner.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { PlayerClassImg } from "../component/PlayerClassImg.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import bluLogoImg from "../icons/blu_logo.png";
@@ -42,6 +41,9 @@ import { PageNotFound } from "./_auth.page-not-found.tsx";
 
 export const Route = createFileRoute("/_auth/match/$matchId")({
 	component: MatchPage,
+	head: () => ({
+		meta: [{ name: "description", content: "Match details" }, { title: "Match" }],
+	}),
 	beforeLoad: () => {
 		ensureFeatureEnabled("stats_enabled");
 	},
@@ -303,7 +305,6 @@ function MatchPage() {
 
 	return (
 		<ContainerWithHeader title={"Match Results"} iconLeft={<SportsIcon />}>
-			<Title>{match.title}</Title>
 			<Grid container spacing={2}>
 				<Grid size={{ xs: 8 }}>
 					<Stack>

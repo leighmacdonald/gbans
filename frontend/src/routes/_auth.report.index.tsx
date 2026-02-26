@@ -35,7 +35,6 @@ import { PersonCell } from "../component/PersonCell.tsx";
 import { PlayerMessageContext } from "../component/PlayerMessageContext.tsx";
 import { ReportStatusIcon } from "../component/ReportStatusIcon.tsx";
 import RouterLink from "../component/RouterLink.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -60,6 +59,9 @@ const searchSchemaReport = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_auth/report/")({
 	component: ReportCreate,
+	head: () => ({
+		meta: [{ name: "description", content: "Create a new player report" }, { title: "Create Report" }],
+	}),
 	validateSearch: (search) => searchSchemaReport.parse(search),
 });
 
@@ -78,7 +80,6 @@ function ReportCreate() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>Create Report</Title>
 			<Grid size={{ xs: 12, md: 8 }}>
 				<Stack spacing={2}>
 					{canReport ? (

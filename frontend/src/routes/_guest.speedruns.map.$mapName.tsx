@@ -14,7 +14,6 @@ import { apiGetServers, getSpeedrunsTopMap } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
@@ -26,6 +25,9 @@ import { durationString, renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/speedruns/map/$mapName")({
 	component: SpeedrunsMap,
+	head: () => ({
+		meta: [{ name: "description", content: "Map Speedruns" }, { title: "Speedruns" }],
+	}),
 	beforeLoad: () => {
 		ensureFeatureEnabled("speedruns_enabled");
 	},
@@ -48,16 +50,13 @@ function SpeedrunsMap() {
 	});
 
 	return (
-		<>
-			<Title>{title}</Title>
-			<ContainerWithHeader title={title} iconLeft={<EmojiEventsIcon />}>
-				<SpeedrunTable
-					speedruns={speedruns ?? []}
-					servers={servers ?? []}
-					isLoading={isLoading || isLoadingServers}
-				></SpeedrunTable>
-			</ContainerWithHeader>
-		</>
+		<ContainerWithHeader title={title} iconLeft={<EmojiEventsIcon />}>
+			<SpeedrunTable
+				speedruns={speedruns ?? []}
+				servers={servers ?? []}
+				isLoading={isLoading || isLoadingServers}
+			></SpeedrunTable>
+		</ContainerWithHeader>
 	);
 }
 

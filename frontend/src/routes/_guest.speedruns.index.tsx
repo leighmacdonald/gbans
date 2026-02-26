@@ -21,7 +21,6 @@ import { ButtonLink } from "../component/ButtonLink.tsx";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { Title } from "../component/Title";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
@@ -32,6 +31,9 @@ import { durationString, renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/speedruns/")({
 	component: SpeedrunsOverall,
+	head: () => ({
+		meta: [{ name: "description", content: "Speedruns Overall Results" }, { title: "Speedruns" }],
+	}),
 });
 
 const columnHelper = createColumnHelper<SpeedrunResult>();
@@ -65,61 +67,54 @@ function SpeedrunsOverall() {
 	}, [speedruns]);
 
 	return (
-		<>
-			<Title>Speedrun Overall Results</Title>
-			<Grid container spacing={2}>
-				<Grid size={{ xs: 12, md: 4 }}>
-					<ContainerWithHeader title={"Speedruns"} iconLeft={<ElectricBoltIcon />}>
-						<Typography>
-							These are the overall results for the speedruns. Speedruns are automatically created upon
-							match completion. For a player to count in the overall participants, they must have played a
-							minimum of 25% of the total play time of the map.
-						</Typography>
-					</ContainerWithHeader>
-				</Grid>
-
-				<Grid size={{ xs: 12, md: 8 }}>
-					<ContainerWithHeader title={"Most Recent Changes"} iconLeft={<HistoryIcon />}>
-						<SpeedrunRecentTable
-							speedruns={recent ?? []}
-							isLoading={isLoadingRecent}
-							servers={servers ?? []}
-						/>
-					</ContainerWithHeader>
-				</Grid>
-
-				{speedruns &&
-					keys.map((map_name) => {
-						return (
-							<Grid size={{ xs: 12, md: 6, lg: 4 }} key={`map-${map_name}`}>
-								<ContainerWithHeaderAndButtons
-									title={map_name}
-									iconLeft={<EmojiEventsIcon />}
-									buttons={[
-										<ButtonGroup key={"buttons"}>
-											<ButtonLink
-												variant={"contained"}
-												color={"success"}
-												endIcon={<PageviewIcon />}
-												to={"/speedruns/map/$mapName"}
-												params={{ mapName: map_name }}
-											>
-												More
-											</ButtonLink>
-										</ButtonGroup>,
-									]}
-								>
-									<SpeedrunTopTable
-										speedruns={speedruns[map_name]}
-										servers={servers}
-										isLoading={isLoading || isLoadingServers}
-									></SpeedrunTopTable>
-								</ContainerWithHeaderAndButtons>
-							</Grid>
-						);
-					})}
+		<Grid container spacing={2}>
+			<Grid size={{ xs: 12, md: 4 }}>
+				<ContainerWithHeader title={"Speedruns"} iconLeft={<ElectricBoltIcon />}>
+					<Typography>
+						These are the overall results for the speedruns. Speedruns are automatically created upon match
+						completion. For a player to count in the overall participants, they must have played a minimum
+						of 25% of the total play time of the map.
+					</Typography>
+				</ContainerWithHeader>
 			</Grid>
-		</>
+
+			<Grid size={{ xs: 12, md: 8 }}>
+				<ContainerWithHeader title={"Most Recent Changes"} iconLeft={<HistoryIcon />}>
+					<SpeedrunRecentTable speedruns={recent ?? []} isLoading={isLoadingRecent} servers={servers ?? []} />
+				</ContainerWithHeader>
+			</Grid>
+
+			{speedruns &&
+				keys.map((map_name) => {
+					return (
+						<Grid size={{ xs: 12, md: 6, lg: 4 }} key={`map-${map_name}`}>
+							<ContainerWithHeaderAndButtons
+								title={map_name}
+								iconLeft={<EmojiEventsIcon />}
+								buttons={[
+									<ButtonGroup key={"buttons"}>
+										<ButtonLink
+											variant={"contained"}
+											color={"success"}
+											endIcon={<PageviewIcon />}
+											to={"/speedruns/map/$mapName"}
+											params={{ mapName: map_name }}
+										>
+											More
+										</ButtonLink>
+									</ButtonGroup>,
+								]}
+							>
+								<SpeedrunTopTable
+									speedruns={speedruns[map_name]}
+									servers={servers}
+									isLoading={isLoading || isLoadingServers}
+								></SpeedrunTopTable>
+							</ContainerWithHeaderAndButtons>
+						</Grid>
+					);
+				})}
+		</Grid>
 	);
 }
 

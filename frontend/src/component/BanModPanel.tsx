@@ -23,7 +23,6 @@ import { ErrorDetails } from "./ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./LoadingPlaceholder.tsx";
 import { BanModal } from "./modal/BanModal.tsx";
 import { UnbanModal } from "./modal/UnbanModal.tsx";
-import { Title } from "./Title";
 
 const onSubmit = z.object({
 	appeal_state: AppealStateEnum,
@@ -100,7 +99,6 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 
 	return (
 		<ContainerWithHeader title={"Moderation Tools"} iconLeft={<AddModeratorIcon />}>
-			<Title>Ban Appeal</Title>
 			<form
 				onSubmit={async (e) => {
 					e.preventDefault();

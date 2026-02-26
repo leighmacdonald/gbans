@@ -39,6 +39,9 @@ const reportsSearchSchema = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_mod/admin/reports")({
 	component: AdminReports,
+	head: () => ({
+		meta: [{ name: "description", content: "Reports" }, { title: "Reports" }],
+	}),
 	validateSearch: (search) => reportsSearchSchema.parse(search),
 	loader: async ({ context, abortController }) => {
 		const reports = await context.queryClient.fetchQuery({
@@ -114,7 +117,6 @@ function AdminReports() {
 
 	return (
 		<Grid container spacing={2}>
-			<Title>Reports</Title>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form
