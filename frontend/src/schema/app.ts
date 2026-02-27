@@ -5,6 +5,7 @@ export const schemaAppInfoDetail = z.object({
 	site_description: z.string(),
 	app_version: z.string(),
 	link_id: z.string(),
+	favicon: z.string(),
 	sentry_dns_web: z.string(),
 	asset_url: z.string(),
 	patreon_client_id: z.string(),

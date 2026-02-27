@@ -128,6 +128,7 @@ type General struct {
 	FileServeMode      FileServeMode `json:"file_serve_mode"`
 	SrcdsLogAddr       string        `json:"srcds_log_addr"`
 	AssetURL           string        `json:"asset_url"`
+	Favicon            string        `json:"favicon"`
 	DefaultRoute       string        `json:"default_route"`
 	NewsEnabled        bool          `json:"news_enabled"`
 	ForumsEnabled      bool          `json:"forums_enabled"`
@@ -140,6 +141,14 @@ type General struct {
 	DemosEnabled       bool          `json:"demos_enabled"`
 	SpeedrunsEnabled   bool          `json:"speedruns_enabled"`
 	PlayerqueueEnabled bool          `json:"playerqueue_enabled"`
+}
+
+func (c General) FaviconURL() string {
+	if c.Favicon == "" {
+		return ""
+	}
+
+	return c.AssetURL + c.Favicon
 }
 
 type Debug struct {

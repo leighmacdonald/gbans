@@ -21,17 +21,19 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiGetDemoCleanup, apiGetNetworkUpdateDB } from "../api";
 import { apiGetSettings, apiSaveSettings } from "../api/admin.ts";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
+import { UploadButton } from "../component/form/button/UploadButton.tsx";
 import { CheckboxField } from "../component/form/field/CheckboxField.tsx";
 import { SubHeading } from "../component/SubHeading.tsx";
 import { TabButton } from "../component/TabButton.tsx";
 import { TabSection } from "../component/TabSection.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import type { Asset } from "../schema/asset.ts";
 import {
 	type Config,
 	schemaAnticheat,
@@ -49,6 +51,7 @@ import {
 	schemaSSH,
 } from "../schema/config.ts";
 import { logErr } from "../util/errors.ts";
+import { emptyOrNullString } from "../util/types.ts";
 
 const settingsSchema = z.object({
 	section: z
@@ -270,6 +273,25 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 		},
 	});
 
+	const onSuccess = useCallback(
+		async (asset: Asset) => {
+			console.log("asd");
+			form.setFieldValue("favicon", asset.asset_id);
+		},
+		[form],
+	);
+
+	const faviconURL = useMemo(() => {
+		const value = form.getFieldValue("favicon");
+		if (emptyOrNullString(value)) {
+			return "";
+		}
+		if (value.startsWith("http")) {
+			return value;
+		}
+		return `/asset/${value}`;
+	}, [form]);
+
 	return (
 		<TabSection
 			tab={"general"}
@@ -309,13 +331,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>Favicon Upload</SubHeading>
+						<SubHeading>Favicon URL</SubHeading>
 						<form.AppField
 							name={"favicon"}
 							children={(field) => {
 								return <field.TextField label={"Description"} />;
 							}}
 						/>
+						<UploadButton onSuccess={onSuccess} />
+						<img src={faviconURL} width={64} height={64} />
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
