@@ -1,6 +1,6 @@
-import type * as React from "react";
+import type { ReactNode } from "react";
 
-export const renderHelpText = (errors: unknown[], helpText?: string | React.ReactNode) => {
+export const renderHelpText = (errors: unknown[], helpText?: string | ReactNode) => {
 	return errors.length > 0
 		? errors
 				.map((v: unknown) => {
