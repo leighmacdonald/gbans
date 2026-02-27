@@ -309,6 +309,16 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
+						<SubHeading>Favicon Upload</SubHeading>
+						<form.AppField
+							name={"favicon"}
+							children={(field) => {
+								return <field.TextField label={"Description"} />;
+							}}
+						/>
+					</Grid>
+
+					<Grid size={{ xs: 12 }}>
 						<SubHeading>If you have an asset under a different subdir you should change this.</SubHeading>
 						<form.AppField
 							name={"asset_url"}
