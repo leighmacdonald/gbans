@@ -11,7 +11,6 @@ import * as Sentry from "@sentry/react";
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
-import { getAppInfo as apiGetAppInfo } from "../api/app.ts";
 import type { AuthContextProps } from "../auth.tsx";
 import { BackgroundImageProvider } from "../component/BackgroundImageProvider.tsx";
 import { type Flash, Flashes } from "../component/Flashes.tsx";
@@ -40,14 +39,14 @@ type RouterContext = {
 export const Route = createRootRouteWithContext<RouterContext>()({
 	component: Root,
 	loader: async ({ context }) => {
-		const appInfo = await context.queryClient.fetchQuery({ queryKey: ["appInfo"], queryFn: apiGetAppInfo });
-		return { appInfo };
+		return { appInfo: context.appInfo };
 	},
 	head: ({ loaderData }) => ({
+		links: [{ rel: "icon", href: loaderData?.appInfo.favicon ?? "/favicon.ico" }],
 		meta: [
 			{ name: "og:type", content: "website" },
 			{ name: "og:title", content: loaderData?.appInfo.site_name ?? "gbans" },
-			{ name: "og:image", content: "" },
+			{ name: "og:image", content: loaderData?.appInfo.favicon ?? "" },
 			{ name: "og:url", content: window.location.href },
 			{
 				name: "og:description",

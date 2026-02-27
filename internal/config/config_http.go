@@ -55,6 +55,7 @@ type AppInfo struct {
 	SiteName           string `json:"site_name"`
 	SiteDescription    string `json:"site_description"`
 	AssetURL           string `json:"asset_url"`
+	Favicon            string `json:"favicon"`
 	LinkID             string `json:"link_id"`
 	AppVersion         string `json:"app_version"`
 	DocumentPolicy     string `json:"document_policy"`
@@ -83,6 +84,7 @@ func (c httpHandler) onAppInfo(version string) gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, AppInfo{
 			SiteName:           conf.General.SiteName,
 			AssetURL:           conf.General.AssetURL,
+			Favicon:            conf.General.FaviconURL(),
 			LinkID:             conf.Discord.LinkID,
 			AppVersion:         version,
 			DocumentPolicy:     "",

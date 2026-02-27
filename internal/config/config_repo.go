@@ -38,7 +38,8 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 	const query = `
 		SELECT general_site_name, general_site_description, general_mode, general_file_serve_mode, general_srcds_log_addr, general_asset_url,
 		       general_default_route, general_news_enabled, general_forums_enabled, general_contests_enabled, general_wiki_enabled,
-		       general_stats_enabled, general_servers_enabled, general_reports_enabled,general_chatlogs_enabled, general_demos_enabled, general_speedruns_enabled, general_playerqueue_enabled,
+		       general_stats_enabled, general_servers_enabled, general_reports_enabled,general_chatlogs_enabled, general_demos_enabled,
+			   general_speedruns_enabled, general_playerqueue_enabled, general_favicon,
 
 		       filters_enabled, filters_dry, filters_ping_discord, filters_max_weight, filters_warning_timeout, filters_check_timeout, filters_match_timeout,
 
@@ -81,7 +82,7 @@ func (c *Repository) Read(ctx context.Context) (Config, error) {
 		Scan(&cfg.General.SiteName, &cfg.General.SiteDescription, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr, &cfg.General.AssetURL,
 			&cfg.General.DefaultRoute, &cfg.General.NewsEnabled, &cfg.General.ForumsEnabled, &cfg.General.ContestsEnabled, &cfg.General.WikiEnabled,
 			&cfg.General.StatsEnabled, &cfg.General.ServersEnabled, &cfg.General.ReportsEnabled, &cfg.General.ChatlogsEnabled, &cfg.General.DemosEnabled, &cfg.General.SpeedrunsEnabled,
-			&cfg.General.PlayerqueueEnabled,
+			&cfg.General.PlayerqueueEnabled, &cfg.General.Favicon,
 			&cfg.Filters.Enabled, &cfg.Filters.Dry, &cfg.Filters.PingDiscord, &cfg.Filters.MaxWeight, &cfg.Filters.WarningTimeout, &cfg.Filters.CheckTimeout, &cfg.Filters.MatchTimeout,
 			&cfg.Demo.DemoCleanupEnabled, &cfg.Demo.DemoCleanupStrategy, &cfg.Demo.DemoCleanupMinPct, &cfg.Demo.DemoCleanupMount, &cfg.Demo.DemoCountLimit, &cfg.Demo.DemoParserURL,
 			&cfg.Patreon.Enabled, &cfg.Patreon.ClientID, &cfg.Patreon.ClientSecret, &cfg.Patreon.CreatorAccessToken, &cfg.Patreon.CreatorRefreshToken, &cfg.Patreon.IntegrationsEnabled,
@@ -154,6 +155,7 @@ func (c *Repository) Write(ctx context.Context, config Config) error {
 			"general_demos_enabled":               config.General.DemosEnabled,
 			"general_speedruns_enabled":           config.General.SpeedrunsEnabled,
 			"general_playerqueue_enabled":         config.General.PlayerqueueEnabled,
+			"general_favicon":                     config.General.Favicon,
 			"filters_enabled":                     config.Filters.Enabled,
 			"filters_dry":                         config.Filters.Dry,
 			"filters_ping_discord":                config.Filters.PingDiscord,

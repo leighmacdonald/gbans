@@ -58,6 +58,7 @@ frontend/.tanstack
 TODO*
 *.csv
 __*
+!__root.tsx
 .direnv
 *.dump
 result

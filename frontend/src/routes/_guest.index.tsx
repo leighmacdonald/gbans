@@ -24,8 +24,8 @@ export const Route = createFileRoute("/_guest/")({
 	}),
 	head: ({ loaderData }) => ({
 		meta: [
-			{ name: "description", content: loaderData?.appInfo.site_description },
-			{ title: `Home - ${loaderData?.appInfo.site_name}` },
+			{ name: "og:description", content: loaderData?.appInfo.site_description },
+			{ name: "og:title", content: `Home - ${loaderData?.appInfo.site_name}` },
 		],
 	}),
 });
