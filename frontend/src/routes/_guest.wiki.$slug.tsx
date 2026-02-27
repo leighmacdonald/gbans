@@ -35,8 +35,8 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 			};
 		}
 	},
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "Wiki" }, { title: `Wiki - ${loaderData?.appInfo.site_name}` }],
+	head: () => ({
+		meta: [{ name: "description", content: "Wiki" }, { "og:title": `Wiki` }],
 	}),
 	errorComponent: ({ error }) => {
 		if (error instanceof AppError) {

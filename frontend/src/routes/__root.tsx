@@ -45,9 +45,12 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 	},
 	head: ({ loaderData }) => ({
 		meta: [
-			{ title: loaderData?.appInfo.site_name ?? "gbans" },
+			{ name: "og:type", content: "website" },
+			{ name: "og:title", content: loaderData?.appInfo.site_name ?? "gbans" },
+			{ name: "og:image", content: "" },
+			{ name: "og:url", content: window.location.href },
 			{
-				name: "description",
+				name: "og:description",
 				content:
 					loaderData?.appInfo.site_description ??
 					"gbans is a web application for managing Team Fortress 2 communities",
