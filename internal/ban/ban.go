@@ -95,7 +95,7 @@ type Opts struct {
 	ReasonText string             `json:"reason_text"`
 	Origin     Origin             `json:"origin" binding:"oneof=0 1 2 3"`
 	ReportID   int64              `json:"report_id" binding:"omitempty,gt=0"`
-	CIDR       *string            `json:"cidr"  binding:"omitnil,cidrv4"`
+	CIDR       *string            `json:"cidr"`
 	EvadeOk    bool               `json:"evade_ok"`
 	Name       string             `json:"name" binding:"max=36"`
 	DemoName   string             `json:"demo_name" binding:"omitempty,max=256"`
@@ -112,7 +112,8 @@ func (opts *Opts) Validate() error {
 		return fmt.Errorf("%w: Custom reason must be at least 3 characters", ErrInvalidBanOpts)
 	}
 
-	if opts.CIDR != nil {
+	// FIXME opt field handling is pretty clunky
+	if opts.CIDR != nil && *opts.CIDR != "" {
 		_, ipnet, errCIDR := net.ParseCIDR(*opts.CIDR)
 		if errCIDR != nil {
 			return fmt.Errorf("%w: Invalid CIDR", ErrInvalidBanOpts)

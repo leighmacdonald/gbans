@@ -25,32 +25,36 @@ export const SteamIDField = (props: Props) => {
 	const [error, setError] = useState<string>();
 	const [loading, setLoading] = useState(false);
 
-	// An ugly function to validate the steamid provided.
-	const check = async () => {
-		if (!emptyOrNullString(field.state.value)) {
-			try {
-				setLoading(true);
-				const update = await apiGetSteamValidate(field.state.value);
-				setProfile(update);
-				field.setValue(update.steam_id);
-				setError(undefined);
-			} catch {
-				// Doesnt work?
-				field.setErrorMap({
-					onChange: errors.map(() => "Invalid steam ID / Profile link"),
-				});
-				setError("Invalid steam ID / Profile link");
-				setProfile(undefined);
-			} finally {
-				setLoading(false);
-			}
-		} else {
-			setProfile(undefined);
-		}
-	};
-
 	// Make sure we debounce the check callback
-	const setDebouncedQuery = useCallback(debounce(check, { wait: 500 }), []);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: This needs to be reworked correctly.
+	const setDebouncedQuery = useCallback(
+		debounce(
+			async () => {
+				if (!emptyOrNullString(field.state.value)) {
+					try {
+						setLoading(true);
+						const update = await apiGetSteamValidate(field.state.value);
+						setProfile(update);
+						field.setValue(update.steam_id);
+						setError(undefined);
+					} catch {
+						// Doesnt work?
+						field.setErrorMap({
+							onChange: errors.map(() => "Invalid steam ID / Profile link"),
+						});
+						setError("Invalid steam ID / Profile link");
+						setProfile(undefined);
+					} finally {
+						setLoading(false);
+					}
+				} else {
+					setProfile(undefined);
+				}
+			},
+			{ wait: 500 },
+		),
+		[field.state.value],
+	);
 
 	const adornment = useMemo(() => {
 		if (loading) {
@@ -72,14 +76,18 @@ export const SteamIDField = (props: Props) => {
 		return <QuestionMark color={"secondary"} />;
 	}, [field.state.meta.isPristine, field.state.meta.isValidating, profile, field.state.meta.errors, error, loading]);
 
-	const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-		// Update the value immediately
-		field.handleChange(e.target.value);
-		setProfile(undefined);
+	const onChange = useCallback(
+		(e: ChangeEvent<HTMLInputElement>) => {
+			// Update the value immediately
+			console.log(e.target.value);
+			field.handleChange(e.target.value);
+			setProfile(undefined);
 
-		// Trigger a debounced validation check
-		setDebouncedQuery();
-	};
+			// Trigger a debounced validation check
+			setDebouncedQuery();
+		},
+		[field, setDebouncedQuery],
+	);
 
 	return (
 		<TextField

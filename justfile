@@ -61,7 +61,7 @@ test-ts:
 test-go:
     go test -race ./...
 
-check: lint_golangci vulncheck lint_ts typecheck_ts lint_md
+check: lint_go vulncheck lint_ts typecheck_ts lint_md
 
 vulncheck:
     govulncheck
@@ -69,7 +69,7 @@ vulncheck:
 lint_nil:
     nilaway -include-pkgs="github.com/leighmacdonald/gbans" -exclude-pkgs="github.com/jackc/pgx/v5" -test=false ./...
 
-lint_golangci:
+lint_go:
     golangci-lint run --timeout 3m ./...
 
 fix: fmt
