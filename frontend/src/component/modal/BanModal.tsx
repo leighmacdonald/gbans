@@ -86,6 +86,7 @@ export const BanModal = NiceModal.create(
 					});
 				}
 				queryClient.setQueryData(["ban", { banId }], banRecord);
+				return banRecord;
 			},
 			onSuccess: async (banRecord) => {
 				if (ban?.ban_id) {
