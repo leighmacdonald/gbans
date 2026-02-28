@@ -51,7 +51,6 @@ function LinearProgressWithLabel(props: LinearProgressProps & { value: number })
 			<Box width="100%" mr={1}>
 				<LinearProgress variant="determinate" {...props} />
 			</Box>
-			a
 			<Box minWidth={35}>
 				<Typography variant="body2" color="textSecondary">{`${Math.round(props.value)}%`}</Typography>
 			</Box>

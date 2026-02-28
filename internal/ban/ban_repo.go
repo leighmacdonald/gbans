@@ -233,6 +233,10 @@ func (r *Repository) insertBan(ctx context.Context, ban *Ban) error {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case WHEN $11 = 0 THEN null ELSE $11 END, $12, $13, $14, $15)
 		RETURNING ban_id`
 
+	if ban.CIDR != nil && *ban.CIDR == "" {
+		ban.CIDR = nil
+	}
+
 	errQuery := r.
 		QueryRow(ctx, sqlQuery, ban.TargetID.Int64(), ban.SourceID.Int64(), ban.BanType, ban.Reason, ban.ReasonText,
 			ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Origin, ban.ReportID, ban.AppealState,
@@ -250,6 +254,10 @@ func (r *Repository) updateBan(ctx context.Context, ban *Ban) error {
 	var reportID *int64
 	if ban.ReportID > 0 {
 		reportID = &ban.ReportID
+	}
+
+	if ban.CIDR != nil && *ban.CIDR == "" {
+		ban.CIDR = nil
 	}
 
 	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().

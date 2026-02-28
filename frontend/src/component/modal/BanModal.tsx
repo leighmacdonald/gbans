@@ -237,7 +237,7 @@ export const BanModal = NiceModal.create(
 							</Grid>
 
 							<Grid size={{ xs: 12 }}>
-								{ban && (
+								{ban?.valid_until && (
 									<>
 										<p>
 											Expires In:{" "}

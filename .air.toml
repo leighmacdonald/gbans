@@ -2,7 +2,7 @@ env_files = [".env"]
 
 [build]
 cmd = "CGO_ENABLED=0 go build -gcflags=all=\"-N -l\" -o ./tmp/main . && killall -9 main || true"
-full_bin = "dlv exec --listen=127.0.0.1:2345 --headless=true --api-version=2 --accept-multiclient --continue --log ./tmp/main"
+full_bin = "dlv exec --listen=127.0.0.1:2345 --headless=true --api-version=2 --accept-multiclient --check-go-version=false --continue --log ./tmp/main"
 rerun = true
 include_dir = ["internal", "pkg"]
 include_file = ["main.go"]

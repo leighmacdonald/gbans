@@ -10,7 +10,7 @@ in
 pkgs.mkShell {
   hardeningDisable = [ "fortify" ];
   buildInputs = with pkgs; [
-    go_1_25
+    go_1_26
     # libpcap
     # gcc
     golangci-lint
