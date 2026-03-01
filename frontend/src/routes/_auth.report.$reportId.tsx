@@ -31,20 +31,14 @@ import { renderDateTime, renderTimeDistance } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/report/$reportId")({
 	component: ReportView,
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "View a report" },
-			{ title: `Report - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "View a report" }, match.context.title("Report")],
 	}),
 });
 
 function ReportView() {
 	const { reportId } = Route.useParams();
-	const { appInfo } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 	const theme = useTheme();
 	const { hasPermission } = useAuth();
 	const navigate = useNavigate();

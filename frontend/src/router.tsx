@@ -6,6 +6,7 @@ import { LoadingPlaceholder } from "./component/LoadingPlaceholder.tsx";
 import { AppError, ErrorCode } from "./error.tsx";
 import { routeTree } from "./routeTree.gen.ts";
 import type { appInfoDetail } from "./schema/app.ts";
+import { toTitleCase } from "./util/text.tsx";
 
 export const newRouter = (queryClient: QueryClient, appInfo: appInfoDetail) => {
 	return createRouter({
@@ -14,6 +15,9 @@ export const newRouter = (queryClient: QueryClient, appInfo: appInfoDetail) => {
 		context: {
 			queryClient,
 			appInfo,
+			title: (title?: string) => {
+				return { title: title ? `${toTitleCase(title)} - ${appInfo.site_name}` : appInfo.site_name };
+			},
 		},
 		defaultPendingComponent: LoadingPlaceholder,
 		defaultErrorComponent: () => {

@@ -53,15 +53,9 @@ const filterSearchSchema = z.object({
 
 export const Route = createFileRoute("/_mod/admin/filters")({
 	component: AdminFilters,
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
 	validateSearch: (search) => filterSearchSchema.parse(search),
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Filtered Words" },
-			{ title: `Filtered Words - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Filtered Words" }, match.context.title("Filtered Words")],
 	}),
 });
 

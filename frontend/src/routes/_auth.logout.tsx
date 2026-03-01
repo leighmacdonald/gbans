@@ -5,11 +5,8 @@ import { useAuth } from "../hooks/useAuth";
 
 export const Route = createFileRoute("/_auth/logout")({
 	component: LogoutPage,
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [{ title: `Logout - ${loaderData?.appInfo.site_name}` }],
+	head: ({ match }) => ({
+		meta: [match.context.title("Logout")],
 	}),
 });
 

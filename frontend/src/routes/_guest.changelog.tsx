@@ -13,20 +13,14 @@ import { renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/changelog")({
 	component: Changelogs,
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Git Changelogs" },
-			{ title: `Changelog - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Git Changelogs" }, match.context.title("Changelog")],
 	}),
 });
 
 function Changelogs() {
 	const theme = useTheme();
-	const { appInfo } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 	const { data: changelogs, isLoading } = useQuery({
 		queryKey: ["changelogs"],
 		queryFn: getChangelogs,

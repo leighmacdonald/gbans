@@ -60,13 +60,10 @@ export const Route = createFileRoute("/_auth/forums/$forum_id")({
 		};
 
 		const threads = await context.queryClient.fetchQuery(threadsQueryOpts);
-		return { forum, threads, appInfo: context.appInfo };
+		return { forum, threads };
 	},
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: loaderData?.forum.description },
-			{ title: `Forum - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ loaderData, match }) => ({
+		meta: [{ name: "description", content: loaderData?.forum.description }, match.context.title("Forum")],
 	}),
 	errorComponent: ({ error }) => {
 		if (error instanceof AppError) {

@@ -66,11 +66,8 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_mod/admin/bans")({
 	component: AdminBans,
 	validateSearch: (search) => searchSchema.parse(search),
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "Bans" }, { title: `Bans - ${loaderData?.appInfo.site_name}` }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Bans" }, match.context.title("Bans")],
 	}),
 });
 

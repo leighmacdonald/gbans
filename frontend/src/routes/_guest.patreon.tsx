@@ -35,20 +35,18 @@ export const Route = createFileRoute("/_guest/patreon")({
 			queryFn: apiGetPatreonCampaigns,
 		});
 
-		return { campaign, appInfo: context.appInfo };
+		return { campaign };
 	},
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Patreon Capaigns" },
-			{ title: `Patreon - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Patreon Capaigns" }, match.context.title("Patreon")],
 	}),
 });
 
 function Patreon() {
 	const { queryClient } = Route.useRouteContext();
 	const { isAuthenticated, profile } = useAuth();
-	const { campaign, appInfo } = Route.useLoaderData();
+	const { campaign } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 	const theme = useTheme();
 	const followCallback = async () => {
 		const result = await queryClient.fetchQuery({

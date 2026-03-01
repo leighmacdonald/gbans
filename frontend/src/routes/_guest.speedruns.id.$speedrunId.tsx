@@ -29,14 +29,8 @@ import { durationString, renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/speedruns/id/$speedrunId")({
 	component: SpeedrunDetail,
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Speedrun details" },
-			{ title: `Speedrun - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Speedrun details" }, match.context.title("Speedrun")],
 	}),
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.speedruns_enabled);

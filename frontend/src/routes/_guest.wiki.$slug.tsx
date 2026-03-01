@@ -18,25 +18,26 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 			},
 		});
 		try {
-			return { page: await context.queryClient.fetchQuery(queryOpts), appInfo: context.appInfo };
+			return { page: await context.queryClient.fetchQuery(queryOpts) };
 		} catch (e) {
 			if (e instanceof AppError) {
 				// Mostly meant for handling permission denied error
 				throw e;
 			}
 			return {
-				appInfo: context.appInfo,
 				page: {
 					revision: 0,
 					body_md: "",
 					slug: slug,
 					permission_level: PermissionLevel.Guest,
+					created_on: new Date(),
+					updated_on: new Date(),
 				},
 			};
 		}
 	},
-	head: () => ({
-		meta: [{ name: "description", content: "Wiki" }, { "og:title": `Wiki` }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Wiki" }, match.context.title("Wiki")],
 	}),
 	errorComponent: ({ error }) => {
 		if (error instanceof AppError) {
@@ -48,7 +49,8 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 
 function Wiki() {
 	const { slug } = Route.useParams();
-	const { appInfo } = Route.useLoaderData();
+	const { page } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 
-	return <WikiPage slug={slug} path={"/_guest/wiki/$slug"} assetURL={appInfo.asset_url} />;
+	return <WikiPage slug={slug} page={page} assetURL={appInfo.asset_url} />;
 }

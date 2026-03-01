@@ -46,10 +46,10 @@ export const Route = createFileRoute("/_mod/admin/reports")({
 				return apiGetReports({ deleted: false }, abortController);
 			},
 		});
-		return { reports: reports ?? [], appInfo: context.appInfo };
+		return { reports: reports ?? [] };
 	},
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "Reports" }, { title: `Reports - ${loaderData?.appInfo.site_name}` }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Reports" }, match.context.title("Reports")],
 	}),
 });
 

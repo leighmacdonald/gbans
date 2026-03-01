@@ -43,17 +43,14 @@ export const Route = createFileRoute("/_auth/contests/$contest_id")({
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.contests_enabled);
 	},
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "Contests" }, { title: `Contests - ${loaderData?.appInfo.site_name}` }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Contests" }, match.context.title("Contests")],
 	}),
 });
 
 function Contest() {
 	const { contest_id } = Route.useParams();
-	const { appInfo } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 	const [entries, setEntries] = useState<ContestEntry[]>([]);
 	const [entriesLoading, setEntriesLoading] = useState(false);
 	const { hasPermission, profile } = useAuth();

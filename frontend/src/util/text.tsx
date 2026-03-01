@@ -55,7 +55,8 @@ export const avatarHashToURL = (hash?: string, size: avatarSize = "full") => {
 	return `https://avatars.steamstatic.com/${hash ?? defaultAvatarHash}${size === "small" ? "" : `_${size}`}.jpg`;
 };
 
-export const toTitleCase = (string: string) => {
-	const titleCaseWord = (s: string) => s[0].toUpperCase() + s.slice(1);
-	return string.replace(/\w\S*/g, titleCaseWord);
-};
+export const toTitleCase = (str: string) =>
+	str
+		.split(" ")
+		.map((item) => item.replace(item.charAt(0), item.charAt(0).toUpperCase()))
+		.join(" ");

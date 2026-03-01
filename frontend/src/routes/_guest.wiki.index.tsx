@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { apiGetWikiPage } from "../api/wiki.ts";
 import { WikiPage } from "../component/WikiPage.tsx";
 import { PermissionLevel } from "../schema/people.ts";
-import { logErr } from "../util/errors.ts";
 
 export const Route = createFileRoute("/_guest/wiki/")({
 	component: Wiki,
@@ -13,26 +12,30 @@ export const Route = createFileRoute("/_guest/wiki/")({
 			queryFn: async () => {
 				try {
 					return await apiGetWikiPage("home", abortController);
-				} catch (e) {
-					logErr(e);
+				} catch {
 					return {
 						revision: 0,
 						body_md: "",
 						slug: "home",
 						permission_level: PermissionLevel.Guest,
+						created_on: new Date(),
+						updated_on: new Date(),
 					};
 				}
 			},
 		});
-
-		return { page: context.queryClient.fetchQuery(queryOpts), appInfo: context.appInfo };
+		const page = await context.queryClient.fetchQuery(queryOpts);
+		return { page };
 	},
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "Contests" }, { title: `Contests - ${loaderData?.appInfo.site_name}` }],
-	}),
+	head: ({ match, loaderData }) => {
+		return {
+			meta: [{ name: "description", content: "Wiki" }, match.context.title(loaderData?.page.slug ?? "Home")],
+		};
+	},
 });
 
 function Wiki() {
-	const { appInfo } = Route.useLoaderData();
-	return <WikiPage slug={"home"} path={"/_guest/wiki/"} assetURL={appInfo.asset_url} />;
+	const { appInfo } = Route.useRouteContext();
+	const { page } = Route.useLoaderData();
+	return <WikiPage page={page} slug="home" assetURL={appInfo.asset_url} />;
 }

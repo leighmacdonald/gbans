@@ -41,11 +41,8 @@ const peopleSearchSchema = commonTableSearchSchema.extend({
 export const Route = createFileRoute("/_mod/admin/people")({
 	component: AdminPeople,
 	validateSearch: (search) => peopleSearchSchema.parse(search),
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "People" }, { title: `People - ${loaderData?.appInfo.site_name}` }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "People" }, match.context.title("People")],
 	}),
 });
 

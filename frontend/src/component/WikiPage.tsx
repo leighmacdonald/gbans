@@ -6,7 +6,6 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useLoaderData } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiSaveWikiPage } from "../api/wiki.ts";
@@ -29,20 +28,12 @@ interface WikiValues {
 	permission_level: PermissionLevelEnum;
 }
 
-export const WikiPage = ({
-	slug = "home",
-	path,
-	assetURL,
-}: {
-	slug: string;
-	path: "/_guest/wiki/" | "/_guest/wiki/$slug";
-	assetURL: string;
-}) => {
+export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page: Page; assetURL: string }) => {
 	const [editMode, setEditMode] = useState<boolean>(false);
+	const [currentPage, setCurrentPage] = useState<Page>(page);
 	const queryClient = useQueryClient();
 	const { hasPermission } = useAuth();
 	const { sendFlash, sendError } = useUserFlashCtx();
-	const page = useLoaderData({ from: path }) as Page;
 
 	const buttons = useMemo(() => {
 		if (!hasPermission(PermissionLevel.Editor)) {
@@ -82,6 +73,7 @@ export const WikiPage = ({
 			setEditMode(false);
 			mdEditorRef.current?.setMarkdown("");
 			sendFlash("success", `Updated ${slug} successfully. Revision: ${savedPage.revision}`);
+			setCurrentPage(savedPage);
 		},
 		onError: sendError,
 	});
@@ -159,8 +151,12 @@ export const WikiPage = ({
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: editMode ? 6 : 12 }}>
-				<ContainerWithHeaderAndButtons title={page?.slug ?? ""} iconLeft={<ArticleIcon />} buttons={buttons}>
-					<MarkDownRenderer body_md={page?.body_md ?? ""} assetURL={assetURL} />
+				<ContainerWithHeaderAndButtons
+					title={currentPage?.slug ?? ""}
+					iconLeft={<ArticleIcon />}
+					buttons={buttons}
+				>
+					<MarkDownRenderer body_md={currentPage?.body_md ?? ""} assetURL={assetURL} />
 				</ContainerWithHeaderAndButtons>
 			</Grid>
 		</Grid>

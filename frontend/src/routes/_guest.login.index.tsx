@@ -18,15 +18,12 @@ const loginSearchSchema = z.object({
 export const Route = createFileRoute("/_guest/login/")({
 	component: LoginPage,
 	validateSearch: (search) => loginSearchSchema.parse(search),
-	beforeLoad: ({ context }) => {
-		// Otherwise, return the user in context
-		return context.auth;
-	},
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "Login" }, { title: `Login - ${loaderData?.appInfo.site_name}` }],
+	// beforeLoad: ({ context }) => {
+	// 	// Otherwise, return the user in context
+	// 	return context.auth;
+	// },
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Login" }, match.context.title("Login")],
 	}),
 });
 

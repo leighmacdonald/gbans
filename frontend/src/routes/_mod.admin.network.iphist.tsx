@@ -21,14 +21,8 @@ const ipHistorySearchSchema = commonTableSearchSchema.extend({
 export const Route = createFileRoute("/_mod/admin/network/iphist")({
 	component: AdminNetworkPlayerIPHistory,
 	validateSearch: (search) => ipHistorySearchSchema.parse(search),
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Player IP History" },
-			{ title: `Player IP History - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Player IP History" }, match.context.title("Player IP History")],
 	}),
 });
 

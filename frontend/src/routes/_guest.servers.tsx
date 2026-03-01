@@ -34,14 +34,8 @@ export const Route = createFileRoute("/_guest/servers")({
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.servers_enabled);
 	},
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Server Browser" },
-			{ title: `Servers - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Server Browser" }, match.context.title("Servers")],
 	}),
 });
 

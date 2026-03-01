@@ -34,24 +34,23 @@ type RouterContext = {
 	auth?: AuthContextProps;
 	queryClient: QueryClient;
 	appInfo: appInfoDetail;
+	title: (title?: string) => { title: string };
 };
 
 export const Route = createRootRouteWithContext<RouterContext>()({
 	component: Root,
-	loader: async ({ context }) => {
-		return { appInfo: context.appInfo };
-	},
-	head: ({ loaderData }) => ({
-		links: [{ rel: "icon", href: loaderData?.appInfo.favicon ?? "/favicon.ico" }],
+	head: ({ match }) => ({
+		links: [{ rel: "icon", href: match.context.appInfo.favicon ?? "/favicon.ico" }],
 		meta: [
+			match.context.title(),
 			{ name: "og:type", content: "website" },
-			{ name: "og:title", content: loaderData?.appInfo.site_name ?? "gbans" },
-			{ name: "og:image", content: loaderData?.appInfo.favicon ?? "" },
+			{ name: "og:title", content: match.context.appInfo.site_name ?? "gbans" },
+			{ name: "og:image", content: match.context.appInfo.favicon ?? "" },
 			{ name: "og:url", content: window.location.href },
 			{
 				name: "og:description",
 				content:
-					loaderData?.appInfo.site_description ??
+					match.context.appInfo.site_description ??
 					"gbans is a web application for managing Team Fortress 2 communities",
 			},
 		],
@@ -62,7 +61,7 @@ function Root() {
 	const initialTheme = (localStorage.getItem("theme") as PaletteMode) || "light";
 	const { hasPermission } = useAuth();
 	const [flashes, setFlashes] = useState<Flash[]>([]);
-	const { appInfo } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 	const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 	const [mode, setMode] = useState<"light" | "dark">(
 		initialTheme ? initialTheme : prefersDarkMode ? "dark" : "light",

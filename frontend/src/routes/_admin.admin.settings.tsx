@@ -84,13 +84,10 @@ export const Route = createFileRoute("/_admin/admin/settings")({
 				return await apiGetSettings();
 			},
 		});
-		return { settings, appInfo: context.appInfo };
+		return { settings };
 	},
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Edit Core System Settings" },
-			{ title: `System Settings - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Edit Core System Settings" }, match.context.title("System Settings")],
 	}),
 });
 

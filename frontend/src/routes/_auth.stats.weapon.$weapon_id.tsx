@@ -21,11 +21,8 @@ export const Route = createFileRoute("/_auth/stats/weapon/$weapon_id")({
 	loader: ({ context }) => ({
 		appInfo: context.appInfo,
 	}),
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Weapon Stats" },
-			{ title: `Weapon Stats - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Weapon Stats" }, match.context.title("Weapon Stats")],
 	}),
 });
 

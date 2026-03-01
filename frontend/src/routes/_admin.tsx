@@ -21,6 +21,6 @@ export const Route = createFileRoute("/_admin")({
 		}
 
 		// Otherwise, return the user in context
-		return context.auth;
+		return context;
 	},
 });
