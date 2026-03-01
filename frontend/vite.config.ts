@@ -1,5 +1,4 @@
 /// <reference types="vite/client" />
-import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { tanstackRouter } from "@tanstack/router-vite-plugin";
 import react from "@vitejs/plugin-react-swc";
 import { defineConfig } from "vite";
@@ -80,19 +79,13 @@ export default defineConfig({
 	plugins: [
 		tanstackRouter({
 			target: "react",
-			autoCodeSplitting: true,
+			autoCodeSplitting: false,
 		}),
 		react(), // Must come *after* tanstackRouter
 		createHtmlPlugin({
 			entry: "./src/index.tsx",
 			template: "index.html",
 			inject: {},
-		}),
-		sentryVitePlugin({
-			telemetry: false,
-			org: "uncletopia",
-			project: "frontend",
-			authToken: import.meta.env?.SENTRY_AUTH_TOKEN ?? "",
 		}),
 	],
 });
