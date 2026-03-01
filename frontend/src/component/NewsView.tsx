@@ -42,7 +42,7 @@ export const NewsView = ({ itemsPerPage, assetURL }: NewsViewProps) => {
 				onChange={(_, newPage) => {
 					setPage(newPage - 1);
 				}}
-			></Pagination>
+			/>
 		</Stack>
 	);
 };
