@@ -1,24 +1,27 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
 project_name: gbans
 
 before:
   hooks:
-    - make frontend
+    - just frontend
 
-dockers:
+dockers_v2:
   - dockerfile: "docker/Dockerfile"
-    skip_push: false
     ids: ["gbans"]
-    image_templates:
-      - "ghcr.io/leighmacdonald/gbans:latest"
-      - "ghcr.io/leighmacdonald/gbans:{{ .Tag }}"
-      - "ghcr.io/leighmacdonald/gbans:v{{ .Major }}"
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
+    platforms:
+      - linux/amd64
+    images:
+      - "ghcr.io/leighmacdonald/gbans"
+    tags:
+      - "v{{ .Version }}"
+      - "latest"
+    labels:
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.title": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+    sbom: false
 
 builds:
   - id: gbans
@@ -51,7 +54,7 @@ nfpms:
 archives:
   - formats: ["tar.gz"]
     files:
-      - LICENSE.md
+      - LICENSE
       - README.md
       - gbans_example.yml
       - sourcemod/plugins/gbans.smx

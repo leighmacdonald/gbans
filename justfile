@@ -22,10 +22,10 @@ bump_deps:
     go get -u ./...
     just -f frontend/justfile update
 
-buildp: frontend
+buildp:
     goreleaser release --clean
 
-builds: frontend
+builds:
     goreleaser release --clean --snapshot
 
 generate:
@@ -94,8 +94,7 @@ docker_restore:
     cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans
 
 run_docker_snapshot: builds
-    docker build . --no-cache -t gbans:snapshot
-    docker run -it -v ./gbans.yml:/app/gbans.yml -v ./.cache:/app/.cache -p 6006:6006  gbans:snapshot
+    docker run -it -v ./gbans.yml:/app/gbans.yml -v ./.cache:/app/.cache -p 6006:6006 ghcr.io/leighmacdonald/gbans:latest-amd64
 
 docs_install:
     just -f docs/justfile install
