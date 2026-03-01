@@ -14,60 +14,15 @@ export default defineConfig({
 		sourcemap: true,
 		rollupOptions: {
 			treeshake: "smallest",
-			output: {
-				//esModule: false,
-				manualChunks(id) {
-					const chunks = [
-						"sentry",
-						"sentry/react",
-						"react-leaflet",
-						"icons-material",
-						"leaflet",
-						"nice-modal-react",
-						"fontsource/roboto",
-						"mdxeditor/editor",
-						"mui-markdown",
-						"date-fns",
-						"mui/x-charts",
-						"mui/x-date-pickers",
-						"mui/lab",
-						"emotion",
-						"mui/material",
-						"mui/system",
-						"mui/utils",
-						"tanstack/react-form",
-						"tanstack/react-query",
-						"tanstack/react-router",
-						"tanstack/react-table",
-						"eslint",
-						"markdown-to-jsx",
-						"mui-markdown",
-						"mui-image",
-						"material-ui-popup-state",
-						"minimatch",
-						"zod",
-						"video-react",
-						"steamid",
-						"js-cookie",
-						"file-type",
-						"ip-cidr",
-						"base64-js",
-						"mui-nested-menu",
-						"react",
-						"react-dom",
-						"react-dom/client",
-						"react-scrollable-feed",
-						"react-timer-hook",
-						"react-use-websocket",
-					];
-
-					if (id.includes("node_modules")) {
-						return (chunks.find((c) => id.includes(c)) ?? "vendor").replace("/", "-");
-					}
-
-					return null;
-				},
-			},
+			// output: {
+			// 	//esModule: false,
+			// 	manualChunks(id) {
+			// 		if (id.includes("node_modules")) {
+			// 			return "vendor";
+			// 		}
+			// 		return null;
+			// 	},
+			// },
 		},
 	},
 
