@@ -141,6 +141,8 @@ type General struct {
 	DemosEnabled       bool          `json:"demos_enabled"`
 	SpeedrunsEnabled   bool          `json:"speedruns_enabled"`
 	PlayerqueueEnabled bool          `json:"playerqueue_enabled"`
+	SentryDSN          string        `json:"sentry_dsn"`
+	SentryDSNWeb       string        `json:"sentry_dsn_web"`
 }
 
 func (c General) FaviconURL() string {

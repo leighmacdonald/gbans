@@ -581,7 +581,7 @@ func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
 	player := people[0]
 	if player.Expired() {
 		if errGetProfile := UpdatePlayerSummary(ctx, &player, u.tfAPI); errGetProfile != nil {
-			slog.Error("Failed to fetch user profile on login", slog.String("error", errGetProfile.Error()))
+			slog.Warn("Failed to udpate player summary for expired player", slog.String("error", errGetProfile.Error()))
 		}
 	}
 
