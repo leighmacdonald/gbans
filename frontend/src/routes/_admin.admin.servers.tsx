@@ -45,9 +45,11 @@ const serversSearchSchema = z.object({
 export const Route = createFileRoute("/_admin/admin/servers")({
 	component: AdminServers,
 	validateSearch: (search) => serversSearchSchema.parse(search),
-	head: () => ({
-		meta: [{ name: "description", content: "Server Editor" }, { title: "Edit Servers" }],
-	}),
+	head: ({ match }) => {
+		return {
+			meta: [{ name: "description", content: "Server Editor" }, match.context.title("Edit Servers")],
+		};
+	},
 });
 
 function AdminServers() {

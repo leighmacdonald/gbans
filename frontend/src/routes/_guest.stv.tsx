@@ -51,7 +51,6 @@ export const Route = createFileRoute("/_guest/stv")({
 		});
 
 		return {
-			appInfo: context.appInfo,
 			servers: unsorted.sort((a, b) => {
 				if (a.server_name > b.server_name) {
 					return 1;
@@ -63,10 +62,10 @@ export const Route = createFileRoute("/_guest/stv")({
 			}),
 		};
 	},
-	head: ({ loaderData }) => ({
+	head: ({ match }) => ({
 		meta: [
 			{ name: "description", content: "Search and download SourceTV recordings" },
-			{ title: `SourceTV - ${loaderData?.appInfo.site_name}` },
+			match.context.title("SourceTV"),
 		],
 	}),
 });

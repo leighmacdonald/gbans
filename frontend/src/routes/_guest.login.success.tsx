@@ -13,11 +13,8 @@ export const Route = createFileRoute("/_guest/login/success")({
 		token: z.string(),
 	}),
 	component: LoginSteamSuccess,
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [{ title: `Login Successful - ${loaderData?.appInfo.site_name}` }],
+	head: ({ match }) => ({
+		meta: [match.context.title("Login Successful")],
 	}),
 });
 

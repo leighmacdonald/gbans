@@ -19,20 +19,18 @@ import { useAuth } from "../hooks/useAuth.ts";
 
 export const Route = createFileRoute("/_guest/")({
 	component: Index,
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
+	head: ({ match }) => ({
 		meta: [
-			{ name: "og:description", content: loaderData?.appInfo.site_description },
-			{ name: "og:title", content: `Home - ${loaderData?.appInfo.site_name}` },
+			{ name: "og:description", content: match.context.appInfo.site_description },
+			{ name: "og:title", content: `Home - ${match.context.appInfo.site_name}` },
+			match.context.title("Home"),
 		],
 	}),
 });
 
 function Index() {
 	const navigate = useNavigate();
-	const { appInfo } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 	const { profile } = useAuth();
 
 	return (

@@ -31,14 +31,8 @@ const newsSchema = commonTableSearchSchema.extend({
 export const Route = createFileRoute("/_mod/admin/news")({
 	component: AdminNews,
 	validateSearch: (search) => newsSchema.parse(search),
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "News Management" },
-			{ title: `News - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "News Management" }, match.context.title("News")],
 	}),
 });
 

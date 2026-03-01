@@ -32,11 +32,8 @@ export const Route = createFileRoute("/_auth/logs/$steamId/")({
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.stats_enabled);
 	},
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: () => ({
-		meta: [{ name: "description", content: "Match History" }, { title: "Match History" }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Match History" }, match.context.title("Match History")],
 	}),
 });
 

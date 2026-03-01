@@ -59,13 +59,10 @@ export const Route = createFileRoute("/_auth/settings")({
 			},
 		});
 
-		return { settings, appInfo: context.appInfo };
+		return { settings };
 	},
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "User Settings" },
-			{ title: `User Settings - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "User Settings" }, match.context.title("User Settings")],
 	}),
 });
 
@@ -81,7 +78,8 @@ type userSettingTabs = "general" | "connections" | "forums" | "game";
 function ProfileSettings() {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const { profile, hasPermission } = useAuth();
-	const { settings, appInfo } = useLoaderData({ from: "/_auth/settings" });
+	const { settings } = useLoaderData({ from: "/_auth/settings" });
+	const { appInfo } = Route.useRouteContext();
 	const { section } = Route.useSearch();
 	const [tab, setTab] = useState<userSettingTabs>(section);
 	const navigate = useNavigate();
@@ -446,7 +444,7 @@ const ConnectionsSection = ({
 	const { profile, login } = useAuth();
 	const { sendFlash } = useUserFlashCtx();
 	const confirmModal = useModal(ConfirmationModal);
-	const { appInfo } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 
 	const { data: user, isLoading } = useQuery({
 		queryKey: ["discordProfile", { steamID: profile.steam_id }],

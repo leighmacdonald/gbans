@@ -44,12 +44,9 @@ export const Route = createFileRoute("/_auth/match/$matchId")({
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.stats_enabled);
 	},
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
 
-	head: () => ({
-		meta: [{ name: "description", content: "Match details" }, { title: "Match" }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Match details" }, match.context.title("Match")],
 	}),
 });
 

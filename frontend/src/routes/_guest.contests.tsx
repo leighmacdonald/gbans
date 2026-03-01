@@ -27,11 +27,8 @@ export const Route = createFileRoute("/_guest/contests")({
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.contests_enabled);
 	},
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "Contests" }, { title: `Contests - ${loaderData?.appInfo.site_name}` }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Contests" }, match.context.title("Contests")],
 	}),
 });
 

@@ -47,20 +47,18 @@ export const Route = createFileRoute("/_auth/forums/thread/$forum_thread_id")({
 			},
 		});
 
-		return { thread, appInfo: context.appInfo };
+		return { thread };
 	},
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: loaderData?.thread?.title },
-			{ title: `Thread - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ loaderData, match }) => ({
+		meta: [{ name: "description", content: loaderData?.thread?.title }, match.context.title("Thread")],
 	}),
 });
 
 function ForumThreadPage() {
 	const { hasPermission, permissionLevel } = useAuth();
 	const { forum_thread_id } = Route.useParams();
-	const { thread, appInfo } = Route.useLoaderData();
+	const { thread } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 	const { pageIndex } = Route.useSearch();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();

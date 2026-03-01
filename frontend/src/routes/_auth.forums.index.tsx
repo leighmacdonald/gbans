@@ -34,11 +34,8 @@ import { renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/forums/")({
 	component: ForumOverview,
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "Forums" }, { title: `Forums - ${loaderData?.appInfo.site_name}` }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Forums" }, match.context.title("Forums")],
 	}),
 });
 
@@ -183,7 +180,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 
 function ForumOverview() {
 	const { sendFlash } = useUserFlashCtx();
-	const { appInfo } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 	const { hasPermission } = useAuth();
 	const { data: overview, isLoading } = useQuery({
 		queryKey: ["forumOverview"],

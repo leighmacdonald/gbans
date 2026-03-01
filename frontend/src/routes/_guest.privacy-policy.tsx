@@ -8,14 +8,8 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 
 export const Route = createFileRoute("/_guest/privacy-policy")({
 	component: PrivacyPolicy,
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Privacy Policy" },
-			{ title: `Privacy Policy - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Privacy Policy" }, match.context.title("Privacy Policy")],
 	}),
 });
 
@@ -31,7 +25,7 @@ const PPBox = ({ heading, children }: { heading: string } & PropsWithChildren) =
 };
 
 function PrivacyPolicy() {
-	const { appInfo } = Route.useLoaderData();
+	const { appInfo } = Route.useRouteContext();
 
 	return (
 		<ContainerWithHeader title={"Privacy Policy"} padding={2} iconLeft={<PolicyIcon />}>

@@ -35,13 +35,10 @@ export const Route = createFileRoute("/_guest/profile/$steamId")({
 				queryFn: async () => await apiGetProfile(steamId, abortController),
 			}),
 		);
-		return { profile, appInfo: context.appInfo };
+		return { profile };
 	},
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Player Profile" },
-			{ title: `Profile - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Player Profile" }, match.context.title("Profile")],
 	}),
 });
 

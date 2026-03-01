@@ -35,11 +35,8 @@ const schema = z.object({
 export const Route = createFileRoute("/_mod/admin/network/ipInfo")({
 	component: AdminNetworkInfo,
 	validateSearch: (search) => searchSchema.parse(search),
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "IP Info" }, { title: `IP Info - ${loaderData?.appInfo.site_name}` }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "IP Info" }, match.context.title("IP Info")],
 	}),
 });
 

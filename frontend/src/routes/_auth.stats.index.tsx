@@ -10,8 +10,8 @@ export const Route = createFileRoute("/_auth/stats/")({
 	loader: ({ context }) => ({
 		appInfo: context.appInfo,
 	}),
-	head: ({ loaderData }) => ({
-		meta: [{ name: "description", content: "Stats" }, { title: `Stats - ${loaderData?.appInfo.site_name}` }],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Stats" }, match.context.title("Stats")],
 	}),
 });
 

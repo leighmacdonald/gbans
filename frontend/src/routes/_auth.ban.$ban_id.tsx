@@ -53,24 +53,24 @@ export const Route = createFileRoute("/_auth/ban/$ban_id")({
 				return ban;
 			},
 		});
-		return { ban, appInfo: context.appInfo };
+		return { ban };
 	},
 	errorComponent: (e) => {
 		return <ErrorDetails error={e.error} />;
 	},
-	head: ({ loaderData }) => ({
+	head: ({ loaderData, match }) => ({
 		meta: [
-			{ name: "description", content: loaderData?.appInfo.site_description },
-			{ title: `Ban #${loaderData?.ban.ban_id} - ${loaderData?.appInfo.site_name}` },
+			{ name: "description", content: match.context.appInfo.site_description },
+			match.context.title(`Ban #${loaderData?.ban.ban_id}`),
 		],
 	}),
 });
 
 function BanPage() {
 	const { permissionLevel, profile } = useAuth();
-	const { ban, appInfo } = Route.useLoaderData();
+	const { ban } = Route.useLoaderData();
 	const { sendFlash } = useUserFlashCtx();
-
+	const { appInfo } = Route.useRouteContext();
 	const queryClient = useQueryClient();
 
 	const { data: messages } = useQuery({
