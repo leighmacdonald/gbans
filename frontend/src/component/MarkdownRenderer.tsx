@@ -92,10 +92,8 @@ export const MarkDownRenderer = ({
 			.join("\n");
 	}, [assetURL, body_md]);
 
-	console.log(links);
-
 	return (
-		<Box padding={2} maxWidth={"100%"} minHeight={minHeight}>
+		<Box paddingLeft={2} paddingRight={2} maxWidth={"100%"} minHeight={minHeight}>
 			<MuiMarkdown options={mdRenderOpts}>{links}</MuiMarkdown>
 		</Box>
 	);

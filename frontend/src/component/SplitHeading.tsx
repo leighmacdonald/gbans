@@ -15,11 +15,12 @@ export const SplitHeading: FC<SplitHeadingProps> = ({ left, right, bgColor }: Sp
 	return (
 		<Stack direction={"row"}>
 			<Typography
-				variant={"h6"}
+				lineHeight={2}
+				variant={"subtitle1"}
 				align={"left"}
+				paddingLeft={2}
 				paddingTop={1}
 				paddingBottom={1}
-				paddingLeft={2}
 				sx={{
 					backgroundColor: bgColor ?? theme.palette.primary.main,
 					color: theme.palette.common.white,
