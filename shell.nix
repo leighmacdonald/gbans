@@ -6,11 +6,10 @@ let
     overlays = [ ];
   };
 in
-
 pkgs.mkShell {
   hardeningDisable = [ "fortify" ];
   buildInputs = with pkgs; [
-    go_1_26
+    go_1_25
     # libpcap
     # gcc
     golangci-lint
@@ -27,5 +26,6 @@ pkgs.mkShell {
     air
     delve
     markdownlint-cli2
+    sourcepawn-studio
   ];
 }
