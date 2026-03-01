@@ -1,5 +1,7 @@
 onlyBuiltDependencies:
-  - '@sentry/cli'
-  - '@swc/core'
+  - "@sentry/cli"
+  - "@swc/core"
   - es5-ext
   - esbuild
+packages:
+  - .
