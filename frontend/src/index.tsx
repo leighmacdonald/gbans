@@ -1,4 +1,4 @@
-import { createRoot } from "react-dom/client";
+import { createRoot, type Root } from "react-dom/client";
 import "@fontsource/roboto/latin-300.css";
 import "@fontsource/roboto/latin-400.css";
 import "@fontsource/roboto/latin-500.css";
@@ -21,42 +21,27 @@ declare module "@tanstack/react-router" {
 		router: typeof router;
 	}
 }
-
-if (import.meta.env.VITE_SENTRY_DSN !== "") {
-	const target = `^https://${window.location.origin}/api`;
-
-	Sentry.init({
-		environment: import.meta.env.MODE,
-		attachStacktrace: true,
-		enableLogs: true,
-		dsn: import.meta.env.VITE_SENTRY_DSN,
-		release: import.meta.env.VITE_BUILD_VERSION,
-		integrations: [
-			Sentry.tanstackRouterBrowserTracingIntegration(router),
-			Sentry.browserTracingIntegration(),
-			Sentry.browserProfilingIntegration(),
-			Sentry.replayIntegration({
-				maskAllText: false,
-				blockAllMedia: false,
-			}),
-		],
-		// Performance Monitoring
-		tracesSampleRate: 0.1, //  Capture 100% of the transactions
-		tracePropagationTargets: ["localhost", target],
-		// Session Replay
-		replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-		replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
-	});
-}
-
-const AppProfiler = Sentry.withProfiler(App, { name: "gbans" });
-//const appInfo = await queryClient.fetchQuery({ queryKey: ["appInfo"], queryFn: apiGetAppInfo });
-
+let root: Root;
 const container = document.getElementById("root");
 if (container) {
-	if (import.meta.env.VITE_SENTRY_DSN !== "") {
-		createRoot(container).render(<AppProfiler queryClient={queryClient} router={router} />);
+	if (appInfo.sentry_dns_web !== "") {
+		Sentry.init({
+			environment: import.meta.env.MODE,
+			attachStacktrace: true,
+			enableLogs: false,
+			dsn: appInfo.sentry_dns_web,
+			release: import.meta.env.VITE_BUILD_VERSION,
+			integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
+		});
+		root = createRoot(container, {
+			onUncaughtError: Sentry.reactErrorHandler((error, errorInfo) => {
+				console.error("Uncaught error", error, errorInfo.componentStack);
+			}),
+			onCaughtError: Sentry.reactErrorHandler(),
+			onRecoverableError: Sentry.reactErrorHandler(),
+		});
 	} else {
-		createRoot(container).render(<App queryClient={queryClient} router={router} />);
+		root = createRoot(container);
 	}
+	root.render(<App queryClient={queryClient} router={router} />);
 }

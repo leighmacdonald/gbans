@@ -332,7 +332,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"favicon"}
 							children={(field) => {
-								return <field.TextField label={"Description"} />;
+								return <field.TextField label={"Favicon URL"} />;
 							}}
 						/>
 						<UploadButton onSuccess={onSuccess} />
@@ -358,6 +358,26 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 							name={"srcds_log_addr"}
 							children={(field) => {
 								return <field.TextField label={"UDP Log Listen Address"} />;
+							}}
+						/>
+					</Grid>
+
+					<Grid size={{ xs: 12 }}>
+						<SubHeading> Sentry support (frontend)</SubHeading>
+						<form.AppField
+							name={"sentry_dsn_web"}
+							children={(field) => {
+								return <field.TextField label={"Sentry DSN Address"} />;
+							}}
+						/>
+					</Grid>
+
+					<Grid size={{ xs: 12 }}>
+						<SubHeading> Sentry support (backend)</SubHeading>
+						<form.AppField
+							name={"sentry_dsn"}
+							children={(field) => {
+								return <field.TextField label={"Sentry DSN Address"} />;
 							}}
 						/>
 					</Grid>

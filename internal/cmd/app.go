@@ -55,7 +55,6 @@ var (
 	BuildVersion = "master" //nolint:gochecknoglobals
 	BuildCommit  = ""       //nolint:gochecknoglobals
 	BuildDate    = ""       //nolint:gochecknoglobals
-	SentryDSN    = ""       //nolint:gochecknoglobals
 )
 
 type BuildInfo struct {
@@ -130,13 +129,6 @@ func (g *GBans) Init(ctx context.Context) error {
 	}
 	g.config = configuration
 
-	// This is normally set by build time flags, but can be overwritten by the env var.
-	if SentryDSN == "" {
-		if value, found := os.LookupEnv("SENTRY_DSN"); found && value != "" {
-			SentryDSN = value
-		}
-	}
-
 	conf := g.config.Config()
 
 	g.setupSentry()
@@ -144,7 +136,7 @@ func (g *GBans) Init(ctx context.Context) error {
 		slog.SetDefault(slog.New(slog.DiscardHandler))
 		g.logCloser = func() {}
 	} else {
-		g.logCloser = log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, SentryDSN != "", BuildVersion)
+		g.logCloser = log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, conf.General.SentryDSN != "", BuildVersion)
 	}
 	slog.Info("Starting gbans...",
 		slog.String("version", BuildVersion),
@@ -393,8 +385,9 @@ func (g *GBans) setupPlayerQueue(ctx context.Context) {
 }
 
 func (g *GBans) setupSentry() {
-	if SentryDSN != "" {
-		sentryClient, err := log.NewSentryClient(SentryDSN, true, 0.25, BuildVersion, string(g.config.Config().General.Mode))
+	dsn := g.config.Config().General.SentryDSN
+	if dsn != "" {
+		sentryClient, err := log.NewSentryClient(dsn, true, 0.25, BuildVersion, string(g.config.Config().General.Mode))
 		if err != nil {
 			slog.Error("Failed to setup sentry client")
 		} else {
@@ -402,7 +395,7 @@ func (g *GBans) setupSentry() {
 			g.sentry = sentryClient
 		}
 	} else {
-		slog.Info("Sentry.io support is disabled. To enable at runtime, set SENTRY_DSN.")
+		slog.Debug("Sentry.io support is disabled. To enable at runtime, set SENTRY_DSN.")
 	}
 }
 
@@ -483,7 +476,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 		HTTPLogEnabled:    conf.Log.HTTPEnabled,
 		LogLevel:          conf.Log.Level,
 		HTTPOtelEnabled:   conf.Log.HTTPOtelEnabled,
-		SentryDSN:         SentryDSN,
+		SentryDSN:         g.config.Config().General.SentryDSN,
 		Version:           BuildVersion,
 		PProfEnabled:      conf.PProfEnabled,
 		PrometheusEnabled: conf.PrometheusEnabled,
@@ -499,8 +492,8 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	}
 
 	// Create authentication middlewares
-	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, SentryDSN)
-	serverAuth := servers.NewServerAuth(g.servers, SentryDSN)
+	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
+	serverAuth := servers.NewServerAuth(g.servers, g.config.Config().General.SentryDSN)
 
 	// Register all our handlers with router
 	anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)

@@ -36,7 +36,6 @@ builds:
     ldflags:
       - -s
       - -w
-      #- -X github.com/leighmacdonald/gbans/internal/cmd.SentryDSN={{ .Env.SENTRY_DSN }}
       - -X github.com/leighmacdonald/gbans/internal/cmd.BuildVersion={{.Version}}
       - -X github.com/leighmacdonald/gbans/internal/cmd.BuildCommit={{.Commit}}
       - -X github.com/leighmacdonald/gbans/internal/cmd.BuildDate={{.Date}}

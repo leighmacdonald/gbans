@@ -58,6 +58,7 @@ type AppInfo struct {
 	Favicon            string `json:"favicon"`
 	LinkID             string `json:"link_id"`
 	AppVersion         string `json:"app_version"`
+	SentryDSNWeb       string `json:"sentry_dsn_web"`
 	DocumentPolicy     string `json:"document_policy"`
 	PatreonClientID    string `json:"patreon_client_id"`
 	DiscordClientID    string `json:"discord_client_id"`
@@ -88,6 +89,8 @@ func (c httpHandler) onAppInfo(version string) gin.HandlerFunc {
 			LinkID:             conf.Discord.LinkID,
 			AppVersion:         version,
 			DocumentPolicy:     "",
+			SentryDSNWeb:       conf.General.SentryDSNWeb,
+			SiteDescription:    conf.General.SiteDescription,
 			PatreonClientID:    conf.Patreon.ClientID,
 			DiscordClientID:    conf.Discord.AppID,
 			DiscordEnabled:     conf.Discord.IntegrationsEnabled && conf.Discord.Enabled,

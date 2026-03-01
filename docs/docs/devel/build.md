@@ -58,7 +58,6 @@ Alternatively you can manually build the components without goreleaser.
 ```sh
 just frontend
 go build -tags release -ldflags="-s -w \
-    -X 'github.com/leighmacdonald/gbans/internal/app.SentryDSN=master' \
     -X 'github.com/leighmacdonald/gbans/internal/app.BuildVersion="master"' \
     -X 'github.com/leighmacdonald/gbans/internal/app.BuildCommit="master"' \
     -X 'github.com/leighmacdonald/gbans/internal/app.BuildDate=""' \
