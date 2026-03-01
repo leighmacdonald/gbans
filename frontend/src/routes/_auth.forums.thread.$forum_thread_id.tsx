@@ -50,7 +50,10 @@ export const Route = createFileRoute("/_auth/forums/thread/$forum_thread_id")({
 		return { thread };
 	},
 	head: ({ loaderData, match }) => ({
-		meta: [{ name: "description", content: loaderData?.thread?.title }, match.context.title("Thread")],
+		meta: [
+			{ name: "description", content: loaderData?.thread?.title },
+			match.context.title(loaderData?.thread?.title ?? "Thread"),
+		],
 	}),
 });
 

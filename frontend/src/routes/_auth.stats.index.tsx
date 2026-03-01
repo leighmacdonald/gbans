@@ -7,9 +7,6 @@ import { WeaponsStatListContainer } from "../component/WeaponsStatListContainer.
 
 export const Route = createFileRoute("/_auth/stats/")({
 	component: Stats,
-	loader: ({ context }) => ({
-		appInfo: context.appInfo,
-	}),
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Stats" }, match.context.title("Stats")],
 	}),

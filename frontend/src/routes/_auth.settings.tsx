@@ -20,7 +20,7 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useLoaderData, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { z } from "zod/v4";
 import {
@@ -78,7 +78,7 @@ type userSettingTabs = "general" | "connections" | "forums" | "game";
 function ProfileSettings() {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const { profile, hasPermission } = useAuth();
-	const { settings } = useLoaderData({ from: "/_auth/settings" });
+	const { settings } = Route.useLoaderData();
 	const { appInfo } = Route.useRouteContext();
 	const { section } = Route.useSearch();
 	const [tab, setTab] = useState<userSettingTabs>(section);

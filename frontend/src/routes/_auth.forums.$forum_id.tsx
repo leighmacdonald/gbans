@@ -11,7 +11,7 @@ import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { type FetchQueryOptions, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate, useRouteContext } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { apiForum, apiGetThreads } from "../api/forum.ts";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
@@ -63,7 +63,10 @@ export const Route = createFileRoute("/_auth/forums/$forum_id")({
 		return { forum, threads };
 	},
 	head: ({ loaderData, match }) => ({
-		meta: [{ name: "description", content: loaderData?.forum.description }, match.context.title("Forum")],
+		meta: [
+			{ name: "description", content: loaderData?.forum.description },
+			match.context.title(loaderData?.forum.title ?? "Forum"),
+		],
 	}),
 	errorComponent: ({ error }) => {
 		if (error instanceof AppError) {
@@ -79,11 +82,6 @@ function ForumPage() {
 	const { forum, threads } = Route.useLoaderData();
 	const modalCreate = useModal(ForumThreadCreatorModal);
 	const { hasPermission } = useAuth();
-
-	useRouteContext({
-		from: "/_auth/forums/$forum_id",
-	});
-
 	const { sendFlash } = useUserFlashCtx();
 	const navigate = useNavigate();
 

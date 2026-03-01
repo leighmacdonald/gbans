@@ -31,33 +31,41 @@ import { renderDateTime, renderTimeDistance } from "../util/time.ts";
 
 export const Route = createFileRoute("/_auth/report/$reportId")({
 	component: ReportView,
+	loader: async ({ params, context }) => {
+		const { reportId } = params;
+		const report = await context.queryClient.fetchQuery({
+			queryKey: ["report", { reportId }],
+			queryFn: async () => {
+				return await apiGetReport(Number(reportId));
+			},
+		});
+
+		return { report };
+	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "View a report" }, match.context.title("Report")],
+		meta: [
+			{ name: "description", content: "View a report" },
+			match.context.title(`Report #${match.params.reportId}`),
+		],
 	}),
 });
 
 function ReportView() {
 	const { reportId } = Route.useParams();
+	const { report } = Route.useLoaderData();
 	const { appInfo } = Route.useRouteContext();
-	const theme = useTheme();
 	const { hasPermission } = useAuth();
+	const theme = useTheme();
 	const navigate = useNavigate();
 
-	const { data: report, isLoading: isLoadingReport } = useQuery({
-		queryKey: ["report", { reportId }],
-		queryFn: async () => {
-			return await apiGetReport(Number(reportId));
-		},
-	});
-
 	const { data: ban, isLoading: isLoadingBan } = useQuery({
-		queryKey: ["ban", { targetId: report?.target_id }],
+		queryKey: ["ban", { targetId: report.target_id }],
 		queryFn: async () => {
-			if (report?.target_id) {
-				return await apiGetBanBySteam(report?.target_id);
+			if (report.target_id) {
+				return await apiGetBanBySteam(report.target_id);
 			}
 		},
-		enabled: !isLoadingReport && Boolean(report?.target_id),
+		enabled: Boolean(report.target_id),
 	});
 
 	const renderBan = useMemo(() => {
@@ -167,16 +175,16 @@ function ReportView() {
 										}}
 										onClick={async () => {
 											await navigate({
-												to: `/profile/${report?.author.steam_id}`,
+												to: `/profile/${report.author.steam_id}`,
 											});
 										}}
 									>
 										<ListItemAvatar>
-											<Avatar src={avatarHashToURL(report?.author.avatar_hash)}>
+											<Avatar src={avatarHashToURL(report.author.avatar_hash)}>
 												<SendIcon />
 											</Avatar>
 										</ListItemAvatar>
-										<ListItemText primary={report?.author.persona_name} secondary={"Author"} />
+										<ListItemText primary={report.author.persona_name} secondary={"Author"} />
 									</ListItem>
 									{report?.reason && (
 										<ListItem
@@ -187,10 +195,10 @@ function ReportView() {
 												},
 											}}
 										>
-											<ListItemText primary={"Reason"} secondary={BanReasons[report?.reason]} />
+											<ListItemText primary={"Reason"} secondary={BanReasons[report.reason]} />
 										</ListItem>
 									)}
-									{report?.reason && report?.reason_text !== "" && (
+									{report?.reason && report.reason_text !== "" && (
 										<ListItem
 											sx={{
 												"&:hover": {
@@ -199,7 +207,7 @@ function ReportView() {
 												},
 											}}
 										>
-											<ListItemText primary={"Custom Reason"} secondary={report?.reason_text} />
+											<ListItemText primary={"Custom Reason"} secondary={report.reason_text} />
 										</ListItem>
 									)}
 								</List>

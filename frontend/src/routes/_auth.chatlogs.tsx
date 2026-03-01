@@ -4,7 +4,7 @@ import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useLoaderData, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod/v4";
 import { apiGetMessages, apiGetServers } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
@@ -13,7 +13,6 @@ import { ChatTable } from "../component/table/ChatTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { PermissionLevel } from "../schema/people.ts";
-import type { ServerSimple } from "../schema/server.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { commonTableSearchSchema, RowsPerPage } from "../util/table.ts";
 
@@ -44,11 +43,7 @@ export const Route = createFileRoute("/_auth/chatlogs")({
 	validateSearch: (search) => searchSchema.parse(search),
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.chatlogs_enabled);
-		return context;
 	},
-	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Browse in-game chat logs" }, match.context.title("Chat Logs")],
-	}),
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
@@ -66,6 +61,9 @@ export const Route = createFileRoute("/_auth/chatlogs")({
 			}),
 		};
 	},
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Browse in-game chat logs" }, match.context.title("Chat Logs")],
+	}),
 });
 
 const schema = z.object({
@@ -81,9 +79,7 @@ function ChatLogs() {
 	const defaultRows = RowsPerPage.TwentyFive;
 	const search = Route.useSearch();
 	const { hasPermission } = useAuth();
-	const { servers } = useLoaderData({ from: "/_auth/chatlogs" }) as {
-		servers: ServerSimple[];
-	};
+	const { servers } = Route.useLoaderData();
 	const navigate = useNavigate({ from: Route.fullPath });
 
 	const defaultValues: z.input<typeof schema> = {

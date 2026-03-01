@@ -6,7 +6,6 @@ import WallpaperIcon from "@mui/icons-material/Wallpaper";
 import Grid from "@mui/material/Grid";
 import TableCell from "@mui/material/TableCell";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	createColumnHelper,
@@ -19,7 +18,6 @@ import { useMemo, useState } from "react";
 import { getSpeedrun } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
-import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
 import type { SpeedrunParticipant, SpeedrunPointCaptures } from "../schema/speedrun.ts";
@@ -29,6 +27,16 @@ import { durationString, renderDateTime } from "../util/time.ts";
 
 export const Route = createFileRoute("/_guest/speedruns/id/$speedrunId")({
 	component: SpeedrunDetail,
+	loader: async ({ context, params }) => {
+		const { speedrunId } = params;
+		const speedrun = await context.queryClient.fetchQuery({
+			queryKey: ["speedrun", speedrunId],
+			queryFn: async () => {
+				return await getSpeedrun(Number(speedrunId));
+			},
+		});
+		return { speedrun };
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Speedrun details" }, match.context.title("Speedrun")],
 	}),
@@ -38,14 +46,7 @@ export const Route = createFileRoute("/_guest/speedruns/id/$speedrunId")({
 });
 
 function SpeedrunDetail() {
-	const { speedrunId } = Route.useParams();
-
-	const { data: speedrun, isLoading } = useQuery({
-		queryKey: ["speedrun", speedrunId],
-		queryFn: async () => {
-			return await getSpeedrun(Number(speedrunId));
-		},
-	});
+	const { speedrun } = Route.useLoaderData();
 
 	const sortedSpeedruns = useMemo(() => {
 		return (
@@ -57,9 +58,7 @@ function SpeedrunDetail() {
 
 	return (
 		<>
-			{isLoading && <LoadingPlaceholder height={400} />}
-
-			{!isLoading && speedrun && (
+			{speedrun && (
 				<Grid container spacing={2}>
 					<Grid size={{ xs: 2 }}>
 						<ContainerWithHeader title={"Rank (Initial)"} iconLeft={<EmojiEventsIcon />}>
@@ -101,7 +100,7 @@ function SpeedrunDetail() {
 							<SpeedrunPlayerTable
 								captures={speedrun.point_captures}
 								players={sortedSpeedruns}
-								isLoading={isLoading}
+								isLoading={false}
 							></SpeedrunPlayerTable>
 						</ContainerWithHeader>
 					</Grid>

@@ -1,6 +1,5 @@
 import InsightsIcon from "@mui/icons-material/Insights";
 import Grid from "@mui/material/Grid";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	createColumnHelper,
@@ -27,22 +26,26 @@ export const Route = createFileRoute("/_guest/contests")({
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.contests_enabled);
 	},
+	loader: async ({ context }) => {
+		const contests = await context.queryClient.fetchQuery({
+			queryKey: ["contests"],
+			queryFn: async () => {
+				return await apiContests();
+			},
+		});
+
+		return { contests };
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Contests" }, match.context.title("Contests")],
 	}),
 });
 
 function Contests() {
+	const { contests } = Route.useLoaderData();
 	const [pagination, setPagination] = useState({
 		pageIndex: 0, //initial page index
 		pageSize: RowsPerPage.TwentyFive, //default page size
-	});
-
-	const { data: contests, isLoading } = useQuery({
-		queryKey: ["contests"],
-		queryFn: async () => {
-			return await apiContests();
-		},
 	});
 
 	// const onEnter = useCallback(async (contest_id: string) => {
@@ -59,7 +62,7 @@ function Contests() {
 				<ContainerWithHeader title={"Contests"} iconLeft={<InsightsIcon />}>
 					<ContestsTable
 						contests={contests ?? []}
-						isLoading={isLoading}
+						isLoading={false}
 						pagination={pagination}
 						setPagination={setPagination}
 					/>

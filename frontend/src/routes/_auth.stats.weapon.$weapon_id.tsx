@@ -4,7 +4,7 @@ import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from "@tanstack/react-table";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { apiGetPlayerWeaponStats, type PlayerWeaponStatsResponse } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader";
 import { FmtWhenGt } from "../component/FmtWhenGT.tsx";
@@ -64,98 +64,100 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
 		pageSize: RowsPerPage.TwentyFive, //default page size
 	});
 
-	const columns = [
-		columnHelper.accessor("rank", {
-			header: "#",
-			size: 40,
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{info.getValue()}</Typography>
-				</TableCellSmall>
-			),
-		}),
-		columnHelper.accessor("steam_id", {
-			header: "Name",
-			size: 400,
-			cell: (info) => (
-				<TableCellSmall>
-					<PersonCell
-						steam_id={stats.data[info.row.index].steam_id}
-						personaname={stats.data[info.row.index].personaname}
-						avatar_hash={stats.data[info.row.index].avatar_hash}
-					/>
-				</TableCellSmall>
-			),
-		}),
-		columnHelper.accessor("kills", {
-			header: "Kills",
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-				</TableCellSmall>
-			),
-		}),
+	const columns = useMemo(() => {
+		return [
+			columnHelper.accessor("rank", {
+				header: "#",
+				size: 40,
+				cell: (info) => (
+					<TableCellSmall>
+						<Typography>{info.getValue()}</Typography>
+					</TableCellSmall>
+				),
+			}),
+			columnHelper.accessor("steam_id", {
+				header: "Name",
+				size: 400,
+				cell: (info) => (
+					<TableCellSmall>
+						<PersonCell
+							steam_id={stats.data[info.row.index].steam_id}
+							personaname={stats.data[info.row.index].personaname}
+							avatar_hash={stats.data[info.row.index].avatar_hash}
+						/>
+					</TableCellSmall>
+				),
+			}),
+			columnHelper.accessor("kills", {
+				header: "Kills",
+				cell: (info) => (
+					<TableCellSmall>
+						<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+					</TableCellSmall>
+				),
+			}),
 
-		columnHelper.accessor("damage", {
-			header: "Kills%",
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
-				</TableCellSmall>
-			),
-		}),
-		columnHelper.accessor("shots", {
-			header: "Shots",
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-				</TableCellSmall>
-			),
-		}),
-		columnHelper.accessor("hits", {
-			header: "Hits",
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-				</TableCellSmall>
-			),
-		}),
+			columnHelper.accessor("damage", {
+				header: "Kills%",
+				cell: (info) => (
+					<TableCellSmall>
+						<Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
+					</TableCellSmall>
+				),
+			}),
+			columnHelper.accessor("shots", {
+				header: "Shots",
+				cell: (info) => (
+					<TableCellSmall>
+						<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+					</TableCellSmall>
+				),
+			}),
+			columnHelper.accessor("hits", {
+				header: "Hits",
+				cell: (info) => (
+					<TableCellSmall>
+						<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+					</TableCellSmall>
+				),
+			}),
 
-		columnHelper.accessor("accuracy", {
-			header: "Acc%",
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{FmtWhenGt(info.getValue(), () => defaultFloatFmtPct(info.getValue()))}</Typography>
-				</TableCellSmall>
-			),
-		}),
-		columnHelper.accessor("airshots", {
-			header: "As",
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-				</TableCellSmall>
-			),
-		}),
+			columnHelper.accessor("accuracy", {
+				header: "Acc%",
+				cell: (info) => (
+					<TableCellSmall>
+						<Typography>{FmtWhenGt(info.getValue(), () => defaultFloatFmtPct(info.getValue()))}</Typography>
+					</TableCellSmall>
+				),
+			}),
+			columnHelper.accessor("airshots", {
+				header: "As",
+				cell: (info) => (
+					<TableCellSmall>
+						<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+					</TableCellSmall>
+				),
+			}),
 
-		columnHelper.accessor("backstabs", {
-			header: "Bs",
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-				</TableCellSmall>
-			),
-		}),
+			columnHelper.accessor("backstabs", {
+				header: "Bs",
+				cell: (info) => (
+					<TableCellSmall>
+						<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+					</TableCellSmall>
+				),
+			}),
 
-		columnHelper.accessor("headshots", {
-			header: "Hs",
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
-				</TableCellSmall>
-			),
-		}),
-	];
+			columnHelper.accessor("headshots", {
+				header: "Hs",
+				cell: (info) => (
+					<TableCellSmall>
+						<Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+					</TableCellSmall>
+				),
+			}),
+		];
+	}, [stats]);
 
 	const table = useReactTable({
 		data: stats.data,

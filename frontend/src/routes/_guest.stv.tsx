@@ -13,7 +13,7 @@ import Select from "@mui/material/Select";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useLoaderData, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type ColumnFiltersState, createColumnHelper, type SortingState } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { z } from "zod/v4";
@@ -79,7 +79,7 @@ const schema = z.object({
 function STV() {
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
-	const { servers } = useLoaderData({ from: "/_guest/stv" });
+	const { servers } = Route.useLoaderData();
 	const { profile, isAuthenticated } = useAuth();
 	const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
 	const [sorting] = useState<SortingState>([{ id: "demo_id", desc: true }]);

@@ -10,7 +10,7 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { queryOptions } from "@tanstack/react-query";
-import { createFileRoute, useLoaderData } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { format, fromUnixTime } from "date-fns";
 import { apiGetProfile } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
@@ -37,16 +37,19 @@ export const Route = createFileRoute("/_guest/profile/$steamId")({
 		);
 		return { profile };
 	},
-	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Player Profile" }, match.context.title("Profile")],
+	head: ({ match, loaderData }) => ({
+		meta: [
+			{ name: "description", content: "Player Profile" },
+			match.context.title(
+				loaderData?.profile.player.persona_name ?? loaderData?.profile.player.steam_id ?? "Unknown",
+			),
+		],
 	}),
 });
 
 function ProfilePage() {
 	const { profile: userProfile, isAuthenticated } = useAuth();
-	const { profile } = useLoaderData({
-		from: "/_guest/profile/$steamId",
-	});
+	const { profile } = Route.useLoaderData();
 
 	return (
 		<Grid container spacing={2}>

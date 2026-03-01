@@ -14,7 +14,7 @@ import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	type ColumnDef,
@@ -48,6 +48,15 @@ import { RowsPerPage } from "../util/table.ts";
 
 export const Route = createFileRoute("/_auth/notifications")({
 	component: NotificationsPage,
+	loader: async ({ context }) => {
+		const notifications = await context.queryClient.fetchQuery({
+			queryKey: ["notifications"],
+			queryFn: async () => {
+				return await apiGetNotifications();
+			},
+		});
+		return { notifications };
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "User Notifications" }, match.context.title("Notifications")],
 	}),
@@ -55,6 +64,7 @@ export const Route = createFileRoute("/_auth/notifications")({
 
 function NotificationsPage() {
 	const queryClient = useQueryClient();
+	const { notifications } = Route.useLoaderData();
 	const { sendError, sendFlash } = useUserFlashCtx();
 	const [rowSelection, setRowSelection] = useState({});
 	const theme = useTheme();
@@ -64,13 +74,6 @@ function NotificationsPage() {
 	const [pagination, setPagination] = useState({
 		pageIndex: 0, //initial page index
 		pageSize: RowsPerPage.TwentyFive, //default page size
-	});
-
-	const { data: notifications, isLoading } = useQuery({
-		queryKey: ["notifications"],
-		queryFn: async () => {
-			return await apiGetNotifications();
-		},
 	});
 
 	const selectedToIds = useCallback(() => {
@@ -299,7 +302,7 @@ function NotificationsPage() {
 				>
 					<NotificationsTable
 						notifications={notifications ?? []}
-						isLoading={isLoading}
+						isLoading={false}
 						rowSelection={rowSelection}
 						setRowSelection={setRowSelection}
 						pagination={pagination}

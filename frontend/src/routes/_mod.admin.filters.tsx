@@ -54,6 +54,16 @@ const filterSearchSchema = z.object({
 export const Route = createFileRoute("/_mod/admin/filters")({
 	component: AdminFilters,
 	validateSearch: (search) => filterSearchSchema.parse(search),
+	loader: async ({ context }) => {
+		const filters = await context.queryClient.fetchQuery({
+			queryKey: ["filters"],
+			queryFn: async () => {
+				return await apiGetFilters();
+			},
+		});
+
+		return { filters };
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Filtered Words" }, match.context.title("Filtered Words")],
 	}),
@@ -62,19 +72,13 @@ export const Route = createFileRoute("/_mod/admin/filters")({
 function AdminFilters() {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
+	const { filters } = Route.useLoaderData();
 	const [rowSelection, setRowSelection] = useState({});
 
 	// const { page, rows, sortOrder, sortColumn } = Route.useSearch();
 	const [pagination, setPagination] = useState({
 		pageIndex: 0, //initial page index
 		pageSize: RowsPerPage.TwentyFive, //default page size
-	});
-
-	const { data: filters, isLoading } = useQuery({
-		queryKey: ["filters"],
-		queryFn: async () => {
-			return await apiGetFilters();
-		},
 	});
 
 	const { data: warnings, isLoading: isLoadingWarnings } = useQuery({
@@ -186,7 +190,7 @@ function AdminFilters() {
 				>
 					<FiltersTable
 						filters={filters ?? []}
-						isLoading={isLoading}
+						isLoading={false}
 						rowSelection={rowSelection}
 						setRowSelection={setRowSelection}
 						pagination={pagination}
