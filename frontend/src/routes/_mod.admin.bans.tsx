@@ -11,7 +11,7 @@ import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
 	type ColumnFiltersState,
@@ -66,6 +66,17 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_mod/admin/bans")({
 	component: AdminBans,
 	validateSearch: (search) => searchSchema.parse(search),
+	loader: async ({ context }) => {
+		const bans = await context.queryClient.fetchQuery({
+			queryKey: ["bans"],
+
+			queryFn: async () => {
+				return await apiGetBans({ deleted: true });
+			},
+		});
+
+		return { bans };
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Bans" }, match.context.title("Bans")],
 	}),
@@ -75,18 +86,11 @@ function AdminBans() {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
+	const { bans } = Route.useLoaderData();
 	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
 	const [sorting] = useState<SortingState>([{ id: "ban_id", desc: true }]);
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
 	const { sendFlash } = useUserFlashCtx();
-
-	const { data: bans, isLoading } = useQuery({
-		queryKey: ["bans"],
-
-		queryFn: async () => {
-			return await apiGetBans({ deleted: true });
-		},
-	});
 
 	const onNewBanSteam = async () => {
 		try {
@@ -333,7 +337,7 @@ function AdminBans() {
 								pagination={pagination}
 								setPagination={setPagination}
 								data={filtered ?? []}
-								isLoading={isLoading}
+								isLoading={false}
 								columns={columns}
 								sorting={sorting}
 								toOptions={{ from: Route.fullPath }}

@@ -6,7 +6,7 @@ import NewspaperIcon from "@mui/icons-material/Newspaper";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createColumnHelper, type SortingState } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
@@ -31,6 +31,15 @@ const newsSchema = commonTableSearchSchema.extend({
 export const Route = createFileRoute("/_mod/admin/news")({
 	component: AdminNews,
 	validateSearch: (search) => newsSchema.parse(search),
+	loader: async ({ context }) => {
+		const news = await context.queryClient.fetchQuery({
+			queryKey: ["newsList"],
+			queryFn: async () => {
+				return await apiGetNewsAll();
+			},
+		});
+		return { news };
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "News Management" }, match.context.title("News")],
 	}),
@@ -39,17 +48,11 @@ export const Route = createFileRoute("/_mod/admin/news")({
 function AdminNews() {
 	const search = Route.useSearch();
 	const queryClient = useQueryClient();
+	const { news } = Route.useLoaderData();
 	const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
 	const [sorting] = useState<SortingState>([{ id: "news_id", desc: true }]);
 
 	const { sendFlash, sendError } = useUserFlashCtx();
-
-	const { data: news, isLoading } = useQuery({
-		queryKey: ["newsList"],
-		queryFn: async () => {
-			return await apiGetNewsAll();
-		},
-	});
 
 	const onCreate = async () => {
 		try {
@@ -200,7 +203,7 @@ function AdminNews() {
 				>
 					<FullTable
 						data={news ?? []}
-						isLoading={isLoading}
+						isLoading={false}
 						columns={columns}
 						pagination={pagination}
 						setPagination={setPagination}

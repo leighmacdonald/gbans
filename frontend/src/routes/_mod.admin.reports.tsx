@@ -7,7 +7,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type ColumnFiltersState, createColumnHelper, type SortingState } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiGetReports } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader";
@@ -96,7 +96,7 @@ function AdminReports() {
 		},
 	});
 
-	const clear = async () => {
+	const clear = useCallback(async () => {
 		form.reset();
 		setColumnFilters([]);
 		await navigate({
@@ -108,7 +108,7 @@ function AdminReports() {
 				report_status: undefined,
 			}),
 		});
-	};
+	}, [form, navigate]);
 
 	const columns = useMemo(() => {
 		return makeColumns();

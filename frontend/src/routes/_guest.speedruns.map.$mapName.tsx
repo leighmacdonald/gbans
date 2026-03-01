@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_guest/speedruns/map/$mapName")({
 		ensureFeatureEnabled(context.appInfo.speedruns_enabled);
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Map Speedruns" }, match.context.title("Speedruns")],
+		meta: [{ name: "description", content: "Map Speedruns" }, match.context.title("Map Speedruns")],
 	}),
 });
 

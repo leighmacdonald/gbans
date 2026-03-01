@@ -8,7 +8,7 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	type ColumnDef,
@@ -43,29 +43,34 @@ const serversSearchSchema = z.object({
 });
 
 export const Route = createFileRoute("/_admin/admin/servers")({
-	component: AdminServers,
 	validateSearch: (search) => serversSearchSchema.parse(search),
+	loader: async ({ context }) => {
+		const servers = await context.queryClient.fetchQuery({
+			queryKey: ["serversAdmin"],
+			queryFn: async () => {
+				return await apiGetServersAdmin();
+			},
+		});
+
+		return { servers };
+	},
 	head: ({ match }) => {
 		return {
 			meta: [{ name: "description", content: "Server Editor" }, match.context.title("Edit Servers")],
 		};
 	},
+
+	component: AdminServers,
 });
 
 function AdminServers() {
 	const { sendFlash } = useUserFlashCtx();
+	const { servers } = Route.useLoaderData();
 	const queryClient = useQueryClient();
 
 	const [pagination, setPagination] = useState({
 		pageIndex: 0, //initial page index
 		pageSize: RowsPerPage.TwentyFive, //default page size
-	});
-
-	const { data: servers, isLoading } = useQuery({
-		queryKey: ["serversAdmin"],
-		queryFn: async () => {
-			return await apiGetServersAdmin();
-		},
 	});
 
 	const onCreate = async () => {
@@ -117,7 +122,7 @@ function AdminServers() {
 					>
 						<AdminServersTable
 							servers={servers ?? []}
-							isLoading={isLoading}
+							isLoading={false}
 							setPagination={setPagination}
 							pagination={pagination}
 							onEdit={onEdit}

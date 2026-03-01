@@ -12,7 +12,7 @@ import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useLoaderData, useNavigate } from "@tanstack/react-router";
 import { createColumnHelper, type PaginationState, type SortingState } from "@tanstack/react-table";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { z } from "zod/v4";
 import { apiGetAnticheatLogs, apiGetServers } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
@@ -60,11 +60,8 @@ export const Route = createFileRoute("/_mod/admin/anticheat")({
 			}),
 		};
 	},
-	head: ({ loaderData }) => ({
-		meta: [
-			{ name: "description", content: "Anti-Cheat Logs" },
-			{ title: `Anti-Cheat Logs - ${loaderData?.appInfo.site_name}` },
-		],
+	head: ({ match }) => ({
+		meta: [{ name: "description", content: "Anti-Cheat Logs" }, match.context.title("Anti-Cheat Logs")],
 	}),
 });
 
@@ -153,83 +150,85 @@ function AdminAnticheat() {
 	};
 
 	const theme = useTheme();
-	const columns = [
-		columnHelper.accessor("anticheat_id", {
-			header: "ID",
-			size: 50,
-			cell: (info) => <Typography>{info.getValue()}</Typography>,
-		}),
-		columnHelper.accessor("server_id", {
-			header: "Server",
-			size: 100,
-			cell: (info) => {
-				return (
-					<Button
-						sx={{
-							color: stringToColour(info.row.original.server_name, theme.palette.mode),
-						}}
-						onClick={async () => {
-							await navigate({
-								to: "/admin/anticheat",
-								search: (prev) => ({
-									...prev,
-									server_id: info.getValue() as number,
-								}),
-							});
-						}}
-					>
-						{info.row.original.server_name}
-					</Button>
-				);
-			},
-		}),
-		columnHelper.accessor("name", {
-			header: "Name",
-			enableHiding: false,
-			size: 300,
-			cell: (info) => (
-				<PersonCell
-					showCopy={true}
-					steam_id={info.row.original.steam_id}
-					personaname={info.row.original.personaname}
-					avatar_hash={info.row.original.avatar}
-				/>
-			),
-		}),
-		columnHelper.accessor("personaname", {
-			enableHiding: true,
-			header: "Personaname",
-		}),
-		columnHelper.accessor("steam_id", {
-			enableHiding: true,
-			header: "Steam ID",
-		}),
-		columnHelper.accessor("created_on", {
-			header: "Created",
-			size: 140,
-			cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
-		}),
-		columnHelper.accessor("demo_id", {
-			header: "Demo",
-			size: 50,
-			cell: (info) => <Typography>{info.getValue()}</Typography>,
-		}),
-		columnHelper.accessor("detection", {
-			header: "Detection",
-			size: 130,
-			cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-		}),
-		columnHelper.accessor("triggered", {
-			header: "Count",
-			size: 80,
-			cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-		}),
-		columnHelper.accessor("summary", {
-			header: "Summary",
-			size: 400,
-			cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-		}),
-	];
+	const columns = useCallback(() => {
+		return [
+			columnHelper.accessor("anticheat_id", {
+				header: "ID",
+				size: 50,
+				cell: (info) => <Typography>{info.getValue()}</Typography>,
+			}),
+			columnHelper.accessor("server_id", {
+				header: "Server",
+				size: 100,
+				cell: (info) => {
+					return (
+						<Button
+							sx={{
+								color: stringToColour(info.row.original.server_name, theme.palette.mode),
+							}}
+							onClick={async () => {
+								await navigate({
+									to: "/admin/anticheat",
+									search: (prev) => ({
+										...prev,
+										server_id: info.getValue() as number,
+									}),
+								});
+							}}
+						>
+							{info.row.original.server_name}
+						</Button>
+					);
+				},
+			}),
+			columnHelper.accessor("name", {
+				header: "Name",
+				enableHiding: false,
+				size: 300,
+				cell: (info) => (
+					<PersonCell
+						showCopy={true}
+						steam_id={info.row.original.steam_id}
+						personaname={info.row.original.personaname}
+						avatar_hash={info.row.original.avatar}
+					/>
+				),
+			}),
+			columnHelper.accessor("personaname", {
+				enableHiding: true,
+				header: "Personaname",
+			}),
+			columnHelper.accessor("steam_id", {
+				enableHiding: true,
+				header: "Steam ID",
+			}),
+			columnHelper.accessor("created_on", {
+				header: "Created",
+				size: 140,
+				cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
+			}),
+			columnHelper.accessor("demo_id", {
+				header: "Demo",
+				size: 50,
+				cell: (info) => <Typography>{info.getValue()}</Typography>,
+			}),
+			columnHelper.accessor("detection", {
+				header: "Detection",
+				size: 130,
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("triggered", {
+				header: "Count",
+				size: 80,
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("summary", {
+				header: "Summary",
+				size: 400,
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+		];
+	}, [theme, navigate]);
 
 	return (
 		<Grid container spacing={2}>

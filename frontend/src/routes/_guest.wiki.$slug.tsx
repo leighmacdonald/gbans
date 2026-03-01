@@ -36,8 +36,8 @@ export const Route = createFileRoute("/_guest/wiki/$slug")({
 			};
 		}
 	},
-	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Wiki" }, match.context.title("Wiki")],
+	head: ({ match, params }) => ({
+		meta: [{ name: "description", content: "Wiki" }, match.context.title(params.slug)],
 	}),
 	errorComponent: ({ error }) => {
 		if (error instanceof AppError) {

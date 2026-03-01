@@ -4,7 +4,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	type ColumnDef,
@@ -37,6 +36,15 @@ const contestsSearchSchema = commonTableSearchSchema.extend({
 export const Route = createFileRoute("/_mod/admin/contests")({
 	component: AdminContests,
 	validateSearch: (search) => contestsSearchSchema.parse(search),
+	loader: async ({ context }) => {
+		const contests = await context.queryClient.fetchQuery({
+			queryKey: ["adminContests"],
+			queryFn: async () => {
+				return await apiContests();
+			},
+		});
+		return { contests };
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Contests" }, match.context.title("Contests")],
 	}),
@@ -44,14 +52,8 @@ export const Route = createFileRoute("/_mod/admin/contests")({
 
 function AdminContests() {
 	const search = Route.useSearch();
+	const { contests } = Route.useLoaderData();
 	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
-
-	const { data: contests, isLoading } = useQuery({
-		queryKey: ["adminContests"],
-		queryFn: async () => {
-			return await apiContests();
-		},
-	});
 
 	const onEditContest = useCallback(async (contest?: Contest) => {
 		try {
@@ -94,7 +96,7 @@ function AdminContests() {
 		>
 			<ContestTable
 				contests={contests ?? []}
-				isLoading={isLoading}
+				isLoading={false}
 				onEdit={onEditContest}
 				pagination={pagination}
 				setPagination={setPagination}

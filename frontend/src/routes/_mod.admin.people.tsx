@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { fromUnixTime } from "date-fns";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
 import { apiSearchPeople } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
@@ -52,6 +52,7 @@ function AdminPeople() {
 	const navigate = useNavigate({ from: Route.fullPath });
 	const { hasPermission } = useAuth();
 	const { steam_id, staff_only, pageIndex, persona_name, sortColumn, pageSize, sortOrder } = Route.useSearch();
+
 	const { data: people, isLoading } = useQuery({
 		queryKey: ["people", { pageSize, pageIndex, sortColumn, sortOrder, persona_name, steam_id }],
 		queryFn: async () => {
@@ -68,16 +69,19 @@ function AdminPeople() {
 		},
 	});
 
-	const onEditPerson = async (person: Person) => {
-		try {
-			await NiceModal.show(PersonEditModal, {
-				person,
-			});
-			sendFlash("success", "Updated permission level successfully");
-		} catch (e) {
-			sendFlash("error", `${e}`);
-		}
-	};
+	const onEditPerson = useCallback(
+		async (person: Person) => {
+			try {
+				await NiceModal.show(PersonEditModal, {
+					person,
+				});
+				sendFlash("success", "Updated permission level successfully");
+			} catch (e) {
+				sendFlash("error", `${e}`);
+			}
+		},
+		[sendFlash],
+	);
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -100,12 +104,12 @@ function AdminPeople() {
 		},
 	});
 
-	const clear = async () => {
+	const clear = useCallback(async () => {
 		await navigate({
 			to: "/admin/people",
 			search: (prev) => ({ ...prev, steam_id: "", personaname: "" }),
 		});
-	};
+	}, [navigate]);
 
 	return (
 		<Grid container spacing={2}>
