@@ -18,7 +18,10 @@ interface SourceBansListProps {
 	is_reporter: boolean;
 }
 
-export const SourceBansList = ({ steam_id, is_reporter }: SourceBansListProps) => {
+export const SourceBansList = ({
+	steam_id,
+	is_reporter,
+}: SourceBansListProps) => {
 	const { data: bans } = useQuery({
 		queryKey: ["sourcebans", { steam_id }],
 		queryFn: async () => {
@@ -31,9 +34,14 @@ export const SourceBansList = ({ steam_id, is_reporter }: SourceBansListProps) =
 	}
 
 	return (
-		<ContainerWithHeader title={"External Ban History"} iconLeft={<HistoryIcon />}>
+		<ContainerWithHeader
+			title={"External Ban History"}
+			iconLeft={<HistoryIcon />}
+		>
 			<Stack spacing={1}>
-				<Typography variant={"h5"}>{is_reporter ? "Reporter History" : "Suspect History"}</Typography>
+				<Typography variant={"h5"}>
+					{is_reporter ? "Reporter History" : "Suspect History"}
+				</Typography>
 				<TableContainer>
 					<Table size="small">
 						<TableHead>
