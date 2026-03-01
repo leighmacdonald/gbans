@@ -49,7 +49,7 @@ const MDLink = ({ children, href, title }: MDLnkProps) => {
 };
 
 const mdRenderOpts: Options = {
-	disableParsingRawHTML: true,
+	disableParsingRawHTML: false,
 	overrides: {
 		a: {
 			component: MDLink,
@@ -85,8 +85,14 @@ export const MarkDownRenderer = ({
 	minHeight?: number;
 }) => {
 	const links = useMemo(() => {
-		return renderLinks(body_md, assetURL);
+		return renderLinks(body_md, assetURL)
+			.trim()
+			.split("\n")
+			.map((v) => (v.startsWith("\\") ? v.slice(1) : v))
+			.join("\n");
 	}, [assetURL, body_md]);
+
+	console.log(links);
 
 	return (
 		<Box padding={2} maxWidth={"100%"} minHeight={minHeight}>
