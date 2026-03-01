@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import Button from "@mui/material/Button";
@@ -10,9 +11,13 @@ import Select from "@mui/material/Select";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useLoaderData, useNavigate } from "@tanstack/react-router";
-import { createColumnHelper, type PaginationState, type SortingState } from "@tanstack/react-table";
-import { useCallback, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+	createColumnHelper,
+	type PaginationState,
+	type SortingState,
+} from "@tanstack/react-table";
+import { useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiGetAnticheatLogs, apiGetServers } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
@@ -21,15 +26,32 @@ import { PersonCell } from "../component/PersonCell.tsx";
 import { FullTable } from "../component/table/FullTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
-import { DetectionCollection, Detections, type StacEntry } from "../schema/anticheat.ts";
-import type { ServerSimple } from "../schema/server.ts";
+import {
+	DetectionCollection,
+	Detections,
+	type StacEntry,
+} from "../schema/anticheat.ts";
 import { stringToColour } from "../util/colours.ts";
-import { commonTableSearchSchema, initPagination, initSortOrder, RowsPerPage } from "../util/table.ts";
+import {
+	commonTableSearchSchema,
+	initPagination,
+	initSortOrder,
+	RowsPerPage,
+} from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
 
 const searchSchema = commonTableSearchSchema.extend({
 	sortColumn: z
-		.enum(["anticheat_id", "name", "personaname", "summary", "detection", "steam_id", "created_on", "server_name"])
+		.enum([
+			"anticheat_id",
+			"name",
+			"personaname",
+			"summary",
+			"detection",
+			"steam_id",
+			"created_on",
+			"server_name",
+		])
 		.optional(),
 	name: z.string().optional(),
 	summary: z.string().optional(),
@@ -48,7 +70,6 @@ export const Route = createFileRoute("/_mod/admin/anticheat")({
 			queryFn: apiGetServers,
 		});
 		return {
-			appInfo: context.appInfo,
 			servers: unsorted.sort((a, b) => {
 				if (a.server_name > b.server_name) {
 					return 1;
@@ -61,7 +82,10 @@ export const Route = createFileRoute("/_mod/admin/anticheat")({
 		};
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Anti-Cheat Logs" }, match.context.title("Anti-Cheat Logs")],
+		meta: [
+			{ name: "description", content: "Anti-Cheat Logs" },
+			match.context.title("Anti-Cheat Logs"),
+		],
 	}),
 });
 
@@ -79,10 +103,10 @@ function AdminAnticheat() {
 	const defaultRows = RowsPerPage.TwentyFive;
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
-	const { servers } = useLoaderData({ from: "/_mod/admin/anticheat" }) as {
-		servers: ServerSimple[];
-	};
-	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
+	const { servers } = Route.useLoaderData();
+	const [pagination, setPagination] = useState<PaginationState>(
+		initPagination(search.pageIndex, search.pageSize),
+	);
 	const [sorting] = useState<SortingState>(
 		initSortOrder(search.sortColumn, search.sortOrder, {
 			id: "created_on",
@@ -140,17 +164,17 @@ function AdminAnticheat() {
 		},
 	});
 
-	const clear = async () => {
+	const clear = useCallback(async () => {
 		//setColumnFilters([]);
 		form.reset();
 		await navigate({
 			to: "/admin/anticheat",
 			search: (prev) => ({ ...prev }),
 		});
-	};
+	}, [form, navigate]);
 
 	const theme = useTheme();
-	const columns = useCallback(() => {
+	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("anticheat_id", {
 				header: "ID",
@@ -164,7 +188,10 @@ function AdminAnticheat() {
 					return (
 						<Button
 							sx={{
-								color: stringToColour(info.row.original.server_name, theme.palette.mode),
+								color: stringToColour(
+									info.row.original.server_name,
+									theme.palette.mode,
+								),
 							}}
 							onClick={async () => {
 								await navigate({
@@ -205,7 +232,9 @@ function AdminAnticheat() {
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				size: 140,
-				cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>{renderDateTime(info.getValue())}</TableCellString>
+				),
 			}),
 			columnHelper.accessor("demo_id", {
 				header: "Demo",
@@ -233,7 +262,11 @@ function AdminAnticheat() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
+				<ContainerWithHeader
+					title={"Filters"}
+					iconLeft={<FilterListIcon />}
+					marginTop={2}
+				>
 					<form
 						onSubmit={async (e) => {
 							e.preventDefault();
@@ -265,7 +298,9 @@ function AdminAnticheat() {
 									children={({ state, handleChange, handleBlur }) => {
 										return (
 											<FormControl fullWidth>
-												<InputLabel id="server-select-label">Servers</InputLabel>
+												<InputLabel id="server-select-label">
+													Servers
+												</InputLabel>
 												<Select
 													fullWidth
 													value={state.value}
@@ -330,7 +365,10 @@ function AdminAnticheat() {
 				</ContainerWithHeader>
 			</Grid>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeaderAndButtons title={`Entries`} iconLeft={<FilterAltIcon />}>
+				<ContainerWithHeaderAndButtons
+					title={`Entries`}
+					iconLeft={<FilterAltIcon />}
+				>
 					<FullTable<StacEntry>
 						// columnFilters={columnFilters}
 						pagination={pagination}
