@@ -6,6 +6,7 @@ import { SubmitButton } from "../component/form/button/SubmitButton.tsx";
 import { CheckboxField } from "../component/form/field/CheckboxField.tsx";
 import { DateTimeField } from "../component/form/field/DateTimeField.tsx";
 import { MarkdownField } from "../component/form/field/MarkdownField.tsx";
+import { NumberField } from "../component/form/field/NumberField.tsx";
 import { SelectField } from "../component/form/field/SelectField.tsx";
 import { SteamIDField } from "../component/form/field/SteamIDField.tsx";
 import { TextField } from "../component/form/field/TextField.tsx";
@@ -22,6 +23,7 @@ export const { useAppForm } = createFormHook({
 		SteamIDField,
 		SelectField,
 		DateTimeField,
+		NumberField,
 	},
 	formComponents: {
 		SubmitButton,
