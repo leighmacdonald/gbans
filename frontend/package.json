@@ -61,6 +61,7 @@
 	},
 	"packageManager": "pnpm@10.21.0",
 	"dependencies": {
+		"@base-ui/react": "^1.2.0",
 		"@ebay/nice-modal-react": "^1.2.13",
 		"@emotion/react": "^11.14.0",
 		"@emotion/styled": "^11.14.1",
