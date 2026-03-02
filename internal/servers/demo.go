@@ -44,9 +44,9 @@ const (
 type DemoConfig struct {
 	DemoCleanupEnabled  bool         `json:"demo_cleanup_enabled"`
 	DemoCleanupStrategy DemoStrategy `json:"demo_cleanup_strategy"`
-	DemoCleanupMinPct   float32      `json:"demo_cleanup_min_pct,string"`
+	DemoCleanupMinPct   float32      `json:"demo_cleanup_min_pct"`
 	DemoCleanupMount    string       `json:"demo_cleanup_mount"`
-	DemoCountLimit      uint64       `json:"demo_count_limit,string"`
+	DemoCountLimit      uint64       `json:"demo_count_limit"`
 	DemoParserURL       string       `json:"demo_parser_url"`
 }
 

@@ -973,12 +973,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 		onSubmit: async ({ value }) => {
 			mutate({
 				...settings,
-				demo: {
-					...value,
-					// FIXME zod coerce break this otherwise
-					demo_cleanup_min_pct: Number(value.demo_cleanup_min_pct),
-					demo_count_limit: Number(value.demo_count_limit),
-				},
+				demo: value,
 			});
 		},
 		defaultValues: defaultValues,
@@ -1065,7 +1060,13 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 						<form.AppField
 							name={"demo_cleanup_min_pct"}
 							children={(field) => {
-								return <field.TextField label={"Minimum percent free space to retain"} />;
+								return (
+									<field.NumberField
+										label={"Minimum percent free space to retain"}
+										min={1}
+										max={100}
+									/>
+								);
 							}}
 						/>
 					</Grid>
@@ -1086,7 +1087,9 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 						<form.AppField
 							name={"demo_count_limit"}
 							children={(field) => {
-								return <field.TextField label={"Max amount of demos to keep"} />;
+								return (
+									<field.NumberField label={"Max amount of demos to keep"} min={0} max={1000000} />
+								);
 							}}
 						/>
 					</Grid>
