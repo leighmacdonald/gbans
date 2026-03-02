@@ -12,11 +12,7 @@ import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-	createColumnHelper,
-	type PaginationState,
-	type SortingState,
-} from "@tanstack/react-table";
+import { createColumnHelper, type PaginationState, type SortingState } from "@tanstack/react-table";
 import { useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiGetAnticheatLogs, apiGetServers } from "../api";
@@ -26,32 +22,14 @@ import { PersonCell } from "../component/PersonCell.tsx";
 import { FullTable } from "../component/table/FullTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
-import {
-	DetectionCollection,
-	Detections,
-	type StacEntry,
-} from "../schema/anticheat.ts";
+import { DetectionCollection, Detections, type StacEntry } from "../schema/anticheat.ts";
 import { stringToColour } from "../util/colours.ts";
-import {
-	commonTableSearchSchema,
-	initPagination,
-	initSortOrder,
-	RowsPerPage,
-} from "../util/table.ts";
-import { renderDateTime } from "../util/time.ts";
+import { commonTableSearchSchema, initPagination, initSortOrder, RowsPerPage } from "../util/table.ts";
+import { renderDate, renderDateTime } from "../util/time.ts";
 
 const searchSchema = commonTableSearchSchema.extend({
 	sortColumn: z
-		.enum([
-			"anticheat_id",
-			"name",
-			"personaname",
-			"summary",
-			"detection",
-			"steam_id",
-			"created_on",
-			"server_name",
-		])
+		.enum(["anticheat_id", "name", "personaname", "summary", "detection", "steam_id", "created_on", "server_name"])
 		.optional(),
 	name: z.string().optional(),
 	summary: z.string().optional(),
@@ -82,10 +60,7 @@ export const Route = createFileRoute("/_mod/admin/anticheat")({
 		};
 	},
 	head: ({ match }) => ({
-		meta: [
-			{ name: "description", content: "Anti-Cheat Logs" },
-			match.context.title("Anti-Cheat Logs"),
-		],
+		meta: [{ name: "description", content: "Anti-Cheat Logs" }, match.context.title("Anti-Cheat Logs")],
 	}),
 });
 
@@ -104,9 +79,7 @@ function AdminAnticheat() {
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
 	const { servers } = Route.useLoaderData();
-	const [pagination, setPagination] = useState<PaginationState>(
-		initPagination(search.pageIndex, search.pageSize),
-	);
+	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
 	const [sorting] = useState<SortingState>(
 		initSortOrder(search.sortColumn, search.sortOrder, {
 			id: "created_on",
@@ -188,10 +161,7 @@ function AdminAnticheat() {
 					return (
 						<Button
 							sx={{
-								color: stringToColour(
-									info.row.original.server_name,
-									theme.palette.mode,
-								),
+								color: stringToColour(info.row.original.server_name, theme.palette.mode),
 							}}
 							onClick={async () => {
 								await navigate({
@@ -233,7 +203,9 @@ function AdminAnticheat() {
 				header: "Created",
 				size: 140,
 				cell: (info) => (
-					<TableCellString>{renderDateTime(info.getValue())}</TableCellString>
+					<TableCellString title={renderDateTime(info.getValue())}>
+						{renderDate(info.getValue())}
+					</TableCellString>
 				),
 			}),
 			columnHelper.accessor("demo_id", {
@@ -262,11 +234,7 @@ function AdminAnticheat() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader
-					title={"Filters"}
-					iconLeft={<FilterListIcon />}
-					marginTop={2}
-				>
+				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form
 						onSubmit={async (e) => {
 							e.preventDefault();
@@ -298,9 +266,7 @@ function AdminAnticheat() {
 									children={({ state, handleChange, handleBlur }) => {
 										return (
 											<FormControl fullWidth>
-												<InputLabel id="server-select-label">
-													Servers
-												</InputLabel>
+												<InputLabel id="server-select-label">Servers</InputLabel>
 												<Select
 													fullWidth
 													value={state.value}
@@ -365,10 +331,7 @@ function AdminAnticheat() {
 				</ContainerWithHeader>
 			</Grid>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeaderAndButtons
-					title={`Entries`}
-					iconLeft={<FilterAltIcon />}
-				>
+				<ContainerWithHeaderAndButtons title={`Entries`} iconLeft={<FilterAltIcon />}>
 					<FullTable<StacEntry>
 						// columnFilters={columnFilters}
 						pagination={pagination}

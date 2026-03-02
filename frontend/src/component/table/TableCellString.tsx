@@ -6,11 +6,17 @@ interface TextProps {
 	variant?: TypographyVariant;
 	component?: ElementType;
 	onClick?: () => void;
+	title?: string;
 }
 
-export const TableCellString = ({ children, variant = "body1", component = "p" }: PropsWithChildren<TextProps>) => {
+export const TableCellString = ({
+	children,
+	variant = "body1",
+	component = "p",
+	title = undefined,
+}: PropsWithChildren<TextProps>) => {
 	return (
-		<div>
+		<div title={title}>
 			<Typography variant={variant} component={component}>
 				{children}
 			</Typography>

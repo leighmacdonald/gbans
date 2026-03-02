@@ -64,7 +64,7 @@ export const schemaDemos = z.object({
 	demo_cleanup_strategy: z.enum(["pctfree", "count"]),
 	demo_cleanup_min_pct: z.coerce.number().min(0).max(100),
 	demo_cleanup_mount: z.string().startsWith("/"), // windows?
-	demo_count_limit: z.number(),
+	demo_count_limit: z.coerce.number().min(0).max(1000000000),
 	demo_parser_url: z.string(),
 });
 

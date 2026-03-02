@@ -6,9 +6,9 @@ import { useState } from "react";
 import { apiGetNewsLatest } from "../api/news";
 import { renderDate } from "../util/time.ts";
 import { MarkDownRenderer } from "./MarkdownRenderer";
-import { SplitHeading } from "./SplitHeading";
+import { NewsHead } from "./NewsHead.tsx";
 
-export interface NewsViewProps {
+interface NewsViewProps {
 	itemsPerPage: number;
 	assetURL: string;
 }
@@ -31,7 +31,7 @@ export const NewsView = ({ itemsPerPage, assetURL }: NewsViewProps) => {
 					}
 					return (
 						<Paper elevation={1} key={`news_${article.news_id}`}>
-							<SplitHeading left={article.title} right={renderDate(article.created_on)} />
+							<NewsHead left={article.title} right={renderDate(article.created_on)} />
 							<MarkDownRenderer body_md={article.body_md} assetURL={assetURL} />
 						</Paper>
 					);

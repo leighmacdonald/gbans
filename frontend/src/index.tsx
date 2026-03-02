@@ -10,13 +10,6 @@ import "./fonts/tf2build.css";
 import { getAppInfo } from "./api/app.ts";
 import { newRouter } from "./router.tsx";
 
-const queryClient = new QueryClient();
-const appInfo = await queryClient.fetchQuery({
-	queryKey: ["appInfo"],
-	queryFn: getAppInfo,
-});
-const router = newRouter(queryClient, appInfo);
-
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
 	// noinspection JSUnusedGlobalSymbols
@@ -24,8 +17,16 @@ declare module "@tanstack/react-router" {
 		router: typeof router;
 	}
 }
-let root: Root;
+
+const queryClient = new QueryClient();
+const appInfo = await queryClient.fetchQuery({
+	queryKey: ["appInfo"],
+	queryFn: getAppInfo,
+});
+const router = newRouter(queryClient, appInfo);
 const container = document.getElementById("root");
+
+let root: Root;
 if (container) {
 	if (appInfo.sentry_dns_web !== "") {
 		Sentry.init({

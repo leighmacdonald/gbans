@@ -88,8 +88,6 @@ func (c *client) ID() string {
 func (c *client) Start() {
 	for msg := range c.responseChan {
 		if errWrite := c.conn.WriteJSON(msg); errWrite != nil {
-			slog.Debug("Failed to send message to client", slog.String("string", errWrite.Error()))
-
 			return
 		}
 	}
@@ -97,7 +95,5 @@ func (c *client) Start() {
 
 func (c *client) Close() {
 	slog.Debug("Closing client connection", slog.String("addr", c.conn.RemoteAddr().String()))
-	if errClose := c.conn.Close(); errClose != nil {
-		slog.Debug("Error closing client connection", slog.String("error", errClose.Error()))
-	}
+	_ = c.conn.Close()
 }
