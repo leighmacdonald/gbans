@@ -20,7 +20,15 @@ interface MDImgProps {
 }
 
 const MDImg = ({ src, alt }: MDImgProps) => {
-	return <ImageBox src={src} alt={alt} key={alt} maxWidth={"100%"} maxHeight={"100%"} />;
+	return (
+		<ImageBox
+			src={src}
+			alt={alt}
+			key={alt}
+			maxWidth={"100%"}
+			maxHeight={"100%"}
+		/>
+	);
 };
 
 interface MDLnkProps {
@@ -92,10 +100,13 @@ export const MarkDownRenderer = ({
 			.join("\n");
 	}, [assetURL, body_md]);
 
-	console.log(links);
-
 	return (
-		<Box paddingLeft={2} paddingRight={2} maxWidth={"100%"} minHeight={minHeight}>
+		<Box
+			paddingLeft={2}
+			paddingRight={2}
+			maxWidth={"100%"}
+			minHeight={minHeight}
+		>
 			<MuiMarkdown options={mdRenderOpts}>{links}</MuiMarkdown>
 		</Box>
 	);

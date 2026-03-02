@@ -1,3 +1,5 @@
+/** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
+
 import FilterListIcon from "@mui/icons-material/FilterList";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -13,15 +15,21 @@ import { apiVotesQuery } from "../api/votes.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
+import { BoolCell } from "../component/table/BoolCell.tsx";
 import { FullTable } from "../component/table/FullTable.tsx";
-import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import type { VoteResult } from "../schema/votes.ts";
-import { commonTableSearchSchema, initPagination, RowsPerPage } from "../util/table.ts";
+import {
+	commonTableSearchSchema,
+	initPagination,
+	RowsPerPage,
+} from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
 
 const votesSearchSchema = commonTableSearchSchema.extend({
-	sortColumn: z.enum(["target_id", "source_id", "success", "created_on"]).optional(),
+	sortColumn: z
+		.enum(["target_id", "source_id", "success", "created_on"])
+		.optional(),
 	source_id: z.string().optional(),
 	target_id: z.string().optional(),
 	success: z.number().optional(),
@@ -31,7 +39,10 @@ export const Route = createFileRoute("/_mod/admin/votes")({
 	component: AdminVotes,
 	validateSearch: (search) => votesSearchSchema.parse(search),
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Votes" }, match.context.title("Votes")],
+		meta: [
+			{ name: "description", content: "Votes" },
+			match.context.title("Votes"),
+		],
 	}),
 });
 
@@ -39,7 +50,9 @@ function AdminVotes() {
 	const defaultRows = RowsPerPage.TwentyFive;
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
-	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
+	const [pagination, setPagination] = useState<PaginationState>(
+		initPagination(search.pageIndex, search.pageSize),
+	);
 
 	const { data: votes, isLoading } = useQuery({
 		queryKey: ["votes", { search }],
@@ -95,7 +108,11 @@ function AdminVotes() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
+				<ContainerWithHeader
+					title={"Filters"}
+					iconLeft={<FilterListIcon />}
+					marginTop={2}
+				>
 					<form
 						onSubmit={async (e) => {
 							e.preventDefault();
@@ -136,7 +153,10 @@ function AdminVotes() {
 				</ContainerWithHeader>
 			</Grid>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeaderAndButtons title={"Vote History"} iconLeft={<HowToVoteIcon />}>
+				<ContainerWithHeaderAndButtons
+					title={"Vote History"}
+					iconLeft={<HowToVoteIcon />}
+				>
 					<FullTable
 						data={votes?.data ?? []}
 						isLoading={isLoading}
@@ -183,7 +203,9 @@ const makeVoteColumns = () => {
 		columnHelper.accessor("success", {
 			header: "Passed",
 			size: 50,
-			cell: (info) => <TableCellBool enabled={info.getValue()} />,
+			cell: (info) => {
+				return <BoolCell enabled={info.getValue()} />;
+			},
 		}),
 		columnHelper.accessor("server_name", {
 			header: "Server",
@@ -193,7 +215,9 @@ const makeVoteColumns = () => {
 		columnHelper.accessor("created_on", {
 			header: "Created",
 			size: 120,
-			cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
+			cell: (info) => (
+				<Typography>{renderDateTime(info.getValue())}</Typography>
+			),
 		}),
 	];
 };

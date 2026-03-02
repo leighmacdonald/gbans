@@ -21,7 +21,9 @@ type Props = {
 export const SteamIDField = (props: Props) => {
 	const field = useFieldContext<string>();
 	const errors = useStore(field.store, (state) => state.meta.errors);
-	const [profile, setProfile] = useState<SteamValidate | undefined>(props.defaultProfile);
+	const [profile, setProfile] = useState<SteamValidate | undefined>(
+		props.defaultProfile,
+	);
 	const [error, setError] = useState<string>();
 	const [loading, setLoading] = useState(false);
 
@@ -70,16 +72,26 @@ export const SteamIDField = (props: Props) => {
 			return <ErrorOutlineIcon color={"error"} sx={{ width: 40 }} />;
 		}
 		if (profile) {
-			return <Avatar src={avatarHashToURL(profile.hash ?? defaultAvatarHash)} variant={"square"} />;
+			return (
+				<Avatar
+					src={avatarHashToURL(profile.hash ?? defaultAvatarHash)}
+					variant={"square"}
+				/>
+			);
 		}
 
 		return <QuestionMark color={"secondary"} />;
-	}, [field.state.meta.isPristine, field.state.meta.isValidating, profile, field.state.meta.errors, error, loading]);
+	}, [
+		field.state.meta.isPristine,
+		field.state.meta.isValidating,
+		profile,
+		field.state.meta.errors,
+		error,
+		loading,
+	]);
 
 	const onChange = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
-			// Update the value immediately
-			console.log(e.target.value);
 			field.handleChange(e.target.value);
 			setProfile(undefined);
 
@@ -101,7 +113,9 @@ export const SteamIDField = (props: Props) => {
 			helperText={error ?? "Any form of Steam ID or profile link."}
 			slotProps={{
 				input: {
-					endAdornment: <InputAdornment position={"end"}>{adornment}</InputAdornment>,
+					endAdornment: (
+						<InputAdornment position={"end"}>{adornment}</InputAdornment>
+					),
 				},
 			}}
 		/>

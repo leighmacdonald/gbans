@@ -8,11 +8,11 @@ import {
 	type TableOptions,
 	useReactTable,
 } from "@tanstack/react-table";
+import { useMemo } from "react";
 import type { PersonConnection } from "../../schema/people.ts";
 import type { LazyResult } from "../../util/table.ts";
 import { renderDateTime } from "../../util/time.ts";
 import { DataTable } from "./DataTable.tsx";
-import { TableCellSmall } from "./TableCellSmall.tsx";
 
 const columnHelper = createColumnHelper<PersonConnection>();
 
@@ -29,43 +29,35 @@ export const IPHistoryTable = ({
 	pagination?: PaginationState;
 	setPagination?: OnChangeFn<PaginationState>;
 }) => {
-	const columns = [
-		columnHelper.accessor("created_on", {
-			header: "Created",
-			size: 120,
-			cell: (info) => (
-				<TableCellSmall>
+	const columns = useMemo(() => {
+		return [
+			columnHelper.accessor("created_on", {
+				header: "Created",
+				size: 120,
+				cell: (info) => (
 					<Typography>{renderDateTime(info.getValue())}</Typography>
-				</TableCellSmall>
-			),
-		}),
-		columnHelper.accessor("persona_name", {
-			header: "Name",
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{info.getValue()}</Typography>
-				</TableCellSmall>
-			),
-		}),
-		columnHelper.accessor("ip_addr", {
-			header: "IP Address",
-			size: 120,
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{info.getValue()}</Typography>
-				</TableCellSmall>
-			),
-		}),
-		columnHelper.accessor("server_id", {
-			header: "Server",
-			size: 120,
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>{connections.data[info.row.index].server_name_short}</Typography>
-				</TableCellSmall>
-			),
-		}),
-	];
+				),
+			}),
+			columnHelper.accessor("persona_name", {
+				header: "Name",
+				cell: (info) => <Typography>{info.getValue()}</Typography>,
+			}),
+			columnHelper.accessor("ip_addr", {
+				header: "IP Address",
+				size: 120,
+				cell: (info) => <Typography>{info.getValue()}</Typography>,
+			}),
+			columnHelper.accessor("server_id", {
+				header: "Server",
+				size: 120,
+				cell: (info) => (
+					<Typography>
+						{connections.data[info.row.index].server_name_short}
+					</Typography>
+				),
+			}),
+		];
+	}, [connections.data]);
 
 	const opts: TableOptions<PersonConnection> = {
 		data: connections.data,

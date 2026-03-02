@@ -15,8 +15,8 @@ import { apiGetNewsAll, apiNewsDelete } from "../api/news.ts";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { NewsEditModal } from "../component/modal/NewsEditModal.tsx";
+import { BoolCell } from "../component/table/BoolCell.tsx";
 import { FullTable } from "../component/table/FullTable.tsx";
-import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { NewsEntry } from "../schema/news.ts";
@@ -24,7 +24,9 @@ import { commonTableSearchSchema, initPagination } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
 
 const newsSchema = commonTableSearchSchema.extend({
-	sortColumn: z.enum(["news_id", "title", "created_on", "updated_on"]).optional(),
+	sortColumn: z
+		.enum(["news_id", "title", "created_on", "updated_on"])
+		.optional(),
 	published: z.boolean().optional(),
 });
 
@@ -41,7 +43,10 @@ export const Route = createFileRoute("/_mod/admin/news")({
 		return { news };
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "News Management" }, match.context.title("News")],
+		meta: [
+			{ name: "description", content: "News Management" },
+			match.context.title("News"),
+		],
 	}),
 });
 
@@ -49,7 +54,9 @@ function AdminNews() {
 	const search = Route.useSearch();
 	const queryClient = useQueryClient();
 	const { news } = Route.useLoaderData();
-	const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
+	const [pagination, setPagination] = useState(
+		initPagination(search.pageIndex, search.pageSize),
+	);
 	const [sorting] = useState<SortingState>([{ id: "news_id", desc: true }]);
 
 	const { sendFlash, sendError } = useUserFlashCtx();
@@ -105,7 +112,9 @@ function AdminNews() {
 				})) as NewsEntry;
 				queryClient.setQueryData(
 					["newsList"],
-					news?.map((e) => (e.news_id === editedEntry.news_id ? editedEntry : e)),
+					news?.map((e) =>
+						e.news_id === editedEntry.news_id ? editedEntry : e,
+					),
 				);
 				sendFlash("success", `Entry updated successfully`);
 			} catch (e) {
@@ -132,14 +141,18 @@ function AdminNews() {
 				header: "Created",
 				size: 120,
 				cell: (info) => {
-					return <TableCellString>{renderDateTime(info.getValue())}</TableCellString>;
+					return (
+						<TableCellString>{renderDateTime(info.getValue())}</TableCellString>
+					);
 				},
 			}),
 			columnHelper.accessor("updated_on", {
 				header: "Updated",
 				size: 120,
 				cell: (info) => {
-					return <TableCellString>{renderDateTime(info.getValue())}</TableCellString>;
+					return (
+						<TableCellString>{renderDateTime(info.getValue())}</TableCellString>
+					);
 				},
 			}),
 			columnHelper.accessor("is_published", {
@@ -147,7 +160,7 @@ function AdminNews() {
 				header: "Pub",
 				size: 30,
 				cell: (info) => {
-					return <TableCellBool enabled={info.getValue()} />;
+					return <BoolCell enabled={info.getValue()} />;
 				},
 			}),
 			columnHelper.display({

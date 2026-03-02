@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/noChildrenProp: form */
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -28,8 +29,8 @@ import { BanModal } from "../component/modal/BanModal.tsx";
 import { UnbanModal } from "../component/modal/UnbanModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
+import { BoolCell } from "../component/table/BoolCell.tsx";
 import { FullTable } from "../component/table/FullTable.tsx";
-import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
@@ -43,7 +44,12 @@ import {
 	banReasonsCollection,
 } from "../schema/bans.ts";
 import { schemaBanQueryOpts } from "../schema/query.ts";
-import { initColumnFilter, initPagination, isPermanentBan, RowsPerPage } from "../util/table.ts";
+import {
+	initColumnFilter,
+	initPagination,
+	isPermanentBan,
+	RowsPerPage,
+} from "../util/table.ts";
 import { renderDate } from "../util/time.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
@@ -51,7 +57,16 @@ const searchSchema = z.object({
 	pageIndex: z.number().optional().catch(0),
 	pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
 	sortOrder: z.enum(["desc", "asc"]).optional().catch("desc"),
-	sortColumn: z.enum(["ban_id", "source_id", "target_id", "reason", "created_on", "updated_on"]).optional(),
+	sortColumn: z
+		.enum([
+			"ban_id",
+			"source_id",
+			"target_id",
+			"reason",
+			"created_on",
+			"updated_on",
+		])
+		.optional(),
 	source_id: z.string().optional(),
 	target_id: z.string().optional(),
 	appeal_state: AppealStateEnum.optional(),
@@ -78,7 +93,10 @@ export const Route = createFileRoute("/_mod/admin/bans")({
 		return { bans };
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Bans" }, match.context.title("Bans")],
+		meta: [
+			{ name: "description", content: "Bans" },
+			match.context.title("Bans"),
+		],
 	}),
 });
 
@@ -87,9 +105,13 @@ function AdminBans() {
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
 	const { bans } = Route.useLoaderData();
-	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
+	const [pagination, setPagination] = useState<PaginationState>(
+		initPagination(search.pageIndex, search.pageSize),
+	);
 	const [sorting] = useState<SortingState>([{ id: "ban_id", desc: true }]);
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
+	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
+		initColumnFilter(search),
+	);
 	const { sendFlash } = useUserFlashCtx();
 
 	const onNewBanSteam = async () => {
@@ -209,7 +231,11 @@ function AdminBans() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
+				<ContainerWithHeader
+					title={"Filters"}
+					iconLeft={<FilterListIcon />}
+					marginTop={2}
+				>
 					<form
 						onSubmit={async (e) => {
 							e.preventDefault();
@@ -294,7 +320,9 @@ function AdminBans() {
 								<form.AppField
 									name={"deleted"}
 									children={(field) => {
-										return <field.CheckboxField label={"Show deleted/expired"} />;
+										return (
+											<field.CheckboxField label={"Show deleted/expired"} />
+										);
 									}}
 								/>
 							</Grid>
@@ -352,13 +380,19 @@ function AdminBans() {
 
 const columnHelper = createColumnHelper<BanRecord>();
 
-const makeColumns = (onEdit: (ban: BanRecord) => Promise<void>, onUnban: (ban: BanRecord) => Promise<void>) => [
+const makeColumns = (
+	onEdit: (ban: BanRecord) => Promise<void>,
+	onUnban: (ban: BanRecord) => Promise<void>,
+) => [
 	columnHelper.accessor("ban_id", {
 		enableColumnFilter: false,
 		size: 50,
 		header: "Ban ID",
 		cell: (info) => (
-			<TextLink to={`/ban/$ban_id`} params={{ ban_id: String(info.getValue()) }}>
+			<TextLink
+				to={`/ban/$ban_id`}
+				params={{ ban_id: String(info.getValue()) }}
+			>
 				{`#${info.getValue()}`}
 			</TextLink>
 		),
@@ -405,15 +439,21 @@ const makeColumns = (onEdit: (ban: BanRecord) => Promise<void>, onUnban: (ban: B
 		enableColumnFilter: true,
 		size: 150,
 		filterFn: (row, _, filterValue) => {
-			return filterValue === BanReason.Any || row.original.reason === filterValue;
+			return (
+				filterValue === BanReason.Any || row.original.reason === filterValue
+			);
 		},
 		header: "Reason",
-		cell: (info) => <Typography>{BanReasons[info.getValue() as BanReasonEnum]}</Typography>,
+		cell: (info) => (
+			<Typography>{BanReasons[info.getValue() as BanReasonEnum]}</Typography>
+		),
 	}),
 	columnHelper.accessor("created_on", {
 		header: "Created",
 		size: 100,
-		cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>,
+		cell: (info) => (
+			<Typography>{renderDate(info.getValue() as Date)}</Typography>
+		),
 	}),
 	columnHelper.accessor("valid_until", {
 		header: "Duration",
@@ -421,7 +461,10 @@ const makeColumns = (onEdit: (ban: BanRecord) => Promise<void>, onUnban: (ban: B
 		cell: (info) => {
 			return typeof info.row.original === "undefined" ? (
 				""
-			) : isPermanentBan(info.row.original.created_on, info.row.original.valid_until) ? (
+			) : isPermanentBan(
+					info.row.original.created_on,
+					info.row.original.valid_until,
+				) ? (
 				"Permanent"
 			) : (
 				<TableCellRelativeDateField
@@ -433,11 +476,12 @@ const makeColumns = (onEdit: (ban: BanRecord) => Promise<void>, onUnban: (ban: B
 	}),
 	columnHelper.accessor("evade_ok", {
 		meta: {
-			tooltip: "Evasion OK. Players connecting from the same ip will not be banned.",
+			tooltip:
+				"Evasion OK. Players connecting from the same ip will not be banned.",
 		},
 		size: 30,
 		header: "E",
-		cell: (info) => <TableCellBool enabled={info.getValue()} />,
+		cell: (info) => <BoolCell enabled={info.getValue()} />,
 	}),
 	columnHelper.accessor("deleted", {
 		size: 30,
@@ -446,7 +490,7 @@ const makeColumns = (onEdit: (ban: BanRecord) => Promise<void>, onUnban: (ban: B
 			return filterValue ? true : !row.original.deleted;
 		},
 		header: "D",
-		cell: (info) => <TableCellBool enabled={info.getValue()} />,
+		cell: (info) => <BoolCell enabled={info.getValue()} />,
 	}),
 	columnHelper.accessor("report_id", {
 		header: "Rep.",
@@ -454,7 +498,10 @@ const makeColumns = (onEdit: (ban: BanRecord) => Promise<void>, onUnban: (ban: B
 		meta: { tooltip: "Linked report" },
 		cell: (info) =>
 			Boolean(info.getValue()) && (
-				<TextLink to={`/report/$reportId`} params={{ reportId: String(info.getValue()) }}>
+				<TextLink
+					to={`/report/$reportId`}
+					params={{ reportId: String(info.getValue()) }}
+				>
 					{`#${info.getValue()}`}
 				</TextLink>
 			),

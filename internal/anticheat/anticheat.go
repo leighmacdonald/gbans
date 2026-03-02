@@ -105,7 +105,7 @@ func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager,
 		}
 
 		for _, file := range filelist {
-			if !strings.HasSuffix(file.Name(), ".log") {
+			if !strings.HasSuffix(file.Name(), ".log") || time.Since(file.ModTime()) < time.Hour*26 {
 				continue
 			}
 
@@ -127,7 +127,15 @@ func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager,
 				}
 			}
 
-			_ = reader.Close()
+			if errClose := reader.Close(); errClose != nil {
+				slog.Error("Failed to close stac log", slog.String("error", errClose.Error()), slog.String("path", logPath))
+			}
+
+			if err := client.Delete(ctx, logPath); err != nil {
+				slog.Error("Failed to delete stac log", slog.String("error", err.Error()), slog.String("path", logPath))
+			}
+
+			slog.Debug("Removed stac log", slog.String("path", logPath))
 		}
 	}
 
@@ -225,15 +233,22 @@ func (a AntiCheat) Import(ctx context.Context, fileName string, reader io.ReadCl
 		return nil, nil
 	}
 
+	var valid []logparse.StacEntry
 	for i := range entries {
 		entries[i].ServerID = serverID
+		if err := a.persons.EnsurePerson(ctx, entries[i].SteamID); err != nil {
+			slog.Error("Failed to ensure stac person exists", slog.String("error", err.Error()))
+
+			continue
+		}
+		valid = append(valid, entries[i])
 	}
 
-	if err := a.repo.SaveEntries(ctx, entries); err != nil {
+	if err := a.repo.SaveEntries(ctx, valid); err != nil {
 		return nil, err
 	}
 
-	return entries, nil
+	return valid, nil
 }
 
 func (a AntiCheat) SyncDemoIDs(ctx context.Context, limit uint64) error {

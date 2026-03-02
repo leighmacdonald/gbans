@@ -38,12 +38,16 @@ import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { IndeterminateCheckbox } from "../component/IndeterminateCheckbox.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
+import { BoolCell } from "../component/table/BoolCell.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
-import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { NotificationSeverity, type NotificationSeverityEnum, type UserNotification } from "../schema/people.ts";
+import {
+	NotificationSeverity,
+	type NotificationSeverityEnum,
+	type UserNotification,
+} from "../schema/people.ts";
 import { RowsPerPage } from "../util/table.ts";
 
 export const Route = createFileRoute("/_auth/notifications")({
@@ -58,7 +62,10 @@ export const Route = createFileRoute("/_auth/notifications")({
 		return { notifications };
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "User Notifications" }, match.context.title("Notifications")],
+		meta: [
+			{ name: "description", content: "User Notifications" },
+			match.context.title("Notifications"),
+		],
 	}),
 });
 
@@ -81,7 +88,9 @@ function NotificationsPage() {
 			return [];
 		}
 
-		return Object.keys(rowSelection).map((s) => notifications[Number(s)].person_notification_id);
+		return Object.keys(rowSelection).map(
+			(s) => notifications[Number(s)].person_notification_id,
+		);
 	}, [notifications, rowSelection]);
 
 	const onMarkAllRead = useMutation({
@@ -90,12 +99,18 @@ function NotificationsPage() {
 			await apiNotificationsMarkAllRead();
 		},
 		onSuccess: () => {
-			queryClient.setQueryData(["notifications"], (prev: UserNotification[]) => {
-				return prev?.map((n) => {
-					return { ...n, read: true };
-				});
-			});
-			sendFlash("success", `Successfully marked ${notifications?.length} as read`);
+			queryClient.setQueryData(
+				["notifications"],
+				(prev: UserNotification[]) => {
+					return prev?.map((n) => {
+						return { ...n, read: true };
+					});
+				},
+			);
+			sendFlash(
+				"success",
+				`Successfully marked ${notifications?.length} as read`,
+			);
 			setRowSelection({});
 		},
 		onError: sendError,
@@ -107,11 +122,16 @@ function NotificationsPage() {
 			await apiNotificationsMarkRead(selectedIds);
 		},
 		onSuccess: (_, ids) => {
-			queryClient.setQueryData(["notifications"], (prev: UserNotification[]) => {
-				return prev?.map((n) => {
-					return ids.includes(n.person_notification_id) ? { ...n, read: true } : n;
-				});
-			});
+			queryClient.setQueryData(
+				["notifications"],
+				(prev: UserNotification[]) => {
+					return prev?.map((n) => {
+						return ids.includes(n.person_notification_id)
+							? { ...n, read: true }
+							: n;
+					});
+				},
+			);
 			sendFlash("success", `Successfully marked ${ids?.length} as read`);
 			setRowSelection({});
 		},
@@ -125,7 +145,10 @@ function NotificationsPage() {
 		},
 		onSuccess: () => {
 			queryClient.setQueryData(["notifications"], []);
-			sendFlash("success", `Successfully deleted ${notifications?.length} messages`);
+			sendFlash(
+				"success",
+				`Successfully deleted ${notifications?.length} messages`,
+			);
 			setRowSelection({});
 		},
 		onError: sendError,
@@ -137,11 +160,14 @@ function NotificationsPage() {
 			await apiNotificationsDelete(selectedIds);
 		},
 		onSuccess: (_, ids) => {
-			queryClient.setQueryData(["notifications"], (prev: UserNotification[]) => {
-				return prev?.filter((n) => {
-					return !ids.includes(n.person_notification_id);
-				});
-			});
+			queryClient.setQueryData(
+				["notifications"],
+				(prev: UserNotification[]) => {
+					return prev?.filter((n) => {
+						return !ids.includes(n.person_notification_id);
+					});
+				},
+			);
 			sendFlash("success", `Successfully deleted ${ids?.length} messages`);
 			setRowSelection({});
 		},
@@ -329,16 +355,30 @@ function NotificationsPage() {
 	);
 }
 
-const TableCellSeverity = ({ severity }: { severity: NotificationSeverityEnum }) => {
+const TableCellSeverity = ({
+	severity,
+}: {
+	severity: NotificationSeverityEnum;
+}) => {
 	const theme = useTheme();
 
 	switch (severity) {
 		case NotificationSeverity.SeverityError:
-			return <Typography style={{ color: theme.palette.error.main }}>ERROR</Typography>;
+			return (
+				<Typography style={{ color: theme.palette.error.main }}>
+					ERROR
+				</Typography>
+			);
 		case NotificationSeverity.SeverityWarn:
-			return <Typography style={{ color: theme.palette.warning.main }}>WARN</Typography>;
+			return (
+				<Typography style={{ color: theme.palette.warning.main }}>
+					WARN
+				</Typography>
+			);
 		default:
-			return <Typography style={{ color: theme.palette.info.main }}>INFO</Typography>;
+			return (
+				<Typography style={{ color: theme.palette.info.main }}>INFO</Typography>
+			);
 	}
 };
 
@@ -388,27 +428,38 @@ const NotificationsTable = ({
 			{
 				accessorKey: "read",
 				header: () => <MarkChatReadIcon />,
-				cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />,
+				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
 				size: 30,
 				enableResizing: false,
 			},
 			{
 				accessorKey: "created_on",
 				header: () => "Created",
-				cell: (info) => <TableCellRelativeDateField date={info.row.original.created_on} suffix={true} />,
+				cell: (info) => (
+					<TableCellRelativeDateField
+						date={info.row.original.created_on}
+						suffix={true}
+					/>
+				),
 				size: 125,
 				enableResizing: false,
 			},
 			{
 				accessorKey: "severity",
 				header: () => "level",
-				cell: (info) => <TableCellSeverity severity={info.getValue() as NotificationSeverityEnum} />,
+				cell: (info) => (
+					<TableCellSeverity
+						severity={info.getValue() as NotificationSeverityEnum}
+					/>
+				),
 				size: 55,
 				enableResizing: false,
 			},
 			{
 				accessorKey: "message",
-				cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>{info.getValue() as string}</TableCellString>
+				),
 			},
 			{
 				accessorKey: "author",

@@ -525,7 +525,7 @@ func (s *Server) updateState(ctx context.Context) {
 	if time.Since(lastA2SUpdate) > time.Second*60 {
 		waitGroup.Go(func() {
 			if err := s.updateA2S(); err != nil {
-				slog.Error("Failed to update a2s", slog.String("error", err.Error()),
+				slog.Debug("Failed to update a2s", slog.String("error", err.Error()),
 					slog.String("server", s.ShortName))
 
 				return
