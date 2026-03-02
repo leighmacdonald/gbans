@@ -37,10 +37,9 @@ func (r *DemoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]Demo
 	rows, errRow := r.QueryBuilder(ctx, r.Builder().
 		Select("d.demo_id", "d.title", "d.asset_id").
 		From("demo d").
-		LeftJoin("report r on d.demo_id = r.demo_id").
-		Where("d.archive = false").
-		OrderBy("d.demo_id").
-		Limit(limit))
+		Where(sq.Eq{"d.archive": false}).
+		OrderBy("d.demo_id DESC").
+		Offset(limit))
 	if errRow != nil {
 		return nil, database.DBErr(errRow)
 	}
