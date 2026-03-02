@@ -755,6 +755,9 @@ func downloadManager(ctx context.Context, store database.Database, conf scp.Conf
 	for {
 		select {
 		case <-ticker.C:
+			if !conf.Enabled {
+				return
+			}
 			knownServers, errServers := repo.Servers(ctx)
 			if errServers != nil {
 				if errors.Is(errServers, database.ErrNoResult) {
