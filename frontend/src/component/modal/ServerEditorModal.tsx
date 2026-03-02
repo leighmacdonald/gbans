@@ -165,7 +165,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 							<form.AppField
 								name={"port"}
 								children={(field) => {
-									return <field.TextField label={"Port"} />;
+									return <field.NumberField label={"Port"} min={1024} max={65535} />;
 								}}
 							/>
 						</Grid>
