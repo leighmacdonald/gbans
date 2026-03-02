@@ -19,11 +19,14 @@ import { apiContests } from "../api";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { ContestEditor } from "../component/modal/ContestEditor.tsx";
+import { BoolCell } from "../component/table/BoolCell.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
-import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import type { Contest } from "../schema/contest.ts";
-import { type PermissionLevelEnum, permissionLevelString } from "../schema/people.ts";
+import {
+	type PermissionLevelEnum,
+	permissionLevelString,
+} from "../schema/people.ts";
 import { logErr } from "../util/errors.ts";
 import { commonTableSearchSchema, initPagination } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
@@ -46,14 +49,19 @@ export const Route = createFileRoute("/_mod/admin/contests")({
 		return { contests };
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Contests" }, match.context.title("Contests")],
+		meta: [
+			{ name: "description", content: "Contests" },
+			match.context.title("Contests"),
+		],
 	}),
 });
 
 function AdminContests() {
 	const search = Route.useSearch();
 	const { contests } = Route.useLoaderData();
-	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
+	const [pagination, setPagination] = useState<PaginationState>(
+		initPagination(search.pageIndex, search.pageSize),
+	);
 
 	const onEditContest = useCallback(async (contest?: Contest) => {
 		try {
@@ -139,28 +147,30 @@ const ContestTable = ({
 				accessorKey: "title",
 				header: "Title",
 				size: 200,
-				cell: (info) => <TableCellString>{String(info.getValue())}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>{String(info.getValue())}</TableCellString>
+				),
 			},
 			{
 				accessorKey: "public",
 				meta: { tooltip: "Is this visible to regular users" },
 				header: "Public",
 				size: 30,
-				cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />,
+				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
 			},
 			{
 				accessorKey: "hide_submissions",
 				meta: { tooltip: "Are submissions hidden from public" },
 				header: "Hide Sub.",
 				size: 70,
-				cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />,
+				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
 			},
 			{
 				accessorKey: "voting",
 				meta: { tooltip: "Is voting enabled on submissions" },
 				header: "Voting",
 				size: 70,
-				cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />,
+				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
 			},
 			{
 				accessorKey: "down_votes",
@@ -169,14 +179,16 @@ const ContestTable = ({
 				},
 				header: "Down Votes",
 				size: 110,
-				cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />,
+				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
 			},
 			{
 				accessorKey: "max_submissions",
 				meta: { tooltip: "Max number of submissions a single user can make" },
 				header: "Max Subs.",
 				size: 100,
-				cell: (info) => <TableCellString>{String(info.getValue())}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>{String(info.getValue())}</TableCellString>
+				),
 			},
 			{
 				accessorKey: "min_permission_level",
@@ -184,7 +196,9 @@ const ContestTable = ({
 				header: "Min. Perms",
 				size: 100,
 				cell: (info) => (
-					<TableCellString>{permissionLevelString(info.getValue() as PermissionLevelEnum)}</TableCellString>
+					<TableCellString>
+						{permissionLevelString(info.getValue() as PermissionLevelEnum)}
+					</TableCellString>
 				),
 			},
 			{
@@ -192,27 +206,42 @@ const ContestTable = ({
 				meta: { tooltip: "Start date" },
 				header: "Starts",
 				size: 150,
-				cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>
+						{renderDateTime(info.getValue() as Date)}
+					</TableCellString>
+				),
 			},
 			{
 				accessorKey: "date_end",
 				meta: { tooltip: "End date" },
 				header: "Ends",
 				size: 150,
-				cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>
+						{renderDateTime(info.getValue() as Date)}
+					</TableCellString>
+				),
 			},
 			{
 				accessorKey: "updated_on",
 				header: "Updated",
 				size: 150,
-				cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>
+						{renderDateTime(info.getValue() as Date)}
+					</TableCellString>
+				),
 			},
 			{
 				id: "actions",
 				size: 30,
 				cell: (info) => {
 					return (
-						<IconButton color={"warning"} onClick={() => onEdit(info.row.original)}>
+						<IconButton
+							color={"warning"}
+							onClick={() => onEdit(info.row.original)}
+						>
 							<EditIcon />
 						</IconButton>
 					);

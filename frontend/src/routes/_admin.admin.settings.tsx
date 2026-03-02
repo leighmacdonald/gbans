@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
 import AddModeratorIcon from "@mui/icons-material/AddModerator";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
@@ -87,7 +88,10 @@ export const Route = createFileRoute("/_admin/admin/settings")({
 		return { settings };
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Edit Core System Settings" }, match.context.title("System Settings")],
+		meta: [
+			{ name: "description", content: "Edit Core System Settings" },
+			match.context.title("System Settings"),
+		],
 	}),
 });
 
@@ -145,7 +149,10 @@ function AdminSettings() {
 	);
 
 	return (
-		<ContainerWithHeaderAndButtons title={"System Settings"} iconLeft={<DeveloperBoardIcon />}>
+		<ContainerWithHeaderAndButtons
+			title={"System Settings"}
+			iconLeft={<DeveloperBoardIcon />}
+		>
 			<Grid container spacing={2}>
 				<Grid size={{ xs: 4, sm: 3, md: 2 }} padding={0}>
 					<Stack spacing={1} padding={2}>
@@ -219,7 +226,13 @@ function AdminSettings() {
 							currentTab={tab}
 							label={"Anticheat"}
 						/>
-						<TabButton tab={"ssh"} onClick={onTabClick} icon={<LanIcon />} currentTab={tab} label={"SSH"} />
+						<TabButton
+							tab={"ssh"}
+							onClick={onTabClick}
+							icon={<LanIcon />}
+							currentTab={tab}
+							label={"SSH"}
+						/>
 						<TabButton
 							tab={"patreon"}
 							onClick={onTabClick}
@@ -240,25 +253,73 @@ function AdminSettings() {
 						</Typography>
 					</Stack>
 				</Grid>
-				<GeneralSection tab={tab} settings={settings} mutate={mutation.mutate} />
-				<FiltersSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<GeneralSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+				/>
+				<FiltersSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+				/>
 				<DemosSection tab={tab} settings={settings} mutate={mutation.mutate} />
-				<PatreonSection tab={tab} settings={settings} mutate={mutation.mutate} />
-				<DiscordSection tab={tab} settings={settings} mutate={mutation.mutate} />
-				<LoggingSection tab={tab} settings={settings} mutate={mutation.mutate} />
-				<GeoLocationSection tab={tab} settings={settings} mutate={mutation.mutate} />
-				<LocalStoreSection tab={tab} settings={settings} mutate={mutation.mutate} />
-				<NetworkSection tab={tab} settings={settings} mutate={mutation.mutate} />
-				<AnticheatSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<PatreonSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+				/>
+				<DiscordSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+				/>
+				<LoggingSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+				/>
+				<GeoLocationSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+				/>
+				<LocalStoreSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+				/>
+				<NetworkSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+				/>
+				<AnticheatSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+				/>
 				<SSHSection tab={tab} settings={settings} mutate={mutation.mutate} />
-				<ExportsSection tab={tab} settings={settings} mutate={mutation.mutate} />
+				<ExportsSection
+					tab={tab}
+					settings={settings}
+					mutate={mutation.mutate}
+				/>
 				<DebugSection tab={tab} settings={settings} mutate={mutation.mutate} />
 			</Grid>
 		</ContainerWithHeaderAndButtons>
 	);
 }
 
-const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const GeneralSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaGeneral> = settings.general;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -272,7 +333,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
 	const onSuccess = useCallback(
 		async (asset: Asset) => {
-			console.log("asd");
 			form.setFieldValue("favicon", asset.asset_id);
 		},
 		[form],
@@ -306,8 +366,8 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 				<ConfigContainer>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							This name is displayed in various places throughout the app such as the title bar and site
-							heading. It should be short and simple.
+							This name is displayed in various places throughout the app such
+							as the title bar and site heading. It should be short and simple.
 						</SubHeading>
 						<form.AppField
 							name={"site_name"}
@@ -340,19 +400,24 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>If you have an asset under a different subdir you should change this.</SubHeading>
+						<SubHeading>
+							If you have an asset under a different subdir you should change
+							this.
+						</SubHeading>
 						<form.AppField
 							name={"asset_url"}
 							children={(field) => {
-								return <field.TextField label={"URL path pointing to assets"} />;
+								return (
+									<field.TextField label={"URL path pointing to assets"} />
+								);
 							}}
 						/>
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							What address to listen for UDP log events. host:port format. If host is empty, it will
-							listen on all available hosts.
+							What address to listen for UDP log events. host:port format. If
+							host is empty, it will listen on all available hosts.
 						</SubHeading>
 						<form.AppField
 							name={"srcds_log_addr"}
@@ -386,7 +451,8 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Sets the default page to load when a user opens the root url <kbd>example.com/</kbd>.
+							Sets the default page to load when a user opens the root url{" "}
+							<kbd>example.com/</kbd>.
 						</SubHeading>
 						<form.AppField
 							name={"default_route"}
@@ -418,8 +484,8 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Enable contests in which users can participate. Users can submit entries and users can vote
-							on them.
+							Enable contests in which users can participate. Users can submit
+							entries and users can vote on them.
 						</SubHeading>
 						<form.AppField
 							name={"contests_enabled"}
@@ -431,7 +497,8 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Enables a wiki section which is editable by moderators, and viewable by the public.
+							Enables a wiki section which is editable by moderators, and
+							viewable by the public.
 						</SubHeading>
 						<form.AppField
 							name={"wiki_enabled"}
@@ -445,7 +512,9 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"demos_enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable Demo/STV Support"} />;
+								return (
+									<field.CheckboxField label={"Enable Demo/STV Support"} />
+								);
 							}}
 						/>
 					</Grid>
@@ -461,7 +530,8 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Enables the server status page showing the current map and player counts.
+							Enables the server status page showing the current map and player
+							counts.
 						</SubHeading>
 						<form.AppField
 							name={"servers_enabled"}
@@ -492,22 +562,29 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>Enables the 1000 uncles speedruns tracking support.</SubHeading>
+						<SubHeading>
+							Enables the 1000 uncles speedruns tracking support.
+						</SubHeading>
 						<form.AppField
 							name={"speedruns_enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable Speedruns support"} />;
+								return (
+									<field.CheckboxField label={"Enable Speedruns support"} />
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Enables the functionality allowing players to queue up together using the website.
+							Enables the functionality allowing players to queue up together
+							using the website.
 						</SubHeading>
 						<form.AppField
 							name={"playerqueue_enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable Playerqueue support"} />;
+								return (
+									<field.CheckboxField label={"Enable Playerqueue support"} />
+								);
 							}}
 						/>
 					</Grid>
@@ -525,7 +602,15 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 	);
 };
 
-const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const AnticheatSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaAnticheat> = settings.anticheat;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -554,7 +639,12 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 	});
 
 	return (
-		<TabSection tab={"anticheat"} currentTab={tab} label={"Anticheat"} description={"Stac configuration"}>
+		<TabSection
+			tab={"anticheat"}
+			currentTab={tab}
+			label={"Anticheat"}
+			description={"Stac configuration"}
+		>
 			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
@@ -571,7 +661,11 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable anticheat log downloading & features"} />;
+								return (
+									<field.CheckboxField
+										label={"Enable anticheat log downloading & features"}
+									/>
+								);
 							}}
 						/>
 					</Grid>
@@ -627,7 +721,9 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>Maximum number of consectutive perfect bhop detections</SubHeading>
+						<SubHeading>
+							Maximum number of consectutive perfect bhop detections
+						</SubHeading>
 						<form.AppField
 							name={"max_bhop"}
 							children={(field) => {
@@ -654,7 +750,9 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>Maximum number of connections from the same ip.</SubHeading>
+						<SubHeading>
+							Maximum number of connections from the same ip.
+						</SubHeading>
 						<form.AppField
 							name={"max_too_many_connections"}
 							children={(field) => {
@@ -703,7 +801,15 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 	);
 };
 
-const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const NetworkSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaNetwork> = settings.network;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -733,7 +839,8 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					<Grid size={{ xs: 12 }}>
 						<Typography variant={"h3"}>Steam Datagram Relay</Typography>
 						<Typography variant={"body1"}>
-							Steam Datagram Relay (SDR) is Valve's virtual private gaming network.
+							Steam Datagram Relay (SDR) is Valve's virtual private gaming
+							network.
 						</Typography>
 					</Grid>
 
@@ -757,8 +864,8 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					<Grid size={{ xs: 12 }}>
 						<Typography variant={"h3"}>Cloudflare</Typography>
 						<Typography variant={"body1"}>
-							Current cloudflare is the only supported DNS provider. If you want to see others added, feel
-							free to open a GitHub issue.
+							Current cloudflare is the only supported DNS provider. If you want
+							to see others added, feel free to open a GitHub issue.
 						</Typography>
 					</Grid>
 
@@ -822,7 +929,15 @@ const schemaFiltersFIXME = schemaFilters.extend({
 	match_timeout: z.string(),
 });
 
-const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const FiltersSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaFiltersFIXME> = {
 		...settings.filters,
 		warning_timeout: String(settings.filters.warning_limit),
@@ -879,29 +994,43 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>If a user gets a warning, it will expire after this duration of time.</SubHeading>
+						<SubHeading>
+							If a user gets a warning, it will expire after this duration of
+							time.
+						</SubHeading>
 						<form.AppField
 							name={"warning_timeout"}
 							children={(field) => {
-								return <field.TextField label={"How long until a warning expires (seconds)"} />;
+								return (
+									<field.TextField
+										label={"How long until a warning expires (seconds)"}
+									/>
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						{" "}
 						<SubHeading>
-							A hard limit to the number of warnings a user can receive before action is taken.
+							A hard limit to the number of warnings a user can receive before
+							action is taken.
 						</SubHeading>
 						<form.AppField
 							name={"warning_limit"}
 							children={(field) => {
-								return <field.TextField label={"Maximum number of warnings allowed"} />;
+								return (
+									<field.TextField
+										label={"Maximum number of warnings allowed"}
+									/>
+								);
 							}}
 						/>
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>Run the chat filters, but do not actually punish users.</SubHeading>
+						<SubHeading>
+							Run the chat filters, but do not actually punish users.
+						</SubHeading>
 						<form.AppField
 							name={"dry"}
 							children={(field) => {
@@ -910,18 +1039,25 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>If discord is enabled, send filter match notices to the log channel.</SubHeading>
+						<SubHeading>
+							If discord is enabled, send filter match notices to the log
+							channel.
+						</SubHeading>
 						<form.AppField
 							name={"ping_discord"}
 							children={(field) => {
-								return <field.CheckboxField label={"Send discord notices on match"} />;
+								return (
+									<field.CheckboxField
+										label={"Send discord notices on match"}
+									/>
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							When the sum of warning weights issued to a user is greater than this value, take action
-							against the user.
+							When the sum of warning weights issued to a user is greater than
+							this value, take action against the user.
 						</SubHeading>
 						<form.AppField
 							name={"max_weight"}
@@ -931,7 +1067,9 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>How frequent warnings will be checked for users exceeding limits.</SubHeading>
+						<SubHeading>
+							How frequent warnings will be checked for users exceeding limits.
+						</SubHeading>
 						<form.AppField
 							name={"check_timeout"}
 							children={(field) => {
@@ -941,7 +1079,10 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>How long it takes for a users warning to expire after being matched.</SubHeading>
+						<SubHeading>
+							How long it takes for a users warning to expire after being
+							matched.
+						</SubHeading>
 						<form.AppField
 							name={"match_timeout"}
 							children={(field) => {
@@ -964,7 +1105,15 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 	);
 };
 
-const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const DemosSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaDemos> = settings.demo;
 	const queryClient = useQueryClient();
 	const { sendFlash } = useUserFlashCtx();
@@ -1019,17 +1168,24 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Enable automatic deletion of demos. This ignores demos that have been marked as archived.
+							Enable automatic deletion of demos. This ignores demos that have
+							been marked as archived.
 						</SubHeading>
 						<form.AppField
 							name={"demo_cleanup_enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable Scheduled Demo Cleanup"} />;
+								return (
+									<field.CheckboxField
+										label={"Enable Scheduled Demo Cleanup"}
+									/>
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>Method used to determine what demos to delete.</SubHeading>
+						<SubHeading>
+							Method used to determine what demos to delete.
+						</SubHeading>
 						<form.AppField
 							name={"demo_cleanup_strategy"}
 							children={(field) => {
@@ -1051,47 +1207,64 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							When using the percent free strategy, defined how much free space should be retained on the
-							demo mount/volume.
+							When using the percent free strategy, defined how much free space
+							should be retained on the demo mount/volume.
 						</SubHeading>
 						<form.AppField
 							name={"demo_cleanup_min_pct"}
 							children={(field) => {
-								return <field.TextField label={"Minimum percent free space to retain"} />;
+								return (
+									<field.TextField
+										label={"Minimum percent free space to retain"}
+									/>
+								);
 							}}
 						/>
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>The mount point that demos are stored. Used to determine free space.</SubHeading>
+						<SubHeading>
+							The mount point that demos are stored. Used to determine free
+							space.
+						</SubHeading>
 						<form.AppField
 							name={"demo_cleanup_mount"}
 							children={(field) => {
-								return <field.TextField label={"Mount point to check for free space"} />;
+								return (
+									<field.TextField
+										label={"Mount point to check for free space"}
+									/>
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							When using the count deletion strategy, this is the maximum number of demos to keep.
+							When using the count deletion strategy, this is the maximum number
+							of demos to keep.
 						</SubHeading>
 						<form.AppField
 							name={"demo_count_limit"}
 							children={(field) => {
-								return <field.TextField label={"Max amount of demos to keep"} />;
+								return (
+									<field.TextField label={"Max amount of demos to keep"} />
+								);
 							}}
 						/>
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							This url should point to an instance of https://github.com/leighmacdonald/tf2_demostats.
-							This is used to pull stats & player steamids out of demos that are fetched.
+							This url should point to an instance of
+							https://github.com/leighmacdonald/tf2_demostats. This is used to
+							pull stats & player steamids out of demos that are fetched.
 						</SubHeading>
 						<form.AppField
 							name={"demo_parser_url"}
 							children={(field) => {
-								return <field.TextField label={"URL for demo parsing submissions"} />;
+								return (
+									<field.TextField label={"URL for demo parsing submissions"} />
+								);
 							}}
 						/>
 					</Grid>
@@ -1110,7 +1283,15 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 	);
 };
 
-const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const PatreonSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaPatreon> = settings.patreon;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -1123,7 +1304,12 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 	});
 
 	return (
-		<TabSection tab={"patreon"} currentTab={tab} label={"Patreon"} description={"Connect to patreon API"}>
+		<TabSection
+			tab={"patreon"}
+			currentTab={tab}
+			label={"Patreon"}
+			description={"Connect to patreon API"}
+		>
 			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
@@ -1137,18 +1323,23 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable Patreon Integration"} />;
+								return (
+									<field.CheckboxField label={"Enable Patreon Integration"} />
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Enables integration into the website. Enables: Donate button, Account Linking.
+							Enables integration into the website. Enables: Donate button,
+							Account Linking.
 						</SubHeading>
 						<form.AppField
 							name={"integrations_enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable website integrations"} />;
+								return (
+									<field.CheckboxField label={"Enable website integrations"} />
+								);
 							}}
 						/>
 					</Grid>
@@ -1204,7 +1395,15 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 	);
 };
 
-const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const DiscordSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaDiscord> = settings.discord;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -1217,7 +1416,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 	});
 
 	return (
-		<TabSection tab={"discord"} currentTab={tab} label={"Discord"} description={"Support for discord bot"}>
+		<TabSection
+			tab={"discord"}
+			currentTab={tab}
+			label={"Discord"}
+			description={"Support for discord bot"}
+		>
 			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
@@ -1231,15 +1435,24 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable discord integration"} />;
+								return (
+									<field.CheckboxField label={"Enable discord integration"} />
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Enabled the discord bot integration. This is self-hosted within the app. You can create a
-							discord application{" "}
-							<Link href={"https://discord.com/developers/applications?new_application=true"}>here</Link>.
+							Enabled the discord bot integration. This is self-hosted within
+							the app. You can create a discord application{" "}
+							<Link
+								href={
+									"https://discord.com/developers/applications?new_application=true"
+								}
+							>
+								here
+							</Link>
+							.
 						</SubHeading>
 						<form.AppField
 							name={"bot_enabled"}
@@ -1250,13 +1463,15 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Enables integrations into the website. Enables: Showing Join Discord button, Account
-							Linking.
+							Enables integrations into the website. Enables: Showing Join
+							Discord button, Account Linking.
 						</SubHeading>
 						<form.AppField
 							name={"integrations_enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable website integrations"} />;
+								return (
+									<field.CheckboxField label={"Enable website integrations"} />
+								);
 							}}
 						/>
 					</Grid>
@@ -1281,8 +1496,9 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							The unique ID for your permanent discord link. This is only the unique string at the end if
-							an invitation url: https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
+							The unique ID for your permanent discord link. This is only the
+							unique string at the end if an invitation url:
+							https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
 						</SubHeading>
 						<form.AppField
 							name={"link_id"}
@@ -1302,8 +1518,9 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							This is the guild id of your discord server. With discoed developer mode enabled,
-							right-click on the server title and select "Copy ID" to get the guild ID.
+							This is the guild id of your discord server. With discoed
+							developer mode enabled, right-click on the server title and select
+							"Copy ID" to get the guild ID.
 						</SubHeading>
 						<form.AppField
 							name={"guild_id"}
@@ -1314,8 +1531,8 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							This should be a private channel. It's the default log channel and is used as the default
-							for other channels if their id is empty.
+							This should be a private channel. It's the default log channel and
+							is used as the default for other channels if their id is empty.
 						</SubHeading>
 						<form.AppField
 							name={"log_channel_id"}
@@ -1328,13 +1545,20 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"public_log_channel_enable"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable public log channel"} />;
+								return (
+									<field.CheckboxField label={"Enable public log channel"} />
+								);
 							}}
 						/>
-						<SubHeading>Whether or not to enable public notices for less sensitive log events.</SubHeading>
+						<SubHeading>
+							Whether or not to enable public notices for less sensitive log
+							events.
+						</SubHeading>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>What role to include when pinging for certain events being sent.</SubHeading>
+						<SubHeading>
+							What role to include when pinging for certain events being sent.
+						</SubHeading>
 						<form.AppField
 							name={"mod_ping_role_id"}
 							children={(field) => {
@@ -1353,21 +1577,24 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							A channel to send match logs to. This can be very large and spammy, so it's generally best
-							to use a separate channel, but not required.
+							A channel to send match logs to. This can be very large and
+							spammy, so it's generally best to use a separate channel, but not
+							required.
 						</SubHeading>
 						<form.AppField
 							name={"public_match_log_channel_id"}
 							children={(field) => {
-								return <field.TextField label={"Public match log channel ID"} />;
+								return (
+									<field.TextField label={"Public match log channel ID"} />
+								);
 							}}
 						/>
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							A channel to send in-game kick voting. This can be very noisy, so it's generally best to use
-							a separate channel, but not required.
+							A channel to send in-game kick voting. This can be very noisy, so
+							it's generally best to use a separate channel, but not required.
 						</SubHeading>
 						<form.AppField
 							name={"vote_log_channel_id"}
@@ -1381,23 +1608,30 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"chat_log_channel_id"}
 							children={(field) => {
-								return <field.TextField label={"In game chat log channel ID"} />;
-							}}
-						/>
-					</Grid>
-					<Grid size={{ xs: 12 }}>
-						<SubHeading>New appeals and appeal messages are shown here.</SubHeading>
-						<form.AppField
-							name={"appeal_log_channel_id"}
-							children={(field) => {
-								return <field.TextField label={"Appeal changelog channel ID"} />;
+								return (
+									<field.TextField label={"In game chat log channel ID"} />
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							A channel to send match logs to. This can be very large and spammy, so it's generally best
-							to use a separate channel, but not required. This only shows steam based bans.
+							New appeals and appeal messages are shown here.
+						</SubHeading>
+						<form.AppField
+							name={"appeal_log_channel_id"}
+							children={(field) => {
+								return (
+									<field.TextField label={"Appeal changelog channel ID"} />
+								);
+							}}
+						/>
+					</Grid>
+					<Grid size={{ xs: 12 }}>
+						<SubHeading>
+							A channel to send match logs to. This can be very large and
+							spammy, so it's generally best to use a separate channel, but not
+							required. This only shows steam based bans.
 						</SubHeading>
 						<form.AppField
 							name={"ban_log_channel_id"}
@@ -1408,17 +1642,22 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Show new forum activity. This includes threads, new messages, message deletions.
+							Show new forum activity. This includes threads, new messages,
+							message deletions.
 						</SubHeading>
 						<form.AppField
 							name={"forum_log_channel_id"}
 							children={(field) => {
-								return <field.TextField label={"Forum activity log channel ID"} />;
+								return (
+									<field.TextField label={"Forum activity log channel ID"} />
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>A channel to send notices to when a user triggers a word filter.</SubHeading>
+						<SubHeading>
+							A channel to send notices to when a user triggers a word filter.
+						</SubHeading>
 						<form.AppField
 							name={"word_filter_log_channel_id"}
 							children={(field) => {
@@ -1428,8 +1667,8 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							A channel to send notices to when a user is kicked either from being banned or denied entry
-							while already in a banned state.
+							A channel to send notices to when a user is kicked either from
+							being banned or denied entry while already in a banned state.
 						</SubHeading>
 						<form.AppField
 							name={"kick_log_channel_id"}
@@ -1439,7 +1678,10 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>A channel which relays the chat messages from the website chat lobby.</SubHeading>
+						<SubHeading>
+							A channel which relays the chat messages from the website chat
+							lobby.
+						</SubHeading>
 						<form.AppField
 							name={"playerqueue_channel_id"}
 							children={(field) => {
@@ -1448,7 +1690,9 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>A channel which shows player server seeding requests.</SubHeading>
+						<SubHeading>
+							A channel which shows player server seeding requests.
+						</SubHeading>
 						<form.AppField
 							name={"seed_channel_id"}
 							children={(field) => {
@@ -1470,7 +1714,15 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 	);
 };
 
-const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const LoggingSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaLogging> = settings.log;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -1483,7 +1735,12 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 	});
 
 	return (
-		<TabSection tab={"logging"} currentTab={tab} label={"Logging"} description={"Configure logger"}>
+		<TabSection
+			tab={"logging"}
+			currentTab={tab}
+			label={"Logging"}
+			description={"Configure logger"}
+		>
 			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
@@ -1514,7 +1771,9 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>If supplied, save log output to this file as well as stdout.</SubHeading>
+						<SubHeading>
+							If supplied, save log output to this file as well as stdout.
+						</SubHeading>
 						<form.AppField
 							name={"file"}
 							children={(field) => {
@@ -1528,22 +1787,30 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"http_enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable HTTP request logs"} />;
+								return (
+									<field.CheckboxField label={"Enable HTTP request logs"} />
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>Enables OpenTelemetry support (span id/trace id).</SubHeading>
+						<SubHeading>
+							Enables OpenTelemetry support (span id/trace id).
+						</SubHeading>
 						<form.AppField
 							name={"http_otel_enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable OpenTelemetry Support"} />;
+								return (
+									<field.CheckboxField label={"Enable OpenTelemetry Support"} />
+								);
 							}}
 						/>
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>What logging level to use for HTTP requests.</SubHeading>
+						<SubHeading>
+							What logging level to use for HTTP requests.
+						</SubHeading>
 						<form.AppField
 							name={"http_level"}
 							children={(field) => {
@@ -1625,22 +1892,31 @@ const GeoLocationSection = ({
 			>
 				<ConfigContainer>
 					<Grid size={{ xs: 12 }}>
-						IP2Location is a 3rd party service that provides geoip databases along with some basic proxy
-						detections. gbans uses the IP2Location LITE database for{" "}
-						<Link href="https://lite.ip2location.com">IP geolocation</Link>. You must register for an
-						account to get an API key.
+						IP2Location is a 3rd party service that provides geoip databases
+						along with some basic proxy detections. gbans uses the IP2Location
+						LITE database for{" "}
+						<Link href="https://lite.ip2location.com">IP geolocation</Link>. You
+						must register for an account to get an API key.
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<Button variant={"contained"} startIcon={<UpdateIcon />} onClick={onUpdateDB}>
+						<Button
+							variant={"contained"}
+							startIcon={<UpdateIcon />}
+							onClick={onUpdateDB}
+						>
 							Update Database
 						</Button>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>Enables the download and usage of geolocation tools.</SubHeading>
+						<SubHeading>
+							Enables the download and usage of geolocation tools.
+						</SubHeading>
 						<form.AppField
 							name={"enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable geolocation services"} />;
+								return (
+									<field.CheckboxField label={"Enable geolocation services"} />
+								);
 							}}
 						/>
 					</Grid>
@@ -1658,7 +1934,9 @@ const GeoLocationSection = ({
 						<form.AppField
 							name={"cache_path"}
 							children={(field) => {
-								return <field.TextField label={"Database download cache path"} />;
+								return (
+									<field.TextField label={"Database download cache path"} />
+								);
 							}}
 						/>
 					</Grid>
@@ -1676,7 +1954,15 @@ const GeoLocationSection = ({
 	);
 };
 
-const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const DebugSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaDebug> = settings.debug;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -1705,7 +1991,8 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 				<ConfigContainer>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Disable validation for OpenID responses. Do not enable this on a live site.
+							Disable validation for OpenID responses. Do not enable this on a
+							live site.
 						</SubHeading>
 						<form.AppField
 							name={"skip_open_id_validation"}
@@ -1717,13 +2004,18 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Add this additional address to all known servers to start receiving log events. Make sure
-							you set up port forwarding.
+							Add this additional address to all known servers to start
+							receiving log events. Make sure you set up port forwarding.
 						</SubHeading>
 						<form.AppField
 							name={"add_rcon_log_address"}
 							children={(field) => {
-								return <field.TextField label={"Extra log_address"} placeholder={"127.0.0.1:27715"} />;
+								return (
+									<field.TextField
+										label={"Extra log_address"}
+										placeholder={"127.0.0.1:27715"}
+									/>
+								);
 							}}
 						/>
 					</Grid>
@@ -1742,7 +2034,15 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 	);
 };
 
-const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const LocalStoreSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaLocalStore> = settings.local_store;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -1776,7 +2076,9 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
 								return <field.TextField label={"Path to store assets"} />;
 							}}
 						/>
-						<SubHeading>Path to store all assets. Path is relative to gbans binary.</SubHeading>
+						<SubHeading>
+							Path to store all assets. Path is relative to gbans binary.
+						</SubHeading>
 					</Grid>
 
 					<Grid size={{ xs: 12 }}>
@@ -1801,7 +2103,15 @@ const schemaSSHFIXME = schemaSSH.extend({
 	timeout: z.string(),
 });
 
-const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const SSHSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.infer<typeof schemaSSHFIXME> = {
 		...settings.ssh,
 		port: String(settings.ssh.port),
@@ -1842,7 +2152,10 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 			>
 				<ConfigContainer>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>Enable the use of SSH/SCP for downloading demos from a remote server.</SubHeading>
+						<SubHeading>
+							Enable the use of SSH/SCP for downloading demos from a remote
+							server.
+						</SubHeading>
 						<form.AppField
 							name={"enabled"}
 							children={(field) => {
@@ -1861,7 +2174,8 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							SSH port to use. This assumes all servers are configured using the same port.
+							SSH port to use. This assumes all servers are configured using the
+							same port.
 						</SubHeading>
 						<form.AppField
 							name={"port"}
@@ -1871,7 +2185,9 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>Path to your private key if using key based authentication.</SubHeading>
+						<SubHeading>
+							Path to your private key if using key based authentication.
+						</SubHeading>
 						<form.AppField
 							name={"private_key_path"}
 							children={(field) => {
@@ -1881,7 +2197,8 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Password when using standard auth. Passphrase to unlock the private key when using key auth.
+							Password when using standard auth. Passphrase to unlock the
+							private key when using key auth.
 						</SubHeading>
 						<form.AppField
 							name={"password"}
@@ -1891,7 +2208,9 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<SubHeading>How often to connect to remove systems and check for demos.</SubHeading>
+						<SubHeading>
+							How often to connect to remove systems and check for demos.
+						</SubHeading>
 						<form.AppField
 							name={"update_interval"}
 							children={(field) => {
@@ -1904,31 +2223,39 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 						<form.AppField
 							name={"timeout"}
 							children={(field) => {
-								return <field.TextField label={"Connection timeout (seconds)"} />;
+								return (
+									<field.TextField label={"Connection timeout (seconds)"} />
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Format for generating a path to look for demos. Use <kbd>%s</kbd> as a substitution for the
-							short server name.
+							Format for generating a path to look for demos. Use <kbd>%s</kbd>{" "}
+							as a substitution for the short server name.
 						</SubHeading>
 						<form.AppField
 							name={"demo_path_fmt"}
 							children={(field) => {
-								return <field.TextField label={"Path format for retrieving demos"} />;
+								return (
+									<field.TextField label={"Path format for retrieving demos"} />
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Format for generating a path to look for stac anticheat logs. Use <kbd>%s</kbd> as a
-							substitution for the short server name.
+							Format for generating a path to look for stac anticheat logs. Use{" "}
+							<kbd>%s</kbd> as a substitution for the short server name.
 						</SubHeading>
 						<form.AppField
 							name={"stac_path_fmt"}
 							children={(field) => {
-								return <field.TextField label={"Path format for retrieving stac logs"} />;
+								return (
+									<field.TextField
+										label={"Path format for retrieving stac logs"}
+									/>
+								);
 							}}
 						/>
 					</Grid>
@@ -1946,7 +2273,15 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 	);
 };
 
-const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+const ExportsSection = ({
+	tab,
+	settings,
+	mutate,
+}: {
+	tab: tabs;
+	settings: Config;
+	mutate: (s: Config) => void;
+}) => {
 	const defaultValues: z.input<typeof schemaExports> = settings.exports;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
@@ -1975,38 +2310,50 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 				<ConfigContainer>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Comma separated list of authorized keys which can access these resources. If no keys are
-							specified, access will be granted to everyone. Append key to query with{" "}
-							<kbd>&key=value</kbd>
+							Comma separated list of authorized keys which can access these
+							resources. If no keys are specified, access will be granted to
+							everyone. Append key to query with <kbd>&key=value</kbd>
 						</SubHeading>
 						<form.AppField
 							name={"authorized_keys"}
 							children={(field) => {
-								return <field.TextField label={"Authorized Keys (comma separated)."} />;
+								return (
+									<field.TextField
+										label={"Authorized Keys (comma separated)."}
+									/>
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Enable exporting of a TF2 Bot Detector compatible player list. Only exports users banned
-							with the cheater reason.
+							Enable exporting of a TF2 Bot Detector compatible player list.
+							Only exports users banned with the cheater reason.
 						</SubHeading>
 						<form.AppField
 							name={"bd_enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable tf2 bot detector compatible export"} />;
+								return (
+									<field.CheckboxField
+										label={"Enable tf2 bot detector compatible export"}
+									/>
+								);
 							}}
 						/>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>
-							Enable exporting of a SRCDS banned_user.cfg compatible player list. Only exports users
-							banned with the cheater reason.
+							Enable exporting of a SRCDS banned_user.cfg compatible player
+							list. Only exports users banned with the cheater reason.
 						</SubHeading>
 						<form.AppField
 							name={"valve_enabled"}
 							children={(field) => {
-								return <field.CheckboxField label={"Enable srcds formatted ban list"} />;
+								return (
+									<field.CheckboxField
+										label={"Enable srcds formatted ban list"}
+									/>
+								);
 							}}
 						/>
 					</Grid>

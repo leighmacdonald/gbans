@@ -62,7 +62,7 @@ export const schemaFilters = z.object({
 export const schemaDemos = z.object({
 	demo_cleanup_enabled: z.boolean(),
 	demo_cleanup_strategy: z.enum(["pctfree", "count"]),
-	demo_cleanup_min_pct: z.number().min(0).max(100),
+	demo_cleanup_min_pct: z.coerce.number().min(0).max(100),
 	demo_cleanup_mount: z.string().startsWith("/"), // windows?
 	demo_count_limit: z.number(),
 	demo_parser_url: z.string(),

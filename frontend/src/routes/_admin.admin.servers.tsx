@@ -24,8 +24,8 @@ import { apiGetServersAdmin } from "../api";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
+import { BoolCell } from "../component/table/BoolCell.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
-import { TableCellBool } from "../component/table/TableCellBool.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { TableCellStringHidden } from "../component/table/TableCellStringHidden.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
@@ -38,7 +38,17 @@ const serversSearchSchema = z.object({
 	page_size: z.number().optional().catch(RowsPerPage.TwentyFive),
 	sort_order: z.enum(["desc", "asc"]).optional().catch("desc"),
 	sort_column: z
-		.enum(["server_id", "short_name", "name", "address", "port", "region", "cc", "enable_stats", "is_enabled"])
+		.enum([
+			"server_id",
+			"short_name",
+			"name",
+			"address",
+			"port",
+			"region",
+			"cc",
+			"enable_stats",
+			"is_enabled",
+		])
 		.optional(),
 });
 
@@ -56,7 +66,10 @@ export const Route = createFileRoute("/_admin/admin/servers")({
 	},
 	head: ({ match }) => {
 		return {
-			meta: [{ name: "description", content: "Server Editor" }, match.context.title("Edit Servers")],
+			meta: [
+				{ name: "description", content: "Server Editor" },
+				match.context.title("Edit Servers"),
+			],
 		};
 	},
 
@@ -76,7 +89,10 @@ function AdminServers() {
 	const onCreate = async () => {
 		try {
 			const newServer = (await NiceModal.show(ServerEditorModal, {})) as Server;
-			queryClient.setQueryData(["serversAdmin"], [...(servers ?? []), newServer]);
+			queryClient.setQueryData(
+				["serversAdmin"],
+				[...(servers ?? []), newServer],
+			);
 			sendFlash("success", "Server created successfully");
 		} catch (e) {
 			sendFlash("error", `Failed to create new server: ${e}`);
@@ -168,7 +184,9 @@ const AdminServersTable = ({
 				accessorKey: "server_id",
 				size: 40,
 				header: "ID",
-				cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>{info.getValue() as string}</TableCellString>
+				),
 			},
 			{
 				accessorKey: "short_name",
@@ -177,7 +195,9 @@ const AdminServersTable = ({
 					tooltip: "Short unique server identifier",
 				},
 				header: "Name",
-				cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>{info.getValue() as string}</TableCellString>
+				),
 			},
 			{
 				accessorKey: "name",
@@ -186,7 +206,9 @@ const AdminServersTable = ({
 					tooltip: "Full name of the server, AKA srcds hostname",
 				},
 				header: "Name Long",
-				cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>{info.getValue() as string}</TableCellString>
+				),
 			},
 			{
 				accessorKey: "address",
@@ -194,13 +216,17 @@ const AdminServersTable = ({
 					tooltip: "IP or DNS/Hostname of the server",
 				},
 				header: "Address",
-				cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>{info.getValue() as string}</TableCellString>
+				),
 			},
 			{
 				accessorKey: "port",
 				size: 50,
 				header: "Port",
-				cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>{info.getValue() as string}</TableCellString>
+				),
 			},
 			{
 				accessorKey: "rcon",
@@ -208,21 +234,32 @@ const AdminServersTable = ({
 					tooltip: "Standard RCON password",
 				},
 				header: () => "RCON",
-				cell: (info) => <TableCellStringHidden>{info.getValue() as string}</TableCellStringHidden>,
+				cell: (info) => (
+					<TableCellStringHidden>
+						{info.getValue() as string}
+					</TableCellStringHidden>
+				),
 			},
 			{
 				accessorKey: "password",
 				meta: {
-					tooltip: "A password that the server uses to authenticate with the central gbans server",
+					tooltip:
+						"A password that the server uses to authenticate with the central gbans server",
 				},
 				header: () => "Auth Key",
-				cell: (info) => <TableCellStringHidden>{info.getValue() as string}</TableCellStringHidden>,
+				cell: (info) => (
+					<TableCellStringHidden>
+						{info.getValue() as string}
+					</TableCellStringHidden>
+				),
 			},
 			{
 				accessorKey: "region",
 				size: 75,
 				header: "Region",
-				cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>{info.getValue() as string}</TableCellString>
+				),
 			},
 			// {
 			//     accessorKey: 'cc',
@@ -257,7 +294,11 @@ const AdminServersTable = ({
 					tooltip: "Last time the server authenticated itself",
 				},
 				header: "Last Auth",
-				cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>,
+				cell: (info) => (
+					<TableCellString>
+						{renderDateTime(info.getValue() as Date)}
+					</TableCellString>
+				),
 			},
 			{
 				accessorKey: "enable_stats",
@@ -266,7 +307,7 @@ const AdminServersTable = ({
 					tooltip: "Stat Tracking Enabled",
 				},
 				header: "St",
-				cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />,
+				cell: (info) => <BoolCell enabled={info.getValue() as boolean} />,
 			},
 			{
 				accessorKey: "is_enabled",
@@ -275,7 +316,7 @@ const AdminServersTable = ({
 					tooltip: "Enabled",
 				},
 				header: "En.",
-				cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />,
+				cell: (info) => <BoolCell enabled={info.getValue() as boolean} />,
 			},
 			{
 				id: "actions",
