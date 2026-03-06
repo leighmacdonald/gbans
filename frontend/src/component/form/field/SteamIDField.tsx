@@ -5,7 +5,7 @@ import Avatar from "@mui/material/Avatar";
 import InputAdornment from "@mui/material/InputAdornment";
 import TextField, { type TextFieldProps } from "@mui/material/TextField";
 import { useStore } from "@tanstack/react-form";
-import { debounce } from "@tanstack/react-pacer/debouncer";
+import { useAsyncDebouncedCallback } from "@tanstack/react-pacer";
 import { type ChangeEvent, useCallback, useMemo, useState } from "react";
 import { apiGetSteamValidate, defaultAvatarHash } from "../../../api";
 import { useFieldContext } from "../../../contexts/formContext.tsx";
@@ -21,41 +21,35 @@ type Props = {
 export const SteamIDField = (props: Props) => {
 	const field = useFieldContext<string>();
 	const errors = useStore(field.store, (state) => state.meta.errors);
-	const [profile, setProfile] = useState<SteamValidate | undefined>(
-		props.defaultProfile,
-	);
+	const [profile, setProfile] = useState<SteamValidate | undefined>(props.defaultProfile);
 	const [error, setError] = useState<string>();
 	const [loading, setLoading] = useState(false);
 
 	// Make sure we debounce the check callback
-	// biome-ignore lint/correctness/useExhaustiveDependencies: This needs to be reworked correctly.
-	const setDebouncedQuery = useCallback(
-		debounce(
-			async () => {
-				if (!emptyOrNullString(field.state.value)) {
-					try {
-						setLoading(true);
-						const update = await apiGetSteamValidate(field.state.value);
-						setProfile(update);
-						field.setValue(update.steam_id);
-						setError(undefined);
-					} catch {
-						// Doesnt work?
-						field.setErrorMap({
-							onChange: errors.map(() => "Invalid steam ID / Profile link"),
-						});
-						setError("Invalid steam ID / Profile link");
-						setProfile(undefined);
-					} finally {
-						setLoading(false);
-					}
-				} else {
+	const debounced = useAsyncDebouncedCallback(
+		async () => {
+			if (!emptyOrNullString(field.state.value)) {
+				try {
+					setLoading(true);
+					const update = await apiGetSteamValidate(field.state.value);
+					setProfile(update);
+					field.setValue(update.steam_id);
+					setError(undefined);
+				} catch {
+					// Doesnt work?
+					field.setErrorMap({
+						onChange: errors.map(() => "Invalid steam ID / Profile link"),
+					});
+					setError("Invalid steam ID / Profile link");
 					setProfile(undefined);
+				} finally {
+					setLoading(false);
 				}
-			},
-			{ wait: 500 },
-		),
-		[field.state.value],
+			} else {
+				setProfile(undefined);
+			}
+		},
+		{ wait: 500 },
 	);
 
 	const adornment = useMemo(() => {
@@ -72,33 +66,21 @@ export const SteamIDField = (props: Props) => {
 			return <ErrorOutlineIcon color={"error"} sx={{ width: 40 }} />;
 		}
 		if (profile) {
-			return (
-				<Avatar
-					src={avatarHashToURL(profile.hash ?? defaultAvatarHash)}
-					variant={"square"}
-				/>
-			);
+			return <Avatar src={avatarHashToURL(profile.hash ?? defaultAvatarHash)} variant={"square"} />;
 		}
 
 		return <QuestionMark color={"secondary"} />;
-	}, [
-		field.state.meta.isPristine,
-		field.state.meta.isValidating,
-		profile,
-		field.state.meta.errors,
-		error,
-		loading,
-	]);
+	}, [field.state.meta.isPristine, field.state.meta.isValidating, profile, field.state.meta.errors, error, loading]);
 
 	const onChange = useCallback(
 		(e: ChangeEvent<HTMLInputElement>) => {
 			field.handleChange(e.target.value);
-			setProfile(undefined);
+			//setProfile(undefined);
 
 			// Trigger a debounced validation check
-			setDebouncedQuery();
+			debounced();
 		},
-		[field, setDebouncedQuery],
+		[field, debounced],
 	);
 
 	return (
@@ -113,9 +95,7 @@ export const SteamIDField = (props: Props) => {
 			helperText={error ?? "Any form of Steam ID or profile link."}
 			slotProps={{
 				input: {
-					endAdornment: (
-						<InputAdornment position={"end"}>{adornment}</InputAdornment>
-					),
+					endAdornment: <InputAdornment position={"end"}>{adornment}</InputAdornment>,
 				},
 			}}
 		/>
