@@ -40,7 +40,7 @@ const schema = z.object({
 	address: z.string().min(1),
 	port: z.number().min(1024).max(65535),
 	password: z.string().length(20),
-	rcon: z.string().min(6),
+	rcon: z.string().min(4),
 	region: z.string().min(1),
 	cc: z.string().length(2),
 	latitude: z.number().min(-90).max(99),
@@ -48,7 +48,7 @@ const schema = z.object({
 	reserved_slots: z.number().min(0).max(100),
 	is_enabled: z.boolean(),
 	enabled_stats: z.boolean(),
-	log_secret: z.coerce.number().min(100000).max(999999999),
+	log_secret: z.number().min(100000).max(999999999),
 	address_internal: z.string(),
 	sdr_enabled: z.boolean(),
 	discord_seed_role_ids: z.string(),
@@ -88,8 +88,8 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 				rcon: values.rcon,
 				region: values.region,
 				cc: values.cc,
-				lat: values.latitude,
-				lon: values.longitude,
+				latitude: values.latitude,
+				longitude: values.longitude,
 				reserved_slots: values.reserved_slots,
 				is_enabled: values.is_enabled,
 				enable_stats: values.enabled_stats,
@@ -212,7 +212,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 							<form.AppField
 								name={"log_secret"}
 								children={(field) => {
-									return <field.TextField label={"Log Secret"} />;
+									return <field.NumberField label={"Log Secret"} min={0} max={999999999} />;
 								}}
 							/>
 						</Grid>
@@ -236,7 +236,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 							<form.AppField
 								name={"latitude"}
 								children={(field) => {
-									return <field.TextField label={"Latitude"} />;
+									return <field.NumberField label={"Latitude"} min={-90} max={90} />;
 								}}
 							/>
 						</Grid>
@@ -244,7 +244,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 							<form.AppField
 								name={"longitude"}
 								children={(field) => {
-									return <field.TextField label={"Longitude"} />;
+									return <field.NumberField label={"Longitude"} min={-180} max={180} />;
 								}}
 							/>
 						</Grid>
@@ -252,7 +252,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 							<form.AppField
 								name={"reserved_slots"}
 								children={(field) => {
-									return <field.TextField label={"Reserved Slots"} />;
+									return <field.NumberField label={"Reserved Slots"} min={0} max={100} />;
 								}}
 							/>
 						</Grid>

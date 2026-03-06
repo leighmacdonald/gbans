@@ -1,22 +1,21 @@
 import { z } from "zod/v4";
 import { Action } from "./asset.ts";
 
-const coercedNumber = z.string().transform(Number);
-
 export const schemaAnticheat = z.object({
 	enabled: z.boolean(),
 	action: Action,
-	duration: z.coerce.number().int(),
-	max_aim_snap: z.coerce.number().int(),
-	max_psilent: z.coerce.number().int(),
-	max_bhop: z.coerce.number().int(),
-	max_fake_ang: z.coerce.number().int(),
-	max_cmd_num: z.coerce.number().int(),
-	max_too_many_connections: z.coerce.number().int(),
-	max_cheat_cvar: z.coerce.number().int(),
-	max_oob_var: z.coerce.number().int(),
-	max_invalid_user_cmd: z.coerce.number().int(),
+	duration: z.number().int(),
+	max_aim_snap: z.number().int(),
+	max_psilent: z.number().int(),
+	max_bhop: z.number().int(),
+	max_fake_ang: z.number().int(),
+	max_cmd_num: z.number().int(),
+	max_too_many_connections: z.number().int(),
+	max_cheat_cvar: z.number().int(),
+	max_oob_var: z.number().int(),
+	max_invalid_user_cmd: z.number().int(),
 });
+
 export const schemaSentry = z.object({
 	sentry_dsn: z.string(),
 	sentry_dsn_web: z.string(),
@@ -56,7 +55,7 @@ export const schemaFilters = z.object({
 	ping_discord: z.boolean(),
 	max_weight: z.number().min(1).max(1000),
 	check_timeout: z.number().min(5).max(300),
-	match_timeout: z.number().min(1).max(1000),
+	match_timeout: z.number().min(1).max(10000),
 });
 
 export const schemaDemos = z.object({
@@ -140,11 +139,11 @@ export const schemaLocalStore = z.object({
 export const schemaSSH = z.object({
 	enabled: z.boolean(),
 	username: z.string(),
-	port: coercedNumber.pipe(z.number().min(1).max(65535)),
+	port: z.number().min(1).max(65535),
 	private_key_path: z.string(),
 	password: z.string(),
-	update_interval: coercedNumber.pipe(z.number().positive()),
-	timeout: coercedNumber.pipe(z.number().positive()),
+	update_interval: z.number().positive(),
+	timeout: z.number().positive(),
 	demo_path_fmt: z.string(),
 	stac_path_fmt: z.string(),
 });

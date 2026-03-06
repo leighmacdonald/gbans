@@ -127,7 +127,7 @@ export const apiDeleteBanMessage = async (ban_message_id: number) =>
 	await apiCall(`/api/bans/message/${ban_message_id}`, "DELETE", {});
 
 export const apiSetBanAppealState = async (ban_id: number, appeal_state: AppealStateEnum) =>
-	await apiCall(`/api/bans/${ban_id}/status`, "POST", {
+	await apiCall(`/api/ban/${ban_id}/status`, "POST", {
 		appeal_state,
 	});
 
