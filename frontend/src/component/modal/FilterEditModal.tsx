@@ -24,7 +24,7 @@ type FilterEditFormValues = {
 	is_enabled?: boolean;
 	action: FilterActionEnum;
 	duration: string;
-	weight: string;
+	weight: number;
 };
 
 const schema = z.object({
@@ -32,7 +32,7 @@ const schema = z.object({
 	is_regex: z.boolean(),
 	action: FilterActionEnum,
 	duration: z.string({ message: "Must provide a duration" }),
-	weight: z.string(),
+	weight: z.number().min(1).max(100),
 	is_enabled: z.boolean(),
 });
 
@@ -45,7 +45,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 		is_enabled: filter?.is_enabled ?? true,
 		action: filter?.action ?? FilterAction.Kick,
 		duration: filter?.duration ?? "1w",
-		weight: filter ? String(filter.weight) : "1",
+		weight: filter ? filter.weight : 1,
 	};
 	const mutation = useMutation({
 		mutationKey: ["filters"],
@@ -149,7 +149,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 							<form.AppField
 								name={"weight"}
 								children={(field) => {
-									return <field.TextField label={"Weight (1-100)"} />;
+									return <field.NumberField label={"Weight"} min={1} max={100} />;
 								}}
 							/>
 						</Grid>

@@ -20,7 +20,6 @@ export const NumberField = ({ label, id: idProp, min, max }: Props) => {
 		id = idProp;
 	}
 
-	console.log(field.state.value);
 	return (
 		<BaseNumberField.Root
 			render={(props, state) => (
@@ -48,6 +47,7 @@ export const NumberField = ({ label, id: idProp, min, max }: Props) => {
 						onKeyUp={props.onKeyUp}
 						onKeyDown={props.onKeyDown}
 						onFocus={props.onFocus}
+						error={errors.length > 0}
 						// slotProps={{
 						// 	input: props,
 						// }}

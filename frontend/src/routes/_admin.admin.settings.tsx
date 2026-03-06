@@ -533,17 +533,17 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 				...settings,
 				anticheat: {
 					action: value.action,
-					duration: Number(value.duration),
+					duration: value.duration,
 					enabled: value.enabled,
-					max_aim_snap: Number(value.max_aim_snap),
-					max_psilent: Number(value.max_psilent),
-					max_bhop: Number(value.max_bhop),
-					max_fake_ang: Number(value.max_fake_ang),
-					max_cmd_num: Number(value.max_cmd_num),
-					max_too_many_connections: Number(value.max_too_many_connections),
-					max_cheat_cvar: Number(value.max_cheat_cvar),
-					max_oob_var: Number(value.max_oob_var),
-					max_invalid_user_cmd: Number(value.max_invalid_user_cmd),
+					max_aim_snap: value.max_aim_snap,
+					max_psilent: value.max_psilent,
+					max_bhop: value.max_bhop,
+					max_fake_ang: value.max_fake_ang,
+					max_cmd_num: value.max_cmd_num,
+					max_too_many_connections: value.max_too_many_connections,
+					max_cheat_cvar: value.max_cheat_cvar,
+					max_oob_var: value.max_oob_var,
+					max_invalid_user_cmd: value.max_invalid_user_cmd,
 				},
 			});
 		},
@@ -603,7 +603,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"duration"}
 							children={(field) => {
-								return <field.TextField label={"Duration"} />;
+								return <field.NumberField label={"Duration"} />;
 							}}
 						/>
 					</Grid>
@@ -613,7 +613,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"max_aim_snap"}
 							children={(field) => {
-								return <field.TextField label={"max_aim_snap"} />;
+								return <field.NumberField label={"max_aim_snap"} />;
 							}}
 						/>
 					</Grid>
@@ -622,7 +622,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"max_psilent"}
 							children={(field) => {
-								return <field.TextField label={"max_psilent"} />;
+								return <field.NumberField label={"max_psilent"} />;
 							}}
 						/>
 					</Grid>
@@ -631,7 +631,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"max_bhop"}
 							children={(field) => {
-								return <field.TextField label={"max_bhop"} />;
+								return <field.NumberField label={"max_bhop"} />;
 							}}
 						/>
 					</Grid>
@@ -640,7 +640,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"max_fake_ang"}
 							children={(field) => {
-								return <field.TextField label={"max_fake_ang"} />;
+								return <field.NumberField label={"max_fake_ang"} />;
 							}}
 						/>
 					</Grid>
@@ -649,7 +649,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"max_cmd_num"}
 							children={(field) => {
-								return <field.TextField label={"max_cmd_num"} />;
+								return <field.NumberField label={"max_cmd_num"} />;
 							}}
 						/>
 					</Grid>
@@ -658,7 +658,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"max_too_many_connections"}
 							children={(field) => {
-								return <field.TextField label={"max_too_many_connections"} />;
+								return <field.NumberField label={"max_too_many_connections"} />;
 							}}
 						/>
 					</Grid>
@@ -667,7 +667,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"max_cheat_cvar"}
 							children={(field) => {
-								return <field.TextField label={"max_cheat_cvar"} />;
+								return <field.NumberField label={"max_cheat_cvar"} />;
 							}}
 						/>
 					</Grid>
@@ -676,7 +676,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"max_oob_var"}
 							children={(field) => {
-								return <field.TextField label={"max_oob_var"} />;
+								return <field.NumberField label={"max_oob_var"} />;
 							}}
 						/>
 					</Grid>
@@ -685,7 +685,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 						<form.AppField
 							name={"max_invalid_user_cmd"}
 							children={(field) => {
-								return <field.TextField label={"max_invalid_user_cmd"} />;
+								return <field.NumberField label={"max_invalid_user_cmd"} />;
 							}}
 						/>
 					</Grid>
@@ -814,40 +814,15 @@ const NetworkSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 	);
 };
 
-const schemaFiltersFIXME = schemaFilters.extend({
-	warning_timeout: z.string(),
-	warning_limit: z.string(),
-	max_weight: z.string(),
-	check_timeout: z.string(),
-	match_timeout: z.string(),
-});
-
 const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
-	const defaultValues: z.input<typeof schemaFiltersFIXME> = {
-		...settings.filters,
-		warning_timeout: String(settings.filters.warning_limit),
-		warning_limit: String(settings.filters.warning_limit),
-		max_weight: String(settings.filters.max_weight),
-		check_timeout: String(settings.filters.check_timeout),
-		match_timeout: String(settings.filters.match_timeout),
-	};
+	const defaultValues: z.input<typeof schemaFilters> = settings.filters;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutate({
-				...settings,
-				filters: {
-					...value,
-					warning_timeout: Number(value.warning_limit),
-					warning_limit: Number(value.warning_limit),
-					max_weight: Number(value.max_weight),
-					check_timeout: Number(value.check_timeout),
-					match_timeout: Number(value.match_timeout),
-				},
-			});
+			mutate({ ...settings, filters: value });
 		},
 		defaultValues,
 		validators: {
-			onSubmit: schemaFiltersFIXME,
+			onSubmit: schemaFilters,
 		},
 	});
 
@@ -883,7 +858,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"warning_timeout"}
 							children={(field) => {
-								return <field.TextField label={"How long until a warning expires (seconds)"} />;
+								return <field.NumberField label={"How long until a warning expires (seconds)"} />;
 							}}
 						/>
 					</Grid>
@@ -895,7 +870,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"warning_limit"}
 							children={(field) => {
-								return <field.TextField label={"Maximum number of warnings allowed"} />;
+								return <field.NumberField label={"Maximum number of warnings allowed"} />;
 							}}
 						/>
 					</Grid>
@@ -926,7 +901,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"max_weight"}
 							children={(field) => {
-								return <field.TextField label={"Max Weight"} />;
+								return <field.NumberField label={"Max Weight"} />;
 							}}
 						/>
 					</Grid>
@@ -935,7 +910,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"check_timeout"}
 							children={(field) => {
-								return <field.TextField label={"Check Frequency (seconds)"} />;
+								return <field.NumberField label={"Check Frequency (seconds)"} />;
 							}}
 						/>
 					</Grid>
@@ -945,7 +920,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 						<form.AppField
 							name={"match_timeout"}
 							children={(field) => {
-								return <field.TextField label={"Match Timeout"} />;
+								return <field.NumberField label={"Match Timeout"} />;
 							}}
 						/>
 					</Grid>
@@ -1804,36 +1779,15 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
 	);
 };
 
-// How do you coerce numbers properly from the form w/o defining a secondary schema?
-// z.coerce.number() does not seem to work for text input fields
-const schemaSSHFIXME = schemaSSH.extend({
-	port: z.string(),
-	update_interval: z.string(),
-	timeout: z.string(),
-});
-
 const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
-	const defaultValues: z.infer<typeof schemaSSHFIXME> = {
-		...settings.ssh,
-		port: String(settings.ssh.port),
-		timeout: String(settings.ssh.timeout),
-		update_interval: String(settings.ssh.update_interval),
-	};
+	const defaultValues: z.infer<typeof schemaSSH> = settings.ssh;
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutate({
-				...settings,
-				ssh: {
-					...value,
-					port: Number(value.port),
-					timeout: Number(value.timeout),
-					update_interval: Number(value.update_interval),
-				},
-			});
+			mutate({ ...settings, ssh: value });
 		},
 		defaultValues,
 		validators: {
-			onSubmit: schemaSSHFIXME,
+			onSubmit: schemaSSH,
 		},
 	});
 
@@ -1877,7 +1831,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 						<form.AppField
 							name={"port"}
 							children={(field) => {
-								return <field.TextField label={"SSH port"} />;
+								return <field.NumberField label={"SSH port"} />;
 							}}
 						/>
 					</Grid>
@@ -1906,7 +1860,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 						<form.AppField
 							name={"update_interval"}
 							children={(field) => {
-								return <field.TextField label={"Check frequency (seconds)"} />;
+								return <field.NumberField label={"Check frequency (seconds)"} />;
 							}}
 						/>
 					</Grid>
@@ -1915,7 +1869,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
 						<form.AppField
 							name={"timeout"}
 							children={(field) => {
-								return <field.TextField label={"Connection timeout (seconds)"} />;
+								return <field.NumberField label={"Connection timeout (seconds)"} />;
 							}}
 						/>
 					</Grid>
