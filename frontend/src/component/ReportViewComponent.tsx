@@ -59,6 +59,7 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 
 	const { data: connections, isLoading: isLoadingConnections } = useQuery({
 		queryKey: ["reportConnectionHist", { steamId: report.target_id }],
+		enabled: hasPermission(PermissionLevel.Moderator),
 		queryFn: async () => {
 			return await apiGetConnections({
 				limit: 1000,

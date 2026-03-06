@@ -62,10 +62,10 @@ GRANT SELECT ON
     sm_admins_groups, sm_admins, 
     cidr_block_whitelist, cidr_block_entries,
     person_whitelist,
-    ban, ban_asn, ban_net, ban_group,
+    ban,
     steam_friends, steam_group_members,
     net_asn TO sourcemod;
-GRANT SELECT, INSERT, UPDATE, DELETE ON sm_cookie_cache, sm_cookies TO sourcemod;
+GRANT SELECT, INSERT, UPDATE, DELETE ON sm_cookie_cache, sm_cookies, mgemod_stats, mgemod_duels, mgemod_duels_2v2 TO sourcemod;
 GRANT CREATE ON SCHEMA public TO sourcemod; -- extension will bail if not set it seems :(.
 GRANT USAGE, SELECT ON SEQUENCE sm_cookies_id_seq TO sourcemod;
 -- Required if you get "Failed to create function" errors

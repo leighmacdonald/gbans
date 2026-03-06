@@ -3,7 +3,8 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
 import Avatar from "@mui/material/Avatar";
 import InputAdornment from "@mui/material/InputAdornment";
-import TextField, { type TextFieldProps } from "@mui/material/TextField";
+import type { TextFieldProps } from "@mui/material/TextField";
+import * as MUITextField from "@mui/material/TextField";
 import { useStore } from "@tanstack/react-form";
 import { useAsyncDebouncedCallback } from "@tanstack/react-pacer";
 import { type ChangeEvent, useCallback, useMemo, useState } from "react";
@@ -13,6 +14,7 @@ import type { SteamValidate } from "../../../schema/people.ts";
 import { avatarHashToURL } from "../../../util/text.tsx";
 import { emptyOrNullString } from "../../../util/types.ts";
 import { GradientSpinner } from "../../GradientSpinner.tsx";
+import { renderHelpText } from "./renderHelpText.ts";
 
 type Props = {
 	defaultProfile?: SteamValidate;
@@ -25,7 +27,6 @@ export const SteamIDField = (props: Props) => {
 	const [error, setError] = useState<string>();
 	const [loading, setLoading] = useState(false);
 
-	// Make sure we debounce the check callback
 	const debounced = useAsyncDebouncedCallback(
 		async () => {
 			if (!emptyOrNullString(field.state.value)) {
@@ -84,15 +85,14 @@ export const SteamIDField = (props: Props) => {
 	);
 
 	return (
-		<TextField
+		<MUITextField.default
 			{...props}
 			value={field.state.value}
 			onChange={onChange}
 			onBlur={field.handleBlur}
-			color={profile ? "success" : "primary"}
-			fullWidth={true}
+			fullWidth
 			error={Boolean(error)}
-			helperText={error ?? "Any form of Steam ID or profile link."}
+			helperText={renderHelpText(errors, "Any form of Steam ID or profile link.")}
 			slotProps={{
 				input: {
 					endAdornment: <InputAdornment position={"end"}>{adornment}</InputAdornment>,

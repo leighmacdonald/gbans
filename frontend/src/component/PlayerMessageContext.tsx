@@ -20,6 +20,7 @@ interface PlayerMessageContextProps {
 export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMessageContextProps) => {
 	const { data: messages, isLoading } = useQuery({
 		queryKey: ["messageContext", playerMessageId],
+
 		queryFn: async () => {
 			return await apiGetMessageContext(playerMessageId, padding);
 		},

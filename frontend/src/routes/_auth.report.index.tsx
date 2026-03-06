@@ -159,47 +159,53 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
 	const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 	const [sorting] = useState<SortingState>([{ id: "report_id", desc: true }]);
 
-	const columns = [
-		columnHelper.accessor("report_status", {
-			header: "Status",
-			size: 150,
-			cell: (info) => {
-				return (
-					<Stack direction={"row"} spacing={1}>
-						<ReportStatusIcon reportStatus={info.getValue()} />
-						<Typography variant={"body1"}>{reportStatusString(info.getValue())}</Typography>
-					</Stack>
-				);
-			},
-		}),
-		columnHelper.accessor("subject", {
-			header: "Player",
-			cell: (info) => (
-				<PersonCell
-					steam_id={info.row.original.subject.steam_id}
-					personaname={info.row.original.subject.persona_name}
-					avatar_hash={info.row.original.subject.avatar_hash}
-				/>
-			),
-		}),
-		columnHelper.accessor("report_id", {
-			header: "View",
-			size: 30,
-			cell: (info) => (
-				<ButtonGroup variant={"text"}>
-					<IconButtonLink
-						color={"primary"}
-						to={`/report/$reportId`}
-						params={{ reportId: String(info.getValue()) }}
-					>
-						<Tooltip title={"View"}>
-							<VisibilityIcon />
-						</Tooltip>
-					</IconButtonLink>
-				</ButtonGroup>
-			),
-		}),
-	];
+	const columns = useMemo(() => {
+		return [
+			columnHelper.accessor("report_status", {
+				header: "Status",
+				size: 150,
+				cell: (info) => {
+					return (
+						<Stack direction={"row"} spacing={1}>
+							<ReportStatusIcon reportStatus={info.getValue()} />
+							<Typography variant={"body1"}>{reportStatusString(info.getValue())}</Typography>
+						</Stack>
+					);
+				},
+			}),
+			columnHelper.accessor("subject", {
+				header: "Player",
+				cell: (info) => (
+					<PersonCell
+						steam_id={info.row.original.subject.steam_id}
+						personaname={
+							emptyOrNullString(info.row.original.subject.persona_name)
+								? info.row.original.subject.steam_id
+								: info.row.original.subject.persona_name
+						}
+						avatar_hash={info.row.original.subject.avatar_hash}
+					/>
+				),
+			}),
+			columnHelper.accessor("report_id", {
+				header: "View",
+				size: 30,
+				cell: (info) => (
+					<ButtonGroup variant={"text"}>
+						<IconButtonLink
+							color={"primary"}
+							to={`/report/$reportId`}
+							params={{ reportId: String(info.getValue()) }}
+						>
+							<Tooltip title={"View"}>
+								<VisibilityIcon />
+							</Tooltip>
+						</IconButtonLink>
+					</ButtonGroup>
+				),
+			}),
+		];
+	}, []);
 
 	const table = useReactTable({
 		data: history,
@@ -238,7 +244,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
 	);
 };
 
-export const ReportCreateForm = (): JSX.Element => {
+const ReportCreateForm = (): JSX.Element => {
 	const { demo_id, steam_id, person_message_id } = Route.useSearch();
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const [isCustom, setIsCustom] = useState(false);
@@ -283,7 +289,7 @@ export const ReportCreateForm = (): JSX.Element => {
 			});
 		},
 		validators: {
-			onSubmit: schemaCreateReportRequest,
+			onSubmitAsync: schemaCreateReportRequest,
 		},
 		defaultValues,
 	});
@@ -335,20 +341,6 @@ export const ReportCreateForm = (): JSX.Element => {
 					<Grid size={{ xs: 6 }}>
 						<form.AppField
 							name={"reason_text"}
-							validators={{
-								onChangeListenTo: ["reason", "reason_text"],
-								onChange: ({ value, fieldApi }) => {
-									if (!emptyOrNullString(value)) {
-										if (BanReason.Custom !== fieldApi.form.getFieldValue("reason")) {
-											return "Reason must be set to custom";
-										}
-										fieldApi.form.setFieldValue("reason", () => {
-											return BanReason.Custom;
-										});
-										return undefined;
-									}
-								},
-							}}
 							children={(field) => {
 								return (
 									<field.TextField

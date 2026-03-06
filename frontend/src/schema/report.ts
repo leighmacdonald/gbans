@@ -1,6 +1,6 @@
 import type { Theme } from "@mui/material";
 import { z } from "zod/v4";
-import { BanReasonEnum } from "./bans.ts";
+import { BanReason, BanReasonEnum } from "./bans.ts";
 import { schemaTimeStamped } from "./chrono.ts";
 import { schemaDemoFile } from "./demo.ts";
 import { schemaPerson, schemaUserProfile } from "./people.ts";
@@ -103,15 +103,23 @@ export const schemaReportMessage = schemaTimeStamped.extend({
 
 export type ReportMessage = z.infer<typeof schemaReportMessage>;
 
-export const schemaCreateReportRequest = z.object({
-	target_id: z.string(),
-	description: z.string().min(10),
-	reason: BanReasonEnum,
-	reason_text: z.string(),
-	demo_id: z.number(),
-	demo_tick: z.number(),
-	person_message_id: z.number(),
-});
+export const schemaCreateReportRequest = z
+	.object({
+		target_id: z.string().regex(/^7656\d[13]\d?/),
+		description: z.string().min(10),
+		reason: BanReasonEnum,
+		reason_text: z.string(),
+		demo_id: z.number(),
+		demo_tick: z.number(),
+		person_message_id: z.number(),
+	})
+	.refine(
+		(data) => data.reason !== BanReason.Custom || (data.reason === BanReason.Custom && data.reason_text.length > 0),
+		{
+			message: "Custom reason cannot be empty",
+			path: ["reason_text"],
+		},
+	);
 
 export type CreateReportRequest = z.infer<typeof schemaCreateReportRequest>;
 
