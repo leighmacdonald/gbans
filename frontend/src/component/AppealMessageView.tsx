@@ -73,7 +73,7 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 
 	if (editing) {
 		return (
-			<Box component={Paper} padding={1}>
+			<Box component={Paper} padding={1} paddingBottom={2}>
 				<form
 					onSubmit={async (e) => {
 						e.preventDefault();
