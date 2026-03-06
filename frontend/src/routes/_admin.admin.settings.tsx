@@ -531,20 +531,7 @@ const AnticheatSection = ({ tab, settings, mutate }: { tab: tabs; settings: Conf
 		onSubmit: async ({ value }) => {
 			mutate({
 				...settings,
-				anticheat: {
-					action: value.action,
-					duration: value.duration,
-					enabled: value.enabled,
-					max_aim_snap: value.max_aim_snap,
-					max_psilent: value.max_psilent,
-					max_bhop: value.max_bhop,
-					max_fake_ang: value.max_fake_ang,
-					max_cmd_num: value.max_cmd_num,
-					max_too_many_connections: value.max_too_many_connections,
-					max_cheat_cvar: value.max_cheat_cvar,
-					max_oob_var: value.max_oob_var,
-					max_invalid_user_cmd: value.max_invalid_user_cmd,
-				},
+				anticheat: value,
 			});
 		},
 		defaultValues,

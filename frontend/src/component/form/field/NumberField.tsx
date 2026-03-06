@@ -4,7 +4,7 @@ import FormHelperText from "@mui/material/FormHelperText";
 import InputLabel from "@mui/material/InputLabel";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import { useStore } from "@tanstack/react-form";
-import { useId } from "react";
+import { useId, useMemo } from "react";
 import { useFieldContext } from "../../../contexts/formContext";
 
 type Props = {
@@ -19,6 +19,18 @@ export const NumberField = ({ label, id: idProp, min, max }: Props) => {
 	if (idProp) {
 		id = idProp;
 	}
+
+	const message = useMemo(() => {
+		if (min !== undefined && max !== undefined) {
+			return `Enter value between ${min} and ${max}`;
+		} else if (min !== undefined) {
+			return `Enter value above ${min}`;
+		} else if (max !== undefined) {
+			return `Enter value below ${max}`;
+		} else {
+			return `Enter a number`;
+		}
+	}, [min, max]);
 
 	return (
 		<BaseNumberField.Root
@@ -81,9 +93,7 @@ export const NumberField = ({ label, id: idProp, min, max }: Props) => {
 					/>
 				)}
 			/>
-			<FormHelperText sx={{ ml: 0, "&:empty": { mt: 0 } }}>
-				{`Enter value between ${min} and ${max}`}
-			</FormHelperText>
+			<FormHelperText sx={{ ml: 0, "&:empty": { mt: 0 } }}>{message}</FormHelperText>
 		</BaseNumberField.Root>
 	);
 };
