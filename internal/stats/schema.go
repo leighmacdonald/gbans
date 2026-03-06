@@ -1,4 +1,4 @@
-package match
+package stats
 
 import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
