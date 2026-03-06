@@ -1,5 +1,9 @@
 package demoparse
 
+type DemoType string
+
+const HL2Demo DemoType = "HL2DEMO"
+
 // Team represents a players team, or spectator state.
 type Team int
 

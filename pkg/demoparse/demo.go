@@ -7,7 +7,7 @@ import (
 
 type Demo struct {
 	Filename string         `json:"filename"`
-	DemoType string         `json:"demo_type"`
+	DemoType DemoType       `json:"demo_type"`
 	Version  int            `json:"version"`
 	Protocol int            `json:"protocol"`
 	Server   string         `json:"server"`
