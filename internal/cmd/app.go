@@ -46,6 +46,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
+	"github.com/leighmacdonald/gbans/pkg/demostats"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
@@ -176,7 +177,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	if g.servers, errServer = servers.New(servers.NewRepository(g.database), g.broadcaster, conf.General.SrcdsLogAddr); errServer != nil {
 		return errServer
 	}
-	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, conf.Demo, steamid.New(conf.Owner))
+	g.demos = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(g.database), g.assets, conf.Demo, steamid.New(conf.Owner), demostats.NewDefault())
 	g.reports = ban.NewReports(ban.NewReportRepository(g.database), g.persons, g.demos, g.tfapiClient, g.notifications,
 		conf.Discord.SafeAppealLogChannelID())
 	g.bans = ban.New(ban.NewRepository(g.database), g.persons, conf.Discord.SafeBanLogChannelID(),

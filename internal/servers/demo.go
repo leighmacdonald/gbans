@@ -19,7 +19,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/fs"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
-	"github.com/leighmacdonald/gbans/pkg/demoparse"
+	"github.com/leighmacdonald/gbans/pkg/demostats"
 	"github.com/leighmacdonald/gbans/pkg/zstd"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/ricochet2200/go-disk-usage/du"
@@ -33,6 +33,10 @@ var (
 	ErrFailedReadFile = errors.New("failed to read file")
 	ErrParse          = errors.New("could not parse demo")
 )
+
+type DemoParser interface {
+	Submit(ctx context.Context, name string, reader io.Reader) (*demostats.Demo, error)
+}
 
 type DemoStrategy string
 
@@ -103,23 +107,24 @@ type UploadedDemo struct {
 }
 
 type Demos struct {
-	DemoConfig
-
+	config      DemoConfig
 	repository  DemoRepository
 	asset       asset.Assets
 	bucket      asset.Bucket
 	cleanupChan chan any
 	owner       steamid.SteamID
+	parser      DemoParser
 }
 
-func NewDemos(bucket asset.Bucket, repository DemoRepository, assets asset.Assets, config DemoConfig, owner steamid.SteamID) Demos {
+func NewDemos(bucket asset.Bucket, repository DemoRepository, assets asset.Assets, config DemoConfig, owner steamid.SteamID, parser DemoParser) Demos {
 	return Demos{
-		DemoConfig:  config,
+		config:      config,
 		bucket:      bucket,
 		repository:  repository,
 		asset:       assets,
 		cleanupChan: make(chan any),
 		owner:       owner,
+		parser:      parser,
 	}
 }
 
@@ -323,11 +328,11 @@ func (d Demos) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64
 }
 
 func (d Demos) Cleanup(ctx context.Context) {
-	if !d.DemoCleanupEnabled {
+	if !d.config.DemoCleanupEnabled {
 		return
 	}
 
-	slog.Debug("Starting demo cleanup", slog.String("strategy", string(d.DemoCleanupStrategy)))
+	slog.Debug("Starting demo cleanup", slog.String("strategy", string(d.config.DemoCleanupStrategy)))
 
 	var (
 		count int
@@ -335,15 +340,15 @@ func (d Demos) Cleanup(ctx context.Context) {
 		size  int64
 	)
 
-	switch d.DemoCleanupStrategy {
+	switch d.config.DemoCleanupStrategy {
 	case DemoStrategyPctFree:
-		count, size, err = d.TruncateBySpace(ctx, d.DemoCleanupMount, d.DemoCleanupMinPct)
+		count, size, err = d.TruncateBySpace(ctx, d.config.DemoCleanupMount, d.config.DemoCleanupMinPct)
 	case DemoStrategyCount:
-		count, size, err = d.TruncateByCount(ctx, d.DemoCountLimit)
+		count, size, err = d.TruncateByCount(ctx, d.config.DemoCountLimit)
 	}
 
 	if err != nil {
-		slog.Error("Error executing demo cleanup", slog.String("strategy", string(d.DemoCleanupStrategy)))
+		slog.Error("Error executing demo cleanup", slog.String("strategy", string(d.config.DemoCleanupStrategy)))
 	}
 
 	slog.Debug("Old demos flushed", slog.Int("count", count), slog.String("size", humanize.Bytes(uint64(size)))) //nolint:gosec
@@ -374,7 +379,7 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		return nil, ErrGetServer
 	}
 	var (
-		demo     *demoparse.Demo
+		demo     *demostats.Demo
 		err      error
 		filename = asset.Name
 		mapName  string
@@ -391,7 +396,7 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 		mapName = nameParts[0]
 	}
 
-	demo, err = demoparse.Submit(ctx, d.DemoParserURL, asset.String(), asset)
+	demo, err = d.parser.Submit(ctx, asset.String(), asset)
 	if err != nil {
 		return nil, err
 	}

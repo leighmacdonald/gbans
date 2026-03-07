@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/tests"
+	"github.com/leighmacdonald/gbans/pkg/demostats"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
@@ -27,8 +28,9 @@ func TestHTTPAppeal(t *testing.T) {
 			person.NewRepository(fixture.Database, true),
 			steamid.New(tests.OwnerSID),
 			fixture.TFApi)
-		assets         = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
-		demos          = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database), assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		assets = asset.NewAssets(asset.NewLocalRepository(fixture.Database, t.TempDir()))
+		demos  = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database),
+			assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner), demostats.NewDefault())
 		reports        = ban.NewReports(ban.NewReportRepository(fixture.Database), persons, demos, fixture.TFApi, notification.NewDiscard(), "")
 		serversCase, _ = servers.New(servers.NewRepository(fixture.Database), nil, "")
 		bans           = ban.New(ban.NewRepository(fixture.Database), fixture.Persons,

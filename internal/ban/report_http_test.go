@@ -12,6 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/tests"
+	"github.com/leighmacdonald/gbans/pkg/demostats"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ func TestReport(t *testing.T) {
 			fixture.TFApi)
 		// appeals = ban.NewAppeals(ban.NewAppealRepository(fixture.Database), bans, persons, fixture.Config, notification.NewNullNotifications())
 		assets        = asset.NewAssets(asset.NewLocalRepository(fixture.Database, "./"))
-		demo          = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database), assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner))
+		demo          = servers.NewDemos(asset.BucketDemo, servers.NewDemoRepository(fixture.Database), assets, fixture.Config.Config().Demo, steamid.New(fixture.Config.Config().Owner), demostats.NewDefault())
 		reports       = ban.NewReports(ban.NewReportRepository(fixture.Database), persons, demo, fixture.TFApi, notification.NewDiscard(), "")
 		moderator     = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)
 		reporter      = fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.User)
