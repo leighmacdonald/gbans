@@ -51,7 +51,7 @@ func TestSpeedrunsHTTP(t *testing.T) {
 		srB.MapDetail = m
 
 		res := tests.PostGOK[servers.Speedrun](t, router, "/api/sm/speedruns", srB)
-		require.Equal(t, strings.ToLower(srB.MapDetail.MapName), res.MapDetail.MapName)
+		require.Equal(t, strings.ToLower(srB.Map.MapName), res.Map.MapName)
 	}
 
 	// result := tests.GetGOK[map[string][]servers.Speedrun](t, router, "/api/speedruns/overall/top?count=10")
