@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -25,13 +26,6 @@ type SpeedrunCategory string
 const (
 	Mode24v40 SpeedrunCategory = "24_40"
 )
-
-type MapDetail struct {
-	MapID     int       `json:"map_id"`
-	MapName   string    `json:"map_name"`
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
-}
 
 type SpeedrunQuery struct {
 	Map      string           `json:"map"`
@@ -52,7 +46,7 @@ type Speedrun struct {
 	ServerID      int                     `json:"server_id"`
 	Rank          int                     `json:"rank,omitempty"`
 	InitialRank   int                     `json:"initial_rank,omitempty"`
-	MapDetail     MapDetail               `json:"map_detail"`
+	Map           maps.Map                `json:"map"`
 	PointCaptures []SpeedrunPointCaptures `json:"point_captures"`
 	Players       []SpeedrunParticipant   `json:"players"`
 	Duration      time.Duration           `json:"duration"`
@@ -76,7 +70,7 @@ type SpeedrunMapOverview struct {
 	ServerID     int              `json:"server_id"`
 	Rank         int              `json:"rank"`
 	InitialRank  int              `json:"initial_rank"`
-	MapDetail    MapDetail        `json:"map_detail"`
+	Map          maps.Map         `json:"map"`
 	Duration     time.Duration    `json:"duration"`
 	PlayerCount  int              `json:"player_count"`
 	BotCount     int              `json:"bot_count"`
@@ -95,37 +89,8 @@ type SpeedrunRepository struct {
 	person person.Provider
 }
 
-func (r *SpeedrunRepository) loadOrCreateMap(ctx context.Context, mapName string) (MapDetail, error) {
-	const query = `
-		WITH ins AS (
-    		INSERT INTO map (map_id, map_name, updated_on, created_on) VALUES (DEFAULT, lower($1), now(),now())
-    		ON CONFLICT (map_name) DO NOTHING RETURNING *
-    	)
-		SELECT * FROM ins
-		UNION
-		SELECT * FROM map
-		WHERE map_name = lower($1);
-		`
-
-	var mapDetail MapDetail
-	if errQuery := r.
-		QueryRow(ctx, query, mapName).
-		Scan(&mapDetail.MapID, &mapDetail.MapName, &mapDetail.UpdatedOn, &mapDetail.CreatedOn); errQuery != nil {
-		return MapDetail{}, database.DBErr(errQuery)
-	}
-
-	return mapDetail, nil
-}
-
 func (r *SpeedrunRepository) Save(ctx context.Context, details *Speedrun) error {
-	mapDetail, mapErr := r.loadOrCreateMap(ctx, details.MapDetail.MapName)
-	if mapErr != nil {
-		return mapErr
-	}
-
 	return r.WrapTx(ctx, func(transaction pgx.Tx) error {
-		details.MapDetail = mapDetail
-
 		if errPlayers := r.insertPlayers(ctx, details.Players); errPlayers != nil {
 			return database.DBErr(errPlayers)
 		}
@@ -140,7 +105,7 @@ func (r *SpeedrunRepository) Save(ctx context.Context, details *Speedrun) error 
 			Insert("speedrun").
 			SetMap(map[string]any{
 				"server_id":    details.ServerID,
-				"map_id":       details.MapDetail.MapID,
+				"map_id":       details.Map.MapID,
 				"category":     details.Category,
 				"duration":     details.Duration,
 				"initial_rank": details.InitialRank,
@@ -316,14 +281,14 @@ func (r *SpeedrunRepository) TopNOverall(ctx context.Context, count int) (map[st
 		if err := rows.Scan(
 			&run.SpeedrunID, &run.ServerID, &run.Category, &run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn,
 			&run.InitialRank, &run.Rank,
-			&run.MapDetail.MapID, &run.MapDetail.MapName, &run.MapDetail.UpdatedOn, &run.MapDetail.CreatedOn); err != nil {
+			&run.Map.MapID, &run.Map.MapName, &run.Map.UpdatedOn, &run.Map.CreatedOn); err != nil {
 			return nil, database.DBErr(err)
 		}
-		if _, ok := runs[run.MapDetail.MapName]; !ok {
-			runs[run.MapDetail.MapName] = []Speedrun{}
+		if _, ok := runs[run.Map.MapName]; !ok {
+			runs[run.Map.MapName] = []Speedrun{}
 		}
 
-		runs[run.MapDetail.MapName] = append(runs[run.MapDetail.MapName], run)
+		runs[run.Map.MapName] = append(runs[run.Map.MapName], run)
 	}
 
 	// TODO this is quite expensive, cache or change to single query
@@ -362,7 +327,7 @@ func (r *SpeedrunRepository) ByID(ctx context.Context, speedrunID int) (Speedrun
 	if err := r.
 		QueryRow(ctx, query, speedrunID).
 		Scan(&run.SpeedrunID, &run.ServerID, &run.Category, &run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
-			&run.MapDetail.MapID, &run.MapDetail.MapName, &run.MapDetail.UpdatedOn, &run.MapDetail.CreatedOn, &run.Rank); err != nil {
+			&run.Map.MapID, &run.Map.MapName, &run.Map.UpdatedOn, &run.Map.CreatedOn, &run.Rank); err != nil {
 		return Speedrun{}, database.DBErr(err)
 	}
 
@@ -413,9 +378,9 @@ func (r *SpeedrunRepository) Recent(ctx context.Context, limit int) ([]SpeedrunM
 	var smo []SpeedrunMapOverview
 	for rows.Next() {
 		var run SpeedrunMapOverview
-		if err := rows.Scan(&run.SpeedrunID, &run.MapDetail.MapID, &run.ServerID, &run.Category,
+		if err := rows.Scan(&run.SpeedrunID, &run.Map.MapID, &run.ServerID, &run.Category,
 			&run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
-			&run.Rank, &run.PlayerCount, &run.MapDetail.MapName); err != nil {
+			&run.Rank, &run.PlayerCount, &run.Map.MapName); err != nil {
 			return []SpeedrunMapOverview{}, database.DBErr(err)
 		}
 		smo = append(smo, run)
@@ -455,9 +420,9 @@ func (r *SpeedrunRepository) ByMap(ctx context.Context, mapName string) ([]Speed
 	var smo []SpeedrunMapOverview
 	for rows.Next() {
 		var run SpeedrunMapOverview
-		if err := rows.Scan(&run.SpeedrunID, &run.MapDetail.MapID, &run.ServerID, &run.Category,
+		if err := rows.Scan(&run.SpeedrunID, &run.Map.MapID, &run.ServerID, &run.Category,
 			&run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
-			&run.Rank, &run.PlayerCount, &run.MapDetail.MapName); err != nil {
+			&run.Rank, &run.PlayerCount, &run.Map.MapName); err != nil {
 			return []SpeedrunMapOverview{}, database.DBErr(err)
 		}
 		smo = append(smo, run)

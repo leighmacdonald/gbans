@@ -22,6 +22,30 @@ type Demo struct {
 	Chat     []ChatMessage  `json:"chat"`
 }
 
+func (d Demo) Winner() logparse.Team {
+	scores := d.Scores()
+	if scores.Red > scores.Blu {
+		return logparse.RED
+	} else if scores.Blu > scores.Red {
+		return logparse.BLU
+	} else {
+		return logparse.UNASSIGNED
+	}
+}
+
+func (d Demo) Scores() logparse.TeamScores {
+	var scores logparse.TeamScores
+	for _, round := range d.Rounds {
+		if round.Winner == logparse.RED.String() {
+			scores.Red++
+		} else if round.Winner == logparse.BLU.String() {
+			scores.Blu++
+		}
+	}
+
+	return scores
+}
+
 func (d Demo) SteamIDs() steamid.Collection {
 	var col steamid.Collection
 
@@ -113,6 +137,7 @@ type PlayerSummary struct {
 	NearFullChargeDeath int `json:"near_full_charge_death"`
 	ChargesUber         int `json:"charges_uber"`
 	ChargesKritz        int `json:"charges_kritz"`
+	ChargesVacc         int `json:"charges_vacc"`
 	ChargesQuickfix     int `json:"charges_quickfix"`
 	Damage              int `json:"damage"`
 	DamageTaken         int `json:"damage_taken"`
@@ -182,25 +207,6 @@ type Player struct {
 	UserID  int                 `json:"userId"`  //nolint:tagliatelle
 	SteamID steamid.SteamID     `json:"steamId"` //nolint:tagliatelle
 	Team    logparse.Team       `json:"team"`
-}
-
-type WeaponSummary struct {
-	Kills     int `json:"kills"`
-	Damage    int `json:"damage"`
-	Shots     int `json:"shots"`
-	Hits      int `json:"hits"`
-	Backstabs int `json:"backstabs"`
-	Headshots int `json:"headshots"`
-	Airshots  int `json:"airshots"`
-
-	PreroundHealing     int `json:"preround_healing"`
-	Healing             int `json:"healing"`
-	PostroundHealing    int `json:"postround_healing"`
-	Drops               int `json:"drops"`
-	NearFullChargeDeath int `json:"near_full_charge_death"`
-	ChargesUber         int `json:"charges_uber"`
-	ChargesKritz        int `json:"charges_kritz"`
-	ChargesQuickfix     int `json:"charges_quickfix"`
 }
 
 type ChatMessage struct {

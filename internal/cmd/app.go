@@ -31,6 +31,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/log"
+	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/network/asn"
@@ -193,7 +194,8 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.anticheat = anticheat.New(anticheat.NewRepository(g.database), conf.Anticheat, g.notifications, g.onAnticheatBan, g.persons)
 	g.votes = votes.New(votes.NewRepository(g.database), g.broadcaster, g.notifications,
 		conf.Discord.SafeVoteLogChannelID(), g.persons)
-	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
+
+	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons), maps.New(maps.NewRepository(g.database)))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
 

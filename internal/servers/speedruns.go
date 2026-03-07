@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/maps"
 )
 
 var (
@@ -13,12 +14,13 @@ var (
 	ErrValueOutOfRange     = errors.New("value out of range")
 )
 
-func NewSpeedruns(repo SpeedrunRepository) Speedruns {
-	return Speedruns{repo: repo}
+func NewSpeedruns(repo SpeedrunRepository, maps maps.Maps) Speedruns {
+	return Speedruns{repo: repo, maps: maps}
 }
 
 type Speedruns struct {
 	repo SpeedrunRepository
+	maps maps.Maps
 }
 
 func (u *Speedruns) Recent(ctx context.Context, limit int) ([]SpeedrunMapOverview, error) {
@@ -68,6 +70,13 @@ func (u *Speedruns) Save(ctx context.Context, details Speedrun) (Speedrun, error
 	}
 
 	details.Players = validPlayers
+
+	mapDetail, mapErr := u.maps.Get(ctx, details.Map.MapName)
+	if mapErr != nil {
+		return details, mapErr
+	}
+
+	details.Map = mapDetail
 
 	if err := u.repo.Save(ctx, &details); err != nil {
 		return Speedrun{}, err
