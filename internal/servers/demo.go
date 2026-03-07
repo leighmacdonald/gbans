@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"path"
@@ -378,51 +377,25 @@ func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID
 	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
 		return nil, ErrGetServer
 	}
-	var (
-		demo     *demostats.Demo
-		err      error
-		filename = asset.Name
-		mapName  string
-	)
 
-	namePartsAll := strings.Split(filename, "-")
-
-	if strings.Contains(filename, "workshop-") {
-		// 20231221-042605-workshop-cp_overgrown_rc8-ugc503939302.dem
-		mapName = namePartsAll[3]
-	} else {
-		// 20231112-063943-koth_harvest_final.dem
-		nameParts := strings.Split(namePartsAll[2], ".")
-		mapName = nameParts[0]
-	}
-
-	demo, err = d.parser.Submit(ctx, asset.String(), asset)
+	demo, err := d.parser.Submit(ctx, asset.String(), asset)
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
 	intStats := map[string]map[string]any{}
-
 	for _, key := range demo.SteamIDs() {
 		if key.Valid() {
 			intStats[key.String()] = map[string]any{}
 		}
 	}
 
-	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])
-	createdTime, errTime := time.Parse("20060102-150405", timeStr) // 20240511-211121
-	if errTime != nil {
-		slog.Warn("Failed to parse demo time, using current time", slog.String("time", timeStr))
-
-		createdTime = time.Now()
-	}
-
 	newDemo := DemoFile{
 		ServerID:  serverID,
 		Title:     asset.Name,
-		CreatedOn: createdTime,
-		MapName:   mapName,
+		CreatedOn: time.Now(),
+		MapName:   demo.Map,
 		Stats:     intStats,
 		AssetID:   asset.AssetID,
 	}

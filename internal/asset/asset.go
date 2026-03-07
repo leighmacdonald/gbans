@@ -78,7 +78,9 @@ func (a *Asset) HashString() string {
 	return hex.EncodeToString(a.Hash)
 }
 
+// IsCompressed checks if the asset is compressed by checking for the file extension..
 func (a *Asset) IsCompressed() bool {
+	// Check magic 4 bytes maybe? 0xFD2FB528
 	return strings.HasSuffix(a.Name, zstd.Extension)
 }
 
@@ -109,7 +111,7 @@ func (a *Asset) String() string {
 	return a.Name
 }
 
-// Read implements io.Reader, handling transparently decompressing on the fly as required.
+// Read implements io.Reader, handling transparently opening and decompressing on the fly as required.
 func (a *Asset) Read(receiver []byte) (int, error) {
 	if a.LocalPath == "" {
 		return 0, ErrOpenFile
@@ -134,13 +136,15 @@ func (a *Asset) Read(receiver []byte) (int, error) {
 
 	count, err := a.reader.Read(receiver)
 	if err != nil {
-		if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		if errors.Is(err, io.EOF) {
 			_ = a.Close()
 
 			return count, io.EOF
 		}
 
-		return count, errors.Join(err, ErrCopyFileContent)
+		_ = a.Close()
+
+		return count, fmt.Errorf("%w: %w", ErrCopyFileContent, err)
 	}
 
 	return count, nil
