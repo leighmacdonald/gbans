@@ -123,22 +123,23 @@ func (p *Player) ApplySummary(update *demoparse.PlayerSummary) {
 	p.MedicStats.ChargesKritz += update.ChargesKritz
 	p.MedicStats.ChargesQuickfix += update.ChargesQuickfix
 
-	// for weaponName, upd := range update.Weapons {
-	// 	cs := PlayerWeaponStats{
-	// 		WeaponName: weaponName,
-	// 		Kills:      upd.Kills,
-	// 		Damage:     upd.Damage,
-	// 		Backstabs:  upd.BackstabKills,
-	// 		Airshots:   upd.Airshots,
-	// 		Headshots:  upd.HeadshotKills,
-	// 		//TODO shots/hits
-	// 	}
+	for weaponName, upd := range update.Weapons {
+		cs := PlayerWeaponStats{
+			WeaponName: weaponName,
+			Kills:      upd.Kills,
+			Damage:     upd.Damage,
+			Backstabs:  upd.BackstabKills,
+			Airshots:   upd.Airshots,
+			Headshots:  upd.HeadshotKills,
+			//TODO shots/hits
+		}
 
-	// 	p.Weapons = append(p.Weapons, cs)
-	// }
+		p.Weapons = append(p.Weapons, cs)
+	}
+
 }
 
-func (p *Player) BiggestKillstreak() *PlayerKillstreak {
+func (p Player) BiggestKillstreak() *PlayerKillstreak {
 	var biggest *PlayerKillstreak
 
 	for _, killstreakVal := range p.Killstreaks {
@@ -151,7 +152,7 @@ func (p *Player) BiggestKillstreak() *PlayerKillstreak {
 	return biggest
 }
 
-func (p *Player) KDRatio() float64 {
+func (p Player) KDRatio() float64 {
 	if p.Deaths <= 0 {
 		return -1
 	}
@@ -159,7 +160,7 @@ func (p *Player) KDRatio() float64 {
 	return math.Ceil((float64(p.Kills)/float64(p.Deaths))*100) / 100
 }
 
-func (p *Player) KDARatio() float64 {
+func (p Player) KDARatio() float64 {
 	if p.Deaths <= 0 {
 		return -1
 	}
@@ -167,7 +168,7 @@ func (p *Player) KDARatio() float64 {
 	return math.Ceil((float64(p.Kills+p.Assists)/float64(p.Deaths))*100) / 100
 }
 
-func (p *Player) DamagePerMin() int {
+func (p Player) DamagePerMin() int {
 	return slices.Max([]int{int(float64(p.Damage) / p.TimeEnd.Sub(p.TimeStart).Minutes()), 0})
 }
 

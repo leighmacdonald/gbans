@@ -28,13 +28,6 @@ const (
 	Mode24v40 SpeedrunCategory = "24_40"
 )
 
-type MapDetail struct {
-	MapID     int       `json:"map_id"`
-	MapName   string    `json:"map_name"`
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
-}
-
 type SpeedrunQuery struct {
 	Map      string           `json:"map"`
 	Interval SpeedrunInterval `json:"interval"`
@@ -54,7 +47,7 @@ type Speedrun struct {
 	ServerID      int                     `json:"server_id"`
 	Rank          int                     `json:"rank,omitempty"`
 	InitialRank   int                     `json:"initial_rank,omitempty"`
-	MapDetail     maps.Map                `json:"map_detail"`
+	MapDetail     MapDetail               `json:"map_detail"`
 	PointCaptures []SpeedrunPointCaptures `json:"point_captures"`
 	Players       []SpeedrunParticipant   `json:"players"`
 	Duration      time.Duration           `json:"duration"`
@@ -78,7 +71,7 @@ type SpeedrunMapOverview struct {
 	ServerID     int              `json:"server_id"`
 	Rank         int              `json:"rank"`
 	InitialRank  int              `json:"initial_rank"`
-	MapDetail    MapDetail        `json:"map_detail"`
+	Map          maps.Map         `json:"map"`
 	Duration     time.Duration    `json:"duration"`
 	PlayerCount  int              `json:"player_count"`
 	BotCount     int              `json:"bot_count"`
@@ -119,7 +112,7 @@ func (r *SpeedrunRepository) Save(ctx context.Context, details *Speedrun) error 
 			Insert("speedrun").
 			SetMap(map[string]any{
 				"server_id":    details.ServerID,
-				"map_id":       details.MapDetail.MapID,
+				"map_id":       details.Map.MapID,
 				"category":     details.Category,
 				"duration":     details.Duration,
 				"initial_rank": details.InitialRank,
@@ -298,11 +291,11 @@ func (r *SpeedrunRepository) TopNOverall(ctx context.Context, count int) (map[st
 			&run.MapDetail.MapID, &run.MapDetail.MapName, &run.MapDetail.UpdatedOn, &run.MapDetail.CreatedOn); err != nil {
 			return nil, database.Err(err)
 		}
-		if _, ok := runs[run.MapDetail.MapName]; !ok {
-			runs[run.MapDetail.MapName] = []Speedrun{}
+		if _, ok := runs[run.Map.MapName]; !ok {
+			runs[run.Map.MapName] = []Speedrun{}
 		}
 
-		runs[run.MapDetail.MapName] = append(runs[run.MapDetail.MapName], run)
+		runs[run.Map.MapName] = append(runs[run.Map.MapName], run)
 	}
 
 	// TODO this is quite expensive, cache or change to single query
@@ -392,7 +385,7 @@ func (r *SpeedrunRepository) Recent(ctx context.Context, limit int) ([]SpeedrunM
 	var smo []SpeedrunMapOverview
 	for rows.Next() {
 		var run SpeedrunMapOverview
-		if err := rows.Scan(&run.SpeedrunID, &run.MapDetail.MapID, &run.ServerID, &run.Category,
+		if err := rows.Scan(&run.SpeedrunID, &run.Map.MapID, &run.ServerID, &run.Category,
 			&run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
 			&run.Rank, &run.PlayerCount, &run.MapDetail.MapName); err != nil {
 			return []SpeedrunMapOverview{}, database.Err(err)
@@ -434,7 +427,7 @@ func (r *SpeedrunRepository) ByMap(ctx context.Context, mapName string) ([]Speed
 	var smo []SpeedrunMapOverview
 	for rows.Next() {
 		var run SpeedrunMapOverview
-		if err := rows.Scan(&run.SpeedrunID, &run.MapDetail.MapID, &run.ServerID, &run.Category,
+		if err := rows.Scan(&run.SpeedrunID, &run.Map.MapID, &run.ServerID, &run.Category,
 			&run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
 			&run.Rank, &run.PlayerCount, &run.MapDetail.MapName); err != nil {
 			return []SpeedrunMapOverview{}, database.Err(err)
