@@ -8,7 +8,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { createColumnHelper, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { fromUnixTime } from "date-fns";
 import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
@@ -17,7 +17,9 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { Paginator } from "../component/forum/Paginator.tsx";
 import { PersonEditModal } from "../component/modal/PersonEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
+import { BoolCell } from "../component/table/BoolCell.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
+import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
@@ -29,7 +31,6 @@ import {
 	permissionLevelString,
 } from "../schema/people.ts";
 import { commonTableSearchSchema, type LazyResult, RowsPerPage } from "../util/table.ts";
-import { renderDate, renderDateTime } from "../util/time.ts";
 
 const peopleSearchSchema = commonTableSearchSchema.extend({
 	sortColumn: z.enum(["vac_bans", "steam_id", "time_created", "persona_name", "created_on"]).optional(),
@@ -183,6 +184,8 @@ function AdminPeople() {
 	);
 }
 
+const columnHelper = createColumnHelper<Person>();
+
 const PeopleTable = ({
 	people,
 	isLoading,
@@ -194,11 +197,11 @@ const PeopleTable = ({
 	isAdmin: boolean;
 	onEditPerson: (person: Person) => Promise<void>;
 }) => {
-	const columns = useMemo<ColumnDef<Person>[]>(
-		() => [
-			{
-				accessorKey: "source_id",
+	const columns = useMemo(() => {
+		return [
+			columnHelper.accessor("steam_id", {
 				header: "Profile",
+				size: 80,
 				cell: (info) => {
 					return typeof people.data[info.row.index] === "undefined" ? (
 						""
@@ -207,13 +210,12 @@ const PeopleTable = ({
 							showCopy={true}
 							steam_id={people.data[info.row.index].steam_id}
 							personaname={people.data[info.row.index].persona_name}
-							avatar_hash={people.data[info.row.index].avatar_hash}
+							avatar_hash={people.data[info.row.index].avatarhash}
 						/>
 					);
 				},
-			},
-			{
-				accessorKey: "communityvisibilitystate",
+			}),
+			columnHelper.accessor("community_visibility_state", {
 				header: "Visibility",
 				size: 50,
 				cell: (info) => (
@@ -221,33 +223,31 @@ const PeopleTable = ({
 						{info.getValue() === communityVisibilityState.Public ? "Public" : "Private"}
 					</Typography>
 				),
-			},
-			{
-				accessorKey: "vac_bans",
-				header: "Vac Ban",
+			}),
+			columnHelper.accessor("vac_bans", {
+				header: "Vac",
+				size: 20,
+				cell: (info) => <BoolCell enabled={info.getValue() > 0} />,
+			}),
+			columnHelper.accessor("community_banned", {
+				header: "CB",
+				size: 20,
+				cell: (info) => <BoolCell enabled={info.getValue()} />,
+			}),
+
+			columnHelper.accessor("time_created", {
+				header: "Created",
 				size: 50,
-				cell: (info) => <Typography variant={"body1"}>{info.getValue() ? "Yes" : "No"}</Typography>,
-			},
-			{
-				accessorKey: "community_banned",
-				header: "Comm. Ban",
-				size: 50,
-				cell: (info) => <Typography variant={"body1"}>{info.getValue() ? "Yes" : "No"}</Typography>,
-			},
-			{
-				accessorKey: "time_created",
-				header: "Account Created",
-				size: 100,
-				cell: (info) => <Typography>{renderDate(fromUnixTime(info.getValue() as number))}</Typography>,
-			},
-			{
-				accessorKey: "created_on",
-				header: "First Seen",
-				size: 100,
-				cell: (info) => <Typography>{renderDateTime(info.getValue() as Date)}</Typography>,
-			},
-			{
-				accessorKey: "permission_level",
+				cell: (info) => <TableCellRelativeDateField date={fromUnixTime(info.getValue())} />,
+			}),
+
+			columnHelper.accessor("created_on", {
+				header: "Seen",
+				size: 80,
+				cell: (info) => <TableCellRelativeDateField date={info.getValue()} />,
+			}),
+
+			columnHelper.accessor("permission_level", {
 				header: "Perms",
 				size: 80,
 				cell: (info) => (
@@ -259,10 +259,9 @@ const PeopleTable = ({
 						)}
 					</Typography>
 				),
-			},
-			{
-				id: "actions",
-				header: "Edit",
+			}),
+			columnHelper.display({
+				header: "Act",
 				size: 30,
 				cell: (info) => {
 					return isAdmin ? (
@@ -271,10 +270,10 @@ const PeopleTable = ({
 						</IconButton>
 					) : null;
 				},
-			},
-		],
-		[isAdmin, onEditPerson, people.data],
-	);
+			}),
+		];
+	}, [isAdmin, onEditPerson, people.data]);
+
 	const table = useReactTable({
 		data: people.data,
 		columns: columns,

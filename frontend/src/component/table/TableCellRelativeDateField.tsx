@@ -22,9 +22,11 @@ export const TableCellRelativeDateField = ({
 		<div>
 			<Tooltip title={date.toUTCString()}>
 				<Typography variant={"body1"}>
-					{compareDate
-						? formatDistanceStrict(date, compareDate, opts)
-						: formatDistanceToNowStrict(date, opts)}
+					{date.getFullYear() < 2000
+						? ""
+						: compareDate
+							? formatDistanceStrict(date, compareDate, opts)
+							: formatDistanceToNowStrict(date, opts)}
 				</Typography>
 			</Tooltip>
 		</div>

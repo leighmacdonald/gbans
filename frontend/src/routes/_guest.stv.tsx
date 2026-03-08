@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/correctness/noChildrenProp: <explanation> */
+/** biome-ignore-all lint/correctness/noChildrenProp: ts-form made me do it! */
 import { ChevronLeft, CloudDownload } from "@mui/icons-material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import FlagIcon from "@mui/icons-material/Flag";
@@ -15,12 +15,8 @@ import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-	type ColumnFiltersState,
-	createColumnHelper,
-	type SortingState,
-} from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { type ColumnFiltersState, createColumnHelper, type SortingState } from "@tanstack/react-table";
+import { useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiGetDemos, apiGetServers } from "../api";
 import { ButtonLink } from "../component/ButtonLink.tsx";
@@ -32,18 +28,12 @@ import type { DemoFile } from "../schema/demo.ts";
 import type { ServerSimple } from "../schema/server.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
-import {
-	commonTableSearchSchema,
-	initColumnFilter,
-	initPagination,
-} from "../util/table.ts";
+import { commonTableSearchSchema, initColumnFilter, initPagination } from "../util/table.ts";
 import { humanFileSize } from "../util/text.tsx";
-import { renderDate, renderDateTime } from "../util/time.ts";
+import { renderDate } from "../util/time.ts";
 
 const demosSchema = commonTableSearchSchema.extend({
-	sortColumn: z
-		.enum(["demo_id", "server_id", "created_on", "map_name"])
-		.optional(),
+	sortColumn: z.enum(["demo_id", "server_id", "created_on", "map_name"]).optional(),
 	map_name: z.string().optional(),
 	server_id: z.number().optional(),
 	stats: z.string().optional(),
@@ -62,15 +52,9 @@ export const Route = createFileRoute("/_guest/stv")({
 		});
 
 		return {
-			servers: unsorted.sort((a, b) => {
-				if (a.server_name > b.server_name) {
-					return 1;
-				}
-				if (a.server_name < b.server_name) {
-					return -1;
-				}
-				return 0;
-			}),
+			servers: unsorted.sort((a, b) =>
+				a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0,
+			),
 		};
 	},
 	head: ({ match }) => ({
@@ -90,18 +74,16 @@ const schema = z.object({
 	stats: z.string(),
 });
 
+const columnHelper = createColumnHelper<DemoFile>();
+
 function STV() {
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
 	const { servers } = Route.useLoaderData();
 	const { profile, isAuthenticated } = useAuth();
-	const [pagination, setPagination] = useState(
-		initPagination(search.pageIndex, search.pageSize),
-	);
+	const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
 	const [sorting] = useState<SortingState>([{ id: "demo_id", desc: true }]);
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
-		initColumnFilter(search),
-	);
+	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
 	const theme = useTheme();
 
 	const defaultValues: z.infer<typeof schema> = {
@@ -126,7 +108,7 @@ function STV() {
 		defaultValues,
 	});
 
-	const clear = async () => {
+	const clear = useCallback(async () => {
 		setColumnFilters([]);
 		form.reset();
 		await navigate({
@@ -137,9 +119,7 @@ function STV() {
 				stats: undefined,
 			}),
 		});
-	};
-
-	const columnHelper = createColumnHelper<DemoFile>();
+	}, [form, navigate]);
 
 	const columns = useMemo(() => {
 		return [
@@ -160,10 +140,7 @@ function STV() {
 					return (
 						<Button
 							sx={{
-								color: stringToColour(
-									info.row.original.server_name_short,
-									theme.palette.mode,
-								),
+								color: stringToColour(info.row.original.server_name_short, theme.palette.mode),
 							}}
 							onClick={async () => {
 								await navigate({
@@ -183,9 +160,7 @@ function STV() {
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				size: 140,
-				cell: (info) => (
-					<Typography>{renderDate(info.getValue() as Date)}</Typography>
-				),
+				cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>,
 			}),
 			columnHelper.accessor("map_name", {
 				enableColumnFilter: true,
@@ -196,23 +171,16 @@ function STV() {
 			columnHelper.accessor("size", {
 				header: "Size",
 				size: 60,
-				cell: (info) => (
-					<Typography>{humanFileSize(info.getValue() as number)}</Typography>
-				),
+				cell: (info) => <Typography>{humanFileSize(info.getValue() as number)}</Typography>,
 			}),
 			columnHelper.accessor("stats", {
 				enableColumnFilter: true,
 				filterFn: (row, _, filterValue) => {
-					return (
-						filterValue === "" ||
-						Object.keys(row.original.stats).includes(filterValue)
-					);
+					return filterValue === "" || Object.keys(row.original.stats).includes(filterValue);
 				},
 				header: "Players",
 				size: 60,
-				cell: (info) => (
-					<Typography>{Object.keys(Object(info.getValue())).length}</Typography>
-				),
+				cell: (info) => <Typography>{Object.keys(Object(info.getValue())).length}</Typography>,
 			}),
 
 			columnHelper.display({
@@ -245,22 +213,12 @@ function STV() {
 				),
 			}),
 		];
-	}, [
-		columnHelper,
-		form.handleSubmit,
-		isAuthenticated,
-		navigate,
-		theme.palette.mode,
-	]);
+	}, [form.handleSubmit, isAuthenticated, navigate, theme.palette.mode]);
 
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader
-					title={"Filters"}
-					iconLeft={<FilterListIcon />}
-					marginTop={2}
-				>
+				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form
 						onSubmit={async (e) => {
 							e.preventDefault();
@@ -275,9 +233,7 @@ function STV() {
 									children={({ state, handleChange, handleBlur }) => {
 										return (
 											<FormControl fullWidth>
-												<InputLabel id="server-select-label">
-													Servers
-												</InputLabel>
+												<InputLabel id="server-select-label">Servers</InputLabel>
 												<Select
 													fullWidth
 													value={state.value}
@@ -346,10 +302,7 @@ function STV() {
 				</ContainerWithHeader>
 			</Grid>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader
-					title={"SourceTV Recordings"}
-					iconLeft={<VideocamIcon />}
-				>
+				<ContainerWithHeader title={"SourceTV Recordings"} iconLeft={<VideocamIcon />}>
 					<FullTable
 						columnFilters={columnFilters}
 						pagination={pagination}
