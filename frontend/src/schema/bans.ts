@@ -45,7 +45,7 @@ export const Duration = {
 	dur1M: "P1M",
 	dur6M: "P6M",
 	dur1y: "P1Y",
-	durInf: "P0",
+	durInf: "P10Y",
 	durCustom: "",
 } as const;
 
