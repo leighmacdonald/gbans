@@ -47,7 +47,7 @@ air:
     while true; do air -c .air.toml -- serve; sleep 1; done
 
 sourcemod:
-    just -f sourcemod/justfile sourcemod
+    just -f sourcemod/justfile
 
 sourcemod_devel: sourcemod
     docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/
@@ -82,8 +82,8 @@ typecheck_ts:
     just -f frontend/justfile typecheck
 
 clean:
-    go clean $(GO_FLAGS) -i
-    rm -rf ./build/
+    go clean -i
+    rm -rf ./dist/
     just -f frontend/justfile clean
     rm -rf ./sourcemod/plugins/gbans.smx
 
