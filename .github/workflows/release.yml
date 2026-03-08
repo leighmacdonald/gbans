@@ -15,7 +15,9 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.head_ref }}
           fetch-depth: 0
+
       - uses: extractions/setup-just@v3
+
       - uses: actions/setup-go@v5
         with:
           go-version: "stable"
@@ -32,29 +34,10 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: "frontend/pnpm-lock.yaml"
 
-      - name: Install modules
-        working-directory: ./frontend
-        run: pnpm install --frozen-lockfile --strict-peer-dependencies
-
-      - name: Build frontend
-        working-directory: ./frontend
-        run: pnpm build
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_URL: ${{ env.SENTRY_URL }}
-          SENTRY_ORG: ${{ env.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ env.SENTRY_PROJECT }}
-          VITE_BUILD_VERSION: ${{ inputs.version }}
-          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
-
       - name: Setup SourcePawn Compiler
         uses: rumblefrog/setup-sp@master
         with:
           version: "1.13.x"
-
-      - name: Build sourcemod plugin
-        working-directory: ./sourcemod/scripting
-        run: spcomp -i"./include/" gbans.sp -o ../plugins/gbans.smx
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -81,21 +64,17 @@ jobs:
           #          DISCORD_WEBHOOK_ID: ${{ secrets.DISCORD_WEBHOOK_ID }}
           #          DISCORD_WEBHOOK_TOKEN: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_URL: ${{ env.SENTRY_URL }}
+          SENTRY_ORG: ${{ env.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ env.SENTRY_PROJECT }}
+          VITE_BUILD_VERSION: ${{ inputs.version }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
 
-      - name: Upload snapshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: snapshot
-          #pattern: snapshot-*
-          #merge-multiple: true
-          path: build/*
-          retention-days: 1
-          overwrite: true
-
-      - name: Update contributor list
-        uses: akhilmhdh/contributors-readme-action@v2.3.11
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Update contributor list
+      #   uses: akhilmhdh/contributors-readme-action@v2.3.11
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # - name: Create Sentry release
       #   uses: getsentry/action-release@v3
