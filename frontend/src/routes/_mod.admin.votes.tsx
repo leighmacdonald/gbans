@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { PaginationState } from "@tanstack/react-table";
 import { createColumnHelper } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiVotesQuery } from "../api/votes.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
@@ -19,17 +19,11 @@ import { BoolCell } from "../component/table/BoolCell.tsx";
 import { FullTable } from "../component/table/FullTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import type { VoteResult } from "../schema/votes.ts";
-import {
-	commonTableSearchSchema,
-	initPagination,
-	RowsPerPage,
-} from "../util/table.ts";
+import { commonTableSearchSchema, initPagination, RowsPerPage } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
 
 const votesSearchSchema = commonTableSearchSchema.extend({
-	sortColumn: z
-		.enum(["target_id", "source_id", "success", "created_on"])
-		.optional(),
+	sortColumn: z.enum(["target_id", "source_id", "success", "created_on"]).optional(),
 	source_id: z.string().optional(),
 	target_id: z.string().optional(),
 	success: z.number().optional(),
@@ -39,10 +33,7 @@ export const Route = createFileRoute("/_mod/admin/votes")({
 	component: AdminVotes,
 	validateSearch: (search) => votesSearchSchema.parse(search),
 	head: ({ match }) => ({
-		meta: [
-			{ name: "description", content: "Votes" },
-			match.context.title("Votes"),
-		],
+		meta: [{ name: "description", content: "Votes" }, match.context.title("Votes")],
 	}),
 });
 
@@ -50,9 +41,7 @@ function AdminVotes() {
 	const defaultRows = RowsPerPage.TwentyFive;
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
-	const [pagination, setPagination] = useState<PaginationState>(
-		initPagination(search.pageIndex, search.pageSize),
-	);
+	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
 
 	const { data: votes, isLoading } = useQuery({
 		queryKey: ["votes", { search }],
@@ -88,7 +77,7 @@ function AdminVotes() {
 		},
 	});
 
-	const clear = async () => {
+	const clear = useCallback(async () => {
 		form.reset();
 		await navigate({
 			to: "/admin/votes",
@@ -99,7 +88,7 @@ function AdminVotes() {
 				success: undefined,
 			}),
 		});
-	};
+	}, [form, navigate]);
 
 	const columns = useMemo(() => {
 		return makeVoteColumns();
@@ -108,11 +97,7 @@ function AdminVotes() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader
-					title={"Filters"}
-					iconLeft={<FilterListIcon />}
-					marginTop={2}
-				>
+				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
 					<form
 						onSubmit={async (e) => {
 							e.preventDefault();
@@ -153,10 +138,7 @@ function AdminVotes() {
 				</ContainerWithHeader>
 			</Grid>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeaderAndButtons
-					title={"Vote History"}
-					iconLeft={<HowToVoteIcon />}
-				>
+				<ContainerWithHeaderAndButtons title={"Vote History"} iconLeft={<HowToVoteIcon />}>
 					<FullTable
 						data={votes?.data ?? []}
 						isLoading={isLoading}
@@ -215,9 +197,7 @@ const makeVoteColumns = () => {
 		columnHelper.accessor("created_on", {
 			header: "Created",
 			size: 120,
-			cell: (info) => (
-				<Typography>{renderDateTime(info.getValue())}</Typography>
-			),
+			cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
 		}),
 	];
 };

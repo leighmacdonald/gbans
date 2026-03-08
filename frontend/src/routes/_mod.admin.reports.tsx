@@ -14,6 +14,7 @@ import { ContainerWithHeader } from "../component/ContainerWithHeader";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import { FullTable } from "../component/table/FullTable.tsx";
+import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { BanReasons } from "../schema/bans.ts";
 import {
@@ -24,7 +25,6 @@ import {
 	reportStatusString,
 } from "../schema/report.ts";
 import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from "../util/table.ts";
-import { renderDateTime } from "../util/time.ts";
 
 const reportsSearchSchema = commonTableSearchSchema.extend({
 	sortColumn: z
@@ -238,8 +238,8 @@ const makeColumns = () => {
 				<PersonCell
 					showCopy={true}
 					steam_id={info.row.original.author.steam_id}
-					personaname={info.row.original.author.persona_name}
-					avatar_hash={info.row.original.author.avatar_hash}
+					personaname={info.row.original.author.name}
+					avatar_hash={info.row.original.author.avatarhash}
 				/>
 			),
 		}),
@@ -250,8 +250,8 @@ const makeColumns = () => {
 				<PersonCell
 					showCopy={true}
 					steam_id={info.row.original.subject.steam_id}
-					personaname={info.row.original.subject.persona_name}
-					avatar_hash={info.row.original.subject.avatar_hash}
+					personaname={info.row.original.subject.name}
+					avatar_hash={info.row.original.subject.avatarhash}
 				/>
 			),
 		}),
@@ -265,13 +265,13 @@ const makeColumns = () => {
 			enableColumnFilter: false,
 			size: 100,
 			header: "Created",
-			cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
+			cell: (info) => <TableCellRelativeDateField date={info.getValue()} />,
 		}),
 		columnHelper.accessor("updated_on", {
 			enableColumnFilter: false,
 			size: 100,
 			header: "Updated",
-			cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
+			cell: (info) => <TableCellRelativeDateField date={info.getValue()} />,
 		}),
 	];
 };

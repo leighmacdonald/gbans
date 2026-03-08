@@ -24,9 +24,7 @@ import { commonTableSearchSchema, initPagination } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
 
 const newsSchema = commonTableSearchSchema.extend({
-	sortColumn: z
-		.enum(["news_id", "title", "created_on", "updated_on"])
-		.optional(),
+	sortColumn: z.enum(["news_id", "title", "created_on", "updated_on"]).optional(),
 	published: z.boolean().optional(),
 });
 
@@ -43,20 +41,17 @@ export const Route = createFileRoute("/_mod/admin/news")({
 		return { news };
 	},
 	head: ({ match }) => ({
-		meta: [
-			{ name: "description", content: "News Management" },
-			match.context.title("News"),
-		],
+		meta: [{ name: "description", content: "News Management" }, match.context.title("News")],
 	}),
 });
+
+const columnHelper = createColumnHelper<NewsEntry>();
 
 function AdminNews() {
 	const search = Route.useSearch();
 	const queryClient = useQueryClient();
 	const { news } = Route.useLoaderData();
-	const [pagination, setPagination] = useState(
-		initPagination(search.pageIndex, search.pageSize),
-	);
+	const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
 	const [sorting] = useState<SortingState>([{ id: "news_id", desc: true }]);
 
 	const { sendFlash, sendError } = useUserFlashCtx();
@@ -88,8 +83,6 @@ function AdminNews() {
 	});
 
 	const columns = useMemo(() => {
-		const columnHelper = createColumnHelper<NewsEntry>();
-
 		const onDelete = async (entry: NewsEntry) => {
 			try {
 				const confirmed = await NiceModal.show(ConfirmationModal, {
@@ -112,9 +105,7 @@ function AdminNews() {
 				})) as NewsEntry;
 				queryClient.setQueryData(
 					["newsList"],
-					news?.map((e) =>
-						e.news_id === editedEntry.news_id ? editedEntry : e,
-					),
+					news?.map((e) => (e.news_id === editedEntry.news_id ? editedEntry : e)),
 				);
 				sendFlash("success", `Entry updated successfully`);
 			} catch (e) {
@@ -141,18 +132,14 @@ function AdminNews() {
 				header: "Created",
 				size: 120,
 				cell: (info) => {
-					return (
-						<TableCellString>{renderDateTime(info.getValue())}</TableCellString>
-					);
+					return <TableCellString>{renderDateTime(info.getValue())}</TableCellString>;
 				},
 			}),
 			columnHelper.accessor("updated_on", {
 				header: "Updated",
 				size: 120,
 				cell: (info) => {
-					return (
-						<TableCellString>{renderDateTime(info.getValue())}</TableCellString>
-					);
+					return <TableCellString>{renderDateTime(info.getValue())}</TableCellString>;
 				},
 			}),
 			columnHelper.accessor("is_published", {

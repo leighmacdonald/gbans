@@ -481,7 +481,7 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 									<>
 										<Tooltip title="User Settings">
 											<IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-												<Avatar alt={profile.name} src={profile.avatar_hash} />
+												<Avatar alt={profile.name} src={profile.avatarhash} />
 											</IconButton>
 										</Tooltip>
 										<Menu

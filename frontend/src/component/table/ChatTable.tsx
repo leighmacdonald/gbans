@@ -6,21 +6,22 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useNavigate } from "@tanstack/react-router";
 import {
-	type ColumnDef,
+	createColumnHelper,
 	getCoreRowModel,
 	getPaginationRowModel,
 	type OnChangeFn,
 	type PaginationState,
-	type TableOptions,
 	useReactTable,
 } from "@tanstack/react-table";
 import { useMemo } from "react";
 import type { PersonMessage } from "../../schema/people.ts";
 import { stringToColour } from "../../util/colours.ts";
-import { renderDateTime } from "../../util/time.ts";
 import { IconButtonLink } from "../IconButtonLink.tsx";
 import { PersonCell } from "../PersonCell.tsx";
 import { DataTable } from "./DataTable.tsx";
+import { TableCellRelativeDateField } from "./TableCellRelativeDateField.tsx";
+
+const columnHelper = createColumnHelper<PersonMessage>();
 
 export const ChatTable = ({
 	messages,
@@ -38,41 +39,38 @@ export const ChatTable = ({
 	const navigate = useNavigate({ from: "/chatlogs" });
 	const theme = useTheme();
 
-	const columns = useMemo<ColumnDef<PersonMessage>[]>(
-		() => [
-			{
-				accessorKey: "server_id",
+	const columns = useMemo(() => {
+		return [
+			columnHelper.accessor("server_id", {
 				header: "Server",
 				size: 40,
-				cell: (info) => {
-					return (
-						<Button
-							sx={{
-								color: stringToColour(messages[info.row.index].server_name, theme.palette.mode),
-							}}
-							onClick={async () => {
-								await navigate({
-									to: "/chatlogs",
-									search: (prev) => ({
-										...prev,
-										server_id: info.getValue() as number,
-									}),
-								});
-							}}
-						>
-							{messages[info.row.index].server_name}
-						</Button>
-					);
-				},
-			},
-			{
-				accessorKey: "created_on",
+				cell: (info) => (
+					<Button
+						sx={{
+							color: stringToColour(messages[info.row.index].server_name, theme.palette.mode),
+						}}
+						onClick={async () => {
+							await navigate({
+								to: "/chatlogs",
+								search: (prev) => ({
+									...prev,
+									server_id: info.getValue(),
+								}),
+							});
+						}}
+					>
+						{messages[info.row.index].server_name}
+					</Button>
+				),
+			}),
+
+			columnHelper.accessor("created_on", {
 				header: "Created",
 				size: 80,
-				cell: (info) => <Typography align={"center"}>{renderDateTime(info.getValue() as Date)}</Typography>,
-			},
-			{
-				accessorKey: "persona_name",
+				cell: (info) => <TableCellRelativeDateField date={info.row.original.created_on} />,
+			}),
+
+			columnHelper.accessor("persona_name", {
 				header: "Name",
 				cell: (info) => (
 					<PersonCell
@@ -82,9 +80,9 @@ export const ChatTable = ({
 						personaname={messages[info.row.index].persona_name}
 					/>
 				),
-			},
-			{
-				accessorKey: "body",
+			}),
+
+			columnHelper.accessor("body", {
 				header: "Message",
 				size: 400,
 				cell: (info) => (
@@ -92,20 +90,19 @@ export const ChatTable = ({
 						{info.getValue() as string}
 					</Typography>
 				),
-			},
-			{
-				accessorKey: "auto_filter_flagged",
+			}),
+			columnHelper.display({
+				header: "Flg",
 				size: 30,
-				header: "",
 				cell: (info) =>
-					(info.getValue() as number) > 0 ? (
+					info.row.original.auto_filter_flagged > 0 ? (
 						<Tooltip title={"Message already flagged"}>
 							<FlagIcon color={"error"} />
 						</Tooltip>
 					) : null,
-			},
-			{
-				id: "actions",
+			}),
+			columnHelper.display({
+				header: "Rep",
 				size: 30,
 				cell: (info) => (
 					<Tooltip title={"Create Report"}>
@@ -122,12 +119,11 @@ export const ChatTable = ({
 						</IconButtonLink>
 					</Tooltip>
 				),
-			},
-		],
-		[messages, navigate, theme.palette.mode],
-	);
+			}),
+		];
+	}, [messages, navigate, theme.palette.mode]);
 
-	const opts: TableOptions<PersonMessage> = {
+	const table = useReactTable({
 		data: messages,
 		columns: columns,
 		getCoreRowModel: getCoreRowModel(),
@@ -141,9 +137,7 @@ export const ChatTable = ({
 					getPaginationRowModel: getPaginationRowModel(),
 					state: { pagination },
 				}),
-	};
-
-	const table = useReactTable(opts);
+	});
 
 	return <DataTable table={table} isLoading={isLoading} />;
 };
