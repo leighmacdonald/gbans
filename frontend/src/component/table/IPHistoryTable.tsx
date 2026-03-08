@@ -34,9 +34,7 @@ export const IPHistoryTable = ({
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				size: 120,
-				cell: (info) => (
-					<Typography>{renderDateTime(info.getValue())}</Typography>
-				),
+				cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
 			}),
 			columnHelper.accessor("persona_name", {
 				header: "Name",
@@ -50,11 +48,7 @@ export const IPHistoryTable = ({
 			columnHelper.accessor("server_id", {
 				header: "Server",
 				size: 120,
-				cell: (info) => (
-					<Typography>
-						{connections.data[info.row.index].server_name_short}
-					</Typography>
-				),
+				cell: (info) => <Typography>{connections.data[info.row.index].server_name_short}</Typography>,
 			}),
 		];
 	}, [connections.data]);

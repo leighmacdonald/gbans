@@ -233,15 +233,15 @@ func (a AntiCheat) Import(ctx context.Context, fileName string, reader io.ReadCl
 		return nil, nil
 	}
 
-	var valid []logparse.StacEntry
-	for i := range entries {
-		entries[i].ServerID = serverID
-		if err := a.persons.EnsurePerson(ctx, entries[i].SteamID); err != nil {
+	var valid []logparse.StacEntry //nolint:prealloc
+	for index := range entries {
+		entries[index].ServerID = serverID
+		if err := a.persons.EnsurePerson(ctx, entries[index].SteamID); err != nil {
 			slog.Error("Failed to ensure stac person exists", slog.String("error", err.Error()))
 
 			continue
 		}
-		valid = append(valid, entries[i])
+		valid = append(valid, entries[index])
 	}
 
 	if err := a.repo.SaveEntries(ctx, valid); err != nil {

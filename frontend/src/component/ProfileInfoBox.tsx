@@ -34,7 +34,7 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
 				<Grid size={{ xs: 12 }}>
 					<Avatar
 						variant={"square"}
-						src={avatarHashToURL(profile.player.avatar_hash)}
+						src={avatarHashToURL(profile.player.avatarhash)}
 						alt={"Profile Avatar"}
 						sx={{ width: "100%", height: "100%" }}
 					/>

@@ -177,7 +177,7 @@ func (c *Configuration) Init(ctx context.Context) error {
 
 func (c *Configuration) Write(ctx context.Context, config Config) error {
 	if !strings.HasSuffix(config.General.AssetURL, "/") {
-		config.General.AssetURL = config.General.AssetURL + "/"
+		config.General.AssetURL += "/"
 	}
 
 	if err := c.repository.Write(ctx, config); err != nil {

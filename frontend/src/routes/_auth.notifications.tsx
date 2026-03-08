@@ -17,7 +17,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-	type ColumnDef,
+	createColumnHelper,
 	getCoreRowModel,
 	getPaginationRowModel,
 	type OnChangeFn,
@@ -342,6 +342,8 @@ const TableCellSeverity = ({ severity }: { severity: NotificationSeverityEnum })
 	}
 };
 
+const columnHelper = createColumnHelper<UserNotification>();
+
 const NotificationsTable = ({
 	notifications,
 	isLoading,
@@ -357,11 +359,11 @@ const NotificationsTable = ({
 	pagination: PaginationState;
 	setPagination: OnChangeFn<PaginationState>;
 }) => {
-	// const columnHelper = createColumnHelper<Filter>();
-	const columns = useMemo<ColumnDef<UserNotification>[]>(
-		() => [
-			{
+	const columns = useMemo(() => {
+		return [
+			columnHelper.display({
 				id: "select",
+				size: 30,
 				header: ({ table }) => (
 					<IndeterminateCheckbox
 						{...{
@@ -383,35 +385,32 @@ const NotificationsTable = ({
 						/>
 					</div>
 				),
+			}),
+
+			columnHelper.accessor("read", {
 				size: 30,
-			},
-			{
-				accessorKey: "read",
+				enableResizing: false,
 				header: () => <MarkChatReadIcon />,
 				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
-				size: 30,
-				enableResizing: false,
-			},
-			{
-				accessorKey: "created_on",
+			}),
+			columnHelper.accessor("created_on", {
 				header: () => "Created",
-				cell: (info) => <TableCellRelativeDateField date={info.row.original.created_on} suffix={true} />,
 				size: 125,
 				enableResizing: false,
-			},
-			{
-				accessorKey: "severity",
+				cell: (info) => <TableCellRelativeDateField date={info.row.original.created_on} suffix={true} />,
+			}),
+			columnHelper.accessor("severity", {
 				header: () => "level",
-				cell: (info) => <TableCellSeverity severity={info.getValue() as NotificationSeverityEnum} />,
 				size: 55,
-				enableResizing: false,
-			},
-			{
-				accessorKey: "message",
+				cell: (info) => <TableCellSeverity severity={info.getValue() as NotificationSeverityEnum} />,
+			}),
+
+			columnHelper.accessor("message", {
+				header: "Message",
 				cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
-			},
-			{
-				accessorKey: "author",
+			}),
+
+			columnHelper.accessor("author", {
 				cell: (info) =>
 					info.row.original.author != null ? (
 						<PersonCell
@@ -423,11 +422,10 @@ const NotificationsTable = ({
 						""
 					),
 				header: () => "Author",
-			},
-			{
-				accessorKey: "link",
-				size: 20,
+			}),
+			columnHelper.accessor("link", {
 				header: "",
+				size: 20,
 				cell: (info) => {
 					return info.getValue() ? (
 						<Link to={info.getValue() as string}>
@@ -437,10 +435,9 @@ const NotificationsTable = ({
 						""
 					);
 				},
-			},
-		],
-		[],
-	);
+			}),
+		];
+	}, []);
 
 	const table = useReactTable({
 		data: notifications,

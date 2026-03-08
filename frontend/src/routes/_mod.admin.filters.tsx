@@ -14,7 +14,6 @@ import Typography from "@mui/material/Typography";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-	type ColumnDef,
 	createColumnHelper,
 	getCoreRowModel,
 	getPaginationRowModel,
@@ -25,11 +24,7 @@ import {
 } from "@tanstack/react-table";
 import { useCallback, useMemo, useState } from "react";
 import { z } from "zod/v4";
-import {
-	apiDeleteFilter,
-	apiGetFilters,
-	apiGetWarningState,
-} from "../api/filters.ts";
+import { apiDeleteFilter, apiGetFilters, apiGetWarningState } from "../api/filters.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
@@ -42,11 +37,7 @@ import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import {
-	type Filter,
-	filterActionString,
-	type UserWarning,
-} from "../schema/filters.ts";
+import { type Filter, filterActionString, type UserWarning } from "../schema/filters.ts";
 import { findSelectedRow } from "../util/findSelectedRow.ts";
 import { findSelectedRows } from "../util/findSelectedRows.ts";
 import { RowsPerPage } from "../util/table.ts";
@@ -56,9 +47,7 @@ const filterSearchSchema = z.object({
 	pageIndex: z.number().optional().catch(0),
 	pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
 	sortOrder: z.enum(["desc", "asc"]).optional().catch("desc"),
-	sortColumn: z
-		.enum(["filter_id", "is_regex", "is_enabled", "weight", "trigger_count"])
-		.optional(),
+	sortColumn: z.enum(["filter_id", "is_regex", "is_enabled", "weight", "trigger_count"]).optional(),
 });
 
 export const Route = createFileRoute("/_mod/admin/filters")({
@@ -75,10 +64,7 @@ export const Route = createFileRoute("/_mod/admin/filters")({
 		return { filters };
 	},
 	head: ({ match }) => ({
-		meta: [
-			{ name: "description", content: "Filtered Words" },
-			match.context.title("Filtered Words"),
-		],
+		meta: [{ name: "description", content: "Filtered Words" }, match.context.title("Filtered Words")],
 	}),
 });
 
@@ -140,10 +126,7 @@ function AdminFilters() {
 	});
 
 	const onDelete = useCallback(async () => {
-		const selectedFiltersIds = findSelectedRows(
-			rowSelection,
-			filters ?? [],
-		)?.map((f) => f.filter_id);
+		const selectedFiltersIds = findSelectedRows(rowSelection, filters ?? [])?.map((f) => f.filter_id);
 		if (!selectedFiltersIds) {
 			return;
 		}
@@ -163,9 +146,7 @@ function AdminFilters() {
 			});
 			queryClient.setQueryData(
 				["filters"],
-				(filters ?? []).filter(
-					(filter) => !selectedFiltersIds.includes(filter.filter_id),
-				),
+				(filters ?? []).filter((filter) => !selectedFiltersIds.includes(filter.filter_id)),
 			);
 			setRowSelection({});
 		} catch (e) {
@@ -202,11 +183,7 @@ function AdminFilters() {
 							>
 								Edit
 							</Button>
-							<Button
-								startIcon={<AddBoxIcon />}
-								color={"success"}
-								onClick={onCreate}
-							>
+							<Button startIcon={<AddBoxIcon />} color={"success"} onClick={onCreate}>
 								New
 							</Button>
 						</ButtonGroup>,
@@ -242,28 +219,25 @@ function AdminFilters() {
 					title={`Current Warning State (Max Weight: ${warnings?.max_weight ?? "..."})`}
 					iconLeft={<WarningIcon />}
 				>
-					<WarningStateTable
-						warnings={warnings?.current ?? []}
-						isLoading={isLoadingWarnings}
-					/>
+					<WarningStateTable warnings={warnings?.current ?? []} isLoading={isLoadingWarnings} />
 				</ContainerWithHeader>
 			</Grid>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"How it works"} iconLeft={<InfoIcon />}>
 					<Typography variant={"body1"}>
-						The way the warning tracking works is that each time a user triggers
-						a match, it gets an entry in the table based on the weight of the
-						match. The individual match weight is determined by the word filter
-						defined above. Once the sum of their triggers exceeds the max weight
-						the user will have action taken against them automatically. Matched
-						entries are ephemeral and are removed over time based on the
-						configured timeout value.
+						The way the warning tracking works is that each time a user triggers a match, it gets an entry
+						in the table based on the weight of the match. The individual match weight is determined by the
+						word filter defined above. Once the sum of their triggers exceeds the max weight the user will
+						have action taken against them automatically. Matched entries are ephemeral and are removed over
+						time based on the configured timeout value.
 					</Typography>
 				</ContainerWithHeader>
 			</Grid>
 		</Grid>
 	);
 }
+
+const columnHelper = createColumnHelper<Filter>();
 
 const FiltersTable = ({
 	filters,
@@ -280,10 +254,9 @@ const FiltersTable = ({
 	pagination: PaginationState;
 	setPagination: OnChangeFn<PaginationState>;
 }) => {
-	// const columnHelper = createColumnHelper<Filter>();
-	const columns = useMemo<ColumnDef<Filter>[]>(
-		() => [
-			{
+	const columns = useMemo(() => {
+		return [
+			columnHelper.display({
 				id: "select",
 				size: 30,
 				header: ({ table }) => (
@@ -307,25 +280,23 @@ const FiltersTable = ({
 						/>
 					</div>
 				),
-			},
-
-			{
-				accessorKey: "pattern",
-				size: 600,
+			}),
+			columnHelper.accessor("pattern", {
 				header: "Pattern",
+				size: 600,
 				cell: (info) => info.getValue(),
-			},
-			{
-				accessorKey: "is_regex",
-				size: 30,
-				meta: { tooltip: "Is this a regular expression" },
-				cell: (info) => <BoolCell enabled={info.getValue() as boolean} />,
+      }),
+			
+			columnHelper.accessor("is_regex", {
 				header: "Rx",
-			},
-			{
-				accessorKey: "action",
-				size: 50,
+				size: 30,
+				cell: (info) => <BoolCell enabled={info.getValue()} />,
+			}),
+
+			columnHelper.accessor("action", {
+				header: "Action",
 				meta: { tooltip: "What action to take?" },
+				size: 50,
 				cell: (info) => {
 					return (
 						<TableCellString>
@@ -335,37 +306,27 @@ const FiltersTable = ({
 						</TableCellString>
 					);
 				},
-				header: "Action",
-			},
-			{
-				accessorKey: "duration",
-				size: 50,
-				meta: { tooltip: "Duration of the punishment when triggered" },
-				cell: (info) => (
-					<TableCellString>{info.getValue() as string}</TableCellString>
-				),
+			}),
+
+			columnHelper.accessor("duration", {
 				header: "Duration",
-			},
-			{
-				accessorKey: "weight",
+				meta: { tooltip: "Duration of the punishment when triggered" },
 				size: 50,
-				cell: (info) => (
-					<TableCellString>{info.getValue() as string}</TableCellString>
-				),
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("weight", {
 				header: "Weight",
-			},
-			{
-				accessorKey: "trigger_count",
-				size: 40,
-				meta: { tooltip: "Number of times the filter has been triggered" },
-				cell: (info) => (
-					<TableCellString>{info.getValue() as string}</TableCellString>
-				),
+				size: 50,
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("trigger_count", {
 				header: "Trig #",
-			},
-		],
-		[filters],
-	);
+				meta: { tooltip: "Number of times the filter has been triggered" },
+				size: 50,
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+		];
+	}, [filters]);
 
 	const table = useReactTable({
 		data: filters,
@@ -386,13 +347,7 @@ const FiltersTable = ({
 	return <DataTable table={table} isLoading={isLoading} />;
 };
 
-export const WarningStateTable = ({
-	warnings,
-	isLoading,
-}: {
-	warnings: UserWarning[];
-	isLoading: boolean;
-}) => {
+export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarning[]; isLoading: boolean }) => {
 	const [pagination, setPagination] = useState({
 		pageIndex: 0, //initial page index
 		pageSize: RowsPerPage.TwentyFive, //default page size
@@ -403,14 +358,10 @@ export const WarningStateTable = ({
 
 		return (
 			<>
-				<Typography variant={"h6"}>
-					Matched {f.is_regex ? "Regex" : "Text"}
-				</Typography>
+				<Typography variant={"h6"}>Matched {f.is_regex ? "Regex" : "Text"}</Typography>
 				<Typography variant={"body1"}>{pat}</Typography>
 				<Typography variant={"body1"}>Weight: {f.weight}</Typography>
-				<Typography variant={"body1"}>
-					Action: {filterActionString(f.action)}
-				</Typography>
+				<Typography variant={"body1"}>Action: {filterActionString(f.action)}</Typography>
 			</>
 		);
 	};
@@ -432,9 +383,7 @@ export const WarningStateTable = ({
 		columnHelper.accessor("created_on", {
 			header: "Created",
 			size: 100,
-			cell: (info) => (
-				<TableCellString>{renderDateTime(info.getValue())}</TableCellString>
-			),
+			cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
 		}),
 		columnHelper.accessor("matched_filter.action", {
 			header: "Action",
@@ -454,9 +403,7 @@ export const WarningStateTable = ({
 			size: 100,
 			cell: (info) => (
 				<TableCell>
-					<Tooltip
-						title={renderFilter(warnings[info.row.index].matched_filter)}
-					>
+					<Tooltip title={renderFilter(warnings[info.row.index].matched_filter)}>
 						<Typography>{info.getValue()}</Typography>
 					</Tooltip>
 				</TableCell>
