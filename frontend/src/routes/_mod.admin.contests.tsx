@@ -6,7 +6,7 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-	type ColumnDef,
+	createColumnHelper,
 	getCoreRowModel,
 	getPaginationRowModel,
 	type OnChangeFn,
@@ -23,10 +23,7 @@ import { BoolCell } from "../component/table/BoolCell.tsx";
 import { DataTable } from "../component/table/DataTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import type { Contest } from "../schema/contest.ts";
-import {
-	type PermissionLevelEnum,
-	permissionLevelString,
-} from "../schema/people.ts";
+import { type PermissionLevelEnum, permissionLevelString } from "../schema/people.ts";
 import { logErr } from "../util/errors.ts";
 import { commonTableSearchSchema, initPagination } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
@@ -49,19 +46,14 @@ export const Route = createFileRoute("/_mod/admin/contests")({
 		return { contests };
 	},
 	head: ({ match }) => ({
-		meta: [
-			{ name: "description", content: "Contests" },
-			match.context.title("Contests"),
-		],
+		meta: [{ name: "description", content: "Contests" }, match.context.title("Contests")],
 	}),
 });
 
 function AdminContests() {
 	const search = Route.useSearch();
 	const { contests } = Route.useLoaderData();
-	const [pagination, setPagination] = useState<PaginationState>(
-		initPagination(search.pageIndex, search.pageSize),
-	);
+	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
 
 	const onEditContest = useCallback(async (contest?: Contest) => {
 		try {
@@ -128,6 +120,8 @@ function AdminContests() {
 	);
 }
 
+const columnHelper = createColumnHelper<Contest>();
+
 const ContestTable = ({
 	contests,
 	isLoading,
@@ -141,115 +135,84 @@ const ContestTable = ({
 	pagination: PaginationState;
 	setPagination: OnChangeFn<PaginationState>;
 }) => {
-	const columns = useMemo<ColumnDef<Contest>[]>(
-		() => [
-			{
-				accessorKey: "title",
+	const columns = useMemo(() => {
+		return [
+			columnHelper.accessor("title", {
 				header: "Title",
 				size: 200,
-				cell: (info) => (
-					<TableCellString>{String(info.getValue())}</TableCellString>
-				),
-			},
-			{
-				accessorKey: "public",
-				meta: { tooltip: "Is this visible to regular users" },
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("public", {
 				header: "Public",
 				size: 30,
-				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
-			},
-			{
-				accessorKey: "hide_submissions",
+				cell: (info) => <BoolCell enabled={info.getValue()} />,
+			}),
+
+			columnHelper.accessor("hide_submissions", {
 				meta: { tooltip: "Are submissions hidden from public" },
 				header: "Hide Sub.",
 				size: 70,
-				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
-			},
-			{
-				accessorKey: "voting",
+				cell: (info) => <BoolCell enabled={info.getValue()} />,
+			}),
+			columnHelper.accessor("voting", {
 				meta: { tooltip: "Is voting enabled on submissions" },
 				header: "Voting",
 				size: 70,
-				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
-			},
-			{
-				accessorKey: "down_votes",
+				cell: (info) => <BoolCell enabled={info.getValue()} />,
+			}),
+			columnHelper.accessor("down_votes", {
 				meta: {
 					tooltip: "Is down voting enabled. Required voting to be enabled",
 				},
 				header: "Down Votes",
-				size: 110,
-				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
-			},
-			{
-				accessorKey: "max_submissions",
+				size: 30,
+				cell: (info) => <BoolCell enabled={info.getValue()} />,
+			}),
+			columnHelper.accessor("max_submissions", {
 				meta: { tooltip: "Max number of submissions a single user can make" },
 				header: "Max Subs.",
 				size: 100,
-				cell: (info) => (
-					<TableCellString>{String(info.getValue())}</TableCellString>
-				),
-			},
-			{
-				accessorKey: "min_permission_level",
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("min_permission_level", {
 				meta: { tooltip: "Minimum permission level required to participate" },
 				header: "Min. Perms",
 				size: 100,
 				cell: (info) => (
-					<TableCellString>
-						{permissionLevelString(info.getValue() as PermissionLevelEnum)}
-					</TableCellString>
+					<TableCellString>{permissionLevelString(info.getValue() as PermissionLevelEnum)}</TableCellString>
 				),
-			},
-			{
-				accessorKey: "date_start",
+			}),
+
+			columnHelper.accessor("date_start", {
 				meta: { tooltip: "Start date" },
 				header: "Starts",
 				size: 150,
-				cell: (info) => (
-					<TableCellString>
-						{renderDateTime(info.getValue() as Date)}
-					</TableCellString>
-				),
-			},
-			{
-				accessorKey: "date_end",
+				cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>,
+			}),
+			columnHelper.accessor("date_end", {
 				meta: { tooltip: "End date" },
 				header: "Ends",
 				size: 150,
-				cell: (info) => (
-					<TableCellString>
-						{renderDateTime(info.getValue() as Date)}
-					</TableCellString>
-				),
-			},
-			{
-				accessorKey: "updated_on",
+				cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>,
+			}),
+			columnHelper.accessor("updated_on", {
 				header: "Updated",
 				size: 150,
-				cell: (info) => (
-					<TableCellString>
-						{renderDateTime(info.getValue() as Date)}
-					</TableCellString>
-				),
-			},
-			{
+				cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>,
+			}),
+			columnHelper.display({
 				id: "actions",
 				size: 30,
 				cell: (info) => {
 					return (
-						<IconButton
-							color={"warning"}
-							onClick={() => onEdit(info.row.original)}
-						>
+						<IconButton color={"warning"} onClick={() => onEdit(info.row.original)}>
 							<EditIcon />
 						</IconButton>
 					);
 				},
-			},
-		],
-		[onEdit],
-	);
+			}),
+		];
+	}, [onEdit]);
 	const table = useReactTable({
 		data: contests,
 		columns: columns,

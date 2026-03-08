@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -23,7 +24,7 @@ func healthCmd() *cobra.Command {
 				return errors.Join(errStatic, ErrHealth)
 			}
 
-			appURL := fmt.Sprintf("http://%s:%d", static.HTTPHost, static.HTTPPort)
+			appURL := net.JoinHostPort(static.HTTPHost, fmt.Sprintf("%d", static.HTTPPort)) //nolint:perfsprint
 			req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, appURL, nil)
 			if errReq != nil {
 				return errors.Join(errReq, ErrHealth)
@@ -34,6 +35,7 @@ func healthCmd() *cobra.Command {
 			if errResp != nil {
 				return errors.Join(errResp, ErrHealth)
 			}
+			defer resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
 				return fmt.Errorf("%w: Invalid response code: %d", ErrHealth, resp.StatusCode)

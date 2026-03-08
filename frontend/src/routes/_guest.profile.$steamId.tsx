@@ -59,7 +59,7 @@ function ProfilePage() {
 						<Grid size={{ xs: 4 }}>
 							<Avatar
 								variant={"square"}
-								src={avatarHashToURL(profile.player.avatar_hash)}
+								src={avatarHashToURL(profile.player.avatarhash)}
 								alt={"Profile Avatar"}
 								sx={{ width: "100%", height: "100%", minHeight: 240 }}
 							/>

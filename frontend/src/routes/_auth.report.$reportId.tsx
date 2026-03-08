@@ -180,7 +180,7 @@ function ReportView() {
 										}}
 									>
 										<ListItemAvatar>
-											<Avatar src={avatarHashToURL(report.author.avatar_hash)}>
+											<Avatar src={avatarHashToURL(report.author.avatarhash)}>
 												<SendIcon />
 											</Avatar>
 										</ListItemAvatar>

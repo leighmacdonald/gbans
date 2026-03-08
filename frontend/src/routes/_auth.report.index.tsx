@@ -183,7 +183,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
 								? info.row.original.subject.steam_id
 								: info.row.original.subject.persona_name
 						}
-						avatar_hash={info.row.original.subject.avatar_hash}
+						avatar_hash={info.row.original.subject.avatarhash}
 					/>
 				),
 			}),

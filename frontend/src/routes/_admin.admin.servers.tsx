@@ -11,7 +11,7 @@ import Tooltip from "@mui/material/Tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-	type ColumnDef,
+	createColumnHelper,
 	getCoreRowModel,
 	getPaginationRowModel,
 	type OnChangeFn,
@@ -38,17 +38,7 @@ const serversSearchSchema = z.object({
 	page_size: z.number().optional().catch(RowsPerPage.TwentyFive),
 	sort_order: z.enum(["desc", "asc"]).optional().catch("desc"),
 	sort_column: z
-		.enum([
-			"server_id",
-			"short_name",
-			"name",
-			"address",
-			"port",
-			"region",
-			"cc",
-			"enable_stats",
-			"is_enabled",
-		])
+		.enum(["server_id", "short_name", "name", "address", "port", "region", "cc", "enable_stats", "is_enabled"])
 		.optional(),
 });
 
@@ -66,10 +56,7 @@ export const Route = createFileRoute("/_admin/admin/servers")({
 	},
 	head: ({ match }) => {
 		return {
-			meta: [
-				{ name: "description", content: "Server Editor" },
-				match.context.title("Edit Servers"),
-			],
+			meta: [{ name: "description", content: "Server Editor" }, match.context.title("Edit Servers")],
 		};
 	},
 
@@ -89,10 +76,7 @@ function AdminServers() {
 	const onCreate = async () => {
 		try {
 			const newServer = (await NiceModal.show(ServerEditorModal, {})) as Server;
-			queryClient.setQueryData(
-				["serversAdmin"],
-				[...(servers ?? []), newServer],
-			);
+			queryClient.setQueryData(["serversAdmin"], [...(servers ?? []), newServer]);
 			sendFlash("success", "Server created successfully");
 		} catch (e) {
 			sendFlash("error", `Failed to create new server: ${e}`);
@@ -165,6 +149,8 @@ function AdminServers() {
 	);
 }
 
+const columnHelper = createColumnHelper<Server>();
+
 const AdminServersTable = ({
 	servers,
 	isLoading,
@@ -178,149 +164,97 @@ const AdminServersTable = ({
 	pagination: PaginationState;
 	setPagination: OnChangeFn<PaginationState>;
 }) => {
-	const columns = useMemo<ColumnDef<Server>[]>(
-		() => [
-			{
-				accessorKey: "server_id",
-				size: 40,
+	const columns = useMemo(() => {
+		return [
+			columnHelper.accessor("server_id", {
 				header: "ID",
-				cell: (info) => (
-					<TableCellString>{info.getValue() as string}</TableCellString>
-				),
-			},
-			{
-				accessorKey: "short_name",
+				size: 40,
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("short_name", {
 				size: 60,
 				meta: {
 					tooltip: "Short unique server identifier",
 				},
 				header: "Name",
-				cell: (info) => (
-					<TableCellString>{info.getValue() as string}</TableCellString>
-				),
-			},
-			{
-				accessorKey: "name",
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+
+			columnHelper.accessor("name", {
 				size: 300,
+				header: "Name Long",
 				meta: {
 					tooltip: "Full name of the server, AKA srcds hostname",
 				},
-				header: "Name Long",
-				cell: (info) => (
-					<TableCellString>{info.getValue() as string}</TableCellString>
-				),
-			},
-			{
-				accessorKey: "address",
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+
+			columnHelper.accessor("address", {
+				header: "Address",
 				meta: {
 					tooltip: "IP or DNS/Hostname of the server",
 				},
-				header: "Address",
-				cell: (info) => (
-					<TableCellString>{info.getValue() as string}</TableCellString>
-				),
-			},
-			{
-				accessorKey: "port",
-				size: 50,
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+
+			columnHelper.accessor("port", {
 				header: "Port",
-				cell: (info) => (
-					<TableCellString>{info.getValue() as string}</TableCellString>
-				),
-			},
-			{
-				accessorKey: "rcon",
+				size: 50,
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+
+			columnHelper.accessor("rcon", {
+				header: "RCON",
 				meta: {
 					tooltip: "Standard RCON password",
 				},
-				header: () => "RCON",
-				cell: (info) => (
-					<TableCellStringHidden>
-						{info.getValue() as string}
-					</TableCellStringHidden>
-				),
-			},
-			{
-				accessorKey: "password",
+				cell: (info) => <TableCellStringHidden>{info.getValue()}</TableCellStringHidden>,
+			}),
+
+			columnHelper.accessor("password", {
 				meta: {
-					tooltip:
-						"A password that the server uses to authenticate with the central gbans server",
+					tooltip: "A password that the server uses to authenticate with the central gbans server",
 				},
 				header: () => "Auth Key",
-				cell: (info) => (
-					<TableCellStringHidden>
-						{info.getValue() as string}
-					</TableCellStringHidden>
-				),
-			},
-			{
-				accessorKey: "region",
-				size: 75,
+				cell: (info) => <TableCellStringHidden>{info.getValue()}</TableCellStringHidden>,
+			}),
+
+			columnHelper.accessor("region", {
 				header: "Region",
-				cell: (info) => (
-					<TableCellString>{info.getValue() as string}</TableCellString>
-				),
-			},
-			// {
-			//     accessorKey: 'cc',
-			//     size: 30,
-			//     meta: {
-			//         tooltip: '2 character country code'
-			//     },
-			//     header: 'CC',
-			//     cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
-			// },
-			// {
-			//     accessorKey: 'latitude',
-			//     size: 60,
-			//     meta: {
-			//         tooltip: 'Latitude'
-			//     },
-			//     header: 'Lat',
-			//     cell: (info) => <TableCellString>{Number(info.getValue()).toFixed(2)}</TableCellString>
-			// },
-			// {
-			//     accessorKey: 'longitude',
-			//     size: 60,
-			//     meta: {
-			//         tooltip: 'Longitude'
-			//     },
-			//     header: 'Lon',
-			//     cell: (info) => <TableCellString>{Number(info.getValue()).toFixed(2)}</TableCellString>
-			// },
-			{
-				accessorKey: "token_created_on",
+				size: 75,
+				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+			}),
+
+			columnHelper.accessor("token_created_on", {
 				meta: {
 					tooltip: "Last time the server authenticated itself",
 				},
 				header: "Last Auth",
-				cell: (info) => (
-					<TableCellString>
-						{renderDateTime(info.getValue() as Date)}
-					</TableCellString>
-				),
-			},
-			{
-				accessorKey: "enable_stats",
+				cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>,
+			}),
+			columnHelper.accessor("enable_stats", {
 				size: 30,
 				meta: {
 					tooltip: "Stat Tracking Enabled",
 				},
 				header: "St",
 				cell: (info) => <BoolCell enabled={info.getValue() as boolean} />,
-			},
-			{
-				accessorKey: "is_enabled",
+			}),
+			columnHelper.accessor("is_enabled", {
 				size: 30,
 				meta: {
 					tooltip: "Enabled",
 				},
 				header: "En.",
 				cell: (info) => <BoolCell enabled={info.getValue() as boolean} />,
-			},
-			{
+			}),
+
+			columnHelper.display({
 				id: "actions",
 				size: 30,
+				meta: {
+					tooltip: "Actions",
+				},
 				cell: (info) => {
 					return (
 						<ButtonGroup fullWidth variant={"text"}>
@@ -337,10 +271,9 @@ const AdminServersTable = ({
 						</ButtonGroup>
 					);
 				},
-			},
-		],
-		[onEdit],
-	);
+			}),
+		];
+	}, [onEdit]);
 
 	const table = useReactTable({
 		data: servers,

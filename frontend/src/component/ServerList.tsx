@@ -6,13 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import {
-	type ColumnDef,
-	createColumnHelper,
-	getCoreRowModel,
-	type TableOptions,
-	useReactTable,
-} from "@tanstack/react-table";
+import { createColumnHelper, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useMemo } from "react";
 import type { z } from "zod/v4";
 import { cleanMapName } from "../api";
@@ -187,15 +181,13 @@ export const ServerList = () => {
 		profile.steam_id,
 	]);
 
-	const opts: TableOptions<ServerRow> = {
+	const table = useReactTable({
 		data: metaServers,
-		columns: columns as ColumnDef<ServerRow>[],
+		columns: columns,
 		getCoreRowModel: getCoreRowModel(),
 		manualPagination: false,
 		autoResetPageIndex: true,
-	};
-
-	const table = useReactTable(opts);
+	});
 
 	if (selectedServers.length === 0) {
 		return <Typography textAlign={"center"}>No Servers Matched</Typography>;
