@@ -42,6 +42,9 @@ import { schemaBanQueryOpts } from "../schema/query.ts";
 import { isPermanentBan, RowsPerPage } from "../util/table.ts";
 import { renderDate } from "../util/time.ts";
 
+const columnHelper = createMRTColumnHelper<BanRecord>();
+const defaultOptions = createDefaultTableOptions<BanRecord>();
+
 const searchSchema = z.object({
 	pageIndex: z.number().optional().catch(0),
 	pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
@@ -492,6 +495,3 @@ function AdminBans() {
 		</Grid>
 	);
 }
-
-const columnHelper = createMRTColumnHelper<BanRecord>();
-const defaultOptions = createDefaultTableOptions<BanRecord>();
