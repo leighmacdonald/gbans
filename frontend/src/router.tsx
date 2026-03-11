@@ -20,8 +20,8 @@ export const newRouter = (queryClient: QueryClient, appInfo: appInfoDetail) => {
 			},
 		},
 		defaultPendingComponent: LoadingPlaceholder,
-		defaultErrorComponent: () => {
-			return <ErrorDetails error={new AppError(ErrorCode.Unknown, "Unexpected error")} />;
+		defaultErrorComponent: ({ error }) => {
+			return <ErrorDetails error={new AppError(ErrorCode.Unknown, `${error}`)} />;
 		},
 		// Since we're using React Query, we don't want loader calls to ever be stale
 		// This will ensure that the loader is always called when the route is preloaded or visited

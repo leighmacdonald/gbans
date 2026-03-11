@@ -123,9 +123,7 @@ function BanPage() {
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate({
-				body_md: value.body_md,
-			});
+			mutation.mutate(value);
 		},
 		defaultValues: {
 			body_md: "",
