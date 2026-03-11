@@ -6,17 +6,17 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { type ColumnFiltersState, createColumnHelper, type SortingState } from "@tanstack/react-table";
-import { useCallback, useMemo, useState } from "react";
+import { createMRTColumnHelper, MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
 import { apiGetReports } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { FullTable } from "../component/table/FullTable.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
-import { BanReasons } from "../schema/bans.ts";
+import { BanReason, BanReasons } from "../schema/bans.ts";
 import {
 	ReportStatus,
 	ReportStatusCollection,
@@ -24,7 +24,10 @@ import {
 	type ReportWithAuthor,
 	reportStatusString,
 } from "../schema/report.ts";
-import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from "../util/table.ts";
+import { commonTableSearchSchema } from "../util/table.ts";
+
+const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
+const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
 
 const reportsSearchSchema = commonTableSearchSchema.extend({
 	sortColumn: z
@@ -58,24 +61,8 @@ function AdminReports() {
 	const search = Route.useSearch();
 	const { reports } = Route.useLoaderData();
 
-	const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
-	const [sorting] = useState<SortingState>(
-		initSortOrder(search.sortColumn, search.sortOrder, {
-			id: "report_id",
-			desc: true,
-		}),
-	);
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
-
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			setColumnFilters(
-				initColumnFilter({
-					report_status: value.report_status ?? ReportStatus.Any,
-					source_id: value.source_id ?? undefined,
-					target_id: value.target_id ?? undefined,
-				}),
-			);
 			await navigate({
 				to: "/admin/reports",
 				replace: true,
@@ -98,7 +85,6 @@ function AdminReports() {
 
 	const clear = useCallback(async () => {
 		form.reset();
-		setColumnFilters([]);
 		await navigate({
 			to: "/admin/reports",
 			search: (prev) => ({
@@ -111,8 +97,107 @@ function AdminReports() {
 	}, [form, navigate]);
 
 	const columns = useMemo(() => {
-		return makeColumns();
+		return [
+			columnHelper.accessor("report_id", {
+				enableColumnFilter: false,
+				header: "ID",
+				size: 30,
+				Cell: ({ cell }) => (
+					<TextLink
+						color={"primary"}
+						to={`/report/$reportId`}
+						params={{ reportId: String(cell.getValue()) }}
+						marginRight={2}
+					>
+						#{cell.getValue()}
+					</TextLink>
+				),
+			}),
+			columnHelper.accessor("report_status", {
+				size: 120,
+				header: "Status",
+				filterVariant: "multi-select",
+				filterSelectOptions: Object.values(ReportStatus).map((status) => ({
+					label: reportStatusString(status),
+					value: status,
+				})),
+				Cell: ({ cell }) => {
+					return (
+						<Stack direction={"row"} spacing={1}>
+							<Typography variant={"body1"}>{reportStatusString(cell.getValue())}</Typography>
+						</Stack>
+					);
+				},
+			}),
+			columnHelper.accessor("source_id", {
+				header: "Reporter",
+				grow: true,
+				Cell: ({ row }) => (
+					<PersonCell
+						showCopy={true}
+						steam_id={row.original.author.steam_id}
+						personaname={row.original.author.name}
+						avatar_hash={row.original.author.avatarhash}
+					/>
+				),
+			}),
+			columnHelper.accessor("target_id", {
+				header: "Subject",
+				grow: true,
+				Cell: ({ row }) => (
+					<PersonCell
+						showCopy={true}
+						steam_id={row.original.subject.steam_id}
+						personaname={row.original.subject.name}
+						avatar_hash={row.original.subject.avatarhash}
+					/>
+				),
+			}),
+			columnHelper.accessor("reason", {
+				enableColumnFilter: false,
+				filterSelectOptions: Object.values(BanReason).map((reason) => ({
+					label: BanReasons[reason],
+					value: reason,
+				})),
+				header: "Reason",
+				size: 100,
+				Cell: ({ cell }) => <Typography>{BanReasons[cell.getValue()]}</Typography>,
+			}),
+			columnHelper.accessor("created_on", {
+				enableColumnFilter: false,
+				size: 100,
+				header: "Created",
+				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
+			}),
+			columnHelper.accessor("updated_on", {
+				enableColumnFilter: false,
+				size: 100,
+				header: "Updated",
+				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
+			}),
+		];
 	}, []);
+
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: reports,
+		enableFilters: true,
+		initialState: {
+			...defaultOptions.initialState,
+
+			sorting: [{ id: "updated_on", desc: true }],
+			columnVisibility: {
+				source_id: false,
+				target_id: true,
+				reason: true,
+				created_on: false,
+				report_status: true,
+				updated_on: true,
+				report_id: true,
+			},
+		},
+	});
 
 	return (
 		<Grid container spacing={2}>
@@ -179,99 +264,9 @@ function AdminReports() {
 			</Grid>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Current User Reports"} iconLeft={<ReportIcon />}>
-					<FullTable
-						data={reports}
-						isLoading={false}
-						columns={columns}
-						sorting={sorting}
-						pagination={pagination}
-						setPagination={setPagination}
-						columnFilters={columnFilters}
-						toOptions={{ from: Route.fullPath }}
-					/>
+					<MaterialReactTable table={table} />
 				</ContainerWithHeader>
 			</Grid>
 		</Grid>
 	);
 }
-
-const columnHelper = createColumnHelper<ReportWithAuthor>();
-
-const makeColumns = () => {
-	return [
-		columnHelper.accessor("report_id", {
-			enableColumnFilter: false,
-			header: "ID",
-			size: 30,
-			cell: (info) => (
-				<TextLink
-					color={"primary"}
-					to={`/report/$reportId`}
-					params={{ reportId: String(info.getValue()) }}
-					marginRight={2}
-				>
-					#{info.getValue()}
-				</TextLink>
-			),
-		}),
-		columnHelper.accessor("report_status", {
-			size: 120,
-			filterFn: (row, _, value: ReportStatusEnum) => {
-				if (value === ReportStatus.Any) {
-					return true;
-				}
-				return row.original.report_status === value;
-			},
-			header: "Status",
-			cell: (info) => {
-				return (
-					<Stack direction={"row"} spacing={1}>
-						<Typography variant={"body1"}>{reportStatusString(info.getValue())}</Typography>
-					</Stack>
-				);
-			},
-		}),
-		columnHelper.accessor("source_id", {
-			enableColumnFilter: true,
-			header: "Reporter",
-			cell: (info) => (
-				<PersonCell
-					showCopy={true}
-					steam_id={info.row.original.author.steam_id}
-					personaname={info.row.original.author.name}
-					avatar_hash={info.row.original.author.avatarhash}
-				/>
-			),
-		}),
-		columnHelper.accessor("target_id", {
-			enableColumnFilter: true,
-			header: "Subject",
-			cell: (info) => (
-				<PersonCell
-					showCopy={true}
-					steam_id={info.row.original.subject.steam_id}
-					personaname={info.row.original.subject.name}
-					avatar_hash={info.row.original.subject.avatarhash}
-				/>
-			),
-		}),
-		columnHelper.accessor("reason", {
-			enableColumnFilter: false,
-			header: "Reason",
-			size: 100,
-			cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>,
-		}),
-		columnHelper.accessor("created_on", {
-			enableColumnFilter: false,
-			size: 100,
-			header: "Created",
-			cell: (info) => <TableCellRelativeDateField date={info.getValue()} />,
-		}),
-		columnHelper.accessor("updated_on", {
-			enableColumnFilter: false,
-			size: 100,
-			header: "Updated",
-			cell: (info) => <TableCellRelativeDateField date={info.getValue()} />,
-		}),
-	];
-};
