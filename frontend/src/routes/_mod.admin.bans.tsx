@@ -14,13 +14,8 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-	type ColumnFiltersState,
-	createColumnHelper,
-	type PaginationState,
-	type SortingState,
-} from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { createMRTColumnHelper, MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
 import { apiGetBans } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
@@ -30,7 +25,7 @@ import { UnbanModal } from "../component/modal/UnbanModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { FullTable } from "../component/table/FullTable.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
@@ -44,9 +39,8 @@ import {
 	banReasonsCollection,
 } from "../schema/bans.ts";
 import { schemaBanQueryOpts } from "../schema/query.ts";
-import { initColumnFilter, initPagination, isPermanentBan, RowsPerPage } from "../util/table.ts";
+import { isPermanentBan, RowsPerPage } from "../util/table.ts";
 import { renderDate } from "../util/time.ts";
-import { emptyOrNullString } from "../util/types.ts";
 
 const searchSchema = z.object({
 	pageIndex: z.number().optional().catch(0),
@@ -88,9 +82,6 @@ function AdminBans() {
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
 	const { bans } = Route.useLoaderData();
-	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
-	const [sorting] = useState<SortingState>([{ id: "ban_id", desc: true }]);
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
 	const { sendFlash } = useUserFlashCtx();
 
 	const onNewBanSteam = async () => {
@@ -114,9 +105,47 @@ function AdminBans() {
 		include_groups: search.include_groups ?? true,
 	};
 
+	const onUnban = useCallback(
+		async (ban: BanRecord) => {
+			try {
+				await NiceModal.show(UnbanModal, {
+					banId: ban.ban_id,
+					personaName: ban.target_personaname,
+				});
+				queryClient.setQueryData(
+					["bans"],
+					(bans ?? []).filter((b) => b.ban_id !== ban.ban_id),
+				);
+				sendFlash("success", "Unbanned player successfully");
+			} catch (e) {
+				sendFlash("error", `Error trying to unban: ${e}`);
+			}
+		},
+		[queryClient, sendFlash, bans],
+	);
+
+	const onEdit = useCallback(
+		async (ban: BanRecord) => {
+			try {
+				const updated = (await NiceModal.show(BanModal, {
+					banId: ban.ban_id,
+					personaName: ban.target_personaname,
+					existing: ban,
+				})) as BanRecord;
+				queryClient.setQueryData(
+					["bans"],
+					(bans ?? []).map((b) => (b.ban_id === updated.ban_id ? updated : b)),
+				);
+			} catch (e) {
+				sendFlash("error", `Error trying to edit ban: ${e}`);
+			}
+		},
+		[queryClient, sendFlash, bans],
+	);
+
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			setColumnFilters(initColumnFilter(value));
+			//setColumnFilters(initColumnFilter(value));
 			await navigate({
 				to: "/admin/bans",
 				search: (prev) => ({ ...prev, ...value }),
@@ -129,7 +158,7 @@ function AdminBans() {
 	});
 
 	const clear = async () => {
-		setColumnFilters([]);
+		//setColumnFilters([]);
 		form.reset();
 		await navigate({
 			to: "/admin/bans",
@@ -152,60 +181,182 @@ function AdminBans() {
 	};
 
 	const columns = useMemo(() => {
-		const onUnban = async (ban: BanRecord) => {
-			try {
-				await NiceModal.show(UnbanModal, {
-					banId: ban.ban_id,
-					personaName: ban.target_personaname,
-				});
-				queryClient.setQueryData(
-					["bans"],
-					(bans ?? []).filter((b) => b.ban_id !== ban.ban_id),
-				);
-				sendFlash("success", "Unbanned player successfully");
-			} catch (e) {
-				sendFlash("error", `Error trying to unban: ${e}`);
-			}
-		};
+		return [
+			columnHelper.accessor("ban_id", {
+				enableColumnFilter: false,
+				size: 75,
+				grow: false,
+				header: "Ban ID",
+				Cell: ({ cell }) => (
+					<TextLink to={`/ban/$ban_id`} params={{ ban_id: String(cell.getValue()) }}>
+						{`#${cell.getValue()}`}
+					</TextLink>
+				),
+			}),
+			columnHelper.accessor("source_id", {
+				header: "Author",
+				grow: true,
+				Cell: ({ row }) => {
+					return typeof row.original === "undefined" ? (
+						""
+					) : (
+						<PersonCell
+							steam_id={row.original.source_id}
+							personaname={row.original.source_personaname}
+							avatar_hash={row.original.source_avatarhash}
+						/>
+					);
+				},
+			}),
+			columnHelper.accessor("target_id", {
+				header: "Subject",
+				grow: true,
+				Cell: ({ row }) => {
+					return typeof row.original === "undefined" ? (
+						""
+					) : (
+						<PersonCell
+							showCopy={true}
+							steam_id={row.original.target_id}
+							personaname={row.original.target_personaname}
+							avatar_hash={row.original.target_avatarhash}
+						/>
+					);
+				},
+			}),
+			columnHelper.accessor("cidr", {
+				enableColumnFilter: true,
+				size: 150,
+				grow: false,
+				filterVariant: "text",
+				// filterFn: (row, _, filterValue) => {
+				//     return filterValue == BanReason.Any || row.original.reason == filterValue;
+				// },
+				header: "CIDR/IP",
+				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
+			}),
+			columnHelper.accessor("reason", {
+				enableColumnFilter: true,
+				size: 150,
+				filterSelectOptions: Object.values(BanReason).map((reason) => ({
+					label: BanReasons[reason],
+					value: reason,
+				})),
+				filterVariant: "multi-select",
+				// filterFn: (row, _, filterValue) => {
+				// 	return filterValue === BanReason.Any || row.original.reason === filterValue;
+				// },
+				header: "Reason",
+				Cell: ({ cell }) => <Typography>{BanReasons[cell.getValue() as BanReasonEnum]}</Typography>,
+			}),
+			columnHelper.accessor("created_on", {
+				header: "Created",
+				filterVariant: "date-range",
+				grow: false,
+				size: 100,
+				Cell: ({ cell }) => <Typography>{renderDate(cell.getValue() as Date)}</Typography>,
+			}),
+			columnHelper.accessor("valid_until", {
+				header: "Duration",
+				enableColumnFilter: false,
+				grow: true,
+				filterVariant: "date-range",
+				size: 100,
+				Cell: ({ row }) => {
+					return typeof row.original === "undefined" ? (
+						""
+					) : isPermanentBan(row.original.created_on, row.original.valid_until) ? (
+						"Permanent"
+					) : (
+						<TableCellRelativeDateField
+							date={row.original.created_on}
+							compareDate={row.original.valid_until}
+						/>
+					);
+				},
+			}),
+			columnHelper.accessor("evade_ok", {
+				meta: {
+					tooltip: "Evasion OK. Players connecting from the same ip will not be banned.",
+				},
+				size: 30,
+				enableColumnFilter: false,
+				grow: false,
+				filterVariant: "checkbox",
+				header: "Evade Ok",
+				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
+			}),
+			columnHelper.accessor("deleted", {
+				size: 30,
+				enableColumnFilter: false,
+				grow: false,
+				filterVariant: "checkbox",
+				meta: { tooltip: "Deleted / Expired Bans" },
+				header: "Unbanned",
+				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
+			}),
+			columnHelper.accessor("report_id", {
+				header: "Rep.",
+				size: 60,
+				grow: false,
+				meta: { tooltip: "Linked report" },
+				Cell: ({ cell }) =>
+					Boolean(cell.getValue()) && (
+						<TextLink to={`/report/$reportId`} params={{ reportId: String(cell.getValue()) }}>
+							{`#${cell.getValue()}`}
+						</TextLink>
+					),
+			}),
+		];
+	}, []);
 
-		const onEdit = async (ban: BanRecord) => {
-			try {
-				const updated = (await NiceModal.show(BanModal, {
-					banId: ban.ban_id,
-					personaName: ban.target_personaname,
-					existing: ban,
-				})) as BanRecord;
-				queryClient.setQueryData(
-					["bans"],
-					(bans ?? []).map((b) => (b.ban_id === updated.ban_id ? updated : b)),
-				);
-			} catch (e) {
-				sendFlash("error", `Error trying to edit ban: ${e}`);
-			}
-		};
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: bans,
+		enableFilters: true,
+		initialState: {
+			...defaultOptions.initialState,
 
-		return makeColumns(onEdit, onUnban);
-	}, [bans, queryClient, sendFlash]);
-
-	const filtered = useMemo(() => {
-		return bans?.filter((b) => {
-			if (!b) {
-				return false;
-			}
-			if (!search.deleted && b.deleted) {
-				return false;
-			}
-			if (search.cidr_only && emptyOrNullString(b.cidr)) {
-				return false;
-			}
-
-			if (search.reason && search.reason >= 0 && b.reason !== search.reason) {
-				return false;
-			}
-
-			return true;
-		});
-	}, [bans, search]);
+			sorting: [{ id: "ban_id", desc: true }],
+			columnVisibility: {
+				source_id: false,
+				target_id: true,
+				reason: true,
+				valid_until: true,
+				created_on: false,
+				updated_on: true,
+				active: false,
+				report_id: true,
+				cidr: false,
+			},
+		},
+		enableRowActions: true,
+		renderRowActionMenuItems: ({ row }) => [
+			<IconButton
+				key={"edit"}
+				color={"warning"}
+				onClick={async () => {
+					await onEdit(row.original);
+				}}
+			>
+				<Tooltip title={"Edit Ban"}>
+					<EditIcon />
+				</Tooltip>
+			</IconButton>,
+			<IconButton
+				key={"remove"}
+				color={"success"}
+				onClick={async () => {
+					await onUnban(row.original);
+				}}
+			>
+				<Tooltip title={"Remove Ban"}>
+					<UndoIcon />
+				</Tooltip>
+			</IconButton>,
+		],
+	});
 
 	return (
 		<Grid container spacing={2}>
@@ -333,16 +484,7 @@ function AdminBans() {
 				>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 12 }}>
-							<FullTable
-								columnFilters={columnFilters}
-								pagination={pagination}
-								setPagination={setPagination}
-								data={filtered ?? []}
-								isLoading={false}
-								columns={columns}
-								sorting={sorting}
-								toOptions={{ from: Route.fullPath }}
-							/>
+							<MaterialReactTable table={table} />
 						</Grid>
 					</Grid>
 				</ContainerWithHeaderAndButtons>
@@ -351,145 +493,5 @@ function AdminBans() {
 	);
 }
 
-const columnHelper = createColumnHelper<BanRecord>();
-
-const makeColumns = (onEdit: (ban: BanRecord) => Promise<void>, onUnban: (ban: BanRecord) => Promise<void>) => [
-	columnHelper.accessor("ban_id", {
-		enableColumnFilter: false,
-		size: 50,
-		header: "Ban ID",
-		cell: (info) => (
-			<TextLink to={`/ban/$ban_id`} params={{ ban_id: String(info.getValue()) }}>
-				{`#${info.getValue()}`}
-			</TextLink>
-		),
-	}),
-	columnHelper.accessor("source_id", {
-		header: "Author",
-		cell: (info) => {
-			return typeof info.row.original === "undefined" ? (
-				""
-			) : (
-				<PersonCell
-					steam_id={info.row.original.source_id}
-					personaname={info.row.original.source_personaname}
-					avatar_hash={info.row.original.source_avatarhash}
-				/>
-			);
-		},
-	}),
-	columnHelper.accessor("target_id", {
-		header: "Subject",
-		cell: (info) => {
-			return typeof info.row.original === "undefined" ? (
-				""
-			) : (
-				<PersonCell
-					showCopy={true}
-					steam_id={info.row.original.target_id}
-					personaname={info.row.original.target_personaname}
-					avatar_hash={info.row.original.target_avatarhash}
-				/>
-			);
-		},
-	}),
-	columnHelper.accessor("cidr", {
-		enableColumnFilter: true,
-		size: 150,
-		// filterFn: (row, _, filterValue) => {
-		//     return filterValue == BanReason.Any || row.original.reason == filterValue;
-		// },
-		header: "CIDR/IP",
-		cell: (info) => <Typography>{info.getValue()}</Typography>,
-	}),
-	columnHelper.accessor("reason", {
-		enableColumnFilter: true,
-		size: 150,
-		filterFn: (row, _, filterValue) => {
-			return filterValue === BanReason.Any || row.original.reason === filterValue;
-		},
-		header: "Reason",
-		cell: (info) => <Typography>{BanReasons[info.getValue() as BanReasonEnum]}</Typography>,
-	}),
-	columnHelper.accessor("created_on", {
-		header: "Created",
-		size: 100,
-		cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>,
-	}),
-	columnHelper.accessor("valid_until", {
-		header: "Duration",
-		size: 100,
-		cell: (info) => {
-			return typeof info.row.original === "undefined" ? (
-				""
-			) : isPermanentBan(info.row.original.created_on, info.row.original.valid_until) ? (
-				"Permanent"
-			) : (
-				<TableCellRelativeDateField
-					date={info.row.original.created_on}
-					compareDate={info.row.original.valid_until}
-				/>
-			);
-		},
-	}),
-	columnHelper.accessor("evade_ok", {
-		meta: {
-			tooltip: "Evasion OK. Players connecting from the same ip will not be banned.",
-		},
-		size: 30,
-		header: "E",
-		cell: (info) => <BoolCell enabled={info.getValue()} />,
-	}),
-	columnHelper.accessor("deleted", {
-		size: 30,
-		meta: { tooltip: "Deleted / Expired Bans" },
-		filterFn: (row, _, filterValue) => {
-			return filterValue ? true : !row.original.deleted;
-		},
-		header: "D",
-		cell: (info) => <BoolCell enabled={info.getValue()} />,
-	}),
-	columnHelper.accessor("report_id", {
-		header: "Rep.",
-		size: 60,
-		meta: { tooltip: "Linked report" },
-		cell: (info) =>
-			Boolean(info.getValue()) && (
-				<TextLink to={`/report/$reportId`} params={{ reportId: String(info.getValue()) }}>
-					{`#${info.getValue()}`}
-				</TextLink>
-			),
-	}),
-	columnHelper.display({
-		id: "edit",
-		size: 30,
-		cell: (info) => (
-			<IconButton
-				color={"warning"}
-				onClick={async () => {
-					await onEdit(info.row.original);
-				}}
-			>
-				<Tooltip title={"Edit Ban"}>
-					<EditIcon />
-				</Tooltip>
-			</IconButton>
-		),
-	}),
-	columnHelper.display({
-		id: "unban",
-		size: 30,
-		cell: (info) => (
-			<IconButton
-				color={"success"}
-				onClick={async () => {
-					await onUnban(info.row.original);
-				}}
-			>
-				<Tooltip title={"Remove Ban"}>
-					<UndoIcon />
-				</Tooltip>
-			</IconButton>
-		),
-	}),
-];
+const columnHelper = createMRTColumnHelper<BanRecord>();
+const defaultOptions = createDefaultTableOptions<BanRecord>();
