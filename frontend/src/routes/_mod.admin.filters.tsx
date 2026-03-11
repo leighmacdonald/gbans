@@ -285,8 +285,8 @@ const FiltersTable = ({
 				header: "Pattern",
 				size: 600,
 				cell: (info) => info.getValue(),
-      }),
-			
+			}),
+
 			columnHelper.accessor("is_regex", {
 				header: "Rx",
 				size: 30,

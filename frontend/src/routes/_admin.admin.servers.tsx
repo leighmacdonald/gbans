@@ -10,22 +10,14 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	type OnChangeFn,
-	type PaginationState,
-	useReactTable,
-} from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { createMRTColumnHelper, MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { useMemo } from "react";
 import { z } from "zod/v4";
 import { apiGetServersAdmin } from "../api";
 import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
-import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { DataTable } from "../component/table/DataTable.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { TableCellStringHidden } from "../component/table/TableCellStringHidden.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
@@ -48,7 +40,7 @@ export const Route = createFileRoute("/_admin/admin/servers")({
 		const servers = await context.queryClient.fetchQuery({
 			queryKey: ["serversAdmin"],
 			queryFn: async () => {
-				return await apiGetServersAdmin();
+				return (await apiGetServersAdmin()) ?? [];
 			},
 		});
 
@@ -68,11 +60,6 @@ function AdminServers() {
 	const { servers } = Route.useLoaderData();
 	const queryClient = useQueryClient();
 
-	const [pagination, setPagination] = useState({
-		pageIndex: 0, //initial page index
-		pageSize: RowsPerPage.TwentyFive, //default page size
-	});
-
 	const onCreate = async () => {
 		try {
 			const newServer = (await NiceModal.show(ServerEditorModal, {})) as Server;
@@ -90,7 +77,7 @@ function AdminServers() {
 			})) as Server;
 			queryClient.setQueryData(
 				["serversAdmin"],
-				(servers ?? []).map((s) => {
+				servers.map((s) => {
 					return s.server_id === editedServer.server_id ? editedServer : s;
 				}),
 			);
@@ -120,28 +107,7 @@ function AdminServers() {
 							</ButtonGroup>,
 						]}
 					>
-						<AdminServersTable
-							servers={servers ?? []}
-							isLoading={false}
-							setPagination={setPagination}
-							pagination={pagination}
-							onEdit={onEdit}
-						/>
-						<PaginatorLocal
-							onRowsChange={(rows) => {
-								setPagination((prev) => {
-									return { ...prev, pageSize: rows };
-								});
-							}}
-							onPageChange={(page) => {
-								setPagination((prev) => {
-									return { ...prev, pageIndex: page };
-								});
-							}}
-							count={servers?.length ?? 0}
-							rows={pagination.pageSize}
-							page={pagination.pageIndex}
-						/>
+						<AdminServersTable servers={servers} isLoading={false} onEdit={onEdit} />
 					</ContainerWithHeaderAndButtons>
 				</Stack>
 			</Grid>
@@ -149,44 +115,42 @@ function AdminServers() {
 	);
 }
 
-const columnHelper = createColumnHelper<Server>();
+const columnHelper = createMRTColumnHelper<Server>();
+const defaultOptions = createDefaultTableOptions<Server>();
 
 const AdminServersTable = ({
 	servers,
-	isLoading,
-	setPagination,
-	pagination,
 	onEdit,
 }: {
 	servers: Server[];
 	isLoading: boolean;
 	onEdit: (server: Server) => Promise<void>;
-	pagination: PaginationState;
-	setPagination: OnChangeFn<PaginationState>;
 }) => {
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("server_id", {
 				header: "ID",
+				grow: false,
 				size: 40,
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{String(cell.getValue())}</TableCellString>,
 			}),
 			columnHelper.accessor("short_name", {
-				size: 60,
+				size: 30,
 				meta: {
 					tooltip: "Short unique server identifier",
 				},
 				header: "Name",
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue() as string}</TableCellString>,
 			}),
 
 			columnHelper.accessor("name", {
 				size: 300,
 				header: "Name Long",
+				grow: true,
 				meta: {
 					tooltip: "Full name of the server, AKA srcds hostname",
 				},
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue() as string}</TableCellString>,
 			}),
 
 			columnHelper.accessor("address", {
@@ -194,13 +158,13 @@ const AdminServersTable = ({
 				meta: {
 					tooltip: "IP or DNS/Hostname of the server",
 				},
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue() as string}</TableCellString>,
 			}),
 
 			columnHelper.accessor("port", {
 				header: "Port",
 				size: 50,
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{String(cell.getValue())}</TableCellString>,
 			}),
 
 			columnHelper.accessor("rcon", {
@@ -208,21 +172,21 @@ const AdminServersTable = ({
 				meta: {
 					tooltip: "Standard RCON password",
 				},
-				cell: (info) => <TableCellStringHidden>{info.getValue()}</TableCellStringHidden>,
+				Cell: ({ cell }) => <TableCellStringHidden>{cell.getValue() as string}</TableCellStringHidden>,
 			}),
 
 			columnHelper.accessor("password", {
 				meta: {
 					tooltip: "A password that the server uses to authenticate with the central gbans server",
 				},
-				header: () => "Auth Key",
-				cell: (info) => <TableCellStringHidden>{info.getValue()}</TableCellStringHidden>,
+				header: "Auth Key",
+				Cell: ({ cell }) => <TableCellStringHidden>{cell.getValue() as string}</TableCellStringHidden>,
 			}),
 
 			columnHelper.accessor("region", {
 				header: "Region",
 				size: 75,
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue() as string}</TableCellString>,
 			}),
 
 			columnHelper.accessor("token_created_on", {
@@ -230,7 +194,7 @@ const AdminServersTable = ({
 					tooltip: "Last time the server authenticated itself",
 				},
 				header: "Last Auth",
-				cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>,
+				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue() as Date)}</TableCellString>,
 			}),
 			columnHelper.accessor("enable_stats", {
 				size: 30,
@@ -238,53 +202,55 @@ const AdminServersTable = ({
 					tooltip: "Stat Tracking Enabled",
 				},
 				header: "St",
-				cell: (info) => <BoolCell enabled={info.getValue() as boolean} />,
+				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() as boolean} />,
 			}),
 			columnHelper.accessor("is_enabled", {
 				size: 30,
+				filterVariant: "checkbox",
 				meta: {
 					tooltip: "Enabled",
 				},
 				header: "En.",
-				cell: (info) => <BoolCell enabled={info.getValue() as boolean} />,
-			}),
-
-			columnHelper.display({
-				id: "actions",
-				size: 30,
-				meta: {
-					tooltip: "Actions",
-				},
-				cell: (info) => {
-					return (
-						<ButtonGroup fullWidth variant={"text"}>
-							<IconButton
-								color={"warning"}
-								onClick={async () => {
-									await onEdit(info.row.original);
-								}}
-							>
-								<Tooltip title={"Edit Server"}>
-									<EditIcon />
-								</Tooltip>
-							</IconButton>
-						</ButtonGroup>
-					);
-				},
+				grow: false,
+				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() as boolean} />,
 			}),
 		];
-	}, [onEdit]);
+	}, []);
 
-	const table = useReactTable({
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
 		data: servers,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		onPaginationChange: setPagination, //update the pagination state when internal APIs mutate the pagination state
-		state: {
-			pagination,
+		enableFilters: true,
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "name", desc: false }],
+			columnVisibility: {
+				server_id: false,
+				short_name: true,
+				password: false,
+				region: false,
+				rcon: false,
+				token_created_on: false,
+				enable_stats: false,
+				is_enabled: true,
+			},
 		},
+		enableRowActions: true,
+		renderRowActionMenuItems: ({ row }) => [
+			<IconButton
+				key="edit"
+				color={"warning"}
+				onClick={async () => {
+					await onEdit(row.original);
+				}}
+			>
+				<Tooltip title={"Edit Server"}>
+					<EditIcon />
+				</Tooltip>
+			</IconButton>,
+		],
 	});
 
-	return <DataTable table={table} isLoading={isLoading} />;
+	return <MaterialReactTable table={table} />;
 };
