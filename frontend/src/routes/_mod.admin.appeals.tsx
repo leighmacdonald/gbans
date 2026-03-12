@@ -1,28 +1,17 @@
-import FilterListIcon from "@mui/icons-material/FilterList";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { createMRTColumnHelper, MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { createFileRoute } from "@tanstack/react-router";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
 import { z } from "zod/v4";
 import { apiGetAppeals, appealStateString } from "../api";
-import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
-import { useAppForm } from "../contexts/formContext.tsx";
-import {
-	AppealState,
-	AppealStateCollection,
-	type AppealStateEnum,
-	BanReason,
-	BanReasons,
-	type BanRecord,
-} from "../schema/bans.ts";
+import { AppealState, BanReason, BanReasons, type BanRecord } from "../schema/bans.ts";
 import { commonTableSearchSchema } from "../util/table.ts";
 
 const columnHelper = createMRTColumnHelper<BanRecord>();
@@ -35,12 +24,6 @@ const appealSearchSchema = commonTableSearchSchema.extend({
 	source_id: z.string().optional(),
 	target_id: z.string().optional(),
 	appeal_state: z.enum(AppealState).optional(),
-});
-
-const schema = z.object({
-	source_id: z.string(),
-	target_id: z.string(),
-	appeal_state: z.enum(AppealState),
 });
 
 export const Route = createFileRoute("/_mod/admin/appeals")({
@@ -56,58 +39,19 @@ export const Route = createFileRoute("/_mod/admin/appeals")({
 });
 
 function AdminAppeals() {
-	const navigate = useNavigate({ from: Route.fullPath });
-	const search = Route.useSearch();
-
-	const defaultValues: z.infer<typeof schema> = {
-		source_id: search.source_id ?? "",
-		target_id: search.target_id ?? "",
-		appeal_state: search.appeal_state ?? AppealState.Any,
-	};
-	const { data } = useQuery({
+	const { data, isLoading } = useQuery({
 		queryKey: ["appeals"],
 		queryFn: async () => {
 			return (await apiGetAppeals({})) ?? [];
 		},
 	});
 
-	const form = useAppForm({
-		onSubmit: async ({ value }) => {
-			await navigate({
-				to: "/admin/appeals",
-				search: (prev) => ({ ...prev, ...value }),
-			});
-		},
-		validators: {
-			onChange: schema,
-		},
-		defaultValues,
-	});
-
-	const clear = async () => {
-		//reset();
-		form.setFieldValue("appeal_state", AppealState.Any);
-		form.setFieldValue("source_id", "");
-		form.setFieldValue("target_id", "");
-
-		await form.handleSubmit();
-		await navigate({
-			to: "/admin/appeals",
-			search: (prev) => ({
-				...prev,
-				source_id: undefined,
-				target_id: undefined,
-				appeal_state: undefined,
-			}),
-		});
-	};
 	const columns = useMemo(
 		() => [
 			columnHelper.accessor("ban_id", {
-				enableColumnFilter: false,
 				header: "ID",
+				size: 75,
 				grow: false,
-				size: 30,
 				Cell: ({ cell }) => (
 					<TextLink
 						color={"primary"}
@@ -120,18 +64,30 @@ function AdminAppeals() {
 				),
 			}),
 			columnHelper.accessor("appeal_state", {
-				enableColumnFilter: true,
 				header: "Status",
-				size: 150,
 				grow: false,
 				Cell: ({ cell }) => {
 					return <Typography variant={"body1"}>{appealStateString(cell.getValue())}</Typography>;
 				},
 			}),
 			columnHelper.accessor("source_id", {
-				enableColumnFilter: true,
 				header: "Author",
 				grow: true,
+				filterFn: (row, _, filterValue) => {
+					const query = filterValue.toLowerCase();
+					if (query === "") {
+						return true;
+					}
+					const value = row.original.source_id.toLowerCase();
+					if (value.includes(query)) {
+						return true;
+					}
+					if (row.original.source_id.includes(query) || row.original.source_id === query) {
+						return true;
+					}
+
+					return false;
+				},
 				Cell: ({ row }) => (
 					<PersonCell
 						showCopy={true}
@@ -142,9 +98,24 @@ function AdminAppeals() {
 				),
 			}),
 			columnHelper.accessor("target_id", {
-				enableColumnFilter: true,
 				header: "Subject",
+				enableColumnFilter: true,
 				grow: true,
+				filterFn: (row, _, filterValue) => {
+					const query = filterValue.toLowerCase();
+					if (query === "") {
+						return true;
+					}
+					const value = row.original.target_personaname.toLowerCase();
+					if (value.includes(query)) {
+						return true;
+					}
+					if (row.original.target_id.includes(query) || row.original.target_id === query) {
+						return true;
+					}
+
+					return false;
+				},
 				Cell: ({ row }) => (
 					<PersonCell
 						showCopy={true}
@@ -155,17 +126,23 @@ function AdminAppeals() {
 				),
 			}),
 			columnHelper.accessor("reason", {
+				filterVariant: "multi-select",
 				header: "Reason",
 				size: 150,
 				filterSelectOptions: Object.values(BanReason).map((reason) => ({
 					label: BanReasons[reason],
 					value: reason,
 				})),
-				filterVariant: "multi-select",
+				filterFn: (row, _, filterValue) => {
+					return (
+						filterValue.length === 0 ||
+						filterValue.includes(BanReason.Any) ||
+						filterValue.includes(row.original.reason)
+					);
+				},
 				Cell: ({ cell }) => <Typography>{BanReasons[cell.getValue()]}</Typography>,
 			}),
 			columnHelper.accessor("reason_text", {
-				enableColumnFilter: false,
 				header: "Custom",
 				filterVariant: "text",
 				grow: true,
@@ -192,6 +169,7 @@ function AdminAppeals() {
 		columns,
 		data: data ?? [],
 		enableFilters: true,
+		state: { isLoading },
 		initialState: {
 			...defaultOptions.initialState,
 			sorting: [{ id: "updated_on", desc: true }],
@@ -208,70 +186,7 @@ function AdminAppeals() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
-					<form
-						onSubmit={async (e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							await form.handleSubmit();
-						}}
-					>
-						<Grid container spacing={2}>
-							<Grid size={{ xs: 6, md: 4 }}>
-								<form.AppField
-									name={"source_id"}
-									children={(field) => {
-										return <field.SteamIDField label={"Author Steam ID"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 6, md: 4 }}>
-								<form.AppField
-									name={"target_id"}
-									children={(field) => {
-										return <field.SteamIDField label={"Subject Steam ID"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 6, md: 4 }}>
-								<form.AppField
-									name={"appeal_state"}
-									children={(field) => {
-										return (
-											<field.SelectField
-												label={"Appeal Status"}
-												items={AppealStateCollection}
-												renderItem={(item) => {
-													return (
-														<MenuItem value={item} key={`rs-${item}`}>
-															{appealStateString(item as AppealStateEnum)}
-														</MenuItem>
-													);
-												}}
-											/>
-										);
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 12 }}>
-								<form.AppForm>
-									<ButtonGroup>
-										<form.ResetButton onClick={clear} />
-										<form.SubmitButton />
-									</ButtonGroup>
-								</form.AppForm>
-							</Grid>
-						</Grid>
-					</form>
-				</ContainerWithHeader>
-			</Grid>
-
-			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Recent Open Appeal Activity"}>
-					<MaterialReactTable table={table} />
-				</ContainerWithHeader>
+				<SortableTable table={table} title={"Ban Appeals"} />
 			</Grid>
 		</Grid>
 	);
