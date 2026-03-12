@@ -2,69 +2,54 @@ import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import NewspaperIcon from "@mui/icons-material/Newspaper";
 import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import IconButton from "@mui/material/IconButton";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { createColumnHelper, type SortingState } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
-import { z } from "zod/v4";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { useCallback, useMemo } from "react";
 import { apiGetNewsAll, apiNewsDelete } from "../api/news.ts";
-import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { NewsEditModal } from "../component/modal/NewsEditModal.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { FullTable } from "../component/table/FullTable.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { NewsEntry } from "../schema/news.ts";
-import { commonTableSearchSchema, initPagination } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
-
-const newsSchema = commonTableSearchSchema.extend({
-	sortColumn: z.enum(["news_id", "title", "created_on", "updated_on"]).optional(),
-	published: z.boolean().optional(),
-});
 
 export const Route = createFileRoute("/_mod/admin/news")({
 	component: AdminNews,
-	validateSearch: (search) => newsSchema.parse(search),
-	loader: async ({ context }) => {
-		const news = await context.queryClient.fetchQuery({
-			queryKey: ["newsList"],
-			queryFn: async () => {
-				return await apiGetNewsAll();
-			},
-		});
-		return { news };
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "News Management" }, match.context.title("News")],
 	}),
 });
 
-const columnHelper = createColumnHelper<NewsEntry>();
+const columnHelper = createMRTColumnHelper<NewsEntry>();
+const defaultOptions = createDefaultTableOptions<NewsEntry>();
 
 function AdminNews() {
-	const search = Route.useSearch();
 	const queryClient = useQueryClient();
-	const { news } = Route.useLoaderData();
-	const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
-	const [sorting] = useState<SortingState>([{ id: "news_id", desc: true }]);
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["newsList"],
+		queryFn: async () => {
+			return (await apiGetNewsAll()) ?? [];
+		},
+	});
 
 	const { sendFlash, sendError } = useUserFlashCtx();
 
-	const onCreate = async () => {
+	const onCreate = useCallback(async () => {
 		try {
 			const newEntry = await NiceModal.show(NewsEditModal);
-			queryClient.setQueryData(["newsList"], [...(news ?? []), newEntry]);
+			queryClient.setQueryData(["newsList"], [...(data ?? []), newEntry]);
 			sendFlash("success", `Entry created successfully`);
 		} catch (e) {
 			sendFlash("error", `Error trying to create entry: ${e}`);
 		}
-	};
+	}, [data, queryClient, sendFlash]);
 
 	const deleteMutation = useMutation({
 		mutationKey: ["deleteNews"],
@@ -75,15 +60,15 @@ function AdminNews() {
 		onSuccess: (news_id) => {
 			queryClient.setQueryData(
 				["newsList"],
-				(news ?? []).filter((e) => e.news_id !== news_id),
+				(data ?? []).filter((e) => e.news_id !== news_id),
 			);
 			sendFlash("success", `Entry deleted successfully`);
 		},
 		onError: sendError,
 	});
 
-	const columns = useMemo(() => {
-		const onDelete = async (entry: NewsEntry) => {
+	const onDelete = useCallback(
+		async (entry: NewsEntry) => {
 			try {
 				const confirmed = await NiceModal.show(ConfirmationModal, {
 					title: "Delete news entry?",
@@ -96,121 +81,130 @@ function AdminNews() {
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
-		};
+		},
+		[deleteMutation, sendFlash],
+	);
 
-		const onEdit = async (entry: NewsEntry) => {
+	const onEdit = useCallback(
+		async (entry: NewsEntry) => {
 			try {
 				const editedEntry = (await NiceModal.show(NewsEditModal, {
 					entry: entry,
 				})) as NewsEntry;
 				queryClient.setQueryData(
 					["newsList"],
-					news?.map((e) => (e.news_id === editedEntry.news_id ? editedEntry : e)),
+					data?.map((e) => (e.news_id === editedEntry.news_id ? editedEntry : e)),
 				);
 				sendFlash("success", `Entry updated successfully`);
 			} catch (e) {
 				sendFlash("error", `Error trying to update entry: ${e}`);
 			}
-		};
+		},
+		[queryClient, sendFlash, data],
+	);
 
+	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("news_id", {
 				header: "ID",
-				size: 30,
-				cell: (info) => {
-					return <TableCellString>{info.getValue()}</TableCellString>;
+				grow: false,
+				Cell: ({ cell }) => {
+					return <TableCellString>{cell.getValue()}</TableCellString>;
 				},
 			}),
 			columnHelper.accessor("title", {
 				header: "Title",
-				size: 400,
-				cell: (info) => {
-					return <TableCellString>{info.getValue()}</TableCellString>;
+				grow: true,
+				Cell: ({ cell }) => {
+					return <TableCellString>{cell.getValue()}</TableCellString>;
 				},
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
-				size: 120,
-				cell: (info) => {
-					return <TableCellString>{renderDateTime(info.getValue())}</TableCellString>;
+				grow: false,
+				enableColumnFilter: false,
+				Cell: ({ cell }) => {
+					return <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>;
 				},
 			}),
 			columnHelper.accessor("updated_on", {
 				header: "Updated",
-				size: 120,
-				cell: (info) => {
-					return <TableCellString>{renderDateTime(info.getValue())}</TableCellString>;
+				grow: false,
+				enableColumnFilter: false,
+				Cell: ({ cell }) => {
+					return <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>;
 				},
 			}),
 			columnHelper.accessor("is_published", {
 				meta: { tooltip: "Published" },
-				header: "Pub",
-				size: 30,
-				cell: (info) => {
-					return <BoolCell enabled={info.getValue()} />;
-				},
-			}),
-			columnHelper.display({
-				id: "edit",
-				size: 50,
-				cell: (info) => {
-					return (
-						<ButtonGroup fullWidth>
-							<Button
-								variant={"contained"}
-								color={"warning"}
-								startIcon={<EditIcon />}
-								onClick={async () => {
-									await onEdit(info.row.original);
-								}}
-							>
-								Edit
-							</Button>
-							<Button
-								variant={"contained"}
-								color={"error"}
-								startIcon={<DeleteIcon />}
-								onClick={async () => {
-									await onDelete(info.row.original);
-								}}
-							>
-								Delete
-							</Button>
-						</ButtonGroup>
-					);
+				filterVariant: "checkbox",
+				header: "Published",
+				grow: false,
+				Cell: ({ cell }) => {
+					return <BoolCell enabled={cell.getValue()} />;
 				},
 			}),
 		];
-	}, [deleteMutation, news, queryClient, sendFlash]);
+	}, []);
 
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data ?? [],
+		enableFilters: true,
+		enableRowActions: true,
+		state: {
+			isLoading,
+			showAlertBanner: isError,
+		},
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "news_id", desc: false }],
+			columnVisibility: {
+				title: true,
+				news_id: false,
+				created_on: false,
+				updated_on: true,
+				is_published: true,
+			},
+		},
+		renderRowActionMenuItems: ({ row }) => [
+			<Button
+				key={"editButton"}
+				variant={"contained"}
+				color={"warning"}
+				startIcon={<EditIcon />}
+				onClick={async () => {
+					await onEdit(row.original);
+				}}
+			>
+				Edit
+			</Button>,
+			<Button
+				key={"deleteButton"}
+				variant={"contained"}
+				color={"error"}
+				startIcon={<DeleteIcon />}
+				onClick={async () => {
+					await onDelete(row.original);
+				}}
+			>
+				Delete
+			</Button>,
+		],
+	});
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeaderAndButtons
+				<SortableTable
+					table={table}
 					title={"News Entries"}
-					iconLeft={<NewspaperIcon />}
 					buttons={[
-						<Button
-							color={"success"}
-							variant={"contained"}
-							key={"addButton"}
-							onClick={onCreate}
-							startIcon={<AddIcon />}
-						>
-							Create
-						</Button>,
+						<IconButton key={"addButton"} onClick={onCreate}>
+							<AddIcon />
+						</IconButton>,
 					]}
-				>
-					<FullTable
-						data={news ?? []}
-						isLoading={false}
-						columns={columns}
-						pagination={pagination}
-						setPagination={setPagination}
-						sorting={sorting}
-						toOptions={{ from: Route.fullPath }}
-					/>
-				</ContainerWithHeaderAndButtons>
+				/>
 			</Grid>
 		</Grid>
 	);

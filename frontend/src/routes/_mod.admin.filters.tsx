@@ -44,7 +44,6 @@ function AdminFilters() {
 				enableColumnFilter: false,
 				Cell: ({ cell }) => cell.getValue(),
 			}),
-
 			columnHelper.accessor("is_regex", {
 				header: "Rx",
 				filterVariant: "checkbox",
@@ -52,7 +51,6 @@ function AdminFilters() {
 				grow: false,
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
-
 			columnHelper.accessor("action", {
 				header: "Action",
 				enableColumnFilter: false,
@@ -66,7 +64,6 @@ function AdminFilters() {
 					);
 				},
 			}),
-
 			columnHelper.accessor("duration", {
 				header: "Duration",
 				enableColumnFilter: false,
