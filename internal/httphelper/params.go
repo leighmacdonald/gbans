@@ -24,7 +24,7 @@ func (f SteamIDField) SteamID(ctx context.Context) (steamid.SteamID, bool) {
 }
 
 type SourceIDField struct {
-	SourceID string `json:"source_id"  url:"source_id"`
+	SourceID string `json:"source_id"  schema:"source_id"`
 }
 
 func (f SourceIDField) SourceSteamID(ctx context.Context) (steamid.SteamID, bool) {

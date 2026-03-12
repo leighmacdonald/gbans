@@ -73,8 +73,8 @@ func (s *speedrunHandler) getByMap() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		var query q
-		if !httphelper.BindQuery(ctx, &query) {
+		query, ok := httphelper.BindQuery[q](ctx)
+		if !ok {
 			return
 		}
 
@@ -113,13 +113,14 @@ func (s *speedrunHandler) getSpeedrun() gin.HandlerFunc {
 	}
 }
 
-func (s *speedrunHandler) getRecentChanges() gin.HandlerFunc {
-	var query struct {
-		Count int `json:"count"`
-	}
+type countQuery struct {
+	Count int `json:"count"`
+}
 
+func (s *speedrunHandler) getRecentChanges() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if !httphelper.BindQuery(ctx, &query) {
+		query, ok := httphelper.BindQuery[countQuery](ctx)
+		if !ok {
 			return
 		}
 
@@ -141,12 +142,9 @@ func (s *speedrunHandler) getRecentChanges() gin.HandlerFunc {
 }
 
 func (s *speedrunHandler) getOverallTopN() gin.HandlerFunc {
-	var query struct {
-		Count int `json:"count"`
-	}
-
 	return func(ctx *gin.Context) {
-		if !httphelper.BindQuery(ctx, &query) {
+		query, ok := httphelper.BindQuery[countQuery](ctx)
+		if !ok {
 			return
 		}
 

@@ -1,46 +1,30 @@
-import ChatIcon from "@mui/icons-material/Chat";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import ButtonGroup from "@mui/material/ButtonGroup";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import ReportIcon from "@mui/icons-material/Report";
+import { IconButton, TableCell, Typography, useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import MenuItem from "@mui/material/MenuItem";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { z } from "zod/v4";
+import Tooltip from "@mui/material/Tooltip";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import {
+	createMRTColumnHelper,
+	type MRT_ColumnFiltersState,
+	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
+} from "material-react-table";
+import { useMemo, useState } from "react";
 import { apiGetMessages, apiGetServers } from "../api";
-import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { Paginator } from "../component/forum/Paginator.tsx";
-import { ChatTable } from "../component/table/ChatTable.tsx";
-import { useAppForm } from "../contexts/formContext.tsx";
-import { useAuth } from "../hooks/useAuth.ts";
-import { PermissionLevel } from "../schema/people.ts";
+import { IconButtonLink } from "../component/IconButtonLink.tsx";
+import { PersonCell } from "../component/PersonCell.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
+import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
+import type { PersonMessage } from "../schema/people.ts";
+import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
-import { commonTableSearchSchema, RowsPerPage } from "../util/table.ts";
-
-const searchSchema = commonTableSearchSchema.extend({
-	sort_column: z
-		.enum([
-			"person_message_id",
-			"steam_id",
-			"persona_name",
-			"server_name",
-			"server_id",
-			"team",
-			"created_on",
-			"pattern",
-			"auto_filter_flagged",
-		])
-		.optional(),
-	server_id: z.number().optional(),
-	persona_name: z.string().optional(),
-	body: z.string().optional(),
-	steam_id: z.string().optional(),
-	flagged_only: z.boolean().optional(),
-	auto_refresh: z.number().optional(),
-});
 
 export const Route = createFileRoute("/_auth/chatlogs")({
 	component: ChatLogs,
-	validateSearch: (search) => searchSchema.parse(search),
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.chatlogs_enabled);
 	},
@@ -66,193 +50,209 @@ export const Route = createFileRoute("/_auth/chatlogs")({
 	}),
 });
 
-const schema = z.object({
-	server_id: z.number(),
-	persona_name: z.string(),
-	body: z.string(),
-	steam_id: z.string(),
-	flagged_only: z.boolean(),
-	auto_refresh: z.number(),
-});
+const columnHelper = createMRTColumnHelper<PersonMessage>();
+const defaultOptions = createDefaultTableOptions<PersonMessage>();
 
 function ChatLogs() {
-	const defaultRows = RowsPerPage.TwentyFive;
-	const search = Route.useSearch();
-	const { hasPermission } = useAuth();
+	const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+	const [globalFilter, setGlobalFilter] = useState("");
+	const [sorting, setSorting] = useState<MRT_SortingState>([]);
+	const [pagination, setPagination] = useState<MRT_PaginationState>({
+		pageIndex: 0,
+		pageSize: 50,
+	});
+	const theme = useTheme();
+	// const { hasPermission } = useAuth();
 	const { servers } = Route.useLoaderData();
-	const navigate = useNavigate({ from: Route.fullPath });
-
-	const defaultValues: z.input<typeof schema> = {
-		body: search.body ?? "",
-		persona_name: search.persona_name ?? "",
-		server_id: search.server_id ?? 0,
-		steam_id: search.steam_id ?? "",
-		flagged_only: search.flagged_only ?? false,
-		auto_refresh: search.auto_refresh ?? 0,
-	};
-
-	const { data: messages, isLoading } = useQuery({
-		queryKey: ["chatlogs", { search }],
-		queryFn: async () => {
-			return await apiGetMessages({
-				server_id: search.server_id,
-				personaname: search.persona_name,
-				query: search.body,
-				source_id: search.steam_id,
-				limit: search.pageSize ?? defaultRows,
-				offset: (search.pageIndex ?? 0) * (search.pageSize ?? defaultRows),
-				order_by: "person_message_id",
-				desc: (search.sortOrder ?? "desc") === "desc",
-				flagged_only: search.flagged_only ?? false,
-			});
-		},
-		refetchInterval: search.auto_refresh,
-	});
-
-	const form = useAppForm({
-		onSubmit: async ({ value }) => {
-			await navigate({
-				to: "/chatlogs",
-				search: (prev) => ({ ...prev, ...value }),
-			});
-		},
-		validators: {
-			onMount: schema,
-			onChangeAsyncDebounceMs: 500,
-			onChangeAsync: schema,
-		},
-		defaultValues,
-	});
-
-	const clear = async () => {
-		form.reset();
-		await navigate({
-			to: "/chatlogs",
-			search: (prev) => ({
-				...prev,
-				body: undefined,
-				persona_name: undefined,
-				server_id: undefined,
-				steam_id: undefined,
-				flagged_only: undefined,
-				autoRefresh: undefined,
+	console.log(servers);
+	// const navigate = useNavigate({ from: Route.fullPath });
+	const columns = useMemo(() => {
+		return [
+			columnHelper.accessor("server_id", {
+				header: "Server",
+				grow: false,
+				enableSorting: false,
+				filterVariant: "multi-select",
+				filterSelectOptions: servers.map((server) => ({
+					label: server.server_name,
+					value: server.server_id,
+				})),
+				filterFn: (row, _, filterValue) => {
+					console.log(filterValue);
+					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
+				},
+				size: 125,
+				Cell: ({ row }) => (
+					<TableCell
+						sx={{
+							color: stringToColour(row.original.server_name, theme.palette.mode),
+						}}
+					>
+						{row.original.server_name}
+					</TableCell>
+				),
 			}),
-		});
-		await form.handleSubmit();
-	};
+
+			columnHelper.accessor("created_on", {
+				header: "Created",
+				enableColumnFilter: false,
+				grow: false,
+				size: 150,
+				Cell: (info) => <TableCellRelativeDateField date={info.row.original.created_on} />,
+			}),
+
+			columnHelper.accessor("steam_id", {
+				header: "SteamID",
+				grow: true,
+				enableSorting: false,
+				enableColumnFilter: true,
+				filterFn: (row, _, filterValue) => {
+					const query = filterValue.toLowerCase();
+					if (query === "") {
+						return true;
+					}
+					const value = row.original.steam_id.toLowerCase();
+					if (value.includes(query)) {
+						return true;
+					}
+					if (row.original.steam_id.includes(query) || row.original.steam_id === query) {
+						return true;
+					}
+
+					return false;
+				},
+				Cell: ({ row }) => (
+					<PersonCell
+						showCopy={true}
+						steam_id={row.original.steam_id}
+						avatar_hash={row.original.avatar_hash}
+						personaname={row.original.persona_name}
+					/>
+				),
+			}),
+
+			columnHelper.accessor("body", {
+				header: "Message",
+				grow: true,
+				enableSorting: false,
+				Cell: ({ cell }) => (
+					<Typography padding={0} variant={"body1"}>
+						{cell.getValue()}
+					</Typography>
+				),
+			}),
+			// columnHelper.accessor("auto_filter_flagged", {
+			// 	header: "Flag",
+			// 	grow: false,
+			// 	size: 30,
+			// 	Cell: ({ cell }) =>
+			// 		cell.getValue() > 0 ? (
+			// 			<Tooltip title={"Message already flagged"}>
+			// 				<FlagIcon color={"error"} />
+			// 			</Tooltip>
+			// 		) : null,
+			// }),
+			columnHelper.display({
+				header: "Flag",
+				grow: false,
+				size: 60,
+				enableSorting: false,
+				Cell: ({ row }) => {
+					return (
+						<Tooltip title={"Create Report"}>
+							<IconButtonLink
+								color={"error"}
+								disabled={row.original.auto_filter_flagged > 0}
+								to={"/report"}
+								search={{
+									person_message_id: row.original.person_message_id,
+									steam_id: row.original.steam_id,
+								}}
+							>
+								<ReportIcon />
+							</IconButtonLink>
+						</Tooltip>
+					);
+				},
+			}),
+		];
+	}, [theme.palette.mode, servers]);
+
+	const { data, isLoading, isError, isRefetching, refetch } = useQuery({
+		queryKey: ["chatlogs", { columnFilters, globalFilter, pagination, sorting }],
+		queryFn: async () => {
+			const server_id = columnFilters.find((filter) => filter.id === "server_id")?.value;
+			const steam_id = columnFilters.find((filter) => filter.id === "steam_id")?.value;
+			const body = columnFilters.find((filter) => filter.id === "body")?.value;
+			const sort = sorting.find((sort) => sort);
+
+			return await apiGetMessages({
+				server_id: server_id ? Number(server_id) : 0,
+				personaname: "",
+				query: body ? String(body) : "",
+				source_id: steam_id ? String(steam_id) : "",
+				limit: pagination.pageSize,
+				offset: pagination.pageIndex * pagination.pageSize,
+				order_by: sort ? sort.id : "person_message_id",
+				desc: sort ? sort.desc : false,
+				flagged_only: false,
+			});
+		},
+		//refetchInterval: search.auto_refresh,
+		placeholderData: keepPreviousData,
+	});
+
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data ? data.data : [],
+		rowCount: data ? data.count : 0,
+		enableFilters: true,
+		state: {
+			columnFilters,
+			globalFilter,
+			isLoading,
+			pagination,
+			showAlertBanner: isError,
+			showProgressBars: isRefetching,
+			sorting,
+		},
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "updated_on", desc: true }],
+			columnVisibility: {
+				server_id: true,
+				source_id: true,
+				body: true,
+				created_on: true,
+			},
+		},
+		manualFiltering: true,
+		manualPagination: true,
+		manualSorting: true,
+		muiToolbarAlertBannerProps: isError
+			? {
+					color: "error",
+					children: "Error loading data",
+				}
+			: undefined,
+		onColumnFiltersChange: setColumnFilters,
+		onGlobalFilterChange: setGlobalFilter,
+		onPaginationChange: setPagination,
+		onSortingChange: setSorting,
+		renderTopToolbarCustomActions: () => (
+			<Tooltip arrow title="Refresh Data">
+				<IconButton onClick={() => refetch()}>
+					<RefreshIcon />
+				</IconButton>
+			</Tooltip>
+		),
+	});
+
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Chat Filters"} iconLeft={<FilterAltIcon />}>
-					<form
-						onSubmit={async (e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							await form.handleSubmit();
-						}}
-					>
-						<Grid container padding={2} spacing={2} justifyContent={"center"} alignItems={"center"}>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"persona_name"}
-									children={(field) => {
-										return <field.TextField label={"Name"} />;
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"steam_id"}
-									children={(field) => {
-										return <field.SteamIDField />;
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"body"}
-									children={(field) => {
-										return <field.TextField label={"Message"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"server_id"}
-									children={(field) => {
-										return (
-											<field.SelectField
-												label={"Servers"}
-												items={servers}
-												renderItem={(s) => {
-													return (
-														<MenuItem value={s.server_id} key={s.server_id}>
-															{s.server_name}
-														</MenuItem>
-													);
-												}}
-											/>
-										);
-									}}
-								/>
-							</Grid>
-							{hasPermission(PermissionLevel.Moderator) && (
-								<>
-									<Grid size={{ xs: "auto" }}>
-										<form.AppField
-											name={"flagged_only"}
-											children={(field) => {
-												return <field.CheckboxField label={"Flagged Only"} />;
-											}}
-										/>
-									</Grid>
-									<Grid size={{ xs: "auto" }}>
-										<form.AppField
-											name={"auto_refresh"}
-											children={(field) => {
-												return (
-													<field.SelectField
-														label={"Action"}
-														items={[0, 10000, 30000, 60000, 300000]}
-														renderItem={(fa) => {
-															return (
-																<MenuItem value={fa} key={`fa-${fa}`}>
-																	{fa / 1000} secs
-																</MenuItem>
-															);
-														}}
-													/>
-												);
-											}}
-										/>
-									</Grid>
-								</>
-							)}
-
-							<Grid size={{ xs: 12 }}>
-								<form.AppForm>
-									<ButtonGroup>
-										<form.ClearButton onClick={clear} />
-										<form.ResetButton />
-										<form.SubmitButton />
-									</ButtonGroup>
-								</form.AppForm>
-							</Grid>
-						</Grid>
-					</form>
-				</ContainerWithHeader>
-			</Grid>
-			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader iconLeft={<ChatIcon />} title={"Chat Logs"}>
-					<ChatTable messages={messages ?? []} isLoading={isLoading} />
-					<Paginator
-						page={search.pageIndex ?? 0}
-						rows={search.pageSize ?? defaultRows}
-						path={"/chatlogs"}
-						data={{ data: [], count: -1 }}
-					/>
-				</ContainerWithHeader>
+				<SortableTable table={table} title={"Chat Logs"} />
 			</Grid>
 		</Grid>
 	);

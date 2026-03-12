@@ -152,8 +152,8 @@ func (h personHandler) onSteamValidate() gin.HandlerFunc {
 		requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 		defer cancelRequest()
 
-		var req httphelper.RequestQuery
-		if !httphelper.BindQuery(ctx, &req) {
+		req, ok := httphelper.BindQuery[httphelper.RequestQuery](ctx)
+		if !ok {
 			return
 		}
 
@@ -183,8 +183,8 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 		requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 		defer cancelRequest()
 
-		var req httphelper.RequestQuery
-		if !httphelper.BindQuery(ctx, &req) {
+		req, ok := httphelper.BindQuery[httphelper.RequestQuery](ctx)
+		if !ok {
 			return
 		}
 

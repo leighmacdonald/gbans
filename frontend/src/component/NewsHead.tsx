@@ -20,7 +20,7 @@ export const NewsHead = ({ left, right }: { left: ReactNode; right: ReactNode })
 				variant={"subtitle1"}
 				align={"left"}
 				sx={{
-					color: theme.palette.common.white,
+					color: theme.palette.primary.contrastText,
 					width: "100%",
 					...tf2Fonts,
 				}}
@@ -34,6 +34,7 @@ export const NewsHead = ({ left, right }: { left: ReactNode; right: ReactNode })
 				align={"right"}
 				sx={{
 					...tf2Fonts,
+					color: theme.palette.primary.contrastText,
 				}}
 			>
 				{right}

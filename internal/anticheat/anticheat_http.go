@@ -65,8 +65,8 @@ func (h antiCheatHandler) byDetection() gin.HandlerFunc {
 
 func (h antiCheatHandler) query() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var query Query
-		if !httphelper.BindQuery(ctx, &query) {
+		query, ok := httphelper.BindQuery[Query](ctx)
+		if !ok {
 			return
 		}
 
