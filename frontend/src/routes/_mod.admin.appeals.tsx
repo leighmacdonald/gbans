@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
-import { App } from "../App.tsx";
 import { apiGetAppeals, appealStateString } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
