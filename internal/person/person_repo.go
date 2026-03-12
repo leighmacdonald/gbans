@@ -90,7 +90,7 @@ func (r *Repository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steam
 	return ids, nil
 }
 
-func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
+func (r *Repository) Query(ctx context.Context, query Query) (People, int64, error) {
 	builder := r.Builder().
 		Select("p.steam_id", "p.created_on", "p.updated_on",
 			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
@@ -101,54 +101,59 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
 		From("person p").
 		LeftJoin("auth_patreon pt USING (steam_id)")
 
-	conditions := sq.And{}
+	countBuilder := r.Builder().
+		Select("count(p.steam_id)").
+		From("person p").
+		LeftJoin("auth_patreon pt USING (steam_id)")
+
+	constraints := sq.And{}
 
 	if query.IP != "" {
 		builder = builder.LeftJoin("person_connections pc ON p.steam_id = pc.steam_id")
 		// TODO
-		conditions = append(conditions, sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", query.IP, query.IP)))
+		constraints = append(constraints, sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", query.IP, query.IP)))
 	}
 
 	if !query.SteamUpdateOlderThan.IsZero() {
 		builder = builder.OrderBy("p.updated_on_steam ASC")
-		conditions = append(conditions, sq.Lt{"p.updated_on_steam": query.SteamUpdateOlderThan})
+		constraints = append(constraints, sq.Lt{"p.updated_on_steam": query.SteamUpdateOlderThan})
 	}
 	if query.StaffOnly {
-		conditions = append(conditions, sq.GtOrEq{"p.permission_level": permission.Reserved})
+		constraints = append(constraints, sq.GtOrEq{"p.permission_level": permission.Reserved})
 	} else if query.WithPermissions > 0 {
-		conditions = append(conditions, sq.GtOrEq{"p.permission_level": query.WithPermissions})
+		constraints = append(constraints, sq.GtOrEq{"p.permission_level": query.WithPermissions})
 	}
 
 	if query.IP != "" {
 		addr := net.ParseIP(query.IP)
 		if addr == nil {
-			return nil, ErrNetworkInvalidIP
+			return nil, 0, ErrNetworkInvalidIP
 		}
 
 		foundIDs, errFoundIDs := r.GetSteamsAtAddress(ctx, addr)
 		if errFoundIDs != nil {
 			if errors.Is(errFoundIDs, database.ErrNoResult) {
-				return People{}, nil
+				return People{}, 0, nil
 			}
 
-			return nil, database.DBErr(errFoundIDs)
+			return nil, 0, database.DBErr(errFoundIDs)
 		}
 
-		conditions = append(conditions, sq.Eq{"p.steam_id": foundIDs})
+		constraints = append(constraints, sq.Eq{"p.steam_id": foundIDs})
 	}
 
 	if query.DiscordID != "" {
-		conditions = append(conditions, sq.Eq{"p.discord_id": query.DiscordID})
+		constraints = append(constraints, sq.Eq{"p.discord_id": query.DiscordID})
 	}
 
 	// sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String())))
 	if len(query.SteamIDs) > 0 {
-		conditions = append(conditions, sq.Eq{"p.steam_id": query.SteamIDs.ToInt64Slice()})
+		constraints = append(constraints, sq.Eq{"p.steam_id": query.SteamIDs.ToInt64Slice()})
 	}
 
 	if query.Personaname != "" {
 		// TODO add lower-cased functional index to avoid table scan
-		conditions = append(conditions, sq.ILike{"p.personaname": normalizeStringLikeQuery(query.Personaname)})
+		constraints = append(constraints, sq.ILike{"p.personaname": normalizeStringLikeQuery(query.Personaname)})
 	}
 
 	builder = query.ApplyLimitOffsetDefault(builder)
@@ -165,9 +170,9 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
 
 	var people People
 
-	rows, errQuery := r.QueryBuilder(ctx, builder.Where(conditions))
+	rows, errQuery := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, database.DBErr(errQuery)
+		return nil, 0, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -183,13 +188,18 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, error) {
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID, &person.PlayerqueueChatStatus,
 				&person.PlayerqueueChatReason); errScan != nil {
-			return nil, errors.Join(errScan, database.ErrScanResult)
+			return nil, 0, errors.Join(errScan, database.ErrScanResult)
 		}
 
 		people = append(people, person)
 	}
 
-	return people, nil
+	count, errQuery := r.GetCount(ctx, countBuilder.Where(constraints))
+	if errQuery != nil {
+		return nil, 0, database.DBErr(errQuery)
+	}
+
+	return people, count, nil
 }
 
 func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Settings, error) {

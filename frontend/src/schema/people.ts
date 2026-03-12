@@ -173,7 +173,7 @@ export type PlayerProfile = z.infer<typeof schemaPlayerProfile>;
 
 export const schemaPlayerQuery = z
 	.object({
-		target_id: z.string(),
+		steam_ids: z.array(z.string()),
 		personaname: z.string(),
 		ip: z.string(),
 		staff_only: z.boolean(),

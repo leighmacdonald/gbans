@@ -1,5 +1,6 @@
 package httphelper
 
+// LazyResult represents a lazy-loaded database result with included total result count data.
 type LazyResult[T any] struct {
 	Count int64 `json:"count"`
 	Data  []T   `json:"data"`
