@@ -1,5 +1,4 @@
 import EditNotificationsIcon from "@mui/icons-material/EditNotifications";
-import HistoryIcon from "@mui/icons-material/History";
 import InfoIcon from "@mui/icons-material/Info";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ButtonGroup from "@mui/material/ButtonGroup";
@@ -14,39 +13,33 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable,
-} from "@tanstack/react-table";
+
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { type JSX, useMemo, useState } from "react";
 import { z } from "zod/v4";
 import { apiCreateReport, apiGetUserReports } from "../api";
 import { ButtonLink } from "../component/ButtonLink.tsx";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
 import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
-import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
-import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { PlayerMessageContext } from "../component/PlayerMessageContext.tsx";
 import { ReportStatusIcon } from "../component/ReportStatusIcon.tsx";
 import RouterLink from "../component/RouterLink.tsx";
-import { DataTable } from "../component/table/DataTable.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { BanReason, BanReasons, banReasonsReportCollection } from "../schema/bans.ts";
 import {
 	type CreateReportRequest,
+	ReportStatus,
 	type ReportWithAuthor,
 	reportStatusString,
 	schemaCreateReportRequest,
 } from "../schema/report.ts";
-import { commonTableSearchSchema, initPagination, RowsPerPage } from "../util/table.ts";
+import { commonTableSearchSchema } from "../util/table.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
 const searchSchemaReport = commonTableSearchSchema.extend({
@@ -72,13 +65,6 @@ function ReportCreate() {
 		return profile.steam_id && profile.ban_id === 0;
 	}, [profile]);
 
-	const { data: logs, isLoading } = useQuery({
-		queryKey: ["history", { steam_id: profile.steam_id }],
-		queryFn: async () => {
-			return await apiGetUserReports();
-		},
-	});
-
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12, md: 8 }}>
@@ -102,13 +88,8 @@ function ReportCreate() {
 							</ButtonGroup>
 						</ContainerWithHeader>
 					)}
-					<ContainerWithHeader title={"Your Report History"} iconLeft={<HistoryIcon />}>
-						{isLoading ? (
-							<LoadingPlaceholder />
-						) : (
-							<UserReportHistory history={logs ?? []} isLoading={isLoading} />
-						)}
-					</ContainerWithHeader>
+
+					<UserReportHistory />
 				</Stack>
 			</Grid>
 			<Grid size={{ xs: 12, md: 4 }}>
@@ -153,49 +134,85 @@ function ReportCreate() {
 	);
 }
 
-const columnHelper = createColumnHelper<ReportWithAuthor>();
+const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
+const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
 
-const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]; isLoading: boolean }) => {
-	const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
-	const [sorting] = useState<SortingState>([{ id: "report_id", desc: true }]);
+const UserReportHistory = () => {
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["history"],
+		queryFn: async () => {
+			return await apiGetUserReports();
+		},
+	});
 
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("report_status", {
 				header: "Status",
 				size: 150,
-				cell: (info) => {
+				filterVariant: "multi-select",
+				filterSelectOptions: Object.values(ReportStatus).map((status) => ({
+					label: reportStatusString(status),
+					value: status,
+				})),
+				filterFn: (row, _, filterValue) => {
+					return (
+						filterValue.length === 0 ||
+						filterValue.includes(ReportStatus.Any) ||
+						filterValue.includes(row.original.report_status)
+					);
+				},
+				Cell: ({ cell }) => {
 					return (
 						<Stack direction={"row"} spacing={1}>
-							<ReportStatusIcon reportStatus={info.getValue()} />
-							<Typography variant={"body1"}>{reportStatusString(info.getValue())}</Typography>
+							<ReportStatusIcon reportStatus={cell.getValue()} />
+							<Typography variant={"body1"}>{reportStatusString(cell.getValue())}</Typography>
 						</Stack>
 					);
 				},
 			}),
 			columnHelper.accessor("subject", {
 				header: "Player",
-				cell: (info) => (
+				filterFn: (row, _, filterValue) => {
+					const query = filterValue.toLowerCase();
+					if (query === "") {
+						return true;
+					}
+					const value = row.original.subject.name.toLowerCase();
+					if (value.includes(query)) {
+						return true;
+					}
+					if (row.original.target_id.includes(query) || row.original.target_id === query) {
+						return true;
+					}
+
+					return false;
+				},
+				Cell: ({ row }) => (
 					<PersonCell
-						steam_id={info.row.original.subject.steam_id}
+						steam_id={row.original.subject.steam_id}
 						personaname={
-							emptyOrNullString(info.row.original.subject.persona_name)
-								? info.row.original.subject.steam_id
-								: info.row.original.subject.persona_name
+							emptyOrNullString(row.original.subject.name)
+								? row.original.subject.steam_id
+								: row.original.subject.name
 						}
-						avatar_hash={info.row.original.subject.avatarhash}
+						avatar_hash={row.original.subject.avatarhash}
 					/>
 				),
 			}),
 			columnHelper.accessor("report_id", {
 				header: "View",
-				size: 30,
-				cell: (info) => (
+				enableColumnActions: false,
+				enableColumnFilter: false,
+				enableSorting: false,
+				size: 85,
+				grow: false,
+				Cell: ({ cell }) => (
 					<ButtonGroup variant={"text"}>
 						<IconButtonLink
 							color={"primary"}
 							to={`/report/$reportId`}
-							params={{ reportId: String(info.getValue()) }}
+							params={{ reportId: String(cell.getValue()) }}
 						>
 							<Tooltip title={"View"}>
 								<VisibilityIcon />
@@ -207,41 +224,33 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
 		];
 	}, []);
 
-	const table = useReactTable({
-		data: history,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
-		manualPagination: false,
-		autoResetPageIndex: true,
-		getPaginationRowModel: getPaginationRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		onPaginationChange: setPagination,
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data ?? [],
+		enableFilters: true,
+		enableHiding: true,
+		enableFacetedValues: true,
 		state: {
-			pagination,
-			sorting,
+			isLoading,
+			showAlertBanner: isError,
+		},
+		initialState: {
+			...defaultOptions.initialState,
+			pagination: {
+				pageSize: 10,
+				pageIndex: 0,
+			},
+			sorting: [{ id: "report_id", desc: true }],
+			columnVisibility: {
+				source_id: false,
+				target_id: true,
+				reason: true,
+			},
 		},
 	});
 
-	return (
-		<>
-			<DataTable table={table} isLoading={isLoading} />
-			<PaginatorLocal
-				onRowsChange={(rows) => {
-					setPagination((prev) => {
-						return { ...prev, pageSize: rows };
-					});
-				}}
-				onPageChange={(page) => {
-					setPagination((prev) => {
-						return { ...prev, pageIndex: page };
-					});
-				}}
-				count={history?.length ?? 0}
-				rows={pagination.pageSize}
-				page={pagination.pageIndex}
-			/>
-		</>
-	);
+	return <SortableTable table={table} title={"Your Report History"} />;
 };
 
 const ReportCreateForm = (): JSX.Element => {
