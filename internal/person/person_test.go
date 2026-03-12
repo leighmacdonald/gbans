@@ -71,7 +71,7 @@ func TestPerson(t *testing.T) {
 	// require.EqualValues(t, updateValues.CenterProjectiles, settings.CenterProjectiles)
 	require.Equal(t, updateValues.StatsHidden, settings.StatsHidden)
 
-	players, errPlayers := personCase.GetPeople(t.Context(), person.Query{})
+	players, _, errPlayers := personCase.GetPeople(t.Context(), person.Query{})
 	require.NoError(t, errPlayers)
 	require.GreaterOrEqual(t, len(players), 4)
 

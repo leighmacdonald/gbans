@@ -37,7 +37,7 @@ func NewPersonHandler(engine *gin.Engine, authenticator httphelper.Authenticator
 	modGrp := engine.Group("/")
 	{
 		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
-		mod.POST("/api/players", handler.searchPlayers())
+		mod.GET("/api/players", handler.searchPlayers())
 	}
 
 	// admin
@@ -207,12 +207,12 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 func (h personHandler) searchPlayers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		query, ok := httphelper.BindJSON[Query](ctx)
+		query, ok := httphelper.BindQuery[Query](ctx)
 		if !ok {
 			return
 		}
 
-		people, errGetPeople := h.GetPeople(ctx, query)
+		people, count, errGetPeople := h.GetPeople(ctx, query)
 		if errGetPeople != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetPeople, httphelper.ErrInternal)))
 
@@ -220,6 +220,6 @@ func (h personHandler) searchPlayers() gin.HandlerFunc {
 		}
 
 		// FIXME
-		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(100, people))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(count, people))
 	}
 }

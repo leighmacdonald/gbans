@@ -1,26 +1,26 @@
 import NiceModal from "@ebay/nice-modal-react";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { createColumnHelper, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { createFileRoute } from "@tanstack/react-router";
 import { fromUnixTime } from "date-fns";
-import { useCallback, useMemo } from "react";
-import { z } from "zod/v4";
+import {
+	createMRTColumnHelper,
+	type MRT_ColumnFiltersState,
+	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
+} from "material-react-table";
+import { useCallback, useMemo, useState } from "react";
 import { apiSearchPeople } from "../api";
-import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { Paginator } from "../component/forum/Paginator.tsx";
 import { PersonEditModal } from "../component/modal/PersonEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { DataTable } from "../component/table/DataTable.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
-import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import {
@@ -30,46 +30,44 @@ import {
 	type Person,
 	permissionLevelString,
 } from "../schema/people.ts";
-import { commonTableSearchSchema, type LazyResult, RowsPerPage } from "../util/table.ts";
-
-const peopleSearchSchema = commonTableSearchSchema.extend({
-	sortColumn: z.enum(["vac_bans", "steam_id", "time_created", "persona_name", "created_on"]).optional(),
-	steam_id: z.string().catch(""),
-	persona_name: z.string().catch(""),
-	staff_only: z.boolean().catch(false),
-});
 
 export const Route = createFileRoute("/_mod/admin/people")({
 	component: AdminPeople,
-	validateSearch: (search) => peopleSearchSchema.parse(search),
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "People" }, match.context.title("People")],
 	}),
 });
 
-function AdminPeople() {
-	const { sendFlash } = useUserFlashCtx();
-	const defaultRows = RowsPerPage.TwentyFive;
-	const navigate = useNavigate({ from: Route.fullPath });
-	const { hasPermission } = useAuth();
-	const { steam_id, staff_only, pageIndex, persona_name, sortColumn, pageSize, sortOrder } = Route.useSearch();
+const columnHelper = createMRTColumnHelper<Person>();
+const defaultOptions = createDefaultTableOptions<Person>();
 
-	const { data: people, isLoading } = useQuery({
-		queryKey: ["people", { pageSize, pageIndex, sortColumn, sortOrder, persona_name, steam_id }],
+function AdminPeople() {
+	const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+	const [globalFilter, setGlobalFilter] = useState("");
+	const [sorting, setSorting] = useState<MRT_SortingState>([]);
+	const [pagination, setPagination] = useState<MRT_PaginationState>({
+		pageIndex: 0,
+		pageSize: 50,
+	});
+	const { sendFlash } = useUserFlashCtx();
+	const { hasPermission } = useAuth();
+	const { data, isLoading, isError, isRefetching } = useQuery({
+		queryKey: ["people", { columnFilters, globalFilter, pagination, sorting }],
 		queryFn: async () => {
+			const steam_id = columnFilters.find((filter) => filter.id === "steam_id")?.value;
+			const sort = sorting.find((sort) => sort);
 			return await apiSearchPeople({
-				personaname: persona_name ?? "",
-				desc: (sortOrder ?? "desc") === "desc",
-				offset: (pageIndex ?? 0) * (pageSize ?? defaultRows),
-				limit: pageSize ?? defaultRows,
-				staff_only: staff_only ?? false,
-				order_by: sortColumn ?? "created_on",
-				target_id: steam_id ?? "",
+				personaname: "",
+				desc: sort ? sort.desc : false,
+				limit: pagination.pageSize,
+				offset: pagination.pageIndex * pagination.pageSize,
+				staff_only: false,
+				order_by: sort ? sort.id : "created_on",
+				steam_ids: steam_id && steam_id !== "" ? [String(steam_id)] : [],
 				ip: "",
 			});
 		},
 	});
-
 	const onEditPerson = useCallback(
 		async (person: Person) => {
 			try {
@@ -83,134 +81,18 @@ function AdminPeople() {
 		},
 		[sendFlash],
 	);
-
-	const form = useAppForm({
-		onSubmit: async ({ value }) => {
-			await navigate({
-				to: "/admin/people",
-				search: (prev) => ({ ...prev, ...value }),
-			});
-		},
-		validators: {
-			onChange: z.object({
-				steam_id: z.string(),
-				persona_name: z.string(),
-				staff_only: z.boolean(),
-			}),
-		},
-		defaultValues: {
-			steam_id: steam_id ?? "",
-			persona_name: persona_name ?? "",
-			staff_only: staff_only ?? false,
-		},
-	});
-
-	const clear = useCallback(async () => {
-		await navigate({
-			to: "/admin/people",
-			search: (prev) => ({ ...prev, steam_id: "", personaname: "" }),
-		});
-	}, [navigate]);
-
-	return (
-		<Grid container spacing={2}>
-			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
-					<form
-						onSubmit={async (e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							await form.handleSubmit();
-						}}
-					>
-						<Grid container spacing={2}>
-							<Grid size={{ xs: 6, md: 4 }}>
-								<form.AppField
-									name={"steam_id"}
-									children={(field) => {
-										return <field.SteamIDField label={"Steam ID"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 6, md: 4 }}>
-								<form.AppField
-									name={"persona_name"}
-									children={(field) => {
-										return <field.TextField label={"Name"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 6, md: 4 }}>
-								<form.AppField
-									name={"staff_only"}
-									children={(field) => {
-										return <field.CheckboxField label={"Staff Only"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 12 }}>
-								<form.AppForm>
-									<ButtonGroup>
-										<form.ClearButton onClick={clear} />
-										<form.ResetButton />
-										<form.SubmitButton />
-									</ButtonGroup>
-								</form.AppForm>
-							</Grid>
-						</Grid>
-					</form>
-				</ContainerWithHeader>
-			</Grid>
-			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Player Search"} iconLeft={<PersonSearchIcon />}>
-					<PeopleTable
-						people={people ?? { data: [], count: 0 }}
-						isLoading={isLoading}
-						isAdmin={hasPermission(PermissionLevel.Admin)}
-						onEditPerson={onEditPerson}
-					/>
-					<Paginator
-						page={pageIndex ?? 0}
-						rows={pageSize ?? defaultRows}
-						data={people}
-						path={"/admin/people"}
-					/>
-				</ContainerWithHeader>
-			</Grid>
-		</Grid>
-	);
-}
-
-const columnHelper = createColumnHelper<Person>();
-
-const PeopleTable = ({
-	people,
-	isLoading,
-	isAdmin,
-	onEditPerson,
-}: {
-	people: LazyResult<Person>;
-	isLoading: boolean;
-	isAdmin: boolean;
-	onEditPerson: (person: Person) => Promise<void>;
-}) => {
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("steam_id", {
 				header: "Profile",
-				size: 80,
-				cell: (info) => {
-					return typeof people.data[info.row.index] === "undefined" ? (
-						""
-					) : (
+				grow: true,
+				Cell: ({ row }) => {
+					return (
 						<PersonCell
 							showCopy={true}
-							steam_id={people.data[info.row.index].steam_id}
-							personaname={people.data[info.row.index].persona_name}
-							avatar_hash={people.data[info.row.index].avatarhash}
+							steam_id={row.original.steam_id}
+							personaname={row.original.persona_name}
+							avatar_hash={row.original.avatarhash}
 						/>
 					);
 				},
@@ -218,43 +100,43 @@ const PeopleTable = ({
 			columnHelper.accessor("community_visibility_state", {
 				header: "Visibility",
 				size: 50,
-				cell: (info) => (
+				Cell: ({ cell }) => (
 					<Typography variant={"body1"}>
-						{info.getValue() === communityVisibilityState.Public ? "Public" : "Private"}
+						{cell.getValue() === communityVisibilityState.Public ? "Public" : "Private"}
 					</Typography>
 				),
 			}),
 			columnHelper.accessor("vac_bans", {
 				header: "Vac",
 				size: 20,
-				cell: (info) => <BoolCell enabled={info.getValue() > 0} />,
+				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() > 0} />,
 			}),
 			columnHelper.accessor("community_banned", {
 				header: "CB",
 				size: 20,
-				cell: (info) => <BoolCell enabled={info.getValue()} />,
+				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
 
 			columnHelper.accessor("time_created", {
 				header: "Created",
 				size: 50,
-				cell: (info) => <TableCellRelativeDateField date={fromUnixTime(info.getValue())} />,
+				Cell: ({ cell }) => <TableCellRelativeDateField date={fromUnixTime(cell.getValue())} />,
 			}),
 
 			columnHelper.accessor("created_on", {
 				header: "Seen",
 				size: 80,
-				cell: (info) => <TableCellRelativeDateField date={info.getValue()} />,
+				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
 			}),
 
 			columnHelper.accessor("permission_level", {
 				header: "Perms",
 				size: 80,
-				cell: (info) => (
+				Cell: ({ row }) => (
 					<Typography>
 						{permissionLevelString(
-							info.row.original
-								? info.row.original.permission_level
+							row.original
+								? row.original.permission_level
 								: (PermissionLevel.Guest as PermissionLevelEnum),
 						)}
 					</Typography>
@@ -262,9 +144,9 @@ const PeopleTable = ({
 			}),
 			columnHelper.display({
 				header: "Act",
-				size: 30,
-				cell: (info) => {
-					return isAdmin ? (
+				grow: false,
+				Cell: (info) => {
+					return hasPermission(PermissionLevel.Admin) ? (
 						<IconButton color={"warning"} onClick={() => onEditPerson(info.row.original)}>
 							<VpnKeyIcon />
 						</IconButton>
@@ -272,15 +154,52 @@ const PeopleTable = ({
 				},
 			}),
 		];
-	}, [isAdmin, onEditPerson, people.data]);
+	}, [onEditPerson, hasPermission]);
 
-	const table = useReactTable({
-		data: people.data,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data ? data.data : [],
+		rowCount: data ? data.count : 0,
+		enableFilters: true,
+		state: {
+			columnFilters,
+			globalFilter,
+			isLoading,
+			pagination,
+			showAlertBanner: isError,
+			showProgressBars: isRefetching,
+			sorting,
+		},
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "updated_on", desc: true }],
+			columnVisibility: {
+				steam_id: true,
+				source_id: true,
+				body: true,
+				created_on: true,
+			},
+		},
+		manualFiltering: true,
 		manualPagination: true,
-		autoResetPageIndex: true,
+		manualSorting: true,
+		muiToolbarAlertBannerProps: isError
+			? {
+					color: "error",
+					children: "Error loading data",
+				}
+			: undefined,
+		onColumnFiltersChange: setColumnFilters,
+		onGlobalFilterChange: setGlobalFilter,
+		onPaginationChange: setPagination,
+		onSortingChange: setSorting,
 	});
-
-	return <DataTable table={table} isLoading={isLoading} />;
-};
+	return (
+		<Grid container spacing={2}>
+			<Grid size={{ xs: 12 }}>
+				<SortableTable table={table} title={"Player Search"} />
+			</Grid>
+		</Grid>
+	);
+}

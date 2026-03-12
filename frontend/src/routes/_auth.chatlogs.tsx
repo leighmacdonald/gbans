@@ -62,10 +62,8 @@ function ChatLogs() {
 		pageSize: 50,
 	});
 	const theme = useTheme();
-	// const { hasPermission } = useAuth();
 	const { servers } = Route.useLoaderData();
-	console.log(servers);
-	// const navigate = useNavigate({ from: Route.fullPath });
+
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("server_id", {

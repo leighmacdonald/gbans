@@ -175,7 +175,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 		return nil, 0, fmt.Errorf("%w: name", httphelper.ErrTooShort)
 	}
 
-	countBulder := r.Builder().Select("count(m.person_message_id)").
+	countBuilder := r.Builder().Select("count(m.person_message_id)").
 		From("person_messages m").
 		LeftJoin("server s USING(server_id)").
 		LeftJoin("person_messages_filter mf USING(person_message_id)").
@@ -292,7 +292,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 		messages = append(messages, message)
 	}
 
-	count, errQuery := r.GetCount(ctx, countBulder.Where(constraints))
+	count, errQuery := r.GetCount(ctx, countBuilder.Where(constraints))
 	if errQuery != nil {
 		return nil, 0, database.DBErr(errQuery)
 	}

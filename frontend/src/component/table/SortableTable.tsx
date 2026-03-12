@@ -60,13 +60,13 @@ export const SortableTable = <TData extends MRT_RowData>({ table, title, buttons
 					<MRT_ToggleFullScreenButton table={table} sx={{ color: "primary.contrastText" }} />
 				</Box>
 			</Box>
+			<Box sx={{ display: "grid", width: "100%" }}>
+				<MRT_ToolbarAlertBanner stackAlertBanner table={table} />
+			</Box>
 			<MRT_TableContainer table={table} />
 			<Box>
 				<Box sx={{ display: "flex", justifyContent: "flex-end" }}>
 					<MRT_TablePagination table={table} />
-				</Box>
-				<Box sx={{ display: "grid", width: "100%" }}>
-					<MRT_ToolbarAlertBanner stackAlertBanner table={table} />
 				</Box>
 			</Box>
 		</Paper>
