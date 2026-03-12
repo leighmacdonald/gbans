@@ -1,47 +1,23 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
-import FormControl from "@mui/material/FormControl";
 import Grid from "@mui/material/Grid";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { createColumnHelper, type PaginationState, type SortingState } from "@tanstack/react-table";
-import { useCallback, useMemo, useState } from "react";
-import { z } from "zod/v4";
+import { createFileRoute } from "@tanstack/react-router";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { useMemo } from "react";
 import { apiGetAnticheatLogs, apiGetServers } from "../api";
-import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { FullTable } from "../component/table/FullTable.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import { useAppForm } from "../contexts/formContext.tsx";
-import { DetectionCollection, Detections, type StacEntry } from "../schema/anticheat.ts";
+import type { StacEntry } from "../schema/anticheat.ts";
 import { stringToColour } from "../util/colours.ts";
-import { commonTableSearchSchema, initPagination, initSortOrder, RowsPerPage } from "../util/table.ts";
 import { renderDate, renderDateTime } from "../util/time.ts";
-
-const searchSchema = commonTableSearchSchema.extend({
-	sortColumn: z
-		.enum(["anticheat_id", "name", "personaname", "summary", "detection", "steam_id", "created_on", "server_name"])
-		.optional(),
-	name: z.string().optional(),
-	summary: z.string().optional(),
-	server_id: z.number().optional(),
-	detection: Detections.optional(),
-	steam_id: z.string().optional(),
-	personaname: z.string().optional(),
-});
 
 export const Route = createFileRoute("/_mod/admin/anticheat")({
 	component: AdminAnticheat,
-	validateSearch: (search) => searchSchema.parse(search),
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
@@ -64,58 +40,26 @@ export const Route = createFileRoute("/_mod/admin/anticheat")({
 	}),
 });
 
-const columnHelper = createColumnHelper<StacEntry>();
-
-const schema = z.object({
-	name: z.string(),
-	summary: z.string(),
-	detection: Detections,
-	steam_id: z.string(),
-	server_id: z.number(),
-});
+const columnHelper = createMRTColumnHelper<StacEntry>();
+const defaultOptions = createDefaultTableOptions<StacEntry>();
 
 function AdminAnticheat() {
-	const defaultRows = RowsPerPage.TwentyFive;
-	const navigate = useNavigate({ from: Route.fullPath });
 	const search = Route.useSearch();
-	const { servers } = Route.useLoaderData();
-	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
-	const [sorting] = useState<SortingState>(
-		initSortOrder(search.sortColumn, search.sortOrder, {
-			id: "created_on",
-			desc: true,
-		}),
-	);
-	//const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
-	const [columnVisibility] = useState({
-		server_id: true,
-		name: true,
-		personaname: false,
-		steam_id: false,
-	});
 
-	const defaultValues: z.input<typeof schema> = {
-		name: search.name ?? "",
-		summary: search.summary ?? "",
-		detection: search.detection ?? "unknown",
-		steam_id: search.steam_id ?? "",
-		server_id: search.server_id ?? 0,
-	};
-
-	const { data: logs, isLoading } = useQuery({
+	const { data, isLoading, isError } = useQuery({
 		queryKey: ["anticheat", search],
 		queryFn: async () => {
 			try {
 				return await apiGetAnticheatLogs({
-					server_id: search.server_id ?? 0,
-					name: search.name ?? "",
-					summary: search.summary ?? "",
-					steam_id: search.steam_id ?? "",
-					detection: (search.detection ?? "any") as Detections,
-					limit: search.pageSize ?? defaultRows,
-					offset: (search.pageIndex ?? 0) * (search.pageSize ?? defaultRows),
+					server_id: 0,
+					name: "",
+					summary: "",
+					steam_id: "",
+					detection: "any",
+					limit: 100000,
+					offset: 0,
 					order_by: "created_on",
-					desc: (search.sortOrder ?? "desc") === "desc",
+					desc: true,
 				});
 			} catch {
 				return [];
@@ -123,57 +67,32 @@ function AdminAnticheat() {
 		},
 	});
 
-	const form = useAppForm({
-		onSubmit: async ({ value }) => {
-			//setColumnFilters(initColumnFilter(value));
-			await navigate({
-				to: "/admin/anticheat",
-				search: (prev) => ({ ...prev, ...value }),
-			});
-		},
-		defaultValues,
-		validators: {
-			onChange: schema,
-		},
-	});
-
-	const clear = useCallback(async () => {
-		//setColumnFilters([]);
-		form.reset();
-		await navigate({
-			to: "/admin/anticheat",
-			search: (prev) => ({ ...prev }),
-		});
-	}, [form, navigate]);
-
 	const theme = useTheme();
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("anticheat_id", {
 				header: "ID",
-				size: 50,
-				cell: (info) => <Typography>{info.getValue()}</Typography>,
+				enableSorting: false,
+				enableColumnFilter: false,
+				grow: false,
+				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("server_id", {
+				filterFn: (row, _, filterValue) => {
+					return filterValue === 0 || row.original.server_id === filterValue;
+				},
+				size: 75,
+				enableSorting: false,
+				enableColumnFilter: false,
 				header: "Server",
-				size: 100,
-				cell: (info) => {
+				Cell: ({ row }) => {
 					return (
 						<Button
 							sx={{
-								color: stringToColour(info.row.original.server_name, theme.palette.mode),
-							}}
-							onClick={async () => {
-								await navigate({
-									to: "/admin/anticheat",
-									search: (prev) => ({
-										...prev,
-										server_id: info.getValue() as number,
-									}),
-								});
+								color: stringToColour(row.original.server_name, theme.palette.mode),
 							}}
 						>
-							{info.row.original.server_name}
+							{row.original.server_name}
 						</Button>
 					);
 				},
@@ -181,169 +100,91 @@ function AdminAnticheat() {
 			columnHelper.accessor("name", {
 				header: "Name",
 				enableHiding: false,
-				size: 300,
-				cell: (info) => (
+				grow: true,
+				Cell: ({ row }) => (
 					<PersonCell
 						showCopy={true}
-						steam_id={info.row.original.steam_id}
-						personaname={info.row.original.personaname}
-						avatar_hash={info.row.original.avatar}
+						steam_id={row.original.steam_id}
+						personaname={row.original.personaname}
+						avatar_hash={row.original.avatar}
 					/>
 				),
 			}),
 			columnHelper.accessor("personaname", {
 				enableHiding: true,
+				grow: false,
 				header: "Personaname",
 			}),
 			columnHelper.accessor("steam_id", {
 				enableHiding: true,
+				grow: false,
 				header: "Steam ID",
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
-				size: 140,
-				cell: (info) => (
-					<TableCellString title={renderDateTime(info.getValue())}>
-						{renderDate(info.getValue())}
+				grow: false,
+				Cell: ({ cell }) => (
+					<TableCellString title={renderDateTime(cell.getValue())}>
+						{renderDate(cell.getValue())}
 					</TableCellString>
 				),
 			}),
 			columnHelper.accessor("demo_id", {
 				header: "Demo",
-				size: 50,
-				cell: (info) => <Typography>{info.getValue()}</Typography>,
+				grow: false,
+				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("detection", {
 				header: "Detection",
-				size: 130,
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+				filterVariant: "multi-select",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
 			columnHelper.accessor("triggered", {
 				header: "Count",
-				size: 80,
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+				filterVariant: "range-slider",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
 			columnHelper.accessor("summary", {
 				header: "Summary",
-				size: 400,
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
+				grow: true,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
 		];
-	}, [theme, navigate]);
+	}, [theme]);
+
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data ?? [],
+		enableFilters: true,
+		state: {
+			isLoading,
+			showAlertBanner: isError,
+		},
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "updated_on", desc: true }],
+			columnVisibility: {
+				anticheat_id: false,
+				server_id: true,
+				name: true,
+				personaname: false,
+				target_id: false,
+				steam_id: false,
+				demo_id: false,
+				reason: true,
+				reason_text: true,
+				created_on: false,
+			},
+		},
+	});
 
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
-					<form
-						onSubmit={async (e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							await form.handleSubmit();
-						}}
-					>
-						<Grid container spacing={2}>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"name"}
-									children={(field) => {
-										return <field.TextField label={"Name"} />;
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"steam_id"}
-									children={(field) => {
-										return <field.SteamIDField />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"server_id"}
-									children={({ state, handleChange, handleBlur }) => {
-										return (
-											<FormControl fullWidth>
-												<InputLabel id="server-select-label">Servers</InputLabel>
-												<Select
-													fullWidth
-													value={state.value}
-													label="Servers"
-													onChange={(e) => {
-														handleChange(Number(e.target.value));
-													}}
-													onBlur={handleBlur}
-												>
-													<MenuItem value={0}>All</MenuItem>
-													{servers.map((s) => (
-														<MenuItem value={s.server_id} key={s.server_id}>
-															{s.server_name}
-														</MenuItem>
-													))}
-												</Select>
-											</FormControl>
-										);
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"detection"}
-									children={(field) => {
-										return (
-											<field.SelectField
-												label={"Detection"}
-												items={DetectionCollection}
-												value={field.state.value}
-												renderItem={(i) => {
-													return (
-														<MenuItem value={i} key={i}>
-															{i}
-														</MenuItem>
-													);
-												}}
-											/>
-										);
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 12 }}>
-								<form.AppField
-									name={"summary"}
-									children={(field) => {
-										return <field.TextField label={"Message"} />;
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 12 }}>
-								<form.AppForm>
-									<ButtonGroup>
-										<form.ClearButton onClick={clear} />
-										<form.ResetButton />
-										<form.SubmitButton />
-									</ButtonGroup>
-								</form.AppForm>
-							</Grid>
-						</Grid>
-					</form>
-				</ContainerWithHeader>
-			</Grid>
-			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeaderAndButtons title={`Entries`} iconLeft={<FilterAltIcon />}>
-					<FullTable<StacEntry>
-						// columnFilters={columnFilters}
-						pagination={pagination}
-						setPagination={setPagination}
-						data={logs ?? []}
-						isLoading={isLoading}
-						columns={columns}
-						sorting={sorting}
-						columnVisibility={columnVisibility}
-						toOptions={{ from: Route.fullPath }}
-					/>
-				</ContainerWithHeaderAndButtons>
+				<SortableTable table={table} title={"Entries"} />
 			</Grid>
 		</Grid>
 	);
