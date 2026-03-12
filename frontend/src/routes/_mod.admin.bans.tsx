@@ -130,6 +130,7 @@ function AdminBans() {
 			}),
 			columnHelper.accessor("source_id", {
 				header: "Author",
+				enableSorting: false,
 				grow: true,
 				filterFn: (row, _, filterValue) => {
 					const query = filterValue.toLowerCase();
@@ -161,6 +162,7 @@ function AdminBans() {
 			columnHelper.accessor("target_id", {
 				header: "Subject",
 				grow: true,
+				enableSorting: false,
 				enableColumnFilter: true,
 				filterFn: (row, _, filterValue) => {
 					const query = filterValue.toLowerCase();
@@ -203,6 +205,7 @@ function AdminBans() {
 			}),
 			columnHelper.accessor("reason", {
 				enableColumnFilter: true,
+				enableSorting: false,
 				size: 150,
 				filterSelectOptions: Object.values(BanReason).map((reason) => ({
 					label: BanReasons[reason],
@@ -284,7 +287,6 @@ function AdminBans() {
 		enableFacetedValues: true,
 		initialState: {
 			...defaultOptions.initialState,
-
 			sorting: [{ id: "ban_id", desc: true }],
 			columnVisibility: {
 				source_id: false,
@@ -340,7 +342,7 @@ function AdminBans() {
 						<Tooltip title="Create new ban" key="create-new-ban">
 							<IconButton
 								key={`ban-steam`}
-								sx={{ marginRight: 2, color: "primary.contrastText" }}
+								sx={{ marginRight: 2, color: "primary.main.contrastText" }}
 								onClick={onNewBanSteam}
 							>
 								<AddIcon />

@@ -2,7 +2,6 @@ package playerqueue
 
 import (
 	"errors"
-	"log/slog"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -94,6 +93,5 @@ func (c *client) Start() {
 }
 
 func (c *client) Close() {
-	slog.Debug("Closing client connection", slog.String("addr", c.conn.RemoteAddr().String()))
 	_ = c.conn.Close()
 }

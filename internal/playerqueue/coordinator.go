@@ -405,8 +405,6 @@ func (q *Coordinator) broadcast(payload Response, targetClients ...Client) {
 	}
 
 	for _, targetClient := range targetClients {
-		slog.Debug("Sending message to client", slog.Int("op", int(payload.Op)),
-			slog.String("client", targetClient.ID()))
 		// Make sure we skip physically sending messages to clients without at least read access to the chat messages.
 		if payload.Op == Message && !targetClient.HasMessageAccess() {
 			continue
