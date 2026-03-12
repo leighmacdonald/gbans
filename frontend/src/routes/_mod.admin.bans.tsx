@@ -7,11 +7,10 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { z } from "zod/v4";
 import { apiGetBans } from "../api";
 import { BanModal } from "../component/modal/BanModal.tsx";
 import { UnbanModal } from "../component/modal/UnbanModal.tsx";
@@ -22,43 +21,15 @@ import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { AppealStateEnum, BanReason, BanReasonEnum, BanReasons, type BanRecord } from "../schema/bans.ts";
-import { isPermanentBan, RowsPerPage } from "../util/table.ts";
+import { BanReason, type BanReasonEnum, BanReasons, type BanRecord } from "../schema/bans.ts";
+import { isPermanentBan } from "../util/table.ts";
 import { renderDate } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<BanRecord>();
 const defaultOptions = createDefaultTableOptions<BanRecord>();
 
-const searchSchema = z.object({
-	pageIndex: z.number().optional().catch(0),
-	pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
-	sortOrder: z.enum(["desc", "asc"]).optional().catch("desc"),
-	sortColumn: z.enum(["ban_id", "source_id", "target_id", "reason", "created_on", "updated_on"]).optional(),
-	source_id: z.string().optional(),
-	target_id: z.string().optional(),
-	appeal_state: AppealStateEnum.optional(),
-	groups_only: z.boolean().optional(),
-	deleted: z.boolean().optional(),
-	cidr: z.string().optional(),
-	cidr_only: z.boolean().optional(),
-	reason: BanReasonEnum.optional(),
-	include_groups: z.boolean().optional(),
-});
-
 export const Route = createFileRoute("/_mod/admin/bans")({
 	component: AdminBans,
-	validateSearch: (search) => searchSchema.parse(search),
-	loader: async ({ context }) => {
-		const bans = await context.queryClient.fetchQuery({
-			queryKey: ["bans"],
-
-			queryFn: async () => {
-				return await apiGetBans({ deleted: true });
-			},
-		});
-
-		return { bans };
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Bans" }, match.context.title("Bans")],
 	}),
@@ -66,13 +37,20 @@ export const Route = createFileRoute("/_mod/admin/bans")({
 
 function AdminBans() {
 	const queryClient = useQueryClient();
-	const { bans } = Route.useLoaderData();
 	const { sendFlash } = useUserFlashCtx();
+
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["bans"],
+
+		queryFn: async () => {
+			return await apiGetBans({ deleted: true });
+		},
+	});
 
 	const onNewBanSteam = async () => {
 		try {
 			const ban = (await NiceModal.show(BanModal, {})) as BanRecord;
-			queryClient.setQueryData(["bans"], [...(bans ?? []), ban]);
+			queryClient.setQueryData(["bans"], [...(data ?? []), ban]);
 		} catch (e) {
 			sendFlash("error", `Error trying to set up ban: ${e}`);
 		}
@@ -87,14 +65,14 @@ function AdminBans() {
 				});
 				queryClient.setQueryData(
 					["bans"],
-					(bans ?? []).filter((b) => b.ban_id !== ban.ban_id),
+					(data ?? []).filter((b) => b.ban_id !== ban.ban_id),
 				);
 				sendFlash("success", "Unbanned player successfully");
 			} catch (e) {
 				sendFlash("error", `Error trying to unban: ${e}`);
 			}
 		},
-		[queryClient, sendFlash, bans],
+		[queryClient, sendFlash, data],
 	);
 
 	const onEdit = useCallback(
@@ -107,13 +85,13 @@ function AdminBans() {
 				})) as BanRecord;
 				queryClient.setQueryData(
 					["bans"],
-					(bans ?? []).map((b) => (b.ban_id === updated.ban_id ? updated : b)),
+					(data ?? []).map((b) => (b.ban_id === updated.ban_id ? updated : b)),
 				);
 			} catch (e) {
 				sendFlash("error", `Error trying to edit ban: ${e}`);
 			}
 		},
-		[queryClient, sendFlash, bans],
+		[queryClient, sendFlash, data],
 	);
 
 	const columns = useMemo(() => {
@@ -197,9 +175,6 @@ function AdminBans() {
 				size: 150,
 				grow: false,
 				filterVariant: "text",
-				// filterFn: (row, _, filterValue) => {
-				//     return filterValue == BanReason.Any || row.original.reason == filterValue;
-				// },
 				header: "CIDR/IP",
 				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
@@ -281,10 +256,14 @@ function AdminBans() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: bans,
+		data: data ?? [],
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,
+		state: {
+			isLoading,
+			showAlertBanner: isError,
+		},
 		initialState: {
 			...defaultOptions.initialState,
 			sorting: [{ id: "ban_id", desc: true }],

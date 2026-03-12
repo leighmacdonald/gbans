@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
-import { z } from "zod/v4";
+import { App } from "../App.tsx";
 import { apiGetAppeals, appealStateString } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
@@ -12,34 +12,19 @@ import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { AppealState, BanReason, BanReasons, type BanRecord } from "../schema/bans.ts";
-import { commonTableSearchSchema } from "../util/table.ts";
 
 const columnHelper = createMRTColumnHelper<BanRecord>();
 const defaultOptions = createDefaultTableOptions<BanRecord>();
 
-const appealSearchSchema = commonTableSearchSchema.extend({
-	sortColumn: z
-		.enum(["report_id", "source_id", "target_id", "appeal_state", "reason", "created_on", "updated_on"])
-		.optional(),
-	source_id: z.string().optional(),
-	target_id: z.string().optional(),
-	appeal_state: z.enum(AppealState).optional(),
-});
-
 export const Route = createFileRoute("/_mod/admin/appeals")({
 	component: AdminAppeals,
-	validateSearch: (search) => appealSearchSchema.parse(search),
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Appeals" }, match.context.title("Appeals")],
 	}),
-	loader: async () => {
-		const data = await apiGetAppeals({});
-		return { data };
-	},
 });
 
 function AdminAppeals() {
-	const { data, isLoading } = useQuery({
+	const { data, isLoading, isError } = useQuery({
 		queryKey: ["appeals"],
 		queryFn: async () => {
 			return (await apiGetAppeals({})) ?? [];
@@ -66,6 +51,18 @@ function AdminAppeals() {
 			columnHelper.accessor("appeal_state", {
 				header: "Status",
 				grow: false,
+				filterVariant: "multi-select",
+				filterSelectOptions: Object.values(AppealState).map((reason) => ({
+					label: appealStateString(reason),
+					value: reason,
+				})),
+				filterFn: (row, _, filterValue) => {
+					return (
+						filterValue.length === 0 ||
+						filterValue.includes(AppealState.Any) ||
+						filterValue.includes(row.original.appeal_state)
+					);
+				},
 				Cell: ({ cell }) => {
 					return <Typography variant={"body1"}>{appealStateString(cell.getValue())}</Typography>;
 				},
@@ -169,7 +166,10 @@ function AdminAppeals() {
 		columns,
 		data: data ?? [],
 		enableFilters: true,
-		state: { isLoading },
+		state: {
+			isLoading,
+			showAlertBanner: isError,
+		},
 		initialState: {
 			...defaultOptions.initialState,
 			sorting: [{ id: "updated_on", desc: true }],

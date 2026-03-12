@@ -1,10 +1,10 @@
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
-import { z } from "zod/v4";
 import { apiGetReports } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
@@ -13,40 +13,24 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { BanReason, BanReasons } from "../schema/bans.ts";
 import { ReportStatus, type ReportWithAuthor, reportStatusString } from "../schema/report.ts";
-import { commonTableSearchSchema } from "../util/table.ts";
 
 const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
 const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
 
-const reportsSearchSchema = commonTableSearchSchema.extend({
-	sortColumn: z
-		.enum(["report_id", "source_id", "target_id", "report_status", "reason", "created_on", "updated_on"])
-		.optional(),
-	source_id: z.string().optional(),
-	target_id: z.string().optional(),
-	deleted: z.boolean().optional(),
-	report_status: z.enum(ReportStatus).optional(),
-});
-
 export const Route = createFileRoute("/_mod/admin/reports")({
 	component: AdminReports,
-	validateSearch: (search) => reportsSearchSchema.parse(search),
-	loader: async ({ context, abortController }) => {
-		const reports = await context.queryClient.fetchQuery({
-			queryKey: ["adminReports"],
-			queryFn: async () => {
-				return apiGetReports({ deleted: false }, abortController);
-			},
-		});
-		return { reports: reports ?? [] };
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Reports" }, match.context.title("Reports")],
 	}),
 });
 
 function AdminReports() {
-	const { reports } = Route.useLoaderData();
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["adminReports"],
+		queryFn: async () => {
+			return apiGetReports({ deleted: false });
+		},
+	});
 
 	const columns = useMemo(() => {
 		return [
@@ -66,6 +50,8 @@ function AdminReports() {
 			}),
 			columnHelper.accessor("report_status", {
 				header: "Status",
+				size: 150,
+				grow: false,
 				filterVariant: "multi-select",
 				filterSelectOptions: Object.values(ReportStatus).map((status) => ({
 					label: reportStatusString(status),
@@ -155,6 +141,11 @@ function AdminReports() {
 				},
 				Cell: ({ cell }) => <Typography>{BanReasons[cell.getValue()]}</Typography>,
 			}),
+			columnHelper.accessor("reason_text", {
+				filterVariant: "text",
+				header: "Custom Reason",
+				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
+			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				size: 150,
@@ -173,7 +164,11 @@ function AdminReports() {
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: reports,
+		data: data ?? [],
+		state: {
+			isLoading,
+			showAlertBanner: isError,
+		},
 		enableFilters: true,
 		initialState: {
 			...defaultOptions.initialState,
@@ -182,6 +177,7 @@ function AdminReports() {
 				source_id: false,
 				target_id: true,
 				reason: true,
+				reason_text: false,
 				created_on: false,
 				report_status: true,
 				updated_on: true,
