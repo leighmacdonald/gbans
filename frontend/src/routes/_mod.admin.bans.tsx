@@ -2,43 +2,27 @@
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import GavelIcon from "@mui/icons-material/Gavel";
 import UndoIcon from "@mui/icons-material/Undo";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
-import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { createMRTColumnHelper, MaterialReactTable, useMaterialReactTable } from "material-react-table";
+import { createFileRoute } from "@tanstack/react-router";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { z } from "zod/v4";
 import { apiGetBans } from "../api";
-import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { BanModal } from "../component/modal/BanModal.tsx";
 import { UnbanModal } from "../component/modal/UnbanModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
-import { useAppForm } from "../contexts/formContext.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import {
-	AppealState,
-	AppealStateEnum,
-	BanReason,
-	BanReasonEnum,
-	BanReasons,
-	type BanRecord,
-	banReasonsCollection,
-} from "../schema/bans.ts";
-import { schemaBanQueryOpts } from "../schema/query.ts";
+import { AppealStateEnum, BanReason, BanReasonEnum, BanReasons, type BanRecord } from "../schema/bans.ts";
 import { isPermanentBan, RowsPerPage } from "../util/table.ts";
 import { renderDate } from "../util/time.ts";
 
@@ -82,8 +66,6 @@ export const Route = createFileRoute("/_mod/admin/bans")({
 
 function AdminBans() {
 	const queryClient = useQueryClient();
-	const navigate = useNavigate({ from: Route.fullPath });
-	const search = Route.useSearch();
 	const { bans } = Route.useLoaderData();
 	const { sendFlash } = useUserFlashCtx();
 
@@ -94,18 +76,6 @@ function AdminBans() {
 		} catch (e) {
 			sendFlash("error", `Error trying to set up ban: ${e}`);
 		}
-	};
-
-	const defaultValues: z.infer<typeof schemaBanQueryOpts> = {
-		source_id: search.source_id ?? "",
-		target_id: search.target_id ?? "",
-		appeal_state: search.appeal_state ?? AppealState.Any,
-		groups_only: search.groups_only ?? false,
-		deleted: search.deleted ?? false,
-		cidr: search.cidr,
-		cidr_only: search.cidr_only ?? false,
-		reason: search.reason ?? BanReason.Any,
-		include_groups: search.include_groups ?? true,
 	};
 
 	const onUnban = useCallback(
@@ -146,48 +116,10 @@ function AdminBans() {
 		[queryClient, sendFlash, bans],
 	);
 
-	const form = useAppForm({
-		onSubmit: async ({ value }) => {
-			//setColumnFilters(initColumnFilter(value));
-			await navigate({
-				to: "/admin/bans",
-				search: (prev) => ({ ...prev, ...value }),
-			});
-		},
-		validators: {
-			onSubmit: schemaBanQueryOpts,
-		},
-		defaultValues,
-	});
-
-	const clear = async () => {
-		//setColumnFilters([]);
-		form.reset();
-		await navigate({
-			to: "/admin/bans",
-			search: (prev) => ({
-				...prev,
-				source_id: undefined,
-				target_id: undefined,
-				reason: undefined,
-				valid_until: undefined,
-				groups_only: undefined,
-				cidr: undefined,
-				cidr_only: undefined,
-				appeal_state: undefined,
-				networks_only: undefined,
-				include_groups: undefined,
-				sortColumn: undefined,
-				sortOrder: undefined,
-			}),
-		});
-	};
-
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("ban_id", {
-				enableColumnFilter: false,
-				size: 75,
+				size: 125,
 				grow: false,
 				header: "Ban ID",
 				Cell: ({ cell }) => (
@@ -199,6 +131,21 @@ function AdminBans() {
 			columnHelper.accessor("source_id", {
 				header: "Author",
 				grow: true,
+				filterFn: (row, _, filterValue) => {
+					const query = filterValue.toLowerCase();
+					if (query === "") {
+						return true;
+					}
+					const value = row.original.source_personaname.toLowerCase();
+					if (value.includes(query)) {
+						return true;
+					}
+					if (row.original.source_id.includes(query) || row.original.source_id === query) {
+						return true;
+					}
+
+					return false;
+				},
 				Cell: ({ row }) => {
 					return typeof row.original === "undefined" ? (
 						""
@@ -214,6 +161,22 @@ function AdminBans() {
 			columnHelper.accessor("target_id", {
 				header: "Subject",
 				grow: true,
+				enableColumnFilter: true,
+				filterFn: (row, _, filterValue) => {
+					const query = filterValue.toLowerCase();
+					if (query === "") {
+						return true;
+					}
+					const value = row.original.target_personaname.toLowerCase();
+					if (value.includes(query)) {
+						return true;
+					}
+					if (row.original.target_id.includes(query) || row.original.target_id === query) {
+						return true;
+					}
+
+					return false;
+				},
 				Cell: ({ row }) => {
 					return typeof row.original === "undefined" ? (
 						""
@@ -246,25 +209,27 @@ function AdminBans() {
 					value: reason,
 				})),
 				filterVariant: "multi-select",
-				// filterFn: (row, _, filterValue) => {
-				// 	return filterValue === BanReason.Any || row.original.reason === filterValue;
-				// },
 				header: "Reason",
+				filterFn: (row, _, filterValue) => {
+					return (
+						filterValue.length === 0 ||
+						filterValue.includes(BanReason.Any) ||
+						filterValue.includes(row.original.reason)
+					);
+				},
 				Cell: ({ cell }) => <Typography>{BanReasons[cell.getValue() as BanReasonEnum]}</Typography>,
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				filterVariant: "date-range",
 				grow: false,
-				size: 100,
 				Cell: ({ cell }) => <Typography>{renderDate(cell.getValue() as Date)}</Typography>,
 			}),
 			columnHelper.accessor("valid_until", {
 				header: "Duration",
 				enableColumnFilter: false,
-				grow: true,
+				grow: false,
 				filterVariant: "date-range",
-				size: 100,
 				Cell: ({ row }) => {
 					return typeof row.original === "undefined" ? (
 						""
@@ -282,25 +247,22 @@ function AdminBans() {
 				meta: {
 					tooltip: "Evasion OK. Players connecting from the same ip will not be banned.",
 				},
-				size: 30,
 				enableColumnFilter: false,
 				grow: false,
 				filterVariant: "checkbox",
-				header: "Evade Ok",
+				header: "Evade",
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
 			columnHelper.accessor("deleted", {
-				size: 30,
 				enableColumnFilter: false,
 				grow: false,
 				filterVariant: "checkbox",
 				meta: { tooltip: "Deleted / Expired Bans" },
-				header: "Unbanned",
+				header: "Expired",
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
 			columnHelper.accessor("report_id", {
-				header: "Rep.",
-				size: 60,
+				header: "Report",
 				grow: false,
 				meta: { tooltip: "Linked report" },
 				Cell: ({ cell }) =>
@@ -318,6 +280,8 @@ function AdminBans() {
 		columns,
 		data: bans,
 		enableFilters: true,
+		enableHiding: true,
+		enableFacetedValues: true,
 		initialState: {
 			...defaultOptions.initialState,
 
@@ -326,6 +290,8 @@ function AdminBans() {
 				source_id: false,
 				target_id: true,
 				reason: true,
+				evade_ok: false,
+				deleted: false,
 				valid_until: true,
 				created_on: false,
 				updated_on: true,
@@ -335,6 +301,9 @@ function AdminBans() {
 			},
 		},
 		enableRowActions: true,
+		renderTopToolbarCustomActions: () => {
+			return <Typography variant="h3">Bans</Typography>;
+		},
 		renderRowActionMenuItems: ({ row }) => [
 			<IconButton
 				key={"edit"}
@@ -364,133 +333,21 @@ function AdminBans() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
-					<form
-						onSubmit={async (e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							await form.handleSubmit();
-						}}
-					>
-						<Grid container spacing={2}>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"source_id"}
-									children={(field) => {
-										return <field.SteamIDField label={"Author Steam ID"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"target_id"}
-									children={(field) => {
-										return <field.SteamIDField label={"Subject Steam ID"} />;
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"cidr"}
-									children={(field) => {
-										return <field.TextField label={"CIDR Range/IP Address"} />;
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"reason"}
-									children={(field) => {
-										return (
-											<field.SelectField
-												label={"Ban Reason"}
-												items={banReasonsCollection}
-												renderItem={(i) => {
-													if (i === undefined) {
-														return null;
-													}
-													return (
-														<MenuItem value={i} key={`${i}-${BanReasons[i]}`}>
-															{BanReasons[i]}
-														</MenuItem>
-													);
-												}}
-											/>
-										);
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"cidr_only"}
-									children={(field) => {
-										return <field.CheckboxField label={"CIDR/IP Bans Only"} />;
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"groups_only"}
-									children={(field) => {
-										return <field.CheckboxField label={"Show groups only"} />;
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"include_groups"}
-									children={(field) => {
-										return <field.CheckboxField label={"Show groups"} />;
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 6, md: 3 }}>
-								<form.AppField
-									name={"deleted"}
-									children={(field) => {
-										return <field.CheckboxField label={"Show deleted/expired"} />;
-									}}
-								/>
-							</Grid>
-							<Grid size={{ xs: 12 }}>
-								<form.AppForm>
-									<ButtonGroup>
-										<form.ClearButton onClick={clear} />
-										<form.ResetButton />
-										<form.SubmitButton />
-									</ButtonGroup>
-								</form.AppForm>
-							</Grid>
-						</Grid>
-					</form>
-				</ContainerWithHeader>
-			</Grid>
-
-			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeaderAndButtons
-					title={"Steam Ban History"}
-					marginTop={0}
-					iconLeft={<GavelIcon />}
+				<SortableTable
+					table={table}
+					title={"Bans"}
 					buttons={[
-						<Button
-							key={`ban-steam`}
-							variant={"contained"}
-							color={"success"}
-							startIcon={<AddIcon />}
-							sx={{ marginRight: 2 }}
-							onClick={onNewBanSteam}
-						>
-							Create
-						</Button>,
+						<Tooltip title="Create new ban" key="create-new-ban">
+							<IconButton
+								key={`ban-steam`}
+								sx={{ marginRight: 2, color: "primary.contrastText" }}
+								onClick={onNewBanSteam}
+							>
+								<AddIcon />
+							</IconButton>
+						</Tooltip>,
 					]}
-				>
-					<Grid container spacing={2}>
-						<Grid size={{ xs: 12 }}>
-							<MaterialReactTable table={table} />
-						</Grid>
-					</Grid>
-				</ContainerWithHeaderAndButtons>
+				/>
 			</Grid>
 		</Grid>
 	);

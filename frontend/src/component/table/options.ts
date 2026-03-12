@@ -4,23 +4,21 @@ export const createDefaultTableOptions = <TData extends MRT_RowData>(): Partial<
 	enableGlobalFilter: false,
 	enableRowPinning: false,
 	initialState: { showColumnFilters: true },
+	enableFacetedValues: true,
+	enableColumnFilters: true,
 	manualFiltering: undefined,
 	manualPagination: undefined,
 	manualSorting: undefined,
 	enableDensityToggle: false,
-	enableTopToolbar: false,
+	enableTopToolbar: true,
 	paginationDisplayMode: "pages",
 	layoutMode: "grid",
-	enableFullScreenToggle: false,
+	enableFullScreenToggle: true,
 	positionActionsColumn: "last",
-	columnFilterDisplayMode: "popover",
-	muiTablePaperProps: {
-		elevation: 0,
-	},
+	columnFilterDisplayMode: "subheader",
+
 	muiTableBodyCellProps: {
 		sx: { paddingLeft: 1, paddingRight: 1, paddingTop: 0.25, paddingBottom: 0.25 },
 	},
-	defaultColumn: {
-		//you can even list default column options here
-	},
+	defaultColumn: {},
 });

@@ -24,7 +24,6 @@ import {
 	type BanRecord,
 } from "../schema/bans.ts";
 import { commonTableSearchSchema } from "../util/table.ts";
-import { renderDateTime } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<BanRecord>();
 const defaultOptions = createDefaultTableOptions<BanRecord>();
@@ -174,6 +173,7 @@ function AdminAppeals() {
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
+				filterVariant: "date",
 				size: 120,
 				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
 			}),
