@@ -105,8 +105,6 @@ func (h *serverQueueHandler) start(validOrigins []string) gin.HandlerFunc {
 				case errors.Is(err, context.Canceled):
 					return
 				case errors.Is(err, ErrQueueIO):
-					slog.Debug("Client connection error", slog.String("client", clientConn.ID()), slog.String("error", ErrQueueIO.Error()))
-
 					return
 				default:
 					slog.Error("Error trying to handle websocket message", slog.String("error", err.Error()))
