@@ -53,14 +53,15 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, showCo
 				params={{ steamId: steam_id }}
 				onClick={onClick ?? undefined}
 				variant={"text"}
+				disableRipple={true}
 				sx={{
-					backgroundColor: theme.palette.background.default,
-					color: theme.palette.primary.contrastText,
+					//backgroundColor: theme.palette.background.default,
+					color: theme.palette.text.primary,
 					"&:hover": {
 						cursor: "pointer",
 						textDecoration: "underline",
 						// color: theme.palette.getContrastText(theme.palette.background.default),
-						backgroundColor: theme.palette.background.default,
+						//backgroundColor: theme.palette.action.active,
 					},
 				}}
 				fullWidth
