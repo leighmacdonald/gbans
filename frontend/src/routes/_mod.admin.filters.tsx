@@ -1,226 +1,125 @@
-import NiceModal from "@ebay/nice-modal-react";
-import AddBoxIcon from "@mui/icons-material/AddBox";
-import CancelIcon from "@mui/icons-material/Cancel";
-import EditIcon from "@mui/icons-material/Edit";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import InfoIcon from "@mui/icons-material/Info";
-import WarningIcon from "@mui/icons-material/Warning";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import TableCell from "@mui/material/TableCell";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	type OnChangeFn,
-	type PaginationState,
-	type RowSelectionState,
-	useReactTable,
-} from "@tanstack/react-table";
-import { useCallback, useMemo, useState } from "react";
-import { z } from "zod/v4";
-import { apiDeleteFilter, apiGetFilters, apiGetWarningState } from "../api/filters.ts";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { useCallback, useMemo } from "react";
+import { apiGetFilters, apiGetWarningState } from "../api/filters.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
-import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
-import { IndeterminateCheckbox } from "../component/IndeterminateCheckbox.tsx";
-import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
-import { FilterEditModal } from "../component/modal/FilterEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { DataTable } from "../component/table/DataTable.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { type Filter, filterActionString, type UserWarning } from "../schema/filters.ts";
-import { findSelectedRow } from "../util/findSelectedRow.ts";
-import { findSelectedRows } from "../util/findSelectedRows.ts";
-import { RowsPerPage } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
 
-const filterSearchSchema = z.object({
-	pageIndex: z.number().optional().catch(0),
-	pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
-	sortOrder: z.enum(["desc", "asc"]).optional().catch("desc"),
-	sortColumn: z.enum(["filter_id", "is_regex", "is_enabled", "weight", "trigger_count"]).optional(),
-});
+const columnHelper = createMRTColumnHelper<Filter>();
+const defaultOptions = createDefaultTableOptions<Filter>();
 
 export const Route = createFileRoute("/_mod/admin/filters")({
 	component: AdminFilters,
-	validateSearch: (search) => filterSearchSchema.parse(search),
-	loader: async ({ context }) => {
-		const filters = await context.queryClient.fetchQuery({
-			queryKey: ["filters"],
-			queryFn: async () => {
-				return await apiGetFilters();
-			},
-		});
-
-		return { filters };
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Filtered Words" }, match.context.title("Filtered Words")],
 	}),
 });
 
 function AdminFilters() {
-	const { sendFlash, sendError } = useUserFlashCtx();
-	const queryClient = useQueryClient();
-	const { filters } = Route.useLoaderData();
-	const [rowSelection, setRowSelection] = useState({});
-
-	// const { page, rows, sortOrder, sortColumn } = Route.useSearch();
-	const [pagination, setPagination] = useState({
-		pageIndex: 0, //initial page index
-		pageSize: RowsPerPage.TwentyFive, //default page size
-	});
-
-	const { data: warnings, isLoading: isLoadingWarnings } = useQuery({
-		queryKey: ["filterWarnings"],
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["filters"],
 		queryFn: async () => {
-			return await apiGetWarningState();
+			return await apiGetFilters();
 		},
 	});
 
-	const onCreate = useCallback(async () => {
-		try {
-			const resp = (await NiceModal.show(FilterEditModal, {})) as Filter;
-			queryClient.setQueryData(["filters"], [...(filters ?? []), resp]);
-		} catch (e) {
-			sendFlash("error", `${e}`);
-		}
-	}, [filters, queryClient, sendFlash]);
+	const columns = useMemo(() => {
+		return [
+			columnHelper.accessor("pattern", {
+				header: "Pattern",
+				grow: true,
+				enableColumnFilter: false,
+				Cell: ({ cell }) => cell.getValue(),
+			}),
 
-	const onEdit = useCallback(async () => {
-		try {
-			const filter = findSelectedRow(rowSelection, filters ?? []);
-			const resp = (await NiceModal.show(FilterEditModal, {
-				filter,
-			})) as Filter;
+			columnHelper.accessor("is_regex", {
+				header: "Rx",
+				filterVariant: "checkbox",
+				enableColumnFilter: false,
+				grow: false,
+				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
+			}),
 
-			queryClient.setQueryData(
-				["filters"],
-				(filters ?? []).map((f) => {
-					return f.filter_id === resp.filter_id ? resp : f;
-				}),
-			);
-		} catch (e) {
-			sendFlash("error", `${e}`);
-		}
-	}, [filters, queryClient, rowSelection, sendFlash]);
+			columnHelper.accessor("action", {
+				header: "Action",
+				enableColumnFilter: false,
+				meta: { tooltip: "What action to take?" },
+				grow: false,
+				Cell: ({ cell }) => {
+					return (
+						<TableCellString>
+							{typeof cell.getValue() === "undefined" ? "" : filterActionString(cell.getValue())}
+						</TableCellString>
+					);
+				},
+			}),
 
-	const deleteMutation = useMutation({
-		mutationKey: ["filters"],
-		mutationFn: async (filter_id: number) => {
-			await apiDeleteFilter(filter_id);
+			columnHelper.accessor("duration", {
+				header: "Duration",
+				enableColumnFilter: false,
+				grow: false,
+				meta: { tooltip: "Duration of the punishment when triggered" },
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("weight", {
+				grow: false,
+				filterVariant: "range",
+				header: "Weight",
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("trigger_count", {
+				header: "Trig #",
+				enableColumnFilter: false,
+				grow: false,
+				meta: { tooltip: "Number of times the filter has been triggered" },
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+		];
+	}, []);
+
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data ?? [],
+		enableFilters: true,
+		state: {
+			isLoading,
+			showAlertBanner: isError,
 		},
-		onSuccess: (_, filterId) => {
-			sendFlash("error", `Deleted filter: ${filterId}`);
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "updated_on", desc: true }],
+			columnVisibility: {
+				source_id: false,
+				target_id: true,
+				reason: true,
+				reason_text: true,
+				created_on: false,
+				updated_on: true,
+			},
 		},
-		onError: sendError,
 	});
-
-	const onDelete = useCallback(async () => {
-		const selectedFiltersIds = findSelectedRows(rowSelection, filters ?? [])?.map((f) => f.filter_id);
-		if (!selectedFiltersIds) {
-			return;
-		}
-
-		try {
-			const confirmed = (await NiceModal.show(ConfirmationModal, {
-				title: `Are you sure you want to delete ${selectedFiltersIds.length} filter(s)?`,
-			})) as boolean;
-
-			if (!confirmed) {
-				return;
-			}
-
-			selectedFiltersIds.map((f) => {
-				deleteMutation.mutate(f as number);
-				return f;
-			});
-			queryClient.setQueryData(
-				["filters"],
-				(filters ?? []).filter((filter) => !selectedFiltersIds.includes(filter.filter_id)),
-			);
-			setRowSelection({});
-		} catch (e) {
-			sendFlash("error", `${e}`);
-			return;
-		}
-	}, [deleteMutation, filters, queryClient, rowSelection, sendFlash]);
 
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeaderAndButtons
-					title={`Word Filters ${Object.values(rowSelection).length ? `Selected: ${Object.values(rowSelection).length}` : ""}`}
-					iconLeft={<FilterAltIcon />}
-					buttons={[
-						<ButtonGroup
-							variant="contained"
-							aria-label="outlined primary button group"
-							key={`btn-headers-filters`}
-						>
-							<Button
-								disabled={Object.values(rowSelection).length === 0}
-								color={"error"}
-								onClick={onDelete}
-								startIcon={<CancelIcon />}
-							>
-								Delete
-							</Button>
-							<Button
-								disabled={Object.values(rowSelection).length !== 1}
-								color={"warning"}
-								onClick={onEdit}
-								startIcon={<EditIcon />}
-							>
-								Edit
-							</Button>
-							<Button startIcon={<AddBoxIcon />} color={"success"} onClick={onCreate}>
-								New
-							</Button>
-						</ButtonGroup>,
-					]}
-				>
-					<FiltersTable
-						filters={filters ?? []}
-						isLoading={false}
-						rowSelection={rowSelection}
-						setRowSelection={setRowSelection}
-						pagination={pagination}
-						setPagination={setPagination}
-					/>
-					<PaginatorLocal
-						onRowsChange={(rows) => {
-							setPagination((prev) => {
-								return { ...prev, pageSize: rows };
-							});
-						}}
-						onPageChange={(page) => {
-							setPagination((prev) => {
-								return { ...prev, pageIndex: page };
-							});
-						}}
-						count={filters?.length ?? 0}
-						rows={pagination.pageSize}
-						page={pagination.pageIndex}
-					/>
-				</ContainerWithHeaderAndButtons>
+				<SortableTable table={table} title={"Word Filters"} />
 			</Grid>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader
-					title={`Current Warning State (Max Weight: ${warnings?.max_weight ?? "..."})`}
-					iconLeft={<WarningIcon />}
-				>
-					<WarningStateTable warnings={warnings?.current ?? []} isLoading={isLoadingWarnings} />
-				</ContainerWithHeader>
+				<WarningStateTable />
 			</Grid>
 			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"How it works"} iconLeft={<InfoIcon />}>
@@ -237,123 +136,17 @@ function AdminFilters() {
 	);
 }
 
-const columnHelper = createColumnHelper<Filter>();
+const columnHelperWarn = createMRTColumnHelper<UserWarning>();
+const defaultOptionsWarn = createDefaultTableOptions<UserWarning>();
 
-const FiltersTable = ({
-	filters,
-	isLoading,
-	rowSelection,
-	setRowSelection,
-	pagination,
-	setPagination,
-}: {
-	filters: Filter[];
-	isLoading: boolean;
-	rowSelection: RowSelectionState;
-	setRowSelection: OnChangeFn<RowSelectionState>;
-	pagination: PaginationState;
-	setPagination: OnChangeFn<PaginationState>;
-}) => {
-	const columns = useMemo(() => {
-		return [
-			columnHelper.display({
-				id: "select",
-				size: 30,
-				header: ({ table }) => (
-					<IndeterminateCheckbox
-						{...{
-							checked: table.getIsAllRowsSelected(),
-							indeterminate: table.getIsSomeRowsSelected(),
-							onChange: table.getToggleAllRowsSelectedHandler(),
-						}}
-					/>
-				),
-				cell: ({ row }) => (
-					<div className="px-1">
-						<IndeterminateCheckbox
-							{...{
-								checked: row.getIsSelected(),
-								disabled: !row.getCanSelect(),
-								indeterminate: row.getIsSomeSelected(),
-								onChange: row.getToggleSelectedHandler(),
-							}}
-						/>
-					</div>
-				),
-			}),
-			columnHelper.accessor("pattern", {
-				header: "Pattern",
-				size: 600,
-				cell: (info) => info.getValue(),
-			}),
-
-			columnHelper.accessor("is_regex", {
-				header: "Rx",
-				size: 30,
-				cell: (info) => <BoolCell enabled={info.getValue()} />,
-			}),
-
-			columnHelper.accessor("action", {
-				header: "Action",
-				meta: { tooltip: "What action to take?" },
-				size: 50,
-				cell: (info) => {
-					return (
-						<TableCellString>
-							{typeof filters[info.row.index] === "undefined"
-								? ""
-								: filterActionString(filters[info.row.index].action)}
-						</TableCellString>
-					);
-				},
-			}),
-
-			columnHelper.accessor("duration", {
-				header: "Duration",
-				meta: { tooltip: "Duration of the punishment when triggered" },
-				size: 50,
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-			}),
-			columnHelper.accessor("weight", {
-				header: "Weight",
-				size: 50,
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-			}),
-			columnHelper.accessor("trigger_count", {
-				header: "Trig #",
-				meta: { tooltip: "Number of times the filter has been triggered" },
-				size: 50,
-				cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-			}),
-		];
-	}, [filters]);
-
-	const table = useReactTable({
-		data: filters,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
-		manualPagination: false,
-		autoResetPageIndex: true,
-		enableRowSelection: true,
-		onRowSelectionChange: setRowSelection,
-		onPaginationChange: setPagination,
-		getPaginationRowModel: getPaginationRowModel(),
-		state: {
-			rowSelection,
-			pagination,
+export const WarningStateTable = () => {
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["filterWarnings"],
+		queryFn: async () => {
+			return await apiGetWarningState();
 		},
 	});
-
-	return <DataTable table={table} isLoading={isLoading} />;
-};
-
-export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarning[]; isLoading: boolean }) => {
-	const [pagination, setPagination] = useState({
-		pageIndex: 0, //initial page index
-		pageSize: RowsPerPage.TwentyFive, //default page size
-	});
-
-	const renderFilter = (f: Filter) => {
+	const renderFilter = useCallback((f: Filter) => {
 		const pat = f.is_regex ? (f.pattern as string) : (f.pattern as string);
 
 		return (
@@ -364,92 +157,80 @@ export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarni
 				<Typography variant={"body1"}>Action: {filterActionString(f.action)}</Typography>
 			</>
 		);
-	};
-	const columnHelper = createColumnHelper<UserWarning>();
+	}, []);
 
-	const columns = [
-		columnHelper.accessor("steam_id", {
-			header: "Pattern",
-			cell: (info) => (
-				<TableCellSmall>
-					<PersonCell
-						steam_id={info.getValue()}
-						personaname={warnings[info.row.index].personaname}
-						avatar_hash={warnings[info.row.index].avatar}
-					/>
-				</TableCellSmall>
-			),
-		}),
-		columnHelper.accessor("created_on", {
-			header: "Created",
-			size: 100,
-			cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
-		}),
-		columnHelper.accessor("matched_filter.action", {
-			header: "Action",
-			size: 100,
-			cell: (info) => (
-				<TableCellSmall>
-					<Typography>
-						{typeof info.row.original.matched_filter.action === "undefined"
-							? ""
-							: filterActionString(info.row.original.matched_filter.action)}
-					</Typography>
-				</TableCellSmall>
-			),
-		}),
-		columnHelper.accessor("matched", {
-			header: "Duration",
-			size: 100,
-			cell: (info) => (
-				<TableCell>
-					<Tooltip title={renderFilter(warnings[info.row.index].matched_filter)}>
-						<Typography>{info.getValue()}</Typography>
-					</Tooltip>
-				</TableCell>
-			),
-		}),
-		columnHelper.accessor("current_total", {
-			header: "Weight",
-			size: 30,
-			cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-		}),
-		columnHelper.accessor("message", {
-			header: "Triggered",
-			size: 400,
-			cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-		}),
-	];
+	const columns = useMemo(
+		() => [
+			columnHelperWarn.accessor("steam_id", {
+				header: "Pattern",
+				Cell: ({ row }) => (
+					<TableCellSmall>
+						<PersonCell
+							steam_id={row.original.steam_id}
+							personaname={row.original.personaname}
+							avatar_hash={row.original.avatar}
+						/>
+					</TableCellSmall>
+				),
+			}),
+			columnHelperWarn.accessor("created_on", {
+				header: "Created",
+				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+			}),
+			columnHelperWarn.accessor("matched_filter.action", {
+				header: "Action",
+				Cell: ({ cell }) => (
+					<TableCellSmall>
+						<Typography>
+							{typeof cell.getValue() === "undefined" ? "" : filterActionString(cell.getValue())}
+						</Typography>
+					</TableCellSmall>
+				),
+			}),
+			columnHelperWarn.accessor("matched", {
+				header: "Duration",
+				Cell: ({ row, cell }) => (
+					<TableCell>
+						<Tooltip title={renderFilter(row.original as unknown as Filter)}>
+							<Typography>{cell.getValue()}</Typography>
+						</Tooltip>
+					</TableCell>
+				),
+			}),
+			columnHelperWarn.accessor("current_total", {
+				header: "Weight",
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelperWarn.accessor("message", {
+				header: "Triggered",
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+		],
+		[renderFilter],
+	);
 
-	const table = useReactTable({
-		data: warnings,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		onPaginationChange: setPagination, //update the pagination state when internal APIs mutate the pagination state
+	const table = useMaterialReactTable({
+		...defaultOptionsWarn,
+		columns,
+		data: data ? data.current : [],
+		enableFilters: true,
 		state: {
-			pagination,
+			isLoading,
+			showAlertBanner: isError,
+		},
+		initialState: {
+			...defaultOptionsWarn.initialState,
+			sorting: [{ id: "updated_on", desc: true }],
+			columnVisibility: {
+				source_id: false,
+				target_id: true,
+				reason: true,
+				reason_text: true,
+				created_on: false,
+				updated_on: true,
+			},
 		},
 	});
 
-	return (
-		<>
-			<DataTable table={table} isLoading={isLoading} />
-			<PaginatorLocal
-				onRowsChange={(rows) => {
-					setPagination((prev) => {
-						return { ...prev, pageSize: rows };
-					});
-				}}
-				onPageChange={(page) => {
-					setPagination((prev) => {
-						return { ...prev, pageIndex: page };
-					});
-				}}
-				count={warnings.length}
-				rows={pagination.pageSize}
-				page={pagination.pageIndex}
-			/>
-		</>
-	);
+	return <SortableTable table={table} title={`Current Warning State (Max Weight: ${data?.max_weight ?? "..."})`} />;
 };
