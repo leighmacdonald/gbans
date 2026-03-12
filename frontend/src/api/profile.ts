@@ -50,23 +50,25 @@ export const apiGetMessageContext = async (messageId: number, padding: number = 
 };
 
 export const apiGetMessages = async (opts: MessageQuery, abortController?: AbortController) => {
-	const resp = await apiCall<PersonMessage[], MessageQuery>(
+	const resp = await apiCall<LazyResult<PersonMessage>, MessageQuery>(
 		`/api/messages`,
-		"POST",
+		"GET",
 		{
 			...opts,
-			date_start: (opts.date_start ?? "") === "" ? undefined : opts.date_start,
-			date_end: (opts.date_end ?? "") === "" ? undefined : opts.date_end,
+			// date_start: (opts.date_start ?? "") === "" ? undefined : opts.date_start,
+			// date_end: (opts.date_end ?? "") === "" ? undefined : opts.date_end,
 		},
 		abortController,
 	);
 
-	return resp.map((msg) => {
+	resp.data = resp.data.map((msg) => {
 		return {
 			...msg,
 			created_on: parseDateTime(msg.created_on as unknown as string),
 		};
 	});
+
+	return resp;
 };
 
 export const apiGetNotifications = async (abortController?: AbortController) => {

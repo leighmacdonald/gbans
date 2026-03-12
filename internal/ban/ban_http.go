@@ -395,8 +395,8 @@ type RequestQueryOpts struct {
 
 func (h banHandler) onQuery() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var params RequestQueryOpts
-		if !httphelper.BindQuery(ctx, &params) {
+		params, ok := httphelper.BindQuery[RequestQueryOpts](ctx)
+		if !ok {
 			return
 		}
 

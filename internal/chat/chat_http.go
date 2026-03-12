@@ -22,37 +22,37 @@ func NewChatHandler(engine *gin.Engine, chat *Chat, authenticator httphelper.Aut
 	authedGrp := engine.Group("/")
 	{
 		authed := authedGrp.Use(authenticator.Middleware(permission.User))
-		authed.POST("/api/messages", handler.onAPIQueryMessages())
+		authed.GET("/api/messages", handler.getMessages())
 	}
 
 	// mod
 	modGrp := engine.Group("/")
 	{
 		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
-		mod.GET("/api/message/:person_message_id/context/:padding", handler.onAPIQueryMessageContext())
+		mod.GET("/api/message/:person_message_id/context/:padding", handler.getMessageCtx())
 	}
 }
 
-func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
+func (h chatHandler) getMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		req, ok := httphelper.BindJSON[HistoryQueryFilter](ctx)
+		req, ok := httphelper.BindQuery[HistoryQueryFilter](ctx)
 		if !ok {
 			return
 		}
 
 		user, _ := session.CurrentUserProfile(ctx)
-		messages, errChat := h.QueryChatHistory(ctx, user, req)
+		messages, count, errChat := h.QueryChatHistory(ctx, user, req)
 		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, httphelper.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, messages)
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(count, messages))
 	}
 }
 
-func (h chatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
+func (h chatHandler) getMessageCtx() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		messageID, idFound := httphelper.GetInt64Param(ctx, "person_message_id")
 		if !idFound {

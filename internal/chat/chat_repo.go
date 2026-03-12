@@ -166,14 +166,21 @@ func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID in
 	return msg, nil
 }
 
-func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFilter) ([]QueryChatHistoryResult, error) { //nolint:maintidx
+func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFilter) ([]QueryChatHistoryResult, int64, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
-		return nil, fmt.Errorf("%w: query", httphelper.ErrTooShort)
+		return nil, 0, fmt.Errorf("%w: query", httphelper.ErrTooShort)
 	}
 
 	if filters.Personaname != "" && len(filters.Personaname) < minQueryLen {
-		return nil, fmt.Errorf("%w: name", httphelper.ErrTooShort)
+		return nil, 0, fmt.Errorf("%w: name", httphelper.ErrTooShort)
 	}
+
+	countBulder := r.Builder().Select("count(m.person_message_id)").
+		From("person_messages m").
+		LeftJoin("server s USING(server_id)").
+		LeftJoin("person_messages_filter mf USING(person_message_id)").
+		LeftJoin("filtered_word f USING(filter_id)").
+		LeftJoin("person p USING(steam_id)")
 
 	builder := r.Builder().
 		Select("m.person_message_id",
@@ -206,7 +213,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 	if !filters.Unrestricted {
 		unrTime := now.AddDate(0, 0, -30)
 		if filters.DateStart != nil && filters.DateStart.Before(unrTime) {
-			return nil, datetime.ErrInvalidDuration
+			return nil, 0, datetime.ErrInvalidDuration
 		}
 	}
 
@@ -243,7 +250,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 
 	rows, errQuery := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, database.DBErr(errQuery)
+		return nil, 0, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -268,7 +275,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			&flagged,
 			&message.AvatarHash,
 			&message.Pattern); errScan != nil {
-			return nil, database.DBErr(errScan)
+			return nil, 0, database.DBErr(errScan)
 		}
 
 		if matchID != nil {
@@ -285,12 +292,17 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 		messages = append(messages, message)
 	}
 
+	count, errQuery := r.GetCount(ctx, countBulder.Where(constraints))
+	if errQuery != nil {
+		return nil, 0, database.DBErr(errQuery)
+	}
+
 	if messages == nil {
 		// Return empty list instead of null
 		messages = []QueryChatHistoryResult{}
 	}
 
-	return messages, nil
+	return messages, count, nil
 }
 
 func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (QueryChatHistoryResult, error) {

@@ -46,17 +46,18 @@ func BindJSON[T any](ctx *gin.Context) (T, bool) { //nolint:ireturn
 // meta-data about structs, and an instance can be shared safely.
 var Decoder = schema.NewDecoder() //nolint:gochecknoglobals
 
-func BindQuery(ctx *gin.Context, target any) bool {
-	if errBind := Decoder.Decode(target, ctx.Request.URL.Query()); errBind != nil {
+func BindQuery[T any](ctx *gin.Context) (T, bool) {
+	var target T
+	if errBind := Decoder.Decode(&target, ctx.Request.URL.Query()); errBind != nil {
 		SetError(ctx,
 			NewAPIErrorf(http.StatusInternalServerError,
 				errors.Join(errBind, ErrBadRequest),
 				"Could not decode query params"))
 
-		return false
+		return target, false
 	}
 
-	return true
+	return target, true
 }
 
 // NewClient allocates a preconfigured *http.Client.

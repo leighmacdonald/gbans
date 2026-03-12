@@ -14,7 +14,6 @@ type Filter struct {
 	Offset  uint64 `json:"offset,omitempty" schema:"offset" binding:"gte=0"`
 	Limit   uint64 `json:"limit,omitempty" schema:"limit" binding:"gte=0,lte=10000"`
 	Desc    bool   `json:"desc,omitempty" schema:"desc"`
-	Query   string `json:"query,omitempty" schema:"query"`
 	OrderBy string `json:"order_by,omitempty" schema:"order_by"`
 	Deleted bool   `json:"deleted,omitempty" schema:"deleted"`
 }

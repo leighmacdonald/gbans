@@ -29,13 +29,14 @@ type HistoryQueryFilter struct {
 	query.Filter
 	httphelper.SourceIDField
 
-	Personaname   string     `json:"personaname,omitempty"`
-	ServerID      int        `json:"server_id,omitempty"`
-	DateStart     *time.Time `json:"date_start,omitempty"`
-	DateEnd       *time.Time `json:"date_end,omitempty"`
-	Unrestricted  bool       `json:"-"`
-	DontCalcTotal bool       `json:"-"`
-	FlaggedOnly   bool       `json:"flagged_only"`
+	Query         string     `schema:"query"`
+	Personaname   string     `schema:"personaname,omitempty"`
+	ServerID      int        `schema:"server_id,omitempty"`
+	DateStart     *time.Time `schema:"date_start,omitempty"`
+	DateEnd       *time.Time `schema:"date_end,omitempty"`
+	Unrestricted  bool       `schema:"-"`
+	DontCalcTotal bool       `schema:"-"`
+	FlaggedOnly   bool       `schema:"flagged_only,omitempty"`
 }
 
 func (f HistoryQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
@@ -352,7 +353,7 @@ func (u *Chat) AddChatHistory(ctx context.Context, message *Message) error {
 	return u.repository.AddChatHistory(ctx, message)
 }
 
-func (u *Chat) QueryChatHistory(ctx context.Context, user person.Info, req HistoryQueryFilter) ([]QueryChatHistoryResult, error) {
+func (u *Chat) QueryChatHistory(ctx context.Context, user person.Info, req HistoryQueryFilter) ([]QueryChatHistoryResult, int64, error) {
 	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(permission.Moderator)) {
 		req.Limit = 100
 	}
