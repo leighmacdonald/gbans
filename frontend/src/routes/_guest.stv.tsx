@@ -8,7 +8,7 @@ import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
 import { apiGetDemos, apiGetServers } from "../api";
@@ -53,9 +53,7 @@ const columnHelper = createMRTColumnHelper<DemoFile>();
 const defaultOptions = createDefaultTableOptions<DemoFile>();
 
 function STV() {
-	const navigate = useNavigate({ from: Route.fullPath });
-	const { servers } = Route.useLoaderData();
-	const { profile, isAuthenticated } = useAuth();
+	const { isAuthenticated } = useAuth();
 	const theme = useTheme();
 
 	const { data, isLoading, isError } = useQuery({
