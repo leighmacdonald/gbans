@@ -1,203 +1,165 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
 
-import FilterListIcon from "@mui/icons-material/FilterList";
-import HowToVoteIcon from "@mui/icons-material/HowToVote";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import type { PaginationState } from "@tanstack/react-table";
-import { createColumnHelper } from "@tanstack/react-table";
-import { useCallback, useMemo, useState } from "react";
-import { z } from "zod/v4";
+import { createFileRoute } from "@tanstack/react-router";
+import {
+	createMRTColumnHelper,
+	type MRT_ColumnFiltersState,
+	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
+} from "material-react-table";
+import { useMemo, useState } from "react";
 import { apiVotesQuery } from "../api/votes.ts";
-import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { FullTable } from "../component/table/FullTable.tsx";
-import { useAppForm } from "../contexts/formContext.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import type { VoteResult } from "../schema/votes.ts";
-import { commonTableSearchSchema, initPagination, RowsPerPage } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
-
-const votesSearchSchema = commonTableSearchSchema.extend({
-	sortColumn: z.enum(["target_id", "source_id", "success", "created_on"]).optional(),
-	source_id: z.string().optional(),
-	target_id: z.string().optional(),
-	success: z.number().optional(),
-});
 
 export const Route = createFileRoute("/_mod/admin/votes")({
 	component: AdminVotes,
-	validateSearch: (search) => votesSearchSchema.parse(search),
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Votes" }, match.context.title("Votes")],
 	}),
 });
 
+const columnHelper = createMRTColumnHelper<VoteResult>();
+const defaultOptions = createDefaultTableOptions<VoteResult>();
+
 function AdminVotes() {
-	const defaultRows = RowsPerPage.TwentyFive;
-	const navigate = useNavigate({ from: Route.fullPath });
-	const search = Route.useSearch();
-	const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
+	const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+	const [globalFilter, setGlobalFilter] = useState("");
+	const [sorting, setSorting] = useState<MRT_SortingState>([]);
+	const [pagination, setPagination] = useState<MRT_PaginationState>({
+		pageIndex: 0,
+		pageSize: 50,
+	});
 
-	const { data: votes, isLoading } = useQuery({
-		queryKey: ["votes", { search }],
+	const { data, isLoading, isError, isRefetching } = useQuery({
+		queryKey: ["votes", {}],
 		queryFn: async () => {
+			const sort = sorting.find((sort) => sort);
+			const source_id = String(columnFilters.find((filter) => filter.id === "source_id")?.value ?? "");
+			const target_id = String(columnFilters.find((filter) => filter.id === "target_id")?.value ?? "");
+			const success = sorting.find((success) => success);
+			console.log(success);
 			return apiVotesQuery({
-				limit: search.pageSize ?? defaultRows,
-				offset: (search.pageIndex ?? 0) * (search.pageSize ?? defaultRows),
-				order_by: search.sortColumn ?? "vote_id",
-				desc: (search.sortOrder ?? "desc") === "desc",
-				source_id: search.source_id ?? "",
-				target_id: search.target_id ?? "",
-				success: search.success ?? -1,
+				limit: pagination.pageSize,
+				offset: pagination.pageIndex * pagination.pageSize,
+				order_by: sort ? sort.id : "vote_id",
+				desc: sort ? sort.desc : false,
+				source_id: source_id ?? "",
+				target_id: target_id ?? "",
+				success: -1,
 			});
 		},
 	});
 
-	const form = useAppForm({
-		onSubmit: async ({ value }) => {
-			await navigate({
-				to: "/admin/votes",
-				search: (prev) => ({ ...prev, ...value }),
-			});
-		},
-		validators: {
-			onChange: z.object({
-				source_id: z.string(),
-				target_id: z.string(),
+	const columns = useMemo(
+		() => [
+			columnHelper.accessor("source_id", {
+				header: "Initiator",
+				grow: true,
+				enableSorting: false,
+				Cell: ({ row }) => (
+					<PersonCell
+						showCopy={true}
+						steam_id={row.original.source_id}
+						personaname={row.original.source_name}
+						avatar_hash={row.original.source_avatar_hash}
+					/>
+				),
 			}),
+			columnHelper.accessor("target_id", {
+				header: "Subject",
+				grow: true,
+				enableSorting: false,
+				Cell: ({ row }) => {
+					return (
+						<PersonCell
+							showCopy={true}
+							steam_id={row.original.target_id}
+							personaname={row.original.target_name}
+							avatar_hash={row.original.target_avatar_hash}
+						/>
+					);
+				},
+			}),
+			columnHelper.accessor("success", {
+				header: "Passed",
+				grow: false,
+				enableSorting: false,
+				filterVariant: "checkbox",
+				Cell: ({ cell }) => {
+					return <BoolCell enabled={cell.getValue()} />;
+				},
+			}),
+			columnHelper.accessor("server_name", {
+				header: "Server",
+				filterVariant: "multi-select",
+				enableSorting: false,
+				grow: false,
+				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
+			}),
+			columnHelper.accessor("created_on", {
+				header: "Created",
+				grow: false,
+				enableColumnFilter: false,
+				Cell: ({ cell }) => <Typography>{renderDateTime(cell.getValue())}</Typography>,
+			}),
+		],
+		[],
+	);
+
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data?.data ?? [],
+		rowCount: data?.count ?? 0,
+		enableFilters: true,
+		state: {
+			columnFilters,
+			globalFilter,
+			isLoading,
+			pagination,
+			showAlertBanner: isError,
+			showProgressBars: isRefetching,
+			sorting,
 		},
-		defaultValues: {
-			source_id: search.source_id ?? "",
-			target_id: search.target_id ?? "",
+		manualFiltering: true,
+		manualPagination: true,
+		manualSorting: true,
+		muiToolbarAlertBannerProps: isError
+			? {
+					color: "error",
+					children: "Error loading data",
+				}
+			: undefined,
+		onColumnFiltersChange: setColumnFilters,
+		onGlobalFilterChange: setGlobalFilter,
+		onPaginationChange: setPagination,
+		onSortingChange: setSorting,
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "updated_on", desc: true }],
+			columnVisibility: {
+				source_id: true,
+				target_id: true,
+				passed: true,
+				server_name: true,
+			},
 		},
 	});
-
-	const clear = useCallback(async () => {
-		form.reset();
-		await navigate({
-			to: "/admin/votes",
-			search: (prev) => ({
-				...prev,
-				source_id: undefined,
-				target_id: undefined,
-				success: undefined,
-			}),
-		});
-	}, [form, navigate]);
-
-	const columns = useMemo(() => {
-		return makeVoteColumns();
-	}, []);
 
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
-					<form
-						onSubmit={async (e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							await form.handleSubmit();
-						}}
-					>
-						<Grid container spacing={2}>
-							<Grid size={{ xs: 6, md: 6 }}>
-								<form.AppField
-									name={"source_id"}
-									children={(field) => {
-										return <field.SteamIDField label={"Initiator Steam ID"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 6, md: 6 }}>
-								<form.AppField
-									name={"target_id"}
-									children={(field) => {
-										return <field.SteamIDField label={"Target Steam ID"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 12 }}>
-								<form.AppForm>
-									<ButtonGroup>
-										<form.ClearButton onClick={clear} />
-										<form.ResetButton />
-										<form.SubmitButton />
-									</ButtonGroup>
-								</form.AppForm>
-							</Grid>
-						</Grid>
-					</form>
-				</ContainerWithHeader>
-			</Grid>
-			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeaderAndButtons title={"Vote History"} iconLeft={<HowToVoteIcon />}>
-					<FullTable
-						data={votes?.data ?? []}
-						isLoading={isLoading}
-						columns={columns}
-						infinitePage={true}
-						pagination={pagination}
-						setPagination={setPagination}
-						toOptions={{ from: Route.fullPath }}
-					/>
-				</ContainerWithHeaderAndButtons>
+				<SortableTable table={table} title={"Vote History"} />
 			</Grid>
 		</Grid>
 	);
 }
-
-const columnHelper = createColumnHelper<VoteResult>();
-
-const makeVoteColumns = () => {
-	return [
-		columnHelper.accessor("source_id", {
-			header: "Initiator",
-			cell: (info) => (
-				<PersonCell
-					showCopy={true}
-					steam_id={info.row.original.source_id}
-					personaname={info.row.original.source_name}
-					avatar_hash={info.row.original.source_avatar_hash}
-				/>
-			),
-		}),
-		columnHelper.accessor("target_id", {
-			header: "Subject",
-			cell: (info) => {
-				return (
-					<PersonCell
-						showCopy={true}
-						steam_id={info.row.original.target_id}
-						personaname={info.row.original.target_name}
-						avatar_hash={info.row.original.target_avatar_hash}
-					/>
-				);
-			},
-		}),
-		columnHelper.accessor("success", {
-			header: "Passed",
-			size: 50,
-			cell: (info) => {
-				return <BoolCell enabled={info.getValue()} />;
-			},
-		}),
-		columnHelper.accessor("server_name", {
-			header: "Server",
-			size: 75,
-			cell: (info) => <Typography>{info.getValue()}</Typography>,
-		}),
-		columnHelper.accessor("created_on", {
-			header: "Created",
-			size: 120,
-			cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
-		}),
-	];
-};

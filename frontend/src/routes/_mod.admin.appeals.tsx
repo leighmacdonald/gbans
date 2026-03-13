@@ -182,6 +182,7 @@ function AdminAppeals() {
 			},
 		},
 	});
+
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
