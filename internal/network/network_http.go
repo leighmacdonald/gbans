@@ -22,7 +22,7 @@ func NewHandler(engine *gin.Engine, authenticator httphelper.Authenticator, netw
 	modGrp := engine.Group("/")
 	{
 		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
-		mod.POST("/api/connections", handler.onAPIQueryConnections())
+		mod.GET("/api/connections", handler.onAPIQueryConnections())
 		mod.POST("/api/network", handler.onAPIQueryNetwork())
 	}
 
@@ -75,7 +75,7 @@ func (h Handler) onAPIQueryNetwork() gin.HandlerFunc {
 
 func (h Handler) onAPIQueryConnections() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		req, ok := httphelper.BindJSON[ConnectionHistoryQuery](ctx)
+		req, ok := httphelper.BindQuery[ConnectionHistoryQuery](ctx)
 		if !ok {
 			return
 		}

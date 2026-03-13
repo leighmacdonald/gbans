@@ -19,13 +19,10 @@ import NewspaperIcon from "@mui/icons-material/Newspaper";
 import NoAccountsIcon from "@mui/icons-material/NoAccounts";
 import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import ReportIcon from "@mui/icons-material/Report";
-import SensorOccupiedIcon from "@mui/icons-material/SensorOccupied";
 import SettingsIcon from "@mui/icons-material/Settings";
 import StorageIcon from "@mui/icons-material/Storage";
 import SubjectIcon from "@mui/icons-material/Subject";
 import SupportIcon from "@mui/icons-material/Support";
-import TimelineIcon from "@mui/icons-material/Timeline";
-import TravelExploreIcon from "@mui/icons-material/TravelExplore";
 import WifiFindIcon from "@mui/icons-material/WifiFind";
 import WifiOffIcon from "@mui/icons-material/WifiOff";
 import AppBar from "@mui/material/AppBar";
@@ -187,20 +184,20 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 				icon: <SettingsIcon sx={colourOpts} />,
 			},
 		];
-		if (appInfo.stats_enabled) {
-			items.push({
-				to: `/logs/${profile.steam_id}`,
-				text: "Match History",
-				icon: <TimelineIcon sx={colourOpts} />,
-			});
-		}
+		// if (appInfo.stats_enabled) {
+		// 	items.push({
+		// 		to: `/logs/${profile.steam_id}`,
+		// 		text: "Match History",
+		// 		icon: <TimelineIcon sx={colourOpts} />,
+		// 	});
+		// }
 		items.push({
 			to: "/logout",
 			text: "Logout",
 			icon: <ExitToAppIcon sx={colourOpts} />,
 		});
 		return items;
-	}, [appInfo.stats_enabled, colourOpts, profile.steam_id]);
+	}, [colourOpts, profile.steam_id]);
 
 	// @ts-expect-error label defined as string
 	const adminItems: MenuItemData = useMemo(() => {
@@ -240,31 +237,19 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 					callback: onClickHandler("/admin/news"),
 				},
 				{
-					leftIcon: <TravelExploreIcon sx={colourOpts} />,
-					label: "IP/Network Tools",
-					callback: onClickHandler("/admin/network"),
-					items: [
-						{
-							leftIcon: <SensorOccupiedIcon sx={colourOpts} />,
-							label: "Player IP History",
-							callback: onClickHandler("/admin/network/iphist"),
-						},
-						{
-							leftIcon: <WifiFindIcon sx={colourOpts} />,
-							label: "Find Players By IP",
-							callback: onClickHandler("/admin/network/playersbyip"),
-						},
-						{
-							leftIcon: <CellTowerIcon sx={colourOpts} />,
-							label: "IP Info",
-							callback: onClickHandler("/admin/network/ipinfo"),
-						},
-						{
-							leftIcon: <WifiOffIcon sx={colourOpts} />,
-							label: "External CIDR Bans",
-							callback: onClickHandler("/admin/network/cidrblocks"),
-						},
-					],
+					leftIcon: <WifiFindIcon sx={colourOpts} />,
+					label: "Find Players By IP",
+					callback: onClickHandler("/admin/network/playersbyip"),
+				},
+				{
+					leftIcon: <CellTowerIcon sx={colourOpts} />,
+					label: "IP Info",
+					callback: onClickHandler("/admin/network/ipinfo"),
+				},
+				{
+					leftIcon: <WifiOffIcon sx={colourOpts} />,
+					label: "CIDR/IP Blocklist",
+					callback: onClickHandler("/admin/network/cidrblocks"),
 				},
 				{
 					leftIcon: <EmojiEventsIcon sx={colourOpts} />,

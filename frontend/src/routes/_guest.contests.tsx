@@ -1,40 +1,24 @@
-import InsightsIcon from "@mui/icons-material/Insights";
-import Grid from "@mui/material/Grid";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	type OnChangeFn,
-	type PaginationState,
-	useReactTable,
-} from "@tanstack/react-table";
-import { useState } from "react";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { useMemo } from "react";
 import { apiContests } from "../api";
-import { ContainerWithHeader } from "../component/ContainerWithHeader";
 import { TextLink } from "../component/TextLink.tsx";
-import { DataTable } from "../component/table/DataTable.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import type { Contest } from "../schema/contest.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
-import { RowsPerPage } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
+
+const columnHelper = createMRTColumnHelper<Contest>();
+const defaultOptions = createDefaultTableOptions<Contest>();
 
 export const Route = createFileRoute("/_guest/contests")({
 	component: Contests,
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.contests_enabled);
-	},
-	loader: async ({ context }) => {
-		const contests = await context.queryClient.fetchQuery({
-			queryKey: ["contests"],
-			queryFn: async () => {
-				return await apiContests();
-			},
-		});
-
-		return { contests };
 	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Contests" }, match.context.title("Contests")],
@@ -42,93 +26,70 @@ export const Route = createFileRoute("/_guest/contests")({
 });
 
 function Contests() {
-	const { contests } = Route.useLoaderData();
-	const [pagination, setPagination] = useState({
-		pageIndex: 0, //initial page index
-		pageSize: RowsPerPage.TwentyFive, //default page size
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["contests"],
+		queryFn: async () => {
+			return await apiContests();
+		},
 	});
 
-	// const onEnter = useCallback(async (contest_id: string) => {
-	//     try {
-	//         await NiceModal.show(ModalContestEntry, { contest_id });
-	//     } catch (e) {
-	//         logErr(e);
-	//     }
-	// }, []);
-
-	return (
-		<Grid container>
-			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Contests"} iconLeft={<InsightsIcon />}>
-					<ContestsTable
-						contests={contests ?? []}
-						isLoading={false}
-						pagination={pagination}
-						setPagination={setPagination}
-					/>
-				</ContainerWithHeader>
-			</Grid>
-		</Grid>
+	const columns = useMemo(
+		() => [
+			columnHelper.accessor("title", {
+				header: "Title",
+				enableSorting: false,
+				grow: true,
+				Cell: ({ row, cell }) => {
+					return (
+						<TableCellSmall>
+							<TextLink
+								to={`/contests/$contest_id`}
+								params={{ contest_id: row.original.contest_id as string }}
+							>
+								{cell.getValue()}
+							</TextLink>
+						</TableCellSmall>
+					);
+				},
+			}),
+			columnHelper.accessor("num_entries", {
+				header: "Entries",
+				enableSorting: false,
+				grow: false,
+				filterVariant: "range-slider",
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("date_start", {
+				header: "Started On",
+				filterVariant: "date",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+			}),
+			columnHelper.accessor("date_end", {
+				header: "Ends On",
+				filterVariant: "date",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+			}),
+		],
+		[],
 	);
-}
 
-const columnHelper = createColumnHelper<Contest>();
-
-const ContestsTable = ({
-	contests,
-	isLoading,
-	pagination,
-	setPagination,
-}: {
-	contests: Contest[];
-	isLoading: boolean;
-	pagination?: PaginationState;
-	setPagination?: OnChangeFn<PaginationState>;
-}) => {
-	const columns = [
-		columnHelper.accessor("title", {
-			header: "Title",
-			size: 700,
-			cell: (info) => {
-				return (
-					<TableCellSmall>
-						<TextLink
-							to={`/contests/$contest_id`}
-							params={{ contest_id: info.row.original.contest_id as string }}
-						>
-							{info.getValue()}
-						</TextLink>
-					</TableCellSmall>
-				);
-			},
-		}),
-		columnHelper.accessor("num_entries", {
-			header: "Entries",
-			size: 75,
-			cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-		}),
-		columnHelper.accessor("date_start", {
-			header: "Stared On",
-			size: 140,
-			cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
-		}),
-		columnHelper.accessor("date_end", {
-			header: "Ends On",
-			size: 140,
-			cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
-		}),
-	];
-
-	const table = useReactTable({
-		data: contests,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
-		manualPagination: false,
-		autoResetPageIndex: true,
-		onPaginationChange: setPagination,
-		getPaginationRowModel: getPaginationRowModel(),
-		state: { pagination },
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data ?? [],
+		enableFilters: true,
+		enableRowActions: true,
+		state: {
+			isLoading,
+			showAlertBanner: isError,
+		},
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "ends_on", desc: true }],
+		},
 	});
 
-	return <DataTable table={table} isLoading={isLoading} />;
-};
+	return <SortableTable table={table} title={"Contests"} />;
+}

@@ -54,10 +54,10 @@ type ConnectionHistoryQuery struct {
 	query.Filter
 	httphelper.SourceIDField
 
-	CIDR    string `json:"cidr,omitempty"`
-	ASN     int    `json:"asn,omitempty"`
-	Sid64   string `json:"sid64,omitempty"`
-	Network string `json:"network,omitempty"`
+	CIDR    string `schema:"cidr,omitempty"`
+	ASN     int    `schema:"asn,omitempty"`
+	Sid64   string `schema:"sid64,omitempty"`
+	Network string `schema:"network,omitempty"`
 }
 
 type PersonConnection struct {

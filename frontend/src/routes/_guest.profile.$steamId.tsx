@@ -1,5 +1,3 @@
-import BarChartIcon from "@mui/icons-material/BarChart";
-import InsightsIcon from "@mui/icons-material/Insights";
 import LinkIcon from "@mui/icons-material/Link";
 import LocalLibraryIcon from "@mui/icons-material/LocalLibrary";
 import Avatar from "@mui/material/Avatar";
@@ -14,11 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { format, fromUnixTime } from "date-fns";
 import { apiGetProfile } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { PlayerStatsOverallContainer } from "../component/PlayerStatsOverallContainer.tsx";
-import { PlayerWeaponsStatListContainer } from "../component/PlayerWeaponsStatListContainer.tsx";
 import { SteamIDList } from "../component/SteamIDList.tsx";
-import { PlayerClassStatsTable } from "../component/table/PlayerClassStatsTable.tsx";
-import { useAuth } from "../hooks/useAuth.ts";
 import { createExternalLinks } from "../util/history.ts";
 import { avatarHashToURL } from "../util/text.tsx";
 import { isValidSteamDate, renderDateTime } from "../util/time.ts";
@@ -48,7 +42,6 @@ export const Route = createFileRoute("/_guest/profile/$steamId")({
 });
 
 function ProfilePage() {
-	const { profile: userProfile, isAuthenticated } = useAuth();
 	const { profile } = Route.useLoaderData();
 
 	return (
@@ -110,7 +103,7 @@ function ProfilePage() {
 			<Grid size={{ xs: 6, md: 2 }}>
 				<SteamIDList steam_id={profile.player.steam_id} />
 			</Grid>
-			{isAuthenticated() &&
+			{/*{isAuthenticated() &&
 				(userProfile.steam_id === profile.player.steam_id || !profile.settings.stats_hidden) && (
 					<>
 						<Grid size={{ xs: 12 }}>
@@ -127,7 +120,7 @@ function ProfilePage() {
 							</ContainerWithHeader>
 						</Grid>
 					</>
-				)}
+				)}*/}
 			<Grid size={{ xs: 128 }}>
 				<ContainerWithHeader title={"External Links"} iconLeft={<LinkIcon />}>
 					<Grid container spacing={1} paddingLeft={1}>

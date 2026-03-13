@@ -1,143 +1,102 @@
-import FlagIcon from "@mui/icons-material/Flag";
-import ReportIcon from "@mui/icons-material/Report";
 import Button from "@mui/material/Button";
 import { useTheme } from "@mui/material/styles";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useNavigate } from "@tanstack/react-router";
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	type OnChangeFn,
-	type PaginationState,
-	useReactTable,
-} from "@tanstack/react-table";
+import { useQuery } from "@tanstack/react-query";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useMemo } from "react";
+import { apiGetMessages } from "../../api/profile.ts";
 import type { PersonMessage } from "../../schema/people.ts";
 import { stringToColour } from "../../util/colours.ts";
-import { IconButtonLink } from "../IconButtonLink.tsx";
 import { PersonCell } from "../PersonCell.tsx";
-import { DataTable } from "./DataTable.tsx";
+import { createDefaultTableOptions } from "./options.ts";
+import { SortableTable } from "./SortableTable.tsx";
 import { TableCellRelativeDateField } from "./TableCellRelativeDateField.tsx";
 
-const columnHelper = createColumnHelper<PersonMessage>();
+const columnHelper = createMRTColumnHelper<PersonMessage>();
+const defaultOptions = createDefaultTableOptions<PersonMessage>();
 
-export const ChatTable = ({
-	messages,
-	isLoading,
-	manualPaging = true,
-	pagination,
-	setPagination,
-}: {
-	messages: PersonMessage[];
-	isLoading: boolean;
-	manualPaging?: boolean;
-	pagination?: PaginationState;
-	setPagination?: OnChangeFn<PaginationState>;
-}) => {
-	const navigate = useNavigate({ from: "/chatlogs" });
+export const ChatTable = ({ steamId }: { steamId: string }) => {
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["reportChat", { steamId }],
+		queryFn: async () => {
+			return await apiGetMessages({
+				personaname: "",
+				query: "",
+				source_id: steamId,
+				limit: 2500,
+				offset: 0,
+				order_by: "person_message_id",
+				desc: true,
+				flagged_only: false,
+			});
+		},
+	});
 	const theme = useTheme();
-
-	const columns = useMemo(() => {
-		return [
+	const columns = useMemo(
+		() => [
 			columnHelper.accessor("server_id", {
 				header: "Server",
-				size: 40,
-				cell: (info) => (
+				grow: false,
+				Cell: ({ row }) => (
 					<Button
+						variant="text"
 						sx={{
-							color: stringToColour(messages[info.row.index].server_name, theme.palette.mode),
-						}}
-						onClick={async () => {
-							await navigate({
-								to: "/chatlogs",
-								search: (prev) => ({
-									...prev,
-									server_id: info.getValue(),
-								}),
-							});
+							color: stringToColour(row.original.server_name, theme.palette.mode),
 						}}
 					>
-						{messages[info.row.index].server_name}
+						{row.original.server_name}
 					</Button>
 				),
 			}),
 
 			columnHelper.accessor("created_on", {
 				header: "Created",
-				size: 80,
-				cell: (info) => <TableCellRelativeDateField date={info.row.original.created_on} />,
+				grow: false,
+				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
 			}),
 
 			columnHelper.accessor("persona_name", {
 				header: "Name",
-				cell: (info) => (
+				grow: false,
+				Cell: ({ row }) => (
 					<PersonCell
 						showCopy={true}
-						steam_id={messages[info.row.index].steam_id}
-						avatar_hash={messages[info.row.index].avatar_hash}
-						personaname={messages[info.row.index].persona_name}
+						steam_id={row.original.steam_id}
+						avatar_hash={row.original.avatar_hash}
+						personaname={row.original.persona_name}
 					/>
 				),
 			}),
 
 			columnHelper.accessor("body", {
 				header: "Message",
-				size: 400,
-				cell: (info) => (
+				grow: true,
+				Cell: ({ cell }) => (
 					<Typography padding={0} variant={"body1"}>
-						{info.getValue() as string}
+						{cell.getValue() as string}
 					</Typography>
 				),
 			}),
-			columnHelper.display({
-				header: "Flg",
-				size: 30,
-				cell: (info) =>
-					info.row.original.auto_filter_flagged > 0 ? (
-						<Tooltip title={"Message already flagged"}>
-							<FlagIcon color={"error"} />
-						</Tooltip>
-					) : null,
-			}),
-			columnHelper.display({
-				header: "Rep",
-				size: 30,
-				cell: (info) => (
-					<Tooltip title={"Create Report"}>
-						<IconButtonLink
-							color={"error"}
-							disabled={info.row.original.auto_filter_flagged > 0}
-							to={"/report"}
-							search={{
-								person_message_id: info.row.original.person_message_id,
-								steam_id: info.row.original.steam_id,
-							}}
-						>
-							<ReportIcon />
-						</IconButtonLink>
-					</Tooltip>
-				),
-			}),
-		];
-	}, [messages, navigate, theme.palette.mode]);
+		],
+		[theme.palette.mode],
+	);
 
-	const table = useReactTable({
-		data: messages,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
-		manualPagination: manualPaging,
-		autoResetPageIndex: true,
-		...(manualPaging
-			? {}
-			: {
-					manualPagination: false,
-					onPaginationChange: setPagination,
-					getPaginationRowModel: getPaginationRowModel(),
-					state: { pagination },
-				}),
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data?.data ?? [],
+		rowCount: data?.count ?? 0,
+		enableFilters: true,
+		enableRowActions: false,
+		state: {
+			isLoading,
+			showAlertBanner: isError,
+		},
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "person_message_id", desc: true }],
+		},
 	});
 
-	return <DataTable table={table} isLoading={isLoading} />;
+	return <SortableTable table={table} title={"Players"} hideHeader />;
 };

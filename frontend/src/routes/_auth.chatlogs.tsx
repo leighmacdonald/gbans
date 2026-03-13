@@ -191,8 +191,8 @@ function ChatLogs() {
 				source_id: steam_id ? String(steam_id) : "",
 				limit: pagination.pageSize,
 				offset: pagination.pageIndex * pagination.pageSize,
-				order_by: sort ? sort.id : "person_message_id",
-				desc: sort ? sort.desc : false,
+				order_by: sort ? sort.id : "created_on",
+				desc: sort ? sort.desc : true,
 				flagged_only: false,
 			});
 		},

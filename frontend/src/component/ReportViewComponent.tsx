@@ -20,18 +20,16 @@ import Typography from "@mui/material/Typography";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type JSX, type SyntheticEvent, useState } from "react";
 import { z } from "zod/v4";
-import { apiCreateReportMessage, apiGetConnections, apiGetMessages } from "../api";
+import { apiCreateReportMessage } from "../api";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { reportMessagesQueryOptions } from "../queries/reportMessages.ts";
 import { PermissionLevel } from "../schema/people.ts";
 import type { Report } from "../schema/report.ts";
-import { RowsPerPage } from "../util/table.ts";
 import { ContainerWithHeader } from "./ContainerWithHeader";
 import { ContainerWithHeaderAndButtons } from "./ContainerWithHeaderAndButtons.tsx";
 import { mdEditorRef } from "./form/field/MarkdownField.tsx";
-import { PaginatorLocal } from "./forum/PaginatorLocal.tsx";
 import { MarkDownRenderer } from "./MarkdownRenderer";
 import { PlayerMessageContext } from "./PlayerMessageContext";
 import { ReportMessageView } from "./ReportMessageView";
@@ -46,47 +44,6 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const [value, setValue] = useState<number>(0);
 	const { hasPermission } = useAuth();
-
-	const [chatPagination, setChatPagination] = useState({
-		pageIndex: 0, //initial page index
-		pageSize: RowsPerPage.TwentyFive, //default page size
-	});
-
-	const [connectionPagination, setConnectionPagination] = useState({
-		pageIndex: 0, //initial page index
-		pageSize: RowsPerPage.TwentyFive, //default page size
-	});
-
-	const { data: connections, isLoading: isLoadingConnections } = useQuery({
-		queryKey: ["reportConnectionHist", { steamId: report.target_id }],
-		enabled: hasPermission(PermissionLevel.Moderator),
-		queryFn: async () => {
-			return await apiGetConnections({
-				limit: 1000,
-				offset: 0,
-				order_by: "person_connection_id",
-				desc: true,
-				source_id: report.target_id,
-			});
-		},
-	});
-
-	const { data: chat, isLoading: isLoadingChat } = useQuery({
-		queryKey: ["reportChat", { steamId: report.target_id }],
-		queryFn: async () => {
-			return await apiGetMessages({
-				personaname: "",
-				query: "",
-				source_id: report.target_id,
-				limit: 2500,
-				offset: 0,
-				order_by: "person_message_id",
-				desc: true,
-				flagged_only: false,
-			});
-		},
-	});
-
 	const { data: messages, isLoading: isLoadingMessages } = useQuery(reportMessagesQueryOptions(report.report_id));
 
 	const handleChange = (_: SyntheticEvent, newValue: number) => {
@@ -161,54 +118,12 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 
 							<TabPanel value={value} index={1}>
 								<Box minHeight={300}>
-									<ChatTable
-										messages={chat ?? []}
-										isLoading={isLoadingChat}
-										manualPaging={false}
-										pagination={chatPagination}
-										setPagination={setChatPagination}
-									/>
-									<PaginatorLocal
-										onRowsChange={(rows) => {
-											setChatPagination((prev) => {
-												return { ...prev, pageSize: rows };
-											});
-										}}
-										onPageChange={(page) => {
-											setChatPagination((prev) => {
-												return { ...prev, pageIndex: page };
-											});
-										}}
-										count={chat?.length ?? 0}
-										rows={chatPagination.pageSize}
-										page={chatPagination.pageIndex}
-									/>
+									<ChatTable steamId={report?.target_id} />
 								</Box>
 							</TabPanel>
 							<TabPanel value={value} index={2}>
 								<Box minHeight={300}>
-									<IPHistoryTable
-										connections={connections ?? { data: [], count: 0 }}
-										isLoading={isLoadingConnections}
-										manualPaging={false}
-										pagination={connectionPagination}
-										setPagination={setConnectionPagination}
-									/>
-									<PaginatorLocal
-										onRowsChange={(rows) => {
-											setConnectionPagination((prev) => {
-												return { ...prev, pageSize: rows };
-											});
-										}}
-										onPageChange={(page) => {
-											setConnectionPagination((prev) => {
-												return { ...prev, pageIndex: page };
-											});
-										}}
-										count={connections?.data?.length ?? 0}
-										rows={connectionPagination.pageSize}
-										page={connectionPagination.pageIndex}
-									/>
+									<IPHistoryTable steamId={report?.target_id} />
 								</Box>
 							</TabPanel>
 						</ContainerWithHeader>

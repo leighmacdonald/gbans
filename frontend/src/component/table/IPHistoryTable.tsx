@@ -17,7 +17,7 @@ import { SortableTable } from "./SortableTable.tsx";
 const columnHelper = createMRTColumnHelper<PersonConnection>();
 const defaultOptions = createDefaultTableOptions<PersonConnection>();
 
-export const IPHistoryTable = () => {
+export const IPHistoryTable = ({ steamId }: { steamId: string }) => {
 	const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
 	const [globalFilter, setGlobalFilter] = useState("");
 	const [sorting, setSorting] = useState<MRT_SortingState>([]);
@@ -29,14 +29,13 @@ export const IPHistoryTable = () => {
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["connectionHist", { columnFilters, globalFilter, pagination, sorting }],
 		queryFn: async () => {
-			const steam_id = String(columnFilters.find((filter) => filter.id === "steam_id")?.value ?? "");
 			const sort = sorting.find((sort) => sort);
 			return await apiGetConnections({
 				limit: pagination.pageSize,
 				offset: pagination.pageIndex * pagination.pageSize,
 				order_by: sort ? sort.id : "created_on",
 				desc: sort ? sort.desc : false,
-				sid64: steam_id,
+				sid64: steamId,
 			});
 		},
 	});
@@ -93,5 +92,5 @@ export const IPHistoryTable = () => {
 		},
 	});
 
-	return <SortableTable table={table} title={"Player IP History"} />;
+	return <SortableTable table={table} title={"Player IP History"} hideHeader />;
 };

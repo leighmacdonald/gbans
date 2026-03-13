@@ -100,7 +100,7 @@ export const apiNotificationsDelete = async (message_ids: number[]) => {
 export const apiGetConnections = async (opts: ConnectionQuery, abortController?: AbortController) => {
 	const resp = await apiCall<LazyResult<PersonConnection>, ConnectionQuery>(
 		`/api/connections`,
-		"POST",
+		"GET",
 		opts,
 		abortController,
 	);
