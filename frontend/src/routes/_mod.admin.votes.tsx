@@ -133,12 +133,6 @@ function AdminVotes() {
 		manualFiltering: true,
 		manualPagination: true,
 		manualSorting: true,
-		muiToolbarAlertBannerProps: isError
-			? {
-					color: "error",
-					children: "Error loading data",
-				}
-			: undefined,
 		onColumnFiltersChange: setColumnFilters,
 		onGlobalFilterChange: setGlobalFilter,
 		onPaginationChange: setPagination,
