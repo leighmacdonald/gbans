@@ -34,7 +34,7 @@ func TestNetworkHTTP(t *testing.T) {
 		}))
 	}
 
-	conns := tests.PostGOK[httphelper.LazyResult[network.PersonConnection]](t, router, "/api/connections", network.ConnectionHistoryQuery{
+	conns := tests.GetGOK[httphelper.LazyResult[network.PersonConnection]](t, router, "/api/connections", network.ConnectionHistoryQuery{
 		Sid64: tests.GuestSID.String(),
 	})
 	require.Len(t, conns.Data, 2)

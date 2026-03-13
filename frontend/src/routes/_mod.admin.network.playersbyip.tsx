@@ -45,7 +45,7 @@ function AdminNetworkPlayersByCIDR() {
 			const sort = sorting.find((sort) => sort);
 
 			return await apiGetConnections({
-				desc: sort ? sort.desc : false,
+				desc: sort ? sort.desc : true,
 				limit: pagination.pageSize,
 				offset: pagination.pageIndex * pagination.pageSize,
 				order_by: sort ? sort.id : "created_on",
@@ -57,14 +57,26 @@ function AdminNetworkPlayersByCIDR() {
 
 	const columns = useMemo(
 		() => [
+			columnHelper.accessor("server_id", {
+				header: "Server",
+				grow: false,
+				//filterVariant: "multi-select",
+				Cell: ({ row }) => (
+					<TableCell>
+						<Typography>{row.original.server_name_short}</Typography>
+					</TableCell>
+				),
+			}),
 			columnHelper.accessor("created_on", {
 				grow: false,
+				filterVariant: "date-range",
 				header: "Created",
 				Cell: ({ cell }) => <Typography>{renderDateTime(cell.getValue())}</Typography>,
 			}),
 			columnHelper.accessor("persona_name", {
 				header: "Name",
 				grow: true,
+				enableSorting: false,
 				Cell: ({ cell }) => (
 					<TableCell>
 						<Typography>{cell.getValue()}</Typography>
@@ -74,6 +86,7 @@ function AdminNetworkPlayersByCIDR() {
 			columnHelper.accessor("steam_id", {
 				grow: false,
 				header: "Steam ID",
+				enableSorting: false,
 				Cell: ({ cell }) => (
 					<TableCell>
 						<TextLink to={"/profile/$steamId"} params={{ steamId: cell.getValue() }}>
@@ -88,16 +101,6 @@ function AdminNetworkPlayersByCIDR() {
 				Cell: ({ cell }) => (
 					<TableCell>
 						<Typography>{cell.getValue()}</Typography>
-					</TableCell>
-				),
-			}),
-
-			columnHelper.accessor("server_id", {
-				header: "Server",
-				grow: false,
-				Cell: ({ row }) => (
-					<TableCell>
-						<Typography>{row.original.server_name_short}</Typography>
 					</TableCell>
 				),
 			}),
@@ -139,7 +142,7 @@ function AdminNetworkPlayersByCIDR() {
 		onGlobalFilterChange: setGlobalFilter,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
-		enableRowActions: true,
+		enableRowActions: false,
 	});
 
 	return (
