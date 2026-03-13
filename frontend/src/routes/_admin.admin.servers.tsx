@@ -1,131 +1,77 @@
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
-import StorageIcon from "@mui/icons-material/Storage";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
-import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { createMRTColumnHelper, MaterialReactTable, useMaterialReactTable } from "material-react-table";
-import { useMemo } from "react";
-import { z } from "zod/v4";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { useCallback, useMemo } from "react";
 import { apiGetServersAdmin } from "../api";
-import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
 import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import { TableCellStringHidden } from "../component/table/TableCellStringHidden.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { Server } from "../schema/server.ts";
-import { RowsPerPage } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
 
-const serversSearchSchema = z.object({
-	page_index: z.number().optional().catch(0),
-	page_size: z.number().optional().catch(RowsPerPage.TwentyFive),
-	sort_order: z.enum(["desc", "asc"]).optional().catch("desc"),
-	sort_column: z
-		.enum(["server_id", "short_name", "name", "address", "port", "region", "cc", "enable_stats", "is_enabled"])
-		.optional(),
-});
+const columnHelper = createMRTColumnHelper<Server>();
+const defaultOptions = createDefaultTableOptions<Server>();
 
 export const Route = createFileRoute("/_admin/admin/servers")({
-	validateSearch: (search) => serversSearchSchema.parse(search),
-	loader: async ({ context }) => {
-		const servers = await context.queryClient.fetchQuery({
-			queryKey: ["serversAdmin"],
-			queryFn: async () => {
-				return (await apiGetServersAdmin()) ?? [];
-			},
-		});
-
-		return { servers };
-	},
 	head: ({ match }) => {
 		return {
 			meta: [{ name: "description", content: "Server Editor" }, match.context.title("Edit Servers")],
 		};
 	},
-
 	component: AdminServers,
 });
 
 function AdminServers() {
 	const { sendFlash } = useUserFlashCtx();
-	const { servers } = Route.useLoaderData();
 	const queryClient = useQueryClient();
 
-	const onCreate = async () => {
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["serversAdmin"],
+		queryFn: async () => {
+			return (await apiGetServersAdmin()) ?? [];
+		},
+	});
+
+	const onCreate = useCallback(async () => {
 		try {
 			const newServer = (await NiceModal.show(ServerEditorModal, {})) as Server;
-			queryClient.setQueryData(["serversAdmin"], [...(servers ?? []), newServer]);
+			queryClient.setQueryData(["serversAdmin"], [...(data ?? []), newServer]);
 			sendFlash("success", "Server created successfully");
 		} catch (e) {
 			sendFlash("error", `Failed to create new server: ${e}`);
 		}
-	};
+	}, [data, sendFlash, queryClient]);
 
-	const onEdit = async (server: Server) => {
-		try {
-			const editedServer = (await NiceModal.show(ServerEditorModal, {
-				server,
-			})) as Server;
-			queryClient.setQueryData(
-				["serversAdmin"],
-				servers.map((s) => {
-					return s.server_id === editedServer.server_id ? editedServer : s;
-				}),
-			);
-			sendFlash("success", "Server edited successfully");
-		} catch (e) {
-			sendFlash("error", `Failed to edit server: ${e}`);
-		}
-	};
-	return (
-		<Grid container spacing={2}>
-			<Grid size={{ xs: 12 }}>
-				<Stack spacing={2}>
-					<ContainerWithHeaderAndButtons
-						title={"Servers"}
-						iconLeft={<StorageIcon />}
-						buttons={[
-							<ButtonGroup key={`server-header-buttons`}>
-								<Button
-									variant={"contained"}
-									color={"success"}
-									startIcon={<AddIcon />}
-									sx={{ marginRight: 2 }}
-									onClick={onCreate}
-								>
-									Create Server
-								</Button>
-							</ButtonGroup>,
-						]}
-					>
-						<AdminServersTable servers={servers} isLoading={false} onEdit={onEdit} />
-					</ContainerWithHeaderAndButtons>
-				</Stack>
-			</Grid>
-		</Grid>
+	const onEdit = useCallback(
+		async (server: Server) => {
+			try {
+				const editedServer = (await NiceModal.show(ServerEditorModal, {
+					server,
+				})) as Server;
+				queryClient.setQueryData(
+					["serversAdmin"],
+					(data ?? []).map((s) => {
+						return s.server_id === editedServer.server_id ? editedServer : s;
+					}),
+				);
+				sendFlash("success", "Server edited successfully");
+			} catch (e) {
+				sendFlash("error", `Failed to edit server: ${e}`);
+			}
+		},
+		[data, sendFlash, queryClient],
 	);
-}
 
-const columnHelper = createMRTColumnHelper<Server>();
-const defaultOptions = createDefaultTableOptions<Server>();
-
-const AdminServersTable = ({
-	servers,
-	onEdit,
-}: {
-	servers: Server[];
-	isLoading: boolean;
-	onEdit: (server: Server) => Promise<void>;
-}) => {
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("server_id", {
@@ -135,7 +81,7 @@ const AdminServersTable = ({
 				Cell: ({ cell }) => <TableCellString>{String(cell.getValue())}</TableCellString>,
 			}),
 			columnHelper.accessor("short_name", {
-				size: 30,
+				grow: false,
 				meta: {
 					tooltip: "Short unique server identifier",
 				},
@@ -155,6 +101,7 @@ const AdminServersTable = ({
 
 			columnHelper.accessor("address", {
 				header: "Address",
+				grow: false,
 				meta: {
 					tooltip: "IP or DNS/Hostname of the server",
 				},
@@ -163,7 +110,7 @@ const AdminServersTable = ({
 
 			columnHelper.accessor("port", {
 				header: "Port",
-				size: 50,
+				grow: false,
 				Cell: ({ cell }) => <TableCellString>{String(cell.getValue())}</TableCellString>,
 			}),
 
@@ -220,8 +167,12 @@ const AdminServersTable = ({
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
-		data: servers,
+		data: data ?? [],
 		enableFilters: true,
+		state: {
+			isLoading,
+			showAlertBanner: isError,
+		},
 		initialState: {
 			...defaultOptions.initialState,
 			sorting: [{ id: "name", desc: false }],
@@ -252,5 +203,19 @@ const AdminServersTable = ({
 		],
 	});
 
-	return <MaterialReactTable table={table} />;
-};
+	return (
+		<Grid container spacing={2}>
+			<Grid size={{ xs: 12 }}>
+				<SortableTable
+					table={table}
+					title={"Servers"}
+					buttons={[
+						<IconButton key="create" onClick={onCreate} sx={{ color: "primary.contrastText" }}>
+							<AddIcon />
+						</IconButton>,
+					]}
+				/>
+			</Grid>
+		</Grid>
+	);
+}
