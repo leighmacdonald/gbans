@@ -54,7 +54,7 @@ function AdminPeople() {
 	const { data, isLoading, isError, isRefetching } = useQuery({
 		queryKey: ["people", { columnFilters, globalFilter, pagination, sorting }],
 		queryFn: async () => {
-			const steam_id = columnFilters.find((filter) => filter.id === "steam_id")?.value;
+			const steam_id = String(columnFilters.find((filter) => filter.id === "steam_id")?.value ?? "");
 			const sort = sorting.find((sort) => sort);
 			return await apiSearchPeople({
 				personaname: "",
@@ -184,12 +184,6 @@ function AdminPeople() {
 		manualFiltering: true,
 		manualPagination: true,
 		manualSorting: true,
-		muiToolbarAlertBannerProps: isError
-			? {
-					color: "error",
-					children: "Error loading data",
-				}
-			: undefined,
 		onColumnFiltersChange: setColumnFilters,
 		onGlobalFilterChange: setGlobalFilter,
 		onPaginationChange: setPagination,

@@ -15,6 +15,10 @@ export const createDefaultTableOptions = <TData extends MRT_RowData>(): Partial<
 	positionActionsColumn: "last",
 	positionToolbarAlertBanner: "top",
 	columnFilterDisplayMode: "subheader",
+	muiToolbarAlertBannerProps: () => ({
+		color: "error",
+		children: "Error loading data :(",
+	}),
 	muiTableBodyCellProps: {
 		sx: { paddingLeft: 1, paddingRight: 1, paddingTop: 0.25, paddingBottom: 0.25 },
 	},
