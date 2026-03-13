@@ -1,75 +1,97 @@
 import Typography from "@mui/material/Typography";
+import { useQuery } from "@tanstack/react-query";
 import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	type OnChangeFn,
-	type PaginationState,
-	type TableOptions,
-	useReactTable,
-} from "@tanstack/react-table";
-import { useMemo } from "react";
+	createMRTColumnHelper,
+	type MRT_ColumnFiltersState,
+	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
+} from "material-react-table";
+import { useMemo, useState } from "react";
+import { apiGetConnections } from "../../api/profile.ts";
 import type { PersonConnection } from "../../schema/people.ts";
-import type { LazyResult } from "../../util/table.ts";
 import { renderDateTime } from "../../util/time.ts";
-import { DataTable } from "./DataTable.tsx";
+import { createDefaultTableOptions } from "./options.ts";
+import { SortableTable } from "./SortableTable.tsx";
 
-const columnHelper = createColumnHelper<PersonConnection>();
+const columnHelper = createMRTColumnHelper<PersonConnection>();
+const defaultOptions = createDefaultTableOptions<PersonConnection>();
 
-export const IPHistoryTable = ({
-	connections,
-	isLoading,
-	manualPaging = true,
-	pagination,
-	setPagination,
-}: {
-	connections: LazyResult<PersonConnection>;
-	isLoading: boolean;
-	manualPaging?: boolean;
-	pagination?: PaginationState;
-	setPagination?: OnChangeFn<PaginationState>;
-}) => {
+export const IPHistoryTable = () => {
+	const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+	const [globalFilter, setGlobalFilter] = useState("");
+	const [sorting, setSorting] = useState<MRT_SortingState>([]);
+	const [pagination, setPagination] = useState<MRT_PaginationState>({
+		pageIndex: 0,
+		pageSize: 50,
+	});
+
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["connectionHist", { columnFilters, globalFilter, pagination, sorting }],
+		queryFn: async () => {
+			const steam_id = String(columnFilters.find((filter) => filter.id === "steam_id")?.value ?? "");
+			const sort = sorting.find((sort) => sort);
+			return await apiGetConnections({
+				limit: pagination.pageSize,
+				offset: pagination.pageIndex * pagination.pageSize,
+				order_by: sort ? sort.id : "created_on",
+				desc: sort ? sort.desc : false,
+				sid64: steam_id,
+			});
+		},
+	});
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				size: 120,
-				cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
+				Cell: ({ cell }) => <Typography>{renderDateTime(cell.getValue())}</Typography>,
 			}),
 			columnHelper.accessor("persona_name", {
 				header: "Name",
-				cell: (info) => <Typography>{info.getValue()}</Typography>,
+				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("ip_addr", {
 				header: "IP Address",
 				size: 120,
-				cell: (info) => <Typography>{info.getValue()}</Typography>,
+				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("server_id", {
 				header: "Server",
 				size: 120,
-				cell: (info) => <Typography>{connections.data[info.row.index].server_name_short}</Typography>,
+				Cell: ({ row }) => <Typography>{row.original.server_name_short}</Typography>,
 			}),
 		];
-	}, [connections.data]);
+	}, []);
 
-	const opts: TableOptions<PersonConnection> = {
-		data: connections.data,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
-		manualPagination: manualPaging,
-		autoResetPageIndex: true,
-		...(manualPaging
-			? {}
-			: {
-					manualPagination: false,
-					onPaginationChange: setPagination,
-					getPaginationRowModel: getPaginationRowModel(),
-					state: { pagination },
-				}),
-	};
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data?.data ?? [],
+		rowCount: data?.count ?? 0,
+		enableFilters: true,
+		enableHiding: true,
+		enableFacetedValues: true,
+		state: {
+			isLoading,
+			columnFilters,
+			globalFilter,
+			pagination,
+			sorting,
+			showAlertBanner: isError,
+		},
+		onColumnFiltersChange: setColumnFilters,
+		onGlobalFilterChange: setGlobalFilter,
+		onPaginationChange: setPagination,
+		onSortingChange: setSorting,
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "ban_id", desc: true }],
+			columnVisibility: {
+				source_id: false,
+			},
+		},
+	});
 
-	const table = useReactTable(opts);
-
-	return <DataTable table={table} isLoading={isLoading} />;
+	return <SortableTable table={table} title={"Player IP History"} />;
 };
