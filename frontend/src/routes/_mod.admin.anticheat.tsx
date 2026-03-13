@@ -68,6 +68,7 @@ function AdminAnticheat() {
 	});
 
 	const theme = useTheme();
+
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("anticheat_id", {
@@ -78,16 +79,14 @@ function AdminAnticheat() {
 				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("server_id", {
-				filterFn: (row, _, filterValue) => {
-					return filterValue === 0 || row.original.server_id === filterValue;
-				},
-				size: 75,
 				enableSorting: false,
+				grow: false,
 				enableColumnFilter: false,
 				header: "Server",
 				Cell: ({ row }) => {
 					return (
 						<Button
+							variant={"text"}
 							sx={{
 								color: stringToColour(row.original.server_name, theme.palette.mode),
 							}}
@@ -165,7 +164,7 @@ function AdminAnticheat() {
 		},
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "updated_on", desc: true }],
+			sorting: [{ id: "created_on", desc: true }],
 			columnVisibility: {
 				anticheat_id: false,
 				server_id: true,

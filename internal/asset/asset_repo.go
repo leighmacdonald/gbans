@@ -112,23 +112,18 @@ func (l Repository) Init(_ context.Context) error {
 	return nil
 }
 
-func (l Repository) Get(ctx context.Context, assetID uuid.UUID) (Asset, io.ReadSeeker, error) {
+func (l Repository) Get(ctx context.Context, assetID uuid.UUID) (Asset, error) {
 	asset, errAsset := l.getAssetByUUID(ctx, assetID)
 	if errAsset != nil {
-		return Asset{}, nil, errAsset
+		return Asset{}, errAsset
 	}
 
-	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
-	if errAssetPath != nil {
-		return Asset{}, nil, errAssetPath
-	}
+	// assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
+	// if errAssetPath != nil {
+	// 	return Asset{}, nil, errAssetPath
+	// }
 
-	reader, errReader := os.Open(assetPath)
-	if errReader != nil {
-		return Asset{}, nil, errors.Join(errReader, ErrOpenFile)
-	}
-
-	return asset, reader, nil
+	return asset, nil
 }
 
 func (l Repository) GenAssetPath(hash string) (string, error) {

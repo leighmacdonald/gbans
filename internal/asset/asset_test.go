@@ -28,17 +28,15 @@ func TestAssets(t *testing.T) {
 	contents, _ := os.ReadFile(saved.LocalPath)
 	require.Equal(t, data, contents)
 
-	fetched, reader, errFetched := assetCase.Get(t.Context(), saved.AssetID)
+	fetched, errFetched := assetCase.Get(t.Context(), saved.AssetID)
 	require.NoError(t, errFetched)
-	content2, _ := io.ReadAll(reader)
-	require.Equal(t, data, content2)
 	require.Equal(t, saved, fetched)
 
 	_, errDelete := assetCase.Delete(t.Context(), saved.AssetID)
 	require.NoError(t, errDelete)
 	require.NoFileExists(t, saved.LocalPath)
 
-	_, _, errFetchedNotFound := assetCase.Get(t.Context(), saved.AssetID)
+	_, errFetchedNotFound := assetCase.Get(t.Context(), saved.AssetID)
 	require.Error(t, errFetchedNotFound)
 }
 

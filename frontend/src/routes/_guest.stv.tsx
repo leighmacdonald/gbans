@@ -15,12 +15,12 @@ import { apiGetDemos, apiGetServers } from "../api";
 import { ButtonLink } from "../component/ButtonLink.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
+import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import type { DemoFile } from "../schema/demo.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { humanFileSize } from "../util/text.tsx";
-import { renderDate } from "../util/time.ts";
 export const Route = createFileRoute("/_guest/stv")({
 	component: STV,
 	beforeLoad: ({ context }) => {
@@ -65,20 +65,22 @@ function STV() {
 		return [
 			columnHelper.accessor("demo_id", {
 				header: "ID",
-				size: 40,
+				grow: false,
 				Cell: ({ cell }) => <Typography>#{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("server_id", {
 				filterFn: (row, _, filterValue) => {
-					return filterValue === 0 || row.original.server_id === filterValue;
+					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
 				},
-				size: 75,
+				filterVariant: "multi-select",
+				grow: false,
 				enableSorting: true,
 				enableColumnFilter: true,
 				header: "Server",
 				Cell: ({ row }) => {
 					return (
 						<Button
+							variant="text"
 							sx={{
 								color: stringToColour(row.original.server_name_short, theme.palette.mode),
 							}}
@@ -91,8 +93,8 @@ function STV() {
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				enableColumnFilter: false,
-				size: 140,
-				Cell: ({ cell }) => <Typography>{renderDate(cell.getValue() as Date)}</Typography>,
+				grow: false,
+				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} suffix />,
 			}),
 			columnHelper.accessor("map_name", {
 				enableColumnFilter: true,

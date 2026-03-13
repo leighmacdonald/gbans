@@ -1,7 +1,6 @@
 package servers
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -23,7 +22,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/zstd"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/ricochet2200/go-disk-usage/du"
-	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 )
 
@@ -129,13 +127,20 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 		slog.String("name", demo.Name))
 
 	// TOOO make these interfaces less clunky for compressed data.
-	var compressed bytes.Buffer
-	if err := zstd.Compress(bytes.NewReader(demo.Content), bufio.NewWriter(&compressed)); err != nil {
+	compressed := new(bytes.Buffer)
+	reader := bytes.NewReader(demo.Content)
+	if err := zstd.Compress(reader, compressed); err != nil {
 		return err
 	}
+	compressedData := compressed.Bytes()
+
+	slog.Debug("Compressed demo data",
+		slog.String("demo", demo.Name),
+		slog.Int("size_raw", len(demo.Content)),
+		slog.Int("size_zstd", len(compressedData)))
 
 	demoAsset, errNewAsset := d.asset.Create(ctx, steamid.New(d.owner),
-		asset.BucketDemo, demo.Name+zstd.Extension, bytes.NewReader(compressed.Bytes()), false)
+		asset.BucketDemo, demo.Name+zstd.Extension, bytes.NewReader(compressedData), false)
 	if errNewAsset != nil {
 		return errNewAsset
 	}
@@ -156,7 +161,7 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 func (d Demos) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo, config scp.Config) error {
 	for _, instance := range server.ServerIDs {
 		demoDir := server.GamePath(config.DemoPathFmt, instance)
-		filelist, errFilelist := client.List(ctx, demoDir, option.NewPage(0, 1))
+		filelist, errFilelist := client.List(ctx, demoDir)
 		if errFilelist != nil {
 			slog.Error("remote list dir failed", slog.String("error", errFilelist.Error()),
 				slog.String("server", instance.ShortName), slog.String("path", demoDir))
@@ -439,7 +444,7 @@ func (d Demos) RemoveOrphans(ctx context.Context) error {
 
 	for _, demo := range demos {
 		var remove bool
-		realAsset, _, errAsset := d.asset.Get(ctx, demo.AssetID)
+		realAsset, errAsset := d.asset.Get(ctx, demo.AssetID)
 		if errAsset != nil {
 			// If it doesn't exist on disk we want to delete our internal references to it.
 			if errors.Is(errAsset, database.ErrNoResult) || errors.Is(errAsset, asset.ErrOpenFile) {

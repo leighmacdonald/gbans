@@ -116,7 +116,13 @@ func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager,
 			}
 
 			slog.Debug("Importing stac log", slog.String("name", file.Name()), slog.String("server", instance.ShortName))
+
 			entries, errImport := a.Import(ctx, file.Name(), reader, instance.ServerID)
+
+			if errClose := reader.Close(); errClose != nil {
+				slog.Error("Failed to close stac log", slog.String("error", errClose.Error()), slog.String("path", logPath))
+			}
+
 			if errImport != nil && !errors.Is(errImport, database.ErrDuplicate) {
 				return errImport
 			}
@@ -125,10 +131,6 @@ func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager,
 				if errHandle := a.Handle(ctx, entries); errHandle != nil {
 					slog.Error("Failed to handle stac logs", slog.String("error", errHandle.Error()))
 				}
-			}
-
-			if errClose := reader.Close(); errClose != nil {
-				slog.Error("Failed to close stac log", slog.String("error", errClose.Error()), slog.String("path", logPath))
 			}
 
 			if err := client.Delete(ctx, logPath); err != nil {

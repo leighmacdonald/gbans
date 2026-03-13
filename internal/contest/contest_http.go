@@ -339,7 +339,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 		}
 
 		curUser, _ := session.CurrentUserProfile(ctx)
-		existingAsset, _, errAsset := c.assets.Get(ctx, req.AssetID)
+		existingAsset, errAsset := c.assets.Get(ctx, req.AssetID)
 		if errAsset != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errAsset, httphelper.ErrInternal)))
 

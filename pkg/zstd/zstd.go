@@ -36,3 +36,19 @@ func Compress(input io.Reader, output io.Writer) error {
 
 	return nil
 }
+
+func Decompress(input io.ReadCloser) ([]byte, error) {
+	reader, errReader := zstd.NewReader(input)
+	if errReader != nil {
+		return nil, errors.Join(errReader, ErrCompress)
+	}
+
+	defer reader.Close()
+
+	body, errBody := io.ReadAll(reader)
+	if errBody != nil {
+		return nil, errors.Join(errBody, ErrCompress)
+	}
+
+	return body, nil
+}
