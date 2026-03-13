@@ -79,46 +79,8 @@ function AdminNetworkPlayersByCIDR() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Filters"} iconLeft={<FilterListIcon />} marginTop={2}>
-					<form
-						onSubmit={async (e) => {
-							e.preventDefault();
-							e.stopPropagation();
-							await form.handleSubmit();
-						}}
-					>
-						<Grid container spacing={2}>
-							<Grid size={{ xs: 12 }}>
-								<form.AppField
-									name={"cidr"}
-									children={(field) => {
-										return <field.TextField label={"CIDR/IP"} />;
-									}}
-								/>
-							</Grid>
-
-							<Grid size={{ xs: 12 }}>
-								<form.AppForm>
-									<ButtonGroup>
-										<form.ClearButton onClick={clear} />
-										<form.ResetButton />
-										<form.SubmitButton />
-									</ButtonGroup>
-								</form.AppForm>
-							</Grid>
-						</Grid>
-					</form>
-				</ContainerWithHeader>
-			</Grid>
-			<Grid size={{ xs: 12 }}>
 				<ContainerWithHeader title={"Find Players By IP/CIDR"} iconLeft={<WifiFindIcon />}>
 					<PayersByIPTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
-					<Paginator
-						page={pageIndex ?? 0}
-						rows={pageSize ?? defaultRows}
-						data={connections}
-						path={"/admin/network/playersbyip"}
-					/>
 				</ContainerWithHeader>
 			</Grid>
 		</Grid>
@@ -127,13 +89,7 @@ function AdminNetworkPlayersByCIDR() {
 
 const columnHelper = createColumnHelper<PersonConnection>();
 
-const PayersByIPTable = ({
-	connections,
-	isLoading,
-}: {
-	connections: LazyResult<PersonConnection>;
-	isLoading: boolean;
-}) => {
+const PayersByIPTable = () => {
 	const columns = [
 		columnHelper.accessor("created_on", {
 			size: 120,
