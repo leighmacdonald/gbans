@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -122,11 +123,11 @@ func (a *Asset) Read(receiver []byte) (int, error) {
 		}
 		a.file = input
 		if a.IsCompressed() {
-			reader, errReader := zstd.NewReader(a.file)
-			if errReader != nil {
-				return 0, errors.Join(errReader, ErrCopyFileContent)
+			body, errBody := zstd.Decompress(a.file)
+			if errBody != nil {
+				return 0, errors.Join(errBody, ErrOpenFile)
 			}
-			a.reader = reader
+			a.reader = bytes.NewReader(body)
 		} else {
 			a.reader = input
 		}
@@ -188,17 +189,17 @@ func (s Assets) Create(ctx context.Context, author steamid.SteamID, bucket Bucke
 	return newAsset, nil
 }
 
-func (s Assets) Get(ctx context.Context, uuid uuid.UUID) (Asset, io.ReadSeeker, error) {
+func (s Assets) Get(ctx context.Context, uuid uuid.UUID) (Asset, error) {
 	if uuid.IsNil() {
-		return Asset{}, nil, ErrUUIDInvalid
+		return Asset{}, ErrUUIDInvalid
 	}
 
-	asset, reader, errAsset := s.repository.Get(ctx, uuid)
+	asset, errAsset := s.repository.Get(ctx, uuid)
 	if errAsset != nil {
-		return asset, nil, errAsset
+		return asset, errAsset
 	}
 
-	return asset, reader, nil
+	return asset, nil
 }
 
 func (s Assets) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
