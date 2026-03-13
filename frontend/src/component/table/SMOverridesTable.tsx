@@ -2,32 +2,41 @@ import NiceModal from "@ebay/nice-modal-react";
 import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createColumnHelper } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
-import { apiDeleteSMOverride } from "../../api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { useCallback, useMemo } from "react";
+import { apiDeleteSMOverride, apiGetSMOverrides } from "../../api";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import { Route } from "../../routes/_admin.admin.game-admins.tsx";
 import type { SMOverrides } from "../../schema/sourcemod.ts";
 import { logErr } from "../../util/errors";
-import { initPagination, RowsPerPage } from "../../util/table";
 import { renderDateTime } from "../../util/time";
-import { ContainerWithHeaderAndButtons } from "../ContainerWithHeaderAndButtons";
 import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
 import { SMOverrideEditorModal } from "../modal/SMOverrideEditorModal.tsx";
-import { FullTable } from "./FullTable";
+import { createDefaultTableOptions } from "./options.ts";
+import { SortableTable } from "./SortableTable.tsx";
 import { TableCellString } from "./TableCellString";
 
-export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverrides[]; isLoading: boolean }) => {
+const overrideColumnHelper = createMRTColumnHelper<SMOverrides>();
+const defaultOptions = createDefaultTableOptions<SMOverrides>();
+
+export const SMOverridesTable = () => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
-	const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
-	const onCreateOverride = async () => {
+	const {
+		data: overrides,
+		isLoading,
+		isError,
+	} = useQuery({
+		queryKey: ["serverOverrides"],
+		queryFn: async () => {
+			return await apiGetSMOverrides();
+		},
+	});
+
+	const onCreateOverride = useCallback(async () => {
 		try {
 			const override = (await NiceModal.show(SMOverrideEditorModal, {})) as SMOverrides;
 			queryClient.setQueryData(["serverOverrides"], [...(overrides ?? []), override]);
@@ -36,7 +45,7 @@ export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverri
 			logErr(e);
 			sendFlash("error", "Error trying to add group");
 		}
-	};
+	}, [queryClient, overrides, sendFlash]);
 
 	const delOverrideMutation = useMutation({
 		mutationKey: ["delOverride"],
@@ -56,24 +65,24 @@ export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverri
 		onError: sendError,
 	});
 
-	const overridesColumns = useMemo(() => {
-		const onEdit = async (override: SMOverrides) => {
-			try {
-				const edited = (await NiceModal.show(SMOverrideEditorModal, { override })) as SMOverrides;
-				queryClient.setQueryData(
-					["serverOverrides"],
-					(overrides ?? []).map((o) => {
-						return o.override_id === edited.override_id ? edited : o;
-					}),
-				);
-				sendFlash("success", `Admin updated successfully: ${override.name}`);
-			} catch (e) {
-				logErr(e);
-				sendFlash("error", "Error trying to update admin");
-			}
-		};
+	const onEdit = async (override: SMOverrides) => {
+		try {
+			const edited = (await NiceModal.show(SMOverrideEditorModal, { override })) as SMOverrides;
+			queryClient.setQueryData(
+				["serverOverrides"],
+				(overrides ?? []).map((o) => {
+					return o.override_id === edited.override_id ? edited : o;
+				}),
+			);
+			sendFlash("success", `Admin updated successfully: ${override.name}`);
+		} catch (e) {
+			logErr(e);
+			sendFlash("error", "Error trying to update admin");
+		}
+	};
 
-		const onDelete = async (override: SMOverrides) => {
+	const onDelete = useCallback(
+		async (override: SMOverrides) => {
 			try {
 				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete override?",
@@ -86,95 +95,92 @@ export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverri
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
-		};
-		return makeOverridesColumns(onEdit, onDelete);
-	}, [delOverrideMutation, overrides, queryClient, sendFlash]);
-
-	return (
-		<ContainerWithHeaderAndButtons
-			title={"Command Overrides"}
-			iconLeft={<AssuredWorkloadIcon />}
-			buttons={[
-				<ButtonGroup key={`override-header-buttons`} variant={"contained"}>
-					<Button color={"success"} startIcon={<AssuredWorkloadIcon />} onClick={onCreateOverride}>
-						Add Override
-					</Button>
-				</ButtonGroup>,
-			]}
-		>
-			<FullTable
-				data={overrides ?? []}
-				isLoading={isLoading}
-				columns={overridesColumns}
-				pagination={pagination}
-				setPagination={setPagination}
-				toOptions={{ from: Route.fullPath }}
-			/>
-		</ContainerWithHeaderAndButtons>
+		},
+		[delOverrideMutation, sendFlash],
 	);
-};
 
-const overrideColumnHelper = createColumnHelper<SMOverrides>();
+	const columns = useMemo(
+		() => [
+			overrideColumnHelper.accessor("name", {
+				header: "Name",
+				grow: true,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			overrideColumnHelper.accessor("type", {
+				header: "Type",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			overrideColumnHelper.accessor("flags", {
+				header: "Flags",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			overrideColumnHelper.accessor("created_on", {
+				header: "Created On",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+			}),
+			overrideColumnHelper.accessor("updated_on", {
+				header: "Updated On",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+			}),
+		],
+		[],
+	);
 
-const makeOverridesColumns = (
-	onEdit: (override: SMOverrides) => Promise<void>,
-	onDelete: (override: SMOverrides) => Promise<void>,
-) => [
-	overrideColumnHelper.accessor("name", {
-		header: "Name",
-		size: 500,
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	overrideColumnHelper.accessor("type", {
-		header: "Type",
-		size: 75,
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	overrideColumnHelper.accessor("flags", {
-		header: "Flags",
-		size: 75,
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	overrideColumnHelper.accessor("created_on", {
-		header: "Created On",
-		size: 140,
-		cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
-	}),
-	overrideColumnHelper.accessor("updated_on", {
-		header: "Updated On",
-		size: 140,
-		cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
-	}),
-	overrideColumnHelper.display({
-		id: "edit",
-		maxSize: 30,
-		cell: (info) => (
-			<Tooltip title={"Edit Override"}>
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: overrides ?? [],
+		enableFilters: true,
+		enableRowActions: true,
+		state: {
+			isLoading: isLoading,
+			showAlertBanner: isError,
+		},
+		renderRowActionMenuItems: ({ row }) => [
+			<Tooltip title={"Edit Override"} key={"edit-override"}>
 				<IconButton
 					color={"warning"}
 					onClick={async () => {
-						await onEdit(info.row.original);
+						await onEdit(row.original);
 					}}
 				>
 					<EditIcon />
 				</IconButton>
-			</Tooltip>
-		),
-	}),
-	overrideColumnHelper.display({
-		id: "delete",
-		maxSize: 30,
-		cell: (info) => (
-			<Tooltip title={"Delete override"}>
+			</Tooltip>,
+			<Tooltip title={"Delete override"} key={"delete-override"}>
 				<IconButton
 					color={"error"}
 					onClick={async () => {
-						await onDelete(info.row.original);
+						await onDelete(row.original);
 					}}
 				>
 					<DeleteIcon />
 				</IconButton>
-			</Tooltip>
-		),
-	}),
-];
+			</Tooltip>,
+		],
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "updated_on", desc: true }],
+			columnVisibility: {
+				name: true,
+				identity: true,
+			},
+		},
+	});
+
+	return (
+		<SortableTable
+			table={table}
+			title={"Command Overrides"}
+			buttons={[
+				<IconButton onClick={onCreateOverride} key="create-override" sx={{ color: "primary.contrastText" }}>
+					<AssuredWorkloadIcon />
+				</IconButton>,
+			]}
+		/>
+	);
+};

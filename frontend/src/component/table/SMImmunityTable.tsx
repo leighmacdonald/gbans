@@ -1,41 +1,52 @@
 import NiceModal from "@ebay/nice-modal-react";
 import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
 import DeleteIcon from "@mui/icons-material/Delete";
-import FlakyIcon from "@mui/icons-material/Flaky";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createColumnHelper } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
-import { apiDeleteSMGroupImmunity } from "../../api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { useCallback, useMemo } from "react";
+import { apiDeleteSMGroupImmunity, apiGetSMGroupImmunities, apiGetSMGroups } from "../../api";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
-import { Route } from "../../routes/_admin.admin.game-admins.tsx";
-import type { SMGroupImmunity, SMGroups } from "../../schema/sourcemod.ts";
+import type { SMGroupImmunity } from "../../schema/sourcemod.ts";
 import { logErr } from "../../util/errors";
-import { initPagination, RowsPerPage } from "../../util/table";
 import { renderDateTime } from "../../util/time.ts";
-import { ContainerWithHeaderAndButtons } from "../ContainerWithHeaderAndButtons";
 import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
 import { SMGroupImmunityCreateModal } from "../modal/SMGroupImmunityCreateModal.tsx";
-import { FullTable } from "./FullTable";
+import { createDefaultTableOptions } from "./options.ts";
+import { SortableTable } from "./SortableTable.tsx";
 import { TableCellString } from "./TableCellString";
 
-export const SMImmunityTable = ({
-	immunities,
-	groups,
-	isLoading,
-}: {
-	immunities: SMGroupImmunity[];
-	groups: SMGroups[];
-	isLoading: boolean;
-}) => {
+const columnHelper = createMRTColumnHelper<SMGroupImmunity>();
+const defaultOptions = createDefaultTableOptions<SMGroupImmunity>();
+
+export const SMImmunityTable = () => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
-	const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
-	const onCreateImmunity = async () => {
+	const {
+		data: groups,
+		isLoading: isLoadingGroups,
+		isError: isErrorGroups,
+	} = useQuery({
+		queryKey: ["serverGroups"],
+		queryFn: async () => {
+			return await apiGetSMGroups();
+		},
+	});
+
+	const {
+		data: immunities,
+		isLoading: isLoadingImmunities,
+		isError: isErrorImmunities,
+	} = useQuery({
+		queryKey: ["serverImmunities"],
+		queryFn: async () => {
+			return await apiGetSMGroupImmunities();
+		},
+	});
+
+	const onCreateImmunity = useCallback(async () => {
 		try {
 			const immunity = (await NiceModal.show(SMGroupImmunityCreateModal, { groups })) as SMGroupImmunity;
 			queryClient.setQueryData(["serverImmunities"], [...(immunities ?? []), immunity]);
@@ -44,7 +55,7 @@ export const SMImmunityTable = ({
 			logErr(e);
 			sendFlash("error", "Error trying to add group immunity");
 		}
-	};
+	}, [groups, immunities, queryClient, sendFlash]);
 
 	const delImmunityMutation = useMutation({
 		mutationKey: ["delGroupImmunity"],
@@ -64,8 +75,8 @@ export const SMImmunityTable = ({
 		onError: sendError,
 	});
 
-	const immunityColumns = useMemo(() => {
-		const onDelete = async (immunity: SMGroupImmunity) => {
+	const onDelete = useCallback(
+		async (immunity: SMGroupImmunity) => {
 			try {
 				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete group immunity?",
@@ -78,72 +89,77 @@ export const SMImmunityTable = ({
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
-		};
-
-		return makeGroupImmunityColumns(onDelete);
-	}, [delImmunityMutation, sendFlash]);
-
-	return (
-		<ContainerWithHeaderAndButtons
-			title={"Group Immunities"}
-			iconLeft={<FlakyIcon />}
-			buttons={[
-				<ButtonGroup key={`immunity-header-buttons`} variant={"contained"}>
-					<Button
-						color={"success"}
-						startIcon={<AssuredWorkloadIcon />}
-						onClick={onCreateImmunity}
-						disabled={groups.length < 2}
-					>
-						Add Immunity
-					</Button>
-				</ButtonGroup>,
-			]}
-		>
-			<FullTable
-				data={immunities ?? []}
-				isLoading={isLoading}
-				columns={immunityColumns}
-				pagination={pagination}
-				setPagination={setPagination}
-				toOptions={{ from: Route.fullPath }}
-			/>
-		</ContainerWithHeaderAndButtons>
+		},
+		[delImmunityMutation, sendFlash],
 	);
-};
 
-const groupImmunityColumnHelper = createColumnHelper<SMGroupImmunity>();
+	const columns = useMemo(
+		() => [
+			columnHelper.accessor("group.name", {
+				header: "Group",
+				grow: true,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("other.name", {
+				header: "Immunity From",
+				grow: true,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelper.accessor("created_on", {
+				header: "Created On",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+			}),
+		],
+		[],
+	);
 
-const makeGroupImmunityColumns = (onDelete: (immunity: SMGroupImmunity) => Promise<void>) => [
-	groupImmunityColumnHelper.accessor("group.name", {
-		header: "Group",
-		size: 500,
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	groupImmunityColumnHelper.accessor("other.name", {
-		header: "Immunity From",
-		size: 200,
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	groupImmunityColumnHelper.accessor("created_on", {
-		header: "Created On",
-		size: 140,
-		cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
-	}),
-	groupImmunityColumnHelper.display({
-		id: "delete",
-		maxSize: 30,
-		cell: (info) => (
-			<Tooltip title={"Delete override"}>
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: immunities ?? [],
+		enableFilters: true,
+		enableRowActions: true,
+		state: {
+			isLoading: isLoadingImmunities || isLoadingGroups,
+			showAlertBanner: isErrorImmunities || isErrorGroups,
+		},
+		renderRowActionMenuItems: ({ row }) => [
+			<Tooltip title={"Delete override"} key={"delete"}>
 				<IconButton
 					color={"error"}
 					onClick={async () => {
-						await onDelete(info.row.original);
+						await onDelete(row.original);
 					}}
 				>
 					<DeleteIcon />
 				</IconButton>
-			</Tooltip>
-		),
-	}),
-];
+			</Tooltip>,
+		],
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "updated_on", desc: true }],
+			columnVisibility: {
+				name: true,
+				identity: true,
+			},
+		},
+	});
+
+	return (
+		<SortableTable
+			table={table}
+			title={"Group Immunities"}
+			buttons={[
+				<IconButton
+					onClick={onCreateImmunity}
+					disabled={(groups ?? []).length < 2}
+					key="create"
+					sx={{ color: "primary.contrastText" }}
+				>
+					<AssuredWorkloadIcon />
+				</IconButton>,
+			]}
+		/>
+	);
+};

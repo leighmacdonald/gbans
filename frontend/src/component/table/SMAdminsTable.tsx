@@ -3,40 +3,51 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import GroupRemoveIcon from "@mui/icons-material/GroupRemove";
-import PersonIcon from "@mui/icons-material/Person";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createColumnHelper } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
-import { apiAddAdminToGroup, apiDelAdminFromGroup, apiDeleteSMAdmin } from "../../api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { useCallback, useMemo } from "react";
+import { apiAddAdminToGroup, apiDelAdminFromGroup, apiDeleteSMAdmin, apiGetSMAdmins, apiGetSMGroups } from "../../api";
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx.ts";
-import { Route } from "../../routes/_admin.admin.game-admins.tsx";
 import type { SMAdmin, SMGroups } from "../../schema/sourcemod.ts";
-import { initPagination, RowsPerPage } from "../../util/table.ts";
 import { renderDateTime } from "../../util/time.ts";
-import { ContainerWithHeaderAndButtons } from "./../ContainerWithHeaderAndButtons.tsx";
 import { ConfirmationModal } from "../modal/ConfirmationModal.tsx";
 import { SMAdminEditorModal } from "../modal/SMAdminEditorModal.tsx";
 import { SMGroupSelectModal } from "../modal/SMGroupSelectModal.tsx";
-import { FullTable } from "./FullTable.tsx";
+import { createDefaultTableOptions } from "./options.ts";
+import { SortableTable } from "./SortableTable.tsx";
 import { TableCellString } from "./TableCellString.tsx";
 
-export const SMAdminsTable = ({
-	admins,
-	groups,
-	isLoading,
-}: {
-	admins: SMAdmin[];
-	groups: SMGroups[];
-	isLoading: boolean;
-}) => {
+const columnHelperAdmins = createMRTColumnHelper<SMAdmin>();
+const defaultOptionsAdmins = createDefaultTableOptions<SMAdmin>();
+
+export const SMAdminsTable = () => {
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
-	const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
+
+	const {
+		data: groups,
+		isLoading: isLoadingGroups,
+		isError: isErrorGroups,
+	} = useQuery({
+		queryKey: ["serverGroups"],
+		queryFn: async () => {
+			return await apiGetSMGroups();
+		},
+	});
+
+	const {
+		data: admins,
+		isLoading: isLoadingAdmins,
+		isError: isErrorAdmins,
+	} = useQuery({
+		queryKey: ["serverAdmins"],
+		queryFn: async () => {
+			return await apiGetSMAdmins();
+		},
+	});
 
 	const onCreateAdmin = async () => {
 		try {
@@ -101,8 +112,8 @@ export const SMAdminsTable = ({
 		onError: sendError,
 	});
 
-	const adminColumns = useMemo(() => {
-		const onEdit = async (admin: SMAdmin) => {
+	const onEdit = useCallback(
+		async (admin: SMAdmin) => {
 			try {
 				const edited = (await NiceModal.show(SMAdminEditorModal, {
 					admin,
@@ -118,8 +129,12 @@ export const SMAdminsTable = ({
 			} catch (e) {
 				sendError(e);
 			}
-		};
-		const onDelete = async (admin: SMAdmin) => {
+		},
+		[admins, groups, queryClient, sendError, sendFlash],
+	);
+
+	const onDelete = useCallback(
+		async (admin: SMAdmin) => {
 			try {
 				const confirmed = (await NiceModal.show(ConfirmationModal, {
 					title: "Delete admin?",
@@ -132,9 +147,12 @@ export const SMAdminsTable = ({
 			} catch (e) {
 				sendFlash("error", `Failed to create confirmation modal: ${e}`);
 			}
-		};
+		},
+		[sendFlash, deleteAdmin],
+	);
 
-		const onAddGroup = async (admin: SMAdmin) => {
+	const onAddGroup = useCallback(
+		async (admin: SMAdmin) => {
 			try {
 				const existingGroupIds = admin.groups.map((g) => g.group_id);
 				const group = (await NiceModal.show(SMGroupSelectModal, {
@@ -144,9 +162,12 @@ export const SMAdminsTable = ({
 			} catch (e) {
 				sendError(e);
 			}
-		};
+		},
+		[addGroupMutation, groups, sendError],
+	);
 
-		const onDelGroup = async (admin: SMAdmin) => {
+	const onDelGroup = useCallback(
+		async (admin: SMAdmin) => {
 			try {
 				const existingGroupIds = admin.groups.map((g) => g.group_id);
 				const group = (await NiceModal.show(SMGroupSelectModal, {
@@ -156,157 +177,142 @@ export const SMAdminsTable = ({
 			} catch (e) {
 				sendError(e);
 			}
-		};
-
-		return makeAdminColumns(groups?.length ?? 0, onEdit, onDelete, onAddGroup, onDelGroup);
-	}, [addGroupMutation, admins, delGroupMutation, deleteAdmin, groups, queryClient, sendFlash, sendError]);
-
-	return (
-		<ContainerWithHeaderAndButtons
-			title={"Admins"}
-			iconLeft={<PersonIcon />}
-			buttons={[
-				<ButtonGroup key={`server-header-buttons`}>
-					<Button
-						variant={"contained"}
-						color={"success"}
-						startIcon={<PersonAddIcon />}
-						onClick={onCreateAdmin}
-					>
-						Create Admin
-					</Button>
-				</ButtonGroup>,
-			]}
-		>
-			<FullTable
-				data={admins ?? []}
-				isLoading={isLoading}
-				columns={adminColumns}
-				pagination={pagination}
-				setPagination={setPagination}
-				toOptions={{ from: Route.fullPath }}
-			/>
-		</ContainerWithHeaderAndButtons>
+		},
+		[delGroupMutation, groups, sendError],
 	);
-};
 
-const adminColumnHelper = createColumnHelper<SMAdmin>();
+	const columns = useMemo(() => {
+		return [
+			columnHelperAdmins.accessor("name", {
+				header: "Name",
+				grow: true,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelperAdmins.accessor("auth_type", {
+				header: "Auth Type",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelperAdmins.accessor("identity", {
+				header: "Identity",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelperAdmins.accessor("steam_id", {
+				header: "SteamID",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelperAdmins.accessor("password", {
+				header: "Password",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelperAdmins.accessor("flags", {
+				header: "Flags",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelperAdmins.accessor("immunity", {
+				header: "Immunity",
+				grow: false,
+				filterVariant: "range-slider",
+				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
+			}),
+			columnHelperAdmins.accessor("created_on", {
+				header: "Created On",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+			}),
+			columnHelperAdmins.accessor("updated_on", {
+				header: "Updated On",
+				grow: false,
+				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>,
+			}),
+		];
+	}, []);
 
-const makeAdminColumns = (
-	groupCount: number,
-	onEdit: (admin: SMAdmin) => Promise<void>,
-	onDelete: (admin: SMAdmin) => Promise<void>,
-	onAddGroup: (admin: SMAdmin) => Promise<void>,
-	onDelGroup: (admin: SMAdmin) => Promise<void>,
-) => [
-	adminColumnHelper.accessor("name", {
-		header: "Name",
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	adminColumnHelper.accessor("auth_type", {
-		header: "Auth Type",
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	adminColumnHelper.accessor("identity", {
-		header: "Identity",
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	adminColumnHelper.accessor("steam_id", {
-		header: "SteamID",
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	adminColumnHelper.accessor("password", {
-		header: "Password",
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	adminColumnHelper.accessor("flags", {
-		header: "Flags",
-		size: 75,
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	adminColumnHelper.accessor("immunity", {
-		header: "Immunity",
-		size: 75,
-		cell: (info) => <TableCellString>{info.getValue()}</TableCellString>,
-	}),
-	adminColumnHelper.accessor("created_on", {
-		header: "Created On",
-		size: 180,
-		cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
-	}),
-	adminColumnHelper.accessor("updated_on", {
-		header: "Updated On",
-		size: 180,
-		cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>,
-	}),
-	adminColumnHelper.display({
-		id: "add_group",
-		size: 30,
-		cell: (info) => (
-			<Tooltip title={"Add user to group"}>
+	const table = useMaterialReactTable({
+		...defaultOptionsAdmins,
+		columns,
+		data: admins ?? [],
+		enableFilters: true,
+		enableRowActions: true,
+		state: {
+			isLoading: isLoadingAdmins || isLoadingGroups,
+			showAlertBanner: isErrorAdmins || isErrorGroups,
+		},
+		renderRowActionMenuItems: ({ row }) => [
+			<Tooltip title={"Add user to group"} key={"add-btn"}>
 				<span>
 					<IconButton
-						disabled={info.row.original.groups.length === groupCount}
+						disabled={row.original.groups.length === groups?.length}
 						color={"success"}
 						onClick={async () => {
-							await onAddGroup(info.row.original);
+							await onAddGroup(row.original);
 						}}
 					>
 						<GroupAddIcon />
 					</IconButton>
 				</span>
-			</Tooltip>
-		),
-	}),
-	adminColumnHelper.display({
-		id: "del_group",
-		size: 30,
-		cell: (info) => (
-			<Tooltip title={"Remove user from group"}>
+			</Tooltip>,
+			<Tooltip title={"Remove user from group"} key={"remove-btn"}>
 				<span>
 					<IconButton
-						disabled={info.row.original.groups.length === 0}
+						disabled={row.original.groups.length === 0}
 						color={"error"}
 						onClick={async () => {
-							await onDelGroup(info.row.original);
+							await onDelGroup(row.original);
 						}}
 					>
 						<GroupRemoveIcon />
 					</IconButton>
 				</span>
-			</Tooltip>
-		),
-	}),
-	adminColumnHelper.display({
-		id: "edit",
-		size: 30,
-		cell: (info) => (
-			<Tooltip title={"Edit admin"}>
+			</Tooltip>,
+			<Tooltip title={"Edit admin"} key={"edit-btn"}>
 				<IconButton
 					color={"warning"}
 					onClick={async () => {
-						await onEdit(info.row.original);
+						await onEdit(row.original);
 					}}
 				>
 					<EditIcon />
 				</IconButton>
-			</Tooltip>
-		),
-	}),
-	adminColumnHelper.display({
-		id: "delete",
-		size: 30,
-		cell: (info) => (
-			<Tooltip title={"Remove admin"}>
+			</Tooltip>,
+			<Tooltip title={"Remove admin"} key={"del-btn"}>
 				<IconButton
 					color={"error"}
 					onClick={async () => {
-						await onDelete(info.row.original);
+						await onDelete(row.original);
 					}}
 				>
 					<DeleteIcon />
 				</IconButton>
-			</Tooltip>
-		),
-	}),
-];
+			</Tooltip>,
+		],
+		initialState: {
+			...defaultOptionsAdmins.initialState,
+			sorting: [{ id: "updated_on", desc: true }],
+			columnVisibility: {
+				name: true,
+				identity: true,
+				created_on: false,
+				updated_on: false,
+				steam_id: false,
+				password: false,
+			},
+		},
+	});
+
+	return (
+		<SortableTable
+			table={table}
+			title={"Admins"}
+			buttons={[
+				<IconButton onClick={onCreateAdmin} key="create-btn" sx={{ color: "primary.contrastText" }}>
+					<PersonAddIcon />
+				</IconButton>,
+			]}
+		/>
+	);
+};
