@@ -16,9 +16,15 @@ type Props<TData extends MRT_RowData> = {
 	table: MRT_TableInstance<TData>;
 	title: string;
 	buttons?: ReactNode[];
+	hideToolbarButtons?: boolean;
 };
 
-export const SortableTable = <TData extends MRT_RowData>({ table, title, buttons }: Props<TData>) => {
+export const SortableTable = <TData extends MRT_RowData>({
+	table,
+	title,
+	buttons,
+	hideToolbarButtons = false,
+}: Props<TData>) => {
 	return (
 		<Paper>
 			<Box
@@ -49,10 +55,14 @@ export const SortableTable = <TData extends MRT_RowData>({ table, title, buttons
 					{buttons}
 				</Box>
 				<Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
-					<MRT_ShowHideColumnsButton table={table} sx={{ color: "primary.contrastText" }} />
-					<MRT_ToggleFiltersButton table={table} sx={{ color: "primary.contrastText" }} />
-					{/*<MRT_ToggleDensePaddingButton table={table} sx={{ color: "primary.contrastText" }} />*/}
-					{/*<MRT_ToggleFullScreenButton table={table} sx={{ color: "primary.contrastText" }} />*/}
+					{!hideToolbarButtons && (
+						<>
+							<MRT_ShowHideColumnsButton table={table} sx={{ color: "primary.contrastText" }} />
+							<MRT_ToggleFiltersButton table={table} sx={{ color: "primary.contrastText" }} />
+							{/*<MRT_ToggleDensePaddingButton table={table} sx={{ color: "primary.contrastText" }} />*/}
+							{/*<MRT_ToggleFullScreenButton table={table} sx={{ color: "primary.contrastText" }} />*/}
+						</>
+					)}
 				</Box>
 			</Box>
 			<Box sx={{ display: "grid", width: "100%" }}>

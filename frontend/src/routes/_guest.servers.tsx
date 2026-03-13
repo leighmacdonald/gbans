@@ -192,28 +192,8 @@ function Servers() {
 				</Paper>
 				<ServerFilters />
 				{showHelp && <QueueHelp />}
-				<ContainerWithHeaderAndButtons
-					title={`Servers (${selectedServers.length}/${servers.length})`}
-					buttons={
-						!hasPermission(PermissionLevel.Moderator)
-							? []
-							: [
-									<Tooltip title={"Toggle server queue help"} key={"help-queue-button"}>
-										<IconButton
-											color={"default"}
-											onClick={() => {
-												setShowHelp((prevState) => !prevState);
-											}}
-										>
-											{showHelp ? <HelpIcon /> : <HelpOutlineIcon />}
-										</IconButton>
-									</Tooltip>,
-								]
-					}
-					iconLeft={<StorageIcon />}
-				>
-					<ServerList />
-				</ContainerWithHeaderAndButtons>
+				<ServerList />
+
 				<ServerStats />
 			</Stack>
 		</MapStateCtx.Provider>
