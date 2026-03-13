@@ -54,10 +54,10 @@ type ConnectionHistoryQuery struct {
 	query.Filter
 	httphelper.SourceIDField
 
-	CIDR    string `schema:"cidr,omitempty"`
-	ASN     int    `schema:"asn,omitempty"`
-	Sid64   string `schema:"sid64,omitempty"`
-	Network string `schema:"network,omitempty"`
+	CIDR    string `json:"cidr,omitempty" schema:"cidr,omitempty"`
+	ASN     int    `json:"asn,omitempty" schema:"asn,omitempty"`
+	Sid64   string `json:"sid64,omitempty" schema:"sid64,omitempty"`
+	Network string `json:"network,omitempty" schema:"network,omitempty"`
 }
 
 type PersonConnection struct {
@@ -251,10 +251,6 @@ func (u Networks) QueryConnectionHistory(ctx context.Context, opts ConnectionHis
 		}
 
 		opts.Network = network.String()
-	}
-
-	if opts.Sid64 == "" && opts.Network == "" {
-		return nil, 0, ErrMissingParam
 	}
 
 	return u.repository.QueryConnections(ctx, opts)

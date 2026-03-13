@@ -50,6 +50,8 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 		LeftJoin("server s USING(server_id)").
 		Where(constraints)
 
+	selectBuilder = opts.ApplyLimitOffsetDefault(selectBuilder)
+
 	builder := r.Builder().
 		Select("x.*").
 		FromSelect(selectBuilder, "x")
