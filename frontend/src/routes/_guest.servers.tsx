@@ -1,33 +1,19 @@
-import HelpIcon from "@mui/icons-material/Help";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import StorageIcon from "@mui/icons-material/Storage";
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
-import Grid from "@mui/material/Grid";
-import IconButton from "@mui/material/IconButton";
-import LinearProgress, { type LinearProgressProps } from "@mui/material/LinearProgress";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
-import Typography from "@mui/material/Typography";
 import { createFileRoute } from "@tanstack/react-router";
 import type { LatLngLiteral } from "leaflet";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTimer } from "react-timer-hook";
 import { apiGetServerStates } from "../api";
-import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
-import { LoadingPlaceholder } from "../component/LoadingPlaceholder.tsx";
 import { QueueHelp } from "../component/queue/QueueHelp.tsx";
 import { ServerFilters } from "../component/ServerFilters.tsx";
 import { ServerList } from "../component/ServerList.tsx";
 import { ServerMap } from "../component/ServerMap.tsx";
 import { MapStateCtx } from "../contexts/MapStateCtx.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import { useMapStateCtx } from "../hooks/useMapStateCtx.ts";
 import { PermissionLevel } from "../schema/people.ts";
 import type { BaseServer } from "../schema/server.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
-import { sum } from "../util/lists.ts";
 
 export const Route = createFileRoute("/_guest/servers")({
 	component: Servers,
@@ -38,87 +24,6 @@ export const Route = createFileRoute("/_guest/servers")({
 		meta: [{ name: "description", content: "Server Browser" }, match.context.title("Servers")],
 	}),
 });
-
-function LinearProgressWithLabel(props: LinearProgressProps & { value: number }) {
-	return (
-		<Box display="flex" alignItems="center">
-			<Box width="100%" mr={1}>
-				<LinearProgress variant="determinate" {...props} />
-			</Box>
-			<Box minWidth={35}>
-				<Typography variant="body2" color="textSecondary">{`${Math.round(props.value)}%`}</Typography>
-			</Box>
-		</Box>
-	);
-}
-
-export const ServerStats = () => {
-	const { servers } = useMapStateCtx();
-
-	const cap = useMemo(() => servers?.length, [servers]);
-	const use = useMemo(() => {
-		return sum(servers.map((value) => value?.players || 0));
-	}, [servers]);
-
-	const regions = useMemo(() => {
-		return servers.reduce(
-			(acc, cv) => {
-				if (!Object.hasOwn(acc, cv.region)) {
-					acc[cv.region] = [];
-				}
-				acc[cv.region].push(cv);
-				return acc;
-			},
-			{} as Record<string, BaseServer[]>,
-		);
-	}, [servers]);
-
-	const keys = useMemo(() => {
-		return Object.keys(regions).sort();
-	}, [regions]);
-
-	if (servers.length === 0) {
-		return <LoadingPlaceholder />;
-	}
-
-	return (
-		<Container component={Paper}>
-			<Grid
-				container
-				direction="row"
-				justifyContent="space-evenly"
-				alignItems="flex-start"
-				justifyItems={"left"}
-				spacing={3}
-				padding={3}
-			>
-				<Grid size={{ xs: 3, xl: 4 }}>
-					<Typography style={{ display: "inline" }} variant={"subtitle1"} align={"center"}>
-						Global: {use} / {cap}
-					</Typography>
-					<LinearProgressWithLabel value={Math.round((use / cap) * 100)} />
-				</Grid>
-
-				{keys.map((v) => {
-					const pSum = sum(
-						((Object.hasOwn(regions, v) && regions[v]) || []).map((value) => value?.players || 0),
-					);
-					const pMax = sum(
-						((Object.hasOwn(regions, v) && regions[v]) || []).map((value) => value?.max_players || 24),
-					);
-					return (
-						<Grid size={{ xs: 3, xl: 4 }} key={`stat-${v}`}>
-							<Typography style={{ display: "inline" }} variant={"subtitle1"} align={"center"}>
-								{v}: {pSum} / {pMax}
-							</Typography>
-							<LinearProgressWithLabel value={Math.round((pSum / pMax) * 100)} />
-						</Grid>
-					);
-				})}
-			</Grid>
-		</Container>
-	);
-};
 
 function Servers() {
 	const [servers, setServers] = useState<BaseServer[]>([]);
@@ -132,7 +37,7 @@ function Servers() {
 	const [filterByRegion, setFilterByRegion] = useState<boolean>(false);
 	const [showOpenOnly, setShowOpenOnly] = useState<boolean>(false);
 	const [selectedRegion, setSelectedRegion] = useState<string>("any");
-	const [showHelp, setShowHelp] = useState<boolean>(false);
+	const [showHelp] = useState<boolean>(false);
 
 	const interval = 5;
 
@@ -191,10 +96,8 @@ function Servers() {
 					<ServerMap />
 				</Paper>
 				<ServerFilters />
-				{showHelp && <QueueHelp />}
+				{hasPermission(PermissionLevel.Moderator) && showHelp && <QueueHelp />}
 				<ServerList />
-
-				<ServerStats />
 			</Stack>
 		</MapStateCtx.Provider>
 	);

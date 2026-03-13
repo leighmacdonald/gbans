@@ -4,7 +4,6 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import EventIcon from "@mui/icons-material/Event";
 import GavelIcon from "@mui/icons-material/Gavel";
 import MarkUnreadChatAltIcon from "@mui/icons-material/MarkUnreadChatAlt";
-import PieChartIcon from "@mui/icons-material/PieChart";
 import StorageIcon from "@mui/icons-material/Storage";
 import SupportIcon from "@mui/icons-material/Support";
 import VideocamIcon from "@mui/icons-material/Videocam";
@@ -141,7 +140,7 @@ function Index() {
 							SourceTV
 						</Button>
 					)}
-					{appInfo.stats_enabled && (
+					{/*{appInfo.stats_enabled && (
 						<Button
 							component={RouterLink}
 							startIcon={<PieChartIcon />}
@@ -152,7 +151,7 @@ function Index() {
 						>
 							Stats (Beta)
 						</Button>
-					)}
+					)}*/}
 					{appInfo.discord_enabled && appInfo.link_id !== "" && (
 						<Button
 							component={Link}

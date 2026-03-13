@@ -10,7 +10,7 @@ import {
 	type MRT_SortingState,
 	useMaterialReactTable,
 } from "material-react-table";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { apiGetConnections } from "../api";
 import { TextLink } from "../component/TextLink.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
@@ -55,52 +55,55 @@ function AdminNetworkPlayersByCIDR() {
 		},
 	});
 
-	const columns = [
-		columnHelper.accessor("created_on", {
-			grow: false,
-			header: "Created",
-			Cell: ({ cell }) => <Typography>{renderDateTime(cell.getValue())}</Typography>,
-		}),
-		columnHelper.accessor("persona_name", {
-			header: "Name",
-			grow: true,
-			Cell: ({ cell }) => (
-				<TableCell>
-					<Typography>{cell.getValue()}</Typography>
-				</TableCell>
-			),
-		}),
-		columnHelper.accessor("steam_id", {
-			grow: false,
-			header: "Steam ID",
-			Cell: ({ cell }) => (
-				<TableCell>
-					<TextLink to={"/profile/$steamId"} params={{ steamId: cell.getValue() }}>
-						{cell.getValue()}
-					</TextLink>
-				</TableCell>
-			),
-		}),
-		columnHelper.accessor("ip_addr", {
-			grow: false,
-			header: "IP Address",
-			Cell: ({ cell }) => (
-				<TableCell>
-					<Typography>{cell.getValue()}</Typography>
-				</TableCell>
-			),
-		}),
+	const columns = useMemo(
+		() => [
+			columnHelper.accessor("created_on", {
+				grow: false,
+				header: "Created",
+				Cell: ({ cell }) => <Typography>{renderDateTime(cell.getValue())}</Typography>,
+			}),
+			columnHelper.accessor("persona_name", {
+				header: "Name",
+				grow: true,
+				Cell: ({ cell }) => (
+					<TableCell>
+						<Typography>{cell.getValue()}</Typography>
+					</TableCell>
+				),
+			}),
+			columnHelper.accessor("steam_id", {
+				grow: false,
+				header: "Steam ID",
+				Cell: ({ cell }) => (
+					<TableCell>
+						<TextLink to={"/profile/$steamId"} params={{ steamId: cell.getValue() }}>
+							{cell.getValue()}
+						</TextLink>
+					</TableCell>
+				),
+			}),
+			columnHelper.accessor("ip_addr", {
+				grow: false,
+				header: "IP Address",
+				Cell: ({ cell }) => (
+					<TableCell>
+						<Typography>{cell.getValue()}</Typography>
+					</TableCell>
+				),
+			}),
 
-		columnHelper.accessor("server_id", {
-			header: "Server",
-			grow: false,
-			Cell: ({ row }) => (
-				<TableCell>
-					<Typography>{row.original.server_name_short}</Typography>
-				</TableCell>
-			),
-		}),
-	];
+			columnHelper.accessor("server_id", {
+				header: "Server",
+				grow: false,
+				Cell: ({ row }) => (
+					<TableCell>
+						<Typography>{row.original.server_name_short}</Typography>
+					</TableCell>
+				),
+			}),
+		],
+		[],
+	);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,

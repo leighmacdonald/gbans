@@ -1,29 +1,24 @@
 import CategoryIcon from "@mui/icons-material/Category";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
-import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import TimerIcon from "@mui/icons-material/Timer";
 import WallpaperIcon from "@mui/icons-material/Wallpaper";
 import Grid from "@mui/material/Grid";
 import TableCell from "@mui/material/TableCell";
 import Typography from "@mui/material/Typography";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	type TableOptions,
-	useReactTable,
-} from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { useMemo } from "react";
 import { getSpeedrun } from "../api";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { DataTable } from "../component/table/DataTable.tsx";
-import type { SpeedrunParticipant, SpeedrunPointCaptures } from "../schema/speedrun.ts";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
+import type { SpeedrunParticipant } from "../schema/speedrun.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
-import { RowsPerPage } from "../util/table.ts";
 import { durationString, renderDateTime } from "../util/time.ts";
+
+const columnHelper = createMRTColumnHelper<SpeedrunParticipant>();
+const defaultOptions = createDefaultTableOptions<SpeedrunParticipant>();
 
 export const Route = createFileRoute("/_guest/speedruns/id/$speedrunId")({
 	component: SpeedrunDetail,
@@ -48,17 +43,80 @@ export const Route = createFileRoute("/_guest/speedruns/id/$speedrunId")({
 function SpeedrunDetail() {
 	const { speedrun } = Route.useLoaderData();
 
-	const sortedSpeedruns = useMemo(() => {
-		return (
-			speedrun?.players.sort((a, b) => {
-				return a.duration > b.duration ? -1 : 1;
-			}) ?? []
-		);
-	}, [speedrun]);
+	const columns = useMemo(
+		() => [
+			columnHelper.accessor("steam_id", {
+				header: "Player",
+				size: 10,
+				Cell: ({ row }) => {
+					return (
+						<PersonCell
+							steam_id={row.original.steam_id}
+							personaname={row.original.persona_name}
+							avatar_hash={row.original.avatar_hash}
+						/>
+					);
+				},
+			}),
+
+			columnHelper.accessor("duration", {
+				header: "Time",
+				size: 60,
+				Cell: ({ cell }) => (
+					<TableCell>
+						<Typography align={"center"}>{durationString(cell.getValue() / 1000)}</Typography>
+					</TableCell>
+				),
+			}),
+			columnHelper.accessor("kills", {
+				header: "Kills",
+				size: 60,
+				Cell: ({ cell }) => (
+					<TableCell>
+						<Typography align={"center"}>{cell.getValue() ?? 0}</Typography>
+					</TableCell>
+				),
+			}),
+			columnHelper.accessor("destructions", {
+				header: "Destructions",
+				size: 60,
+				Cell: ({ cell }) => (
+					<TableCell>
+						<Typography align={"center"}>{cell.getValue() ?? 0}</Typography>
+					</TableCell>
+				),
+			}),
+			columnHelper.display({
+				header: "Captures",
+				size: 60,
+				Cell: () => {
+					return (
+						<TableCell>
+							<Typography align={"center"}>
+								{speedrun.point_captures.map((c) => c.players.filter((x) => x.steam_id)).length}
+							</Typography>
+						</TableCell>
+					);
+				},
+			}),
+		],
+		[speedrun],
+	);
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: speedrun.players,
+		enableFilters: true,
+		enableRowActions: true,
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "duration", desc: true }],
+		},
+	});
 
 	return (
 		<>
-			{speedrun && (
+			{
 				<Grid container spacing={2}>
 					<Grid size={{ xs: 2 }}>
 						<ContainerWithHeader title={"Rank (Initial)"} iconLeft={<EmojiEventsIcon />}>
@@ -96,123 +154,10 @@ function SpeedrunDetail() {
 						</ContainerWithHeader>
 					</Grid>
 					<Grid size={{ xs: 12 }}>
-						<ContainerWithHeader title={"Players"} iconLeft={<GroupAddIcon />}>
-							<SpeedrunPlayerTable
-								captures={speedrun.point_captures}
-								players={sortedSpeedruns}
-								isLoading={false}
-							></SpeedrunPlayerTable>
-						</ContainerWithHeader>
+						<SortableTable table={table} title={"Players"} />
 					</Grid>
 				</Grid>
-			)}
+			}
 		</>
 	);
 }
-
-const columnHelper = createColumnHelper<SpeedrunParticipant>();
-
-const SpeedrunPlayerTable = ({
-	captures,
-	players,
-	isLoading,
-}: {
-	captures: SpeedrunPointCaptures[];
-	players: SpeedrunParticipant[];
-	isLoading: boolean;
-}) => {
-	const [pagination, setPagination] = useState({
-		pageIndex: 0,
-		pageSize: RowsPerPage.TwentyFive,
-	});
-	const columns = [
-		columnHelper.accessor("steam_id", {
-			header: "Player",
-			size: 10,
-			cell: (info) => {
-				return (
-					<PersonCell
-						steam_id={info.row.original.steam_id}
-						personaname={info.row.original.persona_name}
-						avatar_hash={info.row.original.avatar_hash}
-					/>
-				);
-			},
-		}),
-
-		columnHelper.accessor("duration", {
-			header: "Time",
-			size: 60,
-			cell: (info) => (
-				<TableCell>
-					<Typography align={"center"}>{durationString(info.getValue() / 1000)}</Typography>
-				</TableCell>
-			),
-		}),
-		columnHelper.accessor("kills", {
-			header: "Kills",
-			size: 60,
-			cell: (info) => (
-				<TableCell>
-					<Typography align={"center"}>{info.getValue() ?? 0}</Typography>
-				</TableCell>
-			),
-		}),
-		columnHelper.accessor("destructions", {
-			header: "Destructions",
-			size: 60,
-			cell: (info) => (
-				<TableCell>
-					<Typography align={"center"}>{info.getValue() ?? 0}</Typography>
-				</TableCell>
-			),
-		}),
-		columnHelper.display({
-			header: "Captures",
-			size: 60,
-			cell: () => {
-				return (
-					<TableCell>
-						<Typography align={"center"}>
-							{captures.map((c) => c.players.filter((x) => x.steam_id)).length}
-						</Typography>
-					</TableCell>
-				);
-			},
-		}),
-	];
-
-	const opts: TableOptions<SpeedrunParticipant> = {
-		data: players,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
-		manualPagination: false,
-		autoResetPageIndex: true,
-		onPaginationChange: setPagination,
-		getPaginationRowModel: getPaginationRowModel(),
-		state: { pagination },
-	};
-
-	const table = useReactTable(opts);
-
-	return (
-		<>
-			<DataTable table={table} isLoading={isLoading} />
-			<PaginatorLocal
-				onRowsChange={(rows) => {
-					setPagination((prev) => {
-						return { ...prev, pageSize: rows };
-					});
-				}}
-				onPageChange={(page) => {
-					setPagination((prev) => {
-						return { ...prev, pageIndex: page };
-					});
-				}}
-				count={players.length}
-				rows={pagination.pageSize}
-				page={pagination.pageIndex}
-			/>
-		</>
-	);
-};

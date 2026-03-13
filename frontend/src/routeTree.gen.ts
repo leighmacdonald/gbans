@@ -21,7 +21,6 @@ import { Route as GuestPrivacyPolicyRouteImport } from './routes/_guest.privacy-
 import { Route as GuestPatreonRouteImport } from './routes/_guest.patreon'
 import { Route as GuestContestsRouteImport } from './routes/_guest.contests'
 import { Route as GuestChangelogRouteImport } from './routes/_guest.changelog'
-import { Route as AuthStatsRouteImport } from './routes/_auth.stats'
 import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
 import { Route as AuthReportRouteImport } from './routes/_auth.report'
 import { Route as AuthPermissionRouteImport } from './routes/_auth.permission'
@@ -33,7 +32,6 @@ import { Route as AuthChatlogsRouteImport } from './routes/_auth.chatlogs'
 import { Route as GuestWikiIndexRouteImport } from './routes/_guest.wiki.index'
 import { Route as GuestSpeedrunsIndexRouteImport } from './routes/_guest.speedruns.index'
 import { Route as GuestLoginIndexRouteImport } from './routes/_guest.login.index'
-import { Route as AuthStatsIndexRouteImport } from './routes/_auth.stats.index'
 import { Route as AuthReportIndexRouteImport } from './routes/_auth.report.index'
 import { Route as AuthForumsIndexRouteImport } from './routes/_auth.forums.index'
 import { Route as ModAdminVotesRouteImport } from './routes/_mod.admin.votes'
@@ -49,7 +47,6 @@ import { Route as GuestWikiSlugRouteImport } from './routes/_guest.wiki.$slug'
 import { Route as GuestProfileSteamIdRouteImport } from './routes/_guest.profile.$steamId'
 import { Route as GuestLoginSuccessRouteImport } from './routes/_guest.login.success'
 import { Route as AuthReportReportIdRouteImport } from './routes/_auth.report.$reportId'
-import { Route as AuthMatchMatchIdRouteImport } from './routes/_auth.match.$matchId'
 import { Route as AuthForumsForum_idRouteImport } from './routes/_auth.forums.$forum_id'
 import { Route as AuthContestsContest_idRouteImport } from './routes/_auth.contests.$contest_id'
 import { Route as AuthBanBan_idRouteImport } from './routes/_auth.ban.$ban_id'
@@ -58,14 +55,11 @@ import { Route as AdminAdminServersRouteImport } from './routes/_admin.admin.ser
 import { Route as AdminAdminGameAdminsRouteImport } from './routes/_admin.admin.game-admins'
 import { Route as ModAdminNetworkIndexRouteImport } from './routes/_mod.admin.network.index'
 import { Route as ModAdminNetworkPlayersbyipRouteImport } from './routes/_mod.admin.network.playersbyip'
-import { Route as ModAdminNetworkIphistRouteImport } from './routes/_mod.admin.network.iphist'
 import { Route as ModAdminNetworkIpInfoRouteImport } from './routes/_mod.admin.network.ipInfo'
 import { Route as ModAdminNetworkCidrblocksRouteImport } from './routes/_mod.admin.network.cidrblocks'
 import { Route as GuestSpeedrunsMapMapNameRouteImport } from './routes/_guest.speedruns.map.$mapName'
 import { Route as GuestSpeedrunsIdSpeedrunIdRouteImport } from './routes/_guest.speedruns.id.$speedrunId'
-import { Route as AuthStatsWeaponWeapon_idRouteImport } from './routes/_auth.stats.weapon.$weapon_id'
 import { Route as AuthForumsThreadForum_thread_idRouteImport } from './routes/_auth.forums.thread.$forum_thread_id'
-import { Route as AuthLogsSteamIdRouteImport } from './routes/_auth.logs.$steamId.'
 
 const ModRoute = ModRouteImport.update({
   id: '/_mod',
@@ -123,11 +117,6 @@ const GuestChangelogRoute = GuestChangelogRouteImport.update({
   path: '/changelog',
   getParentRoute: () => GuestRoute,
 } as any)
-const AuthStatsRoute = AuthStatsRouteImport.update({
-  id: '/stats',
-  path: '/stats',
-  getParentRoute: () => AuthRoute,
-} as any)
 const AuthSettingsRoute = AuthSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -182,11 +171,6 @@ const GuestLoginIndexRoute = GuestLoginIndexRouteImport.update({
   id: '/login/',
   path: '/login/',
   getParentRoute: () => GuestRoute,
-} as any)
-const AuthStatsIndexRoute = AuthStatsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthStatsRoute,
 } as any)
 const AuthReportIndexRoute = AuthReportIndexRouteImport.update({
   id: '/',
@@ -263,11 +247,6 @@ const AuthReportReportIdRoute = AuthReportReportIdRouteImport.update({
   path: '/$reportId',
   getParentRoute: () => AuthReportRoute,
 } as any)
-const AuthMatchMatchIdRoute = AuthMatchMatchIdRouteImport.update({
-  id: '/match/$matchId',
-  path: '/match/$matchId',
-  getParentRoute: () => AuthRoute,
-} as any)
 const AuthForumsForum_idRoute = AuthForumsForum_idRouteImport.update({
   id: '/$forum_id',
   path: '/$forum_id',
@@ -309,11 +288,6 @@ const ModAdminNetworkPlayersbyipRoute =
     path: '/admin/network/playersbyip',
     getParentRoute: () => ModRoute,
   } as any)
-const ModAdminNetworkIphistRoute = ModAdminNetworkIphistRouteImport.update({
-  id: '/admin/network/iphist',
-  path: '/admin/network/iphist',
-  getParentRoute: () => ModRoute,
-} as any)
 const ModAdminNetworkIpInfoRoute = ModAdminNetworkIpInfoRouteImport.update({
   id: '/admin/network/ipInfo',
   path: '/admin/network/ipInfo',
@@ -337,23 +311,12 @@ const GuestSpeedrunsIdSpeedrunIdRoute =
     path: '/speedruns/id/$speedrunId',
     getParentRoute: () => GuestRoute,
   } as any)
-const AuthStatsWeaponWeapon_idRoute =
-  AuthStatsWeaponWeapon_idRouteImport.update({
-    id: '/weapon/$weapon_id',
-    path: '/weapon/$weapon_id',
-    getParentRoute: () => AuthStatsRoute,
-  } as any)
 const AuthForumsThreadForum_thread_idRoute =
   AuthForumsThreadForum_thread_idRouteImport.update({
     id: '/thread/$forum_thread_id',
     path: '/thread/$forum_thread_id',
     getParentRoute: () => AuthForumsRoute,
   } as any)
-const AuthLogsSteamIdRoute = AuthLogsSteamIdRouteImport.update({
-  id: '/logs/$steamId/',
-  path: '/logs/$steamId/',
-  getParentRoute: () => AuthRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof GuestIndexRoute
@@ -365,7 +328,6 @@ export interface FileRoutesByFullPath {
   '/permission': typeof AuthPermissionRoute
   '/report': typeof AuthReportRouteWithChildren
   '/settings': typeof AuthSettingsRoute
-  '/stats': typeof AuthStatsRouteWithChildren
   '/changelog': typeof GuestChangelogRoute
   '/contests': typeof GuestContestsRoute
   '/patreon': typeof GuestPatreonRoute
@@ -379,7 +341,6 @@ export interface FileRoutesByFullPath {
   '/ban/$ban_id': typeof AuthBanBan_idRoute
   '/contests/$contest_id': typeof AuthContestsContest_idRoute
   '/forums/$forum_id': typeof AuthForumsForum_idRoute
-  '/match/$matchId': typeof AuthMatchMatchIdRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
   '/login/success': typeof GuestLoginSuccessRoute
   '/profile/$steamId': typeof GuestProfileSteamIdRoute
@@ -395,18 +356,14 @@ export interface FileRoutesByFullPath {
   '/admin/votes': typeof ModAdminVotesRoute
   '/forums/': typeof AuthForumsIndexRoute
   '/report/': typeof AuthReportIndexRoute
-  '/stats/': typeof AuthStatsIndexRoute
   '/login/': typeof GuestLoginIndexRoute
   '/speedruns/': typeof GuestSpeedrunsIndexRoute
   '/wiki/': typeof GuestWikiIndexRoute
-  '/logs/$steamId/': typeof AuthLogsSteamIdRoute
   '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForum_thread_idRoute
-  '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeapon_idRoute
   '/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
   '/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
   '/admin/network/cidrblocks': typeof ModAdminNetworkCidrblocksRoute
   '/admin/network/ipInfo': typeof ModAdminNetworkIpInfoRoute
-  '/admin/network/iphist': typeof ModAdminNetworkIphistRoute
   '/admin/network/playersbyip': typeof ModAdminNetworkPlayersbyipRoute
   '/admin/network/': typeof ModAdminNetworkIndexRoute
 }
@@ -430,7 +387,6 @@ export interface FileRoutesByTo {
   '/ban/$ban_id': typeof AuthBanBan_idRoute
   '/contests/$contest_id': typeof AuthContestsContest_idRoute
   '/forums/$forum_id': typeof AuthForumsForum_idRoute
-  '/match/$matchId': typeof AuthMatchMatchIdRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
   '/login/success': typeof GuestLoginSuccessRoute
   '/profile/$steamId': typeof GuestProfileSteamIdRoute
@@ -446,18 +402,14 @@ export interface FileRoutesByTo {
   '/admin/votes': typeof ModAdminVotesRoute
   '/forums': typeof AuthForumsIndexRoute
   '/report': typeof AuthReportIndexRoute
-  '/stats': typeof AuthStatsIndexRoute
   '/login': typeof GuestLoginIndexRoute
   '/speedruns': typeof GuestSpeedrunsIndexRoute
   '/wiki': typeof GuestWikiIndexRoute
-  '/logs/$steamId': typeof AuthLogsSteamIdRoute
   '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForum_thread_idRoute
-  '/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeapon_idRoute
   '/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
   '/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
   '/admin/network/cidrblocks': typeof ModAdminNetworkCidrblocksRoute
   '/admin/network/ipInfo': typeof ModAdminNetworkIpInfoRoute
-  '/admin/network/iphist': typeof ModAdminNetworkIphistRoute
   '/admin/network/playersbyip': typeof ModAdminNetworkPlayersbyipRoute
   '/admin/network': typeof ModAdminNetworkIndexRoute
 }
@@ -475,7 +427,6 @@ export interface FileRoutesById {
   '/_auth/permission': typeof AuthPermissionRoute
   '/_auth/report': typeof AuthReportRouteWithChildren
   '/_auth/settings': typeof AuthSettingsRoute
-  '/_auth/stats': typeof AuthStatsRouteWithChildren
   '/_guest/changelog': typeof GuestChangelogRoute
   '/_guest/contests': typeof GuestContestsRoute
   '/_guest/patreon': typeof GuestPatreonRoute
@@ -490,7 +441,6 @@ export interface FileRoutesById {
   '/_auth/ban/$ban_id': typeof AuthBanBan_idRoute
   '/_auth/contests/$contest_id': typeof AuthContestsContest_idRoute
   '/_auth/forums/$forum_id': typeof AuthForumsForum_idRoute
-  '/_auth/match/$matchId': typeof AuthMatchMatchIdRoute
   '/_auth/report/$reportId': typeof AuthReportReportIdRoute
   '/_guest/login/success': typeof GuestLoginSuccessRoute
   '/_guest/profile/$steamId': typeof GuestProfileSteamIdRoute
@@ -506,18 +456,14 @@ export interface FileRoutesById {
   '/_mod/admin/votes': typeof ModAdminVotesRoute
   '/_auth/forums/': typeof AuthForumsIndexRoute
   '/_auth/report/': typeof AuthReportIndexRoute
-  '/_auth/stats/': typeof AuthStatsIndexRoute
   '/_guest/login/': typeof GuestLoginIndexRoute
   '/_guest/speedruns/': typeof GuestSpeedrunsIndexRoute
   '/_guest/wiki/': typeof GuestWikiIndexRoute
-  '/_auth/logs/$steamId/': typeof AuthLogsSteamIdRoute
   '/_auth/forums/thread/$forum_thread_id': typeof AuthForumsThreadForum_thread_idRoute
-  '/_auth/stats/weapon/$weapon_id': typeof AuthStatsWeaponWeapon_idRoute
   '/_guest/speedruns/id/$speedrunId': typeof GuestSpeedrunsIdSpeedrunIdRoute
   '/_guest/speedruns/map/$mapName': typeof GuestSpeedrunsMapMapNameRoute
   '/_mod/admin/network/cidrblocks': typeof ModAdminNetworkCidrblocksRoute
   '/_mod/admin/network/ipInfo': typeof ModAdminNetworkIpInfoRoute
-  '/_mod/admin/network/iphist': typeof ModAdminNetworkIphistRoute
   '/_mod/admin/network/playersbyip': typeof ModAdminNetworkPlayersbyipRoute
   '/_mod/admin/network/': typeof ModAdminNetworkIndexRoute
 }
@@ -533,7 +479,6 @@ export interface FileRouteTypes {
     | '/permission'
     | '/report'
     | '/settings'
-    | '/stats'
     | '/changelog'
     | '/contests'
     | '/patreon'
@@ -547,7 +492,6 @@ export interface FileRouteTypes {
     | '/ban/$ban_id'
     | '/contests/$contest_id'
     | '/forums/$forum_id'
-    | '/match/$matchId'
     | '/report/$reportId'
     | '/login/success'
     | '/profile/$steamId'
@@ -563,18 +507,14 @@ export interface FileRouteTypes {
     | '/admin/votes'
     | '/forums/'
     | '/report/'
-    | '/stats/'
     | '/login/'
     | '/speedruns/'
     | '/wiki/'
-    | '/logs/$steamId/'
     | '/forums/thread/$forum_thread_id'
-    | '/stats/weapon/$weapon_id'
     | '/speedruns/id/$speedrunId'
     | '/speedruns/map/$mapName'
     | '/admin/network/cidrblocks'
     | '/admin/network/ipInfo'
-    | '/admin/network/iphist'
     | '/admin/network/playersbyip'
     | '/admin/network/'
   fileRoutesByTo: FileRoutesByTo
@@ -598,7 +538,6 @@ export interface FileRouteTypes {
     | '/ban/$ban_id'
     | '/contests/$contest_id'
     | '/forums/$forum_id'
-    | '/match/$matchId'
     | '/report/$reportId'
     | '/login/success'
     | '/profile/$steamId'
@@ -614,18 +553,14 @@ export interface FileRouteTypes {
     | '/admin/votes'
     | '/forums'
     | '/report'
-    | '/stats'
     | '/login'
     | '/speedruns'
     | '/wiki'
-    | '/logs/$steamId'
     | '/forums/thread/$forum_thread_id'
-    | '/stats/weapon/$weapon_id'
     | '/speedruns/id/$speedrunId'
     | '/speedruns/map/$mapName'
     | '/admin/network/cidrblocks'
     | '/admin/network/ipInfo'
-    | '/admin/network/iphist'
     | '/admin/network/playersbyip'
     | '/admin/network'
   id:
@@ -642,7 +577,6 @@ export interface FileRouteTypes {
     | '/_auth/permission'
     | '/_auth/report'
     | '/_auth/settings'
-    | '/_auth/stats'
     | '/_guest/changelog'
     | '/_guest/contests'
     | '/_guest/patreon'
@@ -657,7 +591,6 @@ export interface FileRouteTypes {
     | '/_auth/ban/$ban_id'
     | '/_auth/contests/$contest_id'
     | '/_auth/forums/$forum_id'
-    | '/_auth/match/$matchId'
     | '/_auth/report/$reportId'
     | '/_guest/login/success'
     | '/_guest/profile/$steamId'
@@ -673,18 +606,14 @@ export interface FileRouteTypes {
     | '/_mod/admin/votes'
     | '/_auth/forums/'
     | '/_auth/report/'
-    | '/_auth/stats/'
     | '/_guest/login/'
     | '/_guest/speedruns/'
     | '/_guest/wiki/'
-    | '/_auth/logs/$steamId/'
     | '/_auth/forums/thread/$forum_thread_id'
-    | '/_auth/stats/weapon/$weapon_id'
     | '/_guest/speedruns/id/$speedrunId'
     | '/_guest/speedruns/map/$mapName'
     | '/_mod/admin/network/cidrblocks'
     | '/_mod/admin/network/ipInfo'
-    | '/_mod/admin/network/iphist'
     | '/_mod/admin/network/playersbyip'
     | '/_mod/admin/network/'
   fileRoutesById: FileRoutesById
@@ -782,13 +711,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestChangelogRouteImport
       parentRoute: typeof GuestRoute
     }
-    '/_auth/stats': {
-      id: '/_auth/stats'
-      path: '/stats'
-      fullPath: '/stats'
-      preLoaderRoute: typeof AuthStatsRouteImport
-      parentRoute: typeof AuthRoute
-    }
     '/_auth/settings': {
       id: '/_auth/settings'
       path: '/settings'
@@ -865,13 +787,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/login/'
       preLoaderRoute: typeof GuestLoginIndexRouteImport
       parentRoute: typeof GuestRoute
-    }
-    '/_auth/stats/': {
-      id: '/_auth/stats/'
-      path: '/'
-      fullPath: '/stats/'
-      preLoaderRoute: typeof AuthStatsIndexRouteImport
-      parentRoute: typeof AuthStatsRoute
     }
     '/_auth/report/': {
       id: '/_auth/report/'
@@ -978,13 +893,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthReportReportIdRouteImport
       parentRoute: typeof AuthReportRoute
     }
-    '/_auth/match/$matchId': {
-      id: '/_auth/match/$matchId'
-      path: '/match/$matchId'
-      fullPath: '/match/$matchId'
-      preLoaderRoute: typeof AuthMatchMatchIdRouteImport
-      parentRoute: typeof AuthRoute
-    }
     '/_auth/forums/$forum_id': {
       id: '/_auth/forums/$forum_id'
       path: '/$forum_id'
@@ -1041,13 +949,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModAdminNetworkPlayersbyipRouteImport
       parentRoute: typeof ModRoute
     }
-    '/_mod/admin/network/iphist': {
-      id: '/_mod/admin/network/iphist'
-      path: '/admin/network/iphist'
-      fullPath: '/admin/network/iphist'
-      preLoaderRoute: typeof ModAdminNetworkIphistRouteImport
-      parentRoute: typeof ModRoute
-    }
     '/_mod/admin/network/ipInfo': {
       id: '/_mod/admin/network/ipInfo'
       path: '/admin/network/ipInfo'
@@ -1076,26 +977,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestSpeedrunsIdSpeedrunIdRouteImport
       parentRoute: typeof GuestRoute
     }
-    '/_auth/stats/weapon/$weapon_id': {
-      id: '/_auth/stats/weapon/$weapon_id'
-      path: '/weapon/$weapon_id'
-      fullPath: '/stats/weapon/$weapon_id'
-      preLoaderRoute: typeof AuthStatsWeaponWeapon_idRouteImport
-      parentRoute: typeof AuthStatsRoute
-    }
     '/_auth/forums/thread/$forum_thread_id': {
       id: '/_auth/forums/thread/$forum_thread_id'
       path: '/thread/$forum_thread_id'
       fullPath: '/forums/thread/$forum_thread_id'
       preLoaderRoute: typeof AuthForumsThreadForum_thread_idRouteImport
       parentRoute: typeof AuthForumsRoute
-    }
-    '/_auth/logs/$steamId/': {
-      id: '/_auth/logs/$steamId/'
-      path: '/logs/$steamId'
-      fullPath: '/logs/$steamId/'
-      preLoaderRoute: typeof AuthLogsSteamIdRouteImport
-      parentRoute: typeof AuthRoute
     }
   }
 }
@@ -1144,20 +1031,6 @@ const AuthReportRouteWithChildren = AuthReportRoute._addFileChildren(
   AuthReportRouteChildren,
 )
 
-interface AuthStatsRouteChildren {
-  AuthStatsIndexRoute: typeof AuthStatsIndexRoute
-  AuthStatsWeaponWeapon_idRoute: typeof AuthStatsWeaponWeapon_idRoute
-}
-
-const AuthStatsRouteChildren: AuthStatsRouteChildren = {
-  AuthStatsIndexRoute: AuthStatsIndexRoute,
-  AuthStatsWeaponWeapon_idRoute: AuthStatsWeaponWeapon_idRoute,
-}
-
-const AuthStatsRouteWithChildren = AuthStatsRoute._addFileChildren(
-  AuthStatsRouteChildren,
-)
-
 interface AuthRouteChildren {
   AuthChatlogsRoute: typeof AuthChatlogsRoute
   AuthForumsRoute: typeof AuthForumsRouteWithChildren
@@ -1167,11 +1040,8 @@ interface AuthRouteChildren {
   AuthPermissionRoute: typeof AuthPermissionRoute
   AuthReportRoute: typeof AuthReportRouteWithChildren
   AuthSettingsRoute: typeof AuthSettingsRoute
-  AuthStatsRoute: typeof AuthStatsRouteWithChildren
   AuthBanBan_idRoute: typeof AuthBanBan_idRoute
   AuthContestsContest_idRoute: typeof AuthContestsContest_idRoute
-  AuthMatchMatchIdRoute: typeof AuthMatchMatchIdRoute
-  AuthLogsSteamIdRoute: typeof AuthLogsSteamIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
@@ -1183,11 +1053,8 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthPermissionRoute: AuthPermissionRoute,
   AuthReportRoute: AuthReportRouteWithChildren,
   AuthSettingsRoute: AuthSettingsRoute,
-  AuthStatsRoute: AuthStatsRouteWithChildren,
   AuthBanBan_idRoute: AuthBanBan_idRoute,
   AuthContestsContest_idRoute: AuthContestsContest_idRoute,
-  AuthMatchMatchIdRoute: AuthMatchMatchIdRoute,
-  AuthLogsSteamIdRoute: AuthLogsSteamIdRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
@@ -1254,7 +1121,6 @@ interface ModRouteChildren {
   ModAdminVotesRoute: typeof ModAdminVotesRoute
   ModAdminNetworkCidrblocksRoute: typeof ModAdminNetworkCidrblocksRoute
   ModAdminNetworkIpInfoRoute: typeof ModAdminNetworkIpInfoRoute
-  ModAdminNetworkIphistRoute: typeof ModAdminNetworkIphistRoute
   ModAdminNetworkPlayersbyipRoute: typeof ModAdminNetworkPlayersbyipRoute
   ModAdminNetworkIndexRoute: typeof ModAdminNetworkIndexRoute
 }
@@ -1271,7 +1137,6 @@ const ModRouteChildren: ModRouteChildren = {
   ModAdminVotesRoute: ModAdminVotesRoute,
   ModAdminNetworkCidrblocksRoute: ModAdminNetworkCidrblocksRoute,
   ModAdminNetworkIpInfoRoute: ModAdminNetworkIpInfoRoute,
-  ModAdminNetworkIphistRoute: ModAdminNetworkIphistRoute,
   ModAdminNetworkPlayersbyipRoute: ModAdminNetworkPlayersbyipRoute,
   ModAdminNetworkIndexRoute: ModAdminNetworkIndexRoute,
 }
