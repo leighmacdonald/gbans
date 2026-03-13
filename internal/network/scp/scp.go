@@ -87,7 +87,11 @@ func (f *Connection) Close() {
 
 	if errClose := f.conn.Close(); errClose != nil {
 		slog.Error("failed to close scp client", slog.String("error", errClose.Error()))
+
+		return
 	}
+
+	slog.Debug("closed ssh connection")
 }
 
 func (f *Connection) AddHandler(handler ConnectionHandler) {
@@ -102,6 +106,7 @@ func (f *Connection) Update(ctx context.Context) error {
 	if err := f.connect(); err != nil {
 		return err
 	}
+	defer f.Close()
 
 	var errs error
 	for _, handler := range f.handlers {

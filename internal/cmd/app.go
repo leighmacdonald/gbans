@@ -789,7 +789,6 @@ func downloadManager(ctx context.Context, store database.Database, conf scp.Conf
 				}
 			}
 
-			slog.Debug("Updating SCP handlers")
 			start := time.Now()
 
 			// No errgroup since we want to continue on errors.
