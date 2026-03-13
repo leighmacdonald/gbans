@@ -1,148 +1,149 @@
-import FilterListIcon from "@mui/icons-material/FilterList";
-import WifiFindIcon from "@mui/icons-material/WifiFind";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import TableCell from "@mui/material/TableCell";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { createColumnHelper, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { z } from "zod/v4";
+import { createFileRoute } from "@tanstack/react-router";
+import {
+	createMRTColumnHelper,
+	type MRT_ColumnFiltersState,
+	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
+} from "material-react-table";
+import { useState } from "react";
 import { apiGetConnections } from "../api";
-import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
-import { Paginator } from "../component/forum/Paginator.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { DataTable } from "../component/table/DataTable.tsx";
-import { useAppForm } from "../contexts/formContext.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import type { PersonConnection } from "../schema/people.ts";
-import { commonTableSearchSchema, type LazyResult, RowsPerPage } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
-import { emptyOrNullString } from "../util/types.ts";
 
-const playersByIPSearchSchema = commonTableSearchSchema.extend({
-	sortColumn: z.enum(["person_connection_id", "steam_id", "created_on", "ip_addr", "server_id"]).optional(),
-	cidr: z.string().optional(),
-});
+const columnHelper = createMRTColumnHelper<PersonConnection>();
+const defaultOptions = createDefaultTableOptions<PersonConnection>();
 
 export const Route = createFileRoute("/_mod/admin/network/playersbyip")({
 	component: AdminNetworkPlayersByCIDR,
-	validateSearch: (search) => playersByIPSearchSchema.parse(search),
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Find players by IP address" }, match.context.title("Players By IP")],
 	}),
 });
 
 function AdminNetworkPlayersByCIDR() {
-	const defaultRows = RowsPerPage.TwentyFive;
-	const navigate = useNavigate({ from: Route.fullPath });
-	const { pageIndex, pageSize, sortOrder, sortColumn, cidr } = Route.useSearch();
-	const { data: connections, isLoading } = useQuery({
-		queryKey: ["playersByIP", { pageIndex, pageSize, sortOrder, sortColumn, cidr }],
+	const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+	const [globalFilter, setGlobalFilter] = useState("");
+	const [sorting, setSorting] = useState<MRT_SortingState>([]);
+	const [pagination, setPagination] = useState<MRT_PaginationState>({
+		pageIndex: 0,
+		pageSize: 50,
+	});
+
+	const { data, isLoading, isError, isRefetching } = useQuery({
+		queryKey: ["playersByIP", { columnFilters, globalFilter, pagination, sorting }],
 		queryFn: async () => {
-			if (emptyOrNullString(cidr)) {
-				return { data: [], count: 0 };
-			}
+			const cidr = String(columnFilters.find((filter) => filter.id === "cidr")?.value ?? "");
+			const steam_id = String(columnFilters.find((filter) => filter.id === "steam_id")?.value ?? "");
+			const sort = sorting.find((sort) => sort);
+
 			return await apiGetConnections({
-				limit: pageSize ?? defaultRows,
-				offset: (pageIndex ?? 0) * (pageSize ?? defaultRows),
-				order_by: sortColumn ?? "steam_id",
-				desc: sortOrder === "desc",
+				desc: sort ? sort.desc : false,
+				limit: pagination.pageSize,
+				offset: pagination.pageIndex * pagination.pageSize,
+				order_by: sort ? sort.id : "created_on",
+				source_id: steam_id,
 				cidr: cidr ?? "",
 			});
 		},
 	});
 
-	const form = useAppForm({
-		onSubmit: async ({ value }) => {
-			await navigate({
-				to: "/admin/network/playersbyip",
-				search: (prev) => ({ ...prev, ...value }),
-			});
-		},
-		validators: {
-			onChange: z.object({
-				cidr: z.string(),
-			}),
-		},
-		defaultValues: {
-			cidr: cidr ?? "",
-		},
-	});
-
-	const clear = async () => {
-		await navigate({
-			to: "/admin/network/playersbyip",
-			search: (prev) => ({ ...prev, source_id: undefined }),
-		});
-	};
-
-	return (
-		<Grid container spacing={2}>
-			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeader title={"Find Players By IP/CIDR"} iconLeft={<WifiFindIcon />}>
-					<PayersByIPTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
-				</ContainerWithHeader>
-			</Grid>
-		</Grid>
-	);
-}
-
-const columnHelper = createColumnHelper<PersonConnection>();
-
-const PayersByIPTable = () => {
 	const columns = [
 		columnHelper.accessor("created_on", {
-			size: 120,
+			grow: false,
 			header: "Created",
-			cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
+			Cell: ({ cell }) => <Typography>{renderDateTime(cell.getValue())}</Typography>,
 		}),
 		columnHelper.accessor("persona_name", {
 			header: "Name",
-			cell: (info) => (
+			grow: true,
+			Cell: ({ cell }) => (
 				<TableCell>
-					<Typography>{info.getValue()}</Typography>
+					<Typography>{cell.getValue()}</Typography>
 				</TableCell>
 			),
 		}),
 		columnHelper.accessor("steam_id", {
-			size: 150,
+			grow: false,
 			header: "Steam ID",
-			cell: (info) => (
+			Cell: ({ cell }) => (
 				<TableCell>
-					<TextLink to={"/profile/$steamId"} params={{ steamId: info.getValue() }}>
-						{info.getValue()}
+					<TextLink to={"/profile/$steamId"} params={{ steamId: cell.getValue() }}>
+						{cell.getValue()}
 					</TextLink>
 				</TableCell>
 			),
 		}),
 		columnHelper.accessor("ip_addr", {
-			size: 120,
+			grow: false,
 			header: "IP Address",
-			cell: (info) => (
+			Cell: ({ cell }) => (
 				<TableCell>
-					<Typography>{info.getValue()}</Typography>
+					<Typography>{cell.getValue()}</Typography>
 				</TableCell>
 			),
 		}),
 
 		columnHelper.accessor("server_id", {
 			header: "Server",
-			size: 75,
-			cell: (info) => (
+			grow: false,
+			Cell: ({ row }) => (
 				<TableCell>
-					<Typography>{connections.data[info.row.index].server_name_short}</Typography>
+					<Typography>{row.original.server_name_short}</Typography>
 				</TableCell>
 			),
 		}),
 	];
 
-	const table = useReactTable({
-		data: connections.data,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data?.data ?? [],
+		rowCount: data?.count ?? 0,
+		enableFilters: true,
+		enableHiding: true,
+		enableFacetedValues: true,
+		state: {
+			columnFilters,
+			globalFilter,
+			isLoading,
+			pagination,
+			showAlertBanner: isError,
+			showProgressBars: isRefetching,
+			sorting,
+		},
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "ban_id", desc: true }],
+			columnVisibility: {
+				cidr_block_whitelist_id: false,
+				address: true,
+				created_on: true,
+				updated_on: false,
+			},
+		},
+		manualFiltering: true,
 		manualPagination: true,
-		autoResetPageIndex: true,
+		manualSorting: true,
+		onColumnFiltersChange: setColumnFilters,
+		onGlobalFilterChange: setGlobalFilter,
+		onPaginationChange: setPagination,
+		onSortingChange: setSorting,
+		enableRowActions: true,
 	});
 
-	return <DataTable table={table} isLoading={isLoading} />;
-};
+	return (
+		<Grid container spacing={2}>
+			<Grid size={{ xs: 12 }}>
+				<SortableTable table={table} title={"Players By CIDR/IP"} />
+			</Grid>
+		</Grid>
+	);
+}

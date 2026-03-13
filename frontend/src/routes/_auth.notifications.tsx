@@ -1,329 +1,327 @@
-import NiceModal from "@ebay/nice-modal-react";
-import ClearAllIcon from "@mui/icons-material/ClearAll";
-import DoneIcon from "@mui/icons-material/Done";
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import EmailIcon from "@mui/icons-material/Email";
 import LinkIcon from "@mui/icons-material/Link";
-import MarkChatReadIcon from "@mui/icons-material/MarkChatRead";
-import RemoveIcon from "@mui/icons-material/Remove";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
-import IconButton from "@mui/material/IconButton";
 import { useTheme } from "@mui/material/styles";
-import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	type OnChangeFn,
-	type PaginationState,
-	type RowSelectionState,
-	useReactTable,
-} from "@tanstack/react-table";
-import { useCallback, useMemo, useState } from "react";
-import {
-	apiGetNotifications,
-	apiNotificationsDelete,
-	apiNotificationsDeleteAll,
-	apiNotificationsMarkAllRead,
-	apiNotificationsMarkRead,
-} from "../api";
-import { ContainerWithHeaderAndButtons } from "../component/ContainerWithHeaderAndButtons.tsx";
-import { PaginatorLocal } from "../component/forum/PaginatorLocal.tsx";
-import { IndeterminateCheckbox } from "../component/IndeterminateCheckbox.tsx";
-import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
+import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { useMemo } from "react";
+import { apiGetNotifications } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { DataTable } from "../component/table/DataTable.tsx";
+import { createDefaultTableOptions } from "../component/table/options.ts";
+import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
-import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { NotificationSeverity, type NotificationSeverityEnum, type UserNotification } from "../schema/people.ts";
-import { RowsPerPage } from "../util/table.ts";
+
+const columnHelper = createMRTColumnHelper<UserNotification>();
+const defaultOptions = createDefaultTableOptions<UserNotification>();
 
 export const Route = createFileRoute("/_auth/notifications")({
 	component: NotificationsPage,
-	loader: async ({ context }) => {
-		const notifications = await context.queryClient.fetchQuery({
-			queryKey: ["notifications"],
-			queryFn: async () => {
-				return await apiGetNotifications();
-			},
-		});
-		return { notifications };
-	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "User Notifications" }, match.context.title("Notifications")],
 	}),
 });
 
 function NotificationsPage() {
-	const queryClient = useQueryClient();
-	const { notifications } = Route.useLoaderData();
-	const { sendError, sendFlash } = useUserFlashCtx();
-	const [rowSelection, setRowSelection] = useState({});
-	const theme = useTheme();
-	const breakMatched = useMediaQuery(theme.breakpoints.up("md"));
-
-	// const { page, rows, sortOrder, sortColumn } = Route.useSearch();
-	const [pagination, setPagination] = useState({
-		pageIndex: 0, //initial page index
-		pageSize: RowsPerPage.TwentyFive, //default page size
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["notifications"],
+		queryFn: async () => {
+			return await apiGetNotifications();
+		},
 	});
+	// const queryClient = useQueryClient();
+	// const { notifications } = Route.useLoaderData();
+	// const { sendError, sendFlash } = useUserFlashCtx();
 
-	const selectedToIds = useCallback(() => {
-		if (!notifications) {
-			return [];
-		}
+	// const onMarkAllRead = useMutation({
+	// 	mutationKey: ["notifications"],
+	// 	mutationFn: async () => {
+	// 		await apiNotificationsMarkAllRead();
+	// 	},
+	// 	onSuccess: () => {
+	// 		queryClient.setQueryData(["notifications"], (prev: UserNotification[]) => {
+	// 			return prev?.map((n) => {
+	// 				return { ...n, read: true };
+	// 			});
+	// 		});
+	// 		sendFlash("success", `Successfully marked ${notifications?.length} as read`);
+	// 	},
+	// 	onError: sendError,
+	// });
 
-		return Object.keys(rowSelection).map((s) => notifications[Number(s)].person_notification_id);
-	}, [notifications, rowSelection]);
+	// const onMarkSelected = useMutation({
+	// 	mutationKey: ["notifications"],
+	// 	mutationFn: async (selectedIds: number[]) => {
+	// 		await apiNotificationsMarkRead(selectedIds);
+	// 	},
+	// 	onSuccess: (_, ids) => {
+	// 		queryClient.setQueryData(["notifications"], (prev: UserNotification[]) => {
+	// 			return prev?.map((n) => {
+	// 				return ids.includes(n.person_notification_id) ? { ...n, read: true } : n;
+	// 			});
+	// 		});
+	// 		sendFlash("success", `Successfully marked ${ids?.length} as read`);
+	// 	},
+	// 	onError: sendError,
+	// });
 
-	const onMarkAllRead = useMutation({
-		mutationKey: ["notifications"],
-		mutationFn: async () => {
-			await apiNotificationsMarkAllRead();
-		},
-		onSuccess: () => {
-			queryClient.setQueryData(["notifications"], (prev: UserNotification[]) => {
-				return prev?.map((n) => {
-					return { ...n, read: true };
-				});
-			});
-			sendFlash("success", `Successfully marked ${notifications?.length} as read`);
-			setRowSelection({});
-		},
-		onError: sendError,
-	});
+	// const onDeleteAll = useMutation({
+	// 	mutationKey: ["notifications"],
+	// 	mutationFn: async () => {
+	// 		await apiNotificationsDeleteAll();
+	// 	},
+	// 	onSuccess: () => {
+	// 		queryClient.setQueryData(["notifications"], []);
+	// 		sendFlash("success", `Successfully deleted ${notifications?.length} messages`);
+	// 	},
+	// 	onError: sendError,
+	// });
 
-	const onMarkSelected = useMutation({
-		mutationKey: ["notifications"],
-		mutationFn: async (selectedIds: number[]) => {
-			await apiNotificationsMarkRead(selectedIds);
-		},
-		onSuccess: (_, ids) => {
-			queryClient.setQueryData(["notifications"], (prev: UserNotification[]) => {
-				return prev?.map((n) => {
-					return ids.includes(n.person_notification_id) ? { ...n, read: true } : n;
-				});
-			});
-			sendFlash("success", `Successfully marked ${ids?.length} as read`);
-			setRowSelection({});
-		},
-		onError: sendError,
-	});
+	// const onDeleteSelected = useMutation({
+	// 	mutationKey: ["notifications"],
+	// 	mutationFn: async (selectedIds: number[]) => {
+	// 		await apiNotificationsDelete(selectedIds);
+	// 	},
+	// 	onSuccess: (_, ids) => {
+	// 		queryClient.setQueryData(["notifications"], (prev: UserNotification[]) => {
+	// 			return prev?.filter((n) => {
+	// 				return !ids.includes(n.person_notification_id);
+	// 			});
+	// 		});
+	// 		sendFlash("success", `Successfully deleted ${ids?.length} messages`);
+	// 	},
+	// 	onError: sendError,
+	// });
 
-	const onDeleteAll = useMutation({
-		mutationKey: ["notifications"],
-		mutationFn: async () => {
-			await apiNotificationsDeleteAll();
-		},
-		onSuccess: () => {
-			queryClient.setQueryData(["notifications"], []);
-			sendFlash("success", `Successfully deleted ${notifications?.length} messages`);
-			setRowSelection({});
-		},
-		onError: sendError,
-	});
+	// const onConfirmDeleteSelected = useCallback(async () => {
+	// 	const ids = selectedToIds();
+	// 	if (ids?.length === 0) {
+	// 		return;
+	// 	}
+	// 	const confirmed = (await NiceModal.show(ConfirmationModal, {
+	// 		title: `Delete ${ids.length} notifications?`,
+	// 		children: "This cannot be undone",
+	// 	})) as boolean;
+	// 	if (!confirmed) {
+	// 		return;
+	// 	}
+	// 	onDeleteSelected.mutate(ids);
+	// }, [onDeleteSelected, selectedToIds]);
 
-	const onDeleteSelected = useMutation({
-		mutationKey: ["notifications"],
-		mutationFn: async (selectedIds: number[]) => {
-			await apiNotificationsDelete(selectedIds);
-		},
-		onSuccess: (_, ids) => {
-			queryClient.setQueryData(["notifications"], (prev: UserNotification[]) => {
-				return prev?.filter((n) => {
-					return !ids.includes(n.person_notification_id);
-				});
-			});
-			sendFlash("success", `Successfully deleted ${ids?.length} messages`);
-			setRowSelection({});
-		},
-		onError: sendError,
-	});
-
-	const onConfirmDeleteSelected = useCallback(async () => {
-		const ids = selectedToIds();
-		if (ids?.length === 0) {
-			return;
-		}
-		const confirmed = (await NiceModal.show(ConfirmationModal, {
-			title: `Delete ${ids.length} notifications?`,
-			children: "This cannot be undone",
-		})) as boolean;
-		if (!confirmed) {
-			return;
-		}
-		onDeleteSelected.mutate(ids);
-	}, [onDeleteSelected, selectedToIds]);
-
-	const onConfirmDeleteAll = useCallback(async () => {
-		if (!notifications) {
-			return;
-		}
-		const confirmed = (await NiceModal.show(ConfirmationModal, {
-			title: `Delete all ${notifications.length} notifications?`,
-			children: "This cannot be undone",
-		})) as boolean;
-		if (!confirmed) {
-			return;
-		}
-		onDeleteAll.mutate();
-	}, [notifications, onDeleteAll]);
+	// const onConfirmDeleteAll = useCallback(async () => {
+	// 	if (!notifications) {
+	// 		return;
+	// 	}
+	// 	const confirmed = (await NiceModal.show(ConfirmationModal, {
+	// 		title: `Delete all ${notifications.length} notifications?`,
+	// 		children: "This cannot be undone",
+	// 	})) as boolean;
+	// 	if (!confirmed) {
+	// 		return;
+	// 	}
+	// 	onDeleteAll.mutate();
+	// }, [notifications, onDeleteAll]);
 
 	// const newMessages = useMemo(() => {
 	// 	return notifications?.filter((n) => !n.read).length;
 	// }, [notifications]);
 
-	const buttons = useMemo(() => {
-		if (breakMatched) {
-			return (
-				<ButtonGroup variant="contained" key={"hdr-buttons"}>
-					<Button
-						startIcon={<DoneIcon />}
-						color={"success"}
-						key={"mark-selected"}
-						onClick={() => {
-							const ids = selectedToIds();
-							if (ids?.length === 0) {
-								return;
-							}
-							onMarkSelected.mutate(ids);
-						}}
-						disabled={Object.values(rowSelection).length === 0}
-					>
-						Mark Selected Read
-					</Button>
-					<Button
-						startIcon={<DoneAllIcon />}
-						color={"success"}
-						key={"mark-all"}
-						onClick={() => onMarkAllRead.mutate()}
-						disabled={(notifications ?? [])?.length === 0}
-					>
-						Mark All Read
-					</Button>
-					<Button
-						startIcon={<RemoveIcon />}
-						color={"error"}
-						key={"delete-selected"}
-						onClick={onConfirmDeleteSelected}
-						disabled={Object.values(rowSelection).length === 0}
-					>
-						Delete Selected
-					</Button>
-					<Button
-						startIcon={<ClearAllIcon />}
-						color={"error"}
-						key={"delete-all"}
-						onClick={onConfirmDeleteAll}
-						disabled={(notifications ?? [])?.length === 0}
-					>
-						Delete All
-					</Button>
-				</ButtonGroup>
-			);
-		} else {
-			return (
-				<ButtonGroup variant="contained" key={"hdr-buttons"}>
-					<Tooltip title="Mark Selected Read">
-						<IconButton
-							color={"success"}
-							key={"mark-selected"}
-							onClick={() => {
-								const ids = selectedToIds();
-								if (ids?.length === 0) {
-									return;
-								}
-								onMarkSelected.mutate(ids);
-							}}
-							disabled={Object.values(rowSelection).length === 0}
-						>
-							<DoneIcon />
-						</IconButton>
-					</Tooltip>
-					<Tooltip title="Mark All Read">
-						<IconButton
-							color={"success"}
-							key={"mark-all"}
-							onClick={() => onMarkAllRead.mutate()}
-							disabled={(notifications ?? [])?.length === 0}
-						>
-							<DoneAllIcon />
-						</IconButton>
-					</Tooltip>
-					<Tooltip title="Delete Selected">
-						<IconButton
-							color={"error"}
-							key={"delete-selected"}
-							onClick={onConfirmDeleteSelected}
-							disabled={Object.values(rowSelection).length === 0}
-						>
-							<RemoveIcon />
-						</IconButton>
-					</Tooltip>
-					<Tooltip title="Delete All">
-						<IconButton
-							color={"error"}
-							key={"delete-all"}
-							onClick={onConfirmDeleteAll}
-							disabled={(notifications ?? [])?.length === 0}
-						>
-							<ClearAllIcon />
-						</IconButton>
-					</Tooltip>
-				</ButtonGroup>
-			);
-		}
-	}, [
-		breakMatched,
-		onConfirmDeleteAll,
-		onConfirmDeleteSelected,
-		rowSelection,
-		notifications,
-		onMarkAllRead.mutate,
-		onMarkSelected.mutate,
-		selectedToIds,
-	]);
+	// const buttons = useMemo(() => {
+	// 	if (breakMatched) {
+	// 		return (
+	// 			<ButtonGroup variant="contained" key={"hdr-buttons"}>
+	// 				<Button
+	// 					startIcon={<DoneIcon />}
+	// 					color={"success"}
+	// 					key={"mark-selected"}
+	// 					onClick={() => {
+	// 						const ids = selectedToIds();
+	// 						if (ids?.length === 0) {
+	// 							return;
+	// 						}
+	// 						onMarkSelected.mutate(ids);
+	// 					}}
+	// 					disabled={Object.values(rowSelection).length === 0}
+	// 				>
+	// 					Mark Selected Read
+	// 				</Button>
+	// 				<Button
+	// 					startIcon={<DoneAllIcon />}
+	// 					color={"success"}
+	// 					key={"mark-all"}
+	// 					onClick={() => onMarkAllRead.mutate()}
+	// 					disabled={(notifications ?? [])?.length === 0}
+	// 				>
+	// 					Mark All Read
+	// 				</Button>
+	// 				<Button
+	// 					startIcon={<RemoveIcon />}
+	// 					color={"error"}
+	// 					key={"delete-selected"}
+	// 					onClick={onConfirmDeleteSelected}
+	// 					disabled={Object.values(rowSelection).length === 0}
+	// 				>
+	// 					Delete Selected
+	// 				</Button>
+	// 				<Button
+	// 					startIcon={<ClearAllIcon />}
+	// 					color={"error"}
+	// 					key={"delete-all"}
+	// 					onClick={onConfirmDeleteAll}
+	// 					disabled={(notifications ?? [])?.length === 0}
+	// 				>
+	// 					Delete All
+	// 				</Button>
+	// 			</ButtonGroup>
+	// 		);
+	// 	} else {
+	// 		return (
+	// 			<ButtonGroup variant="contained" key={"hdr-buttons"}>
+	// 				<Tooltip title="Mark Selected Read">
+	// 					<IconButton
+	// 						color={"success"}
+	// 						key={"mark-selected"}
+	// 						onClick={() => {
+	// 							const ids = selectedToIds();
+	// 							if (ids?.length === 0) {
+	// 								return;
+	// 							}
+	// 							onMarkSelected.mutate(ids);
+	// 						}}
+	// 						disabled={Object.values(rowSelection).length === 0}
+	// 					>
+	// 						<DoneIcon />
+	// 					</IconButton>
+	// 				</Tooltip>
+	// 				<Tooltip title="Mark All Read">
+	// 					<IconButton
+	// 						color={"success"}
+	// 						key={"mark-all"}
+	// 						onClick={() => onMarkAllRead.mutate()}
+	// 						disabled={(notifications ?? [])?.length === 0}
+	// 					>
+	// 						<DoneAllIcon />
+	// 					</IconButton>
+	// 				</Tooltip>
+	// 				<Tooltip title="Delete Selected">
+	// 					<IconButton
+	// 						color={"error"}
+	// 						key={"delete-selected"}
+	// 						onClick={onConfirmDeleteSelected}
+	// 						disabled={Object.values(rowSelection).length === 0}
+	// 					>
+	// 						<RemoveIcon />
+	// 					</IconButton>
+	// 				</Tooltip>
+	// 				<Tooltip title="Delete All">
+	// 					<IconButton
+	// 						color={"error"}
+	// 						key={"delete-all"}
+	// 						onClick={onConfirmDeleteAll}
+	// 						disabled={(notifications ?? [])?.length === 0}
+	// 					>
+	// 						<ClearAllIcon />
+	// 					</IconButton>
+	// 				</Tooltip>
+	// 			</ButtonGroup>
+	// 		);
+	// 	}
+	// }, [
+	// 	breakMatched,
+	// 	onConfirmDeleteAll,
+	// 	onConfirmDeleteSelected,
+	// 	rowSelection,
+	// 	notifications,
+	// 	onMarkAllRead.mutate,
+	// 	onMarkSelected.mutate,
+	// 	selectedToIds,
+	// ]);
+
+	const columns = useMemo(() => {
+		return [
+			columnHelper.accessor("read", {
+				header: "Read",
+				grow: false,
+				Cell: ({ cell }) => <BoolCell enabled={Boolean(cell.getValue())} />,
+			}),
+			columnHelper.accessor("created_on", {
+				header: "Created",
+				grow: false,
+				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} suffix={true} />,
+			}),
+			columnHelper.accessor("severity", {
+				header: "level",
+				grow: false,
+				Cell: ({ cell }) => <TableCellSeverity severity={cell.getValue() as NotificationSeverityEnum} />,
+			}),
+
+			columnHelper.accessor("message", {
+				header: "Message",
+				grow: true,
+				Cell: ({ cell }) => <TableCellString>{cell.getValue() as string}</TableCellString>,
+			}),
+
+			columnHelper.accessor("author", {
+				Cell: (info) =>
+					info.row.original.author != null ? (
+						<PersonCell
+							steam_id={info.row.original.author.steam_id}
+							personaname={info.row.original.author?.name}
+							avatar_hash={info.row.original.author?.avatarhash}
+						/>
+					) : (
+						""
+					),
+				header: "Author",
+			}),
+			columnHelper.accessor("link", {
+				header: "Link",
+				grow: false,
+				Cell: ({ cell }) => {
+					return cell.getValue() ? (
+						<Link to={cell.getValue() as string}>
+							<LinkIcon color={"primary"} />
+						</Link>
+					) : (
+						""
+					);
+				},
+			}),
+		];
+	}, []);
+
+	const table = useMaterialReactTable({
+		...defaultOptions,
+		columns,
+		data: data ?? [],
+		enableFilters: true,
+		enableHiding: true,
+		enableFacetedValues: true,
+		state: {
+			isLoading,
+			showAlertBanner: isError,
+		},
+		initialState: {
+			...defaultOptions.initialState,
+			sorting: [{ id: "ban_id", desc: true }],
+			columnVisibility: {
+				cidr_block_whitelist_id: false,
+				address: true,
+				created_on: true,
+				updated_on: false,
+			},
+		},
+		enableRowActions: true,
+		renderRowActionMenuItems: () => [],
+	});
 
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<ContainerWithHeaderAndButtons
-					iconLeft={<EmailIcon />}
-					title={`Notifications  ${Object.values(rowSelection).length ? `(Selected: ${Object.values(rowSelection).length})` : ""}`}
-					buttons={[buttons]}
-				>
-					<NotificationsTable
-						notifications={notifications ?? []}
-						isLoading={false}
-						rowSelection={rowSelection}
-						setRowSelection={setRowSelection}
-						pagination={pagination}
-						setPagination={setPagination}
-					/>
-					<PaginatorLocal
-						onRowsChange={(rows) => {
-							setPagination((prev) => {
-								return { ...prev, pageSize: rows };
-							});
-						}}
-						onPageChange={(page) => {
-							setPagination((prev) => {
-								return { ...prev, pageIndex: page };
-							});
-						}}
-						count={notifications?.length ?? 0}
-						rows={pagination.pageSize}
-						page={pagination.pageIndex}
-					/>
-				</ContainerWithHeaderAndButtons>
+				<SortableTable table={table} title={"User Notifications"} />
 			</Grid>
 		</Grid>
 	);
@@ -340,125 +338,4 @@ const TableCellSeverity = ({ severity }: { severity: NotificationSeverityEnum })
 		default:
 			return <Typography style={{ color: theme.palette.info.main }}>INFO</Typography>;
 	}
-};
-
-const columnHelper = createColumnHelper<UserNotification>();
-
-const NotificationsTable = ({
-	notifications,
-	isLoading,
-	rowSelection,
-	setRowSelection,
-	pagination,
-	setPagination,
-}: {
-	notifications: UserNotification[];
-	isLoading: boolean;
-	rowSelection: RowSelectionState;
-	setRowSelection: OnChangeFn<RowSelectionState>;
-	pagination: PaginationState;
-	setPagination: OnChangeFn<PaginationState>;
-}) => {
-	const columns = useMemo(() => {
-		return [
-			columnHelper.display({
-				id: "select",
-				size: 30,
-				header: ({ table }) => (
-					<IndeterminateCheckbox
-						{...{
-							checked: table.getIsAllRowsSelected(),
-							indeterminate: table.getIsSomeRowsSelected(),
-							onChange: table.getToggleAllRowsSelectedHandler(),
-						}}
-					/>
-				),
-				cell: ({ row }) => (
-					<div className="px-1">
-						<IndeterminateCheckbox
-							{...{
-								checked: row.getIsSelected(),
-								disabled: !row.getCanSelect(),
-								indeterminate: row.getIsSomeSelected(),
-								onChange: row.getToggleSelectedHandler(),
-							}}
-						/>
-					</div>
-				),
-			}),
-
-			columnHelper.accessor("read", {
-				size: 30,
-				enableResizing: false,
-				header: () => <MarkChatReadIcon />,
-				cell: (info) => <BoolCell enabled={Boolean(info.getValue())} />,
-			}),
-			columnHelper.accessor("created_on", {
-				header: () => "Created",
-				size: 125,
-				enableResizing: false,
-				cell: (info) => <TableCellRelativeDateField date={info.row.original.created_on} suffix={true} />,
-			}),
-			columnHelper.accessor("severity", {
-				header: () => "level",
-				size: 55,
-				cell: (info) => <TableCellSeverity severity={info.getValue() as NotificationSeverityEnum} />,
-			}),
-
-			columnHelper.accessor("message", {
-				header: "Message",
-				cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
-			}),
-
-			columnHelper.accessor("author", {
-				cell: (info) =>
-					info.row.original.author != null ? (
-						<PersonCell
-							steam_id={info.row.original.author.steam_id}
-							personaname={info.row.original.author?.name}
-							avatar_hash={info.row.original.author?.avatarhash}
-						/>
-					) : (
-						""
-					),
-				header: () => "Author",
-			}),
-			columnHelper.accessor("link", {
-				header: "",
-				size: 20,
-				cell: (info) => {
-					return info.getValue() ? (
-						<Link to={info.getValue() as string}>
-							<LinkIcon color={"primary"} />
-						</Link>
-					) : (
-						""
-					);
-				},
-			}),
-		];
-	}, []);
-
-	const table = useReactTable({
-		data: notifications,
-		columns: columns,
-		getCoreRowModel: getCoreRowModel(),
-		defaultColumn: {
-			minSize: 0,
-			size: Number.MAX_SAFE_INTEGER,
-			maxSize: Number.MAX_SAFE_INTEGER,
-		},
-		manualPagination: false,
-		autoResetPageIndex: true,
-		enableRowSelection: true,
-		onRowSelectionChange: setRowSelection,
-		onPaginationChange: setPagination,
-		getPaginationRowModel: getPaginationRowModel(),
-		state: {
-			rowSelection,
-			pagination,
-		},
-	});
-
-	return <DataTable table={table} isLoading={isLoading} />;
 };
