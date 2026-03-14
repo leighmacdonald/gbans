@@ -1,4 +1,5 @@
 import type { MRT_RowData, MRT_TableOptions } from "material-react-table";
+import z from "zod/v4";
 
 export const createDefaultTableOptions = <TData extends MRT_RowData>(): Partial<MRT_TableOptions<TData>> => ({
 	enableGlobalFilter: false,
@@ -24,3 +25,42 @@ export const createDefaultTableOptions = <TData extends MRT_RowData>(): Partial<
 	},
 	defaultColumn: {},
 });
+
+export type Updater<T> = T | ((old: T) => T);
+export type OnChangeFn<T> = (updaterOrValue: Updater<T>) => void;
+
+export const makeSchemaState = ({
+	defaultSortColumn,
+	defaultDesc = true,
+}: {
+	defaultSortColumn: string;
+	defaultDesc?: boolean;
+}) => {
+	return z.object({
+		pagination: z
+			.object({
+				pageIndex: z.number().positive().catch(0),
+				pageSize: z.number().positive().catch(10),
+			})
+			.catch({ pageIndex: 0, pageSize: 50 }),
+		columnFilters: z
+			.object({
+				id: z.string(),
+				value: z.unknown(),
+			})
+			.array()
+			.catch([]),
+		sorting: z
+			.object({
+				id: z.string(),
+				desc: z.boolean().catch(true),
+			})
+			.array()
+			.catch([
+				{
+					id: defaultSortColumn,
+					desc: Boolean(defaultDesc),
+				},
+			]),
+	}).shape;
+};
