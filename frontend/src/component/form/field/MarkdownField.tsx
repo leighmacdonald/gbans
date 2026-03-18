@@ -80,11 +80,9 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
 	);
 
 	const classes = useMemo(() => {
-		if (theme.mode === "dark") {
-			return "dark-theme md-editor dark-editor mdxeditor-root-contenteditable-dark";
-		} else {
-			return "md-editor light-editor mdxeditor-root-contenteditable-light";
-		}
+		return theme.mode === "dark"
+			? "dark-theme md-editor dark-editor mdxeditor-root-contenteditable-dark"
+			: "md-editor light-editor mdxeditor-root-contenteditable-light";
 	}, [theme.mode]);
 
 	const errInfo = useMemo(() => {
