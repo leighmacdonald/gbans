@@ -130,7 +130,7 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 							<form.AppField
 								name={"body_md"}
 								children={(field) => {
-									return <field.MarkdownField label={"Region"} />;
+									return <field.MarkdownField label={"Body"} />;
 								}}
 							/>
 						</Grid>

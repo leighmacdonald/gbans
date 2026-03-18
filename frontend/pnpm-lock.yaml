@@ -68,9 +68,6 @@ importers:
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
-      markdown-to-jsx:
-        specifier: 9.7.6
-        version: 9.7.6(react@19.2.4)(solid-js@1.9.6)
       material-react-table:
         specifier: ^3.2.1
         version: 3.2.1(cbea80cb75292e1d589ed002534349f4)
