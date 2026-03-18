@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/netip"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -27,44 +28,74 @@ func NewRepository(db database.Database, persons person.Provider) Repository {
 	return Repository{Database: db, persons: persons}
 }
 
-func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error) {
+func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, error) {
 	var constraints sq.And
 
-	if opts.Sid64 != "" {
-		sid := steamid.New(opts.Sid64)
+	if opts.SourceID != "" {
+		sid := steamid.New(opts.SourceID)
 		if !sid.Valid() {
-			return nil, 0, steamid.ErrInvalidSID
+			return nil, steamid.ErrInvalidSID
 		}
 
-		constraints = append(constraints, sq.Eq{"steam_id": sid.Int64()})
+		constraints = append(constraints, sq.Eq{"c.steam_id": sid.Int64()})
 	}
 
-	if opts.Network != "" {
-		constraints = append(constraints, sq.Expr("ip_addr <<= ?::ip4r", opts.Network))
+	if opts.CIDR != "" {
+		constraints = append(constraints, sq.Expr("c.ip_addr <<= ?::ip4r", opts.CIDR))
+	}
+	if len(opts.ServerID) > 0 {
+		constraints = append(constraints, sq.Eq{"c.server_id": opts.ServerID})
+	}
+	if opts.ASNum > 0 {
+		constraints = append(constraints, sq.Eq{"a.as_num": opts.ASNum})
+	}
+	if opts.ASName != "" {
+		constraints = append(constraints, sq.Eq{"a.as_name": opts.ASName})
+	}
+	if opts.CountryCode != "" {
+		constraints = append(constraints, sq.Eq{"l.country_code": strings.ToUpper(opts.CountryCode)})
+	}
+	if opts.CountryName != "" {
+		constraints = append(constraints, sq.Eq{"l.country_name": opts.CountryName})
+	}
+	if opts.CityName != "" {
+		constraints = append(constraints, sq.Eq{"l.city_name": opts.CityName})
 	}
 
 	selectBuilder := r.Builder().
-		Select("distinct on (c.ip_addr) c.ip_addr", "c.person_connection_id", "c.persona_name",
-			"c.steam_id", "c.created_on", "c.server_id", "s.short_name", "s.name").
+		// distinct on (c.ip_addr) c.ip_addr
+		Select(
+			"c.ip_addr",
+			"c.person_connection_id",
+			"c.persona_name",
+			"c.steam_id",
+			"c.created_on",
+			"c.server_id",
+			"s.short_name",
+			"s.name",
+			"l.country_code",
+			"l.country_name",
+			"l.city_name",
+			"ST_Y(l.location)", "ST_X(l.location)",
+			"a.as_num",
+			"a.as_name").
 		From("person_connections c").
 		LeftJoin("server s USING(server_id)").
-		Where(constraints)
+		LeftJoin("net_location l ON (l.ip_range >>= c.ip_addr)").
+		LeftJoin("net_asn a ON (a.ip_range >>= c.ip_addr)")
 
-	selectBuilder = opts.ApplyLimitOffsetDefault(selectBuilder)
-
-	builder := r.Builder().
-		Select("x.*").
-		FromSelect(selectBuilder, "x")
-
-	builder = opts.ApplySafeOrder(opts.ApplyLimitOffsetDefault(builder), map[string][]string{
-		"x.": {"steam_id", "ip_addr", "persona_name", "created_on", "short_name", "name"},
-	}, "created_on")
+	selectBuilder = opts.ApplySafeOrder(opts.ApplyLimitOffsetDefault(selectBuilder), map[string][]string{
+		"c.": {"steam_id", "ip_addr", "persona_name", "created_on", "short_name", "name", "server_id"},
+		"s.": {"short_name", "name"},
+		"l.": {"country_code", "country_name", "city_name"},
+		"a.": {"as_num", "as_name"},
+	}, "c.created_on")
 
 	var messages []PersonConnection
 
-	rows, errQuery := r.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errQuery := r.QueryBuilder(ctx, selectBuilder.Where(constraints))
 	if errQuery != nil {
-		return nil, 0, database.DBErr(errQuery)
+		return nil, database.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -84,8 +115,11 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 			&connHistory.PersonaName,
 			&steamID,
 			&connHistory.CreatedOn,
-			&serverID, &shortName, &name); errScan != nil {
-			return nil, 0, database.DBErr(errScan)
+			&serverID, &shortName, &name,
+			&connHistory.CountryCode, &connHistory.CountryName, &connHistory.CityName,
+			&connHistory.LatLong.Latitude, &connHistory.LatLong.Longitude,
+			&connHistory.ASNum, &connHistory.ASName); errScan != nil {
+			return nil, database.DBErr(errScan)
 		}
 
 		// Added later in dev, so can be legacy data w/o a server_id
@@ -101,19 +135,10 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 	}
 
 	if messages == nil {
-		return []PersonConnection{}, 0, nil
+		return []PersonConnection{}, nil
 	}
 
-	count, errCount := r.GetCount(ctx, r.Builder().
-		Select("count(c.person_connection_id)").
-		From("person_connections c").
-		Where(constraints))
-
-	if errCount != nil {
-		return nil, 0, database.DBErr(errCount)
-	}
-
-	return messages, count, nil
+	return messages, nil
 }
 
 func (r Repository) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error) {

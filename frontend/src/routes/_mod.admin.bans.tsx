@@ -28,8 +28,20 @@ import { renderDate } from "../util/time.ts";
 const columnHelper = createMRTColumnHelper<BanRecord>();
 const defaultOptions = createDefaultTableOptions<BanRecord>();
 
+// const validateSearch = z
+// 	.object({
+// 		source_id: z.string().optional(),
+// 		target_id: z.string().optional(),
+// 		cidr: z.cidrv4().optional(),
+// 		reason: z.enum(BanReason).optional(),
+// 		report_id: z.number().optional(),
+// 		evade_ok: z.boolean().optional(),
+// 	})
+// 	.extend(makeSchemaState({ defaultSortColumn: "ban_id" }));
+
 export const Route = createFileRoute("/_mod/admin/bans")({
 	component: AdminBans,
+	// validateSearch: validateSearch,
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Bans" }, match.context.title("Bans")],
 	}),
@@ -41,20 +53,19 @@ function AdminBans() {
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["bans"],
-
 		queryFn: async () => {
-			return await apiGetBans({ deleted: true });
+			return (await apiGetBans({ deleted: true })) ?? [];
 		},
 	});
 
-	const onNewBanSteam = async () => {
+	const onNewBanSteam = useCallback(async () => {
 		try {
 			const ban = (await NiceModal.show(BanModal, {})) as BanRecord;
 			queryClient.setQueryData(["bans"], [...(data ?? []), ban]);
 		} catch (e) {
 			sendFlash("error", `Error trying to set up ban: ${e}`);
 		}
-	};
+	}, [queryClient, sendFlash, data]);
 
 	const onUnban = useCallback(
 		async (ban: BanRecord) => {
@@ -94,10 +105,9 @@ function AdminBans() {
 		[queryClient, sendFlash, data],
 	);
 
-	const columns = useMemo(() => {
-		return [
+	const columns = useMemo(
+		() => [
 			columnHelper.accessor("ban_id", {
-				size: 125,
 				grow: false,
 				header: "Ban ID",
 				Cell: ({ cell }) => (
@@ -172,7 +182,6 @@ function AdminBans() {
 			}),
 			columnHelper.accessor("cidr", {
 				enableColumnFilter: true,
-				size: 150,
 				grow: false,
 				filterVariant: "text",
 				header: "CIDR/IP",
@@ -181,7 +190,7 @@ function AdminBans() {
 			columnHelper.accessor("reason", {
 				enableColumnFilter: true,
 				enableSorting: false,
-				size: 150,
+				grow: true,
 				filterSelectOptions: Object.values(BanReason).map((reason) => ({
 					label: BanReasons[reason],
 					value: reason,
@@ -250,8 +259,9 @@ function AdminBans() {
 						</TextLink>
 					),
 			}),
-		];
-	}, []);
+		],
+		[],
+	);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
@@ -265,8 +275,6 @@ function AdminBans() {
 			showAlertBanner: isError,
 		},
 		initialState: {
-			...defaultOptions.initialState,
-			sorting: [{ id: "ban_id", desc: true }],
 			columnVisibility: {
 				source_id: false,
 				target_id: true,
@@ -282,9 +290,6 @@ function AdminBans() {
 			},
 		},
 		enableRowActions: true,
-		renderTopToolbarCustomActions: () => {
-			return <Typography variant="h3">Bans</Typography>;
-		},
 		renderRowActionMenuItems: ({ row }) => [
 			<IconButton
 				key={"edit"}
@@ -321,8 +326,8 @@ function AdminBans() {
 						<Tooltip title="Create new ban" key="create-new-ban">
 							<IconButton
 								key={`ban-steam`}
-								sx={{ marginRight: 2, color: "primary.main.contrastText" }}
 								onClick={onNewBanSteam}
+								sx={{ color: "primary.contrastText" }}
 							>
 								<AddIcon />
 							</IconButton>

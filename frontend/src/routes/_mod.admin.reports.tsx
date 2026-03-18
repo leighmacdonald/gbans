@@ -36,7 +36,7 @@ function AdminReports() {
 		return [
 			columnHelper.accessor("report_id", {
 				header: "ID",
-				size: 30,
+				grow: false,
 				Cell: ({ cell }) => (
 					<TextLink
 						color={"primary"}
@@ -50,7 +50,6 @@ function AdminReports() {
 			}),
 			columnHelper.accessor("report_status", {
 				header: "Status",
-				size: 150,
 				grow: false,
 				filterVariant: "multi-select",
 				filterSelectOptions: Object.values(ReportStatus).map((status) => ({
@@ -131,7 +130,7 @@ function AdminReports() {
 				})),
 				filterVariant: "multi-select",
 				header: "Reason",
-				size: 150,
+				grow: false,
 				filterFn: (row, _, filterValue) => {
 					return (
 						filterValue.length === 0 ||
@@ -143,18 +142,19 @@ function AdminReports() {
 			}),
 			columnHelper.accessor("reason_text", {
 				filterVariant: "text",
+				grow: false,
 				header: "Custom Reason",
 				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
-				size: 150,
+				grow: false,
 				filterVariant: "date",
 				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
 			}),
 			columnHelper.accessor("updated_on", {
 				header: "Updated",
-				size: 150,
+				grow: false,
 				filterVariant: "date",
 				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
 			}),

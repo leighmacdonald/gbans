@@ -80,13 +80,13 @@ func (h Handler) onAPIQueryConnections() gin.HandlerFunc {
 			return
 		}
 
-		ipHist, totalCount, errIPHist := h.QueryConnectionHistory(ctx, req)
+		ipHist, errIPHist := h.QueryConnectionHistory(ctx, req)
 		if errIPHist != nil && !errors.Is(errIPHist, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errIPHist, httphelper.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(totalCount, ipHist))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(-1, ipHist))
 	}
 }

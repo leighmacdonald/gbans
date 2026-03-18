@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/netip"
 	"sync"
 	"time"
@@ -37,17 +36,14 @@ type SteamMember interface {
 	IsMember(steamID steamid.SteamID) (int64, bool)
 }
 
-type Query struct {
+type PlayerQuery struct {
 	query.Filter
 
-	Personaname          string               `schema:"personaname,omitempty"`
-	IP                   string               `schema:"ip,omitempty"`
-	StaffOnly            bool                 `schema:"staff_only,omitempty"`
-	WithPermissions      permission.Privilege `schema:"with_permissions,omitempty"`
-	DiscordID            string               `schema:"discord_id,omitempty"`
-	SteamUpdateOlderThan time.Time            `schema:"steam_update_older_than,omitempty"`
-	Addr                 net.IP               `schema:"addr,omitempty"`
-	SteamIDs             steamid.Collection   `schema:"steam_ids,omitempty"` //nolint:tagliatelle
+	Personaname          string               `schema:"personaname,omitempty" json:"personaname,omitempty"`
+	WithPermissions      permission.Privilege `schema:"with_permissions,omitempty" json:"with_permissions,omitempty"`
+	DiscordID            string               `schema:"discord_id,omitempty" json:"discord_id,omitempty"`
+	SteamUpdateOlderThan time.Time            `schema:"steam_update_older_than" json:"steam_update_older_than"`
+	SteamIDs             []string             `schema:"steam_ids,omitempty" json:"steam_ids,omitempty"` //nolint:tagliatelle
 }
 
 type RequestPermissionLevelUpdate struct {
@@ -471,7 +467,7 @@ func (u *Persons) SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID
 }
 
 func (u *Persons) BySteamID(ctx context.Context, steamID steamid.SteamID) (Person, error) {
-	return u.getFirst(ctx, Query{SteamIDs: []steamid.SteamID{steamID}})
+	return u.getFirst(ctx, PlayerQuery{SteamIDs: []string{steamID.String()}})
 }
 
 func (u *Persons) Drop(ctx context.Context, steamID steamid.SteamID) error {
@@ -491,7 +487,7 @@ func (u *Persons) Save(ctx context.Context, person *Person) error {
 }
 
 func (u *Persons) BySteamIDs(ctx context.Context, steamIDs steamid.Collection) (People, error) {
-	people, _, err := u.repo.Query(ctx, Query{SteamIDs: steamIDs})
+	people, _, err := u.repo.Query(ctx, PlayerQuery{SteamIDs: steamIDs.ToStringSlice()})
 	if err != nil {
 		return nil, err
 	}
@@ -499,21 +495,7 @@ func (u *Persons) BySteamIDs(ctx context.Context, steamIDs steamid.Collection) (
 	return people, nil
 }
 
-func (u *Persons) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
-	people, _, errQuery := u.repo.Query(ctx, Query{Addr: addr})
-	if errQuery != nil {
-		return nil, errQuery
-	}
-
-	var coll steamid.Collection
-	for _, player := range people {
-		coll = append(coll, player.SteamID)
-	}
-
-	return coll, nil
-}
-
-func (u *Persons) GetPeople(ctx context.Context, filter Query) (People, int64, error) {
+func (u *Persons) GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error) {
 	return u.repo.Query(ctx, filter)
 }
 
@@ -573,7 +555,7 @@ func (u *Persons) updatePerson(ctx context.Context, person *Person) error {
 	return u.Save(ctx, person)
 }
 
-func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
+func (u *Persons) getFirst(ctx context.Context, query PlayerQuery) (Person, error) {
 	people, _, errPeople := u.repo.Query(ctx, query)
 	if errPeople != nil {
 		return Person{}, errPeople
@@ -594,7 +576,7 @@ func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
 }
 
 func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (person.Core, error) {
-	fetchedPerson, errGetPerson := u.getFirst(ctx, Query{DiscordID: discordID})
+	fetchedPerson, errGetPerson := u.getFirst(ctx, PlayerQuery{DiscordID: discordID})
 	if errGetPerson != nil {
 		return person.Core{}, errGetPerson
 	}
@@ -613,7 +595,7 @@ func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (p
 }
 
 func (u *Persons) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, int64, error) {
-	return u.repo.Query(ctx, Query{
+	return u.repo.Query(ctx, PlayerQuery{
 		Filter: query.Filter{
 			Limit: limit,
 		},
@@ -623,7 +605,7 @@ func (u *Persons) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Perso
 
 func (u *Persons) GetSteamIDsAbove(ctx context.Context, privilege permission.Privilege) (steamid.Collection, error) {
 	var steamIDs steamid.Collection
-	players, _, errPlayers := u.repo.Query(ctx, Query{
+	players, _, errPlayers := u.repo.Query(ctx, PlayerQuery{
 		WithPermissions: privilege,
 	})
 

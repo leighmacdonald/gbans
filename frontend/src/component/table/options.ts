@@ -4,7 +4,7 @@ import z from "zod/v4";
 export const createDefaultTableOptions = <TData extends MRT_RowData>(): Partial<MRT_TableOptions<TData>> => ({
 	enableGlobalFilter: false,
 	enableRowPinning: false,
-	initialState: { showColumnFilters: true, pagination: { pageSize: 25, pageIndex: 0 } },
+	initialState: { showColumnFilters: true },
 	enableFacetedValues: true,
 	enableColumnFilters: true,
 	enableDensityToggle: false,
@@ -16,10 +16,10 @@ export const createDefaultTableOptions = <TData extends MRT_RowData>(): Partial<
 	positionActionsColumn: "last",
 	positionToolbarAlertBanner: "top",
 	columnFilterDisplayMode: "subheader",
-	muiToolbarAlertBannerProps: () => ({
-		color: "error",
-		children: "Error loading data :(",
-	}),
+	// muiToolbarAlertBannerProps: () => ({
+	// 	color: "error",
+	// 	children: "Error loading data :(",
+	// }),
 	muiTableBodyCellProps: {
 		sx: { paddingLeft: 1, paddingRight: 1, paddingTop: 0.25, paddingBottom: 0.25 },
 	},
@@ -42,25 +42,28 @@ export const makeSchemaState = ({
 				pageIndex: z.number().positive().catch(0),
 				pageSize: z.number().positive().catch(10),
 			})
-			.catch({ pageIndex: 0, pageSize: 50 }),
+			.default({ pageIndex: 0, pageSize: 50 })
+			.optional(),
 		columnFilters: z
 			.object({
 				id: z.string(),
 				value: z.unknown(),
 			})
 			.array()
-			.catch([]),
+			.default([])
+			.optional(),
 		sorting: z
 			.object({
 				id: z.string(),
 				desc: z.boolean().catch(true),
 			})
 			.array()
-			.catch([
+			.default([
 				{
 					id: defaultSortColumn,
 					desc: Boolean(defaultDesc),
 				},
-			]),
+			])
+			.optional(),
 	}).shape;
 };

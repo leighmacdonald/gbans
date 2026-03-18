@@ -171,14 +171,12 @@ export const schemaPlayerProfile = z.object({
 
 export type PlayerProfile = z.infer<typeof schemaPlayerProfile>;
 
-export const schemaPlayerQuery = z
-	.object({
-		steam_ids: z.array(z.string()),
-		personaname: z.string(),
-		ip: z.string(),
-		staff_only: z.boolean(),
-	})
-	.merge(schemaQueryFilter);
+export const schemaPlayerQuery = schemaQueryFilter.extend({
+	steam_ids: z.string().array().optional(),
+	personaname: z.string().optional(),
+	with_permissions: z.enum(PermissionLevel).optional(),
+	discord_id: z.string().optional(),
+});
 
 export type PlayerQuery = z.infer<typeof schemaPlayerQuery>;
 
@@ -204,10 +202,18 @@ export const schemaPersonConnection = z.object({
 	steam_id: z.string(),
 	persona_name: z.string(),
 	created_on: z.date(),
-	ip_info: schemaPersonIPRecord,
+	city_name: z.string(),
+	country_name: z.string(),
+	country_code: z.string(),
+	as_name: z.string(),
+	as_num: z.number(),
 	server_id: z.number().optional(),
 	server_name_short: z.string().optional(),
 	server_name: z.string().optional(),
+	lat_long: z.object({
+		latitude: z.number(),
+		longitude: z.number(),
+	}),
 });
 
 export type PersonConnection = z.infer<typeof schemaPersonConnection>;
@@ -228,28 +234,29 @@ export const schemaPersonMessage = z.object({
 
 export type PersonMessage = z.infer<typeof schemaPersonMessage>;
 
-export const schemaMessageQuery = z
-	.object({
-		personaname: z.string().optional(),
-		source_id: z.string().optional(),
-		query: z.string().optional(),
-		server_id: z.number().optional(),
-		date_start: z.date().optional(),
-		date_end: z.date().optional(),
-		match_id: z.string().optional(),
-		auto_filter_flagged: z.boolean().optional(),
-	})
-	.merge(schemaQueryFilter);
+export const schemaMessageQuery = schemaQueryFilter.extend({
+	personaname: z.string().optional(),
+	source_id: z.string().optional(),
+	query: z.string().optional(),
+	server_id: z.number().optional(),
+	date_start: z.date().optional(),
+	date_end: z.date().optional(),
+	match_id: z.string().optional(),
+	auto_filter_flagged: z.boolean().optional(),
+	flagged_only: z.boolean().optional(),
+});
 
 export type MessageQuery = z.infer<typeof schemaMessageQuery>;
 
 export const schemaConnectionQuery = schemaQueryFilter.extend({
 	cidr: z.cidrv4().optional(),
 	source_id: z.string().optional(),
-	server_id: z.number().optional(),
-	asn: z.number().optional(),
-	network: z.string().optional(),
-	sid64: z.string().optional(),
+	server_id: z.number().array().optional(),
+	as_num: z.number().optional(),
+	as_name: z.string().optional(),
+	country_code: z.string().optional(),
+	country_name: z.string().optional(),
+	city_name: z.string().optional(),
 });
 
 export type ConnectionQuery = z.infer<typeof schemaConnectionQuery>;

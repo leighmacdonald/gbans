@@ -112,8 +112,8 @@ db:
     pushd docker && ./dev_db.sh
 
 demostats_serve:
-    ../tf2_demostats/target/release/tf2_demostats update --api-key $STEAM_KEY
-    ../tf2_demostats/target/release/tf2_demostats serve
+    ../tf2_demostats/dist/cli_x86_64-unknown-linux-musl/tf2_demostats update --api-key $STEAM_KEY
+    ../tf2_demostats/dist/cli_x86_64-unknown-linux-musl/tf2_demostats serve
 
 dev:
     zellij --layout .zellij.kdl
