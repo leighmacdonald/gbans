@@ -4,7 +4,7 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { fromUnixTime } from "date-fns";
 import {
 	createMRTColumnHelper,
@@ -13,12 +13,13 @@ import {
 	type MRT_SortingState,
 	useMaterialReactTable,
 } from "material-react-table";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import z from "zod/v4";
 import { apiSearchPeople } from "../api";
 import { PersonEditModal } from "../component/modal/PersonEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { createDefaultTableOptions } from "../component/table/options.ts";
+import { createDefaultTableOptions, makeSchemaState, type OnChangeFn } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -31,43 +32,53 @@ import {
 	permissionLevelString,
 } from "../schema/people.ts";
 
+const validateSearch = z
+	.object({
+		steam_ids: z.array(z.string()).catch([]),
+		personaname: z.string().catch(""),
+		ip: z.string().catch(""),
+		staff_only: z.boolean().catch(false),
+	})
+	.extend(makeSchemaState({ defaultSortColumn: "steam_id" }));
+
+const columnHelper = createMRTColumnHelper<Person>();
+const defaultOptions = createDefaultTableOptions<Person>();
+
 export const Route = createFileRoute("/_mod/admin/people")({
 	component: AdminPeople,
+	validateSearch,
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "People" }, match.context.title("People")],
 	}),
 });
 
-const columnHelper = createMRTColumnHelper<Person>();
-const defaultOptions = createDefaultTableOptions<Person>();
-
 function AdminPeople() {
-	const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
-	const [globalFilter, setGlobalFilter] = useState("");
-	const [sorting, setSorting] = useState<MRT_SortingState>([]);
-	const [pagination, setPagination] = useState<MRT_PaginationState>({
-		pageIndex: 0,
-		pageSize: 50,
-	});
+	const search = Route.useSearch();
 	const { sendFlash } = useUserFlashCtx();
 	const { hasPermission } = useAuth();
+	const navigate = useNavigate();
+
 	const { data, isLoading, isError, isRefetching } = useQuery({
-		queryKey: ["people", { columnFilters, globalFilter, pagination, sorting }],
+		queryKey: ["people", { search }],
 		queryFn: async () => {
-			const steam_id = String(columnFilters.find((filter) => filter.id === "steam_id")?.value ?? "");
-			const sort = sorting.find((sort) => sort);
+			// const steam_id = String(search.columnFilters.find((filter) => filter.id === "steam_ids")?.value ?? "");
+			const staff_only = Boolean(
+				search.columnFilters.find((filter) => filter.id === "staff_only")?.value ?? false,
+			);
+			const sort = search.sorting.find((sort) => sort);
+
 			return await apiSearchPeople({
 				personaname: "",
-				desc: sort ? sort.desc : false,
-				limit: pagination.pageSize,
-				offset: pagination.pageIndex * pagination.pageSize,
-				staff_only: false,
-				order_by: sort ? sort.id : "created_on",
-				steam_ids: steam_id && steam_id !== "" ? [String(steam_id)] : [],
-				ip: "",
+				desc: sort ? sort.desc : true,
+				limit: search.pagination.pageSize,
+				offset: search.pagination.pageIndex * search.pagination.pageSize,
+				with_permissions: staff_only ? PermissionLevel.Reserved : PermissionLevel.Banned,
+				order_by: sort ? sort.id : "steam_id",
+				// steam_ids: steam_id && steam_id !== "" ? [String(steam_id)] : [],
 			});
 		},
 	});
+
 	const onEditPerson = useCallback(
 		async (person: Person) => {
 			try {
@@ -81,6 +92,45 @@ function AdminPeople() {
 		},
 		[sendFlash],
 	);
+	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					sorting: typeof updater === "function" ? updater(search.sorting) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					columnFilters: typeof updater === "function" ? updater(search.columnFilters) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					pagination: typeof updater === "function" ? updater(search.pagination) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("steam_id", {
@@ -99,7 +149,7 @@ function AdminPeople() {
 			}),
 			columnHelper.accessor("community_visibility_state", {
 				header: "Visibility",
-				size: 50,
+				grow: false,
 				Cell: ({ cell }) => (
 					<Typography variant={"body1"}>
 						{cell.getValue() === communityVisibilityState.Public ? "Public" : "Private"}
@@ -108,30 +158,30 @@ function AdminPeople() {
 			}),
 			columnHelper.accessor("vac_bans", {
 				header: "Vac",
-				size: 20,
+				grow: false,
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() > 0} />,
 			}),
 			columnHelper.accessor("community_banned", {
 				header: "CB",
-				size: 20,
+				grow: false,
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
 
 			columnHelper.accessor("time_created", {
 				header: "Created",
-				size: 50,
+				grow: false,
 				Cell: ({ cell }) => <TableCellRelativeDateField date={fromUnixTime(cell.getValue())} />,
 			}),
 
 			columnHelper.accessor("created_on", {
-				header: "Seen",
-				size: 80,
+				header: "First Seen",
+				grow: false,
 				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
 			}),
 
 			columnHelper.accessor("permission_level", {
 				header: "Perms",
-				size: 80,
+				grow: false,
 				Cell: ({ row }) => (
 					<Typography>
 						{permissionLevelString(
@@ -142,19 +192,8 @@ function AdminPeople() {
 					</Typography>
 				),
 			}),
-			columnHelper.display({
-				header: "Act",
-				grow: false,
-				Cell: (info) => {
-					return hasPermission(PermissionLevel.Admin) ? (
-						<IconButton color={"warning"} onClick={() => onEditPerson(info.row.original)}>
-							<VpnKeyIcon />
-						</IconButton>
-					) : null;
-				},
-			}),
 		];
-	}, [onEditPerson, hasPermission]);
+	}, []);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
@@ -162,18 +201,17 @@ function AdminPeople() {
 		data: data ? data.data : [],
 		rowCount: data ? data.count : 0,
 		enableFilters: true,
+		enableRowActions: true,
 		state: {
-			columnFilters,
-			globalFilter,
-			isLoading,
-			pagination,
+			columnFilters: search.columnFilters,
+			isLoading: isLoading || isRefetching,
+			pagination: search.pagination,
 			showAlertBanner: isError,
 			showProgressBars: isRefetching,
-			sorting,
+			sorting: search.sorting,
 		},
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "updated_on", desc: true }],
 			columnVisibility: {
 				steam_id: true,
 				source_id: true,
@@ -185,9 +223,15 @@ function AdminPeople() {
 		manualPagination: true,
 		manualSorting: true,
 		onColumnFiltersChange: setColumnFilters,
-		onGlobalFilterChange: setGlobalFilter,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
+		renderRowActionMenuItems: ({ row }) => [
+			hasPermission(PermissionLevel.Admin) ? (
+				<IconButton color={"warning"} onClick={() => onEditPerson(row.original)} key={"editperms"}>
+					<VpnKeyIcon />
+				</IconButton>
+			) : null,
+		],
 	});
 	return (
 		<Grid container spacing={2}>

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -90,7 +89,7 @@ func (r *Repository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steam
 	return ids, nil
 }
 
-func (r *Repository) Query(ctx context.Context, query Query) (People, int64, error) {
+func (r *Repository) Query(ctx context.Context, query PlayerQuery) (People, int64, error) {
 	builder := r.Builder().
 		Select("p.steam_id", "p.created_on", "p.updated_on",
 			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
@@ -101,45 +100,14 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 		From("person p").
 		LeftJoin("auth_patreon pt USING (steam_id)")
 
-	countBuilder := r.Builder().
-		Select("count(p.steam_id)").
-		From("person p").
-		LeftJoin("auth_patreon pt USING (steam_id)")
-
 	constraints := sq.And{}
-
-	if query.IP != "" {
-		builder = builder.LeftJoin("person_connections pc ON p.steam_id = pc.steam_id")
-		// TODO
-		constraints = append(constraints, sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", query.IP, query.IP)))
-	}
 
 	if !query.SteamUpdateOlderThan.IsZero() {
 		builder = builder.OrderBy("p.updated_on_steam ASC")
 		constraints = append(constraints, sq.Lt{"p.updated_on_steam": query.SteamUpdateOlderThan})
 	}
-	if query.StaffOnly {
-		constraints = append(constraints, sq.GtOrEq{"p.permission_level": permission.Reserved})
-	} else if query.WithPermissions > 0 {
+	if query.WithPermissions > 0 {
 		constraints = append(constraints, sq.GtOrEq{"p.permission_level": query.WithPermissions})
-	}
-
-	if query.IP != "" {
-		addr := net.ParseIP(query.IP)
-		if addr == nil {
-			return nil, 0, ErrNetworkInvalidIP
-		}
-
-		foundIDs, errFoundIDs := r.GetSteamsAtAddress(ctx, addr)
-		if errFoundIDs != nil {
-			if errors.Is(errFoundIDs, database.ErrNoResult) {
-				return People{}, 0, nil
-			}
-
-			return nil, 0, database.DBErr(errFoundIDs)
-		}
-
-		constraints = append(constraints, sq.Eq{"p.steam_id": foundIDs})
 	}
 
 	if query.DiscordID != "" {
@@ -148,7 +116,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 
 	// sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String())))
 	if len(query.SteamIDs) > 0 {
-		constraints = append(constraints, sq.Eq{"p.steam_id": query.SteamIDs.ToInt64Slice()})
+		constraints = append(constraints, sq.Eq{"p.steam_id": query.SteamIDs})
 	}
 
 	if query.Personaname != "" {
@@ -194,7 +162,10 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 		people = append(people, person)
 	}
 
-	count, errQuery := r.GetCount(ctx, countBuilder.Where(constraints))
+	count, errQuery := r.GetCount(ctx, r.Builder().
+		Select("count(p.steam_id)").
+		From("person p").
+		LeftJoin("auth_patreon pt USING (steam_id)").Where(constraints))
 	if errQuery != nil {
 		return nil, 0, database.DBErr(errQuery)
 	}

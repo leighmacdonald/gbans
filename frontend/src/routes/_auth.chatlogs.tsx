@@ -1,7 +1,8 @@
 import FlagIcon from "@mui/icons-material/Flag";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ReportIcon from "@mui/icons-material/Report";
-import { IconButton, TableCell, Typography, useTheme } from "@mui/material";
+import WifiFindIcon from "@mui/icons-material/WifiFind";
+import { IconButton, Typography, useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -20,12 +21,13 @@ import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { createDefaultTableOptions, makeSchemaState, type OnChangeFn } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
-import type { PersonMessage } from "../schema/people.ts";
+import { useAuth } from "../hooks/useAuth.ts";
+import { PermissionLevel, type PersonMessage } from "../schema/people.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
+import { renderDateTime } from "../util/time.ts";
 
-const schema = z
+const validateSearch = z
 	.object({
 		flagged_only: z.boolean().catch(false),
 	})
@@ -36,23 +38,15 @@ export const Route = createFileRoute("/_auth/chatlogs")({
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.chatlogs_enabled);
 	},
-	validateSearch: schema,
+	validateSearch,
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
 			queryFn: apiGetServers,
 		});
-		return {
-			servers: unsorted.sort((a, b) => {
-				if (a.server_name > b.server_name) {
-					return 1;
-				}
-				if (a.server_name < b.server_name) {
-					return -1;
-				}
-				return 0;
-			}),
-		};
+		return unsorted.sort((a, b) => {
+			return a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0;
+		});
 	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Browse in-game chat logs" }, match.context.title("Chat Logs")],
@@ -64,17 +58,17 @@ const defaultOptions = createDefaultTableOptions<PersonMessage>();
 
 function ChatLogs() {
 	const search = Route.useSearch();
-	const { servers } = Route.useLoaderData();
+	const servers = Route.useLoaderData();
 	const navigate = useNavigate();
 	const theme = useTheme();
-
+	const { hasPermission } = useAuth();
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
 			navigate({
 				to: Route.fullPath,
 				search: {
 					...search,
-					sorting: typeof updater === "function" ? updater(search.sorting) : updater,
+					sorting: typeof updater === "function" ? updater(search.sorting ?? []) : updater,
 				},
 			});
 		},
@@ -87,7 +81,7 @@ function ChatLogs() {
 				to: Route.fullPath,
 				search: {
 					...search,
-					columnFilters: typeof updater === "function" ? updater(search.columnFilters) : updater,
+					columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
 				},
 			});
 		},
@@ -100,7 +94,10 @@ function ChatLogs() {
 				to: Route.fullPath,
 				search: {
 					...search,
-					pagination: typeof updater === "function" ? updater(search.pagination) : updater,
+					pagination:
+						typeof updater === "function"
+							? updater(search.pagination ?? { pageIndex: 0, pageSize: 50 })
+							: updater,
 				},
 			});
 		},
@@ -110,7 +107,7 @@ function ChatLogs() {
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("server_id", {
-				header: "Srv",
+				header: "Server",
 				grow: false,
 				enableSorting: false,
 				filterVariant: "multi-select",
@@ -122,13 +119,15 @@ function ChatLogs() {
 					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
 				},
 				Cell: ({ row }) => (
-					<TableCell
-						sx={{
-							color: stringToColour(row.original.server_name, theme.palette.mode),
-						}}
-					>
-						{row.original.server_name}
-					</TableCell>
+					<Tooltip title={row.original.server_name}>
+						<Typography
+							sx={{
+								color: stringToColour(row.original.server_name, theme.palette.mode),
+							}}
+						>
+							{row.original.server_name}
+						</Typography>
+					</Tooltip>
 				),
 			}),
 
@@ -136,7 +135,7 @@ function ChatLogs() {
 				header: "Created",
 				enableColumnFilter: false,
 				grow: false,
-				Cell: (info) => <TableCellRelativeDateField date={info.row.original.created_on} suffix />,
+				Cell: ({ cell }) => <Typography>{renderDateTime(cell.getValue())}</Typography>,
 			}),
 
 			columnHelper.accessor("steam_id", {
@@ -173,14 +172,14 @@ function ChatLogs() {
 				header: "Message",
 				grow: true,
 				enableSorting: false,
-				Cell: ({ cell, row }) => {
+				Cell: ({ row, renderedCellValue }) => {
 					return (
 						<Typography
 							padding={0}
 							variant={"body1"}
 							color={row.original.auto_filter_flagged > 0 ? "error" : "inherit"}
 						>
-							{cell.getValue()}
+							{renderedCellValue}
 						</Typography>
 					);
 				},
@@ -191,18 +190,18 @@ function ChatLogs() {
 	const { data, isLoading, isError, isRefetching, refetch } = useQuery({
 		queryKey: ["chatlogs", { search }],
 		queryFn: async () => {
-			const server_id = search.columnFilters.find((filter) => filter.id === "server_id")?.value;
-			const steam_id = search.columnFilters.find((filter) => filter.id === "steam_id")?.value;
-			const body = search.columnFilters.find((filter) => filter.id === "body")?.value;
-			const sort = search.sorting.find((sort) => sort);
+			const server_id = search.columnFilters?.find((filter) => filter.id === "server_id")?.value;
+			const steam_id = search.columnFilters?.find((filter) => filter.id === "steam_id")?.value;
+			const body = search.columnFilters?.find((filter) => filter.id === "body")?.value;
+			const sort = search.sorting?.find((sort) => sort);
 
 			return await apiGetMessages({
 				server_id: server_id ? Number(server_id) : 0,
 				personaname: "",
 				query: body ? String(body) : "",
 				source_id: steam_id ? String(steam_id) : "",
-				limit: search.pagination.pageSize,
-				offset: search.pagination.pageIndex * search.pagination.pageSize,
+				limit: search.pagination?.pageSize,
+				offset: search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : undefined,
 				order_by: sort ? sort.id : "created_on",
 				desc: sort ? sort.desc : true,
 				flagged_only: search.flagged_only,
@@ -256,6 +255,23 @@ function ChatLogs() {
 					<ReportIcon />
 				</IconButtonLink>
 			</Tooltip>,
+			<Tooltip title={"IP Lookup"} key={row.original.person_message_id}>
+				<IconButtonLink
+					color={"success"}
+					disabled={!hasPermission(PermissionLevel.Moderator)}
+					to={"/admin/network/playersbyip"}
+					search={{
+						columnFilters: [
+							{
+								id: "steam_id",
+								value: row.original.steam_id,
+							},
+						],
+					}}
+				>
+					<WifiFindIcon />
+				</IconButtonLink>
+			</Tooltip>,
 		],
 	});
 
@@ -285,7 +301,7 @@ function ChatLogs() {
 								});
 							}}
 						>
-							<IconButton color={search.flagged_only ? "error" : "success"}>
+							<IconButton sx={{ color: search.flagged_only ? "error" : "primary.contrastText" }}>
 								<FlagIcon />
 							</IconButton>
 						</Tooltip>,

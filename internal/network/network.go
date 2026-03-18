@@ -54,21 +54,30 @@ type ConnectionHistoryQuery struct {
 	query.Filter
 	httphelper.SourceIDField
 
-	CIDR    string `json:"cidr,omitempty" schema:"cidr,omitempty"`
-	ASN     int    `json:"asn,omitempty" schema:"asn,omitempty"`
-	Sid64   string `json:"sid64,omitempty" schema:"sid64,omitempty"`
-	Network string `json:"network,omitempty" schema:"network,omitempty"`
+	CIDR        string `json:"cidr,omitempty" schema:"cidr,omitempty"`
+	ASNum       int    `json:"as_num,omitempty" schema:"as_num,omitempty"`
+	ASName      string `json:"as_name,omitempty" schema:"as_name,omitempty"`
+	CountryCode string `json:"country_code,omitempty" schema:"country_code,omitempty"`
+	CountryName string `json:"country_name,omitempty" schema:"country_name,omitempty"`
+	CityName    string `json:"city_name,omitempty" schema:"city_name,omitempty"`
+	ServerID    []int  `json:"server_id,omitempty" schema:"server_id,omitempty"`
 }
 
 type PersonConnection struct {
-	PersonConnectionID int64           `json:"person_connection_id"`
-	IPAddr             netip.Addr      `json:"ip_addr"`
-	SteamID            steamid.SteamID `json:"steam_id"`
-	PersonaName        string          `json:"persona_name"`
-	ServerID           int             `json:"server_id"`
-	CreatedOn          time.Time       `json:"created_on"`
-	ServerNameShort    string          `json:"server_name_short"`
-	ServerName         string          `json:"server_name"`
+	PersonConnectionID int64               `json:"person_connection_id"`
+	IPAddr             netip.Addr          `json:"ip_addr"`
+	SteamID            steamid.SteamID     `json:"steam_id"`
+	PersonaName        string              `json:"persona_name"`
+	ServerID           int                 `json:"server_id"`
+	CreatedOn          time.Time           `json:"created_on"`
+	ServerNameShort    string              `json:"server_name_short"`
+	ServerName         string              `json:"server_name"`
+	ASNum              int                 `json:"as_num"`
+	ASName             string              `json:"as_name"`
+	CountryCode        string              `json:"country_code"`
+	CountryName        string              `json:"country_name"`
+	CityName           string              `json:"city_name"`
+	LatLong            ip2location.LatLong `json:"lat_long"`
 }
 
 type PersonConnections []PersonConnection
@@ -229,9 +238,9 @@ func (u Networks) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.Ste
 	return u.repository.GetPlayerMostRecentIP(ctx, steamID)
 }
 
-func (u Networks) QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error) {
+func (u Networks) QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, error) {
 	if sid, ok := opts.SourceSteamID(ctx); ok {
-		opts.Sid64 = sid.String()
+		opts.SourceID = sid.String()
 	}
 
 	if opts.Limit > 1000 {
@@ -247,10 +256,10 @@ func (u Networks) QueryConnectionHistory(ctx context.Context, opts ConnectionHis
 		if errNetwork != nil {
 			slog.Error("Received malformed CIDR", slog.String("error", errNetwork.Error()))
 
-			return nil, 0, ErrInvalidCIDR
+			return nil, ErrInvalidCIDR
 		}
 
-		opts.Network = network.String()
+		opts.CIDR = network.String()
 	}
 
 	return u.repository.QueryConnections(ctx, opts)

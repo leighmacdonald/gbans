@@ -177,7 +177,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 
 	countBuilder := r.Builder().Select("count(m.person_message_id)").
 		From("person_messages m").
-		LeftJoin("server s USING(server_id)").
+		LeftJoin("server s ON (NOT s.deleted AND s.is_enabled AND s.server_id = m.server_id)").
 		LeftJoin("person_messages_filter mf USING(person_message_id)").
 		LeftJoin("filtered_word f USING(filter_id)").
 		LeftJoin("person p USING(steam_id)")

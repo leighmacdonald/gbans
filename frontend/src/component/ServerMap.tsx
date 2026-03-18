@@ -21,7 +21,7 @@ export const ServerMarkers = () => {
 	const { servers } = useMapStateCtx();
 	const d = useMemo(
 		() =>
-			(servers || []).map((s, i) => {
+			(servers || []).map((s) => {
 				//const dis = getDistance(pos, { lat: s.latitude, lng: s.longitude }) / 1000;
 				return (
 					<Circle
@@ -31,7 +31,7 @@ export const ServerMarkers = () => {
 						}}
 						radius={50000}
 						color={"green"}
-						key={`${s.short_name}${i}`}
+						key={`${s.short_name}${s.server_id}`}
 					/>
 				);
 			}),

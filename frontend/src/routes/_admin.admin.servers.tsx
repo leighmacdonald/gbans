@@ -13,7 +13,6 @@ import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { TableCellString } from "../component/table/TableCellString.tsx";
 import { TableCellStringHidden } from "../component/table/TableCellStringHidden.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { Server } from "../schema/server.ts";
@@ -77,8 +76,6 @@ function AdminServers() {
 			columnHelper.accessor("server_id", {
 				header: "ID",
 				grow: false,
-				size: 40,
-				Cell: ({ cell }) => <TableCellString>{String(cell.getValue())}</TableCellString>,
 			}),
 			columnHelper.accessor("short_name", {
 				grow: false,
@@ -86,17 +83,14 @@ function AdminServers() {
 					tooltip: "Short unique server identifier",
 				},
 				header: "Name",
-				Cell: ({ cell }) => <TableCellString>{cell.getValue() as string}</TableCellString>,
 			}),
 
 			columnHelper.accessor("name", {
-				size: 300,
 				header: "Name Long",
 				grow: true,
 				meta: {
 					tooltip: "Full name of the server, AKA srcds hostname",
 				},
-				Cell: ({ cell }) => <TableCellString>{cell.getValue() as string}</TableCellString>,
 			}),
 
 			columnHelper.accessor("address", {
@@ -105,13 +99,11 @@ function AdminServers() {
 				meta: {
 					tooltip: "IP or DNS/Hostname of the server",
 				},
-				Cell: ({ cell }) => <TableCellString>{cell.getValue() as string}</TableCellString>,
 			}),
 
 			columnHelper.accessor("port", {
 				header: "Port",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{String(cell.getValue())}</TableCellString>,
 			}),
 
 			columnHelper.accessor("rcon", {
@@ -119,6 +111,7 @@ function AdminServers() {
 				meta: {
 					tooltip: "Standard RCON password",
 				},
+				grow: false,
 				Cell: ({ cell }) => <TableCellStringHidden>{cell.getValue() as string}</TableCellStringHidden>,
 			}),
 
@@ -127,13 +120,13 @@ function AdminServers() {
 					tooltip: "A password that the server uses to authenticate with the central gbans server",
 				},
 				header: "Auth Key",
+				grow: false,
 				Cell: ({ cell }) => <TableCellStringHidden>{cell.getValue() as string}</TableCellStringHidden>,
 			}),
 
 			columnHelper.accessor("region", {
 				header: "Region",
-				size: 75,
-				Cell: ({ cell }) => <TableCellString>{cell.getValue() as string}</TableCellString>,
+				grow: false,
 			}),
 
 			columnHelper.accessor("token_created_on", {
@@ -141,23 +134,23 @@ function AdminServers() {
 					tooltip: "Last time the server authenticated itself",
 				},
 				header: "Last Auth",
-				Cell: ({ cell }) => <TableCellString>{renderDateTime(cell.getValue() as Date)}</TableCellString>,
+				grow: false,
+				Cell: ({ cell }) => renderDateTime(cell.getValue() as Date),
 			}),
 			columnHelper.accessor("enable_stats", {
-				size: 30,
 				meta: {
 					tooltip: "Stat Tracking Enabled",
 				},
-				header: "St",
+				header: "Stats",
+				grow: false,
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() as boolean} />,
 			}),
 			columnHelper.accessor("is_enabled", {
-				size: 30,
 				filterVariant: "checkbox",
 				meta: {
 					tooltip: "Enabled",
 				},
-				header: "En.",
+				header: "Enabled",
 				grow: false,
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() as boolean} />,
 			}),
