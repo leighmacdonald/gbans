@@ -31,6 +31,10 @@
 	color: #111;
 	--basePageBg: #dabdab;
 	line-height: 1;
+
+	a {
+		color: #111;
+	}
 }
 
 .dark-editor {
@@ -63,6 +67,10 @@
 	color: #f5e7de;
 	--basePageBg: #452c22;
 	line-height: 1;
+
+	a {
+		color: #f5e7de;
+	}
 }
 
 .mdxeditor-root-contenteditable-dark {
