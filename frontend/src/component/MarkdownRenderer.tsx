@@ -51,6 +51,11 @@ const MDLink = ({ children, href, title }: MDLnkProps) => {
 const mdRenderOpts: Options = {
 	disableParsingRawHTML: false,
 	overrides: {
+		// p: {
+		// 	props: {
+		// 		color: "primary.contrastText",
+		// 	},
+		// },
 		a: {
 			component: MDLink,
 		},

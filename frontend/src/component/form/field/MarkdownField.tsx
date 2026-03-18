@@ -22,7 +22,7 @@ import {
 	toolbarPlugin,
 	UndoRedo,
 } from "@mdxeditor/editor";
-import { createRef, useMemo } from "react";
+import { createRef, useCallback, useMemo } from "react";
 import "@mdxeditor/editor/style.css";
 import FormHelperText from "@mui/material/FormHelperText";
 import Stack from "@mui/material/Stack";
@@ -71,10 +71,13 @@ export const MarkdownField = (props: MDBodyFieldProps) => {
 	const { sendFlash } = useUserFlashCtx();
 	const theme = useTheme();
 
-	const onError = (payload: { error: string; source: string }) => {
-		logErr(payload);
-		sendFlash("error", payload.error);
-	};
+	const onError = useCallback(
+		(payload: { error: string; source: string }) => {
+			logErr(payload);
+			sendFlash("error", payload.error);
+		},
+		[sendFlash],
+	);
 
 	const classes = useMemo(() => {
 		if (theme.mode === "dark") {
