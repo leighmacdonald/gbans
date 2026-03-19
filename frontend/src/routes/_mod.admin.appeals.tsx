@@ -1,34 +1,94 @@
 import Grid from "@mui/material/Grid";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
-import { useMemo } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
+import {
+	createMRTColumnHelper,
+	type MRT_ColumnFiltersState,
+	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
+} from "material-react-table";
+import { useCallback, useMemo } from "react";
 import { apiGetAppeals, appealStateString } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { createDefaultTableOptions } from "../component/table/options.ts";
+import {
+	createDefaultTableOptions,
+	makeSchemaState,
+	type OnChangeFn,
+	setColumnFilter,
+} from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { AppealState, BanReason, BanReasons, type BanRecord } from "../schema/bans.ts";
+import { renderDateTime } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<BanRecord>();
 const defaultOptions = createDefaultTableOptions<BanRecord>();
+const validateSearch = makeSchemaState("ban_id");
 
 export const Route = createFileRoute("/_mod/admin/appeals")({
 	component: AdminAppeals,
+	validateSearch,
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Appeals" }, match.context.title("Appeals")],
 	}),
 });
 
 function AdminAppeals() {
+	const navigate = useNavigate();
+	const search = Route.useSearch();
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["appeals"],
 		queryFn: async () => {
 			return (await apiGetAppeals({})) ?? [];
 		},
 	});
+
+	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					sorting: typeof updater === "function" ? updater(search.sorting ?? []) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					pagination: search.pagination
+						? typeof updater === "function"
+							? updater(search.pagination)
+							: updater
+						: undefined,
+				},
+			});
+		},
+		[search, navigate],
+	);
 
 	const columns = useMemo(
 		() => [
@@ -62,9 +122,11 @@ function AdminAppeals() {
 						filterValue.includes(row.original.appeal_state)
 					);
 				},
-				Cell: ({ cell }) => {
-					return <Typography variant={"body1"}>{appealStateString(cell.getValue())}</Typography>;
-				},
+				Cell: ({ cell }) => (
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "appeal_state", [cell.getValue()])}>
+						{appealStateString(cell.getValue())}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("source_id", {
 				header: "Author",
@@ -136,7 +198,11 @@ function AdminAppeals() {
 						filterValue.includes(row.original.reason)
 					);
 				},
-				Cell: ({ cell }) => <Typography>{BanReasons[cell.getValue()]}</Typography>,
+				Cell: ({ cell }) => (
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
+						{BanReasons[cell.getValue()]}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("reason_text", {
 				header: "Custom",
@@ -148,16 +214,24 @@ function AdminAppeals() {
 				header: "Created",
 				filterVariant: "date",
 				size: 120,
-				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
+				Cell: ({ cell }) => (
+					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
+						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					</Tooltip>
+				),
 			}),
 			columnHelper.accessor("updated_on", {
 				header: "Last Active",
 				enableColumnFilter: false,
 				size: 120,
-				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
+				Cell: ({ cell }) => (
+					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
+						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					</Tooltip>
+				),
 			}),
 		],
-		[],
+		[search],
 	);
 
 	const table = useMaterialReactTable({
@@ -165,9 +239,15 @@ function AdminAppeals() {
 		columns,
 		data: data ?? [],
 		enableFilters: true,
+		onColumnFiltersChange: setColumnFilters,
+		onPaginationChange: setPagination,
+		onSortingChange: setSorting,
 		state: {
 			isLoading,
 			showAlertBanner: isError,
+			columnFilters: search.columnFilters,
+			sorting: search.sorting,
+			pagination: search.pagination,
 		},
 		initialState: {
 			...defaultOptions.initialState,

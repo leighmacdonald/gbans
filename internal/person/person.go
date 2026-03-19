@@ -326,11 +326,11 @@ func (u *Persons) QueryProfile(ctx context.Context, query string) (ProfileRespon
 
 	if player.Expired() {
 		if err := UpdatePlayerSummary(ctx, &player, u.tfAPI); err != nil {
-			slog.Error("Failed to update player summary", slog.String("error", err.Error()))
-		} else {
-			if errSave := u.Save(ctx, &player); errSave != nil {
-				slog.Error("Failed to save person summary", slog.String("error", errSave.Error()))
-			}
+			slog.Warn("Failed to update player summary", slog.String("error", err.Error()))
+			player.UpdatedOnSteam = time.Now()
+		}
+		if errSave := u.Save(ctx, &player); errSave != nil {
+			slog.Error("Failed to save person summary", slog.String("error", errSave.Error()))
 		}
 	}
 

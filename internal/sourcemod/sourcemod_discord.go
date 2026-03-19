@@ -19,7 +19,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-//go:embed sourcemod_discord.tmpl
+//go:embed sourcemod_discord.gotmpl
 var templateBody []byte
 
 type discordHandler struct {

@@ -1,37 +1,95 @@
 import Grid from "@mui/material/Grid";
-import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
-import { useMemo } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
+import {
+	createMRTColumnHelper,
+	type MRT_ColumnFiltersState,
+	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
+} from "material-react-table";
+import { useCallback, useMemo } from "react";
 import { apiGetReports } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
-import { createDefaultTableOptions } from "../component/table/options.ts";
+import {
+	createDefaultTableOptions,
+	makeSchemaState,
+	type OnChangeFn,
+	setColumnFilter,
+} from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
-import { BanReason, BanReasons } from "../schema/bans.ts";
+import { BanReason, type BanReasonEnum, BanReasons } from "../schema/bans.ts";
 import { ReportStatus, type ReportWithAuthor, reportStatusString } from "../schema/report.ts";
+import { renderDateTime } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
 const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
+const validateSearch = makeSchemaState("report_id");
 
 export const Route = createFileRoute("/_mod/admin/reports")({
 	component: AdminReports,
+	validateSearch,
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Reports" }, match.context.title("Reports")],
 	}),
 });
 
 function AdminReports() {
+	const navigate = useNavigate();
+	const search = Route.useSearch();
+
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["adminReports"],
 		queryFn: async () => {
 			return apiGetReports({ deleted: false });
 		},
 	});
+	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					sorting: typeof updater === "function" ? updater(search.sorting ?? []) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
 
+	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					pagination: search.pagination
+						? typeof updater === "function"
+							? updater(search.pagination)
+							: updater
+						: undefined,
+				},
+			});
+		},
+		[search, navigate],
+	);
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("report_id", {
@@ -59,13 +117,11 @@ function AdminReports() {
 				filterFn: (row, _, filterValue) => {
 					return filterValue.length === 0 || filterValue.includes(row.original.report_status);
 				},
-				Cell: ({ cell }) => {
-					return (
-						<Stack direction={"row"} spacing={1}>
-							<Typography variant={"body1"}>{reportStatusString(cell.getValue())}</Typography>
-						</Stack>
-					);
-				},
+				Cell: ({ cell }) => (
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "report_status", [cell.getValue()])}>
+						{reportStatusString(cell.getValue())}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("source_id", {
 				header: "Reporter",
@@ -138,7 +194,11 @@ function AdminReports() {
 						filterValue.includes(row.original.reason)
 					);
 				},
-				Cell: ({ cell }) => <Typography>{BanReasons[cell.getValue()]}</Typography>,
+				Cell: ({ cell }) => (
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
+						{BanReasons[cell.getValue() as BanReasonEnum]}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("reason_text", {
 				filterVariant: "text",
@@ -150,24 +210,38 @@ function AdminReports() {
 				header: "Created",
 				grow: false,
 				filterVariant: "date",
-				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
+				Cell: ({ cell }) => (
+					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
+						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					</Tooltip>
+				),
 			}),
 			columnHelper.accessor("updated_on", {
 				header: "Updated",
 				grow: false,
 				filterVariant: "date",
-				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} />,
+				Cell: ({ cell }) => (
+					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
+						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					</Tooltip>
+				),
 			}),
 		];
-	}, []);
+	}, [search]);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
 		data: data ?? [],
+		onColumnFiltersChange: setColumnFilters,
+		onPaginationChange: setPagination,
+		onSortingChange: setSorting,
 		state: {
 			isLoading,
 			showAlertBanner: isError,
+			columnFilters: search.columnFilters,
+			sorting: search.sorting,
+			pagination: search.pagination,
 		},
 		enableFilters: true,
 		initialState: {

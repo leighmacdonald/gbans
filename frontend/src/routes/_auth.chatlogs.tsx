@@ -19,7 +19,12 @@ import z from "zod/v4";
 import { apiGetMessages, apiGetServers } from "../api";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import { createDefaultTableOptions, makeSchemaState, type OnChangeFn } from "../component/table/options.ts";
+import {
+	createDefaultTableOptions,
+	filterValue,
+	makeSchemaState,
+	type OnChangeFn,
+} from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { PermissionLevel, type PersonMessage } from "../schema/people.ts";
@@ -31,7 +36,7 @@ const validateSearch = z
 	.object({
 		flagged_only: z.boolean().catch(false),
 	})
-	.extend(makeSchemaState({ defaultSortColumn: "person_message_id" }));
+	.extend(makeSchemaState("person_message_id").shape);
 
 export const Route = createFileRoute("/_auth/chatlogs")({
 	component: ChatLogs,
@@ -120,11 +125,7 @@ function ChatLogs() {
 				},
 				Cell: ({ row }) => (
 					<Tooltip title={row.original.server_name}>
-						<Typography
-							sx={{
-								color: stringToColour(row.original.server_name, theme.palette.mode),
-							}}
-						>
+						<Typography sx={{ color: stringToColour(row.original.server_name ?? "", theme.palette.mode) }}>
 							{row.original.server_name}
 						</Typography>
 					</Tooltip>
@@ -135,7 +136,7 @@ function ChatLogs() {
 				header: "Created",
 				enableColumnFilter: false,
 				grow: false,
-				Cell: ({ cell }) => <Typography>{renderDateTime(cell.getValue())}</Typography>,
+				Cell: ({ cell }) => renderDateTime(cell.getValue()),
 			}),
 
 			columnHelper.accessor("steam_id", {
@@ -190,9 +191,9 @@ function ChatLogs() {
 	const { data, isLoading, isError, isRefetching, refetch } = useQuery({
 		queryKey: ["chatlogs", { search }],
 		queryFn: async () => {
-			const server_id = search.columnFilters?.find((filter) => filter.id === "server_id")?.value;
-			const steam_id = search.columnFilters?.find((filter) => filter.id === "steam_id")?.value;
-			const body = search.columnFilters?.find((filter) => filter.id === "body")?.value;
+			const server_id = filterValue("server_id", search.columnFilters);
+			const steam_id = filterValue("steam_id", search.columnFilters);
+			const body = filterValue("body", search.columnFilters);
 			const sort = search.sorting?.find((sort) => sort);
 
 			return await apiGetMessages({
