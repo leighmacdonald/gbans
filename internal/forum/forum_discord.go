@@ -11,7 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 )
 
-//go:embed forum_discord.tmpl
+//go:embed forum_discord.gotmpl
 var templateBody []byte
 
 type catSaveView struct {

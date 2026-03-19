@@ -19,7 +19,13 @@ import { apiSearchPeople } from "../api";
 import { PersonEditModal } from "../component/modal/PersonEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { createDefaultTableOptions, makeSchemaState, type OnChangeFn } from "../component/table/options.ts";
+import {
+	createDefaultTableOptions,
+	filterValue,
+	makeSchemaState,
+	type OnChangeFn,
+	sortValueDefault,
+} from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -34,12 +40,9 @@ import {
 
 const validateSearch = z
 	.object({
-		steam_ids: z.array(z.string()).catch([]),
-		personaname: z.string().catch(""),
-		ip: z.string().catch(""),
 		staff_only: z.boolean().catch(false),
 	})
-	.extend(makeSchemaState({ defaultSortColumn: "steam_id" }));
+	.extend(makeSchemaState("steam_id").shape);
 
 const columnHelper = createMRTColumnHelper<Person>();
 const defaultOptions = createDefaultTableOptions<Person>();
@@ -61,20 +64,20 @@ function AdminPeople() {
 	const { data, isLoading, isError, isRefetching } = useQuery({
 		queryKey: ["people", { search }],
 		queryFn: async () => {
-			// const steam_id = String(search.columnFilters.find((filter) => filter.id === "steam_ids")?.value ?? "");
+			const steam_id = filterValue("steam_id", search.columnFilters);
 			const staff_only = Boolean(
-				search.columnFilters.find((filter) => filter.id === "staff_only")?.value ?? false,
+				search.columnFilters?.find((filter) => filter.id === "staff_only")?.value ?? false,
 			);
-			const sort = search.sorting.find((sort) => sort);
+			const sort = search.sorting ? sortValueDefault(search.sorting, "steam_id") : { id: "steam_id", desc: true };
 
 			return await apiSearchPeople({
-				personaname: "",
+				// personaname: filterValue("body", search.columnFilters),
 				desc: sort ? sort.desc : true,
-				limit: search.pagination.pageSize,
-				offset: search.pagination.pageIndex * search.pagination.pageSize,
+				limit: search.pagination?.pageSize,
+				offset: search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : undefined,
 				with_permissions: staff_only ? PermissionLevel.Reserved : PermissionLevel.Banned,
 				order_by: sort ? sort.id : "steam_id",
-				// steam_ids: steam_id && steam_id !== "" ? [String(steam_id)] : [],
+				steam_ids: steam_id && steam_id !== "" ? [steam_id] : [],
 			});
 		},
 	});
@@ -98,7 +101,7 @@ function AdminPeople() {
 				to: Route.fullPath,
 				search: {
 					...search,
-					sorting: typeof updater === "function" ? updater(search.sorting) : updater,
+					sorting: typeof updater === "function" ? updater(search.sorting ?? []) : updater,
 				},
 			});
 		},
@@ -111,7 +114,7 @@ function AdminPeople() {
 				to: Route.fullPath,
 				search: {
 					...search,
-					columnFilters: typeof updater === "function" ? updater(search.columnFilters) : updater,
+					columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
 				},
 			});
 		},
@@ -124,7 +127,11 @@ function AdminPeople() {
 				to: Route.fullPath,
 				search: {
 					...search,
-					pagination: typeof updater === "function" ? updater(search.pagination) : updater,
+					pagination: search.pagination
+						? typeof updater === "function"
+							? updater(search.pagination)
+							: updater
+						: undefined,
 				},
 			});
 		},
@@ -134,7 +141,7 @@ function AdminPeople() {
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("steam_id", {
-				header: "Profile",
+				header: "SteamID",
 				grow: true,
 				Cell: ({ row }) => {
 					return (

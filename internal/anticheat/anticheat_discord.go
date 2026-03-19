@@ -13,7 +13,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-//go:embed anticheat_discord.tmpl
+//go:embed anticheat_discord.gotmpl
 var templateBody []byte
 
 type discordHandler struct {

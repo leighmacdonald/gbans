@@ -12,7 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
-//go:embed chat_discord.tmpl
+//go:embed chat_discord.gotmpl
 var templateBody []byte
 
 func RegisterDiscordCommands(bot discord.Service, wordFilters WordFilters) {

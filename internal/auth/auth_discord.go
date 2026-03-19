@@ -8,7 +8,7 @@ import (
 	personDomain "github.com/leighmacdonald/gbans/internal/domain/person"
 )
 
-//go:embed auth_discord.tmpl
+//go:embed auth_discord.gotmpl
 var templateBody []byte
 
 func RegisterDiscordCommands(_ discord.Service) {

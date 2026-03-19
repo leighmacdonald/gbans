@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"regexp"
 	"strings"
@@ -147,9 +148,9 @@ func (r *Repository) Query(ctx context.Context, query PlayerQuery) (People, int6
 
 	for rows.Next() {
 		person := New(steamid.SteamID{})
-
+		var sid64 int64
 		if errScan := rows.
-			Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn, &person.VisibilityState,
+			Scan(&sid64, &person.CreatedOn, &person.UpdatedOn, &person.VisibilityState,
 				&person.ProfileState, &person.PersonaName, &person.AvatarHash, &person.PersonaState,
 				&person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 				&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
@@ -157,6 +158,13 @@ func (r *Repository) Query(ctx context.Context, query PlayerQuery) (People, int6
 				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID, &person.PlayerqueueChatStatus,
 				&person.PlayerqueueChatReason); errScan != nil {
 			return nil, 0, errors.Join(errScan, database.ErrScanResult)
+		}
+
+		steamID := steamid.New(sid64)
+		if !steamID.Valid() {
+			slog.Debug("Got invalid steam id", slog.Int64("steam_id", sid64))
+
+			continue
 		}
 
 		people = append(people, person)

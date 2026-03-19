@@ -8,7 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 )
 
-//go:embed wiki_discord.tmpl
+//go:embed wiki_discord.gotmpl
 var templateBody []byte
 
 func RegisterDiscordCommands(_ discord.Service) {

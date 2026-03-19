@@ -8,8 +8,15 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
+import {
+	createMRTColumnHelper,
+	type MRT_ColumnFiltersState,
+	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
+} from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { apiGetBans } from "../api";
 import { BanModal } from "../component/modal/BanModal.tsx";
@@ -17,31 +24,26 @@ import { UnbanModal } from "../component/modal/UnbanModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { createDefaultTableOptions } from "../component/table/options.ts";
+import {
+	createDefaultTableOptions,
+	makeSchemaState,
+	type OnChangeFn,
+	setColumnFilter,
+} from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import { BanReason, type BanReasonEnum, BanReasons, type BanRecord } from "../schema/bans.ts";
 import { isPermanentBan } from "../util/table.ts";
-import { renderDate } from "../util/time.ts";
+import { renderDateTime } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<BanRecord>();
 const defaultOptions = createDefaultTableOptions<BanRecord>();
-
-// const validateSearch = z
-// 	.object({
-// 		source_id: z.string().optional(),
-// 		target_id: z.string().optional(),
-// 		cidr: z.cidrv4().optional(),
-// 		reason: z.enum(BanReason).optional(),
-// 		report_id: z.number().optional(),
-// 		evade_ok: z.boolean().optional(),
-// 	})
-// 	.extend(makeSchemaState({ defaultSortColumn: "ban_id" }));
+const validateSearch = makeSchemaState("ban_id");
 
 export const Route = createFileRoute("/_mod/admin/bans")({
 	component: AdminBans,
-	// validateSearch: validateSearch,
+	validateSearch,
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Bans" }, match.context.title("Bans")],
 	}),
@@ -49,8 +51,9 @@ export const Route = createFileRoute("/_mod/admin/bans")({
 
 function AdminBans() {
 	const queryClient = useQueryClient();
+	const search = Route.useSearch();
 	const { sendFlash } = useUserFlashCtx();
-
+	const navigate = useNavigate();
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["bans"],
 		queryFn: async () => {
@@ -103,6 +106,49 @@ function AdminBans() {
 			}
 		},
 		[queryClient, sendFlash, data],
+	);
+
+	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					sorting: typeof updater === "function" ? updater(search.sorting ?? []) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					pagination: search.pagination
+						? typeof updater === "function"
+							? updater(search.pagination)
+							: updater
+						: undefined,
+				},
+			});
+		},
+		[search, navigate],
 	);
 
 	const columns = useMemo(
@@ -185,12 +231,11 @@ function AdminBans() {
 				grow: false,
 				filterVariant: "text",
 				header: "CIDR/IP",
-				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("reason", {
 				enableColumnFilter: true,
 				enableSorting: false,
-				grow: true,
+				grow: false,
 				filterSelectOptions: Object.values(BanReason).map((reason) => ({
 					label: BanReasons[reason],
 					value: reason,
@@ -204,13 +249,21 @@ function AdminBans() {
 						filterValue.includes(row.original.reason)
 					);
 				},
-				Cell: ({ cell }) => <Typography>{BanReasons[cell.getValue() as BanReasonEnum]}</Typography>,
+				Cell: ({ cell }) => (
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "reason", [cell.getValue()])}>
+						{BanReasons[cell.getValue() as BanReasonEnum]}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				filterVariant: "date-range",
 				grow: false,
-				Cell: ({ cell }) => <Typography>{renderDate(cell.getValue() as Date)}</Typography>,
+				Cell: ({ cell }) => (
+					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
+						<Typography>{renderDateTime(cell.getValue())}</Typography>
+					</Tooltip>
+				),
 			}),
 			columnHelper.accessor("valid_until", {
 				header: "Duration",
@@ -260,21 +313,26 @@ function AdminBans() {
 					),
 			}),
 		],
-		[],
+		[search],
 	);
-
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
 		data: data ?? [],
 		enableFilters: true,
-		enableHiding: true,
 		enableFacetedValues: true,
+		onColumnFiltersChange: setColumnFilters,
+		onPaginationChange: setPagination,
+		onSortingChange: setSorting,
 		state: {
 			isLoading,
 			showAlertBanner: isError,
+			columnFilters: search.columnFilters,
+			sorting: search.sorting,
+			pagination: search.pagination,
 		},
 		initialState: {
+			...defaultOptions.initialState,
 			columnVisibility: {
 				source_id: false,
 				target_id: true,
@@ -282,13 +340,13 @@ function AdminBans() {
 				evade_ok: false,
 				deleted: false,
 				valid_until: true,
-				created_on: false,
-				updated_on: true,
+				created_on: true,
 				active: false,
 				report_id: true,
 				cidr: false,
 			},
 		},
+
 		enableRowActions: true,
 		renderRowActionMenuItems: ({ row }) => [
 			<IconButton

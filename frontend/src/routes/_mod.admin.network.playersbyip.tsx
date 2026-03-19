@@ -1,5 +1,4 @@
 import Grid from "@mui/material/Grid";
-import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
@@ -14,7 +13,15 @@ import { CircleMarker, MapContainer, Marker, Popup, TileLayer } from "react-leaf
 import { z } from "zod/v4";
 import { apiGetConnections, apiGetServers } from "../api";
 import { TextLink } from "../component/TextLink.tsx";
-import { createDefaultTableOptions, makeSchemaState, type OnChangeFn } from "../component/table/options.ts";
+import {
+	createDefaultTableOptions,
+	filterValue,
+	filterValueNumber,
+	makeSchemaState,
+	type OnChangeFn,
+	setColumnFilter,
+	sortValueDefault,
+} from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import type { PersonConnection } from "../schema/people.ts";
 import { renderDateTime } from "../util/time.ts";
@@ -50,7 +57,7 @@ const validateSearch = z
 		country_code: z.string().optional(),
 		country_name: z.string().optional(),
 	})
-	.extend(makeSchemaState({ defaultSortColumn: "person_connection_id" }));
+	.extend(makeSchemaState("person_connection_id").shape);
 
 export const Route = createFileRoute("/_mod/admin/network/playersbyip")({
 	component: AdminNetworkPlayersByCIDR,
@@ -78,33 +85,22 @@ function AdminNetworkPlayersByCIDR() {
 	const { data, isLoading, isError, isRefetching } = useQuery({
 		queryKey: ["playersByIP", { search }],
 		queryFn: async () => {
-			const server_id = search.columnFilters?.find((filter) => filter.id === "server_id")?.value;
-			const cidr = String(search.columnFilters?.find((filter) => filter.id === "ip_addr")?.value ?? "");
-			const as_name = String(search.columnFilters?.find((filter) => filter.id === "as_name")?.value ?? "");
-			const as_num = Number(search.columnFilters?.find((filter) => filter.id === "as_num")?.value ?? 0);
-			const city_name = String(search.columnFilters?.find((filter) => filter.id === "city_name")?.value ?? "");
-			const country_code = String(
-				search.columnFilters?.find((filter) => filter.id === "country_code")?.value ?? "",
-			);
-			const country_name = String(
-				search.columnFilters?.find((filter) => filter.id === "country_name")?.value ?? "",
-			);
-			const source_id = String(search.columnFilters?.find((filter) => filter.id === "steam_id")?.value ?? "");
-			const sort = search.sorting?.find((sort) => sort);
+			const server_id = filterValue<PersonConnection>("server_id", search.columnFilters);
+			const sort = search.sorting ? sortValueDefault(search.sorting, "person_connection_id") : undefined;
 
 			return await apiGetConnections({
 				desc: sort ? sort.desc : true,
 				limit: search.pagination?.pageSize,
 				offset: search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0,
 				order_by: sort ? sort.id : "person_connection_id",
-				source_id,
+				source_id: filterValue<PersonConnection>("steam_id", search.columnFilters),
 				server_id: Number(server_id) > 0 ? [Number(server_id)] : [],
-				cidr,
-				as_name,
-				as_num,
-				city_name,
-				country_code,
-				country_name,
+				cidr: filterValue<PersonConnection>("ip_addr", search.columnFilters),
+				as_name: filterValue<PersonConnection>("as_name", search.columnFilters),
+				as_num: filterValueNumber<PersonConnection>("as_num", search.columnFilters),
+				city_name: filterValue("city_name", search.columnFilters),
+				country_code: filterValue("country_code", search.columnFilters),
+				country_name: filterValue("country_name", search.columnFilters),
 			});
 		},
 	});
@@ -165,11 +161,15 @@ function AdminNetworkPlayersByCIDR() {
 				filterFn: (row, _, filterValue) => {
 					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
 				},
-				Cell: ({ row }) => (
+				Cell: ({ row, cell }) => (
 					<Tooltip title={row.original.server_name}>
-						<Typography sx={{ color: stringToColour(row.original.server_name ?? "", theme.palette.mode) }}>
+						<TextLink
+							to={"/admin/network/playersbyip"}
+							search={setColumnFilter(search, "server_id", [cell.getValue()])}
+							sx={{ color: stringToColour(row.original.server_name ?? "", theme.palette.mode) }}
+						>
 							{row.original.server_name_short}
-						</Typography>
+						</TextLink>
 					</Tooltip>
 				),
 			}),
@@ -191,7 +191,10 @@ function AdminNetworkPlayersByCIDR() {
 				header: "Steam ID",
 				enableSorting: false,
 				Cell: ({ cell }) => (
-					<TextLink to={"/profile/$steamId"} params={{ steamId: cell.getValue() }}>
+					<TextLink
+						to={"/admin/network/playersbyip"}
+						search={setColumnFilter(search, "steam_id", cell.getValue())}
+					>
 						{cell.getValue()}
 					</TextLink>
 				),
@@ -205,6 +208,11 @@ function AdminNetworkPlayersByCIDR() {
 				header: "AS Num",
 				grow: false,
 				enableSorting: false,
+				Cell: ({ cell }) => (
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "as_num", cell.getValue())}>
+						{cell.getValue()}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("as_name", {
 				header: "AS Name",
@@ -228,7 +236,7 @@ function AdminNetworkPlayersByCIDR() {
 				Cell: ({ cell }) => `${cell.getValue().latitude} / ${cell.getValue().longitude}`,
 			}),
 		],
-		[servers, theme.palette.mode],
+		[servers, theme.palette.mode, search],
 	);
 
 	const table = useMaterialReactTable({

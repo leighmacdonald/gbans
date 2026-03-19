@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
-//go:embed vote_discord.tmpl
+//go:embed vote_discord.gotmpl
 var templateBody []byte
 
 func RegisterDiscordCommands(_ discord.Service) {

@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ptr"
 )
 
-//go:embed playerqueue_discord.tmpl
+//go:embed playerqueue_discord.gotmpl
 var templateBody []byte
 
 func RegisterDiscordCommands(_ discord.Service) {

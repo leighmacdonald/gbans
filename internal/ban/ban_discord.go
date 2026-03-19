@@ -24,7 +24,7 @@ import (
 	"github.com/sosodev/duration"
 )
 
-//go:embed ban_discord.tmpl
+//go:embed ban_discord.gotmpl
 var templateBody []byte
 
 type discordHandler struct {
