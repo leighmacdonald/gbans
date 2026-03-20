@@ -54,6 +54,7 @@ function AdminBans() {
 	const search = Route.useSearch();
 	const { sendFlash } = useUserFlashCtx();
 	const navigate = useNavigate();
+
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["bans"],
 		queryFn: async () => {

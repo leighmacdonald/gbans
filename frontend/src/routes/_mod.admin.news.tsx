@@ -15,7 +15,6 @@ import { NewsEditModal } from "../component/modal/NewsEditModal.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { TableCellString } from "../component/table/TableCellString.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { NewsEntry } from "../schema/news.ts";
 import { renderDateTime } from "../util/time.ts";
@@ -108,32 +107,22 @@ function AdminNews() {
 			columnHelper.accessor("news_id", {
 				header: "ID",
 				grow: false,
-				Cell: ({ cell }) => {
-					return <TableCellString>{cell.getValue()}</TableCellString>;
-				},
 			}),
 			columnHelper.accessor("title", {
 				header: "Title",
 				grow: true,
-				Cell: ({ cell }) => {
-					return <TableCellString>{cell.getValue()}</TableCellString>;
-				},
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				grow: false,
 				enableColumnFilter: false,
-				Cell: ({ cell }) => {
-					return <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>;
-				},
+				Cell: ({ cell }) => renderDateTime(cell.getValue()),
 			}),
 			columnHelper.accessor("updated_on", {
 				header: "Updated",
 				grow: false,
 				enableColumnFilter: false,
-				Cell: ({ cell }) => {
-					return <TableCellString>{renderDateTime(cell.getValue())}</TableCellString>;
-				},
+				Cell: ({ cell }) => renderDateTime(cell.getValue()),
 			}),
 			columnHelper.accessor("is_published", {
 				meta: { tooltip: "Published" },

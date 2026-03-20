@@ -19,11 +19,13 @@ import z from "zod/v4";
 import { apiGetMessages, apiGetServers } from "../api";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
+import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
 	filterValue,
 	makeSchemaState,
 	type OnChangeFn,
+	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -67,6 +69,7 @@ function ChatLogs() {
 	const navigate = useNavigate();
 	const theme = useTheme();
 	const { hasPermission } = useAuth();
+
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
 			navigate({
@@ -123,11 +126,15 @@ function ChatLogs() {
 				filterFn: (row, _, filterValue) => {
 					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
 				},
-				Cell: ({ row }) => (
+				Cell: ({ row, cell }) => (
 					<Tooltip title={row.original.server_name}>
-						<Typography sx={{ color: stringToColour(row.original.server_name ?? "", theme.palette.mode) }}>
+						<TextLink
+							to={"/admin/network/playersbyip"}
+							search={setColumnFilter(search, "server_id", [cell.getValue()])}
+							sx={{ color: stringToColour(row.original.server_name ?? "", theme.palette.mode) }}
+						>
 							{row.original.server_name}
-						</Typography>
+						</TextLink>
 					</Tooltip>
 				),
 			}),
@@ -186,7 +193,7 @@ function ChatLogs() {
 				},
 			}),
 		];
-	}, [theme.palette.mode, servers]);
+	}, [theme.palette.mode, servers, search]);
 
 	const { data, isLoading, isError, isRefetching, refetch } = useQuery({
 		queryKey: ["chatlogs", { search }],

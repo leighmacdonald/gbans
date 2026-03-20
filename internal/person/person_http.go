@@ -131,7 +131,8 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 			return
 		}
 
-		if sid := user.GetSteamID(); !sid.Valid() {
+		sid := user.GetSteamID()
+		if !sid.Valid() {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, steamid.ErrInvalidSID))
 
 			return

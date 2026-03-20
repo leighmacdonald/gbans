@@ -37,12 +37,10 @@ func setupRootCmd() *cobra.Command {
 	root.Version = BuildVersion
 
 	refreshCommands := refreshCmd()
+	refreshCommands.AddCommand(netUpdateCmd())
 	refreshCommands.AddCommand(refreshFiltersCmd())
+	refreshCommands.AddCommand(refreshSteamIDs())
 
-	netCommands := netCmd()
-	netCommands.AddCommand(netUpdateCmd())
-
-	root.AddCommand(netCommands)
 	root.AddCommand(serveCmd())
 	root.AddCommand(refreshCommands)
 	// root.PersistentFlags().StringVar(&cfgFile, "config", "gbans.yml", "config file (default is $HOME/.gbans.yaml)").

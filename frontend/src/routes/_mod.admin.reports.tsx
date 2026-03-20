@@ -48,6 +48,7 @@ function AdminReports() {
 			return apiGetReports({ deleted: false });
 		},
 	});
+
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
 			navigate({
