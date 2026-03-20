@@ -209,7 +209,7 @@ function STV() {
 			isLoading,
 			showAlertBanner: isError,
 			columnFilters: search.columnFilters,
-			pagination: search.pagination ?? { pageIndex: 0, pageSize: 50 },
+			pagination: search.pagination,
 			sorting: search.sorting,
 		},
 		initialState: {
