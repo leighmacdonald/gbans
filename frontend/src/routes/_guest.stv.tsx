@@ -6,14 +6,27 @@ import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import { useTheme } from "@mui/material/styles";
+import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
-import { useMemo } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+	createMRTColumnHelper,
+	type MRT_ColumnFiltersState,
+	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
+} from "material-react-table";
+import { useCallback, useMemo } from "react";
 import { apiGetDemos, apiGetServers } from "../api";
 import { ButtonLink } from "../component/ButtonLink.tsx";
-import { createDefaultTableOptions } from "../component/table/options.ts";
+import { TextLink } from "../component/TextLink.tsx";
+import {
+	createDefaultTableOptions,
+	makeSchemaState,
+	type OnChangeFn,
+	setColumnFilter,
+} from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellRelativeDateField } from "../component/table/TableCellRelativeDateField.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -21,8 +34,14 @@ import type { DemoFile } from "../schema/demo.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { humanFileSize } from "../util/text.tsx";
+
+const columnHelper = createMRTColumnHelper<DemoFile>();
+const defaultOptions = createDefaultTableOptions<DemoFile>();
+const validateSearch = makeSchemaState("created_on");
+
 export const Route = createFileRoute("/_guest/stv")({
 	component: STV,
+	validateSearch,
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.demos_enabled);
 	},
@@ -49,18 +68,59 @@ export const Route = createFileRoute("/_guest/stv")({
 	}),
 });
 
-const columnHelper = createMRTColumnHelper<DemoFile>();
-const defaultOptions = createDefaultTableOptions<DemoFile>();
-
 function STV() {
 	const { isAuthenticated } = useAuth();
 	const theme = useTheme();
+	const { servers } = Route.useLoaderData();
+	const navigate = useNavigate();
+	const search = Route.useSearch();
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["demos"],
 		queryFn: apiGetDemos,
 	});
 
+	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					sorting: typeof updater === "function" ? updater(search.sorting ?? []) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					pagination:
+						typeof updater === "function"
+							? updater(search.pagination ?? { pageIndex: 0, pageSize: 50 })
+							: updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("demo_id", {
@@ -73,26 +133,31 @@ function STV() {
 					return filterValue.length === 0 || filterValue.includes(row.original.server_id);
 				},
 				filterVariant: "multi-select",
+				filterSelectOptions: servers.map((server) => ({
+					label: server.server_name,
+					value: server.server_id,
+				})),
 				grow: false,
 				enableSorting: true,
 				enableColumnFilter: true,
 				header: "Server",
-				Cell: ({ row }) => {
-					return (
-						<Button
-							variant="text"
-							sx={{
-								color: stringToColour(row.original.server_name_short, theme.palette.mode),
-							}}
+				Cell: ({ row, cell }) => (
+					<Tooltip title={row.original.server_name_long}>
+						<TextLink
+							to={"/stv"}
+							search={setColumnFilter(search, "server_id", [cell.getValue()])}
+							sx={{ color: stringToColour(row.original.server_name_short, theme.palette.mode) }}
 						>
 							{row.original.server_name_short}
-						</Button>
-					);
-				},
+						</TextLink>
+					</Tooltip>
+				),
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				enableColumnFilter: false,
+				enableSorting: true,
+				filterVariant: "date",
 				grow: false,
 				Cell: ({ cell }) => <TableCellRelativeDateField date={cell.getValue()} suffix />,
 			}),
@@ -100,8 +165,15 @@ function STV() {
 				enableColumnFilter: true,
 				header: "Map Name",
 				grow: true,
-				filterVariant: "multi-select",
-				Cell: ({ cell }) => <Typography>{cell.getValue() as string}</Typography>,
+				Cell: ({ row, cell }) => (
+					<TextLink
+						to={"/stv"}
+						search={setColumnFilter(search, "map_name", cell.getValue())}
+						sx={{ color: stringToColour(row.original.map_name, theme.palette.mode) }}
+					>
+						{row.original.map_name}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("size", {
 				header: "Size",
@@ -111,17 +183,17 @@ function STV() {
 				Cell: ({ cell }) => <Typography>{humanFileSize(cell.getValue() as number)}</Typography>,
 			}),
 			columnHelper.accessor("stats", {
-				header: "Players",
+				header: "SteamID",
 				grow: false,
 				enableSorting: false,
 				enableColumnFilter: true,
 				filterFn: (row, _, filterValue) => {
 					return filterValue === "" || Object.keys(row.original.stats).includes(filterValue);
 				},
-				Cell: ({ cell }) => <Typography>{Object.keys(Object(cell.getValue())).length}</Typography>,
+				Cell: ({ cell }) => <Typography>{Object.keys(Object(cell.getValue())).length} Players</Typography>,
 			}),
 		];
-	}, [theme.palette.mode]);
+	}, [theme.palette.mode, servers, search]);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
@@ -130,13 +202,18 @@ function STV() {
 		enableFilters: true,
 		enableHiding: true,
 		enableFacetedValues: true,
+		onColumnFiltersChange: setColumnFilters,
+		onPaginationChange: setPagination,
+		onSortingChange: setSorting,
 		state: {
 			isLoading,
 			showAlertBanner: isError,
+			columnFilters: search.columnFilters,
+			pagination: search.pagination ?? { pageIndex: 0, pageSize: 50 },
+			sorting: search.sorting,
 		},
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "created_on", desc: true }],
 			columnVisibility: {
 				demo_id: false,
 				server_id: true,
@@ -144,9 +221,6 @@ function STV() {
 			},
 		},
 		enableRowActions: true,
-		renderTopToolbarCustomActions: () => {
-			return <Typography variant="h3">Bans</Typography>;
-		},
 		renderRowActionMenuItems: ({ row }) => [
 			<ButtonLink
 				key={"report"}

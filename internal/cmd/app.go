@@ -199,6 +199,7 @@ func (g *GBans) Init(ctx context.Context) error {
 
 	if conf.Discord.Enabled {
 		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
+		auth.RegisterDiscordCommands(g.bot)
 		ban.RegisterDiscordCommands(g.bot, g.bans, g.persons, g.persons)
 		chat.RegisterDiscordCommands(g.bot, g.wordFilters)
 		forum.RegisterDiscordCommands(g.bot)

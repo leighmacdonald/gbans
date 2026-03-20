@@ -134,19 +134,13 @@ func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 	}
 	compressedData := compressed.Bytes()
 
-	slog.Debug("Compressed demo data",
-		slog.String("demo", demo.Name),
-		slog.Int("size_raw", len(demo.Content)),
-		slog.Int("size_zstd", len(compressedData)))
-
-	demoAsset, errNewAsset := d.asset.Create(ctx, steamid.New(d.owner),
+	demoAsset, errNewAsset := d.asset.Create(ctx, d.owner,
 		asset.BucketDemo, demo.Name+zstd.Extension, bytes.NewReader(compressedData), false)
 	if errNewAsset != nil {
 		return errNewAsset
 	}
 
-	_, errDemo := d.CreateFromAsset(ctx, &demoAsset, demo.ServerID)
-	if errDemo != nil {
+	if _, errDemo := d.CreateFromAsset(ctx, &demoAsset, demo.ServerID); errDemo != nil {
 		// Cleanup the asset not attached to a valid demo
 		if _, errDelete := d.asset.Delete(ctx, demoAsset.AssetID); errDelete != nil {
 			return errors.Join(errDelete, errDelete)

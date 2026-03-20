@@ -21,6 +21,7 @@ export type VoteResult = z.infer<typeof schemaVoteResult>;
 
 export const schemaVoteQueryFilter = z
 	.object({
+		server_id: z.number().optional(),
 		source_id: z.string(),
 		target_id: z.string(),
 		success: z.number(),

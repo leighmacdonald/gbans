@@ -35,7 +35,7 @@ export const IPHistoryTable = ({ steamId }: { steamId: string }) => {
 				offset: pagination.pageIndex * pagination.pageSize,
 				order_by: sort ? sort.id : "created_on",
 				desc: sort ? sort.desc : false,
-				sid64: steamId,
+				source_id: steamId,
 			});
 		},
 	});

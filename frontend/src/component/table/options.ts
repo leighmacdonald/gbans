@@ -10,7 +10,7 @@ export const createDefaultTableOptions = <TData extends MRT_RowData>(): Partial<
 	enableDensityToggle: false,
 	enableTopToolbar: true,
 	enableFilters: true,
-	paginationDisplayMode: "pages",
+	// paginationDisplayMode: "pages",
 	layoutMode: "grid",
 	enableFullScreenToggle: true,
 	positionActionsColumn: "last",
@@ -23,7 +23,6 @@ export const createDefaultTableOptions = <TData extends MRT_RowData>(): Partial<
 	muiTableBodyCellProps: {
 		sx: { paddingLeft: 1, paddingRight: 1, paddingTop: 0.25, paddingBottom: 0.25 },
 	},
-	defaultColumn: {},
 });
 
 export type Updater<T> = T | ((old: T) => T);
@@ -34,9 +33,9 @@ export const makeSchemaState = (defaultSortColumn: string = "", defaultDesc: boo
 		pagination: z
 			.object({
 				pageIndex: z.number().positive().catch(0),
-				pageSize: z.number().positive().catch(10),
+				pageSize: z.number().positive().catch(25),
 			})
-			.default({ pageIndex: 0, pageSize: 50 })
+			.default({ pageIndex: 0, pageSize: 25 })
 			.optional(),
 		columnFilters: z
 			.object({

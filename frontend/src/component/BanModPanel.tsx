@@ -157,7 +157,7 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 						variant={"contained"}
 						color={"secondary"}
 						to={"/chatlogs"}
-						search={{ steam_id: ban?.target_id }}
+						search={{ flagged_only: false, columnFilters: [{ id: "steam_id", value: ban?.target_id }] }}
 						startIcon={<ChatIcon />}
 					>
 						Chat Logs

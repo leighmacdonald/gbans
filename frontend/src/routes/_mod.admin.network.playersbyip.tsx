@@ -1,3 +1,4 @@
+import DnsIcon from "@mui/icons-material/Dns";
 import Grid from "@mui/material/Grid";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -10,7 +11,6 @@ import {
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { CircleMarker, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import { z } from "zod/v4";
 import { apiGetConnections, apiGetServers } from "../api";
 import { TextLink } from "../component/TextLink.tsx";
 import {
@@ -33,6 +33,7 @@ import L from "leaflet";
 import * as markerIcon from "leaflet/dist/images/marker-icon.png";
 import * as markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import * as markerShadow from "leaflet/dist/images/marker-shadow.png";
+import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { stringToColour } from "../util/colours.ts";
 
 // Workaround for leaflet not loading icons properly in react
@@ -48,16 +49,7 @@ L.Icon.Default.mergeOptions({
 const columnHelper = createMRTColumnHelper<PersonConnection>();
 const defaultOptions = createDefaultTableOptions<PersonConnection>();
 
-const validateSearch = z
-	.object({
-		cidr: z.cidrv4().optional(),
-		source_id: z.string().optional(),
-		as_num: z.number().optional(),
-		as_name: z.string().optional(),
-		country_code: z.string().optional(),
-		country_name: z.string().optional(),
-	})
-	.extend(makeSchemaState("person_connection_id").shape);
+const validateSearch = makeSchemaState("person_connection_id");
 
 export const Route = createFileRoute("/_mod/admin/network/playersbyip")({
 	component: AdminNetworkPlayersByCIDR,
@@ -202,6 +194,14 @@ function AdminNetworkPlayersByCIDR() {
 			columnHelper.accessor("ip_addr", {
 				grow: true,
 				header: "IP",
+				Cell: ({ cell }) => (
+					<TextLink
+						to={"/admin/network/playersbyip"}
+						search={setColumnFilter(search, "ip_addr", [cell.getValue()])}
+					>
+						{cell.getValue()}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("as_num", {
 				id: "as_num",
@@ -218,16 +218,31 @@ function AdminNetworkPlayersByCIDR() {
 				header: "AS Name",
 				grow: true,
 				enableSorting: false,
+				Cell: ({ cell }) => (
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "as_name", cell.getValue())}>
+						{cell.getValue()}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("country_code", {
 				header: "Country",
 				grow: true,
 				enableSorting: false,
+				Cell: ({ cell }) => (
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "country_code", cell.getValue())}>
+						{cell.getValue()}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("city_name", {
 				header: "City Name",
 				grow: true,
 				enableSorting: false,
+				Cell: ({ cell }) => (
+					<TextLink to={Route.fullPath} search={setColumnFilter(search, "city_name", cell.getValue())}>
+						{cell.getValue()}
+					</TextLink>
+				),
 			}),
 			columnHelper.accessor("lat_long", {
 				header: "Lat Long",
@@ -278,20 +293,19 @@ function AdminNetworkPlayersByCIDR() {
 		onSortingChange: setSorting,
 		enableRowActions: true,
 		enableCellActions: true,
-		// muiTableBodyCellProps: () => {
-		// 	return {
-		// 		onClick: async (event) => {
-		// 			console.log(event);
-		// 			await navigate({
-		// 				to: "/admin/network/playersbyip",
-		// 				search: s,
-		// 			});
-		// 		},
-		// 		sx: {
-		// 			cursor: "pointer", //you might want to change the cursor too when adding an onClick
-		// 		},
-		// 	};
-		// },
+		renderRowActionMenuItems: ({ row }) => [
+			<Tooltip title={"IP Information"} key={1}>
+				<IconButtonLink
+					color={"info"}
+					to={"/admin/network/ipInfo"}
+					search={{
+						ip: row.original.ip_addr,
+					}}
+				>
+					<DnsIcon />
+				</IconButtonLink>
+			</Tooltip>,
+		],
 	});
 
 	return (
@@ -345,10 +359,7 @@ function AdminNetworkPlayersByCIDR() {
 				</Paper>
 			</Grid>
 			<Grid size={{ xs: 12 }}>
-				<SortableTable
-					table={table}
-					title={"Network Connections (Brought to you with our partners at Palantir)"}
-				/>
+				<SortableTable table={table} title={"Player Connection History"} />
 			</Grid>
 		</Grid>
 	);
