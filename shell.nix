@@ -27,5 +27,6 @@ pkgs.mkShell {
     delve
     markdownlint-cli2
     sourcepawn-studio
+    sql-formatter
   ];
 }
