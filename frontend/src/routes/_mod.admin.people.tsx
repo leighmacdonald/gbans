@@ -146,7 +146,6 @@ function AdminPeople() {
 				Cell: ({ row }) => {
 					return (
 						<PersonCell
-							showCopy={true}
 							steam_id={row.original.steam_id}
 							personaname={row.original.persona_name}
 							avatar_hash={row.original.avatarhash}

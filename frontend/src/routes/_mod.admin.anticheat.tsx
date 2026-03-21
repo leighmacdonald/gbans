@@ -1,6 +1,7 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: form needs it */
+
+import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import {
 import { useCallback, useMemo } from "react";
 import { apiGetAnticheatLogs, apiGetServers } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
+import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
@@ -26,7 +28,7 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
 import type { StacEntry } from "../schema/anticheat.ts";
 import { stringToColour } from "../util/colours.ts";
-import { renderDate, renderDateTime } from "../util/time.ts";
+import { renderDate } from "../util/time.ts";
 
 const validateSearch = makeSchemaState("anticheat_id");
 
@@ -60,6 +62,7 @@ function AdminAnticheat() {
 	const search = Route.useSearch();
 	const navigate = useNavigate();
 	const servers = Route.useLoaderData();
+	const theme = useTheme();
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["anticheat", search],
@@ -81,8 +84,6 @@ function AdminAnticheat() {
 			}
 		},
 	});
-
-	const theme = useTheme();
 
 	const columns = useMemo(
 		() => [
@@ -111,24 +112,31 @@ function AdminAnticheat() {
 						<TextLink
 							to={"/admin/anticheat"}
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.server_name ?? "", theme.palette.mode) }}
+							sx={{ color: stringToColour(row.original.server_name ?? "") }}
 						>
 							{row.original.server_name}
 						</TextLink>
 					</Tooltip>
 				),
 			}),
-			columnHelper.accessor("name", {
+			columnHelper.accessor("steam_id", {
 				header: "Name",
 				enableHiding: false,
 				grow: true,
 				Cell: ({ row }) => (
 					<PersonCell
-						showCopy={true}
 						steam_id={row.original.steam_id}
 						personaname={row.original.personaname}
 						avatar_hash={row.original.avatar}
-					/>
+					>
+						<RouterLink
+							style={{ color: theme.palette.primary.light }}
+							to={Route.fullPath}
+							search={setColumnFilter(search, "steam_id", row.original.steam_id)}
+						>
+							{row.original.personaname ?? row.original.steam_id}
+						</RouterLink>
+					</PersonCell>
 				),
 			}),
 			columnHelper.accessor("personaname", {
@@ -136,24 +144,14 @@ function AdminAnticheat() {
 				grow: false,
 				header: "Personaname",
 			}),
-			columnHelper.accessor("steam_id", {
-				enableHiding: true,
-				grow: false,
-				header: "Steam ID",
-			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				grow: false,
-				Cell: ({ cell }) => (
-					<TableCellString title={renderDateTime(cell.getValue())}>
-						{renderDate(cell.getValue())}
-					</TableCellString>
-				),
+				Cell: ({ cell }) => renderDate(cell.getValue()),
 			}),
 			columnHelper.accessor("demo_id", {
 				header: "Demo",
 				grow: false,
-				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("detection", {
 				header: "Detection",
@@ -169,7 +167,6 @@ function AdminAnticheat() {
 				header: "Count",
 				filterVariant: "range-slider",
 				grow: false,
-				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
 			columnHelper.accessor("summary", {
 				header: "Summary",
@@ -177,7 +174,7 @@ function AdminAnticheat() {
 				Cell: ({ renderedCellValue }) => <TableCellString>{renderedCellValue}</TableCellString>,
 			}),
 		],
-		[theme, search, servers],
+		[search, servers, theme],
 	);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
@@ -226,9 +223,6 @@ function AdminAnticheat() {
 		columns,
 		data: data ?? [],
 		enableFilters: true,
-		manualFiltering: true,
-		manualPagination: true,
-		manualSorting: true,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
@@ -247,7 +241,7 @@ function AdminAnticheat() {
 				name: true,
 				personaname: false,
 				target_id: false,
-				steam_id: false,
+				steam_id: true,
 				demo_id: false,
 				reason: true,
 				reason_text: true,
@@ -259,7 +253,7 @@ function AdminAnticheat() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<SortableTable table={table} title={"Entries"} />
+				<SortableTable table={table} title={"Anti-Cheat Log Entries"} />
 			</Grid>
 		</Grid>
 	);

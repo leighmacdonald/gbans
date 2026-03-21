@@ -4,6 +4,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
@@ -16,6 +17,7 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellStringHidden } from "../component/table/TableCellStringHidden.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { Server } from "../schema/server.ts";
+import { stringToColour } from "../util/colours.ts";
 import { renderDateTime } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<Server>();
@@ -83,6 +85,9 @@ function AdminServers() {
 					tooltip: "Short unique server identifier",
 				},
 				header: "Name",
+				Cell: ({ cell, row }) => (
+					<Typography sx={{ color: stringToColour(row.original.short_name) }}>{cell.getValue()}</Typography>
+				),
 			}),
 
 			columnHelper.accessor("name", {
@@ -91,6 +96,9 @@ function AdminServers() {
 				meta: {
 					tooltip: "Full name of the server, AKA srcds hostname",
 				},
+				Cell: ({ cell, row }) => (
+					<Typography sx={{ color: stringToColour(row.original.short_name) }}>{cell.getValue()}</Typography>
+				),
 			}),
 
 			columnHelper.accessor("address", {
@@ -169,6 +177,10 @@ function AdminServers() {
 		initialState: {
 			...defaultOptions.initialState,
 			sorting: [{ id: "name", desc: false }],
+			pagination: {
+				pageIndex: 0,
+				pageSize: 100,
+			},
 			columnVisibility: {
 				server_id: false,
 				short_name: true,
