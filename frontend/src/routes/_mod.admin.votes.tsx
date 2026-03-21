@@ -16,6 +16,7 @@ import { useCallback, useMemo } from "react";
 import { apiGetServers } from "../api/server.ts";
 import { apiVotesQuery } from "../api/votes.ts";
 import { PersonCell } from "../component/PersonCell.tsx";
+import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import {
@@ -98,7 +99,7 @@ function AdminVotes() {
 						<TextLink
 							to={"/admin/votes"}
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.server_name ?? "", theme.palette.mode) }}
+							sx={{ color: stringToColour(row.original.server_name ?? "") }}
 						>
 							{row.original.server_name}
 						</TextLink>
@@ -111,11 +112,18 @@ function AdminVotes() {
 				enableSorting: false,
 				Cell: ({ row }) => (
 					<PersonCell
-						showCopy={true}
 						steam_id={row.original.source_id}
 						personaname={row.original.source_name}
 						avatar_hash={row.original.source_avatar_hash}
-					/>
+					>
+						<RouterLink
+							style={{ color: theme.palette.primary.light }}
+							to={Route.fullPath}
+							search={setColumnFilter(search, "source_id", row.original.source_id)}
+						>
+							{row.original.source_name ?? row.original.source_id}
+						</RouterLink>
+					</PersonCell>
 				),
 			}),
 			columnHelper.accessor("target_id", {
@@ -125,11 +133,18 @@ function AdminVotes() {
 				Cell: ({ row }) => {
 					return (
 						<PersonCell
-							showCopy={true}
 							steam_id={row.original.target_id}
 							personaname={row.original.target_name}
 							avatar_hash={row.original.target_avatar_hash}
-						/>
+						>
+							<RouterLink
+								style={{ color: theme.palette.primary.light }}
+								to={Route.fullPath}
+								search={setColumnFilter(search, "target_id", row.original.target_id)}
+							>
+								{row.original.target_name ?? row.original.target_id}
+							</RouterLink>
+						</PersonCell>
 					);
 				},
 			}),
@@ -151,7 +166,7 @@ function AdminVotes() {
 				Cell: ({ cell }) => renderDateTime(cell.getValue()),
 			}),
 		],
-		[servers, search, theme.palette.mode],
+		[servers, search, theme],
 	);
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(

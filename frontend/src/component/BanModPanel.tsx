@@ -2,7 +2,10 @@ import NiceModal from "@ebay/nice-modal-react";
 import AddModeratorIcon from "@mui/icons-material/AddModerator";
 import ChatIcon from "@mui/icons-material/Chat";
 import EditIcon from "@mui/icons-material/Edit";
+import NoAccountsIcon from "@mui/icons-material/NoAccounts";
 import UndoIcon from "@mui/icons-material/Undo";
+import VideocamIcon from "@mui/icons-material/Videocam";
+import WifiFindIcon from "@mui/icons-material/WifiFind";
 import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import MenuItem from "@mui/material/MenuItem";
@@ -162,6 +165,45 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 					>
 						Chat Logs
 					</ButtonLink>
+					<ButtonLink
+						variant={"contained"}
+						color={"secondary"}
+						to={"/stv"}
+						search={{ columnFilters: [{ id: "stats", value: ban?.target_id }] }}
+						startIcon={<VideocamIcon />}
+					>
+						STV History
+					</ButtonLink>
+					<ButtonLink
+						variant={"contained"}
+						color={"secondary"}
+						to={"/admin/bans"}
+						search={{ columnFilters: [{ id: "target_id", value: ban?.target_id }] }}
+						startIcon={<NoAccountsIcon />}
+					>
+						Ban History
+					</ButtonLink>
+
+					<ButtonLink
+						variant={"contained"}
+						color={"secondary"}
+						to={"/admin/reports"}
+						search={{ columnFilters: [{ id: "target_id", value: ban?.target_id }] }}
+						startIcon={<VideocamIcon />}
+					>
+						Report History
+					</ButtonLink>
+
+					<ButtonLink
+						variant={"contained"}
+						color={"secondary"}
+						to={"/admin/network/playersbyip"}
+						search={{ columnFilters: [{ id: "target_id", value: ban?.target_id }] }}
+						startIcon={<WifiFindIcon />}
+					>
+						Connection History
+					</ButtonLink>
+
 					<ButtonGroup fullWidth variant={"contained"}>
 						<Button color={"warning"} onClick={onEditBan} startIcon={<EditIcon />}>
 							Edit Ban

@@ -5,7 +5,6 @@ import FlagIcon from "@mui/icons-material/Flag";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
-import { useTheme } from "@mui/material/styles";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
@@ -70,7 +69,6 @@ export const Route = createFileRoute("/_guest/stv")({
 
 function STV() {
 	const { isAuthenticated } = useAuth();
-	const theme = useTheme();
 	const { servers } = Route.useLoaderData();
 	const navigate = useNavigate();
 	const search = Route.useSearch();
@@ -146,7 +144,7 @@ function STV() {
 						<TextLink
 							to={"/stv"}
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.server_name_short, theme.palette.mode) }}
+							sx={{ color: stringToColour(row.original.server_name_short) }}
 						>
 							{row.original.server_name_short}
 						</TextLink>
@@ -169,7 +167,7 @@ function STV() {
 					<TextLink
 						to={"/stv"}
 						search={setColumnFilter(search, "map_name", cell.getValue())}
-						sx={{ color: stringToColour(row.original.map_name, theme.palette.mode) }}
+						sx={{ color: stringToColour(row.original.map_name) }}
 					>
 						{row.original.map_name}
 					</TextLink>
@@ -193,7 +191,7 @@ function STV() {
 				Cell: ({ cell }) => <Typography>{Object.keys(Object(cell.getValue())).length} Players</Typography>,
 			}),
 		];
-	}, [theme.palette.mode, servers, search]);
+	}, [servers, search]);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,

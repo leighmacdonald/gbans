@@ -5,8 +5,7 @@ const colourMap: Record<colourVariant, Record<string, string>> = {
 	dark: {},
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const stringToColour = (str: string, _: colourVariant) => {
+export const stringToColour = (str: string) => {
 	const variant = (localStorage.getItem("theme") ?? "light") as colourVariant;
 
 	if (str in colourMap[variant]) {
