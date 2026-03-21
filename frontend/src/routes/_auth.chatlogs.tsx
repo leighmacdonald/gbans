@@ -2,9 +2,10 @@ import FlagIcon from "@mui/icons-material/Flag";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ReportIcon from "@mui/icons-material/Report";
 import WifiFindIcon from "@mui/icons-material/WifiFind";
-import { IconButton, Typography, useTheme } from "@mui/material";
+import { IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
+import { useTheme } from "@mui/system";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
@@ -19,6 +20,7 @@ import z from "zod/v4";
 import { apiGetMessages, apiGetServers } from "../api";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
+import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
@@ -36,7 +38,7 @@ import { renderDateTime } from "../util/time.ts";
 
 const validateSearch = z
 	.object({
-		flagged_only: z.boolean().catch(false),
+		flagged_only: z.boolean().optional().default(false),
 	})
 	.extend(makeSchemaState("person_message_id").shape);
 
@@ -129,9 +131,9 @@ function ChatLogs() {
 				Cell: ({ row, cell }) => (
 					<Tooltip title={row.original.server_name}>
 						<TextLink
-							to={"/admin/network/playersbyip"}
+							to={"/chatlogs"}
 							search={setColumnFilter(search, "server_id", [cell.getValue()])}
-							sx={{ color: stringToColour(row.original.server_name ?? "", theme.palette.mode) }}
+							sx={{ color: stringToColour(row.original.server_name ?? "") }}
 						>
 							{row.original.server_name}
 						</TextLink>
@@ -168,11 +170,18 @@ function ChatLogs() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						showCopy={true}
 						steam_id={row.original.steam_id}
 						avatar_hash={row.original.avatar_hash}
 						personaname={row.original.persona_name}
-					/>
+					>
+						<RouterLink
+							style={{ color: theme.palette.primary.light }}
+							to={Route.fullPath}
+							search={setColumnFilter(search, "steam_id", row.original.steam_id)}
+						>
+							{row.original.persona_name ?? row.original.steam_id}
+						</RouterLink>
+					</PersonCell>
 				),
 			}),
 
@@ -193,7 +202,7 @@ function ChatLogs() {
 				},
 			}),
 		];
-	}, [theme.palette.mode, servers, search]);
+	}, [servers, search, theme]);
 
 	const { data, isLoading, isError, isRefetching, refetch } = useQuery({
 		queryKey: ["chatlogs", { search }],

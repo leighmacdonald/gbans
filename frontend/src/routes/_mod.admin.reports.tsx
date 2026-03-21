@@ -1,3 +1,4 @@
+import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -14,6 +15,7 @@ import {
 import { useCallback, useMemo } from "react";
 import { apiGetReports } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
+import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
@@ -41,7 +43,7 @@ export const Route = createFileRoute("/_mod/admin/reports")({
 function AdminReports() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
-
+	const theme = useTheme();
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["adminReports"],
 		queryFn: async () => {
@@ -145,11 +147,19 @@ function AdminReports() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						showCopy={true}
 						steam_id={row.original.author.steam_id}
 						personaname={row.original.author.name}
 						avatar_hash={row.original.author.avatarhash}
-					/>
+					>
+						{" "}
+						<RouterLink
+							style={{ color: theme.palette.primary.light }}
+							to={Route.fullPath}
+							search={setColumnFilter(search, "source_id", row.original.source_id)}
+						>
+							{row.original.author.name ?? row.original.author.steam_id}
+						</RouterLink>
+					</PersonCell>
 				),
 			}),
 			columnHelper.accessor("target_id", {
@@ -173,11 +183,18 @@ function AdminReports() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						showCopy={true}
 						steam_id={row.original.subject.steam_id}
 						personaname={row.original.subject.name}
 						avatar_hash={row.original.subject.avatarhash}
-					/>
+					>
+						<RouterLink
+							style={{ color: theme.palette.primary.light }}
+							to={Route.fullPath}
+							search={setColumnFilter(search, "target_id", row.original.target_id)}
+						>
+							{row.original.subject.name ?? row.original.subject.steam_id}
+						</RouterLink>
+					</PersonCell>
 				),
 			}),
 			columnHelper.accessor("reason", {
@@ -228,7 +245,7 @@ function AdminReports() {
 				),
 			}),
 		];
-	}, [search]);
+	}, [search, theme]);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,

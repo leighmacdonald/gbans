@@ -188,6 +188,7 @@ export const ServerList = () => {
 		enableSorting: false,
 		enableRowActions: false,
 		enableColumnActions: false,
+		enablePagination: false,
 		initialState: {
 			...defaultOptions.initialState,
 			sorting: [{ id: "distance", desc: true }],

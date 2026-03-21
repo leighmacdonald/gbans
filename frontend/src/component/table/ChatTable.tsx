@@ -1,5 +1,4 @@
 import Button from "@mui/material/Button";
-import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
@@ -31,7 +30,7 @@ export const ChatTable = ({ steamId }: { steamId: string }) => {
 			});
 		},
 	});
-	const theme = useTheme();
+
 	const columns = useMemo(
 		() => [
 			columnHelper.accessor("server_id", {
@@ -41,7 +40,7 @@ export const ChatTable = ({ steamId }: { steamId: string }) => {
 					<Button
 						variant="text"
 						sx={{
-							color: stringToColour(row.original.server_name, theme.palette.mode),
+							color: stringToColour(row.original.server_name),
 						}}
 					>
 						{row.original.server_name}
@@ -60,7 +59,6 @@ export const ChatTable = ({ steamId }: { steamId: string }) => {
 				grow: false,
 				Cell: ({ row }) => (
 					<PersonCell
-						showCopy={true}
 						steam_id={row.original.steam_id}
 						avatar_hash={row.original.avatar_hash}
 						personaname={row.original.persona_name}
@@ -78,7 +76,7 @@ export const ChatTable = ({ steamId }: { steamId: string }) => {
 				),
 			}),
 		],
-		[theme.palette.mode],
+		[],
 	);
 
 	const table = useMaterialReactTable({

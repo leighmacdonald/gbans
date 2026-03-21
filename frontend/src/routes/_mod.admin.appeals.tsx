@@ -1,3 +1,4 @@
+import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -14,6 +15,7 @@ import {
 import { useCallback, useMemo } from "react";
 import { apiGetAppeals, appealStateString } from "../api";
 import { PersonCell } from "../component/PersonCell.tsx";
+import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
@@ -39,6 +41,7 @@ export const Route = createFileRoute("/_mod/admin/appeals")({
 
 function AdminAppeals() {
 	const navigate = useNavigate();
+	const theme = useTheme();
 	const search = Route.useSearch();
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["appeals"],
@@ -148,11 +151,18 @@ function AdminAppeals() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						showCopy={true}
 						steam_id={row.original.source_id}
 						personaname={row.original.source_personaname}
 						avatar_hash={row.original.source_avatarhash}
-					/>
+					>
+						<RouterLink
+							to={Route.fullPath}
+							style={{ color: theme.palette.primary.light }}
+							search={setColumnFilter(search, "source_id", row.original.source_id)}
+						>
+							{row.original.source_personaname ?? row.original.source_id}
+						</RouterLink>
+					</PersonCell>
 				),
 			}),
 			columnHelper.accessor("target_id", {
@@ -176,11 +186,18 @@ function AdminAppeals() {
 				},
 				Cell: ({ row }) => (
 					<PersonCell
-						showCopy={true}
 						steam_id={row.original.target_id}
 						personaname={row.original.target_personaname}
 						avatar_hash={row.original.target_avatarhash}
-					/>
+					>
+						<RouterLink
+							style={{ color: theme.palette.primary.light }}
+							to={Route.fullPath}
+							search={setColumnFilter(search, "target_id", row.original.target_id)}
+						>
+							{row.original.target_personaname ?? row.original.target_id}
+						</RouterLink>
+					</PersonCell>
 				),
 			}),
 			columnHelper.accessor("reason", {
@@ -231,7 +248,7 @@ function AdminAppeals() {
 				),
 			}),
 		],
-		[search],
+		[search, theme],
 	);
 
 	const table = useMaterialReactTable({
