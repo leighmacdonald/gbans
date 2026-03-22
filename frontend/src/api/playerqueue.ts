@@ -1,12 +1,17 @@
 import type { ChatStatus, OperationEnum } from "../schema/playerqueue.ts";
 import { apiCall } from "./common.ts";
 
-export const apiQueueMessagesDelete = async (message_id: number, count: number) => {
-	return await apiCall(`/api/playerqueue/messages/${message_id}/${count}`, "DELETE", {});
+export const apiQueueMessagesDelete = async (message_id: number, count: number, signal: AbortSignal) => {
+	return await apiCall(signal, `/api/playerqueue/messages/${message_id}/${count}`, "DELETE", {});
 };
 
-export const apiQueueSetUserStatus = async (steam_id: string, chat_status: ChatStatus, reason: string) => {
-	return await apiCall(`/api/playerqueue/status/${steam_id}`, "PUT", {
+export const apiQueueSetUserStatus = async (
+	steam_id: string,
+	chat_status: ChatStatus,
+	reason: string,
+	signal: AbortSignal,
+) => {
+	return await apiCall(signal, `/api/playerqueue/status/${steam_id}`, "PUT", {
 		chat_status,
 		reason,
 	});

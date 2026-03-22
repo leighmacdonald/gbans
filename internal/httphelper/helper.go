@@ -43,7 +43,7 @@ func BindJSON[T any](ctx *gin.Context) (T, bool) { //nolint:ireturn
 }
 
 // Decoder is a package global because it caches
-// meta-data about structs, and an instance can be shared safely.
+// meta-data about structs, and can be shared safely.
 var Decoder = schema.NewDecoder() //nolint:gochecknoglobals
 
 func BindQuery[T any](ctx *gin.Context) (T, bool) {

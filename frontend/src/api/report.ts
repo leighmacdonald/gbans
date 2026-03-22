@@ -10,53 +10,45 @@ import type {
 import { transformTimeStampedDates, transformTimeStampedDatesList } from "../util/time.ts";
 import { apiCall } from "./common";
 
-export const apiCreateReport = async (opts: CreateReportRequest) =>
-	await apiCall<Report, CreateReportRequest>("/api/report", "POST", opts);
+export const apiCreateReport = async (opts: CreateReportRequest, signal: AbortSignal) =>
+	await apiCall<Report, CreateReportRequest>(signal, "/api/report", "POST", opts);
 
-export const apiGetReport = async (report_id: number, abortController?: AbortController) =>
-	await apiCall<ReportWithAuthor>(`/api/report/${report_id}`, "GET", abortController);
+export const apiGetReport = async (report_id: number, signal: AbortSignal) =>
+	await apiCall<ReportWithAuthor>(signal, `/api/report/${report_id}`);
 
-export const apiGetReports = async (opts?: ReportQueryFilter, abortController?: AbortController) => {
-	const resp = await apiCall<ReportWithAuthor[], ReportQueryFilter>(`/api/reports`, "POST", opts, abortController);
+export const apiGetReports = async (signal: AbortSignal, opts?: ReportQueryFilter) => {
+	const resp = await apiCall<ReportWithAuthor[], ReportQueryFilter>(signal, `/api/reports`, "POST", opts);
 	return resp.map(transformTimeStampedDates);
 };
 
-export const apiGetUserReports = async (abortController?: AbortController) => {
-	const resp = await apiCall<ReportWithAuthor[], ReportQueryFilter>(
-		`/api/reports/user`,
-		"GET",
-		undefined,
-		abortController,
-	);
+export const apiGetUserReports = async (signal: AbortSignal) => {
+	const resp = await apiCall<ReportWithAuthor[], ReportQueryFilter>(signal, `/api/reports/user`);
 	return resp.map(transformTimeStampedDates);
 };
 
-export const apiGetReportMessages = async (report_id: number, abortController?: AbortController) =>
+export const apiGetReportMessages = async (report_id: number, signal: AbortSignal) =>
 	transformTimeStampedDatesList(
-		await apiCall<ReportMessage[], CreateReportRequest>(
-			`/api/report/${report_id}/messages`,
-			"GET",
-			undefined,
-			abortController,
-		),
+		await apiCall<ReportMessage[], CreateReportRequest>(signal, `/api/report/${report_id}/messages`),
 	);
 
-export const apiCreateReportMessage = async (report_id: number, body_md: string) =>
+export const apiCreateReportMessage = async (report_id: number, body_md: string, signal: AbortSignal) =>
 	transformTimeStampedDates(
-		await apiCall<ReportMessage, CreateReportMessage>(`/api/report/${report_id}/messages`, "POST", { body_md }),
+		await apiCall<ReportMessage, CreateReportMessage>(signal, `/api/report/${report_id}/messages`, "POST", {
+			body_md,
+		}),
 	);
 
-export const apiReportSetState = async (report_id: number, stateAction: ReportStatusEnum) =>
-	await apiCall(`/api/report_status/${report_id}`, "POST", {
+export const apiReportSetState = async (report_id: number, stateAction: ReportStatusEnum, signal: AbortSignal) =>
+	await apiCall(signal, `/api/report_status/${report_id}`, "POST", {
 		status: stateAction,
 	});
 
-export const apiUpdateReportMessage = async (report_message_id: number, message: string) =>
+export const apiUpdateReportMessage = async (report_message_id: number, message: string, signal: AbortSignal) =>
 	transformTimeStampedDates(
-		await apiCall<ReportMessage>(`/api/report/message/${report_message_id}`, "POST", {
+		await apiCall<ReportMessage>(signal, `/api/report/message/${report_message_id}`, "POST", {
 			body_md: message,
 		}),
 	);
 
-export const apiDeleteReportMessage = async (report_message_id: number) =>
-	await apiCall(`/api/report/message/${report_message_id}`, "DELETE", {});
+export const apiDeleteReportMessage = async (report_message_id: number, signal: AbortSignal) =>
+	await apiCall(signal, `/api/report/message/${report_message_id}`, "DELETE", {});

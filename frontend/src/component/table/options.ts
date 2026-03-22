@@ -12,8 +12,9 @@ export const createDefaultTableOptions = <TData extends MRT_RowData>(): Partial<
 	enableFilters: true,
 	// paginationDisplayMode: "pages",
 	layoutMode: "grid",
+	displayColumnDefOptions: makeRowActionsDefOptions(),
 	enableFullScreenToggle: true,
-	positionActionsColumn: "last",
+	positionActionsColumn: "first",
 	positionToolbarAlertBanner: "top",
 	columnFilterDisplayMode: "subheader",
 	// muiToolbarAlertBannerProps: () => ({
@@ -27,6 +28,18 @@ export const createDefaultTableOptions = <TData extends MRT_RowData>(): Partial<
 
 export type Updater<T> = T | ((old: T) => T);
 export type OnChangeFn<T> = (updaterOrValue: Updater<T>) => void;
+
+export const dateTimeColumnSize = 150;
+
+export const makeRowActionsDefOptions = (count: number = 1) => {
+	return {
+		"mrt-row-actions": {
+			size: 60 * count, //if using layoutMode that is not 'semantic', the columns will not auto-size, so you need to set the size manually
+			grow: false,
+			header: "",
+		},
+	};
+};
 
 export const makeSchemaState = (defaultSortColumn: string = "", defaultDesc: boolean = true) => {
 	return z.object({
@@ -82,6 +95,9 @@ export const filterValue = <T>(id: keyof T, s?: MRT_ColumnFiltersState): string 
 export const filterValueNumber = <T>(id: keyof T, s?: MRT_ColumnFiltersState): number =>
 	Number(s?.find((filter) => filter.id === id)?.value ?? 0);
 
+export const filterValueNumberArray = <T, V extends number>(id: keyof T, s?: MRT_ColumnFiltersState): V[] =>
+	(s?.find((filter) => filter.id === id)?.value as V[]) ?? ([] as V[]);
+
 export const filterValueBool = <T>(id: keyof T, s?: MRT_ColumnFiltersState): boolean =>
 	Boolean(s?.find((filter) => filter.id === id)?.value ?? false);
 
@@ -90,3 +106,17 @@ export const filterValueDefault = <T>(id: keyof T, defaultValue?: unknown, s?: M
 
 export const sortValueDefault = (sorting: MRT_SortingState, id: string, desc: boolean = true) =>
 	sorting?.find((sort) => sort) ?? { id, desc };
+
+export const filterValueDate = <T>(id: keyof T, s?: MRT_ColumnFiltersState): Date | string => {
+	try {
+		const found = s?.find((filter) => filter.id === id)?.value;
+		if (!found) return "";
+		const d = new Date(String(found));
+		if (d instanceof Date && !Number.isNaN(d.getTime())) {
+			return d;
+		}
+		return "";
+	} catch {
+		return "";
+	}
+};

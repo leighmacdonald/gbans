@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { defaultAvatarHash } from "../api/const.ts";
 import { schemaQueryFilter } from "./query.ts";
 
 export const PermissionLevel = {
@@ -174,8 +175,15 @@ export type PlayerProfile = z.infer<typeof schemaPlayerProfile>;
 export const schemaPlayerQuery = schemaQueryFilter.extend({
 	steam_ids: z.string().array().optional(),
 	personaname: z.string().optional(),
-	with_permissions: z.enum(PermissionLevel).optional(),
+	with_permissions: z.enum(PermissionLevel).array().optional(),
 	discord_id: z.string().optional(),
+	steam_update_older_than: z.date().optional(),
+	vac_bans: z.int().nonnegative().optional(),
+	game_bans: z.int().nonnegative().optional(),
+	avatar_hash: z.string().length(defaultAvatarHash.length).optional(),
+	community_banned: z.boolean().optional(),
+	time_created_after: z.union([z.date(), z.string()]).optional(),
+	time_created_before: z.union([z.date(), z.string()]).optional(),
 });
 
 export type PlayerQuery = z.infer<typeof schemaPlayerQuery>;

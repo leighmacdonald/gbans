@@ -208,7 +208,7 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 func (h personHandler) searchPlayers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		query, ok := httphelper.BindQuery[PlayerQuery](ctx)
+		query, ok := httphelper.BindQuery[Query](ctx)
 		if !ok {
 			return
 		}

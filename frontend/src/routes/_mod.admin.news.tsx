@@ -2,7 +2,6 @@ import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,8 +11,9 @@ import { useCallback, useMemo } from "react";
 import { apiGetNewsAll, apiNewsDelete } from "../api/news.ts";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { NewsEditModal } from "../component/modal/NewsEditModal.tsx";
+import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { createDefaultTableOptions } from "../component/table/options.ts";
+import { createDefaultTableOptions, makeRowActionsDefOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { NewsEntry } from "../schema/news.ts";
@@ -146,6 +146,29 @@ function AdminNews() {
 			isLoading,
 			showAlertBanner: isError,
 		},
+		displayColumnDefOptions: makeRowActionsDefOptions(2),
+		renderRowActions: ({ row }) => (
+			<RowActionContainer>
+				<IconButton
+					key={"delete"}
+					color={"error"}
+					onClick={async () => {
+						await onDelete(row.original);
+					}}
+				>
+					<DeleteIcon />
+				</IconButton>
+				<IconButton
+					key={"edit"}
+					color={"warning"}
+					onClick={async () => {
+						await onEdit(row.original);
+					}}
+				>
+					<EditIcon />
+				</IconButton>
+			</RowActionContainer>
+		),
 		initialState: {
 			...defaultOptions.initialState,
 			sorting: [{ id: "news_id", desc: false }],
@@ -157,30 +180,6 @@ function AdminNews() {
 				is_published: true,
 			},
 		},
-		renderRowActionMenuItems: ({ row }) => [
-			<Button
-				key={"editButton"}
-				variant={"contained"}
-				color={"warning"}
-				startIcon={<EditIcon />}
-				onClick={async () => {
-					await onEdit(row.original);
-				}}
-			>
-				Edit
-			</Button>,
-			<Button
-				key={"deleteButton"}
-				variant={"contained"}
-				color={"error"}
-				startIcon={<DeleteIcon />}
-				onClick={async () => {
-					await onDelete(row.original);
-				}}
-			>
-				Delete
-			</Button>,
-		],
 	});
 	return (
 		<Grid container spacing={2}>

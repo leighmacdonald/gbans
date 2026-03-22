@@ -2,7 +2,7 @@ import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { TableCell } from "@mui/material";
+import { Link } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -92,22 +92,22 @@ export const NetworkBlocklist = () => {
 			columnHelper.accessor("name", {
 				header: "Name",
 				grow: false,
-				Cell: ({ cell }) => <TableCell>{cell.getValue()}</TableCell>,
 			}),
 			columnHelper.accessor("url", {
 				header: "URL",
 				grow: true,
-				Cell: ({ cell }) => <TableCell>{cell.getValue()}</TableCell>,
+				Cell: ({ cell, renderedCellValue }) => <Link href={cell.getValue()}>{renderedCellValue}</Link>,
 			}),
 			columnHelper.accessor("enabled", {
 				header: "Enabled",
 				grow: false,
+				filterVariant: "checkbox",
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Updated",
 				grow: false,
-				Cell: ({ cell }) => <TableCell>{renderDate(cell.getValue())}</TableCell>,
+				Cell: ({ cell }) => renderDate(cell.getValue()),
 			}),
 		],
 		[],

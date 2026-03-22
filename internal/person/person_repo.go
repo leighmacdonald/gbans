@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"regexp"
 	"strings"
 	"time"
@@ -49,7 +48,7 @@ func (r *Repository) Save(ctx context.Context, person *Person) error {
 	return database.DBErr(r.Exec(ctx, query, person.SteamID.Int64(), person.VisibilityState,
 		person.ProfileState, person.PersonaName,
 		person.AvatarHash, person.PersonaState, person.RealName,
-		person.TimeCreated, person.LocCountryCode, person.LocStateCode,
+		person.Timecreated, person.LocCountryCode, person.LocStateCode,
 		person.LocCityID, person.PermissionLevel, person.DiscordID, person.CommunityBanned,
 		person.VACBans, person.GameBans, person.EconomyBan, person.DaysSinceLastBan, person.UpdatedOnSteam,
 		person.Muted, person.PlayerqueueChatStatus, person.PlayerqueueChatReason, person.CreatedOn, person.UpdatedOn))
@@ -61,35 +60,7 @@ func normalizeStringLikeQuery(input string) string {
 	return fmt.Sprintf("%%%s%%", strings.ToLower(strings.Trim(space.ReplaceAllString(input, "%"), "%")))
 }
 
-// GetSteamsAtAddress fetches all known steam ids which have connected from the provided ip address.
-// TODO move to network or srcds?
-func (r *Repository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
-	var ids steamid.Collection
-
-	// TODO
-	rows, errRows := r.QueryBuilder(ctx, r.Builder().
-		Select("DISTINCT steam_id").
-		From("person_connections").
-		Where(sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String()))))
-	if errRows != nil {
-		return nil, database.DBErr(errRows)
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var sid int64
-		if errScan := rows.Scan(&sid); errScan != nil {
-			return nil, database.DBErr(errScan)
-		}
-
-		ids = append(ids, steamid.New(sid))
-	}
-
-	return ids, nil
-}
-
-func (r *Repository) Query(ctx context.Context, query PlayerQuery) (People, int64, error) {
+func (r *Repository) Query(ctx context.Context, query Query) (People, int64, error) {
 	builder := r.Builder().
 		Select("p.steam_id", "p.created_on", "p.updated_on",
 			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
@@ -103,18 +74,17 @@ func (r *Repository) Query(ctx context.Context, query PlayerQuery) (People, int6
 	constraints := sq.And{}
 
 	if !query.SteamUpdateOlderThan.IsZero() {
-		builder = builder.OrderBy("p.updated_on_steam ASC")
+		// builder = builder.OrderBy("p.updated_on_steam ASC")
 		constraints = append(constraints, sq.Lt{"p.updated_on_steam": query.SteamUpdateOlderThan})
 	}
-	if query.WithPermissions > 0 {
-		constraints = append(constraints, sq.GtOrEq{"p.permission_level": query.WithPermissions})
+	if len(query.WithPermissions) > 0 {
+		constraints = append(constraints, sq.Eq{"p.permission_level": query.WithPermissions})
 	}
 
 	if query.DiscordID != "" {
 		constraints = append(constraints, sq.Eq{"p.discord_id": query.DiscordID})
 	}
 
-	// sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String())))
 	if len(query.SteamIDs) > 0 {
 		constraints = append(constraints, sq.Eq{"p.steam_id": query.SteamIDs})
 	}
@@ -124,12 +94,32 @@ func (r *Repository) Query(ctx context.Context, query PlayerQuery) (People, int6
 		constraints = append(constraints, sq.ILike{"p.personaname": normalizeStringLikeQuery(query.Personaname)})
 	}
 
+	if query.GameBans > 0 {
+		constraints = append(constraints, sq.GtOrEq{"p.game_bans": query.GameBans})
+	}
+
+	if query.VacBans > 0 {
+		constraints = append(constraints, sq.GtOrEq{"p.vac_bans": query.VacBans})
+	}
+
+	if query.CommunityBanned != nil {
+		constraints = append(constraints, sq.Eq{"p.community_banned": *query.CommunityBanned})
+	}
+
+	if query.TimeCreatedAfter != nil && query.TimeCreatedBefore != nil {
+		constraints = append(constraints, sq.Expr("p.timecreated BETWEEN $1 AND $2", *query.TimeCreatedAfter, *query.TimeCreatedBefore))
+	} else if query.TimeCreatedAfter != nil {
+		constraints = append(constraints, sq.GtOrEq{"p.timecreated": *query.TimeCreatedAfter})
+	} else if query.TimeCreatedBefore != nil {
+		constraints = append(constraints, sq.LtOrEq{"p.timecreated": *query.TimeCreatedBefore})
+	}
+
 	builder = query.ApplyLimitOffsetDefault(builder)
 	builder = query.ApplySafeOrder(builder, map[string][]string{
 		"p.": {
 			"steam_id", "created_on", "updated_on",
 			"communityvisibilitystate", "profilestate", "personaname", "avatarhash", "personastate",
-			"realname", "timecreated", "loccountrycode", "locstatecode", "loccityid", "p.permission_level",
+			"realname", "timecreated", "loccountrycode", "locstatecode", "loccityid", "permission_level",
 			"discord_id", "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
 			"updated_on_steam", "muted", "playerqueue_chat_status", "playerqueue_chat_reason",
 		},
@@ -150,7 +140,7 @@ func (r *Repository) Query(ctx context.Context, query PlayerQuery) (People, int6
 		if errScan := rows.
 			Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn, &person.VisibilityState,
 				&person.ProfileState, &person.PersonaName, &person.AvatarHash, &person.PersonaState,
-				&person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
+				&person.RealName, &person.Timecreated, &person.LocCountryCode, &person.LocStateCode,
 				&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID, &person.PlayerqueueChatStatus,

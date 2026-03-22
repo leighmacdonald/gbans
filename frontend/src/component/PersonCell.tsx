@@ -59,7 +59,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 		let items = [
 			<MenuItemLink to={`/profile/$steamId`} params={{ steamId: steam_id }} key={20}>
 				<ListItemIcon>
-					<AccountCircleIcon fontSize="small" />
+					<AccountCircleIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
 				Local Profile
 			</MenuItemLink>,
@@ -71,25 +71,25 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 				key={30}
 			>
 				<ListItemIcon>
-					<PublicIcon fontSize="small" />
+					<PublicIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
 				Steam Profile
 			</MenuItem>,
 			<MenuItem onClick={copySteamID} key={40}>
 				<ListItemIcon>
-					<ContentCopyIcon fontSize="small" />
+					<ContentCopyIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
 				Copy SteamID 64
 			</MenuItem>,
 			<MenuItemLink to={`/chatlogs`} search={{ columnFilters: [{ id: "steam_id", value: steam_id }] }} key={50}>
 				<ListItemIcon>
-					<ChatIcon fontSize="small" />
+					<ChatIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
 				Chat Logs
 			</MenuItemLink>,
 			<MenuItemLink to={`/stv`} search={{ columnFilters: [{ id: "stats", value: steam_id }] }} key={60}>
 				<ListItemIcon>
-					<VideocamIcon fontSize="small" />
+					<VideocamIcon fontSize="small" color={"primary"} />
 				</ListItemIcon>
 				SourceTV History
 			</MenuItemLink>,
@@ -103,7 +103,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 					key={70}
 				>
 					<ListItemIcon>
-						<WifiFindIcon fontSize="small" />
+						<WifiFindIcon fontSize="small" color={"primary"} />
 					</ListItemIcon>
 					Connection History
 				</MenuItemLink>,
@@ -114,7 +114,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 					key={80}
 				>
 					<ListItemIcon>
-						<NoAccountsIcon fontSize="small" />
+						<NoAccountsIcon fontSize="small" color={"primary"} />
 					</ListItemIcon>
 					Ban History
 				</MenuItemLink>,
@@ -124,7 +124,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 					key={90}
 				>
 					<ListItemIcon>
-						<VideocamIcon fontSize="small" />
+						<VideocamIcon fontSize="small" color={"primary"} />
 					</ListItemIcon>
 					Report History
 				</MenuItemLink>,
@@ -135,13 +135,13 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 
 	return (
 		<>
-			<Box display={"flex"} alignItems={"center"} gap={"0.2rem"}>
+			<Box display={"flex"} alignItems={"center"} gap={"0.2rem"} minWidth={200}>
 				<Tooltip title="Player Links">
 					<IconButton
 						onClick={handleClick}
 						size="small"
 						sx={{
-							ml: 2,
+							ml: 0,
 						}}
 						aria-controls={open ? "account-menu" : undefined}
 						aria-haspopup="true"
@@ -153,6 +153,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 							variant={"rounded"}
 							sizes=""
 							sx={{ height: "32px", width: "32px" }}
+							slotProps={{ img: { loading: "lazy" } }}
 						>
 							P
 						</Avatar>
