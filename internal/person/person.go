@@ -36,14 +36,20 @@ type SteamMember interface {
 	IsMember(steamID steamid.SteamID) (int64, bool)
 }
 
-type PlayerQuery struct {
+type Query struct {
 	query.Filter
 
-	Personaname          string               `schema:"personaname,omitempty" json:"personaname,omitempty"`
-	WithPermissions      permission.Privilege `schema:"with_permissions,omitempty" json:"with_permissions,omitempty"`
-	DiscordID            string               `schema:"discord_id,omitempty" json:"discord_id,omitempty"`
-	SteamUpdateOlderThan time.Time            `schema:"steam_update_older_than" json:"steam_update_older_than"`
-	SteamIDs             []string             `schema:"steam_ids,omitempty" json:"steam_ids,omitempty"` //nolint:tagliatelle
+	Personaname          string                 `schema:"personaname,omitempty" json:"personaname,omitempty"`
+	WithPermissions      []permission.Privilege `schema:"with_permissions,omitempty" json:"with_permissions,omitempty"`
+	DiscordID            string                 `schema:"discord_id,omitempty" json:"discord_id,omitempty"`
+	SteamUpdateOlderThan time.Time              `schema:"steam_update_older_than" json:"steam_update_older_than"`
+	SteamIDs             []string               `schema:"steam_ids,omitempty" json:"steam_ids,omitempty"` //nolint:tagliatelle
+	VacBans              int                    `schema:"vac_bans,omitempty" json:"vac_bans,omitempty"`
+	GameBans             int                    `schema:"game_bans,omitempty" json:"game_bans,omitempty"`
+	AvatarHash           string                 `schema:"avatar_hash,omitempty" json:"avatar_hash,omitempty"`
+	CommunityBanned      *bool                  `schema:"community_banned,omitempty" json:"community_banned,omitempty"`
+	TimeCreatedAfter     *time.Time             `schema:"time_created_after,omitzero" json:"time_created_after,omitzero"`
+	TimeCreatedBefore    *time.Time             `schema:"time_created_before,omitzero" json:"time_created_before,omitzero"`
 }
 
 type RequestPermissionLevelUpdate struct {
@@ -93,7 +99,7 @@ type Person struct {
 	ProfileState          int64                  `json:"profile_state"`
 	ProfileURL            string                 `json:"profile_url"`
 	RealName              string                 `json:"real_name"`
-	TimeCreated           int64                  `json:"time_created"`
+	Timecreated           int64                  `json:"timecreated"`
 	VisibilityState       int64                  `json:"visibility_state"`
 }
 
@@ -110,7 +116,7 @@ func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBa
 	p.PrimaryClanID = summary.PrimaryClanId
 	p.ProfileState = summary.ProfileState
 	p.RealName = summary.RealName
-	p.TimeCreated = summary.TimeCreated
+	p.Timecreated = summary.TimeCreated
 	p.CommentPermission = summary.CommentPermission
 	p.VACBans = int(steamBan.NumberOfVacBans)
 	p.GameBans = int(steamBan.NumberOfGameBans)
@@ -132,7 +138,7 @@ func (p Person) GetGameBans() int {
 }
 
 func (p Person) GetTimeCreated() time.Time {
-	return time.Unix(p.TimeCreated, 0)
+	return time.Unix(p.Timecreated, 0)
 }
 
 func (p Person) Avatar() string {
@@ -412,7 +418,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, _ pgx.Tx, people People) (
 			player.ProfileState = summary.ProfileState
 			player.ProfileURL = summary.ProfileUrl
 			player.RealName = summary.RealName
-			player.TimeCreated = summary.TimeCreated
+			player.Timecreated = summary.TimeCreated
 			player.VisibilityState = summary.VisibilityState
 
 			break
@@ -467,7 +473,7 @@ func (u *Persons) SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID
 }
 
 func (u *Persons) BySteamID(ctx context.Context, steamID steamid.SteamID) (Person, error) {
-	return u.getFirst(ctx, PlayerQuery{SteamIDs: []string{steamID.String()}})
+	return u.getFirst(ctx, Query{SteamIDs: []string{steamID.String()}})
 }
 
 func (u *Persons) Drop(ctx context.Context, steamID steamid.SteamID) error {
@@ -487,7 +493,7 @@ func (u *Persons) Save(ctx context.Context, person *Person) error {
 }
 
 func (u *Persons) BySteamIDs(ctx context.Context, steamIDs steamid.Collection) (People, error) {
-	people, _, err := u.repo.Query(ctx, PlayerQuery{SteamIDs: steamIDs.ToStringSlice()})
+	people, _, err := u.repo.Query(ctx, Query{SteamIDs: steamIDs.ToStringSlice()})
 	if err != nil {
 		return nil, err
 	}
@@ -495,7 +501,14 @@ func (u *Persons) BySteamIDs(ctx context.Context, steamIDs steamid.Collection) (
 	return people, nil
 }
 
-func (u *Persons) GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error) {
+func (u *Persons) GetPeople(ctx context.Context, filter Query) (People, int64, error) {
+	if (filter.TimeCreatedAfter != nil && filter.TimeCreatedBefore != nil) &&
+		(filter.TimeCreatedAfter.Before(*filter.TimeCreatedBefore) || filter.TimeCreatedBefore.After(*filter.TimeCreatedAfter)) {
+		swap := filter.TimeCreatedAfter
+		filter.TimeCreatedAfter = filter.TimeCreatedBefore
+		filter.TimeCreatedBefore = swap
+	}
+
 	return u.repo.Query(ctx, filter)
 }
 
@@ -524,7 +537,7 @@ func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.
 		PatreonID:       fetchedPerson.PatreonID,
 		GameBans:        fetchedPerson.GameBans,
 		VacBans:         fetchedPerson.VACBans,
-		TimeCreated:     time.Unix(fetchedPerson.TimeCreated, 0),
+		TimeCreated:     time.Unix(fetchedPerson.Timecreated, 0),
 	}, nil
 }
 
@@ -555,7 +568,7 @@ func (u *Persons) updatePerson(ctx context.Context, person *Person) error {
 	return u.Save(ctx, person)
 }
 
-func (u *Persons) getFirst(ctx context.Context, query PlayerQuery) (Person, error) {
+func (u *Persons) getFirst(ctx context.Context, query Query) (Person, error) {
 	people, _, errPeople := u.repo.Query(ctx, query)
 	if errPeople != nil {
 		return Person{}, errPeople
@@ -576,7 +589,7 @@ func (u *Persons) getFirst(ctx context.Context, query PlayerQuery) (Person, erro
 }
 
 func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (person.Core, error) {
-	fetchedPerson, errGetPerson := u.getFirst(ctx, PlayerQuery{DiscordID: discordID})
+	fetchedPerson, errGetPerson := u.getFirst(ctx, Query{DiscordID: discordID})
 	if errGetPerson != nil {
 		return person.Core{}, errGetPerson
 	}
@@ -589,35 +602,18 @@ func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (p
 		PatreonID:       fetchedPerson.PatreonID,
 		GameBans:        fetchedPerson.GameBans,
 		VacBans:         fetchedPerson.VACBans,
-		TimeCreated:     time.Unix(fetchedPerson.TimeCreated, 0),
+		TimeCreated:     time.Unix(fetchedPerson.Timecreated, 0),
 		DiscordID:       fetchedPerson.DiscordID,
 	}, nil
 }
 
 func (u *Persons) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, int64, error) {
-	return u.repo.Query(ctx, PlayerQuery{
+	return u.repo.Query(ctx, Query{
 		Filter: query.Filter{
 			Limit: limit,
 		},
 		SteamUpdateOlderThan: time.Now().AddDate(0, 0, -30),
 	})
-}
-
-func (u *Persons) GetSteamIDsAbove(ctx context.Context, privilege permission.Privilege) (steamid.Collection, error) {
-	var steamIDs steamid.Collection
-	players, _, errPlayers := u.repo.Query(ctx, PlayerQuery{
-		WithPermissions: privilege,
-	})
-
-	if errPlayers != nil {
-		return steamIDs, errPlayers
-	}
-
-	for _, player := range players {
-		steamIDs = append(steamIDs, player.SteamID)
-	}
-
-	return steamIDs, nil
 }
 
 func (u *Persons) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (Settings, error) {

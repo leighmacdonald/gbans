@@ -117,7 +117,7 @@ func (g *Memberships) Update(ctx context.Context) {
 	g.members = newMap
 	g.Unlock()
 
-	slog.Info("Updated group memberships", slog.Int("count", total))
+	slog.Debug("Updated group memberships", slog.Int("count", total))
 }
 
 // updateGroupBanMembers handles fetching and updating the member lists of steam groups. This does

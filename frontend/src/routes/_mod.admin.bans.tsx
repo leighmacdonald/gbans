@@ -24,10 +24,12 @@ import { BanModal } from "../component/modal/BanModal.tsx";
 import { UnbanModal } from "../component/modal/UnbanModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import RouterLink from "../component/RouterLink.tsx";
+import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import {
 	createDefaultTableOptions,
+	makeRowActionsDefOptions,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -60,8 +62,8 @@ function AdminBans() {
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["bans"],
-		queryFn: async () => {
-			return (await apiGetBans({ deleted: true })) ?? [];
+		queryFn: async ({ signal }) => {
+			return (await apiGetBans({ deleted: true }, signal)) ?? [];
 		},
 	});
 
@@ -169,7 +171,7 @@ function AdminBans() {
 			columnHelper.accessor("source_id", {
 				header: "Author",
 				enableSorting: false,
-				grow: true,
+				grow: false,
 				filterFn: (row, _, filterValue) => {
 					const query = filterValue.toLowerCase();
 					if (query === "") {
@@ -205,7 +207,7 @@ function AdminBans() {
 			}),
 			columnHelper.accessor("target_id", {
 				header: "Subject",
-				grow: true,
+				grow: false,
 				enableSorting: false,
 				enableColumnFilter: true,
 				filterFn: (row, _, filterValue) => {
@@ -337,6 +339,7 @@ function AdminBans() {
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
+		displayColumnDefOptions: makeRowActionsDefOptions(2),
 		state: {
 			isLoading,
 			showAlertBanner: isError,
@@ -361,30 +364,32 @@ function AdminBans() {
 		},
 
 		enableRowActions: true,
-		renderRowActionMenuItems: ({ row }) => [
-			<IconButton
-				key={"edit"}
-				color={"warning"}
-				onClick={async () => {
-					await onEdit(row.original);
-				}}
-			>
-				<Tooltip title={"Edit Ban"}>
-					<EditIcon />
-				</Tooltip>
-			</IconButton>,
-			<IconButton
-				key={"remove"}
-				color={"success"}
-				onClick={async () => {
-					await onUnban(row.original);
-				}}
-			>
-				<Tooltip title={"Remove Ban"}>
-					<UndoIcon />
-				</Tooltip>
-			</IconButton>,
-		],
+		renderRowActions: ({ row }) => (
+			<RowActionContainer>
+				<IconButton
+					key={"edit"}
+					color={"warning"}
+					onClick={async () => {
+						await onEdit(row.original);
+					}}
+				>
+					<Tooltip title={"Edit Ban"}>
+						<EditIcon />
+					</Tooltip>
+				</IconButton>
+				<IconButton
+					key={"remove"}
+					color={"success"}
+					onClick={async () => {
+						await onUnban(row.original);
+					}}
+				>
+					<Tooltip title={"Remove Ban"}>
+						<UndoIcon />
+					</Tooltip>
+				</IconButton>
+			</RowActionContainer>
+		),
 	});
 
 	return (

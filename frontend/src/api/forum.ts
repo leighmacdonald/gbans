@@ -11,10 +11,8 @@ import type { PermissionLevelEnum } from "../schema/people.ts";
 import { parseDateTime, transformCreatedOnDate, transformTimeStampedDates } from "../util/time.ts";
 import { apiCall } from "./common";
 
-export const apiGetForumCategory = async (forumCategoryId: number, abortController?: AbortController) => {
-	return transformTimeStampedDates(
-		await apiCall<ForumCategory>(`/api/forum/category/${forumCategoryId}`, "GET", undefined, abortController),
-	);
+export const apiGetForumCategory = async (forumCategoryId: number, signal: AbortSignal) => {
+	return transformTimeStampedDates(await apiCall<ForumCategory>(signal, `/api/forum/category/${forumCategoryId}`));
 };
 
 export const apiSaveForumCategory = async (
@@ -22,8 +20,9 @@ export const apiSaveForumCategory = async (
 	title: string,
 	description: string,
 	ordering: number,
+	signal: AbortSignal,
 ) => {
-	return await apiCall<ForumCategory>(`/api/forum/category/${forum_category_id}`, "POST", {
+	return await apiCall<ForumCategory>(signal, `/api/forum/category/${forum_category_id}`, "POST", {
 		title,
 		description,
 		ordering,
@@ -34,18 +33,13 @@ export const apiCreateForumCategory = async (
 	title: string,
 	description: string,
 	ordering: number,
-	abortController?: AbortController,
+	signal: AbortSignal,
 ) => {
-	return await apiCall<ForumCategory>(
-		`/api/forum/category`,
-		"POST",
-		{
-			title,
-			description,
-			ordering,
-		},
-		abortController,
-	);
+	return await apiCall<ForumCategory>(signal, `/api/forum/category`, "POST", {
+		title,
+		description,
+		ordering,
+	});
 };
 
 export const apiCreateForum = async (
@@ -54,24 +48,19 @@ export const apiCreateForum = async (
 	description: string,
 	ordering: number,
 	permission_level: PermissionLevelEnum,
-	abortController?: AbortController,
+	signal: AbortSignal,
 ) => {
-	return await apiCall<Forum>(
-		`/api/forum/forum`,
-		"POST",
-		{
-			forum_category_id,
-			title,
-			description,
-			ordering,
-			permission_level,
-		},
-		abortController,
-	);
+	return await apiCall<Forum>(signal, `/api/forum/forum`, "POST", {
+		forum_category_id,
+		title,
+		description,
+		ordering,
+		permission_level,
+	});
 };
 
-export const apiForum = async (forum_id: number, abortController?: AbortController) => {
-	return await apiCall<Forum>(`/api/forum/forum/${forum_id}`, "GET", undefined, abortController);
+export const apiForum = async (forum_id: number, signal: AbortSignal) => {
+	return await apiCall<Forum>(signal, `/api/forum/forum/${forum_id}`);
 };
 
 export const apiSaveForum = async (
@@ -81,24 +70,19 @@ export const apiSaveForum = async (
 	description: string,
 	ordering: number,
 	permission_level: PermissionLevelEnum,
-	abortController?: AbortController,
+	signal: AbortSignal,
 ) => {
-	return await apiCall<Forum>(
-		`/api/forum/forum/${forum_id}`,
-		"POST",
-		{
-			forum_category_id,
-			title,
-			description,
-			ordering,
-			permission_level,
-		},
-		abortController,
-	);
+	return await apiCall<Forum>(signal, `/api/forum/forum/${forum_id}`, "POST", {
+		forum_category_id,
+		title,
+		description,
+		ordering,
+		permission_level,
+	});
 };
 
-export const apiGetForumOverview = async (abortController?: AbortController) => {
-	const resp = await apiCall<ForumOverview>("/api/forum/overview", "GET", undefined, abortController);
+export const apiGetForumOverview = async (signal: AbortSignal) => {
+	const resp = await apiCall<ForumOverview>(signal, "/api/forum/overview");
 	resp.categories = resp.categories.map((category) => {
 		const cat = transformTimeStampedDates(category);
 		cat.forums = cat.forums.map((forum) => {
@@ -114,22 +98,13 @@ export const apiGetForumOverview = async (abortController?: AbortController) => 
 	return resp;
 };
 
-export const apiGetThreadMessages = async (opts: ThreadMessageQueryOpts, abortController?: AbortController) => {
-	const resp = await apiCall<ForumMessage[]>(`/api/forum/messages`, "POST", opts, abortController);
+export const apiGetThreadMessages = async (opts: ThreadMessageQueryOpts, signal: AbortSignal) => {
+	const resp = await apiCall<ForumMessage[]>(signal, `/api/forum/messages`, "POST", opts);
 	return resp.map(transformTimeStampedDates);
 };
 
-export const apiSaveThreadMessage = async (
-	forum_message_id: number,
-	body_md: string,
-	abortController?: AbortController,
-) => {
-	const resp = await apiCall<ForumMessage>(
-		`/api/forum/message/${forum_message_id}`,
-		"POST",
-		{ body_md },
-		abortController,
-	);
+export const apiSaveThreadMessage = async (forum_message_id: number, body_md: string, signal: AbortSignal) => {
+	const resp = await apiCall<ForumMessage>(signal, `/api/forum/message/${forum_message_id}`, "POST", { body_md });
 	return transformTimeStampedDates(resp);
 };
 
@@ -137,8 +112,8 @@ export interface ThreadQueryOpts {
 	forum_id: number;
 }
 
-export const apiGetThreads = async (opts: ThreadQueryOpts, abortController?: AbortController) => {
-	const resp = await apiCall<ForumThread[]>(`/api/forum/threads`, "POST", opts, abortController);
+export const apiGetThreads = async (opts: ThreadQueryOpts, signal: AbortSignal) => {
+	const resp = await apiCall<ForumThread[]>(signal, `/api/forum/threads`, "POST", opts);
 	if (!resp) {
 		return [];
 	}
@@ -149,13 +124,13 @@ export const apiGetThreads = async (opts: ThreadQueryOpts, abortController?: Abo
 	});
 };
 
-export const apiGetThread = async (thread_id: number, abortController?: AbortController) => {
-	const resp = await apiCall<ForumThread>(`/api/forum/thread/${thread_id}`, "GET", undefined, abortController);
+export const apiGetThread = async (thread_id: number, signal: AbortSignal) => {
+	const resp = await apiCall<ForumThread>(signal, `/api/forum/thread/${thread_id}`);
 	return transformTimeStampedDates(resp);
 };
 
-export const apiDeleteThread = async (thread_id: number, abortController?: AbortController) => {
-	return await apiCall(`/api/forum/thread/${thread_id}`, "DELETE", undefined, abortController);
+export const apiDeleteThread = async (thread_id: number, signal: AbortSignal) => {
+	return await apiCall(signal, `/api/forum/thread/${thread_id}`, "DELETE");
 };
 
 export const apiUpdateThread = async (
@@ -163,14 +138,13 @@ export const apiUpdateThread = async (
 	title: string,
 	sticky: boolean,
 	locked: boolean,
-	abortController?: AbortController,
+	signal: AbortSignal,
 ) => {
-	const resp = await apiCall<ForumThread>(
-		`/api/forum/thread/${thread_id}`,
-		"POST",
-		{ title, sticky, locked },
-		abortController,
-	);
+	const resp = await apiCall<ForumThread>(signal, `/api/forum/thread/${thread_id}`, "POST", {
+		title,
+		sticky,
+		locked,
+	});
 	return transformTimeStampedDates(resp);
 };
 
@@ -180,43 +154,32 @@ export const apiCreateThread = async (
 	body_md: string,
 	sticky: boolean,
 	locked: boolean,
-	abortController?: AbortController,
+	signal: AbortSignal,
 ) => {
-	const resp = await apiCall<ForumThread>(
-		`/api/forum/forum/${forum_id}/thread`,
-		"POST",
-		{ title, body_md, sticky, locked },
-		abortController,
-	);
+	const resp = await apiCall<ForumThread>(signal, `/api/forum/forum/${forum_id}/thread`, "POST", {
+		title,
+		body_md,
+		sticky,
+		locked,
+	});
 	return transformTimeStampedDates(resp);
 };
 
-export const apiCreateThreadReply = async (
-	forum_thread_id: number,
-	body_md: string,
-	abortController?: AbortController,
-) => {
+export const apiCreateThreadReply = async (forum_thread_id: number, body_md: string, signal: AbortSignal) => {
 	return transformTimeStampedDates(
-		await apiCall<ForumMessage>(
-			`/api/forum/thread/${forum_thread_id}/message`,
-			"POST",
-			{ body_md },
-			abortController,
-		),
+		await apiCall<ForumMessage>(signal, `/api/forum/thread/${forum_thread_id}/message`, "POST", { body_md }),
 	);
 };
 
-export const apiDeleteMessage = async (forum_message_id: number, abortController?: AbortController) => {
-	return await apiCall(`/api/forum/message/${forum_message_id}`, "DELETE", undefined, abortController);
+export const apiDeleteMessage = async (forum_message_id: number, signal: AbortSignal) => {
+	return await apiCall(signal, `/api/forum/message/${forum_message_id}`, "DELETE");
 };
 
-export const apiForumRecentActivity = async (abortController?: AbortController) => {
-	return (await apiCall<ForumMessage[]>(`/api/forum/messages/recent`, "GET", undefined, abortController)).map(
-		transformTimeStampedDates,
-	);
+export const apiForumRecentActivity = async (signal: AbortSignal) => {
+	return (await apiCall<ForumMessage[]>(signal, `/api/forum/messages/recent`)).map(transformTimeStampedDates);
 };
 
-export const apiForumActiveUsers = async (abortController?: AbortController) => {
-	const resp = await apiCall<ActiveUser[]>(`/api/forum/active_users`, "GET", undefined, abortController);
+export const apiForumActiveUsers = async (signal: AbortSignal) => {
+	const resp = await apiCall<ActiveUser[]>(signal, `/api/forum/active_users`);
 	return resp.map(transformCreatedOnDate);
 };

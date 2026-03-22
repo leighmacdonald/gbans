@@ -75,6 +75,7 @@ export interface GithubRelease {
 	}[];
 }
 
-export const getChangelogs = async () => (await apiCall<GithubRelease[]>("/api/changelog")).map(transformCreatedAtDate);
+export const getChangelogs = async (signal: AbortSignal) =>
+	(await apiCall<GithubRelease[]>(signal, "/api/changelog")).map(transformCreatedAtDate);
 
-export const getAppInfo = async () => apiCall<appInfoDetail>("/api/info");
+export const getAppInfo = async (signal: AbortSignal) => apiCall<appInfoDetail>(signal, "/api/info");

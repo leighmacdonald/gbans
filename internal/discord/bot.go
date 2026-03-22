@@ -201,12 +201,12 @@ func (b *Discord) CreateRole(name string) (string, error) {
 }
 
 func (b *Discord) onReady(session *discordgo.Session, _ *discordgo.Ready) {
-	slog.Info("Logged in successfully", slog.String("name", session.State.User.Username),
+	slog.Debug("Logged in successfully", slog.String("name", session.State.User.Username),
 		slog.String("discriminator", session.State.User.Discriminator))
 }
 
 func (b *Discord) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
-	slog.Info("Discord state changed", slog.String("state", "disconnected"))
+	slog.Debug("Discord state changed", slog.String("state", "disconnected"))
 }
 
 func (b *Discord) onAppCommand(ctx context.Context, session *discordgo.Session,
@@ -259,7 +259,7 @@ func (b *Discord) onInteractionCreate(session *discordgo.Session, interaction *d
 }
 
 func (b *Discord) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
-	slog.Info("Discord state changed", slog.String("state", "connected"))
+	slog.Debug("Discord state changed", slog.String("state", "connected"))
 
 	if errRegister := b.overwriteCommands(); errRegister != nil {
 		slog.Error("Failed to register discord slash commands", slog.String("error", errRegister.Error()))

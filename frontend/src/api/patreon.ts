@@ -45,14 +45,14 @@ export interface PatreonCampaign {
 	// };
 }
 
-export const apiGetPatreonCampaigns = async () => {
-	return apiCall<PatreonCampaign>("/api/patreon/campaigns");
+export const apiGetPatreonCampaigns = async (signal: AbortSignal) => {
+	return apiCall<PatreonCampaign>(signal, "/api/patreon/campaigns");
 };
 
-export const apiGetPatreonLogin = async () => {
-	return apiCall<CallbackLink>("/api/patreon/login");
+export const apiGetPatreonLogin = async (signal: AbortSignal) => {
+	return apiCall<CallbackLink>(signal, "/api/patreon/login");
 };
 
-export const apiGetPatreonLogout = async () => {
-	return apiCall("/api/patreon/logout");
+export const apiGetPatreonLogout = async (signal: AbortSignal) => {
+	return apiCall(signal, "/api/patreon/logout");
 };

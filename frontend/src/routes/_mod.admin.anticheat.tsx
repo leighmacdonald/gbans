@@ -38,7 +38,9 @@ export const Route = createFileRoute("/_mod/admin/anticheat")({
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
-			queryFn: apiGetServers,
+			queryFn: async ({ signal }) => {
+				return await apiGetServers(signal);
+			},
 		});
 		return unsorted.sort((a, b) => {
 			if (a.server_name > b.server_name) {
@@ -66,9 +68,9 @@ function AdminAnticheat() {
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["anticheat", search],
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			try {
-				return await apiGetAnticheatLogs({
+				return await apiGetAnticheatLogs(signal, {
 					server_id: 0,
 					name: "",
 					summary: "",

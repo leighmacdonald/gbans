@@ -1,6 +1,7 @@
 import { z } from "zod/v4";
 import { AppealStateEnum, BanReasonEnum } from "./bans.ts";
 
+// A commonly used shared schema for db query operations.
 export const schemaQueryFilter = z.object({
 	offset: z.number().min(0).optional(),
 	limit: z.number().optional(),

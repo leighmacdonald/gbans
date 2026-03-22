@@ -1,20 +1,30 @@
+import NiceModal from "@ebay/nice-modal-react";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import InfoIcon from "@mui/icons-material/Info";
 import Grid from "@mui/material/Grid";
+import IconButton from "@mui/material/IconButton";
 import TableCell from "@mui/material/TableCell";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import { apiGetFilters, apiGetWarningState } from "../api/filters.ts";
+import { apiDeleteFilter, apiGetFilters, apiGetWarningState } from "../api/filters.ts";
 import { ContainerWithHeader } from "../component/ContainerWithHeader.tsx";
+import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
+import { FilterEditModal } from "../component/modal/FilterEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
+import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { createDefaultTableOptions } from "../component/table/options.ts";
+import { createDefaultTableOptions, makeRowActionsDefOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellSmall } from "../component/table/TableCellSmall.tsx";
 import { TableCellString } from "../component/table/TableCellString.tsx";
+import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
+import { BanType } from "../schema/bans.ts";
 import { type Filter, filterActionString, type UserWarning } from "../schema/filters.ts";
 import { renderDateTime } from "../util/time.ts";
 
@@ -29,20 +39,98 @@ export const Route = createFileRoute("/_mod/admin/filters")({
 });
 
 function AdminFilters() {
+	const { queryClient } = Route.useRouteContext();
+	const { sendFlash, sendError } = useUserFlashCtx();
+
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["filters"],
-		queryFn: async () => {
-			return await apiGetFilters();
+		queryFn: async ({ signal }) => {
+			return await apiGetFilters(signal);
 		},
 	});
+
+	const onCreate = useCallback(async () => {
+		try {
+			const resp = (await NiceModal.show(FilterEditModal, {})) as Filter;
+			queryClient.setQueryData(["filters"], [...(data ?? []), resp]);
+		} catch (e) {
+			sendFlash("error", `${e}`);
+		}
+	}, [queryClient, sendFlash, data]);
+
+	const onEdit = useCallback(
+		async (filter: Filter) => {
+			try {
+				const resp = (await NiceModal.show(FilterEditModal, {
+					filter,
+				})) as Filter;
+
+				queryClient.setQueryData(
+					["filters"],
+					(data ?? []).map((f) => {
+						return f.filter_id === resp.filter_id ? resp : f;
+					}),
+				);
+			} catch (e) {
+				sendFlash("error", `${e}`);
+			}
+		},
+		[data, queryClient, sendFlash],
+	);
+
+	const deleteMutation = useMutation({
+		mutationKey: ["filters"],
+		mutationFn: async (filter_id: number) => {
+			const ac = new AbortController();
+			await apiDeleteFilter(filter_id, ac.signal);
+		},
+		onSuccess: (_, filterId) => {
+			sendFlash("success", `Deleted filter: ${filterId}`);
+		},
+		onError: sendError,
+	});
+
+	const onDelete = useCallback(
+		async (filter: Filter) => {
+			try {
+				const confirmed = (await NiceModal.show(ConfirmationModal, {
+					title: `Are you sure you want to delete this filter?`,
+				})) as boolean;
+
+				if (!confirmed || !filter.filter_id) {
+					return;
+				}
+				await deleteMutation.mutateAsync(filter.filter_id);
+
+				queryClient.setQueryData(
+					["filters"],
+					(data ?? []).filter((f) => f.filter_id !== filter.filter_id),
+				);
+			} catch (e) {
+				sendFlash("success", `${e}`);
+				return;
+			}
+		},
+		[deleteMutation, data, queryClient, sendFlash],
+	);
 
 	const columns = useMemo(() => {
 		return [
 			columnHelper.accessor("pattern", {
 				header: "Pattern",
 				grow: true,
-				enableColumnFilter: false,
-				Cell: ({ cell }) => cell.getValue(),
+				minSize: 350,
+				enableColumnFilter: true,
+				meta: {
+					tooltip: "Find and patterns that match this word or phrase",
+				},
+				filterFn: (row, _, filterValue) => {
+					if (row.original.is_regex) {
+						const rx = new RegExp(row.original.pattern);
+						return Boolean(rx.exec(filterValue.toLowerCase()));
+					}
+					return row.original.pattern.toLowerCase().includes(filterValue.toLowerCase());
+				},
 			}),
 			columnHelper.accessor("is_regex", {
 				header: "Rx",
@@ -53,36 +141,31 @@ function AdminFilters() {
 			}),
 			columnHelper.accessor("action", {
 				header: "Action",
-				enableColumnFilter: false,
+				filterVariant: "multi-select",
 				meta: { tooltip: "What action to take?" },
 				grow: false,
-				Cell: ({ cell }) => {
-					return (
-						<TableCellString>
-							{typeof cell.getValue() === "undefined" ? "" : filterActionString(cell.getValue())}
-						</TableCellString>
-					);
-				},
+				filterSelectOptions: [
+					{ label: "Mute", value: BanType.NoComm },
+					{ label: "Ban", value: BanType.Banned },
+				],
+				Cell: ({ cell }) => filterActionString(cell.getValue()),
 			}),
 			columnHelper.accessor("duration", {
 				header: "Duration",
 				enableColumnFilter: false,
 				grow: false,
 				meta: { tooltip: "Duration of the punishment when triggered" },
-				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
 			columnHelper.accessor("weight", {
 				grow: false,
-				filterVariant: "range",
+				enableColumnFilter: false,
 				header: "Weight",
-				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
 			columnHelper.accessor("trigger_count", {
 				header: "Trig #",
 				enableColumnFilter: false,
 				grow: false,
 				meta: { tooltip: "Number of times the filter has been triggered" },
-				Cell: ({ cell }) => <TableCellString>{cell.getValue()}</TableCellString>,
 			}),
 		];
 	}, []);
@@ -92,13 +175,38 @@ function AdminFilters() {
 		columns,
 		data: data ?? [],
 		enableFilters: true,
+		enableFacetedValues: true,
 		state: {
 			isLoading,
 			showAlertBanner: isError,
 		},
+		displayColumnDefOptions: makeRowActionsDefOptions(2),
+		enableRowActions: true,
+		renderRowActions: ({ row }) => (
+			<RowActionContainer>
+				<IconButton
+					key={"delete"}
+					color={"error"}
+					onClick={async () => {
+						await onDelete(row.original);
+					}}
+				>
+					<DeleteIcon />
+				</IconButton>
+				<IconButton
+					key={"edit"}
+					color={"warning"}
+					onClick={async () => {
+						await onEdit(row.original);
+					}}
+				>
+					<EditIcon />
+				</IconButton>
+			</RowActionContainer>
+		),
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "updated_on", desc: true }],
+			sorting: [{ id: "trigger_count", desc: true }],
 			columnVisibility: {
 				source_id: false,
 				target_id: true,
@@ -113,7 +221,17 @@ function AdminFilters() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<SortableTable table={table} title={"Word Filters"} />
+				<SortableTable
+					table={table}
+					title={"Word Filters"}
+					buttons={[
+						<Tooltip title="Create new filter" key="1">
+							<IconButton key={`ban-steam`} onClick={onCreate} sx={{ color: "primary.contrastText" }}>
+								<AddIcon />
+							</IconButton>
+						</Tooltip>,
+					]}
+				/>
 			</Grid>
 			<Grid size={{ xs: 12 }}>
 				<WarningStateTable />
@@ -139,8 +257,8 @@ const defaultOptionsWarn = createDefaultTableOptions<UserWarning>();
 export const WarningStateTable = () => {
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["filterWarnings"],
-		queryFn: async () => {
-			return await apiGetWarningState();
+		queryFn: async ({ signal }) => {
+			return await apiGetWarningState(signal);
 		},
 	});
 	const renderFilter = useCallback((f: Filter) => {

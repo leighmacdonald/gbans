@@ -56,7 +56,9 @@ export const Route = createFileRoute("/_mod/admin/network/playersbyip")({
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
-			queryFn: apiGetServers,
+			queryFn: async ({ signal }) => {
+				return await apiGetServers(signal);
+			},
 		});
 		return unsorted.sort((a, b) => {
 			return a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0;
@@ -74,24 +76,27 @@ function AdminNetworkPlayersByCIDR() {
 
 	const { data, isLoading, isError, isRefetching } = useQuery({
 		queryKey: ["playersByIP", { search }],
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const server_id = filterValue<PersonConnection>("server_id", search.columnFilters);
 			const sort = search.sorting ? sortValueDefault(search.sorting, "person_connection_id") : undefined;
 
-			return await apiGetConnections({
-				desc: sort ? sort.desc : true,
-				limit: search.pagination?.pageSize,
-				offset: search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0,
-				order_by: sort ? sort.id : "person_connection_id",
-				source_id: filterValue<PersonConnection>("steam_id", search.columnFilters),
-				server_id: Number(server_id) > 0 ? [Number(server_id)] : [],
-				cidr: filterValue<PersonConnection>("ip_addr", search.columnFilters),
-				as_name: filterValue<PersonConnection>("as_name", search.columnFilters),
-				as_num: filterValueNumber<PersonConnection>("as_num", search.columnFilters),
-				city_name: filterValue("city_name", search.columnFilters),
-				country_code: filterValue("country_code", search.columnFilters),
-				country_name: filterValue("country_name", search.columnFilters),
-			});
+			return await apiGetConnections(
+				{
+					desc: sort ? sort.desc : true,
+					limit: search.pagination?.pageSize,
+					offset: search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0,
+					order_by: sort ? sort.id : "person_connection_id",
+					source_id: filterValue<PersonConnection>("steam_id", search.columnFilters),
+					server_id: Number(server_id) > 0 ? [Number(server_id)] : [],
+					cidr: filterValue<PersonConnection>("ip_addr", search.columnFilters),
+					as_name: filterValue<PersonConnection>("as_name", search.columnFilters),
+					as_num: filterValueNumber<PersonConnection>("as_num", search.columnFilters),
+					city_name: filterValue("city_name", search.columnFilters),
+					country_code: filterValue("country_code", search.columnFilters),
+					country_name: filterValue("country_name", search.columnFilters),
+				},
+				signal,
+			);
 		},
 	});
 
@@ -283,9 +288,6 @@ function AdminNetworkPlayersByCIDR() {
 				lat_long: false,
 			},
 		},
-		manualFiltering: true,
-		manualPagination: true,
-		manualSorting: true,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,

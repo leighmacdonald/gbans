@@ -45,8 +45,8 @@ function AdminAppeals() {
 	const search = Route.useSearch();
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["appeals"],
-		queryFn: async () => {
-			return (await apiGetAppeals({})) ?? [];
+		queryFn: async ({ signal }) => {
+			return (await apiGetAppeals({}, signal)) ?? [];
 		},
 	});
 
@@ -97,7 +97,6 @@ function AdminAppeals() {
 		() => [
 			columnHelper.accessor("ban_id", {
 				header: "ID",
-				size: 75,
 				grow: false,
 				Cell: ({ cell }) => (
 					<TextLink
@@ -225,12 +224,10 @@ function AdminAppeals() {
 				header: "Custom",
 				filterVariant: "text",
 				grow: true,
-				Cell: ({ cell }) => <Typography>{cell.getValue()}</Typography>,
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Created",
 				filterVariant: "date",
-				size: 120,
 				Cell: ({ cell }) => (
 					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
 						<Typography>{renderDateTime(cell.getValue())}</Typography>
@@ -240,7 +237,6 @@ function AdminAppeals() {
 			columnHelper.accessor("updated_on", {
 				header: "Last Active",
 				enableColumnFilter: false,
-				size: 120,
 				Cell: ({ cell }) => (
 					<Tooltip title={formatDistanceToNowStrict(cell.getValue(), { addSuffix: true })}>
 						<Typography>{renderDateTime(cell.getValue())}</Typography>

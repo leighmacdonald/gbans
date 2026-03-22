@@ -46,7 +46,7 @@ export const Route = createFileRoute("/_auth/ban/$ban_id")({
 		const ban = await context.queryClient.fetchQuery({
 			queryKey: ["ban", { ban_id }],
 			queryFn: async () => {
-				const ban = await apiGetBanSteam(Number(ban_id), true, abortController);
+				const ban = await apiGetBanSteam(Number(ban_id), true, abortController.signal);
 				if (!ban) {
 					throw new AppError(ErrorCode.NotFound);
 				}
@@ -75,8 +75,8 @@ function BanPage() {
 
 	const { data: messages } = useQuery({
 		queryKey: ["banMessages", { ban_id: ban.ban_id }],
-		queryFn: async () => {
-			return await apiGetBanMessages(ban.ban_id);
+		queryFn: async ({ signal }) => {
+			return await apiGetBanMessages(ban.ban_id, signal);
 		},
 	});
 
@@ -90,7 +90,8 @@ function BanPage() {
 	const onDelete = useCallback(
 		async (message_id: number) => {
 			try {
-				await apiDeleteBanMessage(message_id);
+				const ac = new AbortController();
+				await apiDeleteBanMessage(message_id, ac.signal);
 				queryClient.setQueryData(
 					["banMessages", { ban_id: ban.ban_id }],
 					messages?.filter((m) => {
@@ -112,7 +113,8 @@ function BanPage() {
 			if (!ban) {
 				return;
 			}
-			const msg = await apiCreateBanMessage(ban?.ban_id, values.body_md);
+			const ac = new AbortController();
+			const msg = await apiCreateBanMessage(ban?.ban_id, values.body_md, ac.signal);
 
 			queryClient.setQueryData(["banMessages", { ban_id: ban.ban_id }], [...(messages ?? []), msg]);
 			sendFlash("success", "Created a message successfully");

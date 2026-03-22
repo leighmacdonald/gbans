@@ -155,7 +155,7 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 
 		go h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, loginMessage(fetchedPerson)))
 
-		slog.Info("User logged in",
+		slog.Debug("User logged in",
 			slog.String("sid64", sid.String()),
 			slog.String("name", fetchedPerson.GetName()),
 			slog.Int("permission_level", int(fetchedPerson.PermissionLevel)))

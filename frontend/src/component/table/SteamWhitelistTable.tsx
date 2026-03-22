@@ -26,6 +26,7 @@ export const SteamWhitelistTable = () => {
 	const confirmModal = useModal(ConfirmationModal);
 	const queryClient = useQueryClient();
 	const { sendFlash, sendError } = useUserFlashCtx();
+
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["networkSteamWhitelist"],
 		queryFn: async () => {

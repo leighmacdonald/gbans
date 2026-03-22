@@ -2,9 +2,8 @@ import NiceModal, { useModal } from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import { useTheme } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
-import TableCell from "@mui/material/TableCell";
-import Typography from "@mui/material/Typography";
 import { Grid } from "@mui/system";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
@@ -13,10 +12,12 @@ import { apiDeleteCIDRBlockWhitelist, apiGetCIDRBlockListsIPWhitelist } from "..
 import { useUserFlashCtx } from "../../hooks/useUserFlashCtx";
 import type { WhitelistIP } from "../../schema/network";
 import { logErr } from "../../util/errors";
-import { renderDate } from "../../util/time";
+import { cidrHostCount } from "../../util/strings";
+import { renderDateTime } from "../../util/time";
 import { ConfirmationModal } from "../modal/ConfirmationModal";
 import { IPWhitelistEditorModal } from "../modal/IPWhitelistEditorModal";
-import { createDefaultTableOptions } from "./options";
+import RouterLink from "../RouterLink";
+import { createDefaultTableOptions, setColumnFilter } from "./options";
 import { SortableTable } from "./SortableTable";
 
 const columnHelper = createMRTColumnHelper<WhitelistIP>();
@@ -26,6 +27,8 @@ export const IPWhitelistTable = () => {
 	const confirmModal = useModal(ConfirmationModal);
 	const { sendFlash, sendError } = useUserFlashCtx();
 	const queryClient = useQueryClient();
+	const theme = useTheme();
+
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["networkIPWhitelist"],
 		queryFn: async () => {
@@ -90,37 +93,37 @@ export const IPWhitelistTable = () => {
 			columnHelper.accessor("cidr_block_whitelist_id", {
 				header: "ID",
 				grow: false,
-				Cell: ({ cell }) => <Typography>{cell.getValue() as number}</Typography>,
 			}),
 			columnHelper.accessor("address", {
 				header: "CIDR Address",
 				grow: true,
 				Cell: ({ cell }) => (
-					<TableCell>
-						<Typography>{cell.getValue()}</Typography>
-					</TableCell>
+					<RouterLink
+						style={{ color: theme.palette.primary.light }}
+						to={"/admin/network/playersbyip"}
+						search={setColumnFilter({}, "ip_addr", cell.getValue())}
+					>
+						{cell.getValue()}
+					</RouterLink>
 				),
+			}),
+			columnHelper.display({
+				id: "hosts",
+				header: "Hosts",
+				Cell: ({ row }) => cidrHostCount(row.original.address),
 			}),
 			columnHelper.accessor("created_on", {
 				header: "Created On",
 				grow: true,
-				Cell: ({ cell }) => (
-					<TableCell>
-						<Typography>{renderDate(cell.getValue() as Date)}</Typography>
-					</TableCell>
-				),
+				Cell: ({ cell }) => renderDateTime(cell.getValue()),
 			}),
 			columnHelper.accessor("updated_on", {
 				header: "Updated On",
 				grow: false,
-				Cell: ({ cell }) => (
-					<TableCell>
-						<Typography>{renderDate(cell.getValue() as Date)}</Typography>
-					</TableCell>
-				),
+				Cell: ({ cell }) => renderDateTime(cell.getValue()),
 			}),
 		],
-		[],
+		[theme],
 	);
 
 	const table = useMaterialReactTable({
@@ -140,6 +143,7 @@ export const IPWhitelistTable = () => {
 			columnVisibility: {
 				cidr_block_whitelist_id: false,
 				address: true,
+				hosts: true,
 				created_on: true,
 				updated_on: false,
 			},
