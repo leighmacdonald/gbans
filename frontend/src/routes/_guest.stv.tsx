@@ -1,10 +1,8 @@
 /** biome-ignore-all lint/correctness/noChildrenProp: ts-form made me do it! */
-
 import { CloudDownload } from "@mui/icons-material";
 import FlagIcon from "@mui/icons-material/Flag";
-import Button from "@mui/material/Button";
+import { IconButton, Link } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import Link from "@mui/material/Link";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
@@ -18,10 +16,12 @@ import {
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { apiGetDemos, apiGetServers } from "../api";
-import { ButtonLink } from "../component/ButtonLink.tsx";
+import { IconButtonLink } from "../component/IconButtonLink.tsx";
+import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
+	makeRowActionsDefOptions,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -47,7 +47,9 @@ export const Route = createFileRoute("/_guest/stv")({
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
-			queryFn: apiGetServers,
+			queryFn: async ({ signal }) => {
+				return await apiGetServers(signal);
+			},
 		});
 
 		return {
@@ -75,7 +77,9 @@ function STV() {
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["demos"],
-		queryFn: apiGetDemos,
+		queryFn: async ({ signal }) => {
+			return await apiGetDemos(signal);
+		},
 	});
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
@@ -203,6 +207,7 @@ function STV() {
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
+		displayColumnDefOptions: makeRowActionsDefOptions(2),
 		state: {
 			isLoading,
 			showAlertBanner: isError,
@@ -219,30 +224,25 @@ function STV() {
 			},
 		},
 		enableRowActions: true,
-		renderRowActionMenuItems: ({ row }) => [
-			<ButtonLink
-				key={"report"}
-				disabled={!isAuthenticated()}
-				color={"error"}
-				variant={"text"}
-				to={"/report"}
-				search={{ demo_id: row.original.demo_id }}
-			>
-				<FlagIcon />
-			</ButtonLink>,
-			<Button
-				key={"dl-link"}
-				color={"success"}
-				component={Link}
-				variant={"text"}
-				href={`/asset/${row.original.asset_id}`}
-			>
-				<CloudDownload />
-			</Button>,
-		],
+		renderRowActions: ({ row }) => (
+			<RowActionContainer>
+				<IconButtonLink
+					key={"report"}
+					disabled={!isAuthenticated()}
+					color={"error"}
+					to={"/report"}
+					search={{ demo_id: row.original.demo_id }}
+				>
+					<FlagIcon />
+				</IconButtonLink>
+				<IconButton component={Link} key={"dl-link"} color={"success"} href={`/asset/${row.original.asset_id}`}>
+					<CloudDownload />
+				</IconButton>
+			</RowActionContainer>
+		),
 	});
 	return (
-		<Grid container spacing={2}>
+		<Grid container>
 			<Grid size={{ xs: 12 }}>
 				<SortableTable table={table} title={"SourceTV Recordings"} />
 			</Grid>

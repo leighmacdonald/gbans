@@ -14,13 +14,13 @@ export const transformMatchDates = (item: MatchResult) => {
 	return item;
 };
 
-export const apiGetMatch = async (match_id: string) => {
-	const match = await apiCall<MatchResult>(`/api/log/${match_id}`, "GET");
+export const apiGetMatch = async (match_id: string, signal: AbortSignal) => {
+	const match = await apiCall<MatchResult>(signal, `/api/log/${match_id}`);
 	return transformMatchDates(match);
 };
 
-export const apiGetMatches = async (opts: MatchesQueryOpts, abortController?: AbortController) => {
-	const resp = await apiCall<LazyResult<MatchSummary>, MatchesQueryOpts>(`/api/logs`, "POST", opts, abortController);
+export const apiGetMatches = async (opts: MatchesQueryOpts, signal: AbortSignal) => {
+	const resp = await apiCall<LazyResult<MatchSummary>, MatchesQueryOpts>(signal, `/api/logs`, "POST", opts);
 	resp.data = resp.data.map((m) => {
 		m.time_start = parseDateTime(m.time_start as unknown as string);
 		m.time_end = parseDateTime(m.time_end as unknown as string);

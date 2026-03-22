@@ -1,5 +1,6 @@
 import NiceModal from "@ebay/nice-modal-react";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
@@ -14,16 +15,21 @@ import {
 	useMaterialReactTable,
 } from "material-react-table";
 import { useCallback, useMemo } from "react";
-import z from "zod/v4";
 import { apiSearchPeople } from "../api";
 import { PersonEditModal } from "../component/modal/PersonEditModal.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
+import RouterLink from "../component/RouterLink.tsx";
+import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import {
 	createDefaultTableOptions,
 	filterValue,
+	filterValueBool,
+	filterValueNumber,
+	filterValueNumberArray,
 	makeSchemaState,
 	type OnChangeFn,
+	setColumnFilter,
 	sortValueDefault,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
@@ -38,12 +44,7 @@ import {
 	permissionLevelString,
 } from "../schema/people.ts";
 
-const validateSearch = z
-	.object({
-		staff_only: z.boolean().catch(false),
-	})
-	.extend(makeSchemaState("steam_id").shape);
-
+const validateSearch = makeSchemaState("created_on");
 const columnHelper = createMRTColumnHelper<Person>();
 const defaultOptions = createDefaultTableOptions<Person>();
 
@@ -57,28 +58,37 @@ export const Route = createFileRoute("/_mod/admin/people")({
 
 function AdminPeople() {
 	const search = Route.useSearch();
+	const navigate = useNavigate();
+	const theme = useTheme();
 	const { sendFlash } = useUserFlashCtx();
 	const { hasPermission } = useAuth();
-	const navigate = useNavigate();
 
 	const { data, isLoading, isError, isRefetching } = useQuery({
 		queryKey: ["people", { search }],
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const steam_id = filterValue("steam_id", search.columnFilters);
-			const staff_only = Boolean(
-				search.columnFilters?.find((filter) => filter.id === "staff_only")?.value ?? false,
-			);
-			const sort = search.sorting ? sortValueDefault(search.sorting, "steam_id") : { id: "steam_id", desc: true };
+			const sort = search.sorting ? sortValueDefault(search.sorting, "created_on") : undefined;
 
-			return await apiSearchPeople({
-				// personaname: filterValue("body", search.columnFilters),
-				desc: sort ? sort.desc : true,
-				limit: search.pagination?.pageSize,
-				offset: search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : undefined,
-				with_permissions: staff_only ? PermissionLevel.Reserved : PermissionLevel.Banned,
-				order_by: sort ? sort.id : "steam_id",
-				steam_ids: steam_id && steam_id !== "" ? [steam_id] : [],
-			});
+			return await apiSearchPeople(
+				{
+					// personaname: filterValue("body", search.columnFilters),
+					desc: sort ? sort.desc : true,
+					limit: search.pagination?.pageSize,
+					offset: search.pagination ? search.pagination.pageIndex * search.pagination?.pageSize : 0,
+					order_by: sort ? sort.id : "created_on",
+					with_permissions: filterValueNumberArray<Person, PermissionLevelEnum>(
+						"permission_level",
+						search.columnFilters,
+					),
+					steam_ids: steam_id && steam_id !== "" ? [steam_id] : [],
+					vac_bans: filterValueNumber("vac_bans", search.columnFilters),
+					game_bans: filterValueNumber("game_bans", search.columnFilters),
+					community_banned: filterValueBool("community_banned", search.columnFilters),
+					// time_created_before: filterValueDate("time_created_before", search.columnFilters),
+					// time_created_after: filterValueDate("time_created_after", search.columnFilters),
+				},
+				signal,
+			);
 		},
 	});
 
@@ -149,7 +159,15 @@ function AdminPeople() {
 							steam_id={row.original.steam_id}
 							personaname={row.original.persona_name}
 							avatar_hash={row.original.avatarhash}
-						/>
+						>
+							<RouterLink
+								style={{ color: theme.palette.primary.light }}
+								to={Route.fullPath}
+								search={setColumnFilter(search, "steam_id", row.original.steam_id)}
+							>
+								{row.original.persona_name ?? row.original.steam_id}
+							</RouterLink>
+						</PersonCell>
 					);
 				},
 			}),
@@ -163,13 +181,16 @@ function AdminPeople() {
 				),
 			}),
 			columnHelper.accessor("vac_bans", {
-				header: "Vac",
+				header: "Vac Bans",
 				grow: false,
-				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() > 0} />,
+				Cell: ({ cell }) => (
+					<Typography variant={"body1"}>{cell.getValue() > 0 ? cell.getValue() : ""}</Typography>
+				),
 			}),
 			columnHelper.accessor("community_banned", {
-				header: "CB",
+				header: "Comm Ban",
 				grow: false,
+				filterVariant: "checkbox",
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue()} />,
 			}),
 
@@ -188,6 +209,11 @@ function AdminPeople() {
 			columnHelper.accessor("permission_level", {
 				header: "Perms",
 				grow: false,
+				filterVariant: "multi-select",
+				filterSelectOptions: Object.values(PermissionLevel).map((perm) => ({
+					label: permissionLevelString(perm),
+					value: perm,
+				})),
 				Cell: ({ row }) => (
 					<Typography>
 						{permissionLevelString(
@@ -199,7 +225,7 @@ function AdminPeople() {
 				),
 			}),
 		];
-	}, []);
+	}, [theme, search]);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
@@ -231,13 +257,18 @@ function AdminPeople() {
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
-		renderRowActionMenuItems: ({ row }) => [
-			hasPermission(PermissionLevel.Admin) ? (
-				<IconButton color={"warning"} onClick={() => onEditPerson(row.original)} key={"editperms"}>
+		renderRowActions: ({ row }) => (
+			<RowActionContainer>
+				<IconButton
+					disabled={!hasPermission(PermissionLevel.Admin)}
+					color={"warning"}
+					onClick={() => onEditPerson(row.original)}
+					key={"editperms"}
+				>
 					<VpnKeyIcon />
 				</IconButton>
-			) : null,
-		],
+			</RowActionContainer>
+		),
 	});
 	return (
 		<Grid container spacing={2}>

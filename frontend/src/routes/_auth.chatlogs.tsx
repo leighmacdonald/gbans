@@ -1,7 +1,6 @@
 import FlagIcon from "@mui/icons-material/Flag";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ReportIcon from "@mui/icons-material/Report";
-import WifiFindIcon from "@mui/icons-material/WifiFind";
 import { IconButton, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
@@ -21,17 +20,19 @@ import { apiGetMessages, apiGetServers } from "../api";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import RouterLink from "../component/RouterLink.tsx";
+import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
+	dateTimeColumnSize,
 	filterValue,
+	makeRowActionsDefOptions,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
 } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
-import { useAuth } from "../hooks/useAuth.ts";
-import { PermissionLevel, type PersonMessage } from "../schema/people.ts";
+import type { PersonMessage } from "../schema/people.ts";
 import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { renderDateTime } from "../util/time.ts";
@@ -70,7 +71,6 @@ function ChatLogs() {
 	const servers = Route.useLoaderData();
 	const navigate = useNavigate();
 	const theme = useTheme();
-	const { hasPermission } = useAuth();
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
 		(updater) => {
@@ -145,12 +145,13 @@ function ChatLogs() {
 				header: "Created",
 				enableColumnFilter: false,
 				grow: false,
+				size: dateTimeColumnSize,
 				Cell: ({ cell }) => renderDateTime(cell.getValue()),
 			}),
 
 			columnHelper.accessor("steam_id", {
 				header: "SteamID",
-				grow: true,
+				grow: false,
 				enableSorting: false,
 				enableColumnFilter: true,
 				filterFn: (row, _, filterValue) => {
@@ -235,6 +236,7 @@ function ChatLogs() {
 		rowCount: data ? data.count : 0,
 		enableFilters: true,
 		enableRowActions: true,
+		displayColumnDefOptions: makeRowActionsDefOptions(1),
 		state: {
 			columnFilters: search.columnFilters,
 			isLoading: isLoading || isRefetching,
@@ -258,38 +260,23 @@ function ChatLogs() {
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onSortingChange: setSorting,
-		renderRowActionMenuItems: ({ row }) => [
-			<Tooltip title={"Create Report"} key={row.original.person_message_id}>
-				<IconButtonLink
-					color={"error"}
-					disabled={row.original.auto_filter_flagged > 0}
-					to={"/report"}
-					search={{
-						person_message_id: row.original.person_message_id,
-						steam_id: row.original.steam_id,
-					}}
-				>
-					<ReportIcon />
-				</IconButtonLink>
-			</Tooltip>,
-			<Tooltip title={"IP Lookup"} key={row.original.person_message_id}>
-				<IconButtonLink
-					color={"success"}
-					disabled={!hasPermission(PermissionLevel.Moderator)}
-					to={"/admin/network/playersbyip"}
-					search={{
-						columnFilters: [
-							{
-								id: "steam_id",
-								value: row.original.steam_id,
-							},
-						],
-					}}
-				>
-					<WifiFindIcon />
-				</IconButtonLink>
-			</Tooltip>,
-		],
+		renderRowActions: ({ row }) => (
+			<RowActionContainer>
+				<Tooltip title={"Create Report"} key={row.original.person_message_id}>
+					<IconButtonLink
+						color={"error"}
+						disabled={row.original.auto_filter_flagged > 0}
+						to={"/report"}
+						search={{
+							person_message_id: row.original.person_message_id,
+							steam_id: row.original.steam_id,
+						}}
+					>
+						<ReportIcon />
+					</IconButtonLink>
+				</Tooltip>
+			</RowActionContainer>
+		),
 	});
 
 	return (

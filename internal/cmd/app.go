@@ -138,7 +138,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	} else {
 		g.logCloser = log.MustCreateLogger(ctx, conf.Log.File, conf.Log.Level, conf.General.SentryDSN != "", BuildVersion)
 	}
-	slog.Info("Starting gbans...",
+	slog.Debug("Starting gbans...",
 		slog.String("version", BuildVersion),
 		slog.String("commit", BuildCommit),
 		slog.String("date", BuildDate))
@@ -532,7 +532,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	go func() {
 		<-ctx.Done()
 
-		slog.Info("Shutting down HTTP service")
+		slog.Debug("Shutting down HTTP service")
 
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()

@@ -18,15 +18,16 @@ type httpMethods = "POST" | "GET" | "DELETE" | "PUT";
  * @param url
  * @param method
  * @param body
- * @param abortController
+ * @param signal
  * @param isFormData
  * @throws AppError
  */
 export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Record<string, unknown> | object>(
+	_signal: AbortSignal,
 	url: string,
 	method: httpMethods = "GET",
 	body?: TRequestBody | undefined | FormData | Record<string, string>,
-	abortController?: AbortController,
+
 	isFormData: boolean = false,
 ): Promise<TResponse> => {
 	const headers: Record<string, string> = {};
@@ -52,9 +53,7 @@ export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Recor
 		requestOptions.body = isFormData ? (body as FormData) : JSON.stringify(body);
 	}
 
-	if (abortController !== undefined) {
-		requestOptions.signal = abortController.signal;
-	}
+	// requestOptions.signal = signal;
 
 	const fullURL = new URL(url, apiRootURL());
 	if (method === "GET" && body) {

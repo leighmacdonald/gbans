@@ -11,6 +11,7 @@ import { createMRTColumnHelper, useMaterialReactTable } from "material-react-tab
 import { useCallback, useMemo } from "react";
 import { apiGetServersAdmin } from "../api";
 import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
+import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
 import { createDefaultTableOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
@@ -38,8 +39,8 @@ function AdminServers() {
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["serversAdmin"],
-		queryFn: async () => {
-			return (await apiGetServersAdmin()) ?? [];
+		queryFn: async ({ signal }) => {
+			return (await apiGetServersAdmin(signal)) ?? [];
 		},
 	});
 
@@ -79,6 +80,7 @@ function AdminServers() {
 				header: "ID",
 				grow: false,
 			}),
+
 			columnHelper.accessor("short_name", {
 				grow: false,
 				meta: {
@@ -106,6 +108,14 @@ function AdminServers() {
 				grow: false,
 				meta: {
 					tooltip: "IP or DNS/Hostname of the server",
+				},
+			}),
+
+			columnHelper.accessor("address_internal", {
+				header: "Internal Addr",
+				grow: false,
+				meta: {
+					tooltip: "Internal IP or DNS/Hostname",
 				},
 			}),
 
@@ -145,14 +155,17 @@ function AdminServers() {
 				grow: false,
 				Cell: ({ cell }) => renderDateTime(cell.getValue() as Date),
 			}),
+
 			columnHelper.accessor("enable_stats", {
 				meta: {
 					tooltip: "Stat Tracking Enabled",
 				},
+				filterVariant: "checkbox",
 				header: "Stats",
 				grow: false,
 				Cell: ({ cell }) => <BoolCell enabled={cell.getValue() as boolean} />,
 			}),
+
 			columnHelper.accessor("is_enabled", {
 				filterVariant: "checkbox",
 				meta: {
@@ -193,19 +206,21 @@ function AdminServers() {
 			},
 		},
 		enableRowActions: true,
-		renderRowActionMenuItems: ({ row }) => [
-			<IconButton
-				key="edit"
-				color={"warning"}
-				onClick={async () => {
-					await onEdit(row.original);
-				}}
-			>
-				<Tooltip title={"Edit Server"}>
-					<EditIcon />
-				</Tooltip>
-			</IconButton>,
-		],
+		renderRowActions: ({ row }) => (
+			<RowActionContainer>
+				<IconButton
+					key="edit"
+					color={"warning"}
+					onClick={async () => {
+						await onEdit(row.original);
+					}}
+				>
+					<Tooltip title={"Edit Server"}>
+						<EditIcon />
+					</Tooltip>
+				</IconButton>
+			</RowActionContainer>
+		),
 	});
 
 	return (

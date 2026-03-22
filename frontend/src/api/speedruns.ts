@@ -2,28 +2,31 @@ import type { SpeedrunMapOverview, SpeedrunResult } from "../schema/speedrun.ts"
 import { transformCreatedOnDate } from "../util/time.ts";
 import { apiCall } from "./common.ts";
 
-export const getSpeedrunsTopOverall = async (count: number = 5) => {
-	const results = await apiCall<Record<string, SpeedrunResult[]>>(`/api/speedruns/overall/top?count=${count}`, "GET");
+export const getSpeedrunsTopOverall = async (count: number = 5, signal: AbortSignal) => {
+	const results = await apiCall<Record<string, SpeedrunResult[]>>(
+		signal,
+		`/api/speedruns/overall/top?count=${count}`,
+	);
 	for (const key of Object.keys(results)) {
 		results[key] = results[key].map(transformCreatedOnDate);
 	}
 	return results;
 };
 
-export const getSpeedrunsTopMap = async (map_name: string) => {
-	return (await apiCall<SpeedrunMapOverview[]>(`/api/speedruns/map?map_name=${map_name}`, "GET")).map(
+export const getSpeedrunsTopMap = async (map_name: string, signal: AbortSignal) => {
+	return (await apiCall<SpeedrunMapOverview[]>(signal, `/api/speedruns/map?map_name=${map_name}`)).map(
 		transformCreatedOnDate,
 	);
 };
 
-export const getSpeedrunsRecent = async (count: number = 5) => {
-	return (await apiCall<SpeedrunMapOverview[]>(`/api/speedruns/overall/recent?count=${count}`, "GET")).map(
+export const getSpeedrunsRecent = async (count: number = 5, signal: AbortSignal) => {
+	return (await apiCall<SpeedrunMapOverview[]>(signal, `/api/speedruns/overall/recent?count=${count}`)).map(
 		transformCreatedOnDate,
 	);
 };
 
-export const getSpeedrun = async (speedrun_id: number): Promise<SpeedrunResult> => {
-	const r = transformCreatedOnDate(await apiCall<SpeedrunResult>(`/api/speedruns/byid/${speedrun_id}`, "GET"));
+export const getSpeedrun = async (speedrun_id: number, signal: AbortSignal): Promise<SpeedrunResult> => {
+	const r = transformCreatedOnDate(await apiCall<SpeedrunResult>(signal, `/api/speedruns/byid/${speedrun_id}`));
 	r.players = r.players.sort((a, b) => {
 		return a.duration > b.duration ? 1 : -1;
 	});

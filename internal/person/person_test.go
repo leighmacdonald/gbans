@@ -71,12 +71,9 @@ func TestPerson(t *testing.T) {
 	// require.EqualValues(t, updateValues.CenterProjectiles, settings.CenterProjectiles)
 	require.Equal(t, updateValues.StatsHidden, settings.StatsHidden)
 
-	players, _, errPlayers := personCase.GetPeople(t.Context(), person.PlayerQuery{})
+	players, _, errPlayers := personCase.GetPeople(t.Context(), person.Query{})
 	require.NoError(t, errPlayers)
 	require.GreaterOrEqual(t, len(players), 4)
-
-	aboveMod, _ := personCase.GetSteamIDsAbove(t.Context(), permission.Moderator)
-	require.GreaterOrEqual(t, len(players)-1, len(aboveMod))
 
 	discord, errDisc := personCase.GetPersonByDiscordID(t.Context(), fetched.DiscordID)
 	require.NoError(t, errDisc)

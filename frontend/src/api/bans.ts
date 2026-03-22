@@ -50,25 +50,18 @@ export const banTypeString = (bt: BanTypeEnum) => {
 	}
 };
 
-export const apiGetBans = async (opts: BanQueryOpts, abortController?: AbortController) => {
-	const resp = await apiCall<BanRecord[], BanQueryOpts>(`/api/bans`, "GET", opts, abortController);
+export const apiGetBans = async (opts: BanQueryOpts, signal: AbortSignal) => {
+	const resp = await apiCall<BanRecord[], BanQueryOpts>(signal, `/api/bans`, "GET", opts);
 	return resp.map(transformTimeStampedDates);
 };
 
-export const apiGetBansSteamBySteamID = async (steam_id: string, abortController?: AbortController) => {
-	const resp = await apiCall<BanRecord[], BanQueryOpts>(
-		`/api/bans/all/${steam_id}`,
-		"GET",
-		undefined,
-		abortController,
-	);
+export const apiGetBansSteamBySteamID = async (steam_id: string, signal: AbortSignal) => {
+	const resp = await apiCall<BanRecord[], BanQueryOpts>(signal, `/api/bans/all/${steam_id}`, "GET");
 	return resp.map(transformTimeStampedDates);
 };
 
-export const apiGetBanBySteam = async (steamID: string, abortController?: AbortController) =>
-	transformTimeStampedDates(
-		await apiCall<BanRecord>(`/api/bans/steamid/${steamID}`, "GET", undefined, abortController),
-	);
+export const apiGetBanBySteam = async (steamID: string, signal: AbortSignal) =>
+	transformTimeStampedDates(await apiCall<BanRecord>(signal, `/api/bans/steamid/${steamID}`));
 
 export function applyDateTime<T>(row: T & TimeStampedWithValidUntil) {
 	const record = {
@@ -82,56 +75,60 @@ export function applyDateTime<T>(row: T & TimeStampedWithValidUntil) {
 	return record;
 }
 
-export const apiGetBanSteam = async (ban_id: number, deleted = false, abortController?: AbortController) => {
-	const resp = await apiCall<BanRecord>(`/api/ban/${ban_id}?deleted=${deleted}`, "GET", undefined, abortController);
+export const apiGetBanSteam = async (ban_id: number, deleted = false, signal: AbortSignal) => {
+	const resp = await apiCall<BanRecord>(signal, `/api/ban/${ban_id}?deleted=${deleted}`);
 
 	return resp ? transformTimeStampedDates(resp) : undefined;
 };
 
-export const apiGetAppeals = async (opts: AppealQueryFilter, abortController?: AbortController) => {
-	const appeals = await apiCall<BanRecord[], AppealQueryFilter>(`/api/appeals`, "POST", opts, abortController);
+export const apiGetAppeals = async (opts: AppealQueryFilter, signal: AbortSignal) => {
+	const appeals = await apiCall<BanRecord[], AppealQueryFilter>(signal, `/api/appeals`, "POST", opts);
 	return appeals.map(applyDateTime);
 };
 
-export const apiCreateBan = async (p: BanOpts) =>
-	transformTimeStampedDates(await apiCall<BanRecord, BanOpts>(`/api/bans`, "POST", p));
+export const apiCreateBan = async (p: BanOpts, signal: AbortSignal) =>
+	transformTimeStampedDates(await apiCall<BanRecord, BanOpts>(signal, `/api/bans`, "POST", p));
 
-export const apiUpdateBanSteam = async (ban_id: number, payload: UpdateBanPayload) =>
-	transformTimeStampedDates(await apiCall<BanRecord, UpdateBanPayload>(`/api/ban/${ban_id}`, "POST", payload));
+export const apiUpdateBanSteam = async (ban_id: number, payload: UpdateBanPayload, signal: AbortSignal) =>
+	transformTimeStampedDates(
+		await apiCall<BanRecord, UpdateBanPayload>(signal, `/api/ban/${ban_id}`, "POST", payload),
+	);
 
-export const apiDeleteBan = async (ban_id: number, unban_reason_text: string) =>
-	await apiCall<null, UnbanPayload>(`/api/ban/${ban_id}`, "DELETE", {
+export const apiDeleteBan = async (ban_id: number, unban_reason_text: string, signal: AbortSignal) =>
+	await apiCall<null, UnbanPayload>(signal, `/api/ban/${ban_id}`, "DELETE", {
 		unban_reason_text,
 	});
 
-export const apiGetBanMessages = async (ban_id: number) => {
-	const resp = await apiCall<BanAppealMessage[]>(`/api/bans/${ban_id}/messages`, "GET");
+export const apiGetBanMessages = async (ban_id: number, signal: AbortSignal) => {
+	const resp = await apiCall<BanAppealMessage[]>(signal, `/api/bans/${ban_id}/messages`);
 
 	return transformTimeStampedDatesList(resp);
 };
 
-export const apiCreateBanMessage = async (ban_id: number, body_md: string) => {
-	const resp = await apiCall<BanAppealMessage, BodyMDMessage>(`/api/bans/${ban_id}/messages`, "POST", { body_md });
+export const apiCreateBanMessage = async (ban_id: number, body_md: string, signal: AbortSignal) => {
+	const resp = await apiCall<BanAppealMessage, BodyMDMessage>(signal, `/api/bans/${ban_id}/messages`, "POST", {
+		body_md,
+	});
 
 	return transformTimeStampedDates(resp);
 };
 
-export const apiUpdateBanMessage = async (ban_message_id: number, message: string) =>
+export const apiUpdateBanMessage = async (ban_message_id: number, message: string, signal: AbortSignal) =>
 	transformTimeStampedDates(
-		await apiCall<BanAppealMessage>(`/api/bans/message/${ban_message_id}`, "POST", {
+		await apiCall<BanAppealMessage>(signal, `/api/bans/message/${ban_message_id}`, "POST", {
 			body_md: message,
 		}),
 	);
 
-export const apiDeleteBanMessage = async (ban_message_id: number) =>
-	await apiCall(`/api/bans/message/${ban_message_id}`, "DELETE", {});
+export const apiDeleteBanMessage = async (ban_message_id: number, signal: AbortSignal) =>
+	await apiCall(signal, `/api/bans/message/${ban_message_id}`, "DELETE", {});
 
-export const apiSetBanAppealState = async (ban_id: number, appeal_state: AppealStateEnum) =>
-	await apiCall(`/api/ban/${ban_id}/status`, "POST", {
+export const apiSetBanAppealState = async (ban_id: number, appeal_state: AppealStateEnum, signal: AbortSignal) =>
+	await apiCall(signal, `/api/ban/${ban_id}/status`, "POST", {
 		appeal_state,
 	});
 
-export const apiGetSourceBans = async (steam_id: string) => {
-	const resp = await apiCall<sbBanRecord[]>(`/api/sourcebans/${steam_id}`, "GET");
+export const apiGetSourceBans = async (steam_id: string, signal: AbortSignal) => {
+	const resp = await apiCall<sbBanRecord[]>(signal, `/api/sourcebans/${steam_id}`, "GET");
 	return resp.map(transformCreatedOnDate);
 };
