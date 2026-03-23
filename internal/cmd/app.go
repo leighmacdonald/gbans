@@ -40,6 +40,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/rpc/config/v1/configv1connect"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -513,7 +514,16 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	router.GET("/health", g.healthCheck)
 
-	httpServer := httphelper.NewServer(conf.Addr(), router)
+	mux := http.NewServeMux()
+
+	api := http.NewServeMux()
+	api.Handle(configv1connect.NewConfigServiceHandler(&config.RPC{}))
+
+	mux.Handle("/connect", http.StripPrefix("/connect", api))
+
+	mux.HandleFunc("/", router.Handler().ServeHTTP)
+
+	httpServer := httphelper.NewServer(conf.Addr(), mux)
 
 	go func() {
 		<-ctx.Done()
