@@ -51,7 +51,9 @@ function Servers() {
 		autoStart: true,
 		expiryTimestamp: new Date(),
 		onExpire: () => {
-			apiGetServerStates()
+			// TODO replace this with tan query
+			const ac = new AbortController();
+			apiGetServerStates(ac.signal)
 				.then((response) => {
 					if (!response) {
 						restart(nextExpiry());

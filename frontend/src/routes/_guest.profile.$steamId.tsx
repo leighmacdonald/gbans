@@ -20,13 +20,13 @@ import { emptyOrNullString } from "../util/types.ts";
 
 export const Route = createFileRoute("/_guest/profile/$steamId")({
 	component: ProfilePage,
-	loader: async ({ context, abortController, params }) => {
+	loader: async ({ context, params }) => {
 		const { steamId } = params;
 
 		const profile = await context.queryClient.fetchQuery(
 			queryOptions({
 				queryKey: ["profile", { steamId }],
-				queryFn: async () => await apiGetProfile(steamId, abortController),
+				queryFn: async ({ signal }) => await apiGetProfile(steamId, signal),
 			}),
 		);
 		return { profile };

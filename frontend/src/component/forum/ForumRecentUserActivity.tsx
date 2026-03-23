@@ -11,8 +11,8 @@ import RouterLink from "../RouterLink.tsx";
 export const ForumRecentUserActivity = () => {
 	const { data: activity, isLoading } = useQuery({
 		queryKey: ["forumActivity"],
-		queryFn: async () => {
-			return await apiForumActiveUsers();
+		queryFn: async ({ signal }) => {
+			return await apiForumActiveUsers(signal);
 		},
 	});
 

@@ -17,17 +17,20 @@ const defaultOptions = createDefaultTableOptions<PersonMessage>();
 export const ChatTable = ({ steamId }: { steamId: string }) => {
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["reportChat", { steamId }],
-		queryFn: async () => {
-			return await apiGetMessages({
-				personaname: "",
-				query: "",
-				source_id: steamId,
-				limit: 2500,
-				offset: 0,
-				order_by: "person_message_id",
-				desc: true,
-				flagged_only: false,
-			});
+		queryFn: async ({ signal }) => {
+			return await apiGetMessages(
+				{
+					personaname: "",
+					query: "",
+					source_id: steamId,
+					limit: 2500,
+					offset: 0,
+					order_by: "person_message_id",
+					desc: true,
+					flagged_only: false,
+				},
+				signal,
+			);
 		},
 	});
 

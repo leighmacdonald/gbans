@@ -29,8 +29,8 @@ export const SMGroupsTable = () => {
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["serverGroups"],
-		queryFn: async () => {
-			return await apiGetSMGroups();
+		queryFn: async ({ signal }) => {
+			return await apiGetSMGroups(signal);
 		},
 	});
 
@@ -48,7 +48,8 @@ export const SMGroupsTable = () => {
 	const deleteGroupMutation = useMutation({
 		mutationKey: ["SMGroupDelete"],
 		mutationFn: async (group: SMGroups) => {
-			await apiDeleteSMGroup(group.group_id);
+			const ac = new AbortController();
+			await apiDeleteSMGroup(group.group_id, ac.signal);
 			return group;
 		},
 		onSuccess: (group) => {

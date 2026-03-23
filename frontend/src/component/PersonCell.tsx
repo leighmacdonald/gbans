@@ -3,6 +3,7 @@ import ChatIcon from "@mui/icons-material/Chat";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import NoAccountsIcon from "@mui/icons-material/NoAccounts";
 import PublicIcon from "@mui/icons-material/Public";
+import ReportIcon from "@mui/icons-material/Report";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import WifiFindIcon from "@mui/icons-material/WifiFind";
 import { IconButton, Menu, Typography } from "@mui/material";
@@ -124,7 +125,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 					key={90}
 				>
 					<ListItemIcon>
-						<VideocamIcon fontSize="small" color={"primary"} />
+						<ReportIcon fontSize="small" color={"primary"} />
 					</ListItemIcon>
 					Report History
 				</MenuItemLink>,

@@ -58,9 +58,10 @@ export const SMOverrideEditorModal = NiceModal.create(({ override }: { override?
 	const mutation = useMutation({
 		mutationKey: ["adminSMOverride"],
 		mutationFn: async ({ name, type, flags }: Values) => {
+			const ac = new AbortController();
 			return override?.override_id
-				? await apiSaveSMOverrides(override.override_id, name, type, flags)
-				: await apiCreateSMOverrides(name, type, flags);
+				? await apiSaveSMOverrides(override.override_id, name, type, flags, ac.signal)
+				: await apiCreateSMOverrides(name, type, flags, ac.signal);
 		},
 		onSuccess: async (admin) => {
 			modal.resolve(admin);

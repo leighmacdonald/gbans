@@ -56,13 +56,16 @@ function AdminNetworkInfo() {
 	const { ip } = Route.useSearch();
 	const { data, isLoading } = useQuery({
 		queryKey: ["ipInfo", { ip }],
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			if (emptyOrNullString(ip)) {
 				return;
 			}
-			return await apiGetNetworkDetails({
-				ip: ip ?? "",
-			});
+			return await apiGetNetworkDetails(
+				{
+					ip: ip ?? "",
+				},
+				signal,
+			);
 		},
 	});
 

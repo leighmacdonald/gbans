@@ -31,8 +31,8 @@ function SpeedrunsMap() {
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["speedruns_map", mapName],
-		queryFn: () => {
-			return getSpeedrunsTopMap(mapName);
+		queryFn: ({ signal }) => {
+			return getSpeedrunsTopMap(mapName, signal);
 		},
 	});
 
@@ -42,7 +42,7 @@ function SpeedrunsMap() {
 		isError: isErrorServers,
 	} = useQuery({
 		queryKey: ["serversSimple"],
-		queryFn: apiGetServers,
+		queryFn: ({ signal }) => apiGetServers(signal),
 	});
 
 	const columns = useMemo(

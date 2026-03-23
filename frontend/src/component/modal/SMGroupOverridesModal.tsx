@@ -35,8 +35,8 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["serverGroupOverrides", { group_id: group.group_id }],
-		queryFn: async () => {
-			return await apiGetSMGroupOverrides(group.group_id);
+		queryFn: async ({ signal }) => {
+			return await apiGetSMGroupOverrides(group.group_id, signal);
 		},
 	});
 
@@ -57,7 +57,8 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
 	const delOverrideMutation = useMutation({
 		mutationKey: ["deleteGroupOverride"],
 		mutationFn: async ({ groupOverride }: { groupOverride: SMGroupOverrides }) => {
-			await apiDeleteSMGroupOverride(groupOverride.group_override_id);
+			const ac = new AbortController();
+			await apiDeleteSMGroupOverride(groupOverride.group_override_id, ac.signal);
 			return groupOverride;
 		},
 		onSuccess: (edited) => {

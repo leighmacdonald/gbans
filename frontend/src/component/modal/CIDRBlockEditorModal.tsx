@@ -13,7 +13,7 @@ import { Heading } from "../Heading";
 
 const schema = z.object({
 	name: z.string().min(2),
-	url: z.string().url(),
+	url: z.url(),
 	enabled: z.boolean(),
 });
 
@@ -28,16 +28,18 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
 	const mutation = useMutation({
 		mutationKey: ["blockSource"],
 		mutationFn: async (values: z.infer<typeof schema>) => {
+			const ac = new AbortController();
 			if (source?.cidr_block_source_id) {
 				const resp = await apiUpdateCIDRBlockSource(
 					source.cidr_block_source_id,
 					values.name,
 					values.url,
 					values.enabled,
+					ac.signal,
 				);
 				modal.resolve(resp);
 			} else {
-				const resp = await apiCreateCIDRBlockSource(values.name, values.url, values.enabled);
+				const resp = await apiCreateCIDRBlockSource(values.name, values.url, values.enabled, ac.signal);
 				modal.resolve(resp);
 			}
 		},

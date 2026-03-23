@@ -45,8 +45,8 @@ export const Route = createFileRoute("/_auth/contests/$contest_id")({
 		const { contest_id } = params;
 		const contest = await context.queryClient.fetchQuery({
 			queryKey: ["contest", { contest_id }],
-			queryFn: async () => {
-				return await apiContest(contest_id);
+			queryFn: async ({ signal }) => {
+				return await apiContest(contest_id, signal);
 			},
 		});
 		return { contest };
@@ -78,7 +78,8 @@ function Contest() {
 			return;
 		}
 		setEntriesLoading(true);
-		apiContestEntries(contest?.contest_id)
+		const ac = new AbortController();
+		apiContestEntries(contest?.contest_id, ac.signal)
 			.then((entries) => {
 				setEntries(entries);
 			})
@@ -102,7 +103,8 @@ function Contest() {
 				return;
 			}
 			try {
-				await apiContestEntryVote(contest?.contest_id, contest_entry_id, up_vote);
+				const ac = new AbortController();
+				await apiContestEntryVote(contest?.contest_id, contest_entry_id, up_vote, ac.signal);
 				updateEntries();
 			} catch (e) {
 				logErr(e);

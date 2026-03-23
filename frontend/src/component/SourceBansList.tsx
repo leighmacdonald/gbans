@@ -21,8 +21,8 @@ interface SourceBansListProps {
 export const SourceBansList = ({ steam_id, is_reporter }: SourceBansListProps) => {
 	const { data: bans } = useQuery({
 		queryKey: ["sourcebans", { steam_id }],
-		queryFn: async () => {
-			return await apiGetSourceBans(steam_id);
+		queryFn: async ({ signal }) => {
+			return await apiGetSourceBans(steam_id, signal);
 		},
 	});
 

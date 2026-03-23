@@ -54,24 +54,28 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 	const mutation = useMutation({
 		mutationKey: ["adminContest"],
 		mutationFn: async (values: ContestEditorFormValues) => {
-			return await apiContestSave({
-				contest_id: contest?.contest_id ?? EmptyUUID,
-				date_start: parseISO(values.date_start),
-				date_end: parseISO(values.date_end),
-				description: values.description,
-				hide_submissions: values.hide_submissions,
-				title: values.title,
-				voting: values.voting,
-				down_votes: values.down_votes,
-				max_submissions: Number(values.max_submissions),
-				media_types: values.media_types,
-				public: values.public,
-				min_permission_level: values.min_permission_level,
-				deleted: false,
-				num_entries: 0,
-				updated_on: new Date(),
-				created_on: new Date(),
-			});
+			const ac = new AbortController();
+			return await apiContestSave(
+				{
+					contest_id: contest?.contest_id ?? EmptyUUID,
+					date_start: parseISO(values.date_start),
+					date_end: parseISO(values.date_end),
+					description: values.description,
+					hide_submissions: values.hide_submissions,
+					title: values.title,
+					voting: values.voting,
+					down_votes: values.down_votes,
+					max_submissions: Number(values.max_submissions),
+					media_types: values.media_types,
+					public: values.public,
+					min_permission_level: values.min_permission_level,
+					deleted: false,
+					num_entries: 0,
+					updated_on: new Date(),
+					created_on: new Date(),
+				},
+				ac.signal,
+			);
 		},
 		onSuccess: async (contest) => {
 			modal.resolve(contest);

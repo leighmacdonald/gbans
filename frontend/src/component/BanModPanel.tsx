@@ -42,8 +42,8 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 		error,
 	} = useQuery({
 		queryKey: ["ban", { ban_id }],
-		queryFn: async () => {
-			return await apiGetBanSteam(Number(ban_id), true);
+		queryFn: async ({ signal }) => {
+			return await apiGetBanSteam(Number(ban_id), true, signal);
 		},
 	});
 
@@ -72,7 +72,8 @@ export const BanModPanel = ({ ban_id }: { ban_id: number }) => {
 		mutationKey: ["banEdit", { ban_id }],
 		mutationFn: async (appeal_state: AppealStateEnum) => {
 			try {
-				await apiSetBanAppealState(ban_id, appeal_state);
+				const ac = new AbortController();
+				await apiSetBanAppealState(ban_id, appeal_state, ac.signal);
 				sendFlash("success", "Appeal state updated");
 			} catch (reason) {
 				sendFlash("error", "Could not set appeal state");

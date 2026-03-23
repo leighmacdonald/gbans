@@ -29,15 +29,22 @@ export const ForumCategoryEditorModal = NiceModal.create(({ category }: { catego
 	const mutation = useMutation({
 		mutationKey: ["forumCategory"],
 		mutationFn: async (values: ForumCategoryEditorValues) => {
+			const ac = new AbortController();
 			if (category?.forum_category_id) {
 				return await apiSaveForumCategory(
 					category.forum_category_id,
 					values.title,
 					values.description,
 					Number(values.ordering),
+					ac.signal,
 				);
 			} else {
-				return await apiCreateForumCategory(values.title, values.description, Number(values.ordering));
+				return await apiCreateForumCategory(
+					values.title,
+					values.description,
+					Number(values.ordering),
+					ac.signal,
+				);
 			}
 		},
 		onSuccess: async (category: ForumCategory) => {

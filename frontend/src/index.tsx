@@ -21,7 +21,7 @@ declare module "@tanstack/react-router" {
 const queryClient = new QueryClient();
 const appInfo = await queryClient.fetchQuery({
 	queryKey: ["appInfo"],
-	queryFn: getAppInfo,
+	queryFn: ({ signal }) => getAppInfo(signal),
 });
 const router = newRouter(queryClient, appInfo);
 const container = document.getElementById("root");

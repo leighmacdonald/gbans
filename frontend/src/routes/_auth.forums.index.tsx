@@ -184,8 +184,8 @@ function ForumOverview() {
 	const { hasPermission } = useAuth();
 	const { data: overview, isLoading } = useQuery({
 		queryKey: ["forumOverview"],
-		queryFn: async () => {
-			return await apiGetForumOverview();
+		queryFn: async ({ signal }) => {
+			return await apiGetForumOverview(signal);
 		},
 	});
 

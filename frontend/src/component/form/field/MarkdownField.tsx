@@ -47,7 +47,8 @@ export type MDBodyFieldProps = {
 } & TextFieldProps;
 
 const imageUploadHandler = async (media: File) => {
-	const resp = await apiSaveAsset(media);
+	const ac = new AbortController();
+	const resp = await apiSaveAsset(media, undefined, ac.signal);
 	return assetURL(resp);
 };
 

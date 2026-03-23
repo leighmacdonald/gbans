@@ -28,7 +28,8 @@ export const StatsPanel = () => {
 	});
 
 	useEffect(() => {
-		apiGetStats()
+		const ac = new AbortController();
+		apiGetStats(ac.signal)
 			.then((response) => {
 				setStats(response);
 			})

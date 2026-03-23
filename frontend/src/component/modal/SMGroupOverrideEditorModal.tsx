@@ -25,9 +25,10 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
 		const mutation = useMutation({
 			mutationKey: ["adminSMGroupOverride"],
 			mutationFn: async ({ name, type, access }: mutateOverrideArgs) => {
+				const ac = new AbortController();
 				return override?.group_override_id
-					? await apiSaveSMGroupOverrides(override.group_override_id, name, type, access)
-					: await apiCreateSMGroupOverrides(group.group_id, name, type, access);
+					? await apiSaveSMGroupOverrides(override.group_override_id, name, type, access, ac.signal)
+					: await apiCreateSMGroupOverrides(group.group_id, name, type, access, ac.signal);
 			},
 			onSuccess: async (override) => {
 				modal.resolve(override);

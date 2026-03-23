@@ -35,8 +35,8 @@ export const Route = createFileRoute("/_auth/report/$reportId")({
 		const { reportId } = params;
 		const report = await context.queryClient.fetchQuery({
 			queryKey: ["report", { reportId }],
-			queryFn: async () => {
-				return await apiGetReport(Number(reportId));
+			queryFn: async ({ signal }) => {
+				return await apiGetReport(Number(reportId), signal);
 			},
 		});
 
@@ -60,9 +60,9 @@ function ReportView() {
 
 	const { data: ban, isLoading: isLoadingBan } = useQuery({
 		queryKey: ["ban", { targetId: report.target_id }],
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			if (report.target_id) {
-				return await apiGetBanBySteam(report.target_id);
+				return await apiGetBanBySteam(report.target_id, signal);
 			}
 		},
 		enabled: Boolean(report.target_id),

@@ -33,8 +33,8 @@ function AdminNews() {
 	const queryClient = useQueryClient();
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["newsList"],
-		queryFn: async () => {
-			return (await apiGetNewsAll()) ?? [];
+		queryFn: async ({ signal }) => {
+			return (await apiGetNewsAll(signal)) ?? [];
 		},
 	});
 
@@ -53,7 +53,8 @@ function AdminNews() {
 	const deleteMutation = useMutation({
 		mutationKey: ["deleteNews"],
 		mutationFn: async (variables: { news_id: number }) => {
-			await apiNewsDelete(variables.news_id);
+			const ac = new AbortController();
+			await apiNewsDelete(variables.news_id, ac.signal);
 			return variables.news_id;
 		},
 		onSuccess: (news_id) => {

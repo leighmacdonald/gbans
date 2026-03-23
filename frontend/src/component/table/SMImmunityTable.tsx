@@ -30,8 +30,8 @@ export const SMImmunityTable = () => {
 		isError: isErrorGroups,
 	} = useQuery({
 		queryKey: ["serverGroups"],
-		queryFn: async () => {
-			return await apiGetSMGroups();
+		queryFn: async ({ signal }) => {
+			return await apiGetSMGroups(signal);
 		},
 	});
 
@@ -41,8 +41,8 @@ export const SMImmunityTable = () => {
 		isError: isErrorImmunities,
 	} = useQuery({
 		queryKey: ["serverImmunities"],
-		queryFn: async () => {
-			return await apiGetSMGroupImmunities();
+		queryFn: async ({ signal }) => {
+			return await apiGetSMGroupImmunities(signal);
 		},
 	});
 
@@ -60,7 +60,8 @@ export const SMImmunityTable = () => {
 	const delImmunityMutation = useMutation({
 		mutationKey: ["delGroupImmunity"],
 		mutationFn: async ({ immunity }: { immunity: SMGroupImmunity }) => {
-			await apiDeleteSMGroupImmunity(immunity.group_immunity_id);
+			const ac = new AbortController();
+			await apiDeleteSMGroupImmunity(immunity.group_immunity_id, ac.signal);
 			return immunity;
 		},
 		onSuccess: (deleted) => {

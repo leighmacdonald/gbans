@@ -72,11 +72,11 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 
 	const { data: notifications, isLoading } = useQuery({
 		queryKey: ["notifications"],
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			if (profile.steam_id === "") {
 				return [];
 			}
-			return (await apiGetNotifications()) ?? [];
+			return (await apiGetNotifications(signal)) ?? [];
 		},
 		refetchInterval: 60 * 1000,
 		refetchIntervalInBackground: true,

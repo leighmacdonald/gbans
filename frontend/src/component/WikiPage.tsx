@@ -65,8 +65,8 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 				created_on: page?.created_on ?? new Date(),
 				updated_on: page?.updated_on ?? new Date(),
 			};
-
-			return await apiSaveWikiPage(newPage);
+			const ac = new AbortController();
+			return await apiSaveWikiPage(newPage, ac.signal);
 		},
 		onSuccess: (savedPage) => {
 			queryClient.setQueryData(["wiki", { slug }], savedPage);

@@ -9,12 +9,12 @@ import { PermissionLevel } from "../schema/people.ts";
 export const Route = createFileRoute("/_guest/wiki/$slug")({
 	component: Wiki,
 
-	loader: async ({ context, abortController, params }) => {
+	loader: async ({ context, params }) => {
 		const { slug } = params;
 		const queryOpts = queryOptions({
 			queryKey: ["wiki", { slug }],
-			queryFn: async () => {
-				return await apiGetWikiPage(slug, abortController);
+			queryFn: async ({ signal }) => {
+				return await apiGetWikiPage(slug, signal);
 			},
 		});
 		try {
