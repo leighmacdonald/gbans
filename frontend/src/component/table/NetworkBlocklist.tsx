@@ -29,15 +29,16 @@ export const NetworkBlocklist = () => {
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["networkBlockListSources"],
-		queryFn: async () => {
-			return await apiGetCIDRBlockLists();
+		queryFn: async ({ signal }) => {
+			return await apiGetCIDRBlockLists(signal);
 		},
 	});
 
 	const sourceMutation = useMutation({
 		mutationKey: ["networkBlockSourceDelete"],
 		mutationFn: async (variables: { cidr_block_source_id: number }) => {
-			await apiDeleteCIDRBlockSource(variables.cidr_block_source_id);
+			const ac = new AbortController();
+			await apiDeleteCIDRBlockSource(variables.cidr_block_source_id, ac.signal);
 		},
 		onSuccess: (_, variables) => {
 			sendFlash("success", "Blocklist source deleted");

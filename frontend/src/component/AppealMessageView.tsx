@@ -46,7 +46,8 @@ export const AppealMessageView = ({ message, onDelete, assetURL }: AppealMessage
 	const mutation = useMutation({
 		mutationKey: ["banSteam"],
 		mutationFn: async (values: { body_md: string }) => {
-			const msg = await apiUpdateBanMessage(message.ban_message_id, values.body_md);
+			const ac = new AbortController();
+			const msg = await apiUpdateBanMessage(message.ban_message_id, values.body_md, ac.signal);
 
 			queryClient.setQueryData(["banMessages", { ban_id: message.ban_id }], (prev: BanAppealMessage[]) => {
 				return prev.map((m) => (m.ban_message_id === message.ban_message_id ? msg : m));

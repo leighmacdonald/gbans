@@ -21,7 +21,8 @@ export const QueueStatusModal = NiceModal.create(({ steam_id }: { steam_id: stri
 	const mutation = useMutation({
 		mutationKey: ["playerqueue_status", { steam_id }],
 		mutationFn: async (values: { chat_status: ChatStatus; reason: string }) => {
-			return await apiQueueSetUserStatus(steam_id, values.chat_status, values.reason);
+			const ac = new AbortController();
+			return await apiQueueSetUserStatus(steam_id, values.chat_status, values.reason, ac.signal);
 		},
 		onSuccess: async (result) => {
 			modal.resolve(result);

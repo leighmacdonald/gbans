@@ -18,10 +18,11 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
 	const mutation = useMutation({
 		mutationKey: ["newsEdit"],
 		mutationFn: async (values: { title: string; body_md: string; is_published: boolean }) => {
+			const ac = new AbortController();
 			if (entry?.news_id) {
-				return await apiNewsSave({ ...entry, ...values });
+				return await apiNewsSave({ ...entry, ...values }, ac.signal);
 			} else {
-				return await apiNewsCreate(values.title, values.body_md, values.is_published);
+				return await apiNewsCreate(values.title, values.body_md, values.is_published, ac.signal);
 			}
 		},
 		onSuccess: async (entry) => {

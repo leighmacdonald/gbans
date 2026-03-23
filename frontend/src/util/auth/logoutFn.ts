@@ -4,7 +4,8 @@ import { log } from "../errors.ts";
 
 export const logoutFn = async () => {
 	try {
-		await apiLogout();
+		const ac = new AbortController();
+		await apiLogout(ac.signal);
 	} catch (error) {
 		log(error);
 	}

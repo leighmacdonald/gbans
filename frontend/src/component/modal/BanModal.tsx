@@ -42,9 +42,9 @@ export const BanModal = NiceModal.create(
 			error,
 		} = useQuery({
 			queryKey: ["ban", { banId }],
-			queryFn: async () => {
+			queryFn: async ({ signal }) => {
 				if (banId && banId > 0) {
-					return await apiGetBanSteam(Number(banId), true);
+					return await apiGetBanSteam(Number(banId), true, signal);
 				}
 
 				return {} as BanRecord;
@@ -57,33 +57,41 @@ export const BanModal = NiceModal.create(
 		const mutation = useMutation({
 			mutationKey: ["banSteam"],
 			mutationFn: async (values: BanOpts) => {
+				const ac = new AbortController();
 				let banRecord: BanRecord;
 				if (ban?.ban_id) {
-					banRecord = await apiUpdateBanSteam(ban.ban_id, {
-						note: values.note,
-						ban_type: values.ban_type,
-						reason: values.reason,
-						reason_text: values.reason_text,
-						evade_ok: values.evade_ok,
-						cidr: values.cidr,
-						duration: values.duration,
-					});
+					banRecord = await apiUpdateBanSteam(
+						ban.ban_id,
+						{
+							note: values.note,
+							ban_type: values.ban_type,
+							reason: values.reason,
+							reason_text: values.reason_text,
+							evade_ok: values.evade_ok,
+							cidr: values.cidr,
+							duration: values.duration,
+						},
+						ac.signal,
+					);
 				} else {
-					banRecord = await apiCreateBan({
-						source_id: profile.steam_id,
-						note: values.note,
-						ban_type: values.ban_type,
-						duration: values.duration,
-						reason: values.reason,
-						reason_text: values.reason_text,
-						report_id: values.report_id,
-						target_id: values.target_id,
-						evade_ok: values.evade_ok,
-						demo_name: "",
-						demo_tick: 0,
-						origin: Origin.Web,
-						cidr: values.cidr,
-					});
+					banRecord = await apiCreateBan(
+						{
+							source_id: profile.steam_id,
+							note: values.note,
+							ban_type: values.ban_type,
+							duration: values.duration,
+							reason: values.reason,
+							reason_text: values.reason_text,
+							report_id: values.report_id,
+							target_id: values.target_id,
+							evade_ok: values.evade_ok,
+							demo_name: "",
+							demo_tick: 0,
+							origin: Origin.Web,
+							cidr: values.cidr,
+						},
+						ac.signal,
+					);
 				}
 				queryClient.setQueryData(["ban", { banId }], banRecord);
 				return banRecord;

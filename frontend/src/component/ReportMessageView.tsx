@@ -39,7 +39,8 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 
 	const deleteMessageMutation = useMutation({
 		mutationFn: async ({ message_id }: { message_id: number }) => {
-			return await apiDeleteReportMessage(message_id);
+			const ac = new AbortController();
+			return await apiDeleteReportMessage(message_id, ac.signal);
 		},
 		onSuccess: (_, { message_id }) => {
 			queryClient.setQueryData(
@@ -58,7 +59,8 @@ export const ReportMessageView = ({ message, assetURL }: ReportMessageViewProps)
 	const mutation = useMutation({
 		mutationKey: ["reportMessage"],
 		mutationFn: async (values: { body_md: string }) => {
-			return await apiUpdateReportMessage(message.report_message_id, values.body_md);
+			const ac = new AbortController();
+			return await apiUpdateReportMessage(message.report_message_id, values.body_md, ac.signal);
 		},
 		onSuccess: (msg) => {
 			queryClient.setQueryData(

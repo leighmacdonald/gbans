@@ -42,8 +42,8 @@ export const Route = createFileRoute("/_auth/forums/thread/$forum_thread_id")({
 	loader: async ({ context, params }) => {
 		const thread = await context.queryClient.fetchQuery({
 			queryKey: ["forumThread", { forum_thread_id: Number(params.forum_thread_id) }],
-			queryFn: async () => {
-				return await apiGetThread(Number(params.forum_thread_id));
+			queryFn: async ({ signal }) => {
+				return await apiGetThread(Number(params.forum_thread_id), signal);
 			},
 		});
 
@@ -71,10 +71,13 @@ function ForumThreadPage() {
 
 	const { data: messages, isLoading: isLoadingMessages } = useQuery({
 		queryKey: ["threadMessages", { forum_thread_id }],
-		queryFn: async () => {
-			return await apiGetThreadMessages({
-				forum_thread_id: Number(forum_thread_id),
-			});
+		queryFn: async ({ signal }) => {
+			return await apiGetThreadMessages(
+				{
+					forum_thread_id: Number(forum_thread_id),
+				},
+				signal,
+			);
 		},
 	});
 
@@ -122,7 +125,8 @@ function ForumThreadPage() {
 
 	const deleteMessageMutation = useMutation({
 		mutationFn: async ({ message }: { message: ForumMessage }) => {
-			await apiDeleteMessage(message.forum_message_id);
+			const ac = new AbortController();
+			await apiDeleteMessage(message.forum_message_id, ac.signal);
 		},
 		onSuccess: async (_, variables) => {
 			const newMessages = (messages ?? []).filter(
@@ -166,7 +170,8 @@ function ForumThreadPage() {
 
 	const createMessageMutation = useMutation({
 		mutationFn: async ({ body_md }: { body_md: string }) => {
-			return await apiCreateThreadReply(Number(forum_thread_id), body_md);
+			const ac = new AbortController();
+			return await apiCreateThreadReply(Number(forum_thread_id), body_md, ac.signal);
 		},
 		onSuccess: (message) => {
 			const newMessages = [...(messages ?? []), message];

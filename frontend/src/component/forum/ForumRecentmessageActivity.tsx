@@ -20,9 +20,7 @@ import { ForumRowLink } from "./ForumRowLink.tsx";
 export const ForumRecentMessageActivity = () => {
 	const { data: messages, isLoading } = useQuery({
 		queryKey: ["forumMessageActivity"],
-		queryFn: async () => {
-			return await apiForumRecentActivity();
-		},
+		queryFn: async ({ signal }) => await apiForumRecentActivity(signal),
 	});
 
 	return (

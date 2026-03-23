@@ -16,9 +16,9 @@ export const Route = createFileRoute("/_guest/login/success")({
 	loader: async ({ context, deps }) => {
 		const profile = await context.queryClient.fetchQuery({
 			queryKey: ["currentUser"],
-			queryFn: async () => {
+			queryFn: async ({ signal }) => {
 				writeAccessToken(deps.token);
-				return await apiGetCurrentProfile();
+				return await apiGetCurrentProfile(signal);
 			},
 		});
 		if (!profile) {

@@ -69,7 +69,8 @@ export function AuthProvider({
 			try {
 				const token = readAccessToken();
 				if (!emptyOrNullString(token)) {
-					await login(await apiGetCurrentProfile());
+					const ac = new AbortController();
+					await login(await apiGetCurrentProfile(ac.signal));
 				}
 			} catch (e) {
 				logErr(e);

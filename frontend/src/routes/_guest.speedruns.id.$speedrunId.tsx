@@ -26,8 +26,8 @@ export const Route = createFileRoute("/_guest/speedruns/id/$speedrunId")({
 		const { speedrunId } = params;
 		const speedrun = await context.queryClient.fetchQuery({
 			queryKey: ["speedrun", speedrunId],
-			queryFn: async () => {
-				return await getSpeedrun(Number(speedrunId));
+			queryFn: async ({ signal }) => {
+				return await getSpeedrun(Number(speedrunId), signal);
 			},
 		});
 		return { speedrun };

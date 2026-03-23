@@ -33,6 +33,7 @@ import * as markerIcon from "leaflet/dist/images/marker-icon.png";
 import * as markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import * as markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
+import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { stringToColour } from "../util/colours.ts";
 
 // Workaround for leaflet not loading icons properly in react
@@ -293,19 +294,21 @@ function AdminNetworkPlayersByCIDR() {
 		onSortingChange: setSorting,
 		enableRowActions: true,
 		enableCellActions: true,
-		renderRowActionMenuItems: ({ row }) => [
-			<Tooltip title={"IP Information"} key={1}>
-				<IconButtonLink
-					color={"info"}
-					to={"/admin/network/ipInfo"}
-					search={{
-						ip: row.original.ip_addr,
-					}}
-				>
-					<DnsIcon />
-				</IconButtonLink>
-			</Tooltip>,
-		],
+		renderRowActions: ({ row }) => (
+			<RowActionContainer>
+				<Tooltip title={"IP Information"} key={1}>
+					<IconButtonLink
+						color={"info"}
+						to={"/admin/network/ipInfo"}
+						search={{
+							ip: row.original.ip_addr,
+						}}
+					>
+						<DnsIcon />
+					</IconButtonLink>
+				</Tooltip>
+			</RowActionContainer>
+		),
 	});
 
 	return (

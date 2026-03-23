@@ -21,8 +21,8 @@ export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMes
 	const { data: messages, isLoading } = useQuery({
 		queryKey: ["messageContext", playerMessageId],
 
-		queryFn: async () => {
-			return await apiGetMessageContext(playerMessageId, padding);
+		queryFn: async ({ signal }) => {
+			return await apiGetMessageContext(playerMessageId, padding, signal);
 		},
 	});
 

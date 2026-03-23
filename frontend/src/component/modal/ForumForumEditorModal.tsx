@@ -33,6 +33,7 @@ export const ForumForumEditorModal = NiceModal.create(
 		const mutation = useMutation({
 			mutationKey: ["forumCategory"],
 			mutationFn: async (values: ForumEditorValues) => {
+				const ac = new AbortController();
 				if (forum?.forum_id) {
 					return await apiSaveForum(
 						forum.forum_id,
@@ -41,6 +42,7 @@ export const ForumForumEditorModal = NiceModal.create(
 						values.description,
 						Number(values.ordering),
 						values.permission_level,
+						ac.signal,
 					);
 				} else {
 					return await apiCreateForum(
@@ -49,6 +51,7 @@ export const ForumForumEditorModal = NiceModal.create(
 						values.description,
 						Number(values.ordering),
 						values.permission_level,
+						ac.signal,
 					);
 				}
 			},
@@ -152,7 +155,7 @@ export const ForumForumEditorModal = NiceModal.create(
 								<form.AppField
 									name={"permission_level"}
 									validators={{
-										onChange: z.nativeEnum(PermissionLevel),
+										onChange: z.enum(PermissionLevel),
 									}}
 									children={(field) => {
 										return (

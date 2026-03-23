@@ -33,8 +33,8 @@ export const SMAdminsTable = () => {
 		isError: isErrorGroups,
 	} = useQuery({
 		queryKey: ["serverGroups"],
-		queryFn: async () => {
-			return await apiGetSMGroups();
+		queryFn: async ({ signal }) => {
+			return await apiGetSMGroups(signal);
 		},
 	});
 
@@ -44,8 +44,8 @@ export const SMAdminsTable = () => {
 		isError: isErrorAdmins,
 	} = useQuery({
 		queryKey: ["serverAdmins"],
-		queryFn: async () => {
-			return await apiGetSMAdmins();
+		queryFn: async ({ signal }) => {
+			return await apiGetSMAdmins(signal);
 		},
 	});
 
@@ -64,7 +64,8 @@ export const SMAdminsTable = () => {
 	const deleteAdmin = useMutation({
 		mutationKey: ["SMAdminDelete"],
 		mutationFn: async (admin: SMAdmin) => {
-			await apiDeleteSMAdmin(admin.admin_id);
+			const ac = new AbortController();
+			await apiDeleteSMAdmin(admin.admin_id, ac.signal);
 			return admin;
 		},
 		onSuccess: (admin) => {
@@ -80,7 +81,8 @@ export const SMAdminsTable = () => {
 	const addGroupMutation = useMutation({
 		mutationKey: ["addAdminGroup"],
 		mutationFn: async ({ admin, group }: { admin: SMAdmin; group: SMGroups }) => {
-			return await apiAddAdminToGroup(admin.admin_id, group.group_id);
+			const ac = new AbortController();
+			return await apiAddAdminToGroup(admin.admin_id, group.group_id, ac.signal);
 		},
 		onSuccess: (edited) => {
 			queryClient.setQueryData(
@@ -97,7 +99,8 @@ export const SMAdminsTable = () => {
 	const delGroupMutation = useMutation({
 		mutationKey: ["addAdminGroup"],
 		mutationFn: async ({ admin, group }: { admin: SMAdmin; group: SMGroups }) => {
-			return await apiDelAdminFromGroup(admin.admin_id, group.group_id);
+			const ac = new AbortController();
+			return await apiDelAdminFromGroup(admin.admin_id, group.group_id, ac.signal);
 		},
 		onSuccess: (edited) => {
 			// FIXME

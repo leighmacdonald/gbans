@@ -49,7 +49,8 @@ export const ThreadMessageContainer = ({
 
 	const mutation = useMutation({
 		mutationFn: async (variables: { body_md: string }) => {
-			return await apiSaveThreadMessage(message.forum_message_id, variables.body_md);
+			const ac = new AbortController();
+			return await apiSaveThreadMessage(message.forum_message_id, variables.body_md, ac.signal);
 		},
 		onSuccess: async (data) => {
 			mdEditorRef.current?.setMarkdown("");

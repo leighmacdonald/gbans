@@ -140,8 +140,8 @@ const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
 const UserReportHistory = () => {
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["history"],
-		queryFn: async () => {
-			return await apiGetUserReports();
+		queryFn: async ({ signal }) => {
+			return await apiGetUserReports(signal);
 		},
 	});
 
@@ -270,7 +270,8 @@ const ReportCreateForm = (): JSX.Element => {
 
 	const mutation = useMutation({
 		mutationFn: async (variables: CreateReportRequest) => {
-			return await apiCreateReport(variables);
+			const ac = new AbortController();
+			return await apiCreateReport(variables, ac.signal);
 		},
 		onSuccess: async (data) => {
 			mdEditorRef.current?.setMarkdown("");

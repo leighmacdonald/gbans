@@ -21,7 +21,8 @@ export const QueuePurgeModal = NiceModal.create(({ message }: { message: ChatLog
 		mutationKey: ["playerqueue_message", { message_id: message.message_id }],
 
 		mutationFn: async (values: { count: number }) => {
-			return await apiQueueMessagesDelete(message.message_id, values.count);
+			const ac = new AbortController();
+			return await apiQueueMessagesDelete(message.message_id, values.count, ac.signal);
 		},
 		onSuccess: async (_, variables) => {
 			sendFlash("success", `Purged ${variables.count} message(s) successfully`);

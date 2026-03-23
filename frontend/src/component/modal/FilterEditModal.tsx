@@ -50,24 +50,32 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
 	const mutation = useMutation({
 		mutationKey: ["filters"],
 		mutationFn: async (values: FilterEditFormValues) => {
+			const ac = new AbortController();
 			if (filter?.filter_id) {
-				return await apiEditFilter(filter?.filter_id, {
-					is_enabled: values.is_enabled,
-					is_regex: values.is_regex,
-					pattern: values.pattern,
-					action: values.action,
-					duration: values.duration,
-					weight: Number(values.weight),
-				});
+				return await apiEditFilter(
+					filter?.filter_id,
+					{
+						is_enabled: values.is_enabled,
+						is_regex: values.is_regex,
+						pattern: values.pattern,
+						action: values.action,
+						duration: values.duration,
+						weight: Number(values.weight),
+					},
+					ac.signal,
+				);
 			} else {
-				return await apiCreateFilter({
-					is_enabled: values.is_enabled,
-					is_regex: values.is_regex,
-					pattern: values.pattern,
-					action: values.action,
-					duration: values.duration,
-					weight: Number(values.weight),
-				});
+				return await apiCreateFilter(
+					{
+						is_enabled: values.is_enabled,
+						is_regex: values.is_regex,
+						pattern: values.pattern,
+						action: values.action,
+						duration: values.duration,
+						weight: Number(values.weight),
+					},
+					ac.signal,
+				);
 			}
 		},
 		onSuccess: async (result) => {

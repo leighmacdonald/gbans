@@ -31,8 +31,8 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
 
 	const { data: contest, isLoading } = useQuery({
 		queryKey: ["contest", { contest_id }],
-		queryFn: async () => {
-			return await apiContest(contest_id);
+		queryFn: async ({ signal }) => {
+			return await apiContest(contest_id, signal);
 		},
 	});
 
@@ -81,7 +81,7 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
 		const abortController = new AbortController();
 		const uploadMedia = async () => {
 			try {
-				const media = await apiSaveContestEntryMedia(contest_id, userUpload);
+				const media = await apiSaveContestEntryMedia(contest_id, userUpload, abortController.signal);
 				setAssetID(media.asset_id);
 				setAssetError("");
 			} catch (err) {

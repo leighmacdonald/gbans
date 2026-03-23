@@ -29,15 +29,16 @@ export const SteamWhitelistTable = () => {
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["networkSteamWhitelist"],
-		queryFn: async () => {
-			return await apiGetCIDRBlockListsSteamWhitelist();
+		queryFn: async ({ signal }) => {
+			return await apiGetCIDRBlockListsSteamWhitelist(signal);
 		},
 	});
 
 	const steamWhitelistDelete = useMutation({
 		mutationKey: ["networkSteamWhitelistDelete"],
 		mutationFn: async (variables: { steam_id: string }) => {
-			await apiDeleteWhitelistSteam(variables.steam_id);
+			const ac = new AbortController();
+			await apiDeleteWhitelistSteam(variables.steam_id, ac.signal);
 		},
 		onSuccess: () => {
 			sendFlash("success", "Steam whitelist deleted");

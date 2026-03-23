@@ -17,7 +17,7 @@ import { LoadingPlaceholder } from "./LoadingPlaceholder";
 export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
 	const { data: profile, isLoading } = useQuery({
 		queryKey: ["profile", { steam_id }],
-		queryFn: async () => await apiGetProfile(steam_id),
+		queryFn: async ({ signal }) => await apiGetProfile(steam_id, signal),
 	});
 
 	if (isLoading) {

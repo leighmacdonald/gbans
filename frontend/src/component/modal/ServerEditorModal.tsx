@@ -98,10 +98,11 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 				sdr_enabled: values.sdr_enabled,
 				discord_seed_role_ids: values.discord_seed_role_ids.split(","),
 			};
+			const ac = new AbortController();
 			if (server?.server_id) {
-				modal.resolve(await apiSaveServer(server.server_id, opts));
+				modal.resolve(await apiSaveServer(server.server_id, opts, ac.signal));
 			} else {
-				modal.resolve(await apiCreateServer(opts));
+				modal.resolve(await apiCreateServer(opts, ac.signal));
 			}
 			await modal.hide();
 		},

@@ -17,8 +17,8 @@ export const NewsView = ({ itemsPerPage, assetURL }: NewsViewProps) => {
 	const [page, setPage] = useState<number>(0);
 	const { data: articles, isLoading } = useQuery({
 		queryKey: ["articles"],
-		queryFn: async () => {
-			return await apiGetNewsLatest();
+		queryFn: async ({ signal }) => {
+			return await apiGetNewsLatest(signal);
 		},
 	});
 
