@@ -18,11 +18,12 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
 	const mutation = useMutation({
 		mutationKey: ["blockSource"],
 		mutationFn: async (values: { address: string }) => {
+			const ac = new AbortController();
 			if (source?.cidr_block_whitelist_id) {
-				const resp = await apiUpdateWhitelistIP(source.cidr_block_whitelist_id, values.address);
+				const resp = await apiUpdateWhitelistIP(source.cidr_block_whitelist_id, values.address, ac.signal);
 				modal.resolve(resp);
 			} else {
-				const resp = await apiCreateWhitelistIP(values.address);
+				const resp = await apiCreateWhitelistIP(values.address, ac.signal);
 				modal.resolve(resp);
 			}
 		},

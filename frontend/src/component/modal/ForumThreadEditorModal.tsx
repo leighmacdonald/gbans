@@ -26,7 +26,7 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
 	const { sendFlash, sendError } = useUserFlashCtx();
 
 	const onDelete = useCallback(async () => {
-		const abortController = new AbortController();
+		const ac = new AbortController();
 		try {
 			const confirmed = await confirmModal.show({
 				title: "Confirm Thread Deletion",
@@ -34,7 +34,7 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
 			});
 			if (confirmed) {
 				await confirmModal.hide();
-				await apiDeleteThread(thread.forum_thread_id, abortController);
+				await apiDeleteThread(thread.forum_thread_id, ac.signal);
 				thread.forum_thread_id = 0;
 				modal.resolve(thread);
 				await modal.hide();
@@ -50,7 +50,8 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
 	const mutation = useMutation({
 		mutationKey: ["forumThread", { forum_thread_id: thread.forum_thread_id }],
 		mutationFn: async (values: ThreadEditValues) => {
-			return await apiUpdateThread(thread.forum_thread_id, values.title, values.sticky, values.locked);
+			const ac = new AbortController();
+			return await apiUpdateThread(thread.forum_thread_id, values.title, values.sticky, values.locked, ac.signal);
 		},
 		onSuccess: async (editedThread: ForumThread) => {
 			modal.resolve(editedThread);

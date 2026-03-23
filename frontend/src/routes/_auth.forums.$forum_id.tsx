@@ -43,19 +43,19 @@ const forumThreadsQueryKey = (forum_id: string | number) => {
 
 export const Route = createFileRoute("/_auth/forums/$forum_id")({
 	component: ForumPage,
-	loader: async ({ context, params }) => {
+	loader: async ({ context, abortController, params }) => {
 		const { forum_id } = params;
 		const forumQueryOpts = {
 			queryKey: forumQueryKey(forum_id),
 			queryFn: async () => {
-				return await apiForum(Number(forum_id));
+				return await apiForum(Number(forum_id), abortController.signal);
 			},
 		};
 		const forum = await context.queryClient.fetchQuery(forumQueryOpts);
 		const threadsQueryOpts: FetchQueryOptions<ForumThread[]> = {
 			queryKey: forumThreadsQueryKey(forum_id),
 			queryFn: async () => {
-				return (await apiGetThreads({ forum_id: Number(forum_id) })) ?? [];
+				return (await apiGetThreads({ forum_id: Number(forum_id) }, abortController.signal)) ?? [];
 			},
 		};
 

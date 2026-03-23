@@ -52,7 +52,7 @@ export const Route = createFileRoute("/_auth/chatlogs")({
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
-			queryFn: apiGetServers,
+			queryFn: ({ signal }) => apiGetServers(signal),
 		});
 		return unsorted.sort((a, b) => {
 			return a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0;
@@ -207,23 +207,26 @@ function ChatLogs() {
 
 	const { data, isLoading, isError, isRefetching, refetch } = useQuery({
 		queryKey: ["chatlogs", { search }],
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const server_id = filterValue("server_id", search.columnFilters);
 			const steam_id = filterValue("steam_id", search.columnFilters);
 			const body = filterValue("body", search.columnFilters);
 			const sort = search.sorting?.find((sort) => sort);
 
-			return await apiGetMessages({
-				server_id: server_id ? Number(server_id) : 0,
-				personaname: "",
-				query: body ? String(body) : "",
-				source_id: steam_id ? String(steam_id) : "",
-				limit: search.pagination?.pageSize,
-				offset: search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : undefined,
-				order_by: sort ? sort.id : "created_on",
-				desc: sort ? sort.desc : true,
-				flagged_only: search.flagged_only,
-			});
+			return await apiGetMessages(
+				{
+					server_id: server_id ? Number(server_id) : 0,
+					personaname: "",
+					query: body ? String(body) : "",
+					source_id: steam_id ? String(steam_id) : "",
+					limit: search.pagination?.pageSize,
+					offset: search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : undefined,
+					order_by: sort ? sort.id : "created_on",
+					desc: sort ? sort.desc : true,
+					flagged_only: search.flagged_only,
+				},
+				signal,
+			);
 		},
 		//refetchInterval: search.auto_refresh,
 		placeholderData: keepPreviousData,

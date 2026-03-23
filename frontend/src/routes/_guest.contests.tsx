@@ -28,8 +28,8 @@ export const Route = createFileRoute("/_guest/contests")({
 function Contests() {
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["contests"],
-		queryFn: async () => {
-			return await apiContests();
+		queryFn: async ({ signal }) => {
+			return await apiContests(signal);
 		},
 	});
 

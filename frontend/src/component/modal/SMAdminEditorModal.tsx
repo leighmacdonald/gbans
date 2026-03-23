@@ -65,9 +65,10 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
 	const edit = useMutation({
 		mutationKey: ["adminSMAdmin"],
 		mutationFn: async ({ name, immunity, flags, auth_type, identity, password }: mutateAdminArgs) => {
+			const ac = new AbortController();
 			return admin?.admin_id
-				? await apiSaveSMAdmin(admin.admin_id, name, immunity, flags, auth_type, identity, password)
-				: await apiCreateSMAdmin(name, immunity, flags, auth_type, identity, password);
+				? await apiSaveSMAdmin(admin.admin_id, name, immunity, flags, auth_type, identity, password, ac.signal)
+				: await apiCreateSMAdmin(name, immunity, flags, auth_type, identity, password, ac.signal);
 		},
 		onSuccess: async (admin) => {
 			modal.resolve(admin);

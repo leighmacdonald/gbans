@@ -46,8 +46,8 @@ function AdminReports() {
 	const theme = useTheme();
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["adminReports"],
-		queryFn: async () => {
-			return apiGetReports({ deleted: false });
+		queryFn: async ({ signal }) => {
+			return apiGetReports(signal, { deleted: false });
 		},
 	});
 

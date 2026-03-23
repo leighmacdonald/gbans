@@ -40,7 +40,7 @@ export const Route = createFileRoute("/_mod/admin/votes")({
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
-			queryFn: apiGetServers,
+			queryFn: ({ signal }) => apiGetServers(signal),
 		});
 		return unsorted.sort((a, b) => {
 			return a.server_name > b.server_name ? 1 : a.server_name < b.server_name ? -1 : 0;
@@ -62,22 +62,25 @@ function AdminVotes() {
 
 	const { data, isLoading, isError, isRefetching } = useQuery({
 		queryKey: ["votes", { search }],
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const server_id = filterValueNumber("server_id", search.columnFilters);
 			const source_id = filterValue("source_id", search.columnFilters);
 			const target_id = filterValue("target_id", search.columnFilters);
 			const sort = search.sorting?.find((sort) => sort);
 
-			return apiVotesQuery({
-				limit: search.pagination?.pageSize,
-				offset: search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : undefined,
-				order_by: sort ? sort.id : "created_on",
-				desc: sort ? sort.desc : true,
-				source_id,
-				target_id,
-				server_id,
-				success: -1,
-			});
+			return apiVotesQuery(
+				{
+					limit: search.pagination?.pageSize,
+					offset: search.pagination ? search.pagination.pageIndex * search.pagination.pageSize : undefined,
+					order_by: sort ? sort.id : "created_on",
+					desc: sort ? sort.desc : true,
+					source_id,
+					target_id,
+					server_id,
+					success: -1,
+				},
+				signal,
+			);
 		},
 	});
 

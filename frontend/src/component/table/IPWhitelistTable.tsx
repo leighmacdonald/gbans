@@ -31,8 +31,8 @@ export const IPWhitelistTable = () => {
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["networkIPWhitelist"],
-		queryFn: async () => {
-			return await apiGetCIDRBlockListsIPWhitelist();
+		queryFn: async ({ signal }) => {
+			return await apiGetCIDRBlockListsIPWhitelist(signal);
 		},
 	});
 
@@ -60,7 +60,8 @@ export const IPWhitelistTable = () => {
 	const ipWhitelistMutation = useMutation({
 		mutationKey: ["networkIPWhitelistDelete"],
 		mutationFn: async (variables: { cidr_block_whitelist_id: number }) => {
-			await apiDeleteCIDRBlockWhitelist(variables.cidr_block_whitelist_id);
+			const ac = new AbortController();
+			await apiDeleteCIDRBlockWhitelist(variables.cidr_block_whitelist_id, ac.signal);
 		},
 		onSuccess: () => {
 			sendFlash("success", "IP whitelist deleted");

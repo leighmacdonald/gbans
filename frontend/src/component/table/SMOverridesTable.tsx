@@ -31,8 +31,8 @@ export const SMOverridesTable = () => {
 		isError,
 	} = useQuery({
 		queryKey: ["serverOverrides"],
-		queryFn: async () => {
-			return await apiGetSMOverrides();
+		queryFn: async ({ signal }) => {
+			return await apiGetSMOverrides(signal);
 		},
 	});
 
@@ -50,7 +50,8 @@ export const SMOverridesTable = () => {
 	const delOverrideMutation = useMutation({
 		mutationKey: ["delOverride"],
 		mutationFn: async ({ override }: { override: SMOverrides }) => {
-			await apiDeleteSMOverride(override.override_id);
+			const ac = new AbortController();
+			await apiDeleteSMOverride(override.override_id, ac.signal);
 			return override;
 		},
 		onSuccess: (deleted) => {

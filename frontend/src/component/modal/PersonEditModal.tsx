@@ -22,9 +22,14 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
 		mutationKey: ["banCIDR"],
 		mutationFn: async (values: { permission_level: PermissionLevelEnum }) => {
 			try {
-				const updatedPerson = await apiUpdatePlayerPermission(person.steam_id, {
-					permission_level: values.permission_level,
-				});
+				const ac = new AbortController();
+				const updatedPerson = await apiUpdatePlayerPermission(
+					person.steam_id,
+					{
+						permission_level: values.permission_level,
+					},
+					ac.signal,
+				);
 				modal.resolve(updatedPerson);
 			} catch (e) {
 				modal.reject(e);

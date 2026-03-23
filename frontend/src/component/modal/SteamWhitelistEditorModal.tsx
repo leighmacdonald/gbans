@@ -26,7 +26,8 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
 	const mutation = useMutation({
 		mutationKey: ["blockSourceSteam"],
 		mutationFn: async ({ steam_id }: ValueType) => {
-			const resp = await apiCreateWhitelistSteam(steam_id);
+			const ac = new AbortController();
+			const resp = await apiCreateWhitelistSteam(steam_id, ac.signal);
 			modal.resolve(resp);
 		},
 		onSuccess: async () => {

@@ -32,7 +32,8 @@ export const SteamIDField = (props: Props) => {
 			if (!emptyOrNullString(field.state.value)) {
 				try {
 					setLoading(true);
-					const update = await apiGetSteamValidate(field.state.value);
+					const ac = new AbortController();
+					const update = await apiGetSteamValidate(field.state.value, ac.signal);
 					setProfile(update);
 					field.setValue(update.steam_id);
 					setError(undefined);

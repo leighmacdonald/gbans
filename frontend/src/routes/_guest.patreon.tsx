@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_guest/patreon")({
 	loader: async ({ context }) => {
 		const campaign = await context.queryClient.fetchQuery({
 			queryKey: ["patreonCampaign"],
-			queryFn: apiGetPatreonCampaigns,
+			queryFn: ({ signal }) => apiGetPatreonCampaigns(signal),
 		});
 
 		return { campaign };
@@ -51,7 +51,7 @@ function Patreon() {
 	const followCallback = async () => {
 		const result = await queryClient.fetchQuery({
 			queryKey: ["callback"],
-			queryFn: apiGetPatreonLogin,
+			queryFn: ({ signal }) => apiGetPatreonLogin(signal),
 		});
 		window.open(result.url, "_self");
 	};

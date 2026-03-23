@@ -34,15 +34,16 @@ export const ReportModPanel = ({ reportId }: { reportId: number }) => {
 		error,
 	} = useQuery({
 		queryKey: ["report", { reportId }],
-		queryFn: async () => {
-			return await apiGetReport(Number(reportId));
+		queryFn: async ({ signal }) => {
+			return await apiGetReport(Number(reportId), signal);
 		},
 	});
 
 	const stateMutation = useMutation({
 		mutationKey: ["reportState", { report_status: report?.report_status }],
 		mutationFn: async (report_status: ReportStatusEnum) => {
-			return await apiReportSetState(Number(reportId), report_status);
+			const ac = new AbortController();
+			return await apiReportSetState(Number(reportId), report_status, ac.signal);
 		},
 		onSuccess: async (_, reportStatus) => {
 			if (!report) {

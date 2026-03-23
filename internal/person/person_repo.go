@@ -105,15 +105,14 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 	if query.CommunityBanned != nil {
 		constraints = append(constraints, sq.Eq{"p.community_banned": *query.CommunityBanned})
 	}
-
-	if query.TimeCreatedAfter != nil && query.TimeCreatedBefore != nil {
+	switch {
+	case query.TimeCreatedAfter != nil && query.TimeCreatedBefore != nil:
 		constraints = append(constraints, sq.Expr("p.timecreated BETWEEN $1 AND $2", *query.TimeCreatedAfter, *query.TimeCreatedBefore))
-	} else if query.TimeCreatedAfter != nil {
+	case query.TimeCreatedAfter != nil:
 		constraints = append(constraints, sq.GtOrEq{"p.timecreated": *query.TimeCreatedAfter})
-	} else if query.TimeCreatedBefore != nil {
+	case query.TimeCreatedBefore != nil:
 		constraints = append(constraints, sq.LtOrEq{"p.timecreated": *query.TimeCreatedBefore})
 	}
-
 	builder = query.ApplyLimitOffsetDefault(builder)
 	builder = query.ApplySafeOrder(builder, map[string][]string{
 		"p.": {

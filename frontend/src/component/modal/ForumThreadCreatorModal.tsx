@@ -58,7 +58,15 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
 	const mutation = useMutation({
 		mutationKey: ["forumThreadCreate", { forum_id: forum.forum_id }],
 		mutationFn: async (values: ForumThreadEditorValues) => {
-			return await apiCreateThread(forum.forum_id, values.title, values.body_md, values.sticky, values.locked);
+			const ac = new AbortController();
+			return await apiCreateThread(
+				forum.forum_id,
+				values.title,
+				values.body_md,
+				values.sticky,
+				values.locked,
+				ac.signal,
+			);
 		},
 		onSuccess: async (editedThread: ForumThread) => {
 			modal.resolve(editedThread);

@@ -54,8 +54,8 @@ export const Route = createFileRoute("/_auth/settings")({
 	loader: async ({ context }) => {
 		const settings = await context.queryClient.fetchQuery({
 			queryKey: ["settings"],
-			queryFn: async () => {
-				return await apiGetPersonSettings();
+			queryFn: async ({ signal }) => {
+				return await apiGetPersonSettings(signal);
 			},
 		});
 
@@ -86,11 +86,13 @@ function ProfileSettings() {
 
 	const mutation = useMutation({
 		mutationFn: async (values: SettingsValues) => {
+			const ac = new AbortController();
 			return await apiSavePersonSettings(
 				values.forum_signature,
 				values.forum_profile_messages,
 				values.stats_hidden,
 				values.center_projectiles ?? false,
+				ac.signal,
 			);
 		},
 		onSuccess: async () => {
@@ -448,15 +450,15 @@ const ConnectionsSection = ({
 
 	const { data: user, isLoading } = useQuery({
 		queryKey: ["discordProfile", { steamID: profile.steam_id }],
-		queryFn: async () => {
-			return apiDiscordUser();
+		queryFn: async ({ signal }) => {
+			return apiDiscordUser(signal);
 		},
 	});
 
 	const followPatreonCallback = async () => {
 		const result = await queryClient.fetchQuery({
 			queryKey: ["callbackPatreon"],
-			queryFn: apiGetPatreonLogin,
+			queryFn: async ({ signal }) => await apiGetPatreonLogin(signal),
 		});
 		window.open(result.url, "_self");
 	};
@@ -464,7 +466,7 @@ const ConnectionsSection = ({
 	const followDiscordCallback = async () => {
 		const result = await queryClient.fetchQuery({
 			queryKey: ["callbackDiscord"],
-			queryFn: apiGetDiscordLogin,
+			queryFn: async ({ signal }) => await apiGetDiscordLogin(signal),
 		});
 		window.open(result.url, "_self");
 	};
@@ -480,7 +482,7 @@ const ConnectionsSection = ({
 		try {
 			await queryClient.fetchQuery({
 				queryKey: ["discordForget", { id: user?.id }],
-				queryFn: apiDiscordLogout,
+				queryFn: async ({ signal }) => await apiDiscordLogout(signal),
 			});
 
 			queryClient.setQueryData(["discordProfile", { steamID: profile.steam_id }], {});
@@ -503,7 +505,7 @@ const ConnectionsSection = ({
 		try {
 			await queryClient.fetchQuery({
 				queryKey: ["patreonForget", { patreon_id }],
-				queryFn: apiGetPatreonLogout,
+				queryFn: async ({ signal }) => await apiGetPatreonLogout(signal),
 			});
 			login({ ...profile, discord_id: "" });
 			sendFlash("success", "Logged out successfully");

@@ -19,8 +19,8 @@ export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
 
 	const { data, isLoading } = useQuery({
 		queryKey: ["newsList"],
-		queryFn: async () => {
-			return await apiGetNewsAll();
+		queryFn: async ({ signal }) => {
+			return await apiGetNewsAll(signal);
 		},
 	});
 	return (

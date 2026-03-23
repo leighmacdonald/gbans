@@ -52,7 +52,8 @@ export const ReportViewComponent = ({ report, assetURL }: { report: Report; asse
 
 	const createMessageMutation = useMutation({
 		mutationFn: async ({ body_md }: { body_md: string }) => {
-			return await apiCreateReportMessage(report.report_id, body_md);
+			const ac = new AbortController();
+			return await apiCreateReportMessage(report.report_id, body_md, ac.signal);
 		},
 		onSuccess: (message) => {
 			queryClient.setQueryData(reportMessagesQueryOptions(report.report_id).queryKey, [

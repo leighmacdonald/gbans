@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_guest/changelog")({
 	loader: async ({ context }) => {
 		const changelogs = await context.queryClient.fetchQuery({
 			queryKey: ["changelogs"],
-			queryFn: getChangelogs,
+			queryFn: ({ signal }) => getChangelogs(signal),
 		});
 
 		return { changelogs };

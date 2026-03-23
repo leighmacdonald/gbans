@@ -124,8 +124,7 @@ func (s *Servers) secretAuth(secret int64, ipAddr net.IP) (int, string, error) {
 
 	server.RLock()
 	defer server.RUnlock()
-	if !server.IP.Equal(ipAddr) ||
-		(server.IPInternal != nil && server.IPInternal.Equal(ipAddr)) {
+	if !server.IP.Equal(ipAddr) || (server.IPInternal != nil && !server.IPInternal.Equal(ipAddr)) {
 		return 0, "", ErrNotFound
 	}
 

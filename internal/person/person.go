@@ -504,9 +504,7 @@ func (u *Persons) BySteamIDs(ctx context.Context, steamIDs steamid.Collection) (
 func (u *Persons) GetPeople(ctx context.Context, filter Query) (People, int64, error) {
 	if (filter.TimeCreatedAfter != nil && filter.TimeCreatedBefore != nil) &&
 		(filter.TimeCreatedAfter.Before(*filter.TimeCreatedBefore) || filter.TimeCreatedBefore.After(*filter.TimeCreatedAfter)) {
-		swap := filter.TimeCreatedAfter
-		filter.TimeCreatedAfter = filter.TimeCreatedBefore
-		filter.TimeCreatedBefore = swap
+		filter.TimeCreatedAfter, filter.TimeCreatedBefore = filter.TimeCreatedBefore, filter.TimeCreatedAfter
 	}
 
 	return u.repo.Query(ctx, filter)

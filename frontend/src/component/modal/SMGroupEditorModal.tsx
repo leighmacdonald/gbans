@@ -48,10 +48,11 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
 	const edit = useMutation({
 		mutationKey: ["adminSMGroup"],
 		mutationFn: async ({ name, immunity, flags }: { name: string; immunity: number; flags: string }) => {
+			const ac = new AbortController();
 			if (group?.group_id) {
-				return await apiSaveSMGroup(group.group_id, name, immunity, flags);
+				return await apiSaveSMGroup(group.group_id, name, immunity, flags, ac.signal);
 			}
-			return await apiCreateSMGroup(name, immunity, flags);
+			return await apiCreateSMGroup(name, immunity, flags, ac.signal);
 		},
 		onSuccess: async (group) => {
 			modal.resolve(group);

@@ -28,8 +28,8 @@ export const Route = createFileRoute("/_auth/notifications")({
 function NotificationsPage() {
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["notifications"],
-		queryFn: async () => {
-			return await apiGetNotifications();
+		queryFn: async ({ signal }) => {
+			return await apiGetNotifications(signal);
 		},
 	});
 	// const queryClient = useQueryClient();

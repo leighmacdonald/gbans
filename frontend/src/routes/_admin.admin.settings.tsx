@@ -81,8 +81,8 @@ export const Route = createFileRoute("/_admin/admin/settings")({
 	loader: async ({ context }) => {
 		const settings = await context.queryClient.fetchQuery({
 			queryKey: ["settings"],
-			queryFn: async () => {
-				return await apiGetSettings();
+			queryFn: async ({ signal }) => {
+				return await apiGetSettings(signal);
 			},
 		});
 		return { settings };
@@ -125,7 +125,8 @@ function AdminSettings() {
 	const mutation = useMutation({
 		mutationKey: ["adminSettings"],
 		mutationFn: async (variables: Config) => {
-			await apiSaveSettings(variables);
+			const ac = new AbortController();
+			await apiSaveSettings(ac.signal, variables);
 		},
 		onSuccess: () => {
 			sendFlash("success", "Settings saved successfully");
@@ -948,7 +949,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
 		try {
 			await queryClient.fetchQuery({
 				queryKey: ["demoCleanup"],
-				queryFn: apiGetDemoCleanup,
+				queryFn: async ({ signal }) => await apiGetDemoCleanup(signal),
 			});
 			sendFlash("success", "Cleanup started");
 		} catch (e) {
@@ -1574,7 +1575,8 @@ const GeoLocationSection = ({
 
 	const onUpdateDB = useCallback(async () => {
 		try {
-			await apiGetNetworkUpdateDB();
+			const ac = new AbortController();
+			await apiGetNetworkUpdateDB(ac.signal);
 			sendFlash("success", "Started database update");
 		} catch (e) {
 			logErr(e);

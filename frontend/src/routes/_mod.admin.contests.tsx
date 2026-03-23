@@ -31,8 +31,8 @@ export const Route = createFileRoute("/_mod/admin/contests")({
 function AdminContests() {
 	const { data, isError, isLoading } = useQuery({
 		queryKey: ["adminContests"],
-		queryFn: async () => {
-			return await apiContests();
+		queryFn: async ({ signal }) => {
+			return await apiContests(signal);
 		},
 	});
 

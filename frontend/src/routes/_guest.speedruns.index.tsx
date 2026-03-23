@@ -85,8 +85,8 @@ const SpeedrunRecentTable = () => {
 		isError: isErrorRecent,
 	} = useQuery({
 		queryKey: ["speedruns_recent", recentCount],
-		queryFn: async () => {
-			return await getSpeedrunsRecent(recentCount);
+		queryFn: async ({ signal }) => {
+			return await getSpeedrunsRecent(recentCount, signal);
 		},
 	});
 
@@ -96,7 +96,7 @@ const SpeedrunRecentTable = () => {
 		isError: isErrorServers,
 	} = useQuery({
 		queryKey: ["serversSimple"],
-		queryFn: apiGetServers,
+		queryFn: ({ signal }) => apiGetServers(signal),
 	});
 
 	const columns = useMemo(

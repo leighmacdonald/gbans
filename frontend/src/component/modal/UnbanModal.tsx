@@ -30,7 +30,8 @@ export const UnbanModal = NiceModal.create(
 		const mutation = useMutation({
 			mutationKey: ["deleteSteamBan", { banId }],
 			mutationFn: async (unban_reason: string) => {
-				await apiDeleteBan(banId, unban_reason);
+				const ac = new AbortController();
+				await apiDeleteBan(banId, unban_reason, ac.signal);
 			},
 			onSuccess: async () => {
 				modal.resolve();

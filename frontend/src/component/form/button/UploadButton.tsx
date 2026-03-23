@@ -15,7 +15,8 @@ export const UploadButton = ({ onSuccess, icon, label = "Upload files" }: Upload
 	const onChange = useCallback(
 		async (e: React.ChangeEvent<HTMLInputElement>) => {
 			if (e.target.files) {
-				const asset = await apiSaveAsset(e.target.files[0]);
+				const ac = new AbortController();
+				const asset = await apiSaveAsset(e.target.files[0], undefined, ac.signal);
 				if (onSuccess) {
 					onSuccess(asset);
 				}
