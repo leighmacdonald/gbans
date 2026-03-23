@@ -3,6 +3,7 @@ module github.com/leighmacdonald/gbans
 go 1.25.1
 
 require (
+	connectrpc.com/connect v1.19.1
 	github.com/Depado/ginprom v1.8.3
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/austinbspencer/patreon-go-wrapper v1.0.2
@@ -188,6 +189,6 @@ require (
 	golang.org/x/text v0.35.0
 	golang.org/x/time v0.13.0 // indirect
 	google.golang.org/grpc v1.79.3 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

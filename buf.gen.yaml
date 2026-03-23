@@ -4,7 +4,7 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: github.com/leighmacdonald/gbans
+      value: github.com/leighmacdonald/gbans/internal/rpc
 
 plugins:
   - local: [protoc-gen-go]

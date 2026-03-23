@@ -1,8 +1,7 @@
 syntax = "proto3";
-
 package config.v1;
 
-message InfoRequest {}
+import "google/protobuf/empty.proto";
 
 message InfoResponse {
   string site_name = 1;
@@ -16,7 +15,7 @@ message InfoResponse {
   string patreon_client_id = 9;
   string discord_client_id = 10;
   bool discord_enabled = 11;
-  bool patring_enabled = 12;
+  bool patreon_enabled = 12;
   string default_route = 13;
   bool news_enabled = 14;
   bool contests_enabled = 15;
@@ -29,10 +28,6 @@ message InfoResponse {
   bool speedruns_enabled = 22;
   bool playerqueue_enabled = 23;
   bool forums_enabled = 24;
-}
-
-service ConfigService {
-  rpc Info(InfoRequest) returns (InfoResponse) {}
 }
 
 enum RunMode {
@@ -226,4 +221,10 @@ message Config {
   LocalStore local_store = 12;
   Exports exports = 13;
   Anticheat anticheat = 14;
+}
+
+service ConfigService {
+  rpc Info(google.protobuf.Empty) returns (InfoResponse) {}
+  rpc Get(google.protobuf.Empty) returns (Config) {}
+  rpc Update(Config) returns (Config) {}
 }
