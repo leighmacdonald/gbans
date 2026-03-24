@@ -33,32 +33,32 @@ func (r *Repository) SendSite(ctx context.Context, targetIDs steamid.Collection,
 		batch.Queue(query, sid.Int64(), severity, message, link, time.Now(), authorID)
 	}
 
-	return database.DBErr(r.SendBatch(ctx, batch).Close())
+	return database.Err(r.SendBatch(ctx, batch).Close())
 }
 
 func (r *Repository) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
-	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
+	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
 func (r *Repository) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
-	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
+	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person_notification").
 		Set("read", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
 func (r *Repository) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
-	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
+	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.And{sq.Eq{"steam_id": steamID.Int64()}, sq.Eq{"person_notification_id": ids}})))
 }
 
 func (r *Repository) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
-	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
+	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person_notification").
 		Set("deleted", true).
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
@@ -77,7 +77,7 @@ func (r *Repository) GetPersonNotifications(ctx context.Context, steamID steamid
 
 	rows, errRows := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 
 	defer rows.Close()

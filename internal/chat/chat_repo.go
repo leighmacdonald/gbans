@@ -48,14 +48,14 @@ func (m *MessageProvider) Next(ctx context.Context, count uint64) ([]slur.Messag
 			return nil, nil
 		}
 
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 
 	var res []slur.Message
 	for rows.Next() {
 		var sm SlurMessage
 		if err := rows.Scan(&sm.steamID, &sm.id, &sm.message); err != nil {
-			return nil, database.DBErr(err)
+			return nil, database.Err(err)
 		}
 
 		res = append(res, sm)
@@ -83,7 +83,7 @@ func (r Repository) TopChatters(ctx context.Context, count uint64) ([]TopChatter
 		OrderBy("total DESC").
 		Limit(count))
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 
 	defer rows.Close()
@@ -97,7 +97,7 @@ func (r Repository) TopChatters(ctx context.Context, count uint64) ([]TopChatter
 		)
 
 		if errScan := rows.Scan(&tcr.Name, &steamID, &tcr.Count); errScan != nil {
-			return nil, database.DBErr(errScan)
+			return nil, database.Err(errScan)
 		}
 
 		tcr.SteamID = steamid.New(steamID)
@@ -119,7 +119,7 @@ func (r Repository) AddChatHistory(ctx context.Context, message *Message) error 
 		QueryRow(ctx, query, message.SteamID.Int64(), message.ServerID, message.Body, message.Team,
 			message.CreatedOn, message.PersonaName, message.MatchID).
 		Scan(&message.PersonMessageID); errScan != nil {
-		return database.DBErr(errScan)
+		return database.Err(errScan)
 	}
 
 	return nil
@@ -144,7 +144,7 @@ func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID in
 		Where(sq.Eq{"m.person_message_id": personMessageID}))
 
 	if errRow != nil {
-		return msg, database.DBErr(errRow)
+		return msg, database.Err(errRow)
 	}
 
 	var steamID int64
@@ -158,7 +158,7 @@ func (r Repository) GetPersonMessageByID(ctx context.Context, personMessageID in
 		&msg.PersonaName,
 		&msg.MatchID,
 		&msg.ServerName); errScan != nil {
-		return msg, database.DBErr(errScan)
+		return msg, database.Err(errScan)
 	}
 
 	msg.SteamID = steamid.New(steamID)
@@ -250,7 +250,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 
 	rows, errQuery := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, 0, database.DBErr(errQuery)
+		return nil, 0, database.Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -275,7 +275,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 			&flagged,
 			&message.AvatarHash,
 			&message.Pattern); errScan != nil {
-			return nil, 0, database.DBErr(errScan)
+			return nil, 0, database.Err(errScan)
 		}
 
 		if matchID != nil {
@@ -294,7 +294,7 @@ func (r Repository) QueryChatHistory(ctx context.Context, filters HistoryQueryFi
 
 	count, errQuery := r.GetCount(ctx, countBuilder.Where(constraints))
 	if errQuery != nil {
-		return nil, 0, database.DBErr(errQuery)
+		return nil, 0, database.Err(errQuery)
 	}
 
 	if messages == nil {
@@ -324,7 +324,7 @@ func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (Quer
 
 	var msg QueryChatHistoryResult
 
-	if err := database.DBErr(r.QueryRow(ctx, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
+	if err := database.Err(r.QueryRow(ctx, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 		&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged)); err != nil {
 		return msg, err
 	}
@@ -380,7 +380,7 @@ func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int, m
 
 	rows, errRows := r.Query(ctx, query, messageID, paddedMessageCount, serverID)
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 	defer rows.Close()
 
@@ -391,7 +391,7 @@ func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int, m
 
 		if errScan := rows.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 			&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {
-			return nil, database.DBErr(errScan)
+			return nil, database.Err(errScan)
 		}
 
 		messages = append(messages, msg)

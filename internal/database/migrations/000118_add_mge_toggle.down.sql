@@ -1,0 +1,1 @@
+ALTER TABLE config DROP COLUMN IF EXISTS mge_toggle;

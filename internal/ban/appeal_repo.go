@@ -47,7 +47,7 @@ func (r *AppealRepository) ByActivity(ctx context.Context, opts AppealQueryFilte
 
 	rows, errQuery := r.QueryBuilder(ctx, builder)
 	if errQuery != nil {
-		return nil, database.DBErr(errQuery)
+		return nil, database.Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -110,7 +110,7 @@ func (r *AppealRepository) updateBanMessage(ctx context.Context, message *Appeal
 		Where(sq.Eq{"ban_message_id": message.BanMessageID})
 
 	if errQuery := r.ExecUpdateBuilder(ctx, query); errQuery != nil {
-		return database.DBErr(errQuery)
+		return database.Err(errQuery)
 	}
 
 	return nil
@@ -133,7 +133,7 @@ func (r *AppealRepository) insertBanMessage(ctx context.Context, message *Appeal
 		message.CreatedOn,
 		message.UpdatedOn,
 	).Scan(&message.BanMessageID); errQuery != nil {
-		return database.DBErr(errQuery)
+		return database.Err(errQuery)
 	}
 
 	return nil
@@ -150,7 +150,7 @@ func (r *AppealRepository) Messages(ctx context.Context, banID int64) ([]AppealM
 
 	rows, errQuery := r.QueryBuilder(ctx, query)
 	if errQuery != nil {
-		if errors.Is(database.DBErr(errQuery), database.ErrNoResult) {
+		if errors.Is(database.Err(errQuery), database.ErrNoResult) {
 			return nil, nil
 		}
 	}
@@ -177,7 +177,7 @@ func (r *AppealRepository) Messages(ctx context.Context, banID int64) ([]AppealM
 			&msg.Personaname,
 			&msg.PermissionLevel,
 		); errScan != nil {
-			return nil, database.DBErr(errQuery)
+			return nil, database.Err(errQuery)
 		}
 
 		msg.AuthorID = steamid.New(authorID)
@@ -207,7 +207,7 @@ func (r *AppealRepository) MessageByID(ctx context.Context, banMessageID int64) 
 
 	row, errQuery := r.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return message, database.DBErr(errQuery)
+		return message, database.Err(errQuery)
 	}
 
 	if errScan := row.Scan(
@@ -222,7 +222,7 @@ func (r *AppealRepository) MessageByID(ctx context.Context, banMessageID int64) 
 		&message.Personaname,
 		&message.PermissionLevel,
 	); errScan != nil {
-		return message, database.DBErr(errScan)
+		return message, database.Err(errScan)
 	}
 
 	message.AuthorID = steamid.New(authorID)
@@ -237,7 +237,7 @@ func (r *AppealRepository) DropMessage(ctx context.Context, message *AppealMessa
 		Where(sq.Eq{"ban_message_id": message.BanMessageID})
 
 	if errExec := r.ExecUpdateBuilder(ctx, query); errExec != nil {
-		return database.DBErr(errExec)
+		return database.Err(errExec)
 	}
 
 	message.Deleted = true

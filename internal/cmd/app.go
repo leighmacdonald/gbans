@@ -32,6 +32,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/metrics"
+	"github.com/leighmacdonald/gbans/internal/mge"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/network/asn"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
@@ -77,6 +78,7 @@ type GBans struct {
 	discordOAuth   discordoauth.DiscordOAuth
 	memberships    *ban.Memberships
 	metrics        metrics.Metrics
+	mge            mge.MGE
 	networks       network.Networks
 	news           news.News
 	notifications  *notification.Notifications
@@ -196,6 +198,7 @@ func (g *GBans) Init(ctx context.Context) error {
 	g.speedruns = servers.NewSpeedruns(servers.NewSpeedrunRepository(g.database, g.persons))
 	g.memberships = ban.NewMemberships(ban.NewRepository(g.database), g.tfapiClient)
 	g.banExpirations = ban.NewExpirationMonitor(g.bans, g.persons, g.notifications)
+	g.mge = mge.NewMGE(mge.NewRepository(g.database))
 
 	if conf.Discord.Enabled {
 		anticheat.RegisterDiscordCommands(g.bot, g.anticheat)
@@ -511,6 +514,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	forum.NewForumHandler(router, userAuth, g.forums)
 	// match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
 	metrics.NewMetricsHandler(router)
+	mge.NewHandler(router, userAuth, g.mge)
 	network.NewHandler(router, userAuth, g.networks)
 	network.NewBlocklistHandler(router, userAuth, g.blocklists, g.networks)
 	news.NewNewsHandler(router, g.news, userAuth)

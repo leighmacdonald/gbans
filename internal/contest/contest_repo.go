@@ -33,24 +33,24 @@ func (c *Repository) ContestByID(ctx context.Context, contestID uuid.UUID, conte
 
 	row, errQuery := c.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return database.DBErr(errQuery)
+		return database.Err(errQuery)
 	}
 
-	return database.DBErr(row.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
+	return database.Err(row.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
 		&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
 		&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
 		&contest.CreatedOn, &contest.UpdatedOn, &contest.HideSubmissions))
 }
 
 func (c *Repository) ContestDelete(ctx context.Context, contestID uuid.UUID) error {
-	return database.DBErr(c.ExecUpdateBuilder(ctx, c.Builder().
+	return database.Err(c.ExecUpdateBuilder(ctx, c.Builder().
 		Update("contest").
 		Set("deleted", true).
 		Where(sq.Eq{"contest_id": contestID})))
 }
 
 func (c *Repository) ContestEntryDelete(ctx context.Context, contestEntryID uuid.UUID) error {
-	return database.DBErr(c.ExecDeleteBuilder(ctx, c.Builder().
+	return database.Err(c.ExecDeleteBuilder(ctx, c.Builder().
 		Delete("contest_entry").
 		Where(sq.Eq{"contest_entry_id": contestEntryID})))
 }
@@ -79,7 +79,7 @@ func (c *Repository) Contests(ctx context.Context, publicOnly bool) ([]Contest, 
 			return []Contest{}, nil
 		}
 
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 
 	defer rows.Close()
@@ -90,7 +90,7 @@ func (c *Repository) Contests(ctx context.Context, publicOnly bool) ([]Contest, 
 			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
 			&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
 			&contest.CreatedOn, &contest.UpdatedOn, &contest.NumEntries, &contest.HideSubmissions); errScan != nil {
-			return nil, database.DBErr(errScan)
+			return nil, database.Err(errScan)
 		}
 
 		contests = append(contests, contest)
@@ -100,7 +100,7 @@ func (c *Repository) Contests(ctx context.Context, publicOnly bool) ([]Contest, 
 }
 
 func (c *Repository) ContestEntrySave(ctx context.Context, entry Entry) error {
-	return database.DBErr(c.ExecInsertBuilder(ctx, c.Builder().
+	return database.Err(c.ExecInsertBuilder(ctx, c.Builder().
 		Insert("contest_entry").
 		Columns("contest_entry_id", "contest_id", "steam_id", "asset_id", "description",
 			"placement", "deleted", "created_on", "updated_on").
@@ -135,7 +135,7 @@ func (c *Repository) contestInsert(ctx context.Context, contest *Contest) error 
 			contest.CreatedOn, contest.UpdatedOn, contest.HideSubmissions)
 
 	if errExec := c.ExecInsertBuilder(ctx, query); errExec != nil {
-		return database.DBErr(errExec)
+		return database.Err(errExec)
 	}
 
 	contest.IsNew = false
@@ -146,7 +146,7 @@ func (c *Repository) contestInsert(ctx context.Context, contest *Contest) error 
 func (c *Repository) contestUpdate(ctx context.Context, contest *Contest) error {
 	contest.UpdatedOn = time.Now()
 
-	return database.DBErr(c.ExecUpdateBuilder(ctx, c.Builder().
+	return database.Err(c.ExecUpdateBuilder(ctx, c.Builder().
 		Update("contest").
 		Set("title", contest.Title).
 		Set("public", contest.Public).
@@ -204,7 +204,7 @@ func (c *Repository) ContestEntry(ctx context.Context, contestID uuid.UUID, entr
 			&entry.Personaname, &entry.AvatarHash, &entry.VotesUp, &entry.VotesDown,
 			&entry.Asset.Size, &entry.Asset.Bucket,
 			&entry.Asset.MimeType, &entry.Asset.Name, &entry.Asset.AssetID); errScan != nil {
-		return database.DBErr(errScan)
+		return database.Err(errScan)
 	}
 
 	return nil
@@ -253,7 +253,7 @@ func (c *Repository) ContestEntries(ctx context.Context, contestID uuid.UUID) ([
 			return []*Entry{}, nil
 		}
 
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 
 	defer rows.Close()
@@ -266,7 +266,7 @@ func (c *Repository) ContestEntries(ctx context.Context, contestID uuid.UUID) ([
 			&entry.Personaname, &entry.AvatarHash, &entry.VotesUp, &entry.VotesDown,
 			&entry.Asset.Size, &entry.Asset.Bucket,
 			&entry.Asset.MimeType, &entry.Asset.Name, &entry.Asset.AssetID); errScan != nil {
-			return nil, database.DBErr(errScan)
+			return nil, database.Err(errScan)
 		}
 
 		entries = append(entries, &entry)
@@ -284,13 +284,13 @@ func (c *Repository) ContestEntryVoteGet(ctx context.Context, contestEntryID uui
 
 	row, errQuery := c.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return database.DBErr(errQuery)
+		return database.Err(errQuery)
 	}
 
 	if errScan := row.
 		Scan(&record.ContestEntryVoteID, &record.ContestEntryID,
 			&record.SteamID, &record.Vote, &record.CreatedOn, &record.UpdatedOn); errScan != nil {
-		return database.DBErr(errScan)
+		return database.Err(errScan)
 	}
 
 	return nil
@@ -300,7 +300,7 @@ func (c *Repository) ContestEntryVote(ctx context.Context, contestEntryID uuid.U
 	var record VoteRecord
 	if errRecord := c.ContestEntryVoteGet(ctx, contestEntryID, steamID, &record); errRecord != nil {
 		if !errors.Is(errRecord, database.ErrNoResult) {
-			return database.DBErr(errRecord)
+			return database.Err(errRecord)
 		}
 
 		record = VoteRecord{
@@ -313,7 +313,7 @@ func (c *Repository) ContestEntryVote(ctx context.Context, contestEntryID uuid.U
 
 		now := time.Now()
 
-		return database.DBErr(c.ExecInsertBuilder(ctx, c.Builder().
+		return database.Err(c.ExecInsertBuilder(ctx, c.Builder().
 			Insert("contest_entry_vote").
 			Columns("contest_entry_id", "steam_id", "vote", "created_on", "updated_on").
 			Values(contestEntryID, steamID, vote, now, now)))
@@ -336,14 +336,14 @@ func (c *Repository) ContestEntryVote(ctx context.Context, contestEntryID uuid.U
 }
 
 func (c *Repository) ContestEntryVoteDelete(ctx context.Context, contestEntryVoteID int64) error {
-	return database.DBErr(c.ExecDeleteBuilder(ctx, c.
+	return database.Err(c.ExecDeleteBuilder(ctx, c.
 		Builder().
 		Delete("contest_entry_vote").
 		Where(sq.Eq{"contest_entry_vote_id": contestEntryVoteID})))
 }
 
 func (c *Repository) ContestEntryVoteUpdate(ctx context.Context, contestEntryVoteID int64, newVote bool) error {
-	return database.DBErr(c.ExecUpdateBuilder(ctx, c.Builder().
+	return database.Err(c.ExecUpdateBuilder(ctx, c.Builder().
 		Update("contest_entry_vote").
 		Set("vote", newVote).
 		Set("updated_on", time.Now()).

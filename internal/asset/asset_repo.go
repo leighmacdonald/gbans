@@ -80,7 +80,7 @@ func (l Repository) Delete(ctx context.Context, assetID uuid.UUID) (int64, error
 	query := l.db.Builder().Delete("asset").Where(sq.Eq{"asset_id": assetID})
 
 	if errExec := l.db.ExecDeleteBuilder(ctx, query); errExec != nil {
-		return 0, database.DBErr(errExec)
+		return 0, database.Err(errExec)
 	}
 
 	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
@@ -149,7 +149,7 @@ func (l Repository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) (Asse
 		Where(sq.Eq{"asset_id": assetID}).
 		ToSql()
 	if errSQL != nil {
-		return Asset{}, database.DBErr(errSQL)
+		return Asset{}, database.Err(errSQL)
 	}
 
 	var (
@@ -160,7 +160,7 @@ func (l Repository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) (Asse
 	if errScan := l.db.QueryRow(ctx, query, args...).
 		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
 			&asset.Size, &asset.Hash, &asset.CreatedOn, &asset.UpdatedOn, &asset.IsPrivate); errScan != nil {
-		return Asset{}, database.DBErr(errScan)
+		return Asset{}, database.Err(errScan)
 	}
 
 	asset.AuthorID = steamid.New(authorID)
@@ -182,7 +182,7 @@ func (l Repository) getAssetByHash(ctx context.Context, hash []byte) (Asset, err
 		Where(sq.Eq{"hash": hash}).
 		ToSql()
 	if errSQL != nil {
-		return Asset{}, database.DBErr(errSQL)
+		return Asset{}, database.Err(errSQL)
 	}
 
 	var (
@@ -193,7 +193,7 @@ func (l Repository) getAssetByHash(ctx context.Context, hash []byte) (Asset, err
 	if errScan := l.db.QueryRow(ctx, query, args...).
 		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
 			&asset.Size, &asset.Hash, &asset.IsPrivate, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
-		return Asset{}, database.DBErr(errScan)
+		return Asset{}, database.Err(errScan)
 	}
 
 	asset.AuthorID = steamid.New(authorID)
@@ -223,7 +223,7 @@ func (l Repository) saveAssetToDB(ctx context.Context, asset Asset) error {
 	})
 
 	if errInsert := l.db.ExecInsertBuilder(ctx, query); errInsert != nil {
-		return database.DBErr(errInsert)
+		return database.Err(errInsert)
 	}
 
 	return nil
