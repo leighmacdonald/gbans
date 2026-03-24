@@ -53,7 +53,7 @@ func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) 
 
 	rows, errQueryExec := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errQueryExec != nil {
-		return []Server{}, database.DBErr(errQueryExec)
+		return []Server{}, database.Err(errQueryExec)
 	}
 
 	defer rows.Close()
@@ -84,7 +84,7 @@ func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) 
 	}
 
 	if rows.Err() != nil {
-		return nil, database.DBErr(rows.Err())
+		return nil, database.Err(rows.Err())
 	}
 
 	return servers, nil
@@ -94,13 +94,13 @@ func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) 
 func (r *Repository) Save(ctx context.Context, server *Server) error {
 	if server.ServerID > 0 {
 		const update = `
-			UPDATE server SET 
+			UPDATE server SET
             	short_name = $1, name = $2, address = $3, port = $4, rcon = $5, token_created_on = $6, reserved_slots = $7,
 				updated_on = $8, password = $9, is_enabled = $10, region = $11, cc = $12, latitude = $13, longitude = $14,
       			deleted = $15, log_secret = $16, enable_stats = $17, address_internal = $18, sdr_enabled = $19, discord_seed_role_ids = $20
 			WHERE server_id = $21`
 
-		return database.DBErr(r.Exec(ctx, update, server.ShortName, server.Name, server.Address, server.Port,
+		return database.Err(r.Exec(ctx, update, server.ShortName, server.Name, server.Address, server.Port,
 			server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.UpdatedOn,
 			server.Password, server.IsEnabled, server.Region, server.CC,
 			server.Latitude, server.Longitude, server.Deleted, server.LogSecret, server.EnableStats,
@@ -126,7 +126,7 @@ func (r *Repository) Save(ctx context.Context, server *Server) error {
 		&server.SDREnabled, &server.DiscordSeedRoleIDs).
 		Scan(&server.ServerID)
 	if err != nil {
-		return database.DBErr(err)
+		return database.Err(err)
 	}
 
 	return nil

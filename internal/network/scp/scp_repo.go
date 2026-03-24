@@ -56,7 +56,7 @@ func (r Repository) GetHostKey(ctx context.Context, addr string) (string, error)
 	if errRow := r.db.
 		QueryRow(ctx, `SELECT key FROM host_key WHERE address = $1`, addr).
 		Scan(&key); errRow != nil {
-		return "", database.DBErr(errRow)
+		return "", database.Err(errRow)
 	}
 
 	return key, nil
@@ -69,7 +69,7 @@ func (r Repository) SetHostKey(ctx context.Context, addr string, key string) err
 		ON CONFLICT (address)
 		    DO UPDATE SET address = $1, key = $2, created_on = $3`
 	if err := r.db.Exec(ctx, query, addr, key, time.Now()); err != nil {
-		return database.DBErr(err)
+		return database.Err(err)
 	}
 
 	return nil
@@ -83,7 +83,7 @@ func (r Repository) Servers(ctx context.Context) ([]ServerInfo, error) {
 		ORDER BY short_name`
 	rows, errRows := r.db.Query(ctx, query)
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 	defer rows.Close()
 
@@ -100,7 +100,7 @@ func (r Repository) Servers(ctx context.Context) ([]ServerInfo, error) {
 			addressInternal string
 		)
 		if err := rows.Scan(&sid.ServerID, &sid.ShortName, &address, &addressInternal); err != nil {
-			return nil, database.DBErr(err)
+			return nil, database.Err(err)
 		}
 
 		switch {

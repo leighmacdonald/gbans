@@ -78,19 +78,19 @@ type PgStore struct {
 func (db *PgStore) WrapTx(ctx context.Context, txFunc func(pgx.Tx) error) error {
 	transaction, errTx := db.Begin(ctx)
 	if errTx != nil {
-		return DBErr(errTx)
+		return Err(errTx)
 	}
 
 	if err := txFunc(transaction); err != nil {
 		if errRollback := transaction.Rollback(ctx); errRollback != nil {
-			return DBErr(errRollback)
+			return Err(errRollback)
 		}
 
 		return err
 	}
 
 	if err := transaction.Commit(ctx); err != nil {
-		return DBErr(err)
+		return Err(err)
 	}
 
 	return nil
@@ -105,8 +105,8 @@ func New(dsn string, autoMigrate bool, logQueries bool) *PgStore {
 	}
 }
 
-// DBErr is used to wrap common database errors in owr own error types.
-func DBErr(rootError error) error {
+// Err is used to wrap common database errors in owr own error types.
+func Err(rootError error) error {
 	if rootError == nil {
 		return nil
 	}
@@ -182,7 +182,7 @@ func (db *PgStore) Query(ctx context.Context, query string, args ...any) (pgx.Ro
 func (db *PgStore) QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error) { //nolint:ireturn
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return nil, DBErr(errQuery)
+		return nil, Err(errQuery)
 	}
 
 	rows, err := db.Query(ctx, query, args...)
@@ -213,7 +213,7 @@ func (db *PgStore) Exec(ctx context.Context, query string, args ...any) error {
 func (db *PgStore) ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return DBErr(errQuery)
+		return Err(errQuery)
 	}
 
 	return db.Exec(ctx, query, args...) //nolint:wrapcheck
@@ -288,12 +288,12 @@ func (db *PgStore) GetCount(ctx context.Context, builder sq.SelectBuilder) (int6
 func (db *PgStore) TruncateTable(ctx context.Context, table string) error {
 	query, args, errQueryArgs := sq.Delete(table).ToSql()
 	if errQueryArgs != nil {
-		return DBErr(errQueryArgs)
+		return Err(errQueryArgs)
 	}
 
 	rows, errExec := db.Query(ctx, query, args...)
 	if errExec != nil {
-		return DBErr(errExec)
+		return Err(errExec)
 	}
 
 	rows.Close()

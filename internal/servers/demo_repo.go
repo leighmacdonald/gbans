@@ -41,7 +41,7 @@ func (r *DemoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]Demo
 		OrderBy("d.demo_id DESC").
 		Offset(limit))
 	if errRow != nil {
-		return nil, database.DBErr(errRow)
+		return nil, database.Err(errRow)
 	}
 
 	defer rows.Close()
@@ -51,7 +51,7 @@ func (r *DemoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]Demo
 	for rows.Next() {
 		var demo DemoInfo
 		if err := rows.Scan(&demo.DemoID, &demo.Title, &demo.AssetID); err != nil {
-			return nil, database.DBErr(err)
+			return nil, database.Err(err)
 		}
 
 		demos = append(demos, demo)
@@ -69,7 +69,7 @@ func (r *DemoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile
 		LeftJoin("asset a ON a.asset_id = d.asset_id").
 		Where(sq.Eq{"demo_id": demoID}))
 	if errRow != nil {
-		return database.DBErr(errRow)
+		return database.Err(errRow)
 	}
 
 	var uuidScan *uuid.UUID
@@ -78,7 +78,7 @@ func (r *DemoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile
 		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName,
 		&demoFile.Archive, &demoFile.Stats, &uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
 		&demoFile.ServerNameLong); errQuery != nil {
-		return database.DBErr(errQuery)
+		return database.Err(errQuery)
 	}
 
 	if uuidScan != nil {
@@ -97,7 +97,7 @@ func (r *DemoRepository) GetDemoByName(ctx context.Context, demoName string, dem
 		LeftJoin("asset a ON a.asset_id = r.asset_id").
 		Where(sq.Eq{"title": demoName}))
 	if errRow != nil {
-		return database.DBErr(errRow)
+		return database.Err(errRow)
 	}
 
 	var uuidScan *uuid.UUID
@@ -106,7 +106,7 @@ func (r *DemoRepository) GetDemoByName(ctx context.Context, demoName string, dem
 		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 		&demoFile.Stats, &uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
 		&demoFile.ServerNameLong); errQuery != nil {
-		return database.DBErr(errQuery)
+		return database.Err(errQuery)
 	}
 
 	if uuidScan != nil {
@@ -133,7 +133,7 @@ func (r *DemoRepository) GetDemos(ctx context.Context) ([]DemoFile, error) {
 			return demos, nil
 		}
 
-		return nil, database.DBErr(errQuery)
+		return nil, database.Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -147,7 +147,7 @@ func (r *DemoRepository) GetDemos(ctx context.Context) ([]DemoFile, error) {
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
 			&demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 			&demoFile.ServerNameShort, &demoFile.ServerNameLong, &uuidScan, &demoFile.Size); errScan != nil {
-			return nil, database.DBErr(errScan)
+			return nil, database.Err(errScan)
 		}
 
 		if uuidScan != nil {
@@ -172,7 +172,7 @@ func (r *DemoRepository) SaveDemo(ctx context.Context, demoFile *DemoFile) error
 		err = r.insertDemo(ctx, demoFile)
 	}
 
-	return database.DBErr(err)
+	return database.Err(err)
 }
 
 func (r *DemoRepository) insertDemo(ctx context.Context, demoFile *DemoFile) error {
@@ -184,12 +184,12 @@ func (r *DemoRepository) insertDemo(ctx context.Context, demoFile *DemoFile) err
 		Suffix("RETURNING demo_id").
 		ToSql()
 	if errQueryArgs != nil {
-		return database.DBErr(errQueryArgs)
+		return database.Err(errQueryArgs)
 	}
 
 	errQuery := r.QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
 	if errQuery != nil {
-		return database.DBErr(errQuery)
+		return database.Err(errQuery)
 	}
 
 	return nil
@@ -207,7 +207,7 @@ func (r *DemoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) err
 		Where(sq.Eq{"demo_id": demoFile.DemoID})
 
 	if errExec := r.ExecUpdateBuilder(ctx, query); errExec != nil {
-		return database.DBErr(errExec)
+		return database.Err(errExec)
 	}
 
 	return nil
@@ -216,7 +216,7 @@ func (r *DemoRepository) updateDemo(ctx context.Context, demoFile *DemoFile) err
 func (r *DemoRepository) Delete(ctx context.Context, demoID int64) error {
 	const query = `DELETE FROM demo WHERE demo_id = $1`
 	if err := r.Exec(ctx, query, demoID); err != nil {
-		return database.DBErr(err)
+		return database.Err(err)
 	}
 
 	return nil

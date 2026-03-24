@@ -26,11 +26,11 @@ func (r *Repository) Page(ctx context.Context, slug string) (Page, error) {
 		OrderBy("revision desc").
 		Limit(1))
 	if errQuery != nil {
-		return page, database.DBErr(errQuery)
+		return page, database.Err(errQuery)
 	}
 
 	if err := row.Scan(&page.Slug, &page.BodyMD, &page.Revision, &page.CreatedOn, &page.UpdatedOn, &page.PermissionLevel); err != nil {
-		return page, database.DBErr(err)
+		return page, database.Err(err)
 	}
 
 	return page, nil
@@ -40,7 +40,7 @@ func (r *Repository) Delete(ctx context.Context, slug string) error {
 	if errExec := r.ExecDeleteBuilder(ctx, r.Builder().
 		Delete("wiki").
 		Where(sq.Eq{"lower(slug)": strings.ToLower(slug)})); errExec != nil {
-		return database.DBErr(errExec)
+		return database.Err(errExec)
 	}
 
 	return nil
@@ -51,7 +51,7 @@ func (r *Repository) Save(ctx context.Context, page Page) error {
 		INSERT INTO wiki (slug, body_md, revision, created_on, updated_on, permission_level)
 		VALUES ($1, $2, $3, $4, $5, $6)`
 	if errQueryRow := r.Exec(ctx, query, page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn, page.PermissionLevel); errQueryRow != nil {
-		return database.DBErr(errQueryRow)
+		return database.Err(errQueryRow)
 	}
 
 	return nil
