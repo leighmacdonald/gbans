@@ -93,7 +93,7 @@ func UpdatePlayerSummary(ctx context.Context, personUpdate *Person, tfAPI thirdp
 		personUpdate.ProfileState = summaries[0].ProfileState
 		personUpdate.ProfileURL = summaries[0].ProfileUrl
 		personUpdate.RealName = summaries[0].RealName
-		personUpdate.Timecreated = summaries[0].TimeCreated
+		personUpdate.TimeCreated = summaries[0].TimeCreated
 		personUpdate.VisibilityState = summaries[0].VisibilityState
 
 		return nil

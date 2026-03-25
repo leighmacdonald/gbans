@@ -132,7 +132,12 @@ function AdminAnticheat() {
 						avatar_hash={row.original.avatar}
 					>
 						<RouterLink
-							style={{ color: theme.palette.primary.light }}
+							style={{
+								color:
+									theme.palette.mode === "dark"
+										? theme.palette.primary.light
+										: theme.palette.primary.dark,
+							}}
 							to={Route.fullPath}
 							search={setColumnFilter(search, "steam_id", row.original.steam_id)}
 						>

@@ -26,6 +26,7 @@ import { SortableTable } from "../component/table/SortableTable.tsx";
 import type { PersonConnection } from "../schema/people.ts";
 import { renderDateTime } from "../util/time.ts";
 import "leaflet/dist/leaflet.css";
+import { useTheme } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import Tooltip from "@mui/material/Tooltip";
 import L from "leaflet";
@@ -74,6 +75,7 @@ function AdminNetworkPlayersByCIDR() {
 	const servers = Route.useLoaderData();
 	const search = Route.useSearch();
 	const navigate = useNavigate();
+	const theme = useTheme();
 
 	const { data, isLoading, isError, isRefetching } = useQuery({
 		queryKey: ["playersByIP", { search }],
@@ -188,6 +190,7 @@ function AdminNetworkPlayersByCIDR() {
 				enableSorting: false,
 				Cell: ({ cell }) => (
 					<TextLink
+						color={theme.palette.mode === "dark" ? theme.palette.primary.light : theme.palette.primary.dark}
 						to={"/admin/network/playersbyip"}
 						search={setColumnFilter(search, "steam_id", cell.getValue())}
 					>
@@ -255,7 +258,7 @@ function AdminNetworkPlayersByCIDR() {
 				Cell: ({ cell }) => `${cell.getValue().latitude} / ${cell.getValue().longitude}`,
 			}),
 		],
-		[servers, search],
+		[servers, search, theme],
 	);
 
 	const table = useMaterialReactTable({

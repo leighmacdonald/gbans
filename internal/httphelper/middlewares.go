@@ -52,8 +52,8 @@ func errorHandler() gin.HandlerFunc {
 				abort(ctx, apiError)
 				if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 					hub.WithScope(func(scope *sentry.Scope) {
-						scope.SetExtra("title", apiError.Title)
-						scope.SetExtra("detail", apiError.Detail)
+						scope.SetExtra("title", apiError.Title)   //nolint:staticcheck
+						scope.SetExtra("detail", apiError.Detail) //nolint:staticcheck
 						hub.CaptureException(apiError)
 					})
 				}

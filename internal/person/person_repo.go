@@ -48,7 +48,7 @@ func (r *Repository) Save(ctx context.Context, person *Person) error {
 	return database.Err(r.Exec(ctx, query, person.SteamID.Int64(), person.VisibilityState,
 		person.ProfileState, person.PersonaName,
 		person.AvatarHash, person.PersonaState, person.RealName,
-		person.Timecreated, person.LocCountryCode, person.LocStateCode,
+		person.TimeCreated, person.LocCountryCode, person.LocStateCode,
 		person.LocCityID, person.PermissionLevel, person.DiscordID, person.CommunityBanned,
 		person.VACBans, person.GameBans, person.EconomyBan, person.DaysSinceLastBan, person.UpdatedOnSteam,
 		person.Muted, person.PlayerqueueChatStatus, person.PlayerqueueChatReason, person.CreatedOn, person.UpdatedOn))
@@ -139,7 +139,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 		if errScan := rows.
 			Scan(&person.SteamID, &person.CreatedOn, &person.UpdatedOn, &person.VisibilityState,
 				&person.ProfileState, &person.PersonaName, &person.AvatarHash, &person.PersonaState,
-				&person.RealName, &person.Timecreated, &person.LocCountryCode, &person.LocStateCode,
+				&person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 				&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID, &person.PlayerqueueChatStatus,

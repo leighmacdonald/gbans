@@ -195,7 +195,12 @@ function AdminBans() {
 							avatar_hash={row.original.source_avatarhash}
 						>
 							<RouterLink
-								style={{ color: theme.palette.primary.light }}
+								style={{
+									color:
+										theme.palette.mode === "dark"
+											? theme.palette.primary.light
+											: theme.palette.primary.dark,
+								}}
 								to={Route.fullPath}
 								search={setColumnFilter(search, "source_id", row.original.source_id)}
 							>
@@ -232,7 +237,12 @@ function AdminBans() {
 						avatar_hash={row.original.target_avatarhash}
 					>
 						<RouterLink
-							style={{ color: theme.palette.primary.light }}
+							style={{
+								color:
+									theme.palette.mode === "dark"
+										? theme.palette.primary.light
+										: theme.palette.primary.dark,
+							}}
 							to={Route.fullPath}
 							search={setColumnFilter(search, "target_id", row.original.target_id)}
 						>
