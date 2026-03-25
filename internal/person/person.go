@@ -99,7 +99,7 @@ type Person struct {
 	ProfileState          int64                  `json:"profile_state"`
 	ProfileURL            string                 `json:"profile_url"`
 	RealName              string                 `json:"real_name"`
-	Timecreated           int64                  `json:"time_created"`
+	TimeCreated           int64                  `json:"time_created"`
 	VisibilityState       int64                  `json:"visibility_state"`
 }
 
@@ -116,7 +116,7 @@ func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBa
 	p.PrimaryClanID = summary.PrimaryClanId
 	p.ProfileState = summary.ProfileState
 	p.RealName = summary.RealName
-	p.Timecreated = summary.TimeCreated
+	p.TimeCreated = summary.TimeCreated
 	p.CommentPermission = summary.CommentPermission
 	p.VACBans = int(steamBan.NumberOfVacBans)
 	p.GameBans = int(steamBan.NumberOfGameBans)
@@ -138,7 +138,7 @@ func (p Person) GetGameBans() int {
 }
 
 func (p Person) GetTimeCreated() time.Time {
-	return time.Unix(p.Timecreated, 0)
+	return time.Unix(p.TimeCreated, 0)
 }
 
 func (p Person) Avatar() string {
@@ -418,7 +418,7 @@ func (u *Persons) UpdateProfiles(ctx context.Context, _ pgx.Tx, people People) (
 			player.ProfileState = summary.ProfileState
 			player.ProfileURL = summary.ProfileUrl
 			player.RealName = summary.RealName
-			player.Timecreated = summary.TimeCreated
+			player.TimeCreated = summary.TimeCreated
 			player.VisibilityState = summary.VisibilityState
 
 			break
@@ -535,7 +535,7 @@ func (u *Persons) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.
 		PatreonID:       fetchedPerson.PatreonID,
 		GameBans:        fetchedPerson.GameBans,
 		VacBans:         fetchedPerson.VACBans,
-		TimeCreated:     time.Unix(fetchedPerson.Timecreated, 0),
+		TimeCreated:     time.Unix(fetchedPerson.TimeCreated, 0),
 	}, nil
 }
 
@@ -600,7 +600,7 @@ func (u *Persons) GetPersonByDiscordID(ctx context.Context, discordID string) (p
 		PatreonID:       fetchedPerson.PatreonID,
 		GameBans:        fetchedPerson.GameBans,
 		VacBans:         fetchedPerson.VACBans,
-		TimeCreated:     time.Unix(fetchedPerson.Timecreated, 0),
+		TimeCreated:     time.Unix(fetchedPerson.TimeCreated, 0),
 		DiscordID:       fetchedPerson.DiscordID,
 	}, nil
 }

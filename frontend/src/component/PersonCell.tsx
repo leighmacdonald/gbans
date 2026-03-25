@@ -6,7 +6,7 @@ import PublicIcon from "@mui/icons-material/Public";
 import ReportIcon from "@mui/icons-material/Report";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import WifiFindIcon from "@mui/icons-material/WifiFind";
-import { IconButton, Menu, Typography } from "@mui/material";
+import { IconButton, Menu, Typography, useTheme } from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -35,6 +35,7 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 	const open = Boolean(anchorEl);
 	const { sendFlash } = useUserFlashCtx();
 	const navigate = useNavigate();
+	const theme = useTheme();
 
 	const handleClick = (event: React.MouseEvent<HTMLElement>) => {
 		setAnchorEl(event.currentTarget);
@@ -161,7 +162,17 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, childr
 					</IconButton>
 				</Tooltip>
 				{children ?? (
-					<TextLink to={"/profile/$steamId"} params={{ steamId: steam_id }} onClick={onClick ?? undefined}>
+					<TextLink
+						style={{
+							color:
+								theme.palette.mode === "dark"
+									? theme.palette.primary.light
+									: theme.palette.primary.dark,
+						}}
+						to={"/profile/$steamId"}
+						params={{ steamId: steam_id }}
+						onClick={onClick ?? undefined}
+					>
 						{personaname !== "" ? personaname : steam_id}
 					</TextLink>
 				)}

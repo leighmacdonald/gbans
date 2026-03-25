@@ -156,7 +156,12 @@ function AdminAppeals() {
 					>
 						<RouterLink
 							to={Route.fullPath}
-							style={{ color: theme.palette.primary.light }}
+							style={{
+								color:
+									theme.palette.mode === "dark"
+										? theme.palette.primary.light
+										: theme.palette.primary.dark,
+							}}
 							search={setColumnFilter(search, "source_id", row.original.source_id)}
 						>
 							{row.original.source_personaname ?? row.original.source_id}
@@ -190,7 +195,12 @@ function AdminAppeals() {
 						avatar_hash={row.original.target_avatarhash}
 					>
 						<RouterLink
-							style={{ color: theme.palette.primary.light }}
+							style={{
+								color:
+									theme.palette.mode === "dark"
+										? theme.palette.primary.light
+										: theme.palette.primary.dark,
+							}}
 							to={Route.fullPath}
 							search={setColumnFilter(search, "target_id", row.original.target_id)}
 						>
