@@ -1,3 +1,4 @@
+import AdsClickIcon from "@mui/icons-material/AdsClick";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import ChatIcon from "@mui/icons-material/Chat";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -15,7 +16,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { NewsView } from "../component/NewsView";
 import RouterLink from "../component/RouterLink.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-import AdsClickIcon from '@mui/icons-material/AdsClick';
 export const Route = createFileRoute("/_guest/")({
 	component: Index,
 	head: ({ match }) => ({
@@ -115,7 +115,7 @@ function Index() {
 						>
 							Contests
 						</Button>
-          )}
+					)}
 					{appInfo.chatlogs_enabled && (
 						<Button
 							component={RouterLink}

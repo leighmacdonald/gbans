@@ -32,6 +32,7 @@ import { Route as AuthForumsRouteImport } from './routes/_auth.forums'
 import { Route as AuthChatlogsRouteImport } from './routes/_auth.chatlogs'
 import { Route as GuestWikiIndexRouteImport } from './routes/_guest.wiki.index'
 import { Route as GuestSpeedrunsIndexRouteImport } from './routes/_guest.speedruns.index'
+import { Route as GuestMgeIndexRouteImport } from './routes/_guest.mge.index'
 import { Route as GuestLoginIndexRouteImport } from './routes/_guest.login.index'
 import { Route as AuthReportIndexRouteImport } from './routes/_auth.report.index'
 import { Route as AuthForumsIndexRouteImport } from './routes/_auth.forums.index'
@@ -46,6 +47,8 @@ import { Route as ModAdminAppealsRouteImport } from './routes/_mod.admin.appeals
 import { Route as ModAdminAnticheatRouteImport } from './routes/_mod.admin.anticheat'
 import { Route as GuestWikiSlugRouteImport } from './routes/_guest.wiki.$slug'
 import { Route as GuestProfileSteamIdRouteImport } from './routes/_guest.profile.$steamId'
+import { Route as GuestMge2v2RouteImport } from './routes/_guest.mge.2v2'
+import { Route as GuestMge1v1RouteImport } from './routes/_guest.mge.1v1'
 import { Route as GuestLoginSuccessRouteImport } from './routes/_guest.login.success'
 import { Route as AuthReportReportIdRouteImport } from './routes/_auth.report.$reportId'
 import { Route as AuthForumsForum_idRouteImport } from './routes/_auth.forums.$forum_id'
@@ -173,6 +176,11 @@ const GuestSpeedrunsIndexRoute = GuestSpeedrunsIndexRouteImport.update({
   path: '/speedruns/',
   getParentRoute: () => GuestRoute,
 } as any)
+const GuestMgeIndexRoute = GuestMgeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GuestMgeRoute,
+} as any)
 const GuestLoginIndexRoute = GuestLoginIndexRouteImport.update({
   id: '/login/',
   path: '/login/',
@@ -242,6 +250,16 @@ const GuestProfileSteamIdRoute = GuestProfileSteamIdRouteImport.update({
   id: '/profile/$steamId',
   path: '/profile/$steamId',
   getParentRoute: () => GuestRoute,
+} as any)
+const GuestMge2v2Route = GuestMge2v2RouteImport.update({
+  id: '/2v2',
+  path: '/2v2',
+  getParentRoute: () => GuestMgeRoute,
+} as any)
+const GuestMge1v1Route = GuestMge1v1RouteImport.update({
+  id: '/1v1',
+  path: '/1v1',
+  getParentRoute: () => GuestMgeRoute,
 } as any)
 const GuestLoginSuccessRoute = GuestLoginSuccessRouteImport.update({
   id: '/login/success',
@@ -336,7 +354,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthSettingsRoute
   '/changelog': typeof GuestChangelogRoute
   '/contests': typeof GuestContestsRoute
-  '/mge': typeof GuestMgeRoute
+  '/mge': typeof GuestMgeRouteWithChildren
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
@@ -350,6 +368,8 @@ export interface FileRoutesByFullPath {
   '/forums/$forum_id': typeof AuthForumsForum_idRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
   '/login/success': typeof GuestLoginSuccessRoute
+  '/mge/1v1': typeof GuestMge1v1Route
+  '/mge/2v2': typeof GuestMge2v2Route
   '/profile/$steamId': typeof GuestProfileSteamIdRoute
   '/wiki/$slug': typeof GuestWikiSlugRoute
   '/admin/anticheat': typeof ModAdminAnticheatRoute
@@ -364,6 +384,7 @@ export interface FileRoutesByFullPath {
   '/forums/': typeof AuthForumsIndexRoute
   '/report/': typeof AuthReportIndexRoute
   '/login/': typeof GuestLoginIndexRoute
+  '/mge/': typeof GuestMgeIndexRoute
   '/speedruns/': typeof GuestSpeedrunsIndexRoute
   '/wiki/': typeof GuestWikiIndexRoute
   '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForum_thread_idRoute
@@ -384,7 +405,6 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthSettingsRoute
   '/changelog': typeof GuestChangelogRoute
   '/contests': typeof GuestContestsRoute
-  '/mge': typeof GuestMgeRoute
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
@@ -397,6 +417,8 @@ export interface FileRoutesByTo {
   '/forums/$forum_id': typeof AuthForumsForum_idRoute
   '/report/$reportId': typeof AuthReportReportIdRoute
   '/login/success': typeof GuestLoginSuccessRoute
+  '/mge/1v1': typeof GuestMge1v1Route
+  '/mge/2v2': typeof GuestMge2v2Route
   '/profile/$steamId': typeof GuestProfileSteamIdRoute
   '/wiki/$slug': typeof GuestWikiSlugRoute
   '/admin/anticheat': typeof ModAdminAnticheatRoute
@@ -411,6 +433,7 @@ export interface FileRoutesByTo {
   '/forums': typeof AuthForumsIndexRoute
   '/report': typeof AuthReportIndexRoute
   '/login': typeof GuestLoginIndexRoute
+  '/mge': typeof GuestMgeIndexRoute
   '/speedruns': typeof GuestSpeedrunsIndexRoute
   '/wiki': typeof GuestWikiIndexRoute
   '/forums/thread/$forum_thread_id': typeof AuthForumsThreadForum_thread_idRoute
@@ -437,7 +460,7 @@ export interface FileRoutesById {
   '/_auth/settings': typeof AuthSettingsRoute
   '/_guest/changelog': typeof GuestChangelogRoute
   '/_guest/contests': typeof GuestContestsRoute
-  '/_guest/mge': typeof GuestMgeRoute
+  '/_guest/mge': typeof GuestMgeRouteWithChildren
   '/_guest/patreon': typeof GuestPatreonRoute
   '/_guest/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/_guest/servers': typeof GuestServersRoute
@@ -452,6 +475,8 @@ export interface FileRoutesById {
   '/_auth/forums/$forum_id': typeof AuthForumsForum_idRoute
   '/_auth/report/$reportId': typeof AuthReportReportIdRoute
   '/_guest/login/success': typeof GuestLoginSuccessRoute
+  '/_guest/mge/1v1': typeof GuestMge1v1Route
+  '/_guest/mge/2v2': typeof GuestMge2v2Route
   '/_guest/profile/$steamId': typeof GuestProfileSteamIdRoute
   '/_guest/wiki/$slug': typeof GuestWikiSlugRoute
   '/_mod/admin/anticheat': typeof ModAdminAnticheatRoute
@@ -466,6 +491,7 @@ export interface FileRoutesById {
   '/_auth/forums/': typeof AuthForumsIndexRoute
   '/_auth/report/': typeof AuthReportIndexRoute
   '/_guest/login/': typeof GuestLoginIndexRoute
+  '/_guest/mge/': typeof GuestMgeIndexRoute
   '/_guest/speedruns/': typeof GuestSpeedrunsIndexRoute
   '/_guest/wiki/': typeof GuestWikiIndexRoute
   '/_auth/forums/thread/$forum_thread_id': typeof AuthForumsThreadForum_thread_idRoute
@@ -504,6 +530,8 @@ export interface FileRouteTypes {
     | '/forums/$forum_id'
     | '/report/$reportId'
     | '/login/success'
+    | '/mge/1v1'
+    | '/mge/2v2'
     | '/profile/$steamId'
     | '/wiki/$slug'
     | '/admin/anticheat'
@@ -518,6 +546,7 @@ export interface FileRouteTypes {
     | '/forums/'
     | '/report/'
     | '/login/'
+    | '/mge/'
     | '/speedruns/'
     | '/wiki/'
     | '/forums/thread/$forum_thread_id'
@@ -538,7 +567,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/changelog'
     | '/contests'
-    | '/mge'
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
@@ -551,6 +579,8 @@ export interface FileRouteTypes {
     | '/forums/$forum_id'
     | '/report/$reportId'
     | '/login/success'
+    | '/mge/1v1'
+    | '/mge/2v2'
     | '/profile/$steamId'
     | '/wiki/$slug'
     | '/admin/anticheat'
@@ -565,6 +595,7 @@ export interface FileRouteTypes {
     | '/forums'
     | '/report'
     | '/login'
+    | '/mge'
     | '/speedruns'
     | '/wiki'
     | '/forums/thread/$forum_thread_id'
@@ -605,6 +636,8 @@ export interface FileRouteTypes {
     | '/_auth/forums/$forum_id'
     | '/_auth/report/$reportId'
     | '/_guest/login/success'
+    | '/_guest/mge/1v1'
+    | '/_guest/mge/2v2'
     | '/_guest/profile/$steamId'
     | '/_guest/wiki/$slug'
     | '/_mod/admin/anticheat'
@@ -619,6 +652,7 @@ export interface FileRouteTypes {
     | '/_auth/forums/'
     | '/_auth/report/'
     | '/_guest/login/'
+    | '/_guest/mge/'
     | '/_guest/speedruns/'
     | '/_guest/wiki/'
     | '/_auth/forums/thread/$forum_thread_id'
@@ -800,6 +834,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestSpeedrunsIndexRouteImport
       parentRoute: typeof GuestRoute
     }
+    '/_guest/mge/': {
+      id: '/_guest/mge/'
+      path: '/'
+      fullPath: '/mge/'
+      preLoaderRoute: typeof GuestMgeIndexRouteImport
+      parentRoute: typeof GuestMgeRoute
+    }
     '/_guest/login/': {
       id: '/_guest/login/'
       path: '/login'
@@ -897,6 +938,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/profile/$steamId'
       preLoaderRoute: typeof GuestProfileSteamIdRouteImport
       parentRoute: typeof GuestRoute
+    }
+    '/_guest/mge/2v2': {
+      id: '/_guest/mge/2v2'
+      path: '/2v2'
+      fullPath: '/mge/2v2'
+      preLoaderRoute: typeof GuestMge2v2RouteImport
+      parentRoute: typeof GuestMgeRoute
+    }
+    '/_guest/mge/1v1': {
+      id: '/_guest/mge/1v1'
+      path: '/1v1'
+      fullPath: '/mge/1v1'
+      preLoaderRoute: typeof GuestMge1v1RouteImport
+      parentRoute: typeof GuestMgeRoute
     }
     '/_guest/login/success': {
       id: '/_guest/login/success'
@@ -1078,6 +1133,22 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface GuestMgeRouteChildren {
+  GuestMge1v1Route: typeof GuestMge1v1Route
+  GuestMge2v2Route: typeof GuestMge2v2Route
+  GuestMgeIndexRoute: typeof GuestMgeIndexRoute
+}
+
+const GuestMgeRouteChildren: GuestMgeRouteChildren = {
+  GuestMge1v1Route: GuestMge1v1Route,
+  GuestMge2v2Route: GuestMge2v2Route,
+  GuestMgeIndexRoute: GuestMgeIndexRoute,
+}
+
+const GuestMgeRouteWithChildren = GuestMgeRoute._addFileChildren(
+  GuestMgeRouteChildren,
+)
+
 interface GuestWikiRouteChildren {
   GuestWikiSlugRoute: typeof GuestWikiSlugRoute
   GuestWikiIndexRoute: typeof GuestWikiIndexRoute
@@ -1095,7 +1166,7 @@ const GuestWikiRouteWithChildren = GuestWikiRoute._addFileChildren(
 interface GuestRouteChildren {
   GuestChangelogRoute: typeof GuestChangelogRoute
   GuestContestsRoute: typeof GuestContestsRoute
-  GuestMgeRoute: typeof GuestMgeRoute
+  GuestMgeRoute: typeof GuestMgeRouteWithChildren
   GuestPatreonRoute: typeof GuestPatreonRoute
   GuestPrivacyPolicyRoute: typeof GuestPrivacyPolicyRoute
   GuestServersRoute: typeof GuestServersRoute
@@ -1113,7 +1184,7 @@ interface GuestRouteChildren {
 const GuestRouteChildren: GuestRouteChildren = {
   GuestChangelogRoute: GuestChangelogRoute,
   GuestContestsRoute: GuestContestsRoute,
-  GuestMgeRoute: GuestMgeRoute,
+  GuestMgeRoute: GuestMgeRouteWithChildren,
   GuestPatreonRoute: GuestPatreonRoute,
   GuestPrivacyPolicyRoute: GuestPrivacyPolicyRoute,
   GuestServersRoute: GuestServersRoute,
