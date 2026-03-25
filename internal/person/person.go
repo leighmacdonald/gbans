@@ -99,7 +99,7 @@ type Person struct {
 	ProfileState          int64                  `json:"profile_state"`
 	ProfileURL            string                 `json:"profile_url"`
 	RealName              string                 `json:"real_name"`
-	Timecreated           int64                  `json:"timecreated"`
+	Timecreated           int64                  `json:"time_created"`
 	VisibilityState       int64                  `json:"visibility_state"`
 }
 
