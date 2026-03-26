@@ -133,9 +133,9 @@ function MGEOverall() {
 						<RouterLink
 							style={{
 								color:
-									theme.palette.mode === "light"
+									theme.palette.mode === "dark"
 										? theme.palette.primary.light
-										: theme.palette.secondary.light,
+										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
 							search={setColumnFilter(search, "winner", row.original.winner)}
@@ -157,9 +157,9 @@ function MGEOverall() {
 						<RouterLink
 							style={{
 								color:
-									theme.palette.mode === "light"
+									theme.palette.mode === "dark"
 										? theme.palette.primary.light
-										: theme.palette.secondary.light,
+										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
 							search={setColumnFilter(search, "winner2", row.original.winner2)}
@@ -181,9 +181,9 @@ function MGEOverall() {
 						<RouterLink
 							style={{
 								color:
-									theme.palette.mode === "light"
+									theme.palette.mode === "dark"
 										? theme.palette.primary.light
-										: theme.palette.secondary.light,
+										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
 							search={setColumnFilter(search, "loser", row.original.loser)}
@@ -205,9 +205,9 @@ function MGEOverall() {
 						<RouterLink
 							style={{
 								color:
-									theme.palette.mode === "light"
+									theme.palette.mode === "dark"
 										? theme.palette.primary.light
-										: theme.palette.secondary.light,
+										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
 							search={setColumnFilter(search, "loser2", row.original.loser2)}

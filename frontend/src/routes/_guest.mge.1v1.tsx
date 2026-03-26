@@ -129,9 +129,9 @@ function MGEOverall() {
 						<RouterLink
 							style={{
 								color:
-									theme.palette.mode === "light"
+									theme.palette.mode === "dark"
 										? theme.palette.primary.light
-										: theme.palette.secondary.light,
+										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
 							search={setColumnFilter(search, "winner", row.original.winner)}
@@ -153,9 +153,9 @@ function MGEOverall() {
 						<RouterLink
 							style={{
 								color:
-									theme.palette.mode === "light"
+									theme.palette.mode === "dark"
 										? theme.palette.primary.light
-										: theme.palette.secondary.light,
+										: theme.palette.primary.dark,
 							}}
 							to={Route.fullPath}
 							search={setColumnFilter(search, "loser", row.original.loser)}

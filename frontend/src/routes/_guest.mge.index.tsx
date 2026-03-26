@@ -5,7 +5,6 @@ import Filter2Icon from "@mui/icons-material/Filter2";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { useTheme } from "@mui/system";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
@@ -19,7 +18,6 @@ import { useCallback, useMemo } from "react";
 import { apiMGEOverall } from "../api/mge.ts";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
-import RouterLink from "../component/RouterLink.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import {
 	createDefaultTableOptions,
@@ -58,7 +56,6 @@ export const Route = createFileRoute("/_guest/mge/")({
 function MGEOverall() {
 	const navigate = useNavigate();
 	const search = Route.useSearch();
-	const theme = useTheme();
 
 	const { data, isLoading, isError, isRefetching } = useQuery({
 		queryKey: ["mgeStats", { search }],
@@ -132,20 +129,7 @@ function MGEOverall() {
 						steam_id={row.original.steam_id}
 						avatar_hash={row.original.avatarhash}
 						personaname={row.original.personaname}
-					>
-						<RouterLink
-							style={{
-								color:
-									theme.palette.mode === "light"
-										? theme.palette.primary.light
-										: theme.palette.secondary.light,
-							}}
-							to={"/mge/1v1"}
-							search={setColumnFilter(search, "steam_id", row.original.steam_id)}
-						>
-							{row.original.personaname ?? row.original.steam_id}
-						</RouterLink>
-					</PersonCell>
+					/>
 				),
 			}),
 			columnHelper.accessor("wins", {
@@ -166,7 +150,7 @@ function MGEOverall() {
 				Cell: ({ cell }) => renderDate(cell.getValue()),
 			}),
 		];
-	}, [search, theme]);
+	}, []);
 
 	const table = useMaterialReactTable({
 		...defaultOptions,
@@ -204,7 +188,7 @@ function MGEOverall() {
 						<Filter1Icon />
 					</IconButtonLink>
 				</Tooltip>
-				<Tooltip title={"2v2 History"} key={1}>
+				<Tooltip title={"2v2 History"} key={2}>
 					<IconButtonLink
 						color="secondary"
 						to={"/mge/2v2"}
