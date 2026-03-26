@@ -30,7 +30,13 @@ func New(repo Repository, maps maps.Maps) Stats {
 	return Stats{repo: repo, maps: maps}
 }
 
+<<<<<<< HEAD
 func (s Stats) Import(ctx context.Context, serverID int, demo demoparse.Demo) (*Result, error) {
+||||||| parent of 9bb2102c (alltime stats table)
+func (s Stats) ImportDemo(ctx context.Context, demo demoparse.Demo) error {
+=======
+func (s Stats) ImportDemo(ctx context.Context, serverID int, demo demoparse.Demo) (*Result, error) {
+>>>>>>> 9bb2102c (alltime stats table)
 	timeStart := time.Now().Add(-time.Duration(demo.Duration) * time.Second)
 
 	if demo.DemoType != demoparse.HL2Demo {

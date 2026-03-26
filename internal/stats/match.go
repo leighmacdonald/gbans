@@ -123,6 +123,7 @@ func (p *Player) ApplySummary(update *demoparse.PlayerSummary) {
 	p.MedicStats.ChargesKritz += update.ChargesKritz
 	p.MedicStats.ChargesQuickfix += update.ChargesQuickfix
 
+<<<<<<< HEAD
 	// for weaponName, upd := range update.Weapons {
 	// 	cs := PlayerWeaponStats{
 	// 		WeaponName: weaponName,
@@ -136,6 +137,23 @@ func (p *Player) ApplySummary(update *demoparse.PlayerSummary) {
 
 	// 	p.Weapons = append(p.Weapons, cs)
 	// }
+||||||| parent of 9bb2102c (alltime stats table)
+func (player Player) BiggestKillstreak() *PlayerKillstreak {
+=======
+	for weaponName, upd := range update.Weapons {
+		cs := PlayerWeaponStats{
+			WeaponName: weaponName,
+			Kills:      upd.Kills,
+			Damage:     upd.Damage,
+			Backstabs:  upd.BackstabKills,
+			Airshots:   upd.Airshots,
+			Headshots:  upd.HeadshotKills,
+			//TODO shots/hits
+		}
+
+		p.Weapons = append(p.Weapons, cs)
+	}
+>>>>>>> 9bb2102c (alltime stats table)
 
 }
 

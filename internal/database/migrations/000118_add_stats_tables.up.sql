@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 CREATE TABLE IF NOT EXISTS stats_maps (
   map_id int NOT NULL references map (map_id),
   games int NOT NULL,
@@ -81,4 +82,89 @@ CREATE TABLE IF NOT EXISTS stats_demo_player (
   lastplayed integer NOT NULL,
   hitblip integer NOT NULL,
   PRIMARY KEY (stats_id, steam_id)
+||||||| parent of 9bb2102c (alltime stats table)
+=======
+CREATE TABLE IF NOT EXISTS stats_maps(
+    map_id int NOT NULL references maps(map_id),
+    games int NOT NULL,
+    time_played interval NOT NULL
+);
+CREATE TABLE IF NOT EXISTS stats_player_alltime(
+    steam_id bigint NOT NULL references players(steamid),
+    kills int NOT NULL,
+    deaths int NOT NULL,
+    assists int NOT NULL,
+    postround_kills int NOT NULL,
+    postround_deaths int NOT NULL,
+    postround_assists int NOT NULL,
+    damage int NOT NULL,
+    damage_taken int NOT NULL,
+    dominations int NOT NULL,
+    dominated int NOT NULL,
+    revenges int NOT NULL,
+    revenged int NOT NULL,
+    airshots int NOT NULL,
+    headshot_kills int NOT NULL,
+    backstab_kills int NOT NULL,
+    headshots int NOT NULL,
+    backstabs int NOT NULL,
+    was_headshot int NOT NULL,
+    was_backstabbed int NOT NULL,
+    preround_healing int NOT NULL,
+    healing int NOT NULL,
+    postround_healing int NOT NULL,
+    drops int NOT NULL,
+    near_full_charge_death int NOT NULL,
+    charges_uber int NOT NULL,
+    charges_kritz int NOT NULL,
+    charges_quickfix int NOT NULL,
+    charges_vacc int NOT NULL,
+    round_wins int NOT NULL,
+    round_losses int NOT NULL,
+    games_won int NOT NULL,
+    games_lost int NOT NULL,
+    games_drawn int NOT NULL,
+    time_played interval NOT NULL,
+    points int NOT NULL,
+    bonus_points int NOT NULL,
+    shots int NOT NULL,
+    hits int NOT NULL,
+    object_built int NOT NULL,
+    object_destroyed int NOT NULL,
+    suicides int NOT NULL,
+    captures int NOT NULL,
+    captures_blocked int NOT NULL,
+    extinguishes int NOT NULL,
+    ignites int NOT NULL,
+    mvps int NOT NULL,
+    ticks bigint NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stats_demo(
+    stats_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    demo_id uuid NOT NULL references demos(demo_id),
+    map_id int NOT NULL references maps(map_id),
+    filename text NOT NULL,
+    version integer NOT NULL,
+    protocol integer NOT NULL,
+    hostname text NOT NULL,
+    stv_nick text NOT NULL,
+    game text NOT NULL,
+    duration interval NOT NULL,
+    ticks integer NOT NULL,
+    frames integer NOT NULL,
+    signon integer NOT NULL,
+    created_at timestamptz NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stats_demo_player(
+    stats_id uuid NOT NULL references stats(stats_id),
+    steamid bigint NOT NULL references players(steamid),
+    name text NOT NULL,
+    wins integer NOT NULL,
+    losses integer NOT NULL,
+    lastplayed integer NOT NULL,
+    hitblip integer NOT NULL,
+    PRIMARY KEY(stats_id, steamid)
+>>>>>>> 9bb2102c (alltime stats table)
 );

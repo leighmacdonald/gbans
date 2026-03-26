@@ -24,7 +24,15 @@ func TestImport(t *testing.T) {
 	require.NoError(t, errDemo)
 
 	st := stats.New(stats.NewRepository(testFixture.Database), maps.New(maps.NewRepository(testFixture.Database)))
+<<<<<<< HEAD
 	demoStats, importErr := st.Import(t.Context(), server.ServerID, demo)
+||||||| parent of 9bb2102c (alltime stats table)
+	st := stats.New(stats.NewRepository(testFixture.Database))
+
+	importErr := st.ImportDemo(t.Context(), demo)
+=======
+	_, importErr := st.ImportDemo(t.Context(), server.ServerID, demo)
+>>>>>>> 9bb2102c (alltime stats table)
 	require.NoError(t, importErr)
 	require.Len(t, demoStats.Chat, 48)
 }
