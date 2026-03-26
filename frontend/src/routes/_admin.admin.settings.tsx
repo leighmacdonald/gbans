@@ -490,7 +490,17 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 								return <field.CheckboxField label={"Enable public chatlogs"} />;
 							}}
 						/>
-					</Grid>
+          </Grid>
+
+					<Grid size={{ xs: 12 }}>
+						<SubHeading>Enable showing the mge rankings.</SubHeading>
+						<form.AppField
+							name={"mge_enabled"}
+							children={(field) => {
+								return <field.CheckboxField label={"Enable mge rankings"} />;
+							}}
+						/>
+          </Grid>
 
 					<Grid size={{ xs: 12 }}>
 						<SubHeading>Enable showing the mge rankings.</SubHeading>

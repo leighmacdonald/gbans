@@ -16,7 +16,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { NewsView } from "../component/NewsView";
 import RouterLink from "../component/RouterLink.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
-
+import AdsClickIcon from '@mui/icons-material/AdsClick';
 export const Route = createFileRoute("/_guest/")({
 	component: Index,
 	head: ({ match }) => ({
@@ -115,6 +115,18 @@ function Index() {
 							to={`/contests`}
 						>
 							Contests
+						</Button>
+          )}
+					{appInfo.chatlogs_enabled && (
+						<Button
+							component={RouterLink}
+							startIcon={<AdsClickIcon />}
+							fullWidth
+							color={"primary"}
+							variant={"contained"}
+							to={`/mge`}
+						>
+							MGE Rankings
 						</Button>
 					)}
 					{appInfo.mge_enabled && (
