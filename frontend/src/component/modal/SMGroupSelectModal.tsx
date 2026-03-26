@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import "video-react/dist/video-react.css";
 import { useAppForm } from "../../contexts/formContext.tsx";
 import type { SMGroups } from "../../schema/sourcemod.ts";
 import { Heading } from "../Heading";

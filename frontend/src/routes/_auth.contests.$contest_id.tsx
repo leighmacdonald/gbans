@@ -24,6 +24,7 @@ import { MarkDownRenderer } from "../component/MarkdownRenderer.tsx";
 import { AssetViewer } from "../component/modal/AssetViewer.tsx";
 import { ContestEntryDeleteModal } from "../component/modal/ContestEntryDeleteModal.tsx";
 import { ContestEntryModal } from "../component/modal/ContestEntryModal.tsx";
+import { PageNotFound } from "../component/PageNotFound.tsx";
 import { PersonCell } from "../component/PersonCell.tsx";
 import { VCenterBox } from "../component/VCenterBox.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
@@ -34,7 +35,6 @@ import { PermissionLevel } from "../schema/people.ts";
 import { logErr } from "../util/errors.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { humanFileSize } from "../util/text.tsx";
-import { PageNotFound } from "./_auth.page-not-found.tsx";
 
 export const Route = createFileRoute("/_auth/contests/$contest_id")({
 	component: Contest,

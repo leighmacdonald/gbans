@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import { useMutation } from "@tanstack/react-query";
-import "video-react/dist/video-react.css";
 import { z } from "zod/v4";
 import { apiCreateSMGroup, apiSaveSMGroup, hasSMFlag } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";

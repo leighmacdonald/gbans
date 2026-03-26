@@ -2,7 +2,6 @@ import NiceModal, { muiDialogV5, useModal } from "@ebay/nice-modal-react";
 import PermMediaIcon from "@mui/icons-material/PermMedia";
 import { Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { useMemo } from "react";
-import "video-react/dist/video-react.css";
 import { type Asset, MediaTypes, mediaType } from "../../schema/asset";
 import { Heading } from "../Heading";
 import { ImageAsset } from "../ImageAsset";

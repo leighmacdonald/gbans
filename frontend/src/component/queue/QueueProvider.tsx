@@ -1,6 +1,7 @@
 import { useModal } from "@ebay/nice-modal-react";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+
 import { type QueueRequest, websocketURL } from "../../api";
 import { useAuth } from "../../hooks/useAuth.ts";
 import { QueueCtx } from "../../hooks/useQueueCtx.ts";

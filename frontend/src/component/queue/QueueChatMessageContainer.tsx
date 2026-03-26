@@ -26,9 +26,9 @@ export const QueueChatMessageContainer = ({ showControls }: { showControls: bool
 
 	return (
 		<ScrollableFeed>
-			{messages.map((message, i) => {
+			{messages.map((message) => {
 				return (
-					<div key={`${message.message_id}-${i}`} style={{ overflowWrap: "break-word", paddingRight: 4 }}>
+					<div key={`${message.message_id}-msg`} style={{ overflowWrap: "break-word", paddingRight: 4 }}>
 						<QueueChatMessage message={message} showControls={showControls} />
 					</div>
 				);
