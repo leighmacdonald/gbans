@@ -1,0 +1,1 @@
+ALTER TABLE config ADD COLUMN general_mge_enabled BOOLEAN DEFAULT FALSE;

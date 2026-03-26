@@ -19,6 +19,7 @@ import { Route as GuestStvRouteImport } from './routes/_guest.stv'
 import { Route as GuestServersRouteImport } from './routes/_guest.servers'
 import { Route as GuestPrivacyPolicyRouteImport } from './routes/_guest.privacy-policy'
 import { Route as GuestPatreonRouteImport } from './routes/_guest.patreon'
+import { Route as GuestMgeRouteImport } from './routes/_guest.mge'
 import { Route as GuestContestsRouteImport } from './routes/_guest.contests'
 import { Route as GuestChangelogRouteImport } from './routes/_guest.changelog'
 import { Route as AuthSettingsRouteImport } from './routes/_auth.settings'
@@ -105,6 +106,11 @@ const GuestPrivacyPolicyRoute = GuestPrivacyPolicyRouteImport.update({
 const GuestPatreonRoute = GuestPatreonRouteImport.update({
   id: '/patreon',
   path: '/patreon',
+  getParentRoute: () => GuestRoute,
+} as any)
+const GuestMgeRoute = GuestMgeRouteImport.update({
+  id: '/mge',
+  path: '/mge',
   getParentRoute: () => GuestRoute,
 } as any)
 const GuestContestsRoute = GuestContestsRouteImport.update({
@@ -330,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthSettingsRoute
   '/changelog': typeof GuestChangelogRoute
   '/contests': typeof GuestContestsRoute
+  '/mge': typeof GuestMgeRoute
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
@@ -377,6 +384,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthSettingsRoute
   '/changelog': typeof GuestChangelogRoute
   '/contests': typeof GuestContestsRoute
+  '/mge': typeof GuestMgeRoute
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
@@ -429,6 +437,7 @@ export interface FileRoutesById {
   '/_auth/settings': typeof AuthSettingsRoute
   '/_guest/changelog': typeof GuestChangelogRoute
   '/_guest/contests': typeof GuestContestsRoute
+  '/_guest/mge': typeof GuestMgeRoute
   '/_guest/patreon': typeof GuestPatreonRoute
   '/_guest/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/_guest/servers': typeof GuestServersRoute
@@ -481,6 +490,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/changelog'
     | '/contests'
+    | '/mge'
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
@@ -528,6 +538,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/changelog'
     | '/contests'
+    | '/mge'
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
@@ -579,6 +590,7 @@ export interface FileRouteTypes {
     | '/_auth/settings'
     | '/_guest/changelog'
     | '/_guest/contests'
+    | '/_guest/mge'
     | '/_guest/patreon'
     | '/_guest/privacy-policy'
     | '/_guest/servers'
@@ -695,6 +707,13 @@ declare module '@tanstack/react-router' {
       path: '/patreon'
       fullPath: '/patreon'
       preLoaderRoute: typeof GuestPatreonRouteImport
+      parentRoute: typeof GuestRoute
+    }
+    '/_guest/mge': {
+      id: '/_guest/mge'
+      path: '/mge'
+      fullPath: '/mge'
+      preLoaderRoute: typeof GuestMgeRouteImport
       parentRoute: typeof GuestRoute
     }
     '/_guest/contests': {
@@ -1076,6 +1095,7 @@ const GuestWikiRouteWithChildren = GuestWikiRoute._addFileChildren(
 interface GuestRouteChildren {
   GuestChangelogRoute: typeof GuestChangelogRoute
   GuestContestsRoute: typeof GuestContestsRoute
+  GuestMgeRoute: typeof GuestMgeRoute
   GuestPatreonRoute: typeof GuestPatreonRoute
   GuestPrivacyPolicyRoute: typeof GuestPrivacyPolicyRoute
   GuestServersRoute: typeof GuestServersRoute
@@ -1093,6 +1113,7 @@ interface GuestRouteChildren {
 const GuestRouteChildren: GuestRouteChildren = {
   GuestChangelogRoute: GuestChangelogRoute,
   GuestContestsRoute: GuestContestsRoute,
+  GuestMgeRoute: GuestMgeRoute,
   GuestPatreonRoute: GuestPatreonRoute,
   GuestPrivacyPolicyRoute: GuestPrivacyPolicyRoute,
   GuestServersRoute: GuestServersRoute,

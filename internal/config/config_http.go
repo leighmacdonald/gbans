@@ -76,6 +76,7 @@ type AppInfo struct {
 	DemosEnabled       bool   `json:"demos_enabled"`
 	SpeedrunsEnabled   bool   `json:"speedruns_enabled"`
 	PlayerqueueEnabled bool   `json:"playerqueue_enabled"`
+	MGEEnabled         bool   `json:"mge_enabled"`
 }
 
 func (c httpHandler) onAppInfo(version string) gin.HandlerFunc {
@@ -107,6 +108,7 @@ func (c httpHandler) onAppInfo(version string) gin.HandlerFunc {
 			DemosEnabled:       conf.General.DemosEnabled,
 			SpeedrunsEnabled:   conf.General.SpeedrunsEnabled,
 			PlayerqueueEnabled: conf.General.PlayerqueueEnabled,
+			MGEEnabled:         conf.General.MGEEnabled,
 		})
 	}
 }

@@ -24,7 +24,7 @@ func NewRepository(database database.Database, centerProjectiles bool) Repositor
 }
 
 func (r *Repository) DropPerson(ctx context.Context, steamID steamid.SteamID) error {
-	return database.DBErr(r.ExecDeleteBuilder(ctx, r.Builder().
+	return database.Err(r.ExecDeleteBuilder(ctx, r.Builder().
 		Delete("person").
 		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
@@ -45,7 +45,7 @@ func (r *Repository) Save(ctx context.Context, person *Person) error {
 			discord_id = $13, community_banned = $14,  vac_bans = $15, game_bans = $16, economy_ban = $17, days_since_last_ban = $18,
 			updated_on_steam = $19, muted =$20, playerqueue_chat_status =$21, playerqueue_chat_reason=$22, updated_on=$24`
 
-	return database.DBErr(r.Exec(ctx, query, person.SteamID.Int64(), person.VisibilityState,
+	return database.Err(r.Exec(ctx, query, person.SteamID.Int64(), person.VisibilityState,
 		person.ProfileState, person.PersonaName,
 		person.AvatarHash, person.PersonaState, person.RealName,
 		person.Timecreated, person.LocCountryCode, person.LocStateCode,
@@ -129,7 +129,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 
 	rows, errQuery := r.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, 0, database.DBErr(errQuery)
+		return nil, 0, database.Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -155,7 +155,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 		From("person p").
 		LeftJoin("auth_patreon pt USING (steam_id)").Where(constraints))
 	if errQuery != nil {
-		return nil, 0, database.DBErr(errQuery)
+		return nil, 0, database.Err(errQuery)
 	}
 
 	return people, count, nil
@@ -171,20 +171,20 @@ func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Set
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
 
 	if errRow != nil {
-		return settings, database.DBErr(errRow)
+		return settings, database.Err(errRow)
 	}
 
 	settings.SteamID = steamID
 
 	if errScan := row.Scan(&settings.PersonSettingsID, &settings.ForumSignature,
 		&settings.ForumProfileMessages, &settings.StatsHidden, &settings.CreatedOn, &settings.UpdatedOn); errScan != nil {
-		if errors.Is(database.DBErr(errScan), database.ErrNoResult) {
+		if errors.Is(database.Err(errScan), database.ErrNoResult) {
 			settings.ForumProfileMessages = true
 
 			return settings, nil
 		}
 
-		return settings, database.DBErr(errScan)
+		return settings, database.Err(errScan)
 	}
 
 	if r.centerProjectiles {
@@ -197,7 +197,7 @@ func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Set
 				sq.Eq{"name": "tf2centerprojectiles"},
 			}))
 		if errRow != nil {
-			return settings, database.DBErr(errRow)
+			return settings, database.Err(errRow)
 		}
 
 		defer rows.Close()
@@ -207,7 +207,7 @@ func (r *Repository) Settings(ctx context.Context, steamID steamid.SteamID) (Set
 			value := ""
 
 			if errScan := rows.Scan(&key, &value); errScan != nil {
-				return settings, database.DBErr(errScan)
+				return settings, database.Err(errScan)
 			}
 
 			if key == "tf2centerprojectiles" {
@@ -252,7 +252,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 	if settings.PersonSettingsID == 0 {
 		settings.CreatedOn = settings.UpdatedOn
 
-		errSiteSettings = database.DBErr(r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
+		errSiteSettings = database.Err(r.ExecInsertBuilderWithReturnValue(ctx, r.Builder().
 			Insert("person_settings").
 			SetMap(map[string]any{
 				"steam_id":               settings.SteamID.Int64(),
@@ -265,7 +265,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 			Suffix("RETURNING person_settings_id"),
 			&settings.PersonSettingsID))
 	} else {
-		errSiteSettings = database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
+		errSiteSettings = database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
 			Update("person_settings").
 			SetMap(map[string]any{
 				"forum_signature":        settings.ForumSignature,
@@ -281,7 +281,7 @@ func (r *Repository) SaveSettings(ctx context.Context, settings *Settings) error
 	var errGameSettings error
 	if r.centerProjectiles && settings.CenterProjectiles != nil {
 		// TODO test this
-		_ = database.DBErr(r.QueryRow(ctx, query,
+		_ = database.Err(r.QueryRow(ctx, query,
 			settings.SteamID.Steam(false),
 			boolToStringDigit(*settings.CenterProjectiles)).Scan(&value))
 	}

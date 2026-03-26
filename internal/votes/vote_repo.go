@@ -58,7 +58,7 @@ func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, e
 
 	rows, errRows := r.QueryBuilder(ctx, builder)
 	if errRows != nil {
-		return nil, 0, database.DBErr(errRows)
+		return nil, 0, database.Err(errRows)
 	}
 	defer rows.Close()
 
@@ -75,7 +75,7 @@ func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, e
 			&sourceID, &result.SourceName, &result.SourceAvatarHash,
 			&targetID, &result.TargetName, &result.TargetAvatarHash,
 			&result.Name, &result.Success, &result.CreatedOn, &result.ServerName); errScan != nil {
-			return nil, 0, database.DBErr(errScan)
+			return nil, 0, database.Err(errScan)
 		}
 
 		result.SourceID = steamid.New(sourceID)
@@ -91,14 +91,14 @@ func (r Repository) Query(ctx context.Context, filter Query) ([]Result, int64, e
 		From("vote_result v").
 		Where(constraints))
 	if errCount != nil {
-		return nil, 0, database.DBErr(errCount)
+		return nil, 0, database.Err(errCount)
 	}
 
 	return results, count, nil
 }
 
 func (r Repository) AddResult(ctx context.Context, voteResult Result) error {
-	return database.DBErr(r.ExecInsertBuilder(ctx, r.Builder().
+	return database.Err(r.ExecInsertBuilder(ctx, r.Builder().
 		Insert("vote_result").
 		SetMap(map[string]any{
 			"server_id":  voteResult.ServerID,

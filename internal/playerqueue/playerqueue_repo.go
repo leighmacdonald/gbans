@@ -26,28 +26,28 @@ func (r Repository) Message(ctx context.Context, messageID int64) (ChatLog, erro
 		LeftJoin("person p USING(steam_id)").
 		Where(sq.And{sq.Eq{"m.deleted": false}, sq.Eq{"m.message_id": messageID}}))
 	if err != nil {
-		return ChatLog{}, database.DBErr(err)
+		return ChatLog{}, database.Err(err)
 	}
 
 	var message ChatLog
 
 	if errScan := row.Scan(&message.MessageID, &message.SteamID, &message.CreatedOn, &message.Personaname,
 		&message.Avatarhash, &message.PermissionLevel, &message.BodyMD); errScan != nil {
-		return ChatLog{}, database.DBErr(errScan)
+		return ChatLog{}, database.Err(errScan)
 	}
 
 	return message, nil
 }
 
 func (r Repository) SetChatStatus(ctx context.Context, steamID steamid.SteamID, status ChatStatus) error {
-	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
+	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("person").
 		Set("playerqueue_chat_status", status).
 		Where(sq.Eq{"steam_id": steamID})))
 }
 
 func (r Repository) Delete(ctx context.Context, messageID ...int64) error {
-	return database.DBErr(r.ExecUpdateBuilder(ctx, r.Builder().
+	return database.Err(r.ExecUpdateBuilder(ctx, r.Builder().
 		Update("playerqueue_messages").
 		Set("deleted", true).
 		Where(sq.Eq{"message_id": messageID})))
@@ -71,11 +71,11 @@ func (r Repository) Save(ctx context.Context, message ChatLog) (ChatLog, error) 
 		Suffix("RETURNING message_id").
 		ToSql()
 	if errQuery != nil {
-		return ChatLog{}, database.DBErr(errQuery)
+		return ChatLog{}, database.Err(errQuery)
 	}
 
 	if err := r.QueryRow(ctx, query, args...).Scan(&message.MessageID); err != nil {
-		return message, database.DBErr(err)
+		return message, database.Err(err)
 	}
 
 	return message, nil
@@ -103,7 +103,7 @@ func (r Repository) Query(ctx context.Context, query QueryOpts) ([]ChatLog, erro
 
 	rows, errRows := r.QueryBuilder(ctx, builder)
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 
 	defer rows.Close()
@@ -112,7 +112,7 @@ func (r Repository) Query(ctx context.Context, query QueryOpts) ([]ChatLog, erro
 		var msg ChatLog
 		if errScan := rows.Scan(&msg.MessageID, &msg.SteamID, &msg.CreatedOn, &msg.Personaname,
 			&msg.Avatarhash, &msg.PermissionLevel, &msg.BodyMD); errScan != nil {
-			return nil, database.DBErr(errScan)
+			return nil, database.Err(errScan)
 		}
 
 		msgs = append(msgs, msg)

@@ -92,12 +92,12 @@ type SpeedrunRepository struct {
 func (r *SpeedrunRepository) Save(ctx context.Context, details *Speedrun) error {
 	return r.WrapTx(ctx, func(transaction pgx.Tx) error {
 		if errPlayers := r.insertPlayers(ctx, details.Players); errPlayers != nil {
-			return database.DBErr(errPlayers)
+			return database.Err(errPlayers)
 		}
 
 		for _, point := range details.PointCaptures {
 			if errPlayers := r.insertPlayers(ctx, point.Players); errPlayers != nil {
-				return database.DBErr(errPlayers)
+				return database.Err(errPlayers)
 			}
 		}
 
@@ -116,11 +116,11 @@ func (r *SpeedrunRepository) Save(ctx context.Context, details *Speedrun) error 
 			Suffix(" RETURNING speedrun_id").
 			ToSql()
 		if errQuery != nil {
-			return database.DBErr(errQuery)
+			return database.Err(errQuery)
 		}
 
 		if errScan := r.QueryRow(ctx, query, args...).Scan(&details.SpeedrunID); errScan != nil {
-			return database.DBErr(errScan)
+			return database.Err(errScan)
 		}
 
 		if errRounds := r.insertCaptures(ctx, details.SpeedrunID, details.PointCaptures); errRounds != nil {
@@ -154,12 +154,12 @@ func (r *SpeedrunRepository) updateSpeedrunRank(ctx context.Context, transaction
 
 	var rank int
 	if err := transaction.QueryRow(ctx, query, speedrunID).Scan(&rank); err != nil {
-		return 0, database.DBErr(err)
+		return 0, database.Err(err)
 	}
 
 	const queryUpdate = `UPDATE speedrun SET initial_rank = $1 WHERE speedrun_id = $2`
 	if _, err := transaction.Exec(ctx, queryUpdate, rank, speedrunID); err != nil {
-		return 0, database.DBErr(err)
+		return 0, database.Err(err)
 	}
 
 	return rank, nil
@@ -187,11 +187,11 @@ func (r *SpeedrunRepository) insertRunners(ctx context.Context, transaction pgx.
 			}).
 			ToSql()
 		if errQuery != nil {
-			return database.DBErr(errQuery)
+			return database.Err(errQuery)
 		}
 
 		if _, errExec := transaction.Exec(ctx, query, args...); errExec != nil {
-			return database.DBErr(errExec)
+			return database.Err(errExec)
 		}
 	}
 
@@ -212,11 +212,11 @@ func (r *SpeedrunRepository) insertCaptures(ctx context.Context, speedrunID int,
 			Suffix(" RETURNING round_id").
 			ToSql()
 		if errQuery != nil {
-			return database.DBErr(errQuery)
+			return database.Err(errQuery)
 		}
 
 		if errExec := r.QueryRow(ctx, query, args...).Scan(&round.RoundID); errExec != nil {
-			return database.DBErr(errExec)
+			return database.Err(errExec)
 		}
 
 		if errPlayers := r.insertCapturePlayers(ctx, speedrunID, roundNum+1, round.Players); errPlayers != nil {
@@ -240,11 +240,11 @@ func (r *SpeedrunRepository) insertCapturePlayers(ctx context.Context, speedrunI
 			}).
 			ToSql()
 		if errQuery != nil {
-			return database.DBErr(errQuery)
+			return database.Err(errQuery)
 		}
 
 		if errExec := r.Exec(ctx, query, args...); errExec != nil {
-			return database.DBErr(errExec)
+			return database.Err(errExec)
 		}
 	}
 
@@ -271,7 +271,7 @@ func (r *SpeedrunRepository) TopNOverall(ctx context.Context, count int) (map[st
 	`
 	rows, errRows := r.Database.Query(ctx, query, count)
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 	defer rows.Next()
 
@@ -371,7 +371,7 @@ func (r *SpeedrunRepository) Recent(ctx context.Context, limit int) ([]SpeedrunM
 		LIMIT $1`
 	rows, errRows := r.Database.Query(ctx, query, limit)
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 	defer rows.Close()
 
@@ -413,7 +413,7 @@ func (r *SpeedrunRepository) ByMap(ctx context.Context, mapName string) ([]Speed
 		ORDER BY rank`
 	rows, errRows := r.Database.Query(ctx, query, mapName)
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 	defer rows.Close()
 
@@ -439,7 +439,7 @@ func (r *SpeedrunRepository) getCapturedPoints(ctx context.Context, speedrunID i
 		ORDER BY c.round_id`
 	rows, errRows := r.Database.Query(ctx, q, speedrunID)
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 
 	defer rows.Close()
@@ -448,7 +448,7 @@ func (r *SpeedrunRepository) getCapturedPoints(ctx context.Context, speedrunID i
 	for rows.Next() {
 		var c SpeedrunPointCaptures
 		if err := rows.Scan(&c.SpeedrunID, &c.RoundID, &c.Duration, &c.PointName); err != nil {
-			return nil, database.DBErr(err)
+			return nil, database.Err(err)
 		}
 
 		captures = append(captures, c)
@@ -471,7 +471,7 @@ func (r *SpeedrunRepository) getCaptures(ctx context.Context, speedrunID int) ([
 		ORDER BY r.round_id`
 	rows, errRows := r.Database.Query(ctx, query, speedrunID)
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 
 	defer rows.Close()
@@ -484,7 +484,7 @@ func (r *SpeedrunRepository) getCaptures(ctx context.Context, speedrunID int) ([
 			sid         int64
 		)
 		if err := rows.Scan(&participant.RoundID, &sid, &participant.Duration, &participant.AvatarHash, &participant.PersonaName); err != nil {
-			return nil, database.DBErr(err)
+			return nil, database.Err(err)
 		}
 
 		participant.SteamID = steamid.New(sid)
@@ -511,7 +511,7 @@ func (r *SpeedrunRepository) getRunners(ctx context.Context, speedrunID int) ([]
 		WHERE speedrun_id = $1`
 	rows, errRows := r.Database.Query(ctx, q, speedrunID)
 	if errRows != nil {
-		return nil, database.DBErr(errRows)
+		return nil, database.Err(errRows)
 	}
 	defer rows.Close()
 
@@ -524,7 +524,7 @@ func (r *SpeedrunRepository) getRunners(ctx context.Context, speedrunID int) ([]
 		)
 
 		if err := rows.Scan(&sid, &participant.Duration, &participant.AvatarHash, &participant.PersonaName); err != nil {
-			return nil, database.DBErr(err)
+			return nil, database.Err(err)
 		}
 		participant.SteamID = steamid.New(sid)
 
