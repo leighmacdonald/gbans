@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_guest/login/")({
 	}),
 });
 
-export function LoginPage() {
+function LoginPage() {
 	const message = "To access this page, please login using your steam account below.";
 	const title = "Permission Denied";
 	const { isAuthenticated } = useAuth();

@@ -6,7 +6,6 @@ import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import MenuItem from "@mui/material/MenuItem";
 import { useMutation } from "@tanstack/react-query";
-import "video-react/dist/video-react.css";
 import { z } from "zod/v4";
 import { apiCreateSMAdmin, apiSaveSMAdmin, hasSMFlag } from "../../api";
 import { useAppForm } from "../../contexts/formContext.tsx";

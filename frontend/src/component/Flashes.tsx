@@ -62,8 +62,8 @@ export const Flashes = (): JSX.Element => {
 
 	return (
 		<>
-			{flashes.map((flash, index) => {
-				return <PositionedSnackbar notification={flash} key={`flash-${flash.message}-${index}`} />; // fixme message as key
+			{flashes.map((flash) => {
+				return <PositionedSnackbar notification={flash} key={`flash-${flash.message}`} />; // fixme message as key
 			})}
 		</>
 	);

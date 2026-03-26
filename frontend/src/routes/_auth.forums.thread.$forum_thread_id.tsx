@@ -12,7 +12,7 @@ import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { apiCreateThreadReply, apiDeleteMessage, apiGetThread, apiGetThreadMessages } from "../api/forum.ts";
 import { mdEditorRef } from "../component/form/field/MarkdownField.tsx";
@@ -32,7 +32,6 @@ import { logErr } from "../util/errors.ts";
 import { useScrollToLocation } from "../util/history.ts";
 import { commonTableSearchSchema, RowsPerPage } from "../util/table.ts";
 import { renderDateTime } from "../util/time.ts";
-import { LoginPage } from "./_guest.login.index.tsx";
 
 const forumThreadSearchSchema = commonTableSearchSchema;
 
@@ -194,7 +193,14 @@ function ForumThreadPage() {
 
 	const replyContainer = useMemo(() => {
 		if (permissionLevel() === PermissionLevel.Guest) {
-			return <LoginPage />;
+			return (
+				<Navigate
+					to={"/login"}
+					search={{
+						redirect: window.location.pathname + window.location.search,
+					}}
+				/>
+			);
 		} else if (thread?.forum_thread_id && !thread?.locked) {
 			return (
 				<Paper>

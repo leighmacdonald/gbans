@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { tanstackRouter } from "@tanstack/router-vite-plugin";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { createHtmlPlugin } from "vite-plugin-html";
 
@@ -8,21 +8,13 @@ import { createHtmlPlugin } from "vite-plugin-html";
 export default defineConfig({
 	base: "/",
 	publicDir: "public",
+	legacy: {
+		// Required until react-video is updated: https://github.com/robtaussig/react-use-websocket/issues/280
+		inconsistentCjsInterop: true,
+	},
 	build: {
 		copyPublicDir: true,
 		sourcemap: true,
-		rollupOptions: {
-			treeshake: "smallest",
-			// output: {
-			// 	//esModule: false,
-			// 	manualChunks(id) {
-			// 		if (id.includes("node_modules")) {
-			// 			return "vendor";
-			// 		}
-			// 		return null;
-			// 	},
-			// },
-		},
 	},
 
 	server: {
@@ -79,7 +71,7 @@ export default defineConfig({
 	plugins: [
 		tanstackRouter({
 			target: "react",
-			autoCodeSplitting: false,
+			autoCodeSplitting: true,
 		}),
 		react(), // Must come *after* tanstackRouter
 		createHtmlPlugin({
