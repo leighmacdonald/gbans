@@ -39,6 +39,7 @@ func TestConfigHTTP(t *testing.T) {
 	curConf.General.FileServeMode = config.LocalMode
 	curConf.General.Mode = config.TestMode
 	curConf.Log.Level = log.Warn
+	curConf.General.AssetURL = "/"
 
 	saved := tests.PutGOK[config.Config](t, router, "/api/config", curConf)
 	require.Equal(t, curConf, saved)

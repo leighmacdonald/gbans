@@ -62,7 +62,7 @@ func TestMessages(t *testing.T) {
 		require.NoError(t, chats.AddChatHistory(t.Context(), &msg))
 	}
 	req := chat.HistoryQueryFilter{}
-	messages := tests.PostGOK[[]chat.QueryChatHistoryResult](t, router, "/api/messages", req)
+	messages := tests.GetGOK[[]chat.QueryChatHistoryResult](t, router, "/api/messages", req)
 	require.Len(t, messages, count)
 
 	require.Len(t, tests.PostGOK[[]chat.QueryChatHistoryResult](t, router, "/api/messages", chat.HistoryQueryFilter{

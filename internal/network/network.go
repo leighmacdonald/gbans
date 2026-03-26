@@ -54,13 +54,13 @@ type ConnectionHistoryQuery struct {
 	query.Filter
 	httphelper.SourceIDField
 
-	CIDR        string `json:"cidr,omitempty" schema:"cidr,omitempty"`
-	ASNum       int    `json:"as_num,omitempty" schema:"as_num,omitempty"`
-	ASName      string `json:"as_name,omitempty" schema:"as_name,omitempty"`
-	CountryCode string `json:"country_code,omitempty" schema:"country_code,omitempty"`
-	CountryName string `json:"country_name,omitempty" schema:"country_name,omitempty"`
-	CityName    string `json:"city_name,omitempty" schema:"city_name,omitempty"`
-	ServerID    []int  `json:"server_id,omitempty" schema:"server_id,omitempty"`
+	CIDR        string `json:"cidr,omitempty" query:"cidr" schema:"cidr"`
+	ASNum       int    `json:"as_num,omitempty" query:"as_num" schema:"as_num"`
+	ASName      string `json:"as_name,omitempty" query:"as_name" schema:"as_num"`
+	CountryCode string `json:"country_code,omitempty" query:"country_code" schema:"country_code"`
+	CountryName string `json:"country_name,omitempty" query:"country_name" schema:"country_name"`
+	CityName    string `json:"city_name,omitempty" query:"city_name" schema:"city_name"`
+	ServerID    []int  `json:"server_id,omitempty" query:"server_id" schema:"server_id"`
 }
 
 type PersonConnection struct {

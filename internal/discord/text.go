@@ -17,6 +17,10 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+func init() {
+	templates = template.New("").Funcs(createFuncMap())
+}
+
 //nolint:gochecknoglobals
 var (
 	templatedMutex sync.RWMutex

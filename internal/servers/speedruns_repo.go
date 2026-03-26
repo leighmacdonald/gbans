@@ -282,7 +282,7 @@ func (r *SpeedrunRepository) TopNOverall(ctx context.Context, count int) (map[st
 			&run.SpeedrunID, &run.ServerID, &run.Category, &run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn,
 			&run.InitialRank, &run.Rank,
 			&run.Map.MapID, &run.Map.MapName, &run.Map.UpdatedOn, &run.Map.CreatedOn); err != nil {
-			return nil, database.DBErr(err)
+			return nil, database.Err(err)
 		}
 		if _, ok := runs[run.Map.MapName]; !ok {
 			runs[run.Map.MapName] = []Speedrun{}
@@ -328,7 +328,7 @@ func (r *SpeedrunRepository) ByID(ctx context.Context, speedrunID int) (Speedrun
 		QueryRow(ctx, query, speedrunID).
 		Scan(&run.SpeedrunID, &run.ServerID, &run.Category, &run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
 			&run.Map.MapID, &run.Map.MapName, &run.Map.UpdatedOn, &run.Map.CreatedOn, &run.Rank); err != nil {
-		return Speedrun{}, database.DBErr(err)
+		return Speedrun{}, database.Err(err)
 	}
 
 	runners, errRunners := r.getRunners(ctx, speedrunID)
@@ -381,7 +381,7 @@ func (r *SpeedrunRepository) Recent(ctx context.Context, limit int) ([]SpeedrunM
 		if err := rows.Scan(&run.SpeedrunID, &run.Map.MapID, &run.ServerID, &run.Category,
 			&run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
 			&run.Rank, &run.PlayerCount, &run.Map.MapName); err != nil {
-			return []SpeedrunMapOverview{}, database.DBErr(err)
+			return []SpeedrunMapOverview{}, database.Err(err)
 		}
 		smo = append(smo, run)
 	}
@@ -423,7 +423,7 @@ func (r *SpeedrunRepository) ByMap(ctx context.Context, mapName string) ([]Speed
 		if err := rows.Scan(&run.SpeedrunID, &run.Map.MapID, &run.ServerID, &run.Category,
 			&run.Duration, &run.PlayerCount, &run.BotCount, &run.CreatedOn, &run.InitialRank,
 			&run.Rank, &run.PlayerCount, &run.Map.MapName); err != nil {
-			return []SpeedrunMapOverview{}, database.DBErr(err)
+			return []SpeedrunMapOverview{}, database.Err(err)
 		}
 		smo = append(smo, run)
 	}

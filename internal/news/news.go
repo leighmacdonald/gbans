@@ -54,7 +54,7 @@ func (u News) Save(ctx context.Context, entry *Article) error {
 		return err
 	}
 
-	if entry.IsPublished {
+	if entry.IsPublished && u.logChannelID != "" {
 		if isNew {
 			go u.notifications.Send(notification.NewDiscord(u.logChannelID,
 				newNewsMessage(entry.BodyMD, entry.Title)))

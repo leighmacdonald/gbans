@@ -11,11 +11,11 @@ const MaxResultsDefault = 100
 
 // Filter provides a structure for common query parameters.
 type Filter struct {
-	Offset  uint64 `json:"offset,omitempty" schema:"offset" binding:"gte=0"`
-	Limit   uint64 `json:"limit,omitempty" schema:"limit" binding:"gte=0,lte=10000"`
-	Desc    bool   `json:"desc,omitempty" schema:"desc"`
-	OrderBy string `json:"order_by,omitempty" schema:"order_by"`
-	Deleted bool   `json:"deleted,omitempty" schema:"deleted"`
+	Offset  uint64 `json:"offset,omitempty" schema:"offset" binding:"gte=0" query:"offset"`
+	Limit   uint64 `json:"limit,omitempty" schema:"limit" binding:"gte=0,lte=10000" query:"limit"`
+	Desc    bool   `json:"desc,omitempty" schema:"desc" query:"desc"`
+	OrderBy string `json:"order_by,omitempty" schema:"order_by" query:"order_by"`
+	Deleted bool   `json:"deleted,omitempty" schema:"deleted" query:"deleted"`
 }
 
 // ApplySafeOrder is used to ensure that a user requested column is valid. This
