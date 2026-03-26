@@ -134,8 +134,8 @@ func (r Repository) History(ctx context.Context, opts HistoryOpts) ([]Duels, int
 	fromTable := "mgemod_duels m"
 	if opts.Mode == TwoVsTwo {
 		columns = append(columns,
-			"m.winner2", "w2.avatarhash", "w2.personaname",
-			"m.loser2", "l2.avatarhash", "l2.personaname", "m.duel2_id")
+			"m.winner2", "coalesce(w2.avatarhash, '')", "coalesce(w2.personaname, m.winner2::text)",
+			"m.loser2", "coalesce(l2.avatarhash, '')", "coalesce(l2.personaname, m.loser2::text)", "m.duel2_id")
 		fromTable = "mgemod_duels_2v2 m"
 	} else {
 		columns = append(columns, "m.duel_id")
