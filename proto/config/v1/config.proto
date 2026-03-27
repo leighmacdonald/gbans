@@ -33,7 +33,7 @@ message InfoResponse {
 enum RunMode {
   RUN_MODE_RELEASE_UNSPECIFIED = 0;
   RUN_MODE_DEBUG = 1;
-  RUN_MODE_TEST = 3;
+  RUN_MODE_TEST = 2;
 }
 
 enum FileServeMode {
@@ -119,7 +119,7 @@ message Discord {
   string chat_log_channel_id = 22;
 }
 
-message Sourcemd {
+message Sourcemod {
   bool center_projectiles = 1;
 }
 
@@ -204,15 +204,47 @@ message Anticheat {
   int32 max_too_many_connections = 9;
   int32 max_oob_var = 10;
   int32 max_invalid_user_cmd = 11;
+  int32 max_cheat_cvar = 12;
 }
-
-message Config {
+message UpdateRequest {
   General general = 1;
   Debug debug = 2;
   Demo demo = 3;
   Filters filters = 4;
   Discord discord = 5;
-  Sourcemd sourcemd = 6;
+  // Sourcemod sourcemod = 6;
+  Log log = 7;
+  GeoLocation geo_location = 8;
+  Patreon patreon = 9;
+  SSH ssh = 10;
+  Network network = 11;
+  LocalStore local_store = 12;
+  Exports exports = 13;
+  Anticheat anticheat = 14;
+}
+message UpdateResponse {
+  General general = 1;
+  Debug debug = 2;
+  Demo demo = 3;
+  Filters filters = 4;
+  Discord discord = 5;
+  // Sourcemod sourcemod = 6;
+  Log log = 7;
+  GeoLocation geo_location = 8;
+  Patreon patreon = 9;
+  SSH ssh = 10;
+  Network network = 11;
+  LocalStore local_store = 12;
+  Exports exports = 13;
+  Anticheat anticheat = 14;
+}
+message GetResponse {
+  General general = 1;
+  Debug debug = 2;
+  Demo demo = 3;
+  Filters filters = 4;
+  Discord discord = 5;
+  // Sourcemod sourcemod = 6;
   Log log = 7;
   GeoLocation geo_location = 8;
   Patreon patreon = 9;
@@ -225,6 +257,6 @@ message Config {
 
 service ConfigService {
   rpc Info(google.protobuf.Empty) returns (InfoResponse) {}
-  rpc Get(google.protobuf.Empty) returns (Config) {}
-  rpc Update(Config) returns (Config) {}
+  rpc Get(google.protobuf.Empty) returns (GetResponse) {}
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
 }

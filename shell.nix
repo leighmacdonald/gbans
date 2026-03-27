@@ -1,5 +1,10 @@
 let
-  nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/tarball/nixos-25.11";
+  # nixpkgs = fetchTarball {
+  #   url = "https://github.com/NixOS/nixpkgs/archive/e0629618b4b419a47e2c8a3cab223e2a7f3a8f97.tar.gz";
+  #   sha256 = "sha256-e0629618b4b419a47e2c8a3cab223e2a7f3a8f97";
+  # };
+  #nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/tarball/nixos-25.11";
+  nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/e0629618b4b419a47e2c8a3cab223e2a7f3a8f97.tar.gz";
 
   pkgs = import nixpkgs {
     config = { };
@@ -9,14 +14,13 @@ in
 pkgs.mkShell {
   hardeningDisable = [ "fortify" ];
   buildInputs = with pkgs; [
-    go
     # libpcap
     # gcc
     golangci-lint
     goreleaser
     nilaway
-    nodejs_24
-    pnpm_10
+    nodejs
+    pnpm
     just
     just-lsp
     nil
@@ -31,6 +35,7 @@ pkgs.mkShell {
     protoc-gen-go
     protoc-gen-connect-go
     oapi-codegen
+    protobuf-language-server
     sql-formatter
     rcon-cli
   ];

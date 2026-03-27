@@ -27,7 +27,7 @@ type RunMode int32
 const (
 	RunMode_RUN_MODE_RELEASE_UNSPECIFIED RunMode = 0
 	RunMode_RUN_MODE_DEBUG               RunMode = 1
-	RunMode_RUN_MODE_TEST                RunMode = 3
+	RunMode_RUN_MODE_TEST                RunMode = 2
 )
 
 // Enum value maps for RunMode.
@@ -35,12 +35,12 @@ var (
 	RunMode_name = map[int32]string{
 		0: "RUN_MODE_RELEASE_UNSPECIFIED",
 		1: "RUN_MODE_DEBUG",
-		3: "RUN_MODE_TEST",
+		2: "RUN_MODE_TEST",
 	}
 	RunMode_value = map[string]int32{
 		"RUN_MODE_RELEASE_UNSPECIFIED": 0,
 		"RUN_MODE_DEBUG":               1,
-		"RUN_MODE_TEST":                3,
+		"RUN_MODE_TEST":                2,
 	}
 )
 
@@ -1190,27 +1190,27 @@ func (x *Discord) GetChatLogChannelId() string {
 	return ""
 }
 
-type Sourcemd struct {
+type Sourcemod struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	CenterProjectiles bool                   `protobuf:"varint,1,opt,name=center_projectiles,json=centerProjectiles,proto3" json:"center_projectiles,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
 
-func (x *Sourcemd) Reset() {
-	*x = Sourcemd{}
+func (x *Sourcemod) Reset() {
+	*x = Sourcemod{}
 	mi := &file_config_v1_config_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Sourcemd) String() string {
+func (x *Sourcemod) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Sourcemd) ProtoMessage() {}
+func (*Sourcemod) ProtoMessage() {}
 
-func (x *Sourcemd) ProtoReflect() protoreflect.Message {
+func (x *Sourcemod) ProtoReflect() protoreflect.Message {
 	mi := &file_config_v1_config_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1222,12 +1222,12 @@ func (x *Sourcemd) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Sourcemd.ProtoReflect.Descriptor instead.
-func (*Sourcemd) Descriptor() ([]byte, []int) {
+// Deprecated: Use Sourcemod.ProtoReflect.Descriptor instead.
+func (*Sourcemod) Descriptor() ([]byte, []int) {
 	return file_config_v1_config_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *Sourcemd) GetCenterProjectiles() bool {
+func (x *Sourcemod) GetCenterProjectiles() bool {
 	if x != nil {
 		return x.CenterProjectiles
 	}
@@ -1763,6 +1763,7 @@ type Anticheat struct {
 	MaxTooManyConnections int32                  `protobuf:"varint,9,opt,name=max_too_many_connections,json=maxTooManyConnections,proto3" json:"max_too_many_connections,omitempty"`
 	MaxOobVar             int32                  `protobuf:"varint,10,opt,name=max_oob_var,json=maxOobVar,proto3" json:"max_oob_var,omitempty"`
 	MaxInvalidUserCmd     int32                  `protobuf:"varint,11,opt,name=max_invalid_user_cmd,json=maxInvalidUserCmd,proto3" json:"max_invalid_user_cmd,omitempty"`
+	MaxCheatCvar          int32                  `protobuf:"varint,12,opt,name=max_cheat_cvar,json=maxCheatCvar,proto3" json:"max_cheat_cvar,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -1874,40 +1875,47 @@ func (x *Anticheat) GetMaxInvalidUserCmd() int32 {
 	return 0
 }
 
-type Config struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	General       *General               `protobuf:"bytes,1,opt,name=general,proto3" json:"general,omitempty"`
-	Debug         *Debug                 `protobuf:"bytes,2,opt,name=debug,proto3" json:"debug,omitempty"`
-	Demo          *Demo                  `protobuf:"bytes,3,opt,name=demo,proto3" json:"demo,omitempty"`
-	Filters       *Filters               `protobuf:"bytes,4,opt,name=filters,proto3" json:"filters,omitempty"`
-	Discord       *Discord               `protobuf:"bytes,5,opt,name=discord,proto3" json:"discord,omitempty"`
-	Sourcemd      *Sourcemd              `protobuf:"bytes,6,opt,name=sourcemd,proto3" json:"sourcemd,omitempty"`
-	Log           *Log                   `protobuf:"bytes,7,opt,name=log,proto3" json:"log,omitempty"`
-	GeoLocation   *GeoLocation           `protobuf:"bytes,8,opt,name=geo_location,json=geoLocation,proto3" json:"geo_location,omitempty"`
-	Patreon       *Patreon               `protobuf:"bytes,9,opt,name=patreon,proto3" json:"patreon,omitempty"`
-	Ssh           *SSH                   `protobuf:"bytes,10,opt,name=ssh,proto3" json:"ssh,omitempty"`
-	Network       *Network               `protobuf:"bytes,11,opt,name=network,proto3" json:"network,omitempty"`
-	LocalStore    *LocalStore            `protobuf:"bytes,12,opt,name=local_store,json=localStore,proto3" json:"local_store,omitempty"`
-	Exports       *Exports               `protobuf:"bytes,13,opt,name=exports,proto3" json:"exports,omitempty"`
-	Anticheat     *Anticheat             `protobuf:"bytes,14,opt,name=anticheat,proto3" json:"anticheat,omitempty"`
+func (x *Anticheat) GetMaxCheatCvar() int32 {
+	if x != nil {
+		return x.MaxCheatCvar
+	}
+	return 0
+}
+
+type UpdateRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	General *General               `protobuf:"bytes,1,opt,name=general,proto3" json:"general,omitempty"`
+	Debug   *Debug                 `protobuf:"bytes,2,opt,name=debug,proto3" json:"debug,omitempty"`
+	Demo    *Demo                  `protobuf:"bytes,3,opt,name=demo,proto3" json:"demo,omitempty"`
+	Filters *Filters               `protobuf:"bytes,4,opt,name=filters,proto3" json:"filters,omitempty"`
+	Discord *Discord               `protobuf:"bytes,5,opt,name=discord,proto3" json:"discord,omitempty"`
+	// Sourcemod sourcemod = 6;
+	Log           *Log         `protobuf:"bytes,7,opt,name=log,proto3" json:"log,omitempty"`
+	GeoLocation   *GeoLocation `protobuf:"bytes,8,opt,name=geo_location,json=geoLocation,proto3" json:"geo_location,omitempty"`
+	Patreon       *Patreon     `protobuf:"bytes,9,opt,name=patreon,proto3" json:"patreon,omitempty"`
+	Ssh           *SSH         `protobuf:"bytes,10,opt,name=ssh,proto3" json:"ssh,omitempty"`
+	Network       *Network     `protobuf:"bytes,11,opt,name=network,proto3" json:"network,omitempty"`
+	LocalStore    *LocalStore  `protobuf:"bytes,12,opt,name=local_store,json=localStore,proto3" json:"local_store,omitempty"`
+	Exports       *Exports     `protobuf:"bytes,13,opt,name=exports,proto3" json:"exports,omitempty"`
+	Anticheat     *Anticheat   `protobuf:"bytes,14,opt,name=anticheat,proto3" json:"anticheat,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Config) Reset() {
-	*x = Config{}
+func (x *UpdateRequest) Reset() {
+	*x = UpdateRequest{}
 	mi := &file_config_v1_config_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Config) String() string {
+func (x *UpdateRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Config) ProtoMessage() {}
+func (*UpdateRequest) ProtoMessage() {}
 
-func (x *Config) ProtoReflect() protoreflect.Message {
+func (x *UpdateRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_config_v1_config_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1919,103 +1927,378 @@ func (x *Config) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Config.ProtoReflect.Descriptor instead.
-func (*Config) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateRequest.ProtoReflect.Descriptor instead.
+func (*UpdateRequest) Descriptor() ([]byte, []int) {
 	return file_config_v1_config_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *Config) GetGeneral() *General {
+func (x *UpdateRequest) GetGeneral() *General {
 	if x != nil {
 		return x.General
 	}
 	return nil
 }
 
-func (x *Config) GetDebug() *Debug {
+func (x *UpdateRequest) GetDebug() *Debug {
 	if x != nil {
 		return x.Debug
 	}
 	return nil
 }
 
-func (x *Config) GetDemo() *Demo {
+func (x *UpdateRequest) GetDemo() *Demo {
 	if x != nil {
 		return x.Demo
 	}
 	return nil
 }
 
-func (x *Config) GetFilters() *Filters {
+func (x *UpdateRequest) GetFilters() *Filters {
 	if x != nil {
 		return x.Filters
 	}
 	return nil
 }
 
-func (x *Config) GetDiscord() *Discord {
+func (x *UpdateRequest) GetDiscord() *Discord {
 	if x != nil {
 		return x.Discord
 	}
 	return nil
 }
 
-func (x *Config) GetSourcemd() *Sourcemd {
-	if x != nil {
-		return x.Sourcemd
-	}
-	return nil
-}
-
-func (x *Config) GetLog() *Log {
+func (x *UpdateRequest) GetLog() *Log {
 	if x != nil {
 		return x.Log
 	}
 	return nil
 }
 
-func (x *Config) GetGeoLocation() *GeoLocation {
+func (x *UpdateRequest) GetGeoLocation() *GeoLocation {
 	if x != nil {
 		return x.GeoLocation
 	}
 	return nil
 }
 
-func (x *Config) GetPatreon() *Patreon {
+func (x *UpdateRequest) GetPatreon() *Patreon {
 	if x != nil {
 		return x.Patreon
 	}
 	return nil
 }
 
-func (x *Config) GetSsh() *SSH {
+func (x *UpdateRequest) GetSsh() *SSH {
 	if x != nil {
 		return x.Ssh
 	}
 	return nil
 }
 
-func (x *Config) GetNetwork() *Network {
+func (x *UpdateRequest) GetNetwork() *Network {
 	if x != nil {
 		return x.Network
 	}
 	return nil
 }
 
-func (x *Config) GetLocalStore() *LocalStore {
+func (x *UpdateRequest) GetLocalStore() *LocalStore {
 	if x != nil {
 		return x.LocalStore
 	}
 	return nil
 }
 
-func (x *Config) GetExports() *Exports {
+func (x *UpdateRequest) GetExports() *Exports {
 	if x != nil {
 		return x.Exports
 	}
 	return nil
 }
 
-func (x *Config) GetAnticheat() *Anticheat {
+func (x *UpdateRequest) GetAnticheat() *Anticheat {
+	if x != nil {
+		return x.Anticheat
+	}
+	return nil
+}
+
+type UpdateResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	General *General               `protobuf:"bytes,1,opt,name=general,proto3" json:"general,omitempty"`
+	Debug   *Debug                 `protobuf:"bytes,2,opt,name=debug,proto3" json:"debug,omitempty"`
+	Demo    *Demo                  `protobuf:"bytes,3,opt,name=demo,proto3" json:"demo,omitempty"`
+	Filters *Filters               `protobuf:"bytes,4,opt,name=filters,proto3" json:"filters,omitempty"`
+	Discord *Discord               `protobuf:"bytes,5,opt,name=discord,proto3" json:"discord,omitempty"`
+	// Sourcemod sourcemod = 6;
+	Log           *Log         `protobuf:"bytes,7,opt,name=log,proto3" json:"log,omitempty"`
+	GeoLocation   *GeoLocation `protobuf:"bytes,8,opt,name=geo_location,json=geoLocation,proto3" json:"geo_location,omitempty"`
+	Patreon       *Patreon     `protobuf:"bytes,9,opt,name=patreon,proto3" json:"patreon,omitempty"`
+	Ssh           *SSH         `protobuf:"bytes,10,opt,name=ssh,proto3" json:"ssh,omitempty"`
+	Network       *Network     `protobuf:"bytes,11,opt,name=network,proto3" json:"network,omitempty"`
+	LocalStore    *LocalStore  `protobuf:"bytes,12,opt,name=local_store,json=localStore,proto3" json:"local_store,omitempty"`
+	Exports       *Exports     `protobuf:"bytes,13,opt,name=exports,proto3" json:"exports,omitempty"`
+	Anticheat     *Anticheat   `protobuf:"bytes,14,opt,name=anticheat,proto3" json:"anticheat,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateResponse) Reset() {
+	*x = UpdateResponse{}
+	mi := &file_config_v1_config_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateResponse) ProtoMessage() {}
+
+func (x *UpdateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_config_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateResponse.ProtoReflect.Descriptor instead.
+func (*UpdateResponse) Descriptor() ([]byte, []int) {
+	return file_config_v1_config_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *UpdateResponse) GetGeneral() *General {
+	if x != nil {
+		return x.General
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetDebug() *Debug {
+	if x != nil {
+		return x.Debug
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetDemo() *Demo {
+	if x != nil {
+		return x.Demo
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetFilters() *Filters {
+	if x != nil {
+		return x.Filters
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetDiscord() *Discord {
+	if x != nil {
+		return x.Discord
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetLog() *Log {
+	if x != nil {
+		return x.Log
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetGeoLocation() *GeoLocation {
+	if x != nil {
+		return x.GeoLocation
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetPatreon() *Patreon {
+	if x != nil {
+		return x.Patreon
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetSsh() *SSH {
+	if x != nil {
+		return x.Ssh
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetNetwork() *Network {
+	if x != nil {
+		return x.Network
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetLocalStore() *LocalStore {
+	if x != nil {
+		return x.LocalStore
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetExports() *Exports {
+	if x != nil {
+		return x.Exports
+	}
+	return nil
+}
+
+func (x *UpdateResponse) GetAnticheat() *Anticheat {
+	if x != nil {
+		return x.Anticheat
+	}
+	return nil
+}
+
+type GetResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	General *General               `protobuf:"bytes,1,opt,name=general,proto3" json:"general,omitempty"`
+	Debug   *Debug                 `protobuf:"bytes,2,opt,name=debug,proto3" json:"debug,omitempty"`
+	Demo    *Demo                  `protobuf:"bytes,3,opt,name=demo,proto3" json:"demo,omitempty"`
+	Filters *Filters               `protobuf:"bytes,4,opt,name=filters,proto3" json:"filters,omitempty"`
+	Discord *Discord               `protobuf:"bytes,5,opt,name=discord,proto3" json:"discord,omitempty"`
+	// Sourcemod sourcemod = 6;
+	Log           *Log         `protobuf:"bytes,7,opt,name=log,proto3" json:"log,omitempty"`
+	GeoLocation   *GeoLocation `protobuf:"bytes,8,opt,name=geo_location,json=geoLocation,proto3" json:"geo_location,omitempty"`
+	Patreon       *Patreon     `protobuf:"bytes,9,opt,name=patreon,proto3" json:"patreon,omitempty"`
+	Ssh           *SSH         `protobuf:"bytes,10,opt,name=ssh,proto3" json:"ssh,omitempty"`
+	Network       *Network     `protobuf:"bytes,11,opt,name=network,proto3" json:"network,omitempty"`
+	LocalStore    *LocalStore  `protobuf:"bytes,12,opt,name=local_store,json=localStore,proto3" json:"local_store,omitempty"`
+	Exports       *Exports     `protobuf:"bytes,13,opt,name=exports,proto3" json:"exports,omitempty"`
+	Anticheat     *Anticheat   `protobuf:"bytes,14,opt,name=anticheat,proto3" json:"anticheat,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetResponse) Reset() {
+	*x = GetResponse{}
+	mi := &file_config_v1_config_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetResponse) ProtoMessage() {}
+
+func (x *GetResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_config_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
+func (*GetResponse) Descriptor() ([]byte, []int) {
+	return file_config_v1_config_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetResponse) GetGeneral() *General {
+	if x != nil {
+		return x.General
+	}
+	return nil
+}
+
+func (x *GetResponse) GetDebug() *Debug {
+	if x != nil {
+		return x.Debug
+	}
+	return nil
+}
+
+func (x *GetResponse) GetDemo() *Demo {
+	if x != nil {
+		return x.Demo
+	}
+	return nil
+}
+
+func (x *GetResponse) GetFilters() *Filters {
+	if x != nil {
+		return x.Filters
+	}
+	return nil
+}
+
+func (x *GetResponse) GetDiscord() *Discord {
+	if x != nil {
+		return x.Discord
+	}
+	return nil
+}
+
+func (x *GetResponse) GetLog() *Log {
+	if x != nil {
+		return x.Log
+	}
+	return nil
+}
+
+func (x *GetResponse) GetGeoLocation() *GeoLocation {
+	if x != nil {
+		return x.GeoLocation
+	}
+	return nil
+}
+
+func (x *GetResponse) GetPatreon() *Patreon {
+	if x != nil {
+		return x.Patreon
+	}
+	return nil
+}
+
+func (x *GetResponse) GetSsh() *SSH {
+	if x != nil {
+		return x.Ssh
+	}
+	return nil
+}
+
+func (x *GetResponse) GetNetwork() *Network {
+	if x != nil {
+		return x.Network
+	}
+	return nil
+}
+
+func (x *GetResponse) GetLocalStore() *LocalStore {
+	if x != nil {
+		return x.LocalStore
+	}
+	return nil
+}
+
+func (x *GetResponse) GetExports() *Exports {
+	if x != nil {
+		return x.Exports
+	}
+	return nil
+}
+
+func (x *GetResponse) GetAnticheat() *Anticheat {
 	if x != nil {
 		return x.Anticheat
 	}
@@ -2125,8 +2408,8 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x14anticheat_channel_id\x18\x13 \x01(\tR\x12anticheatChannelId\x12&\n" +
 	"\x0fseed_channel_id\x18\x14 \x01(\tR\rseedChannelId\x12:\n" +
 	"\x1aword_filter_log_channel_id\x18\x15 \x01(\tR\x16wordFilterLogChannelId\x12-\n" +
-	"\x13chat_log_channel_id\x18\x16 \x01(\tR\x10chatLogChannelId\"9\n" +
-	"\bSourcemd\x12-\n" +
+	"\x13chat_log_channel_id\x18\x16 \x01(\tR\x10chatLogChannelId\":\n" +
+	"\tSourcemod\x12-\n" +
 	"\x12center_projectiles\x18\x01 \x01(\bR\x11centerProjectiles\"\xcf\x01\n" +
 	"\x03Log\x12&\n" +
 	"\x05level\x18\x01 \x01(\x0e2\x10.config.v1.LevelR\x05level\x12\x17\n" +
@@ -2175,7 +2458,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
 	"bd_enabled\x18\x01 \x01(\bR\tbdEnabled\x12#\n" +
 	"\rvalve_enabled\x18\x02 \x01(\bR\fvalveEnabled\x12'\n" +
-	"\x0fauthorized_keys\x18\x03 \x03(\tR\x0eauthorizedKeys\"\x98\x03\n" +
+	"\x0fauthorized_keys\x18\x03 \x03(\tR\x0eauthorizedKeys\"\xbe\x03\n" +
 	"\tAnticheat\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12)\n" +
 	"\x06action\x18\x02 \x01(\x0e2\x11.config.v1.ActionR\x06action\x12\x1a\n" +
@@ -2190,14 +2473,46 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x18max_too_many_connections\x18\t \x01(\x05R\x15maxTooManyConnections\x12\x1e\n" +
 	"\vmax_oob_var\x18\n" +
 	" \x01(\x05R\tmaxOobVar\x12/\n" +
-	"\x14max_invalid_user_cmd\x18\v \x01(\x05R\x11maxInvalidUserCmd\"\x85\x05\n" +
-	"\x06Config\x12,\n" +
+	"\x14max_invalid_user_cmd\x18\v \x01(\x05R\x11maxInvalidUserCmd\x12$\n" +
+	"\x0emax_cheat_cvar\x18\f \x01(\x05R\fmaxCheatCvar\"\xdb\x04\n" +
+	"\rUpdateRequest\x12,\n" +
 	"\ageneral\x18\x01 \x01(\v2\x12.config.v1.GeneralR\ageneral\x12&\n" +
 	"\x05debug\x18\x02 \x01(\v2\x10.config.v1.DebugR\x05debug\x12#\n" +
 	"\x04demo\x18\x03 \x01(\v2\x0f.config.v1.DemoR\x04demo\x12,\n" +
 	"\afilters\x18\x04 \x01(\v2\x12.config.v1.FiltersR\afilters\x12,\n" +
-	"\adiscord\x18\x05 \x01(\v2\x12.config.v1.DiscordR\adiscord\x12/\n" +
-	"\bsourcemd\x18\x06 \x01(\v2\x13.config.v1.SourcemdR\bsourcemd\x12 \n" +
+	"\adiscord\x18\x05 \x01(\v2\x12.config.v1.DiscordR\adiscord\x12 \n" +
+	"\x03log\x18\a \x01(\v2\x0e.config.v1.LogR\x03log\x129\n" +
+	"\fgeo_location\x18\b \x01(\v2\x16.config.v1.GeoLocationR\vgeoLocation\x12,\n" +
+	"\apatreon\x18\t \x01(\v2\x12.config.v1.PatreonR\apatreon\x12 \n" +
+	"\x03ssh\x18\n" +
+	" \x01(\v2\x0e.config.v1.SSHR\x03ssh\x12,\n" +
+	"\anetwork\x18\v \x01(\v2\x12.config.v1.NetworkR\anetwork\x126\n" +
+	"\vlocal_store\x18\f \x01(\v2\x15.config.v1.LocalStoreR\n" +
+	"localStore\x12,\n" +
+	"\aexports\x18\r \x01(\v2\x12.config.v1.ExportsR\aexports\x122\n" +
+	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatR\tanticheat\"\xdc\x04\n" +
+	"\x0eUpdateResponse\x12,\n" +
+	"\ageneral\x18\x01 \x01(\v2\x12.config.v1.GeneralR\ageneral\x12&\n" +
+	"\x05debug\x18\x02 \x01(\v2\x10.config.v1.DebugR\x05debug\x12#\n" +
+	"\x04demo\x18\x03 \x01(\v2\x0f.config.v1.DemoR\x04demo\x12,\n" +
+	"\afilters\x18\x04 \x01(\v2\x12.config.v1.FiltersR\afilters\x12,\n" +
+	"\adiscord\x18\x05 \x01(\v2\x12.config.v1.DiscordR\adiscord\x12 \n" +
+	"\x03log\x18\a \x01(\v2\x0e.config.v1.LogR\x03log\x129\n" +
+	"\fgeo_location\x18\b \x01(\v2\x16.config.v1.GeoLocationR\vgeoLocation\x12,\n" +
+	"\apatreon\x18\t \x01(\v2\x12.config.v1.PatreonR\apatreon\x12 \n" +
+	"\x03ssh\x18\n" +
+	" \x01(\v2\x0e.config.v1.SSHR\x03ssh\x12,\n" +
+	"\anetwork\x18\v \x01(\v2\x12.config.v1.NetworkR\anetwork\x126\n" +
+	"\vlocal_store\x18\f \x01(\v2\x15.config.v1.LocalStoreR\n" +
+	"localStore\x12,\n" +
+	"\aexports\x18\r \x01(\v2\x12.config.v1.ExportsR\aexports\x122\n" +
+	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatR\tanticheat\"\xd9\x04\n" +
+	"\vGetResponse\x12,\n" +
+	"\ageneral\x18\x01 \x01(\v2\x12.config.v1.GeneralR\ageneral\x12&\n" +
+	"\x05debug\x18\x02 \x01(\v2\x10.config.v1.DebugR\x05debug\x12#\n" +
+	"\x04demo\x18\x03 \x01(\v2\x0f.config.v1.DemoR\x04demo\x12,\n" +
+	"\afilters\x18\x04 \x01(\v2\x12.config.v1.FiltersR\afilters\x12,\n" +
+	"\adiscord\x18\x05 \x01(\v2\x12.config.v1.DiscordR\adiscord\x12 \n" +
 	"\x03log\x18\a \x01(\v2\x0e.config.v1.LogR\x03log\x129\n" +
 	"\fgeo_location\x18\b \x01(\v2\x16.config.v1.GeoLocationR\vgeoLocation\x12,\n" +
 	"\apatreon\x18\t \x01(\v2\x12.config.v1.PatreonR\apatreon\x12 \n" +
@@ -2211,7 +2526,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\aRunMode\x12 \n" +
 	"\x1cRUN_MODE_RELEASE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eRUN_MODE_DEBUG\x10\x01\x12\x11\n" +
-	"\rRUN_MODE_TEST\x10\x03*6\n" +
+	"\rRUN_MODE_TEST\x10\x02*6\n" +
 	"\rFileServeMode\x12%\n" +
 	"!FILE_SERVE_MODE_LOCAL_UNSPECIFIED\x10\x00*N\n" +
 	"\fDemoStrategy\x12%\n" +
@@ -2232,11 +2547,11 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
 	"ACTION_GAG\x10\x01\x12\x0e\n" +
 	"\n" +
-	"ACTION_BAN\x10\x022\xb0\x01\n" +
+	"ACTION_BAN\x10\x022\xc4\x01\n" +
 	"\rConfigService\x129\n" +
-	"\x04Info\x12\x16.google.protobuf.Empty\x1a\x17.config.v1.InfoResponse\"\x00\x122\n" +
-	"\x03Get\x12\x16.google.protobuf.Empty\x1a\x11.config.v1.Config\"\x00\x120\n" +
-	"\x06Update\x12\x11.config.v1.Config\x1a\x11.config.v1.Config\"\x00B\xa2\x01\n" +
+	"\x04Info\x12\x16.google.protobuf.Empty\x1a\x17.config.v1.InfoResponse\"\x00\x127\n" +
+	"\x03Get\x12\x16.google.protobuf.Empty\x1a\x16.config.v1.GetResponse\"\x00\x12?\n" +
+	"\x06Update\x12\x18.config.v1.UpdateRequest\x1a\x19.config.v1.UpdateResponse\"\x00B\xa2\x01\n" +
 	"\rcom.config.v1B\vConfigProtoP\x01Z?github.com/leighmacdonald/gbans/internal/rpc/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
 	"Config::V1b\x06proto3"
 
@@ -2253,31 +2568,33 @@ func file_config_v1_config_proto_rawDescGZIP() []byte {
 }
 
 var file_config_v1_config_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_config_v1_config_proto_goTypes = []any{
-	(RunMode)(0),          // 0: config.v1.RunMode
-	(FileServeMode)(0),    // 1: config.v1.FileServeMode
-	(DemoStrategy)(0),     // 2: config.v1.DemoStrategy
-	(Level)(0),            // 3: config.v1.Level
-	(HostKeyStrategy)(0),  // 4: config.v1.HostKeyStrategy
-	(Action)(0),           // 5: config.v1.Action
-	(*InfoResponse)(nil),  // 6: config.v1.InfoResponse
-	(*General)(nil),       // 7: config.v1.General
-	(*Debug)(nil),         // 8: config.v1.Debug
-	(*Demo)(nil),          // 9: config.v1.Demo
-	(*Filters)(nil),       // 10: config.v1.Filters
-	(*Discord)(nil),       // 11: config.v1.Discord
-	(*Sourcemd)(nil),      // 12: config.v1.Sourcemd
-	(*Log)(nil),           // 13: config.v1.Log
-	(*GeoLocation)(nil),   // 14: config.v1.GeoLocation
-	(*Patreon)(nil),       // 15: config.v1.Patreon
-	(*SSH)(nil),           // 16: config.v1.SSH
-	(*Network)(nil),       // 17: config.v1.Network
-	(*LocalStore)(nil),    // 18: config.v1.LocalStore
-	(*Exports)(nil),       // 19: config.v1.Exports
-	(*Anticheat)(nil),     // 20: config.v1.Anticheat
-	(*Config)(nil),        // 21: config.v1.Config
-	(*emptypb.Empty)(nil), // 22: google.protobuf.Empty
+	(RunMode)(0),           // 0: config.v1.RunMode
+	(FileServeMode)(0),     // 1: config.v1.FileServeMode
+	(DemoStrategy)(0),      // 2: config.v1.DemoStrategy
+	(Level)(0),             // 3: config.v1.Level
+	(HostKeyStrategy)(0),   // 4: config.v1.HostKeyStrategy
+	(Action)(0),            // 5: config.v1.Action
+	(*InfoResponse)(nil),   // 6: config.v1.InfoResponse
+	(*General)(nil),        // 7: config.v1.General
+	(*Debug)(nil),          // 8: config.v1.Debug
+	(*Demo)(nil),           // 9: config.v1.Demo
+	(*Filters)(nil),        // 10: config.v1.Filters
+	(*Discord)(nil),        // 11: config.v1.Discord
+	(*Sourcemod)(nil),      // 12: config.v1.Sourcemod
+	(*Log)(nil),            // 13: config.v1.Log
+	(*GeoLocation)(nil),    // 14: config.v1.GeoLocation
+	(*Patreon)(nil),        // 15: config.v1.Patreon
+	(*SSH)(nil),            // 16: config.v1.SSH
+	(*Network)(nil),        // 17: config.v1.Network
+	(*LocalStore)(nil),     // 18: config.v1.LocalStore
+	(*Exports)(nil),        // 19: config.v1.Exports
+	(*Anticheat)(nil),      // 20: config.v1.Anticheat
+	(*UpdateRequest)(nil),  // 21: config.v1.UpdateRequest
+	(*UpdateResponse)(nil), // 22: config.v1.UpdateResponse
+	(*GetResponse)(nil),    // 23: config.v1.GetResponse
+	(*emptypb.Empty)(nil),  // 24: google.protobuf.Empty
 }
 var file_config_v1_config_proto_depIdxs = []int32{
 	0,  // 0: config.v1.General.mode:type_name -> config.v1.RunMode
@@ -2287,31 +2604,56 @@ var file_config_v1_config_proto_depIdxs = []int32{
 	3,  // 4: config.v1.Log.http_level:type_name -> config.v1.Level
 	4,  // 5: config.v1.SSH.host_key_strategy:type_name -> config.v1.HostKeyStrategy
 	5,  // 6: config.v1.Anticheat.action:type_name -> config.v1.Action
-	7,  // 7: config.v1.Config.general:type_name -> config.v1.General
-	8,  // 8: config.v1.Config.debug:type_name -> config.v1.Debug
-	9,  // 9: config.v1.Config.demo:type_name -> config.v1.Demo
-	10, // 10: config.v1.Config.filters:type_name -> config.v1.Filters
-	11, // 11: config.v1.Config.discord:type_name -> config.v1.Discord
-	12, // 12: config.v1.Config.sourcemd:type_name -> config.v1.Sourcemd
-	13, // 13: config.v1.Config.log:type_name -> config.v1.Log
-	14, // 14: config.v1.Config.geo_location:type_name -> config.v1.GeoLocation
-	15, // 15: config.v1.Config.patreon:type_name -> config.v1.Patreon
-	16, // 16: config.v1.Config.ssh:type_name -> config.v1.SSH
-	17, // 17: config.v1.Config.network:type_name -> config.v1.Network
-	18, // 18: config.v1.Config.local_store:type_name -> config.v1.LocalStore
-	19, // 19: config.v1.Config.exports:type_name -> config.v1.Exports
-	20, // 20: config.v1.Config.anticheat:type_name -> config.v1.Anticheat
-	22, // 21: config.v1.ConfigService.Info:input_type -> google.protobuf.Empty
-	22, // 22: config.v1.ConfigService.Get:input_type -> google.protobuf.Empty
-	21, // 23: config.v1.ConfigService.Update:input_type -> config.v1.Config
-	6,  // 24: config.v1.ConfigService.Info:output_type -> config.v1.InfoResponse
-	21, // 25: config.v1.ConfigService.Get:output_type -> config.v1.Config
-	21, // 26: config.v1.ConfigService.Update:output_type -> config.v1.Config
-	24, // [24:27] is the sub-list for method output_type
-	21, // [21:24] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	7,  // 7: config.v1.UpdateRequest.general:type_name -> config.v1.General
+	8,  // 8: config.v1.UpdateRequest.debug:type_name -> config.v1.Debug
+	9,  // 9: config.v1.UpdateRequest.demo:type_name -> config.v1.Demo
+	10, // 10: config.v1.UpdateRequest.filters:type_name -> config.v1.Filters
+	11, // 11: config.v1.UpdateRequest.discord:type_name -> config.v1.Discord
+	13, // 12: config.v1.UpdateRequest.log:type_name -> config.v1.Log
+	14, // 13: config.v1.UpdateRequest.geo_location:type_name -> config.v1.GeoLocation
+	15, // 14: config.v1.UpdateRequest.patreon:type_name -> config.v1.Patreon
+	16, // 15: config.v1.UpdateRequest.ssh:type_name -> config.v1.SSH
+	17, // 16: config.v1.UpdateRequest.network:type_name -> config.v1.Network
+	18, // 17: config.v1.UpdateRequest.local_store:type_name -> config.v1.LocalStore
+	19, // 18: config.v1.UpdateRequest.exports:type_name -> config.v1.Exports
+	20, // 19: config.v1.UpdateRequest.anticheat:type_name -> config.v1.Anticheat
+	7,  // 20: config.v1.UpdateResponse.general:type_name -> config.v1.General
+	8,  // 21: config.v1.UpdateResponse.debug:type_name -> config.v1.Debug
+	9,  // 22: config.v1.UpdateResponse.demo:type_name -> config.v1.Demo
+	10, // 23: config.v1.UpdateResponse.filters:type_name -> config.v1.Filters
+	11, // 24: config.v1.UpdateResponse.discord:type_name -> config.v1.Discord
+	13, // 25: config.v1.UpdateResponse.log:type_name -> config.v1.Log
+	14, // 26: config.v1.UpdateResponse.geo_location:type_name -> config.v1.GeoLocation
+	15, // 27: config.v1.UpdateResponse.patreon:type_name -> config.v1.Patreon
+	16, // 28: config.v1.UpdateResponse.ssh:type_name -> config.v1.SSH
+	17, // 29: config.v1.UpdateResponse.network:type_name -> config.v1.Network
+	18, // 30: config.v1.UpdateResponse.local_store:type_name -> config.v1.LocalStore
+	19, // 31: config.v1.UpdateResponse.exports:type_name -> config.v1.Exports
+	20, // 32: config.v1.UpdateResponse.anticheat:type_name -> config.v1.Anticheat
+	7,  // 33: config.v1.GetResponse.general:type_name -> config.v1.General
+	8,  // 34: config.v1.GetResponse.debug:type_name -> config.v1.Debug
+	9,  // 35: config.v1.GetResponse.demo:type_name -> config.v1.Demo
+	10, // 36: config.v1.GetResponse.filters:type_name -> config.v1.Filters
+	11, // 37: config.v1.GetResponse.discord:type_name -> config.v1.Discord
+	13, // 38: config.v1.GetResponse.log:type_name -> config.v1.Log
+	14, // 39: config.v1.GetResponse.geo_location:type_name -> config.v1.GeoLocation
+	15, // 40: config.v1.GetResponse.patreon:type_name -> config.v1.Patreon
+	16, // 41: config.v1.GetResponse.ssh:type_name -> config.v1.SSH
+	17, // 42: config.v1.GetResponse.network:type_name -> config.v1.Network
+	18, // 43: config.v1.GetResponse.local_store:type_name -> config.v1.LocalStore
+	19, // 44: config.v1.GetResponse.exports:type_name -> config.v1.Exports
+	20, // 45: config.v1.GetResponse.anticheat:type_name -> config.v1.Anticheat
+	24, // 46: config.v1.ConfigService.Info:input_type -> google.protobuf.Empty
+	24, // 47: config.v1.ConfigService.Get:input_type -> google.protobuf.Empty
+	21, // 48: config.v1.ConfigService.Update:input_type -> config.v1.UpdateRequest
+	6,  // 49: config.v1.ConfigService.Info:output_type -> config.v1.InfoResponse
+	23, // 50: config.v1.ConfigService.Get:output_type -> config.v1.GetResponse
+	22, // 51: config.v1.ConfigService.Update:output_type -> config.v1.UpdateResponse
+	49, // [49:52] is the sub-list for method output_type
+	46, // [46:49] is the sub-list for method input_type
+	46, // [46:46] is the sub-list for extension type_name
+	46, // [46:46] is the sub-list for extension extendee
+	0,  // [0:46] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_config_proto_init() }
@@ -2326,7 +2668,7 @@ func file_config_v1_config_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_config_proto_rawDesc), len(file_config_v1_config_proto_rawDesc)),
 			NumEnums:      6,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
