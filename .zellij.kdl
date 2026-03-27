@@ -5,7 +5,7 @@ layout {
         }
 
         pane command="just" size="16%" {
-            args "demostats_serve"
+            args "demostats-serve"
         }
 
         pane command="just" {

@@ -27,6 +27,10 @@ pkgs.mkShell {
     delve
     markdownlint-cli2
     sourcepawn-studio
+    buf
+    protoc-gen-go
+    protoc-gen-connect-go
+    oapi-codegen
     sql-formatter
     rcon-cli
   ];

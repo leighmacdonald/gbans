@@ -1,0 +1,229 @@
+syntax = "proto3";
+
+package config.v1;
+
+message InfoRequest {}
+
+message InfoResponse {
+  string site_name = 1;
+  string site_description = 2;
+  string asset_url = 3;
+  string favicon = 4;
+  string link_id = 5;
+  string app_version = 6;
+  string sentry_dsn_web = 7;
+  string document_policy = 8;
+  string patreon_client_id = 9;
+  string discord_client_id = 10;
+  bool discord_enabled = 11;
+  bool patring_enabled = 12;
+  string default_route = 13;
+  bool news_enabled = 14;
+  bool contests_enabled = 15;
+  bool wiki_enabled = 16;
+  bool stats_enabled = 17;
+  bool servers_enabled = 18;
+  bool reports_enabled = 19;
+  bool chatlogs_enabled = 20;
+  bool demos_enabled = 21;
+  bool speedruns_enabled = 22;
+  bool playerqueue_enabled = 23;
+  bool forums_enabled = 24;
+}
+
+service ConfigService {
+  rpc Info(InfoRequest) returns (InfoResponse) {}
+}
+
+enum RunMode {
+  RUN_MODE_RELEASE_UNSPECIFIED = 0;
+  RUN_MODE_DEBUG = 1;
+  RUN_MODE_TEST = 3;
+}
+
+enum FileServeMode {
+  FILE_SERVE_MODE_LOCAL_UNSPECIFIED = 0;
+}
+
+message General {
+  string site_name = 1;
+  string site_description = 2;
+  RunMode mode = 3;
+  FileServeMode file_serve_mode = 4;
+  string srcds_log_addr = 5;
+  string asset_url = 6;
+  string favicon = 7;
+  string default_route = 8;
+  bool news_enabled = 9;
+  bool forums_enabled = 10;
+  bool contests_enabled = 11;
+  bool wiki_enabled = 12;
+  bool stats_enabled = 13;
+  bool servers_enabled = 14;
+  bool reports_enabled = 15;
+  bool chatlogs_enabled = 16;
+  bool demos_enabled = 17;
+  bool speedruns_enabled = 18;
+  bool playerqueue_enabled = 19;
+  string sentry_dsn = 20;
+  string sentry_dsn_web = 21;
+}
+
+message Debug {
+  bool skip_open_id_validation = 1;
+  string add_rcon_log_address = 2;
+}
+
+enum DemoStrategy {
+  DEMO_STRATEGY_PCTFREE_UNSPECIFIED = 0;
+  DEMO_STRATEGY_COUNT = 1;
+}
+
+message Demo {
+  bool cleanup_enabled = 1;
+  DemoStrategy strategy = 2;
+  float cleanup_min_pct = 3;
+  string cleanup_mount = 4;
+  int64 count_limit = 5;
+  string parser_url = 6;
+}
+
+message Filters {
+  bool enabled = 1;
+  int32 warning_timeout = 2;
+  int32 warning_limit = 3;
+  bool dry = 4;
+  bool ping_discord = 5;
+  int32 max_weight = 6;
+  int32 check_timeout = 7;
+  int32 match_timeout = 8;
+}
+
+message Discord {
+  bool enabled = 1;
+  bool bot_enabled = 2;
+  bool integrations_enabled = 3;
+  string app_id = 4;
+  string app_secret = 5;
+  string link_id = 6;
+  string token = 7;
+  string guild_id = 8;
+  bool public_log_channel_enable = 9;
+  string log_channel_id = 10;
+  string public_match_log_channel_id = 11;
+  string vote_log_channel_id = 12;
+  string appeal_log_channel_id = 13;
+  string ban_log_channel_id = 14;
+  string forum_log_channel_id = 15;
+  string kick_log_channel_id = 16;
+  string playerqueue_channel_id = 17;
+  string mod_ping_role_id = 18;
+  string anticheat_channel_id = 19;
+  string seed_channel_id = 20;
+  string word_filter_log_channel_id = 21;
+  string chat_log_channel_id = 22;
+}
+
+message Sourcemd {
+  bool center_projectiles = 1;
+}
+
+enum Level {
+  LEVEL_ERROR_UNSPECIFIED = 0;
+  LEVEL_WARNING = 1;
+  LEVEL_INFO = 2;
+  LEVEL_DEBUG = 3;
+}
+
+message Log {
+  Level level = 1;
+  optional string file = 2;
+  bool http_enabled = 3;
+  bool http_otel_enabled = 4;
+  Level http_level = 5;
+}
+
+message GeoLocation {
+  bool enabled = 1;
+  string cache_path = 2;
+  string token = 3;
+}
+message Patreon {
+  bool enabled = 1;
+  bool integrations_enabled = 2;
+  string client_id = 3;
+  string client_secret = 4;
+  string creator_access_token = 5;
+  string creator_refresh_token = 6;
+}
+enum HostKeyStrategy {
+  HOST_KEY_STRATEGY_AUTO_ACCEPT_UNSPECIFIED = 0;
+  HOST_KEY_STRATEGY_ACCEPT_FIRST = 1;
+  HOST_KEY_STRATEGY_IGNORE_ALL = 2;
+}
+message SSH {
+  bool enabled = 1;
+  string username = 2;
+  int32 port = 3;
+  string private_key_path = 4;
+  HostKeyStrategy host_key_strategy = 5;
+  string password = 6;
+  int32 update_interval = 7;
+  int32 timeout = 8;
+  string demo_path_fmt = 9;
+  string stac_path = 10;
+}
+
+message Network {
+  bool sdr_enabled = 1;
+  bool sdr_dns_enabled = 2;
+  string cf_key = 3;
+  string cf_email = 4;
+  string cf_zone_id = 5;
+}
+
+message LocalStore {
+  string path_root = 1;
+}
+message Exports {
+  bool bd_enabled = 1;
+  bool valve_enabled = 2;
+  repeated string authorized_keys = 3;
+}
+
+enum Action {
+  ACTION_KICK_UNSPECIFIED = 0;
+  ACTION_GAG = 1;
+  ACTION_BAN = 2;
+}
+
+message Anticheat {
+  bool enabled = 1;
+  Action action = 2;
+  int32 duration = 3;
+  int32 max_aim_snaps = 4;
+  int32 max_psilent = 5;
+  int32 max_bhop = 6;
+  int32 max_fake_ang = 7;
+  int32 max_cmd_num = 8;
+  int32 max_too_many_connections = 9;
+  int32 max_oob_var = 10;
+  int32 max_invalid_user_cmd = 11;
+}
+
+message Config {
+  General general = 1;
+  Debug debug = 2;
+  Demo demo = 3;
+  Filters filters = 4;
+  Discord discord = 5;
+  Sourcemd sourcemd = 6;
+  Log log = 7;
+  GeoLocation geo_location = 8;
+  Patreon patreon = 9;
+  SSH ssh = 10;
+  Network network = 11;
+  LocalStore local_store = 12;
+  Exports exports = 13;
+  Anticheat anticheat = 14;
+}
