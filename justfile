@@ -6,19 +6,37 @@ alias d := dev
 
 all: frontend sourcemod buildp
 
-fmt: fmt-go fmt-md
+fmt: fmt-proto fmt-go fmt-md
 
 fmt-go:
     golangci-lint fmt
     just -f frontend/justfile fmt
 
+test-go:
+    go test -race ./...
+
+lint-nil:
+    nilaway -include-pkgs="github.com/leighmacdonald/gbans" -exclude-pkgs="github.com/jackc/pgx/v5" -test=false ./...
+
+lint-go:
+    golangci-lint run --timeout 3m ./...
+
+generate:
+    go generate ./...
+
+run:
+    go run -race . serve
+
+fmt-proto:
+    buf format -w
+
 fmt-md:
     markdownlint-cli2 --fix
 
-lint_md:
+lint-md:
     markdownlint-cli2
 
-bump_deps:
+bump-deps:
     go get -u ./...
     just -f frontend/justfile update
 
@@ -28,19 +46,13 @@ buildp:
 builds:
     goreleaser release --clean --snapshot
 
-generate:
-    go generate ./...
-
 serve:
     just -f frontend/justfile serve
 
 frontend:
     just -f frontend/justfile
 
-run:
-    go run -race . serve
-
-run_forever:
+run-forever:
     while true; do go run -race . serve; sleep 1; done
 
 air:
@@ -49,7 +61,7 @@ air:
 sourcemod:
     just -f sourcemod/justfile
 
-sourcemod_devel: sourcemod
+sourcemod-devel: sourcemod
     docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/
     docker restart srcds-localhost-1
 
@@ -58,27 +70,21 @@ test: test-go test-ts
 test-ts:
     just -f frontend/justfile test
 
-test-go:
-    go test -race ./...
-
-check: lint_go vulncheck lint_ts typecheck_ts lint_md
+check: lint-go vulncheck lint-ts typecheck-ts lint-md
 
 vulncheck:
     govulncheck
 
-lint_nil:
-    nilaway -include-pkgs="github.com/leighmacdonald/gbans" -exclude-pkgs="github.com/jackc/pgx/v5" -test=false ./...
-
-lint_go:
-    golangci-lint run --timeout 3m ./...
+lint-proto:
+    buf lint
 
 fix: fmt
     golangci-lint run --fix
 
-lint_ts:
+lint-ts:
     just -f frontend/justfile lint
 
-typecheck_ts:
+typecheck-ts:
     just -f frontend/justfile typecheck
 
 clean:
@@ -87,31 +93,31 @@ clean:
     just -f frontend/justfile clean
     rm -rf ./sourcemod/plugins/gbans.smx
 
-docker_dump:
+docker-dump:
     docker exec gbans-postgres pg_dump -U gbans > gbans.sql
 
-docker_restore:
+docker-restore:
     cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans
 
-run_docker_snapshot: builds
+run-docker-snapshot: builds
     docker run -it -v ./gbans.yml:/app/gbans.yml -v ./.cache:/app/.cache -p 6006:6006 ghcr.io/leighmacdonald/gbans:latest-amd64
 
-docs_install:
+docs-install:
     just -f docs/justfile install
 
-docs_start:
+docs-start:
     just -f docs/justfile start
 
-docs_deploy:
+docs-deploy:
     just -f docs/justfile deploy
 
-docs_build:
+docs-build:
     just -f docs/justfile build
 
 db:
     pushd docker && ./dev_db.sh
 
-demostats_serve:
+demostats-serve:
     ../tf2_demostats/dist/cli_x86_64-unknown-linux-musl/tf2_demostats update --api-key $STEAM_KEY
     ../tf2_demostats/dist/cli_x86_64-unknown-linux-musl/tf2_demostats serve
 
