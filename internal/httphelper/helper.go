@@ -185,12 +185,17 @@ type ResultsCount struct {
 }
 
 func NewServer(listenAddr string, handler http.Handler) *http.Server {
+	protocols := new(http.Protocols)
+	protocols.SetHTTP1(true)
+	protocols.SetUnencryptedHTTP2(true)
+
 	httpServer := &http.Server{
 		Addr:           listenAddr,
 		Handler:        handler,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   120 * time.Second,
 		MaxHeaderBytes: 1 << 20,
+		Protocols:      protocols,
 	}
 
 	return httpServer

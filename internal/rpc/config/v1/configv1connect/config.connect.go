@@ -45,8 +45,8 @@ const (
 // ConfigServiceClient is a client for the config.v1.ConfigService service.
 type ConfigServiceClient interface {
 	Info(context.Context, *emptypb.Empty) (*v1.InfoResponse, error)
-	Get(context.Context, *emptypb.Empty) (*v1.Config, error)
-	Update(context.Context, *v1.Config) (*v1.Config, error)
+	Get(context.Context, *emptypb.Empty) (*v1.GetResponse, error)
+	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
 }
 
 // NewConfigServiceClient constructs a client for the config.v1.ConfigService service. By default,
@@ -66,13 +66,13 @@ func NewConfigServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(configServiceMethods.ByName("Info")),
 			connect.WithClientOptions(opts...),
 		),
-		get: connect.NewClient[emptypb.Empty, v1.Config](
+		get: connect.NewClient[emptypb.Empty, v1.GetResponse](
 			httpClient,
 			baseURL+ConfigServiceGetProcedure,
 			connect.WithSchema(configServiceMethods.ByName("Get")),
 			connect.WithClientOptions(opts...),
 		),
-		update: connect.NewClient[v1.Config, v1.Config](
+		update: connect.NewClient[v1.UpdateRequest, v1.UpdateResponse](
 			httpClient,
 			baseURL+ConfigServiceUpdateProcedure,
 			connect.WithSchema(configServiceMethods.ByName("Update")),
@@ -84,8 +84,8 @@ func NewConfigServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 // configServiceClient implements ConfigServiceClient.
 type configServiceClient struct {
 	info   *connect.Client[emptypb.Empty, v1.InfoResponse]
-	get    *connect.Client[emptypb.Empty, v1.Config]
-	update *connect.Client[v1.Config, v1.Config]
+	get    *connect.Client[emptypb.Empty, v1.GetResponse]
+	update *connect.Client[v1.UpdateRequest, v1.UpdateResponse]
 }
 
 // Info calls config.v1.ConfigService.Info.
@@ -98,7 +98,7 @@ func (c *configServiceClient) Info(ctx context.Context, req *emptypb.Empty) (*v1
 }
 
 // Get calls config.v1.ConfigService.Get.
-func (c *configServiceClient) Get(ctx context.Context, req *emptypb.Empty) (*v1.Config, error) {
+func (c *configServiceClient) Get(ctx context.Context, req *emptypb.Empty) (*v1.GetResponse, error) {
 	response, err := c.get.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -107,7 +107,7 @@ func (c *configServiceClient) Get(ctx context.Context, req *emptypb.Empty) (*v1.
 }
 
 // Update calls config.v1.ConfigService.Update.
-func (c *configServiceClient) Update(ctx context.Context, req *v1.Config) (*v1.Config, error) {
+func (c *configServiceClient) Update(ctx context.Context, req *v1.UpdateRequest) (*v1.UpdateResponse, error) {
 	response, err := c.update.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -118,8 +118,8 @@ func (c *configServiceClient) Update(ctx context.Context, req *v1.Config) (*v1.C
 // ConfigServiceHandler is an implementation of the config.v1.ConfigService service.
 type ConfigServiceHandler interface {
 	Info(context.Context, *emptypb.Empty) (*v1.InfoResponse, error)
-	Get(context.Context, *emptypb.Empty) (*v1.Config, error)
-	Update(context.Context, *v1.Config) (*v1.Config, error)
+	Get(context.Context, *emptypb.Empty) (*v1.GetResponse, error)
+	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
 }
 
 // NewConfigServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -168,10 +168,10 @@ func (UnimplementedConfigServiceHandler) Info(context.Context, *emptypb.Empty) (
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("config.v1.ConfigService.Info is not implemented"))
 }
 
-func (UnimplementedConfigServiceHandler) Get(context.Context, *emptypb.Empty) (*v1.Config, error) {
+func (UnimplementedConfigServiceHandler) Get(context.Context, *emptypb.Empty) (*v1.GetResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("config.v1.ConfigService.Get is not implemented"))
 }
 
-func (UnimplementedConfigServiceHandler) Update(context.Context, *v1.Config) (*v1.Config, error) {
+func (UnimplementedConfigServiceHandler) Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("config.v1.ConfigService.Update is not implemented"))
 }

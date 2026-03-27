@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,6 +13,8 @@ import (
 	"syscall"
 	"time"
 
+	"connectrpc.com/connect"
+	"connectrpc.com/validate"
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
@@ -50,6 +53,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var (
@@ -517,11 +521,12 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	mux := http.NewServeMux()
 
 	api := http.NewServeMux()
-	api.Handle(configv1connect.NewConfigServiceHandler(&config.RPC{}))
+	api.Handle(configv1connect.NewConfigServiceHandler(
+		&config.RPC{Configuration: g.config},
+		connect.WithInterceptors(validate.NewInterceptor())))
 
-	mux.Handle("/connect", http.StripPrefix("/connect", api))
-
-	mux.HandleFunc("/", router.Handler().ServeHTTP)
+	mux.Handle("/connect/", http.StripPrefix("/connect", api))
+	mux.Handle("/", router)
 
 	httpServer := httphelper.NewServer(conf.Addr(), mux)
 
@@ -539,6 +544,14 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	}()
 
 	slog.Info("Starting HTTP server", slog.String("address", conf.Addr()), slog.String("url", conf.ExternalURL))
+
+	go func() {
+		time.Sleep(time.Second * 2)
+		client := configv1connect.NewConfigServiceClient(http.DefaultClient, "http://localhost:6006/connect")
+		resp, err := client.Info(context.Background(), &emptypb.Empty{})
+		fmt.Println(resp)
+		fmt.Println(err)
+	}()
 
 	if errServe := httpServer.ListenAndServe(); errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
 		slog.Error("HTTP server returned error", slog.String("error", errServe.Error()))
