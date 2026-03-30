@@ -22,13 +22,16 @@ import { ColourModeContext } from "../contexts/ColourModeContext.tsx";
 import { UserFlashCtx } from "../contexts/UserFlashCtx.tsx";
 import { type ApiError, isApiError } from "../error.tsx";
 import type { appInfoDetail } from "../schema/app.ts";
+import type { InfoResponse } from "../gen/config/v1/config_pb.ts";
+import { useAuth } from "../hooks/useAuth.ts";
+import { PermissionLevel } from "../schema/people.ts";
 import { createThemeByMode } from "../theme.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
 type RouterContext = {
 	auth?: AuthContextProps;
 	queryClient: QueryClient;
-	appInfo: appInfoDetail;
+	appInfo: InfoResponse;
 	title: (title?: string) => { title: string };
 };
 
@@ -39,13 +42,13 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		meta: [
 			match.context.title(),
 			{ name: "og:type", content: "website" },
-			{ name: "og:title", content: match.context.appInfo.site_name ?? "gbans" },
+			{ name: "og:title", content: match.context.appInfo.siteName ?? "gbans" },
 			{ name: "og:image", content: match.context.appInfo.favicon ?? "" },
 			{ name: "og:url", content: window.location.href },
 			{
 				name: "og:description",
 				content:
-					match.context.appInfo.site_description ??
+					match.context.appInfo.siteDescription ??
 					"gbans is a web application for managing Team Fortress 2 communities",
 			},
 		],

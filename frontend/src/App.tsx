@@ -1,3 +1,4 @@
+import { TransportProvider } from "@connectrpc/connect-query";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type AnyRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode, useState } from "react";
@@ -5,6 +6,7 @@ import { defaultAvatarHash } from "./api";
 import { AuthProvider, profileKey } from "./auth.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import { PermissionLevel } from "./schema/people.ts";
+import { finalTransport } from "./transport.ts";
 import { logErr } from "./util/errors.ts";
 
 const loadProfile = () => {
@@ -37,11 +39,13 @@ export function App({ queryClient, router }: { queryClient: QueryClient; router:
 
 	return (
 		<AuthProvider profile={profile} setProfile={setProfile}>
-			<QueryClientProvider client={queryClient}>
-				<StrictMode>
-					<InnerApp router={router} />
-				</StrictMode>
-			</QueryClientProvider>
+			<TransportProvider transport={finalTransport}>
+				<QueryClientProvider client={queryClient}>
+					<StrictMode>
+						<InnerApp router={router} />
+					</StrictMode>
+				</QueryClientProvider>
+			</TransportProvider>
 		</AuthProvider>
 	);
 }

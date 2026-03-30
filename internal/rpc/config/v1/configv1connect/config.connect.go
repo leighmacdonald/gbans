@@ -64,6 +64,7 @@ func NewConfigServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			httpClient,
 			baseURL+ConfigServiceInfoProcedure,
 			connect.WithSchema(configServiceMethods.ByName("Info")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
 		get: connect.NewClient[emptypb.Empty, v1.GetResponse](
@@ -133,6 +134,7 @@ func NewConfigServiceHandler(svc ConfigServiceHandler, opts ...connect.HandlerOp
 		ConfigServiceInfoProcedure,
 		svc.Info,
 		connect.WithSchema(configServiceMethods.ByName("Info")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
 	configServiceGetHandler := connect.NewUnaryHandlerSimple(

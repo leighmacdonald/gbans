@@ -4,11 +4,11 @@ import { createRouter } from "@tanstack/react-router";
 import { ErrorDetails } from "./component/ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./component/LoadingPlaceholder.tsx";
 import { AppError, ErrorCode } from "./error.tsx";
+import type { InfoResponse } from "./gen/config/v1/config_pb.ts";
 import { routeTree } from "./routeTree.gen.ts";
-import type { appInfoDetail } from "./schema/app.ts";
 import { toTitleCase } from "./util/text.tsx";
 
-export const newRouter = (queryClient: QueryClient, appInfo: appInfoDetail) => {
+export const newRouter = (queryClient: QueryClient, appInfo: InfoResponse) => {
 	return createRouter({
 		routeTree,
 		defaultPreload: "intent",
@@ -16,7 +16,7 @@ export const newRouter = (queryClient: QueryClient, appInfo: appInfoDetail) => {
 			queryClient,
 			appInfo,
 			title: (title?: string) => {
-				return { title: title ? `${toTitleCase(title)} - ${appInfo.site_name}` : appInfo.site_name };
+				return { title: title ? `${toTitleCase(title)} - ${appInfo.siteName}` : appInfo.siteName };
 			},
 		},
 		defaultPendingComponent: LoadingPlaceholder,

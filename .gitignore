@@ -77,3 +77,4 @@ id_stv*
 *.vdf
 !buf*.yaml
 !.env-example
+*.vdf

@@ -1,0 +1,72 @@
+edition = "2023";
+
+package mge.v1;
+
+import "google/protobuf/timestamp.proto";
+import "filter.proto";
+
+service MGEService {
+  rpc GetRatingsOverall(GetRatingsOverallRequest) returns (GetRatingsOverallResponse);
+  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse);
+}
+
+message GetRatingsOverallRequest {
+  Filter filter = 1;
+  string steam_id = 2;
+}
+
+message PlayerStats {
+  int32 stats_id = 1;
+  int32 rating = 2;
+  string steam_id = 3;
+  string persona_name = 4;
+  string avatar_hash = 5;
+  string name = 6;
+  int32 wins = 7;
+  int32 losses = 8;
+  google.protobuf.Timestamp last_play = 9;
+}
+
+message GetRatingsOverallResponse {
+  repeated PlayerStats stats = 1;
+}
+
+enum DuelMode {
+  DUEL_MODE_ONE_VS_ONE_UNSPECIFIED = 0;
+  DUEL_MODE_TWO_VS_TWO = 1;
+}
+
+message GetHistoryRequest{
+  Filter filter = 1;
+  DuelMode mode = 2;
+  string winner = 3;
+  string winner2 = 4;
+  string loser = 5;
+  string loser2 = 6;
+}
+
+message Duel {
+  int32 duel_id = 1;
+  string winner = 2;
+  string winner_avatar_hash = 3;
+  string winner_persona_name = 4;
+  string winner2 = 5;
+  string winner2_avatar_hash = 6;
+  string winner2_persona_name = 7;
+  string loser = 8;
+  string loser_avatar_hash = 9;
+  string loser_persona_name = 10;
+  string loser2 = 11;
+  string loser2_avatar_hash = 12;
+  string loser2_persona_name = 13;
+  int32 winner_score = 14;
+  int32 loser_score = 15;
+  int32 win_limit = 16;
+   google.protobuf.Timestamp game_time = 17;
+   string map_name = 18;
+   string arena_name = 19;
+
+}
+message GetHistoryResponse {
+
+}

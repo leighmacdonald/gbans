@@ -1,0 +1,25 @@
+edition = "2023";
+
+package servers.v1;
+
+import "ban/v1/ban.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service ServersService {
+  rpc State(google.protobuf.Empty) returns (StateResponse);
+  rpc Servers(ServersRequest) returns (ServersResponse);
+  rpc EditServer(EditServerRequest) returns (EditServerResponse);
+  rpc DeleteServer(DeleteServerRequest) returns (DeleteServerResponse);
+  rpc ServersAdmin(google.protobuf.Empty) returns (ServersAdminResponse);
+}
+
+message StateResponse {}
+
+message ServersRequest{}
+message ServersResponse{}
+message EditServerRequest{}
+message EditServerResponse{}
+message DeleteServerRequest{}
+message DeleteServerResponse{}
+message ServersAdminResponse{}

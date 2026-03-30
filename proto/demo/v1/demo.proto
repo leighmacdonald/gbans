@@ -1,0 +1,30 @@
+edition = "2023";
+
+package servers.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service DemoService {
+  rpc GetGemos(google.protobuf.Empty) returns (GetDemosResponse);
+  rpc RunCleanup(google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message GetDemosResponse {
+  repeated Demo demos = 1;
+}
+
+message Demo {
+  int64 demo_id = 1;
+  int32 server_id = 2;
+  string server_name_short = 3;
+  string server_name_long = 4;
+  string title = 5;
+  google.protobuf.Timestamp created_on = 6;
+  int64 downloads = 7;
+  int64 size = 8;
+  string map_name = 9;
+  bool archive = 10;
+  map<string, string> stats = 11;
+  string asset_id = 12;
+}

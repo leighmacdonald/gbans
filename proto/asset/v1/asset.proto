@@ -1,0 +1,33 @@
+edition = "2023";
+
+package asset.v1;
+
+import "google/protobuf/timestamp.proto";
+import "filter.proto";
+
+service AssetService {
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
+}
+
+message DeleteRequest {
+  string asset_id = 1;
+}
+message DeleteResponse {}
+
+message CreateRequest {}
+message CreateResponse {}
+
+
+message Asset {
+  string asset_id =1;
+  string bucket = 2;
+  string author_id = 3;
+  string hash = 4;
+  bool is_private = 5;
+  string mime_type = 6;
+  string name = 7;
+  int64 size = 8;
+  google.protobuf.Timestamp created_on = 9;
+  google.protobuf.Timestamp updated_on = 10;
+}

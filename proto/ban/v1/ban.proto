@@ -1,0 +1,101 @@
+edition = "2023";
+
+package ban.v1;
+
+import "filter.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+enum AppealState {
+  APPEAL_STATE_OPEN_UNSPECIFIED = 0;
+  APPEAL_STATE_DENIED = 1;
+  APPEAL_STATE_ACCEPTED = 2;
+  APPEAL_STATE_REDUCED = 3;
+  APPEAL_STATE_NO_APPEAL = 4;
+}
+
+enum BanReason {
+  BAN_REASON_UNSPECIFIED = 0;
+  BAN_REASON_CUSTOM = 1;
+  BAN_REASON_EXTERNAL = 2;
+  BAN_REASON_CHEATING = 3;
+  BAN_REASON_RACISM = 4;
+  BAN_REASON_HARASSMENT = 5;
+  BAN_REASON_EXPLOITING = 6;
+  BAN_REASON_WARNINGS_EXCEEDED = 7;
+  BAN_REASON_SPAM = 8;
+  BAN_REASON_LANGUAGE = 9;
+  BAN_REASON_PROFILE = 10;
+  BAN_REASON_ITEM_DESCRIPTIONS = 11;
+  BAN_REASON_BOT_HOST = 12;
+  BAN_REASON_EVADING = 13;
+  BAN_REASON_USERNAME = 14;
+}
+
+service BanService {
+  rpc Query(QueryRequest) returns (QueryResponse) {}
+  rpc ExportTF2BD(google.protobuf.Empty) returns (ExportTF2BDResponse) {}
+  // rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty) {}
+}
+
+message ExportTF2BDResponse {}
+
+message DeleteRequest {
+  int64 ban_id = 1;
+}
+
+message QueryRequest {
+  string source_id = 1;
+  string target_id = 2;
+  bool groups_only = 3;
+  bool deleted = 4;
+  string cidr = 5;
+  bool cidr_only = 6;
+  repeated BanReason reason = 7;
+  int32 appeal_state = 8;
+}
+
+enum BanType {
+  BAN_TYPE_OK_UNSPECIFIED = 0;
+  BAN_TYPE_NO_COMM = 1;
+  BAN_TYPE_BANNED = 2;
+  BAN_TYPE_NETWORK = 3;
+}
+
+message QueryResponse {
+  repeated Ban bans = 1;
+}
+enum Origin {
+  ORIGIN_SYSTEM_UNSPECIFIED = 0;
+  ORIGIN_BOT = 1;
+  ORIGIN_WEB = 2;
+  ORIGIN_IN_GAME = 3;
+  ORIGIN_REPORTED = 4;
+}
+message Ban {
+  string target_id = 1;
+  string source_id = 2;
+  int64 ban_id = 3;
+  int64 report_id = 4;
+  string last_ip = 5;
+  bool evade_ok = 6;
+  BanType bantype = 7;
+  BanReason reason = 8;
+  string reason_text = 9;
+  string unban_reason_text = 10;
+  string note = 11;
+  Origin origin = 12;
+  string cidr = 13;
+  AppealState appeal_state = 14;
+  string name = 15;
+  bool deleted = 16;
+  bool is_enabled = 17;
+  google.protobuf.Timestamp valid_until = 18;
+  google.protobuf.Timestamp created_on = 19;
+  google.protobuf.Timestamp updated_on = 20;
+  string source_personaname = 21;
+  string source_avatarhash = 22;
+  string target_personaname = 23;
+  string target_avatarhash = 24;
+}

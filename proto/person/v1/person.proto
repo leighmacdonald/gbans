@@ -1,0 +1,116 @@
+edition = "2023";
+
+package person.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+import "filter.proto";
+import "privilege.proto";
+
+service PersonService {
+  rpc CurrentProfile(google.protobuf.Empty) returns (CurrentProfileResponse);
+  rpc ProfileSettings(google.protobuf.Empty) returns (ProfileSettingsResponse);
+  rpc EditProfileSettings(EditProfileSettingsRequest) returns (EditProfileSettingsResponse);
+  rpc Query(QueryRequest) returns (QueryResponse);
+  rpc EditPermissions(EditPermissionsRequest) returns (EditPermissionsResponse);
+
+}
+
+message Settings {
+  int64 person_settings_id = 1;
+  string steam_id = 2;
+  string forum_signature = 3;
+  bool forum_profile_messages    = 4;
+  bool stats_hidden = 5;
+  bool center_projectiles =6;
+  google.protobuf.Timestamp created_on = 7;
+  google.protobuf.Timestamp updated_on = 8;
+}
+
+message EditProfileSettingsRequest {
+  string forum_signature = 1;
+  bool forum_profile_messages    = 2;
+  bool stats_hidden = 3;
+  bool center_projectiles =4;
+}
+
+message PersonCore {
+  string steam_id = 1;
+  Privilege permission_level = 2;
+  string name = 3;
+  string avatar_hash = 4;
+  string discord_id = 5;
+  int32 vac_bans = 6;
+  int32 game_bans = 7;
+  int64 ban_id = 8;
+  google.protobuf.Timestamp time_created = 9;
+}
+
+message CurrentProfileResponse {
+  PersonCore person = 1;
+}
+message ProfileSettingsResponse{}
+
+message EditProfileSettingsResponse{}
+
+message EditPermissionsRequest{
+  string steam_id = 1;
+  Privilege permission_level = 2;
+}
+
+message EditPermissionsResponse{
+  Person person = 1;
+}
+
+message QueryRequest{
+  Filter filter = 1;
+  string persona_name = 2;
+  repeated Privilege with_permissions = 3;
+  string discord_id  =4;
+  repeated string steam_ids = 5;
+  int32 vac_bans = 6;
+  int32 game_bans = 7;
+  string avatar_hash = 8;
+  bool community_banned = 9;
+  google.protobuf.Timestamp time_created_after = 10;
+  google.protobuf.Timestamp time_created_before = 11;
+}
+
+message Person {
+  string steam_id = 1;
+  google.protobuf.Timestamp created_on = 2;
+  google.protobuf.Timestamp updated_on =3;
+  Privilege permission_level = 4;
+  bool muted = 5;
+  string discord_id = 6;
+  string patreon_id = 7;
+  string ip_addr = 8;
+  bool community_banned = 9;
+  int32 vac_bans = 10;
+  int32 game_bans = 11;
+  string economy_ban = 12;
+  int32 days_since_last_ban = 13;
+  google.protobuf.Timestamp updated_on_steam = 14;
+  int32 playerqueue_chat_status = 15;
+  string playerqueue_chat_reason = 16;
+  string avatar_hash = 17;
+  int64 comment_permission = 18;
+  int64 last_logoff = 19;
+  int64 loc_city_id = 20;
+  string loc_country_code = 21;
+  string loc_state_code = 22;
+  string persona_name = 23;
+  int32 persona_state = 24;
+  int32 persona_state_flags = 25;
+  string primary_clan_id = 26;
+  int64 profile_state = 27;
+  string profile_url = 28;
+  string real_name = 29;
+   google.protobuf.Timestamp time_created = 30;
+   int64 visibility_state = 31;
+
+}
+message QueryResponse{
+  repeated PersonCore people = 1;
+}

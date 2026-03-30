@@ -1,0 +1,106 @@
+edition = "2023";
+package sourcemod.v1;
+
+import "ban/v1/ban.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+
+service SourcemodService {
+  rpc Groups(google.protobuf.Empty) returns (GroupsResponse) {}
+  rpc CreateGroups(CreateGroupsRequest) returns (CreateGroupsResponse) {}
+  rpc EditGroups(EditGroupsRequest) returns (EditGroupsResponse) {}
+  rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {}
+  rpc GroupOverrides(GroupOverridesRequest) returns (GroupOverridesResponse) {}
+  rpc CreateGroupOverride(CreateGroupOverrideRequest) returns (CreateGroupOverrideResponse) {}
+  rpc EditGroupOverride(EditGroupOverrideRequest) returns (EditGroupOverrideResponse) {}
+  rpc DeleteGroupOverride(DeleteGroupOverrideRequest) returns (DeleteGroupOverrideResponse) {}
+
+  rpc Admins(google.protobuf.Empty) returns (AdminsResponse) {}
+  rpc CreateAdmin(CreateAdminRequest) returns (CreateAdminResponse) {}
+  rpc EditAdmin(EditAdminRequest) returns (EditAdminResponse) {}
+  rpc DeleteAdmin(DeleteAdminRequest) returns (DeleteAdminResponse) {}
+  rpc AddAdminGroup(AddAdminGroupRequest) returns (AddAdminGroupResponse) {}
+  rpc DeleteAdminGroup(DeleteAdminGroupRequest) returns (DeleteAdminGroupResponse) {}
+
+  rpc Overrides(google.protobuf.Empty) returns (OverridesResponse) {}
+  rpc CreateOverrides(CreateOverridesRequest) returns (CreateOverridesResponse) {}
+  rpc EditOverrides(EditOverridesRequest) returns (EditOverridesResponse) {}
+  rpc DeleteOverrides(DeleteOverridesRequest) returns (DeleteOverridesResponse) {}
+
+  rpc GroupImmunities(google.protobuf.Empty) returns (GroupImmunitiesResponse) {}
+  rpc CreateImmunity(CreateImmunityRequest) returns (CreateImmunityResponse) {}
+  rpc DeleteImmunity(DeleteImmunityRequest) returns (DeleteImmunityResponse) {}
+}
+
+message GroupsResponse{}
+message CreateGroupsRequest {}
+message CreateGroupsResponse {}
+message EditGroupsRequest {}
+message EditGroupsResponse {}
+message DeleteGroupRequest {}
+message DeleteGroupResponse {}
+message GroupOverridesRequest {}
+message GroupOverridesResponse {}
+message CreateGroupOverrideRequest {}
+message CreateGroupOverrideResponse {}
+message EditGroupOverrideRequest {}
+message EditGroupOverrideResponse {}
+message DeleteGroupOverrideRequest {}
+message DeleteGroupOverrideResponse {}
+
+message AdminsResponse {}
+message CreateAdminRequest {}
+message CreateAdminResponse {}
+message EditAdminRequest {}
+message EditAdminResponse {}
+message DeleteAdminRequest {}
+message DeleteAdminResponse {}
+message AddAdminGroupRequest {}
+message AddAdminGroupResponse {}
+message DeleteAdminGroupRequest {}
+message DeleteAdminGroupResponse {}
+
+message OverridesRequest {}
+message OverridesResponse {}
+message CreateOverridesRequest {}
+message CreateOverridesResponse {}
+message EditOverridesRequest {}
+message EditOverridesResponse {}
+message DeleteOverridesRequest {}
+message DeleteOverridesResponse {}
+
+message GroupImmunitiesRequest {}
+message GroupImmunitiesResponse {}
+message CreateImmunityRequest {}
+message CreateImmunityResponse {}
+message DeleteImmunityRequest {}
+message DeleteImmunityResponse {}
+
+message Group {
+  int32 group_id = 1;
+  string flags = 2;
+  string name = 3;
+  int32 immunity_level = 4;
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
+}
+
+message GroupImmunity {
+  int32 group_id = 1;
+  Group group = 2;
+  Group other = 3;
+  google.protobuf.Timestamp created_on = 4;
+}
+
+enum OverrideType {
+  OVERRIDE_TYPE_COMMAND_UNSPECIFIED = 0;
+  OVERRIDE_TYPE_GROUP = 1;
+}
+
+message GroupOverride {
+  int32 group_override_id = 1;
+  int32 group_id = 2;
+  OverrideType type = 3;
+  string name = 4;
+}

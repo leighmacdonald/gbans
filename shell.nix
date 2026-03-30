@@ -16,11 +16,12 @@ pkgs.mkShell {
   buildInputs = with pkgs; [
     # libpcap
     # gcc
+    go
     golangci-lint
     goreleaser
     nilaway
     nodejs
-    pnpm
+    pnpm_10
     just
     just-lsp
     nil
@@ -35,8 +36,12 @@ pkgs.mkShell {
     protoc-gen-go
     protoc-gen-connect-go
     oapi-codegen
-    protobuf-language-server
     sql-formatter
+    protoc-gen-es
+    protobuf-language-server
     rcon-cli
+    protols
+    clang-tools
+    govulncheck
   ];
 }

@@ -1,0 +1,36 @@
+edition = "2023";
+
+package wiki.v1;
+
+import "google/protobuf/timestamp.proto";
+import "privilege.proto";
+
+service WikiService {
+  rpc Get(GetRequest) returns (GetResponse) {}
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+}
+
+message Wiki {
+  string slug = 1;
+  string body_md = 2;
+  int32 revision = 3;
+  Privilege permission_level = 4;
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
+}
+
+message GetRequest {
+  string slug = 1;
+}
+
+message GetResponse {
+  Wiki wiki = 1;
+}
+
+message UpdateRequest {
+  Wiki wiki = 1;
+}
+
+message UpdateResponse {
+  Wiki wiki = 1;
+}

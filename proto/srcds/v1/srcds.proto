@@ -1,0 +1,68 @@
+edition = "2023";
+
+package servers.v1;
+
+import "ban/v1/ban.proto";
+import "sourcemod/v1/sourcemod.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service SRCDSService {
+  rpc Check(CheckRequest) returns (CheckResponse) {}
+  rpc Overrides(google.protobuf.Empty) returns (OverridesResponse) {}
+  rpc Users(google.protobuf.Empty) returns (UsersResponse) {}
+  rpc Groups(google.protobuf.Empty) returns (GroupsResponse) {}
+  rpc Seed(SeedRequest) returns (google.protobuf.Empty) {}
+}
+
+message SeedRequest {
+  string steam_id = 1;
+  int32 server_id = 2;
+}
+
+message CheckRequest {
+  int32 client_id = 1;
+  BanType ban_type = 2;
+  string ip = 3;
+  string name = 4;
+}
+
+message CheckResponse {
+  int32 client_id = 1;
+  BanType ban_type = 2;
+  string msg = 3;
+}
+
+message Override {
+  int32 override_id = 1;
+  OverrideType type = 2;
+  string name = 3;
+  string flags = 4;
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
+}
+
+message OverridesResponse {
+  repeated Override overrides = 1;
+}
+
+message Admin {
+  int32 admin_id = 1;
+  string steam_id = 2;
+  AuthType auth_type = 3;
+  string identity = 4;
+  string password = 5;
+  string name = 6;
+  int32 immunity = 7;
+  repeated Group groups = 8;
+  google.protobuf.Timestamp created_on = 9;
+  google.protobuf.Timestamp updated_on = 10;
+}
+
+message UsersResponse {
+  repeated Admin admins = 1;
+}
+
+message GroupsResponse {
+  repeated Group groups = 1;
+}

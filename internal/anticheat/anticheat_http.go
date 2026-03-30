@@ -27,6 +27,7 @@ func NewAnticheatHandler(engine *gin.Engine, authenticator httphelper.Authentica
 	}
 }
 
+// TODO Remove and just use query
 func (h antiCheatHandler) bySteamID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		steamID, idFound := httphelper.GetSID64Param(ctx, "steam_id")
@@ -45,6 +46,7 @@ func (h antiCheatHandler) bySteamID() gin.HandlerFunc {
 	}
 }
 
+// TODO Remove and just use query
 func (h antiCheatHandler) byDetection() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		detectionType, typeFound := httphelper.GetStringParam(ctx, "detection_type")
