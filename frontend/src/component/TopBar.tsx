@@ -46,10 +46,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { type MenuItemData, NestedDropdown } from "mui-nested-menu";
 import { type JSX, type MouseEvent, useCallback, useMemo, useState } from "react";
 import { apiGetNotifications } from "../api";
+import type { InfoResponse } from "../gen/config/v1/config_pb.ts";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useColourModeCtx } from "../hooks/useColourModeCtx.ts";
 import steamLogo from "../icons/steam_login_sm.png";
-import type { appInfoDetail } from "../schema/app.ts";
 import { PermissionLevel, type UserNotification } from "../schema/people.ts";
 import { tf2Fonts } from "../theme";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
@@ -62,7 +62,7 @@ interface menuRoute {
 	icon: JSX.Element;
 }
 
-export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
+export const TopBar = ({ appInfo }: { appInfo: InfoResponse }) => {
 	const { profile, hasPermission, isAuthenticated } = useAuth();
 
 	const { data: notifications, isLoading } = useQuery({
@@ -118,28 +118,28 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 				icon: <DashboardIcon color={"primary"} sx={topColourOpts} />,
 			},
 		];
-		if (appInfo.servers_enabled && (profile.ban_id <= 0 || profile.muted)) {
+		if (appInfo.serversEnabled && (profile.ban_id <= 0 || profile.muted)) {
 			items.push({
 				to: "/servers",
 				text: "Servers",
 				icon: <StorageIcon sx={topColourOpts} />,
 			});
 		}
-		if (appInfo.forums_enabled) {
+		if (appInfo.forumsEnabled) {
 			items.push({
 				to: "/forums",
 				text: "Forums",
 				icon: <ForumIcon sx={topColourOpts} />,
 			});
 		}
-		if (appInfo.wiki_enabled) {
+		if (appInfo.wikiEnabled) {
 			items.push({
 				to: "/wiki",
 				text: "Wiki",
 				icon: <ArticleIcon sx={topColourOpts} />,
 			});
 		}
-		if (appInfo.reports_enabled) {
+		if (appInfo.reportsEnabled) {
 			if (profile.ban_id <= 0) {
 				items.push({
 					to: "/report",
@@ -157,10 +157,10 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 		}
 		return items;
 	}, [
-		appInfo.forums_enabled,
-		appInfo.reports_enabled,
-		appInfo.servers_enabled,
-		appInfo.wiki_enabled,
+		appInfo.forumsEnabled,
+		appInfo.reportsEnabled,
+		appInfo.serversEnabled,
+		appInfo.wikiEnabled,
 		profile.ban_id,
 		topColourOpts,
 		profile.muted,
@@ -331,7 +331,7 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 								...tf2Fonts,
 							}}
 						>
-							{appInfo.site_name}
+							{appInfo.siteName}
 						</Typography>
 
 						<Box
@@ -381,7 +381,7 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 								display: { xs: "flex", md: "none" },
 							}}
 						>
-							{appInfo.site_name}
+							{appInfo.siteName}
 						</Typography>
 						<Box
 							sx={{

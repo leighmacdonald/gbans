@@ -5,20 +5,20 @@ import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { type JSX, useMemo } from "react";
-import type { appInfoDetail } from "../schema/app.ts";
+import type { InfoResponse } from "../gen/config/v1/config_pb.ts";
 import RouterLink from "./RouterLink.tsx";
 
-export const Footer = ({ appInfo }: { appInfo: appInfoDetail }): JSX.Element => {
+export const Footer = ({ appInfo }: { appInfo: InfoResponse }): JSX.Element => {
 	const theme = useTheme();
 
 	const gbansUrl = useMemo(() => {
-		if (appInfo.app_version === "master") {
+		if (appInfo.appVersion === "master") {
 			return "https://github.com/leighmacdonald/gbans/tree/master";
-		} else if (appInfo.app_version.startsWith("v")) {
-			return `https://github.com/leighmacdonald/gbans/releases/tag/${appInfo.app_version}`;
+		} else if (appInfo.appVersion.startsWith("v")) {
+			return `https://github.com/leighmacdonald/gbans/releases/tag/${appInfo.appVersion}`;
 		}
 		return "https://github.com/leighmacdonald/gbans";
-	}, [appInfo.app_version]);
+	}, [appInfo.appVersion]);
 
 	return (
 		<Box
@@ -33,7 +33,7 @@ export const Footer = ({ appInfo }: { appInfo: appInfoDetail }): JSX.Element => 
 			<Grid container spacing={0} direction="column" alignItems="center" justifyContent="center">
 				<Grid size={{ xs: 3 }}>
 					<Typography variant={"subtitle2"} color={"text"}>
-						Copyright &copy; {appInfo.site_name} {new Date().getFullYear()}{" "}
+						Copyright &copy; {appInfo.siteName} {new Date().getFullYear()}{" "}
 					</Typography>
 					<Stack
 						// direction={'row'}
@@ -47,7 +47,7 @@ export const Footer = ({ appInfo }: { appInfo: appInfoDetail }): JSX.Element => 
 								to={gbansUrl}
 								sx={{ color: theme.palette.text.primary }}
 							>
-								{appInfo.app_version}
+								{appInfo.appVersion}
 							</Link>
 							<Link
 								component={RouterLink}

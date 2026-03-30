@@ -19,10 +19,13 @@
 		"ci": "biome ci",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit",
-		"unused": "npm dlx knip"
+		"unused": "npm dlx knip",
+		"gen": "npx @bufbuild/buf generate"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.9",
+		"@bufbuild/protoc-gen-es": "^2.11.0",
+		"@connectrpc/protoc-gen-connect-query": "^2.2.0",
 		"@sentry/vite-plugin": "^5.1.1",
 		"@tanstack/react-query-devtools": "^5.96.1",
 		"@tanstack/router-vite-plugin": "^1.166.27",
@@ -53,6 +56,8 @@
 	"packageManager": "pnpm@10.21.0",
 	"dependencies": {
 		"@base-ui/react": "^1.3.0",
+		"@bufbuild/protobuf": "^2.11.0",
+		"@connectrpc/connect": "^2.1.1",
 		"@connectrpc/connect-query": "^2.2.0",
 		"@connectrpc/connect-web": "^2.1.1",
 		"@ebay/nice-modal-react": "^1.2.13",

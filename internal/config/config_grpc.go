@@ -28,6 +28,13 @@ type RPC struct {
 	version string
 }
 
+func NewRPC(conf *Configuration, version string) *RPC {
+	return &RPC{
+		Configuration: conf,
+		version:       version,
+	}
+}
+
 func (r *RPC) Info(context.Context, *emptypb.Empty) (*configv1.InfoResponse, error) {
 	conf := r.Config()
 

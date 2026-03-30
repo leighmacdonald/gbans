@@ -1,0 +1,54 @@
+edition = "2023";
+
+package anticheat.v1;
+
+import "google/protobuf/timestamp.proto";
+import "filter.proto";
+
+service AnticheatService {
+  rpc Query(QueryRequest) returns (QueryResponse) {}
+}
+
+enum Detection {
+  Unknown = 0;
+  SilentAim = 1;
+  AimSnap = 2;
+  TooManyConnections = 3;
+  Interp = 4;
+  BHop = 5;
+  CmdNumSpike = 6;
+  EyeAngles = 7;
+  InvalidUserCmd = 8;
+  OOBCVar = 9;
+  CheatCVar = 10;
+}
+
+message QueryRequest {
+  Filter filter = 1;
+  string name = 2;
+  string steam_id = 3;
+  string sumamry = 4;
+  Detection detection = 5;
+}
+
+message QueryResponse {
+  repeated Entry entries = 1;
+}
+
+message Entry {
+  int64 anticheat_id = 1;
+  string steam_id = 2;
+  int32 server_id = 3;
+  string server_name = 4;
+  int32 demo_id = 5;
+  string demo_name = 6;
+  int32 demo_tick = 7;
+  string name = 8;
+  Detection detection = 9;
+  string summary = 10;
+  string raw_log = 11;
+  google.protobuf.Timestamp created_on = 12;
+  string personaname = 13;
+  string avatarhash = 14;
+  int32 triggered = 15;
+}

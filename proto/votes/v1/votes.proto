@@ -1,0 +1,47 @@
+edition = "2023";
+
+package votes.v1;
+
+import "google/protobuf/timestamp.proto";
+import "filter.proto";
+
+enum VoteCode {
+  VOTE_CODE_FAIL_GENERIC_UNSPECIFIED = 0;
+  VOTE_CODE_FAIL_NO_OUTNUMBER_YES = 1;
+  VOTE_CODE_FAIL_QUORUM = 2;
+}
+
+service VotesService {
+  rpc Query(QueryRequest) returns (QueryResponse) {}
+}
+
+message QueryRequest {
+  Filter filter = 1;
+  string source_id = 2;
+  string target_id = 3;
+
+  int32 server_id = 4;
+  string name = 5;
+  int32 success = 6;
+  bool code = 7;
+}
+
+message VoteResult {
+  int32 vote_id = 1;
+  string source_id = 2;
+  string source_name = 3;
+  string source_avatar_hash = 4;
+  string target_id = 5;
+  string target_name = 6;
+  string target_avatar_hash = 7;
+  string name = 8;
+  bool success = 9;
+  int32 server_id = 10;
+  string server_name = 11;
+  VoteCode code = 12;
+  google.protobuf.Timestamp created_on = 13;
+}
+
+message QueryResponse {
+  repeated VoteResult results = 1;
+}

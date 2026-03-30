@@ -31,14 +31,14 @@ func (h Handler) getRatings() gin.HandlerFunc {
 			return
 		}
 
-		messages, count, errChat := h.mge.Query(ctx, req)
+		history, count, errChat := h.mge.Query(ctx, req)
 		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, httphelper.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(count, messages))
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(count, history))
 	}
 }
 

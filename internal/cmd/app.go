@@ -522,7 +522,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 
 	api := http.NewServeMux()
 	api.Handle(configv1connect.NewConfigServiceHandler(
-		&config.RPC{Configuration: g.config},
+		config.NewRPC(g.config, BuildVersion),
 		connect.WithInterceptors(validate.NewInterceptor())))
 
 	mux.Handle("/connect/", http.StripPrefix("/connect", api))

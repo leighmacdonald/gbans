@@ -1,3 +1,4 @@
+// import type { appInfoDetail } from "../schema/app.ts";
 import type { appInfoDetail } from "../schema/app.ts";
 import { transformCreatedAtDate } from "../util/time.ts";
 import { apiCall } from "./common.ts";

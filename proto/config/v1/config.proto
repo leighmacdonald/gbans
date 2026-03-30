@@ -1,4 +1,5 @@
-syntax = "proto3";
+edition = "2023";
+
 package config.v1;
 
 import "google/protobuf/empty.proto";
@@ -15,7 +16,7 @@ message InfoResponse {
   string patreon_client_id = 9;
   string discord_client_id = 10;
   bool discord_enabled = 11;
-  bool patreon_enabled = 12;
+  bool patring_enabled = 12;
   string default_route = 13;
   bool news_enabled = 14;
   bool contests_enabled = 15;
@@ -30,10 +31,30 @@ message InfoResponse {
   bool forums_enabled = 24;
 }
 
+message GetResponse {
+  Config config = 1;
+}
+
+message UpdateRequest {
+  Config config = 1;
+}
+
+message UpdateResponse {
+  Config config = 1;
+}
+
+service ConfigService {
+  rpc Info(google.protobuf.Empty) returns (InfoResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  rpc Get(google.protobuf.Empty) returns (GetResponse) {}
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+}
+
 enum RunMode {
   RUN_MODE_RELEASE_UNSPECIFIED = 0;
   RUN_MODE_DEBUG = 1;
-  RUN_MODE_TEST = 2;
+  RUN_MODE_TEST = 3;
 }
 
 enum FileServeMode {
@@ -132,7 +153,7 @@ enum Level {
 
 message Log {
   Level level = 1;
-  optional string file = 2;
+  string file = 2;
   bool http_enabled = 3;
   bool http_otel_enabled = 4;
   Level http_level = 5;
@@ -143,6 +164,7 @@ message GeoLocation {
   string cache_path = 2;
   string token = 3;
 }
+
 message Patreon {
   bool enabled = 1;
   bool integrations_enabled = 2;
@@ -151,11 +173,13 @@ message Patreon {
   string creator_access_token = 5;
   string creator_refresh_token = 6;
 }
+
 enum HostKeyStrategy {
   HOST_KEY_STRATEGY_AUTO_ACCEPT_UNSPECIFIED = 0;
   HOST_KEY_STRATEGY_ACCEPT_FIRST = 1;
   HOST_KEY_STRATEGY_IGNORE_ALL = 2;
 }
+
 message SSH {
   bool enabled = 1;
   string username = 2;
@@ -180,6 +204,7 @@ message Network {
 message LocalStore {
   string path_root = 1;
 }
+
 message Exports {
   bool bd_enabled = 1;
   bool valve_enabled = 2;
@@ -204,59 +229,21 @@ message Anticheat {
   int32 max_too_many_connections = 9;
   int32 max_oob_var = 10;
   int32 max_invalid_user_cmd = 11;
-  int32 max_cheat_cvar = 12;
-}
-message UpdateRequest {
-  General general = 1;
-  Debug debug = 2;
-  Demo demo = 3;
-  Filters filters = 4;
-  Discord discord = 5;
-  // Sourcemod sourcemod = 6;
-  Log log = 7;
-  GeoLocation geo_location = 8;
-  Patreon patreon = 9;
-  SSH ssh = 10;
-  Network network = 11;
-  LocalStore local_store = 12;
-  Exports exports = 13;
-  Anticheat anticheat = 14;
-}
-message UpdateResponse {
-  General general = 1;
-  Debug debug = 2;
-  Demo demo = 3;
-  Filters filters = 4;
-  Discord discord = 5;
-  // Sourcemod sourcemod = 6;
-  Log log = 7;
-  GeoLocation geo_location = 8;
-  Patreon patreon = 9;
-  SSH ssh = 10;
-  Network network = 11;
-  LocalStore local_store = 12;
-  Exports exports = 13;
-  Anticheat anticheat = 14;
-}
-message GetResponse {
-  General general = 1;
-  Debug debug = 2;
-  Demo demo = 3;
-  Filters filters = 4;
-  Discord discord = 5;
-  // Sourcemod sourcemod = 6;
-  Log log = 7;
-  GeoLocation geo_location = 8;
-  Patreon patreon = 9;
-  SSH ssh = 10;
-  Network network = 11;
-  LocalStore local_store = 12;
-  Exports exports = 13;
-  Anticheat anticheat = 14;
 }
 
-service ConfigService {
-  rpc Info(google.protobuf.Empty) returns (InfoResponse) {}
-  rpc Get(google.protobuf.Empty) returns (GetResponse) {}
-  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+message Config {
+  General general = 1;
+  Debug debug = 2;
+  Demo demo = 3;
+  Filters filters = 4;
+  Discord discord = 5;
+  Sourcemod sourcemd = 6;
+  Log log = 7;
+  GeoLocation geo_location = 8;
+  Patreon patreon = 9;
+  SSH ssh = 10;
+  Network network = 11;
+  LocalStore local_store = 12;
+  Exports exports = 13;
+  Anticheat anticheat = 14;
 }
