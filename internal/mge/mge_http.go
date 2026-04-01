@@ -13,6 +13,7 @@ type Handler struct {
 	mge MGE
 }
 
+<<<<<<< HEAD
 func NewHandler(engine *gin.Engine, _ httphelper.Authenticator, mge MGE) Handler {
 	handler := Handler{
 		mge: mge,
@@ -57,5 +58,33 @@ func (h Handler) getHistory() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(count, history))
+||||||| parent of 179f35e8 (Add overall ranking table)
+=======
+func NewHandler(engine *gin.Engine, authenticator httphelper.Authenticator, mge MGE) Handler {
+	handler := Handler{
+		mge: mge,
+	}
+
+	engine.GET("/api/mge/ratings/overall", handler.getRatings())
+
+	return handler
+}
+
+func (h Handler) getRatings() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		req, ok := httphelper.BindQuery[QueryOpts](ctx)
+		if !ok {
+			return
+		}
+
+		messages, count, errChat := h.mge.Query(ctx, req)
+		if errChat != nil && !errors.Is(errChat, database.ErrNoResult) {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errChat, httphelper.ErrInternal)))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(count, messages))
+>>>>>>> 179f35e8 (Add overall ranking table)
 	}
 }

@@ -41,7 +41,7 @@ export const schemaGeneral = z.object({
 	stats_enabled: z.boolean(),
 	servers_enabled: z.boolean(),
 	reports_enabled: z.boolean(),
-	chatlogs_enabled: z.boolean(),
+  chatlogs_enabled: z.boolean(),
 	mge_enabled: z.boolean(),
 	demos_enabled: z.boolean(),
 	speedruns_enabled: z.boolean(),
