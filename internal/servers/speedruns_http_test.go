@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/tests"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -17,11 +18,12 @@ import (
 
 func TestSpeedrunsHTTP(t *testing.T) {
 	var (
+		mapsUC     = maps.New(maps.NewRepository(fixture.Database))
 		userAuth   = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.ModSID, permission.Moderator)}
 		serverAuth = &tests.ServerAuth{}
 		router     = fixture.CreateRouter()
 		server     = fixture.CreateTestServer(t.Context())
-		speedruns  = servers.NewSpeedruns(servers.NewSpeedrunRepository(fixture.Database, fixture.Persons))
+		speedruns  = servers.NewSpeedruns(servers.NewSpeedrunRepository(fixture.Database, fixture.Persons), mapsUC)
 	)
 
 	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, speedruns)
@@ -42,10 +44,14 @@ func TestSpeedrunsHTTP(t *testing.T) {
 	var srB servers.Speedrun
 	for range 40 {
 		srB = genSpeedrun(24, 40, server.ServerID)
-		srB.MapDetail.MapName = mapName
+		m, err := mapsUC.Get(t.Context(), mapName)
+		if err != nil {
+			t.Fatal(err)
+		}
+		srB.Map = m
 
 		res := tests.PostGOK[servers.Speedrun](t, router, "/api/sm/speedruns", srB)
-		require.Equal(t, strings.ToLower(srB.MapDetail.MapName), res.MapDetail.MapName)
+		require.Equal(t, strings.ToLower(srB.Map.MapName), res.Map.MapName)
 	}
 
 	// result := tests.GetGOK[map[string][]servers.Speedrun](t, router, "/api/speedruns/overall/top?count=10")
@@ -54,7 +60,7 @@ func TestSpeedrunsHTTP(t *testing.T) {
 
 func genSpeedrun(players int, bots int, serverID int) servers.Speedrun {
 	run := servers.Speedrun{
-		MapDetail:     servers.MapDetail{MapName: "pl_" + stringutil.SecureRandomString(10)},
+		Map:           maps.Map{MapName: "pl_" + stringutil.SecureRandomString(10)},
 		PointCaptures: nil,
 		ServerID:      serverID,
 		Players:       make([]servers.SpeedrunParticipant, players),

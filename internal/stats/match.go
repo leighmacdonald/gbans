@@ -8,7 +8,9 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database/query"
+	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -81,16 +83,66 @@ type Player struct {
 	Team          logparse.Team       `json:"team"`
 	TimeStart     time.Time           `json:"time_start"`
 	TimeEnd       time.Time           `json:"time_end"`
-	MedicStats    *Healer             `json:"medic_stats"`
+	MedicStats    *PlayerMedicStats   `json:"medic_stats"`
 	Classes       []PlayerClassDetail `json:"classes"`
 	Killstreaks   []PlayerKillstreak  `json:"killstreaks"`
 	Weapons       []PlayerWeapon      `json:"weapons"`
 }
 
-func (player Player) BiggestKillstreak() *PlayerKillstreak {
+func (p *Player) ApplySummary(update *demoparse.PlayerSummary) {
+	p.Kills += update.Kills
+	p.Assists += update.Assists
+	p.Deaths += update.Deaths
+
+	p.PostroundKills += update.PostroundKills
+	p.PostroundAssists += update.PostroundAssists
+	p.PostroundDeaths += update.PostroundDeaths
+
+	p.Damage += update.Damage
+	p.DamageTaken += update.Damage
+
+	p.Dominations += update.Dominations
+	p.Dominated += update.Dominated
+	p.Revenges += update.Revenges
+	p.Revenged += update.Revenged
+
+	p.Airshots += update.Airshots
+	p.HeadshotKills += update.HeadshotKills
+	p.BackstabKills += update.BackstabKills
+	p.Headshots += update.Headshots
+	p.Backstabs += update.Backstabs
+	p.WasHeadshot += update.WasHeadshot
+	p.WasBackstabbed += update.WasBackstabbed
+
+	p.MedicStats.PreroundHealing += update.PreroundHealing
+	p.MedicStats.PostroundHealing += update.PostroundHealing
+	p.MedicStats.Healing += update.Healing
+	p.MedicStats.Drops += update.Drops
+	p.MedicStats.NearFullChargeDeath += update.NearFullChargeDeath
+	p.MedicStats.ChargesVacc += update.ChargesVacc
+	p.MedicStats.ChargesKritz += update.ChargesKritz
+	p.MedicStats.ChargesQuickfix += update.ChargesQuickfix
+
+	for weaponName, upd := range update.Weapons {
+		cs := PlayerWeaponStats{
+			WeaponName: weaponName,
+			Kills:      upd.Kills,
+			Damage:     upd.Damage,
+			Backstabs:  upd.BackstabKills,
+			Airshots:   upd.Airshots,
+			Headshots:  upd.HeadshotKills,
+			//TODO shots/hits
+		}
+
+		p.Weapons = append(p.Weapons, cs)
+	}
+
+}
+
+func (p Player) BiggestKillstreak() *PlayerKillstreak {
 	var biggest *PlayerKillstreak
 
-	for _, killstreakVal := range player.Killstreaks {
+	for _, killstreakVal := range p.Killstreaks {
 		killstreak := killstreakVal
 		if biggest == nil || killstreak.Killstreak > biggest.Killstreak {
 			biggest = &killstreak
@@ -100,24 +152,24 @@ func (player Player) BiggestKillstreak() *PlayerKillstreak {
 	return biggest
 }
 
-func (player Player) KDRatio() float64 {
-	if player.Deaths <= 0 {
+func (p Player) KDRatio() float64 {
+	if p.Deaths <= 0 {
 		return -1
 	}
 
-	return math.Ceil((float64(player.Kills)/float64(player.Deaths))*100) / 100
+	return math.Ceil((float64(p.Kills)/float64(p.Deaths))*100) / 100
 }
 
-func (player Player) KDARatio() float64 {
-	if player.Deaths <= 0 {
+func (p Player) KDARatio() float64 {
+	if p.Deaths <= 0 {
 		return -1
 	}
 
-	return math.Ceil((float64(player.Kills+player.Assists)/float64(player.Deaths))*100) / 100
+	return math.Ceil((float64(p.Kills+p.Assists)/float64(p.Deaths))*100) / 100
 }
 
-func (player Player) DamagePerMin() int {
-	return slices.Max([]int{int(float64(player.Damage) / player.TimeEnd.Sub(player.TimeStart).Minutes()), 0})
+func (p Player) DamagePerMin() int {
+	return slices.Max([]int{int(float64(p.Damage) / p.TimeEnd.Sub(p.TimeStart).Minutes()), 0})
 }
 
 type Healer struct {
@@ -152,7 +204,7 @@ type Result struct {
 	MatchID    uuid.UUID           `json:"match_id"`
 	ServerID   int                 `json:"server_id"`
 	Title      string              `json:"title"`
-	MapName    string              `json:"map_name"`
+	Map        maps.Map            `json:"map"`
 	TeamScores logparse.TeamScores `json:"team_scores"`
 	TimeStart  time.Time           `json:"time_start"`
 	TimeEnd    time.Time           `json:"time_end"`
@@ -169,6 +221,7 @@ type PersonMessage struct {
 	ServerName        string          `json:"server_name"`
 	ServerID          int             `json:"server_id"`
 	Body              string          `json:"body"`
+	Tick              int64           `json:"tick"`
 	Team              bool            `json:"team"`
 	CreatedOn         time.Time       `json:"created_on"`
 	AutoFilterFlagged int64           `json:"auto_filter_flagged"`
@@ -406,14 +459,16 @@ type PlayerKillstreakStats struct {
 }
 
 type PlayerMedicStats struct {
-	Healing             int
-	Drops               int
-	NearFullChargeDeath int
-	AvgUberLength       float64
-	ChargesUber         int
-	ChargesKritz        int
-	ChargesVacc         int
-	ChargesQuickfix     int
+	Healing             int     `json:"healing"`
+	Drops               int     `json:"drops"`
+	NearFullChargeDeath int     `json:"near_full_charge_death"`
+	AvgUberLength       float64 `json:"avg_uber_length"`
+	ChargesUber         int     `json:"charges_uber"`
+	ChargesKritz        int     `json:"charges_kritz"`
+	ChargesVacc         int     `json:"charges_vacc"`
+	ChargesQuickfix     int     `json:"charges_quickfix"`
+	PreroundHealing     int     `json:"preround_healing"`
+	PostroundHealing    int     `json:"postround_healing"`
 }
 
 type CommonPlayerStats struct {
@@ -427,6 +482,7 @@ type CommonPlayerStats struct {
 	Dominations       int             `json:"dominations"`
 	Dominated         int             `json:"dominated"`
 	Revenges          int             `json:"revenges"`
+	Revenged          int             `json:"revenged"`
 	Damage            int             `json:"damage"`
 	DamageTaken       int             `json:"damage_taken"`
 	HealingTaken      int             `json:"healing_taken"`
@@ -442,7 +498,15 @@ type CommonPlayerStats struct {
 	Headshots         int             `json:"headshots"`
 	Shots             int             `json:"shots"`
 	Hits              int             `json:"hits"`
+	HeadshotKills     int             `json:"headshot_kills"`
+	BackstabKills     int             `json:"backstab_kills"`
+	WasHeadshot       int             `json:"was_headshot"`
+	WasBackstabbed    int             `json:"was_backstabbed"`
+	PostroundKills    int             `json:"postround_kills"`
+	PostroundAssists  int             `json:"postround_assists"`
+	PostroundDeaths   int             `json:"postround_deaths"`
 }
+
 type PlayerStats struct {
 	CommonPlayerStats
 	PlayerMedicStats
