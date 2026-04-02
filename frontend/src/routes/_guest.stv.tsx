@@ -6,7 +6,7 @@ import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
 	type MRT_ColumnFiltersState,
@@ -22,6 +22,7 @@ import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
 	makeRowActionsDefOptions,
+	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -36,11 +37,15 @@ import { humanFileSize } from "../util/text.tsx";
 
 const columnHelper = createMRTColumnHelper<DemoFile>();
 const defaultOptions = createDefaultTableOptions<DemoFile>();
+const defaultValues = makeSchemaDefaults({ defaultColumn: "created_on" });
 const validateSearch = makeSchemaState("created_on");
 
 export const Route = createFileRoute("/_guest/stv")({
 	component: STV,
 	validateSearch,
+	search: {
+		middlewares: [stripSearchParams(defaultValues)],
+	},
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.demos_enabled);
 	},

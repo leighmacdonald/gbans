@@ -4,7 +4,7 @@ import { useTheme } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
 	type MRT_ColumnFiltersState,
@@ -23,6 +23,7 @@ import {
 	createDefaultTableOptions,
 	filterValue,
 	filterValueNumber,
+	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -32,11 +33,17 @@ import type { VoteResult } from "../schema/votes.ts";
 import { stringToColour } from "../util/colours.ts";
 import { renderDateTime } from "../util/time.ts";
 
+const columnHelper = createMRTColumnHelper<VoteResult>();
+const defaultOptions = createDefaultTableOptions<VoteResult>();
 const validateSearch = makeSchemaState("vote_id");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "vote_id" });
 
 export const Route = createFileRoute("/_mod/admin/votes")({
 	component: AdminVotes,
 	validateSearch,
+	search: {
+		middlewares: [stripSearchParams(defaultValues)],
+	},
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],
@@ -50,9 +57,6 @@ export const Route = createFileRoute("/_mod/admin/votes")({
 		meta: [{ name: "description", content: "Votes" }, match.context.title("Votes")],
 	}),
 });
-
-const columnHelper = createMRTColumnHelper<VoteResult>();
-const defaultOptions = createDefaultTableOptions<VoteResult>();
 
 function AdminVotes() {
 	const servers = Route.useLoaderData();

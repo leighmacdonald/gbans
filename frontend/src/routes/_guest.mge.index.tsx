@@ -6,7 +6,7 @@ import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
 	type MRT_ColumnFiltersState,
@@ -23,6 +23,7 @@ import {
 	createDefaultTableOptions,
 	filterValue,
 	makeRowActionsDefOptions,
+	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -34,11 +35,15 @@ import { renderDate } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<MGEStat>();
 const defaultOptions = createDefaultTableOptions<MGEStat>();
+const defaultValues = makeSchemaDefaults({ defaultColumn: "rating" });
 const validateSearch = makeSchemaState("rating");
 
 export const Route = createFileRoute("/_guest/mge/")({
 	component: MGEOverall,
 	validateSearch,
+	search: {
+		middlewares: [stripSearchParams(defaultValues)],
+	},
 	beforeLoad: ({ context }) => {
 		ensureFeatureEnabled(context.appInfo.demos_enabled);
 	},

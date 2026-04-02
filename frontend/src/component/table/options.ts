@@ -41,6 +41,30 @@ export const makeRowActionsDefOptions = (count: number = 1) => {
 	};
 };
 
+export const makeSchemaDefaults = <T>({
+	defaultColumn,
+	defaultDesc = true,
+	pageSize = 25,
+}: {
+	defaultColumn: keyof T;
+	defaultDesc?: boolean;
+	pageSize?: number;
+}) => {
+	return {
+		pagination: {
+			pageIndex: 0,
+			pageSize: pageSize,
+		},
+		sorting: [
+			{
+				id: defaultColumn,
+				desc: defaultDesc,
+			},
+		],
+		columnFilters: [],
+	};
+};
+
 export const makeSchemaState = (defaultSortColumn: string = "", defaultDesc: boolean = true) => {
 	return z.object({
 		pagination: z

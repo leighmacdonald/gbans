@@ -13,7 +13,6 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { type JSX, useMemo, useState } from "react";
 import { z } from "zod/v4";
@@ -42,7 +41,7 @@ import {
 import { commonTableSearchSchema } from "../util/table.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
-const searchSchemaReport = commonTableSearchSchema.extend({
+const validateSearch = commonTableSearchSchema.extend({
 	rows: z.number().optional(),
 	sortColumn: z.enum(["report_status", "created_on"]).optional(),
 	steam_id: z.string().optional(),
@@ -52,8 +51,7 @@ const searchSchemaReport = commonTableSearchSchema.extend({
 
 export const Route = createFileRoute("/_auth/report/")({
 	component: ReportCreate,
-	validateSearch: (search) => searchSchemaReport.parse(search),
-
+	validateSearch,
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Create a new player report" }, match.context.title("Create Report")],
 	}),

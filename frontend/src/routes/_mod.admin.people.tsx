@@ -5,7 +5,7 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { fromUnixTime } from "date-fns";
 import {
 	createMRTColumnHelper,
@@ -27,6 +27,7 @@ import {
 	filterValueBool,
 	filterValueNumber,
 	filterValueNumberArray,
+	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -44,6 +45,7 @@ import {
 	permissionLevelString,
 } from "../schema/people.ts";
 
+const defaultValues = makeSchemaDefaults({ defaultColumn: "created_on" });
 const validateSearch = makeSchemaState("created_on");
 const columnHelper = createMRTColumnHelper<Person>();
 const defaultOptions = createDefaultTableOptions<Person>();
@@ -51,6 +53,9 @@ const defaultOptions = createDefaultTableOptions<Person>();
 export const Route = createFileRoute("/_mod/admin/people")({
 	component: AdminPeople,
 	validateSearch,
+	search: {
+		middlewares: [stripSearchParams(defaultValues)],
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "People" }, match.context.title("People")],
 	}),
