@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 import {
 	createMRTColumnHelper,
@@ -19,6 +19,7 @@ import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
+	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -30,11 +31,15 @@ import { renderDateTime } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<ReportWithAuthor>();
 const defaultOptions = createDefaultTableOptions<ReportWithAuthor>();
+const defaultValues = makeSchemaDefaults({ defaultColumn: "report_id" });
 const validateSearch = makeSchemaState("report_id");
 
 export const Route = createFileRoute("/_mod/admin/reports")({
 	component: AdminReports,
 	validateSearch,
+	search: {
+		middlewares: [stripSearchParams(defaultValues)],
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Reports" }, match.context.title("Reports")],
 	}),
@@ -273,7 +278,6 @@ function AdminReports() {
 		enableFilters: true,
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "updated_on", desc: true }],
 			columnVisibility: {
 				source_id: false,
 				target_id: true,

@@ -1,7 +1,7 @@
 import DnsIcon from "@mui/icons-material/Dns";
 import Grid from "@mui/material/Grid";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
 	type MRT_ColumnFiltersState,
@@ -17,6 +17,7 @@ import {
 	createDefaultTableOptions,
 	filterValue,
 	filterValueNumber,
+	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -49,12 +50,15 @@ L.Icon.Default.mergeOptions({
 
 const columnHelper = createMRTColumnHelper<PersonConnection>();
 const defaultOptions = createDefaultTableOptions<PersonConnection>();
-
+const defaultValues = makeSchemaDefaults({ defaultColumn: "person_connection_id" });
 const validateSearch = makeSchemaState("person_connection_id");
 
 export const Route = createFileRoute("/_mod/admin/network/playersbyip")({
 	component: AdminNetworkPlayersByCIDR,
 	validateSearch,
+	search: {
+		middlewares: [stripSearchParams(defaultValues)],
+	},
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],

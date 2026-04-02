@@ -18,12 +18,12 @@ export const { useAppForm } = createFormHook({
 	formContext,
 	fieldComponents: {
 		CheckboxField,
-		MarkdownField,
 		TextField,
 		SteamIDField,
 		SelectField,
 		DateTimeField,
 		NumberField,
+		MarkdownField,
 	},
 	formComponents: {
 		SubmitButton,

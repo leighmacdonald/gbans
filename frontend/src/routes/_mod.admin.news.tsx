@@ -5,32 +5,53 @@ import EditIcon from "@mui/icons-material/Edit";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
+import {
+	createMRTColumnHelper,
+	type MRT_ColumnFiltersState,
+	type MRT_PaginationState,
+	type MRT_SortingState,
+	useMaterialReactTable,
+} from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { apiGetNewsAll, apiNewsDelete } from "../api/news.ts";
 import { ConfirmationModal } from "../component/modal/ConfirmationModal.tsx";
 import { NewsEditModal } from "../component/modal/NewsEditModal.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { createDefaultTableOptions, makeRowActionsDefOptions } from "../component/table/options.ts";
+import {
+	createDefaultTableOptions,
+	makeRowActionsDefOptions,
+	makeSchemaDefaults,
+	makeSchemaState,
+	type OnChangeFn,
+} from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import type { NewsEntry } from "../schema/news.ts";
 import { renderDateTime } from "../util/time.ts";
 
+const columnHelper = createMRTColumnHelper<NewsEntry>();
+const defaultOptions = createDefaultTableOptions<NewsEntry>();
+const defaultValues = makeSchemaDefaults({ defaultColumn: "news_id" });
+const validateSearch = makeSchemaState("news_id");
+
 export const Route = createFileRoute("/_mod/admin/news")({
 	component: AdminNews,
+	validateSearch,
+	search: {
+		middlewares: [stripSearchParams(defaultValues)],
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "News Management" }, match.context.title("News")],
 	}),
 });
 
-const columnHelper = createMRTColumnHelper<NewsEntry>();
-const defaultOptions = createDefaultTableOptions<NewsEntry>();
-
 function AdminNews() {
+	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const search = Route.useSearch();
+
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["newsList"],
 		queryFn: async ({ signal }) => {
@@ -137,17 +158,67 @@ function AdminNews() {
 		];
 	}, []);
 
+	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					sorting: typeof updater === "function" ? updater(search.sorting ?? []) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
+	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
+		(updater) => {
+			navigate({
+				to: Route.fullPath,
+				search: {
+					...search,
+					pagination: search.pagination
+						? typeof updater === "function"
+							? updater(search.pagination)
+							: updater
+						: undefined,
+				},
+			});
+		},
+		[search, navigate],
+	);
+
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
 		data: data ?? [],
 		enableFilters: true,
 		enableRowActions: true,
+		enableFacetedValues: true,
+		onColumnFiltersChange: setColumnFilters,
+		onPaginationChange: setPagination,
+		onSortingChange: setSorting,
+		displayColumnDefOptions: makeRowActionsDefOptions(2),
 		state: {
 			isLoading,
 			showAlertBanner: isError,
+			columnFilters: search.columnFilters,
+			sorting: search.sorting,
+			pagination: search.pagination,
 		},
-		displayColumnDefOptions: makeRowActionsDefOptions(2),
 		renderRowActions: ({ row }) => (
 			<RowActionContainer>
 				<IconButton
@@ -172,7 +243,6 @@ function AdminNews() {
 		),
 		initialState: {
 			...defaultOptions.initialState,
-			sorting: [{ id: "news_id", desc: false }],
 			columnVisibility: {
 				title: true,
 				news_id: false,

@@ -6,7 +6,7 @@ import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import { useTheme } from "@mui/system";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
 	type MRT_ColumnFiltersState,
@@ -27,6 +27,7 @@ import {
 	dateTimeColumnSize,
 	filterValue,
 	makeRowActionsDefOptions,
+	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -37,6 +38,7 @@ import { stringToColour } from "../util/colours.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 import { renderDateTime } from "../util/time.ts";
 
+const defaultValues = { ...makeSchemaDefaults({ defaultColumn: "person_message_id" }), flagged_only: false };
 const validateSearch = z
 	.object({
 		flagged_only: z.boolean().optional().default(false),
@@ -49,6 +51,9 @@ export const Route = createFileRoute("/_auth/chatlogs")({
 		ensureFeatureEnabled(context.appInfo.chatlogs_enabled);
 	},
 	validateSearch,
+	search: {
+		middlewares: [stripSearchParams(defaultValues)],
+	},
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({
 			queryKey: ["serversSimple"],

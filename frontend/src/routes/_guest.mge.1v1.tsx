@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/system";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import {
 	createMRTColumnHelper,
 	type MRT_ColumnFiltersState,
@@ -19,6 +19,7 @@ import {
 	createDefaultTableOptions,
 	filterValue,
 	makeRowActionsDefOptions,
+	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -29,11 +30,15 @@ import { renderDateTime } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<MGEHistory>();
 const defaultOptions = createDefaultTableOptions<MGEHistory>();
-const validateSearch = makeSchemaState("game_time");
+const defaultValues = makeSchemaDefaults({ defaultColumn: "rating" });
+const validateSearch = makeSchemaState("rating");
 
 export const Route = createFileRoute("/_guest/mge/1v1")({
 	component: MGEOverall,
 	validateSearch,
+	search: {
+		middlewares: [stripSearchParams(defaultValues)],
+	},
 	head: ({ match }) => ({
 		meta: [
 			{

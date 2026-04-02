@@ -3,7 +3,7 @@ import Grid from "@mui/material/Grid";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams, useNavigate } from "@tanstack/react-router";
 import { formatDistanceToNowStrict } from "date-fns/formatDistanceToNowStrict";
 import {
 	createMRTColumnHelper,
@@ -19,6 +19,7 @@ import RouterLink from "../component/RouterLink.tsx";
 import { TextLink } from "../component/TextLink.tsx";
 import {
 	createDefaultTableOptions,
+	makeSchemaDefaults,
 	makeSchemaState,
 	type OnChangeFn,
 	setColumnFilter,
@@ -29,11 +30,15 @@ import { renderDateTime } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<BanRecord>();
 const defaultOptions = createDefaultTableOptions<BanRecord>();
+const defaultValues = makeSchemaDefaults({ defaultColumn: "ban_id" });
 const validateSearch = makeSchemaState("ban_id");
 
 export const Route = createFileRoute("/_mod/admin/appeals")({
 	component: AdminAppeals,
 	validateSearch,
+	search: {
+		middlewares: [stripSearchParams(defaultValues)],
+	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Appeals" }, match.context.title("Appeals")],
 	}),
