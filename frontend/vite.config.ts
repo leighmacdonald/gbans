@@ -6,7 +6,7 @@ import { createHtmlPlugin } from "vite-plugin-html";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-	base: "/",
+	base: "",
 	publicDir: "public",
 	legacy: {
 		// Required until react-video is updated: https://github.com/robtaussig/react-use-websocket/issues/280
