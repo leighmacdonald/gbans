@@ -1,17 +1,16 @@
 {
 	"compilerOptions": {
-		"target": "ES2020",
-		"useDefineForClassFields": true,
-		"lib": [
-			"ES2024", // steam CEF blocks update to 2022, stuck at Chrome 85
-			"DOM",
-			"DOM.Iterable"
-		],
-		"module": "ESNext",
+		// "target": "ES2020",
+		// "useDefineForClassFields": true,
+		// "lib": [
+		// 	"ES2024", // steam CEF blocks update to 2022, stuck at Chrome 85
+		// 	"DOM",
+		// 	"DOM.Iterable"
+		// ],
+		//"module": "ESNext",
 		"skipLibCheck": true,
-
+		"rootDir": "src",
 		/* Bundler mode */
-		"moduleResolution": "bundler",
 		"allowImportingTsExtensions": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
@@ -25,7 +24,7 @@
 		"noFallthroughCasesInSwitch": true,
 		"typeRoots": [] // Fixed: Cannot find type definition file for 'eslint__js'
 	},
-	"include": ["src"],
-	"exclude": [],
+	// "include": ["src"],
+	// "exclude": [],
 	"references": [{ "path": "./tsconfig.node.json" }]
 }
