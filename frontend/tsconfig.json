@@ -7,16 +7,17 @@
 		// 	"DOM",
 		// 	"DOM.Iterable"
 		// ],
-		//"module": "ESNext",
+		"module": "ES2022",
+		// "types": ["*"],
 		"skipLibCheck": true,
-		"rootDir": "src",
+		"rootDir": "./src",
 		/* Bundler mode */
 		"allowImportingTsExtensions": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
 		"jsx": "react-jsx",
-
+		"moduleResolution": "bundler",
 		/* Linting */
 		"strict": true,
 		"noUnusedLocals": true,
@@ -24,7 +25,7 @@
 		"noFallthroughCasesInSwitch": true,
 		"typeRoots": [] // Fixed: Cannot find type definition file for 'eslint__js'
 	},
-	// "include": ["src"],
+	"include": ["src"],
 	// "exclude": [],
 	"references": [{ "path": "./tsconfig.node.json" }]
 }
