@@ -5,13 +5,10 @@ import type { LatLngLiteral } from "leaflet";
 import { useState } from "react";
 import { useTimer } from "react-timer-hook";
 import { apiGetServerStates } from "../api";
-import { QueueHelp } from "../component/queue/QueueHelp.tsx";
 import { ServerFilters } from "../component/ServerFilters.tsx";
 import { ServerList } from "../component/ServerList.tsx";
 import { ServerMap } from "../component/ServerMap.tsx";
 import { MapStateCtx } from "../contexts/MapStateCtx.tsx";
-import { useAuth } from "../hooks/useAuth.ts";
-import { PermissionLevel } from "../schema/people.ts";
 import type { BaseServer } from "../schema/server.ts";
 import { ensureFeatureEnabled } from "../util/features.ts";
 
@@ -27,7 +24,6 @@ export const Route = createFileRoute("/_guest/servers")({
 
 function Servers() {
 	const [servers, setServers] = useState<BaseServer[]>([]);
-	const { hasPermission } = useAuth();
 	const [pos, setPos] = useState<LatLngLiteral>({
 		lat: 0.0,
 		lng: 0.0,
@@ -37,7 +33,6 @@ function Servers() {
 	const [filterByRegion, setFilterByRegion] = useState<boolean>(false);
 	const [showOpenOnly, setShowOpenOnly] = useState<boolean>(false);
 	const [selectedRegion, setSelectedRegion] = useState<string>("any");
-	const [showHelp] = useState<boolean>(false);
 
 	const interval = 5;
 
@@ -98,7 +93,6 @@ function Servers() {
 					<ServerMap />
 				</Paper>
 				<ServerFilters />
-				{hasPermission(PermissionLevel.Moderator) && showHelp && <QueueHelp />}
 				<ServerList />
 			</Stack>
 		</MapStateCtx.Provider>

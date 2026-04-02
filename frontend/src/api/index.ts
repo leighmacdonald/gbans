@@ -7,7 +7,6 @@ export * from "./demo";
 export * from "./discord";
 export * from "./match";
 export * from "./network";
-export * from "./playerqueue.ts";
 export * from "./profile";
 export * from "./report";
 export * from "./server";

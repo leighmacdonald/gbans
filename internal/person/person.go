@@ -14,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
-	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -69,38 +68,36 @@ const (
 )
 
 type Person struct {
-	SteamID               steamid.SteamID      `json:"steam_id"`
-	CreatedOn             time.Time            `json:"created_on"`
-	UpdatedOn             time.Time            `json:"updated_on"`
-	PermissionLevel       permission.Privilege `json:"permission_level"`
-	Muted                 bool                 `json:"muted"`
-	isNew                 bool
-	DiscordID             string                 `json:"discord_id"`
-	PatreonID             string                 `json:"patreon_id"`
-	IPAddr                netip.Addr             `json:"-"`
-	CommunityBanned       bool                   `json:"community_banned"`
-	VACBans               int                    `json:"vac_bans"`
-	GameBans              int                    `json:"game_bans"`
-	EconomyBan            EconBanState           `json:"economy_ban"`
-	DaysSinceLastBan      int                    `json:"days_since_last_ban"`
-	UpdatedOnSteam        time.Time              `json:"updated_on_steam"`
-	PlayerqueueChatStatus playerqueue.ChatStatus `json:"playerqueue_chat_status"`
-	PlayerqueueChatReason string                 `json:"playerqueue_chat_reason"`
-	AvatarHash            string                 `json:"avatar_hash"`
-	CommentPermission     int64                  `json:"comment_permission"`
-	LastLogoff            int64                  `json:"last_logoff"`
-	LocCityID             int64                  `json:"loc_city_id"`
-	LocCountryCode        string                 `json:"loc_country_code"`
-	LocStateCode          string                 `json:"loc_state_code"`
-	PersonaName           string                 `json:"persona_name"`
-	PersonaState          int64                  `json:"persona_state"`
-	PersonaStateFlags     int64                  `json:"persona_state_flags"`
-	PrimaryClanID         string                 `json:"primary_clan_id"`
-	ProfileState          int64                  `json:"profile_state"`
-	ProfileURL            string                 `json:"profile_url"`
-	RealName              string                 `json:"real_name"`
-	TimeCreated           int64                  `json:"time_created"`
-	VisibilityState       int64                  `json:"visibility_state"`
+	SteamID           steamid.SteamID      `json:"steam_id"`
+	CreatedOn         time.Time            `json:"created_on"`
+	UpdatedOn         time.Time            `json:"updated_on"`
+	PermissionLevel   permission.Privilege `json:"permission_level"`
+	Muted             bool                 `json:"muted"`
+	isNew             bool
+	DiscordID         string       `json:"discord_id"`
+	PatreonID         string       `json:"patreon_id"`
+	IPAddr            netip.Addr   `json:"-"`
+	CommunityBanned   bool         `json:"community_banned"`
+	VACBans           int          `json:"vac_bans"`
+	GameBans          int          `json:"game_bans"`
+	EconomyBan        EconBanState `json:"economy_ban"`
+	DaysSinceLastBan  int          `json:"days_since_last_ban"`
+	UpdatedOnSteam    time.Time    `json:"updated_on_steam"`
+	AvatarHash        string       `json:"avatar_hash"`
+	CommentPermission int64        `json:"comment_permission"`
+	LastLogoff        int64        `json:"last_logoff"`
+	LocCityID         int64        `json:"loc_city_id"`
+	LocCountryCode    string       `json:"loc_country_code"`
+	LocStateCode      string       `json:"loc_state_code"`
+	PersonaName       string       `json:"persona_name"`
+	PersonaState      int64        `json:"persona_state"`
+	PersonaStateFlags int64        `json:"persona_state_flags"`
+	PrimaryClanID     string       `json:"primary_clan_id"`
+	ProfileState      int64        `json:"profile_state"`
+	ProfileURL        string       `json:"profile_url"`
+	RealName          string       `json:"real_name"`
+	TimeCreated       int64        `json:"time_created"`
+	VisibilityState   int64        `json:"visibility_state"`
 }
 
 func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBan thirdparty.SteamBan) Person {
@@ -227,20 +224,19 @@ func New(sid64 steamid.SteamID) Person {
 	curTime := time.Now()
 
 	return Person{
-		SteamID:               sid64,
-		CreatedOn:             curTime,
-		UpdatedOn:             curTime,
-		PermissionLevel:       permission.User,
-		Muted:                 false,
-		isNew:                 true,
-		DiscordID:             "",
-		CommunityBanned:       false,
-		VACBans:               0,
-		GameBans:              0,
-		EconomyBan:            "none",
-		DaysSinceLastBan:      0,
-		UpdatedOnSteam:        time.Unix(0, 0),
-		PlayerqueueChatStatus: "readwrite",
+		SteamID:          sid64,
+		CreatedOn:        curTime,
+		UpdatedOn:        curTime,
+		PermissionLevel:  permission.User,
+		Muted:            false,
+		isNew:            true,
+		DiscordID:        "",
+		CommunityBanned:  false,
+		VACBans:          0,
+		GameBans:         0,
+		EconomyBan:       "none",
+		DaysSinceLastBan: 0,
+		UpdatedOnSteam:   time.Unix(0, 0),
 	}
 }
 

@@ -83,8 +83,6 @@ export const schemaUserProfile = z.object({
 	muted: z.boolean(),
 	created_on: z.date(),
 	updated_on: z.date(),
-	playerqueue_chat_status: z.enum(["readwrite", "readonly", "noaccess"]).default("readwrite"),
-	// playerqueue_chat_reason: z.string()
 });
 
 export type UserProfile = z.infer<typeof schemaUserProfile>;
@@ -115,7 +113,6 @@ export const schemaPerson = z.object({
 	muted: z.boolean(),
 	created_on: z.date(),
 	updated_on: z.date(),
-	playerqueue_chat_status: z.enum(["readwrite", "readonly", "noaccess"]).default("readwrite"),
 	// PlayerSummaries shape
 	community_visibility_state: communityVisibilityStateEnum,
 	profile_state: profileStateEnum,

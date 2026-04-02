@@ -1,25 +1,20 @@
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import GroupsIcon from "@mui/icons-material/Groups";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Link from "@mui/material/Link";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { createMRTColumnHelper, type MRT_ColumnDef, useMaterialReactTable } from "material-react-table";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import type { z } from "zod/v4";
 import { cleanMapName } from "../api";
-import { useAuth } from "../hooks/useAuth.ts";
 import { useMapStateCtx } from "../hooks/useMapStateCtx.ts";
-import { useQueueCtx } from "../hooks/useQueueCtx.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
-import { PermissionLevel } from "../schema/people.ts";
 import type { schemaServerRow } from "../schema/server.ts";
 import { tf2Fonts } from "../theme";
 import { logErr } from "../util/errors";
 import { Flag } from "./Flag";
-import { StyledBadge } from "./StyledBadge.tsx";
 import { createDefaultTableOptions } from "./table/options.ts";
 import { SortableTable } from "./table/SortableTable.tsx";
 
@@ -30,28 +25,11 @@ const defaultOptions = createDefaultTableOptions<ServerRow>();
 
 export const ServerList = () => {
 	const { sendFlash } = useUserFlashCtx();
-	const { profile, hasPermission } = useAuth();
 	const { selectedServers } = useMapStateCtx();
-	const { joinQueue, leaveQueue, lobbies } = useQueueCtx();
 
 	const metaServers = useMemo(() => {
 		return selectedServers.map((s) => ({ ...s, copy: "", connect: "" }));
 	}, [selectedServers]);
-
-	const isQueued = useCallback(
-		(server_id: number) => {
-			try {
-				return Boolean(
-					lobbies
-						.find((s) => s.server_id === server_id)
-						?.members?.find((m) => m.steam_id === profile.steam_id),
-				);
-			} catch {
-				return false;
-			}
-		},
-		[lobbies, profile],
-	);
 
 	const columns = useMemo(
 		() =>
@@ -81,7 +59,7 @@ export const ServerList = () => {
 					Cell: ({ row }) => (
 						<Typography
 							variant={"body2"}
-						>{`${row.original.players + row.original.bots}/${row.original.max_players}`}</Typography>
+						>{`${row.original.players}/${Number(row.original.max_players_visible) > 0 ? row.original.max_players_visible : row.original.max_players}`}</Typography>
 					),
 				}),
 				columnHelper.accessor("distance", {
@@ -123,42 +101,6 @@ export const ServerList = () => {
 						</IconButton>
 					),
 				}),
-				hasPermission(PermissionLevel.Moderator)
-					? columnHelper.display({
-							header: "Queue",
-							id: "queue",
-							size: 30,
-							Cell: ({ row }) => {
-								const queued = isQueued(row.original.server_id);
-
-								const count = lobbies
-									? (lobbies.find((value) => {
-											return value.server_id === row.original.server_id;
-										})?.members?.length ?? 0)
-									: 0;
-
-								return (
-									<Tooltip title="Join/Leave server queue. Number indicates actively queued players. (in testing)">
-										<IconButton
-											disabled={false}
-											color={queued ? "success" : "primary"}
-											onClick={() => {
-												if (queued) {
-													leaveQueue([String(row.original.server_id)]);
-												} else {
-													joinQueue([String(row.original.server_id)]);
-												}
-											}}
-										>
-											<StyledBadge badgeContent={count}>
-												<GroupsIcon />
-											</StyledBadge>
-										</IconButton>
-									</Tooltip>
-								);
-							},
-						})
-					: undefined,
 				columnHelper.accessor("connect", {
 					header: "Connect",
 					size: 125,
@@ -176,7 +118,7 @@ export const ServerList = () => {
 					),
 				}),
 			].filter((f) => f) as Array<MRT_ColumnDef<ServerRow>>,
-		[lobbies, hasPermission, joinQueue, leaveQueue, sendFlash, isQueued],
+		[sendFlash],
 	);
 
 	const table = useMaterialReactTable({

@@ -17,17 +17,12 @@ import { type Flash, Flashes } from "../component/Flashes.tsx";
 import { Footer } from "../component/Footer.tsx";
 import { LogoutHandler } from "../component/LogoutHandler.tsx";
 import { NotificationsProvider } from "../component/NotificationsProvider.tsx";
-import { OptionalQueueProvider } from "../component/OptionalQueueProvider.tsx";
-import { QueueChat } from "../component/queue/QueueChat.tsx";
 import { TopBar } from "../component/TopBar.tsx";
 import { ColourModeContext } from "../contexts/ColourModeContext.tsx";
 import { UserFlashCtx } from "../contexts/UserFlashCtx.tsx";
 import { type ApiError, isApiError } from "../error.tsx";
-import { useAuth } from "../hooks/useAuth.ts";
 import type { appInfoDetail } from "../schema/app.ts";
-import { PermissionLevel } from "../schema/people.ts";
 import { createThemeByMode } from "../theme.ts";
-import { checkFeatureEnabled } from "../util/features.ts";
 import { emptyOrNullString } from "../util/types.ts";
 
 type RouterContext = {
@@ -59,7 +54,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function Root() {
 	const initialTheme = (localStorage.getItem("theme") as PaletteMode) || "light";
-	const { hasPermission } = useAuth();
 	const [flashes, setFlashes] = useState<Flash[]>([]);
 	const { appInfo } = Route.useRouteContext();
 	const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -126,37 +120,33 @@ function Root() {
 
 	return (
 		<UserFlashCtx.Provider value={{ flashes, setFlashes, sendFlash, sendError }}>
-			<OptionalQueueProvider>
-				<LocalizationProvider dateAdapter={AdapterDateFns}>
-					<ColourModeContext.Provider value={colorMode}>
-						<ThemeProvider theme={theme}>
-							<Scripts />
-							<BackgroundImageProvider />
-							<NotificationsProvider>
-								<NiceModal.Provider>
-									<LogoutHandler />
-									<CssBaseline />
-									<HeadContent />
-									<Container maxWidth={"lg"}>
-										<TopBar appInfo={appInfo} />
-										<div
-											style={{
-												marginTop: 24,
-											}}
-										>
-											{checkFeatureEnabled("playerqueue_enabled") &&
-												hasPermission(PermissionLevel.Moderator) && <QueueChat />}
-											<Outlet />
-										</div>
-										<Footer appInfo={appInfo} />
-									</Container>
-									<Flashes />
-								</NiceModal.Provider>
-							</NotificationsProvider>
-						</ThemeProvider>
-					</ColourModeContext.Provider>
-				</LocalizationProvider>
-			</OptionalQueueProvider>
+			<LocalizationProvider dateAdapter={AdapterDateFns}>
+				<ColourModeContext.Provider value={colorMode}>
+					<ThemeProvider theme={theme}>
+						<Scripts />
+						<BackgroundImageProvider />
+						<NotificationsProvider>
+							<NiceModal.Provider>
+								<LogoutHandler />
+								<CssBaseline />
+								<HeadContent />
+								<Container maxWidth={"lg"}>
+									<TopBar appInfo={appInfo} />
+									<div
+										style={{
+											marginTop: 24,
+										}}
+									>
+										<Outlet />
+									</div>
+									<Footer appInfo={appInfo} />
+								</Container>
+								<Flashes />
+							</NiceModal.Provider>
+						</NotificationsProvider>
+					</ThemeProvider>
+				</ColourModeContext.Provider>
+			</LocalizationProvider>
 		</UserFlashCtx.Provider>
 	);
 }
