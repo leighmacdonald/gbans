@@ -59,6 +59,8 @@ type state struct {
 	PlayerCount int `json:"player_count"`
 	// Maximum number of players the server reports it can hold.
 	MaxPlayers int `json:"max_players"`
+	// Maximum number of players the server reports it can hold, visible to the public.
+	MaxPlayersVisible int `json:"max_players_visible"`
 	// Number of bots on the server.
 	Bots int `json:"bots"`
 	// Indicates whether the server requires a password

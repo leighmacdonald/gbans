@@ -36,14 +36,14 @@ func (r *Repository) Save(ctx context.Context, person *Person) error {
 			personaname, avatarhash, personastate,
 			realname, timecreated, loccountrycode, locstatecode, loccityid, permission_level,
 			discord_id, community_banned, vac_bans, game_bans, economy_ban, days_since_last_ban,
-			updated_on_steam, muted, playerqueue_chat_status, playerqueue_chat_reason, created_on, updated_on)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+			updated_on_steam, muted,  created_on, updated_on)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
 		ON CONFLICT (steam_id) DO UPDATE SET
 			communityvisibilitystate = $2, profilestate = $3,
 			personaname = $4, avatarhash = $5, personastate = $6,
 			realname = $7, timecreated = $8, loccountrycode = $9, locstatecode = $10, loccityid = $11,  permission_level = $12,
 			discord_id = $13, community_banned = $14,  vac_bans = $15, game_bans = $16, economy_ban = $17, days_since_last_ban = $18,
-			updated_on_steam = $19, muted =$20, playerqueue_chat_status =$21, playerqueue_chat_reason=$22, updated_on=$24`
+			updated_on_steam = $19, muted = $20, updated_on=$22`
 
 	return database.Err(r.Exec(ctx, query, person.SteamID.Int64(), person.VisibilityState,
 		person.ProfileState, person.PersonaName,
@@ -51,7 +51,7 @@ func (r *Repository) Save(ctx context.Context, person *Person) error {
 		person.TimeCreated, person.LocCountryCode, person.LocStateCode,
 		person.LocCityID, person.PermissionLevel, person.DiscordID, person.CommunityBanned,
 		person.VACBans, person.GameBans, person.EconomyBan, person.DaysSinceLastBan, person.UpdatedOnSteam,
-		person.Muted, person.PlayerqueueChatStatus, person.PlayerqueueChatReason, person.CreatedOn, person.UpdatedOn))
+		person.Muted, person.CreatedOn, person.UpdatedOn))
 }
 
 func normalizeStringLikeQuery(input string) string {
@@ -66,8 +66,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
 			"p.loccountrycode", "p.locstatecode", "p.loccityid", "p.permission_level", "p.discord_id",
 			"p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban", "p.days_since_last_ban",
-			"p.updated_on_steam", "p.muted", "coalesce(pt.patreon_id, '')", "p.playerqueue_chat_status",
-			"p.playerqueue_chat_reason").
+			"p.updated_on_steam", "p.muted", "coalesce(pt.patreon_id, '')").
 		From("person p").
 		LeftJoin("auth_patreon pt USING (steam_id)")
 
@@ -120,7 +119,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 			"communityvisibilitystate", "profilestate", "personaname", "avatarhash", "personastate",
 			"realname", "timecreated", "loccountrycode", "locstatecode", "loccityid", "permission_level",
 			"discord_id", "community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
-			"updated_on_steam", "muted", "playerqueue_chat_status", "playerqueue_chat_reason",
+			"updated_on_steam", "muted",
 		},
 		"pt.": {"patreon_id"},
 	}, "steam_id")
@@ -142,8 +141,7 @@ func (r *Repository) Query(ctx context.Context, query Query) (People, int64, err
 				&person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 				&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
-				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID, &person.PlayerqueueChatStatus,
-				&person.PlayerqueueChatReason); errScan != nil {
+				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID); errScan != nil {
 			return nil, 0, errors.Join(errScan, database.ErrScanResult)
 		}
 

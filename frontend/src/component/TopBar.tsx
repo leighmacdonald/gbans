@@ -9,8 +9,6 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import ForumIcon from "@mui/icons-material/Forum";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
-import KeyboardIcon from "@mui/icons-material/Keyboard";
-import KeyboardHideIcon from "@mui/icons-material/KeyboardHide";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import LiveHelpIcon from "@mui/icons-material/LiveHelp";
 import MailIcon from "@mui/icons-material/Mail";
@@ -49,15 +47,12 @@ import { type JSX, type MouseEvent, useCallback, useMemo, useState } from "react
 import { apiGetNotifications } from "../api";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useColourModeCtx } from "../hooks/useColourModeCtx.ts";
-import { useQueueCtx } from "../hooks/useQueueCtx.ts";
 import steamLogo from "../icons/steam_login_sm.png";
 import type { appInfoDetail } from "../schema/app.ts";
 import { PermissionLevel, type UserNotification } from "../schema/people.ts";
 import { tf2Fonts } from "../theme";
 import { generateOIDCLink } from "../util/auth/generateOIDCLink.ts";
-import { checkFeatureEnabled } from "../util/features.ts";
 import RouterLink from "./RouterLink.tsx";
-import { StyledBadge } from "./StyledBadge.tsx";
 import { VCenterBox } from "./VCenterBox.tsx";
 
 interface menuRoute {
@@ -68,7 +63,6 @@ interface menuRoute {
 
 export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 	const { profile, hasPermission, isAuthenticated } = useAuth();
-	const { users, showChat, setShowChat } = useQueueCtx();
 
 	const { data: notifications, isLoading } = useQuery({
 		queryKey: ["notifications"],
@@ -316,10 +310,6 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 		);
 	}, [theme.palette.mode]);
 
-	const handleToggleChat = useCallback(() => {
-		setShowChat(!showChat);
-	}, [setShowChat, showChat]);
-
 	return (
 		<>
 			<AppBar>
@@ -400,21 +390,6 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 
 						<Box sx={{ flexGrow: 0 }}>
 							<Stack direction={"row"} spacing={1}>
-								{checkFeatureEnabled("playerqueue_enabled") &&
-									hasPermission(PermissionLevel.Moderator) && (
-										<Tooltip title="Toggle Chat Window">
-											<IconButton onClick={handleToggleChat}>
-												<StyledBadge badgeContent={users.length}>
-													{showChat ? (
-														<KeyboardHideIcon sx={{ color: "#fff", rotate: 180 }} />
-													) : (
-														<KeyboardIcon sx={{ color: "#fff" }} />
-													)}
-												</StyledBadge>
-											</IconButton>
-										</Tooltip>
-									)}
-
 								<Tooltip title="Toggle BLU/RED mode">
 									<IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
 								</Tooltip>

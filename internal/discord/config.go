@@ -18,7 +18,6 @@ type Config struct {
 	BanLogChannelID         string `json:"ban_log_channel_id"`
 	ForumLogChannelID       string `json:"forum_log_channel_id"`
 	KickLogChannelID        string `json:"kick_log_channel_id"`
-	PlayerqueueChannelID    string `json:"playerqueue_channel_id"`
 	ModPingRoleID           string `json:"mod_ping_role_id"`
 	AnticheatChannelID      string `json:"anticheat_channel_id"`
 	SeedChannelID           string `json:"seed_channel_id"`
@@ -85,14 +84,6 @@ func (c Config) SafeForumLogChannelID() string {
 func (c Config) SafeKickLogChannelID() string {
 	if c.KickLogChannelID != "" {
 		return c.KickLogChannelID
-	}
-
-	return c.LogChannelID
-}
-
-func (c Config) SafePlayerqueueChannelID() string {
-	if c.PlayerqueueChannelID != "" {
-		return c.PlayerqueueChannelID
 	}
 
 	return c.LogChannelID

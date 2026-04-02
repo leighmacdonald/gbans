@@ -25,7 +25,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/contest"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord/oauth"
 	"github.com/leighmacdonald/gbans/internal/forum"
@@ -41,7 +40,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/playerqueue"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -84,7 +82,6 @@ type GBans struct {
 	news           news.News
 	notifications  *notification.Notifications
 	persons        *person.Persons
-	playerQueue    *playerqueue.Playerqueue
 	reports        ban.Reports
 	servers        *servers.Servers
 	speedruns      servers.Speedruns
@@ -209,7 +206,6 @@ func (g *GBans) Init(ctx context.Context) error {
 		chat.RegisterDiscordCommands(g.bot, g.wordFilters)
 		forum.RegisterDiscordCommands(g.bot)
 		news.RegisterDiscordCommands(g.bot)
-		playerqueue.RegisterDiscordCommands(g.bot)
 		servers.RegisterDiscordCommands(g.bot, g.persons, g.servers, g.networks, g.notifications, conf.Discord.SafeKickLogChannelID())
 		sourcemod.RegisterDiscordCommands(g.bot, g.sourcemod, g.servers)
 		votes.RegisterDiscordCommands(g.bot)
@@ -227,9 +223,6 @@ func (g *GBans) Init(ctx context.Context) error {
 	// if conf.Network.SDREnabled && conf.Network.SDRDNSEnabled {
 	// 	// go dns.MonitorChanges(ctx, conf, stateUsecase, serversUC)
 	// }
-
-	// Config
-	g.setupPlayerQueue(ctx)
 
 	if errRoles := g.createDiscordRoles(ctx); errRoles != nil {
 		slog.Error("Failed to register discord roles", slog.String("error", errRoles.Error()))
@@ -379,17 +372,6 @@ func (g *GBans) startBot() {
 	}
 }
 
-func (g *GBans) setupPlayerQueue(ctx context.Context) {
-	playerQueueRepo := playerqueue.NewRepository(g.database, g.persons)
-	// Pre-load some messages into queue message cache
-	chatlogs, errChatlogs := playerQueueRepo.Query(ctx, playerqueue.QueryOpts{Filter: query.Filter{Limit: 100}})
-	if errChatlogs != nil {
-		slog.Error("Failed to warm playerqueue chatlogs", slog.String("error", errChatlogs.Error()))
-		chatlogs = []playerqueue.ChatLog{}
-	}
-	g.playerQueue = playerqueue.NewPlayerqueue(ctx, playerQueueRepo, g.persons, g.servers, chatlogs, g.config.Config().Discord.PlayerqueueChannelID, g.notifications)
-}
-
 func (g *GBans) setupSentry() {
 	dsn := g.config.Config().General.SentryDSN
 	if dsn != "" {
@@ -418,7 +400,6 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	go g.forums.Start(ctx)
 	go g.metrics.Start(ctx)
 	go g.votes.Start(ctx)
-	go g.playerQueue.Start(ctx)
 	go g.networks.Start(ctx)
 	go g.notifications.Sender(ctx)
 
@@ -523,7 +504,6 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	notification.NewNotificationHandler(router, userAuth, g.notifications)
 	patreon.NewPatreonHandler(router, userAuth, patreon.NewPatreon(patreon.NewRepository(g.database), conf.Patreon), g.config.Config().Patreon)
 	person.NewPersonHandler(router, userAuth, g.persons)
-	playerqueue.NewPlayerqueueHandler(router, userAuth, g.playerQueue)
 	servers.NewDemoHandler(router, userAuth, g.demos)
 	servers.NewServersHandler(router, userAuth, g.servers)
 	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)

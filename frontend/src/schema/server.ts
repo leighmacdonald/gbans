@@ -40,6 +40,7 @@ export const schemaBaseServer = z.object({
 	cc: z.string(),
 	players: z.number(),
 	max_players: z.number(),
+	max_players_visible: z.number(),
 	bots: z.number(),
 	humans: z.number(),
 	map: z.string(),

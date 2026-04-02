@@ -29,24 +29,25 @@ var (
 // SafeServer provides a server struct stripped of any sensitive info suitable for public-facing
 // services.
 type SafeServer struct {
-	ServerID   int      `json:"server_id"`
-	Host       string   `json:"host"`
-	Port       uint16   `json:"port"`
-	IP         string   `json:"ip"`
-	Name       string   `json:"name"`
-	NameShort  string   `json:"name_short"`
-	Region     string   `json:"region"`
-	CC         string   `json:"cc"`
-	Players    int      `json:"players"`
-	MaxPlayers int      `json:"max_players"`
-	Bots       int      `json:"bots"`
-	Map        string   `json:"map"`
-	GameTypes  []string `json:"game_types"`
-	Latitude   float64  `json:"latitude"`
-	Longitude  float64  `json:"longitude"`
-	Distance   float64  `json:"distance"`
-	Humans     int      `json:"humans"`
-	Tags       []string `json:"tags"`
+	ServerID          int      `json:"server_id"`
+	Host              string   `json:"host"`
+	Port              uint16   `json:"port"`
+	IP                string   `json:"ip"`
+	Name              string   `json:"name"`
+	NameShort         string   `json:"name_short"`
+	Region            string   `json:"region"`
+	CC                string   `json:"cc"`
+	Players           int      `json:"players"`
+	MaxPlayers        int      `json:"max_players"`
+	MaxPlayersVisible int      `json:"max_players_visible"`
+	Bots              int      `json:"bots"`
+	Map               string   `json:"map"`
+	GameTypes         []string `json:"game_types"`
+	Latitude          float64  `json:"latitude"`
+	Longitude         float64  `json:"longitude"`
+	Distance          float64  `json:"distance"`
+	Humans            int      `json:"humans"`
+	Tags              []string `json:"tags"`
 }
 
 type Server struct {
@@ -98,8 +99,9 @@ type Server struct {
 	// a VPN to the RCOn port instead of having it exposed publicly.
 	IPInternal net.IP `json:"-"`
 
-	lastMaxPlayersUpdate time.Time
-	lastA2SUpdate        time.Time
+	lastMaxPlayersUpdate        time.Time
+	lastMaxVisiblePlayersUpdate time.Time
+	lastA2SUpdate               time.Time
 
 	// state holds all information we know about the current dynamic game state of the server.
 	state *state
@@ -334,6 +336,8 @@ func (s *Server) SteamLink() string {
 }
 
 func (s *Server) updateA2S() error {
+	s.lastA2SUpdate = time.Now()
+
 	s.RLock()
 	addr := fmt.Sprintf("%s:%d", s.Address, s.Port)
 	s.RUnlock()
@@ -501,9 +505,9 @@ func (s *Server) updateMaxVisiblePlayers(ctx context.Context) error {
 
 	s.Lock()
 	if maxPlayers > 0 {
-		s.state.MaxPlayers = int(maxPlayers)
+		s.state.MaxPlayersVisible = int(maxPlayers)
 	}
-	s.lastMaxPlayersUpdate = time.Now()
+	s.lastMaxVisiblePlayersUpdate = time.Now()
 	s.Unlock()
 
 	return nil
@@ -511,8 +515,8 @@ func (s *Server) updateMaxVisiblePlayers(ctx context.Context) error {
 
 func (s *Server) updateState(ctx context.Context) {
 	s.RLock()
-	lastA2SUpdate := s.lastMaxPlayersUpdate
-	lastPlayersUpdate := s.lastMaxPlayersUpdate
+	lastA2SUpdate := s.lastA2SUpdate
+	lastPlayersUpdate := s.lastMaxVisiblePlayersUpdate
 	s.RUnlock()
 
 	waitGroup := &sync.WaitGroup{}
@@ -524,7 +528,7 @@ func (s *Server) updateState(ctx context.Context) {
 		}
 	})
 
-	if time.Since(lastA2SUpdate) > time.Second*60 {
+	if time.Since(lastA2SUpdate) > time.Minute {
 		waitGroup.Go(func() {
 			if err := s.updateA2S(); err != nil {
 				slog.Debug("Failed to update a2s", slog.String("error", err.Error()),

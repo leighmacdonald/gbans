@@ -28,5 +28,6 @@ pkgs.mkShell {
     markdownlint-cli2
     sourcepawn-studio
     sql-formatter
+    rcon-cli
   ];
 }
