@@ -22,7 +22,7 @@ const (
 )
 
 // PacketAuthenticator is responsible for validating the incoming packet secret.
-type PacketAuthenticator func(secret int64, clientIP net.IP) (int, string, error)
+type PacketAuthenticator func(ctx context.Context, secret int64, clientIP net.IP) (int, string, error)
 
 type LogEventHandler func(EventType, ServerEvent)
 
@@ -141,10 +141,12 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 					}
 
 					// IP Check: Ensure the packet originates from a known server IP
-					serverID, serverName, errAuth := remoteSrc.packetAuth(secret, remoteAddr.IP)
+					serverID, serverName, errAuth := remoteSrc.packetAuth(ctx, secret, remoteAddr.IP)
 					if errAuth != nil {
 						continue
 					}
+
+					slog.Debug("UDP Log", slog.String("msg", line[idx:readLen-2]), slog.String("server", serverName))
 
 					msgIngressChan <- newMsg{body: line[idx : readLen-2], serverID: serverID, serverName: serverName}
 

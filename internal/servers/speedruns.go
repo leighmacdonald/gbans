@@ -71,12 +71,12 @@ func (u *Speedruns) Save(ctx context.Context, details Speedrun) (Speedrun, error
 
 	details.Players = validPlayers
 
-	mapDetail, mapErr := u.maps.Get(ctx, details.Map.MapName)
+	mapDetail, mapErr := u.maps.Get(ctx, details.MapDetail.MapName)
 	if mapErr != nil {
 		return details, mapErr
 	}
 
-	details.Map = mapDetail
+	details.MapDetail = mapDetail
 
 	if err := u.repo.Save(ctx, &details); err != nil {
 		return Speedrun{}, err

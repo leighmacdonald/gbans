@@ -74,3 +74,4 @@ id_stv*
 !.goreleaser.yaml
 !.markdownlint-cli2.yaml
 !.envrc
+*.vdf

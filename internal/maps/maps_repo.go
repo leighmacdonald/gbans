@@ -32,7 +32,7 @@ func (r Repository) GetOrCreate(ctx context.Context, mapName string) (Map, error
 	if errQuery := r.
 		QueryRow(ctx, query, mapName).
 		Scan(&mapDetail.MapID, &mapDetail.MapName, &mapDetail.UpdatedOn, &mapDetail.CreatedOn); errQuery != nil {
-		return Map{}, database.DBErr(errQuery)
+		return Map{}, database.Err(errQuery)
 	}
 
 	return mapDetail, nil

@@ -13,10 +13,10 @@ func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
 }
 
-func (r Repository) Insert(ctx context.Context) error {
+func (r Repository) Insert(_ context.Context) error {
 	return nil
 }
 
-func (r Repository) AddPlayerStatsAlltime(ctx context.Context, stats demoparse.Stats) error {
+func (r Repository) AddPlayerStatsAlltime(_ context.Context, _ demoparse.Stats) error {
 	return nil
 }

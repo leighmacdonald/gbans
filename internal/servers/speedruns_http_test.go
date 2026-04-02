@@ -48,10 +48,10 @@ func TestSpeedrunsHTTP(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		srB.Map = m
+		srB.MapDetail = m
 
 		res := tests.PostGOK[servers.Speedrun](t, router, "/api/sm/speedruns", srB)
-		require.Equal(t, strings.ToLower(srB.Map.MapName), res.Map.MapName)
+		require.Equal(t, strings.ToLower(srB.MapDetail.MapName), res.MapDetail.MapName)
 	}
 
 	// result := tests.GetGOK[map[string][]servers.Speedrun](t, router, "/api/speedruns/overall/top?count=10")
@@ -60,7 +60,7 @@ func TestSpeedrunsHTTP(t *testing.T) {
 
 func genSpeedrun(players int, bots int, serverID int) servers.Speedrun {
 	run := servers.Speedrun{
-		Map:           maps.Map{MapName: "pl_" + stringutil.SecureRandomString(10)},
+		MapDetail:     maps.Map{MapName: "pl_" + stringutil.SecureRandomString(10)},
 		PointCaptures: nil,
 		ServerID:      serverID,
 		Players:       make([]servers.SpeedrunParticipant, players),
