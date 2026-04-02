@@ -31,8 +31,8 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.4.9",
 		"@sentry/vite-plugin": "^5.1.1",
-		"@tanstack/react-query-devtools": "^5.95.2",
-		"@tanstack/router-vite-plugin": "^1.166.20",
+		"@tanstack/react-query-devtools": "^5.96.1",
+		"@tanstack/router-vite-plugin": "^1.166.27",
 		"@types/leaflet": "^1.9.21",
 		"@types/node": "^25.5.0",
 		"@types/react": "^19.2.14",
@@ -40,9 +40,9 @@
 		"@types/steamid": "^2.0.4",
 		"@types/video-react": "^0.15.8",
 		"typescript": "^6.0.2",
-		"vite": "^8.0.2",
+		"vite": "^8.0.3",
 		"vite-plugin-html": "^3.2.2",
-		"vitest": "^4.1.1"
+		"vitest": "^4.1.2"
 	},
 	"browserslist": {
 		"production": [
@@ -70,13 +70,13 @@
 		"@mui/lab": "7.0.1-beta.23",
 		"@mui/material": "^7.3.9",
 		"@mui/system": "^7.3.9",
-		"@mui/x-charts": "^8.28.0",
+		"@mui/x-charts": "^8.28.2",
 		"@mui/x-date-pickers": "^8.27.2",
-		"@sentry/react": "^10.46.0",
-		"@tanstack/react-form": "^1.28.5",
-		"@tanstack/react-pacer": "^0.21.0",
-		"@tanstack/react-query": "^5.95.2",
-		"@tanstack/react-router": "^1.168.4",
+		"@sentry/react": "^10.47.0",
+		"@tanstack/react-form": "^1.28.6",
+		"@tanstack/react-pacer": "^0.21.1",
+		"@tanstack/react-query": "^5.96.1",
+		"@tanstack/react-router": "^1.168.10",
 		"@vitejs/plugin-react": "^6.0.1",
 		"date-fns": "4.1.0",
 		"iso8601-duration": "^2.1.3",

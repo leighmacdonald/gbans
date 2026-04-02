@@ -8,13 +8,17 @@ import { createHtmlPlugin } from "vite-plugin-html";
 export default defineConfig({
 	base: "",
 	publicDir: "public",
-	legacy: {
-		// Required until react-video is updated: https://github.com/robtaussig/react-use-websocket/issues/280
-		inconsistentCjsInterop: true,
-	},
 	build: {
 		copyPublicDir: true,
-		sourcemap: true,
+		sourcemap: "hidden",
+
+		// rolldownOptions: {
+		// 	makeAbsoluteExternalsRelative: true,
+		// 	preserveEntrySignatures: "strict",
+		// 	output: {
+		// 		esModule: true,
+		// 	},
+		// },
 	},
 
 	server: {
