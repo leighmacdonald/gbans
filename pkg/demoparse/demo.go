@@ -28,9 +28,9 @@ func (d Demo) Winner() logparse.Team {
 		return logparse.RED
 	} else if scores.Blu > scores.Red {
 		return logparse.BLU
-	} else {
-		return logparse.UNASSIGNED
 	}
+
+	return logparse.UNASSIGNED
 }
 
 func (d Demo) Scores() logparse.TeamScores {

@@ -17,9 +17,7 @@ const (
 	MinDuraion = 300
 )
 
-var (
-	ErrInvalidState = errors.New("Invalid demo state")
-)
+var ErrInvalidState = errors.New("invalid demo state")
 
 type Stats struct {
 	repo Repository
@@ -78,13 +76,12 @@ func (s Stats) Import(ctx context.Context, serverID int, demo demoparse.Demo) (*
 			if !ok {
 				plr = &Player{MedicStats: &PlayerMedicStats{}}
 				players[user] = plr
-
 			}
 			plr.ApplySummary(&player)
 		}
 	}
 
-	var chat []PersonMessage
+	var chat []PersonMessage //nolint:prealloc
 	for _, message := range demo.Chat {
 		user := steamid.New(message.User)
 		if message.Message == "" || message.Tick <= 0 {

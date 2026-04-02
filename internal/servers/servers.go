@@ -113,19 +113,18 @@ func New(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.Ev
 	return servers, nil
 }
 
-func (s *Servers) secretAuth(secret int64, ipAddr net.IP) (int, string, error) {
-	s.serversMu.RLock()
-	defer s.serversMu.RUnlock()
-
-	server, found := s.servers.bySecret(secret)
-	if !found {
-		return 0, "", ErrNotFound
+func (s *Servers) secretAuth(ctx context.Context, secret int64, ipAddr net.IP) (int, string, error) {
+	server, err := s.ServerByLogSecret(ctx, secret)
+	if err != nil {
+		return 0, "", fmt.Errorf("%w: invalid log_secret", err)
 	}
-
-	server.RLock()
-	defer server.RUnlock()
-	if !server.IP.Equal(ipAddr) || (server.IPInternal != nil && !server.IPInternal.Equal(ipAddr)) {
-		return 0, "", ErrNotFound
+	if server.AddressInternal != "" {
+		addr := resolveIP(ctx, server.AddressInternal)
+		if addr.String() != ipAddr.String() {
+			return 0, "", fmt.Errorf("%w: invalid source ip (int)", ErrNotFound)
+		}
+	} else if resolveIP(ctx, server.Address).String() != server.Address {
+		return 0, "", fmt.Errorf("%w: invalid source ip (ext)", ErrNotFound)
 	}
 
 	return server.ServerID, server.ShortName, nil

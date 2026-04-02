@@ -17,6 +17,32 @@ func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
 }
 
+func (r *Repository) ServerByLogSecret(ctx context.Context, secret int64) (Server, error) {
+	builder := r.Builder().
+		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
+			"s.token_created_on", "s.created_on", "s.updated_on", "s.reserved_slots", "s.is_enabled", "s.region", "s.cc",
+			"s.latitude", "s.longitude", "s.deleted", "s.log_secret", "s.enable_stats", "s.address_internal", "s.sdr_enabled",
+			"s.discord_seed_role_ids").
+		From("server s").Where(sq.Eq{"s.log_secret": secret})
+	var server Server
+	var tokenDate time.Time
+	row, errRow := r.QueryRowBuilder(ctx, builder)
+	if errRow != nil {
+		return server, database.Err(errRow)
+	}
+	if err := row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
+		&server.Password, &tokenDate, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
+		&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
+		&server.Deleted, &server.LogSecret, &server.EnableStats, &server.AddressInternal, &server.SDREnabled,
+		&server.DiscordSeedRoleIDs); err != nil {
+		return server, database.Err(err)
+	}
+
+	server.TokenCreatedOn = tokenDate
+
+	return server, nil
+}
+
 func (r *Repository) Query(ctx context.Context, filter Query) ([]Server, error) {
 	builder := r.Builder().
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",

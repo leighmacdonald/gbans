@@ -2,11 +2,13 @@ package servers
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
+	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -52,7 +54,7 @@ type Speedrun struct {
 	ServerID      int                     `json:"server_id"`
 	Rank          int                     `json:"rank,omitempty"`
 	InitialRank   int                     `json:"initial_rank,omitempty"`
-	MapDetail     MapDetail               `json:"map_detail"`
+	MapDetail     maps.Map                `json:"map_detail"`
 	PointCaptures []SpeedrunPointCaptures `json:"point_captures"`
 	Players       []SpeedrunParticipant   `json:"players"`
 	Duration      time.Duration           `json:"duration"`
@@ -95,36 +97,13 @@ type SpeedrunRepository struct {
 	person person.Provider
 }
 
-func (r *SpeedrunRepository) loadOrCreateMap(ctx context.Context, mapName string) (MapDetail, error) {
-	const query = `
-		WITH ins AS (
-    		INSERT INTO map (map_id, map_name, updated_on, created_on) VALUES (DEFAULT, lower($1), now(),now())
-    		ON CONFLICT (map_name) DO NOTHING RETURNING *
-    	)
-		SELECT * FROM ins
-		UNION
-		SELECT * FROM map
-		WHERE map_name = lower($1);
-		`
-
-	var mapDetail MapDetail
-	if errQuery := r.
-		QueryRow(ctx, query, mapName).
-		Scan(&mapDetail.MapID, &mapDetail.MapName, &mapDetail.UpdatedOn, &mapDetail.CreatedOn); errQuery != nil {
-		return MapDetail{}, database.Err(errQuery)
-	}
-
-	return mapDetail, nil
-}
+var errInvalidMapID = errors.New("map_id is required")
 
 func (r *SpeedrunRepository) Save(ctx context.Context, details *Speedrun) error {
-	mapDetail, mapErr := r.loadOrCreateMap(ctx, details.MapDetail.MapName)
-	if mapErr != nil {
-		return mapErr
-	}
-
 	return r.WrapTx(ctx, func(transaction pgx.Tx) error {
-		details.MapDetail = mapDetail
+		if details.MapDetail.MapID == 0 {
+			return errInvalidMapID
+		}
 
 		if errPlayers := r.insertPlayers(ctx, details.Players); errPlayers != nil {
 			return database.Err(errPlayers)

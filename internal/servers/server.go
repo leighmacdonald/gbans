@@ -197,6 +197,8 @@ func (s *Server) resolveIPInternal() error {
 }
 
 func (s *Server) LogAddressAdd(ctx context.Context, logAddress string) error {
+	slog.Warn("Adding logaddress", slog.String("address", logAddress))
+
 	return s.ExecDiscardF(ctx, "logaddress_add %s", logAddress)
 }
 
@@ -301,7 +303,7 @@ func (s *Server) Silence(ctx context.Context, target steamid.SteamID, reason str
 }
 
 func (s *Server) Addr() string {
-	return fmt.Sprintf("%s:%d", s.Address, s.Port)
+	return fmt.Sprintf("%s:%d", s.AddrInternalOrDefault(), s.Port)
 }
 
 func (s *Server) AddrInternalOrDefault() string {
@@ -333,7 +335,7 @@ func (s *Server) SteamLink() string {
 
 func (s *Server) updateA2S() error {
 	s.RLock()
-	addr := s.Addr()
+	addr := fmt.Sprintf("%s:%d", s.Address, s.Port)
 	s.RUnlock()
 
 	client, errClient := a2s.NewClient(addr, a2s.TimeoutOption(serverQueryTimeout))

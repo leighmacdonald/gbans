@@ -354,7 +354,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthSettingsRoute
   '/changelog': typeof GuestChangelogRoute
   '/contests': typeof GuestContestsRoute
-  '/mge': typeof GuestMgeRoute
+  '/mge': typeof GuestMgeRouteWithChildren
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
@@ -405,7 +405,6 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthSettingsRoute
   '/changelog': typeof GuestChangelogRoute
   '/contests': typeof GuestContestsRoute
-  '/mge': typeof GuestMgeRoute
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
@@ -461,7 +460,7 @@ export interface FileRoutesById {
   '/_auth/settings': typeof AuthSettingsRoute
   '/_guest/changelog': typeof GuestChangelogRoute
   '/_guest/contests': typeof GuestContestsRoute
-  '/_guest/mge': typeof GuestMgeRoute
+  '/_guest/mge': typeof GuestMgeRouteWithChildren
   '/_guest/patreon': typeof GuestPatreonRoute
   '/_guest/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/_guest/servers': typeof GuestServersRoute
@@ -568,7 +567,6 @@ export interface FileRouteTypes {
     | '/settings'
     | '/changelog'
     | '/contests'
-    | '/mge'
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
@@ -1168,7 +1166,7 @@ const GuestWikiRouteWithChildren = GuestWikiRoute._addFileChildren(
 interface GuestRouteChildren {
   GuestChangelogRoute: typeof GuestChangelogRoute
   GuestContestsRoute: typeof GuestContestsRoute
-  GuestMgeRoute: typeof GuestMgeRoute
+  GuestMgeRoute: typeof GuestMgeRouteWithChildren
   GuestPatreonRoute: typeof GuestPatreonRoute
   GuestPrivacyPolicyRoute: typeof GuestPrivacyPolicyRoute
   GuestServersRoute: typeof GuestServersRoute
@@ -1186,7 +1184,7 @@ interface GuestRouteChildren {
 const GuestRouteChildren: GuestRouteChildren = {
   GuestChangelogRoute: GuestChangelogRoute,
   GuestContestsRoute: GuestContestsRoute,
-  GuestMgeRoute: GuestMgeRoute,
+  GuestMgeRoute: GuestMgeRouteWithChildren,
   GuestPatreonRoute: GuestPatreonRoute,
   GuestPrivacyPolicyRoute: GuestPrivacyPolicyRoute,
   GuestServersRoute: GuestServersRoute,

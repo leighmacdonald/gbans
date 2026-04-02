@@ -163,16 +163,6 @@ func (c Collection) byServerID(serverID int) (*Server, bool) {
 	return nil, false
 }
 
-func (c Collection) bySecret(secret int64) (*Server, bool) {
-	for _, server := range c {
-		if int64(server.LogSecret) == secret {
-			return server, true
-		}
-	}
-
-	return nil, false
-}
-
 func (c Collection) byName(name string, wildcardOk bool) []*Server {
 	var servers []*Server
 
