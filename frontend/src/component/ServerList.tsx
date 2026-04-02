@@ -133,6 +133,10 @@ export const ServerList = () => {
 		enablePagination: false,
 		initialState: {
 			...defaultOptions.initialState,
+			pagination: {
+				pageSize: 100,
+				pageIndex: 0,
+			},
 			sorting: [{ id: "distance", desc: true }],
 			columnVisibility: {
 				name: true,

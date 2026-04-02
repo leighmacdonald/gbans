@@ -73,6 +73,7 @@ export const SortableTable = <TData extends MRT_RowData>({
 				<MRT_ToolbarAlertBanner stackAlertBanner table={table} />
 			</Box>
 			<MRT_TableContainer table={table} />
+
 			<Box>
 				<Box sx={{ display: "flex", justifyContent: "flex-end" }}>
 					<MRT_TablePagination table={table} />

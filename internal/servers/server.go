@@ -380,6 +380,9 @@ func (s *Server) updateA2S() error {
 	s.state.ServerOS = serverInfo.ServerOS.String()
 	s.state.Password = !serverInfo.Visibility
 	s.state.PlayerCount = int(serverInfo.Players)
+	if s.state.MaxPlayers == 0 {
+		s.state.MaxPlayers = int(serverInfo.MaxPlayers)
+	}
 	if serverInfo.SourceTV != nil {
 		s.state.STVPort = serverInfo.SourceTV.Port
 		s.state.STVName = serverInfo.SourceTV.Name
