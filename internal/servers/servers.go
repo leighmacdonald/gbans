@@ -83,38 +83,42 @@ type ServerInfoSafe struct {
 }
 
 type Servers struct {
-	Repository
+	repo Repository
 
 	logListener *logparse.Listener
 	logFileChan chan LogFilePayload
 	servers     Collection
 	serversMu   *sync.RWMutex
 	broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	logAddr     string
+	logRecorder *LogEventRecorder
 }
 
 func New(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.EventType, logparse.ServerEvent], logAddr string) (*Servers, error) {
 	servers := &Servers{
-		Repository:  repository,
+		repo:        repository,
 		logFileChan: make(chan LogFilePayload),
 		servers:     Collection{},
 		serversMu:   &sync.RWMutex{},
 		broadcaster: broadcaster,
+		logAddr:     logAddr,
+		logRecorder: newLogEventRecorder(repository),
 	}
-	logSrc, errLogSrc := logparse.NewListener(logAddr,
-		func(_ logparse.EventType, event logparse.ServerEvent) {
-			broadcaster.Emit(event.EventType, event)
-		}, servers.secretAuth)
-	if errLogSrc != nil {
-		return nil, errLogSrc
-	}
-
-	servers.logListener = logSrc
 
 	return servers, nil
 }
 
+func (s *Servers) onLogEvent(_ logparse.EventType, event logparse.ServerEvent) {
+	s.broadcaster.Emit(event.EventType, event)
+	s.logRecorder.send(event)
+}
+
+func (s *Servers) QueryLogs(ctx context.Context, opts QueryLogOpts) ([]ServerLog, int64, error) {
+	return s.repo.QueryLogs(ctx, opts)
+}
+
 func (s *Servers) secretAuth(ctx context.Context, secret int64, ipAddr net.IP) (int, string, error) {
-	server, err := s.ServerByLogSecret(ctx, secret)
+	server, err := s.repo.ServerByLogSecret(ctx, secret)
 	if err != nil {
 		return 0, "", fmt.Errorf("%w: invalid log_secret", err)
 	}
@@ -202,7 +206,14 @@ func (s *Servers) Start(ctx context.Context, updateFreq time.Duration) error {
 		timeOut = time.Duration(float64(updateFreq) * 0.8)
 	)
 
-	go s.logListener.Start(ctx)
+	logSrc, errLogSrc := logparse.NewListener(s.logAddr, s.onLogEvent, s.secretAuth)
+	if errLogSrc != nil {
+		return errLogSrc
+	}
+
+	go logSrc.Start(ctx)
+
+	go s.logRecorder.start(ctx)
 
 	for {
 		select {
@@ -290,7 +301,7 @@ func (s *Servers) Delete(ctx context.Context, serverID int) error {
 
 	server.Deleted = true
 
-	if err := s.Repository.Save(ctx, &server); err != nil {
+	if err := s.repo.Save(ctx, &server); err != nil {
 		return err
 	}
 
@@ -302,7 +313,7 @@ func (s *Servers) Server(ctx context.Context, serverID int) (Server, error) {
 		return Server{}, ErrNotFound
 	}
 
-	servers, err := s.Query(ctx, Query{ServerID: serverID, IncludeDisabled: true})
+	servers, err := s.repo.Query(ctx, Query{ServerID: serverID, IncludeDisabled: true})
 	if err != nil {
 		return Server{}, err
 	}
@@ -315,11 +326,11 @@ func (s *Servers) Server(ctx context.Context, serverID int) (Server, error) {
 }
 
 func (s *Servers) Servers(ctx context.Context, filter Query) ([]Server, error) {
-	return s.Query(ctx, filter)
+	return s.repo.Query(ctx, filter)
 }
 
 func (s *Servers) GetByName(ctx context.Context, serverName string) (Server, error) {
-	server, errServer := s.Query(ctx, Query{ShortName: serverName})
+	server, errServer := s.repo.Query(ctx, Query{ShortName: serverName})
 
 	if errServer != nil {
 		return Server{}, errServer
@@ -333,7 +344,7 @@ func (s *Servers) GetByName(ctx context.Context, serverName string) (Server, err
 }
 
 func (s *Servers) GetByPassword(ctx context.Context, serverPassword string) (Server, error) {
-	server, errServer := s.Query(ctx, Query{Password: serverPassword})
+	server, errServer := s.repo.Query(ctx, Query{Password: serverPassword})
 
 	if errServer != nil {
 		return Server{}, errServer
@@ -351,7 +362,7 @@ func (s *Servers) Save(ctx context.Context, server Server) (Server, error) {
 		server.UpdatedOn = time.Now()
 	}
 
-	if err := s.Repository.Save(ctx, &server); err != nil {
+	if err := s.repo.Save(ctx, &server); err != nil {
 		return Server{}, err
 	}
 

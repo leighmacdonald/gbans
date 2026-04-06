@@ -8,15 +8,8 @@
 	"license": "MIT",
 	"main": "src/index.tsx",
 	"type": "module",
-	"presets": [
-		[
-			"env",
-			{
-				"modules": false
-			}
-		]
-	],
 	"scripts": {
+		"build:analyze": "vite build --mode analyze",
 		"preinstall": "npx only-allow pnpm",
 		"watch": "vite build --watch",
 		"serve": "vite --force",
@@ -38,7 +31,6 @@
 		"@types/react": "^19.2.14",
 		"@types/react-dom": "^19.2.3",
 		"@types/steamid": "^2.0.4",
-		"@types/video-react": "^0.15.8",
 		"typescript": "^6.0.2",
 		"vite": "^8.0.3",
 		"vite-plugin-html": "^3.2.2",
@@ -92,7 +84,6 @@
 		"react-player": "^3.4.0",
 		"react-scrollable-feed": "^2.0.4",
 		"react-timer-hook": "^4.0.5",
-		"react-use-websocket": "^4.13.0",
 		"steamid": "^2.1.0",
 		"zod": "^4.3.6"
 	}

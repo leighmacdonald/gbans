@@ -30,7 +30,7 @@ var (
 //go:embed migrations
 var migrations embed.FS
 
-// Database is the common database interface. All errors from callers should be wrapped in errs.DBErr as they
+// Database is the common database interface. All errors from callers should be wrapped in Err as they
 // are not automatically wrapped.
 type Database interface {
 	Pool() *pgxpool.Pool

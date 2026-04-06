@@ -104,9 +104,6 @@ importers:
       react-timer-hook:
         specifier: ^4.0.5
         version: 4.0.5(react@19.2.4)
-      react-use-websocket:
-        specifier: ^4.13.0
-        version: 4.13.0
       steamid:
         specifier: ^2.1.0
         version: 2.1.0
@@ -141,9 +138,6 @@ importers:
       '@types/steamid':
         specifier: ^2.0.4
         version: 2.0.4
-      '@types/video-react':
-        specifier: ^0.15.8
-        version: 0.15.8
       typescript:
         specifier: ^6.0.2
         version: 6.0.2
@@ -2273,9 +2267,6 @@ packages:
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
 
-  '@types/video-react@0.15.8':
-    resolution: {integrity: sha512-ZFm57z6bwJ1FWMKAMXyDar0OAQCchals2T4mDG//JXeToW3C2dADI2MzX5y53tFL77Y2QAA1YQZh5XTL1rjiqw==}
-
   '@vimeo/player@2.29.0':
     resolution: {integrity: sha512-9JjvjeqUndb9otCCFd0/+2ESsLk7VkDE6sxOBy9iy2ukezuQbplVRi+g9g59yAurKofbmTi/KcKxBGO/22zWRw==}
 
@@ -3807,9 +3798,6 @@ packages:
     peerDependencies:
       react: '>=16.6.0'
       react-dom: '>=16.6.0'
-
-  react-use-websocket@4.13.0:
-    resolution: {integrity: sha512-anMuVoV//g2N76Wxqvqjjo1X48r9Np3y1/gMl7arX84tAPXdy5R7sB5lO5hvCzQRYjqXwV8XMAiEBOUbyrZFrw==}
 
   react@19.2.4:
     resolution: {integrity: sha512-9nfp2hYpCwOjAN+8TZFGhtWEwgvWHXqESH8qT89AT/lWklpLON22Lc8pEtnpsZz7VmawabSU0gCjnj8aC0euHQ==}
@@ -6735,10 +6723,6 @@ snapshots:
 
   '@types/unist@3.0.3': {}
 
-  '@types/video-react@0.15.8':
-    dependencies:
-      '@types/react': 19.2.14
-
   '@vimeo/player@2.29.0':
     dependencies:
       native-promise-only: 0.8.1
@@ -8615,8 +8599,6 @@ snapshots:
       prop-types: 15.8.1
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-
-  react-use-websocket@4.13.0: {}
 
   react@19.2.4: {}
 

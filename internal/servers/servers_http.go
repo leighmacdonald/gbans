@@ -36,6 +36,25 @@ func NewServersHandler(engine *gin.Engine, authenticator httphelper.Authenticato
 		admin.PUT("/api/servers/:server_id", handler.onSave())
 		admin.DELETE("/api/servers/:server_id", handler.onDelete())
 		admin.GET("/api/servers_admin", handler.onGetAdmin())
+		admin.GET("/api/serverlogs", handler.onGetServerLogs())
+	}
+}
+
+func (h *serversHandler) onGetServerLogs() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		req, ok := httphelper.BindQuery[QueryLogOpts](ctx)
+		if !ok {
+			return
+		}
+
+		logs, count, errLogs := h.QueryLogs(ctx, req)
+		if errLogs != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errLogs, httphelper.ErrInternal)))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, httphelper.NewLazyResult(count, logs))
 	}
 }
 

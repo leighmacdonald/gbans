@@ -11,14 +11,6 @@ export default defineConfig({
 	build: {
 		copyPublicDir: true,
 		sourcemap: "hidden",
-
-		// rolldownOptions: {
-		// 	makeAbsoluteExternalsRelative: true,
-		// 	preserveEntrySignatures: "strict",
-		// 	output: {
-		// 		esModule: true,
-		// 	},
-		// },
 	},
 
 	server: {
@@ -62,12 +54,6 @@ export default defineConfig({
 				target: "http://gbans.localhost:6006",
 				changeOrigin: true,
 				secure: false,
-			},
-			"/ws": {
-				target: "http://gbans.localhost:6006",
-				changeOrigin: true,
-				secure: false,
-				ws: true,
 			},
 		},
 	},
