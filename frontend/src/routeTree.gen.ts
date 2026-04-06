@@ -56,6 +56,7 @@ import { Route as AuthContestsContest_idRouteImport } from './routes/_auth.conte
 import { Route as AuthBanBan_idRouteImport } from './routes/_auth.ban.$ban_id'
 import { Route as AdminAdminSettingsRouteImport } from './routes/_admin.admin.settings'
 import { Route as AdminAdminServersRouteImport } from './routes/_admin.admin.servers'
+import { Route as AdminAdminServerlogsRouteImport } from './routes/_admin.admin.serverlogs'
 import { Route as AdminAdminGameAdminsRouteImport } from './routes/_admin.admin.game-admins'
 import { Route as ModAdminNetworkIndexRouteImport } from './routes/_mod.admin.network.index'
 import { Route as ModAdminNetworkPlayersbyipRouteImport } from './routes/_mod.admin.network.playersbyip'
@@ -296,6 +297,11 @@ const AdminAdminServersRoute = AdminAdminServersRouteImport.update({
   path: '/admin/servers',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAdminServerlogsRoute = AdminAdminServerlogsRouteImport.update({
+  id: '/admin/serverlogs',
+  path: '/admin/serverlogs',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAdminGameAdminsRoute = AdminAdminGameAdminsRouteImport.update({
   id: '/admin/game-admins',
   path: '/admin/game-admins',
@@ -361,6 +367,7 @@ export interface FileRoutesByFullPath {
   '/stv': typeof GuestStvRoute
   '/wiki': typeof GuestWikiRouteWithChildren
   '/admin/game-admins': typeof AdminAdminGameAdminsRoute
+  '/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/admin/servers': typeof AdminAdminServersRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/ban/$ban_id': typeof AuthBanBan_idRoute
@@ -410,6 +417,7 @@ export interface FileRoutesByTo {
   '/servers': typeof GuestServersRoute
   '/stv': typeof GuestStvRoute
   '/admin/game-admins': typeof AdminAdminGameAdminsRoute
+  '/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/admin/servers': typeof AdminAdminServersRoute
   '/admin/settings': typeof AdminAdminSettingsRoute
   '/ban/$ban_id': typeof AuthBanBan_idRoute
@@ -468,6 +476,7 @@ export interface FileRoutesById {
   '/_guest/wiki': typeof GuestWikiRouteWithChildren
   '/_guest/': typeof GuestIndexRoute
   '/_admin/admin/game-admins': typeof AdminAdminGameAdminsRoute
+  '/_admin/admin/serverlogs': typeof AdminAdminServerlogsRoute
   '/_admin/admin/servers': typeof AdminAdminServersRoute
   '/_admin/admin/settings': typeof AdminAdminSettingsRoute
   '/_auth/ban/$ban_id': typeof AuthBanBan_idRoute
@@ -523,6 +532,7 @@ export interface FileRouteTypes {
     | '/stv'
     | '/wiki'
     | '/admin/game-admins'
+    | '/admin/serverlogs'
     | '/admin/servers'
     | '/admin/settings'
     | '/ban/$ban_id'
@@ -572,6 +582,7 @@ export interface FileRouteTypes {
     | '/servers'
     | '/stv'
     | '/admin/game-admins'
+    | '/admin/serverlogs'
     | '/admin/servers'
     | '/admin/settings'
     | '/ban/$ban_id'
@@ -629,6 +640,7 @@ export interface FileRouteTypes {
     | '/_guest/wiki'
     | '/_guest/'
     | '/_admin/admin/game-admins'
+    | '/_admin/admin/serverlogs'
     | '/_admin/admin/servers'
     | '/_admin/admin/settings'
     | '/_auth/ban/$ban_id'
@@ -1002,6 +1014,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminServersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/serverlogs': {
+      id: '/_admin/admin/serverlogs'
+      path: '/admin/serverlogs'
+      fullPath: '/admin/serverlogs'
+      preLoaderRoute: typeof AdminAdminServerlogsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/admin/game-admins': {
       id: '/_admin/admin/game-admins'
       path: '/admin/game-admins'
@@ -1063,12 +1082,14 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAdminGameAdminsRoute: typeof AdminAdminGameAdminsRoute
+  AdminAdminServerlogsRoute: typeof AdminAdminServerlogsRoute
   AdminAdminServersRoute: typeof AdminAdminServersRoute
   AdminAdminSettingsRoute: typeof AdminAdminSettingsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminGameAdminsRoute: AdminAdminGameAdminsRoute,
+  AdminAdminServerlogsRoute: AdminAdminServerlogsRoute,
   AdminAdminServersRoute: AdminAdminServersRoute,
   AdminAdminSettingsRoute: AdminAdminSettingsRoute,
 }

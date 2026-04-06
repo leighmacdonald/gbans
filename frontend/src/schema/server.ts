@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { schemaQueryFilter } from "./query";
 
 export const schemaServer = z.object({
 	server_id: z.number(),
@@ -99,3 +100,20 @@ export const schemaServerRow = schemaBaseServer.extend({
 	copy: z.string(),
 	connect: z.string(),
 });
+
+export const ServerLog = z
+	.object({
+		server_id: z.number(),
+		server_name: z.string(),
+		body: z.string(),
+		created_on: z.date(),
+	})
+	.readonly();
+
+export type ServerLog = z.infer<typeof ServerLog>;
+
+export const schemaServerLogQuery = schemaQueryFilter.extend({
+	server_ids: z.number().array().optional(),
+});
+
+export type ServerLogQuery = z.infer<typeof schemaServerLogQuery>;

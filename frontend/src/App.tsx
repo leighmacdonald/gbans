@@ -49,5 +49,5 @@ export function App({ queryClient, router }: { queryClient: QueryClient; router:
 const InnerApp = ({ router }: { router: AnyRouter }) => {
 	const auth = useAuth();
 
-	return <RouterProvider defaultPreload={"intent"} router={router} context={{ auth }} />;
+	return <RouterProvider defaultPreload={false} router={router} context={{ auth }} />;
 };

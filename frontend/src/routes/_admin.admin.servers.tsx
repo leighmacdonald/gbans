@@ -1,6 +1,7 @@
 import NiceModal from "@ebay/nice-modal-react";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
+import ListIcon from "@mui/icons-material/List";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
@@ -10,10 +11,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { apiGetServersAdmin } from "../api";
+import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { createDefaultTableOptions } from "../component/table/options.ts";
+import { createDefaultTableOptions, makeRowActionsDefOptions } from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellStringHidden } from "../component/table/TableCellStringHidden.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
@@ -206,6 +208,7 @@ function AdminServers() {
 			},
 		},
 		enableRowActions: true,
+		displayColumnDefOptions: makeRowActionsDefOptions(2),
 		renderRowActions: ({ row }) => (
 			<RowActionContainer>
 				<IconButton
@@ -219,6 +222,16 @@ function AdminServers() {
 						<EditIcon />
 					</Tooltip>
 				</IconButton>
+				<IconButtonLink
+					to={"/admin/serverlogs"}
+					search={{ server_ids: [row.original.server_id] }}
+					key="logs"
+					color={"warning"}
+				>
+					<Tooltip title={"Server Logs"}>
+						<ListIcon />
+					</Tooltip>
+				</IconButtonLink>
 			</RowActionContainer>
 		),
 	});

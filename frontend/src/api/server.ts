@@ -1,4 +1,4 @@
-import type { SaveServerOpts, Server, ServerSimple, UserServers } from "../schema/server.ts";
+import type { SaveServerOpts, Server, ServerLog, ServerLogQuery, ServerSimple, UserServers } from "../schema/server.ts";
 import type {
 	AuthType,
 	Flags,
@@ -10,6 +10,7 @@ import type {
 	SMGroups,
 	SMOverrides,
 } from "../schema/sourcemod.ts";
+import type { LazyResult } from "../util/table.ts";
 import { parseDateTime, transformCreatedOnDate, transformTimeStampedDates } from "../util/time.ts";
 import { apiCall } from "./common";
 
@@ -224,3 +225,9 @@ export const apiSaveSMGroup = async (
 
 export const apiDeleteSMGroup = async (group_id: number, signal: AbortSignal) =>
 	await apiCall(signal, `/api/smadmin/groups/${group_id}`, "DELETE");
+
+export const apiGetServerLogs = async (opts: ServerLogQuery, signal: AbortSignal) => {
+	const resp = await apiCall<LazyResult<ServerLog>>(signal, `/api/serverlogs`, "GET", opts);
+	resp.data = resp.data.map(transformCreatedOnDate);
+	return resp;
+};

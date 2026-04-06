@@ -10,6 +10,7 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import ForumIcon from "@mui/icons-material/Forum";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import LightModeIcon from "@mui/icons-material/LightMode";
+import ListIcon from "@mui/icons-material/List";
 import LiveHelpIcon from "@mui/icons-material/LiveHelp";
 import MailIcon from "@mui/icons-material/Mail";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -269,6 +270,11 @@ export const TopBar = ({ appInfo }: { appInfo: appInfoDetail }) => {
 					leftIcon: <SettingsIcon sx={colourOpts} />,
 					label: "Servers",
 					callback: onClickHandler("/admin/servers"),
+				},
+				{
+					leftIcon: <ListIcon sx={colourOpts} />,
+					label: "Server Logs",
+					callback: onClickHandler("/admin/serverlogs"),
 				},
 				{
 					leftIcon: <AddModeratorIcon sx={colourOpts} />,

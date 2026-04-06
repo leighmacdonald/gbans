@@ -6,7 +6,10 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/database/query"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 )
 
 type Repository struct {
@@ -15,6 +18,88 @@ type Repository struct {
 
 func NewRepository(database database.Database) Repository {
 	return Repository{Database: database}
+}
+
+func (r *Repository) InsertLogs(ctx context.Context, events []logparse.ServerEvent) error {
+	const query = "INSERT INTO server_logs (server_id, body, created_on) VALUES ($1, $2, $3)"
+
+	batch := &pgx.Batch{}
+	for _, log := range events {
+		batch.Queue(query, log.ServerID, log.Raw, log.CreatedOn)
+	}
+
+	batchResults := r.SendBatch(ctx, batch)
+	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
+		return errors.Join(errCloseBatch, database.ErrCloseBatch)
+	}
+
+	return nil
+}
+
+func (r *Repository) purgeLogs(ctx context.Context) error {
+	servers, errServers := r.Query(ctx, Query{IncludeDisabled: true, IncludeDeleted: true})
+	if errServers != nil {
+		return errServers
+	}
+
+	const query = "DELETE FROM server_logs WHERE server_id = $1 ORDER BY created_on DESC OFFSET 10000"
+
+	for _, server := range servers {
+		if err := r.Exec(ctx, query, server.ServerID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+type ServerLog struct {
+	ServerID   int       `json:"server_id"`
+	ServerName string    `json:"server_name"`
+	Body       string    `json:"body"`
+	CreatedOn  time.Time `json:"created_on"`
+}
+
+type QueryLogOpts struct {
+	query.Filter
+
+	ServerIDs []int `json:"server_ids" schema:"server_ids"` //nolint:tagliatelle
+}
+
+func (r *Repository) QueryLogs(ctx context.Context, opts QueryLogOpts) ([]ServerLog, int64, error) {
+	builder := r.Builder().
+		Select("sl.server_id",
+			"s.name",
+			"sl.body",
+			"sl.created_on").
+		From("server_logs sl").
+		LeftJoin("server s USING(server_id)")
+
+	builder = opts.ApplyLimitOffset(builder, 1000)
+
+	var constraints sq.And
+	if len(opts.ServerIDs) > 0 {
+		constraints = append(constraints, sq.Eq{"sl.server_id": opts.ServerIDs})
+	}
+	if len(constraints) > 0 {
+		builder = builder.Where(constraints)
+	}
+	rows, err := r.QueryBuilder(ctx, builder)
+	if err != nil {
+		return nil, 0, database.Err(err)
+	}
+	defer rows.Close()
+
+	var logs []ServerLog
+	for rows.Next() {
+		var log ServerLog
+		if err := rows.Scan(&log.ServerID, &log.ServerName, &log.Body, &log.CreatedOn); err != nil {
+			return nil, 0, database.Err(err)
+		}
+		logs = append(logs, log)
+	}
+
+	return logs, int64(len(logs)), nil
 }
 
 func (r *Repository) ServerByLogSecret(ctx context.Context, secret int64) (Server, error) {

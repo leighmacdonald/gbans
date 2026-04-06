@@ -197,6 +197,8 @@ func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 type ServerEvent struct {
 	Results
 
+	CreatedOn  time.Time
+	Raw        string
 	ServerID   int
 	ServerName string
 }
@@ -212,6 +214,8 @@ func logToServerEvent(parser *LogParser, serverID int, serverName string, msg st
 	}
 
 	event.Results = parseResult
+	event.Raw = msg
+	event.CreatedOn = time.Now()
 
 	return event, nil
 }
