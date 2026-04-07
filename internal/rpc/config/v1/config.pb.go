@@ -312,30 +312,30 @@ func (Action) EnumDescriptor() ([]byte, []int) {
 
 type InfoResponse struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	SiteName           string                 `protobuf:"bytes,1,opt,name=site_name,json=siteName,proto3" json:"site_name,omitempty"`
-	SiteDescription    string                 `protobuf:"bytes,2,opt,name=site_description,json=siteDescription,proto3" json:"site_description,omitempty"`
-	AssetUrl           string                 `protobuf:"bytes,3,opt,name=asset_url,json=assetUrl,proto3" json:"asset_url,omitempty"`
-	Favicon            string                 `protobuf:"bytes,4,opt,name=favicon,proto3" json:"favicon,omitempty"`
-	LinkId             string                 `protobuf:"bytes,5,opt,name=link_id,json=linkId,proto3" json:"link_id,omitempty"`
-	AppVersion         string                 `protobuf:"bytes,6,opt,name=app_version,json=appVersion,proto3" json:"app_version,omitempty"`
-	SentryDsnWeb       string                 `protobuf:"bytes,7,opt,name=sentry_dsn_web,json=sentryDsnWeb,proto3" json:"sentry_dsn_web,omitempty"`
-	DocumentPolicy     string                 `protobuf:"bytes,8,opt,name=document_policy,json=documentPolicy,proto3" json:"document_policy,omitempty"`
-	PatreonClientId    string                 `protobuf:"bytes,9,opt,name=patreon_client_id,json=patreonClientId,proto3" json:"patreon_client_id,omitempty"`
-	DiscordClientId    string                 `protobuf:"bytes,10,opt,name=discord_client_id,json=discordClientId,proto3" json:"discord_client_id,omitempty"`
-	DiscordEnabled     bool                   `protobuf:"varint,11,opt,name=discord_enabled,json=discordEnabled,proto3" json:"discord_enabled,omitempty"`
-	PatringEnabled     bool                   `protobuf:"varint,12,opt,name=patring_enabled,json=patringEnabled,proto3" json:"patring_enabled,omitempty"`
-	DefaultRoute       string                 `protobuf:"bytes,13,opt,name=default_route,json=defaultRoute,proto3" json:"default_route,omitempty"`
-	NewsEnabled        bool                   `protobuf:"varint,14,opt,name=news_enabled,json=newsEnabled,proto3" json:"news_enabled,omitempty"`
-	ContestsEnabled    bool                   `protobuf:"varint,15,opt,name=contests_enabled,json=contestsEnabled,proto3" json:"contests_enabled,omitempty"`
-	WikiEnabled        bool                   `protobuf:"varint,16,opt,name=wiki_enabled,json=wikiEnabled,proto3" json:"wiki_enabled,omitempty"`
-	StatsEnabled       bool                   `protobuf:"varint,17,opt,name=stats_enabled,json=statsEnabled,proto3" json:"stats_enabled,omitempty"`
-	ServersEnabled     bool                   `protobuf:"varint,18,opt,name=servers_enabled,json=serversEnabled,proto3" json:"servers_enabled,omitempty"`
-	ReportsEnabled     bool                   `protobuf:"varint,19,opt,name=reports_enabled,json=reportsEnabled,proto3" json:"reports_enabled,omitempty"`
-	ChatlogsEnabled    bool                   `protobuf:"varint,20,opt,name=chatlogs_enabled,json=chatlogsEnabled,proto3" json:"chatlogs_enabled,omitempty"`
-	DemosEnabled       bool                   `protobuf:"varint,21,opt,name=demos_enabled,json=demosEnabled,proto3" json:"demos_enabled,omitempty"`
-	SpeedrunsEnabled   bool                   `protobuf:"varint,22,opt,name=speedruns_enabled,json=speedrunsEnabled,proto3" json:"speedruns_enabled,omitempty"`
-	PlayerqueueEnabled bool                   `protobuf:"varint,23,opt,name=playerqueue_enabled,json=playerqueueEnabled,proto3" json:"playerqueue_enabled,omitempty"`
-	ForumsEnabled      bool                   `protobuf:"varint,24,opt,name=forums_enabled,json=forumsEnabled,proto3" json:"forums_enabled,omitempty"`
+	SiteName           *string                `protobuf:"bytes,1,opt,name=site_name,json=siteName" json:"site_name,omitempty"`
+	SiteDescription    *string                `protobuf:"bytes,2,opt,name=site_description,json=siteDescription" json:"site_description,omitempty"`
+	AssetUrl           *string                `protobuf:"bytes,3,opt,name=asset_url,json=assetUrl" json:"asset_url,omitempty"`
+	Favicon            *string                `protobuf:"bytes,4,opt,name=favicon" json:"favicon,omitempty"`
+	LinkId             *string                `protobuf:"bytes,5,opt,name=link_id,json=linkId" json:"link_id,omitempty"`
+	AppVersion         *string                `protobuf:"bytes,6,opt,name=app_version,json=appVersion" json:"app_version,omitempty"`
+	SentryDsnWeb       *string                `protobuf:"bytes,7,opt,name=sentry_dsn_web,json=sentryDsnWeb" json:"sentry_dsn_web,omitempty"`
+	DocumentPolicy     *string                `protobuf:"bytes,8,opt,name=document_policy,json=documentPolicy" json:"document_policy,omitempty"`
+	PatreonClientId    *string                `protobuf:"bytes,9,opt,name=patreon_client_id,json=patreonClientId" json:"patreon_client_id,omitempty"`
+	DiscordClientId    *string                `protobuf:"bytes,10,opt,name=discord_client_id,json=discordClientId" json:"discord_client_id,omitempty"`
+	DiscordEnabled     *bool                  `protobuf:"varint,11,opt,name=discord_enabled,json=discordEnabled" json:"discord_enabled,omitempty"`
+	PatreonEnabled     *bool                  `protobuf:"varint,12,opt,name=patreon_enabled,json=patreonEnabled" json:"patreon_enabled,omitempty"`
+	DefaultRoute       *string                `protobuf:"bytes,13,opt,name=default_route,json=defaultRoute" json:"default_route,omitempty"`
+	NewsEnabled        *bool                  `protobuf:"varint,14,opt,name=news_enabled,json=newsEnabled" json:"news_enabled,omitempty"`
+	ContestsEnabled    *bool                  `protobuf:"varint,15,opt,name=contests_enabled,json=contestsEnabled" json:"contests_enabled,omitempty"`
+	WikiEnabled        *bool                  `protobuf:"varint,16,opt,name=wiki_enabled,json=wikiEnabled" json:"wiki_enabled,omitempty"`
+	StatsEnabled       *bool                  `protobuf:"varint,17,opt,name=stats_enabled,json=statsEnabled" json:"stats_enabled,omitempty"`
+	ServersEnabled     *bool                  `protobuf:"varint,18,opt,name=servers_enabled,json=serversEnabled" json:"servers_enabled,omitempty"`
+	ReportsEnabled     *bool                  `protobuf:"varint,19,opt,name=reports_enabled,json=reportsEnabled" json:"reports_enabled,omitempty"`
+	ChatlogsEnabled    *bool                  `protobuf:"varint,20,opt,name=chatlogs_enabled,json=chatlogsEnabled" json:"chatlogs_enabled,omitempty"`
+	DemosEnabled       *bool                  `protobuf:"varint,21,opt,name=demos_enabled,json=demosEnabled" json:"demos_enabled,omitempty"`
+	SpeedrunsEnabled   *bool                  `protobuf:"varint,22,opt,name=speedruns_enabled,json=speedrunsEnabled" json:"speedruns_enabled,omitempty"`
+	PlayerqueueEnabled *bool                  `protobuf:"varint,23,opt,name=playerqueue_enabled,json=playerqueueEnabled" json:"playerqueue_enabled,omitempty"`
+	ForumsEnabled      *bool                  `protobuf:"varint,24,opt,name=forums_enabled,json=forumsEnabled" json:"forums_enabled,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -371,176 +371,176 @@ func (*InfoResponse) Descriptor() ([]byte, []int) {
 }
 
 func (x *InfoResponse) GetSiteName() string {
-	if x != nil {
-		return x.SiteName
+	if x != nil && x.SiteName != nil {
+		return *x.SiteName
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetSiteDescription() string {
-	if x != nil {
-		return x.SiteDescription
+	if x != nil && x.SiteDescription != nil {
+		return *x.SiteDescription
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetAssetUrl() string {
-	if x != nil {
-		return x.AssetUrl
+	if x != nil && x.AssetUrl != nil {
+		return *x.AssetUrl
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetFavicon() string {
-	if x != nil {
-		return x.Favicon
+	if x != nil && x.Favicon != nil {
+		return *x.Favicon
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetLinkId() string {
-	if x != nil {
-		return x.LinkId
+	if x != nil && x.LinkId != nil {
+		return *x.LinkId
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetAppVersion() string {
-	if x != nil {
-		return x.AppVersion
+	if x != nil && x.AppVersion != nil {
+		return *x.AppVersion
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetSentryDsnWeb() string {
-	if x != nil {
-		return x.SentryDsnWeb
+	if x != nil && x.SentryDsnWeb != nil {
+		return *x.SentryDsnWeb
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetDocumentPolicy() string {
-	if x != nil {
-		return x.DocumentPolicy
+	if x != nil && x.DocumentPolicy != nil {
+		return *x.DocumentPolicy
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetPatreonClientId() string {
-	if x != nil {
-		return x.PatreonClientId
+	if x != nil && x.PatreonClientId != nil {
+		return *x.PatreonClientId
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetDiscordClientId() string {
-	if x != nil {
-		return x.DiscordClientId
+	if x != nil && x.DiscordClientId != nil {
+		return *x.DiscordClientId
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetDiscordEnabled() bool {
-	if x != nil {
-		return x.DiscordEnabled
+	if x != nil && x.DiscordEnabled != nil {
+		return *x.DiscordEnabled
 	}
 	return false
 }
 
-func (x *InfoResponse) GetPatringEnabled() bool {
-	if x != nil {
-		return x.PatringEnabled
+func (x *InfoResponse) GetPatreonEnabled() bool {
+	if x != nil && x.PatreonEnabled != nil {
+		return *x.PatreonEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetDefaultRoute() string {
-	if x != nil {
-		return x.DefaultRoute
+	if x != nil && x.DefaultRoute != nil {
+		return *x.DefaultRoute
 	}
 	return ""
 }
 
 func (x *InfoResponse) GetNewsEnabled() bool {
-	if x != nil {
-		return x.NewsEnabled
+	if x != nil && x.NewsEnabled != nil {
+		return *x.NewsEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetContestsEnabled() bool {
-	if x != nil {
-		return x.ContestsEnabled
+	if x != nil && x.ContestsEnabled != nil {
+		return *x.ContestsEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetWikiEnabled() bool {
-	if x != nil {
-		return x.WikiEnabled
+	if x != nil && x.WikiEnabled != nil {
+		return *x.WikiEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetStatsEnabled() bool {
-	if x != nil {
-		return x.StatsEnabled
+	if x != nil && x.StatsEnabled != nil {
+		return *x.StatsEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetServersEnabled() bool {
-	if x != nil {
-		return x.ServersEnabled
+	if x != nil && x.ServersEnabled != nil {
+		return *x.ServersEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetReportsEnabled() bool {
-	if x != nil {
-		return x.ReportsEnabled
+	if x != nil && x.ReportsEnabled != nil {
+		return *x.ReportsEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetChatlogsEnabled() bool {
-	if x != nil {
-		return x.ChatlogsEnabled
+	if x != nil && x.ChatlogsEnabled != nil {
+		return *x.ChatlogsEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetDemosEnabled() bool {
-	if x != nil {
-		return x.DemosEnabled
+	if x != nil && x.DemosEnabled != nil {
+		return *x.DemosEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetSpeedrunsEnabled() bool {
-	if x != nil {
-		return x.SpeedrunsEnabled
+	if x != nil && x.SpeedrunsEnabled != nil {
+		return *x.SpeedrunsEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetPlayerqueueEnabled() bool {
-	if x != nil {
-		return x.PlayerqueueEnabled
+	if x != nil && x.PlayerqueueEnabled != nil {
+		return *x.PlayerqueueEnabled
 	}
 	return false
 }
 
 func (x *InfoResponse) GetForumsEnabled() bool {
-	if x != nil {
-		return x.ForumsEnabled
+	if x != nil && x.ForumsEnabled != nil {
+		return *x.ForumsEnabled
 	}
 	return false
 }
 
 type GetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Config        *Config                `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
+	Config        *Config                `protobuf:"bytes,1,opt,name=config" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -584,7 +584,7 @@ func (x *GetResponse) GetConfig() *Config {
 
 type UpdateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Config        *Config                `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
+	Config        *Config                `protobuf:"bytes,1,opt,name=config" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -628,7 +628,7 @@ func (x *UpdateRequest) GetConfig() *Config {
 
 type UpdateResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Config        *Config                `protobuf:"bytes,1,opt,name=config,proto3" json:"config,omitempty"`
+	Config        *Config                `protobuf:"bytes,1,opt,name=config" json:"config,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -672,27 +672,27 @@ func (x *UpdateResponse) GetConfig() *Config {
 
 type General struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	SiteName           string                 `protobuf:"bytes,1,opt,name=site_name,json=siteName,proto3" json:"site_name,omitempty"`
-	SiteDescription    string                 `protobuf:"bytes,2,opt,name=site_description,json=siteDescription,proto3" json:"site_description,omitempty"`
-	Mode               RunMode                `protobuf:"varint,3,opt,name=mode,proto3,enum=config.v1.RunMode" json:"mode,omitempty"`
-	FileServeMode      FileServeMode          `protobuf:"varint,4,opt,name=file_serve_mode,json=fileServeMode,proto3,enum=config.v1.FileServeMode" json:"file_serve_mode,omitempty"`
-	SrcdsLogAddr       string                 `protobuf:"bytes,5,opt,name=srcds_log_addr,json=srcdsLogAddr,proto3" json:"srcds_log_addr,omitempty"`
-	AssetUrl           string                 `protobuf:"bytes,6,opt,name=asset_url,json=assetUrl,proto3" json:"asset_url,omitempty"`
-	Favicon            string                 `protobuf:"bytes,7,opt,name=favicon,proto3" json:"favicon,omitempty"`
-	DefaultRoute       string                 `protobuf:"bytes,8,opt,name=default_route,json=defaultRoute,proto3" json:"default_route,omitempty"`
-	NewsEnabled        bool                   `protobuf:"varint,9,opt,name=news_enabled,json=newsEnabled,proto3" json:"news_enabled,omitempty"`
-	ForumsEnabled      bool                   `protobuf:"varint,10,opt,name=forums_enabled,json=forumsEnabled,proto3" json:"forums_enabled,omitempty"`
-	ContestsEnabled    bool                   `protobuf:"varint,11,opt,name=contests_enabled,json=contestsEnabled,proto3" json:"contests_enabled,omitempty"`
-	WikiEnabled        bool                   `protobuf:"varint,12,opt,name=wiki_enabled,json=wikiEnabled,proto3" json:"wiki_enabled,omitempty"`
-	StatsEnabled       bool                   `protobuf:"varint,13,opt,name=stats_enabled,json=statsEnabled,proto3" json:"stats_enabled,omitempty"`
-	ServersEnabled     bool                   `protobuf:"varint,14,opt,name=servers_enabled,json=serversEnabled,proto3" json:"servers_enabled,omitempty"`
-	ReportsEnabled     bool                   `protobuf:"varint,15,opt,name=reports_enabled,json=reportsEnabled,proto3" json:"reports_enabled,omitempty"`
-	ChatlogsEnabled    bool                   `protobuf:"varint,16,opt,name=chatlogs_enabled,json=chatlogsEnabled,proto3" json:"chatlogs_enabled,omitempty"`
-	DemosEnabled       bool                   `protobuf:"varint,17,opt,name=demos_enabled,json=demosEnabled,proto3" json:"demos_enabled,omitempty"`
-	SpeedrunsEnabled   bool                   `protobuf:"varint,18,opt,name=speedruns_enabled,json=speedrunsEnabled,proto3" json:"speedruns_enabled,omitempty"`
-	PlayerqueueEnabled bool                   `protobuf:"varint,19,opt,name=playerqueue_enabled,json=playerqueueEnabled,proto3" json:"playerqueue_enabled,omitempty"`
-	SentryDsn          string                 `protobuf:"bytes,20,opt,name=sentry_dsn,json=sentryDsn,proto3" json:"sentry_dsn,omitempty"`
-	SentryDsnWeb       string                 `protobuf:"bytes,21,opt,name=sentry_dsn_web,json=sentryDsnWeb,proto3" json:"sentry_dsn_web,omitempty"`
+	SiteName           *string                `protobuf:"bytes,1,opt,name=site_name,json=siteName" json:"site_name,omitempty"`
+	SiteDescription    *string                `protobuf:"bytes,2,opt,name=site_description,json=siteDescription" json:"site_description,omitempty"`
+	Mode               *RunMode               `protobuf:"varint,3,opt,name=mode,enum=config.v1.RunMode" json:"mode,omitempty"`
+	FileServeMode      *FileServeMode         `protobuf:"varint,4,opt,name=file_serve_mode,json=fileServeMode,enum=config.v1.FileServeMode" json:"file_serve_mode,omitempty"`
+	SrcdsLogAddr       *string                `protobuf:"bytes,5,opt,name=srcds_log_addr,json=srcdsLogAddr" json:"srcds_log_addr,omitempty"`
+	AssetUrl           *string                `protobuf:"bytes,6,opt,name=asset_url,json=assetUrl" json:"asset_url,omitempty"`
+	Favicon            *string                `protobuf:"bytes,7,opt,name=favicon" json:"favicon,omitempty"`
+	DefaultRoute       *string                `protobuf:"bytes,8,opt,name=default_route,json=defaultRoute" json:"default_route,omitempty"`
+	NewsEnabled        *bool                  `protobuf:"varint,9,opt,name=news_enabled,json=newsEnabled" json:"news_enabled,omitempty"`
+	ForumsEnabled      *bool                  `protobuf:"varint,10,opt,name=forums_enabled,json=forumsEnabled" json:"forums_enabled,omitempty"`
+	ContestsEnabled    *bool                  `protobuf:"varint,11,opt,name=contests_enabled,json=contestsEnabled" json:"contests_enabled,omitempty"`
+	WikiEnabled        *bool                  `protobuf:"varint,12,opt,name=wiki_enabled,json=wikiEnabled" json:"wiki_enabled,omitempty"`
+	StatsEnabled       *bool                  `protobuf:"varint,13,opt,name=stats_enabled,json=statsEnabled" json:"stats_enabled,omitempty"`
+	ServersEnabled     *bool                  `protobuf:"varint,14,opt,name=servers_enabled,json=serversEnabled" json:"servers_enabled,omitempty"`
+	ReportsEnabled     *bool                  `protobuf:"varint,15,opt,name=reports_enabled,json=reportsEnabled" json:"reports_enabled,omitempty"`
+	ChatlogsEnabled    *bool                  `protobuf:"varint,16,opt,name=chatlogs_enabled,json=chatlogsEnabled" json:"chatlogs_enabled,omitempty"`
+	DemosEnabled       *bool                  `protobuf:"varint,17,opt,name=demos_enabled,json=demosEnabled" json:"demos_enabled,omitempty"`
+	SpeedrunsEnabled   *bool                  `protobuf:"varint,18,opt,name=speedruns_enabled,json=speedrunsEnabled" json:"speedruns_enabled,omitempty"`
+	PlayerqueueEnabled *bool                  `protobuf:"varint,19,opt,name=playerqueue_enabled,json=playerqueueEnabled" json:"playerqueue_enabled,omitempty"`
+	SentryDsn          *string                `protobuf:"bytes,20,opt,name=sentry_dsn,json=sentryDsn" json:"sentry_dsn,omitempty"`
+	SentryDsnWeb       *string                `protobuf:"bytes,21,opt,name=sentry_dsn_web,json=sentryDsnWeb" json:"sentry_dsn_web,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -728,156 +728,156 @@ func (*General) Descriptor() ([]byte, []int) {
 }
 
 func (x *General) GetSiteName() string {
-	if x != nil {
-		return x.SiteName
+	if x != nil && x.SiteName != nil {
+		return *x.SiteName
 	}
 	return ""
 }
 
 func (x *General) GetSiteDescription() string {
-	if x != nil {
-		return x.SiteDescription
+	if x != nil && x.SiteDescription != nil {
+		return *x.SiteDescription
 	}
 	return ""
 }
 
 func (x *General) GetMode() RunMode {
-	if x != nil {
-		return x.Mode
+	if x != nil && x.Mode != nil {
+		return *x.Mode
 	}
 	return RunMode_RUN_MODE_RELEASE_UNSPECIFIED
 }
 
 func (x *General) GetFileServeMode() FileServeMode {
-	if x != nil {
-		return x.FileServeMode
+	if x != nil && x.FileServeMode != nil {
+		return *x.FileServeMode
 	}
 	return FileServeMode_FILE_SERVE_MODE_LOCAL_UNSPECIFIED
 }
 
 func (x *General) GetSrcdsLogAddr() string {
-	if x != nil {
-		return x.SrcdsLogAddr
+	if x != nil && x.SrcdsLogAddr != nil {
+		return *x.SrcdsLogAddr
 	}
 	return ""
 }
 
 func (x *General) GetAssetUrl() string {
-	if x != nil {
-		return x.AssetUrl
+	if x != nil && x.AssetUrl != nil {
+		return *x.AssetUrl
 	}
 	return ""
 }
 
 func (x *General) GetFavicon() string {
-	if x != nil {
-		return x.Favicon
+	if x != nil && x.Favicon != nil {
+		return *x.Favicon
 	}
 	return ""
 }
 
 func (x *General) GetDefaultRoute() string {
-	if x != nil {
-		return x.DefaultRoute
+	if x != nil && x.DefaultRoute != nil {
+		return *x.DefaultRoute
 	}
 	return ""
 }
 
 func (x *General) GetNewsEnabled() bool {
-	if x != nil {
-		return x.NewsEnabled
+	if x != nil && x.NewsEnabled != nil {
+		return *x.NewsEnabled
 	}
 	return false
 }
 
 func (x *General) GetForumsEnabled() bool {
-	if x != nil {
-		return x.ForumsEnabled
+	if x != nil && x.ForumsEnabled != nil {
+		return *x.ForumsEnabled
 	}
 	return false
 }
 
 func (x *General) GetContestsEnabled() bool {
-	if x != nil {
-		return x.ContestsEnabled
+	if x != nil && x.ContestsEnabled != nil {
+		return *x.ContestsEnabled
 	}
 	return false
 }
 
 func (x *General) GetWikiEnabled() bool {
-	if x != nil {
-		return x.WikiEnabled
+	if x != nil && x.WikiEnabled != nil {
+		return *x.WikiEnabled
 	}
 	return false
 }
 
 func (x *General) GetStatsEnabled() bool {
-	if x != nil {
-		return x.StatsEnabled
+	if x != nil && x.StatsEnabled != nil {
+		return *x.StatsEnabled
 	}
 	return false
 }
 
 func (x *General) GetServersEnabled() bool {
-	if x != nil {
-		return x.ServersEnabled
+	if x != nil && x.ServersEnabled != nil {
+		return *x.ServersEnabled
 	}
 	return false
 }
 
 func (x *General) GetReportsEnabled() bool {
-	if x != nil {
-		return x.ReportsEnabled
+	if x != nil && x.ReportsEnabled != nil {
+		return *x.ReportsEnabled
 	}
 	return false
 }
 
 func (x *General) GetChatlogsEnabled() bool {
-	if x != nil {
-		return x.ChatlogsEnabled
+	if x != nil && x.ChatlogsEnabled != nil {
+		return *x.ChatlogsEnabled
 	}
 	return false
 }
 
 func (x *General) GetDemosEnabled() bool {
-	if x != nil {
-		return x.DemosEnabled
+	if x != nil && x.DemosEnabled != nil {
+		return *x.DemosEnabled
 	}
 	return false
 }
 
 func (x *General) GetSpeedrunsEnabled() bool {
-	if x != nil {
-		return x.SpeedrunsEnabled
+	if x != nil && x.SpeedrunsEnabled != nil {
+		return *x.SpeedrunsEnabled
 	}
 	return false
 }
 
 func (x *General) GetPlayerqueueEnabled() bool {
-	if x != nil {
-		return x.PlayerqueueEnabled
+	if x != nil && x.PlayerqueueEnabled != nil {
+		return *x.PlayerqueueEnabled
 	}
 	return false
 }
 
 func (x *General) GetSentryDsn() string {
-	if x != nil {
-		return x.SentryDsn
+	if x != nil && x.SentryDsn != nil {
+		return *x.SentryDsn
 	}
 	return ""
 }
 
 func (x *General) GetSentryDsnWeb() string {
-	if x != nil {
-		return x.SentryDsnWeb
+	if x != nil && x.SentryDsnWeb != nil {
+		return *x.SentryDsnWeb
 	}
 	return ""
 }
 
 type Debug struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
-	SkipOpenIdValidation bool                   `protobuf:"varint,1,opt,name=skip_open_id_validation,json=skipOpenIdValidation,proto3" json:"skip_open_id_validation,omitempty"`
-	AddRconLogAddress    string                 `protobuf:"bytes,2,opt,name=add_rcon_log_address,json=addRconLogAddress,proto3" json:"add_rcon_log_address,omitempty"`
+	SkipOpenIdValidation *bool                  `protobuf:"varint,1,opt,name=skip_open_id_validation,json=skipOpenIdValidation" json:"skip_open_id_validation,omitempty"`
+	AddRconLogAddress    *string                `protobuf:"bytes,2,opt,name=add_rcon_log_address,json=addRconLogAddress" json:"add_rcon_log_address,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -913,27 +913,27 @@ func (*Debug) Descriptor() ([]byte, []int) {
 }
 
 func (x *Debug) GetSkipOpenIdValidation() bool {
-	if x != nil {
-		return x.SkipOpenIdValidation
+	if x != nil && x.SkipOpenIdValidation != nil {
+		return *x.SkipOpenIdValidation
 	}
 	return false
 }
 
 func (x *Debug) GetAddRconLogAddress() string {
-	if x != nil {
-		return x.AddRconLogAddress
+	if x != nil && x.AddRconLogAddress != nil {
+		return *x.AddRconLogAddress
 	}
 	return ""
 }
 
 type Demo struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	CleanupEnabled bool                   `protobuf:"varint,1,opt,name=cleanup_enabled,json=cleanupEnabled,proto3" json:"cleanup_enabled,omitempty"`
-	Strategy       DemoStrategy           `protobuf:"varint,2,opt,name=strategy,proto3,enum=config.v1.DemoStrategy" json:"strategy,omitempty"`
-	CleanupMinPct  float32                `protobuf:"fixed32,3,opt,name=cleanup_min_pct,json=cleanupMinPct,proto3" json:"cleanup_min_pct,omitempty"`
-	CleanupMount   string                 `protobuf:"bytes,4,opt,name=cleanup_mount,json=cleanupMount,proto3" json:"cleanup_mount,omitempty"`
-	CountLimit     int64                  `protobuf:"varint,5,opt,name=count_limit,json=countLimit,proto3" json:"count_limit,omitempty"`
-	ParserUrl      string                 `protobuf:"bytes,6,opt,name=parser_url,json=parserUrl,proto3" json:"parser_url,omitempty"`
+	CleanupEnabled *bool                  `protobuf:"varint,1,opt,name=cleanup_enabled,json=cleanupEnabled" json:"cleanup_enabled,omitempty"`
+	Strategy       *DemoStrategy          `protobuf:"varint,2,opt,name=strategy,enum=config.v1.DemoStrategy" json:"strategy,omitempty"`
+	CleanupMinPct  *float32               `protobuf:"fixed32,3,opt,name=cleanup_min_pct,json=cleanupMinPct" json:"cleanup_min_pct,omitempty"`
+	CleanupMount   *string                `protobuf:"bytes,4,opt,name=cleanup_mount,json=cleanupMount" json:"cleanup_mount,omitempty"`
+	CountLimit     *int64                 `protobuf:"varint,5,opt,name=count_limit,json=countLimit" json:"count_limit,omitempty"`
+	ParserUrl      *string                `protobuf:"bytes,6,opt,name=parser_url,json=parserUrl" json:"parser_url,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -969,57 +969,57 @@ func (*Demo) Descriptor() ([]byte, []int) {
 }
 
 func (x *Demo) GetCleanupEnabled() bool {
-	if x != nil {
-		return x.CleanupEnabled
+	if x != nil && x.CleanupEnabled != nil {
+		return *x.CleanupEnabled
 	}
 	return false
 }
 
 func (x *Demo) GetStrategy() DemoStrategy {
-	if x != nil {
-		return x.Strategy
+	if x != nil && x.Strategy != nil {
+		return *x.Strategy
 	}
 	return DemoStrategy_DEMO_STRATEGY_PCTFREE_UNSPECIFIED
 }
 
 func (x *Demo) GetCleanupMinPct() float32 {
-	if x != nil {
-		return x.CleanupMinPct
+	if x != nil && x.CleanupMinPct != nil {
+		return *x.CleanupMinPct
 	}
 	return 0
 }
 
 func (x *Demo) GetCleanupMount() string {
-	if x != nil {
-		return x.CleanupMount
+	if x != nil && x.CleanupMount != nil {
+		return *x.CleanupMount
 	}
 	return ""
 }
 
 func (x *Demo) GetCountLimit() int64 {
-	if x != nil {
-		return x.CountLimit
+	if x != nil && x.CountLimit != nil {
+		return *x.CountLimit
 	}
 	return 0
 }
 
 func (x *Demo) GetParserUrl() string {
-	if x != nil {
-		return x.ParserUrl
+	if x != nil && x.ParserUrl != nil {
+		return *x.ParserUrl
 	}
 	return ""
 }
 
 type Filters struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	Enabled        bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	WarningTimeout int32                  `protobuf:"varint,2,opt,name=warning_timeout,json=warningTimeout,proto3" json:"warning_timeout,omitempty"`
-	WarningLimit   int32                  `protobuf:"varint,3,opt,name=warning_limit,json=warningLimit,proto3" json:"warning_limit,omitempty"`
-	Dry            bool                   `protobuf:"varint,4,opt,name=dry,proto3" json:"dry,omitempty"`
-	PingDiscord    bool                   `protobuf:"varint,5,opt,name=ping_discord,json=pingDiscord,proto3" json:"ping_discord,omitempty"`
-	MaxWeight      int32                  `protobuf:"varint,6,opt,name=max_weight,json=maxWeight,proto3" json:"max_weight,omitempty"`
-	CheckTimeout   int32                  `protobuf:"varint,7,opt,name=check_timeout,json=checkTimeout,proto3" json:"check_timeout,omitempty"`
-	MatchTimeout   int32                  `protobuf:"varint,8,opt,name=match_timeout,json=matchTimeout,proto3" json:"match_timeout,omitempty"`
+	Enabled        *bool                  `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
+	WarningTimeout *int32                 `protobuf:"varint,2,opt,name=warning_timeout,json=warningTimeout" json:"warning_timeout,omitempty"`
+	WarningLimit   *int32                 `protobuf:"varint,3,opt,name=warning_limit,json=warningLimit" json:"warning_limit,omitempty"`
+	Dry            *bool                  `protobuf:"varint,4,opt,name=dry" json:"dry,omitempty"`
+	PingDiscord    *bool                  `protobuf:"varint,5,opt,name=ping_discord,json=pingDiscord" json:"ping_discord,omitempty"`
+	MaxWeight      *int32                 `protobuf:"varint,6,opt,name=max_weight,json=maxWeight" json:"max_weight,omitempty"`
+	CheckTimeout   *int32                 `protobuf:"varint,7,opt,name=check_timeout,json=checkTimeout" json:"check_timeout,omitempty"`
+	MatchTimeout   *int32                 `protobuf:"varint,8,opt,name=match_timeout,json=matchTimeout" json:"match_timeout,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -1055,85 +1055,85 @@ func (*Filters) Descriptor() ([]byte, []int) {
 }
 
 func (x *Filters) GetEnabled() bool {
-	if x != nil {
-		return x.Enabled
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
 	}
 	return false
 }
 
 func (x *Filters) GetWarningTimeout() int32 {
-	if x != nil {
-		return x.WarningTimeout
+	if x != nil && x.WarningTimeout != nil {
+		return *x.WarningTimeout
 	}
 	return 0
 }
 
 func (x *Filters) GetWarningLimit() int32 {
-	if x != nil {
-		return x.WarningLimit
+	if x != nil && x.WarningLimit != nil {
+		return *x.WarningLimit
 	}
 	return 0
 }
 
 func (x *Filters) GetDry() bool {
-	if x != nil {
-		return x.Dry
+	if x != nil && x.Dry != nil {
+		return *x.Dry
 	}
 	return false
 }
 
 func (x *Filters) GetPingDiscord() bool {
-	if x != nil {
-		return x.PingDiscord
+	if x != nil && x.PingDiscord != nil {
+		return *x.PingDiscord
 	}
 	return false
 }
 
 func (x *Filters) GetMaxWeight() int32 {
-	if x != nil {
-		return x.MaxWeight
+	if x != nil && x.MaxWeight != nil {
+		return *x.MaxWeight
 	}
 	return 0
 }
 
 func (x *Filters) GetCheckTimeout() int32 {
-	if x != nil {
-		return x.CheckTimeout
+	if x != nil && x.CheckTimeout != nil {
+		return *x.CheckTimeout
 	}
 	return 0
 }
 
 func (x *Filters) GetMatchTimeout() int32 {
-	if x != nil {
-		return x.MatchTimeout
+	if x != nil && x.MatchTimeout != nil {
+		return *x.MatchTimeout
 	}
 	return 0
 }
 
 type Discord struct {
 	state                   protoimpl.MessageState `protogen:"open.v1"`
-	Enabled                 bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	BotEnabled              bool                   `protobuf:"varint,2,opt,name=bot_enabled,json=botEnabled,proto3" json:"bot_enabled,omitempty"`
-	IntegrationsEnabled     bool                   `protobuf:"varint,3,opt,name=integrations_enabled,json=integrationsEnabled,proto3" json:"integrations_enabled,omitempty"`
-	AppId                   string                 `protobuf:"bytes,4,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	AppSecret               string                 `protobuf:"bytes,5,opt,name=app_secret,json=appSecret,proto3" json:"app_secret,omitempty"`
-	LinkId                  string                 `protobuf:"bytes,6,opt,name=link_id,json=linkId,proto3" json:"link_id,omitempty"`
-	Token                   string                 `protobuf:"bytes,7,opt,name=token,proto3" json:"token,omitempty"`
-	GuildId                 string                 `protobuf:"bytes,8,opt,name=guild_id,json=guildId,proto3" json:"guild_id,omitempty"`
-	PublicLogChannelEnable  bool                   `protobuf:"varint,9,opt,name=public_log_channel_enable,json=publicLogChannelEnable,proto3" json:"public_log_channel_enable,omitempty"`
-	LogChannelId            string                 `protobuf:"bytes,10,opt,name=log_channel_id,json=logChannelId,proto3" json:"log_channel_id,omitempty"`
-	PublicMatchLogChannelId string                 `protobuf:"bytes,11,opt,name=public_match_log_channel_id,json=publicMatchLogChannelId,proto3" json:"public_match_log_channel_id,omitempty"`
-	VoteLogChannelId        string                 `protobuf:"bytes,12,opt,name=vote_log_channel_id,json=voteLogChannelId,proto3" json:"vote_log_channel_id,omitempty"`
-	AppealLogChannelId      string                 `protobuf:"bytes,13,opt,name=appeal_log_channel_id,json=appealLogChannelId,proto3" json:"appeal_log_channel_id,omitempty"`
-	BanLogChannelId         string                 `protobuf:"bytes,14,opt,name=ban_log_channel_id,json=banLogChannelId,proto3" json:"ban_log_channel_id,omitempty"`
-	ForumLogChannelId       string                 `protobuf:"bytes,15,opt,name=forum_log_channel_id,json=forumLogChannelId,proto3" json:"forum_log_channel_id,omitempty"`
-	KickLogChannelId        string                 `protobuf:"bytes,16,opt,name=kick_log_channel_id,json=kickLogChannelId,proto3" json:"kick_log_channel_id,omitempty"`
-	PlayerqueueChannelId    string                 `protobuf:"bytes,17,opt,name=playerqueue_channel_id,json=playerqueueChannelId,proto3" json:"playerqueue_channel_id,omitempty"`
-	ModPingRoleId           string                 `protobuf:"bytes,18,opt,name=mod_ping_role_id,json=modPingRoleId,proto3" json:"mod_ping_role_id,omitempty"`
-	AnticheatChannelId      string                 `protobuf:"bytes,19,opt,name=anticheat_channel_id,json=anticheatChannelId,proto3" json:"anticheat_channel_id,omitempty"`
-	SeedChannelId           string                 `protobuf:"bytes,20,opt,name=seed_channel_id,json=seedChannelId,proto3" json:"seed_channel_id,omitempty"`
-	WordFilterLogChannelId  string                 `protobuf:"bytes,21,opt,name=word_filter_log_channel_id,json=wordFilterLogChannelId,proto3" json:"word_filter_log_channel_id,omitempty"`
-	ChatLogChannelId        string                 `protobuf:"bytes,22,opt,name=chat_log_channel_id,json=chatLogChannelId,proto3" json:"chat_log_channel_id,omitempty"`
+	Enabled                 *bool                  `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
+	BotEnabled              *bool                  `protobuf:"varint,2,opt,name=bot_enabled,json=botEnabled" json:"bot_enabled,omitempty"`
+	IntegrationsEnabled     *bool                  `protobuf:"varint,3,opt,name=integrations_enabled,json=integrationsEnabled" json:"integrations_enabled,omitempty"`
+	AppId                   *string                `protobuf:"bytes,4,opt,name=app_id,json=appId" json:"app_id,omitempty"`
+	AppSecret               *string                `protobuf:"bytes,5,opt,name=app_secret,json=appSecret" json:"app_secret,omitempty"`
+	LinkId                  *string                `protobuf:"bytes,6,opt,name=link_id,json=linkId" json:"link_id,omitempty"`
+	Token                   *string                `protobuf:"bytes,7,opt,name=token" json:"token,omitempty"`
+	GuildId                 *string                `protobuf:"bytes,8,opt,name=guild_id,json=guildId" json:"guild_id,omitempty"`
+	PublicLogChannelEnable  *bool                  `protobuf:"varint,9,opt,name=public_log_channel_enable,json=publicLogChannelEnable" json:"public_log_channel_enable,omitempty"`
+	LogChannelId            *string                `protobuf:"bytes,10,opt,name=log_channel_id,json=logChannelId" json:"log_channel_id,omitempty"`
+	PublicMatchLogChannelId *string                `protobuf:"bytes,11,opt,name=public_match_log_channel_id,json=publicMatchLogChannelId" json:"public_match_log_channel_id,omitempty"`
+	VoteLogChannelId        *string                `protobuf:"bytes,12,opt,name=vote_log_channel_id,json=voteLogChannelId" json:"vote_log_channel_id,omitempty"`
+	AppealLogChannelId      *string                `protobuf:"bytes,13,opt,name=appeal_log_channel_id,json=appealLogChannelId" json:"appeal_log_channel_id,omitempty"`
+	BanLogChannelId         *string                `protobuf:"bytes,14,opt,name=ban_log_channel_id,json=banLogChannelId" json:"ban_log_channel_id,omitempty"`
+	ForumLogChannelId       *string                `protobuf:"bytes,15,opt,name=forum_log_channel_id,json=forumLogChannelId" json:"forum_log_channel_id,omitempty"`
+	KickLogChannelId        *string                `protobuf:"bytes,16,opt,name=kick_log_channel_id,json=kickLogChannelId" json:"kick_log_channel_id,omitempty"`
+	PlayerqueueChannelId    *string                `protobuf:"bytes,17,opt,name=playerqueue_channel_id,json=playerqueueChannelId" json:"playerqueue_channel_id,omitempty"`
+	ModPingRoleId           *string                `protobuf:"bytes,18,opt,name=mod_ping_role_id,json=modPingRoleId" json:"mod_ping_role_id,omitempty"`
+	AnticheatChannelId      *string                `protobuf:"bytes,19,opt,name=anticheat_channel_id,json=anticheatChannelId" json:"anticheat_channel_id,omitempty"`
+	SeedChannelId           *string                `protobuf:"bytes,20,opt,name=seed_channel_id,json=seedChannelId" json:"seed_channel_id,omitempty"`
+	WordFilterLogChannelId  *string                `protobuf:"bytes,21,opt,name=word_filter_log_channel_id,json=wordFilterLogChannelId" json:"word_filter_log_channel_id,omitempty"`
+	ChatLogChannelId        *string                `protobuf:"bytes,22,opt,name=chat_log_channel_id,json=chatLogChannelId" json:"chat_log_channel_id,omitempty"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1169,162 +1169,162 @@ func (*Discord) Descriptor() ([]byte, []int) {
 }
 
 func (x *Discord) GetEnabled() bool {
-	if x != nil {
-		return x.Enabled
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
 	}
 	return false
 }
 
 func (x *Discord) GetBotEnabled() bool {
-	if x != nil {
-		return x.BotEnabled
+	if x != nil && x.BotEnabled != nil {
+		return *x.BotEnabled
 	}
 	return false
 }
 
 func (x *Discord) GetIntegrationsEnabled() bool {
-	if x != nil {
-		return x.IntegrationsEnabled
+	if x != nil && x.IntegrationsEnabled != nil {
+		return *x.IntegrationsEnabled
 	}
 	return false
 }
 
 func (x *Discord) GetAppId() string {
-	if x != nil {
-		return x.AppId
+	if x != nil && x.AppId != nil {
+		return *x.AppId
 	}
 	return ""
 }
 
 func (x *Discord) GetAppSecret() string {
-	if x != nil {
-		return x.AppSecret
+	if x != nil && x.AppSecret != nil {
+		return *x.AppSecret
 	}
 	return ""
 }
 
 func (x *Discord) GetLinkId() string {
-	if x != nil {
-		return x.LinkId
+	if x != nil && x.LinkId != nil {
+		return *x.LinkId
 	}
 	return ""
 }
 
 func (x *Discord) GetToken() string {
-	if x != nil {
-		return x.Token
+	if x != nil && x.Token != nil {
+		return *x.Token
 	}
 	return ""
 }
 
 func (x *Discord) GetGuildId() string {
-	if x != nil {
-		return x.GuildId
+	if x != nil && x.GuildId != nil {
+		return *x.GuildId
 	}
 	return ""
 }
 
 func (x *Discord) GetPublicLogChannelEnable() bool {
-	if x != nil {
-		return x.PublicLogChannelEnable
+	if x != nil && x.PublicLogChannelEnable != nil {
+		return *x.PublicLogChannelEnable
 	}
 	return false
 }
 
 func (x *Discord) GetLogChannelId() string {
-	if x != nil {
-		return x.LogChannelId
+	if x != nil && x.LogChannelId != nil {
+		return *x.LogChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetPublicMatchLogChannelId() string {
-	if x != nil {
-		return x.PublicMatchLogChannelId
+	if x != nil && x.PublicMatchLogChannelId != nil {
+		return *x.PublicMatchLogChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetVoteLogChannelId() string {
-	if x != nil {
-		return x.VoteLogChannelId
+	if x != nil && x.VoteLogChannelId != nil {
+		return *x.VoteLogChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetAppealLogChannelId() string {
-	if x != nil {
-		return x.AppealLogChannelId
+	if x != nil && x.AppealLogChannelId != nil {
+		return *x.AppealLogChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetBanLogChannelId() string {
-	if x != nil {
-		return x.BanLogChannelId
+	if x != nil && x.BanLogChannelId != nil {
+		return *x.BanLogChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetForumLogChannelId() string {
-	if x != nil {
-		return x.ForumLogChannelId
+	if x != nil && x.ForumLogChannelId != nil {
+		return *x.ForumLogChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetKickLogChannelId() string {
-	if x != nil {
-		return x.KickLogChannelId
+	if x != nil && x.KickLogChannelId != nil {
+		return *x.KickLogChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetPlayerqueueChannelId() string {
-	if x != nil {
-		return x.PlayerqueueChannelId
+	if x != nil && x.PlayerqueueChannelId != nil {
+		return *x.PlayerqueueChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetModPingRoleId() string {
-	if x != nil {
-		return x.ModPingRoleId
+	if x != nil && x.ModPingRoleId != nil {
+		return *x.ModPingRoleId
 	}
 	return ""
 }
 
 func (x *Discord) GetAnticheatChannelId() string {
-	if x != nil {
-		return x.AnticheatChannelId
+	if x != nil && x.AnticheatChannelId != nil {
+		return *x.AnticheatChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetSeedChannelId() string {
-	if x != nil {
-		return x.SeedChannelId
+	if x != nil && x.SeedChannelId != nil {
+		return *x.SeedChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetWordFilterLogChannelId() string {
-	if x != nil {
-		return x.WordFilterLogChannelId
+	if x != nil && x.WordFilterLogChannelId != nil {
+		return *x.WordFilterLogChannelId
 	}
 	return ""
 }
 
 func (x *Discord) GetChatLogChannelId() string {
-	if x != nil {
-		return x.ChatLogChannelId
+	if x != nil && x.ChatLogChannelId != nil {
+		return *x.ChatLogChannelId
 	}
 	return ""
 }
 
 type Sourcemod struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	CenterProjectiles bool                   `protobuf:"varint,1,opt,name=center_projectiles,json=centerProjectiles,proto3" json:"center_projectiles,omitempty"`
+	CenterProjectiles *bool                  `protobuf:"varint,1,opt,name=center_projectiles,json=centerProjectiles" json:"center_projectiles,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1360,19 +1360,19 @@ func (*Sourcemod) Descriptor() ([]byte, []int) {
 }
 
 func (x *Sourcemod) GetCenterProjectiles() bool {
-	if x != nil {
-		return x.CenterProjectiles
+	if x != nil && x.CenterProjectiles != nil {
+		return *x.CenterProjectiles
 	}
 	return false
 }
 
 type Log struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	Level           Level                  `protobuf:"varint,1,opt,name=level,proto3,enum=config.v1.Level" json:"level,omitempty"`
-	File            *string                `protobuf:"bytes,2,opt,name=file,proto3,oneof" json:"file,omitempty"`
-	HttpEnabled     bool                   `protobuf:"varint,3,opt,name=http_enabled,json=httpEnabled,proto3" json:"http_enabled,omitempty"`
-	HttpOtelEnabled bool                   `protobuf:"varint,4,opt,name=http_otel_enabled,json=httpOtelEnabled,proto3" json:"http_otel_enabled,omitempty"`
-	HttpLevel       Level                  `protobuf:"varint,5,opt,name=http_level,json=httpLevel,proto3,enum=config.v1.Level" json:"http_level,omitempty"`
+	Level           *Level                 `protobuf:"varint,1,opt,name=level,enum=config.v1.Level" json:"level,omitempty"`
+	File            *string                `protobuf:"bytes,2,opt,name=file" json:"file,omitempty"`
+	HttpEnabled     *bool                  `protobuf:"varint,3,opt,name=http_enabled,json=httpEnabled" json:"http_enabled,omitempty"`
+	HttpOtelEnabled *bool                  `protobuf:"varint,4,opt,name=http_otel_enabled,json=httpOtelEnabled" json:"http_otel_enabled,omitempty"`
+	HttpLevel       *Level                 `protobuf:"varint,5,opt,name=http_level,json=httpLevel,enum=config.v1.Level" json:"http_level,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1408,8 +1408,8 @@ func (*Log) Descriptor() ([]byte, []int) {
 }
 
 func (x *Log) GetLevel() Level {
-	if x != nil {
-		return x.Level
+	if x != nil && x.Level != nil {
+		return *x.Level
 	}
 	return Level_LEVEL_ERROR_UNSPECIFIED
 }
@@ -1422,31 +1422,31 @@ func (x *Log) GetFile() string {
 }
 
 func (x *Log) GetHttpEnabled() bool {
-	if x != nil {
-		return x.HttpEnabled
+	if x != nil && x.HttpEnabled != nil {
+		return *x.HttpEnabled
 	}
 	return false
 }
 
 func (x *Log) GetHttpOtelEnabled() bool {
-	if x != nil {
-		return x.HttpOtelEnabled
+	if x != nil && x.HttpOtelEnabled != nil {
+		return *x.HttpOtelEnabled
 	}
 	return false
 }
 
 func (x *Log) GetHttpLevel() Level {
-	if x != nil {
-		return x.HttpLevel
+	if x != nil && x.HttpLevel != nil {
+		return *x.HttpLevel
 	}
 	return Level_LEVEL_ERROR_UNSPECIFIED
 }
 
 type GeoLocation struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Enabled       bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	CachePath     string                 `protobuf:"bytes,2,opt,name=cache_path,json=cachePath,proto3" json:"cache_path,omitempty"`
-	Token         string                 `protobuf:"bytes,3,opt,name=token,proto3" json:"token,omitempty"`
+	Enabled       *bool                  `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
+	CachePath     *string                `protobuf:"bytes,2,opt,name=cache_path,json=cachePath" json:"cache_path,omitempty"`
+	Token         *string                `protobuf:"bytes,3,opt,name=token" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1482,34 +1482,34 @@ func (*GeoLocation) Descriptor() ([]byte, []int) {
 }
 
 func (x *GeoLocation) GetEnabled() bool {
-	if x != nil {
-		return x.Enabled
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
 	}
 	return false
 }
 
 func (x *GeoLocation) GetCachePath() string {
-	if x != nil {
-		return x.CachePath
+	if x != nil && x.CachePath != nil {
+		return *x.CachePath
 	}
 	return ""
 }
 
 func (x *GeoLocation) GetToken() string {
-	if x != nil {
-		return x.Token
+	if x != nil && x.Token != nil {
+		return *x.Token
 	}
 	return ""
 }
 
 type Patreon struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
-	Enabled             bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	IntegrationsEnabled bool                   `protobuf:"varint,2,opt,name=integrations_enabled,json=integrationsEnabled,proto3" json:"integrations_enabled,omitempty"`
-	ClientId            string                 `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	ClientSecret        string                 `protobuf:"bytes,4,opt,name=client_secret,json=clientSecret,proto3" json:"client_secret,omitempty"`
-	CreatorAccessToken  string                 `protobuf:"bytes,5,opt,name=creator_access_token,json=creatorAccessToken,proto3" json:"creator_access_token,omitempty"`
-	CreatorRefreshToken string                 `protobuf:"bytes,6,opt,name=creator_refresh_token,json=creatorRefreshToken,proto3" json:"creator_refresh_token,omitempty"`
+	Enabled             *bool                  `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
+	IntegrationsEnabled *bool                  `protobuf:"varint,2,opt,name=integrations_enabled,json=integrationsEnabled" json:"integrations_enabled,omitempty"`
+	ClientId            *string                `protobuf:"bytes,3,opt,name=client_id,json=clientId" json:"client_id,omitempty"`
+	ClientSecret        *string                `protobuf:"bytes,4,opt,name=client_secret,json=clientSecret" json:"client_secret,omitempty"`
+	CreatorAccessToken  *string                `protobuf:"bytes,5,opt,name=creator_access_token,json=creatorAccessToken" json:"creator_access_token,omitempty"`
+	CreatorRefreshToken *string                `protobuf:"bytes,6,opt,name=creator_refresh_token,json=creatorRefreshToken" json:"creator_refresh_token,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -1545,59 +1545,59 @@ func (*Patreon) Descriptor() ([]byte, []int) {
 }
 
 func (x *Patreon) GetEnabled() bool {
-	if x != nil {
-		return x.Enabled
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
 	}
 	return false
 }
 
 func (x *Patreon) GetIntegrationsEnabled() bool {
-	if x != nil {
-		return x.IntegrationsEnabled
+	if x != nil && x.IntegrationsEnabled != nil {
+		return *x.IntegrationsEnabled
 	}
 	return false
 }
 
 func (x *Patreon) GetClientId() string {
-	if x != nil {
-		return x.ClientId
+	if x != nil && x.ClientId != nil {
+		return *x.ClientId
 	}
 	return ""
 }
 
 func (x *Patreon) GetClientSecret() string {
-	if x != nil {
-		return x.ClientSecret
+	if x != nil && x.ClientSecret != nil {
+		return *x.ClientSecret
 	}
 	return ""
 }
 
 func (x *Patreon) GetCreatorAccessToken() string {
-	if x != nil {
-		return x.CreatorAccessToken
+	if x != nil && x.CreatorAccessToken != nil {
+		return *x.CreatorAccessToken
 	}
 	return ""
 }
 
 func (x *Patreon) GetCreatorRefreshToken() string {
-	if x != nil {
-		return x.CreatorRefreshToken
+	if x != nil && x.CreatorRefreshToken != nil {
+		return *x.CreatorRefreshToken
 	}
 	return ""
 }
 
 type SSH struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	Enabled         bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	Username        string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Port            int32                  `protobuf:"varint,3,opt,name=port,proto3" json:"port,omitempty"`
-	PrivateKeyPath  string                 `protobuf:"bytes,4,opt,name=private_key_path,json=privateKeyPath,proto3" json:"private_key_path,omitempty"`
-	HostKeyStrategy HostKeyStrategy        `protobuf:"varint,5,opt,name=host_key_strategy,json=hostKeyStrategy,proto3,enum=config.v1.HostKeyStrategy" json:"host_key_strategy,omitempty"`
-	Password        string                 `protobuf:"bytes,6,opt,name=password,proto3" json:"password,omitempty"`
-	UpdateInterval  int32                  `protobuf:"varint,7,opt,name=update_interval,json=updateInterval,proto3" json:"update_interval,omitempty"`
-	Timeout         int32                  `protobuf:"varint,8,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	DemoPathFmt     string                 `protobuf:"bytes,9,opt,name=demo_path_fmt,json=demoPathFmt,proto3" json:"demo_path_fmt,omitempty"`
-	StacPath        string                 `protobuf:"bytes,10,opt,name=stac_path,json=stacPath,proto3" json:"stac_path,omitempty"`
+	Enabled         *bool                  `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
+	Username        *string                `protobuf:"bytes,2,opt,name=username" json:"username,omitempty"`
+	Port            *int32                 `protobuf:"varint,3,opt,name=port" json:"port,omitempty"`
+	PrivateKeyPath  *string                `protobuf:"bytes,4,opt,name=private_key_path,json=privateKeyPath" json:"private_key_path,omitempty"`
+	HostKeyStrategy *HostKeyStrategy       `protobuf:"varint,5,opt,name=host_key_strategy,json=hostKeyStrategy,enum=config.v1.HostKeyStrategy" json:"host_key_strategy,omitempty"`
+	Password        *string                `protobuf:"bytes,6,opt,name=password" json:"password,omitempty"`
+	UpdateInterval  *int32                 `protobuf:"varint,7,opt,name=update_interval,json=updateInterval" json:"update_interval,omitempty"`
+	Timeout         *int32                 `protobuf:"varint,8,opt,name=timeout" json:"timeout,omitempty"`
+	DemoPathFmt     *string                `protobuf:"bytes,9,opt,name=demo_path_fmt,json=demoPathFmt" json:"demo_path_fmt,omitempty"`
+	StacPath        *string                `protobuf:"bytes,10,opt,name=stac_path,json=stacPath" json:"stac_path,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1633,82 +1633,82 @@ func (*SSH) Descriptor() ([]byte, []int) {
 }
 
 func (x *SSH) GetEnabled() bool {
-	if x != nil {
-		return x.Enabled
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
 	}
 	return false
 }
 
 func (x *SSH) GetUsername() string {
-	if x != nil {
-		return x.Username
+	if x != nil && x.Username != nil {
+		return *x.Username
 	}
 	return ""
 }
 
 func (x *SSH) GetPort() int32 {
-	if x != nil {
-		return x.Port
+	if x != nil && x.Port != nil {
+		return *x.Port
 	}
 	return 0
 }
 
 func (x *SSH) GetPrivateKeyPath() string {
-	if x != nil {
-		return x.PrivateKeyPath
+	if x != nil && x.PrivateKeyPath != nil {
+		return *x.PrivateKeyPath
 	}
 	return ""
 }
 
 func (x *SSH) GetHostKeyStrategy() HostKeyStrategy {
-	if x != nil {
-		return x.HostKeyStrategy
+	if x != nil && x.HostKeyStrategy != nil {
+		return *x.HostKeyStrategy
 	}
 	return HostKeyStrategy_HOST_KEY_STRATEGY_AUTO_ACCEPT_UNSPECIFIED
 }
 
 func (x *SSH) GetPassword() string {
-	if x != nil {
-		return x.Password
+	if x != nil && x.Password != nil {
+		return *x.Password
 	}
 	return ""
 }
 
 func (x *SSH) GetUpdateInterval() int32 {
-	if x != nil {
-		return x.UpdateInterval
+	if x != nil && x.UpdateInterval != nil {
+		return *x.UpdateInterval
 	}
 	return 0
 }
 
 func (x *SSH) GetTimeout() int32 {
-	if x != nil {
-		return x.Timeout
+	if x != nil && x.Timeout != nil {
+		return *x.Timeout
 	}
 	return 0
 }
 
 func (x *SSH) GetDemoPathFmt() string {
-	if x != nil {
-		return x.DemoPathFmt
+	if x != nil && x.DemoPathFmt != nil {
+		return *x.DemoPathFmt
 	}
 	return ""
 }
 
 func (x *SSH) GetStacPath() string {
-	if x != nil {
-		return x.StacPath
+	if x != nil && x.StacPath != nil {
+		return *x.StacPath
 	}
 	return ""
 }
 
 type Network struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SdrEnabled    bool                   `protobuf:"varint,1,opt,name=sdr_enabled,json=sdrEnabled,proto3" json:"sdr_enabled,omitempty"`
-	SdrDnsEnabled bool                   `protobuf:"varint,2,opt,name=sdr_dns_enabled,json=sdrDnsEnabled,proto3" json:"sdr_dns_enabled,omitempty"`
-	CfKey         string                 `protobuf:"bytes,3,opt,name=cf_key,json=cfKey,proto3" json:"cf_key,omitempty"`
-	CfEmail       string                 `protobuf:"bytes,4,opt,name=cf_email,json=cfEmail,proto3" json:"cf_email,omitempty"`
-	CfZoneId      string                 `protobuf:"bytes,5,opt,name=cf_zone_id,json=cfZoneId,proto3" json:"cf_zone_id,omitempty"`
+	SdrEnabled    *bool                  `protobuf:"varint,1,opt,name=sdr_enabled,json=sdrEnabled" json:"sdr_enabled,omitempty"`
+	SdrDnsEnabled *bool                  `protobuf:"varint,2,opt,name=sdr_dns_enabled,json=sdrDnsEnabled" json:"sdr_dns_enabled,omitempty"`
+	CfKey         *string                `protobuf:"bytes,3,opt,name=cf_key,json=cfKey" json:"cf_key,omitempty"`
+	CfEmail       *string                `protobuf:"bytes,4,opt,name=cf_email,json=cfEmail" json:"cf_email,omitempty"`
+	CfZoneId      *string                `protobuf:"bytes,5,opt,name=cf_zone_id,json=cfZoneId" json:"cf_zone_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1744,43 +1744,43 @@ func (*Network) Descriptor() ([]byte, []int) {
 }
 
 func (x *Network) GetSdrEnabled() bool {
-	if x != nil {
-		return x.SdrEnabled
+	if x != nil && x.SdrEnabled != nil {
+		return *x.SdrEnabled
 	}
 	return false
 }
 
 func (x *Network) GetSdrDnsEnabled() bool {
-	if x != nil {
-		return x.SdrDnsEnabled
+	if x != nil && x.SdrDnsEnabled != nil {
+		return *x.SdrDnsEnabled
 	}
 	return false
 }
 
 func (x *Network) GetCfKey() string {
-	if x != nil {
-		return x.CfKey
+	if x != nil && x.CfKey != nil {
+		return *x.CfKey
 	}
 	return ""
 }
 
 func (x *Network) GetCfEmail() string {
-	if x != nil {
-		return x.CfEmail
+	if x != nil && x.CfEmail != nil {
+		return *x.CfEmail
 	}
 	return ""
 }
 
 func (x *Network) GetCfZoneId() string {
-	if x != nil {
-		return x.CfZoneId
+	if x != nil && x.CfZoneId != nil {
+		return *x.CfZoneId
 	}
 	return ""
 }
 
 type LocalStore struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PathRoot      string                 `protobuf:"bytes,1,opt,name=path_root,json=pathRoot,proto3" json:"path_root,omitempty"`
+	PathRoot      *string                `protobuf:"bytes,1,opt,name=path_root,json=pathRoot" json:"path_root,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1816,17 +1816,17 @@ func (*LocalStore) Descriptor() ([]byte, []int) {
 }
 
 func (x *LocalStore) GetPathRoot() string {
-	if x != nil {
-		return x.PathRoot
+	if x != nil && x.PathRoot != nil {
+		return *x.PathRoot
 	}
 	return ""
 }
 
 type Exports struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
-	BdEnabled      bool                   `protobuf:"varint,1,opt,name=bd_enabled,json=bdEnabled,proto3" json:"bd_enabled,omitempty"`
-	ValveEnabled   bool                   `protobuf:"varint,2,opt,name=valve_enabled,json=valveEnabled,proto3" json:"valve_enabled,omitempty"`
-	AuthorizedKeys []string               `protobuf:"bytes,3,rep,name=authorized_keys,json=authorizedKeys,proto3" json:"authorized_keys,omitempty"`
+	BdEnabled      *bool                  `protobuf:"varint,1,opt,name=bd_enabled,json=bdEnabled" json:"bd_enabled,omitempty"`
+	ValveEnabled   *bool                  `protobuf:"varint,2,opt,name=valve_enabled,json=valveEnabled" json:"valve_enabled,omitempty"`
+	AuthorizedKeys []string               `protobuf:"bytes,3,rep,name=authorized_keys,json=authorizedKeys" json:"authorized_keys,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -1862,15 +1862,15 @@ func (*Exports) Descriptor() ([]byte, []int) {
 }
 
 func (x *Exports) GetBdEnabled() bool {
-	if x != nil {
-		return x.BdEnabled
+	if x != nil && x.BdEnabled != nil {
+		return *x.BdEnabled
 	}
 	return false
 }
 
 func (x *Exports) GetValveEnabled() bool {
-	if x != nil {
-		return x.ValveEnabled
+	if x != nil && x.ValveEnabled != nil {
+		return *x.ValveEnabled
 	}
 	return false
 }
@@ -1884,17 +1884,17 @@ func (x *Exports) GetAuthorizedKeys() []string {
 
 type Anticheat struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
-	Enabled               bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	Action                Action                 `protobuf:"varint,2,opt,name=action,proto3,enum=config.v1.Action" json:"action,omitempty"`
-	Duration              int32                  `protobuf:"varint,3,opt,name=duration,proto3" json:"duration,omitempty"`
-	MaxAimSnaps           int32                  `protobuf:"varint,4,opt,name=max_aim_snaps,json=maxAimSnaps,proto3" json:"max_aim_snaps,omitempty"`
-	MaxPsilent            int32                  `protobuf:"varint,5,opt,name=max_psilent,json=maxPsilent,proto3" json:"max_psilent,omitempty"`
-	MaxBhop               int32                  `protobuf:"varint,6,opt,name=max_bhop,json=maxBhop,proto3" json:"max_bhop,omitempty"`
-	MaxFakeAng            int32                  `protobuf:"varint,7,opt,name=max_fake_ang,json=maxFakeAng,proto3" json:"max_fake_ang,omitempty"`
-	MaxCmdNum             int32                  `protobuf:"varint,8,opt,name=max_cmd_num,json=maxCmdNum,proto3" json:"max_cmd_num,omitempty"`
-	MaxTooManyConnections int32                  `protobuf:"varint,9,opt,name=max_too_many_connections,json=maxTooManyConnections,proto3" json:"max_too_many_connections,omitempty"`
-	MaxOobVar             int32                  `protobuf:"varint,10,opt,name=max_oob_var,json=maxOobVar,proto3" json:"max_oob_var,omitempty"`
-	MaxInvalidUserCmd     int32                  `protobuf:"varint,11,opt,name=max_invalid_user_cmd,json=maxInvalidUserCmd,proto3" json:"max_invalid_user_cmd,omitempty"`
+	Enabled               *bool                  `protobuf:"varint,1,opt,name=enabled" json:"enabled,omitempty"`
+	Action                *Action                `protobuf:"varint,2,opt,name=action,enum=config.v1.Action" json:"action,omitempty"`
+	Duration              *int32                 `protobuf:"varint,3,opt,name=duration" json:"duration,omitempty"`
+	MaxAimSnaps           *int32                 `protobuf:"varint,4,opt,name=max_aim_snaps,json=maxAimSnaps" json:"max_aim_snaps,omitempty"`
+	MaxPsilent            *int32                 `protobuf:"varint,5,opt,name=max_psilent,json=maxPsilent" json:"max_psilent,omitempty"`
+	MaxBhop               *int32                 `protobuf:"varint,6,opt,name=max_bhop,json=maxBhop" json:"max_bhop,omitempty"`
+	MaxFakeAng            *int32                 `protobuf:"varint,7,opt,name=max_fake_ang,json=maxFakeAng" json:"max_fake_ang,omitempty"`
+	MaxCmdNum             *int32                 `protobuf:"varint,8,opt,name=max_cmd_num,json=maxCmdNum" json:"max_cmd_num,omitempty"`
+	MaxTooManyConnections *int32                 `protobuf:"varint,9,opt,name=max_too_many_connections,json=maxTooManyConnections" json:"max_too_many_connections,omitempty"`
+	MaxOobVar             *int32                 `protobuf:"varint,10,opt,name=max_oob_var,json=maxOobVar" json:"max_oob_var,omitempty"`
+	MaxInvalidUserCmd     *int32                 `protobuf:"varint,11,opt,name=max_invalid_user_cmd,json=maxInvalidUserCmd" json:"max_invalid_user_cmd,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -1930,98 +1930,98 @@ func (*Anticheat) Descriptor() ([]byte, []int) {
 }
 
 func (x *Anticheat) GetEnabled() bool {
-	if x != nil {
-		return x.Enabled
+	if x != nil && x.Enabled != nil {
+		return *x.Enabled
 	}
 	return false
 }
 
 func (x *Anticheat) GetAction() Action {
-	if x != nil {
-		return x.Action
+	if x != nil && x.Action != nil {
+		return *x.Action
 	}
 	return Action_ACTION_KICK_UNSPECIFIED
 }
 
 func (x *Anticheat) GetDuration() int32 {
-	if x != nil {
-		return x.Duration
+	if x != nil && x.Duration != nil {
+		return *x.Duration
 	}
 	return 0
 }
 
 func (x *Anticheat) GetMaxAimSnaps() int32 {
-	if x != nil {
-		return x.MaxAimSnaps
+	if x != nil && x.MaxAimSnaps != nil {
+		return *x.MaxAimSnaps
 	}
 	return 0
 }
 
 func (x *Anticheat) GetMaxPsilent() int32 {
-	if x != nil {
-		return x.MaxPsilent
+	if x != nil && x.MaxPsilent != nil {
+		return *x.MaxPsilent
 	}
 	return 0
 }
 
 func (x *Anticheat) GetMaxBhop() int32 {
-	if x != nil {
-		return x.MaxBhop
+	if x != nil && x.MaxBhop != nil {
+		return *x.MaxBhop
 	}
 	return 0
 }
 
 func (x *Anticheat) GetMaxFakeAng() int32 {
-	if x != nil {
-		return x.MaxFakeAng
+	if x != nil && x.MaxFakeAng != nil {
+		return *x.MaxFakeAng
 	}
 	return 0
 }
 
 func (x *Anticheat) GetMaxCmdNum() int32 {
-	if x != nil {
-		return x.MaxCmdNum
+	if x != nil && x.MaxCmdNum != nil {
+		return *x.MaxCmdNum
 	}
 	return 0
 }
 
 func (x *Anticheat) GetMaxTooManyConnections() int32 {
-	if x != nil {
-		return x.MaxTooManyConnections
+	if x != nil && x.MaxTooManyConnections != nil {
+		return *x.MaxTooManyConnections
 	}
 	return 0
 }
 
 func (x *Anticheat) GetMaxOobVar() int32 {
-	if x != nil {
-		return x.MaxOobVar
+	if x != nil && x.MaxOobVar != nil {
+		return *x.MaxOobVar
 	}
 	return 0
 }
 
 func (x *Anticheat) GetMaxInvalidUserCmd() int32 {
-	if x != nil {
-		return x.MaxInvalidUserCmd
+	if x != nil && x.MaxInvalidUserCmd != nil {
+		return *x.MaxInvalidUserCmd
 	}
 	return 0
 }
 
 type Config struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	General       *General               `protobuf:"bytes,1,opt,name=general,proto3" json:"general,omitempty"`
-	Debug         *Debug                 `protobuf:"bytes,2,opt,name=debug,proto3" json:"debug,omitempty"`
-	Demo          *Demo                  `protobuf:"bytes,3,opt,name=demo,proto3" json:"demo,omitempty"`
-	Filters       *Filters               `protobuf:"bytes,4,opt,name=filters,proto3" json:"filters,omitempty"`
-	Discord       *Discord               `protobuf:"bytes,5,opt,name=discord,proto3" json:"discord,omitempty"`
-	Sourcemd      *Sourcemod             `protobuf:"bytes,6,opt,name=sourcemd,proto3" json:"sourcemd,omitempty"`
-	Log           *Log                   `protobuf:"bytes,7,opt,name=log,proto3" json:"log,omitempty"`
-	GeoLocation   *GeoLocation           `protobuf:"bytes,8,opt,name=geo_location,json=geoLocation,proto3" json:"geo_location,omitempty"`
-	Patreon       *Patreon               `protobuf:"bytes,9,opt,name=patreon,proto3" json:"patreon,omitempty"`
-	Ssh           *SSH                   `protobuf:"bytes,10,opt,name=ssh,proto3" json:"ssh,omitempty"`
-	Network       *Network               `protobuf:"bytes,11,opt,name=network,proto3" json:"network,omitempty"`
-	LocalStore    *LocalStore            `protobuf:"bytes,12,opt,name=local_store,json=localStore,proto3" json:"local_store,omitempty"`
-	Exports       *Exports               `protobuf:"bytes,13,opt,name=exports,proto3" json:"exports,omitempty"`
-	Anticheat     *Anticheat             `protobuf:"bytes,14,opt,name=anticheat,proto3" json:"anticheat,omitempty"`
+	General       *General               `protobuf:"bytes,1,opt,name=general" json:"general,omitempty"`
+	Debug         *Debug                 `protobuf:"bytes,2,opt,name=debug" json:"debug,omitempty"`
+	Demo          *Demo                  `protobuf:"bytes,3,opt,name=demo" json:"demo,omitempty"`
+	Filters       *Filters               `protobuf:"bytes,4,opt,name=filters" json:"filters,omitempty"`
+	Discord       *Discord               `protobuf:"bytes,5,opt,name=discord" json:"discord,omitempty"`
+	Sourcemd      *Sourcemod             `protobuf:"bytes,6,opt,name=sourcemd" json:"sourcemd,omitempty"`
+	Log           *Log                   `protobuf:"bytes,7,opt,name=log" json:"log,omitempty"`
+	GeoLocation   *GeoLocation           `protobuf:"bytes,8,opt,name=geo_location,json=geoLocation" json:"geo_location,omitempty"`
+	Patreon       *Patreon               `protobuf:"bytes,9,opt,name=patreon" json:"patreon,omitempty"`
+	Ssh           *SSH                   `protobuf:"bytes,10,opt,name=ssh" json:"ssh,omitempty"`
+	Network       *Network               `protobuf:"bytes,11,opt,name=network" json:"network,omitempty"`
+	LocalStore    *LocalStore            `protobuf:"bytes,12,opt,name=local_store,json=localStore" json:"local_store,omitempty"`
+	Exports       *Exports               `protobuf:"bytes,13,opt,name=exports" json:"exports,omitempty"`
+	Anticheat     *Anticheat             `protobuf:"bytes,14,opt,name=anticheat" json:"anticheat,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2173,7 +2173,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x11discord_client_id\x18\n" +
 	" \x01(\tR\x0fdiscordClientId\x12'\n" +
 	"\x0fdiscord_enabled\x18\v \x01(\bR\x0ediscordEnabled\x12'\n" +
-	"\x0fpatring_enabled\x18\f \x01(\bR\x0epatringEnabled\x12#\n" +
+	"\x0fpatreon_enabled\x18\f \x01(\bR\x0epatreonEnabled\x12#\n" +
 	"\rdefault_route\x18\r \x01(\tR\fdefaultRoute\x12!\n" +
 	"\fnews_enabled\x18\x0e \x01(\bR\vnewsEnabled\x12)\n" +
 	"\x10contests_enabled\x18\x0f \x01(\bR\x0fcontestsEnabled\x12!\n" +
@@ -2265,15 +2265,14 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x1aword_filter_log_channel_id\x18\x15 \x01(\tR\x16wordFilterLogChannelId\x12-\n" +
 	"\x13chat_log_channel_id\x18\x16 \x01(\tR\x10chatLogChannelId\":\n" +
 	"\tSourcemod\x12-\n" +
-	"\x12center_projectiles\x18\x01 \x01(\bR\x11centerProjectiles\"\xcf\x01\n" +
+	"\x12center_projectiles\x18\x01 \x01(\bR\x11centerProjectiles\"\xc1\x01\n" +
 	"\x03Log\x12&\n" +
-	"\x05level\x18\x01 \x01(\x0e2\x10.config.v1.LevelR\x05level\x12\x17\n" +
-	"\x04file\x18\x02 \x01(\tH\x00R\x04file\x88\x01\x01\x12!\n" +
+	"\x05level\x18\x01 \x01(\x0e2\x10.config.v1.LevelR\x05level\x12\x12\n" +
+	"\x04file\x18\x02 \x01(\tR\x04file\x12!\n" +
 	"\fhttp_enabled\x18\x03 \x01(\bR\vhttpEnabled\x12*\n" +
 	"\x11http_otel_enabled\x18\x04 \x01(\bR\x0fhttpOtelEnabled\x12/\n" +
 	"\n" +
-	"http_level\x18\x05 \x01(\x0e2\x10.config.v1.LevelR\thttpLevelB\a\n" +
-	"\x05_file\"\\\n" +
+	"http_level\x18\x05 \x01(\x0e2\x10.config.v1.LevelR\thttpLevel\"\\\n" +
 	"\vGeoLocation\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1d\n" +
 	"\n" +
@@ -2376,7 +2375,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x03Get\x12\x16.google.protobuf.Empty\x1a\x16.config.v1.GetResponse\"\x00\x12?\n" +
 	"\x06Update\x12\x18.config.v1.UpdateRequest\x1a\x19.config.v1.UpdateResponse\"\x00B\xa2\x01\n" +
 	"\rcom.config.v1B\vConfigProtoP\x01Z?github.com/leighmacdonald/gbans/internal/rpc/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
-	"Config::V1b\x06proto3"
+	"Config::V1b\beditionsp\xe8\a"
 
 var (
 	file_config_v1_config_proto_rawDescOnce sync.Once
@@ -2463,7 +2462,6 @@ func file_config_v1_config_proto_init() {
 	if File_config_v1_config_proto != nil {
 		return
 	}
-	file_config_v1_config_proto_msgTypes[10].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

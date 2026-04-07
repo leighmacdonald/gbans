@@ -2,10 +2,19 @@ edition = "2023";
 
 package servers.v1;
 
-import "ban/v1/ban.proto";
+import "group.proto";
+import "overridetype.proto";
 import "sourcemod/v1/sourcemod.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+
+// TODO remove this duplicate
+enum BanType {
+  BAN_TYPE_OK_UNSPECIFIED = 0;
+  BAN_TYPE_NO_COMM = 1;
+  BAN_TYPE_BANNED = 2;
+  BAN_TYPE_NETWORK = 3;
+}
 
 service SRCDSService {
   rpc Check(CheckRequest) returns (CheckResponse) {}
@@ -44,6 +53,12 @@ message Override {
 
 message OverridesResponse {
   repeated Override overrides = 1;
+}
+
+enum AuthType {
+  AUTH_TYPE_STEAM_UNSPECIFIED = 0;
+  AUTH_TYPE_NAME = 1;
+  AUTH_TYPE_IP = 2;
 }
 
 message Admin {

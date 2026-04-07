@@ -1,10 +1,6 @@
 let
-  # nixpkgs = fetchTarball {
-  #   url = "https://github.com/NixOS/nixpkgs/archive/e0629618b4b419a47e2c8a3cab223e2a7f3a8f97.tar.gz";
-  #   sha256 = "sha256-e0629618b4b419a47e2c8a3cab223e2a7f3a8f97";
-  # };
-  #nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/tarball/nixos-25.11";
-  nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/e0629618b4b419a47e2c8a3cab223e2a7f3a8f97.tar.gz";
+  nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/tarball/nixos-25.11";
+  #nixpkgs = fetchTarball "https://github.com/NixOS/nixpkgs/archive/e0629618b4b419a47e2c8a3cab223e2a7f3a8f97.tar.gz";
 
   pkgs = import nixpkgs {
     config = { };
@@ -40,7 +36,6 @@ pkgs.mkShell {
     protoc-gen-es
     protobuf-language-server
     rcon-cli
-    protols
     clang-tools
     govulncheck
   ];

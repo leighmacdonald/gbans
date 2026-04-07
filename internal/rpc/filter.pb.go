@@ -23,10 +23,10 @@ const (
 
 type Filter struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Offset        uint64                 `protobuf:"varint,1,opt,name=offset,proto3" json:"offset,omitempty"`
-	Limit         uint64                 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
-	Desc          bool                   `protobuf:"varint,3,opt,name=desc,proto3" json:"desc,omitempty"`
-	OrderBy       string                 `protobuf:"bytes,4,opt,name=order_by,json=orderBy,proto3" json:"order_by,omitempty"`
+	Offset        *uint64                `protobuf:"varint,1,opt,name=offset" json:"offset,omitempty"`
+	Limit         *uint64                `protobuf:"varint,2,opt,name=limit" json:"limit,omitempty"`
+	Desc          *bool                  `protobuf:"varint,3,opt,name=desc" json:"desc,omitempty"`
+	OrderBy       *string                `protobuf:"bytes,4,opt,name=order_by,json=orderBy" json:"order_by,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -62,29 +62,29 @@ func (*Filter) Descriptor() ([]byte, []int) {
 }
 
 func (x *Filter) GetOffset() uint64 {
-	if x != nil {
-		return x.Offset
+	if x != nil && x.Offset != nil {
+		return *x.Offset
 	}
 	return 0
 }
 
 func (x *Filter) GetLimit() uint64 {
-	if x != nil {
-		return x.Limit
+	if x != nil && x.Limit != nil {
+		return *x.Limit
 	}
 	return 0
 }
 
 func (x *Filter) GetDesc() bool {
-	if x != nil {
-		return x.Desc
+	if x != nil && x.Desc != nil {
+		return *x.Desc
 	}
 	return false
 }
 
 func (x *Filter) GetOrderBy() string {
-	if x != nil {
-		return x.OrderBy
+	if x != nil && x.OrderBy != nil {
+		return *x.OrderBy
 	}
 	return ""
 }
@@ -98,7 +98,7 @@ const file_filter_proto_rawDesc = "" +
 	"\x06offset\x18\x01 \x01(\x04R\x06offset\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x04R\x05limit\x12\x12\n" +
 	"\x04desc\x18\x03 \x01(\bR\x04desc\x12\x19\n" +
-	"\border_by\x18\x04 \x01(\tR\aorderByB=B\vFilterProtoP\x01Z,github.com/leighmacdonald/gbans/internal/rpcb\x06proto3"
+	"\border_by\x18\x04 \x01(\tR\aorderByB=B\vFilterProtoP\x01Z,github.com/leighmacdonald/gbans/internal/rpcb\beditionsp\xe8\a"
 
 var (
 	file_filter_proto_rawDescOnce sync.Once

@@ -98,11 +98,11 @@ func (Detection) EnumDescriptor() ([]byte, []int) {
 
 type QueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *rpc.Filter            `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	SteamId       string                 `protobuf:"bytes,3,opt,name=steam_id,json=steamId,proto3" json:"steam_id,omitempty"`
-	Sumamry       string                 `protobuf:"bytes,4,opt,name=sumamry,proto3" json:"sumamry,omitempty"`
-	Detection     Detection              `protobuf:"varint,5,opt,name=detection,proto3,enum=anticheat.v1.Detection" json:"detection,omitempty"`
+	Filter        *rpc.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	SteamId       *string                `protobuf:"bytes,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	Sumamry       *string                `protobuf:"bytes,4,opt,name=sumamry" json:"sumamry,omitempty"`
+	Detection     *Detection             `protobuf:"varint,5,opt,name=detection,enum=anticheat.v1.Detection" json:"detection,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -145,36 +145,36 @@ func (x *QueryRequest) GetFilter() *rpc.Filter {
 }
 
 func (x *QueryRequest) GetName() string {
-	if x != nil {
-		return x.Name
+	if x != nil && x.Name != nil {
+		return *x.Name
 	}
 	return ""
 }
 
 func (x *QueryRequest) GetSteamId() string {
-	if x != nil {
-		return x.SteamId
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
 	}
 	return ""
 }
 
 func (x *QueryRequest) GetSumamry() string {
-	if x != nil {
-		return x.Sumamry
+	if x != nil && x.Sumamry != nil {
+		return *x.Sumamry
 	}
 	return ""
 }
 
 func (x *QueryRequest) GetDetection() Detection {
-	if x != nil {
-		return x.Detection
+	if x != nil && x.Detection != nil {
+		return *x.Detection
 	}
 	return Detection_Unknown
 }
 
 type QueryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Entries       []*Entry               `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	Entries       []*Entry               `protobuf:"bytes,1,rep,name=entries" json:"entries,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -218,21 +218,21 @@ func (x *QueryResponse) GetEntries() []*Entry {
 
 type Entry struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AnticheatId   int64                  `protobuf:"varint,1,opt,name=anticheat_id,json=anticheatId,proto3" json:"anticheat_id,omitempty"`
-	SteamId       string                 `protobuf:"bytes,2,opt,name=steam_id,json=steamId,proto3" json:"steam_id,omitempty"`
-	ServerId      int32                  `protobuf:"varint,3,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	ServerName    string                 `protobuf:"bytes,4,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
-	DemoId        int32                  `protobuf:"varint,5,opt,name=demo_id,json=demoId,proto3" json:"demo_id,omitempty"`
-	DemoName      string                 `protobuf:"bytes,6,opt,name=demo_name,json=demoName,proto3" json:"demo_name,omitempty"`
-	DemoTick      int32                  `protobuf:"varint,7,opt,name=demo_tick,json=demoTick,proto3" json:"demo_tick,omitempty"`
-	Name          string                 `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
-	Detection     Detection              `protobuf:"varint,9,opt,name=detection,proto3,enum=anticheat.v1.Detection" json:"detection,omitempty"`
-	Summary       string                 `protobuf:"bytes,10,opt,name=summary,proto3" json:"summary,omitempty"`
-	RawLog        string                 `protobuf:"bytes,11,opt,name=raw_log,json=rawLog,proto3" json:"raw_log,omitempty"`
-	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_on,json=createdOn,proto3" json:"created_on,omitempty"`
-	Personaname   string                 `protobuf:"bytes,13,opt,name=personaname,proto3" json:"personaname,omitempty"`
-	Avatarhash    string                 `protobuf:"bytes,14,opt,name=avatarhash,proto3" json:"avatarhash,omitempty"`
-	Triggered     int32                  `protobuf:"varint,15,opt,name=triggered,proto3" json:"triggered,omitempty"`
+	AnticheatId   *int64                 `protobuf:"varint,1,opt,name=anticheat_id,json=anticheatId" json:"anticheat_id,omitempty"`
+	SteamId       *string                `protobuf:"bytes,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	ServerId      *int32                 `protobuf:"varint,3,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	ServerName    *string                `protobuf:"bytes,4,opt,name=server_name,json=serverName" json:"server_name,omitempty"`
+	DemoId        *int32                 `protobuf:"varint,5,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
+	DemoName      *string                `protobuf:"bytes,6,opt,name=demo_name,json=demoName" json:"demo_name,omitempty"`
+	DemoTick      *int32                 `protobuf:"varint,7,opt,name=demo_tick,json=demoTick" json:"demo_tick,omitempty"`
+	Name          *string                `protobuf:"bytes,8,opt,name=name" json:"name,omitempty"`
+	Detection     *Detection             `protobuf:"varint,9,opt,name=detection,enum=anticheat.v1.Detection" json:"detection,omitempty"`
+	Summary       *string                `protobuf:"bytes,10,opt,name=summary" json:"summary,omitempty"`
+	RawLog        *string                `protobuf:"bytes,11,opt,name=raw_log,json=rawLog" json:"raw_log,omitempty"`
+	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	Personaname   *string                `protobuf:"bytes,13,opt,name=personaname" json:"personaname,omitempty"`
+	Avatarhash    *string                `protobuf:"bytes,14,opt,name=avatarhash" json:"avatarhash,omitempty"`
+	Triggered     *int32                 `protobuf:"varint,15,opt,name=triggered" json:"triggered,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -268,78 +268,78 @@ func (*Entry) Descriptor() ([]byte, []int) {
 }
 
 func (x *Entry) GetAnticheatId() int64 {
-	if x != nil {
-		return x.AnticheatId
+	if x != nil && x.AnticheatId != nil {
+		return *x.AnticheatId
 	}
 	return 0
 }
 
 func (x *Entry) GetSteamId() string {
-	if x != nil {
-		return x.SteamId
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
 	}
 	return ""
 }
 
 func (x *Entry) GetServerId() int32 {
-	if x != nil {
-		return x.ServerId
+	if x != nil && x.ServerId != nil {
+		return *x.ServerId
 	}
 	return 0
 }
 
 func (x *Entry) GetServerName() string {
-	if x != nil {
-		return x.ServerName
+	if x != nil && x.ServerName != nil {
+		return *x.ServerName
 	}
 	return ""
 }
 
 func (x *Entry) GetDemoId() int32 {
-	if x != nil {
-		return x.DemoId
+	if x != nil && x.DemoId != nil {
+		return *x.DemoId
 	}
 	return 0
 }
 
 func (x *Entry) GetDemoName() string {
-	if x != nil {
-		return x.DemoName
+	if x != nil && x.DemoName != nil {
+		return *x.DemoName
 	}
 	return ""
 }
 
 func (x *Entry) GetDemoTick() int32 {
-	if x != nil {
-		return x.DemoTick
+	if x != nil && x.DemoTick != nil {
+		return *x.DemoTick
 	}
 	return 0
 }
 
 func (x *Entry) GetName() string {
-	if x != nil {
-		return x.Name
+	if x != nil && x.Name != nil {
+		return *x.Name
 	}
 	return ""
 }
 
 func (x *Entry) GetDetection() Detection {
-	if x != nil {
-		return x.Detection
+	if x != nil && x.Detection != nil {
+		return *x.Detection
 	}
 	return Detection_Unknown
 }
 
 func (x *Entry) GetSummary() string {
-	if x != nil {
-		return x.Summary
+	if x != nil && x.Summary != nil {
+		return *x.Summary
 	}
 	return ""
 }
 
 func (x *Entry) GetRawLog() string {
-	if x != nil {
-		return x.RawLog
+	if x != nil && x.RawLog != nil {
+		return *x.RawLog
 	}
 	return ""
 }
@@ -352,22 +352,22 @@ func (x *Entry) GetCreatedOn() *timestamppb.Timestamp {
 }
 
 func (x *Entry) GetPersonaname() string {
-	if x != nil {
-		return x.Personaname
+	if x != nil && x.Personaname != nil {
+		return *x.Personaname
 	}
 	return ""
 }
 
 func (x *Entry) GetAvatarhash() string {
-	if x != nil {
-		return x.Avatarhash
+	if x != nil && x.Avatarhash != nil {
+		return *x.Avatarhash
 	}
 	return ""
 }
 
 func (x *Entry) GetTriggered() int32 {
-	if x != nil {
-		return x.Triggered
+	if x != nil && x.Triggered != nil {
+		return *x.Triggered
 	}
 	return 0
 }
@@ -422,7 +422,7 @@ const file_anticheat_v1_anticheat_proto_rawDesc = "" +
 	"2V\n" +
 	"\x10AnticheatService\x12B\n" +
 	"\x05Query\x12\x1a.anticheat.v1.QueryRequest\x1a\x1b.anticheat.v1.QueryResponse\"\x00B\xba\x01\n" +
-	"\x10com.anticheat.v1B\x0eAnticheatProtoP\x01ZEgithub.com/leighmacdonald/gbans/internal/rpc/anticheat/v1;anticheatv1\xa2\x02\x03AXX\xaa\x02\fAnticheat.V1\xca\x02\fAnticheat\\V1\xe2\x02\x18Anticheat\\V1\\GPBMetadata\xea\x02\rAnticheat::V1b\x06proto3"
+	"\x10com.anticheat.v1B\x0eAnticheatProtoP\x01ZEgithub.com/leighmacdonald/gbans/internal/rpc/anticheat/v1;anticheatv1\xa2\x02\x03AXX\xaa\x02\fAnticheat.V1\xca\x02\fAnticheat\\V1\xe2\x02\x18Anticheat\\V1\\GPBMetadata\xea\x02\rAnticheat::V1b\beditionsp\xe8\a"
 
 var (
 	file_anticheat_v1_anticheat_proto_rawDescOnce sync.Once

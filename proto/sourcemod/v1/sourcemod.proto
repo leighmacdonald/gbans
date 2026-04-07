@@ -1,6 +1,9 @@
 edition = "2023";
+
 package sourcemod.v1;
 
+import "group.proto";
+import "overridetype.proto";
 import "ban/v1/ban.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
@@ -77,14 +80,6 @@ message CreateImmunityResponse {}
 message DeleteImmunityRequest {}
 message DeleteImmunityResponse {}
 
-message Group {
-  int32 group_id = 1;
-  string flags = 2;
-  string name = 3;
-  int32 immunity_level = 4;
-  google.protobuf.Timestamp created_on = 5;
-  google.protobuf.Timestamp updated_on = 6;
-}
 
 message GroupImmunity {
   int32 group_id = 1;
@@ -93,10 +88,7 @@ message GroupImmunity {
   google.protobuf.Timestamp created_on = 4;
 }
 
-enum OverrideType {
-  OVERRIDE_TYPE_COMMAND_UNSPECIFIED = 0;
-  OVERRIDE_TYPE_GROUP = 1;
-}
+
 
 message GroupOverride {
   int32 group_override_id = 1;

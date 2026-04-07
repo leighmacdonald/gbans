@@ -25,8 +25,8 @@ const (
 
 type QueryContextRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	PersonMessageId int64                  `protobuf:"varint,1,opt,name=person_message_id,json=personMessageId,proto3" json:"person_message_id,omitempty"`
-	Padding         int32                  `protobuf:"varint,2,opt,name=padding,proto3" json:"padding,omitempty"`
+	PersonMessageId *int64                 `protobuf:"varint,1,opt,name=person_message_id,json=personMessageId" json:"person_message_id,omitempty"`
+	Padding         *int32                 `protobuf:"varint,2,opt,name=padding" json:"padding,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -62,22 +62,22 @@ func (*QueryContextRequest) Descriptor() ([]byte, []int) {
 }
 
 func (x *QueryContextRequest) GetPersonMessageId() int64 {
-	if x != nil {
-		return x.PersonMessageId
+	if x != nil && x.PersonMessageId != nil {
+		return *x.PersonMessageId
 	}
 	return 0
 }
 
 func (x *QueryContextRequest) GetPadding() int32 {
-	if x != nil {
-		return x.Padding
+	if x != nil && x.Padding != nil {
+		return *x.Padding
 	}
 	return 0
 }
 
 type QueryContextResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages" json:"messages,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -121,12 +121,12 @@ func (x *QueryContextResponse) GetMessages() []*Message {
 
 type QueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *rpc.Filter            `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
-	Query         string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
-	ServerId      int32                  `protobuf:"varint,3,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	DateStart     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=date_start,json=dateStart,proto3" json:"date_start,omitempty"`
-	DateEnd       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=date_end,json=dateEnd,proto3" json:"date_end,omitempty"`
-	FlaggedOnly   bool                   `protobuf:"varint,6,opt,name=flagged_only,json=flaggedOnly,proto3" json:"flagged_only,omitempty"`
+	Filter        *rpc.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Query         *string                `protobuf:"bytes,2,opt,name=query" json:"query,omitempty"`
+	ServerId      *int32                 `protobuf:"varint,3,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	DateStart     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=date_start,json=dateStart" json:"date_start,omitempty"`
+	DateEnd       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=date_end,json=dateEnd" json:"date_end,omitempty"`
+	FlaggedOnly   *bool                  `protobuf:"varint,6,opt,name=flagged_only,json=flaggedOnly" json:"flagged_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -169,15 +169,15 @@ func (x *QueryRequest) GetFilter() *rpc.Filter {
 }
 
 func (x *QueryRequest) GetQuery() string {
-	if x != nil {
-		return x.Query
+	if x != nil && x.Query != nil {
+		return *x.Query
 	}
 	return ""
 }
 
 func (x *QueryRequest) GetServerId() int32 {
-	if x != nil {
-		return x.ServerId
+	if x != nil && x.ServerId != nil {
+		return *x.ServerId
 	}
 	return 0
 }
@@ -197,15 +197,15 @@ func (x *QueryRequest) GetDateEnd() *timestamppb.Timestamp {
 }
 
 func (x *QueryRequest) GetFlaggedOnly() bool {
-	if x != nil {
-		return x.FlaggedOnly
+	if x != nil && x.FlaggedOnly != nil {
+		return *x.FlaggedOnly
 	}
 	return false
 }
 
 type QueryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages,proto3" json:"messages,omitempty"`
+	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages" json:"messages,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -249,17 +249,17 @@ func (x *QueryResponse) GetMessages() []*Message {
 
 type Message struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	PersonMessageId   int64                  `protobuf:"varint,1,opt,name=person_message_id,json=personMessageId,proto3" json:"person_message_id,omitempty"`
-	MatchId           string                 `protobuf:"bytes,2,opt,name=match_id,json=matchId,proto3" json:"match_id,omitempty"`
-	SteamId           string                 `protobuf:"bytes,3,opt,name=steam_id,json=steamId,proto3" json:"steam_id,omitempty"`
-	AvatarHash        string                 `protobuf:"bytes,4,opt,name=avatar_hash,json=avatarHash,proto3" json:"avatar_hash,omitempty"`
-	PersonaName       string                 `protobuf:"bytes,5,opt,name=persona_name,json=personaName,proto3" json:"persona_name,omitempty"`
-	ServerName        string                 `protobuf:"bytes,6,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
-	ServerId          int32                  `protobuf:"varint,7,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	Body              string                 `protobuf:"bytes,8,opt,name=body,proto3" json:"body,omitempty"`
-	Team              bool                   `protobuf:"varint,9,opt,name=team,proto3" json:"team,omitempty"`
-	CreatedOn         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_on,json=createdOn,proto3" json:"created_on,omitempty"`
-	AutoFilterFlagged int64                  `protobuf:"varint,11,opt,name=auto_filter_flagged,json=autoFilterFlagged,proto3" json:"auto_filter_flagged,omitempty"`
+	PersonMessageId   *int64                 `protobuf:"varint,1,opt,name=person_message_id,json=personMessageId" json:"person_message_id,omitempty"`
+	MatchId           *string                `protobuf:"bytes,2,opt,name=match_id,json=matchId" json:"match_id,omitempty"`
+	SteamId           *string                `protobuf:"bytes,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	AvatarHash        *string                `protobuf:"bytes,4,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
+	PersonaName       *string                `protobuf:"bytes,5,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
+	ServerName        *string                `protobuf:"bytes,6,opt,name=server_name,json=serverName" json:"server_name,omitempty"`
+	ServerId          *int32                 `protobuf:"varint,7,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
+	Body              *string                `protobuf:"bytes,8,opt,name=body" json:"body,omitempty"`
+	Team              *bool                  `protobuf:"varint,9,opt,name=team" json:"team,omitempty"`
+	CreatedOn         *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	AutoFilterFlagged *int64                 `protobuf:"varint,11,opt,name=auto_filter_flagged,json=autoFilterFlagged" json:"auto_filter_flagged,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -295,64 +295,64 @@ func (*Message) Descriptor() ([]byte, []int) {
 }
 
 func (x *Message) GetPersonMessageId() int64 {
-	if x != nil {
-		return x.PersonMessageId
+	if x != nil && x.PersonMessageId != nil {
+		return *x.PersonMessageId
 	}
 	return 0
 }
 
 func (x *Message) GetMatchId() string {
-	if x != nil {
-		return x.MatchId
+	if x != nil && x.MatchId != nil {
+		return *x.MatchId
 	}
 	return ""
 }
 
 func (x *Message) GetSteamId() string {
-	if x != nil {
-		return x.SteamId
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
 	}
 	return ""
 }
 
 func (x *Message) GetAvatarHash() string {
-	if x != nil {
-		return x.AvatarHash
+	if x != nil && x.AvatarHash != nil {
+		return *x.AvatarHash
 	}
 	return ""
 }
 
 func (x *Message) GetPersonaName() string {
-	if x != nil {
-		return x.PersonaName
+	if x != nil && x.PersonaName != nil {
+		return *x.PersonaName
 	}
 	return ""
 }
 
 func (x *Message) GetServerName() string {
-	if x != nil {
-		return x.ServerName
+	if x != nil && x.ServerName != nil {
+		return *x.ServerName
 	}
 	return ""
 }
 
 func (x *Message) GetServerId() int32 {
-	if x != nil {
-		return x.ServerId
+	if x != nil && x.ServerId != nil {
+		return *x.ServerId
 	}
 	return 0
 }
 
 func (x *Message) GetBody() string {
-	if x != nil {
-		return x.Body
+	if x != nil && x.Body != nil {
+		return *x.Body
 	}
 	return ""
 }
 
 func (x *Message) GetTeam() bool {
-	if x != nil {
-		return x.Team
+	if x != nil && x.Team != nil {
+		return *x.Team
 	}
 	return false
 }
@@ -365,8 +365,8 @@ func (x *Message) GetCreatedOn() *timestamppb.Timestamp {
 }
 
 func (x *Message) GetAutoFilterFlagged() int64 {
-	if x != nil {
-		return x.AutoFilterFlagged
+	if x != nil && x.AutoFilterFlagged != nil {
+		return *x.AutoFilterFlagged
 	}
 	return 0
 }
@@ -410,7 +410,7 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\vChatService\x128\n" +
 	"\x05Query\x12\x15.chat.v1.QueryRequest\x1a\x16.chat.v1.QueryResponse\"\x00\x12M\n" +
 	"\fQueryContext\x12\x1c.chat.v1.QueryContextRequest\x1a\x1d.chat.v1.QueryContextResponse\"\x00B\x92\x01\n" +
-	"\vcom.chat.v1B\tChatProtoP\x01Z;github.com/leighmacdonald/gbans/internal/rpc/chat/v1;chatv1\xa2\x02\x03CXX\xaa\x02\aChat.V1\xca\x02\aChat\\V1\xe2\x02\x13Chat\\V1\\GPBMetadata\xea\x02\bChat::V1b\x06proto3"
+	"\vcom.chat.v1B\tChatProtoP\x01Z;github.com/leighmacdonald/gbans/internal/rpc/chat/v1;chatv1\xa2\x02\x03CXX\xaa\x02\aChat.V1\xca\x02\aChat\\V1\xe2\x02\x13Chat\\V1\\GPBMetadata\xea\x02\bChat::V1b\beditionsp\xe8\a"
 
 var (
 	file_chat_v1_chat_proto_rawDescOnce sync.Once
