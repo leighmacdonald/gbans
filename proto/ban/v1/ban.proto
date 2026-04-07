@@ -6,7 +6,6 @@ import "filter.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
-
 enum BanType {
   BAN_TYPE_OK_UNSPECIFIED = 0;
   BAN_TYPE_NO_COMM = 1;
