@@ -18,13 +18,13 @@ plugins:
       - simple
 
   - local: protoc-gen-es
-    out: frontend/src/gen
+    out: frontend/src/rpc
     include_imports: true
     opt:
       - target=ts
 
   - local: [frontend/node_modules/.bin/protoc-gen-connect-query]
-    out: frontend/src/gen
+    out: frontend/src/rpc
     opt:
       - target=ts
 

@@ -5,3 +5,13 @@ package ptr
 func To[T any](v T) *T {
 	return &v
 }
+
+func From[T any](v *T) T {
+	if v != nil {
+		return *v
+	}
+
+	var t T
+
+	return t
+}
