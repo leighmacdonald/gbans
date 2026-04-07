@@ -24,6 +24,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type BanType int32
+
+const (
+	BanType_BAN_TYPE_OK_UNSPECIFIED BanType = 0
+	BanType_BAN_TYPE_NO_COMM        BanType = 1
+	BanType_BAN_TYPE_BANNED         BanType = 2
+	BanType_BAN_TYPE_NETWORK        BanType = 3
+)
+
+// Enum value maps for BanType.
+var (
+	BanType_name = map[int32]string{
+		0: "BAN_TYPE_OK_UNSPECIFIED",
+		1: "BAN_TYPE_NO_COMM",
+		2: "BAN_TYPE_BANNED",
+		3: "BAN_TYPE_NETWORK",
+	}
+	BanType_value = map[string]int32{
+		"BAN_TYPE_OK_UNSPECIFIED": 0,
+		"BAN_TYPE_NO_COMM":        1,
+		"BAN_TYPE_BANNED":         2,
+		"BAN_TYPE_NETWORK":        3,
+	}
+)
+
+func (x BanType) Enum() *BanType {
+	p := new(BanType)
+	*p = x
+	return p
+}
+
+func (x BanType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BanType) Descriptor() protoreflect.EnumDescriptor {
+	return file_ban_v1_ban_proto_enumTypes[0].Descriptor()
+}
+
+func (BanType) Type() protoreflect.EnumType {
+	return &file_ban_v1_ban_proto_enumTypes[0]
+}
+
+func (x BanType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BanType.Descriptor instead.
+func (BanType) EnumDescriptor() ([]byte, []int) {
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{0}
+}
+
 type AppealState int32
 
 const (
@@ -63,11 +115,11 @@ func (x AppealState) String() string {
 }
 
 func (AppealState) Descriptor() protoreflect.EnumDescriptor {
-	return file_ban_v1_ban_proto_enumTypes[0].Descriptor()
+	return file_ban_v1_ban_proto_enumTypes[1].Descriptor()
 }
 
 func (AppealState) Type() protoreflect.EnumType {
-	return &file_ban_v1_ban_proto_enumTypes[0]
+	return &file_ban_v1_ban_proto_enumTypes[1]
 }
 
 func (x AppealState) Number() protoreflect.EnumNumber {
@@ -76,7 +128,7 @@ func (x AppealState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use AppealState.Descriptor instead.
 func (AppealState) EnumDescriptor() ([]byte, []int) {
-	return file_ban_v1_ban_proto_rawDescGZIP(), []int{0}
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{1}
 }
 
 type BanReason int32
@@ -148,11 +200,11 @@ func (x BanReason) String() string {
 }
 
 func (BanReason) Descriptor() protoreflect.EnumDescriptor {
-	return file_ban_v1_ban_proto_enumTypes[1].Descriptor()
+	return file_ban_v1_ban_proto_enumTypes[2].Descriptor()
 }
 
 func (BanReason) Type() protoreflect.EnumType {
-	return &file_ban_v1_ban_proto_enumTypes[1]
+	return &file_ban_v1_ban_proto_enumTypes[2]
 }
 
 func (x BanReason) Number() protoreflect.EnumNumber {
@@ -161,58 +213,6 @@ func (x BanReason) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BanReason.Descriptor instead.
 func (BanReason) EnumDescriptor() ([]byte, []int) {
-	return file_ban_v1_ban_proto_rawDescGZIP(), []int{1}
-}
-
-type BanType int32
-
-const (
-	BanType_BAN_TYPE_OK_UNSPECIFIED BanType = 0
-	BanType_BAN_TYPE_NO_COMM        BanType = 1
-	BanType_BAN_TYPE_BANNED         BanType = 2
-	BanType_BAN_TYPE_NETWORK        BanType = 3
-)
-
-// Enum value maps for BanType.
-var (
-	BanType_name = map[int32]string{
-		0: "BAN_TYPE_OK_UNSPECIFIED",
-		1: "BAN_TYPE_NO_COMM",
-		2: "BAN_TYPE_BANNED",
-		3: "BAN_TYPE_NETWORK",
-	}
-	BanType_value = map[string]int32{
-		"BAN_TYPE_OK_UNSPECIFIED": 0,
-		"BAN_TYPE_NO_COMM":        1,
-		"BAN_TYPE_BANNED":         2,
-		"BAN_TYPE_NETWORK":        3,
-	}
-)
-
-func (x BanType) Enum() *BanType {
-	p := new(BanType)
-	*p = x
-	return p
-}
-
-func (x BanType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (BanType) Descriptor() protoreflect.EnumDescriptor {
-	return file_ban_v1_ban_proto_enumTypes[2].Descriptor()
-}
-
-func (BanType) Type() protoreflect.EnumType {
-	return &file_ban_v1_ban_proto_enumTypes[2]
-}
-
-func (x BanType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use BanType.Descriptor instead.
-func (BanType) EnumDescriptor() ([]byte, []int) {
 	return file_ban_v1_ban_proto_rawDescGZIP(), []int{2}
 }
 
@@ -309,7 +309,7 @@ func (*ExportTF2BDResponse) Descriptor() ([]byte, []int) {
 
 type DeleteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         int64                  `protobuf:"varint,1,opt,name=ban_id,json=banId,proto3" json:"ban_id,omitempty"`
+	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -345,22 +345,22 @@ func (*DeleteRequest) Descriptor() ([]byte, []int) {
 }
 
 func (x *DeleteRequest) GetBanId() int64 {
-	if x != nil {
-		return x.BanId
+	if x != nil && x.BanId != nil {
+		return *x.BanId
 	}
 	return 0
 }
 
 type QueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SourceId      string                 `protobuf:"bytes,1,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
-	TargetId      string                 `protobuf:"bytes,2,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
-	GroupsOnly    bool                   `protobuf:"varint,3,opt,name=groups_only,json=groupsOnly,proto3" json:"groups_only,omitempty"`
-	Deleted       bool                   `protobuf:"varint,4,opt,name=deleted,proto3" json:"deleted,omitempty"`
-	Cidr          string                 `protobuf:"bytes,5,opt,name=cidr,proto3" json:"cidr,omitempty"`
-	CidrOnly      bool                   `protobuf:"varint,6,opt,name=cidr_only,json=cidrOnly,proto3" json:"cidr_only,omitempty"`
-	Reason        []BanReason            `protobuf:"varint,7,rep,packed,name=reason,proto3,enum=ban.v1.BanReason" json:"reason,omitempty"`
-	AppealState   int32                  `protobuf:"varint,8,opt,name=appeal_state,json=appealState,proto3" json:"appeal_state,omitempty"`
+	SourceId      *string                `protobuf:"bytes,1,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
+	TargetId      *string                `protobuf:"bytes,2,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
+	GroupsOnly    *bool                  `protobuf:"varint,3,opt,name=groups_only,json=groupsOnly" json:"groups_only,omitempty"`
+	Deleted       *bool                  `protobuf:"varint,4,opt,name=deleted" json:"deleted,omitempty"`
+	Cidr          *string                `protobuf:"bytes,5,opt,name=cidr" json:"cidr,omitempty"`
+	CidrOnly      *bool                  `protobuf:"varint,6,opt,name=cidr_only,json=cidrOnly" json:"cidr_only,omitempty"`
+	Reason        []BanReason            `protobuf:"varint,7,rep,packed,name=reason,enum=ban.v1.BanReason" json:"reason,omitempty"`
+	AppealState   *int32                 `protobuf:"varint,8,opt,name=appeal_state,json=appealState" json:"appeal_state,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -396,43 +396,43 @@ func (*QueryRequest) Descriptor() ([]byte, []int) {
 }
 
 func (x *QueryRequest) GetSourceId() string {
-	if x != nil {
-		return x.SourceId
+	if x != nil && x.SourceId != nil {
+		return *x.SourceId
 	}
 	return ""
 }
 
 func (x *QueryRequest) GetTargetId() string {
-	if x != nil {
-		return x.TargetId
+	if x != nil && x.TargetId != nil {
+		return *x.TargetId
 	}
 	return ""
 }
 
 func (x *QueryRequest) GetGroupsOnly() bool {
-	if x != nil {
-		return x.GroupsOnly
+	if x != nil && x.GroupsOnly != nil {
+		return *x.GroupsOnly
 	}
 	return false
 }
 
 func (x *QueryRequest) GetDeleted() bool {
-	if x != nil {
-		return x.Deleted
+	if x != nil && x.Deleted != nil {
+		return *x.Deleted
 	}
 	return false
 }
 
 func (x *QueryRequest) GetCidr() string {
-	if x != nil {
-		return x.Cidr
+	if x != nil && x.Cidr != nil {
+		return *x.Cidr
 	}
 	return ""
 }
 
 func (x *QueryRequest) GetCidrOnly() bool {
-	if x != nil {
-		return x.CidrOnly
+	if x != nil && x.CidrOnly != nil {
+		return *x.CidrOnly
 	}
 	return false
 }
@@ -445,15 +445,15 @@ func (x *QueryRequest) GetReason() []BanReason {
 }
 
 func (x *QueryRequest) GetAppealState() int32 {
-	if x != nil {
-		return x.AppealState
+	if x != nil && x.AppealState != nil {
+		return *x.AppealState
 	}
 	return 0
 }
 
 type QueryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Bans          []*Ban                 `protobuf:"bytes,1,rep,name=bans,proto3" json:"bans,omitempty"`
+	Bans          []*Ban                 `protobuf:"bytes,1,rep,name=bans" json:"bans,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -497,30 +497,30 @@ func (x *QueryResponse) GetBans() []*Ban {
 
 type Ban struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	TargetId          string                 `protobuf:"bytes,1,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
-	SourceId          string                 `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
-	BanId             int64                  `protobuf:"varint,3,opt,name=ban_id,json=banId,proto3" json:"ban_id,omitempty"`
-	ReportId          int64                  `protobuf:"varint,4,opt,name=report_id,json=reportId,proto3" json:"report_id,omitempty"`
-	LastIp            string                 `protobuf:"bytes,5,opt,name=last_ip,json=lastIp,proto3" json:"last_ip,omitempty"`
-	EvadeOk           bool                   `protobuf:"varint,6,opt,name=evade_ok,json=evadeOk,proto3" json:"evade_ok,omitempty"`
-	Bantype           BanType                `protobuf:"varint,7,opt,name=bantype,proto3,enum=ban.v1.BanType" json:"bantype,omitempty"`
-	Reason            BanReason              `protobuf:"varint,8,opt,name=reason,proto3,enum=ban.v1.BanReason" json:"reason,omitempty"`
-	ReasonText        string                 `protobuf:"bytes,9,opt,name=reason_text,json=reasonText,proto3" json:"reason_text,omitempty"`
-	UnbanReasonText   string                 `protobuf:"bytes,10,opt,name=unban_reason_text,json=unbanReasonText,proto3" json:"unban_reason_text,omitempty"`
-	Note              string                 `protobuf:"bytes,11,opt,name=note,proto3" json:"note,omitempty"`
-	Origin            Origin                 `protobuf:"varint,12,opt,name=origin,proto3,enum=ban.v1.Origin" json:"origin,omitempty"`
-	Cidr              string                 `protobuf:"bytes,13,opt,name=cidr,proto3" json:"cidr,omitempty"`
-	AppealState       AppealState            `protobuf:"varint,14,opt,name=appeal_state,json=appealState,proto3,enum=ban.v1.AppealState" json:"appeal_state,omitempty"`
-	Name              string                 `protobuf:"bytes,15,opt,name=name,proto3" json:"name,omitempty"`
-	Deleted           bool                   `protobuf:"varint,16,opt,name=deleted,proto3" json:"deleted,omitempty"`
-	IsEnabled         bool                   `protobuf:"varint,17,opt,name=is_enabled,json=isEnabled,proto3" json:"is_enabled,omitempty"`
-	ValidUntil        *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=valid_until,json=validUntil,proto3" json:"valid_until,omitempty"`
-	CreatedOn         *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=created_on,json=createdOn,proto3" json:"created_on,omitempty"`
-	UpdatedOn         *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=updated_on,json=updatedOn,proto3" json:"updated_on,omitempty"`
-	SourcePersonaname string                 `protobuf:"bytes,21,opt,name=source_personaname,json=sourcePersonaname,proto3" json:"source_personaname,omitempty"`
-	SourceAvatarhash  string                 `protobuf:"bytes,22,opt,name=source_avatarhash,json=sourceAvatarhash,proto3" json:"source_avatarhash,omitempty"`
-	TargetPersonaname string                 `protobuf:"bytes,23,opt,name=target_personaname,json=targetPersonaname,proto3" json:"target_personaname,omitempty"`
-	TargetAvatarhash  string                 `protobuf:"bytes,24,opt,name=target_avatarhash,json=targetAvatarhash,proto3" json:"target_avatarhash,omitempty"`
+	TargetId          *string                `protobuf:"bytes,1,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
+	SourceId          *string                `protobuf:"bytes,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
+	BanId             *int64                 `protobuf:"varint,3,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	ReportId          *int64                 `protobuf:"varint,4,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
+	LastIp            *string                `protobuf:"bytes,5,opt,name=last_ip,json=lastIp" json:"last_ip,omitempty"`
+	EvadeOk           *bool                  `protobuf:"varint,6,opt,name=evade_ok,json=evadeOk" json:"evade_ok,omitempty"`
+	Bantype           *BanType               `protobuf:"varint,7,opt,name=bantype,enum=ban.v1.BanType" json:"bantype,omitempty"`
+	Reason            *BanReason             `protobuf:"varint,8,opt,name=reason,enum=ban.v1.BanReason" json:"reason,omitempty"`
+	ReasonText        *string                `protobuf:"bytes,9,opt,name=reason_text,json=reasonText" json:"reason_text,omitempty"`
+	UnbanReasonText   *string                `protobuf:"bytes,10,opt,name=unban_reason_text,json=unbanReasonText" json:"unban_reason_text,omitempty"`
+	Note              *string                `protobuf:"bytes,11,opt,name=note" json:"note,omitempty"`
+	Origin            *Origin                `protobuf:"varint,12,opt,name=origin,enum=ban.v1.Origin" json:"origin,omitempty"`
+	Cidr              *string                `protobuf:"bytes,13,opt,name=cidr" json:"cidr,omitempty"`
+	AppealState       *AppealState           `protobuf:"varint,14,opt,name=appeal_state,json=appealState,enum=ban.v1.AppealState" json:"appeal_state,omitempty"`
+	Name              *string                `protobuf:"bytes,15,opt,name=name" json:"name,omitempty"`
+	Deleted           *bool                  `protobuf:"varint,16,opt,name=deleted" json:"deleted,omitempty"`
+	IsEnabled         *bool                  `protobuf:"varint,17,opt,name=is_enabled,json=isEnabled" json:"is_enabled,omitempty"`
+	ValidUntil        *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=valid_until,json=validUntil" json:"valid_until,omitempty"`
+	CreatedOn         *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn         *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
+	SourcePersonaname *string                `protobuf:"bytes,21,opt,name=source_personaname,json=sourcePersonaname" json:"source_personaname,omitempty"`
+	SourceAvatarhash  *string                `protobuf:"bytes,22,opt,name=source_avatarhash,json=sourceAvatarhash" json:"source_avatarhash,omitempty"`
+	TargetPersonaname *string                `protobuf:"bytes,23,opt,name=target_personaname,json=targetPersonaname" json:"target_personaname,omitempty"`
+	TargetAvatarhash  *string                `protobuf:"bytes,24,opt,name=target_avatarhash,json=targetAvatarhash" json:"target_avatarhash,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -556,120 +556,120 @@ func (*Ban) Descriptor() ([]byte, []int) {
 }
 
 func (x *Ban) GetTargetId() string {
-	if x != nil {
-		return x.TargetId
+	if x != nil && x.TargetId != nil {
+		return *x.TargetId
 	}
 	return ""
 }
 
 func (x *Ban) GetSourceId() string {
-	if x != nil {
-		return x.SourceId
+	if x != nil && x.SourceId != nil {
+		return *x.SourceId
 	}
 	return ""
 }
 
 func (x *Ban) GetBanId() int64 {
-	if x != nil {
-		return x.BanId
+	if x != nil && x.BanId != nil {
+		return *x.BanId
 	}
 	return 0
 }
 
 func (x *Ban) GetReportId() int64 {
-	if x != nil {
-		return x.ReportId
+	if x != nil && x.ReportId != nil {
+		return *x.ReportId
 	}
 	return 0
 }
 
 func (x *Ban) GetLastIp() string {
-	if x != nil {
-		return x.LastIp
+	if x != nil && x.LastIp != nil {
+		return *x.LastIp
 	}
 	return ""
 }
 
 func (x *Ban) GetEvadeOk() bool {
-	if x != nil {
-		return x.EvadeOk
+	if x != nil && x.EvadeOk != nil {
+		return *x.EvadeOk
 	}
 	return false
 }
 
 func (x *Ban) GetBantype() BanType {
-	if x != nil {
-		return x.Bantype
+	if x != nil && x.Bantype != nil {
+		return *x.Bantype
 	}
 	return BanType_BAN_TYPE_OK_UNSPECIFIED
 }
 
 func (x *Ban) GetReason() BanReason {
-	if x != nil {
-		return x.Reason
+	if x != nil && x.Reason != nil {
+		return *x.Reason
 	}
 	return BanReason_BAN_REASON_UNSPECIFIED
 }
 
 func (x *Ban) GetReasonText() string {
-	if x != nil {
-		return x.ReasonText
+	if x != nil && x.ReasonText != nil {
+		return *x.ReasonText
 	}
 	return ""
 }
 
 func (x *Ban) GetUnbanReasonText() string {
-	if x != nil {
-		return x.UnbanReasonText
+	if x != nil && x.UnbanReasonText != nil {
+		return *x.UnbanReasonText
 	}
 	return ""
 }
 
 func (x *Ban) GetNote() string {
-	if x != nil {
-		return x.Note
+	if x != nil && x.Note != nil {
+		return *x.Note
 	}
 	return ""
 }
 
 func (x *Ban) GetOrigin() Origin {
-	if x != nil {
-		return x.Origin
+	if x != nil && x.Origin != nil {
+		return *x.Origin
 	}
 	return Origin_ORIGIN_SYSTEM_UNSPECIFIED
 }
 
 func (x *Ban) GetCidr() string {
-	if x != nil {
-		return x.Cidr
+	if x != nil && x.Cidr != nil {
+		return *x.Cidr
 	}
 	return ""
 }
 
 func (x *Ban) GetAppealState() AppealState {
-	if x != nil {
-		return x.AppealState
+	if x != nil && x.AppealState != nil {
+		return *x.AppealState
 	}
 	return AppealState_APPEAL_STATE_OPEN_UNSPECIFIED
 }
 
 func (x *Ban) GetName() string {
-	if x != nil {
-		return x.Name
+	if x != nil && x.Name != nil {
+		return *x.Name
 	}
 	return ""
 }
 
 func (x *Ban) GetDeleted() bool {
-	if x != nil {
-		return x.Deleted
+	if x != nil && x.Deleted != nil {
+		return *x.Deleted
 	}
 	return false
 }
 
 func (x *Ban) GetIsEnabled() bool {
-	if x != nil {
-		return x.IsEnabled
+	if x != nil && x.IsEnabled != nil {
+		return *x.IsEnabled
 	}
 	return false
 }
@@ -696,29 +696,29 @@ func (x *Ban) GetUpdatedOn() *timestamppb.Timestamp {
 }
 
 func (x *Ban) GetSourcePersonaname() string {
-	if x != nil {
-		return x.SourcePersonaname
+	if x != nil && x.SourcePersonaname != nil {
+		return *x.SourcePersonaname
 	}
 	return ""
 }
 
 func (x *Ban) GetSourceAvatarhash() string {
-	if x != nil {
-		return x.SourceAvatarhash
+	if x != nil && x.SourceAvatarhash != nil {
+		return *x.SourceAvatarhash
 	}
 	return ""
 }
 
 func (x *Ban) GetTargetPersonaname() string {
-	if x != nil {
-		return x.TargetPersonaname
+	if x != nil && x.TargetPersonaname != nil {
+		return *x.TargetPersonaname
 	}
 	return ""
 }
 
 func (x *Ban) GetTargetAvatarhash() string {
-	if x != nil {
-		return x.TargetAvatarhash
+	if x != nil && x.TargetAvatarhash != nil {
+		return *x.TargetAvatarhash
 	}
 	return ""
 }
@@ -727,7 +727,7 @@ var File_ban_v1_ban_proto protoreflect.FileDescriptor
 
 const file_ban_v1_ban_proto_rawDesc = "" +
 	"\n" +
-	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\ffilter.proto\"\x15\n" +
+	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\ffilter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x15\n" +
 	"\x13ExportTF2BDResponse\"&\n" +
 	"\rDeleteRequest\x12\x15\n" +
 	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\"\x82\x02\n" +
@@ -773,7 +773,12 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x12source_personaname\x18\x15 \x01(\tR\x11sourcePersonaname\x12+\n" +
 	"\x11source_avatarhash\x18\x16 \x01(\tR\x10sourceAvatarhash\x12-\n" +
 	"\x12target_personaname\x18\x17 \x01(\tR\x11targetPersonaname\x12+\n" +
-	"\x11target_avatarhash\x18\x18 \x01(\tR\x10targetAvatarhash*\x9a\x01\n" +
+	"\x11target_avatarhash\x18\x18 \x01(\tR\x10targetAvatarhash*g\n" +
+	"\aBanType\x12\x1b\n" +
+	"\x17BAN_TYPE_OK_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10BAN_TYPE_NO_COMM\x10\x01\x12\x13\n" +
+	"\x0fBAN_TYPE_BANNED\x10\x02\x12\x14\n" +
+	"\x10BAN_TYPE_NETWORK\x10\x03*\x9a\x01\n" +
 	"\vAppealState\x12!\n" +
 	"\x1dAPPEAL_STATE_OPEN_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13APPEAL_STATE_DENIED\x10\x01\x12\x19\n" +
@@ -796,12 +801,7 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x1cBAN_REASON_ITEM_DESCRIPTIONS\x10\v\x12\x17\n" +
 	"\x13BAN_REASON_BOT_HOST\x10\f\x12\x16\n" +
 	"\x12BAN_REASON_EVADING\x10\r\x12\x17\n" +
-	"\x13BAN_REASON_USERNAME\x10\x0e*g\n" +
-	"\aBanType\x12\x1b\n" +
-	"\x17BAN_TYPE_OK_UNSPECIFIED\x10\x00\x12\x14\n" +
-	"\x10BAN_TYPE_NO_COMM\x10\x01\x12\x13\n" +
-	"\x0fBAN_TYPE_BANNED\x10\x02\x12\x14\n" +
-	"\x10BAN_TYPE_NETWORK\x10\x03*p\n" +
+	"\x13BAN_REASON_USERNAME\x10\x0e*p\n" +
 	"\x06Origin\x12\x1d\n" +
 	"\x19ORIGIN_SYSTEM_UNSPECIFIED\x10\x00\x12\x0e\n" +
 	"\n" +
@@ -816,7 +816,7 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\vExportTF2BD\x12\x16.google.protobuf.Empty\x1a\x1b.ban.v1.ExportTF2BDResponse\"\x00\x129\n" +
 	"\x06Delete\x12\x15.ban.v1.DeleteRequest\x1a\x16.google.protobuf.Empty\"\x00B\x8a\x01\n" +
 	"\n" +
-	"com.ban.v1B\bBanProtoP\x01Z9github.com/leighmacdonald/gbans/internal/rpc/ban/v1;banv1\xa2\x02\x03BXX\xaa\x02\x06Ban.V1\xca\x02\x06Ban\\V1\xe2\x02\x12Ban\\V1\\GPBMetadata\xea\x02\aBan::V1b\x06proto3"
+	"com.ban.v1B\bBanProtoP\x01Z9github.com/leighmacdonald/gbans/internal/rpc/ban/v1;banv1\xa2\x02\x03BXX\xaa\x02\x06Ban.V1\xca\x02\x06Ban\\V1\xe2\x02\x12Ban\\V1\\GPBMetadata\xea\x02\aBan::V1b\beditionsp\xe8\a"
 
 var (
 	file_ban_v1_ban_proto_rawDescOnce sync.Once
@@ -833,9 +833,9 @@ func file_ban_v1_ban_proto_rawDescGZIP() []byte {
 var file_ban_v1_ban_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
 var file_ban_v1_ban_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_ban_v1_ban_proto_goTypes = []any{
-	(AppealState)(0),              // 0: ban.v1.AppealState
-	(BanReason)(0),                // 1: ban.v1.BanReason
-	(BanType)(0),                  // 2: ban.v1.BanType
+	(BanType)(0),                  // 0: ban.v1.BanType
+	(AppealState)(0),              // 1: ban.v1.AppealState
+	(BanReason)(0),                // 2: ban.v1.BanReason
 	(Origin)(0),                   // 3: ban.v1.Origin
 	(*ExportTF2BDResponse)(nil),   // 4: ban.v1.ExportTF2BDResponse
 	(*DeleteRequest)(nil),         // 5: ban.v1.DeleteRequest
@@ -846,12 +846,12 @@ var file_ban_v1_ban_proto_goTypes = []any{
 	(*emptypb.Empty)(nil),         // 10: google.protobuf.Empty
 }
 var file_ban_v1_ban_proto_depIdxs = []int32{
-	1,  // 0: ban.v1.QueryRequest.reason:type_name -> ban.v1.BanReason
+	2,  // 0: ban.v1.QueryRequest.reason:type_name -> ban.v1.BanReason
 	8,  // 1: ban.v1.QueryResponse.bans:type_name -> ban.v1.Ban
-	2,  // 2: ban.v1.Ban.bantype:type_name -> ban.v1.BanType
-	1,  // 3: ban.v1.Ban.reason:type_name -> ban.v1.BanReason
+	0,  // 2: ban.v1.Ban.bantype:type_name -> ban.v1.BanType
+	2,  // 3: ban.v1.Ban.reason:type_name -> ban.v1.BanReason
 	3,  // 4: ban.v1.Ban.origin:type_name -> ban.v1.Origin
-	0,  // 5: ban.v1.Ban.appeal_state:type_name -> ban.v1.AppealState
+	1,  // 5: ban.v1.Ban.appeal_state:type_name -> ban.v1.AppealState
 	9,  // 6: ban.v1.Ban.valid_until:type_name -> google.protobuf.Timestamp
 	9,  // 7: ban.v1.Ban.created_on:type_name -> google.protobuf.Timestamp
 	9,  // 8: ban.v1.Ban.updated_on:type_name -> google.protobuf.Timestamp

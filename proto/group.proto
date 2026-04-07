@@ -1,0 +1,12 @@
+edition = "2023";
+
+import "google/protobuf/timestamp.proto";
+
+message Group {
+  int32 group_id = 1;
+  string flags = 2;
+  string name = 3;
+  int32 immunity_level = 4;
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
+}

@@ -4,6 +4,7 @@ package config.v1;
 
 import "google/protobuf/empty.proto";
 
+
 message InfoResponse {
   string site_name = 1;
   string site_description = 2;
@@ -16,7 +17,7 @@ message InfoResponse {
   string patreon_client_id = 9;
   string discord_client_id = 10;
   bool discord_enabled = 11;
-  bool patring_enabled = 12;
+  bool patreon_enabled = 12;
   string default_route = 13;
   bool news_enabled = 14;
   bool contests_enabled = 15;

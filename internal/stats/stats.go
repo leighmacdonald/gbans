@@ -48,7 +48,6 @@ func (s Stats) Import(ctx context.Context, serverID int, demo demoparse.Demo) (*
 
 	if demo.Duration < MinDuraion {
 		return nil, fmt.Errorf("%w: demo too short in length", ErrInvalidState)
-		return nil, fmt.Errorf("%w: invalid file name", ErrInvalidState)
 	}
 
 	if len(demo.SteamIDs()) < MinPlayers {

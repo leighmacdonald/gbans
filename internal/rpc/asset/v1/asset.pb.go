@@ -25,7 +25,7 @@ const (
 
 type DeleteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AssetId       string                 `protobuf:"bytes,1,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
+	AssetId       *string                `protobuf:"bytes,1,opt,name=asset_id,json=assetId" json:"asset_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,8 +61,8 @@ func (*DeleteRequest) Descriptor() ([]byte, []int) {
 }
 
 func (x *DeleteRequest) GetAssetId() string {
-	if x != nil {
-		return x.AssetId
+	if x != nil && x.AssetId != nil {
+		return *x.AssetId
 	}
 	return ""
 }
@@ -177,16 +177,16 @@ func (*CreateResponse) Descriptor() ([]byte, []int) {
 
 type Asset struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AssetId       string                 `protobuf:"bytes,1,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
-	Bucket        string                 `protobuf:"bytes,2,opt,name=bucket,proto3" json:"bucket,omitempty"`
-	AuthorId      string                 `protobuf:"bytes,3,opt,name=author_id,json=authorId,proto3" json:"author_id,omitempty"`
-	Hash          string                 `protobuf:"bytes,4,opt,name=hash,proto3" json:"hash,omitempty"`
-	IsPrivate     bool                   `protobuf:"varint,5,opt,name=is_private,json=isPrivate,proto3" json:"is_private,omitempty"`
-	MimeType      string                 `protobuf:"bytes,6,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
-	Name          string                 `protobuf:"bytes,7,opt,name=name,proto3" json:"name,omitempty"`
-	Size          int64                  `protobuf:"varint,8,opt,name=size,proto3" json:"size,omitempty"`
-	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_on,json=createdOn,proto3" json:"created_on,omitempty"`
-	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_on,json=updatedOn,proto3" json:"updated_on,omitempty"`
+	AssetId       *string                `protobuf:"bytes,1,opt,name=asset_id,json=assetId" json:"asset_id,omitempty"`
+	Bucket        *string                `protobuf:"bytes,2,opt,name=bucket" json:"bucket,omitempty"`
+	AuthorId      *string                `protobuf:"bytes,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
+	Hash          *string                `protobuf:"bytes,4,opt,name=hash" json:"hash,omitempty"`
+	IsPrivate     *bool                  `protobuf:"varint,5,opt,name=is_private,json=isPrivate" json:"is_private,omitempty"`
+	MimeType      *string                `protobuf:"bytes,6,opt,name=mime_type,json=mimeType" json:"mime_type,omitempty"`
+	Name          *string                `protobuf:"bytes,7,opt,name=name" json:"name,omitempty"`
+	Size          *int64                 `protobuf:"varint,8,opt,name=size" json:"size,omitempty"`
+	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -222,57 +222,57 @@ func (*Asset) Descriptor() ([]byte, []int) {
 }
 
 func (x *Asset) GetAssetId() string {
-	if x != nil {
-		return x.AssetId
+	if x != nil && x.AssetId != nil {
+		return *x.AssetId
 	}
 	return ""
 }
 
 func (x *Asset) GetBucket() string {
-	if x != nil {
-		return x.Bucket
+	if x != nil && x.Bucket != nil {
+		return *x.Bucket
 	}
 	return ""
 }
 
 func (x *Asset) GetAuthorId() string {
-	if x != nil {
-		return x.AuthorId
+	if x != nil && x.AuthorId != nil {
+		return *x.AuthorId
 	}
 	return ""
 }
 
 func (x *Asset) GetHash() string {
-	if x != nil {
-		return x.Hash
+	if x != nil && x.Hash != nil {
+		return *x.Hash
 	}
 	return ""
 }
 
 func (x *Asset) GetIsPrivate() bool {
-	if x != nil {
-		return x.IsPrivate
+	if x != nil && x.IsPrivate != nil {
+		return *x.IsPrivate
 	}
 	return false
 }
 
 func (x *Asset) GetMimeType() string {
-	if x != nil {
-		return x.MimeType
+	if x != nil && x.MimeType != nil {
+		return *x.MimeType
 	}
 	return ""
 }
 
 func (x *Asset) GetName() string {
-	if x != nil {
-		return x.Name
+	if x != nil && x.Name != nil {
+		return *x.Name
 	}
 	return ""
 }
 
 func (x *Asset) GetSize() int64 {
-	if x != nil {
-		return x.Size
+	if x != nil && x.Size != nil {
+		return *x.Size
 	}
 	return 0
 }
@@ -320,7 +320,7 @@ const file_asset_v1_asset_proto_rawDesc = "" +
 	"\x06Create\x12\x17.asset.v1.CreateRequest\x1a\x18.asset.v1.CreateResponse\"\x00\x12=\n" +
 	"\x06Delete\x12\x17.asset.v1.DeleteRequest\x1a\x18.asset.v1.DeleteResponse\"\x00B\x9a\x01\n" +
 	"\fcom.asset.v1B\n" +
-	"AssetProtoP\x01Z=github.com/leighmacdonald/gbans/internal/rpc/asset/v1;assetv1\xa2\x02\x03AXX\xaa\x02\bAsset.V1\xca\x02\bAsset\\V1\xe2\x02\x14Asset\\V1\\GPBMetadata\xea\x02\tAsset::V1b\x06proto3"
+	"AssetProtoP\x01Z=github.com/leighmacdonald/gbans/internal/rpc/asset/v1;assetv1\xa2\x02\x03AXX\xaa\x02\bAsset.V1\xca\x02\bAsset\\V1\xe2\x02\x14Asset\\V1\\GPBMetadata\xea\x02\tAsset::V1b\beditionsp\xe8\a"
 
 var (
 	file_asset_v1_asset_proto_rawDescOnce sync.Once

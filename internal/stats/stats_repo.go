@@ -20,7 +20,3 @@ func (r Repository) Insert(_ context.Context) error {
 func (r Repository) AddPlayerStatsAlltime(_ context.Context, _ demoparse.Stats) error {
 	return nil
 }
-
-func (r Repository) AddPlayerStatsAlltime(ctx context.Context, stats demoparse.Stats) error {
-	return nil
-}

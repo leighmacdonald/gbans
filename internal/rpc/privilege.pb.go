@@ -95,7 +95,7 @@ const file_privilege_proto_rawDesc = "" +
 	"\x12PRIVILEGE_RESERVED\x10\x0f\x12\x14\n" +
 	"\x10PRIVILEGE_EDITOR\x10\x19\x12\x17\n" +
 	"\x13PRIVILEGE_MODERATOR\x102\x12\x13\n" +
-	"\x0fPRIVILEGE_ADMIN\x10dB@B\x0ePrivilegeProtoP\x01Z,github.com/leighmacdonald/gbans/internal/rpcb\x06proto3"
+	"\x0fPRIVILEGE_ADMIN\x10dB@B\x0ePrivilegeProtoP\x01Z,github.com/leighmacdonald/gbans/internal/rpcb\beditionsp\xe8\a"
 
 var (
 	file_privilege_proto_rawDescOnce sync.Once

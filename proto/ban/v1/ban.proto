@@ -6,6 +6,14 @@ import "filter.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
+
+enum BanType {
+  BAN_TYPE_OK_UNSPECIFIED = 0;
+  BAN_TYPE_NO_COMM = 1;
+  BAN_TYPE_BANNED = 2;
+  BAN_TYPE_NETWORK = 3;
+}
+
 enum AppealState {
   APPEAL_STATE_OPEN_UNSPECIFIED = 0;
   APPEAL_STATE_DENIED = 1;
@@ -54,13 +62,6 @@ message QueryRequest {
   bool cidr_only = 6;
   repeated BanReason reason = 7;
   int32 appeal_state = 8;
-}
-
-enum BanType {
-  BAN_TYPE_OK_UNSPECIFIED = 0;
-  BAN_TYPE_NO_COMM = 1;
-  BAN_TYPE_BANNED = 2;
-  BAN_TYPE_NETWORK = 3;
 }
 
 message QueryResponse {

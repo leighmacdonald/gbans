@@ -25,12 +25,12 @@ const (
 
 type Wiki struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	Slug            string                 `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
-	BodyMd          string                 `protobuf:"bytes,2,opt,name=body_md,json=bodyMd,proto3" json:"body_md,omitempty"`
-	Revision        int32                  `protobuf:"varint,3,opt,name=revision,proto3" json:"revision,omitempty"`
-	PermissionLevel rpc.Privilege          `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,proto3,enum=Privilege" json:"permission_level,omitempty"`
-	CreatedOn       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_on,json=createdOn,proto3" json:"created_on,omitempty"`
-	UpdatedOn       *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_on,json=updatedOn,proto3" json:"updated_on,omitempty"`
+	Slug            *string                `protobuf:"bytes,1,opt,name=slug" json:"slug,omitempty"`
+	BodyMd          *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
+	Revision        *int32                 `protobuf:"varint,3,opt,name=revision" json:"revision,omitempty"`
+	PermissionLevel *rpc.Privilege         `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	CreatedOn       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn       *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -66,29 +66,29 @@ func (*Wiki) Descriptor() ([]byte, []int) {
 }
 
 func (x *Wiki) GetSlug() string {
-	if x != nil {
-		return x.Slug
+	if x != nil && x.Slug != nil {
+		return *x.Slug
 	}
 	return ""
 }
 
 func (x *Wiki) GetBodyMd() string {
-	if x != nil {
-		return x.BodyMd
+	if x != nil && x.BodyMd != nil {
+		return *x.BodyMd
 	}
 	return ""
 }
 
 func (x *Wiki) GetRevision() int32 {
-	if x != nil {
-		return x.Revision
+	if x != nil && x.Revision != nil {
+		return *x.Revision
 	}
 	return 0
 }
 
 func (x *Wiki) GetPermissionLevel() rpc.Privilege {
-	if x != nil {
-		return x.PermissionLevel
+	if x != nil && x.PermissionLevel != nil {
+		return *x.PermissionLevel
 	}
 	return rpc.Privilege(0)
 }
@@ -109,7 +109,7 @@ func (x *Wiki) GetUpdatedOn() *timestamppb.Timestamp {
 
 type GetRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Slug          string                 `protobuf:"bytes,1,opt,name=slug,proto3" json:"slug,omitempty"`
+	Slug          *string                `protobuf:"bytes,1,opt,name=slug" json:"slug,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -145,15 +145,15 @@ func (*GetRequest) Descriptor() ([]byte, []int) {
 }
 
 func (x *GetRequest) GetSlug() string {
-	if x != nil {
-		return x.Slug
+	if x != nil && x.Slug != nil {
+		return *x.Slug
 	}
 	return ""
 }
 
 type GetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Wiki          *Wiki                  `protobuf:"bytes,1,opt,name=wiki,proto3" json:"wiki,omitempty"`
+	Wiki          *Wiki                  `protobuf:"bytes,1,opt,name=wiki" json:"wiki,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -197,7 +197,7 @@ func (x *GetResponse) GetWiki() *Wiki {
 
 type UpdateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Wiki          *Wiki                  `protobuf:"bytes,1,opt,name=wiki,proto3" json:"wiki,omitempty"`
+	Wiki          *Wiki                  `protobuf:"bytes,1,opt,name=wiki" json:"wiki,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -241,7 +241,7 @@ func (x *UpdateRequest) GetWiki() *Wiki {
 
 type UpdateResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Wiki          *Wiki                  `protobuf:"bytes,1,opt,name=wiki,proto3" json:"wiki,omitempty"`
+	Wiki          *Wiki                  `protobuf:"bytes,1,opt,name=wiki" json:"wiki,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -310,7 +310,7 @@ const file_wiki_v1_wiki_proto_rawDesc = "" +
 	"\vWikiService\x122\n" +
 	"\x03Get\x12\x13.wiki.v1.GetRequest\x1a\x14.wiki.v1.GetResponse\"\x00\x12;\n" +
 	"\x06Update\x12\x16.wiki.v1.UpdateRequest\x1a\x17.wiki.v1.UpdateResponse\"\x00B\x92\x01\n" +
-	"\vcom.wiki.v1B\tWikiProtoP\x01Z;github.com/leighmacdonald/gbans/internal/rpc/wiki/v1;wikiv1\xa2\x02\x03WXX\xaa\x02\aWiki.V1\xca\x02\aWiki\\V1\xe2\x02\x13Wiki\\V1\\GPBMetadata\xea\x02\bWiki::V1b\x06proto3"
+	"\vcom.wiki.v1B\tWikiProtoP\x01Z;github.com/leighmacdonald/gbans/internal/rpc/wiki/v1;wikiv1\xa2\x02\x03WXX\xaa\x02\aWiki.V1\xca\x02\aWiki\\V1\xe2\x02\x13Wiki\\V1\\GPBMetadata\xea\x02\bWiki::V1b\beditionsp\xe8\a"
 
 var (
 	file_wiki_v1_wiki_proto_rawDescOnce sync.Once
