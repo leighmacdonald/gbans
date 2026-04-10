@@ -34,15 +34,15 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// DemoServiceGetGemosProcedure is the fully-qualified name of the DemoService's GetGemos RPC.
-	DemoServiceGetGemosProcedure = "/servers.v1.DemoService/GetGemos"
+	// DemoServiceGetDemosProcedure is the fully-qualified name of the DemoService's GetDemos RPC.
+	DemoServiceGetDemosProcedure = "/servers.v1.DemoService/GetDemos"
 	// DemoServiceRunCleanupProcedure is the fully-qualified name of the DemoService's RunCleanup RPC.
 	DemoServiceRunCleanupProcedure = "/servers.v1.DemoService/RunCleanup"
 )
 
 // DemoServiceClient is a client for the servers.v1.DemoService service.
 type DemoServiceClient interface {
-	GetGemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error)
+	GetDemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error)
 	RunCleanup(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
 
@@ -57,10 +57,10 @@ func NewDemoServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 	baseURL = strings.TrimRight(baseURL, "/")
 	demoServiceMethods := v1.File_demo_v1_demo_proto.Services().ByName("DemoService").Methods()
 	return &demoServiceClient{
-		getGemos: connect.NewClient[emptypb.Empty, v1.GetDemosResponse](
+		getDemos: connect.NewClient[emptypb.Empty, v1.GetDemosResponse](
 			httpClient,
-			baseURL+DemoServiceGetGemosProcedure,
-			connect.WithSchema(demoServiceMethods.ByName("GetGemos")),
+			baseURL+DemoServiceGetDemosProcedure,
+			connect.WithSchema(demoServiceMethods.ByName("GetDemos")),
 			connect.WithClientOptions(opts...),
 		),
 		runCleanup: connect.NewClient[emptypb.Empty, emptypb.Empty](
@@ -74,13 +74,13 @@ func NewDemoServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 
 // demoServiceClient implements DemoServiceClient.
 type demoServiceClient struct {
-	getGemos   *connect.Client[emptypb.Empty, v1.GetDemosResponse]
+	getDemos   *connect.Client[emptypb.Empty, v1.GetDemosResponse]
 	runCleanup *connect.Client[emptypb.Empty, emptypb.Empty]
 }
 
-// GetGemos calls servers.v1.DemoService.GetGemos.
-func (c *demoServiceClient) GetGemos(ctx context.Context, req *emptypb.Empty) (*v1.GetDemosResponse, error) {
-	response, err := c.getGemos.CallUnary(ctx, connect.NewRequest(req))
+// GetDemos calls servers.v1.DemoService.GetDemos.
+func (c *demoServiceClient) GetDemos(ctx context.Context, req *emptypb.Empty) (*v1.GetDemosResponse, error) {
+	response, err := c.getDemos.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -98,7 +98,7 @@ func (c *demoServiceClient) RunCleanup(ctx context.Context, req *emptypb.Empty) 
 
 // DemoServiceHandler is an implementation of the servers.v1.DemoService service.
 type DemoServiceHandler interface {
-	GetGemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error)
+	GetDemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error)
 	RunCleanup(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
 
@@ -109,10 +109,10 @@ type DemoServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewDemoServiceHandler(svc DemoServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	demoServiceMethods := v1.File_demo_v1_demo_proto.Services().ByName("DemoService").Methods()
-	demoServiceGetGemosHandler := connect.NewUnaryHandlerSimple(
-		DemoServiceGetGemosProcedure,
-		svc.GetGemos,
-		connect.WithSchema(demoServiceMethods.ByName("GetGemos")),
+	demoServiceGetDemosHandler := connect.NewUnaryHandlerSimple(
+		DemoServiceGetDemosProcedure,
+		svc.GetDemos,
+		connect.WithSchema(demoServiceMethods.ByName("GetDemos")),
 		connect.WithHandlerOptions(opts...),
 	)
 	demoServiceRunCleanupHandler := connect.NewUnaryHandlerSimple(
@@ -123,8 +123,8 @@ func NewDemoServiceHandler(svc DemoServiceHandler, opts ...connect.HandlerOption
 	)
 	return "/servers.v1.DemoService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case DemoServiceGetGemosProcedure:
-			demoServiceGetGemosHandler.ServeHTTP(w, r)
+		case DemoServiceGetDemosProcedure:
+			demoServiceGetDemosHandler.ServeHTTP(w, r)
 		case DemoServiceRunCleanupProcedure:
 			demoServiceRunCleanupHandler.ServeHTTP(w, r)
 		default:
@@ -136,8 +136,8 @@ func NewDemoServiceHandler(svc DemoServiceHandler, opts ...connect.HandlerOption
 // UnimplementedDemoServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedDemoServiceHandler struct{}
 
-func (UnimplementedDemoServiceHandler) GetGemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.DemoService.GetGemos is not implemented"))
+func (UnimplementedDemoServiceHandler) GetDemos(context.Context, *emptypb.Empty) (*v1.GetDemosResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.DemoService.GetDemos is not implemented"))
 }
 
 func (UnimplementedDemoServiceHandler) RunCleanup(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {

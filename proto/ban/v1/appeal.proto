@@ -1,0 +1,40 @@
+edition = "2023";
+
+package ban.v1;
+
+import "buf/validate/validate.proto";
+import "filter.proto";
+import "ban/v1/ban.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+service AppealService {
+  rpc Appeals(AppealsRequest) returns (AppealsResponse) {}
+  rpc Messages(MessagesRequest) returns (MessagesResponse) {}
+  rpc Reply(ReplyRequest) returns (ReplyResponse) {}
+  rpc EditAppealMessage(EditAppealMessageRequest) returns (EditAppealMessageResponse) {}
+  rpc DeleteAppealMessage(DeleteAppealMessageRequest) returns (DeleteAppealMessageResponse) {}
+}
+
+message AppealsRequest{
+  bool deleted = 1;
+}
+
+message AppealsResponse {}
+
+message AppealOverview {
+  Ban ban = 1;
+}
+
+message MessagesRequest {}
+message MessagesResponse {}
+
+message ReplyRequest {}
+message ReplyResponse {}
+
+message EditAppealMessageRequest{}
+message EditAppealMessageResponse{}
+
+message DeleteAppealMessageRequest{}
+message DeleteAppealMessageResponse{}

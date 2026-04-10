@@ -1,6 +1,7 @@
 edition = "2023";
 
 package config.v1;
+
 import "google/protobuf/descriptor.proto";
 import "google/protobuf/empty.proto";
 
@@ -27,9 +28,8 @@ message InfoResponse {
   bool chatlogs_enabled = 20;
   bool demos_enabled = 21;
   bool speedruns_enabled = 22;
-  bool playerqueue_enabled = 23;
-  bool forums_enabled = 24;
-  bool mge_enabled = 25;
+  bool forums_enabled = 23;
+  bool mge_enabled = 24;
 }
 
 message GetResponse {
@@ -81,9 +81,8 @@ message General {
   bool chatlogs_enabled = 16;
   bool demos_enabled = 17;
   bool speedruns_enabled = 18;
-  bool playerqueue_enabled = 19;
-  string sentry_dsn = 20;
-  string sentry_dsn_web = 21;
+  string sentry_dsn = 19;
+  string sentry_dsn_web = 20;
 }
 
 message Debug {
@@ -133,12 +132,11 @@ message Discord {
   string ban_log_channel_id = 14;
   string forum_log_channel_id = 15;
   string kick_log_channel_id = 16;
-  string playerqueue_channel_id = 17;
-  string mod_ping_role_id = 18;
-  string anticheat_channel_id = 19;
-  string seed_channel_id = 20;
-  string word_filter_log_channel_id = 21;
-  string chat_log_channel_id = 22;
+  string mod_ping_role_id = 17;
+  string anticheat_channel_id = 18;
+  string seed_channel_id = 19;
+  string word_filter_log_channel_id = 20;
+  string chat_log_channel_id = 21;
 }
 
 message Sourcemod {
@@ -233,13 +231,17 @@ message Anticheat {
   int32 max_cheat_cvar = 12;
 }
 
+message Clientprefs {
+  bool center_projectiles = 1;
+}
+
 message Config {
   General general = 1;
   Debug debug = 2;
   Demo demo = 3;
   Filters filters = 4;
   Discord discord = 5;
-  Sourcemod sourcemd = 6;
+  Clientprefs client_prefs = 6;
   Log log = 7;
   GeoLocation geo_location = 8;
   Patreon patreon = 9;

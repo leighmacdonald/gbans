@@ -312,34 +312,33 @@ func (Action) EnumDescriptor() ([]byte, []int) {
 }
 
 type InfoResponse struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	SiteName           *string                `protobuf:"bytes,1,opt,name=site_name,json=siteName" json:"site_name,omitempty"`
-	SiteDescription    *string                `protobuf:"bytes,2,opt,name=site_description,json=siteDescription" json:"site_description,omitempty"`
-	AssetUrl           *string                `protobuf:"bytes,3,opt,name=asset_url,json=assetUrl" json:"asset_url,omitempty"`
-	Favicon            *string                `protobuf:"bytes,4,opt,name=favicon" json:"favicon,omitempty"`
-	LinkId             *string                `protobuf:"bytes,5,opt,name=link_id,json=linkId" json:"link_id,omitempty"`
-	AppVersion         *string                `protobuf:"bytes,6,opt,name=app_version,json=appVersion" json:"app_version,omitempty"`
-	SentryDsnWeb       *string                `protobuf:"bytes,7,opt,name=sentry_dsn_web,json=sentryDsnWeb" json:"sentry_dsn_web,omitempty"`
-	DocumentPolicy     *string                `protobuf:"bytes,8,opt,name=document_policy,json=documentPolicy" json:"document_policy,omitempty"`
-	PatreonClientId    *string                `protobuf:"bytes,9,opt,name=patreon_client_id,json=patreonClientId" json:"patreon_client_id,omitempty"`
-	DiscordClientId    *string                `protobuf:"bytes,10,opt,name=discord_client_id,json=discordClientId" json:"discord_client_id,omitempty"`
-	DiscordEnabled     *bool                  `protobuf:"varint,11,opt,name=discord_enabled,json=discordEnabled" json:"discord_enabled,omitempty"`
-	PatreonEnabled     *bool                  `protobuf:"varint,12,opt,name=patreon_enabled,json=patreonEnabled" json:"patreon_enabled,omitempty"`
-	DefaultRoute       *string                `protobuf:"bytes,13,opt,name=default_route,json=defaultRoute" json:"default_route,omitempty"`
-	NewsEnabled        *bool                  `protobuf:"varint,14,opt,name=news_enabled,json=newsEnabled" json:"news_enabled,omitempty"`
-	ContestsEnabled    *bool                  `protobuf:"varint,15,opt,name=contests_enabled,json=contestsEnabled" json:"contests_enabled,omitempty"`
-	WikiEnabled        *bool                  `protobuf:"varint,16,opt,name=wiki_enabled,json=wikiEnabled" json:"wiki_enabled,omitempty"`
-	StatsEnabled       *bool                  `protobuf:"varint,17,opt,name=stats_enabled,json=statsEnabled" json:"stats_enabled,omitempty"`
-	ServersEnabled     *bool                  `protobuf:"varint,18,opt,name=servers_enabled,json=serversEnabled" json:"servers_enabled,omitempty"`
-	ReportsEnabled     *bool                  `protobuf:"varint,19,opt,name=reports_enabled,json=reportsEnabled" json:"reports_enabled,omitempty"`
-	ChatlogsEnabled    *bool                  `protobuf:"varint,20,opt,name=chatlogs_enabled,json=chatlogsEnabled" json:"chatlogs_enabled,omitempty"`
-	DemosEnabled       *bool                  `protobuf:"varint,21,opt,name=demos_enabled,json=demosEnabled" json:"demos_enabled,omitempty"`
-	SpeedrunsEnabled   *bool                  `protobuf:"varint,22,opt,name=speedruns_enabled,json=speedrunsEnabled" json:"speedruns_enabled,omitempty"`
-	PlayerqueueEnabled *bool                  `protobuf:"varint,23,opt,name=playerqueue_enabled,json=playerqueueEnabled" json:"playerqueue_enabled,omitempty"`
-	ForumsEnabled      *bool                  `protobuf:"varint,24,opt,name=forums_enabled,json=forumsEnabled" json:"forums_enabled,omitempty"`
-	MgeEnabled         *bool                  `protobuf:"varint,25,opt,name=mge_enabled,json=mgeEnabled" json:"mge_enabled,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	SiteName         *string                `protobuf:"bytes,1,opt,name=site_name,json=siteName" json:"site_name,omitempty"`
+	SiteDescription  *string                `protobuf:"bytes,2,opt,name=site_description,json=siteDescription" json:"site_description,omitempty"`
+	AssetUrl         *string                `protobuf:"bytes,3,opt,name=asset_url,json=assetUrl" json:"asset_url,omitempty"`
+	Favicon          *string                `protobuf:"bytes,4,opt,name=favicon" json:"favicon,omitempty"`
+	LinkId           *string                `protobuf:"bytes,5,opt,name=link_id,json=linkId" json:"link_id,omitempty"`
+	AppVersion       *string                `protobuf:"bytes,6,opt,name=app_version,json=appVersion" json:"app_version,omitempty"`
+	SentryDsnWeb     *string                `protobuf:"bytes,7,opt,name=sentry_dsn_web,json=sentryDsnWeb" json:"sentry_dsn_web,omitempty"`
+	DocumentPolicy   *string                `protobuf:"bytes,8,opt,name=document_policy,json=documentPolicy" json:"document_policy,omitempty"`
+	PatreonClientId  *string                `protobuf:"bytes,9,opt,name=patreon_client_id,json=patreonClientId" json:"patreon_client_id,omitempty"`
+	DiscordClientId  *string                `protobuf:"bytes,10,opt,name=discord_client_id,json=discordClientId" json:"discord_client_id,omitempty"`
+	DiscordEnabled   *bool                  `protobuf:"varint,11,opt,name=discord_enabled,json=discordEnabled" json:"discord_enabled,omitempty"`
+	PatreonEnabled   *bool                  `protobuf:"varint,12,opt,name=patreon_enabled,json=patreonEnabled" json:"patreon_enabled,omitempty"`
+	DefaultRoute     *string                `protobuf:"bytes,13,opt,name=default_route,json=defaultRoute" json:"default_route,omitempty"`
+	NewsEnabled      *bool                  `protobuf:"varint,14,opt,name=news_enabled,json=newsEnabled" json:"news_enabled,omitempty"`
+	ContestsEnabled  *bool                  `protobuf:"varint,15,opt,name=contests_enabled,json=contestsEnabled" json:"contests_enabled,omitempty"`
+	WikiEnabled      *bool                  `protobuf:"varint,16,opt,name=wiki_enabled,json=wikiEnabled" json:"wiki_enabled,omitempty"`
+	StatsEnabled     *bool                  `protobuf:"varint,17,opt,name=stats_enabled,json=statsEnabled" json:"stats_enabled,omitempty"`
+	ServersEnabled   *bool                  `protobuf:"varint,18,opt,name=servers_enabled,json=serversEnabled" json:"servers_enabled,omitempty"`
+	ReportsEnabled   *bool                  `protobuf:"varint,19,opt,name=reports_enabled,json=reportsEnabled" json:"reports_enabled,omitempty"`
+	ChatlogsEnabled  *bool                  `protobuf:"varint,20,opt,name=chatlogs_enabled,json=chatlogsEnabled" json:"chatlogs_enabled,omitempty"`
+	DemosEnabled     *bool                  `protobuf:"varint,21,opt,name=demos_enabled,json=demosEnabled" json:"demos_enabled,omitempty"`
+	SpeedrunsEnabled *bool                  `protobuf:"varint,22,opt,name=speedruns_enabled,json=speedrunsEnabled" json:"speedruns_enabled,omitempty"`
+	ForumsEnabled    *bool                  `protobuf:"varint,23,opt,name=forums_enabled,json=forumsEnabled" json:"forums_enabled,omitempty"`
+	MgeEnabled       *bool                  `protobuf:"varint,24,opt,name=mge_enabled,json=mgeEnabled" json:"mge_enabled,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *InfoResponse) Reset() {
@@ -526,13 +525,6 @@ func (x *InfoResponse) GetSpeedrunsEnabled() bool {
 	return false
 }
 
-func (x *InfoResponse) GetPlayerqueueEnabled() bool {
-	if x != nil && x.PlayerqueueEnabled != nil {
-		return *x.PlayerqueueEnabled
-	}
-	return false
-}
-
 func (x *InfoResponse) GetForumsEnabled() bool {
 	if x != nil && x.ForumsEnabled != nil {
 		return *x.ForumsEnabled
@@ -680,30 +672,29 @@ func (x *UpdateResponse) GetConfig() *Config {
 }
 
 type General struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	SiteName           *string                `protobuf:"bytes,1,opt,name=site_name,json=siteName" json:"site_name,omitempty"`
-	SiteDescription    *string                `protobuf:"bytes,2,opt,name=site_description,json=siteDescription" json:"site_description,omitempty"`
-	Mode               *RunMode               `protobuf:"varint,3,opt,name=mode,enum=config.v1.RunMode" json:"mode,omitempty"`
-	FileServeMode      *FileServeMode         `protobuf:"varint,4,opt,name=file_serve_mode,json=fileServeMode,enum=config.v1.FileServeMode" json:"file_serve_mode,omitempty"`
-	SrcdsLogAddr       *string                `protobuf:"bytes,5,opt,name=srcds_log_addr,json=srcdsLogAddr" json:"srcds_log_addr,omitempty"`
-	AssetUrl           *string                `protobuf:"bytes,6,opt,name=asset_url,json=assetUrl" json:"asset_url,omitempty"`
-	Favicon            *string                `protobuf:"bytes,7,opt,name=favicon" json:"favicon,omitempty"`
-	DefaultRoute       *string                `protobuf:"bytes,8,opt,name=default_route,json=defaultRoute" json:"default_route,omitempty"`
-	NewsEnabled        *bool                  `protobuf:"varint,9,opt,name=news_enabled,json=newsEnabled" json:"news_enabled,omitempty"`
-	ForumsEnabled      *bool                  `protobuf:"varint,10,opt,name=forums_enabled,json=forumsEnabled" json:"forums_enabled,omitempty"`
-	ContestsEnabled    *bool                  `protobuf:"varint,11,opt,name=contests_enabled,json=contestsEnabled" json:"contests_enabled,omitempty"`
-	WikiEnabled        *bool                  `protobuf:"varint,12,opt,name=wiki_enabled,json=wikiEnabled" json:"wiki_enabled,omitempty"`
-	StatsEnabled       *bool                  `protobuf:"varint,13,opt,name=stats_enabled,json=statsEnabled" json:"stats_enabled,omitempty"`
-	ServersEnabled     *bool                  `protobuf:"varint,14,opt,name=servers_enabled,json=serversEnabled" json:"servers_enabled,omitempty"`
-	ReportsEnabled     *bool                  `protobuf:"varint,15,opt,name=reports_enabled,json=reportsEnabled" json:"reports_enabled,omitempty"`
-	ChatlogsEnabled    *bool                  `protobuf:"varint,16,opt,name=chatlogs_enabled,json=chatlogsEnabled" json:"chatlogs_enabled,omitempty"`
-	DemosEnabled       *bool                  `protobuf:"varint,17,opt,name=demos_enabled,json=demosEnabled" json:"demos_enabled,omitempty"`
-	SpeedrunsEnabled   *bool                  `protobuf:"varint,18,opt,name=speedruns_enabled,json=speedrunsEnabled" json:"speedruns_enabled,omitempty"`
-	PlayerqueueEnabled *bool                  `protobuf:"varint,19,opt,name=playerqueue_enabled,json=playerqueueEnabled" json:"playerqueue_enabled,omitempty"`
-	SentryDsn          *string                `protobuf:"bytes,20,opt,name=sentry_dsn,json=sentryDsn" json:"sentry_dsn,omitempty"`
-	SentryDsnWeb       *string                `protobuf:"bytes,21,opt,name=sentry_dsn_web,json=sentryDsnWeb" json:"sentry_dsn_web,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	SiteName         *string                `protobuf:"bytes,1,opt,name=site_name,json=siteName" json:"site_name,omitempty"`
+	SiteDescription  *string                `protobuf:"bytes,2,opt,name=site_description,json=siteDescription" json:"site_description,omitempty"`
+	Mode             *RunMode               `protobuf:"varint,3,opt,name=mode,enum=config.v1.RunMode" json:"mode,omitempty"`
+	FileServeMode    *FileServeMode         `protobuf:"varint,4,opt,name=file_serve_mode,json=fileServeMode,enum=config.v1.FileServeMode" json:"file_serve_mode,omitempty"`
+	SrcdsLogAddr     *string                `protobuf:"bytes,5,opt,name=srcds_log_addr,json=srcdsLogAddr" json:"srcds_log_addr,omitempty"`
+	AssetUrl         *string                `protobuf:"bytes,6,opt,name=asset_url,json=assetUrl" json:"asset_url,omitempty"`
+	Favicon          *string                `protobuf:"bytes,7,opt,name=favicon" json:"favicon,omitempty"`
+	DefaultRoute     *string                `protobuf:"bytes,8,opt,name=default_route,json=defaultRoute" json:"default_route,omitempty"`
+	NewsEnabled      *bool                  `protobuf:"varint,9,opt,name=news_enabled,json=newsEnabled" json:"news_enabled,omitempty"`
+	ForumsEnabled    *bool                  `protobuf:"varint,10,opt,name=forums_enabled,json=forumsEnabled" json:"forums_enabled,omitempty"`
+	ContestsEnabled  *bool                  `protobuf:"varint,11,opt,name=contests_enabled,json=contestsEnabled" json:"contests_enabled,omitempty"`
+	WikiEnabled      *bool                  `protobuf:"varint,12,opt,name=wiki_enabled,json=wikiEnabled" json:"wiki_enabled,omitempty"`
+	StatsEnabled     *bool                  `protobuf:"varint,13,opt,name=stats_enabled,json=statsEnabled" json:"stats_enabled,omitempty"`
+	ServersEnabled   *bool                  `protobuf:"varint,14,opt,name=servers_enabled,json=serversEnabled" json:"servers_enabled,omitempty"`
+	ReportsEnabled   *bool                  `protobuf:"varint,15,opt,name=reports_enabled,json=reportsEnabled" json:"reports_enabled,omitempty"`
+	ChatlogsEnabled  *bool                  `protobuf:"varint,16,opt,name=chatlogs_enabled,json=chatlogsEnabled" json:"chatlogs_enabled,omitempty"`
+	DemosEnabled     *bool                  `protobuf:"varint,17,opt,name=demos_enabled,json=demosEnabled" json:"demos_enabled,omitempty"`
+	SpeedrunsEnabled *bool                  `protobuf:"varint,18,opt,name=speedruns_enabled,json=speedrunsEnabled" json:"speedruns_enabled,omitempty"`
+	SentryDsn        *string                `protobuf:"bytes,19,opt,name=sentry_dsn,json=sentryDsn" json:"sentry_dsn,omitempty"`
+	SentryDsnWeb     *string                `protobuf:"bytes,20,opt,name=sentry_dsn_web,json=sentryDsnWeb" json:"sentry_dsn_web,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *General) Reset() {
@@ -858,13 +849,6 @@ func (x *General) GetDemosEnabled() bool {
 func (x *General) GetSpeedrunsEnabled() bool {
 	if x != nil && x.SpeedrunsEnabled != nil {
 		return *x.SpeedrunsEnabled
-	}
-	return false
-}
-
-func (x *General) GetPlayerqueueEnabled() bool {
-	if x != nil && x.PlayerqueueEnabled != nil {
-		return *x.PlayerqueueEnabled
 	}
 	return false
 }
@@ -1137,12 +1121,11 @@ type Discord struct {
 	BanLogChannelId         *string                `protobuf:"bytes,14,opt,name=ban_log_channel_id,json=banLogChannelId" json:"ban_log_channel_id,omitempty"`
 	ForumLogChannelId       *string                `protobuf:"bytes,15,opt,name=forum_log_channel_id,json=forumLogChannelId" json:"forum_log_channel_id,omitempty"`
 	KickLogChannelId        *string                `protobuf:"bytes,16,opt,name=kick_log_channel_id,json=kickLogChannelId" json:"kick_log_channel_id,omitempty"`
-	PlayerqueueChannelId    *string                `protobuf:"bytes,17,opt,name=playerqueue_channel_id,json=playerqueueChannelId" json:"playerqueue_channel_id,omitempty"`
-	ModPingRoleId           *string                `protobuf:"bytes,18,opt,name=mod_ping_role_id,json=modPingRoleId" json:"mod_ping_role_id,omitempty"`
-	AnticheatChannelId      *string                `protobuf:"bytes,19,opt,name=anticheat_channel_id,json=anticheatChannelId" json:"anticheat_channel_id,omitempty"`
-	SeedChannelId           *string                `protobuf:"bytes,20,opt,name=seed_channel_id,json=seedChannelId" json:"seed_channel_id,omitempty"`
-	WordFilterLogChannelId  *string                `protobuf:"bytes,21,opt,name=word_filter_log_channel_id,json=wordFilterLogChannelId" json:"word_filter_log_channel_id,omitempty"`
-	ChatLogChannelId        *string                `protobuf:"bytes,22,opt,name=chat_log_channel_id,json=chatLogChannelId" json:"chat_log_channel_id,omitempty"`
+	ModPingRoleId           *string                `protobuf:"bytes,17,opt,name=mod_ping_role_id,json=modPingRoleId" json:"mod_ping_role_id,omitempty"`
+	AnticheatChannelId      *string                `protobuf:"bytes,18,opt,name=anticheat_channel_id,json=anticheatChannelId" json:"anticheat_channel_id,omitempty"`
+	SeedChannelId           *string                `protobuf:"bytes,19,opt,name=seed_channel_id,json=seedChannelId" json:"seed_channel_id,omitempty"`
+	WordFilterLogChannelId  *string                `protobuf:"bytes,20,opt,name=word_filter_log_channel_id,json=wordFilterLogChannelId" json:"word_filter_log_channel_id,omitempty"`
+	ChatLogChannelId        *string                `protobuf:"bytes,21,opt,name=chat_log_channel_id,json=chatLogChannelId" json:"chat_log_channel_id,omitempty"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -1285,13 +1268,6 @@ func (x *Discord) GetForumLogChannelId() string {
 func (x *Discord) GetKickLogChannelId() string {
 	if x != nil && x.KickLogChannelId != nil {
 		return *x.KickLogChannelId
-	}
-	return ""
-}
-
-func (x *Discord) GetPlayerqueueChannelId() string {
-	if x != nil && x.PlayerqueueChannelId != nil {
-		return *x.PlayerqueueChannelId
 	}
 	return ""
 }
@@ -2023,6 +1999,50 @@ func (x *Anticheat) GetMaxCheatCvar() int32 {
 	return 0
 }
 
+type Clientprefs struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	CenterProjectiles *bool                  `protobuf:"varint,1,opt,name=center_projectiles,json=centerProjectiles" json:"center_projectiles,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *Clientprefs) Reset() {
+	*x = Clientprefs{}
+	mi := &file_config_v1_config_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Clientprefs) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Clientprefs) ProtoMessage() {}
+
+func (x *Clientprefs) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_config_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Clientprefs.ProtoReflect.Descriptor instead.
+func (*Clientprefs) Descriptor() ([]byte, []int) {
+	return file_config_v1_config_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *Clientprefs) GetCenterProjectiles() bool {
+	if x != nil && x.CenterProjectiles != nil {
+		return *x.CenterProjectiles
+	}
+	return false
+}
+
 type Config struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	General       *General               `protobuf:"bytes,1,opt,name=general" json:"general,omitempty"`
@@ -2030,7 +2050,7 @@ type Config struct {
 	Demo          *Demo                  `protobuf:"bytes,3,opt,name=demo" json:"demo,omitempty"`
 	Filters       *Filters               `protobuf:"bytes,4,opt,name=filters" json:"filters,omitempty"`
 	Discord       *Discord               `protobuf:"bytes,5,opt,name=discord" json:"discord,omitempty"`
-	Sourcemd      *Sourcemod             `protobuf:"bytes,6,opt,name=sourcemd" json:"sourcemd,omitempty"`
+	ClientPrefs   *Clientprefs           `protobuf:"bytes,6,opt,name=client_prefs,json=clientPrefs" json:"client_prefs,omitempty"`
 	Log           *Log                   `protobuf:"bytes,7,opt,name=log" json:"log,omitempty"`
 	GeoLocation   *GeoLocation           `protobuf:"bytes,8,opt,name=geo_location,json=geoLocation" json:"geo_location,omitempty"`
 	Patreon       *Patreon               `protobuf:"bytes,9,opt,name=patreon" json:"patreon,omitempty"`
@@ -2045,7 +2065,7 @@ type Config struct {
 
 func (x *Config) Reset() {
 	*x = Config{}
-	mi := &file_config_v1_config_proto_msgTypes[18]
+	mi := &file_config_v1_config_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2057,7 +2077,7 @@ func (x *Config) String() string {
 func (*Config) ProtoMessage() {}
 
 func (x *Config) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[18]
+	mi := &file_config_v1_config_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2070,7 +2090,7 @@ func (x *Config) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config.ProtoReflect.Descriptor instead.
 func (*Config) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{18}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Config) GetGeneral() *General {
@@ -2108,9 +2128,9 @@ func (x *Config) GetDiscord() *Discord {
 	return nil
 }
 
-func (x *Config) GetSourcemd() *Sourcemod {
+func (x *Config) GetClientPrefs() *Clientprefs {
 	if x != nil {
-		return x.Sourcemd
+		return x.ClientPrefs
 	}
 	return nil
 }
@@ -2175,7 +2195,7 @@ var File_config_v1_config_proto protoreflect.FileDescriptor
 
 const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/config.proto\x12\tconfig.v1\x1a google/protobuf/descriptor.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xc3\a\n" +
+	"\x16config/v1/config.proto\x12\tconfig.v1\x1a google/protobuf/descriptor.proto\x1a\x1bgoogle/protobuf/empty.proto\"\x92\a\n" +
 	"\fInfoResponse\x12\x1b\n" +
 	"\tsite_name\x18\x01 \x01(\tR\bsiteName\x12)\n" +
 	"\x10site_description\x18\x02 \x01(\tR\x0fsiteDescription\x12\x1b\n" +
@@ -2200,17 +2220,16 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x0freports_enabled\x18\x13 \x01(\bR\x0ereportsEnabled\x12)\n" +
 	"\x10chatlogs_enabled\x18\x14 \x01(\bR\x0fchatlogsEnabled\x12#\n" +
 	"\rdemos_enabled\x18\x15 \x01(\bR\fdemosEnabled\x12+\n" +
-	"\x11speedruns_enabled\x18\x16 \x01(\bR\x10speedrunsEnabled\x12/\n" +
-	"\x13playerqueue_enabled\x18\x17 \x01(\bR\x12playerqueueEnabled\x12%\n" +
-	"\x0eforums_enabled\x18\x18 \x01(\bR\rforumsEnabled\x12\x1f\n" +
-	"\vmge_enabled\x18\x19 \x01(\bR\n" +
+	"\x11speedruns_enabled\x18\x16 \x01(\bR\x10speedrunsEnabled\x12%\n" +
+	"\x0eforums_enabled\x18\x17 \x01(\bR\rforumsEnabled\x12\x1f\n" +
+	"\vmge_enabled\x18\x18 \x01(\bR\n" +
 	"mgeEnabled\"8\n" +
 	"\vGetResponse\x12)\n" +
 	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigR\x06config\":\n" +
 	"\rUpdateRequest\x12)\n" +
 	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigR\x06config\";\n" +
 	"\x0eUpdateResponse\x12)\n" +
-	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigR\x06config\"\xbf\x06\n" +
+	"\x06config\x18\x01 \x01(\v2\x11.config.v1.ConfigR\x06config\"\x8e\x06\n" +
 	"\aGeneral\x12\x1b\n" +
 	"\tsite_name\x18\x01 \x01(\tR\bsiteName\x12)\n" +
 	"\x10site_description\x18\x02 \x01(\tR\x0fsiteDescription\x12&\n" +
@@ -2230,11 +2249,10 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x0freports_enabled\x18\x0f \x01(\bR\x0ereportsEnabled\x12)\n" +
 	"\x10chatlogs_enabled\x18\x10 \x01(\bR\x0fchatlogsEnabled\x12#\n" +
 	"\rdemos_enabled\x18\x11 \x01(\bR\fdemosEnabled\x12+\n" +
-	"\x11speedruns_enabled\x18\x12 \x01(\bR\x10speedrunsEnabled\x12/\n" +
-	"\x13playerqueue_enabled\x18\x13 \x01(\bR\x12playerqueueEnabled\x12\x1d\n" +
+	"\x11speedruns_enabled\x18\x12 \x01(\bR\x10speedrunsEnabled\x12\x1d\n" +
 	"\n" +
-	"sentry_dsn\x18\x14 \x01(\tR\tsentryDsn\x12$\n" +
-	"\x0esentry_dsn_web\x18\x15 \x01(\tR\fsentryDsnWeb\"o\n" +
+	"sentry_dsn\x18\x13 \x01(\tR\tsentryDsn\x12$\n" +
+	"\x0esentry_dsn_web\x18\x14 \x01(\tR\fsentryDsnWeb\"o\n" +
 	"\x05Debug\x125\n" +
 	"\x17skip_open_id_validation\x18\x01 \x01(\bR\x14skipOpenIdValidation\x12/\n" +
 	"\x14add_rcon_log_address\x18\x02 \x01(\tR\x11addRconLogAddress\"\xf1\x01\n" +
@@ -2256,7 +2274,7 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
 	"max_weight\x18\x06 \x01(\x05R\tmaxWeight\x12#\n" +
 	"\rcheck_timeout\x18\a \x01(\x05R\fcheckTimeout\x12#\n" +
-	"\rmatch_timeout\x18\b \x01(\x05R\fmatchTimeout\"\xa9\a\n" +
+	"\rmatch_timeout\x18\b \x01(\x05R\fmatchTimeout\"\xf3\x06\n" +
 	"\aDiscord\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1f\n" +
 	"\vbot_enabled\x18\x02 \x01(\bR\n" +
@@ -2276,13 +2294,12 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\x15appeal_log_channel_id\x18\r \x01(\tR\x12appealLogChannelId\x12+\n" +
 	"\x12ban_log_channel_id\x18\x0e \x01(\tR\x0fbanLogChannelId\x12/\n" +
 	"\x14forum_log_channel_id\x18\x0f \x01(\tR\x11forumLogChannelId\x12-\n" +
-	"\x13kick_log_channel_id\x18\x10 \x01(\tR\x10kickLogChannelId\x124\n" +
-	"\x16playerqueue_channel_id\x18\x11 \x01(\tR\x14playerqueueChannelId\x12'\n" +
-	"\x10mod_ping_role_id\x18\x12 \x01(\tR\rmodPingRoleId\x120\n" +
-	"\x14anticheat_channel_id\x18\x13 \x01(\tR\x12anticheatChannelId\x12&\n" +
-	"\x0fseed_channel_id\x18\x14 \x01(\tR\rseedChannelId\x12:\n" +
-	"\x1aword_filter_log_channel_id\x18\x15 \x01(\tR\x16wordFilterLogChannelId\x12-\n" +
-	"\x13chat_log_channel_id\x18\x16 \x01(\tR\x10chatLogChannelId\":\n" +
+	"\x13kick_log_channel_id\x18\x10 \x01(\tR\x10kickLogChannelId\x12'\n" +
+	"\x10mod_ping_role_id\x18\x11 \x01(\tR\rmodPingRoleId\x120\n" +
+	"\x14anticheat_channel_id\x18\x12 \x01(\tR\x12anticheatChannelId\x12&\n" +
+	"\x0fseed_channel_id\x18\x13 \x01(\tR\rseedChannelId\x12:\n" +
+	"\x1aword_filter_log_channel_id\x18\x14 \x01(\tR\x16wordFilterLogChannelId\x12-\n" +
+	"\x13chat_log_channel_id\x18\x15 \x01(\tR\x10chatLogChannelId\":\n" +
 	"\tSourcemod\x12-\n" +
 	"\x12center_projectiles\x18\x01 \x01(\bR\x11centerProjectiles\"\xc1\x01\n" +
 	"\x03Log\x12&\n" +
@@ -2347,14 +2364,16 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\vmax_oob_var\x18\n" +
 	" \x01(\x05R\tmaxOobVar\x12/\n" +
 	"\x14max_invalid_user_cmd\x18\v \x01(\x05R\x11maxInvalidUserCmd\x12$\n" +
-	"\x0emax_cheat_cvar\x18\f \x01(\x05R\fmaxCheatCvar\"\x86\x05\n" +
+	"\x0emax_cheat_cvar\x18\f \x01(\x05R\fmaxCheatCvar\"<\n" +
+	"\vClientprefs\x12-\n" +
+	"\x12center_projectiles\x18\x01 \x01(\bR\x11centerProjectiles\"\x8f\x05\n" +
 	"\x06Config\x12,\n" +
 	"\ageneral\x18\x01 \x01(\v2\x12.config.v1.GeneralR\ageneral\x12&\n" +
 	"\x05debug\x18\x02 \x01(\v2\x10.config.v1.DebugR\x05debug\x12#\n" +
 	"\x04demo\x18\x03 \x01(\v2\x0f.config.v1.DemoR\x04demo\x12,\n" +
 	"\afilters\x18\x04 \x01(\v2\x12.config.v1.FiltersR\afilters\x12,\n" +
-	"\adiscord\x18\x05 \x01(\v2\x12.config.v1.DiscordR\adiscord\x120\n" +
-	"\bsourcemd\x18\x06 \x01(\v2\x14.config.v1.SourcemodR\bsourcemd\x12 \n" +
+	"\adiscord\x18\x05 \x01(\v2\x12.config.v1.DiscordR\adiscord\x129\n" +
+	"\fclient_prefs\x18\x06 \x01(\v2\x16.config.v1.ClientprefsR\vclientPrefs\x12 \n" +
 	"\x03log\x18\a \x01(\v2\x0e.config.v1.LogR\x03log\x129\n" +
 	"\fgeo_location\x18\b \x01(\v2\x16.config.v1.GeoLocationR\vgeoLocation\x12,\n" +
 	"\apatreon\x18\t \x01(\v2\x12.config.v1.PatreonR\apatreon\x12 \n" +
@@ -2410,7 +2429,7 @@ func file_config_v1_config_proto_rawDescGZIP() []byte {
 }
 
 var file_config_v1_config_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_config_v1_config_proto_goTypes = []any{
 	(RunMode)(0),           // 0: config.v1.RunMode
 	(FileServeMode)(0),     // 1: config.v1.FileServeMode
@@ -2436,13 +2455,14 @@ var file_config_v1_config_proto_goTypes = []any{
 	(*LocalStore)(nil),     // 21: config.v1.LocalStore
 	(*Exports)(nil),        // 22: config.v1.Exports
 	(*Anticheat)(nil),      // 23: config.v1.Anticheat
-	(*Config)(nil),         // 24: config.v1.Config
-	(*emptypb.Empty)(nil),  // 25: google.protobuf.Empty
+	(*Clientprefs)(nil),    // 24: config.v1.Clientprefs
+	(*Config)(nil),         // 25: config.v1.Config
+	(*emptypb.Empty)(nil),  // 26: google.protobuf.Empty
 }
 var file_config_v1_config_proto_depIdxs = []int32{
-	24, // 0: config.v1.GetResponse.config:type_name -> config.v1.Config
-	24, // 1: config.v1.UpdateRequest.config:type_name -> config.v1.Config
-	24, // 2: config.v1.UpdateResponse.config:type_name -> config.v1.Config
+	25, // 0: config.v1.GetResponse.config:type_name -> config.v1.Config
+	25, // 1: config.v1.UpdateRequest.config:type_name -> config.v1.Config
+	25, // 2: config.v1.UpdateResponse.config:type_name -> config.v1.Config
 	0,  // 3: config.v1.General.mode:type_name -> config.v1.RunMode
 	1,  // 4: config.v1.General.file_serve_mode:type_name -> config.v1.FileServeMode
 	2,  // 5: config.v1.Demo.strategy:type_name -> config.v1.DemoStrategy
@@ -2455,7 +2475,7 @@ var file_config_v1_config_proto_depIdxs = []int32{
 	12, // 12: config.v1.Config.demo:type_name -> config.v1.Demo
 	13, // 13: config.v1.Config.filters:type_name -> config.v1.Filters
 	14, // 14: config.v1.Config.discord:type_name -> config.v1.Discord
-	15, // 15: config.v1.Config.sourcemd:type_name -> config.v1.Sourcemod
+	24, // 15: config.v1.Config.client_prefs:type_name -> config.v1.Clientprefs
 	16, // 16: config.v1.Config.log:type_name -> config.v1.Log
 	17, // 17: config.v1.Config.geo_location:type_name -> config.v1.GeoLocation
 	18, // 18: config.v1.Config.patreon:type_name -> config.v1.Patreon
@@ -2464,8 +2484,8 @@ var file_config_v1_config_proto_depIdxs = []int32{
 	21, // 21: config.v1.Config.local_store:type_name -> config.v1.LocalStore
 	22, // 22: config.v1.Config.exports:type_name -> config.v1.Exports
 	23, // 23: config.v1.Config.anticheat:type_name -> config.v1.Anticheat
-	25, // 24: config.v1.ConfigService.Info:input_type -> google.protobuf.Empty
-	25, // 25: config.v1.ConfigService.Get:input_type -> google.protobuf.Empty
+	26, // 24: config.v1.ConfigService.Info:input_type -> google.protobuf.Empty
+	26, // 25: config.v1.ConfigService.Get:input_type -> google.protobuf.Empty
 	8,  // 26: config.v1.ConfigService.Update:input_type -> config.v1.UpdateRequest
 	6,  // 27: config.v1.ConfigService.Info:output_type -> config.v1.InfoResponse
 	7,  // 28: config.v1.ConfigService.Get:output_type -> config.v1.GetResponse
@@ -2488,7 +2508,7 @@ func file_config_v1_config_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_config_proto_rawDesc), len(file_config_v1_config_proto_rawDesc)),
 			NumEnums:      6,
-			NumMessages:   19,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

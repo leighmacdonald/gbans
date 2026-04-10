@@ -25,7 +25,7 @@ const patreonSearchSchema = z.object({
 export const Route = createFileRoute("/_guest/patreon")({
 	component: Patreon,
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.patreon_enabled);
+		ensureFeatureEnabled(context.appInfo.patreonEnabled);
 	},
 
 	validateSearch: (search) => patreonSearchSchema.parse(search),
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_guest/patreon")({
 		return { campaign };
 	},
 	head: ({ match }) => ({
-		meta: [{ name: "description", content: "Patreon Capaigns" }, match.context.title("Patreon")],
+		meta: [{ name: "description", content: "Patreon Campaigns" }, match.context.title("Patreon")],
 	}),
 });
 
@@ -56,7 +56,7 @@ function Patreon() {
 		window.open(result.url, "_self");
 	};
 
-	if (!appInfo.patreon_enabled) {
+	if (!appInfo.patreonEnabled) {
 		return <Navigate to={"/"} />;
 	}
 
@@ -95,11 +95,11 @@ function Patreon() {
 									/>
 								</Paper>
 
-								<MarkDownRenderer body_md={campaign.attributes.summary} assetURL={appInfo.asset_url} />
+								<MarkDownRenderer body_md={campaign.attributes.summary} assetURL={appInfo.assetUrl} />
 
 								<MarkDownRenderer
 									body_md={campaign.attributes.thanks_msg}
-									assetURL={appInfo.asset_url}
+									assetURL={appInfo.assetUrl}
 								/>
 							</Stack>
 						</Grid>

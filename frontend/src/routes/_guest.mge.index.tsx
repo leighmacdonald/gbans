@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_guest/mge/")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.demos_enabled);
+		ensureFeatureEnabled(context.appInfo.demosEnabled);
 	},
 	head: ({ match }) => ({
 		meta: [
@@ -79,8 +79,8 @@ function MGEOverall() {
 	});
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
-		(updater) => {
-			navigate({
+        async (updater) => {
+			await navigate({
 				to: "/mge/1v1",
 				search: {
 					...search,
@@ -92,8 +92,8 @@ function MGEOverall() {
 	);
 
 	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
-		(updater) => {
-			navigate({
+        async (updater) => {
+			await navigate({
 				to: "/mge",
 				search: {
 					...search,
@@ -105,8 +105,8 @@ function MGEOverall() {
 	);
 
 	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: "/mge",
 				search: {
 					...search,

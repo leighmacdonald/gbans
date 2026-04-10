@@ -2,8 +2,8 @@ edition = "2023";
 
 package anticheat.v1;
 
-import "google/protobuf/timestamp.proto";
 import "filter.proto";
+import "google/protobuf/timestamp.proto";
 
 service AnticheatService {
   rpc Query(QueryRequest) returns (QueryResponse) {}
@@ -27,7 +27,7 @@ message QueryRequest {
   Filter filter = 1;
   string name = 2;
   string steam_id = 3;
-  string sumamry = 4;
+  string summary = 4;
   Detection detection = 5;
 }
 
@@ -48,7 +48,7 @@ message Entry {
   string summary = 10;
   string raw_log = 11;
   google.protobuf.Timestamp created_on = 12;
-  string personaname = 13;
-  string avatarhash = 14;
+  string persona_name = 13;
+  string avatar_hash = 14;
   int32 triggered = 15;
 }

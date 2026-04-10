@@ -44,6 +44,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/rpc/config/v1/configv1connect"
+	"github.com/leighmacdonald/gbans/internal/rpc/servers/v1/serversv1connect"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
@@ -116,17 +117,16 @@ func New() (*GBans, error) {
 	return &GBans{
 		staticConfig: staticConfig,
 		broadcaster:  broadcaster.New[logparse.EventType, logparse.ServerEvent](),
+		database:     database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries),
 	}, nil
 }
 
 func (g *GBans) Init(ctx context.Context) error {
-	dbConn := database.New(g.staticConfig.DatabaseDSN, g.staticConfig.DatabaseAutoMigrate, g.staticConfig.DatabaseLogQueries)
-	if errConnect := dbConn.Connect(ctx); errConnect != nil {
+	if errConnect := g.database.Connect(ctx); errConnect != nil {
 		slog.Error("Cannot initialize database", slog.String("error", errConnect.Error()))
 
 		return errConnect
 	}
-	g.database = dbConn
 
 	configuration, errConfig := g.createConfig(ctx)
 	if errConfig != nil {
@@ -510,7 +510,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	patreon.NewPatreonHandler(router, userAuth, patreon.NewPatreon(patreon.NewRepository(g.database), conf.Patreon), g.config.Config().Patreon)
 	person.NewPersonHandler(router, userAuth, g.persons)
 	servers.NewDemoHandler(router, userAuth, g.demos)
-	servers.NewServersHandler(router, userAuth, g.servers)
+	// servers.NewServersHandler(router, userAuth, g.servers)
 	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)
 	sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod, g.notifications, conf.Discord.SafeKickLogChannelID(), g.persons)
 	votes.NewVotesHandler(router, userAuth, g.votes)
@@ -523,6 +523,10 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	api := http.NewServeMux()
 	api.Handle(configv1connect.NewConfigServiceHandler(
 		config.NewRPC(g.config, BuildVersion),
+		connect.WithInterceptors(validate.NewInterceptor())))
+
+	api.Handle(serversv1connect.NewServersServiceHandler(
+		servers.NewRPC(g.servers),
 		connect.WithInterceptors(validate.NewInterceptor())))
 
 	mux.Handle("/connect/", http.StripPrefix("/connect", api))

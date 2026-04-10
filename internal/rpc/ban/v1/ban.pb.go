@@ -7,9 +7,11 @@
 package banv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	_ "github.com/leighmacdonald/gbans/internal/rpc"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
@@ -271,26 +273,34 @@ func (Origin) EnumDescriptor() ([]byte, []int) {
 	return file_ban_v1_ban_proto_rawDescGZIP(), []int{3}
 }
 
-type ExportTF2BDResponse struct {
+type UpdateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	TargetId      *string                `protobuf:"bytes,1,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
+	BanType       *BanType               `protobuf:"varint,2,opt,name=ban_type,json=banType,enum=ban.v1.BanType" json:"ban_type,omitempty"`
+	Reason        *BanReason             `protobuf:"varint,3,opt,name=reason,enum=ban.v1.BanReason" json:"reason,omitempty"`
+	ReasonText    *string                `protobuf:"bytes,4,opt,name=reason_text,json=reasonText" json:"reason_text,omitempty"`
+	Note          *string                `protobuf:"bytes,5,opt,name=note" json:"note,omitempty"`
+	EvadeOk       *bool                  `protobuf:"varint,6,opt,name=evade_ok,json=evadeOk" json:"evade_ok,omitempty"`
+	Duration      *string                `protobuf:"bytes,7,opt,name=duration" json:"duration,omitempty"`
+	Cidr          *string                `protobuf:"bytes,8,opt,name=cidr" json:"cidr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ExportTF2BDResponse) Reset() {
-	*x = ExportTF2BDResponse{}
+func (x *UpdateRequest) Reset() {
+	*x = UpdateRequest{}
 	mi := &file_ban_v1_ban_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ExportTF2BDResponse) String() string {
+func (x *UpdateRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ExportTF2BDResponse) ProtoMessage() {}
+func (*UpdateRequest) ProtoMessage() {}
 
-func (x *ExportTF2BDResponse) ProtoReflect() protoreflect.Message {
+func (x *UpdateRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_ban_v1_ban_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -302,9 +312,393 @@ func (x *ExportTF2BDResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ExportTF2BDResponse.ProtoReflect.Descriptor instead.
-func (*ExportTF2BDResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateRequest.ProtoReflect.Descriptor instead.
+func (*UpdateRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_ban_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *UpdateRequest) GetTargetId() string {
+	if x != nil && x.TargetId != nil {
+		return *x.TargetId
+	}
+	return ""
+}
+
+func (x *UpdateRequest) GetBanType() BanType {
+	if x != nil && x.BanType != nil {
+		return *x.BanType
+	}
+	return BanType_BAN_TYPE_OK_UNSPECIFIED
+}
+
+func (x *UpdateRequest) GetReason() BanReason {
+	if x != nil && x.Reason != nil {
+		return *x.Reason
+	}
+	return BanReason_BAN_REASON_UNSPECIFIED
+}
+
+func (x *UpdateRequest) GetReasonText() string {
+	if x != nil && x.ReasonText != nil {
+		return *x.ReasonText
+	}
+	return ""
+}
+
+func (x *UpdateRequest) GetNote() string {
+	if x != nil && x.Note != nil {
+		return *x.Note
+	}
+	return ""
+}
+
+func (x *UpdateRequest) GetEvadeOk() bool {
+	if x != nil && x.EvadeOk != nil {
+		return *x.EvadeOk
+	}
+	return false
+}
+
+func (x *UpdateRequest) GetDuration() string {
+	if x != nil && x.Duration != nil {
+		return *x.Duration
+	}
+	return ""
+}
+
+func (x *UpdateRequest) GetCidr() string {
+	if x != nil && x.Cidr != nil {
+		return *x.Cidr
+	}
+	return ""
+}
+
+type UpdateResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ban           *Ban                   `protobuf:"bytes,1,opt,name=ban" json:"ban,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateResponse) Reset() {
+	*x = UpdateResponse{}
+	mi := &file_ban_v1_ban_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateResponse) ProtoMessage() {}
+
+func (x *UpdateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_ban_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateResponse.ProtoReflect.Descriptor instead.
+func (*UpdateResponse) Descriptor() ([]byte, []int) {
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *UpdateResponse) GetBan() *Ban {
+	if x != nil {
+		return x.Ban
+	}
+	return nil
+}
+
+type QuerySourceBansRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SteamId       *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuerySourceBansRequest) Reset() {
+	*x = QuerySourceBansRequest{}
+	mi := &file_ban_v1_ban_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuerySourceBansRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuerySourceBansRequest) ProtoMessage() {}
+
+func (x *QuerySourceBansRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_ban_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuerySourceBansRequest.ProtoReflect.Descriptor instead.
+func (*QuerySourceBansRequest) Descriptor() ([]byte, []int) {
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *QuerySourceBansRequest) GetSteamId() string {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return ""
+}
+
+type SourceBanRecord struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	SiteName      *string                `protobuf:"bytes,2,opt,name=site_name,json=siteName" json:"site_name,omitempty"`
+	SiteId        *int32                 `protobuf:"varint,3,opt,name=site_id,json=siteId" json:"site_id,omitempty"`
+	PersonaName   *string                `protobuf:"bytes,4,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
+	SteamId       *string                `protobuf:"bytes,5,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	Reason        *string                `protobuf:"bytes,6,opt,name=reason" json:"reason,omitempty"`
+	Duration      *durationpb.Duration   `protobuf:"bytes,7,opt,name=duration" json:"duration,omitempty"`
+	Permanent     *bool                  `protobuf:"varint,8,opt,name=permanent" json:"permanent,omitempty"`
+	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SourceBanRecord) Reset() {
+	*x = SourceBanRecord{}
+	mi := &file_ban_v1_ban_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SourceBanRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SourceBanRecord) ProtoMessage() {}
+
+func (x *SourceBanRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_ban_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SourceBanRecord.ProtoReflect.Descriptor instead.
+func (*SourceBanRecord) Descriptor() ([]byte, []int) {
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SourceBanRecord) GetBanId() int32 {
+	if x != nil && x.BanId != nil {
+		return *x.BanId
+	}
+	return 0
+}
+
+func (x *SourceBanRecord) GetSiteName() string {
+	if x != nil && x.SiteName != nil {
+		return *x.SiteName
+	}
+	return ""
+}
+
+func (x *SourceBanRecord) GetSiteId() int32 {
+	if x != nil && x.SiteId != nil {
+		return *x.SiteId
+	}
+	return 0
+}
+
+func (x *SourceBanRecord) GetPersonaName() string {
+	if x != nil && x.PersonaName != nil {
+		return *x.PersonaName
+	}
+	return ""
+}
+
+func (x *SourceBanRecord) GetSteamId() string {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return ""
+}
+
+func (x *SourceBanRecord) GetReason() string {
+	if x != nil && x.Reason != nil {
+		return *x.Reason
+	}
+	return ""
+}
+
+func (x *SourceBanRecord) GetDuration() *durationpb.Duration {
+	if x != nil {
+		return x.Duration
+	}
+	return nil
+}
+
+func (x *SourceBanRecord) GetPermanent() bool {
+	if x != nil && x.Permanent != nil {
+		return *x.Permanent
+	}
+	return false
+}
+
+func (x *SourceBanRecord) GetCreatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedOn
+	}
+	return nil
+}
+
+type QuerySourceBansResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Bans          []*SourceBanRecord     `protobuf:"bytes,1,rep,name=bans" json:"bans,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuerySourceBansResponse) Reset() {
+	*x = QuerySourceBansResponse{}
+	mi := &file_ban_v1_ban_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuerySourceBansResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuerySourceBansResponse) ProtoMessage() {}
+
+func (x *QuerySourceBansResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_ban_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuerySourceBansResponse.ProtoReflect.Descriptor instead.
+func (*QuerySourceBansResponse) Descriptor() ([]byte, []int) {
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *QuerySourceBansResponse) GetBans() []*SourceBanRecord {
+	if x != nil {
+		return x.Bans
+	}
+	return nil
+}
+
+type GetBanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBanRequest) Reset() {
+	*x = GetBanRequest{}
+	mi := &file_ban_v1_ban_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBanRequest) ProtoMessage() {}
+
+func (x *GetBanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_ban_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBanRequest.ProtoReflect.Descriptor instead.
+func (*GetBanRequest) Descriptor() ([]byte, []int) {
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetBanRequest) GetBanId() int32 {
+	if x != nil && x.BanId != nil {
+		return *x.BanId
+	}
+	return 0
+}
+
+type GetBanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ban           *Ban                   `protobuf:"bytes,1,opt,name=ban" json:"ban,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBanResponse) Reset() {
+	*x = GetBanResponse{}
+	mi := &file_ban_v1_ban_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBanResponse) ProtoMessage() {}
+
+func (x *GetBanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_ban_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBanResponse.ProtoReflect.Descriptor instead.
+func (*GetBanResponse) Descriptor() ([]byte, []int) {
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetBanResponse) GetBan() *Ban {
+	if x != nil {
+		return x.Ban
+	}
+	return nil
 }
 
 type DeleteRequest struct {
@@ -316,7 +710,7 @@ type DeleteRequest struct {
 
 func (x *DeleteRequest) Reset() {
 	*x = DeleteRequest{}
-	mi := &file_ban_v1_ban_proto_msgTypes[1]
+	mi := &file_ban_v1_ban_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -328,7 +722,7 @@ func (x *DeleteRequest) String() string {
 func (*DeleteRequest) ProtoMessage() {}
 
 func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_ban_proto_msgTypes[1]
+	mi := &file_ban_v1_ban_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -341,7 +735,7 @@ func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRequest) Descriptor() ([]byte, []int) {
-	return file_ban_v1_ban_proto_rawDescGZIP(), []int{1}
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DeleteRequest) GetBanId() int64 {
@@ -367,7 +761,7 @@ type QueryRequest struct {
 
 func (x *QueryRequest) Reset() {
 	*x = QueryRequest{}
-	mi := &file_ban_v1_ban_proto_msgTypes[2]
+	mi := &file_ban_v1_ban_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -379,7 +773,7 @@ func (x *QueryRequest) String() string {
 func (*QueryRequest) ProtoMessage() {}
 
 func (x *QueryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_ban_proto_msgTypes[2]
+	mi := &file_ban_v1_ban_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -392,7 +786,7 @@ func (x *QueryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRequest.ProtoReflect.Descriptor instead.
 func (*QueryRequest) Descriptor() ([]byte, []int) {
-	return file_ban_v1_ban_proto_rawDescGZIP(), []int{2}
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *QueryRequest) GetSourceId() string {
@@ -460,7 +854,7 @@ type QueryResponse struct {
 
 func (x *QueryResponse) Reset() {
 	*x = QueryResponse{}
-	mi := &file_ban_v1_ban_proto_msgTypes[3]
+	mi := &file_ban_v1_ban_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -472,7 +866,7 @@ func (x *QueryResponse) String() string {
 func (*QueryResponse) ProtoMessage() {}
 
 func (x *QueryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_ban_proto_msgTypes[3]
+	mi := &file_ban_v1_ban_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -485,7 +879,7 @@ func (x *QueryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryResponse.ProtoReflect.Descriptor instead.
 func (*QueryResponse) Descriptor() ([]byte, []int) {
-	return file_ban_v1_ban_proto_rawDescGZIP(), []int{3}
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *QueryResponse) GetBans() []*Ban {
@@ -503,7 +897,7 @@ type Ban struct {
 	ReportId          *int64                 `protobuf:"varint,4,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	LastIp            *string                `protobuf:"bytes,5,opt,name=last_ip,json=lastIp" json:"last_ip,omitempty"`
 	EvadeOk           *bool                  `protobuf:"varint,6,opt,name=evade_ok,json=evadeOk" json:"evade_ok,omitempty"`
-	Bantype           *BanType               `protobuf:"varint,7,opt,name=bantype,enum=ban.v1.BanType" json:"bantype,omitempty"`
+	BanType           *BanType               `protobuf:"varint,7,opt,name=ban_type,json=banType,enum=ban.v1.BanType" json:"ban_type,omitempty"`
 	Reason            *BanReason             `protobuf:"varint,8,opt,name=reason,enum=ban.v1.BanReason" json:"reason,omitempty"`
 	ReasonText        *string                `protobuf:"bytes,9,opt,name=reason_text,json=reasonText" json:"reason_text,omitempty"`
 	UnbanReasonText   *string                `protobuf:"bytes,10,opt,name=unban_reason_text,json=unbanReasonText" json:"unban_reason_text,omitempty"`
@@ -517,17 +911,17 @@ type Ban struct {
 	ValidUntil        *timestamppb.Timestamp `protobuf:"bytes,18,opt,name=valid_until,json=validUntil" json:"valid_until,omitempty"`
 	CreatedOn         *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	UpdatedOn         *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
-	SourcePersonaname *string                `protobuf:"bytes,21,opt,name=source_personaname,json=sourcePersonaname" json:"source_personaname,omitempty"`
-	SourceAvatarhash  *string                `protobuf:"bytes,22,opt,name=source_avatarhash,json=sourceAvatarhash" json:"source_avatarhash,omitempty"`
-	TargetPersonaname *string                `protobuf:"bytes,23,opt,name=target_personaname,json=targetPersonaname" json:"target_personaname,omitempty"`
-	TargetAvatarhash  *string                `protobuf:"bytes,24,opt,name=target_avatarhash,json=targetAvatarhash" json:"target_avatarhash,omitempty"`
+	SourcePersonaName *string                `protobuf:"bytes,21,opt,name=source_persona_name,json=sourcePersonaName" json:"source_persona_name,omitempty"`
+	SourceAvatarHash  *string                `protobuf:"bytes,22,opt,name=source_avatar_hash,json=sourceAvatarHash" json:"source_avatar_hash,omitempty"`
+	TargetPersonaName *string                `protobuf:"bytes,23,opt,name=target_persona_name,json=targetPersonaName" json:"target_persona_name,omitempty"`
+	TargetAvatarHash  *string                `protobuf:"bytes,24,opt,name=target_avatar_hash,json=targetAvatarHash" json:"target_avatar_hash,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Ban) Reset() {
 	*x = Ban{}
-	mi := &file_ban_v1_ban_proto_msgTypes[4]
+	mi := &file_ban_v1_ban_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -539,7 +933,7 @@ func (x *Ban) String() string {
 func (*Ban) ProtoMessage() {}
 
 func (x *Ban) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_ban_proto_msgTypes[4]
+	mi := &file_ban_v1_ban_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -552,7 +946,7 @@ func (x *Ban) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Ban.ProtoReflect.Descriptor instead.
 func (*Ban) Descriptor() ([]byte, []int) {
-	return file_ban_v1_ban_proto_rawDescGZIP(), []int{4}
+	return file_ban_v1_ban_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Ban) GetTargetId() string {
@@ -597,9 +991,9 @@ func (x *Ban) GetEvadeOk() bool {
 	return false
 }
 
-func (x *Ban) GetBantype() BanType {
-	if x != nil && x.Bantype != nil {
-		return *x.Bantype
+func (x *Ban) GetBanType() BanType {
+	if x != nil && x.BanType != nil {
+		return *x.BanType
 	}
 	return BanType_BAN_TYPE_OK_UNSPECIFIED
 }
@@ -695,30 +1089,30 @@ func (x *Ban) GetUpdatedOn() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *Ban) GetSourcePersonaname() string {
-	if x != nil && x.SourcePersonaname != nil {
-		return *x.SourcePersonaname
+func (x *Ban) GetSourcePersonaName() string {
+	if x != nil && x.SourcePersonaName != nil {
+		return *x.SourcePersonaName
 	}
 	return ""
 }
 
-func (x *Ban) GetSourceAvatarhash() string {
-	if x != nil && x.SourceAvatarhash != nil {
-		return *x.SourceAvatarhash
+func (x *Ban) GetSourceAvatarHash() string {
+	if x != nil && x.SourceAvatarHash != nil {
+		return *x.SourceAvatarHash
 	}
 	return ""
 }
 
-func (x *Ban) GetTargetPersonaname() string {
-	if x != nil && x.TargetPersonaname != nil {
-		return *x.TargetPersonaname
+func (x *Ban) GetTargetPersonaName() string {
+	if x != nil && x.TargetPersonaName != nil {
+		return *x.TargetPersonaName
 	}
 	return ""
 }
 
-func (x *Ban) GetTargetAvatarhash() string {
-	if x != nil && x.TargetAvatarhash != nil {
-		return *x.TargetAvatarhash
+func (x *Ban) GetTargetAvatarHash() string {
+	if x != nil && x.TargetAvatarHash != nil {
+		return *x.TargetAvatarHash
 	}
 	return ""
 }
@@ -727,8 +1121,38 @@ var File_ban_v1_ban_proto protoreflect.FileDescriptor
 
 const file_ban_v1_ban_proto_rawDesc = "" +
 	"\n" +
-	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\ffilter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x15\n" +
-	"\x13ExportTF2BDResponse\"&\n" +
+	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\x1bbuf/validate/validate.proto\x1a\ffilter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/duration.proto\"\x83\x02\n" +
+	"\rUpdateRequest\x12\x1b\n" +
+	"\ttarget_id\x18\x01 \x01(\tR\btargetId\x12*\n" +
+	"\bban_type\x18\x02 \x01(\x0e2\x0f.ban.v1.BanTypeR\abanType\x12)\n" +
+	"\x06reason\x18\x03 \x01(\x0e2\x11.ban.v1.BanReasonR\x06reason\x12\x1f\n" +
+	"\vreason_text\x18\x04 \x01(\tR\n" +
+	"reasonText\x12\x12\n" +
+	"\x04note\x18\x05 \x01(\tR\x04note\x12\x19\n" +
+	"\bevade_ok\x18\x06 \x01(\bR\aevadeOk\x12\x1a\n" +
+	"\bduration\x18\a \x01(\tR\bduration\x12\x12\n" +
+	"\x04cidr\x18\b \x01(\tR\x04cidr\"/\n" +
+	"\x0eUpdateResponse\x12\x1d\n" +
+	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\"3\n" +
+	"\x16QuerySourceBansRequest\x12\x19\n" +
+	"\bsteam_id\x18\x01 \x01(\tR\asteamId\"\xc4\x02\n" +
+	"\x0fSourceBanRecord\x12\x15\n" +
+	"\x06ban_id\x18\x01 \x01(\x05R\x05banId\x12\x1b\n" +
+	"\tsite_name\x18\x02 \x01(\tR\bsiteName\x12\x17\n" +
+	"\asite_id\x18\x03 \x01(\x05R\x06siteId\x12!\n" +
+	"\fpersona_name\x18\x04 \x01(\tR\vpersonaName\x12\x19\n" +
+	"\bsteam_id\x18\x05 \x01(\tR\asteamId\x12\x16\n" +
+	"\x06reason\x18\x06 \x01(\tR\x06reason\x125\n" +
+	"\bduration\x18\a \x01(\v2\x19.google.protobuf.DurationR\bduration\x12\x1c\n" +
+	"\tpermanent\x18\b \x01(\bR\tpermanent\x129\n" +
+	"\n" +
+	"created_on\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"F\n" +
+	"\x17QuerySourceBansResponse\x12+\n" +
+	"\x04bans\x18\x01 \x03(\v2\x17.ban.v1.SourceBanRecordR\x04bans\"&\n" +
+	"\rGetBanRequest\x12\x15\n" +
+	"\x06ban_id\x18\x01 \x01(\x05R\x05banId\"/\n" +
+	"\x0eGetBanResponse\x12\x1d\n" +
+	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\"&\n" +
 	"\rDeleteRequest\x12\x15\n" +
 	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\"\x82\x02\n" +
 	"\fQueryRequest\x12\x1b\n" +
@@ -742,15 +1166,15 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x06reason\x18\a \x03(\x0e2\x11.ban.v1.BanReasonR\x06reason\x12!\n" +
 	"\fappeal_state\x18\b \x01(\x05R\vappealState\"0\n" +
 	"\rQueryResponse\x12\x1f\n" +
-	"\x04bans\x18\x01 \x03(\v2\v.ban.v1.BanR\x04bans\"\x8a\a\n" +
+	"\x04bans\x18\x01 \x03(\v2\v.ban.v1.BanR\x04bans\"\x8f\a\n" +
 	"\x03Ban\x12\x1b\n" +
 	"\ttarget_id\x18\x01 \x01(\tR\btargetId\x12\x1b\n" +
 	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12\x15\n" +
 	"\x06ban_id\x18\x03 \x01(\x03R\x05banId\x12\x1b\n" +
 	"\treport_id\x18\x04 \x01(\x03R\breportId\x12\x17\n" +
 	"\alast_ip\x18\x05 \x01(\tR\x06lastIp\x12\x19\n" +
-	"\bevade_ok\x18\x06 \x01(\bR\aevadeOk\x12)\n" +
-	"\abantype\x18\a \x01(\x0e2\x0f.ban.v1.BanTypeR\abantype\x12)\n" +
+	"\bevade_ok\x18\x06 \x01(\bR\aevadeOk\x12*\n" +
+	"\bban_type\x18\a \x01(\x0e2\x0f.ban.v1.BanTypeR\abanType\x12)\n" +
 	"\x06reason\x18\b \x01(\x0e2\x11.ban.v1.BanReasonR\x06reason\x12\x1f\n" +
 	"\vreason_text\x18\t \x01(\tR\n" +
 	"reasonText\x12*\n" +
@@ -769,11 +1193,11 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
-	"updated_on\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12-\n" +
-	"\x12source_personaname\x18\x15 \x01(\tR\x11sourcePersonaname\x12+\n" +
-	"\x11source_avatarhash\x18\x16 \x01(\tR\x10sourceAvatarhash\x12-\n" +
-	"\x12target_personaname\x18\x17 \x01(\tR\x11targetPersonaname\x12+\n" +
-	"\x11target_avatarhash\x18\x18 \x01(\tR\x10targetAvatarhash*g\n" +
+	"updated_on\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12.\n" +
+	"\x13source_persona_name\x18\x15 \x01(\tR\x11sourcePersonaName\x12,\n" +
+	"\x12source_avatar_hash\x18\x16 \x01(\tR\x10sourceAvatarHash\x12.\n" +
+	"\x13target_persona_name\x18\x17 \x01(\tR\x11targetPersonaName\x12,\n" +
+	"\x12target_avatar_hash\x18\x18 \x01(\tR\x10targetAvatarHash*g\n" +
 	"\aBanType\x12\x1b\n" +
 	"\x17BAN_TYPE_OK_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10BAN_TYPE_NO_COMM\x10\x01\x12\x13\n" +
@@ -809,12 +1233,14 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\n" +
 	"ORIGIN_WEB\x10\x02\x12\x12\n" +
 	"\x0eORIGIN_IN_GAME\x10\x03\x12\x13\n" +
-	"\x0fORIGIN_REPORTED\x10\x042\xc5\x01\n" +
+	"\x0fORIGIN_REPORTED\x10\x042\xc8\x02\n" +
 	"\n" +
 	"BanService\x126\n" +
-	"\x05Query\x12\x14.ban.v1.QueryRequest\x1a\x15.ban.v1.QueryResponse\"\x00\x12D\n" +
-	"\vExportTF2BD\x12\x16.google.protobuf.Empty\x1a\x1b.ban.v1.ExportTF2BDResponse\"\x00\x129\n" +
-	"\x06Delete\x12\x15.ban.v1.DeleteRequest\x1a\x16.google.protobuf.Empty\"\x00B\x8a\x01\n" +
+	"\x05Query\x12\x14.ban.v1.QueryRequest\x1a\x15.ban.v1.QueryResponse\"\x00\x129\n" +
+	"\x06Delete\x12\x15.ban.v1.DeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x126\n" +
+	"\x03Get\x12\x15.ban.v1.GetBanRequest\x1a\x16.ban.v1.GetBanResponse\"\x00\x12T\n" +
+	"\x0fQuerySourceBans\x12\x1e.ban.v1.QuerySourceBansRequest\x1a\x1f.ban.v1.QuerySourceBansResponse\"\x00\x129\n" +
+	"\x06Update\x12\x15.ban.v1.UpdateRequest\x1a\x16.ban.v1.UpdateResponse\"\x00B\x8a\x01\n" +
 	"\n" +
 	"com.ban.v1B\bBanProtoP\x01Z9github.com/leighmacdonald/gbans/internal/rpc/ban/v1;banv1\xa2\x02\x03BXX\xaa\x02\x06Ban.V1\xca\x02\x06Ban\\V1\xe2\x02\x12Ban\\V1\\GPBMetadata\xea\x02\aBan::V1b\beditionsp\xe8\a"
 
@@ -831,41 +1257,59 @@ func file_ban_v1_ban_proto_rawDescGZIP() []byte {
 }
 
 var file_ban_v1_ban_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_ban_v1_ban_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_ban_v1_ban_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_ban_v1_ban_proto_goTypes = []any{
-	(BanType)(0),                  // 0: ban.v1.BanType
-	(AppealState)(0),              // 1: ban.v1.AppealState
-	(BanReason)(0),                // 2: ban.v1.BanReason
-	(Origin)(0),                   // 3: ban.v1.Origin
-	(*ExportTF2BDResponse)(nil),   // 4: ban.v1.ExportTF2BDResponse
-	(*DeleteRequest)(nil),         // 5: ban.v1.DeleteRequest
-	(*QueryRequest)(nil),          // 6: ban.v1.QueryRequest
-	(*QueryResponse)(nil),         // 7: ban.v1.QueryResponse
-	(*Ban)(nil),                   // 8: ban.v1.Ban
-	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),         // 10: google.protobuf.Empty
+	(BanType)(0),                    // 0: ban.v1.BanType
+	(AppealState)(0),                // 1: ban.v1.AppealState
+	(BanReason)(0),                  // 2: ban.v1.BanReason
+	(Origin)(0),                     // 3: ban.v1.Origin
+	(*UpdateRequest)(nil),           // 4: ban.v1.UpdateRequest
+	(*UpdateResponse)(nil),          // 5: ban.v1.UpdateResponse
+	(*QuerySourceBansRequest)(nil),  // 6: ban.v1.QuerySourceBansRequest
+	(*SourceBanRecord)(nil),         // 7: ban.v1.SourceBanRecord
+	(*QuerySourceBansResponse)(nil), // 8: ban.v1.QuerySourceBansResponse
+	(*GetBanRequest)(nil),           // 9: ban.v1.GetBanRequest
+	(*GetBanResponse)(nil),          // 10: ban.v1.GetBanResponse
+	(*DeleteRequest)(nil),           // 11: ban.v1.DeleteRequest
+	(*QueryRequest)(nil),            // 12: ban.v1.QueryRequest
+	(*QueryResponse)(nil),           // 13: ban.v1.QueryResponse
+	(*Ban)(nil),                     // 14: ban.v1.Ban
+	(*durationpb.Duration)(nil),     // 15: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),   // 16: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),           // 17: google.protobuf.Empty
 }
 var file_ban_v1_ban_proto_depIdxs = []int32{
-	2,  // 0: ban.v1.QueryRequest.reason:type_name -> ban.v1.BanReason
-	8,  // 1: ban.v1.QueryResponse.bans:type_name -> ban.v1.Ban
-	0,  // 2: ban.v1.Ban.bantype:type_name -> ban.v1.BanType
-	2,  // 3: ban.v1.Ban.reason:type_name -> ban.v1.BanReason
-	3,  // 4: ban.v1.Ban.origin:type_name -> ban.v1.Origin
-	1,  // 5: ban.v1.Ban.appeal_state:type_name -> ban.v1.AppealState
-	9,  // 6: ban.v1.Ban.valid_until:type_name -> google.protobuf.Timestamp
-	9,  // 7: ban.v1.Ban.created_on:type_name -> google.protobuf.Timestamp
-	9,  // 8: ban.v1.Ban.updated_on:type_name -> google.protobuf.Timestamp
-	6,  // 9: ban.v1.BanService.Query:input_type -> ban.v1.QueryRequest
-	10, // 10: ban.v1.BanService.ExportTF2BD:input_type -> google.protobuf.Empty
-	5,  // 11: ban.v1.BanService.Delete:input_type -> ban.v1.DeleteRequest
-	7,  // 12: ban.v1.BanService.Query:output_type -> ban.v1.QueryResponse
-	4,  // 13: ban.v1.BanService.ExportTF2BD:output_type -> ban.v1.ExportTF2BDResponse
-	10, // 14: ban.v1.BanService.Delete:output_type -> google.protobuf.Empty
-	12, // [12:15] is the sub-list for method output_type
-	9,  // [9:12] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	0,  // 0: ban.v1.UpdateRequest.ban_type:type_name -> ban.v1.BanType
+	2,  // 1: ban.v1.UpdateRequest.reason:type_name -> ban.v1.BanReason
+	14, // 2: ban.v1.UpdateResponse.ban:type_name -> ban.v1.Ban
+	15, // 3: ban.v1.SourceBanRecord.duration:type_name -> google.protobuf.Duration
+	16, // 4: ban.v1.SourceBanRecord.created_on:type_name -> google.protobuf.Timestamp
+	7,  // 5: ban.v1.QuerySourceBansResponse.bans:type_name -> ban.v1.SourceBanRecord
+	14, // 6: ban.v1.GetBanResponse.ban:type_name -> ban.v1.Ban
+	2,  // 7: ban.v1.QueryRequest.reason:type_name -> ban.v1.BanReason
+	14, // 8: ban.v1.QueryResponse.bans:type_name -> ban.v1.Ban
+	0,  // 9: ban.v1.Ban.ban_type:type_name -> ban.v1.BanType
+	2,  // 10: ban.v1.Ban.reason:type_name -> ban.v1.BanReason
+	3,  // 11: ban.v1.Ban.origin:type_name -> ban.v1.Origin
+	1,  // 12: ban.v1.Ban.appeal_state:type_name -> ban.v1.AppealState
+	16, // 13: ban.v1.Ban.valid_until:type_name -> google.protobuf.Timestamp
+	16, // 14: ban.v1.Ban.created_on:type_name -> google.protobuf.Timestamp
+	16, // 15: ban.v1.Ban.updated_on:type_name -> google.protobuf.Timestamp
+	12, // 16: ban.v1.BanService.Query:input_type -> ban.v1.QueryRequest
+	11, // 17: ban.v1.BanService.Delete:input_type -> ban.v1.DeleteRequest
+	9,  // 18: ban.v1.BanService.Get:input_type -> ban.v1.GetBanRequest
+	6,  // 19: ban.v1.BanService.QuerySourceBans:input_type -> ban.v1.QuerySourceBansRequest
+	4,  // 20: ban.v1.BanService.Update:input_type -> ban.v1.UpdateRequest
+	13, // 21: ban.v1.BanService.Query:output_type -> ban.v1.QueryResponse
+	17, // 22: ban.v1.BanService.Delete:output_type -> google.protobuf.Empty
+	10, // 23: ban.v1.BanService.Get:output_type -> ban.v1.GetBanResponse
+	8,  // 24: ban.v1.BanService.QuerySourceBans:output_type -> ban.v1.QuerySourceBansResponse
+	5,  // 25: ban.v1.BanService.Update:output_type -> ban.v1.UpdateResponse
+	21, // [21:26] is the sub-list for method output_type
+	16, // [16:21] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_ban_v1_ban_proto_init() }
@@ -879,7 +1323,7 @@ func file_ban_v1_ban_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ban_v1_ban_proto_rawDesc), len(file_ban_v1_ban_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   5,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

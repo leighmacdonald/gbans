@@ -29,7 +29,7 @@ var (
 // SafeServer provides a server struct stripped of any sensitive info suitable for public-facing
 // services.
 type SafeServer struct {
-	ServerID          int      `json:"server_id"`
+	ServerID          int32    `json:"server_id"`
 	Host              string   `json:"host"`
 	Port              uint16   `json:"port"`
 	IP                string   `json:"ip"`
@@ -37,16 +37,16 @@ type SafeServer struct {
 	NameShort         string   `json:"name_short"`
 	Region            string   `json:"region"`
 	CC                string   `json:"cc"`
-	Players           int      `json:"players"`
-	MaxPlayers        int      `json:"max_players"`
-	MaxPlayersVisible int      `json:"max_players_visible"`
-	Bots              int      `json:"bots"`
+	Players           int32    `json:"players"`
+	MaxPlayers        int32    `json:"max_players"`
+	MaxPlayersVisible int32    `json:"max_players_visible"`
+	Bots              int32    `json:"bots"`
 	Map               string   `json:"map"`
 	GameTypes         []string `json:"game_types"`
 	Latitude          float64  `json:"latitude"`
 	Longitude         float64  `json:"longitude"`
 	Distance          float64  `json:"distance"`
-	Humans            int      `json:"humans"`
+	Humans            int32    `json:"humans"`
 	Tags              []string `json:"tags"`
 }
 
@@ -54,7 +54,7 @@ type Server struct {
 	*sync.RWMutex
 
 	// Auto generated id
-	ServerID int `json:"server_id"`
+	ServerID int32 `json:"server_id"`
 	// ShortName is a short reference name for the server eg: us-1
 	// This is used as a unique identifier for servers and is used for many different things such as paths,
 	// so it's best to keep it short and without whitespace.
@@ -70,7 +70,7 @@ type Server struct {
 	Port uint16 `json:"port"`
 	// RCON is the RCON password for the server
 	RCON          string `json:"rcon"`
-	ReservedSlots int    `json:"reserved_slots"`
+	ReservedSlots int32  `json:"reserved_slots"` // TODO remove and ignore
 	// Password is what the sourcemod plugin on each server uses to generate a token to make authenticated calls.
 	// This is *NOT* the general game server password (sv_password)
 	Password  string `json:"password"`
@@ -84,8 +84,8 @@ type Server struct {
 	// Physical Longitude location
 	Longitude float64 `json:"longitude"`
 	// LogSecret is a unique integer used to "authenticate" UDP log packets.
-	LogSecret   int  `json:"log_secret"`
-	EnableStats bool `json:"enable_stats"`
+	LogSecret   int32 `json:"log_secret"`
+	EnableStats bool  `json:"enable_stats"`
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time `json:"token_created_on"`
 	CreatedOn      time.Time `json:"created_on"`
@@ -316,7 +316,7 @@ func (s *Server) AddrInternalOrDefault() string {
 	return s.Address
 }
 
-func (s *Server) Slots(statusSlots int) int {
+func (s *Server) Slots(statusSlots int32) int32 {
 	return statusSlots - s.ReservedSlots
 }
 
@@ -376,12 +376,12 @@ func (s *Server) updateA2S() error {
 	s.state.AppID = serverInfo.ID
 	s.state.Version = serverInfo.Version
 	s.state.VAC = serverInfo.VAC
-	s.state.Bots = int(serverInfo.Bots)
+	s.state.Bots = int32(serverInfo.Bots)
 	s.state.ServerOS = serverInfo.ServerOS.String()
 	s.state.Password = !serverInfo.Visibility
-	s.state.PlayerCount = int(serverInfo.Players)
+	s.state.PlayerCount = int32(serverInfo.Players)
 	if s.state.MaxPlayers == 0 {
-		s.state.MaxPlayers = int(serverInfo.MaxPlayers)
+		s.state.MaxPlayers = int32(serverInfo.MaxPlayers)
 	}
 	if serverInfo.SourceTV != nil {
 		s.state.STVPort = serverInfo.SourceTV.Port
@@ -467,7 +467,7 @@ func (s *Server) updateStatus(ctx context.Context) error {
 	s.state.Players = players
 	if s.state.MaxPlayers == 0 && status.PlayersMax > 0 {
 		// Prefer the sv_visiblemaxplayers value
-		s.state.MaxPlayers = status.PlayersMax
+		s.state.MaxPlayers = int32(status.PlayersMax)
 	}
 	s.state.Map = status.Map
 	s.state.IP = status.IPInfo.FakeIP
@@ -508,7 +508,7 @@ func (s *Server) updateMaxVisiblePlayers(ctx context.Context) error {
 
 	s.Lock()
 	if maxPlayers > 0 {
-		s.state.MaxPlayersVisible = int(maxPlayers)
+		s.state.MaxPlayersVisible = int32(maxPlayers)
 	}
 	s.lastMaxVisiblePlayersUpdate = time.Now()
 	s.Unlock()

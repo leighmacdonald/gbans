@@ -4,17 +4,17 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Timestamp } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Filter } from "../../filter_pb";
 import { file_filter } from "../../filter_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file anticheat/v1/anticheat.proto.
  */
 export const file_anticheat_v1_anticheat: GenFile = /*@__PURE__*/
-  fileDesc("ChxhbnRpY2hlYXQvdjEvYW50aWNoZWF0LnByb3RvEgxhbnRpY2hlYXQudjEihAEKDFF1ZXJ5UmVxdWVzdBIXCgZmaWx0ZXIYASABKAsyBy5GaWx0ZXISDAoEbmFtZRgCIAEoCRIQCghzdGVhbV9pZBgDIAEoCRIPCgdzdW1hbXJ5GAQgASgJEioKCWRldGVjdGlvbhgFIAEoDjIXLmFudGljaGVhdC52MS5EZXRlY3Rpb24iNQoNUXVlcnlSZXNwb25zZRIkCgdlbnRyaWVzGAEgAygLMhMuYW50aWNoZWF0LnYxLkVudHJ5ItYCCgVFbnRyeRIUCgxhbnRpY2hlYXRfaWQYASABKAMSEAoIc3RlYW1faWQYAiABKAkSEQoJc2VydmVyX2lkGAMgASgFEhMKC3NlcnZlcl9uYW1lGAQgASgJEg8KB2RlbW9faWQYBSABKAUSEQoJZGVtb19uYW1lGAYgASgJEhEKCWRlbW9fdGljaxgHIAEoBRIMCgRuYW1lGAggASgJEioKCWRldGVjdGlvbhgJIAEoDjIXLmFudGljaGVhdC52MS5EZXRlY3Rpb24SDwoHc3VtbWFyeRgKIAEoCRIPCgdyYXdfbG9nGAsgASgJEi4KCmNyZWF0ZWRfb24YDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhMKC3BlcnNvbmFuYW1lGA0gASgJEhIKCmF2YXRhcmhhc2gYDiABKAkSEQoJdHJpZ2dlcmVkGA8gASgFKrIBCglEZXRlY3Rpb24SCwoHVW5rbm93bhAAEg0KCVNpbGVudEFpbRABEgsKB0FpbVNuYXAQAhIWChJUb29NYW55Q29ubmVjdGlvbnMQAxIKCgZJbnRlcnAQBBIICgRCSG9wEAUSDwoLQ21kTnVtU3Bpa2UQBhINCglFeWVBbmdsZXMQBxISCg5JbnZhbGlkVXNlckNtZBAIEgsKB09PQkNWYXIQCRINCglDaGVhdENWYXIQCjJWChBBbnRpY2hlYXRTZXJ2aWNlEkIKBVF1ZXJ5EhouYW50aWNoZWF0LnYxLlF1ZXJ5UmVxdWVzdBobLmFudGljaGVhdC52MS5RdWVyeVJlc3BvbnNlIgBCugEKEGNvbS5hbnRpY2hlYXQudjFCDkFudGljaGVhdFByb3RvUAFaRWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvcnBjL2FudGljaGVhdC92MTthbnRpY2hlYXR2MaICA0FYWKoCDEFudGljaGVhdC5WMcoCDEFudGljaGVhdFxWMeICGEFudGljaGVhdFxWMVxHUEJNZXRhZGF0YeoCDUFudGljaGVhdDo6VjFiCGVkaXRpb25zcOgH", [file_google_protobuf_timestamp, file_filter]);
+  fileDesc("ChxhbnRpY2hlYXQvdjEvYW50aWNoZWF0LnByb3RvEgxhbnRpY2hlYXQudjEihAEKDFF1ZXJ5UmVxdWVzdBIXCgZmaWx0ZXIYASABKAsyBy5GaWx0ZXISDAoEbmFtZRgCIAEoCRIQCghzdGVhbV9pZBgDIAEoCRIPCgdzdW1tYXJ5GAQgASgJEioKCWRldGVjdGlvbhgFIAEoDjIXLmFudGljaGVhdC52MS5EZXRlY3Rpb24iNQoNUXVlcnlSZXNwb25zZRIkCgdlbnRyaWVzGAEgAygLMhMuYW50aWNoZWF0LnYxLkVudHJ5ItgCCgVFbnRyeRIUCgxhbnRpY2hlYXRfaWQYASABKAMSEAoIc3RlYW1faWQYAiABKAkSEQoJc2VydmVyX2lkGAMgASgFEhMKC3NlcnZlcl9uYW1lGAQgASgJEg8KB2RlbW9faWQYBSABKAUSEQoJZGVtb19uYW1lGAYgASgJEhEKCWRlbW9fdGljaxgHIAEoBRIMCgRuYW1lGAggASgJEioKCWRldGVjdGlvbhgJIAEoDjIXLmFudGljaGVhdC52MS5EZXRlY3Rpb24SDwoHc3VtbWFyeRgKIAEoCRIPCgdyYXdfbG9nGAsgASgJEi4KCmNyZWF0ZWRfb24YDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhQKDHBlcnNvbmFfbmFtZRgNIAEoCRITCgthdmF0YXJfaGFzaBgOIAEoCRIRCgl0cmlnZ2VyZWQYDyABKAUqsgEKCURldGVjdGlvbhILCgdVbmtub3duEAASDQoJU2lsZW50QWltEAESCwoHQWltU25hcBACEhYKElRvb01hbnlDb25uZWN0aW9ucxADEgoKBkludGVycBAEEggKBEJIb3AQBRIPCgtDbWROdW1TcGlrZRAGEg0KCUV5ZUFuZ2xlcxAHEhIKDkludmFsaWRVc2VyQ21kEAgSCwoHT09CQ1ZhchAJEg0KCUNoZWF0Q1ZhchAKMlYKEEFudGljaGVhdFNlcnZpY2USQgoFUXVlcnkSGi5hbnRpY2hlYXQudjEuUXVlcnlSZXF1ZXN0GhsuYW50aWNoZWF0LnYxLlF1ZXJ5UmVzcG9uc2UiAEK6AQoQY29tLmFudGljaGVhdC52MUIOQW50aWNoZWF0UHJvdG9QAVpFZ2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9ycGMvYW50aWNoZWF0L3YxO2FudGljaGVhdHYxogIDQVhYqgIMQW50aWNoZWF0LlYxygIMQW50aWNoZWF0XFYx4gIYQW50aWNoZWF0XFYxXEdQQk1ldGFkYXRh6gINQW50aWNoZWF0OjpWMWIIZWRpdGlvbnNw6Ac", [file_filter, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message anticheat.v1.QueryRequest
@@ -36,9 +36,9 @@ export type QueryRequest = Message<"anticheat.v1.QueryRequest"> & {
   steamId: string;
 
   /**
-   * @generated from field: string sumamry = 4;
+   * @generated from field: string summary = 4;
    */
-  sumamry: string;
+  summary: string;
 
   /**
    * @generated from field: anticheat.v1.Detection detection = 5;
@@ -135,14 +135,14 @@ export type Entry = Message<"anticheat.v1.Entry"> & {
   createdOn?: Timestamp;
 
   /**
-   * @generated from field: string personaname = 13;
+   * @generated from field: string persona_name = 13;
    */
-  personaname: string;
+  personaName: string;
 
   /**
-   * @generated from field: string avatarhash = 14;
+   * @generated from field: string avatar_hash = 14;
    */
-  avatarhash: string;
+  avatarHash: string;
 
   /**
    * @generated from field: int32 triggered = 15;

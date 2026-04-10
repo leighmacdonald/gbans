@@ -59,7 +59,7 @@ func (r Repository) Query(ctx context.Context, opts QueryOpts) ([]PlayerStats, i
 	}
 	defer rows.Close()
 
-	stats := []PlayerStats{}
+	var stats []PlayerStats
 	for rows.Next() {
 		var stat PlayerStats
 		if err := rows.Scan(&stat.StatsID, &stat.Rating, &stat.SteamID, &stat.Name, &stat.Wins,

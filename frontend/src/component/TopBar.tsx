@@ -46,7 +46,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { type MenuItemData, NestedDropdown } from "mui-nested-menu";
 import { type JSX, type MouseEvent, useCallback, useMemo, useState } from "react";
 import { apiGetNotifications } from "../api";
-import type { InfoResponse } from "../gen/config/v1/config_pb.ts";
+import type { InfoResponse } from "../rpc/config/v1/config_pb.ts";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useColourModeCtx } from "../hooks/useColourModeCtx.ts";
 import steamLogo from "../icons/steam_login_sm.png";

@@ -37,5 +37,5 @@ export const Route = createFileRoute("/_guest/wiki/")({
 function Wiki() {
 	const { appInfo } = Route.useRouteContext();
 	const { page } = Route.useLoaderData();
-	return <WikiPage page={page} slug="home" assetURL={appInfo.asset_url} />;
+	return <WikiPage page={page} slug="home" assetURL={appInfo.assetUrl} />;
 }

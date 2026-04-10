@@ -117,18 +117,6 @@ function Index() {
 							Contests
 						</Button>
 					)}
-					{appInfo.chatlogsEnabled && (
-						<Button
-							component={RouterLink}
-							startIcon={<AdsClickIcon />}
-							fullWidth
-							color={"primary"}
-							variant={"contained"}
-							to={`/mge`}
-						>
-							MGE Rankings
-						</Button>
-					)}
 					{appInfo.mgeEnabled && (
 						<Button
 							component={RouterLink}

@@ -39,7 +39,7 @@ import { humanFileSize } from "../util/text.tsx";
 export const Route = createFileRoute("/_auth/contests/$contest_id")({
 	component: Contest,
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.contests_enabled);
+		ensureFeatureEnabled(context.appInfo.contestsEnabled);
 	},
 	loader: async ({ context, params }) => {
 		const { contest_id } = params;
@@ -219,7 +219,7 @@ function Contest() {
 													<Grid size={{ xs: 8 }} padding={2}>
 														<Typography variant={"subtitle1"}>Description</Typography>
 														<MarkDownRenderer
-															assetURL={appInfo.asset_url}
+															assetURL={appInfo.assetUrl}
 															body_md={
 																entry.description !== ""
 																	? entry.description

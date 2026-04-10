@@ -644,7 +644,7 @@ var File_srcds_v1_srcds_proto protoreflect.FileDescriptor
 const file_srcds_v1_srcds_proto_rawDesc = "" +
 	"\n" +
 	"\x14srcds/v1/srcds.proto\x12\n" +
-	"servers.v1\x1a\vgroup.proto\x1a\x12overridetype.proto\x1a\x1csourcemod/v1/sourcemod.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"E\n" +
+	"servers.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\vgroup.proto\x1a\x12overridetype.proto\x1a\x1csourcemod/v1/sourcemod.proto\"E\n" +
 	"\vSeedRequest\x12\x19\n" +
 	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x12\x1b\n" +
 	"\tserver_id\x18\x02 \x01(\x05R\bserverId\"\x7f\n" +

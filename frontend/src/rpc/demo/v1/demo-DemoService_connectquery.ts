@@ -5,9 +5,9 @@
 import { DemoService } from "./demo_pb";
 
 /**
- * @generated from rpc servers.v1.DemoService.GetGemos
+ * @generated from rpc servers.v1.DemoService.GetDemos
  */
-export const getGemos = DemoService.method.getGemos;
+export const getDemos = DemoService.method.getDemos;
 
 /**
  * @generated from rpc servers.v1.DemoService.RunCleanup

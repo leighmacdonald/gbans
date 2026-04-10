@@ -19,7 +19,7 @@ const defaultOptions = createDefaultTableOptions<SpeedrunMapOverview>();
 export const Route = createFileRoute("/_guest/speedruns/map/$mapName")({
 	component: SpeedrunsMap,
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.speedruns_enabled);
+		ensureFeatureEnabled(context.appInfo.speedrunsEnabled);
 	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Map Speedruns" }, match.context.title("Map Speedruns")],

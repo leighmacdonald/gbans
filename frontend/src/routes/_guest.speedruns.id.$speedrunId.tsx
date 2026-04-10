@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_guest/speedruns/id/$speedrunId")({
 		meta: [{ name: "description", content: "Speedrun details" }, match.context.title("Speedrun")],
 	}),
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.speedruns_enabled);
+		ensureFeatureEnabled(context.appInfo.speedrunsEnabled);
 	},
 });
 

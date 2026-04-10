@@ -52,5 +52,5 @@ function Wiki() {
 	const { page } = Route.useLoaderData();
 	const { appInfo } = Route.useRouteContext();
 
-	return <WikiPage slug={slug} page={page} assetURL={appInfo.asset_url} />;
+	return <WikiPage slug={slug} page={page} assetURL={appInfo.assetUrl} />;
 }

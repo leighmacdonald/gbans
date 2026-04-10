@@ -14,7 +14,7 @@ import (
 )
 
 type broadcastResult struct {
-	serverID int
+	serverID int32
 	resp     string
 }
 
@@ -32,7 +32,7 @@ type FindResult struct {
 
 type Collection []*Server
 
-func (c Collection) filter(serverIDs []int) Collection {
+func (c Collection) filter(serverIDs []int32) Collection {
 	var valid Collection
 	for _, server := range c {
 		if slices.Contains(serverIDs, server.ServerID) {
@@ -45,9 +45,9 @@ func (c Collection) filter(serverIDs []int) Collection {
 
 // broadcast sends out rcon commands to all provided servers. If no servers are provided it will default to broadcasting
 // to every server.
-func (c Collection) broadcast(ctx context.Context, cmd string) map[int]string {
+func (c Collection) broadcast(ctx context.Context, cmd string) map[int32]string {
 	var (
-		results         = map[int]string{}
+		results         = map[int32]string{}
 		errGroup, egCtx = errgroup.WithContext(ctx)
 		resultChan      = make(chan broadcastResult)
 	)
@@ -61,7 +61,7 @@ func (c Collection) broadcast(ctx context.Context, cmd string) map[int]string {
 				}
 
 				slog.Error("Failed to exec server command", slog.String("name", server.Name),
-					slog.Int("server_id", server.ServerID), slog.String("error", errExec.Error()))
+					slog.Int("server_id", int(server.ServerID)), slog.String("error", errExec.Error()))
 
 				// Don't error out since we don't want a single servers potentially temporary issue to prevent the rest
 				// from executing.
@@ -153,7 +153,7 @@ func (c Collection) sortRegion() map[string][]*Server {
 	return serverMap
 }
 
-func (c Collection) byServerID(serverID int) (*Server, bool) {
+func (c Collection) byServerID(serverID int32) (*Server, bool) {
 	for _, server := range c {
 		if server.ServerID == serverID {
 			return server, true

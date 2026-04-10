@@ -7,15 +7,26 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { createMRTColumnHelper, useMaterialReactTable } from "material-react-table";
+import {createFileRoute, stripSearchParams, useNavigate} from "@tanstack/react-router";
+import {
+    createMRTColumnHelper,
+    useMaterialReactTable,
+    type MRT_SortingState,
+    type MRT_ColumnFiltersState, type MRT_PaginationState
+} from "material-react-table";
 import { useCallback, useMemo } from "react";
 import { apiGetServersAdmin } from "../api";
 import { IconButtonLink } from "../component/IconButtonLink.tsx";
 import { ServerEditorModal } from "../component/modal/ServerEditorModal.tsx";
 import { RowActionContainer } from "../component/RowActionContainer.tsx";
 import { BoolCell } from "../component/table/BoolCell.tsx";
-import { createDefaultTableOptions, makeRowActionsDefOptions } from "../component/table/options.ts";
+import {
+    createDefaultTableOptions,
+    makeRowActionsDefOptions,
+    makeSchemaDefaults,
+    makeSchemaState,
+    type OnChangeFn
+} from "../component/table/options.ts";
 import { SortableTable } from "../component/table/SortableTable.tsx";
 import { TableCellStringHidden } from "../component/table/TableCellStringHidden.tsx";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
@@ -25,8 +36,22 @@ import { renderDateTime } from "../util/time.ts";
 
 const columnHelper = createMRTColumnHelper<Server>();
 const defaultOptions = createDefaultTableOptions<Server>();
+const defaultValues = {
+    ...makeSchemaDefaults({ defaultColumn: "name" }),
+    columnFilters: [{id:"is_enabled", value: "true"}],
+    sorting: [{ id: "name", desc: false }],
+    pagination: {
+        pageIndex: 0,
+        pageSize: 25,
+    },
+};
+const validateSearch = makeSchemaState("name", false);
 
 export const Route = createFileRoute("/_admin/admin/servers")({
+    validateSearch,
+    search: {
+        middlewares: [stripSearchParams(defaultValues)],
+    },
 	head: ({ match }) => {
 		return {
 			meta: [{ name: "description", content: "Server Editor" }, match.context.title("Edit Servers")],
@@ -38,6 +63,8 @@ export const Route = createFileRoute("/_admin/admin/servers")({
 function AdminServers() {
 	const { sendFlash } = useUserFlashCtx();
 	const queryClient = useQueryClient();
+    const search = Route.useSearch();
+    const navigate = useNavigate();
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey: ["serversAdmin"],
@@ -180,22 +207,67 @@ function AdminServers() {
 		];
 	}, []);
 
+    const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
+        async (updater) => {
+            await navigate({
+                to: Route.fullPath,
+                search: {
+                    ...search,
+                    sorting: typeof updater === "function" ? updater(search.sorting ?? []) : updater,
+                },
+            });
+        },
+        [search, navigate],
+    );
+
+    const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
+        async (updater) => {
+            await navigate({
+                to: Route.fullPath,
+                search: {
+                    ...search,
+                    columnFilters: typeof updater === "function" ? updater(search.columnFilters ?? []) : updater,
+                },
+            });
+        },
+        [search, navigate],
+    );
+
+    const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
+        async (updater) => {
+            await navigate({
+                to: Route.fullPath,
+                search: {
+                    ...search,
+                    pagination: search.pagination
+                        ? typeof updater === "function"
+                            ? updater(search.pagination)
+                            : updater
+                        : undefined,
+                },
+            });
+        },
+        [search, navigate],
+    );
 	const table = useMaterialReactTable({
 		...defaultOptions,
 		columns,
 		data: data ?? [],
 		enableFilters: true,
+        onColumnFiltersChange: setColumnFilters,
+        onPaginationChange: setPagination,
+        onSortingChange: setSorting,
 		state: {
 			isLoading,
 			showAlertBanner: isError,
+            columnFilters: search.columnFilters,
+            sorting: search.sorting,
+            pagination: search.pagination,
 		},
 		initialState: {
-			...defaultOptions.initialState,
-			sorting: [{ id: "name", desc: false }],
-			pagination: {
-				pageIndex: 0,
-				pageSize: 100,
-			},
+            columnFilters: defaultValues.columnFilters,
+			pagination: defaultValues.pagination,
+            sorting: defaultValues.sorting,
 			columnVisibility: {
 				server_id: false,
 				short_name: true,

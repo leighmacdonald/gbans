@@ -2,10 +2,9 @@ edition = "2023";
 
 package person.v1;
 
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/empty.proto";
-
 import "filter.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 import "privilege.proto";
 
 service PersonService {
@@ -14,25 +13,24 @@ service PersonService {
   rpc EditProfileSettings(EditProfileSettingsRequest) returns (EditProfileSettingsResponse);
   rpc Query(QueryRequest) returns (QueryResponse);
   rpc EditPermissions(EditPermissionsRequest) returns (EditPermissionsResponse);
-
 }
 
 message Settings {
   int64 person_settings_id = 1;
   string steam_id = 2;
   string forum_signature = 3;
-  bool forum_profile_messages    = 4;
+  bool forum_profile_messages = 4;
   bool stats_hidden = 5;
-  bool center_projectiles =6;
+  bool center_projectiles = 6;
   google.protobuf.Timestamp created_on = 7;
   google.protobuf.Timestamp updated_on = 8;
 }
 
 message EditProfileSettingsRequest {
   string forum_signature = 1;
-  bool forum_profile_messages    = 2;
+  bool forum_profile_messages = 2;
   bool stats_hidden = 3;
-  bool center_projectiles =4;
+  bool center_projectiles = 4;
 }
 
 message PersonCore {
@@ -50,24 +48,39 @@ message PersonCore {
 message CurrentProfileResponse {
   PersonCore person = 1;
 }
-message ProfileSettingsResponse{}
 
-message EditProfileSettingsResponse{}
+message UserSettings {
+  int64 person_settings_id = 1;
+  string steam_id = 2;
+  string forum_signature = 3;
+  bool forum_profile_messages = 4;
+  bool stats_hidden = 5;
+  google.protobuf.Timestamp created_on = 6;
+  google.protobuf.Timestamp updated_on = 7;
+}
 
-message EditPermissionsRequest{
+message ProfileSettingsResponse {
+  UserSettings settings = 1;
+}
+
+message EditProfileSettingsResponse {
+  UserSettings settings = 1;
+}
+
+message EditPermissionsRequest {
   string steam_id = 1;
   Privilege permission_level = 2;
 }
 
-message EditPermissionsResponse{
+message EditPermissionsResponse {
   Person person = 1;
 }
 
-message QueryRequest{
+message QueryRequest {
   Filter filter = 1;
   string persona_name = 2;
   repeated Privilege with_permissions = 3;
-  string discord_id  =4;
+  string discord_id = 4;
   repeated string steam_ids = 5;
   int32 vac_bans = 6;
   int32 game_bans = 7;
@@ -80,7 +93,7 @@ message QueryRequest{
 message Person {
   string steam_id = 1;
   google.protobuf.Timestamp created_on = 2;
-  google.protobuf.Timestamp updated_on =3;
+  google.protobuf.Timestamp updated_on = 3;
   Privilege permission_level = 4;
   bool muted = 5;
   string discord_id = 6;
@@ -107,10 +120,9 @@ message Person {
   int64 profile_state = 27;
   string profile_url = 28;
   string real_name = 29;
-   google.protobuf.Timestamp time_created = 30;
-   int64 visibility_state = 31;
-
+  google.protobuf.Timestamp time_created = 30;
+  int64 visibility_state = 31;
 }
-message QueryResponse{
+message QueryResponse {
   repeated PersonCore people = 1;
 }

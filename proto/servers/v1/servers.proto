@@ -3,23 +3,114 @@ edition = "2023";
 package servers.v1;
 
 import "ban/v1/ban.proto";
+import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service ServersService {
-  rpc State(google.protobuf.Empty) returns (StateResponse);
-  rpc Servers(ServersRequest) returns (ServersResponse);
+  rpc State(StateRequest) returns (StateResponse);
+  rpc Servers(google.protobuf.Empty) returns (ServersResponse);
   rpc EditServer(EditServerRequest) returns (EditServerResponse);
-  rpc DeleteServer(DeleteServerRequest) returns (DeleteServerResponse);
+  rpc DeleteServer(DeleteServerRequest) returns (google.protobuf.Empty);
   rpc ServersAdmin(google.protobuf.Empty) returns (ServersAdminResponse);
 }
 
-message StateResponse {}
+message StateRequest {
+  LatLong lat_long = 1;
+}
 
-message ServersRequest{}
-message ServersResponse{}
-message EditServerRequest{}
-message EditServerResponse{}
-message DeleteServerRequest{}
-message DeleteServerResponse{}
-message ServersAdminResponse{}
+message SafeServer {
+  int32 server_id = 1;
+  string host = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.address = true
+  ];
+  uint32 port = 3 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).uint32.lte = 65535
+  ];
+  string ip = 4;
+  string name = 5;
+  string name_short = 6;
+  string region = 7;
+  string cc = 8;
+  int32 players = 9;
+  int32 max_players = 10;
+  int32 bot = 11;
+  string map = 12;
+  repeated string game_types = 13;
+  float latitude = 14;
+  float longitude = 15;
+  float distance = 16;
+  int32 humans = 17;
+  repeated string tags = 18;
+}
+
+message LatLong {
+  float latitude = 1 [
+    (buf.validate.field).float.gte = -90,
+    (buf.validate.field).float.lte = 90
+  ];
+  float longitude = 2 [
+    (buf.validate.field).float.gte = -180,
+    (buf.validate.field).float.lte = 180
+  ];
+}
+message Server {
+  int32 server_id = 1;
+  string short_name = 2;
+  string name = 3;
+  string address = 4;
+  string address_internal = 5;
+  bool sdr_enabled = 6;
+  int32 port = 7;
+  string rcon = 8;
+  string password = 9;
+  bool is_enabled = 10;
+  bool deleted = 11;
+  string region = 12;
+  string cc = 13;
+  float latitude = 14;
+  float longitude = 15;
+  int32 log_secret = 16;
+  bool enable_stats = 17;
+  google.protobuf.Timestamp token_created_on = 18;
+  google.protobuf.Timestamp created_on = 19;
+  google.protobuf.Timestamp updated_on = 20;
+  repeated string discord_seed_role_ids = 21;
+  string ip = 22;
+}
+
+message StateResponse {
+  repeated SafeServer servers = 1;
+  LatLong lat_long = 2;
+}
+
+message ServerInfoSafe {
+  string server_name_long = 1;
+  string server_name = 2;
+  int32 server_id = 3;
+  string colour = 4;
+}
+
+message ServersResponse {
+  repeated ServerInfoSafe servers = 1;
+}
+
+message EditServerRequest {
+  Server server = 1;
+}
+
+message EditServerResponse {
+  Server server = 1;
+}
+
+message DeleteServerRequest {
+  int32 server_id = 1;
+}
+
+message DeleteServerResponse {}
+
+message ServersAdminResponse {
+  repeated Server servers = 1;
+}

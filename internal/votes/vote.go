@@ -35,7 +35,7 @@ type Result struct {
 	TargetAvatarHash string            `json:"target_avatar_hash"`
 	Name             string            `json:"name"`
 	Success          bool              `json:"success"`
-	ServerID         int               `json:"server_id"`
+	ServerID         int32             `json:"server_id"`
 	ServerName       string            `json:"server_name"`
 	Code             logparse.VoteCode `json:"code"`
 	CreatedOn        time.Time         `json:"created_on"`
@@ -61,7 +61,7 @@ func New(repository Repository, broadcaster *broadcaster.Broadcaster[logparse.Ev
 	}
 }
 
-func (u Votes) Add(ctx context.Context, sourceID steamid.SteamID, targetID steamid.SteamID, name string, success bool, serverID int, code logparse.VoteCode) error {
+func (u Votes) Add(ctx context.Context, sourceID steamid.SteamID, targetID steamid.SteamID, name string, success bool, serverID int32, code logparse.VoteCode) error {
 	return u.repository.AddResult(ctx, Result{
 		SourceID:  sourceID,
 		TargetID:  targetID,
@@ -95,7 +95,7 @@ func (u Votes) Start(ctx context.Context) {
 	// Track recent votes and reject duplicates. Sometimes vote results get logged twice
 	var recent []Result
 
-	active := map[int]voteState{}
+	active := map[int32]voteState{}
 
 	cleanupTimer := time.NewTicker(time.Second * 5)
 

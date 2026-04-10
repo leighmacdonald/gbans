@@ -212,7 +212,7 @@ function ForumOverview() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12 }}>
-				<Typography variant={"h2"}>{appInfo.site_name} community</Typography>
+				<Typography variant={"h2"}>{appInfo.siteName} community</Typography>
 			</Grid>
 			<Grid size={{ xs: 12, md: 9 }}>
 				<Stack spacing={2}>

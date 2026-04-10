@@ -15,7 +15,7 @@ import { ensureFeatureEnabled } from "../util/features.ts";
 export const Route = createFileRoute("/_guest/servers")({
 	component: Servers,
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.servers_enabled);
+		ensureFeatureEnabled(context.appInfo.serversEnabled);
 	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Server Browser" }, match.context.title("Servers")],

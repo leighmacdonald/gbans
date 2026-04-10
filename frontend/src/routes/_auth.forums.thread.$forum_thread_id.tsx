@@ -271,7 +271,7 @@ function ForumThreadPage() {
 			) : (
 				(messages ?? []).map((m) => (
 					<ThreadMessageContainer
-						assetURL={appInfo.asset_url}
+						assetURL={appInfo.assetUrl}
 						onSave={onSave}
 						message={m}
 						key={`thread-message-id-${m.forum_message_id}`}

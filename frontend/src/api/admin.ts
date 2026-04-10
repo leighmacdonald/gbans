@@ -1,4 +1,4 @@
-import type { Config } from "../gen/config/v1/config_pb.ts";
+import type { Config } from "../rpc/config/v1/config_pb.ts";
 import { apiCall } from "./common.ts";
 
 export const apiSaveSettings = async (signal: AbortSignal, settings: Config) => {

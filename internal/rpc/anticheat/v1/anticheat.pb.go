@@ -101,7 +101,7 @@ type QueryRequest struct {
 	Filter        *rpc.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
 	SteamId       *string                `protobuf:"bytes,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
-	Sumamry       *string                `protobuf:"bytes,4,opt,name=sumamry" json:"sumamry,omitempty"`
+	Summary       *string                `protobuf:"bytes,4,opt,name=summary" json:"summary,omitempty"`
 	Detection     *Detection             `protobuf:"varint,5,opt,name=detection,enum=anticheat.v1.Detection" json:"detection,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -158,9 +158,9 @@ func (x *QueryRequest) GetSteamId() string {
 	return ""
 }
 
-func (x *QueryRequest) GetSumamry() string {
-	if x != nil && x.Sumamry != nil {
-		return *x.Sumamry
+func (x *QueryRequest) GetSummary() string {
+	if x != nil && x.Summary != nil {
+		return *x.Summary
 	}
 	return ""
 }
@@ -230,8 +230,8 @@ type Entry struct {
 	Summary       *string                `protobuf:"bytes,10,opt,name=summary" json:"summary,omitempty"`
 	RawLog        *string                `protobuf:"bytes,11,opt,name=raw_log,json=rawLog" json:"raw_log,omitempty"`
 	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
-	Personaname   *string                `protobuf:"bytes,13,opt,name=personaname" json:"personaname,omitempty"`
-	Avatarhash    *string                `protobuf:"bytes,14,opt,name=avatarhash" json:"avatarhash,omitempty"`
+	PersonaName   *string                `protobuf:"bytes,13,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
+	AvatarHash    *string                `protobuf:"bytes,14,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
 	Triggered     *int32                 `protobuf:"varint,15,opt,name=triggered" json:"triggered,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -351,16 +351,16 @@ func (x *Entry) GetCreatedOn() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *Entry) GetPersonaname() string {
-	if x != nil && x.Personaname != nil {
-		return *x.Personaname
+func (x *Entry) GetPersonaName() string {
+	if x != nil && x.PersonaName != nil {
+		return *x.PersonaName
 	}
 	return ""
 }
 
-func (x *Entry) GetAvatarhash() string {
-	if x != nil && x.Avatarhash != nil {
-		return *x.Avatarhash
+func (x *Entry) GetAvatarHash() string {
+	if x != nil && x.AvatarHash != nil {
+		return *x.AvatarHash
 	}
 	return ""
 }
@@ -376,15 +376,15 @@ var File_anticheat_v1_anticheat_proto protoreflect.FileDescriptor
 
 const file_anticheat_v1_anticheat_proto_rawDesc = "" +
 	"\n" +
-	"\x1canticheat/v1/anticheat.proto\x12\fanticheat.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\ffilter.proto\"\xaf\x01\n" +
+	"\x1canticheat/v1/anticheat.proto\x12\fanticheat.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xaf\x01\n" +
 	"\fQueryRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
 	"\bsteam_id\x18\x03 \x01(\tR\asteamId\x12\x18\n" +
-	"\asumamry\x18\x04 \x01(\tR\asumamry\x125\n" +
+	"\asummary\x18\x04 \x01(\tR\asummary\x125\n" +
 	"\tdetection\x18\x05 \x01(\x0e2\x17.anticheat.v1.DetectionR\tdetection\">\n" +
 	"\rQueryResponse\x12-\n" +
-	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryR\aentries\"\xef\x03\n" +
+	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryR\aentries\"\xf1\x03\n" +
 	"\x05Entry\x12!\n" +
 	"\fanticheat_id\x18\x01 \x01(\x03R\vanticheatId\x12\x19\n" +
 	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12\x1b\n" +
@@ -400,11 +400,10 @@ const file_anticheat_v1_anticheat_proto_rawDesc = "" +
 	" \x01(\tR\asummary\x12\x17\n" +
 	"\araw_log\x18\v \x01(\tR\x06rawLog\x129\n" +
 	"\n" +
-	"created_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12 \n" +
-	"\vpersonaname\x18\r \x01(\tR\vpersonaname\x12\x1e\n" +
-	"\n" +
-	"avatarhash\x18\x0e \x01(\tR\n" +
-	"avatarhash\x12\x1c\n" +
+	"created_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x12!\n" +
+	"\fpersona_name\x18\r \x01(\tR\vpersonaName\x12\x1f\n" +
+	"\vavatar_hash\x18\x0e \x01(\tR\n" +
+	"avatarHash\x12\x1c\n" +
 	"\ttriggered\x18\x0f \x01(\x05R\ttriggered*\xb2\x01\n" +
 	"\tDetection\x12\v\n" +
 	"\aUnknown\x10\x00\x12\r\n" +

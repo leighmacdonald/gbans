@@ -2,8 +2,8 @@ edition = "2023";
 
 package mge.v1;
 
-import "google/protobuf/timestamp.proto";
 import "filter.proto";
+import "google/protobuf/timestamp.proto";
 
 service MGEService {
   rpc GetRatingsOverall(GetRatingsOverallRequest) returns (GetRatingsOverallResponse);
@@ -36,7 +36,7 @@ enum DuelMode {
   DUEL_MODE_TWO_VS_TWO = 1;
 }
 
-message GetHistoryRequest{
+message GetHistoryRequest {
   Filter filter = 1;
   DuelMode mode = 2;
   string winner = 3;
@@ -62,11 +62,8 @@ message Duel {
   int32 winner_score = 14;
   int32 loser_score = 15;
   int32 win_limit = 16;
-   google.protobuf.Timestamp game_time = 17;
-   string map_name = 18;
-   string arena_name = 19;
-
+  google.protobuf.Timestamp game_time = 17;
+  string map_name = 18;
+  string arena_name = 19;
 }
-message GetHistoryResponse {
-
-}
+message GetHistoryResponse {}

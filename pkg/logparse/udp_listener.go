@@ -22,7 +22,7 @@ const (
 )
 
 // PacketAuthenticator is responsible for validating the incoming packet secret.
-type PacketAuthenticator func(ctx context.Context, secret int64, clientIP net.IP) (int, string, error)
+type PacketAuthenticator func(ctx context.Context, secret int64, clientIP net.IP) (int32, string, error)
 
 type LogEventHandler func(EventType, ServerEvent)
 
@@ -54,7 +54,7 @@ func NewListener(logAddr string, onEvent LogEventHandler, authenticator PacketAu
 }
 
 type ServerIDMap struct {
-	ServerID   int
+	ServerID   int32
 	ServerName string
 }
 
@@ -64,7 +64,7 @@ type ServerIDMap struct {
 func (remoteSrc *Listener) Start(ctx context.Context) { //nolint:cyclop
 	type newMsg struct {
 		body       string
-		serverID   int
+		serverID   int32
 		serverName string
 	}
 
@@ -199,13 +199,13 @@ type ServerEvent struct {
 
 	CreatedOn  time.Time
 	Raw        string
-	ServerID   int
+	ServerID   int32
 	ServerName string
 }
 
 var ErrLogParse = errors.New("failed to parse log message")
 
-func logToServerEvent(parser *LogParser, serverID int, serverName string, msg string) (ServerEvent, error) {
+func logToServerEvent(parser *LogParser, serverID int32, serverName string, msg string) (ServerEvent, error) {
 	event := ServerEvent{ServerID: serverID, ServerName: serverName}
 
 	parseResult, errParse := parser.Parse(msg)

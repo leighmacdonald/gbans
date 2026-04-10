@@ -5,7 +5,7 @@ import Stack from "@mui/material/Stack";
 import { useTheme } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import { type JSX, useMemo } from "react";
-import type { InfoResponse } from "../gen/config/v1/config_pb.ts";
+import type { InfoResponse } from "../rpc/config/v1/config_pb.ts";
 import RouterLink from "./RouterLink.tsx";
 
 export const Footer = ({ appInfo }: { appInfo: InfoResponse }): JSX.Element => {

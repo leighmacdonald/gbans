@@ -18,7 +18,7 @@ const defaultOptions = createDefaultTableOptions<Contest>();
 export const Route = createFileRoute("/_guest/contests")({
 	component: Contests,
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.contests_enabled);
+		ensureFeatureEnabled(context.appInfo.contestsEnabled);
 	},
 	head: ({ match }) => ({
 		meta: [{ name: "description", content: "Contests" }, match.context.title("Contests")],

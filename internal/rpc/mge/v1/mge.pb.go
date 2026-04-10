@@ -585,7 +585,7 @@ var File_mge_v1_mge_proto protoreflect.FileDescriptor
 
 const file_mge_v1_mge_proto_rawDesc = "" +
 	"\n" +
-	"\x10mge/v1/mge.proto\x12\x06mge.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\ffilter.proto\"V\n" +
+	"\x10mge/v1/mge.proto\x12\x06mge.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"V\n" +
 	"\x18GetRatingsOverallRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x19\n" +
 	"\bsteam_id\x18\x02 \x01(\tR\asteamId\"\x98\x02\n" +

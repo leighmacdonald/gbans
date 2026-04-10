@@ -352,7 +352,7 @@ var File_votes_v1_votes_proto protoreflect.FileDescriptor
 
 const file_votes_v1_votes_proto_rawDesc = "" +
 	"\n" +
-	"\x14votes/v1/votes.proto\x12\bvotes.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\ffilter.proto\"\xc8\x01\n" +
+	"\x14votes/v1/votes.proto\x12\bvotes.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc8\x01\n" +
 	"\fQueryRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x1b\n" +
 	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12\x1b\n" +
