@@ -6,7 +6,7 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service DemoService {
-  rpc GetGemos(google.protobuf.Empty) returns (GetDemosResponse);
+  rpc GetDemos(google.protobuf.Empty) returns (GetDemosResponse);
   rpc RunCleanup(google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 

@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_guest/stv")({
 		middlewares: [stripSearchParams(defaultValues)],
 	},
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.demos_enabled);
+		ensureFeatureEnabled(context.appInfo.demosEnabled);
 	},
 	loader: async ({ context }) => {
 		const unsorted = await context.queryClient.ensureQueryData({

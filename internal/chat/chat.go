@@ -58,7 +58,7 @@ type Message struct {
 	AvatarHash        string          `json:"avatar_hash"`
 	PersonaName       string          `json:"persona_name"`
 	ServerName        string          `json:"server_name"`
-	ServerID          int             `json:"server_id"`
+	ServerID          int32           `json:"server_id"`
 	Body              string          `json:"body"`
 	Team              bool            `json:"team"`
 	CreatedOn         time.Time       `json:"created_on"`

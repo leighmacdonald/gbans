@@ -2,8 +2,8 @@ edition = "2023";
 
 package asset.v1;
 
-import "google/protobuf/timestamp.proto";
 import "filter.proto";
+import "google/protobuf/timestamp.proto";
 
 service AssetService {
   rpc Create(CreateRequest) returns (CreateResponse) {}
@@ -13,14 +13,20 @@ service AssetService {
 message DeleteRequest {
   string asset_id = 1;
 }
+
 message DeleteResponse {}
 
-message CreateRequest {}
-message CreateResponse {}
+message CreateRequest {
+  bytes contents = 1;
+  string name = 2;
+}
 
+message CreateResponse {
+  Asset asset = 1;
+}
 
 message Asset {
-  string asset_id =1;
+  string asset_id = 1;
   string bucket = 2;
   string author_id = 3;
   string hash = 4;

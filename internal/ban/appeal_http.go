@@ -173,13 +173,13 @@ func (h *appealHandler) onAPIGetAppeals() gin.HandlerFunc {
 			return
 		}
 
-		bans, errBans := h.appeals.GetAppealsByActivity(ctx, req)
-		if errBans != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
+		appeals, errAppeals := h.appeals.GetAppealsByActivity(ctx, req)
+		if errAppeals != nil {
+			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errAppeals, httphelper.ErrInternal)))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, bans)
+		ctx.JSON(http.StatusOK, appeals)
 	}
 }

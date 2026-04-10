@@ -60,7 +60,7 @@ export const Route = createFileRoute("/_auth/ban/$ban_id")({
 	},
 	head: ({ loaderData, match }) => ({
 		meta: [
-			{ name: "description", content: match.context.appInfo.site_description },
+			{ name: "description", content: match.context.appInfo.siteDescription },
 			match.context.title(`Ban #${loaderData?.ban.ban_id}`),
 		],
 	}),
@@ -157,7 +157,7 @@ function BanPage() {
 							onDelete={onDelete}
 							message={m}
 							key={`ban-appeal-msg-${m.ban_message_id}`}
-							assetURL={appInfo.asset_url}
+							assetURL={appInfo.assetUrl}
 						/>
 					))}
 					{canPost && (
@@ -253,7 +253,7 @@ function BanPage() {
 
 					{permissionLevel() >= PermissionLevel.Moderator && ban.note !== "" && (
 						<ContainerWithHeader title={"Mod Notes"} iconLeft={<DocumentScannerIcon />}>
-							<MarkDownRenderer body_md={ban.note} assetURL={appInfo.asset_url} />
+							<MarkDownRenderer body_md={ban.note} assetURL={appInfo.assetUrl} />
 						</ContainerWithHeader>
 					)}
 

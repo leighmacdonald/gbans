@@ -3,6 +3,6 @@ import { ensureFeatureEnabled } from "../util/features.ts";
 
 export const Route = createFileRoute("/_auth/forums")({
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.forums_enabled);
+		ensureFeatureEnabled(context.appInfo.forumsEnabled);
 	},
 });

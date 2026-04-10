@@ -2,12 +2,11 @@ edition = "2023";
 
 package servers.v1;
 
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 import "group.proto";
 import "overridetype.proto";
 import "sourcemod/v1/sourcemod.proto";
-import "google/protobuf/empty.proto";
-import "google/protobuf/timestamp.proto";
-
 
 // TODO remove this duplicate
 enum BanType {

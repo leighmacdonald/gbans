@@ -2,8 +2,8 @@ edition = "2023";
 
 package votes.v1;
 
-import "google/protobuf/timestamp.proto";
 import "filter.proto";
+import "google/protobuf/timestamp.proto";
 
 enum VoteCode {
   VOTE_CODE_FAIL_GENERIC_UNSPECIFIED = 0;

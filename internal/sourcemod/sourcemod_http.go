@@ -538,14 +538,14 @@ func (s *Handler) onSaveSMAdmin() gin.HandlerFunc {
 		admin.Identity = req.Identity
 		admin.Password = req.Password
 
-		editedGroup, errSave := s.SaveAdmin(ctx, admin)
+		edited, errSave := s.SaveAdmin(ctx, admin)
 		if errSave != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, editedGroup)
+		ctx.JSON(http.StatusOK, edited)
 	}
 }
 
@@ -918,7 +918,7 @@ func (s *Handler) onAPIGetSeed() gin.HandlerFunc {
 			return
 		}
 
-		server, errServer := s.servers.Server(ctx, ctx.GetInt("server_id"))
+		server, errServer := s.servers.Server(ctx, int32(ctx.GetInt("server_id")))
 		if errServer != nil {
 			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
 

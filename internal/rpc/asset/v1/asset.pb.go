@@ -105,6 +105,8 @@ func (*DeleteResponse) Descriptor() ([]byte, []int) {
 
 type CreateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Contents      []byte                 `protobuf:"bytes,1,opt,name=contents" json:"contents,omitempty"`
+	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -139,8 +141,23 @@ func (*CreateRequest) Descriptor() ([]byte, []int) {
 	return file_asset_v1_asset_proto_rawDescGZIP(), []int{2}
 }
 
+func (x *CreateRequest) GetContents() []byte {
+	if x != nil {
+		return x.Contents
+	}
+	return nil
+}
+
+func (x *CreateRequest) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
 type CreateResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Asset         *Asset                 `protobuf:"bytes,1,opt,name=asset" json:"asset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -173,6 +190,13 @@ func (x *CreateResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CreateResponse.ProtoReflect.Descriptor instead.
 func (*CreateResponse) Descriptor() ([]byte, []int) {
 	return file_asset_v1_asset_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CreateResponse) GetAsset() *Asset {
+	if x != nil {
+		return x.Asset
+	}
+	return nil
 }
 
 type Asset struct {
@@ -295,12 +319,15 @@ var File_asset_v1_asset_proto protoreflect.FileDescriptor
 
 const file_asset_v1_asset_proto_rawDesc = "" +
 	"\n" +
-	"\x14asset/v1/asset.proto\x12\basset.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\ffilter.proto\"*\n" +
+	"\x14asset/v1/asset.proto\x12\basset.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"*\n" +
 	"\rDeleteRequest\x12\x19\n" +
 	"\basset_id\x18\x01 \x01(\tR\aassetId\"\x10\n" +
-	"\x0eDeleteResponse\"\x0f\n" +
-	"\rCreateRequest\"\x10\n" +
-	"\x0eCreateResponse\"\xc5\x02\n" +
+	"\x0eDeleteResponse\"?\n" +
+	"\rCreateRequest\x12\x1a\n" +
+	"\bcontents\x18\x01 \x01(\fR\bcontents\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"7\n" +
+	"\x0eCreateResponse\x12%\n" +
+	"\x05asset\x18\x01 \x01(\v2\x0f.asset.v1.AssetR\x05asset\"\xc5\x02\n" +
 	"\x05Asset\x12\x19\n" +
 	"\basset_id\x18\x01 \x01(\tR\aassetId\x12\x16\n" +
 	"\x06bucket\x18\x02 \x01(\tR\x06bucket\x12\x1b\n" +
@@ -344,17 +371,18 @@ var file_asset_v1_asset_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_asset_v1_asset_proto_depIdxs = []int32{
-	5, // 0: asset.v1.Asset.created_on:type_name -> google.protobuf.Timestamp
-	5, // 1: asset.v1.Asset.updated_on:type_name -> google.protobuf.Timestamp
-	2, // 2: asset.v1.AssetService.Create:input_type -> asset.v1.CreateRequest
-	0, // 3: asset.v1.AssetService.Delete:input_type -> asset.v1.DeleteRequest
-	3, // 4: asset.v1.AssetService.Create:output_type -> asset.v1.CreateResponse
-	1, // 5: asset.v1.AssetService.Delete:output_type -> asset.v1.DeleteResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	4, // 0: asset.v1.CreateResponse.asset:type_name -> asset.v1.Asset
+	5, // 1: asset.v1.Asset.created_on:type_name -> google.protobuf.Timestamp
+	5, // 2: asset.v1.Asset.updated_on:type_name -> google.protobuf.Timestamp
+	2, // 3: asset.v1.AssetService.Create:input_type -> asset.v1.CreateRequest
+	0, // 4: asset.v1.AssetService.Delete:input_type -> asset.v1.DeleteRequest
+	3, // 5: asset.v1.AssetService.Create:output_type -> asset.v1.CreateResponse
+	1, // 6: asset.v1.AssetService.Delete:output_type -> asset.v1.DeleteResponse
+	5, // [5:7] is the sub-list for method output_type
+	3, // [3:5] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_asset_v1_asset_proto_init() }

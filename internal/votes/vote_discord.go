@@ -23,7 +23,7 @@ type voteResultView struct {
 	TargetSID  string
 	Code       logparse.VoteCode
 	Success    bool
-	Server     int
+	Server     int32
 }
 
 func VoteResultMessage(result Result, _ person.Core, target person.Core) *discordgo.MessageSend {

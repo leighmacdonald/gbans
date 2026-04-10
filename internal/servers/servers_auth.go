@@ -53,7 +53,7 @@ func (s ServerAuth) Middleware(ctx *gin.Context) {
 		if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 			hub.WithScope(func(scope *sentry.Scope) {
 				scope.SetUser(sentry.User{
-					ID:        strconv.Itoa(server.ServerID),
+					ID:        strconv.Itoa(int(server.ServerID)),
 					IPAddress: server.Addr(),
 					Name:      server.ShortName,
 				})

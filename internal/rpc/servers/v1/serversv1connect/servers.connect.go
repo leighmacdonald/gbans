@@ -51,10 +51,10 @@ const (
 
 // ServersServiceClient is a client for the servers.v1.ServersService service.
 type ServersServiceClient interface {
-	State(context.Context, *emptypb.Empty) (*v1.StateResponse, error)
-	Servers(context.Context, *v1.ServersRequest) (*v1.ServersResponse, error)
+	State(context.Context, *v1.StateRequest) (*v1.StateResponse, error)
+	Servers(context.Context, *emptypb.Empty) (*v1.ServersResponse, error)
 	EditServer(context.Context, *v1.EditServerRequest) (*v1.EditServerResponse, error)
-	DeleteServer(context.Context, *v1.DeleteServerRequest) (*v1.DeleteServerResponse, error)
+	DeleteServer(context.Context, *v1.DeleteServerRequest) (*emptypb.Empty, error)
 	ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error)
 }
 
@@ -69,13 +69,13 @@ func NewServersServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 	baseURL = strings.TrimRight(baseURL, "/")
 	serversServiceMethods := v1.File_servers_v1_servers_proto.Services().ByName("ServersService").Methods()
 	return &serversServiceClient{
-		state: connect.NewClient[emptypb.Empty, v1.StateResponse](
+		state: connect.NewClient[v1.StateRequest, v1.StateResponse](
 			httpClient,
 			baseURL+ServersServiceStateProcedure,
 			connect.WithSchema(serversServiceMethods.ByName("State")),
 			connect.WithClientOptions(opts...),
 		),
-		servers: connect.NewClient[v1.ServersRequest, v1.ServersResponse](
+		servers: connect.NewClient[emptypb.Empty, v1.ServersResponse](
 			httpClient,
 			baseURL+ServersServiceServersProcedure,
 			connect.WithSchema(serversServiceMethods.ByName("Servers")),
@@ -87,7 +87,7 @@ func NewServersServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(serversServiceMethods.ByName("EditServer")),
 			connect.WithClientOptions(opts...),
 		),
-		deleteServer: connect.NewClient[v1.DeleteServerRequest, v1.DeleteServerResponse](
+		deleteServer: connect.NewClient[v1.DeleteServerRequest, emptypb.Empty](
 			httpClient,
 			baseURL+ServersServiceDeleteServerProcedure,
 			connect.WithSchema(serversServiceMethods.ByName("DeleteServer")),
@@ -104,15 +104,15 @@ func NewServersServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 
 // serversServiceClient implements ServersServiceClient.
 type serversServiceClient struct {
-	state        *connect.Client[emptypb.Empty, v1.StateResponse]
-	servers      *connect.Client[v1.ServersRequest, v1.ServersResponse]
+	state        *connect.Client[v1.StateRequest, v1.StateResponse]
+	servers      *connect.Client[emptypb.Empty, v1.ServersResponse]
 	editServer   *connect.Client[v1.EditServerRequest, v1.EditServerResponse]
-	deleteServer *connect.Client[v1.DeleteServerRequest, v1.DeleteServerResponse]
+	deleteServer *connect.Client[v1.DeleteServerRequest, emptypb.Empty]
 	serversAdmin *connect.Client[emptypb.Empty, v1.ServersAdminResponse]
 }
 
 // State calls servers.v1.ServersService.State.
-func (c *serversServiceClient) State(ctx context.Context, req *emptypb.Empty) (*v1.StateResponse, error) {
+func (c *serversServiceClient) State(ctx context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {
 	response, err := c.state.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -121,7 +121,7 @@ func (c *serversServiceClient) State(ctx context.Context, req *emptypb.Empty) (*
 }
 
 // Servers calls servers.v1.ServersService.Servers.
-func (c *serversServiceClient) Servers(ctx context.Context, req *v1.ServersRequest) (*v1.ServersResponse, error) {
+func (c *serversServiceClient) Servers(ctx context.Context, req *emptypb.Empty) (*v1.ServersResponse, error) {
 	response, err := c.servers.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -139,7 +139,7 @@ func (c *serversServiceClient) EditServer(ctx context.Context, req *v1.EditServe
 }
 
 // DeleteServer calls servers.v1.ServersService.DeleteServer.
-func (c *serversServiceClient) DeleteServer(ctx context.Context, req *v1.DeleteServerRequest) (*v1.DeleteServerResponse, error) {
+func (c *serversServiceClient) DeleteServer(ctx context.Context, req *v1.DeleteServerRequest) (*emptypb.Empty, error) {
 	response, err := c.deleteServer.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -158,10 +158,10 @@ func (c *serversServiceClient) ServersAdmin(ctx context.Context, req *emptypb.Em
 
 // ServersServiceHandler is an implementation of the servers.v1.ServersService service.
 type ServersServiceHandler interface {
-	State(context.Context, *emptypb.Empty) (*v1.StateResponse, error)
-	Servers(context.Context, *v1.ServersRequest) (*v1.ServersResponse, error)
+	State(context.Context, *v1.StateRequest) (*v1.StateResponse, error)
+	Servers(context.Context, *emptypb.Empty) (*v1.ServersResponse, error)
 	EditServer(context.Context, *v1.EditServerRequest) (*v1.EditServerResponse, error)
-	DeleteServer(context.Context, *v1.DeleteServerRequest) (*v1.DeleteServerResponse, error)
+	DeleteServer(context.Context, *v1.DeleteServerRequest) (*emptypb.Empty, error)
 	ServersAdmin(context.Context, *emptypb.Empty) (*v1.ServersAdminResponse, error)
 }
 
@@ -223,11 +223,11 @@ func NewServersServiceHandler(svc ServersServiceHandler, opts ...connect.Handler
 // UnimplementedServersServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedServersServiceHandler struct{}
 
-func (UnimplementedServersServiceHandler) State(context.Context, *emptypb.Empty) (*v1.StateResponse, error) {
+func (UnimplementedServersServiceHandler) State(context.Context, *v1.StateRequest) (*v1.StateResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.State is not implemented"))
 }
 
-func (UnimplementedServersServiceHandler) Servers(context.Context, *v1.ServersRequest) (*v1.ServersResponse, error) {
+func (UnimplementedServersServiceHandler) Servers(context.Context, *emptypb.Empty) (*v1.ServersResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.Servers is not implemented"))
 }
 
@@ -235,7 +235,7 @@ func (UnimplementedServersServiceHandler) EditServer(context.Context, *v1.EditSe
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.EditServer is not implemented"))
 }
 
-func (UnimplementedServersServiceHandler) DeleteServer(context.Context, *v1.DeleteServerRequest) (*v1.DeleteServerResponse, error) {
+func (UnimplementedServersServiceHandler) DeleteServer(context.Context, *v1.DeleteServerRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("servers.v1.ServersService.DeleteServer is not implemented"))
 }
 

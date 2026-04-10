@@ -68,7 +68,7 @@ type PersonConnection struct {
 	IPAddr             netip.Addr          `json:"ip_addr"`
 	SteamID            steamid.SteamID     `json:"steam_id"`
 	PersonaName        string              `json:"persona_name"`
-	ServerID           int                 `json:"server_id"`
+	ServerID           int32               `json:"server_id"`
 	CreatedOn          time.Time           `json:"created_on"`
 	ServerNameShort    string              `json:"server_name_short"`
 	ServerName         string              `json:"server_name"`

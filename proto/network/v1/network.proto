@@ -1,0 +1,111 @@
+edition = "2023";
+
+package network.v1;
+
+import "filter.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service NetworkService {
+  rpc QueryConnections(QueryConnectionsRequest) returns (QueryConnectionsResponse) {}
+  rpc QueryNetwork(QueryNetworkRequest) returns (QueryNetworkResponse) {}
+  rpc UpdateDB(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
+message QueryNetworkRequest {
+  Filter filter = 1;
+  string ip = 2;
+}
+
+message Details {
+  Location location = 1;
+  ASN asn = 2;
+  Proxy proxy = 3;
+}
+
+message Location {
+  string cidr = 1;
+  string country_code = 2;
+  string country_name = 3;
+  string region_name = 4;
+  string city_name = 5;
+  LatLong lat_long = 6;
+}
+
+message ASN {
+  string cidr = 1;
+  uint64 as_num = 2;
+  string as_name = 3;
+}
+enum ThreatType {
+  THREAT_TYPE_UNSPECIFIED = 0;
+  THREAT_TYPE_SPAM = 1;
+  THREAT_TYPE_BOTNET = 2;
+  THREAT_TYPE_SCANNER = 3;
+  THREAT_TYPE_SPAM_BOTNET = 4;
+  THREAT_TYPE_SPAM_SCANNER = 5;
+  THREAT_TYPE_SPAM_SCANNER_BOTNET = 6;
+}
+
+enum UsageType {
+  USAGE_TYPE_UNSPECIFIED = 0;
+  USAGE_TYPE_CDN = 1;
+  USAGE_TYPE_ISP_FIXED_MOBILE = 2;
+  USAGE_TYPE_COMMERCIAL = 3;
+  USAGE_TYPE_ISP_MOBILE = 4;
+  USAGE_TYPE_LIBRARY = 5;
+  USAGE_TYPE_DATA_CENTER = 6;
+  USAGE_TYPE_MILITARY = 7;
+  USAGE_TYPE_GOVERNMENT = 8;
+  USAGE_TYPE_ISP_FIXED = 9;
+  USAGE_TYPE_ORGANIZATION = 10;
+  USAGE_TYPE_EDUCATION = 11;
+}
+
+enum ProxyType {
+  PROXY_TYPE_PUB_UNSPECIFIED = 0;
+}
+
+message Proxy {
+  string cidr = 1;
+  ProxyType proxy_type = 2;
+  string country_code = 3;
+  string country_name = 4;
+  string region_name = 5;
+  string city_name = 6;
+  string isp = 7;
+  string domain = 8;
+  UsageType usage_type = 9;
+  int64 asn = 10;
+  string as_name = 11;
+  google.protobuf.Timestamp last_seen = 12;
+  ThreatType threat_type = 13;
+}
+
+message LatLong {
+  float latitude = 1;
+  float longitude = 2;
+}
+message QueryNetworkResponse {}
+
+message QueryConnectionsRequest {
+  Filter filter = 1;
+  string steam_id = 2;
+  string cidr = 3;
+  string country_code = 4;
+  string country_name = 5;
+  string city_name = 6;
+  repeated int32 server_id = 7;
+}
+
+message QueryConnectionsResponse {
+  repeated PersonConnection connection = 1;
+}
+
+message PersonConnection {
+  int64 person_connection_id = 1;
+  string ip_addr = 2;
+  string steam_id = 3;
+  string persona_name = 4;
+  int32 server_id = 5;
+}

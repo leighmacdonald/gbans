@@ -56,13 +56,13 @@ type state struct {
 	// Steam Application ID of game.
 	AppID uint16 `json:"app_id"`
 	// Number of players on the server.
-	PlayerCount int `json:"player_count"`
+	PlayerCount int32 `json:"player_count"`
 	// Maximum number of players the server reports it can hold.
-	MaxPlayers int `json:"max_players"`
+	MaxPlayers int32 `json:"max_players"`
 	// Maximum number of players the server reports it can hold, visible to the public.
-	MaxPlayersVisible int `json:"max_players_visible"`
+	MaxPlayersVisible int32 `json:"max_players_visible"`
 	// Number of bots on the server.
-	Bots int `json:"bots"`
+	Bots int32 `json:"bots"`
 	// Indicates whether the server requires a password
 	Password bool `json:"password"`
 	// Specifies whether the server uses VAC
@@ -87,7 +87,7 @@ type state struct {
 	Tags    []string  `json:"tags"`
 	Players []*Player `json:"players"`
 	// How many human players in the server
-	Humans int `json:"humans"`
+	Humans int32 `json:"humans"`
 	// HasSynchronizedDNS tracks if the server has done its initial DNS update cycle. This is required
 	// for future change detection and updates.
 	HasSynchronizedDNS bool              `json:"has_synchronized_dns"`

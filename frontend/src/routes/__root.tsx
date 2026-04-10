@@ -21,10 +21,7 @@ import { TopBar } from "../component/TopBar.tsx";
 import { ColourModeContext } from "../contexts/ColourModeContext.tsx";
 import { UserFlashCtx } from "../contexts/UserFlashCtx.tsx";
 import { type ApiError, isApiError } from "../error.tsx";
-import type { appInfoDetail } from "../schema/app.ts";
-import type { InfoResponse } from "../gen/config/v1/config_pb.ts";
-import { useAuth } from "../hooks/useAuth.ts";
-import { PermissionLevel } from "../schema/people.ts";
+import type { InfoResponse } from "../rpc/config/v1/config_pb.ts";
 import { createThemeByMode } from "../theme.ts";
 import { emptyOrNullString } from "../util/types.ts";
 

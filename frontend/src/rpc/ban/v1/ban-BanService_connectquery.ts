@@ -10,13 +10,23 @@ import { BanService } from "./ban_pb";
 export const query = BanService.method.query;
 
 /**
- * @generated from rpc ban.v1.BanService.ExportTF2BD
- */
-export const exportTF2BD = BanService.method.exportTF2BD;
-
-/**
  * rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
  *
  * @generated from rpc ban.v1.BanService.Delete
  */
 export const delete$ = BanService.method.delete;
+
+/**
+ * @generated from rpc ban.v1.BanService.Get
+ */
+export const get = BanService.method.get;
+
+/**
+ * @generated from rpc ban.v1.BanService.QuerySourceBans
+ */
+export const querySourceBans = BanService.method.querySourceBans;
+
+/**
+ * @generated from rpc ban.v1.BanService.Update
+ */
+export const update = BanService.method.update;

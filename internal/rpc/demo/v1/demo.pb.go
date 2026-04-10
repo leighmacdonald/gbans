@@ -227,7 +227,7 @@ const file_demo_v1_demo_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x012\x8d\x01\n" +
 	"\vDemoService\x12@\n" +
-	"\bGetGemos\x12\x16.google.protobuf.Empty\x1a\x1c.servers.v1.GetDemosResponse\x12<\n" +
+	"\bGetDemos\x12\x16.google.protobuf.Empty\x1a\x1c.servers.v1.GetDemosResponse\x12<\n" +
 	"\n" +
 	"RunCleanup\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.EmptyB\xa4\x01\n" +
 	"\x0ecom.servers.v1B\tDemoProtoP\x01Z>github.com/leighmacdonald/gbans/internal/rpc/demo/v1;serversv1\xa2\x02\x03SXX\xaa\x02\n" +
@@ -258,9 +258,9 @@ var file_demo_v1_demo_proto_depIdxs = []int32{
 	1, // 0: servers.v1.GetDemosResponse.demos:type_name -> servers.v1.Demo
 	3, // 1: servers.v1.Demo.created_on:type_name -> google.protobuf.Timestamp
 	2, // 2: servers.v1.Demo.stats:type_name -> servers.v1.Demo.StatsEntry
-	4, // 3: servers.v1.DemoService.GetGemos:input_type -> google.protobuf.Empty
+	4, // 3: servers.v1.DemoService.GetDemos:input_type -> google.protobuf.Empty
 	4, // 4: servers.v1.DemoService.RunCleanup:input_type -> google.protobuf.Empty
-	0, // 5: servers.v1.DemoService.GetGemos:output_type -> servers.v1.GetDemosResponse
+	0, // 5: servers.v1.DemoService.GetDemos:output_type -> servers.v1.GetDemosResponse
 	4, // 6: servers.v1.DemoService.RunCleanup:output_type -> google.protobuf.Empty
 	5, // [5:7] is the sub-list for method output_type
 	3, // [3:5] is the sub-list for method input_type

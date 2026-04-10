@@ -16,20 +16,20 @@ type seedRequest struct {
 // SeedQueue is responsible for keeping track of users who use the !seed command. Servers are only
 // Allowed to send a seed request once every 5 minutes by default.
 type SeedQueue struct {
-	servers map[int]seedRequest
+	servers map[int32]seedRequest
 	minTime time.Duration
 	mu      *sync.Mutex
 }
 
 func NewSeedQueue() SeedQueue {
 	return SeedQueue{
-		servers: map[int]seedRequest{},
+		servers: map[int32]seedRequest{},
 		minTime: time.Second * 300,
 		mu:      &sync.Mutex{},
 	}
 }
 
-func (q *SeedQueue) Allowed(serverID int, userID string) bool {
+func (q *SeedQueue) Allowed(serverID int32, userID string) bool {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 

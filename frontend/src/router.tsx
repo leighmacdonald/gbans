@@ -4,7 +4,7 @@ import { createRouter } from "@tanstack/react-router";
 import { ErrorDetails } from "./component/ErrorDetails.tsx";
 import { LoadingPlaceholder } from "./component/LoadingPlaceholder.tsx";
 import { AppError, ErrorCode } from "./error.tsx";
-import type { InfoResponse } from "./gen/config/v1/config_pb.ts";
+import type { InfoResponse } from "./rpc/config/v1/config_pb.ts";
 import { routeTree } from "./routeTree.gen.ts";
 import { toTitleCase } from "./util/text.tsx";
 

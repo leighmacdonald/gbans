@@ -105,7 +105,7 @@ type UserWarning struct {
 	Personaname   string        `json:"personaname"`
 	Avatar        string        `json:"avatar"`
 	ServerName    string        `json:"server_name"`
-	ServerID      int           `json:"server_id"`
+	ServerID      int32         `json:"server_id"`
 	SteamID       string        `json:"steam_id"`
 	CurrentTotal  int           `json:"current_total"`
 }

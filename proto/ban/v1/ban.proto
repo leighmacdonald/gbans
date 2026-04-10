@@ -2,9 +2,11 @@ edition = "2023";
 
 package ban.v1;
 
+import "buf/validate/validate.proto";
 import "filter.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 
 enum BanType {
   BAN_TYPE_OK_UNSPECIFIED = 0;
@@ -41,12 +43,54 @@ enum BanReason {
 
 service BanService {
   rpc Query(QueryRequest) returns (QueryResponse) {}
-  rpc ExportTF2BD(google.protobuf.Empty) returns (ExportTF2BDResponse) {}
   // rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
   rpc Delete(DeleteRequest) returns (google.protobuf.Empty) {}
+  rpc Get(GetBanRequest) returns (GetBanResponse) {}
+  rpc QuerySourceBans(QuerySourceBansRequest) returns (QuerySourceBansResponse) {}
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
 }
 
-message ExportTF2BDResponse {}
+message UpdateRequest {
+  string target_id = 1;
+  BanType ban_type = 2;
+  BanReason reason = 3;
+  string reason_text = 4;
+  string note = 5;
+  bool evade_ok = 6;
+  string duration = 7;
+  string cidr = 8;
+}
+message UpdateResponse {
+  Ban ban = 1;
+}
+
+message QuerySourceBansRequest {
+  string steam_id = 1;
+}
+
+message SourceBanRecord {
+  int32 ban_id = 1;
+  string site_name = 2;
+  int32 site_id = 3;
+  string persona_name = 4;
+  string steam_id = 5;
+  string reason = 6;
+  google.protobuf.Duration duration = 7;
+  bool permanent = 8;
+  google.protobuf.Timestamp created_on = 9;
+}
+
+message QuerySourceBansResponse {
+  repeated SourceBanRecord bans = 1;
+}
+
+message GetBanRequest {
+  int32 ban_id = 1;
+}
+
+message GetBanResponse {
+  Ban ban = 1;
+}
 
 message DeleteRequest {
   int64 ban_id = 1;
@@ -66,6 +110,7 @@ message QueryRequest {
 message QueryResponse {
   repeated Ban bans = 1;
 }
+
 enum Origin {
   ORIGIN_SYSTEM_UNSPECIFIED = 0;
   ORIGIN_BOT = 1;
@@ -73,6 +118,7 @@ enum Origin {
   ORIGIN_IN_GAME = 3;
   ORIGIN_REPORTED = 4;
 }
+
 message Ban {
   string target_id = 1;
   string source_id = 2;
@@ -80,7 +126,7 @@ message Ban {
   int64 report_id = 4;
   string last_ip = 5;
   bool evade_ok = 6;
-  BanType bantype = 7;
+  BanType ban_type = 7;
   BanReason reason = 8;
   string reason_text = 9;
   string unban_reason_text = 10;
@@ -94,8 +140,8 @@ message Ban {
   google.protobuf.Timestamp valid_until = 18;
   google.protobuf.Timestamp created_on = 19;
   google.protobuf.Timestamp updated_on = 20;
-  string source_personaname = 21;
-  string source_avatarhash = 22;
-  string target_personaname = 23;
-  string target_avatarhash = 24;
+  string source_persona_name = 21;
+  string source_avatar_hash = 22;
+  string target_persona_name = 23;
+  string target_avatar_hash = 24;
 }

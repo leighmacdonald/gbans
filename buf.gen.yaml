@@ -2,6 +2,9 @@ version: v2
 
 managed:
   enabled: true
+  disable:
+    - file_option: go_package_prefix
+      module: buf.build/bufbuild/protovalidate
   override:
     - file_option: go_package_prefix
       value: github.com/leighmacdonald/gbans/internal/rpc
@@ -28,5 +31,5 @@ plugins:
     opt:
       - target=ts
 
-inputs:
-  - directory: proto
+#inputs:
+#  - directory: proto

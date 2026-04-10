@@ -36,18 +36,25 @@ const (
 const (
 	// BanServiceQueryProcedure is the fully-qualified name of the BanService's Query RPC.
 	BanServiceQueryProcedure = "/ban.v1.BanService/Query"
-	// BanServiceExportTF2BDProcedure is the fully-qualified name of the BanService's ExportTF2BD RPC.
-	BanServiceExportTF2BDProcedure = "/ban.v1.BanService/ExportTF2BD"
 	// BanServiceDeleteProcedure is the fully-qualified name of the BanService's Delete RPC.
 	BanServiceDeleteProcedure = "/ban.v1.BanService/Delete"
+	// BanServiceGetProcedure is the fully-qualified name of the BanService's Get RPC.
+	BanServiceGetProcedure = "/ban.v1.BanService/Get"
+	// BanServiceQuerySourceBansProcedure is the fully-qualified name of the BanService's
+	// QuerySourceBans RPC.
+	BanServiceQuerySourceBansProcedure = "/ban.v1.BanService/QuerySourceBans"
+	// BanServiceUpdateProcedure is the fully-qualified name of the BanService's Update RPC.
+	BanServiceUpdateProcedure = "/ban.v1.BanService/Update"
 )
 
 // BanServiceClient is a client for the ban.v1.BanService service.
 type BanServiceClient interface {
 	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
-	ExportTF2BD(context.Context, *emptypb.Empty) (*v1.ExportTF2BDResponse, error)
 	// rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
 	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
+	Get(context.Context, *v1.GetBanRequest) (*v1.GetBanResponse, error)
+	QuerySourceBans(context.Context, *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error)
+	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
 }
 
 // NewBanServiceClient constructs a client for the ban.v1.BanService service. By default, it uses
@@ -67,16 +74,28 @@ func NewBanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(banServiceMethods.ByName("Query")),
 			connect.WithClientOptions(opts...),
 		),
-		exportTF2BD: connect.NewClient[emptypb.Empty, v1.ExportTF2BDResponse](
-			httpClient,
-			baseURL+BanServiceExportTF2BDProcedure,
-			connect.WithSchema(banServiceMethods.ByName("ExportTF2BD")),
-			connect.WithClientOptions(opts...),
-		),
 		delete: connect.NewClient[v1.DeleteRequest, emptypb.Empty](
 			httpClient,
 			baseURL+BanServiceDeleteProcedure,
 			connect.WithSchema(banServiceMethods.ByName("Delete")),
+			connect.WithClientOptions(opts...),
+		),
+		get: connect.NewClient[v1.GetBanRequest, v1.GetBanResponse](
+			httpClient,
+			baseURL+BanServiceGetProcedure,
+			connect.WithSchema(banServiceMethods.ByName("Get")),
+			connect.WithClientOptions(opts...),
+		),
+		querySourceBans: connect.NewClient[v1.QuerySourceBansRequest, v1.QuerySourceBansResponse](
+			httpClient,
+			baseURL+BanServiceQuerySourceBansProcedure,
+			connect.WithSchema(banServiceMethods.ByName("QuerySourceBans")),
+			connect.WithClientOptions(opts...),
+		),
+		update: connect.NewClient[v1.UpdateRequest, v1.UpdateResponse](
+			httpClient,
+			baseURL+BanServiceUpdateProcedure,
+			connect.WithSchema(banServiceMethods.ByName("Update")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -84,23 +103,16 @@ func NewBanServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 
 // banServiceClient implements BanServiceClient.
 type banServiceClient struct {
-	query       *connect.Client[v1.QueryRequest, v1.QueryResponse]
-	exportTF2BD *connect.Client[emptypb.Empty, v1.ExportTF2BDResponse]
-	delete      *connect.Client[v1.DeleteRequest, emptypb.Empty]
+	query           *connect.Client[v1.QueryRequest, v1.QueryResponse]
+	delete          *connect.Client[v1.DeleteRequest, emptypb.Empty]
+	get             *connect.Client[v1.GetBanRequest, v1.GetBanResponse]
+	querySourceBans *connect.Client[v1.QuerySourceBansRequest, v1.QuerySourceBansResponse]
+	update          *connect.Client[v1.UpdateRequest, v1.UpdateResponse]
 }
 
 // Query calls ban.v1.BanService.Query.
 func (c *banServiceClient) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
 	response, err := c.query.CallUnary(ctx, connect.NewRequest(req))
-	if response != nil {
-		return response.Msg, err
-	}
-	return nil, err
-}
-
-// ExportTF2BD calls ban.v1.BanService.ExportTF2BD.
-func (c *banServiceClient) ExportTF2BD(ctx context.Context, req *emptypb.Empty) (*v1.ExportTF2BDResponse, error) {
-	response, err := c.exportTF2BD.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -116,12 +128,41 @@ func (c *banServiceClient) Delete(ctx context.Context, req *v1.DeleteRequest) (*
 	return nil, err
 }
 
+// Get calls ban.v1.BanService.Get.
+func (c *banServiceClient) Get(ctx context.Context, req *v1.GetBanRequest) (*v1.GetBanResponse, error) {
+	response, err := c.get.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// QuerySourceBans calls ban.v1.BanService.QuerySourceBans.
+func (c *banServiceClient) QuerySourceBans(ctx context.Context, req *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error) {
+	response, err := c.querySourceBans.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// Update calls ban.v1.BanService.Update.
+func (c *banServiceClient) Update(ctx context.Context, req *v1.UpdateRequest) (*v1.UpdateResponse, error) {
+	response, err := c.update.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // BanServiceHandler is an implementation of the ban.v1.BanService service.
 type BanServiceHandler interface {
 	Query(context.Context, *v1.QueryRequest) (*v1.QueryResponse, error)
-	ExportTF2BD(context.Context, *emptypb.Empty) (*v1.ExportTF2BDResponse, error)
 	// rpc ExportValve(google.protobuf.Empty) returns (ExportValveResponse) {}
 	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
+	Get(context.Context, *v1.GetBanRequest) (*v1.GetBanResponse, error)
+	QuerySourceBans(context.Context, *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error)
+	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
 }
 
 // NewBanServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -137,26 +178,42 @@ func NewBanServiceHandler(svc BanServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(banServiceMethods.ByName("Query")),
 		connect.WithHandlerOptions(opts...),
 	)
-	banServiceExportTF2BDHandler := connect.NewUnaryHandlerSimple(
-		BanServiceExportTF2BDProcedure,
-		svc.ExportTF2BD,
-		connect.WithSchema(banServiceMethods.ByName("ExportTF2BD")),
-		connect.WithHandlerOptions(opts...),
-	)
 	banServiceDeleteHandler := connect.NewUnaryHandlerSimple(
 		BanServiceDeleteProcedure,
 		svc.Delete,
 		connect.WithSchema(banServiceMethods.ByName("Delete")),
 		connect.WithHandlerOptions(opts...),
 	)
+	banServiceGetHandler := connect.NewUnaryHandlerSimple(
+		BanServiceGetProcedure,
+		svc.Get,
+		connect.WithSchema(banServiceMethods.ByName("Get")),
+		connect.WithHandlerOptions(opts...),
+	)
+	banServiceQuerySourceBansHandler := connect.NewUnaryHandlerSimple(
+		BanServiceQuerySourceBansProcedure,
+		svc.QuerySourceBans,
+		connect.WithSchema(banServiceMethods.ByName("QuerySourceBans")),
+		connect.WithHandlerOptions(opts...),
+	)
+	banServiceUpdateHandler := connect.NewUnaryHandlerSimple(
+		BanServiceUpdateProcedure,
+		svc.Update,
+		connect.WithSchema(banServiceMethods.ByName("Update")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/ban.v1.BanService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case BanServiceQueryProcedure:
 			banServiceQueryHandler.ServeHTTP(w, r)
-		case BanServiceExportTF2BDProcedure:
-			banServiceExportTF2BDHandler.ServeHTTP(w, r)
 		case BanServiceDeleteProcedure:
 			banServiceDeleteHandler.ServeHTTP(w, r)
+		case BanServiceGetProcedure:
+			banServiceGetHandler.ServeHTTP(w, r)
+		case BanServiceQuerySourceBansProcedure:
+			banServiceQuerySourceBansHandler.ServeHTTP(w, r)
+		case BanServiceUpdateProcedure:
+			banServiceUpdateHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -170,10 +227,18 @@ func (UnimplementedBanServiceHandler) Query(context.Context, *v1.QueryRequest) (
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.Query is not implemented"))
 }
 
-func (UnimplementedBanServiceHandler) ExportTF2BD(context.Context, *emptypb.Empty) (*v1.ExportTF2BDResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.ExportTF2BD is not implemented"))
-}
-
 func (UnimplementedBanServiceHandler) Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.Delete is not implemented"))
+}
+
+func (UnimplementedBanServiceHandler) Get(context.Context, *v1.GetBanRequest) (*v1.GetBanResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.Get is not implemented"))
+}
+
+func (UnimplementedBanServiceHandler) QuerySourceBans(context.Context, *v1.QuerySourceBansRequest) (*v1.QuerySourceBansResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.QuerySourceBans is not implemented"))
+}
+
+func (UnimplementedBanServiceHandler) Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("ban.v1.BanService.Update is not implemented"))
 }

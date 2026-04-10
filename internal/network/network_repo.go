@@ -104,7 +104,7 @@ func (r Repository) QueryConnections(ctx context.Context, opts ConnectionHistory
 		var (
 			connHistory PersonConnection
 			steamID     int64
-			serverID    *int
+			serverID    *int32
 			shortName   *string
 			name        *string
 		)

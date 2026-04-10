@@ -135,7 +135,7 @@ function ProfileSettings() {
 								label={"Forums"}
 							/>
 						)}
-						{(appInfo.patreon_enabled || appInfo.discord_enabled) && (
+						{(appInfo.patreonEnabled || appInfo.discordEnabled) && (
 							<TabButton
 								tab={"connections"}
 								onClick={onTabClick}
@@ -523,7 +523,7 @@ const ConnectionsSection = ({
 			description={"Configure your 3rd party connections to us."}
 		>
 			<Grid container spacing={2} padding={0}>
-				{appInfo.patreon_enabled ? (
+				{appInfo.patreonEnabled ? (
 					patreon_id ? (
 						<Grid size={{ xs: 12 }}>
 							<Typography variant={"h3"}>Patreon</Typography>
@@ -558,7 +558,7 @@ const ConnectionsSection = ({
 						</Grid>
 					)
 				) : null}
-				{appInfo.discord_enabled ? (
+				{appInfo.discordEnabled ? (
 					!isLoading && user?.username ? (
 						<Grid size={{ xs: 12 }}>
 							<Typography>You are connected to us as: {user.username}</Typography>

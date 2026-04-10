@@ -48,7 +48,7 @@ const validateSearch = z
 export const Route = createFileRoute("/_auth/chatlogs")({
 	component: ChatLogs,
 	beforeLoad: ({ context }) => {
-		ensureFeatureEnabled(context.appInfo.chatlogs_enabled);
+		ensureFeatureEnabled(context.appInfo.chatlogsEnabled);
 	},
 	validateSearch,
 	search: {
@@ -78,8 +78,8 @@ function ChatLogs() {
 	const theme = useTheme();
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: Route.fullPath,
 				search: {
 					...search,
@@ -91,8 +91,8 @@ function ChatLogs() {
 	);
 
 	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: Route.fullPath,
 				search: {
 					...search,
@@ -104,8 +104,8 @@ function ChatLogs() {
 	);
 
 	const setPagination: OnChangeFn<MRT_PaginationState> = useCallback(
-		(updater) => {
-			navigate({
+		async (updater) => {
+			await navigate({
 				to: Route.fullPath,
 				search: {
 					...search,
@@ -168,11 +168,7 @@ function ChatLogs() {
 					if (value.includes(query)) {
 						return true;
 					}
-					if (row.original.steam_id.includes(query) || row.original.steam_id === query) {
-						return true;
-					}
-
-					return false;
+					return row.original.steam_id.includes(query) || row.original.steam_id === query;
 				},
 				Cell: ({ row }) => (
 					<PersonCell
@@ -303,8 +299,8 @@ function ChatLogs() {
 							arrow
 							title="Flagged Only"
 							key="flagged"
-							onClick={() => {
-								navigate({
+							onClick={async () => {
+								await navigate({
 									to: Route.fullPath,
 									search: {
 										...search,

@@ -2,97 +2,329 @@ edition = "2023";
 
 package sourcemod.v1;
 
-import "group.proto";
-import "overridetype.proto";
 import "ban/v1/ban.proto";
+import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-
+import "group.proto";
+import "overridetype.proto";
 
 service SourcemodService {
   rpc Groups(google.protobuf.Empty) returns (GroupsResponse) {}
-  rpc CreateGroups(CreateGroupsRequest) returns (CreateGroupsResponse) {}
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {}
   rpc EditGroups(EditGroupsRequest) returns (EditGroupsResponse) {}
-  rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {}
-  rpc GroupOverrides(GroupOverridesRequest) returns (GroupOverridesResponse) {}
+  rpc DeleteGroup(DeleteGroupRequest) returns (google.protobuf.Empty) {}
+  rpc GroupOverrides(google.protobuf.Empty) returns (GroupOverridesResponse) {}
   rpc CreateGroupOverride(CreateGroupOverrideRequest) returns (CreateGroupOverrideResponse) {}
   rpc EditGroupOverride(EditGroupOverrideRequest) returns (EditGroupOverrideResponse) {}
-  rpc DeleteGroupOverride(DeleteGroupOverrideRequest) returns (DeleteGroupOverrideResponse) {}
+  rpc DeleteGroupOverride(DeleteGroupOverrideRequest) returns (google.protobuf.Empty) {}
 
   rpc Admins(google.protobuf.Empty) returns (AdminsResponse) {}
   rpc CreateAdmin(CreateAdminRequest) returns (CreateAdminResponse) {}
   rpc EditAdmin(EditAdminRequest) returns (EditAdminResponse) {}
-  rpc DeleteAdmin(DeleteAdminRequest) returns (DeleteAdminResponse) {}
+  rpc DeleteAdmin(DeleteAdminRequest) returns (google.protobuf.Empty) {}
   rpc AddAdminGroup(AddAdminGroupRequest) returns (AddAdminGroupResponse) {}
-  rpc DeleteAdminGroup(DeleteAdminGroupRequest) returns (DeleteAdminGroupResponse) {}
+  rpc DeleteAdminGroup(DeleteAdminGroupRequest) returns (google.protobuf.Empty) {}
 
   rpc Overrides(google.protobuf.Empty) returns (OverridesResponse) {}
   rpc CreateOverrides(CreateOverridesRequest) returns (CreateOverridesResponse) {}
   rpc EditOverrides(EditOverridesRequest) returns (EditOverridesResponse) {}
-  rpc DeleteOverrides(DeleteOverridesRequest) returns (DeleteOverridesResponse) {}
+  rpc DeleteOverrides(DeleteOverridesRequest) returns (google.protobuf.Empty) {}
 
   rpc GroupImmunities(google.protobuf.Empty) returns (GroupImmunitiesResponse) {}
   rpc CreateImmunity(CreateImmunityRequest) returns (CreateImmunityResponse) {}
-  rpc DeleteImmunity(DeleteImmunityRequest) returns (DeleteImmunityResponse) {}
+  rpc DeleteImmunity(DeleteImmunityRequest) returns (google.protobuf.Empty) {}
+
+  // Sourcemod plugin surface
+  rpc Check(CheckRequest) returns (CheckResponse) {}
+  rpc SMOverrides(google.protobuf.Empty) returns (SMOverridesResponse) {}
+  rpc SMUsers(google.protobuf.Empty) returns (SMUsersResponse) {}
+  rpc SMGroups(google.protobuf.Empty) returns (SMGroupsResponse) {}
+  rpc SMSeed(SMSeedRequest) returns (SMSeedResponse) {}
 }
 
-message GroupsResponse{}
-message CreateGroupsRequest {}
-message CreateGroupsResponse {}
-message EditGroupsRequest {}
-message EditGroupsResponse {}
-message DeleteGroupRequest {}
-message DeleteGroupResponse {}
-message GroupOverridesRequest {}
-message GroupOverridesResponse {}
-message CreateGroupOverrideRequest {}
-message CreateGroupOverrideResponse {}
-message EditGroupOverrideRequest {}
-message EditGroupOverrideResponse {}
-message DeleteGroupOverrideRequest {}
+message SMSeedRequest {
+  string steam_id = 1;
+}
+
+message SMSeedResponse {
+  string message = 1;
+}
+
+message SMOverride {
+  OverrideType override_type = 1;
+  string name = 2;
+  string flags = 3;
+}
+
+message SMOverridesResponse {
+  repeated SMOverride overrides = 1;
+}
+
+message SMUser {
+  int32 id = 1;
+  AuthType auth_type = 2;
+  string identity = 3;
+  string password = 4;
+  string flags = 5;
+  string name = 6;
+  int32 immunity = 7;
+}
+
+message SMUserGroup {
+  int32 admin_id = 1;
+  string group_name = 2;
+}
+
+message SMUsersResponse {
+  repeated SMUser users = 1;
+  repeated SMUserGroup user_groups = 2;
+}
+
+message SMGroup {
+  string flags = 1;
+  string name = 2;
+  int32 immunity_level = 3;
+}
+
+message SMGroupsResponse {
+  repeated SMGroup groups = 1;
+}
+
+message CheckRequest {
+  string steam_id = 1;
+  int32 client_id = 2;
+  string ip = 3;
+  string name = 4;
+}
+
+enum BanType {
+  BAN_TYPE_OK_UNSPECIFIED = 0;
+  BAN_TYPE_NO_COMM = 1;
+  BAN_TYPE_BANNED = 2;
+  BAN_TYPE_NETWORK = 3;
+}
+
+message CheckResponse {
+  int32 client_id = 1;
+  BanType ban_type = 2;
+  string msg = 3;
+}
+
+message GroupsResponse {
+  repeated Group groups = 1;
+}
+
+message CreateGroupRequest {
+  string name = 1;
+  int32 immunity = 2 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 100
+  ];
+  string flags = 3;
+}
+
+message CreateGroupResponse {
+  Group group = 1;
+}
+
+message EditGroupsRequest {
+  int32 group_id = 1;
+  string name = 2;
+  int32 immunity = 3 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 100
+  ];
+  string flags = 4;
+}
+
+message EditGroupsResponse {
+  Group group = 1;
+}
+
+message DeleteGroupRequest {
+  int32 group_id = 1;
+}
+
+message GroupOverridesResponse {
+  repeated GroupOverrides overrides = 1;
+}
+
+message CreateGroupOverrideRequest {
+  int32 group_override_id = 1;
+  int32 group_id = 2;
+  OverrideType type = 3;
+  string name = 4;
+}
+
+message CreateGroupOverrideResponse {
+  GroupOverrides group_override = 1;
+}
+
+message EditGroupOverrideRequest {
+  int32 group_override_id = 1;
+  string name = 2;
+  OverrideType override_type = 3;
+  OverrideAccess override_access = 4;
+}
+message EditGroupOverrideResponse {
+  GroupOverrides group_override = 1;
+}
+
+message DeleteGroupOverrideRequest {
+  int32 group_override_od = 1;
+}
 message DeleteGroupOverrideResponse {}
 
-message AdminsResponse {}
-message CreateAdminRequest {}
-message CreateAdminResponse {}
-message EditAdminRequest {}
-message EditAdminResponse {}
-message DeleteAdminRequest {}
-message DeleteAdminResponse {}
+message AdminsResponse {
+  repeated Admin admins = 1;
+}
+
+message CreateAdminRequest {
+  AuthType auth_type = 1;
+  string identity = 2;
+  string password = 3;
+  string flags = 4;
+  string name = 5;
+  int32 immunity = 6;
+}
+
+message CreateAdminResponse {
+  Admin admin = 1;
+}
+
+message EditAdminRequest {
+  int32 admin_id = 1;
+  AuthType auth_type = 2;
+  string identity = 3;
+  string password = 4;
+  string flags = 5;
+  string name = 6;
+  int32 immunity = 7;
+}
+message EditAdminResponse {
+  Admin admin = 1;
+}
+
+message DeleteAdminRequest {
+  int32 admin_id = 1;
+}
+
 message AddAdminGroupRequest {}
 message AddAdminGroupResponse {}
-message DeleteAdminGroupRequest {}
-message DeleteAdminGroupResponse {}
 
-message OverridesRequest {}
-message OverridesResponse {}
-message CreateOverridesRequest {}
-message CreateOverridesResponse {}
-message EditOverridesRequest {}
-message EditOverridesResponse {}
-message DeleteOverridesRequest {}
-message DeleteOverridesResponse {}
+message DeleteAdminGroupRequest {
+  int32 admin_group_id = 1;
+}
 
-message GroupImmunitiesRequest {}
-message GroupImmunitiesResponse {}
-message CreateImmunityRequest {}
-message CreateImmunityResponse {}
-message DeleteImmunityRequest {}
-message DeleteImmunityResponse {}
+message OverridesResponse {
+  repeated Override overrides = 1;
+}
+message CreateOverridesRequest {
+  string name = 1;
+  OverrideType override_type = 2;
+  string flags = 3;
+}
+message CreateOverridesResponse {
+  repeated Override overrides = 1;
+}
 
+message EditOverridesRequest {
+  int32 override_id = 1;
+  string name = 2;
+  OverrideType override_type = 3;
+  string flags = 4;
+}
+
+message EditOverridesResponse {
+  GroupImmunity group_immunity = 1;
+}
+
+message DeleteOverridesRequest {
+  int32 override_id = 1;
+}
+
+message GroupImmunitiesResponse {
+  repeated GroupImmunity group_immunities = 1;
+}
+
+message CreateImmunityRequest {
+  int32 group_id = 1;
+  int32 other_id = 2;
+}
+
+message CreateImmunityResponse {
+  GroupImmunity group_immunity = 1;
+}
+
+message DeleteImmunityRequest {
+  int32 immunity_id = 1;
+}
 
 message GroupImmunity {
-  int32 group_id = 1;
+  int32 group_immunity_id = 1;
   Group group = 2;
   Group other = 3;
   google.protobuf.Timestamp created_on = 4;
 }
 
+message Group {
+  int32 group_id = 1;
+  string flags = 2;
+  string name = 3;
+  int32 immunity_level = 4;
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
+}
 
+enum OverrideType {
+  OVERRIDE_TYPE_COMMAND_UNSPECIFIED = 0;
+  OVERRIDE_TYPE_GROUP = 1;
+}
 
-message GroupOverride {
+enum OverrideAccess {
+  OVERRIDE_ACCESS_ALLOW_UNSPECIFIED = 0;
+  OVERRIDE_ACCESS_DENY = 1;
+}
+
+message GroupOverrides {
   int32 group_override_id = 1;
   int32 group_id = 2;
-  OverrideType type = 3;
+  OverrideType override_type = 3;
   string name = 4;
+  OverrideAccess override_access = 5;
+  google.protobuf.Timestamp created_on = 6;
+  google.protobuf.Timestamp updated_on = 7;
+}
+
+enum AuthType {
+  AUTH_TYPE_STEAM_UNSPECIFIED = 0;
+  AUTH_TYPE_NAME = 1;
+  AUTH_TYPE_IP = 2;
+}
+
+message Admin {
+  int32 admin_id = 1;
+  string steam_id = 2;
+  AuthType auth_type = 3;
+  string identity = 4;
+  string password = 5;
+  string flags = 6;
+  string name = 7;
+  int32 immunity = 8 [
+    (buf.validate.field).int32.gte = 0,
+    (buf.validate.field).int32.lte = 100
+  ];
+  repeated Group groups = 9;
+  google.protobuf.Timestamp created_on = 10;
+  google.protobuf.Timestamp updated_on = 11;
+}
+
+message Override {
+  int32 override_id = 1;
+  OverrideType override_type = 2;
+  string name = 3;
+  string flags = 4;
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
 }

@@ -83,43 +83,6 @@ func (s Stats) Import(ctx context.Context, serverID int, demo demoparse.Demo) (*
 			if !ok {
 				plr = &Player{MedicStats: &PlayerMedicStats{}}
 				players[user] = plr
-
-			}
-			plr.ApplySummary(&player)
-		}
-	}
-
-	if demo.Map == "" {
-		return nil, fmt.Errorf("%w: empty map invalid", ErrInvalidState)
-	}
-	var chat []PersonMessage
-	for _, message := range demo.Chat {
-		user := steamid.New(message.User)
-		if message.Message == "" || message.Tick <= 0 {
-			continue
-		}
-
-	newID, errID := uuid.NewV4()
-	if errID != nil {
-		return nil, fmt.Errorf("%w: failed to generate UUID", ErrInvalidState)
-	}
-
-	mapInfo, errMap := s.maps.Get(ctx, demo.Map)
-	if errMap != nil {
-		return nil, fmt.Errorf("%w: %w", ErrInvalidState, errMap)
-	}
-
-	players := map[steamid.SteamID]*Player{}
-	for _, round := range demo.Rounds {
-		for _, player := range round.Players {
-			user := steamid.New(player.SteamID)
-			if !user.Valid() {
-				continue
-			}
-			plr, ok := players[user]
-			if !ok {
-				plr = &Player{MedicStats: &PlayerMedicStats{}}
-				players[user] = plr
 			}
 			plr.ApplySummary(&player)
 		}

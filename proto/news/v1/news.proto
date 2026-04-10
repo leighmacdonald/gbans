@@ -1,0 +1,56 @@
+edition = "2023";
+
+package news.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service PersonService {
+  rpc Latest(LatestRequest) returns (NewsAllResponse) {}
+  rpc Edit(EditRequest) returns (EditResponse) {}
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty) {}
+}
+
+message Article {
+  int32 news_id = 1;
+  string title = 2;
+  string body_md = 3;
+  bool is_published = 4;
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
+}
+
+message DeleteRequest {
+  string news_id = 1;
+}
+
+message LatestRequest {
+  int32 limit = 1;
+}
+
+message CreateRequest {
+  string title = 1;
+  string body_md = 2;
+  bool is_published = 3;
+  google.protobuf.Timestamp created_on = 4;
+}
+message CreateResponse {
+  Article article = 1;
+}
+
+message NewsAllResponse {
+  repeated Article article = 1;
+}
+
+message EditRequest {
+  int32 news_id = 1;
+  string title = 2;
+  string body_md = 3;
+  bool is_published = 4;
+  google.protobuf.Timestamp created_on = 5;
+}
+
+message EditResponse {
+  Article article = 1;
+}

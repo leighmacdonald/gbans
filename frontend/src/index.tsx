@@ -9,7 +9,7 @@ import { App } from "./App.tsx";
 import "./fonts/tf2build.css";
 import { createClient } from "@connectrpc/connect";
 import { createConnectQueryKey } from "@connectrpc/connect-query";
-import { ConfigService } from "./gen/config/v1/config_pb.ts";
+import { ConfigService } from "./rpc/config/v1/config_pb.ts";
 import { newRouter } from "./router.tsx";
 import { finalTransport } from "./transport.ts";
 

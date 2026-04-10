@@ -150,7 +150,7 @@ function ReportView() {
 	return (
 		<Grid container spacing={2}>
 			<Grid size={{ xs: 12, md: 8 }}>
-				{report && <ReportViewComponent report={report} assetURL={appInfo.asset_url} />}
+				{report && <ReportViewComponent report={report} assetURL={appInfo.assetUrl} />}
 			</Grid>
 			<Grid size={{ xs: 12, md: 4 }}>
 				<div>

@@ -169,7 +169,7 @@ func New(repository Repository, person person.Provider, notifier notification.No
 		servers:       servers,
 		seedQueue: &SeedQueue{
 			minTime: time.Second * 300,
-			servers: make(map[int]seedRequest),
+			servers: make(map[int32]seedRequest),
 			mu:      &sync.Mutex{},
 		},
 	}
