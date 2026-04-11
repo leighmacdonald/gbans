@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 )
 
 const MaxResultsDefault = 100
@@ -16,6 +17,15 @@ type Filter struct {
 	Desc    bool   `json:"desc,omitempty" schema:"desc"`
 	OrderBy string `json:"order_by,omitempty" schema:"order_by"`
 	Deleted bool   `json:"deleted,omitempty" schema:"deleted"`
+}
+
+func FromRPC(filter *rpc.Filter) Filter {
+	return Filter{
+		Offset:  filter.GetOffset(),
+		Limit:   filter.GetLimit(),
+		Desc:    filter.GetDesc(),
+		OrderBy: filter.GetOrderBy(),
+	}
 }
 
 // ApplySafeOrder is used to ensure that a user requested column is valid. This

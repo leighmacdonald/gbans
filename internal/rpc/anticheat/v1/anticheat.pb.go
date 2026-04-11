@@ -100,7 +100,7 @@ type QueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filter        *rpc.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	SteamId       *string                `protobuf:"bytes,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId       *int64                 `protobuf:"varint,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	Summary       *string                `protobuf:"bytes,4,opt,name=summary" json:"summary,omitempty"`
 	Detection     *Detection             `protobuf:"varint,5,opt,name=detection,enum=anticheat.v1.Detection" json:"detection,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -151,11 +151,11 @@ func (x *QueryRequest) GetName() string {
 	return ""
 }
 
-func (x *QueryRequest) GetSteamId() string {
+func (x *QueryRequest) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 func (x *QueryRequest) GetSummary() string {
@@ -219,7 +219,7 @@ func (x *QueryResponse) GetEntries() []*Entry {
 type Entry struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AnticheatId   *int64                 `protobuf:"varint,1,opt,name=anticheat_id,json=anticheatId" json:"anticheat_id,omitempty"`
-	SteamId       *string                `protobuf:"bytes,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId       *int64                 `protobuf:"varint,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	ServerId      *int32                 `protobuf:"varint,3,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
 	ServerName    *string                `protobuf:"bytes,4,opt,name=server_name,json=serverName" json:"server_name,omitempty"`
 	DemoId        *int32                 `protobuf:"varint,5,opt,name=demo_id,json=demoId" json:"demo_id,omitempty"`
@@ -274,11 +274,11 @@ func (x *Entry) GetAnticheatId() int64 {
 	return 0
 }
 
-func (x *Entry) GetSteamId() string {
+func (x *Entry) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 func (x *Entry) GetServerId() int32 {
@@ -380,14 +380,14 @@ const file_anticheat_v1_anticheat_proto_rawDesc = "" +
 	"\fQueryRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
-	"\bsteam_id\x18\x03 \x01(\tR\asteamId\x12\x18\n" +
+	"\bsteam_id\x18\x03 \x01(\x03R\asteamId\x12\x18\n" +
 	"\asummary\x18\x04 \x01(\tR\asummary\x125\n" +
 	"\tdetection\x18\x05 \x01(\x0e2\x17.anticheat.v1.DetectionR\tdetection\">\n" +
 	"\rQueryResponse\x12-\n" +
 	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryR\aentries\"\xf1\x03\n" +
 	"\x05Entry\x12!\n" +
 	"\fanticheat_id\x18\x01 \x01(\x03R\vanticheatId\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12\x1b\n" +
+	"\bsteam_id\x18\x02 \x01(\x03R\asteamId\x12\x1b\n" +
 	"\tserver_id\x18\x03 \x01(\x05R\bserverId\x12\x1f\n" +
 	"\vserver_name\x18\x04 \x01(\tR\n" +
 	"serverName\x12\x17\n" +

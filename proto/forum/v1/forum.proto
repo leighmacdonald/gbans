@@ -1,0 +1,251 @@
+edition = "2023";
+
+package forum.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "privilege.proto";
+
+service ForumService {
+  rpc ActiveUsers(google.protobuf.Empty) returns (ActiveUsersResponse) {}
+
+  rpc Overview(google.protobuf.Empty) returns (OverviewResponse) {}
+  rpc RecentMessages(google.protobuf.Empty) returns (RecentMessagesResponse) {}
+  rpc Threads(ThreadsRequest) returns (ThreadsRequestResponse) {}
+  rpc Thread(ThreadRequest) returns (ThreadResponse) {}
+  rpc ThreadDelete(ThreadDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc Forum(ForumRequest) returns (ForumResponse) {}
+  rpc ForumMessages(ForumMessagesRequest) returns (ForumMessagesResponse) {}
+
+  // authed
+  rpc ThreadCreate(ThreadCreateRequest) returns (ThreadCreateResponse) {}
+  rpc ThreadEdit(ThreadEditRequest) returns (ThreadEditResponse) {}
+  rpc ThreadReplyCreate(ThreadReplyCreateRequest) returns (ThreadReplyCreateResponse) {}
+  rpc ThreadReplyEdit(ThreadReplyEditRequest) returns (ThreadReplyEditRequest) {}
+  rpc MessageDelete(MessageDeleteRequest) returns (google.protobuf.Empty) {}
+
+
+  // mod
+  rpc CategoryCreate(CategoryCreateRequest) returns (CategoryCreateResponse) {}
+  rpc CategoryEdit(CategoryEditRequest) returns (CategoryEditResponse) {}
+  rpc Category(CategoryRequest) returns (CategoryResponse) {}
+  rpc ForumCreate(ForumCreateRequest) returns (ForumCreateResponse) {}
+  rpc ForumEdit(ForumEditRequest) returns (ForumEditResponse) {}
+}
+
+message ThreadEditRequest {
+  int32 forum_thread_id = 1;
+  string title = 2;
+  bool sticky = 3;
+  bool locked = 4;
+}
+
+message ThreadEditResponse {
+  Thread thread = 1;
+}
+
+message ForumEditResponse {
+  Forum forum = 1;
+}
+
+message ForumEditRequest {
+  int32 forum_id = 1;
+  int32 forum_category_id = 2;
+  Privilege permission_level = 3;
+  string title = 4;
+  string description = 5;
+  int32 ordering = 6;
+}
+
+message ForumCreateRequest {
+  int32 forum_category_id = 1;
+  Privilege permission_level = 2;
+  string title = 3;
+  string description = 4;
+  int32 ordering = 5;
+}
+
+message ForumCreateResponse {
+  Forum forum = 1;
+}
+
+message CategoryEditRequest {
+  int32 forum_category_id = 1;
+  string title = 2;
+  string description = 3;
+  int32 ordering = 4;
+}
+
+message CategoryEditResponse {
+  Category category = 1;
+}
+
+message CategoryRequest {
+  int32 forum_category_id = 1;
+}
+
+message CategoryResponse {
+  Category category = 1;
+}
+
+message CategoryCreateResponse {
+  Category category = 1;
+}
+
+message CategoryCreateRequest {
+  string title = 1;
+  string description = 2;
+  int32 ordering = 3;
+}
+
+message MessageDeleteRequest {
+  int64 forum_message_id = 1;
+}
+
+message ThreadDeleteRequest {
+  int64 forum_thread_id = 1;
+}
+
+message ThreadReplyEditRequest {
+  int64 forum_message_id = 1;
+  string body_md = 2;
+}
+
+message ThreadReplyCreateRequest {
+  int64 forum_thread_id = 1;
+  string body_md = 2;
+}
+
+message ThreadReplyCreateResponse {
+  Message message = 1;
+}
+
+message ThreadCreateRequest {
+  int32 forum_id = 1;
+  string title = 2;
+  string body_md = 3;
+  bool sticky = 4;
+  bool locked = 5;
+}
+
+message ThreadCreateResponse {
+  Thread thread = 1;
+  Message message = 2;
+}
+
+message ForumMessagesRequest {
+  int64 forum_thread_id = 1;
+  bool deleted = 2;
+}
+
+message ForumMessagesResponse {
+  repeated Message messages = 1;
+}
+
+message ForumRequest {
+  int32 forum_id = 1;
+}
+
+message ForumResponse {
+  Forum forum = 1;
+}
+
+message ThreadRequest {
+  int64 forum_thread_id = 1;
+}
+
+message ThreadResponse {
+  Thread thread = 1;
+}
+
+message ThreadsRequest {
+  int32 forum_id = 1;
+}
+
+message ThreadsRequestResponse {
+  repeated Thread threads = 1;
+}
+
+message Thread {
+  int32 forum_id = 1;
+  int64 source_id = 2;
+  string title = 3;
+  google.protobuf.Timestamp created_on = 4;
+  google.protobuf.Timestamp updated_on = 5;
+}
+
+message ThreadWithSource {
+  Thread thread = 1;
+  string persona_name = 2;
+  string avatar_hash = 3;
+  Privilege permission_level = 4;
+  int64 recent_forum_message_id = 5;
+  google.protobuf.Timestamp recent_created_on = 6;
+  int64 recent_steam_id = 7;
+  string recent_persona_name = 8;
+  string recent_avatar_hash = 9;
+}
+
+message UserActivity {
+  int64 steam_id = 1;
+  string persona_name = 2;
+  Privilege permission_level = 3;
+  google.protobuf.Timestamp created_on = 4;
+}
+
+message ActiveUsersResponse {
+  repeated UserActivity user_activity = 1;
+}
+
+message Message {
+  int64 forum_message_id = 1;
+  int64 forum_thread_id = 2;
+  int64 source_id = 3;
+  string body_md = 4;
+  string title = 5;
+  bool online = 6;
+  string signature = 7;
+  string persona_name = 8;
+  string avatar_hash = 9;
+  Privilege permission_level = 10;
+  google.protobuf.Timestamp created_on = 11;
+  google.protobuf.Timestamp updated_on = 12;
+}
+
+message RecentMessagesResponse {
+  repeated Message messages = 1;
+}
+
+message Forum {
+  int32 forum_id = 1;
+  int32 forum_category_id = 2;
+  int64 last_thread_id = 3;
+  string title = 4;
+  string description = 5;
+  int32 ordering = 6;
+  int64 count_threads = 7;
+  int64 count_messages = 8;
+  Privilege permission_level = 9;
+  int64 recent_forum_thread_id = 10;
+  string recent_forum_title = 11;
+  string recent_source_id = 12;
+  string recent_persona_name = 13;
+  string recent_avatar_hash = 14;
+  google.protobuf.Timestamp recent_created_on = 15;
+  google.protobuf.Timestamp created_on = 16;
+  google.protobuf.Timestamp updated_on = 17;
+}
+
+message Category {
+  int32 forum_category_id = 1;
+  string title = 2;
+  string description = 3;
+  int32 ordering = 4;
+  repeated Forum forums = 5;
+  google.protobuf.Timestamp created_on = 6;
+  google.protobuf.Timestamp updated_on = 7;
+}
+
+message OverviewResponse {
+  repeated Category categories = 1;
+}

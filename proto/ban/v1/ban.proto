@@ -4,9 +4,9 @@ package ban.v1;
 
 import "buf/validate/validate.proto";
 import "filter.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/duration.proto";
 
 enum BanType {
   BAN_TYPE_OK_UNSPECIFIED = 0;
@@ -97,8 +97,8 @@ message DeleteRequest {
 }
 
 message QueryRequest {
-  string source_id = 1;
-  string target_id = 2;
+  int64 source_id = 1;
+  int64 target_id = 2;
   bool groups_only = 3;
   bool deleted = 4;
   string cidr = 5;
@@ -120,8 +120,8 @@ enum Origin {
 }
 
 message Ban {
-  string target_id = 1;
-  string source_id = 2;
+  int64 target_id = 1;
+  int64 source_id = 2;
   int64 ban_id = 3;
   int64 report_id = 4;
   string last_ip = 5;

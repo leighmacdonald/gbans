@@ -2,39 +2,77 @@ edition = "2023";
 
 package ban.v1;
 
+import "ban/v1/ban.proto";
 import "buf/validate/validate.proto";
 import "filter.proto";
-import "ban/v1/ban.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/duration.proto";
+import "privilege.proto";
 
 service AppealService {
   rpc Appeals(AppealsRequest) returns (AppealsResponse) {}
   rpc Messages(MessagesRequest) returns (MessagesResponse) {}
   rpc Reply(ReplyRequest) returns (ReplyResponse) {}
   rpc EditAppealMessage(EditAppealMessageRequest) returns (EditAppealMessageResponse) {}
-  rpc DeleteAppealMessage(DeleteAppealMessageRequest) returns (DeleteAppealMessageResponse) {}
+  rpc DeleteAppealMessage(DeleteAppealMessageRequest) returns (google.protobuf.Empty) {}
 }
 
-message AppealsRequest{
+message AppealsRequest {
   bool deleted = 1;
 }
 
-message AppealsResponse {}
+message AppealsResponse {
+  repeated AppealOverview appeals = 1;
+}
+
+message MessagesRequest {
+  int32 ban_id = 1;
+}
+
+message MessagesResponse {
+  repeated AppealMessage messages = 1;
+}
 
 message AppealOverview {
   Ban ban = 1;
+  string source_persona_name = 2;
+  string source_avatar_hash = 3;
+  string target_persona_name = 4;
+  string target_avatar_hash = 5;
 }
 
-message MessagesRequest {}
-message MessagesResponse {}
+message AppealMessage {
+  int32 ban_id = 1;
+  int64 ban_message_id = 2;
+  int64 author_id = 3;
+  string message_md = 4;
+  bool deleted = 5;
+  google.protobuf.Timestamp created_on = 6;
+  google.protobuf.Timestamp updated_on = 7;
+  string avatar_hash = 8;
+  string persona_name = 9;
+  Privilege privilege = 10;
+}
 
-message ReplyRequest {}
-message ReplyResponse {}
+message ReplyRequest {
+  int32 ban_id = 1;
+  string body_md = 2;
+}
 
-message EditAppealMessageRequest{}
-message EditAppealMessageResponse{}
+message ReplyResponse {
+  AppealMessage message = 1;
+}
 
-message DeleteAppealMessageRequest{}
-message DeleteAppealMessageResponse{}
+message EditAppealMessageRequest {
+  int64 ban_message_id = 1;
+  string body_md = 2;
+}
+
+message EditAppealMessageResponse {
+  AppealMessage message = 1;
+}
+
+message DeleteAppealMessageRequest {
+  int64 ban_message_id = 1;
+}

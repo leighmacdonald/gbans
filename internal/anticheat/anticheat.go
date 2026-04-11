@@ -52,13 +52,13 @@ type ConfigStore struct {
 	PathRoot string `json:"path_root"`
 }
 
-// Entry represents a stac log entry and some associated meta data.
+// Entry represents a stac log entry and some associated metadata.
 type Entry struct {
 	logparse.StacEntry
 
 	Personaname string `json:"personaname"`
 	AvatarHash  string `json:"avatar_hash"`
-	Triggered   int    `json:"triggered"`
+	Triggered   int32  `json:"triggered"`
 }
 
 type Query struct {
@@ -96,15 +96,15 @@ func New(repo Repository, config Config, notif notification.Notifier, handler On
 func (a AntiCheat) DownloadHandler(ctx context.Context, client storage.Storager, server scp.ServerInfo, config scp.Config) error {
 	for _, instance := range server.ServerIDs {
 		logDir := server.GamePath(config.StacPathFmt, instance)
-		filelist, errFilelist := client.List(ctx, logDir, option.NewPage(0, 5))
-		if errFilelist != nil {
-			slog.Error("remote list dir failed", slog.String("error", errFilelist.Error()),
+		fileList, errFileList := client.List(ctx, logDir, option.NewPage(0, 5))
+		if errFileList != nil {
+			slog.Error("remote list dir failed", slog.String("error", errFileList.Error()),
 				slog.String("server", instance.ShortName), slog.String("path", logDir))
 
 			return nil //nolint:nilerr
 		}
 
-		for _, file := range filelist {
+		for _, file := range fileList {
 			if !strings.HasSuffix(file.Name(), ".log") || time.Since(file.ModTime()) < time.Hour*26 {
 				continue
 			}
@@ -175,32 +175,32 @@ func (a AntiCheat) Handle(ctx context.Context, entries []logparse.StacEntry) err
 
 		results[entry.SteamID][entry.Detection]++
 
-		isban := false
+		isBan := false
 
 		switch entry.Detection {
 		case logparse.SilentAim:
-			isban = a.MaxPsilent > 0 && results[entry.SteamID][entry.Detection] >= a.MaxPsilent
+			isBan = a.MaxPsilent > 0 && results[entry.SteamID][entry.Detection] >= a.MaxPsilent
 		case logparse.AimSnap:
-			isban = a.MaxAimSnap > 0 && results[entry.SteamID][entry.Detection] >= a.MaxAimSnap
+			isBan = a.MaxAimSnap > 0 && results[entry.SteamID][entry.Detection] >= a.MaxAimSnap
 		case logparse.BHop:
-			isban = a.MaxBhop > 0 && results[entry.SteamID][entry.Detection] >= a.MaxBhop
+			isBan = a.MaxBhop > 0 && results[entry.SteamID][entry.Detection] >= a.MaxBhop
 		case logparse.CmdNumSpike:
-			isban = a.MaxCmdNum > 0 && results[entry.SteamID][entry.Detection] >= a.MaxCmdNum
+			isBan = a.MaxCmdNum > 0 && results[entry.SteamID][entry.Detection] >= a.MaxCmdNum
 		case logparse.EyeAngles:
-			isban = a.MaxFakeAng > 0 && results[entry.SteamID][entry.Detection] >= a.MaxFakeAng
+			isBan = a.MaxFakeAng > 0 && results[entry.SteamID][entry.Detection] >= a.MaxFakeAng
 		case logparse.InvalidUserCmd:
-			isban = a.MaxInvalidUserCmd > 0 && results[entry.SteamID][entry.Detection] >= a.MaxInvalidUserCmd
+			isBan = a.MaxInvalidUserCmd > 0 && results[entry.SteamID][entry.Detection] >= a.MaxInvalidUserCmd
 		case logparse.OOBCVar:
-			isban = a.MaxOOBVar > 0 && results[entry.SteamID][entry.Detection] >= a.MaxOOBVar
+			isBan = a.MaxOOBVar > 0 && results[entry.SteamID][entry.Detection] >= a.MaxOOBVar
 		case logparse.CheatCVar:
-			isban = a.MaxCheatCvar > 0 && results[entry.SteamID][entry.Detection] >= a.MaxCheatCvar
+			isBan = a.MaxCheatCvar > 0 && results[entry.SteamID][entry.Detection] >= a.MaxCheatCvar
 		case logparse.TooManyConnectiona:
-			isban = a.MaxTooManyConnections > 0 && results[entry.SteamID][entry.Detection] >= a.MaxTooManyConnections
+			isBan = a.MaxTooManyConnections > 0 && results[entry.SteamID][entry.Detection] >= a.MaxTooManyConnections
 		default:
 			slog.Warn("Got unknown stac detection", slog.String("summary", entry.Summary))
 		}
 
-		if !isban || slices.Contains(hasBeenBanned, entry.SteamID) {
+		if !isBan || slices.Contains(hasBeenBanned, entry.SteamID) {
 			continue
 		}
 
@@ -225,7 +225,7 @@ func (a AntiCheat) DetectionsByType(ctx context.Context, detectionType logparse.
 	return a.repo.DetectionsByType(ctx, detectionType)
 }
 
-func (a AntiCheat) Import(ctx context.Context, fileName string, reader io.ReadCloser, serverID int) ([]logparse.StacEntry, error) {
+func (a AntiCheat) Import(ctx context.Context, fileName string, reader io.ReadCloser, serverID int32) ([]logparse.StacEntry, error) {
 	entries, errEntries := a.parser.Parse(fileName, reader)
 	if errEntries != nil {
 		return nil, errEntries

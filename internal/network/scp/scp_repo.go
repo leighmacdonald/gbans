@@ -10,7 +10,7 @@ import (
 
 // serverID is a unique game instance on a server.
 type serverID struct {
-	ServerID  int
+	ServerID  int32
 	ShortName string
 }
 

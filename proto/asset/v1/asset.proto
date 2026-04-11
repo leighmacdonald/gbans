@@ -28,7 +28,7 @@ message CreateResponse {
 message Asset {
   string asset_id = 1;
   string bucket = 2;
-  string author_id = 3;
+  int64 author_id = 3;
   string hash = 4;
   bool is_private = 5;
   string mime_type = 6;

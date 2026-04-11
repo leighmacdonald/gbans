@@ -1,0 +1,92 @@
+edition = "2023";
+
+package patreon.v1;
+
+import "filter.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service PatreonService {
+  rpc Campaigns(google.protobuf.Empty) returns (CampaignsResponse) {}
+}
+
+message Campaign {
+  string type = 1;
+  string id = 2;
+  Attributes attributes = 3;
+  Relationships relationships= 4;
+}
+
+message CampaignsResponse {
+    repeated Campaign campaigns = 1;
+}
+
+message Attributes {
+  google.protobuf.Timestamp created_at = 1;
+  string creation_name = 2;
+  string discord_server_id = 3;
+  string google_analytics_id = 4;
+  bool has_rss  =5;
+  bool has_sent_rss_notify = 6;
+  string image_small_url =7;
+  string image_url = 8;
+  bool is_changed_immediately = 9;
+  bool is_monthly = 10;
+  bool is_nsfw = 11;
+  string main_video_embed = 12;
+  string main_video_url = 13;
+  string one_liner = 14;
+  int32 patron_count =15;
+  string pay_per_name = 16;
+  string pledge_url = 17;
+  google.protobuf.Timestamp published_at = 18;
+  string rss_artwork_url = 19;
+  string rss_feed_title = 20;
+  bool show_warnings = 21;
+  string summary = 22;
+  string thanks_embed = 23;
+  string thanks_msg = 24;
+  string thanks_video_url = 25;
+  string url = 26;
+  string vanity = 27;
+}
+
+message Relationships {
+  Benefits benefits = 1;
+  Categories categories = 2;
+  Creator creator = 3;
+  Goals goals = 4;
+  Tiers tiers = 5;
+}
+
+message Tiers {
+  repeated Data data = 1;
+  Related links = 2;
+}
+
+message Creator {
+  repeated Data data = 1;
+  Related links = 2;
+}
+
+message Goals {
+  repeated Data data = 1;
+}
+
+message Categories {
+  repeated Data data = 1;
+}
+
+message Benefits {
+  repeated Data data = 1;
+  Related links = 2;
+}
+
+message Data {
+  string id = 1;
+  string type = 2;
+}
+
+message Related {
+  string related = 1;
+}
