@@ -5,6 +5,7 @@ package person.v1;
 import "filter.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "person_core.proto";
 import "privilege.proto";
 
 service PersonService {
@@ -31,18 +32,6 @@ message EditProfileSettingsRequest {
   bool forum_profile_messages = 2;
   bool stats_hidden = 3;
   bool center_projectiles = 4;
-}
-
-message PersonCore {
-  string steam_id = 1;
-  Privilege permission_level = 2;
-  string name = 3;
-  string avatar_hash = 4;
-  string discord_id = 5;
-  int32 vac_bans = 6;
-  int32 game_bans = 7;
-  int64 ban_id = 8;
-  google.protobuf.Timestamp time_created = 9;
 }
 
 message CurrentProfileResponse {

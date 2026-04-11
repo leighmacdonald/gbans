@@ -203,7 +203,7 @@ type Asset struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AssetId       *string                `protobuf:"bytes,1,opt,name=asset_id,json=assetId" json:"asset_id,omitempty"`
 	Bucket        *string                `protobuf:"bytes,2,opt,name=bucket" json:"bucket,omitempty"`
-	AuthorId      *string                `protobuf:"bytes,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
+	AuthorId      *int64                 `protobuf:"varint,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
 	Hash          *string                `protobuf:"bytes,4,opt,name=hash" json:"hash,omitempty"`
 	IsPrivate     *bool                  `protobuf:"varint,5,opt,name=is_private,json=isPrivate" json:"is_private,omitempty"`
 	MimeType      *string                `protobuf:"bytes,6,opt,name=mime_type,json=mimeType" json:"mime_type,omitempty"`
@@ -259,11 +259,11 @@ func (x *Asset) GetBucket() string {
 	return ""
 }
 
-func (x *Asset) GetAuthorId() string {
+func (x *Asset) GetAuthorId() int64 {
 	if x != nil && x.AuthorId != nil {
 		return *x.AuthorId
 	}
-	return ""
+	return 0
 }
 
 func (x *Asset) GetHash() string {
@@ -331,7 +331,7 @@ const file_asset_v1_asset_proto_rawDesc = "" +
 	"\x05Asset\x12\x19\n" +
 	"\basset_id\x18\x01 \x01(\tR\aassetId\x12\x16\n" +
 	"\x06bucket\x18\x02 \x01(\tR\x06bucket\x12\x1b\n" +
-	"\tauthor_id\x18\x03 \x01(\tR\bauthorId\x12\x12\n" +
+	"\tauthor_id\x18\x03 \x01(\x03R\bauthorId\x12\x12\n" +
 	"\x04hash\x18\x04 \x01(\tR\x04hash\x12\x1d\n" +
 	"\n" +
 	"is_private\x18\x05 \x01(\bR\tisPrivate\x12\x1b\n" +

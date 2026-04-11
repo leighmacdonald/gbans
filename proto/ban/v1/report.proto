@@ -1,0 +1,130 @@
+edition = "2023";
+
+package ban.v1;
+
+import "ban/v1/ban.proto";
+import "buf/validate/validate.proto";
+import "filter.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "person_core.proto";
+import "privilege.proto";
+
+service ReportService {
+  rpc ReportCreate(CreateReportRequest) returns (CreateReportResponse) {}
+  rpc Report(ReportRequest) returns (ReportResponse) {}
+  rpc ReportStatusEdit(ReportStatusEditRequest) returns (google.protobuf.Empty) {}
+  rpc UserReports(UserReportsRequest) returns (UserReportsResponse) {}
+
+  rpc ReportMessages(ReportMessagesRequest) returns (ReportMessagesResponse) {}
+  rpc ReportMessageCreate(CreateReportMessageRequest) returns (CreateReportMessageResponse) {}
+  rpc ReportMessageEdit(ReportMessageEditRequest) returns (ReportMessageEditResponse) {}
+  rpc ReportMessageDelete(ReportMessageDeleteRequest) returns (google.protobuf.Empty) {}
+}
+
+message ReportMessageDeleteRequest {
+  int64 report_message_id = 1;
+}
+
+message ReportMessageEditRequest {
+  int64 report_message_id = 1;
+  string body_md = 2;
+}
+
+message ReportMessageEditResponse {
+  ReportMessage message = 1;
+}
+
+message ReportMessagesRequest {
+  int64 report_id = 1;
+}
+
+message UserReportsRequest {
+  int64 steam_id = 1;
+}
+
+message ReportMessagesResponse {
+  repeated ReportMessage messages = 1;
+}
+
+message UserReportsResponse {
+  repeated ReportWithAuthor reports = 1;
+}
+
+message ReportRequest {
+  int64 report_id = 1;
+}
+
+message ReportResponse {
+  ReportWithAuthor report = 1;
+}
+
+enum ReportStatus {
+  REPORT_STATUS_OPENED_UNSPECIFIED = 0;
+  REPORT_STATUS_NEED_MORE_INFO = 1;
+  REPORT_STATUS_CLOSED_WITHOUT_ACTION = 2;
+  REPORT_STATUS_CLOSED_WITH_ACTION = 3;
+}
+
+message ReportMessage {
+  int64 report_id = 1;
+  int64 report_message_id = 2;
+  int64 author_id = 3;
+  string message_md = 4;
+  bool deleted = 5;
+  google.protobuf.Timestamp created_on = 6;
+  google.protobuf.Timestamp updated_on = 7;
+  string persona_name = 8;
+  string avatar_hash = 9;
+  Privilege permission_level = 10;
+}
+
+message Report {
+  int64 report_id = 1;
+  int64 source_id = 2;
+  int64 target_id = 3;
+  string description = 4;
+  ReportStatus report_status = 5;
+  BanReason reason = 6;
+  string reason_text = 7;
+  bool deleted = 8;
+  int32 demo_tick = 9;
+  int64 demo_id = 10;
+  int64 person_message_id = 11;
+  google.protobuf.Timestamp created_on = 12;
+  google.protobuf.Timestamp updated_on = 13;
+}
+
+message ReportWithAuthor {
+  Report report = 1;
+  PersonCore author = 2;
+  PersonCore subject = 3;
+}
+
+message ReportStatusEditRequest {
+  int64 report_id = 1;
+  ReportStatus report_status = 2;
+}
+
+message CreateReportRequest {
+  int64 source_id = 1;
+  int64 target_id = 2;
+  string description = 3;
+  BanReason reason = 4;
+  string reason_text = 5;
+  int64 demo_id = 6;
+  int32 demo_tick = 7;
+  int64 person_message_id = 8;
+}
+
+message CreateReportResponse {
+  ReportWithAuthor report = 1;
+}
+
+message CreateReportMessageRequest {
+  int32 report_id = 1;
+  string body_md = 2;
+}
+
+message CreateReportMessageResponse {}

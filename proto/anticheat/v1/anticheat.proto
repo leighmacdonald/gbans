@@ -26,7 +26,7 @@ enum Detection {
 message QueryRequest {
   Filter filter = 1;
   string name = 2;
-  string steam_id = 3;
+  int64 steam_id = 3;
   string summary = 4;
   Detection detection = 5;
 }
@@ -37,7 +37,7 @@ message QueryResponse {
 
 message Entry {
   int64 anticheat_id = 1;
-  string steam_id = 2;
+  int64 steam_id = 2;
   int32 server_id = 3;
   string server_name = 4;
   int32 demo_id = 5;

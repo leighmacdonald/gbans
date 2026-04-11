@@ -5,6 +5,26 @@
 import { AppealService } from "./appeal_pb";
 
 /**
+ * @generated from rpc ban.v1.AppealService.Appeals
+ */
+export const appeals = AppealService.method.appeals;
+
+/**
  * @generated from rpc ban.v1.AppealService.Messages
  */
 export const messages = AppealService.method.messages;
+
+/**
+ * @generated from rpc ban.v1.AppealService.Reply
+ */
+export const reply = AppealService.method.reply;
+
+/**
+ * @generated from rpc ban.v1.AppealService.EditAppealMessage
+ */
+export const editAppealMessage = AppealService.method.editAppealMessage;
+
+/**
+ * @generated from rpc ban.v1.AppealService.DeleteAppealMessage
+ */
+export const deleteAppealMessage = AppealService.method.deleteAppealMessage;

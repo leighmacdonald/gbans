@@ -8,12 +8,12 @@ package banv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	_ "github.com/leighmacdonald/gbans/internal/rpc"
+	rpc "github.com/leighmacdonald/gbans/internal/rpc"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	_ "google.golang.org/protobuf/types/known/durationpb"
-	_ "google.golang.org/protobuf/types/known/emptypb"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -26,15 +26,104 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type AppealsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Deleted       *bool                  `protobuf:"varint,1,opt,name=deleted" json:"deleted,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AppealsRequest) Reset() {
+	*x = AppealsRequest{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AppealsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppealsRequest) ProtoMessage() {}
+
+func (x *AppealsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppealsRequest.ProtoReflect.Descriptor instead.
+func (*AppealsRequest) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *AppealsRequest) GetDeleted() bool {
+	if x != nil && x.Deleted != nil {
+		return *x.Deleted
+	}
+	return false
+}
+
+type AppealsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Appeals       []*AppealOverview      `protobuf:"bytes,1,rep,name=appeals" json:"appeals,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AppealsResponse) Reset() {
+	*x = AppealsResponse{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AppealsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppealsResponse) ProtoMessage() {}
+
+func (x *AppealsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppealsResponse.ProtoReflect.Descriptor instead.
+func (*AppealsResponse) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *AppealsResponse) GetAppeals() []*AppealOverview {
+	if x != nil {
+		return x.Appeals
+	}
+	return nil
+}
+
 type MessagesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MessagesRequest) Reset() {
 	*x = MessagesRequest{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[0]
+	mi := &file_ban_v1_appeal_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +135,7 @@ func (x *MessagesRequest) String() string {
 func (*MessagesRequest) ProtoMessage() {}
 
 func (x *MessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[0]
+	mi := &file_ban_v1_appeal_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,18 +148,26 @@ func (x *MessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessagesRequest.ProtoReflect.Descriptor instead.
 func (*MessagesRequest) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{0}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *MessagesRequest) GetBanId() int32 {
+	if x != nil && x.BanId != nil {
+		return *x.BanId
+	}
+	return 0
 }
 
 type MessagesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Messages      []*AppealMessage       `protobuf:"bytes,1,rep,name=messages" json:"messages,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MessagesResponse) Reset() {
 	*x = MessagesResponse{}
-	mi := &file_ban_v1_appeal_proto_msgTypes[1]
+	mi := &file_ban_v1_appeal_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -82,7 +179,7 @@ func (x *MessagesResponse) String() string {
 func (*MessagesResponse) ProtoMessage() {}
 
 func (x *MessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_ban_v1_appeal_proto_msgTypes[1]
+	mi := &file_ban_v1_appeal_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -95,18 +192,498 @@ func (x *MessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MessagesResponse.ProtoReflect.Descriptor instead.
 func (*MessagesResponse) Descriptor() ([]byte, []int) {
-	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{1}
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *MessagesResponse) GetMessages() []*AppealMessage {
+	if x != nil {
+		return x.Messages
+	}
+	return nil
+}
+
+type AppealOverview struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Ban               *Ban                   `protobuf:"bytes,1,opt,name=ban" json:"ban,omitempty"`
+	SourcePersonaName *string                `protobuf:"bytes,2,opt,name=source_persona_name,json=sourcePersonaName" json:"source_persona_name,omitempty"`
+	SourceAvatarHash  *string                `protobuf:"bytes,3,opt,name=source_avatar_hash,json=sourceAvatarHash" json:"source_avatar_hash,omitempty"`
+	TargetPersonaName *string                `protobuf:"bytes,4,opt,name=target_persona_name,json=targetPersonaName" json:"target_persona_name,omitempty"`
+	TargetAvatarHash  *string                `protobuf:"bytes,5,opt,name=target_avatar_hash,json=targetAvatarHash" json:"target_avatar_hash,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *AppealOverview) Reset() {
+	*x = AppealOverview{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AppealOverview) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppealOverview) ProtoMessage() {}
+
+func (x *AppealOverview) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppealOverview.ProtoReflect.Descriptor instead.
+func (*AppealOverview) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *AppealOverview) GetBan() *Ban {
+	if x != nil {
+		return x.Ban
+	}
+	return nil
+}
+
+func (x *AppealOverview) GetSourcePersonaName() string {
+	if x != nil && x.SourcePersonaName != nil {
+		return *x.SourcePersonaName
+	}
+	return ""
+}
+
+func (x *AppealOverview) GetSourceAvatarHash() string {
+	if x != nil && x.SourceAvatarHash != nil {
+		return *x.SourceAvatarHash
+	}
+	return ""
+}
+
+func (x *AppealOverview) GetTargetPersonaName() string {
+	if x != nil && x.TargetPersonaName != nil {
+		return *x.TargetPersonaName
+	}
+	return ""
+}
+
+func (x *AppealOverview) GetTargetAvatarHash() string {
+	if x != nil && x.TargetAvatarHash != nil {
+		return *x.TargetAvatarHash
+	}
+	return ""
+}
+
+type AppealMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanMessageId  *int64                 `protobuf:"varint,2,opt,name=ban_message_id,json=banMessageId" json:"ban_message_id,omitempty"`
+	AuthorId      *int64                 `protobuf:"varint,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
+	MessageMd     *string                `protobuf:"bytes,4,opt,name=message_md,json=messageMd" json:"message_md,omitempty"`
+	Deleted       *bool                  `protobuf:"varint,5,opt,name=deleted" json:"deleted,omitempty"`
+	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
+	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
+	AvatarHash    *string                `protobuf:"bytes,8,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
+	PersonaName   *string                `protobuf:"bytes,9,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
+	Privilege     *rpc.Privilege         `protobuf:"varint,10,opt,name=privilege,enum=Privilege" json:"privilege,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AppealMessage) Reset() {
+	*x = AppealMessage{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AppealMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppealMessage) ProtoMessage() {}
+
+func (x *AppealMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppealMessage.ProtoReflect.Descriptor instead.
+func (*AppealMessage) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AppealMessage) GetBanId() int32 {
+	if x != nil && x.BanId != nil {
+		return *x.BanId
+	}
+	return 0
+}
+
+func (x *AppealMessage) GetBanMessageId() int64 {
+	if x != nil && x.BanMessageId != nil {
+		return *x.BanMessageId
+	}
+	return 0
+}
+
+func (x *AppealMessage) GetAuthorId() int64 {
+	if x != nil && x.AuthorId != nil {
+		return *x.AuthorId
+	}
+	return 0
+}
+
+func (x *AppealMessage) GetMessageMd() string {
+	if x != nil && x.MessageMd != nil {
+		return *x.MessageMd
+	}
+	return ""
+}
+
+func (x *AppealMessage) GetDeleted() bool {
+	if x != nil && x.Deleted != nil {
+		return *x.Deleted
+	}
+	return false
+}
+
+func (x *AppealMessage) GetCreatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedOn
+	}
+	return nil
+}
+
+func (x *AppealMessage) GetUpdatedOn() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedOn
+	}
+	return nil
+}
+
+func (x *AppealMessage) GetAvatarHash() string {
+	if x != nil && x.AvatarHash != nil {
+		return *x.AvatarHash
+	}
+	return ""
+}
+
+func (x *AppealMessage) GetPersonaName() string {
+	if x != nil && x.PersonaName != nil {
+		return *x.PersonaName
+	}
+	return ""
+}
+
+func (x *AppealMessage) GetPrivilege() rpc.Privilege {
+	if x != nil && x.Privilege != nil {
+		return *x.Privilege
+	}
+	return rpc.Privilege(0)
+}
+
+type ReplyRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BodyMd        *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplyRequest) Reset() {
+	*x = ReplyRequest{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplyRequest) ProtoMessage() {}
+
+func (x *ReplyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplyRequest.ProtoReflect.Descriptor instead.
+func (*ReplyRequest) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ReplyRequest) GetBanId() int32 {
+	if x != nil && x.BanId != nil {
+		return *x.BanId
+	}
+	return 0
+}
+
+func (x *ReplyRequest) GetBodyMd() string {
+	if x != nil && x.BodyMd != nil {
+		return *x.BodyMd
+	}
+	return ""
+}
+
+type ReplyResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       *AppealMessage         `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReplyResponse) Reset() {
+	*x = ReplyResponse{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReplyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReplyResponse) ProtoMessage() {}
+
+func (x *ReplyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReplyResponse.ProtoReflect.Descriptor instead.
+func (*ReplyResponse) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ReplyResponse) GetMessage() *AppealMessage {
+	if x != nil {
+		return x.Message
+	}
+	return nil
+}
+
+type EditAppealMessageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BanMessageId  *int64                 `protobuf:"varint,1,opt,name=ban_message_id,json=banMessageId" json:"ban_message_id,omitempty"`
+	BodyMd        *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EditAppealMessageRequest) Reset() {
+	*x = EditAppealMessageRequest{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EditAppealMessageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EditAppealMessageRequest) ProtoMessage() {}
+
+func (x *EditAppealMessageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EditAppealMessageRequest.ProtoReflect.Descriptor instead.
+func (*EditAppealMessageRequest) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *EditAppealMessageRequest) GetBanMessageId() int64 {
+	if x != nil && x.BanMessageId != nil {
+		return *x.BanMessageId
+	}
+	return 0
+}
+
+func (x *EditAppealMessageRequest) GetBodyMd() string {
+	if x != nil && x.BodyMd != nil {
+		return *x.BodyMd
+	}
+	return ""
+}
+
+type EditAppealMessageResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       *AppealMessage         `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EditAppealMessageResponse) Reset() {
+	*x = EditAppealMessageResponse{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EditAppealMessageResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EditAppealMessageResponse) ProtoMessage() {}
+
+func (x *EditAppealMessageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EditAppealMessageResponse.ProtoReflect.Descriptor instead.
+func (*EditAppealMessageResponse) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *EditAppealMessageResponse) GetMessage() *AppealMessage {
+	if x != nil {
+		return x.Message
+	}
+	return nil
+}
+
+type DeleteAppealMessageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BanMessageId  *int64                 `protobuf:"varint,1,opt,name=ban_message_id,json=banMessageId" json:"ban_message_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteAppealMessageRequest) Reset() {
+	*x = DeleteAppealMessageRequest{}
+	mi := &file_ban_v1_appeal_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteAppealMessageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAppealMessageRequest) ProtoMessage() {}
+
+func (x *DeleteAppealMessageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_ban_v1_appeal_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAppealMessageRequest.ProtoReflect.Descriptor instead.
+func (*DeleteAppealMessageRequest) Descriptor() ([]byte, []int) {
+	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *DeleteAppealMessageRequest) GetBanMessageId() int64 {
+	if x != nil && x.BanMessageId != nil {
+		return *x.BanMessageId
+	}
+	return 0
 }
 
 var File_ban_v1_appeal_proto protoreflect.FileDescriptor
 
 const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\n" +
-	"\x13ban/v1/appeal.proto\x12\x06ban.v1\x1a\x1bbuf/validate/validate.proto\x1a\ffilter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/duration.proto\"\x11\n" +
-	"\x0fMessagesRequest\"\x12\n" +
-	"\x10MessagesResponse2P\n" +
-	"\rAppealService\x12?\n" +
-	"\bMessages\x12\x17.ban.v1.MessagesRequest\x1a\x18.ban.v1.MessagesResponse\"\x00B\x8d\x01\n" +
+	"\x13ban/v1/appeal.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\ffilter.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0fprivilege.proto\"*\n" +
+	"\x0eAppealsRequest\x12\x18\n" +
+	"\adeleted\x18\x01 \x01(\bR\adeleted\"C\n" +
+	"\x0fAppealsResponse\x120\n" +
+	"\aappeals\x18\x01 \x03(\v2\x16.ban.v1.AppealOverviewR\aappeals\"(\n" +
+	"\x0fMessagesRequest\x12\x15\n" +
+	"\x06ban_id\x18\x01 \x01(\x05R\x05banId\"E\n" +
+	"\x10MessagesResponse\x121\n" +
+	"\bmessages\x18\x01 \x03(\v2\x15.ban.v1.AppealMessageR\bmessages\"\xeb\x01\n" +
+	"\x0eAppealOverview\x12\x1d\n" +
+	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\x12.\n" +
+	"\x13source_persona_name\x18\x02 \x01(\tR\x11sourcePersonaName\x12,\n" +
+	"\x12source_avatar_hash\x18\x03 \x01(\tR\x10sourceAvatarHash\x12.\n" +
+	"\x13target_persona_name\x18\x04 \x01(\tR\x11targetPersonaName\x12,\n" +
+	"\x12target_avatar_hash\x18\x05 \x01(\tR\x10targetAvatarHash\"\x86\x03\n" +
+	"\rAppealMessage\x12\x15\n" +
+	"\x06ban_id\x18\x01 \x01(\x05R\x05banId\x12$\n" +
+	"\x0eban_message_id\x18\x02 \x01(\x03R\fbanMessageId\x12\x1b\n" +
+	"\tauthor_id\x18\x03 \x01(\x03R\bauthorId\x12\x1d\n" +
+	"\n" +
+	"message_md\x18\x04 \x01(\tR\tmessageMd\x12\x18\n" +
+	"\adeleted\x18\x05 \x01(\bR\adeleted\x129\n" +
+	"\n" +
+	"created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
+	"\n" +
+	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12\x1f\n" +
+	"\vavatar_hash\x18\b \x01(\tR\n" +
+	"avatarHash\x12!\n" +
+	"\fpersona_name\x18\t \x01(\tR\vpersonaName\x12(\n" +
+	"\tprivilege\x18\n" +
+	" \x01(\x0e2\n" +
+	".PrivilegeR\tprivilege\">\n" +
+	"\fReplyRequest\x12\x15\n" +
+	"\x06ban_id\x18\x01 \x01(\x05R\x05banId\x12\x17\n" +
+	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"@\n" +
+	"\rReplyResponse\x12/\n" +
+	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.AppealMessageR\amessage\"Y\n" +
+	"\x18EditAppealMessageRequest\x12$\n" +
+	"\x0eban_message_id\x18\x01 \x01(\x03R\fbanMessageId\x12\x17\n" +
+	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"L\n" +
+	"\x19EditAppealMessageResponse\x12/\n" +
+	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.AppealMessageR\amessage\"B\n" +
+	"\x1aDeleteAppealMessageRequest\x12$\n" +
+	"\x0eban_message_id\x18\x01 \x01(\x03R\fbanMessageId2\xf7\x02\n" +
+	"\rAppealService\x12<\n" +
+	"\aAppeals\x12\x16.ban.v1.AppealsRequest\x1a\x17.ban.v1.AppealsResponse\"\x00\x12?\n" +
+	"\bMessages\x12\x17.ban.v1.MessagesRequest\x1a\x18.ban.v1.MessagesResponse\"\x00\x126\n" +
+	"\x05Reply\x12\x14.ban.v1.ReplyRequest\x1a\x15.ban.v1.ReplyResponse\"\x00\x12Z\n" +
+	"\x11EditAppealMessage\x12 .ban.v1.EditAppealMessageRequest\x1a!.ban.v1.EditAppealMessageResponse\"\x00\x12S\n" +
+	"\x13DeleteAppealMessage\x12\".ban.v1.DeleteAppealMessageRequest\x1a\x16.google.protobuf.Empty\"\x00B\x8d\x01\n" +
 	"\n" +
 	"com.ban.v1B\vAppealProtoP\x01Z9github.com/leighmacdonald/gbans/internal/rpc/ban/v1;banv1\xa2\x02\x03BXX\xaa\x02\x06Ban.V1\xca\x02\x06Ban\\V1\xe2\x02\x12Ban\\V1\\GPBMetadata\xea\x02\aBan::V1b\beditionsp\xe8\a"
 
@@ -122,19 +699,48 @@ func file_ban_v1_appeal_proto_rawDescGZIP() []byte {
 	return file_ban_v1_appeal_proto_rawDescData
 }
 
-var file_ban_v1_appeal_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_ban_v1_appeal_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_ban_v1_appeal_proto_goTypes = []any{
-	(*MessagesRequest)(nil),  // 0: ban.v1.MessagesRequest
-	(*MessagesResponse)(nil), // 1: ban.v1.MessagesResponse
+	(*AppealsRequest)(nil),             // 0: ban.v1.AppealsRequest
+	(*AppealsResponse)(nil),            // 1: ban.v1.AppealsResponse
+	(*MessagesRequest)(nil),            // 2: ban.v1.MessagesRequest
+	(*MessagesResponse)(nil),           // 3: ban.v1.MessagesResponse
+	(*AppealOverview)(nil),             // 4: ban.v1.AppealOverview
+	(*AppealMessage)(nil),              // 5: ban.v1.AppealMessage
+	(*ReplyRequest)(nil),               // 6: ban.v1.ReplyRequest
+	(*ReplyResponse)(nil),              // 7: ban.v1.ReplyResponse
+	(*EditAppealMessageRequest)(nil),   // 8: ban.v1.EditAppealMessageRequest
+	(*EditAppealMessageResponse)(nil),  // 9: ban.v1.EditAppealMessageResponse
+	(*DeleteAppealMessageRequest)(nil), // 10: ban.v1.DeleteAppealMessageRequest
+	(*Ban)(nil),                        // 11: ban.v1.Ban
+	(*timestamppb.Timestamp)(nil),      // 12: google.protobuf.Timestamp
+	(rpc.Privilege)(0),                 // 13: Privilege
+	(*emptypb.Empty)(nil),              // 14: google.protobuf.Empty
 }
 var file_ban_v1_appeal_proto_depIdxs = []int32{
-	0, // 0: ban.v1.AppealService.Messages:input_type -> ban.v1.MessagesRequest
-	1, // 1: ban.v1.AppealService.Messages:output_type -> ban.v1.MessagesResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	4,  // 0: ban.v1.AppealsResponse.appeals:type_name -> ban.v1.AppealOverview
+	5,  // 1: ban.v1.MessagesResponse.messages:type_name -> ban.v1.AppealMessage
+	11, // 2: ban.v1.AppealOverview.ban:type_name -> ban.v1.Ban
+	12, // 3: ban.v1.AppealMessage.created_on:type_name -> google.protobuf.Timestamp
+	12, // 4: ban.v1.AppealMessage.updated_on:type_name -> google.protobuf.Timestamp
+	13, // 5: ban.v1.AppealMessage.privilege:type_name -> Privilege
+	5,  // 6: ban.v1.ReplyResponse.message:type_name -> ban.v1.AppealMessage
+	5,  // 7: ban.v1.EditAppealMessageResponse.message:type_name -> ban.v1.AppealMessage
+	0,  // 8: ban.v1.AppealService.Appeals:input_type -> ban.v1.AppealsRequest
+	2,  // 9: ban.v1.AppealService.Messages:input_type -> ban.v1.MessagesRequest
+	6,  // 10: ban.v1.AppealService.Reply:input_type -> ban.v1.ReplyRequest
+	8,  // 11: ban.v1.AppealService.EditAppealMessage:input_type -> ban.v1.EditAppealMessageRequest
+	10, // 12: ban.v1.AppealService.DeleteAppealMessage:input_type -> ban.v1.DeleteAppealMessageRequest
+	1,  // 13: ban.v1.AppealService.Appeals:output_type -> ban.v1.AppealsResponse
+	3,  // 14: ban.v1.AppealService.Messages:output_type -> ban.v1.MessagesResponse
+	7,  // 15: ban.v1.AppealService.Reply:output_type -> ban.v1.ReplyResponse
+	9,  // 16: ban.v1.AppealService.EditAppealMessage:output_type -> ban.v1.EditAppealMessageResponse
+	14, // 17: ban.v1.AppealService.DeleteAppealMessage:output_type -> google.protobuf.Empty
+	13, // [13:18] is the sub-list for method output_type
+	8,  // [8:13] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_ban_v1_appeal_proto_init() }
@@ -142,13 +748,14 @@ func file_ban_v1_appeal_proto_init() {
 	if File_ban_v1_appeal_proto != nil {
 		return
 	}
+	file_ban_v1_ban_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ban_v1_appeal_proto_rawDesc), len(file_ban_v1_appeal_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

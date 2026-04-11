@@ -747,8 +747,8 @@ func (x *DeleteRequest) GetBanId() int64 {
 
 type QueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SourceId      *string                `protobuf:"bytes,1,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
-	TargetId      *string                `protobuf:"bytes,2,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
+	SourceId      *int64                 `protobuf:"varint,1,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
+	TargetId      *int64                 `protobuf:"varint,2,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
 	GroupsOnly    *bool                  `protobuf:"varint,3,opt,name=groups_only,json=groupsOnly" json:"groups_only,omitempty"`
 	Deleted       *bool                  `protobuf:"varint,4,opt,name=deleted" json:"deleted,omitempty"`
 	Cidr          *string                `protobuf:"bytes,5,opt,name=cidr" json:"cidr,omitempty"`
@@ -789,18 +789,18 @@ func (*QueryRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_ban_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *QueryRequest) GetSourceId() string {
+func (x *QueryRequest) GetSourceId() int64 {
 	if x != nil && x.SourceId != nil {
 		return *x.SourceId
 	}
-	return ""
+	return 0
 }
 
-func (x *QueryRequest) GetTargetId() string {
+func (x *QueryRequest) GetTargetId() int64 {
 	if x != nil && x.TargetId != nil {
 		return *x.TargetId
 	}
-	return ""
+	return 0
 }
 
 func (x *QueryRequest) GetGroupsOnly() bool {
@@ -891,8 +891,8 @@ func (x *QueryResponse) GetBans() []*Ban {
 
 type Ban struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	TargetId          *string                `protobuf:"bytes,1,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
-	SourceId          *string                `protobuf:"bytes,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
+	TargetId          *int64                 `protobuf:"varint,1,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
+	SourceId          *int64                 `protobuf:"varint,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
 	BanId             *int64                 `protobuf:"varint,3,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	ReportId          *int64                 `protobuf:"varint,4,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	LastIp            *string                `protobuf:"bytes,5,opt,name=last_ip,json=lastIp" json:"last_ip,omitempty"`
@@ -949,18 +949,18 @@ func (*Ban) Descriptor() ([]byte, []int) {
 	return file_ban_v1_ban_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *Ban) GetTargetId() string {
+func (x *Ban) GetTargetId() int64 {
 	if x != nil && x.TargetId != nil {
 		return *x.TargetId
 	}
-	return ""
+	return 0
 }
 
-func (x *Ban) GetSourceId() string {
+func (x *Ban) GetSourceId() int64 {
 	if x != nil && x.SourceId != nil {
 		return *x.SourceId
 	}
-	return ""
+	return 0
 }
 
 func (x *Ban) GetBanId() int64 {
@@ -1121,7 +1121,7 @@ var File_ban_v1_ban_proto protoreflect.FileDescriptor
 
 const file_ban_v1_ban_proto_rawDesc = "" +
 	"\n" +
-	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\x1bbuf/validate/validate.proto\x1a\ffilter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/duration.proto\"\x83\x02\n" +
+	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\x1bbuf/validate/validate.proto\x1a\ffilter.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x83\x02\n" +
 	"\rUpdateRequest\x12\x1b\n" +
 	"\ttarget_id\x18\x01 \x01(\tR\btargetId\x12*\n" +
 	"\bban_type\x18\x02 \x01(\x0e2\x0f.ban.v1.BanTypeR\abanType\x12)\n" +
@@ -1156,8 +1156,8 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\rDeleteRequest\x12\x15\n" +
 	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\"\x82\x02\n" +
 	"\fQueryRequest\x12\x1b\n" +
-	"\tsource_id\x18\x01 \x01(\tR\bsourceId\x12\x1b\n" +
-	"\ttarget_id\x18\x02 \x01(\tR\btargetId\x12\x1f\n" +
+	"\tsource_id\x18\x01 \x01(\x03R\bsourceId\x12\x1b\n" +
+	"\ttarget_id\x18\x02 \x01(\x03R\btargetId\x12\x1f\n" +
 	"\vgroups_only\x18\x03 \x01(\bR\n" +
 	"groupsOnly\x12\x18\n" +
 	"\adeleted\x18\x04 \x01(\bR\adeleted\x12\x12\n" +
@@ -1168,8 +1168,8 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\rQueryResponse\x12\x1f\n" +
 	"\x04bans\x18\x01 \x03(\v2\v.ban.v1.BanR\x04bans\"\x8f\a\n" +
 	"\x03Ban\x12\x1b\n" +
-	"\ttarget_id\x18\x01 \x01(\tR\btargetId\x12\x1b\n" +
-	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12\x15\n" +
+	"\ttarget_id\x18\x01 \x01(\x03R\btargetId\x12\x1b\n" +
+	"\tsource_id\x18\x02 \x01(\x03R\bsourceId\x12\x15\n" +
 	"\x06ban_id\x18\x03 \x01(\x03R\x05banId\x12\x1b\n" +
 	"\treport_id\x18\x04 \x01(\x03R\breportId\x12\x17\n" +
 	"\alast_ip\x18\x05 \x01(\tR\x06lastIp\x12\x19\n" +

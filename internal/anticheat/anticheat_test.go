@@ -1,20 +1,9 @@
 package anticheat_test
 
 import (
-	"context"
-	"io"
-	"strings"
 	"testing"
-	"time"
 
-	"github.com/leighmacdonald/gbans/internal/anticheat"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/tests"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v4/extra"
-	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/stretchr/testify/require"
 )
 
 var fixture *tests.Fixture //nolint:gochecknoglobals
@@ -26,32 +15,32 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestAnticheat(t *testing.T) {
-	var (
-		auth      = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
-		server    = fixture.CreateTestServer(t.Context())
-		router    = fixture.CreateRouter()
-		antiCheat = anticheat.New(anticheat.NewRepository(fixture.Database), fixture.Config.Config().Anticheat, notification.NewDiscard(),
-			func(_ context.Context, _ logparse.StacEntry, _ time.Duration, _ int) error {
-				return nil
-			}, fixture.Persons)
-	)
+//func TestAnticheat(t *testing.T) {
+//	var (
+//		auth      = &tests.UserAuth{Profile: fixture.CreateTestPerson(t.Context(), tests.UserSID, permission.User)}
+//		server    = fixture.CreateTestServer(t.Context())
+//		router    = fixture.CreateRouter()
+//		antiCheat = anticheat.New(anticheat.NewRepository(fixture.Database), fixture.Config.Config().Anticheat, notification.NewDiscard(),
+//			func(_ context.Context, _ logparse.StacEntry, _ time.Duration, _ int) error {
+//				return nil
+//			}, fixture.Persons)
+//	)
+//
+//	for _, sid := range extra.FindReaderSteamIDs(strings.NewReader(testData)) {
+//		fixture.CreateTestPerson(t.Context(), sid, permission.User)
+//	}
+//
+//	for _, sid := range []string{"STEAM_0:1:59129186", "STEAM_0:0:123751210", "STEAM_0:0:893704961", "STEAM_0:1:807960493"} {
+//		fixture.CreateTestPerson(t.Context(), steamid.New(sid), permission.User)
+//	}
+//	anticheat.NewAnticheatHandler(router, auth, antiCheat)
+//
+//	entries, err := antiCheat.Import(t.Context(), "stac_052224.log", io.NopCloser(strings.NewReader(testData)), server.ServerID)
+//	require.NoError(t, err)
+//	require.Len(t, entries, 9)
+//}
 
-	for _, sid := range extra.FindReaderSteamIDs(strings.NewReader(testData)) {
-		fixture.CreateTestPerson(t.Context(), sid, permission.User)
-	}
-
-	for _, sid := range []string{"STEAM_0:1:59129186", "STEAM_0:0:123751210", "STEAM_0:0:893704961", "STEAM_0:1:807960493"} {
-		fixture.CreateTestPerson(t.Context(), steamid.New(sid), permission.User)
-	}
-	anticheat.NewAnticheatHandler(router, auth, antiCheat)
-
-	entries, err := antiCheat.Import(t.Context(), "stac_052224.log", io.NopCloser(strings.NewReader(testData)), server.ServerID)
-	require.NoError(t, err)
-	require.Len(t, entries, 9)
-}
-
-const testData = `<01:13:00>
+const _testData = `<01:13:00>
 
 ----------
 

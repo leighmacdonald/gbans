@@ -72,7 +72,7 @@ func (DuelMode) EnumDescriptor() ([]byte, []int) {
 type GetRatingsOverallRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filter        *rpc.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
-	SteamId       *string                `protobuf:"bytes,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId       *int64                 `protobuf:"varint,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -114,18 +114,18 @@ func (x *GetRatingsOverallRequest) GetFilter() *rpc.Filter {
 	return nil
 }
 
-func (x *GetRatingsOverallRequest) GetSteamId() string {
+func (x *GetRatingsOverallRequest) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 type PlayerStats struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	StatsId       *int32                 `protobuf:"varint,1,opt,name=stats_id,json=statsId" json:"stats_id,omitempty"`
 	Rating        *int32                 `protobuf:"varint,2,opt,name=rating" json:"rating,omitempty"`
-	SteamId       *string                `protobuf:"bytes,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId       *int64                 `protobuf:"varint,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	PersonaName   *string                `protobuf:"bytes,4,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
 	AvatarHash    *string                `protobuf:"bytes,5,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
 	Name          *string                `protobuf:"bytes,6,opt,name=name" json:"name,omitempty"`
@@ -180,11 +180,11 @@ func (x *PlayerStats) GetRating() int32 {
 	return 0
 }
 
-func (x *PlayerStats) GetSteamId() string {
+func (x *PlayerStats) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 func (x *PlayerStats) GetPersonaName() string {
@@ -277,10 +277,10 @@ type GetHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filter        *rpc.Filter            `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	Mode          *DuelMode              `protobuf:"varint,2,opt,name=mode,enum=mge.v1.DuelMode" json:"mode,omitempty"`
-	Winner        *string                `protobuf:"bytes,3,opt,name=winner" json:"winner,omitempty"`
-	Winner2       *string                `protobuf:"bytes,4,opt,name=winner2" json:"winner2,omitempty"`
-	Loser         *string                `protobuf:"bytes,5,opt,name=loser" json:"loser,omitempty"`
-	Loser2        *string                `protobuf:"bytes,6,opt,name=loser2" json:"loser2,omitempty"`
+	Winner        *int64                 `protobuf:"varint,3,opt,name=winner" json:"winner,omitempty"`
+	Winner2       *int64                 `protobuf:"varint,4,opt,name=winner2" json:"winner2,omitempty"`
+	Loser         *int64                 `protobuf:"varint,5,opt,name=loser" json:"loser,omitempty"`
+	Loser2        *int64                 `protobuf:"varint,6,opt,name=loser2" json:"loser2,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -329,47 +329,47 @@ func (x *GetHistoryRequest) GetMode() DuelMode {
 	return DuelMode_DUEL_MODE_ONE_VS_ONE_UNSPECIFIED
 }
 
-func (x *GetHistoryRequest) GetWinner() string {
+func (x *GetHistoryRequest) GetWinner() int64 {
 	if x != nil && x.Winner != nil {
 		return *x.Winner
 	}
-	return ""
+	return 0
 }
 
-func (x *GetHistoryRequest) GetWinner2() string {
+func (x *GetHistoryRequest) GetWinner2() int64 {
 	if x != nil && x.Winner2 != nil {
 		return *x.Winner2
 	}
-	return ""
+	return 0
 }
 
-func (x *GetHistoryRequest) GetLoser() string {
+func (x *GetHistoryRequest) GetLoser() int64 {
 	if x != nil && x.Loser != nil {
 		return *x.Loser
 	}
-	return ""
+	return 0
 }
 
-func (x *GetHistoryRequest) GetLoser2() string {
+func (x *GetHistoryRequest) GetLoser2() int64 {
 	if x != nil && x.Loser2 != nil {
 		return *x.Loser2
 	}
-	return ""
+	return 0
 }
 
 type Duel struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	DuelId             *int32                 `protobuf:"varint,1,opt,name=duel_id,json=duelId" json:"duel_id,omitempty"`
-	Winner             *string                `protobuf:"bytes,2,opt,name=winner" json:"winner,omitempty"`
+	Winner             *int64                 `protobuf:"varint,2,opt,name=winner" json:"winner,omitempty"`
 	WinnerAvatarHash   *string                `protobuf:"bytes,3,opt,name=winner_avatar_hash,json=winnerAvatarHash" json:"winner_avatar_hash,omitempty"`
 	WinnerPersonaName  *string                `protobuf:"bytes,4,opt,name=winner_persona_name,json=winnerPersonaName" json:"winner_persona_name,omitempty"`
-	Winner2            *string                `protobuf:"bytes,5,opt,name=winner2" json:"winner2,omitempty"`
+	Winner2            *int64                 `protobuf:"varint,5,opt,name=winner2" json:"winner2,omitempty"`
 	Winner2AvatarHash  *string                `protobuf:"bytes,6,opt,name=winner2_avatar_hash,json=winner2AvatarHash" json:"winner2_avatar_hash,omitempty"`
 	Winner2PersonaName *string                `protobuf:"bytes,7,opt,name=winner2_persona_name,json=winner2PersonaName" json:"winner2_persona_name,omitempty"`
-	Loser              *string                `protobuf:"bytes,8,opt,name=loser" json:"loser,omitempty"`
+	Loser              *int64                 `protobuf:"varint,8,opt,name=loser" json:"loser,omitempty"`
 	LoserAvatarHash    *string                `protobuf:"bytes,9,opt,name=loser_avatar_hash,json=loserAvatarHash" json:"loser_avatar_hash,omitempty"`
 	LoserPersonaName   *string                `protobuf:"bytes,10,opt,name=loser_persona_name,json=loserPersonaName" json:"loser_persona_name,omitempty"`
-	Loser2             *string                `protobuf:"bytes,11,opt,name=loser2" json:"loser2,omitempty"`
+	Loser2             *int64                 `protobuf:"varint,11,opt,name=loser2" json:"loser2,omitempty"`
 	Loser2AvatarHash   *string                `protobuf:"bytes,12,opt,name=loser2_avatar_hash,json=loser2AvatarHash" json:"loser2_avatar_hash,omitempty"`
 	Loser2PersonaName  *string                `protobuf:"bytes,13,opt,name=loser2_persona_name,json=loser2PersonaName" json:"loser2_persona_name,omitempty"`
 	WinnerScore        *int32                 `protobuf:"varint,14,opt,name=winner_score,json=winnerScore" json:"winner_score,omitempty"`
@@ -419,11 +419,11 @@ func (x *Duel) GetDuelId() int32 {
 	return 0
 }
 
-func (x *Duel) GetWinner() string {
+func (x *Duel) GetWinner() int64 {
 	if x != nil && x.Winner != nil {
 		return *x.Winner
 	}
-	return ""
+	return 0
 }
 
 func (x *Duel) GetWinnerAvatarHash() string {
@@ -440,11 +440,11 @@ func (x *Duel) GetWinnerPersonaName() string {
 	return ""
 }
 
-func (x *Duel) GetWinner2() string {
+func (x *Duel) GetWinner2() int64 {
 	if x != nil && x.Winner2 != nil {
 		return *x.Winner2
 	}
-	return ""
+	return 0
 }
 
 func (x *Duel) GetWinner2AvatarHash() string {
@@ -461,11 +461,11 @@ func (x *Duel) GetWinner2PersonaName() string {
 	return ""
 }
 
-func (x *Duel) GetLoser() string {
+func (x *Duel) GetLoser() int64 {
 	if x != nil && x.Loser != nil {
 		return *x.Loser
 	}
-	return ""
+	return 0
 }
 
 func (x *Duel) GetLoserAvatarHash() string {
@@ -482,11 +482,11 @@ func (x *Duel) GetLoserPersonaName() string {
 	return ""
 }
 
-func (x *Duel) GetLoser2() string {
+func (x *Duel) GetLoser2() int64 {
 	if x != nil && x.Loser2 != nil {
 		return *x.Loser2
 	}
-	return ""
+	return 0
 }
 
 func (x *Duel) GetLoser2AvatarHash() string {
@@ -588,11 +588,11 @@ const file_mge_v1_mge_proto_rawDesc = "" +
 	"\x10mge/v1/mge.proto\x12\x06mge.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"V\n" +
 	"\x18GetRatingsOverallRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\tR\asteamId\"\x98\x02\n" +
+	"\bsteam_id\x18\x02 \x01(\x03R\asteamId\"\x98\x02\n" +
 	"\vPlayerStats\x12\x19\n" +
 	"\bstats_id\x18\x01 \x01(\x05R\astatsId\x12\x16\n" +
 	"\x06rating\x18\x02 \x01(\x05R\x06rating\x12\x19\n" +
-	"\bsteam_id\x18\x03 \x01(\tR\asteamId\x12!\n" +
+	"\bsteam_id\x18\x03 \x01(\x03R\asteamId\x12!\n" +
 	"\fpersona_name\x18\x04 \x01(\tR\vpersonaName\x12\x1f\n" +
 	"\vavatar_hash\x18\x05 \x01(\tR\n" +
 	"avatarHash\x12\x12\n" +
@@ -605,23 +605,23 @@ const file_mge_v1_mge_proto_rawDesc = "" +
 	"\x11GetHistoryRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12$\n" +
 	"\x04mode\x18\x02 \x01(\x0e2\x10.mge.v1.DuelModeR\x04mode\x12\x16\n" +
-	"\x06winner\x18\x03 \x01(\tR\x06winner\x12\x18\n" +
-	"\awinner2\x18\x04 \x01(\tR\awinner2\x12\x14\n" +
-	"\x05loser\x18\x05 \x01(\tR\x05loser\x12\x16\n" +
-	"\x06loser2\x18\x06 \x01(\tR\x06loser2\"\xcb\x05\n" +
+	"\x06winner\x18\x03 \x01(\x03R\x06winner\x12\x18\n" +
+	"\awinner2\x18\x04 \x01(\x03R\awinner2\x12\x14\n" +
+	"\x05loser\x18\x05 \x01(\x03R\x05loser\x12\x16\n" +
+	"\x06loser2\x18\x06 \x01(\x03R\x06loser2\"\xcb\x05\n" +
 	"\x04Duel\x12\x17\n" +
 	"\aduel_id\x18\x01 \x01(\x05R\x06duelId\x12\x16\n" +
-	"\x06winner\x18\x02 \x01(\tR\x06winner\x12,\n" +
+	"\x06winner\x18\x02 \x01(\x03R\x06winner\x12,\n" +
 	"\x12winner_avatar_hash\x18\x03 \x01(\tR\x10winnerAvatarHash\x12.\n" +
 	"\x13winner_persona_name\x18\x04 \x01(\tR\x11winnerPersonaName\x12\x18\n" +
-	"\awinner2\x18\x05 \x01(\tR\awinner2\x12.\n" +
+	"\awinner2\x18\x05 \x01(\x03R\awinner2\x12.\n" +
 	"\x13winner2_avatar_hash\x18\x06 \x01(\tR\x11winner2AvatarHash\x120\n" +
 	"\x14winner2_persona_name\x18\a \x01(\tR\x12winner2PersonaName\x12\x14\n" +
-	"\x05loser\x18\b \x01(\tR\x05loser\x12*\n" +
+	"\x05loser\x18\b \x01(\x03R\x05loser\x12*\n" +
 	"\x11loser_avatar_hash\x18\t \x01(\tR\x0floserAvatarHash\x12,\n" +
 	"\x12loser_persona_name\x18\n" +
 	" \x01(\tR\x10loserPersonaName\x12\x16\n" +
-	"\x06loser2\x18\v \x01(\tR\x06loser2\x12,\n" +
+	"\x06loser2\x18\v \x01(\x03R\x06loser2\x12,\n" +
 	"\x12loser2_avatar_hash\x18\f \x01(\tR\x10loser2AvatarHash\x12.\n" +
 	"\x13loser2_persona_name\x18\r \x01(\tR\x11loser2PersonaName\x12!\n" +
 	"\fwinner_score\x18\x0e \x01(\x05R\vwinnerScore\x12\x1f\n" +
