@@ -9,7 +9,7 @@ import { enumDesc, fileDesc } from "@bufbuild/protobuf/codegenv2";
  * Describes the file overridetype.proto.
  */
 export const file_overridetype: GenFile = /*@__PURE__*/
-  fileDesc("ChJvdmVycmlkZXR5cGUucHJvdG8qTgoMT3ZlcnJpZGVUeXBlEiUKIU9WRVJSSURFX1RZUEVfQ09NTUFORF9VTlNQRUNJRklFRBAAEhcKE09WRVJSSURFX1RZUEVfR1JPVVAQAUJDQhFPdmVycmlkZXR5cGVQcm90b1ABWixnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL3JwY2IIZWRpdGlvbnNw6Ac");
+  fileDesc("ChJvdmVycmlkZXR5cGUucHJvdG8qTgoMT3ZlcnJpZGVUeXBlEiUKIU9WRVJSSURFX1RZUEVfQ09NTUFORF9VTlNQRUNJRklFRBAAEhcKE09WRVJSSURFX1RZUEVfR1JPVVAQAUI/QhFPdmVycmlkZXR5cGVQcm90b1ABWihnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsYghlZGl0aW9uc3DoBw");
 
 /**
  * @generated from enum OverrideType

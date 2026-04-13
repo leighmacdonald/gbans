@@ -164,7 +164,7 @@ func (p StacParser) Parse(logName string, reader io.Reader) ([]StacEntry, error)
 				if errTick != nil {
 					slog.Warn("Failed to parse demo tick", slog.String("line", line))
 				} else {
-					current.DemoTick = tick
+					current.DemoTick = int32(tick)
 				}
 			}
 		}

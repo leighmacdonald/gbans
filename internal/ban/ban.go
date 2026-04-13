@@ -99,7 +99,7 @@ type Opts struct {
 	EvadeOk    bool               `json:"evade_ok"`
 	Name       string             `json:"name" binding:"max=36"`
 	DemoName   string             `json:"demo_name" binding:"omitempty,max=256"`
-	DemoTick   int                `json:"demo_tick" binding:"omitempty"`
+	DemoTick   int32              `json:"demo_tick" binding:"omitempty"`
 	Note       string             `json:"note" binding:"omitempty,max=100000"`
 }
 

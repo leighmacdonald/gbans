@@ -75,7 +75,7 @@ type DemoMetaData struct {
 
 type DemoFile struct {
 	DemoID          int64                     `json:"demo_id"`
-	ServerID        int                       `json:"server_id"`
+	ServerID        int32                     `json:"server_id"`
 	ServerNameShort string                    `json:"server_name_short"`
 	ServerNameLong  string                    `json:"server_name_long"`
 	Title           string                    `json:"title"`
@@ -96,7 +96,7 @@ type DemoInfo struct {
 
 type UploadedDemo struct {
 	Name     string
-	ServerID int
+	ServerID int32
 	Content  []byte
 }
 
@@ -123,7 +123,7 @@ func NewDemos(bucket asset.Bucket, repository DemoRepository, assets asset.Asset
 
 func (d Demos) onDemoReceived(ctx context.Context, demo UploadedDemo) error {
 	slog.Debug("Got new demo",
-		slog.Int("server_id", demo.ServerID),
+		slog.Int("server_id", int(demo.ServerID)),
 		slog.String("name", demo.Name))
 
 	// TOOO make these interfaces less clunky for compressed data.
@@ -368,7 +368,7 @@ func (d Demos) GetDemos(ctx context.Context) ([]DemoFile, error) {
 	return d.repository.GetDemos(ctx)
 }
 
-func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID int) (*DemoFile, error) {
+func (d Demos) CreateFromAsset(ctx context.Context, asset *asset.Asset, serverID int32) (*DemoFile, error) {
 	if errGetServer := d.repository.ValidateServer(ctx, serverID); errGetServer != nil {
 		return nil, ErrGetServer
 	}
