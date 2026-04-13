@@ -19,14 +19,14 @@ type Query struct {
 	httphelper.SourceIDField
 	httphelper.TargetIDField
 
-	ServerID int    `json:"server_id"`
+	ServerID int32  `json:"server_id"`
 	Name     string `json:"name"`
-	Success  int    `json:"success"` // -1 = any, 0 = false, 1 = true
+	Success  int32  `json:"success"` // -1 = any, 0 = false, 1 = true
 	Code     bool   `json:"code"`
 }
 
 type Result struct {
-	VoteID           int               `json:"vote_id"`
+	VoteID           int32             `json:"vote_id"`
 	SourceID         steamid.SteamID   `json:"source_id"`
 	SourceName       string            `json:"source_name"`
 	SourceAvatarHash string            `json:"source_avatar_hash"`

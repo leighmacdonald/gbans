@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	v1 "github.com/leighmacdonald/gbans/internal/anticheat/v1"
+	"github.com/leighmacdonald/gbans/internal/anticheat/v1/anticheatv1connect"
 	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/ptr"
-	v1 "github.com/leighmacdonald/gbans/internal/rpc/anticheat/v1"
-	"github.com/leighmacdonald/gbans/internal/rpc/anticheat/v1/anticheatv1connect"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

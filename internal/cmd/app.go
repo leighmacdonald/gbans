@@ -18,6 +18,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/anticheat"
+	"github.com/leighmacdonald/gbans/internal/anticheat/v1/anticheatv1connect"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
@@ -26,6 +27,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/config/v1/configv1connect"
 	"github.com/leighmacdonald/gbans/internal/contest"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -43,13 +45,13 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/internal/rpc/config/v1/configv1connect"
-	"github.com/leighmacdonald/gbans/internal/rpc/servers/v1/serversv1connect"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/servers/v1/serversv1connect"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
+	"github.com/leighmacdonald/gbans/internal/wiki/v1/wikiv1connect"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -488,7 +490,7 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	serverAuth := servers.NewServerAuth(g.servers, g.config.Config().General.SentryDSN)
 
 	// Register all our handlers with router
-	anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)
+	// anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)
 	asset.NewAssetHandler(router, userAuth, g.assets)
 	auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications)
 	ban.NewAppealHandler(router, userAuth, ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.LogChannelID))
@@ -521,6 +523,10 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	mux := http.NewServeMux()
 
 	api := http.NewServeMux()
+	api.Handle(anticheatv1connect.NewAnticheatServiceHandler(
+		anticheat.NewService(g.anticheat),
+		connect.WithInterceptors(validate.NewInterceptor())))
+
 	api.Handle(configv1connect.NewConfigServiceHandler(
 		config.NewRPC(g.config, BuildVersion),
 		connect.WithInterceptors(validate.NewInterceptor())))
@@ -528,6 +534,9 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	api.Handle(serversv1connect.NewServersServiceHandler(
 		servers.NewRPC(g.servers),
 		connect.WithInterceptors(validate.NewInterceptor())))
+
+	api.Handle(wikiv1connect.NewWikiServiceHandler(
+		wiki.NewService(), connect.WithInterceptors(validate.NewInterceptor())))
 
 	mux.Handle("/connect/", http.StripPrefix("/connect", api))
 	mux.Handle("/", router)

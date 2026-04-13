@@ -19,13 +19,13 @@ func NewDemoRepository(database database.Database) DemoRepository {
 	return DemoRepository{Database: database}
 }
 
-func (r *DemoRepository) ValidateServer(ctx context.Context, serverID int) error {
+func (r *DemoRepository) ValidateServer(ctx context.Context, serverID int32) error {
 	if serverID == 0 {
 		return ErrNotFound
 	}
 
 	row := r.QueryRow(ctx, `SELECT server_id FROM server WHERE server_id = $1`, serverID)
-	var serverIDScan int
+	var serverIDScan int32
 	if errQuery := row.Scan(&serverIDScan); errQuery != nil {
 		return ErrNotFound
 	}

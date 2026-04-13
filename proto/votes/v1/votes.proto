@@ -44,4 +44,5 @@ message VoteResult {
 
 message QueryResponse {
   repeated VoteResult results = 1;
+  int64 count = 2;
 }

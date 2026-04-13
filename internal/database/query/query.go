@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/rpc"
+	"github.com/leighmacdonald/gbans/internal"
 )
 
 const MaxResultsDefault = 100
@@ -19,7 +19,7 @@ type Filter struct {
 	Deleted bool   `json:"deleted,omitempty" schema:"deleted"`
 }
 
-func FromRPC(filter *rpc.Filter) Filter {
+func FromRPC(filter *internal.Filter) Filter {
 	return Filter{
 		Offset:  filter.GetOffset(),
 		Limit:   filter.GetLimit(),

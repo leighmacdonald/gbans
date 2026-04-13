@@ -10,7 +10,6 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/notification"
@@ -39,13 +38,13 @@ func NewAuthHandler(engine *gin.Engine, auth *Authentication, config *config.Con
 
 	engine.GET("/auth/callback", handler.onSteamOIDCCallback())
 
-	authGrp := engine.Group("/")
-	{
-		// authed
-		env := authGrp.Use(auth.Middleware(permission.User))
-
-		env.GET("/api/auth/logout", handler.onAPILogout())
-	}
+	//authGrp := engine.Group("/")
+	//{
+	//	// authed
+	//	env := authGrp.Use(auth.Middleware(permission.User))
+	//
+	//	env.GET("/api/auth/logout", handler.onAPILogout())
+	//}
 }
 
 func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
