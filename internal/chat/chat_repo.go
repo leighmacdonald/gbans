@@ -332,7 +332,7 @@ func (r Repository) GetPersonMessage(ctx context.Context, messageID int64) (Quer
 	return msg, nil
 }
 
-func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int32, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error) {
+func (r Repository) GetPersonMessageContext(ctx context.Context, serverID int32, messageID int64, paddedMessageCount int32) ([]QueryChatHistoryResult, error) {
 	const query = `
 		SELECT x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name, x.match_id, s.short_name, COALESCE(f.person_message_filter_id, 0) as flagged
 		FROM ((SELECT m.person_message_id,

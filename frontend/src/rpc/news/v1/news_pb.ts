@@ -12,7 +12,24 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file news/v1/news.proto.
  */
 export const file_news_v1_news: GenFile = /*@__PURE__*/
-  fileDesc("ChJuZXdzL3YxL25ld3MucHJvdG8SB25ld3MudjEisAEKB0FydGljbGUSDwoHbmV3c19pZBgBIAEoBRINCgV0aXRsZRgCIAEoCRIPCgdib2R5X21kGAMgASgJEhQKDGlzX3B1Ymxpc2hlZBgEIAEoCBIuCgpjcmVhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIgCg1EZWxldGVSZXF1ZXN0Eg8KB25ld3NfaWQYASABKAkiHgoNTGF0ZXN0UmVxdWVzdBINCgVsaW1pdBgBIAEoBSJ1Cg1DcmVhdGVSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEg8KB2JvZHlfbWQYAiABKAkSFAoMaXNfcHVibGlzaGVkGAMgASgIEi4KCmNyZWF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIjMKDkNyZWF0ZVJlc3BvbnNlEiEKB2FydGljbGUYASABKAsyEC5uZXdzLnYxLkFydGljbGUiNAoPTmV3c0FsbFJlc3BvbnNlEiEKB2FydGljbGUYASADKAsyEC5uZXdzLnYxLkFydGljbGUihAEKC0VkaXRSZXF1ZXN0Eg8KB25ld3NfaWQYASABKAUSDQoFdGl0bGUYAiABKAkSDwoHYm9keV9tZBgDIAEoCRIUCgxpc19wdWJsaXNoZWQYBCABKAgSLgoKY3JlYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiMQoMRWRpdFJlc3BvbnNlEiEKB2FydGljbGUYASABKAsyEC5uZXdzLnYxLkFydGljbGUy/QEKDVBlcnNvblNlcnZpY2USPAoGTGF0ZXN0EhYubmV3cy52MS5MYXRlc3RSZXF1ZXN0GhgubmV3cy52MS5OZXdzQWxsUmVzcG9uc2UiABI1CgRFZGl0EhQubmV3cy52MS5FZGl0UmVxdWVzdBoVLm5ld3MudjEuRWRpdFJlc3BvbnNlIgASOwoGQ3JlYXRlEhYubmV3cy52MS5DcmVhdGVSZXF1ZXN0GhcubmV3cy52MS5DcmVhdGVSZXNwb25zZSIAEjoKBkRlbGV0ZRIWLm5ld3MudjEuRGVsZXRlUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAQo4BCgtjb20ubmV3cy52MUIJTmV3c1Byb3RvUAFaN2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvbmV3cy92MTtuZXdzdjGiAgNOWFiqAgdOZXdzLlYxygIHTmV3c1xWMeICE05ld3NcVjFcR1BCTWV0YWRhdGHqAghOZXdzOjpWMWIIZWRpdGlvbnNw6Ac", [file_google_protobuf_empty, file_google_protobuf_timestamp]);
+  fileDesc("ChJuZXdzL3YxL25ld3MucHJvdG8SB25ld3MudjEiMQoLQWxsUmVzcG9uc2USIgoIYXJ0aWNsZXMYASADKAsyEC5uZXdzLnYxLkFydGljbGUisAEKB0FydGljbGUSDwoHbmV3c19pZBgBIAEoBRINCgV0aXRsZRgCIAEoCRIPCgdib2R5X21kGAMgASgJEhQKDGlzX3B1Ymxpc2hlZBgEIAEoCBIuCgpjcmVhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIgCg1EZWxldGVSZXF1ZXN0Eg8KB25ld3NfaWQYASABKAUiHgoNTGF0ZXN0UmVxdWVzdBINCgVsaW1pdBgBIAEoBSJ1Cg1DcmVhdGVSZXF1ZXN0Eg0KBXRpdGxlGAEgASgJEg8KB2JvZHlfbWQYAiABKAkSFAoMaXNfcHVibGlzaGVkGAMgASgIEi4KCmNyZWF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIjMKDkNyZWF0ZVJlc3BvbnNlEiEKB2FydGljbGUYASABKAsyEC5uZXdzLnYxLkFydGljbGUiNAoPTmV3c0FsbFJlc3BvbnNlEiEKB2FydGljbGUYASADKAsyEC5uZXdzLnYxLkFydGljbGUihAEKC0VkaXRSZXF1ZXN0Eg8KB25ld3NfaWQYASABKAUSDQoFdGl0bGUYAiABKAkSDwoHYm9keV9tZBgDIAEoCRIUCgxpc19wdWJsaXNoZWQYBCABKAgSLgoKY3JlYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiMQoMRWRpdFJlc3BvbnNlEiEKB2FydGljbGUYASABKAsyEC5uZXdzLnYxLkFydGljbGUysgIKC05ld3NTZXJ2aWNlEjwKBkxhdGVzdBIWLm5ld3MudjEuTGF0ZXN0UmVxdWVzdBoYLm5ld3MudjEuTmV3c0FsbFJlc3BvbnNlIgASNQoERWRpdBIULm5ld3MudjEuRWRpdFJlcXVlc3QaFS5uZXdzLnYxLkVkaXRSZXNwb25zZSIAEjsKBkNyZWF0ZRIWLm5ld3MudjEuQ3JlYXRlUmVxdWVzdBoXLm5ld3MudjEuQ3JlYXRlUmVzcG9uc2UiABI6CgZEZWxldGUSFi5uZXdzLnYxLkRlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABI1CgNBbGwSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFC5uZXdzLnYxLkFsbFJlc3BvbnNlIgBCjgEKC2NvbS5uZXdzLnYxQglOZXdzUHJvdG9QAVo3Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9uZXdzL3YxO25ld3N2MaICA05YWKoCB05ld3MuVjHKAgdOZXdzXFYx4gITTmV3c1xWMVxHUEJNZXRhZGF0YeoCCE5ld3M6OlYxYghlZGl0aW9uc3DoBw", [file_google_protobuf_empty, file_google_protobuf_timestamp]);
+
+/**
+ * @generated from message news.v1.AllResponse
+ */
+export type AllResponse = Message<"news.v1.AllResponse"> & {
+  /**
+   * @generated from field: repeated news.v1.Article articles = 1;
+   */
+  articles: Article[];
+};
+
+/**
+ * Describes the message news.v1.AllResponse.
+ * Use `create(AllResponseSchema)` to create a new message.
+ */
+export const AllResponseSchema: GenMessage<AllResponse> = /*@__PURE__*/
+  messageDesc(file_news_v1_news, 0);
 
 /**
  * @generated from message news.v1.Article
@@ -54,16 +71,16 @@ export type Article = Message<"news.v1.Article"> & {
  * Use `create(ArticleSchema)` to create a new message.
  */
 export const ArticleSchema: GenMessage<Article> = /*@__PURE__*/
-  messageDesc(file_news_v1_news, 0);
+  messageDesc(file_news_v1_news, 1);
 
 /**
  * @generated from message news.v1.DeleteRequest
  */
 export type DeleteRequest = Message<"news.v1.DeleteRequest"> & {
   /**
-   * @generated from field: string news_id = 1;
+   * @generated from field: int32 news_id = 1;
    */
-  newsId: string;
+  newsId: number;
 };
 
 /**
@@ -71,7 +88,7 @@ export type DeleteRequest = Message<"news.v1.DeleteRequest"> & {
  * Use `create(DeleteRequestSchema)` to create a new message.
  */
 export const DeleteRequestSchema: GenMessage<DeleteRequest> = /*@__PURE__*/
-  messageDesc(file_news_v1_news, 1);
+  messageDesc(file_news_v1_news, 2);
 
 /**
  * @generated from message news.v1.LatestRequest
@@ -88,7 +105,7 @@ export type LatestRequest = Message<"news.v1.LatestRequest"> & {
  * Use `create(LatestRequestSchema)` to create a new message.
  */
 export const LatestRequestSchema: GenMessage<LatestRequest> = /*@__PURE__*/
-  messageDesc(file_news_v1_news, 2);
+  messageDesc(file_news_v1_news, 3);
 
 /**
  * @generated from message news.v1.CreateRequest
@@ -120,7 +137,7 @@ export type CreateRequest = Message<"news.v1.CreateRequest"> & {
  * Use `create(CreateRequestSchema)` to create a new message.
  */
 export const CreateRequestSchema: GenMessage<CreateRequest> = /*@__PURE__*/
-  messageDesc(file_news_v1_news, 3);
+  messageDesc(file_news_v1_news, 4);
 
 /**
  * @generated from message news.v1.CreateResponse
@@ -137,7 +154,7 @@ export type CreateResponse = Message<"news.v1.CreateResponse"> & {
  * Use `create(CreateResponseSchema)` to create a new message.
  */
 export const CreateResponseSchema: GenMessage<CreateResponse> = /*@__PURE__*/
-  messageDesc(file_news_v1_news, 4);
+  messageDesc(file_news_v1_news, 5);
 
 /**
  * @generated from message news.v1.NewsAllResponse
@@ -154,7 +171,7 @@ export type NewsAllResponse = Message<"news.v1.NewsAllResponse"> & {
  * Use `create(NewsAllResponseSchema)` to create a new message.
  */
 export const NewsAllResponseSchema: GenMessage<NewsAllResponse> = /*@__PURE__*/
-  messageDesc(file_news_v1_news, 5);
+  messageDesc(file_news_v1_news, 6);
 
 /**
  * @generated from message news.v1.EditRequest
@@ -191,7 +208,7 @@ export type EditRequest = Message<"news.v1.EditRequest"> & {
  * Use `create(EditRequestSchema)` to create a new message.
  */
 export const EditRequestSchema: GenMessage<EditRequest> = /*@__PURE__*/
-  messageDesc(file_news_v1_news, 6);
+  messageDesc(file_news_v1_news, 7);
 
 /**
  * @generated from message news.v1.EditResponse
@@ -208,14 +225,14 @@ export type EditResponse = Message<"news.v1.EditResponse"> & {
  * Use `create(EditResponseSchema)` to create a new message.
  */
 export const EditResponseSchema: GenMessage<EditResponse> = /*@__PURE__*/
-  messageDesc(file_news_v1_news, 7);
+  messageDesc(file_news_v1_news, 8);
 
 /**
- * @generated from service news.v1.PersonService
+ * @generated from service news.v1.NewsService
  */
-export const PersonService: GenService<{
+export const NewsService: GenService<{
   /**
-   * @generated from rpc news.v1.PersonService.Latest
+   * @generated from rpc news.v1.NewsService.Latest
    */
   latest: {
     methodKind: "unary";
@@ -223,7 +240,7 @@ export const PersonService: GenService<{
     output: typeof NewsAllResponseSchema;
   },
   /**
-   * @generated from rpc news.v1.PersonService.Edit
+   * @generated from rpc news.v1.NewsService.Edit
    */
   edit: {
     methodKind: "unary";
@@ -231,7 +248,7 @@ export const PersonService: GenService<{
     output: typeof EditResponseSchema;
   },
   /**
-   * @generated from rpc news.v1.PersonService.Create
+   * @generated from rpc news.v1.NewsService.Create
    */
   create: {
     methodKind: "unary";
@@ -239,12 +256,20 @@ export const PersonService: GenService<{
     output: typeof CreateResponseSchema;
   },
   /**
-   * @generated from rpc news.v1.PersonService.Delete
+   * @generated from rpc news.v1.NewsService.Delete
    */
   delete: {
     methodKind: "unary";
     input: typeof DeleteRequestSchema;
     output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc news.v1.NewsService.All
+   */
+  all: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof AllResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_news_v1_news, 0);

@@ -1,0 +1,105 @@
+edition = "2023";
+
+package chat.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service WordfilterService {
+  rpc Filters(google.protobuf.Empty) returns (FiltersResponse) {}
+  rpc WarningState(google.protobuf.Empty) returns (WarningStateResponse) {}
+  rpc FilterCreate(FilterCreateRequest) returns (FilterCreateResponse) {}
+  rpc FilterEdit(FilterEditRequest) returns (FilterEditResponse) {}
+  rpc FilterDelete(FilterDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc FilterMatch(FilterMatchRequest) returns (FilterMatchResponse) {}
+}
+
+message FilterMatchRequest {
+  string query = 1;
+}
+
+message FilterMatchResponse {
+  repeated Filter filters = 1;
+}
+
+message FilterDeleteRequest {
+  int64 filter_id = 1;
+}
+
+message FilterCreateRequest {
+  Filter filter = 1;
+}
+
+message FilterCreateResponse {
+  Filter filter = 1;
+}
+
+message FilterEditRequest {
+  Filter filter = 1;
+}
+
+message FilterEditResponse {
+  Filter filter = 1;
+}
+
+enum FilterAction {
+  FILTER_ACTION_KICK_UNSPECIFIED = 0;
+  FILTER_ACTION_MUTE = 1;
+  FILTER_ACTION_BAN = 2;
+}
+
+message Filter {
+  int64 filter_id = 1;
+  int64 author_id = 2;
+  string pattern = 3;
+  bool is_regex = 4;
+  bool is_enabled = 5;
+  FilterAction action = 6;
+  string duration = 7;
+  int64 trigger_count =8;
+  int32 weight = 9;
+  google.protobuf.Timestamp created_on = 10;
+  google.protobuf.Timestamp updated_on = 11;
+}
+
+message FiltersResponse {
+  repeated Filter filters = 1;
+}
+
+// FIXME Duplicated
+enum BanReason {
+  BAN_REASON_UNSPECIFIED = 0;
+  BAN_REASON_CUSTOM = 1;
+  BAN_REASON_EXTERNAL = 2;
+  BAN_REASON_CHEATING = 3;
+  BAN_REASON_RACISM = 4;
+  BAN_REASON_HARASSMENT = 5;
+  BAN_REASON_EXPLOITING = 6;
+  BAN_REASON_WARNINGS_EXCEEDED = 7;
+  BAN_REASON_SPAM = 8;
+  BAN_REASON_LANGUAGE = 9;
+  BAN_REASON_PROFILE = 10;
+  BAN_REASON_ITEM_DESCRIPTIONS = 11;
+  BAN_REASON_BOT_HOST = 12;
+  BAN_REASON_EVADING = 13;
+  BAN_REASON_USERNAME = 14;
+}
+
+message UserWarning {
+  BanReason reason = 1;
+  string message = 2;
+  string matched = 3;
+  Filter filter = 4;
+  google.protobuf.Timestamp created_on = 5;
+  string persona_name = 6;
+  string avatar_hash = 7;
+  string server_name = 8;
+  int32 server_id = 9;
+  int64 steam_id = 10;
+  int32 current_total = 11;
+}
+
+message WarningStateResponse {
+  int32 max_weight = 1;
+  repeated UserWarning current = 2;
+}

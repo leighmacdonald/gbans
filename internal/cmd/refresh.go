@@ -155,7 +155,7 @@ func refreshFiltersCmd() *cobra.Command {
 			}
 
 			for {
-				messages, _, errMessages := app.chat.QueryChatHistory(ctx, admin, query)
+				messages, _, errMessages := app.chat.QueryChatHistory(ctx, admin.PermissionLevel, query)
 				if errMessages != nil {
 					slog.Error("Failed to load more messages", slog.String("error", errMessages.Error()))
 

@@ -127,6 +127,7 @@ type QueryRequest struct {
 	DateStart     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=date_start,json=dateStart" json:"date_start,omitempty"`
 	DateEnd       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=date_end,json=dateEnd" json:"date_end,omitempty"`
 	FlaggedOnly   *bool                  `protobuf:"varint,6,opt,name=flagged_only,json=flaggedOnly" json:"flagged_only,omitempty"`
+	SteamId       *string                `protobuf:"bytes,7,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -203,9 +204,17 @@ func (x *QueryRequest) GetFlaggedOnly() bool {
 	return false
 }
 
+func (x *QueryRequest) GetSteamId() string {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return ""
+}
+
 type QueryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Messages      []*Message             `protobuf:"bytes,1,rep,name=messages" json:"messages,omitempty"`
+	Count         *int64                 `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -245,6 +254,13 @@ func (x *QueryResponse) GetMessages() []*Message {
 		return x.Messages
 	}
 	return nil
+}
+
+func (x *QueryResponse) GetCount() int64 {
+	if x != nil && x.Count != nil {
+		return *x.Count
+	}
+	return 0
 }
 
 type Message struct {
@@ -380,7 +396,7 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\x11person_message_id\x18\x01 \x01(\x03R\x0fpersonMessageId\x12\x18\n" +
 	"\apadding\x18\x02 \x01(\x05R\apadding\"D\n" +
 	"\x14QueryContextResponse\x12,\n" +
-	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageR\bmessages\"\xf7\x01\n" +
+	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageR\bmessages\"\x92\x02\n" +
 	"\fQueryRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x14\n" +
 	"\x05query\x18\x02 \x01(\tR\x05query\x12\x1b\n" +
@@ -388,9 +404,11 @@ const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
 	"date_start\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tdateStart\x125\n" +
 	"\bdate_end\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\adateEnd\x12!\n" +
-	"\fflagged_only\x18\x06 \x01(\bR\vflaggedOnly\"=\n" +
+	"\fflagged_only\x18\x06 \x01(\bR\vflaggedOnly\x12\x19\n" +
+	"\bsteam_id\x18\a \x01(\tR\asteamId\"S\n" +
 	"\rQueryResponse\x12,\n" +
-	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageR\bmessages\"\x80\x03\n" +
+	"\bmessages\x18\x01 \x03(\v2\x10.chat.v1.MessageR\bmessages\x12\x14\n" +
+	"\x05count\x18\x02 \x01(\x03R\x05count\"\x80\x03\n" +
 	"\aMessage\x12*\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03R\x0fpersonMessageId\x12\x19\n" +
 	"\bmatch_id\x18\x02 \x01(\tR\amatchId\x12\x19\n" +

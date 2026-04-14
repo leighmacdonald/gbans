@@ -38,7 +38,7 @@ const (
 	FilterActionBan
 )
 
-func NewFilter(author steamid.SteamID, pattern string, regex bool, action FilterAction, duration string, weight int) (Filter, error) {
+func NewFilter(author steamid.SteamID, pattern string, regex bool, action FilterAction, duration string, weight int32) (Filter, error) {
 	now := time.Now()
 
 	filter := Filter{
@@ -77,7 +77,7 @@ type Filter struct {
 	Duration     string          `json:"duration"`
 	Regex        *regexp.Regexp  `json:"-"`
 	TriggerCount int64           `json:"trigger_count"`
-	Weight       int             `json:"weight"`
+	Weight       int32           `json:"weight"`
 	CreatedOn    time.Time       `json:"created_on"`
 	UpdatedOn    time.Time       `json:"updated_on"`
 }
@@ -106,8 +106,8 @@ type UserWarning struct {
 	Avatar        string        `json:"avatar"`
 	ServerName    string        `json:"server_name"`
 	ServerID      int32         `json:"server_id"`
-	SteamID       string        `json:"steam_id"`
-	CurrentTotal  int           `json:"current_total"`
+	SteamID       int64         `json:"steam_id"`
+	CurrentTotal  int32         `json:"current_total"`
 }
 
 type NewUserWarning struct {
@@ -122,14 +122,14 @@ type Warnings interface {
 }
 
 type Config struct {
-	Enabled        bool `json:"enabled"`
-	WarningTimeout int  `json:"warning_timeout"`
-	WarningLimit   int  `json:"warning_limit"`
-	Dry            bool `json:"dry"`
-	PingDiscord    bool `json:"ping_discord"`
-	MaxWeight      int  `json:"max_weight"`
-	CheckTimeout   int  `json:"check_timeout"`
-	MatchTimeout   int  `json:"match_timeout"`
+	Enabled        bool  `json:"enabled"`
+	WarningTimeout int   `json:"warning_timeout"`
+	WarningLimit   int   `json:"warning_limit"`
+	Dry            bool  `json:"dry"`
+	PingDiscord    bool  `json:"ping_discord"`
+	MaxWeight      int32 `json:"max_weight"`
+	CheckTimeout   int   `json:"check_timeout"`
+	MatchTimeout   int   `json:"match_timeout"`
 }
 
 type WordFilters struct {
@@ -247,7 +247,7 @@ func (w *WordFilters) Edit(ctx context.Context, user person.Info, filterID int64
 	return existingFilter, nil
 }
 
-func (w *WordFilters) Create(ctx context.Context, user person.Info, opts Filter) (Filter, error) {
+func (w *WordFilters) Create(ctx context.Context, steamID steamid.SteamID, opts Filter) (Filter, error) {
 	if opts.Pattern == "" {
 		return Filter{}, ErrInvalidPattern
 	}
@@ -269,7 +269,7 @@ func (w *WordFilters) Create(ctx context.Context, user person.Info, opts Filter)
 	}
 
 	newFilter := Filter{
-		AuthorID:  user.GetSteamID(),
+		AuthorID:  steamID,
 		Pattern:   opts.Pattern,
 		Action:    opts.Action,
 		Duration:  opts.Duration,

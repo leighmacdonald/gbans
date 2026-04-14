@@ -22,8 +22,8 @@ import (
 const _ = connect.IsAtLeastVersion1_13_0
 
 const (
-	// PersonServiceName is the fully-qualified name of the PersonService service.
-	PersonServiceName = "news.v1.PersonService"
+	// NewsServiceName is the fully-qualified name of the NewsService service.
+	NewsServiceName = "news.v1.NewsService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -34,72 +34,82 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// PersonServiceLatestProcedure is the fully-qualified name of the PersonService's Latest RPC.
-	PersonServiceLatestProcedure = "/news.v1.PersonService/Latest"
-	// PersonServiceEditProcedure is the fully-qualified name of the PersonService's Edit RPC.
-	PersonServiceEditProcedure = "/news.v1.PersonService/Edit"
-	// PersonServiceCreateProcedure is the fully-qualified name of the PersonService's Create RPC.
-	PersonServiceCreateProcedure = "/news.v1.PersonService/Create"
-	// PersonServiceDeleteProcedure is the fully-qualified name of the PersonService's Delete RPC.
-	PersonServiceDeleteProcedure = "/news.v1.PersonService/Delete"
+	// NewsServiceLatestProcedure is the fully-qualified name of the NewsService's Latest RPC.
+	NewsServiceLatestProcedure = "/news.v1.NewsService/Latest"
+	// NewsServiceEditProcedure is the fully-qualified name of the NewsService's Edit RPC.
+	NewsServiceEditProcedure = "/news.v1.NewsService/Edit"
+	// NewsServiceCreateProcedure is the fully-qualified name of the NewsService's Create RPC.
+	NewsServiceCreateProcedure = "/news.v1.NewsService/Create"
+	// NewsServiceDeleteProcedure is the fully-qualified name of the NewsService's Delete RPC.
+	NewsServiceDeleteProcedure = "/news.v1.NewsService/Delete"
+	// NewsServiceAllProcedure is the fully-qualified name of the NewsService's All RPC.
+	NewsServiceAllProcedure = "/news.v1.NewsService/All"
 )
 
-// PersonServiceClient is a client for the news.v1.PersonService service.
-type PersonServiceClient interface {
+// NewsServiceClient is a client for the news.v1.NewsService service.
+type NewsServiceClient interface {
 	Latest(context.Context, *v1.LatestRequest) (*v1.NewsAllResponse, error)
 	Edit(context.Context, *v1.EditRequest) (*v1.EditResponse, error)
 	Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error)
 	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
+	All(context.Context, *emptypb.Empty) (*v1.AllResponse, error)
 }
 
-// NewPersonServiceClient constructs a client for the news.v1.PersonService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// NewNewsServiceClient constructs a client for the news.v1.NewsService service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
 // uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
 // connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewPersonServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) PersonServiceClient {
+func NewNewsServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) NewsServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
-	personServiceMethods := v1.File_news_v1_news_proto.Services().ByName("PersonService").Methods()
-	return &personServiceClient{
+	newsServiceMethods := v1.File_news_v1_news_proto.Services().ByName("NewsService").Methods()
+	return &newsServiceClient{
 		latest: connect.NewClient[v1.LatestRequest, v1.NewsAllResponse](
 			httpClient,
-			baseURL+PersonServiceLatestProcedure,
-			connect.WithSchema(personServiceMethods.ByName("Latest")),
+			baseURL+NewsServiceLatestProcedure,
+			connect.WithSchema(newsServiceMethods.ByName("Latest")),
 			connect.WithClientOptions(opts...),
 		),
 		edit: connect.NewClient[v1.EditRequest, v1.EditResponse](
 			httpClient,
-			baseURL+PersonServiceEditProcedure,
-			connect.WithSchema(personServiceMethods.ByName("Edit")),
+			baseURL+NewsServiceEditProcedure,
+			connect.WithSchema(newsServiceMethods.ByName("Edit")),
 			connect.WithClientOptions(opts...),
 		),
 		create: connect.NewClient[v1.CreateRequest, v1.CreateResponse](
 			httpClient,
-			baseURL+PersonServiceCreateProcedure,
-			connect.WithSchema(personServiceMethods.ByName("Create")),
+			baseURL+NewsServiceCreateProcedure,
+			connect.WithSchema(newsServiceMethods.ByName("Create")),
 			connect.WithClientOptions(opts...),
 		),
 		delete: connect.NewClient[v1.DeleteRequest, emptypb.Empty](
 			httpClient,
-			baseURL+PersonServiceDeleteProcedure,
-			connect.WithSchema(personServiceMethods.ByName("Delete")),
+			baseURL+NewsServiceDeleteProcedure,
+			connect.WithSchema(newsServiceMethods.ByName("Delete")),
+			connect.WithClientOptions(opts...),
+		),
+		all: connect.NewClient[emptypb.Empty, v1.AllResponse](
+			httpClient,
+			baseURL+NewsServiceAllProcedure,
+			connect.WithSchema(newsServiceMethods.ByName("All")),
 			connect.WithClientOptions(opts...),
 		),
 	}
 }
 
-// personServiceClient implements PersonServiceClient.
-type personServiceClient struct {
+// newsServiceClient implements NewsServiceClient.
+type newsServiceClient struct {
 	latest *connect.Client[v1.LatestRequest, v1.NewsAllResponse]
 	edit   *connect.Client[v1.EditRequest, v1.EditResponse]
 	create *connect.Client[v1.CreateRequest, v1.CreateResponse]
 	delete *connect.Client[v1.DeleteRequest, emptypb.Empty]
+	all    *connect.Client[emptypb.Empty, v1.AllResponse]
 }
 
-// Latest calls news.v1.PersonService.Latest.
-func (c *personServiceClient) Latest(ctx context.Context, req *v1.LatestRequest) (*v1.NewsAllResponse, error) {
+// Latest calls news.v1.NewsService.Latest.
+func (c *newsServiceClient) Latest(ctx context.Context, req *v1.LatestRequest) (*v1.NewsAllResponse, error) {
 	response, err := c.latest.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -107,8 +117,8 @@ func (c *personServiceClient) Latest(ctx context.Context, req *v1.LatestRequest)
 	return nil, err
 }
 
-// Edit calls news.v1.PersonService.Edit.
-func (c *personServiceClient) Edit(ctx context.Context, req *v1.EditRequest) (*v1.EditResponse, error) {
+// Edit calls news.v1.NewsService.Edit.
+func (c *newsServiceClient) Edit(ctx context.Context, req *v1.EditRequest) (*v1.EditResponse, error) {
 	response, err := c.edit.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -116,8 +126,8 @@ func (c *personServiceClient) Edit(ctx context.Context, req *v1.EditRequest) (*v
 	return nil, err
 }
 
-// Create calls news.v1.PersonService.Create.
-func (c *personServiceClient) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateResponse, error) {
+// Create calls news.v1.NewsService.Create.
+func (c *newsServiceClient) Create(ctx context.Context, req *v1.CreateRequest) (*v1.CreateResponse, error) {
 	response, err := c.create.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -125,8 +135,8 @@ func (c *personServiceClient) Create(ctx context.Context, req *v1.CreateRequest)
 	return nil, err
 }
 
-// Delete calls news.v1.PersonService.Delete.
-func (c *personServiceClient) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Empty, error) {
+// Delete calls news.v1.NewsService.Delete.
+func (c *newsServiceClient) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Empty, error) {
 	response, err := c.delete.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -134,76 +144,98 @@ func (c *personServiceClient) Delete(ctx context.Context, req *v1.DeleteRequest)
 	return nil, err
 }
 
-// PersonServiceHandler is an implementation of the news.v1.PersonService service.
-type PersonServiceHandler interface {
+// All calls news.v1.NewsService.All.
+func (c *newsServiceClient) All(ctx context.Context, req *emptypb.Empty) (*v1.AllResponse, error) {
+	response, err := c.all.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// NewsServiceHandler is an implementation of the news.v1.NewsService service.
+type NewsServiceHandler interface {
 	Latest(context.Context, *v1.LatestRequest) (*v1.NewsAllResponse, error)
 	Edit(context.Context, *v1.EditRequest) (*v1.EditResponse, error)
 	Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error)
 	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
+	All(context.Context, *emptypb.Empty) (*v1.AllResponse, error)
 }
 
-// NewPersonServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
+// NewNewsServiceHandler builds an HTTP handler from the service implementation. It returns the path
+// on which to mount the handler and the handler itself.
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewPersonServiceHandler(svc PersonServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	personServiceMethods := v1.File_news_v1_news_proto.Services().ByName("PersonService").Methods()
-	personServiceLatestHandler := connect.NewUnaryHandlerSimple(
-		PersonServiceLatestProcedure,
+func NewNewsServiceHandler(svc NewsServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	newsServiceMethods := v1.File_news_v1_news_proto.Services().ByName("NewsService").Methods()
+	newsServiceLatestHandler := connect.NewUnaryHandlerSimple(
+		NewsServiceLatestProcedure,
 		svc.Latest,
-		connect.WithSchema(personServiceMethods.ByName("Latest")),
+		connect.WithSchema(newsServiceMethods.ByName("Latest")),
 		connect.WithHandlerOptions(opts...),
 	)
-	personServiceEditHandler := connect.NewUnaryHandlerSimple(
-		PersonServiceEditProcedure,
+	newsServiceEditHandler := connect.NewUnaryHandlerSimple(
+		NewsServiceEditProcedure,
 		svc.Edit,
-		connect.WithSchema(personServiceMethods.ByName("Edit")),
+		connect.WithSchema(newsServiceMethods.ByName("Edit")),
 		connect.WithHandlerOptions(opts...),
 	)
-	personServiceCreateHandler := connect.NewUnaryHandlerSimple(
-		PersonServiceCreateProcedure,
+	newsServiceCreateHandler := connect.NewUnaryHandlerSimple(
+		NewsServiceCreateProcedure,
 		svc.Create,
-		connect.WithSchema(personServiceMethods.ByName("Create")),
+		connect.WithSchema(newsServiceMethods.ByName("Create")),
 		connect.WithHandlerOptions(opts...),
 	)
-	personServiceDeleteHandler := connect.NewUnaryHandlerSimple(
-		PersonServiceDeleteProcedure,
+	newsServiceDeleteHandler := connect.NewUnaryHandlerSimple(
+		NewsServiceDeleteProcedure,
 		svc.Delete,
-		connect.WithSchema(personServiceMethods.ByName("Delete")),
+		connect.WithSchema(newsServiceMethods.ByName("Delete")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/news.v1.PersonService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	newsServiceAllHandler := connect.NewUnaryHandlerSimple(
+		NewsServiceAllProcedure,
+		svc.All,
+		connect.WithSchema(newsServiceMethods.ByName("All")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/news.v1.NewsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case PersonServiceLatestProcedure:
-			personServiceLatestHandler.ServeHTTP(w, r)
-		case PersonServiceEditProcedure:
-			personServiceEditHandler.ServeHTTP(w, r)
-		case PersonServiceCreateProcedure:
-			personServiceCreateHandler.ServeHTTP(w, r)
-		case PersonServiceDeleteProcedure:
-			personServiceDeleteHandler.ServeHTTP(w, r)
+		case NewsServiceLatestProcedure:
+			newsServiceLatestHandler.ServeHTTP(w, r)
+		case NewsServiceEditProcedure:
+			newsServiceEditHandler.ServeHTTP(w, r)
+		case NewsServiceCreateProcedure:
+			newsServiceCreateHandler.ServeHTTP(w, r)
+		case NewsServiceDeleteProcedure:
+			newsServiceDeleteHandler.ServeHTTP(w, r)
+		case NewsServiceAllProcedure:
+			newsServiceAllHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
 	})
 }
 
-// UnimplementedPersonServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedPersonServiceHandler struct{}
+// UnimplementedNewsServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedNewsServiceHandler struct{}
 
-func (UnimplementedPersonServiceHandler) Latest(context.Context, *v1.LatestRequest) (*v1.NewsAllResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("news.v1.PersonService.Latest is not implemented"))
+func (UnimplementedNewsServiceHandler) Latest(context.Context, *v1.LatestRequest) (*v1.NewsAllResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("news.v1.NewsService.Latest is not implemented"))
 }
 
-func (UnimplementedPersonServiceHandler) Edit(context.Context, *v1.EditRequest) (*v1.EditResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("news.v1.PersonService.Edit is not implemented"))
+func (UnimplementedNewsServiceHandler) Edit(context.Context, *v1.EditRequest) (*v1.EditResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("news.v1.NewsService.Edit is not implemented"))
 }
 
-func (UnimplementedPersonServiceHandler) Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("news.v1.PersonService.Create is not implemented"))
+func (UnimplementedNewsServiceHandler) Create(context.Context, *v1.CreateRequest) (*v1.CreateResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("news.v1.NewsService.Create is not implemented"))
 }
 
-func (UnimplementedPersonServiceHandler) Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("news.v1.PersonService.Delete is not implemented"))
+func (UnimplementedNewsServiceHandler) Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("news.v1.NewsService.Delete is not implemented"))
+}
+
+func (UnimplementedNewsServiceHandler) All(context.Context, *emptypb.Empty) (*v1.AllResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("news.v1.NewsService.All is not implemented"))
 }

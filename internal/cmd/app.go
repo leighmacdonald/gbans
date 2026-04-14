@@ -20,15 +20,16 @@ import (
 	"github.com/leighmacdonald/gbans/internal/anticheat"
 	"github.com/leighmacdonald/gbans/internal/anticheat/v1/anticheatv1connect"
 	"github.com/leighmacdonald/gbans/internal/asset"
+	"github.com/leighmacdonald/gbans/internal/asset/v1/assetv1connect"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/config/v1/configv1connect"
-	"github.com/leighmacdonald/gbans/internal/contest"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord/oauth"
@@ -42,14 +43,15 @@ import (
 	"github.com/leighmacdonald/gbans/internal/network/asn"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
 	"github.com/leighmacdonald/gbans/internal/news"
+	"github.com/leighmacdonald/gbans/internal/news/v1/newsv1connect"
 	"github.com/leighmacdonald/gbans/internal/notification"
-	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/servers/v1/serversv1connect"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
+	"github.com/leighmacdonald/gbans/internal/votes/v1/votesv1connect"
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/internal/wiki/v1/wikiv1connect"
 	"github.com/leighmacdonald/gbans/pkg/broadcaster"
@@ -320,7 +322,7 @@ func (g *GBans) chatHandler(ctx context.Context, exceeded bool, newWarning chat.
 
 	slog.Info("Warn limit exceeded",
 		slog.String("sid64", newWarning.UserMessage.SteamID.String()),
-		slog.Int("weight", newWarning.CurrentTotal))
+		slog.Int("weight", int(newWarning.CurrentTotal)))
 
 	return nil
 }
@@ -456,6 +458,22 @@ func (g *GBans) StartBackground(ctx context.Context) {
 	}
 }
 
+func (g *GBans) createAPI() *http.ServeMux {
+	interceptor := connect.WithInterceptors(validate.NewInterceptor())
+	api := http.NewServeMux()
+
+	api.Handle(assetv1connect.NewAssetServiceHandler(asset.NewService(g.assets), interceptor))
+	api.Handle(anticheatv1connect.NewAnticheatServiceHandler(anticheat.NewService(g.anticheat), interceptor))
+	api.Handle(chatv1connect.NewChatServiceHandler(chat.NewService(g.chat), interceptor))
+	api.Handle(configv1connect.NewConfigServiceHandler(config.NewRPC(g.config, BuildVersion), interceptor))
+	api.Handle(serversv1connect.NewServersServiceHandler(servers.NewRPC(g.servers), interceptor))
+	api.Handle(votesv1connect.NewVotesServiceHandler(votes.NewService(g.votes), interceptor))
+	api.Handle(wikiv1connect.NewWikiServiceHandler(wiki.NewService(g.wiki), interceptor))
+	api.Handle(newsv1connect.NewNewsServiceHandler(news.NewService(g.news), interceptor))
+
+	return api
+}
+
 func (g *GBans) Serve(rootCtx context.Context) error {
 	ctx, stop := signal.NotifyContext(rootCtx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -486,57 +504,43 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	}
 
 	// Create authentication middlewares
-	userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
-	serverAuth := servers.NewServerAuth(g.servers, g.config.Config().General.SentryDSN)
+	// userAuth := auth.NewAuthentication(auth.NewRepository(g.database), conf.General.SiteName, conf.HTTPCookieKey, g.persons, g.bans, g.servers, g.config.Config().General.SentryDSN)
+	// serverAuth := servers.NewServerAuth(g.servers, g.config.Config().General.SentryDSN)
 
 	// Register all our handlers with router
 	// anticheat.NewAnticheatHandler(router, userAuth, g.anticheat)
-	asset.NewAssetHandler(router, userAuth, g.assets)
-	auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications)
-	ban.NewAppealHandler(router, userAuth, ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.LogChannelID))
-	ban.NewReportHandler(router, userAuth, g.reports)
-	ban.NewHandlerBans(router, userAuth, g.bans, conf.Exports, conf.General.SiteName)
-	chat.NewChatHandler(router, g.chat, userAuth)
-	chat.NewWordFilterHandler(router, userAuth, conf.Filters, g.wordFilters, g.chat)
-	config.NewHandler(router, userAuth, g.config, BuildVersion)
-	contest.NewContestHandler(router, userAuth, contest.NewContests(contest.NewRepository(g.database)), g.assets)
-	discordoauth.NewDiscordOAuthHandler(router, userAuth, g.config, g.persons, g.discordOAuth)
-	forum.NewForumHandler(router, userAuth, g.forums)
+	// asset.NewAssetHandler(router, userAuth, g.assets)
+	// auth.NewAuthHandler(router, userAuth, g.config, g.tfapiClient, g.notifications)
+	// ban.NewAppealHandler(router, userAuth, ban.NewAppeals(ban.NewAppealRepository(g.database), g.bans, g.persons, g.notifications, conf.Discord.LogChannelID))
+	// ban.NewReportHandler(router, userAuth, g.reports)
+	// ban.NewHandlerBans(router, userAuth, g.bans, conf.Exports, conf.General.SiteName)
+	// chat.NewChatHandler(router, g.chat, userAuth)
+	// chat.NewWordFilterHandler(router, userAuth, conf.Filters, g.wordFilters, g.chat)
+	// config.NewHandler(router, userAuth, g.config, BuildVersion)
+	// contest.NewContestHandler(router, userAuth, contest.NewContests(contest.NewRepository(g.database)), g.assets)
+	// discordoauth.NewDiscordOAuthHandler(router, userAuth, g.config, g.persons, g.discordOAuth)
+	// forum.NewForumHandler(router, userAuth, g.forums)
 	// match.NewMatchHandler(ctx, router, matchUsecase, serversUC, authUsecase, configUsecase)
-	metrics.NewMetricsHandler(router)
-	mge.NewHandler(router, userAuth, g.mge)
-	network.NewHandler(router, userAuth, g.networks)
-	network.NewBlocklistHandler(router, userAuth, g.blocklists, g.networks)
-	news.NewNewsHandler(router, g.news, userAuth)
-	notification.NewNotificationHandler(router, userAuth, g.notifications)
-	patreon.NewPatreonHandler(router, userAuth, patreon.NewPatreon(patreon.NewRepository(g.database), conf.Patreon), g.config.Config().Patreon)
-	person.NewPersonHandler(router, userAuth, g.persons)
-	servers.NewDemoHandler(router, userAuth, g.demos)
+	// metrics.NewMetricsHandler(router)
+	// mge.NewHandler(router, userAuth, g.mge)
+	// network.NewHandler(router, userAuth, g.networks)
+	// network.NewBlocklistHandler(router, userAuth, g.blocklists, g.networks)
+	// news.NewNewsHandler(router, g.news, userAuth)
+	// notification.NewNotificationHandler(router, userAuth, g.notifications)
+	// patreon.NewPatreonHandler(router, userAuth, patreon.NewPatreon(patreon.NewRepository(g.database), conf.Patreon), g.config.Config().Patreon)
+	// person.NewPersonHandler(router, userAuth, g.persons)
+	// servers.NewDemoHandler(router, userAuth, g.demos)
 	// servers.NewServersHandler(router, userAuth, g.servers)
-	servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)
-	sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod, g.notifications, conf.Discord.SafeKickLogChannelID(), g.persons)
-	votes.NewVotesHandler(router, userAuth, g.votes)
-	wiki.NewWikiHandler(router, userAuth, g.wiki)
+	// servers.NewSpeedrunsHandler(router, userAuth, serverAuth, g.speedruns)
+	// sourcemod.NewHandler(router, userAuth, serverAuth, g.sourcemod, g.notifications, conf.Discord.SafeKickLogChannelID(), g.persons)
 
 	router.GET("/health", g.healthCheck)
 
+	api := g.createAPI()
+
 	mux := http.NewServeMux()
-
-	api := http.NewServeMux()
-	api.Handle(anticheatv1connect.NewAnticheatServiceHandler(
-		anticheat.NewService(g.anticheat),
-		connect.WithInterceptors(validate.NewInterceptor())))
-
-	api.Handle(configv1connect.NewConfigServiceHandler(
-		config.NewRPC(g.config, BuildVersion),
-		connect.WithInterceptors(validate.NewInterceptor())))
-
-	api.Handle(serversv1connect.NewServersServiceHandler(
-		servers.NewRPC(g.servers),
-		connect.WithInterceptors(validate.NewInterceptor())))
-
-	api.Handle(wikiv1connect.NewWikiServiceHandler(
-		wiki.NewService(), connect.WithInterceptors(validate.NewInterceptor())))
+	mw := auth.NewMiddleware()
+	mw.AuthedRoute(votesv1connect.VotesServiceQueryProcedure, auth.WithMinPermissions(permission.Moderator))
 
 	mux.Handle("/connect/", http.StripPrefix("/connect", api))
 	mux.Handle("/", router)

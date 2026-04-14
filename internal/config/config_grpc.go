@@ -307,7 +307,7 @@ func (r *RPC) Update(ctx context.Context, request *configv1.UpdateRequest) (*con
 			WarningLimit:   int(ptr.From(request.Config.Filters.WarningLimit)),
 			Dry:            ptr.From(request.Config.Filters.Dry),
 			PingDiscord:    ptr.From(request.Config.Filters.PingDiscord),
-			MaxWeight:      int(ptr.From(request.Config.Filters.MaxWeight)),
+			MaxWeight:      ptr.From(request.Config.Filters.MaxWeight),
 			CheckTimeout:   int(ptr.From(request.Config.Filters.CheckTimeout)),
 			MatchTimeout:   int(ptr.From(request.Config.Filters.MatchTimeout)),
 		},
