@@ -6,11 +6,11 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal"
-	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/ptr"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/wiki/v1"
 	"github.com/leighmacdonald/gbans/internal/wiki/v1/wikiv1connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -40,7 +40,7 @@ func (s Service) Get(ctx context.Context, request *v1.GetRequest) (*v1.GetRespon
 		}
 	}
 
-	if _, errAuth := auth.UserInfoFromCtxWithCheck(ctx, page.PermissionLevel); errAuth != nil {
+	if _, errAuth := rpc.UserInfoFromCtxWithCheck(ctx, page.PermissionLevel); errAuth != nil {
 		return nil, errAuth
 	}
 

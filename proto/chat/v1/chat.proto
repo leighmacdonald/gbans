@@ -26,10 +26,12 @@ message QueryRequest {
   google.protobuf.Timestamp date_start = 4;
   google.protobuf.Timestamp date_end = 5;
   bool flagged_only = 6;
+  string steam_id = 7;
 }
 
 message QueryResponse {
   repeated Message messages = 1;
+  int64 count = 2;
 }
 
 message Message {

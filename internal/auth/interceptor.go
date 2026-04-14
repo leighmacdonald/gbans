@@ -7,39 +7,11 @@ import (
 	"net/http"
 
 	"connectrpc.com/authn"
-	"connectrpc.com/connect"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
-
-type UserInfo struct {
-	SteamID   steamid.SteamID      `json:"steam_id"`
-	Privilege permission.Privilege `json:"privilege"`
-}
-
-func (u UserInfo) HasPermission(privilege permission.Privilege) bool {
-	return u.Privilege >= privilege
-}
-
-func UserInfoFromCtx(ctx context.Context) (*UserInfo, bool) {
-	user, ok := authn.GetInfo(ctx).(UserInfo)
-	if !ok {
-		return nil, false
-	}
-
-	return &user, true
-}
-
-func UserInfoFromCtxWithCheck(ctx context.Context, privilege permission.Privilege) (*UserInfo, error) {
-	user, authed := UserInfoFromCtx(ctx)
-
-	if !authed || !user.HasPermission(privilege) {
-		return nil, connect.NewError(connect.CodePermissionDenied, permission.ErrDenied)
-	}
-
-	return user, nil
-}
 
 func fingerprintFromRequest(req *http.Request) (string, error) {
 	fp, errFP := req.Cookie("fingerprint")
@@ -94,7 +66,13 @@ func claimsFromRequest(req *http.Request) (*UserAuthClaims, error) {
 	return &claims, nil
 }
 
-type RouteAuthFn = func(req *http.Request) bool
+type RouteAuthFn = func(ctx context.Context, req *http.Request) bool
+
+func NewMiddleware() *Middleware {
+	return &Middleware{
+		allowList: map[string]RouteAuthFn{},
+	}
+}
 
 type Middleware struct {
 	allowList map[string]RouteAuthFn
@@ -104,13 +82,13 @@ func (m *Middleware) AuthedRoute(procedure string, authFunc RouteAuthFn) {
 	m.allowList[procedure] = authFunc
 }
 
-func (m *Middleware) Authenticate(_ context.Context, req *http.Request) (any, error) {
+func (m *Middleware) Authenticate(ctx context.Context, req *http.Request) (any, error) {
 	procedure, found := authn.InferProcedure(req.URL)
 	if !found {
 		return nil, nil
 	}
 
-	var info UserInfo
+	var info rpc.UserInfo
 
 	claims, errToken := claimsFromRequest(req)
 	if errToken != nil {
@@ -130,9 +108,20 @@ func (m *Middleware) Authenticate(_ context.Context, req *http.Request) (any, er
 		return info, authn.Errorf("unknown procedure")
 	}
 
-	if !authFn(req) {
+	if !authFn(ctx, req) {
 		return info, authn.Errorf("unauthorized")
 	}
 
 	return info, nil
+}
+
+func WithMinPermissions(permission permission.Privilege) RouteAuthFn {
+	return func(ctx context.Context, req *http.Request) bool {
+		info, err := rpc.UserInfoFromCtxWithCheck(ctx, permission)
+		if err != nil {
+			return false
+		}
+
+		return info.HasPermission(permission)
+	}
 }

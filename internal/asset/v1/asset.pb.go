@@ -69,6 +69,7 @@ func (x *DeleteRequest) GetAssetId() string {
 
 type DeleteResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Size          *int64                 `protobuf:"varint,1,opt,name=size" json:"size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -101,6 +102,13 @@ func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use DeleteResponse.ProtoReflect.Descriptor instead.
 func (*DeleteResponse) Descriptor() ([]byte, []int) {
 	return file_asset_v1_asset_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *DeleteResponse) GetSize() int64 {
+	if x != nil && x.Size != nil {
+		return *x.Size
+	}
+	return 0
 }
 
 type CreateRequest struct {
@@ -321,8 +329,9 @@ const file_asset_v1_asset_proto_rawDesc = "" +
 	"\n" +
 	"\x14asset/v1/asset.proto\x12\basset.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"*\n" +
 	"\rDeleteRequest\x12\x19\n" +
-	"\basset_id\x18\x01 \x01(\tR\aassetId\"\x10\n" +
-	"\x0eDeleteResponse\"?\n" +
+	"\basset_id\x18\x01 \x01(\tR\aassetId\"$\n" +
+	"\x0eDeleteResponse\x12\x12\n" +
+	"\x04size\x18\x01 \x01(\x03R\x04size\"?\n" +
 	"\rCreateRequest\x12\x1a\n" +
 	"\bcontents\x18\x01 \x01(\fR\bcontents\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"7\n" +

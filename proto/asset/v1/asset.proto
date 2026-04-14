@@ -14,7 +14,9 @@ message DeleteRequest {
   string asset_id = 1;
 }
 
-message DeleteResponse {}
+message DeleteResponse {
+  int64 size = 1;
+}
 
 message CreateRequest {
   bytes contents = 1;

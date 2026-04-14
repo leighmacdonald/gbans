@@ -7,9 +7,9 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/ptr"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/votes/v1"
 	"github.com/leighmacdonald/gbans/internal/votes/v1/votesv1connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -27,7 +27,7 @@ func NewService(votes Votes) Service {
 
 func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResponse, error) {
 	votes, count, errVotes := s.votes.Query(ctx, Query{
-		Filter:        query.FromRPC(req.Filter),
+		Filter:        rpc.FromRPC(req.Filter),
 		SourceIDField: httphelper.SourceIDField{},
 		TargetIDField: httphelper.TargetIDField{},
 		ServerID:      ptr.From(req.ServerId),
@@ -64,5 +64,6 @@ func (s Service) Query(ctx context.Context, req *v1.QueryRequest) (*v1.QueryResp
 			CreatedOn:        timestamppb.New(vote.CreatedOn),
 		}
 	}
+
 	return &resp, nil
 }

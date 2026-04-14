@@ -10,7 +10,7 @@ import (
 )
 
 type Article struct {
-	NewsID      int       `json:"news_id"`
+	NewsID      int32     `json:"news_id"`
 	Title       string    `json:"title"`
 	BodyMD      string    `json:"body_md"`
 	IsPublished bool      `json:"is_published"`
@@ -28,7 +28,7 @@ func New(repository Repository, notifications notification.Notifier, logChannelI
 	return News{repository: repository, notifications: notifications, logChannelID: logChannelID}
 }
 
-func (u News) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]Article, error) {
+func (u News) GetNewsLatest(ctx context.Context, limit int32, includeUnpublished bool) ([]Article, error) {
 	return u.repository.GetNewsLatest(ctx, limit, includeUnpublished)
 }
 
@@ -67,12 +67,12 @@ func (u News) Save(ctx context.Context, entry *Article) error {
 	return nil
 }
 
-func (u News) DropNewsArticle(ctx context.Context, newsID int) error {
+func (u News) DropNewsArticle(ctx context.Context, newsID int32) error {
 	if err := u.repository.DropNewsArticle(ctx, newsID); err != nil {
 		return err
 	}
 
-	slog.Info("Deleted news article", slog.Int("news_id", newsID))
+	slog.Info("Deleted news article", slog.Int("news_id", int(newsID)))
 
 	return nil
 }

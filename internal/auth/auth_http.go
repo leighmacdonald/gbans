@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -161,72 +160,73 @@ func (h *authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 	}
 }
 
-func (h *authHandler) onAPILogout() gin.HandlerFunc {
-	conf := h.config.Config()
-
-	return func(ctx *gin.Context) {
-		fingerprint, errCookie := ctx.Cookie(FingerprintCookieName)
-		if errCookie != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errCookie, httphelper.ErrBadRequest),
-				"Failed to find fingerprint cookie: %s", FingerprintCookieName))
-
-			return
-		}
-
-		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
-		if errExternal != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errExternal, httphelper.ErrInternal),
-				"Invalid external url: %s", conf.ExternalURL))
-
-			return
-		}
-
-		ctx.SetCookie(FingerprintCookieName, "", -1, "/api",
-			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
-
-		token, errToken := h.TokenFromHeader(ctx, false)
-		if errToken != nil {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-
-			return
-		}
-
-		sid, errFromToken := h.Sid64FromJWTToken(token, h.cookieKey, fingerprint)
-		if errFromToken != nil {
-			if errors.Is(errFromToken, ErrExpired) {
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-
-				return
-			}
-
-			slog.Error("Failed to load sid from access token", slog.String("error", errFromToken.Error()))
-			ctx.AbortWithStatus(http.StatusForbidden)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{})
-
-		go func(steamID steamid.SteamID) {
-			sentry.AddBreadcrumb(&sentry.Breadcrumb{
-				Category: "auth",
-				Message:  "User logged out " + steamID.String(),
-				Level:    sentry.LevelWarning,
-			})
-
-			sentry.ConfigureScope(func(scope *sentry.Scope) {
-				scope.SetUser(sentry.User{})
-			})
-			player, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
-			if errPerson != nil {
-				slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
-
-				return
-			}
-			h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, logoutMessage(player)))
-		}(sid)
-	}
-}
+//
+//func (h *authHandler) onAPILogout() gin.HandlerFunc {
+//	conf := h.config.Config()
+//
+//	return func(ctx *gin.Context) {
+//		fingerprint, errCookie := ctx.Cookie(FingerprintCookieName)
+//		if errCookie != nil {
+//			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errCookie, httphelper.ErrBadRequest),
+//				"Failed to find fingerprint cookie: %s", FingerprintCookieName))
+//
+//			return
+//		}
+//
+//		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
+//		if errExternal != nil {
+//			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(errExternal, httphelper.ErrInternal),
+//				"Invalid external url: %s", conf.ExternalURL))
+//
+//			return
+//		}
+//
+//		ctx.SetCookie(FingerprintCookieName, "", -1, "/api",
+//			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
+//
+//		token, errToken := h.TokenFromHeader(ctx, false)
+//		if errToken != nil {
+//			ctx.AbortWithStatus(http.StatusUnauthorized)
+//
+//			return
+//		}
+//
+//		sid, errFromToken := h.Sid64FromJWTToken(token, h.cookieKey, fingerprint)
+//		if errFromToken != nil {
+//			if errors.Is(errFromToken, ErrExpired) {
+//				ctx.AbortWithStatus(http.StatusUnauthorized)
+//
+//				return
+//			}
+//
+//			slog.Error("Failed to load sid from access token", slog.String("error", errFromToken.Error()))
+//			ctx.AbortWithStatus(http.StatusForbidden)
+//
+//			return
+//		}
+//
+//		ctx.JSON(http.StatusOK, gin.H{})
+//
+//		go func(steamID steamid.SteamID) {
+//			sentry.AddBreadcrumb(&sentry.Breadcrumb{
+//				Category: "auth",
+//				Message:  "User logged out " + steamID.String(),
+//				Level:    sentry.LevelWarning,
+//			})
+//
+//			sentry.ConfigureScope(func(scope *sentry.Scope) {
+//				scope.SetUser(sentry.User{})
+//			})
+//			player, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+//			if errPerson != nil {
+//				slog.Error("Failed to create or load user profile", slog.String("error", errPerson.Error()))
+//
+//				return
+//			}
+//			h.notif.Send(notification.NewDiscord(conf.Discord.LogChannelID, logoutMessage(player)))
+//		}(sid)
+//	}
+//}
 
 // noOpDiscoveryCache implements the DiscoveryCache interface and doesn't cache anything.
 type noOpDiscoveryCache struct{}

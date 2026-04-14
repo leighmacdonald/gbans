@@ -6,8 +6,8 @@ import (
 
 	v1 "github.com/leighmacdonald/gbans/internal/anticheat/v1"
 	"github.com/leighmacdonald/gbans/internal/anticheat/v1/anticheatv1connect"
-	"github.com/leighmacdonald/gbans/internal/database/query"
 	"github.com/leighmacdonald/gbans/internal/ptr"
+	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -24,7 +24,7 @@ type Service struct {
 
 func (s Service) Query(ctx context.Context, request *v1.QueryRequest) (*v1.QueryResponse, error) {
 	opts := Query{
-		Filter:    query.FromRPC(request.Filter),
+		Filter:    rpc.FromRPC(request.Filter),
 		Name:      request.GetName(),
 		SteamID:   fmt.Sprintf("%d", request.GetSteamId()),
 		ServerID:  0,
