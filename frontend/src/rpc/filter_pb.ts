@@ -9,38 +9,39 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file filter.proto.
  */
-export const file_filter: GenFile = /*@__PURE__*/
-  fileDesc("CgxmaWx0ZXIucHJvdG8iRwoGRmlsdGVyEg4KBm9mZnNldBgBIAEoBBINCgVsaW1pdBgCIAEoBBIMCgRkZXNjGAMgASgIEhAKCG9yZGVyX2J5GAQgASgJQjlCC0ZpbHRlclByb3RvUAFaKGdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWxiCGVkaXRpb25zcOgH");
+export const file_filter: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"CgxmaWx0ZXIucHJvdG8iRwoGRmlsdGVyEg4KBm9mZnNldBgBIAEoBBINCgVsaW1pdBgCIAEoBBIMCgRkZXNjGAMgASgIEhAKCG9yZGVyX2J5GAQgASgJQjlCC0ZpbHRlclByb3RvUAFaKGdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWxiCGVkaXRpb25zcOgH",
+	);
 
 /**
  * @generated from message Filter
  */
 export type Filter = Message<"Filter"> & {
-  /**
-   * @generated from field: uint64 offset = 1;
-   */
-  offset: bigint;
+	/**
+	 * @generated from field: uint64 offset = 1;
+	 */
+	offset: bigint;
 
-  /**
-   * @generated from field: uint64 limit = 2;
-   */
-  limit: bigint;
+	/**
+	 * @generated from field: uint64 limit = 2;
+	 */
+	limit: bigint;
 
-  /**
-   * @generated from field: bool desc = 3;
-   */
-  desc: boolean;
+	/**
+	 * @generated from field: bool desc = 3;
+	 */
+	desc: boolean;
 
-  /**
-   * @generated from field: string order_by = 4;
-   */
-  orderBy: string;
+	/**
+	 * @generated from field: string order_by = 4;
+	 */
+	orderBy: string;
 };
 
 /**
  * Describes the message Filter.
  * Use `create(FilterSchema)` to create a new message.
  */
-export const FilterSchema: GenMessage<Filter> = /*@__PURE__*/
-  messageDesc(file_filter, 0);
-
+export const FilterSchema: GenMessage<Filter> = /*@__PURE__*/ messageDesc(file_filter, 0);

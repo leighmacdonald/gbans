@@ -116,7 +116,7 @@ func (x *AppealsResponse) GetAppeals() []*AppealOverview {
 
 type MessagesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -151,7 +151,7 @@ func (*MessagesRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *MessagesRequest) GetBanId() int32 {
+func (x *MessagesRequest) GetBanId() int64 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
@@ -280,7 +280,7 @@ func (x *AppealOverview) GetTargetAvatarHash() string {
 
 type AppealMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	BanMessageId  *int64                 `protobuf:"varint,2,opt,name=ban_message_id,json=banMessageId" json:"ban_message_id,omitempty"`
 	AuthorId      *int64                 `protobuf:"varint,3,opt,name=author_id,json=authorId" json:"author_id,omitempty"`
 	MessageMd     *string                `protobuf:"bytes,4,opt,name=message_md,json=messageMd" json:"message_md,omitempty"`
@@ -324,7 +324,7 @@ func (*AppealMessage) Descriptor() ([]byte, []int) {
 	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *AppealMessage) GetBanId() int32 {
+func (x *AppealMessage) GetBanId() int64 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
@@ -396,7 +396,7 @@ func (x *AppealMessage) GetPrivilege() internal.Privilege {
 
 type ReplyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	BodyMd        *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -432,7 +432,7 @@ func (*ReplyRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_appeal_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ReplyRequest) GetBanId() int32 {
+func (x *ReplyRequest) GetBanId() int64 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
@@ -640,7 +640,7 @@ const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\x0fAppealsResponse\x120\n" +
 	"\aappeals\x18\x01 \x03(\v2\x16.ban.v1.AppealOverviewR\aappeals\"(\n" +
 	"\x0fMessagesRequest\x12\x15\n" +
-	"\x06ban_id\x18\x01 \x01(\x05R\x05banId\"E\n" +
+	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\"E\n" +
 	"\x10MessagesResponse\x121\n" +
 	"\bmessages\x18\x01 \x03(\v2\x15.ban.v1.AppealMessageR\bmessages\"\xeb\x01\n" +
 	"\x0eAppealOverview\x12\x1d\n" +
@@ -650,7 +650,7 @@ const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\x13target_persona_name\x18\x04 \x01(\tR\x11targetPersonaName\x12,\n" +
 	"\x12target_avatar_hash\x18\x05 \x01(\tR\x10targetAvatarHash\"\x86\x03\n" +
 	"\rAppealMessage\x12\x15\n" +
-	"\x06ban_id\x18\x01 \x01(\x05R\x05banId\x12$\n" +
+	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\x12$\n" +
 	"\x0eban_message_id\x18\x02 \x01(\x03R\fbanMessageId\x12\x1b\n" +
 	"\tauthor_id\x18\x03 \x01(\x03R\bauthorId\x12\x1d\n" +
 	"\n" +
@@ -667,7 +667,7 @@ const file_ban_v1_appeal_proto_rawDesc = "" +
 	" \x01(\x0e2\n" +
 	".PrivilegeR\tprivilege\">\n" +
 	"\fReplyRequest\x12\x15\n" +
-	"\x06ban_id\x18\x01 \x01(\x05R\x05banId\x12\x17\n" +
+	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\x12\x17\n" +
 	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"@\n" +
 	"\rReplyResponse\x12/\n" +
 	"\amessage\x18\x01 \x01(\v2\x15.ban.v1.AppealMessageR\amessage\"Y\n" +

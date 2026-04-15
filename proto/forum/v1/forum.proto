@@ -21,9 +21,8 @@ service ForumService {
   rpc ThreadCreate(ThreadCreateRequest) returns (ThreadCreateResponse) {}
   rpc ThreadEdit(ThreadEditRequest) returns (ThreadEditResponse) {}
   rpc ThreadReplyCreate(ThreadReplyCreateRequest) returns (ThreadReplyCreateResponse) {}
-  rpc ThreadReplyEdit(ThreadReplyEditRequest) returns (ThreadReplyEditRequest) {}
+  rpc ThreadReplyEdit(ThreadReplyEditRequest) returns (ThreadReplyEditResponse) {}
   rpc MessageDelete(MessageDeleteRequest) returns (google.protobuf.Empty) {}
-
 
   // mod
   rpc CategoryCreate(CategoryCreateRequest) returns (CategoryCreateResponse) {}
@@ -103,7 +102,7 @@ message MessageDeleteRequest {
 }
 
 message ThreadDeleteRequest {
-  int64 forum_thread_id = 1;
+  int32 forum_thread_id = 1;
 }
 
 message ThreadReplyEditRequest {
@@ -111,8 +110,12 @@ message ThreadReplyEditRequest {
   string body_md = 2;
 }
 
+message ThreadReplyEditResponse {
+  Message message = 1;
+}
+
 message ThreadReplyCreateRequest {
-  int64 forum_thread_id = 1;
+  int32 forum_thread_id = 1;
   string body_md = 2;
 }
 
@@ -134,7 +137,7 @@ message ThreadCreateResponse {
 }
 
 message ForumMessagesRequest {
-  int64 forum_thread_id = 1;
+  int32 forum_thread_id = 1;
   bool deleted = 2;
 }
 
@@ -151,7 +154,7 @@ message ForumResponse {
 }
 
 message ThreadRequest {
-  int64 forum_thread_id = 1;
+  int32 forum_thread_id = 1;
 }
 
 message ThreadResponse {
@@ -199,7 +202,7 @@ message ActiveUsersResponse {
 
 message Message {
   int64 forum_message_id = 1;
-  int64 forum_thread_id = 2;
+  int32 forum_thread_id = 2;
   int64 source_id = 3;
   string body_md = 4;
   string title = 5;
@@ -219,14 +222,14 @@ message RecentMessagesResponse {
 message Forum {
   int32 forum_id = 1;
   int32 forum_category_id = 2;
-  int64 last_thread_id = 3;
+  int32 last_thread_id = 3;
   string title = 4;
   string description = 5;
   int32 ordering = 6;
   int64 count_threads = 7;
   int64 count_messages = 8;
   Privilege permission_level = 9;
-  int64 recent_forum_thread_id = 10;
+  int32 recent_forum_thread_id = 10;
   string recent_forum_title = 11;
   string recent_source_id = 12;
   string recent_persona_name = 13;

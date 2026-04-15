@@ -996,7 +996,7 @@ func (x *CreateReportResponse) GetReport() *ReportWithAuthor {
 
 type CreateReportMessageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReportId      *int32                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
+	ReportId      *int64                 `protobuf:"varint,1,opt,name=report_id,json=reportId" json:"report_id,omitempty"`
 	BodyMd        *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1032,7 +1032,7 @@ func (*CreateReportMessageRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *CreateReportMessageRequest) GetReportId() int32 {
+func (x *CreateReportMessageRequest) GetReportId() int64 {
 	if x != nil && x.ReportId != nil {
 		return *x.ReportId
 	}
@@ -1048,6 +1048,7 @@ func (x *CreateReportMessageRequest) GetBodyMd() string {
 
 type CreateReportMessageResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReportMessage *ReportMessage         `protobuf:"bytes,1,opt,name=report_message,json=reportMessage" json:"report_message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1080,6 +1081,13 @@ func (x *CreateReportMessageResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use CreateReportMessageResponse.ProtoReflect.Descriptor instead.
 func (*CreateReportMessageResponse) Descriptor() ([]byte, []int) {
 	return file_ban_v1_report_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *CreateReportMessageResponse) GetReportMessage() *ReportMessage {
+	if x != nil {
+		return x.ReportMessage
+	}
+	return nil
 }
 
 var File_ban_v1_report_proto protoreflect.FileDescriptor
@@ -1161,9 +1169,10 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\x14CreateReportResponse\x120\n" +
 	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorR\x06report\"R\n" +
 	"\x1aCreateReportMessageRequest\x12\x1b\n" +
-	"\treport_id\x18\x01 \x01(\x05R\breportId\x12\x17\n" +
-	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"\x1d\n" +
-	"\x1bCreateReportMessageResponse*\xa5\x01\n" +
+	"\treport_id\x18\x01 \x01(\x03R\breportId\x12\x17\n" +
+	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"[\n" +
+	"\x1bCreateReportMessageResponse\x12<\n" +
+	"\x0ereport_message\x18\x01 \x01(\v2\x15.ban.v1.ReportMessageR\rreportMessage*\xa5\x01\n" +
 	"\fReportStatus\x12$\n" +
 	" REPORT_STATUS_OPENED_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cREPORT_STATUS_NEED_MORE_INFO\x10\x01\x12'\n" +
@@ -1238,27 +1247,28 @@ var file_ban_v1_report_proto_depIdxs = []int32{
 	0,  // 14: ban.v1.ReportStatusEditRequest.report_status:type_name -> ban.v1.ReportStatus
 	20, // 15: ban.v1.CreateReportRequest.reason:type_name -> ban.v1.BanReason
 	12, // 16: ban.v1.CreateReportResponse.report:type_name -> ban.v1.ReportWithAuthor
-	14, // 17: ban.v1.ReportService.ReportCreate:input_type -> ban.v1.CreateReportRequest
-	8,  // 18: ban.v1.ReportService.Report:input_type -> ban.v1.ReportRequest
-	13, // 19: ban.v1.ReportService.ReportStatusEdit:input_type -> ban.v1.ReportStatusEditRequest
-	5,  // 20: ban.v1.ReportService.UserReports:input_type -> ban.v1.UserReportsRequest
-	4,  // 21: ban.v1.ReportService.ReportMessages:input_type -> ban.v1.ReportMessagesRequest
-	16, // 22: ban.v1.ReportService.ReportMessageCreate:input_type -> ban.v1.CreateReportMessageRequest
-	2,  // 23: ban.v1.ReportService.ReportMessageEdit:input_type -> ban.v1.ReportMessageEditRequest
-	1,  // 24: ban.v1.ReportService.ReportMessageDelete:input_type -> ban.v1.ReportMessageDeleteRequest
-	15, // 25: ban.v1.ReportService.ReportCreate:output_type -> ban.v1.CreateReportResponse
-	9,  // 26: ban.v1.ReportService.Report:output_type -> ban.v1.ReportResponse
-	22, // 27: ban.v1.ReportService.ReportStatusEdit:output_type -> google.protobuf.Empty
-	7,  // 28: ban.v1.ReportService.UserReports:output_type -> ban.v1.UserReportsResponse
-	6,  // 29: ban.v1.ReportService.ReportMessages:output_type -> ban.v1.ReportMessagesResponse
-	17, // 30: ban.v1.ReportService.ReportMessageCreate:output_type -> ban.v1.CreateReportMessageResponse
-	3,  // 31: ban.v1.ReportService.ReportMessageEdit:output_type -> ban.v1.ReportMessageEditResponse
-	22, // 32: ban.v1.ReportService.ReportMessageDelete:output_type -> google.protobuf.Empty
-	25, // [25:33] is the sub-list for method output_type
-	17, // [17:25] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	10, // 17: ban.v1.CreateReportMessageResponse.report_message:type_name -> ban.v1.ReportMessage
+	14, // 18: ban.v1.ReportService.ReportCreate:input_type -> ban.v1.CreateReportRequest
+	8,  // 19: ban.v1.ReportService.Report:input_type -> ban.v1.ReportRequest
+	13, // 20: ban.v1.ReportService.ReportStatusEdit:input_type -> ban.v1.ReportStatusEditRequest
+	5,  // 21: ban.v1.ReportService.UserReports:input_type -> ban.v1.UserReportsRequest
+	4,  // 22: ban.v1.ReportService.ReportMessages:input_type -> ban.v1.ReportMessagesRequest
+	16, // 23: ban.v1.ReportService.ReportMessageCreate:input_type -> ban.v1.CreateReportMessageRequest
+	2,  // 24: ban.v1.ReportService.ReportMessageEdit:input_type -> ban.v1.ReportMessageEditRequest
+	1,  // 25: ban.v1.ReportService.ReportMessageDelete:input_type -> ban.v1.ReportMessageDeleteRequest
+	15, // 26: ban.v1.ReportService.ReportCreate:output_type -> ban.v1.CreateReportResponse
+	9,  // 27: ban.v1.ReportService.Report:output_type -> ban.v1.ReportResponse
+	22, // 28: ban.v1.ReportService.ReportStatusEdit:output_type -> google.protobuf.Empty
+	7,  // 29: ban.v1.ReportService.UserReports:output_type -> ban.v1.UserReportsResponse
+	6,  // 30: ban.v1.ReportService.ReportMessages:output_type -> ban.v1.ReportMessagesResponse
+	17, // 31: ban.v1.ReportService.ReportMessageCreate:output_type -> ban.v1.CreateReportMessageResponse
+	3,  // 32: ban.v1.ReportService.ReportMessageEdit:output_type -> ban.v1.ReportMessageEditResponse
+	22, // 33: ban.v1.ReportService.ReportMessageDelete:output_type -> google.protobuf.Empty
+	26, // [26:34] is the sub-list for method output_type
+	18, // [18:26] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_ban_v1_report_proto_init() }

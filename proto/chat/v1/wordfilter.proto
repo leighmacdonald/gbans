@@ -56,7 +56,7 @@ message Filter {
   bool is_enabled = 5;
   FilterAction action = 6;
   string duration = 7;
-  int64 trigger_count =8;
+  int64 trigger_count = 8;
   int32 weight = 9;
   google.protobuf.Timestamp created_on = 10;
   google.protobuf.Timestamp updated_on = 11;

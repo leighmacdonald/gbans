@@ -9,6 +9,9 @@ import { file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
 /**
  * Describes the file contest/v1/contest.proto.
  */
-export const file_contest_v1_contest: GenFile = /*@__PURE__*/
-  fileDesc("Chhjb250ZXN0L3YxL2NvbnRlc3QucHJvdG8SCmNvbnRlc3QudjFCpgEKDmNvbS5jb250ZXN0LnYxQgxDb250ZXN0UHJvdG9QAVo9Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9jb250ZXN0L3YxO2NvbnRlc3R2MaICA0NYWKoCCkNvbnRlc3QuVjHKAgpDb250ZXN0XFYx4gIWQ29udGVzdFxWMVxHUEJNZXRhZGF0YeoCC0NvbnRlc3Q6OlYxYghlZGl0aW9uc3DoBw", [file_google_protobuf_empty]);
-
+export const file_contest_v1_contest: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"Chhjb250ZXN0L3YxL2NvbnRlc3QucHJvdG8SCmNvbnRlc3QudjFCpgEKDmNvbS5jb250ZXN0LnYxQgxDb250ZXN0UHJvdG9QAVo9Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9jb250ZXN0L3YxO2NvbnRlc3R2MaICA0NYWKoCCkNvbnRlc3QuVjHKAgpDb250ZXN0XFYx4gIWQ29udGVzdFxWMVxHUEJNZXRhZGF0YeoCC0NvbnRlc3Q6OlYxYghlZGl0aW9uc3DoBw",
+		[file_google_protobuf_empty],
+	);

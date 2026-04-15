@@ -34,8 +34,8 @@ function PrivacyPolicy() {
 					<ul>
 						<li>
 							Where it is necessary for the purposes of the legitimate and legal interests of{" "}
-							{appInfo.siteName}, except where such interests are overridden by your prevailing
-							legitimate interests and rights; or
+							{appInfo.siteName}, except where such interests are overridden by your prevailing legitimate
+							interests and rights; or
 						</li>
 						<li>Where you have given consent to it.</li>
 					</ul>

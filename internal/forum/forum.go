@@ -28,15 +28,15 @@ var (
 
 type ThreadMessagesQuery struct {
 	Deleted       bool  `json:"deleted,omitempty" uri:"deleted"`
-	ForumThreadID int64 `json:"forum_thread_id"`
+	ForumThreadID int32 `json:"forum_thread_id"`
 }
 
 type ThreadQueryFilter struct {
-	ForumID int `json:"forum_id"`
+	ForumID int32 `json:"forum_id"`
 }
 
 type Activity struct {
-	Person       person.Info
+	Person       person.BaseUser
 	LastActivity time.Time
 }
 
@@ -45,10 +45,10 @@ func (activity Activity) Expired() bool {
 }
 
 type Category struct {
-	ForumCategoryID int       `json:"forum_category_id"`
+	ForumCategoryID int32     `json:"forum_category_id"`
 	Title           string    `json:"title"`
 	Description     string    `json:"description"`
-	Ordering        int       `json:"ordering"`
+	Ordering        int32     `json:"ordering"`
 	Forums          []Forum   `json:"forums"`
 	CreatedOn       time.Time `json:"created_on"`
 	UpdatedOn       time.Time `json:"updated_on"`
@@ -68,16 +68,16 @@ func (category Category) NewForum(title string, description string) Forum {
 }
 
 type Forum struct {
-	ForumID             int                  `json:"forum_id"`
-	ForumCategoryID     int                  `json:"forum_category_id"`
-	LastThreadID        int64                `json:"last_thread_id"`
+	ForumID             int32                `json:"forum_id"`
+	ForumCategoryID     int32                `json:"forum_category_id"`
+	LastThreadID        int32                `json:"last_thread_id"`
 	Title               string               `json:"title"`
 	Description         string               `json:"description"`
-	Ordering            int                  `json:"ordering"`
+	Ordering            int32                `json:"ordering"`
 	CountThreads        int64                `json:"count_threads"`
 	CountMessages       int64                `json:"count_messages"`
 	PermissionLevel     permission.Privilege `json:"permission_level"`
-	RecentForumThreadID int64                `json:"recent_forum_thread_id"`
+	RecentForumThreadID int32                `json:"recent_forum_thread_id"`
 	RecentForumTitle    string               `json:"recent_forum_title"`
 	RecentSourceID      string               `json:"recent_source_id"`
 	RecentPersonaname   string               `json:"recent_personaname"`
@@ -102,8 +102,8 @@ func (f Forum) NewThread(title string, sourceID steamid.SteamID) Thread {
 }
 
 type Thread struct {
-	ForumThreadID   int64                `json:"forum_thread_id"`
-	ForumID         int                  `json:"forum_id"`
+	ForumThreadID   int32                `json:"forum_thread_id"`
+	ForumID         int32                `json:"forum_id"`
 	SourceID        steamid.SteamID      `json:"source_id"`
 	Title           string               `json:"title"`
 	Sticky          bool                 `json:"sticky"`
@@ -134,7 +134,7 @@ func (t Thread) NewMessage(sourceID steamid.SteamID, body string) Message {
 
 type Message struct {
 	ForumMessageID  int64                `json:"forum_message_id"`
-	ForumThreadID   int64                `json:"forum_thread_id"`
+	ForumThreadID   int32                `json:"forum_thread_id"`
 	SourceID        steamid.SteamID      `json:"source_id"`
 	BodyMD          string               `json:"body_md"`
 	Title           string               `json:"title"`
@@ -207,7 +207,7 @@ func (f Forums) Start(ctx context.Context) {
 	f.tracker.Start(ctx)
 }
 
-func (f Forums) Touch(up person.Info) {
+func (f Forums) Touch(up person.BaseUser) {
 	f.tracker.Touch(up)
 }
 
@@ -237,7 +237,7 @@ func (f Forums) CategorySave(ctx context.Context, category *Category) error {
 	return nil
 }
 
-func (f Forums) Category(ctx context.Context, categoryID int, category *Category) error {
+func (f Forums) Category(ctx context.Context, categoryID int32, category *Category) error {
 	return f.repo.ForumCategory(ctx, categoryID, category)
 }
 
@@ -247,7 +247,7 @@ func (f Forums) CategoryDelete(ctx context.Context, category Category) error {
 	}
 
 	go f.notif.Send(notification.NewDiscord(f.channelID, discordCategoryDelete(category)))
-	slog.Info("Forum category deleted", slog.String("category", category.Title), slog.Int("forum_category_id", category.ForumCategoryID))
+	slog.Info("Forum category deleted", slog.String("category", category.Title), slog.Int("forum_category_id", int(category.ForumCategoryID)))
 
 	return nil
 }
@@ -268,22 +268,22 @@ func (f Forums) ForumSave(ctx context.Context, forum *Forum) error {
 	if isNew {
 		slog.Info("New forum created", slog.String("title", forum.Title))
 	} else {
-		slog.Info("Forum updated", slog.String("title", forum.Title), slog.Int("forum_id", forum.ForumID))
+		slog.Info("Forum updated", slog.String("title", forum.Title), slog.Int("forum_id", int(forum.ForumID)))
 	}
 
 	return nil
 }
 
-func (f Forums) Forum(ctx context.Context, forumID int, forum *Forum) error {
+func (f Forums) Forum(ctx context.Context, forumID int32, forum *Forum) error {
 	return f.repo.Forum(ctx, forumID, forum)
 }
 
-func (f Forums) ForumDelete(ctx context.Context, forumID int) error {
+func (f Forums) ForumDelete(ctx context.Context, forumID int32) error {
 	if err := f.repo.ForumDelete(ctx, forumID); err != nil {
 		return err
 	}
 
-	slog.Info("Forum deleted successfully", slog.Int("forum_id", forumID))
+	slog.Info("Forum deleted successfully", slog.Int("forum_id", int(forumID)))
 
 	return nil
 }
@@ -296,28 +296,28 @@ func (f Forums) ThreadSave(ctx context.Context, thread *Thread) error {
 	}
 
 	if isNew {
-		slog.Info("Thread created", slog.String("title", thread.Title), slog.Int64("thread_id", thread.ForumThreadID))
+		slog.Info("Thread created", slog.String("title", thread.Title), slog.Int("thread_id", int(thread.ForumThreadID)))
 	} else {
-		slog.Info("Forum thread updates", slog.String("title", thread.Title), slog.Int64("thread_id", thread.ForumThreadID))
+		slog.Info("Forum thread updates", slog.String("title", thread.Title), slog.Int("thread_id", int(thread.ForumThreadID)))
 	}
 
 	return nil
 }
 
-func (f Forums) Thread(ctx context.Context, forumThreadID int64, thread *Thread) error {
+func (f Forums) Thread(ctx context.Context, forumThreadID int32, thread *Thread) error {
 	return f.repo.ForumThread(ctx, forumThreadID, thread)
 }
 
-func (f Forums) ThreadIncrView(ctx context.Context, forumThreadID int64) error {
+func (f Forums) ThreadIncrView(ctx context.Context, forumThreadID int32) error {
 	return f.repo.ForumThreadIncrView(ctx, forumThreadID)
 }
 
-func (f Forums) ThreadDelete(ctx context.Context, forumThreadID int64) error {
+func (f Forums) ThreadDelete(ctx context.Context, forumThreadID int32) error {
 	if err := f.repo.ForumThreadDelete(ctx, forumThreadID); err != nil {
 		return err
 	}
 
-	slog.Info("Forum thread deleted", slog.Int64("forum_thread_id", forumThreadID))
+	slog.Info("Forum thread deleted", slog.Int("forum_thread_id", int(forumThreadID)))
 
 	return nil
 }
@@ -326,7 +326,7 @@ func (f Forums) Threads(ctx context.Context, filter ThreadQueryFilter) ([]Thread
 	return f.repo.ForumThreads(ctx, filter)
 }
 
-func (f Forums) ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error {
+func (f Forums) ForumIncrMessageCount(ctx context.Context, forumID int32, incr bool) error {
 	return f.repo.ForumIncrMessageCount(ctx, forumID, incr)
 }
 
@@ -336,7 +336,7 @@ type parents struct {
 	Category Category
 }
 
-func (f Forums) getParents(ctx context.Context, forumThreadID int64) (parents, error) {
+func (f Forums) getParents(ctx context.Context, forumThreadID int32) (parents, error) {
 	var thread Thread
 	if err := f.Thread(ctx, forumThreadID, &thread); err != nil {
 		return parents{}, err
@@ -380,9 +380,9 @@ func (f Forums) MessageSave(ctx context.Context, fMessage *Message) error {
 			return errIncr
 		}
 
-		slog.Info("Created new forum message", slog.Int64("forum_thread_id", fMessage.ForumThreadID))
+		slog.Info("Created new forum message", slog.Int("forum_thread_id", int(fMessage.ForumThreadID)))
 	} else {
-		slog.Info("Forum message edited", slog.Int64("forum_thread_id", fMessage.ForumThreadID))
+		slog.Info("Forum message edited", slog.Int("forum_thread_id", int(fMessage.ForumThreadID)))
 	}
 
 	return nil
@@ -404,7 +404,7 @@ func (f Forums) Messages(ctx context.Context, filters ThreadMessagesQuery) ([]Me
 	return f.repo.ForumMessages(ctx, filters)
 }
 
-func (f Forums) MessageDelete(ctx context.Context, person person.Info, messageID int64) error {
+func (f Forums) MessageDelete(ctx context.Context, person person.BaseUser, messageID int64) error {
 	var message Message
 	if err := f.Message(ctx, messageID, &message); err != nil {
 		return err
@@ -447,7 +447,7 @@ func (f Forums) MessageDelete(ctx context.Context, person person.Info, messageID
 			return errSave
 		}
 
-		slog.Error("Thread deleted due to parent deletion", slog.Int64("forum_thread_id", thread.ForumThreadID))
+		slog.Error("Thread deleted due to parent deletion", slog.Int("forum_thread_id", int(thread.ForumThreadID)))
 	} else {
 		if errDelete := f.MessageDelete(ctx, person, message.ForumMessageID); errDelete != nil {
 			return errDelete
@@ -482,7 +482,7 @@ func NewTracker() *Tracker {
 	}
 }
 
-func (t *Tracker) Touch(person person.Info) {
+func (t *Tracker) Touch(person person.BaseUser) {
 	sid := person.GetSteamID()
 	if !sid.Valid() {
 		return

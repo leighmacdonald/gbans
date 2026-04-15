@@ -106,11 +106,11 @@ func UpdatePlayerSummary(ctx context.Context, personUpdate *Person, tfAPI thirdp
 		}
 
 		personUpdate.CommunityBanned = vac[0].CommunityBanned
-		personUpdate.VACBans = int(vac[0].NumberOfVacBans)
-		personUpdate.GameBans = int(vac[0].NumberOfGameBans)
+		personUpdate.VACBans = int32(vac[0].NumberOfVacBans)
+		personUpdate.GameBans = int32(vac[0].NumberOfGameBans)
 		personUpdate.EconomyBan = EconBanState(vac[0].EconomyBan)
 		personUpdate.CommunityBanned = vac[0].CommunityBanned
-		personUpdate.DaysSinceLastBan = int(vac[0].DaysSinceLastBan)
+		personUpdate.DaysSinceLastBan = int32(vac[0].DaysSinceLastBan)
 		personUpdate.UpdatedOnSteam = time.Now()
 
 		return nil

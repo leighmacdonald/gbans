@@ -734,7 +734,7 @@ func (x *MessageDeleteRequest) GetForumMessageId() int64 {
 
 type ThreadDeleteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ForumThreadId *int64                 `protobuf:"varint,1,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
+	ForumThreadId *int32                 `protobuf:"varint,1,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -769,7 +769,7 @@ func (*ThreadDeleteRequest) Descriptor() ([]byte, []int) {
 	return file_forum_v1_forum_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *ThreadDeleteRequest) GetForumThreadId() int64 {
+func (x *ThreadDeleteRequest) GetForumThreadId() int32 {
 	if x != nil && x.ForumThreadId != nil {
 		return *x.ForumThreadId
 	}
@@ -828,9 +828,53 @@ func (x *ThreadReplyEditRequest) GetBodyMd() string {
 	return ""
 }
 
+type ThreadReplyEditResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Message       *Message               `protobuf:"bytes,1,opt,name=message" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ThreadReplyEditResponse) Reset() {
+	*x = ThreadReplyEditResponse{}
+	mi := &file_forum_v1_forum_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ThreadReplyEditResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ThreadReplyEditResponse) ProtoMessage() {}
+
+func (x *ThreadReplyEditResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_forum_v1_forum_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ThreadReplyEditResponse.ProtoReflect.Descriptor instead.
+func (*ThreadReplyEditResponse) Descriptor() ([]byte, []int) {
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ThreadReplyEditResponse) GetMessage() *Message {
+	if x != nil {
+		return x.Message
+	}
+	return nil
+}
+
 type ThreadReplyCreateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ForumThreadId *int64                 `protobuf:"varint,1,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
+	ForumThreadId *int32                 `protobuf:"varint,1,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
 	BodyMd        *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -838,7 +882,7 @@ type ThreadReplyCreateRequest struct {
 
 func (x *ThreadReplyCreateRequest) Reset() {
 	*x = ThreadReplyCreateRequest{}
-	mi := &file_forum_v1_forum_proto_msgTypes[15]
+	mi := &file_forum_v1_forum_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -850,7 +894,7 @@ func (x *ThreadReplyCreateRequest) String() string {
 func (*ThreadReplyCreateRequest) ProtoMessage() {}
 
 func (x *ThreadReplyCreateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[15]
+	mi := &file_forum_v1_forum_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -863,10 +907,10 @@ func (x *ThreadReplyCreateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ThreadReplyCreateRequest.ProtoReflect.Descriptor instead.
 func (*ThreadReplyCreateRequest) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{15}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{16}
 }
 
-func (x *ThreadReplyCreateRequest) GetForumThreadId() int64 {
+func (x *ThreadReplyCreateRequest) GetForumThreadId() int32 {
 	if x != nil && x.ForumThreadId != nil {
 		return *x.ForumThreadId
 	}
@@ -889,7 +933,7 @@ type ThreadReplyCreateResponse struct {
 
 func (x *ThreadReplyCreateResponse) Reset() {
 	*x = ThreadReplyCreateResponse{}
-	mi := &file_forum_v1_forum_proto_msgTypes[16]
+	mi := &file_forum_v1_forum_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -901,7 +945,7 @@ func (x *ThreadReplyCreateResponse) String() string {
 func (*ThreadReplyCreateResponse) ProtoMessage() {}
 
 func (x *ThreadReplyCreateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[16]
+	mi := &file_forum_v1_forum_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -914,7 +958,7 @@ func (x *ThreadReplyCreateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ThreadReplyCreateResponse.ProtoReflect.Descriptor instead.
 func (*ThreadReplyCreateResponse) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{16}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ThreadReplyCreateResponse) GetMessage() *Message {
@@ -937,7 +981,7 @@ type ThreadCreateRequest struct {
 
 func (x *ThreadCreateRequest) Reset() {
 	*x = ThreadCreateRequest{}
-	mi := &file_forum_v1_forum_proto_msgTypes[17]
+	mi := &file_forum_v1_forum_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -949,7 +993,7 @@ func (x *ThreadCreateRequest) String() string {
 func (*ThreadCreateRequest) ProtoMessage() {}
 
 func (x *ThreadCreateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[17]
+	mi := &file_forum_v1_forum_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -962,7 +1006,7 @@ func (x *ThreadCreateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ThreadCreateRequest.ProtoReflect.Descriptor instead.
 func (*ThreadCreateRequest) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{17}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ThreadCreateRequest) GetForumId() int32 {
@@ -1010,7 +1054,7 @@ type ThreadCreateResponse struct {
 
 func (x *ThreadCreateResponse) Reset() {
 	*x = ThreadCreateResponse{}
-	mi := &file_forum_v1_forum_proto_msgTypes[18]
+	mi := &file_forum_v1_forum_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1022,7 +1066,7 @@ func (x *ThreadCreateResponse) String() string {
 func (*ThreadCreateResponse) ProtoMessage() {}
 
 func (x *ThreadCreateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[18]
+	mi := &file_forum_v1_forum_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1035,7 +1079,7 @@ func (x *ThreadCreateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ThreadCreateResponse.ProtoReflect.Descriptor instead.
 func (*ThreadCreateResponse) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{18}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ThreadCreateResponse) GetThread() *Thread {
@@ -1054,7 +1098,7 @@ func (x *ThreadCreateResponse) GetMessage() *Message {
 
 type ForumMessagesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ForumThreadId *int64                 `protobuf:"varint,1,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
+	ForumThreadId *int32                 `protobuf:"varint,1,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
 	Deleted       *bool                  `protobuf:"varint,2,opt,name=deleted" json:"deleted,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1062,7 +1106,7 @@ type ForumMessagesRequest struct {
 
 func (x *ForumMessagesRequest) Reset() {
 	*x = ForumMessagesRequest{}
-	mi := &file_forum_v1_forum_proto_msgTypes[19]
+	mi := &file_forum_v1_forum_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1074,7 +1118,7 @@ func (x *ForumMessagesRequest) String() string {
 func (*ForumMessagesRequest) ProtoMessage() {}
 
 func (x *ForumMessagesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[19]
+	mi := &file_forum_v1_forum_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1087,10 +1131,10 @@ func (x *ForumMessagesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForumMessagesRequest.ProtoReflect.Descriptor instead.
 func (*ForumMessagesRequest) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{19}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *ForumMessagesRequest) GetForumThreadId() int64 {
+func (x *ForumMessagesRequest) GetForumThreadId() int32 {
 	if x != nil && x.ForumThreadId != nil {
 		return *x.ForumThreadId
 	}
@@ -1113,7 +1157,7 @@ type ForumMessagesResponse struct {
 
 func (x *ForumMessagesResponse) Reset() {
 	*x = ForumMessagesResponse{}
-	mi := &file_forum_v1_forum_proto_msgTypes[20]
+	mi := &file_forum_v1_forum_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1125,7 +1169,7 @@ func (x *ForumMessagesResponse) String() string {
 func (*ForumMessagesResponse) ProtoMessage() {}
 
 func (x *ForumMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[20]
+	mi := &file_forum_v1_forum_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1138,7 +1182,7 @@ func (x *ForumMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForumMessagesResponse.ProtoReflect.Descriptor instead.
 func (*ForumMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{20}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ForumMessagesResponse) GetMessages() []*Message {
@@ -1157,7 +1201,7 @@ type ForumRequest struct {
 
 func (x *ForumRequest) Reset() {
 	*x = ForumRequest{}
-	mi := &file_forum_v1_forum_proto_msgTypes[21]
+	mi := &file_forum_v1_forum_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1169,7 +1213,7 @@ func (x *ForumRequest) String() string {
 func (*ForumRequest) ProtoMessage() {}
 
 func (x *ForumRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[21]
+	mi := &file_forum_v1_forum_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1182,7 +1226,7 @@ func (x *ForumRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForumRequest.ProtoReflect.Descriptor instead.
 func (*ForumRequest) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{21}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *ForumRequest) GetForumId() int32 {
@@ -1201,7 +1245,7 @@ type ForumResponse struct {
 
 func (x *ForumResponse) Reset() {
 	*x = ForumResponse{}
-	mi := &file_forum_v1_forum_proto_msgTypes[22]
+	mi := &file_forum_v1_forum_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1213,7 +1257,7 @@ func (x *ForumResponse) String() string {
 func (*ForumResponse) ProtoMessage() {}
 
 func (x *ForumResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[22]
+	mi := &file_forum_v1_forum_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1226,7 +1270,7 @@ func (x *ForumResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForumResponse.ProtoReflect.Descriptor instead.
 func (*ForumResponse) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{22}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ForumResponse) GetForum() *Forum {
@@ -1238,14 +1282,14 @@ func (x *ForumResponse) GetForum() *Forum {
 
 type ThreadRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ForumThreadId *int64                 `protobuf:"varint,1,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
+	ForumThreadId *int32                 `protobuf:"varint,1,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ThreadRequest) Reset() {
 	*x = ThreadRequest{}
-	mi := &file_forum_v1_forum_proto_msgTypes[23]
+	mi := &file_forum_v1_forum_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1257,7 +1301,7 @@ func (x *ThreadRequest) String() string {
 func (*ThreadRequest) ProtoMessage() {}
 
 func (x *ThreadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[23]
+	mi := &file_forum_v1_forum_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1270,10 +1314,10 @@ func (x *ThreadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ThreadRequest.ProtoReflect.Descriptor instead.
 func (*ThreadRequest) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{23}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{24}
 }
 
-func (x *ThreadRequest) GetForumThreadId() int64 {
+func (x *ThreadRequest) GetForumThreadId() int32 {
 	if x != nil && x.ForumThreadId != nil {
 		return *x.ForumThreadId
 	}
@@ -1289,7 +1333,7 @@ type ThreadResponse struct {
 
 func (x *ThreadResponse) Reset() {
 	*x = ThreadResponse{}
-	mi := &file_forum_v1_forum_proto_msgTypes[24]
+	mi := &file_forum_v1_forum_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1301,7 +1345,7 @@ func (x *ThreadResponse) String() string {
 func (*ThreadResponse) ProtoMessage() {}
 
 func (x *ThreadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[24]
+	mi := &file_forum_v1_forum_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1314,7 +1358,7 @@ func (x *ThreadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ThreadResponse.ProtoReflect.Descriptor instead.
 func (*ThreadResponse) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{24}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ThreadResponse) GetThread() *Thread {
@@ -1333,7 +1377,7 @@ type ThreadsRequest struct {
 
 func (x *ThreadsRequest) Reset() {
 	*x = ThreadsRequest{}
-	mi := &file_forum_v1_forum_proto_msgTypes[25]
+	mi := &file_forum_v1_forum_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1345,7 +1389,7 @@ func (x *ThreadsRequest) String() string {
 func (*ThreadsRequest) ProtoMessage() {}
 
 func (x *ThreadsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[25]
+	mi := &file_forum_v1_forum_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1358,7 +1402,7 @@ func (x *ThreadsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ThreadsRequest.ProtoReflect.Descriptor instead.
 func (*ThreadsRequest) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{25}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ThreadsRequest) GetForumId() int32 {
@@ -1377,7 +1421,7 @@ type ThreadsRequestResponse struct {
 
 func (x *ThreadsRequestResponse) Reset() {
 	*x = ThreadsRequestResponse{}
-	mi := &file_forum_v1_forum_proto_msgTypes[26]
+	mi := &file_forum_v1_forum_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1389,7 +1433,7 @@ func (x *ThreadsRequestResponse) String() string {
 func (*ThreadsRequestResponse) ProtoMessage() {}
 
 func (x *ThreadsRequestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[26]
+	mi := &file_forum_v1_forum_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1402,7 +1446,7 @@ func (x *ThreadsRequestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ThreadsRequestResponse.ProtoReflect.Descriptor instead.
 func (*ThreadsRequestResponse) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{26}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *ThreadsRequestResponse) GetThreads() []*Thread {
@@ -1425,7 +1469,7 @@ type Thread struct {
 
 func (x *Thread) Reset() {
 	*x = Thread{}
-	mi := &file_forum_v1_forum_proto_msgTypes[27]
+	mi := &file_forum_v1_forum_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1437,7 +1481,7 @@ func (x *Thread) String() string {
 func (*Thread) ProtoMessage() {}
 
 func (x *Thread) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[27]
+	mi := &file_forum_v1_forum_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1450,7 +1494,7 @@ func (x *Thread) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Thread.ProtoReflect.Descriptor instead.
 func (*Thread) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{27}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *Thread) GetForumId() int32 {
@@ -1505,7 +1549,7 @@ type ThreadWithSource struct {
 
 func (x *ThreadWithSource) Reset() {
 	*x = ThreadWithSource{}
-	mi := &file_forum_v1_forum_proto_msgTypes[28]
+	mi := &file_forum_v1_forum_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1517,7 +1561,7 @@ func (x *ThreadWithSource) String() string {
 func (*ThreadWithSource) ProtoMessage() {}
 
 func (x *ThreadWithSource) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[28]
+	mi := &file_forum_v1_forum_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1530,7 +1574,7 @@ func (x *ThreadWithSource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ThreadWithSource.ProtoReflect.Descriptor instead.
 func (*ThreadWithSource) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{28}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ThreadWithSource) GetThread() *Thread {
@@ -1608,7 +1652,7 @@ type UserActivity struct {
 
 func (x *UserActivity) Reset() {
 	*x = UserActivity{}
-	mi := &file_forum_v1_forum_proto_msgTypes[29]
+	mi := &file_forum_v1_forum_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1620,7 +1664,7 @@ func (x *UserActivity) String() string {
 func (*UserActivity) ProtoMessage() {}
 
 func (x *UserActivity) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[29]
+	mi := &file_forum_v1_forum_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1633,7 +1677,7 @@ func (x *UserActivity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserActivity.ProtoReflect.Descriptor instead.
 func (*UserActivity) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{29}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *UserActivity) GetSteamId() int64 {
@@ -1673,7 +1717,7 @@ type ActiveUsersResponse struct {
 
 func (x *ActiveUsersResponse) Reset() {
 	*x = ActiveUsersResponse{}
-	mi := &file_forum_v1_forum_proto_msgTypes[30]
+	mi := &file_forum_v1_forum_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1685,7 +1729,7 @@ func (x *ActiveUsersResponse) String() string {
 func (*ActiveUsersResponse) ProtoMessage() {}
 
 func (x *ActiveUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[30]
+	mi := &file_forum_v1_forum_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1698,7 +1742,7 @@ func (x *ActiveUsersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActiveUsersResponse.ProtoReflect.Descriptor instead.
 func (*ActiveUsersResponse) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{30}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ActiveUsersResponse) GetUserActivity() []*UserActivity {
@@ -1711,7 +1755,7 @@ func (x *ActiveUsersResponse) GetUserActivity() []*UserActivity {
 type Message struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ForumMessageId  *int64                 `protobuf:"varint,1,opt,name=forum_message_id,json=forumMessageId" json:"forum_message_id,omitempty"`
-	ForumThreadId   *int64                 `protobuf:"varint,2,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
+	ForumThreadId   *int32                 `protobuf:"varint,2,opt,name=forum_thread_id,json=forumThreadId" json:"forum_thread_id,omitempty"`
 	SourceId        *int64                 `protobuf:"varint,3,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
 	BodyMd          *string                `protobuf:"bytes,4,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
 	Title           *string                `protobuf:"bytes,5,opt,name=title" json:"title,omitempty"`
@@ -1728,7 +1772,7 @@ type Message struct {
 
 func (x *Message) Reset() {
 	*x = Message{}
-	mi := &file_forum_v1_forum_proto_msgTypes[31]
+	mi := &file_forum_v1_forum_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1740,7 +1784,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[31]
+	mi := &file_forum_v1_forum_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1753,7 +1797,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{31}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *Message) GetForumMessageId() int64 {
@@ -1763,7 +1807,7 @@ func (x *Message) GetForumMessageId() int64 {
 	return 0
 }
 
-func (x *Message) GetForumThreadId() int64 {
+func (x *Message) GetForumThreadId() int32 {
 	if x != nil && x.ForumThreadId != nil {
 		return *x.ForumThreadId
 	}
@@ -1849,7 +1893,7 @@ type RecentMessagesResponse struct {
 
 func (x *RecentMessagesResponse) Reset() {
 	*x = RecentMessagesResponse{}
-	mi := &file_forum_v1_forum_proto_msgTypes[32]
+	mi := &file_forum_v1_forum_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1861,7 +1905,7 @@ func (x *RecentMessagesResponse) String() string {
 func (*RecentMessagesResponse) ProtoMessage() {}
 
 func (x *RecentMessagesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[32]
+	mi := &file_forum_v1_forum_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1874,7 +1918,7 @@ func (x *RecentMessagesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecentMessagesResponse.ProtoReflect.Descriptor instead.
 func (*RecentMessagesResponse) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{32}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *RecentMessagesResponse) GetMessages() []*Message {
@@ -1888,14 +1932,14 @@ type Forum struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	ForumId             *int32                 `protobuf:"varint,1,opt,name=forum_id,json=forumId" json:"forum_id,omitempty"`
 	ForumCategoryId     *int32                 `protobuf:"varint,2,opt,name=forum_category_id,json=forumCategoryId" json:"forum_category_id,omitempty"`
-	LastThreadId        *int64                 `protobuf:"varint,3,opt,name=last_thread_id,json=lastThreadId" json:"last_thread_id,omitempty"`
+	LastThreadId        *int32                 `protobuf:"varint,3,opt,name=last_thread_id,json=lastThreadId" json:"last_thread_id,omitempty"`
 	Title               *string                `protobuf:"bytes,4,opt,name=title" json:"title,omitempty"`
 	Description         *string                `protobuf:"bytes,5,opt,name=description" json:"description,omitempty"`
 	Ordering            *int32                 `protobuf:"varint,6,opt,name=ordering" json:"ordering,omitempty"`
 	CountThreads        *int64                 `protobuf:"varint,7,opt,name=count_threads,json=countThreads" json:"count_threads,omitempty"`
 	CountMessages       *int64                 `protobuf:"varint,8,opt,name=count_messages,json=countMessages" json:"count_messages,omitempty"`
 	PermissionLevel     *internal.Privilege    `protobuf:"varint,9,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
-	RecentForumThreadId *int64                 `protobuf:"varint,10,opt,name=recent_forum_thread_id,json=recentForumThreadId" json:"recent_forum_thread_id,omitempty"`
+	RecentForumThreadId *int32                 `protobuf:"varint,10,opt,name=recent_forum_thread_id,json=recentForumThreadId" json:"recent_forum_thread_id,omitempty"`
 	RecentForumTitle    *string                `protobuf:"bytes,11,opt,name=recent_forum_title,json=recentForumTitle" json:"recent_forum_title,omitempty"`
 	RecentSourceId      *string                `protobuf:"bytes,12,opt,name=recent_source_id,json=recentSourceId" json:"recent_source_id,omitempty"`
 	RecentPersonaName   *string                `protobuf:"bytes,13,opt,name=recent_persona_name,json=recentPersonaName" json:"recent_persona_name,omitempty"`
@@ -1909,7 +1953,7 @@ type Forum struct {
 
 func (x *Forum) Reset() {
 	*x = Forum{}
-	mi := &file_forum_v1_forum_proto_msgTypes[33]
+	mi := &file_forum_v1_forum_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1921,7 +1965,7 @@ func (x *Forum) String() string {
 func (*Forum) ProtoMessage() {}
 
 func (x *Forum) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[33]
+	mi := &file_forum_v1_forum_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1934,7 +1978,7 @@ func (x *Forum) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Forum.ProtoReflect.Descriptor instead.
 func (*Forum) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{33}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *Forum) GetForumId() int32 {
@@ -1951,7 +1995,7 @@ func (x *Forum) GetForumCategoryId() int32 {
 	return 0
 }
 
-func (x *Forum) GetLastThreadId() int64 {
+func (x *Forum) GetLastThreadId() int32 {
 	if x != nil && x.LastThreadId != nil {
 		return *x.LastThreadId
 	}
@@ -2000,7 +2044,7 @@ func (x *Forum) GetPermissionLevel() internal.Privilege {
 	return internal.Privilege(0)
 }
 
-func (x *Forum) GetRecentForumThreadId() int64 {
+func (x *Forum) GetRecentForumThreadId() int32 {
 	if x != nil && x.RecentForumThreadId != nil {
 		return *x.RecentForumThreadId
 	}
@@ -2071,7 +2115,7 @@ type Category struct {
 
 func (x *Category) Reset() {
 	*x = Category{}
-	mi := &file_forum_v1_forum_proto_msgTypes[34]
+	mi := &file_forum_v1_forum_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2083,7 +2127,7 @@ func (x *Category) String() string {
 func (*Category) ProtoMessage() {}
 
 func (x *Category) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[34]
+	mi := &file_forum_v1_forum_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2096,7 +2140,7 @@ func (x *Category) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Category.ProtoReflect.Descriptor instead.
 func (*Category) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{34}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *Category) GetForumCategoryId() int32 {
@@ -2157,7 +2201,7 @@ type OverviewResponse struct {
 
 func (x *OverviewResponse) Reset() {
 	*x = OverviewResponse{}
-	mi := &file_forum_v1_forum_proto_msgTypes[35]
+	mi := &file_forum_v1_forum_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2169,7 +2213,7 @@ func (x *OverviewResponse) String() string {
 func (*OverviewResponse) ProtoMessage() {}
 
 func (x *OverviewResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_forum_v1_forum_proto_msgTypes[35]
+	mi := &file_forum_v1_forum_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2182,7 +2226,7 @@ func (x *OverviewResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OverviewResponse.ProtoReflect.Descriptor instead.
 func (*OverviewResponse) Descriptor() ([]byte, []int) {
-	return file_forum_v1_forum_proto_rawDescGZIP(), []int{35}
+	return file_forum_v1_forum_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *OverviewResponse) GetCategories() []*Category {
@@ -2243,12 +2287,14 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x14MessageDeleteRequest\x12(\n" +
 	"\x10forum_message_id\x18\x01 \x01(\x03R\x0eforumMessageId\"=\n" +
 	"\x13ThreadDeleteRequest\x12&\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x03R\rforumThreadId\"[\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\"[\n" +
 	"\x16ThreadReplyEditRequest\x12(\n" +
 	"\x10forum_message_id\x18\x01 \x01(\x03R\x0eforumMessageId\x12\x17\n" +
-	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"[\n" +
+	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"F\n" +
+	"\x17ThreadReplyEditResponse\x12+\n" +
+	"\amessage\x18\x01 \x01(\v2\x11.forum.v1.MessageR\amessage\"[\n" +
 	"\x18ThreadReplyCreateRequest\x12&\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x03R\rforumThreadId\x12\x17\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\x12\x17\n" +
 	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"H\n" +
 	"\x19ThreadReplyCreateResponse\x12+\n" +
 	"\amessage\x18\x01 \x01(\v2\x11.forum.v1.MessageR\amessage\"\x8f\x01\n" +
@@ -2262,7 +2308,7 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\x12+\n" +
 	"\amessage\x18\x02 \x01(\v2\x11.forum.v1.MessageR\amessage\"X\n" +
 	"\x14ForumMessagesRequest\x12&\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x03R\rforumThreadId\x12\x18\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\x12\x18\n" +
 	"\adeleted\x18\x02 \x01(\bR\adeleted\"F\n" +
 	"\x15ForumMessagesResponse\x12-\n" +
 	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageR\bmessages\")\n" +
@@ -2271,7 +2317,7 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\rForumResponse\x12%\n" +
 	"\x05forum\x18\x01 \x01(\v2\x0f.forum.v1.ForumR\x05forum\"7\n" +
 	"\rThreadRequest\x12&\n" +
-	"\x0fforum_thread_id\x18\x01 \x01(\x03R\rforumThreadId\":\n" +
+	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\":\n" +
 	"\x0eThreadResponse\x12(\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\"+\n" +
 	"\x0eThreadsRequest\x12\x19\n" +
@@ -2309,7 +2355,7 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityR\fuserActivity\"\xce\x03\n" +
 	"\aMessage\x12(\n" +
 	"\x10forum_message_id\x18\x01 \x01(\x03R\x0eforumMessageId\x12&\n" +
-	"\x0fforum_thread_id\x18\x02 \x01(\x03R\rforumThreadId\x12\x1b\n" +
+	"\x0fforum_thread_id\x18\x02 \x01(\x05R\rforumThreadId\x12\x1b\n" +
 	"\tsource_id\x18\x03 \x01(\x03R\bsourceId\x12\x17\n" +
 	"\abody_md\x18\x04 \x01(\tR\x06bodyMd\x12\x14\n" +
 	"\x05title\x18\x05 \x01(\tR\x05title\x12\x16\n" +
@@ -2330,7 +2376,7 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x05Forum\x12\x19\n" +
 	"\bforum_id\x18\x01 \x01(\x05R\aforumId\x12*\n" +
 	"\x11forum_category_id\x18\x02 \x01(\x05R\x0fforumCategoryId\x12$\n" +
-	"\x0elast_thread_id\x18\x03 \x01(\x03R\flastThreadId\x12\x14\n" +
+	"\x0elast_thread_id\x18\x03 \x01(\x05R\flastThreadId\x12\x14\n" +
 	"\x05title\x18\x04 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1a\n" +
 	"\bordering\x18\x06 \x01(\x05R\bordering\x12#\n" +
@@ -2339,7 +2385,7 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x10permission_level\x18\t \x01(\x0e2\n" +
 	".PrivilegeR\x0fpermissionLevel\x123\n" +
 	"\x16recent_forum_thread_id\x18\n" +
-	" \x01(\x03R\x13recentForumThreadId\x12,\n" +
+	" \x01(\x05R\x13recentForumThreadId\x12,\n" +
 	"\x12recent_forum_title\x18\v \x01(\tR\x10recentForumTitle\x12(\n" +
 	"\x10recent_source_id\x18\f \x01(\tR\x0erecentSourceId\x12.\n" +
 	"\x13recent_persona_name\x18\r \x01(\tR\x11recentPersonaName\x12,\n" +
@@ -2362,7 +2408,7 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x10OverviewResponse\x122\n" +
 	"\n" +
 	"categories\x18\x01 \x03(\v2\x12.forum.v1.CategoryR\n" +
-	"categories2\xea\n" +
+	"categories2\xeb\n" +
 	"\n" +
 	"\fForumService\x12F\n" +
 	"\vActiveUsers\x12\x16.google.protobuf.Empty\x1a\x1d.forum.v1.ActiveUsersResponse\"\x00\x12@\n" +
@@ -2376,8 +2422,8 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\fThreadCreate\x12\x1d.forum.v1.ThreadCreateRequest\x1a\x1e.forum.v1.ThreadCreateResponse\"\x00\x12I\n" +
 	"\n" +
 	"ThreadEdit\x12\x1b.forum.v1.ThreadEditRequest\x1a\x1c.forum.v1.ThreadEditResponse\"\x00\x12^\n" +
-	"\x11ThreadReplyCreate\x12\".forum.v1.ThreadReplyCreateRequest\x1a#.forum.v1.ThreadReplyCreateResponse\"\x00\x12W\n" +
-	"\x0fThreadReplyEdit\x12 .forum.v1.ThreadReplyEditRequest\x1a .forum.v1.ThreadReplyEditRequest\"\x00\x12I\n" +
+	"\x11ThreadReplyCreate\x12\".forum.v1.ThreadReplyCreateRequest\x1a#.forum.v1.ThreadReplyCreateResponse\"\x00\x12X\n" +
+	"\x0fThreadReplyEdit\x12 .forum.v1.ThreadReplyEditRequest\x1a!.forum.v1.ThreadReplyEditResponse\"\x00\x12I\n" +
 	"\rMessageDelete\x12\x1e.forum.v1.MessageDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x12U\n" +
 	"\x0eCategoryCreate\x12\x1f.forum.v1.CategoryCreateRequest\x1a .forum.v1.CategoryCreateResponse\"\x00\x12O\n" +
 	"\fCategoryEdit\x12\x1d.forum.v1.CategoryEditRequest\x1a\x1e.forum.v1.CategoryEditResponse\"\x00\x12C\n" +
@@ -2399,7 +2445,7 @@ func file_forum_v1_forum_proto_rawDescGZIP() []byte {
 	return file_forum_v1_forum_proto_rawDescData
 }
 
-var file_forum_v1_forum_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
+var file_forum_v1_forum_proto_msgTypes = make([]protoimpl.MessageInfo, 37)
 var file_forum_v1_forum_proto_goTypes = []any{
 	(*ThreadEditRequest)(nil),         // 0: forum.v1.ThreadEditRequest
 	(*ThreadEditResponse)(nil),        // 1: forum.v1.ThreadEditResponse
@@ -2416,108 +2462,110 @@ var file_forum_v1_forum_proto_goTypes = []any{
 	(*MessageDeleteRequest)(nil),      // 12: forum.v1.MessageDeleteRequest
 	(*ThreadDeleteRequest)(nil),       // 13: forum.v1.ThreadDeleteRequest
 	(*ThreadReplyEditRequest)(nil),    // 14: forum.v1.ThreadReplyEditRequest
-	(*ThreadReplyCreateRequest)(nil),  // 15: forum.v1.ThreadReplyCreateRequest
-	(*ThreadReplyCreateResponse)(nil), // 16: forum.v1.ThreadReplyCreateResponse
-	(*ThreadCreateRequest)(nil),       // 17: forum.v1.ThreadCreateRequest
-	(*ThreadCreateResponse)(nil),      // 18: forum.v1.ThreadCreateResponse
-	(*ForumMessagesRequest)(nil),      // 19: forum.v1.ForumMessagesRequest
-	(*ForumMessagesResponse)(nil),     // 20: forum.v1.ForumMessagesResponse
-	(*ForumRequest)(nil),              // 21: forum.v1.ForumRequest
-	(*ForumResponse)(nil),             // 22: forum.v1.ForumResponse
-	(*ThreadRequest)(nil),             // 23: forum.v1.ThreadRequest
-	(*ThreadResponse)(nil),            // 24: forum.v1.ThreadResponse
-	(*ThreadsRequest)(nil),            // 25: forum.v1.ThreadsRequest
-	(*ThreadsRequestResponse)(nil),    // 26: forum.v1.ThreadsRequestResponse
-	(*Thread)(nil),                    // 27: forum.v1.Thread
-	(*ThreadWithSource)(nil),          // 28: forum.v1.ThreadWithSource
-	(*UserActivity)(nil),              // 29: forum.v1.UserActivity
-	(*ActiveUsersResponse)(nil),       // 30: forum.v1.ActiveUsersResponse
-	(*Message)(nil),                   // 31: forum.v1.Message
-	(*RecentMessagesResponse)(nil),    // 32: forum.v1.RecentMessagesResponse
-	(*Forum)(nil),                     // 33: forum.v1.Forum
-	(*Category)(nil),                  // 34: forum.v1.Category
-	(*OverviewResponse)(nil),          // 35: forum.v1.OverviewResponse
-	(internal.Privilege)(0),           // 36: Privilege
-	(*timestamppb.Timestamp)(nil),     // 37: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),             // 38: google.protobuf.Empty
+	(*ThreadReplyEditResponse)(nil),   // 15: forum.v1.ThreadReplyEditResponse
+	(*ThreadReplyCreateRequest)(nil),  // 16: forum.v1.ThreadReplyCreateRequest
+	(*ThreadReplyCreateResponse)(nil), // 17: forum.v1.ThreadReplyCreateResponse
+	(*ThreadCreateRequest)(nil),       // 18: forum.v1.ThreadCreateRequest
+	(*ThreadCreateResponse)(nil),      // 19: forum.v1.ThreadCreateResponse
+	(*ForumMessagesRequest)(nil),      // 20: forum.v1.ForumMessagesRequest
+	(*ForumMessagesResponse)(nil),     // 21: forum.v1.ForumMessagesResponse
+	(*ForumRequest)(nil),              // 22: forum.v1.ForumRequest
+	(*ForumResponse)(nil),             // 23: forum.v1.ForumResponse
+	(*ThreadRequest)(nil),             // 24: forum.v1.ThreadRequest
+	(*ThreadResponse)(nil),            // 25: forum.v1.ThreadResponse
+	(*ThreadsRequest)(nil),            // 26: forum.v1.ThreadsRequest
+	(*ThreadsRequestResponse)(nil),    // 27: forum.v1.ThreadsRequestResponse
+	(*Thread)(nil),                    // 28: forum.v1.Thread
+	(*ThreadWithSource)(nil),          // 29: forum.v1.ThreadWithSource
+	(*UserActivity)(nil),              // 30: forum.v1.UserActivity
+	(*ActiveUsersResponse)(nil),       // 31: forum.v1.ActiveUsersResponse
+	(*Message)(nil),                   // 32: forum.v1.Message
+	(*RecentMessagesResponse)(nil),    // 33: forum.v1.RecentMessagesResponse
+	(*Forum)(nil),                     // 34: forum.v1.Forum
+	(*Category)(nil),                  // 35: forum.v1.Category
+	(*OverviewResponse)(nil),          // 36: forum.v1.OverviewResponse
+	(internal.Privilege)(0),           // 37: Privilege
+	(*timestamppb.Timestamp)(nil),     // 38: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),             // 39: google.protobuf.Empty
 }
 var file_forum_v1_forum_proto_depIdxs = []int32{
-	27, // 0: forum.v1.ThreadEditResponse.thread:type_name -> forum.v1.Thread
-	33, // 1: forum.v1.ForumEditResponse.forum:type_name -> forum.v1.Forum
-	36, // 2: forum.v1.ForumEditRequest.permission_level:type_name -> Privilege
-	36, // 3: forum.v1.ForumCreateRequest.permission_level:type_name -> Privilege
-	33, // 4: forum.v1.ForumCreateResponse.forum:type_name -> forum.v1.Forum
-	34, // 5: forum.v1.CategoryEditResponse.category:type_name -> forum.v1.Category
-	34, // 6: forum.v1.CategoryResponse.category:type_name -> forum.v1.Category
-	34, // 7: forum.v1.CategoryCreateResponse.category:type_name -> forum.v1.Category
-	31, // 8: forum.v1.ThreadReplyCreateResponse.message:type_name -> forum.v1.Message
-	27, // 9: forum.v1.ThreadCreateResponse.thread:type_name -> forum.v1.Thread
-	31, // 10: forum.v1.ThreadCreateResponse.message:type_name -> forum.v1.Message
-	31, // 11: forum.v1.ForumMessagesResponse.messages:type_name -> forum.v1.Message
-	33, // 12: forum.v1.ForumResponse.forum:type_name -> forum.v1.Forum
-	27, // 13: forum.v1.ThreadResponse.thread:type_name -> forum.v1.Thread
-	27, // 14: forum.v1.ThreadsRequestResponse.threads:type_name -> forum.v1.Thread
-	37, // 15: forum.v1.Thread.created_on:type_name -> google.protobuf.Timestamp
-	37, // 16: forum.v1.Thread.updated_on:type_name -> google.protobuf.Timestamp
-	27, // 17: forum.v1.ThreadWithSource.thread:type_name -> forum.v1.Thread
-	36, // 18: forum.v1.ThreadWithSource.permission_level:type_name -> Privilege
-	37, // 19: forum.v1.ThreadWithSource.recent_created_on:type_name -> google.protobuf.Timestamp
-	36, // 20: forum.v1.UserActivity.permission_level:type_name -> Privilege
-	37, // 21: forum.v1.UserActivity.created_on:type_name -> google.protobuf.Timestamp
-	29, // 22: forum.v1.ActiveUsersResponse.user_activity:type_name -> forum.v1.UserActivity
-	36, // 23: forum.v1.Message.permission_level:type_name -> Privilege
-	37, // 24: forum.v1.Message.created_on:type_name -> google.protobuf.Timestamp
-	37, // 25: forum.v1.Message.updated_on:type_name -> google.protobuf.Timestamp
-	31, // 26: forum.v1.RecentMessagesResponse.messages:type_name -> forum.v1.Message
-	36, // 27: forum.v1.Forum.permission_level:type_name -> Privilege
-	37, // 28: forum.v1.Forum.recent_created_on:type_name -> google.protobuf.Timestamp
-	37, // 29: forum.v1.Forum.created_on:type_name -> google.protobuf.Timestamp
-	37, // 30: forum.v1.Forum.updated_on:type_name -> google.protobuf.Timestamp
-	33, // 31: forum.v1.Category.forums:type_name -> forum.v1.Forum
-	37, // 32: forum.v1.Category.created_on:type_name -> google.protobuf.Timestamp
-	37, // 33: forum.v1.Category.updated_on:type_name -> google.protobuf.Timestamp
-	34, // 34: forum.v1.OverviewResponse.categories:type_name -> forum.v1.Category
-	38, // 35: forum.v1.ForumService.ActiveUsers:input_type -> google.protobuf.Empty
-	38, // 36: forum.v1.ForumService.Overview:input_type -> google.protobuf.Empty
-	38, // 37: forum.v1.ForumService.RecentMessages:input_type -> google.protobuf.Empty
-	25, // 38: forum.v1.ForumService.Threads:input_type -> forum.v1.ThreadsRequest
-	23, // 39: forum.v1.ForumService.Thread:input_type -> forum.v1.ThreadRequest
-	13, // 40: forum.v1.ForumService.ThreadDelete:input_type -> forum.v1.ThreadDeleteRequest
-	21, // 41: forum.v1.ForumService.Forum:input_type -> forum.v1.ForumRequest
-	19, // 42: forum.v1.ForumService.ForumMessages:input_type -> forum.v1.ForumMessagesRequest
-	17, // 43: forum.v1.ForumService.ThreadCreate:input_type -> forum.v1.ThreadCreateRequest
-	0,  // 44: forum.v1.ForumService.ThreadEdit:input_type -> forum.v1.ThreadEditRequest
-	15, // 45: forum.v1.ForumService.ThreadReplyCreate:input_type -> forum.v1.ThreadReplyCreateRequest
-	14, // 46: forum.v1.ForumService.ThreadReplyEdit:input_type -> forum.v1.ThreadReplyEditRequest
-	12, // 47: forum.v1.ForumService.MessageDelete:input_type -> forum.v1.MessageDeleteRequest
-	11, // 48: forum.v1.ForumService.CategoryCreate:input_type -> forum.v1.CategoryCreateRequest
-	6,  // 49: forum.v1.ForumService.CategoryEdit:input_type -> forum.v1.CategoryEditRequest
-	8,  // 50: forum.v1.ForumService.Category:input_type -> forum.v1.CategoryRequest
-	4,  // 51: forum.v1.ForumService.ForumCreate:input_type -> forum.v1.ForumCreateRequest
-	3,  // 52: forum.v1.ForumService.ForumEdit:input_type -> forum.v1.ForumEditRequest
-	30, // 53: forum.v1.ForumService.ActiveUsers:output_type -> forum.v1.ActiveUsersResponse
-	35, // 54: forum.v1.ForumService.Overview:output_type -> forum.v1.OverviewResponse
-	32, // 55: forum.v1.ForumService.RecentMessages:output_type -> forum.v1.RecentMessagesResponse
-	26, // 56: forum.v1.ForumService.Threads:output_type -> forum.v1.ThreadsRequestResponse
-	24, // 57: forum.v1.ForumService.Thread:output_type -> forum.v1.ThreadResponse
-	38, // 58: forum.v1.ForumService.ThreadDelete:output_type -> google.protobuf.Empty
-	22, // 59: forum.v1.ForumService.Forum:output_type -> forum.v1.ForumResponse
-	20, // 60: forum.v1.ForumService.ForumMessages:output_type -> forum.v1.ForumMessagesResponse
-	18, // 61: forum.v1.ForumService.ThreadCreate:output_type -> forum.v1.ThreadCreateResponse
-	1,  // 62: forum.v1.ForumService.ThreadEdit:output_type -> forum.v1.ThreadEditResponse
-	16, // 63: forum.v1.ForumService.ThreadReplyCreate:output_type -> forum.v1.ThreadReplyCreateResponse
-	14, // 64: forum.v1.ForumService.ThreadReplyEdit:output_type -> forum.v1.ThreadReplyEditRequest
-	38, // 65: forum.v1.ForumService.MessageDelete:output_type -> google.protobuf.Empty
-	10, // 66: forum.v1.ForumService.CategoryCreate:output_type -> forum.v1.CategoryCreateResponse
-	7,  // 67: forum.v1.ForumService.CategoryEdit:output_type -> forum.v1.CategoryEditResponse
-	9,  // 68: forum.v1.ForumService.Category:output_type -> forum.v1.CategoryResponse
-	5,  // 69: forum.v1.ForumService.ForumCreate:output_type -> forum.v1.ForumCreateResponse
-	2,  // 70: forum.v1.ForumService.ForumEdit:output_type -> forum.v1.ForumEditResponse
-	53, // [53:71] is the sub-list for method output_type
-	35, // [35:53] is the sub-list for method input_type
-	35, // [35:35] is the sub-list for extension type_name
-	35, // [35:35] is the sub-list for extension extendee
-	0,  // [0:35] is the sub-list for field type_name
+	28, // 0: forum.v1.ThreadEditResponse.thread:type_name -> forum.v1.Thread
+	34, // 1: forum.v1.ForumEditResponse.forum:type_name -> forum.v1.Forum
+	37, // 2: forum.v1.ForumEditRequest.permission_level:type_name -> Privilege
+	37, // 3: forum.v1.ForumCreateRequest.permission_level:type_name -> Privilege
+	34, // 4: forum.v1.ForumCreateResponse.forum:type_name -> forum.v1.Forum
+	35, // 5: forum.v1.CategoryEditResponse.category:type_name -> forum.v1.Category
+	35, // 6: forum.v1.CategoryResponse.category:type_name -> forum.v1.Category
+	35, // 7: forum.v1.CategoryCreateResponse.category:type_name -> forum.v1.Category
+	32, // 8: forum.v1.ThreadReplyEditResponse.message:type_name -> forum.v1.Message
+	32, // 9: forum.v1.ThreadReplyCreateResponse.message:type_name -> forum.v1.Message
+	28, // 10: forum.v1.ThreadCreateResponse.thread:type_name -> forum.v1.Thread
+	32, // 11: forum.v1.ThreadCreateResponse.message:type_name -> forum.v1.Message
+	32, // 12: forum.v1.ForumMessagesResponse.messages:type_name -> forum.v1.Message
+	34, // 13: forum.v1.ForumResponse.forum:type_name -> forum.v1.Forum
+	28, // 14: forum.v1.ThreadResponse.thread:type_name -> forum.v1.Thread
+	28, // 15: forum.v1.ThreadsRequestResponse.threads:type_name -> forum.v1.Thread
+	38, // 16: forum.v1.Thread.created_on:type_name -> google.protobuf.Timestamp
+	38, // 17: forum.v1.Thread.updated_on:type_name -> google.protobuf.Timestamp
+	28, // 18: forum.v1.ThreadWithSource.thread:type_name -> forum.v1.Thread
+	37, // 19: forum.v1.ThreadWithSource.permission_level:type_name -> Privilege
+	38, // 20: forum.v1.ThreadWithSource.recent_created_on:type_name -> google.protobuf.Timestamp
+	37, // 21: forum.v1.UserActivity.permission_level:type_name -> Privilege
+	38, // 22: forum.v1.UserActivity.created_on:type_name -> google.protobuf.Timestamp
+	30, // 23: forum.v1.ActiveUsersResponse.user_activity:type_name -> forum.v1.UserActivity
+	37, // 24: forum.v1.Message.permission_level:type_name -> Privilege
+	38, // 25: forum.v1.Message.created_on:type_name -> google.protobuf.Timestamp
+	38, // 26: forum.v1.Message.updated_on:type_name -> google.protobuf.Timestamp
+	32, // 27: forum.v1.RecentMessagesResponse.messages:type_name -> forum.v1.Message
+	37, // 28: forum.v1.Forum.permission_level:type_name -> Privilege
+	38, // 29: forum.v1.Forum.recent_created_on:type_name -> google.protobuf.Timestamp
+	38, // 30: forum.v1.Forum.created_on:type_name -> google.protobuf.Timestamp
+	38, // 31: forum.v1.Forum.updated_on:type_name -> google.protobuf.Timestamp
+	34, // 32: forum.v1.Category.forums:type_name -> forum.v1.Forum
+	38, // 33: forum.v1.Category.created_on:type_name -> google.protobuf.Timestamp
+	38, // 34: forum.v1.Category.updated_on:type_name -> google.protobuf.Timestamp
+	35, // 35: forum.v1.OverviewResponse.categories:type_name -> forum.v1.Category
+	39, // 36: forum.v1.ForumService.ActiveUsers:input_type -> google.protobuf.Empty
+	39, // 37: forum.v1.ForumService.Overview:input_type -> google.protobuf.Empty
+	39, // 38: forum.v1.ForumService.RecentMessages:input_type -> google.protobuf.Empty
+	26, // 39: forum.v1.ForumService.Threads:input_type -> forum.v1.ThreadsRequest
+	24, // 40: forum.v1.ForumService.Thread:input_type -> forum.v1.ThreadRequest
+	13, // 41: forum.v1.ForumService.ThreadDelete:input_type -> forum.v1.ThreadDeleteRequest
+	22, // 42: forum.v1.ForumService.Forum:input_type -> forum.v1.ForumRequest
+	20, // 43: forum.v1.ForumService.ForumMessages:input_type -> forum.v1.ForumMessagesRequest
+	18, // 44: forum.v1.ForumService.ThreadCreate:input_type -> forum.v1.ThreadCreateRequest
+	0,  // 45: forum.v1.ForumService.ThreadEdit:input_type -> forum.v1.ThreadEditRequest
+	16, // 46: forum.v1.ForumService.ThreadReplyCreate:input_type -> forum.v1.ThreadReplyCreateRequest
+	14, // 47: forum.v1.ForumService.ThreadReplyEdit:input_type -> forum.v1.ThreadReplyEditRequest
+	12, // 48: forum.v1.ForumService.MessageDelete:input_type -> forum.v1.MessageDeleteRequest
+	11, // 49: forum.v1.ForumService.CategoryCreate:input_type -> forum.v1.CategoryCreateRequest
+	6,  // 50: forum.v1.ForumService.CategoryEdit:input_type -> forum.v1.CategoryEditRequest
+	8,  // 51: forum.v1.ForumService.Category:input_type -> forum.v1.CategoryRequest
+	4,  // 52: forum.v1.ForumService.ForumCreate:input_type -> forum.v1.ForumCreateRequest
+	3,  // 53: forum.v1.ForumService.ForumEdit:input_type -> forum.v1.ForumEditRequest
+	31, // 54: forum.v1.ForumService.ActiveUsers:output_type -> forum.v1.ActiveUsersResponse
+	36, // 55: forum.v1.ForumService.Overview:output_type -> forum.v1.OverviewResponse
+	33, // 56: forum.v1.ForumService.RecentMessages:output_type -> forum.v1.RecentMessagesResponse
+	27, // 57: forum.v1.ForumService.Threads:output_type -> forum.v1.ThreadsRequestResponse
+	25, // 58: forum.v1.ForumService.Thread:output_type -> forum.v1.ThreadResponse
+	39, // 59: forum.v1.ForumService.ThreadDelete:output_type -> google.protobuf.Empty
+	23, // 60: forum.v1.ForumService.Forum:output_type -> forum.v1.ForumResponse
+	21, // 61: forum.v1.ForumService.ForumMessages:output_type -> forum.v1.ForumMessagesResponse
+	19, // 62: forum.v1.ForumService.ThreadCreate:output_type -> forum.v1.ThreadCreateResponse
+	1,  // 63: forum.v1.ForumService.ThreadEdit:output_type -> forum.v1.ThreadEditResponse
+	17, // 64: forum.v1.ForumService.ThreadReplyCreate:output_type -> forum.v1.ThreadReplyCreateResponse
+	15, // 65: forum.v1.ForumService.ThreadReplyEdit:output_type -> forum.v1.ThreadReplyEditResponse
+	39, // 66: forum.v1.ForumService.MessageDelete:output_type -> google.protobuf.Empty
+	10, // 67: forum.v1.ForumService.CategoryCreate:output_type -> forum.v1.CategoryCreateResponse
+	7,  // 68: forum.v1.ForumService.CategoryEdit:output_type -> forum.v1.CategoryEditResponse
+	9,  // 69: forum.v1.ForumService.Category:output_type -> forum.v1.CategoryResponse
+	5,  // 70: forum.v1.ForumService.ForumCreate:output_type -> forum.v1.ForumCreateResponse
+	2,  // 71: forum.v1.ForumService.ForumEdit:output_type -> forum.v1.ForumEditResponse
+	54, // [54:72] is the sub-list for method output_type
+	36, // [36:54] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_forum_v1_forum_proto_init() }
@@ -2531,7 +2579,7 @@ func file_forum_v1_forum_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_forum_v1_forum_proto_rawDesc), len(file_forum_v1_forum_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   36,
+			NumMessages:   37,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

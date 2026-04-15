@@ -48,7 +48,7 @@ type RequestReportCreate struct {
 	Reason          reason.Reason   `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
 	DemoID          int64           `json:"demo_id"`
-	DemoTick        int             `json:"demo_tick"`
+	DemoTick        int32           `json:"demo_tick"`
 	PersonMessageID int64           `json:"person_message_id"`
 }
 
@@ -84,7 +84,7 @@ type Report struct {
 	Reason          reason.Reason   `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
 	Deleted         bool            `json:"deleted"`
-	DemoTick        int             `json:"demo_tick"`
+	DemoTick        int32           `json:"demo_tick"`
 	DemoID          int64           `json:"demo_id"`
 	PersonMessageID int64           `json:"person_message_id"`
 	CreatedOn       time.Time       `json:"created_on"`
@@ -249,7 +249,7 @@ func (r Reports) addAuthorsToReports(ctx context.Context, reports []Report) ([]R
 	return userReports, nil
 }
 
-func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user personDomain.Info, status ReportStatus) (ReportWithAuthor, error) {
+func (r Reports) SetReportStatus(ctx context.Context, reportID int64, user personDomain.BaseUser, status ReportStatus) (ReportWithAuthor, error) {
 	report, errGet := r.Report(ctx, user, reportID)
 	if errGet != nil {
 		return report, errGet
@@ -323,7 +323,7 @@ func (r Reports) Reports(ctx context.Context) ([]ReportWithAuthor, error) {
 	return r.addAuthorsToReports(ctx, reports)
 }
 
-func (r Reports) Report(ctx context.Context, curUser personDomain.Info, reportID int64) (ReportWithAuthor, error) {
+func (r Reports) Report(ctx context.Context, curUser personDomain.BaseUser, reportID int64) (ReportWithAuthor, error) {
 	report, err := r.repository.GetReport(ctx, reportID)
 	if err != nil {
 		return ReportWithAuthor{}, err
@@ -370,7 +370,7 @@ func (r Reports) MessageByID(ctx context.Context, reportMessageID int64) (Report
 	return r.repository.GetReportMessageByID(ctx, reportMessageID)
 }
 
-func (r Reports) DropMessage(ctx context.Context, curUser personDomain.Info, reportMessageID int64) error {
+func (r Reports) DropMessage(ctx context.Context, curUser personDomain.BaseUser, reportMessageID int64) error {
 	existing, errExist := r.repository.GetReportMessageByID(ctx, reportMessageID)
 	if errExist != nil {
 		return errExist
@@ -396,7 +396,7 @@ func (r Reports) Drop(ctx context.Context, report *Report) error {
 	return r.repository.DropReport(ctx, report)
 }
 
-func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req RequestReportCreate) (ReportWithAuthor, error) {
+func (r Reports) Save(ctx context.Context, currentUser personDomain.BaseUser, req RequestReportCreate) (ReportWithAuthor, error) {
 	if req.Description == "" || len(req.Description) < 10 {
 		return ReportWithAuthor{}, fmt.Errorf("%w: description", httphelper.ErrParamInvalid)
 	}
@@ -491,7 +491,7 @@ func (r Reports) Save(ctx context.Context, currentUser personDomain.Info, req Re
 	return newReport, nil
 }
 
-func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser personDomain.Info, req RequestMessageBodyMD) (ReportMessage, error) {
+func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser personDomain.BaseUser, req RequestMessageBodyMD) (ReportMessage, error) {
 	if reportMessageID <= 0 {
 		return ReportMessage{}, httphelper.ErrParamInvalid
 	}
@@ -530,7 +530,7 @@ func (r Reports) EditMessage(ctx context.Context, reportMessageID int64, curUser
 	return r.MessageByID(ctx, reportMessageID)
 }
 
-func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser personDomain.Info, req RequestMessageBodyMD) (ReportMessage, error) {
+func (r Reports) CreateMessage(ctx context.Context, reportID int64, curUser personDomain.BaseUser, req RequestMessageBodyMD) (ReportMessage, error) {
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
 
 	if req.BodyMD == "" {

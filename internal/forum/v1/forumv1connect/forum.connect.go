@@ -97,7 +97,7 @@ type ForumServiceClient interface {
 	ThreadCreate(context.Context, *v1.ThreadCreateRequest) (*v1.ThreadCreateResponse, error)
 	ThreadEdit(context.Context, *v1.ThreadEditRequest) (*v1.ThreadEditResponse, error)
 	ThreadReplyCreate(context.Context, *v1.ThreadReplyCreateRequest) (*v1.ThreadReplyCreateResponse, error)
-	ThreadReplyEdit(context.Context, *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditRequest, error)
+	ThreadReplyEdit(context.Context, *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditResponse, error)
 	MessageDelete(context.Context, *v1.MessageDeleteRequest) (*emptypb.Empty, error)
 	// mod
 	CategoryCreate(context.Context, *v1.CategoryCreateRequest) (*v1.CategoryCreateResponse, error)
@@ -184,7 +184,7 @@ func NewForumServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(forumServiceMethods.ByName("ThreadReplyCreate")),
 			connect.WithClientOptions(opts...),
 		),
-		threadReplyEdit: connect.NewClient[v1.ThreadReplyEditRequest, v1.ThreadReplyEditRequest](
+		threadReplyEdit: connect.NewClient[v1.ThreadReplyEditRequest, v1.ThreadReplyEditResponse](
 			httpClient,
 			baseURL+ForumServiceThreadReplyEditProcedure,
 			connect.WithSchema(forumServiceMethods.ByName("ThreadReplyEdit")),
@@ -242,7 +242,7 @@ type forumServiceClient struct {
 	threadCreate      *connect.Client[v1.ThreadCreateRequest, v1.ThreadCreateResponse]
 	threadEdit        *connect.Client[v1.ThreadEditRequest, v1.ThreadEditResponse]
 	threadReplyCreate *connect.Client[v1.ThreadReplyCreateRequest, v1.ThreadReplyCreateResponse]
-	threadReplyEdit   *connect.Client[v1.ThreadReplyEditRequest, v1.ThreadReplyEditRequest]
+	threadReplyEdit   *connect.Client[v1.ThreadReplyEditRequest, v1.ThreadReplyEditResponse]
 	messageDelete     *connect.Client[v1.MessageDeleteRequest, emptypb.Empty]
 	categoryCreate    *connect.Client[v1.CategoryCreateRequest, v1.CategoryCreateResponse]
 	categoryEdit      *connect.Client[v1.CategoryEditRequest, v1.CategoryEditResponse]
@@ -351,7 +351,7 @@ func (c *forumServiceClient) ThreadReplyCreate(ctx context.Context, req *v1.Thre
 }
 
 // ThreadReplyEdit calls forum.v1.ForumService.ThreadReplyEdit.
-func (c *forumServiceClient) ThreadReplyEdit(ctx context.Context, req *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditRequest, error) {
+func (c *forumServiceClient) ThreadReplyEdit(ctx context.Context, req *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditResponse, error) {
 	response, err := c.threadReplyEdit.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -427,7 +427,7 @@ type ForumServiceHandler interface {
 	ThreadCreate(context.Context, *v1.ThreadCreateRequest) (*v1.ThreadCreateResponse, error)
 	ThreadEdit(context.Context, *v1.ThreadEditRequest) (*v1.ThreadEditResponse, error)
 	ThreadReplyCreate(context.Context, *v1.ThreadReplyCreateRequest) (*v1.ThreadReplyCreateResponse, error)
-	ThreadReplyEdit(context.Context, *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditRequest, error)
+	ThreadReplyEdit(context.Context, *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditResponse, error)
 	MessageDelete(context.Context, *v1.MessageDeleteRequest) (*emptypb.Empty, error)
 	// mod
 	CategoryCreate(context.Context, *v1.CategoryCreateRequest) (*v1.CategoryCreateResponse, error)
@@ -643,7 +643,7 @@ func (UnimplementedForumServiceHandler) ThreadReplyCreate(context.Context, *v1.T
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.ThreadReplyCreate is not implemented"))
 }
 
-func (UnimplementedForumServiceHandler) ThreadReplyEdit(context.Context, *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditRequest, error) {
+func (UnimplementedForumServiceHandler) ThreadReplyEdit(context.Context, *v1.ThreadReplyEditRequest) (*v1.ThreadReplyEditResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("forum.v1.ForumService.ThreadReplyEdit is not implemented"))
 }
 

@@ -102,7 +102,7 @@ func (u *Appeals) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilt
 	return u.ByActivity(ctx, opts)
 }
 
-func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.Info, banMessageID int64, newMsg string) (AppealMessage, error) {
+func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.BaseUser, banMessageID int64, newMsg string) (AppealMessage, error) {
 	existing, err := u.MessageByID(ctx, banMessageID)
 	if err != nil {
 		return AppealMessage{}, err
@@ -144,7 +144,7 @@ func (u *Appeals) EditBanMessage(ctx context.Context, curUser person.Info, banMe
 	return existing, nil
 }
 
-func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, banID int64, newMsg string) (AppealMessage, error) {
+func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.BaseUser, banID int64, newMsg string) (AppealMessage, error) {
 	if banID <= 0 {
 		return AppealMessage{}, httphelper.ErrInvalidParameter
 	}
@@ -184,7 +184,7 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, ban
 	}
 
 	msg := NewBanAppealMessage(banID, curUser.GetSteamID(), newMsg)
-	msg.PermissionLevel = curUser.Permissions()
+	msg.PermissionLevel = curUser.GetPrivilege()
 	msg.Personaname = curUser.GetName()
 	msg.Avatarhash = curUser.GetAvatar().Hash()
 
@@ -218,7 +218,7 @@ func (u *Appeals) CreateBanMessage(ctx context.Context, curUser person.Info, ban
 	return msg, nil
 }
 
-func (u *Appeals) Messages(ctx context.Context, userProfile person.Info, banID int64) ([]AppealMessage, error) {
+func (u *Appeals) Messages(ctx context.Context, userProfile person.BaseUser, banID int64) ([]AppealMessage, error) {
 	banPerson, errGetBan := u.bans.QueryOne(ctx, QueryOpts{
 		BanID:   banID,
 		Deleted: true,
@@ -228,7 +228,7 @@ func (u *Appeals) Messages(ctx context.Context, userProfile person.Info, banID i
 		return nil, errGetBan
 	}
 
-	if !httphelper.HasPrivilege(userProfile, steamid.Collection{banPerson.TargetID, banPerson.SourceID}, permission.Moderator) {
+	if !userProfile.HasPermission(permission.Moderator) && !banPerson.TargetID.Equal(userProfile.GetSteamID()) {
 		return nil, permission.ErrDenied
 	}
 
@@ -239,7 +239,7 @@ func (u *Appeals) MessageByID(ctx context.Context, banMessageID int64) (AppealMe
 	return u.AppealRepository.MessageByID(ctx, banMessageID)
 }
 
-func (u *Appeals) DropMessage(ctx context.Context, curUser person.Info, banMessageID int64) error {
+func (u *Appeals) DropMessage(ctx context.Context, curUser person.BaseUser, banMessageID int64) error {
 	existing, errExist := u.MessageByID(ctx, banMessageID)
 	if errExist != nil {
 		return errExist

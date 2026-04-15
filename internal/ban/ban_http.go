@@ -3,24 +3,17 @@ package ban
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"reflect"
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
-	"github.com/leighmacdonald/gbans/internal/auth/session"
-	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
-	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/sosodev/duration"
 )
 
 type banHandler struct {
@@ -30,7 +23,7 @@ type banHandler struct {
 	authorizedKeys []string
 }
 
-func NewHandlerBans(engine *gin.Engine, authenticator httphelper.Authenticator, bans Bans, config Config, siteName string) {
+func NewHandlerBans(engine *gin.Engine, bans Bans, config Config, siteName string) {
 	var b AppealState
 	httphelper.Decoder.RegisterConverter(&b, func(input string) reflect.Value {
 		value, errValue := strconv.ParseInt(input, 10, 64)
@@ -42,7 +35,11 @@ func NewHandlerBans(engine *gin.Engine, authenticator httphelper.Authenticator, 
 		return reflect.ValueOf(&state)
 	})
 
-	handler := banHandler{Bans: bans, authorizedKeys: strings.Split(config.AuthorizedKeys, ","), siteName: siteName}
+	handler := banHandler{
+		Bans:           bans,
+		authorizedKeys: strings.Split(config.AuthorizedKeys, ","),
+		siteName:       siteName,
+	}
 
 	if config.BDEnabled {
 		engine.GET("/export/bans/tf2bd", handler.onAPIExportBansTF2BD())
@@ -50,242 +47,6 @@ func NewHandlerBans(engine *gin.Engine, authenticator httphelper.Authenticator, 
 
 	if config.ValveEnabled {
 		engine.GET("/export/bans/valve/steamid", handler.onAPIExportBansValveSteamID())
-	}
-
-	// auth
-	authedGrp := engine.Group("/")
-	{
-		authed := authedGrp.Use(authenticator.Middleware(permission.User))
-		authed.GET("/api/ban/:ban_id", handler.onAPIGetBanByID())
-	}
-
-	// mod
-	modGrp := engine.Group("/")
-	{
-		mod := modGrp.Use(authenticator.Middleware(permission.Moderator))
-
-		mod.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
-		mod.GET("/api/stats", handler.onStats())
-		mod.GET("/api/bans", handler.onQuery())
-		mod.POST("/api/bans", handler.onBanCreate())
-		mod.DELETE("/api/ban/:ban_id", handler.onBanDelete())
-		mod.POST("/api/ban/:ban_id", handler.onBanUpdate())
-		mod.POST("/api/ban/:ban_id/status", handler.onSetBanAppealStatus())
-	}
-}
-
-type SetStatusReq struct {
-	AppealState AppealState `json:"appeal_state"`
-}
-
-func (h banHandler) onSetBanAppealStatus() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		banID, idFound := httphelper.GetInt64Param(ctx, "ban_id")
-		if !idFound {
-			return
-		}
-
-		req, ok := httphelper.BindJSON[SetStatusReq](ctx)
-		if !ok {
-			return
-		}
-
-		bannedPerson, banErr := h.QueryOne(ctx, QueryOpts{BanID: banID, EvadeOk: true})
-		if banErr != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, banErr))
-
-			return
-		}
-
-		if bannedPerson.AppealState == req.AppealState {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, httphelper.ErrBadRequest,
-				"New state must be different than previous state"))
-
-			return
-		}
-
-		original := bannedPerson.AppealState
-		bannedPerson.AppealState = req.AppealState
-
-		if errSave := h.Save(ctx, &bannedPerson); errSave != nil {
-			switch {
-			case errors.Is(errSave, ErrPersonTarget):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
-					"Ban target steam_id invalid"))
-			case errors.Is(errSave, ErrPersonSource):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
-					"Ban author steam_id invalid"))
-			case errors.Is(errSave, database.ErrDuplicate):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, httphelper.ErrBadRequest,
-					"Ban typ (nocomm/ban/network) cannot be the same as existng ban"))
-			case errors.Is(errSave, ErrGetBan):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound, "Could not load ban to update"))
-			default:
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
-			}
-
-			return
-		}
-
-		if req.AppealState == Accepted {
-			user, _ := session.CurrentUserProfile(ctx)
-			if _, err := h.Unban(ctx, bannedPerson.TargetID, "Appeal accepted", user); err != nil {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusInternalServerError, errors.Join(err, httphelper.ErrInternal),
-					"Could not perform unban request"))
-
-				return
-			}
-		}
-
-		ctx.JSON(http.StatusAccepted, gin.H{})
-
-		slog.Info("Updated ban appeal state",
-			slog.Int64("ban_id", banID),
-			slog.Int("from_state", int(original)),
-			slog.Int("to_state", int(req.AppealState)))
-	}
-}
-
-func (h banHandler) onBanCreate() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		req, ok := httphelper.BindJSON[Opts](ctx)
-		if !ok {
-			return
-		}
-
-		user, _ := session.CurrentUserProfile(ctx)
-		if !req.SourceID.Valid() {
-			req.SourceID = user.GetSteamID()
-		}
-
-		newBan, errBan := h.Create(ctx, req)
-		if errBan != nil {
-			switch {
-			case errors.Is(errBan, database.ErrDuplicate):
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusConflict, database.ErrDuplicate,
-					"Ban already active for steam_id: %s", req.TargetID.String()))
-			default:
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBan, httphelper.ErrInternal)))
-			}
-
-			return
-		}
-
-		ctx.JSON(http.StatusCreated, newBan)
-		slog.Info("New steam ban created", slog.Int64("ban_id", newBan.BanID), slog.String("steam_id", newBan.TargetID.String()))
-	}
-}
-
-func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		user, _ := session.CurrentUserProfile(ctx)
-		banID, idFound := httphelper.GetInt64Param(ctx, "ban_id")
-		if !idFound {
-			return
-		}
-
-		if banID == 0 {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
-				"Ban ID must be > 0"))
-
-			return
-		}
-
-		deletedOk := false
-		if fullValue, fullOk := ctx.GetQuery("deleted"); fullOk {
-			deleted, deletedOkErr := strconv.ParseBool(fullValue)
-			if deletedOkErr != nil {
-				slog.Error("Failed to parse ban full query value", slog.String("error", deletedOkErr.Error()))
-			} else {
-				deletedOk = deleted
-			}
-		}
-		bannedPerson, errGet := h.QueryOne(ctx, QueryOpts{BanID: banID, Deleted: deletedOk, EvadeOk: true})
-		if errGet != nil {
-			if errors.Is(errGet, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, database.ErrNoResult))
-
-				return
-			}
-
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGet, httphelper.ErrInternal)))
-
-			return
-		}
-
-		if !httphelper.HasPrivilege(user, steamid.Collection{bannedPerson.TargetID}, permission.Moderator) {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusForbidden, permission.ErrDenied,
-				"You do not have permission to access this ban."))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, bannedPerson)
-	}
-}
-
-type BDSourceBansRecord struct {
-	BanID       int             `json:"ban_id"`
-	SiteName    string          `json:"site_name"`
-	SiteID      int             `json:"site_id"`
-	PersonaName string          `json:"persona_name"`
-	SteamID     steamid.SteamID `json:"steam_id"`
-	Reason      string          `json:"reason"`
-	Duration    time.Duration   `json:"duration"`
-	Permanent   bool            `json:"permanent"`
-	CreatedOn   time.Time       `json:"created_on"`
-}
-
-func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
-	client, errClient := thirdparty.NewClientWithResponses("https://tf-api.roto.lol")
-	if errClient != nil {
-		panic(errClient)
-	}
-
-	return func(ctx *gin.Context) {
-		steamID, idFound := httphelper.GetSID64Param(ctx, "steam_id")
-		if !idFound {
-			return
-		}
-
-		//goland:noinspection ALL
-		records := []BDSourceBansRecord{}
-		resp, errResp := client.BansSearchWithResponse(ctx, &thirdparty.BansSearchParams{Steamids: steamID.String()})
-		if errResp != nil {
-			return
-		}
-
-		if resp.JSON200 != nil {
-			for _, ban := range *resp.JSON200 {
-				records = append(records, BDSourceBansRecord{
-					SiteName:    ban.SiteName,
-					SiteID:      0,
-					PersonaName: ban.Name,
-					SteamID:     steamid.New(ban.SteamId),
-					Reason:      ban.Reason,
-					Duration:    ban.ExpiresOn.Sub(ban.CreatedOn),
-					Permanent:   ban.Permanent,
-					CreatedOn:   ban.CreatedOn,
-				})
-			}
-		}
-
-		ctx.JSON(http.StatusOK, records)
-	}
-}
-
-func (h banHandler) onStats() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var stats Stats
-		if errGetStats := h.Stats(ctx, &stats); errGetStats != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errGetStats, httphelper.ErrInternal)))
-
-			return
-		}
-
-		stats.ServersAlive = 1
-
-		ctx.JSON(http.StatusOK, stats)
 	}
 }
 
@@ -376,164 +137,5 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, out)
-	}
-}
-
-type RequestQueryOpts struct {
-	SourceID string `query:"source_id"`
-	// TargetID can represent a SteamID or a group ID. They both use steamID formats, just in a different numberspace
-	TargetID      string          `query:"target_id"`
-	GroupsOnly    bool            `query:"groups_only"`
-	IncludeGroups bool            `query:"include_groups"`
-	Deleted       bool            `query:"deleted"`
-	CIDR          string          `query:"cidr"`
-	CIDROnly      bool            `query:"cidr_only"`
-	Reasons       []reason.Reason `query:"reasons"`
-	// TODO AppealState conversions instead of int
-	AppealState *int `form:"appeal_state" query:"appeal_state"`
-}
-
-func (h banHandler) onQuery() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		params, ok := httphelper.BindQuery[RequestQueryOpts](ctx)
-		if !ok {
-			return
-		}
-
-		bans, errBans := h.Query(ctx, QueryOpts{
-			Deleted:       params.Deleted,
-			SourceID:      steamid.New(params.SourceID),
-			TargetID:      steamid.New(params.TargetID),
-			GroupsOnly:    params.GroupsOnly,
-			CIDR:          params.CIDR,
-			CIDROnly:      params.CIDROnly,
-			Reasons:       params.Reasons,
-			IncludeGroups: params.IncludeGroups,
-		})
-		if errBans != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBans, httphelper.ErrInternal)))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, bans)
-	}
-}
-
-func (h banHandler) onBanDelete() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		banID, idFound := httphelper.GetInt64Param(ctx, "ban_id")
-		if !idFound {
-			return
-		}
-
-		req, ok := httphelper.BindJSON[RequestUnban](ctx)
-		if !ok {
-			return
-		}
-
-		bannedPerson, errBan := h.QueryOne(ctx, QueryOpts{BanID: banID, EvadeOk: true})
-		if errBan != nil {
-			if errors.Is(errBan, database.ErrNoResult) {
-				httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusNotFound, httphelper.ErrNotFound))
-
-				return
-			}
-
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errBan, httphelper.ErrInternal)))
-
-			return
-		}
-
-		user, _ := session.CurrentUserProfile(ctx)
-		changed, errSave := h.Unban(ctx, bannedPerson.TargetID, req.UnbanReasonText, user)
-		if errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errors.Join(errSave, httphelper.ErrInternal)))
-
-			return
-		}
-
-		if !changed {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusOK, ErrUnbanFailed, "Ban status is unchanged"))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{})
-	}
-}
-
-type RequestBanUpdate struct {
-	TargetID   steamid.SteamID `json:"target_id"`
-	BanType    bantype.Type    `json:"ban_type"`
-	Reason     int             `json:"reason"`
-	ReasonText string          `json:"reason_text"`
-	Note       string          `json:"note"`
-	EvadeOk    bool            `json:"evade_ok"`
-	Duration   string          `json:"duration"`
-	CIDR       string          `json:"cidr"`
-}
-
-func (h banHandler) onBanUpdate() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		banID, idFound := httphelper.GetInt64Param(ctx, "ban_id")
-		if !idFound {
-			return
-		}
-
-		req, ok := httphelper.BindJSON[RequestBanUpdate](ctx)
-		if !ok {
-			return
-		}
-
-		bannedPerson, banErr := h.QueryOne(ctx, QueryOpts{BanID: banID, Deleted: true, EvadeOk: true})
-		if banErr != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusNotFound, httphelper.ErrNotFound,
-				"Failed to find existing ban with id: %d", banID))
-
-			return
-		}
-
-		if reason.Reason(req.Reason) == reason.Custom {
-			if req.ReasonText == "" {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
-					"Reason cannot be empty."))
-
-				return
-			}
-
-			bannedPerson.ReasonText = req.ReasonText
-		} else {
-			bannedPerson.ReasonText = ""
-		}
-
-		if req.Duration != "" {
-			dur, errDur := duration.Parse(req.Duration)
-			if errDur != nil {
-				httphelper.SetError(ctx, httphelper.NewAPIErrorf(http.StatusBadRequest, httphelper.ErrBadRequest,
-					"Invalid duration provided"))
-
-				return
-			}
-
-			bannedPerson.ValidUntil = time.Now().Add(dur.ToTimeDuration())
-		}
-
-		bannedPerson.Note = req.Note
-		bannedPerson.BanType = req.BanType
-		bannedPerson.Reason = reason.Reason(req.Reason)
-		bannedPerson.EvadeOk = req.EvadeOk
-
-		if req.CIDR != "" {
-			bannedPerson.CIDR = &req.CIDR
-		}
-
-		if errSave := h.Save(ctx, &bannedPerson); errSave != nil {
-			httphelper.SetError(ctx, httphelper.NewAPIError(http.StatusInternalServerError, errSave))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, bannedPerson)
 	}
 }

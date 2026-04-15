@@ -13,501 +13,499 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file network/v1/network.proto.
  */
-export const file_network_v1_network: GenFile = /*@__PURE__*/
-  fileDesc("ChhuZXR3b3JrL3YxL25ldHdvcmsucHJvdG8SCm5ldHdvcmsudjEiOgoTUXVlcnlOZXR3b3JrUmVxdWVzdBIXCgZmaWx0ZXIYASABKAsyBy5GaWx0ZXISCgoCaXAYAiABKAkicQoHRGV0YWlscxImCghsb2NhdGlvbhgBIAEoCzIULm5ldHdvcmsudjEuTG9jYXRpb24SHAoDYXNuGAIgASgLMg8ubmV0d29yay52MS5BU04SIAoFcHJveHkYAyABKAsyES5uZXR3b3JrLnYxLlByb3h5IpMBCghMb2NhdGlvbhIMCgRjaWRyGAEgASgJEhQKDGNvdW50cnlfY29kZRgCIAEoCRIUCgxjb3VudHJ5X25hbWUYAyABKAkSEwoLcmVnaW9uX25hbWUYBCABKAkSEQoJY2l0eV9uYW1lGAUgASgJEiUKCGxhdF9sb25nGAYgASgLMhMubmV0d29yay52MS5MYXRMb25nIjQKA0FTThIMCgRjaWRyGAEgASgJEg4KBmFzX251bRgCIAEoBBIPCgdhc19uYW1lGAMgASgJItYCCgVQcm94eRIMCgRjaWRyGAEgASgJEikKCnByb3h5X3R5cGUYAiABKA4yFS5uZXR3b3JrLnYxLlByb3h5VHlwZRIUCgxjb3VudHJ5X2NvZGUYAyABKAkSFAoMY291bnRyeV9uYW1lGAQgASgJEhMKC3JlZ2lvbl9uYW1lGAUgASgJEhEKCWNpdHlfbmFtZRgGIAEoCRILCgNpc3AYByABKAkSDgoGZG9tYWluGAggASgJEikKCnVzYWdlX3R5cGUYCSABKA4yFS5uZXR3b3JrLnYxLlVzYWdlVHlwZRILCgNhc24YCiABKAMSDwoHYXNfbmFtZRgLIAEoCRItCglsYXN0X3NlZW4YDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEisKC3RocmVhdF90eXBlGA0gASgOMhYubmV0d29yay52MS5UaHJlYXRUeXBlIi4KB0xhdExvbmcSEAoIbGF0aXR1ZGUYASABKAISEQoJbG9uZ2l0dWRlGAIgASgCIhYKFFF1ZXJ5TmV0d29ya1Jlc3BvbnNlIqQBChdRdWVyeUNvbm5lY3Rpb25zUmVxdWVzdBIXCgZmaWx0ZXIYASABKAsyBy5GaWx0ZXISEAoIc3RlYW1faWQYAiABKAkSDAoEY2lkchgDIAEoCRIUCgxjb3VudHJ5X2NvZGUYBCABKAkSFAoMY291bnRyeV9uYW1lGAUgASgJEhEKCWNpdHlfbmFtZRgGIAEoCRIRCglzZXJ2ZXJfaWQYByADKAUiTAoYUXVlcnlDb25uZWN0aW9uc1Jlc3BvbnNlEjAKCmNvbm5lY3Rpb24YASADKAsyHC5uZXR3b3JrLnYxLlBlcnNvbkNvbm5lY3Rpb24ifAoQUGVyc29uQ29ubmVjdGlvbhIcChRwZXJzb25fY29ubmVjdGlvbl9pZBgBIAEoAxIPCgdpcF9hZGRyGAIgASgJEhAKCHN0ZWFtX2lkGAMgASgJEhQKDHBlcnNvbmFfbmFtZRgEIAEoCRIRCglzZXJ2ZXJfaWQYBSABKAUq0AEKClRocmVhdFR5cGUSGwoXVEhSRUFUX1RZUEVfVU5TUEVDSUZJRUQQABIUChBUSFJFQVRfVFlQRV9TUEFNEAESFgoSVEhSRUFUX1RZUEVfQk9UTkVUEAISFwoTVEhSRUFUX1RZUEVfU0NBTk5FUhADEhsKF1RIUkVBVF9UWVBFX1NQQU1fQk9UTkVUEAQSHAoYVEhSRUFUX1RZUEVfU1BBTV9TQ0FOTkVSEAUSIwofVEhSRUFUX1RZUEVfU1BBTV9TQ0FOTkVSX0JPVE5FVBAGKssCCglVc2FnZVR5cGUSGgoWVVNBR0VfVFlQRV9VTlNQRUNJRklFRBAAEhIKDlVTQUdFX1RZUEVfQ0ROEAESHwobVVNBR0VfVFlQRV9JU1BfRklYRURfTU9CSUxFEAISGQoVVVNBR0VfVFlQRV9DT01NRVJDSUFMEAMSGQoVVVNBR0VfVFlQRV9JU1BfTU9CSUxFEAQSFgoSVVNBR0VfVFlQRV9MSUJSQVJZEAUSGgoWVVNBR0VfVFlQRV9EQVRBX0NFTlRFUhAGEhcKE1VTQUdFX1RZUEVfTUlMSVRBUlkQBxIZChVVU0FHRV9UWVBFX0dPVkVSTk1FTlQQCBIYChRVU0FHRV9UWVBFX0lTUF9GSVhFRBAJEhsKF1VTQUdFX1RZUEVfT1JHQU5JWkFUSU9OEAoSGAoUVVNBR0VfVFlQRV9FRFVDQVRJT04QCyorCglQcm94eVR5cGUSHgoaUFJPWFlfVFlQRV9QVUJfVU5TUEVDSUZJRUQQADKEAgoOTmV0d29ya1NlcnZpY2USXwoQUXVlcnlDb25uZWN0aW9ucxIjLm5ldHdvcmsudjEuUXVlcnlDb25uZWN0aW9uc1JlcXVlc3QaJC5uZXR3b3JrLnYxLlF1ZXJ5Q29ubmVjdGlvbnNSZXNwb25zZSIAElMKDFF1ZXJ5TmV0d29yaxIfLm5ldHdvcmsudjEuUXVlcnlOZXR3b3JrUmVxdWVzdBogLm5ldHdvcmsudjEuUXVlcnlOZXR3b3JrUmVzcG9uc2UiABI8CghVcGRhdGVEQhIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAQqYBCg5jb20ubmV0d29yay52MUIMTmV0d29ya1Byb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvbmV0d29yay92MTtuZXR3b3JrdjGiAgNOWFiqAgpOZXR3b3JrLlYxygIKTmV0d29ya1xWMeICFk5ldHdvcmtcVjFcR1BCTWV0YWRhdGHqAgtOZXR3b3JrOjpWMWIIZWRpdGlvbnNw6Ac", [file_filter, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+export const file_network_v1_network: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChhuZXR3b3JrL3YxL25ldHdvcmsucHJvdG8SCm5ldHdvcmsudjEiOgoTUXVlcnlOZXR3b3JrUmVxdWVzdBIXCgZmaWx0ZXIYASABKAsyBy5GaWx0ZXISCgoCaXAYAiABKAkicQoHRGV0YWlscxImCghsb2NhdGlvbhgBIAEoCzIULm5ldHdvcmsudjEuTG9jYXRpb24SHAoDYXNuGAIgASgLMg8ubmV0d29yay52MS5BU04SIAoFcHJveHkYAyABKAsyES5uZXR3b3JrLnYxLlByb3h5IpMBCghMb2NhdGlvbhIMCgRjaWRyGAEgASgJEhQKDGNvdW50cnlfY29kZRgCIAEoCRIUCgxjb3VudHJ5X25hbWUYAyABKAkSEwoLcmVnaW9uX25hbWUYBCABKAkSEQoJY2l0eV9uYW1lGAUgASgJEiUKCGxhdF9sb25nGAYgASgLMhMubmV0d29yay52MS5MYXRMb25nIjQKA0FTThIMCgRjaWRyGAEgASgJEg4KBmFzX251bRgCIAEoBBIPCgdhc19uYW1lGAMgASgJItYCCgVQcm94eRIMCgRjaWRyGAEgASgJEikKCnByb3h5X3R5cGUYAiABKA4yFS5uZXR3b3JrLnYxLlByb3h5VHlwZRIUCgxjb3VudHJ5X2NvZGUYAyABKAkSFAoMY291bnRyeV9uYW1lGAQgASgJEhMKC3JlZ2lvbl9uYW1lGAUgASgJEhEKCWNpdHlfbmFtZRgGIAEoCRILCgNpc3AYByABKAkSDgoGZG9tYWluGAggASgJEikKCnVzYWdlX3R5cGUYCSABKA4yFS5uZXR3b3JrLnYxLlVzYWdlVHlwZRILCgNhc24YCiABKAMSDwoHYXNfbmFtZRgLIAEoCRItCglsYXN0X3NlZW4YDCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEisKC3RocmVhdF90eXBlGA0gASgOMhYubmV0d29yay52MS5UaHJlYXRUeXBlIi4KB0xhdExvbmcSEAoIbGF0aXR1ZGUYASABKAISEQoJbG9uZ2l0dWRlGAIgASgCIhYKFFF1ZXJ5TmV0d29ya1Jlc3BvbnNlIqQBChdRdWVyeUNvbm5lY3Rpb25zUmVxdWVzdBIXCgZmaWx0ZXIYASABKAsyBy5GaWx0ZXISEAoIc3RlYW1faWQYAiABKAkSDAoEY2lkchgDIAEoCRIUCgxjb3VudHJ5X2NvZGUYBCABKAkSFAoMY291bnRyeV9uYW1lGAUgASgJEhEKCWNpdHlfbmFtZRgGIAEoCRIRCglzZXJ2ZXJfaWQYByADKAUiTAoYUXVlcnlDb25uZWN0aW9uc1Jlc3BvbnNlEjAKCmNvbm5lY3Rpb24YASADKAsyHC5uZXR3b3JrLnYxLlBlcnNvbkNvbm5lY3Rpb24ifAoQUGVyc29uQ29ubmVjdGlvbhIcChRwZXJzb25fY29ubmVjdGlvbl9pZBgBIAEoAxIPCgdpcF9hZGRyGAIgASgJEhAKCHN0ZWFtX2lkGAMgASgJEhQKDHBlcnNvbmFfbmFtZRgEIAEoCRIRCglzZXJ2ZXJfaWQYBSABKAUq0AEKClRocmVhdFR5cGUSGwoXVEhSRUFUX1RZUEVfVU5TUEVDSUZJRUQQABIUChBUSFJFQVRfVFlQRV9TUEFNEAESFgoSVEhSRUFUX1RZUEVfQk9UTkVUEAISFwoTVEhSRUFUX1RZUEVfU0NBTk5FUhADEhsKF1RIUkVBVF9UWVBFX1NQQU1fQk9UTkVUEAQSHAoYVEhSRUFUX1RZUEVfU1BBTV9TQ0FOTkVSEAUSIwofVEhSRUFUX1RZUEVfU1BBTV9TQ0FOTkVSX0JPVE5FVBAGKssCCglVc2FnZVR5cGUSGgoWVVNBR0VfVFlQRV9VTlNQRUNJRklFRBAAEhIKDlVTQUdFX1RZUEVfQ0ROEAESHwobVVNBR0VfVFlQRV9JU1BfRklYRURfTU9CSUxFEAISGQoVVVNBR0VfVFlQRV9DT01NRVJDSUFMEAMSGQoVVVNBR0VfVFlQRV9JU1BfTU9CSUxFEAQSFgoSVVNBR0VfVFlQRV9MSUJSQVJZEAUSGgoWVVNBR0VfVFlQRV9EQVRBX0NFTlRFUhAGEhcKE1VTQUdFX1RZUEVfTUlMSVRBUlkQBxIZChVVU0FHRV9UWVBFX0dPVkVSTk1FTlQQCBIYChRVU0FHRV9UWVBFX0lTUF9GSVhFRBAJEhsKF1VTQUdFX1RZUEVfT1JHQU5JWkFUSU9OEAoSGAoUVVNBR0VfVFlQRV9FRFVDQVRJT04QCyorCglQcm94eVR5cGUSHgoaUFJPWFlfVFlQRV9QVUJfVU5TUEVDSUZJRUQQADKEAgoOTmV0d29ya1NlcnZpY2USXwoQUXVlcnlDb25uZWN0aW9ucxIjLm5ldHdvcmsudjEuUXVlcnlDb25uZWN0aW9uc1JlcXVlc3QaJC5uZXR3b3JrLnYxLlF1ZXJ5Q29ubmVjdGlvbnNSZXNwb25zZSIAElMKDFF1ZXJ5TmV0d29yaxIfLm5ldHdvcmsudjEuUXVlcnlOZXR3b3JrUmVxdWVzdBogLm5ldHdvcmsudjEuUXVlcnlOZXR3b3JrUmVzcG9uc2UiABI8CghVcGRhdGVEQhIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAQqYBCg5jb20ubmV0d29yay52MUIMTmV0d29ya1Byb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvbmV0d29yay92MTtuZXR3b3JrdjGiAgNOWFiqAgpOZXR3b3JrLlYxygIKTmV0d29ya1xWMeICFk5ldHdvcmtcVjFcR1BCTWV0YWRhdGHqAgtOZXR3b3JrOjpWMWIIZWRpdGlvbnNw6Ac",
+		[file_filter, file_google_protobuf_empty, file_google_protobuf_timestamp],
+	);
 
 /**
  * @generated from message network.v1.QueryNetworkRequest
  */
 export type QueryNetworkRequest = Message<"network.v1.QueryNetworkRequest"> & {
-  /**
-   * @generated from field: Filter filter = 1;
-   */
-  filter?: Filter;
+	/**
+	 * @generated from field: Filter filter = 1;
+	 */
+	filter?: Filter;
 
-  /**
-   * @generated from field: string ip = 2;
-   */
-  ip: string;
+	/**
+	 * @generated from field: string ip = 2;
+	 */
+	ip: string;
 };
 
 /**
  * Describes the message network.v1.QueryNetworkRequest.
  * Use `create(QueryNetworkRequestSchema)` to create a new message.
  */
-export const QueryNetworkRequestSchema: GenMessage<QueryNetworkRequest> = /*@__PURE__*/
-  messageDesc(file_network_v1_network, 0);
+export const QueryNetworkRequestSchema: GenMessage<QueryNetworkRequest> =
+	/*@__PURE__*/
+	messageDesc(file_network_v1_network, 0);
 
 /**
  * @generated from message network.v1.Details
  */
 export type Details = Message<"network.v1.Details"> & {
-  /**
-   * @generated from field: network.v1.Location location = 1;
-   */
-  location?: Location;
+	/**
+	 * @generated from field: network.v1.Location location = 1;
+	 */
+	location?: Location;
 
-  /**
-   * @generated from field: network.v1.ASN asn = 2;
-   */
-  asn?: ASN;
+	/**
+	 * @generated from field: network.v1.ASN asn = 2;
+	 */
+	asn?: ASN;
 
-  /**
-   * @generated from field: network.v1.Proxy proxy = 3;
-   */
-  proxy?: Proxy;
+	/**
+	 * @generated from field: network.v1.Proxy proxy = 3;
+	 */
+	proxy?: Proxy;
 };
 
 /**
  * Describes the message network.v1.Details.
  * Use `create(DetailsSchema)` to create a new message.
  */
-export const DetailsSchema: GenMessage<Details> = /*@__PURE__*/
-  messageDesc(file_network_v1_network, 1);
+export const DetailsSchema: GenMessage<Details> = /*@__PURE__*/ messageDesc(file_network_v1_network, 1);
 
 /**
  * @generated from message network.v1.Location
  */
 export type Location = Message<"network.v1.Location"> & {
-  /**
-   * @generated from field: string cidr = 1;
-   */
-  cidr: string;
+	/**
+	 * @generated from field: string cidr = 1;
+	 */
+	cidr: string;
 
-  /**
-   * @generated from field: string country_code = 2;
-   */
-  countryCode: string;
+	/**
+	 * @generated from field: string country_code = 2;
+	 */
+	countryCode: string;
 
-  /**
-   * @generated from field: string country_name = 3;
-   */
-  countryName: string;
+	/**
+	 * @generated from field: string country_name = 3;
+	 */
+	countryName: string;
 
-  /**
-   * @generated from field: string region_name = 4;
-   */
-  regionName: string;
+	/**
+	 * @generated from field: string region_name = 4;
+	 */
+	regionName: string;
 
-  /**
-   * @generated from field: string city_name = 5;
-   */
-  cityName: string;
+	/**
+	 * @generated from field: string city_name = 5;
+	 */
+	cityName: string;
 
-  /**
-   * @generated from field: network.v1.LatLong lat_long = 6;
-   */
-  latLong?: LatLong;
+	/**
+	 * @generated from field: network.v1.LatLong lat_long = 6;
+	 */
+	latLong?: LatLong;
 };
 
 /**
  * Describes the message network.v1.Location.
  * Use `create(LocationSchema)` to create a new message.
  */
-export const LocationSchema: GenMessage<Location> = /*@__PURE__*/
-  messageDesc(file_network_v1_network, 2);
+export const LocationSchema: GenMessage<Location> = /*@__PURE__*/ messageDesc(file_network_v1_network, 2);
 
 /**
  * @generated from message network.v1.ASN
  */
 export type ASN = Message<"network.v1.ASN"> & {
-  /**
-   * @generated from field: string cidr = 1;
-   */
-  cidr: string;
+	/**
+	 * @generated from field: string cidr = 1;
+	 */
+	cidr: string;
 
-  /**
-   * @generated from field: uint64 as_num = 2;
-   */
-  asNum: bigint;
+	/**
+	 * @generated from field: uint64 as_num = 2;
+	 */
+	asNum: bigint;
 
-  /**
-   * @generated from field: string as_name = 3;
-   */
-  asName: string;
+	/**
+	 * @generated from field: string as_name = 3;
+	 */
+	asName: string;
 };
 
 /**
  * Describes the message network.v1.ASN.
  * Use `create(ASNSchema)` to create a new message.
  */
-export const ASNSchema: GenMessage<ASN> = /*@__PURE__*/
-  messageDesc(file_network_v1_network, 3);
+export const ASNSchema: GenMessage<ASN> = /*@__PURE__*/ messageDesc(file_network_v1_network, 3);
 
 /**
  * @generated from message network.v1.Proxy
  */
 export type Proxy = Message<"network.v1.Proxy"> & {
-  /**
-   * @generated from field: string cidr = 1;
-   */
-  cidr: string;
+	/**
+	 * @generated from field: string cidr = 1;
+	 */
+	cidr: string;
 
-  /**
-   * @generated from field: network.v1.ProxyType proxy_type = 2;
-   */
-  proxyType: ProxyType;
+	/**
+	 * @generated from field: network.v1.ProxyType proxy_type = 2;
+	 */
+	proxyType: ProxyType;
 
-  /**
-   * @generated from field: string country_code = 3;
-   */
-  countryCode: string;
+	/**
+	 * @generated from field: string country_code = 3;
+	 */
+	countryCode: string;
 
-  /**
-   * @generated from field: string country_name = 4;
-   */
-  countryName: string;
+	/**
+	 * @generated from field: string country_name = 4;
+	 */
+	countryName: string;
 
-  /**
-   * @generated from field: string region_name = 5;
-   */
-  regionName: string;
+	/**
+	 * @generated from field: string region_name = 5;
+	 */
+	regionName: string;
 
-  /**
-   * @generated from field: string city_name = 6;
-   */
-  cityName: string;
+	/**
+	 * @generated from field: string city_name = 6;
+	 */
+	cityName: string;
 
-  /**
-   * @generated from field: string isp = 7;
-   */
-  isp: string;
+	/**
+	 * @generated from field: string isp = 7;
+	 */
+	isp: string;
 
-  /**
-   * @generated from field: string domain = 8;
-   */
-  domain: string;
+	/**
+	 * @generated from field: string domain = 8;
+	 */
+	domain: string;
 
-  /**
-   * @generated from field: network.v1.UsageType usage_type = 9;
-   */
-  usageType: UsageType;
+	/**
+	 * @generated from field: network.v1.UsageType usage_type = 9;
+	 */
+	usageType: UsageType;
 
-  /**
-   * @generated from field: int64 asn = 10;
-   */
-  asn: bigint;
+	/**
+	 * @generated from field: int64 asn = 10;
+	 */
+	asn: bigint;
 
-  /**
-   * @generated from field: string as_name = 11;
-   */
-  asName: string;
+	/**
+	 * @generated from field: string as_name = 11;
+	 */
+	asName: string;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp last_seen = 12;
-   */
-  lastSeen?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp last_seen = 12;
+	 */
+	lastSeen?: Timestamp;
 
-  /**
-   * @generated from field: network.v1.ThreatType threat_type = 13;
-   */
-  threatType: ThreatType;
+	/**
+	 * @generated from field: network.v1.ThreatType threat_type = 13;
+	 */
+	threatType: ThreatType;
 };
 
 /**
  * Describes the message network.v1.Proxy.
  * Use `create(ProxySchema)` to create a new message.
  */
-export const ProxySchema: GenMessage<Proxy> = /*@__PURE__*/
-  messageDesc(file_network_v1_network, 4);
+export const ProxySchema: GenMessage<Proxy> = /*@__PURE__*/ messageDesc(file_network_v1_network, 4);
 
 /**
  * @generated from message network.v1.LatLong
  */
 export type LatLong = Message<"network.v1.LatLong"> & {
-  /**
-   * @generated from field: float latitude = 1;
-   */
-  latitude: number;
+	/**
+	 * @generated from field: float latitude = 1;
+	 */
+	latitude: number;
 
-  /**
-   * @generated from field: float longitude = 2;
-   */
-  longitude: number;
+	/**
+	 * @generated from field: float longitude = 2;
+	 */
+	longitude: number;
 };
 
 /**
  * Describes the message network.v1.LatLong.
  * Use `create(LatLongSchema)` to create a new message.
  */
-export const LatLongSchema: GenMessage<LatLong> = /*@__PURE__*/
-  messageDesc(file_network_v1_network, 5);
+export const LatLongSchema: GenMessage<LatLong> = /*@__PURE__*/ messageDesc(file_network_v1_network, 5);
 
 /**
  * @generated from message network.v1.QueryNetworkResponse
  */
-export type QueryNetworkResponse = Message<"network.v1.QueryNetworkResponse"> & {
-};
+export type QueryNetworkResponse = Message<"network.v1.QueryNetworkResponse"> & {};
 
 /**
  * Describes the message network.v1.QueryNetworkResponse.
  * Use `create(QueryNetworkResponseSchema)` to create a new message.
  */
-export const QueryNetworkResponseSchema: GenMessage<QueryNetworkResponse> = /*@__PURE__*/
-  messageDesc(file_network_v1_network, 6);
+export const QueryNetworkResponseSchema: GenMessage<QueryNetworkResponse> =
+	/*@__PURE__*/
+	messageDesc(file_network_v1_network, 6);
 
 /**
  * @generated from message network.v1.QueryConnectionsRequest
  */
 export type QueryConnectionsRequest = Message<"network.v1.QueryConnectionsRequest"> & {
-  /**
-   * @generated from field: Filter filter = 1;
-   */
-  filter?: Filter;
+	/**
+	 * @generated from field: Filter filter = 1;
+	 */
+	filter?: Filter;
 
-  /**
-   * @generated from field: string steam_id = 2;
-   */
-  steamId: string;
+	/**
+	 * @generated from field: string steam_id = 2;
+	 */
+	steamId: string;
 
-  /**
-   * @generated from field: string cidr = 3;
-   */
-  cidr: string;
+	/**
+	 * @generated from field: string cidr = 3;
+	 */
+	cidr: string;
 
-  /**
-   * @generated from field: string country_code = 4;
-   */
-  countryCode: string;
+	/**
+	 * @generated from field: string country_code = 4;
+	 */
+	countryCode: string;
 
-  /**
-   * @generated from field: string country_name = 5;
-   */
-  countryName: string;
+	/**
+	 * @generated from field: string country_name = 5;
+	 */
+	countryName: string;
 
-  /**
-   * @generated from field: string city_name = 6;
-   */
-  cityName: string;
+	/**
+	 * @generated from field: string city_name = 6;
+	 */
+	cityName: string;
 
-  /**
-   * @generated from field: repeated int32 server_id = 7;
-   */
-  serverId: number[];
+	/**
+	 * @generated from field: repeated int32 server_id = 7;
+	 */
+	serverId: number[];
 };
 
 /**
  * Describes the message network.v1.QueryConnectionsRequest.
  * Use `create(QueryConnectionsRequestSchema)` to create a new message.
  */
-export const QueryConnectionsRequestSchema: GenMessage<QueryConnectionsRequest> = /*@__PURE__*/
-  messageDesc(file_network_v1_network, 7);
+export const QueryConnectionsRequestSchema: GenMessage<QueryConnectionsRequest> =
+	/*@__PURE__*/
+	messageDesc(file_network_v1_network, 7);
 
 /**
  * @generated from message network.v1.QueryConnectionsResponse
  */
 export type QueryConnectionsResponse = Message<"network.v1.QueryConnectionsResponse"> & {
-  /**
-   * @generated from field: repeated network.v1.PersonConnection connection = 1;
-   */
-  connection: PersonConnection[];
+	/**
+	 * @generated from field: repeated network.v1.PersonConnection connection = 1;
+	 */
+	connection: PersonConnection[];
 };
 
 /**
  * Describes the message network.v1.QueryConnectionsResponse.
  * Use `create(QueryConnectionsResponseSchema)` to create a new message.
  */
-export const QueryConnectionsResponseSchema: GenMessage<QueryConnectionsResponse> = /*@__PURE__*/
-  messageDesc(file_network_v1_network, 8);
+export const QueryConnectionsResponseSchema: GenMessage<QueryConnectionsResponse> =
+	/*@__PURE__*/
+	messageDesc(file_network_v1_network, 8);
 
 /**
  * @generated from message network.v1.PersonConnection
  */
 export type PersonConnection = Message<"network.v1.PersonConnection"> & {
-  /**
-   * @generated from field: int64 person_connection_id = 1;
-   */
-  personConnectionId: bigint;
+	/**
+	 * @generated from field: int64 person_connection_id = 1;
+	 */
+	personConnectionId: bigint;
 
-  /**
-   * @generated from field: string ip_addr = 2;
-   */
-  ipAddr: string;
+	/**
+	 * @generated from field: string ip_addr = 2;
+	 */
+	ipAddr: string;
 
-  /**
-   * @generated from field: string steam_id = 3;
-   */
-  steamId: string;
+	/**
+	 * @generated from field: string steam_id = 3;
+	 */
+	steamId: string;
 
-  /**
-   * @generated from field: string persona_name = 4;
-   */
-  personaName: string;
+	/**
+	 * @generated from field: string persona_name = 4;
+	 */
+	personaName: string;
 
-  /**
-   * @generated from field: int32 server_id = 5;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 5;
+	 */
+	serverId: number;
 };
 
 /**
  * Describes the message network.v1.PersonConnection.
  * Use `create(PersonConnectionSchema)` to create a new message.
  */
-export const PersonConnectionSchema: GenMessage<PersonConnection> = /*@__PURE__*/
-  messageDesc(file_network_v1_network, 9);
+export const PersonConnectionSchema: GenMessage<PersonConnection> =
+	/*@__PURE__*/
+	messageDesc(file_network_v1_network, 9);
 
 /**
  * @generated from enum network.v1.ThreatType
  */
 export enum ThreatType {
-  /**
-   * @generated from enum value: THREAT_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: THREAT_TYPE_UNSPECIFIED = 0;
+	 */
+	UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: THREAT_TYPE_SPAM = 1;
-   */
-  SPAM = 1,
+	/**
+	 * @generated from enum value: THREAT_TYPE_SPAM = 1;
+	 */
+	SPAM = 1,
 
-  /**
-   * @generated from enum value: THREAT_TYPE_BOTNET = 2;
-   */
-  BOTNET = 2,
+	/**
+	 * @generated from enum value: THREAT_TYPE_BOTNET = 2;
+	 */
+	BOTNET = 2,
 
-  /**
-   * @generated from enum value: THREAT_TYPE_SCANNER = 3;
-   */
-  SCANNER = 3,
+	/**
+	 * @generated from enum value: THREAT_TYPE_SCANNER = 3;
+	 */
+	SCANNER = 3,
 
-  /**
-   * @generated from enum value: THREAT_TYPE_SPAM_BOTNET = 4;
-   */
-  SPAM_BOTNET = 4,
+	/**
+	 * @generated from enum value: THREAT_TYPE_SPAM_BOTNET = 4;
+	 */
+	SPAM_BOTNET = 4,
 
-  /**
-   * @generated from enum value: THREAT_TYPE_SPAM_SCANNER = 5;
-   */
-  SPAM_SCANNER = 5,
+	/**
+	 * @generated from enum value: THREAT_TYPE_SPAM_SCANNER = 5;
+	 */
+	SPAM_SCANNER = 5,
 
-  /**
-   * @generated from enum value: THREAT_TYPE_SPAM_SCANNER_BOTNET = 6;
-   */
-  SPAM_SCANNER_BOTNET = 6,
+	/**
+	 * @generated from enum value: THREAT_TYPE_SPAM_SCANNER_BOTNET = 6;
+	 */
+	SPAM_SCANNER_BOTNET = 6,
 }
 
 /**
  * Describes the enum network.v1.ThreatType.
  */
-export const ThreatTypeSchema: GenEnum<ThreatType> = /*@__PURE__*/
-  enumDesc(file_network_v1_network, 0);
+export const ThreatTypeSchema: GenEnum<ThreatType> = /*@__PURE__*/ enumDesc(file_network_v1_network, 0);
 
 /**
  * @generated from enum network.v1.UsageType
  */
 export enum UsageType {
-  /**
-   * @generated from enum value: USAGE_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: USAGE_TYPE_UNSPECIFIED = 0;
+	 */
+	UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_CDN = 1;
-   */
-  CDN = 1,
+	/**
+	 * @generated from enum value: USAGE_TYPE_CDN = 1;
+	 */
+	CDN = 1,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_ISP_FIXED_MOBILE = 2;
-   */
-  ISP_FIXED_MOBILE = 2,
+	/**
+	 * @generated from enum value: USAGE_TYPE_ISP_FIXED_MOBILE = 2;
+	 */
+	ISP_FIXED_MOBILE = 2,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_COMMERCIAL = 3;
-   */
-  COMMERCIAL = 3,
+	/**
+	 * @generated from enum value: USAGE_TYPE_COMMERCIAL = 3;
+	 */
+	COMMERCIAL = 3,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_ISP_MOBILE = 4;
-   */
-  ISP_MOBILE = 4,
+	/**
+	 * @generated from enum value: USAGE_TYPE_ISP_MOBILE = 4;
+	 */
+	ISP_MOBILE = 4,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_LIBRARY = 5;
-   */
-  LIBRARY = 5,
+	/**
+	 * @generated from enum value: USAGE_TYPE_LIBRARY = 5;
+	 */
+	LIBRARY = 5,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_DATA_CENTER = 6;
-   */
-  DATA_CENTER = 6,
+	/**
+	 * @generated from enum value: USAGE_TYPE_DATA_CENTER = 6;
+	 */
+	DATA_CENTER = 6,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_MILITARY = 7;
-   */
-  MILITARY = 7,
+	/**
+	 * @generated from enum value: USAGE_TYPE_MILITARY = 7;
+	 */
+	MILITARY = 7,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_GOVERNMENT = 8;
-   */
-  GOVERNMENT = 8,
+	/**
+	 * @generated from enum value: USAGE_TYPE_GOVERNMENT = 8;
+	 */
+	GOVERNMENT = 8,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_ISP_FIXED = 9;
-   */
-  ISP_FIXED = 9,
+	/**
+	 * @generated from enum value: USAGE_TYPE_ISP_FIXED = 9;
+	 */
+	ISP_FIXED = 9,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_ORGANIZATION = 10;
-   */
-  ORGANIZATION = 10,
+	/**
+	 * @generated from enum value: USAGE_TYPE_ORGANIZATION = 10;
+	 */
+	ORGANIZATION = 10,
 
-  /**
-   * @generated from enum value: USAGE_TYPE_EDUCATION = 11;
-   */
-  EDUCATION = 11,
+	/**
+	 * @generated from enum value: USAGE_TYPE_EDUCATION = 11;
+	 */
+	EDUCATION = 11,
 }
 
 /**
  * Describes the enum network.v1.UsageType.
  */
-export const UsageTypeSchema: GenEnum<UsageType> = /*@__PURE__*/
-  enumDesc(file_network_v1_network, 1);
+export const UsageTypeSchema: GenEnum<UsageType> = /*@__PURE__*/ enumDesc(file_network_v1_network, 1);
 
 /**
  * @generated from enum network.v1.ProxyType
  */
 export enum ProxyType {
-  /**
-   * @generated from enum value: PROXY_TYPE_PUB_UNSPECIFIED = 0;
-   */
-  PUB_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: PROXY_TYPE_PUB_UNSPECIFIED = 0;
+	 */
+	PUB_UNSPECIFIED = 0,
 }
 
 /**
  * Describes the enum network.v1.ProxyType.
  */
-export const ProxyTypeSchema: GenEnum<ProxyType> = /*@__PURE__*/
-  enumDesc(file_network_v1_network, 2);
+export const ProxyTypeSchema: GenEnum<ProxyType> = /*@__PURE__*/ enumDesc(file_network_v1_network, 2);
 
 /**
  * @generated from service network.v1.NetworkService
  */
 export const NetworkService: GenService<{
-  /**
-   * @generated from rpc network.v1.NetworkService.QueryConnections
-   */
-  queryConnections: {
-    methodKind: "unary";
-    input: typeof QueryConnectionsRequestSchema;
-    output: typeof QueryConnectionsResponseSchema;
-  },
-  /**
-   * @generated from rpc network.v1.NetworkService.QueryNetwork
-   */
-  queryNetwork: {
-    methodKind: "unary";
-    input: typeof QueryNetworkRequestSchema;
-    output: typeof QueryNetworkResponseSchema;
-  },
-  /**
-   * @generated from rpc network.v1.NetworkService.UpdateDB
-   */
-  updateDB: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof EmptySchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_network_v1_network, 0);
-
+	/**
+	 * @generated from rpc network.v1.NetworkService.QueryConnections
+	 */
+	queryConnections: {
+		methodKind: "unary";
+		input: typeof QueryConnectionsRequestSchema;
+		output: typeof QueryConnectionsResponseSchema;
+	};
+	/**
+	 * @generated from rpc network.v1.NetworkService.QueryNetwork
+	 */
+	queryNetwork: {
+		methodKind: "unary";
+		input: typeof QueryNetworkRequestSchema;
+		output: typeof QueryNetworkResponseSchema;
+	};
+	/**
+	 * @generated from rpc network.v1.NetworkService.UpdateDB
+	 */
+	updateDB: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof EmptySchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_network_v1_network, 0);

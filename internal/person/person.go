@@ -78,10 +78,10 @@ type Person struct {
 	PatreonID         string       `json:"patreon_id"`
 	IPAddr            netip.Addr   `json:"-"`
 	CommunityBanned   bool         `json:"community_banned"`
-	VACBans           int          `json:"vac_bans"`
-	GameBans          int          `json:"game_bans"`
+	VACBans           int32        `json:"vac_bans"`
+	GameBans          int32        `json:"game_bans"`
 	EconomyBan        EconBanState `json:"economy_ban"`
-	DaysSinceLastBan  int          `json:"days_since_last_ban"`
+	DaysSinceLastBan  int32        `json:"days_since_last_ban"`
 	UpdatedOnSteam    time.Time    `json:"updated_on_steam"`
 	AvatarHash        string       `json:"avatar_hash"`
 	CommentPermission int64        `json:"comment_permission"`
@@ -115,9 +115,9 @@ func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBa
 	p.RealName = summary.RealName
 	p.TimeCreated = summary.TimeCreated
 	p.CommentPermission = summary.CommentPermission
-	p.VACBans = int(steamBan.NumberOfVacBans)
-	p.GameBans = int(steamBan.NumberOfGameBans)
-	p.DaysSinceLastBan = int(steamBan.DaysSinceLastBan)
+	p.VACBans = int32(steamBan.NumberOfVacBans)
+	p.GameBans = int32(steamBan.NumberOfGameBans)
+	p.DaysSinceLastBan = int32(steamBan.DaysSinceLastBan)
 	p.CommunityBanned = steamBan.CommunityBanned
 	p.EconomyBan = EconBanState(steamBan.EconomyBan)
 	p.UpdatedOn = time.Now()
@@ -126,11 +126,11 @@ func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBa
 	return p
 }
 
-func (p Person) GetVACBans() int {
+func (p Person) GetVACBans() int32 {
 	return p.VACBans
 }
 
-func (p Person) GetGameBans() int {
+func (p Person) GetGameBans() int32 {
 	return p.GameBans
 }
 
@@ -179,7 +179,7 @@ func (p Person) HasPermission(privilege permission.Privilege) bool {
 }
 
 func (p Person) GetAvatar() person.Avatar {
-	return person.NewAvatar(p.AvatarHash)
+	return person.Avatar(p.AvatarHash)
 }
 
 func (p Person) GetSteamID() steamid.SteamID {
@@ -426,11 +426,11 @@ func (u *Persons) UpdateProfiles(ctx context.Context, _ pgx.Tx, people People) (
 			}
 
 			player.CommunityBanned = banState.CommunityBanned
-			player.VACBans = int(banState.NumberOfVacBans)
-			player.GameBans = int(banState.NumberOfGameBans)
+			player.VACBans = int32(banState.NumberOfVacBans)
+			player.GameBans = int32(banState.NumberOfGameBans)
 			player.EconomyBan = EconBanState(banState.EconomyBan)
 			player.CommunityBanned = banState.CommunityBanned
-			player.DaysSinceLastBan = int(banState.DaysSinceLastBan)
+			player.DaysSinceLastBan = int32(banState.DaysSinceLastBan)
 		}
 
 		if errSavePerson := u.repo.Save(ctx, &player); errSavePerson != nil {

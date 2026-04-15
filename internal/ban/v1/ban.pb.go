@@ -283,6 +283,7 @@ type UpdateRequest struct {
 	EvadeOk       *bool                  `protobuf:"varint,6,opt,name=evade_ok,json=evadeOk" json:"evade_ok,omitempty"`
 	Duration      *string                `protobuf:"bytes,7,opt,name=duration" json:"duration,omitempty"`
 	Cidr          *string                `protobuf:"bytes,8,opt,name=cidr" json:"cidr,omitempty"`
+	BanId         *int64                 `protobuf:"varint,9,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -371,6 +372,13 @@ func (x *UpdateRequest) GetCidr() string {
 		return *x.Cidr
 	}
 	return ""
+}
+
+func (x *UpdateRequest) GetBanId() int64 {
+	if x != nil && x.BanId != nil {
+		return *x.BanId
+	}
+	return 0
 }
 
 type UpdateResponse struct {
@@ -615,7 +623,7 @@ func (x *QuerySourceBansResponse) GetBans() []*SourceBanRecord {
 
 type GetBanRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BanId         *int32                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -650,7 +658,7 @@ func (*GetBanRequest) Descriptor() ([]byte, []int) {
 	return file_ban_v1_ban_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *GetBanRequest) GetBanId() int32 {
+func (x *GetBanRequest) GetBanId() int64 {
 	if x != nil && x.BanId != nil {
 		return *x.BanId
 	}
@@ -704,6 +712,7 @@ func (x *GetBanResponse) GetBan() *Ban {
 type DeleteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	BanId         *int64                 `protobuf:"varint,1,opt,name=ban_id,json=banId" json:"ban_id,omitempty"`
+	Reason        *string                `protobuf:"bytes,2,opt,name=reason" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -743,6 +752,13 @@ func (x *DeleteRequest) GetBanId() int64 {
 		return *x.BanId
 	}
 	return 0
+}
+
+func (x *DeleteRequest) GetReason() string {
+	if x != nil && x.Reason != nil {
+		return *x.Reason
+	}
+	return ""
 }
 
 type QueryRequest struct {
@@ -1121,7 +1137,7 @@ var File_ban_v1_ban_proto protoreflect.FileDescriptor
 
 const file_ban_v1_ban_proto_rawDesc = "" +
 	"\n" +
-	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\x1bbuf/validate/validate.proto\x1a\ffilter.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x83\x02\n" +
+	"\x10ban/v1/ban.proto\x12\x06ban.v1\x1a\x1bbuf/validate/validate.proto\x1a\ffilter.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9a\x02\n" +
 	"\rUpdateRequest\x12\x1b\n" +
 	"\ttarget_id\x18\x01 \x01(\tR\btargetId\x12*\n" +
 	"\bban_type\x18\x02 \x01(\x0e2\x0f.ban.v1.BanTypeR\abanType\x12)\n" +
@@ -1131,7 +1147,8 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x04note\x18\x05 \x01(\tR\x04note\x12\x19\n" +
 	"\bevade_ok\x18\x06 \x01(\bR\aevadeOk\x12\x1a\n" +
 	"\bduration\x18\a \x01(\tR\bduration\x12\x12\n" +
-	"\x04cidr\x18\b \x01(\tR\x04cidr\"/\n" +
+	"\x04cidr\x18\b \x01(\tR\x04cidr\x12\x15\n" +
+	"\x06ban_id\x18\t \x01(\x03R\x05banId\"/\n" +
 	"\x0eUpdateResponse\x12\x1d\n" +
 	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\"3\n" +
 	"\x16QuerySourceBansRequest\x12\x19\n" +
@@ -1150,11 +1167,12 @@ const file_ban_v1_ban_proto_rawDesc = "" +
 	"\x17QuerySourceBansResponse\x12+\n" +
 	"\x04bans\x18\x01 \x03(\v2\x17.ban.v1.SourceBanRecordR\x04bans\"&\n" +
 	"\rGetBanRequest\x12\x15\n" +
-	"\x06ban_id\x18\x01 \x01(\x05R\x05banId\"/\n" +
+	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\"/\n" +
 	"\x0eGetBanResponse\x12\x1d\n" +
-	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\"&\n" +
+	"\x03ban\x18\x01 \x01(\v2\v.ban.v1.BanR\x03ban\">\n" +
 	"\rDeleteRequest\x12\x15\n" +
-	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\"\x82\x02\n" +
+	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"\x82\x02\n" +
 	"\fQueryRequest\x12\x1b\n" +
 	"\tsource_id\x18\x01 \x01(\x03R\bsourceId\x12\x1b\n" +
 	"\ttarget_id\x18\x02 \x01(\x03R\btargetId\x12\x1f\n" +
