@@ -59,6 +59,7 @@ message UpdateRequest {
   bool evade_ok = 6;
   string duration = 7;
   string cidr = 8;
+  int64 ban_id = 9;
 }
 message UpdateResponse {
   Ban ban = 1;
@@ -85,7 +86,7 @@ message QuerySourceBansResponse {
 }
 
 message GetBanRequest {
-  int32 ban_id = 1;
+  int64 ban_id = 1;
 }
 
 message GetBanResponse {
@@ -94,6 +95,7 @@ message GetBanResponse {
 
 message DeleteRequest {
   int64 ban_id = 1;
+  string reason = 2;
 }
 
 message QueryRequest {

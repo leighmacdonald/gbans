@@ -16,7 +16,7 @@ var templateBody []byte
 
 type catSaveView struct {
 	Category    string
-	ID          int
+	ID          int32
 	Description string
 }
 
@@ -52,11 +52,11 @@ func discordCategoryDelete(category Category) *discordgo.MessageSend {
 
 type messageSaveView struct {
 	Msg     *Message
-	Author  person.Info
+	Author  person.BaseUser
 	Parents parents
 }
 
-func discordForumMessageSaved(parent parents, author person.Info, forumMessage *Message) *discordgo.MessageSend {
+func discordForumMessageSaved(parent parents, author person.BaseUser, forumMessage *Message) *discordgo.MessageSend {
 	return discord.NewMessage(
 		discord.Heading("Forum Message Created/Edited"),
 		discord.BodyTextWithThumbnail(discord.ColourSuccess,

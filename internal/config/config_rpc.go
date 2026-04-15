@@ -25,6 +25,7 @@ import (
 
 type RPC struct {
 	configv1connect.UnimplementedConfigServiceHandler
+
 	*Configuration
 	version string
 }
@@ -64,6 +65,7 @@ func (r *RPC) Info(context.Context, *emptypb.Empty) (*configv1.InfoResponse, err
 		SpeedrunsEnabled: &conf.General.SpeedrunsEnabled,
 		MgeEnabled:       &conf.General.MGEEnabled,
 	}
+
 	return &resp, nil
 }
 
@@ -261,7 +263,6 @@ func toAction(action anticheat.Action) configv1.Action {
 		fallthrough
 	default:
 		return configv1.Action_ACTION_KICK_UNSPECIFIED
-
 	}
 }
 

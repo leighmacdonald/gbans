@@ -488,26 +488,26 @@ function AdminSettings() {
 									</Grid>
 
 									<Grid size={{ xs: 12 }}>
-						<SubHeading>Enable showing the mge rankings.</SubHeading>
-						<form.AppField
-							name={"mge_enabled"}
-							children={(field) => {
-								return <field.CheckboxField label={"Enable mge rankings"} />;
-							}}
-						/>
-					</Grid>
+										<SubHeading>Enable showing the mge rankings.</SubHeading>
+										<form.AppField
+											name={"mge_enabled"}
+											children={(field) => {
+												return <field.CheckboxField label={"Enable mge rankings"} />;
+											}}
+										/>
+									</Grid>
 
-					<Grid size={{ xs: 12 }}>
-						<SubHeading>Enable showing the mge rankings.</SubHeading>
-						<form.AppField
-							name={"mge_enabled"}
-							children={(field) => {
-								return <field.CheckboxField label={"Enable mge rankings"} />;
-							}}
-						/>
-					</Grid>
+									<Grid size={{ xs: 12 }}>
+										<SubHeading>Enable showing the mge rankings.</SubHeading>
+										<form.AppField
+											name={"mge_enabled"}
+											children={(field) => {
+												return <field.CheckboxField label={"Enable mge rankings"} />;
+											}}
+										/>
+									</Grid>
 
-					<Grid size={{ xs: 12 }}>
+									<Grid size={{ xs: 12 }}>
 										<SubHeading>Enables the 1000 uncles speedruns tracking support.</SubHeading>
 										<form.AppField
 											name={"speedruns_enabled"}

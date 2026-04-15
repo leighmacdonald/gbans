@@ -134,7 +134,7 @@ func NewSiteGroup(groups []permission.Privilege, severity Severity, message stri
 	}
 }
 
-func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ person.Info) Payload {
+func NewSiteGroupNotificationWithAuthor(groups []permission.Privilege, severity Severity, message string, link string, _ person.BaseUser) Payload {
 	payload := NewSiteGroup(groups, severity, message, link)
 	// payload.Author = &author
 

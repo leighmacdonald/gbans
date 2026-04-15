@@ -79,7 +79,7 @@ function MGEOverall() {
 	});
 
 	const setSorting: OnChangeFn<MRT_SortingState> = useCallback(
-        async (updater) => {
+		async (updater) => {
 			await navigate({
 				to: "/mge/1v1",
 				search: {
@@ -92,7 +92,7 @@ function MGEOverall() {
 	);
 
 	const setColumnFilters: OnChangeFn<MRT_ColumnFiltersState> = useCallback(
-        async (updater) => {
+		async (updater) => {
 			await navigate({
 				to: "/mge",
 				search: {

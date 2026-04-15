@@ -14,11 +14,11 @@ message Campaign {
   string type = 1;
   string id = 2;
   Attributes attributes = 3;
-  Relationships relationships= 4;
+  Relationships relationships = 4;
 }
 
 message CampaignsResponse {
-    repeated Campaign campaigns = 1;
+  repeated Campaign campaigns = 1;
 }
 
 message Attributes {
@@ -26,9 +26,9 @@ message Attributes {
   string creation_name = 2;
   string discord_server_id = 3;
   string google_analytics_id = 4;
-  bool has_rss  =5;
+  bool has_rss = 5;
   bool has_sent_rss_notify = 6;
-  string image_small_url =7;
+  string image_small_url = 7;
   string image_url = 8;
   bool is_changed_immediately = 9;
   bool is_monthly = 10;
@@ -36,7 +36,7 @@ message Attributes {
   string main_video_embed = 12;
   string main_video_url = 13;
   string one_liner = 14;
-  int32 patron_count =15;
+  int32 patron_count = 15;
   string pay_per_name = 16;
   string pledge_url = 17;
   google.protobuf.Timestamp published_at = 18;

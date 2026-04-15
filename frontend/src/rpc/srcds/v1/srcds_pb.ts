@@ -16,244 +16,246 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file srcds/v1/srcds.proto.
  */
-export const file_srcds_v1_srcds: GenFile = /*@__PURE__*/
-  fileDesc("ChRzcmNkcy92MS9zcmNkcy5wcm90bxIKc2VydmVycy52MSIyCgtTZWVkUmVxdWVzdBIQCghzdGVhbV9pZBgBIAEoCRIRCglzZXJ2ZXJfaWQYAiABKAUiYgoMQ2hlY2tSZXF1ZXN0EhEKCWNsaWVudF9pZBgBIAEoBRIlCghiYW5fdHlwZRgCIAEoDjITLnNlcnZlcnMudjEuQmFuVHlwZRIKCgJpcBgDIAEoCRIMCgRuYW1lGAQgASgJIlYKDUNoZWNrUmVzcG9uc2USEQoJY2xpZW50X2lkGAEgASgFEiUKCGJhbl90eXBlGAIgASgOMhMuc2VydmVycy52MS5CYW5UeXBlEgsKA21zZxgDIAEoCSK5AQoIT3ZlcnJpZGUSEwoLb3ZlcnJpZGVfaWQYASABKAUSGwoEdHlwZRgCIAEoDjINLk92ZXJyaWRlVHlwZRIMCgRuYW1lGAMgASgJEg0KBWZsYWdzGAQgASgJEi4KCmNyZWF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIjwKEU92ZXJyaWRlc1Jlc3BvbnNlEicKCW92ZXJyaWRlcxgBIAMoCzIULnNlcnZlcnMudjEuT3ZlcnJpZGUikAIKBUFkbWluEhAKCGFkbWluX2lkGAEgASgFEhAKCHN0ZWFtX2lkGAIgASgJEicKCWF1dGhfdHlwZRgDIAEoDjIULnNlcnZlcnMudjEuQXV0aFR5cGUSEAoIaWRlbnRpdHkYBCABKAkSEAoIcGFzc3dvcmQYBSABKAkSDAoEbmFtZRgGIAEoCRIQCghpbW11bml0eRgHIAEoBRIWCgZncm91cHMYCCADKAsyBi5Hcm91cBIuCgpjcmVhdGVkX29uGAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIyCg1Vc2Vyc1Jlc3BvbnNlEiEKBmFkbWlucxgBIAMoCzIRLnNlcnZlcnMudjEuQWRtaW4iKAoOR3JvdXBzUmVzcG9uc2USFgoGZ3JvdXBzGAEgAygLMgYuR3JvdXAqZwoHQmFuVHlwZRIbChdCQU5fVFlQRV9PS19VTlNQRUNJRklFRBAAEhQKEEJBTl9UWVBFX05PX0NPTU0QARITCg9CQU5fVFlQRV9CQU5ORUQQAhIUChBCQU5fVFlQRV9ORVRXT1JLEAMqUQoIQXV0aFR5cGUSHwobQVVUSF9UWVBFX1NURUFNX1VOU1BFQ0lGSUVEEAASEgoOQVVUSF9UWVBFX05BTUUQARIQCgxBVVRIX1RZUEVfSVAQAjLNAgoMU1JDRFNTZXJ2aWNlEj4KBUNoZWNrEhguc2VydmVycy52MS5DaGVja1JlcXVlc3QaGS5zZXJ2ZXJzLnYxLkNoZWNrUmVzcG9uc2UiABJECglPdmVycmlkZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHS5zZXJ2ZXJzLnYxLk92ZXJyaWRlc1Jlc3BvbnNlIgASPAoFVXNlcnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGS5zZXJ2ZXJzLnYxLlVzZXJzUmVzcG9uc2UiABI+CgZHcm91cHMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGi5zZXJ2ZXJzLnYxLkdyb3Vwc1Jlc3BvbnNlIgASOQoEU2VlZBIXLnNlcnZlcnMudjEuU2VlZFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiAEKiAQoOY29tLnNlcnZlcnMudjFCClNyY2RzUHJvdG9QAVo7Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9zcmNkcy92MTtzZXJ2ZXJzdjGiAgNTWFiqAgpTZXJ2ZXJzLlYxygIKU2VydmVyc1xWMeICFlNlcnZlcnNcVjFcR1BCTWV0YWRhdGHqAgtTZXJ2ZXJzOjpWMWIIZWRpdGlvbnNw6Ac", [file_google_protobuf_empty, file_google_protobuf_timestamp, file_group, file_overridetype, file_sourcemod_v1_sourcemod]);
+export const file_srcds_v1_srcds: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChRzcmNkcy92MS9zcmNkcy5wcm90bxIKc2VydmVycy52MSIyCgtTZWVkUmVxdWVzdBIQCghzdGVhbV9pZBgBIAEoCRIRCglzZXJ2ZXJfaWQYAiABKAUiYgoMQ2hlY2tSZXF1ZXN0EhEKCWNsaWVudF9pZBgBIAEoBRIlCghiYW5fdHlwZRgCIAEoDjITLnNlcnZlcnMudjEuQmFuVHlwZRIKCgJpcBgDIAEoCRIMCgRuYW1lGAQgASgJIlYKDUNoZWNrUmVzcG9uc2USEQoJY2xpZW50X2lkGAEgASgFEiUKCGJhbl90eXBlGAIgASgOMhMuc2VydmVycy52MS5CYW5UeXBlEgsKA21zZxgDIAEoCSK5AQoIT3ZlcnJpZGUSEwoLb3ZlcnJpZGVfaWQYASABKAUSGwoEdHlwZRgCIAEoDjINLk92ZXJyaWRlVHlwZRIMCgRuYW1lGAMgASgJEg0KBWZsYWdzGAQgASgJEi4KCmNyZWF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIjwKEU92ZXJyaWRlc1Jlc3BvbnNlEicKCW92ZXJyaWRlcxgBIAMoCzIULnNlcnZlcnMudjEuT3ZlcnJpZGUikAIKBUFkbWluEhAKCGFkbWluX2lkGAEgASgFEhAKCHN0ZWFtX2lkGAIgASgJEicKCWF1dGhfdHlwZRgDIAEoDjIULnNlcnZlcnMudjEuQXV0aFR5cGUSEAoIaWRlbnRpdHkYBCABKAkSEAoIcGFzc3dvcmQYBSABKAkSDAoEbmFtZRgGIAEoCRIQCghpbW11bml0eRgHIAEoBRIWCgZncm91cHMYCCADKAsyBi5Hcm91cBIuCgpjcmVhdGVkX29uGAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCIyCg1Vc2Vyc1Jlc3BvbnNlEiEKBmFkbWlucxgBIAMoCzIRLnNlcnZlcnMudjEuQWRtaW4iKAoOR3JvdXBzUmVzcG9uc2USFgoGZ3JvdXBzGAEgAygLMgYuR3JvdXAqZwoHQmFuVHlwZRIbChdCQU5fVFlQRV9PS19VTlNQRUNJRklFRBAAEhQKEEJBTl9UWVBFX05PX0NPTU0QARITCg9CQU5fVFlQRV9CQU5ORUQQAhIUChBCQU5fVFlQRV9ORVRXT1JLEAMqUQoIQXV0aFR5cGUSHwobQVVUSF9UWVBFX1NURUFNX1VOU1BFQ0lGSUVEEAASEgoOQVVUSF9UWVBFX05BTUUQARIQCgxBVVRIX1RZUEVfSVAQAjLNAgoMU1JDRFNTZXJ2aWNlEj4KBUNoZWNrEhguc2VydmVycy52MS5DaGVja1JlcXVlc3QaGS5zZXJ2ZXJzLnYxLkNoZWNrUmVzcG9uc2UiABJECglPdmVycmlkZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHS5zZXJ2ZXJzLnYxLk92ZXJyaWRlc1Jlc3BvbnNlIgASPAoFVXNlcnMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGS5zZXJ2ZXJzLnYxLlVzZXJzUmVzcG9uc2UiABI+CgZHcm91cHMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaGi5zZXJ2ZXJzLnYxLkdyb3Vwc1Jlc3BvbnNlIgASOQoEU2VlZBIXLnNlcnZlcnMudjEuU2VlZFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiAEKiAQoOY29tLnNlcnZlcnMudjFCClNyY2RzUHJvdG9QAVo7Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9zcmNkcy92MTtzZXJ2ZXJzdjGiAgNTWFiqAgpTZXJ2ZXJzLlYxygIKU2VydmVyc1xWMeICFlNlcnZlcnNcVjFcR1BCTWV0YWRhdGHqAgtTZXJ2ZXJzOjpWMWIIZWRpdGlvbnNw6Ac",
+		[
+			file_google_protobuf_empty,
+			file_google_protobuf_timestamp,
+			file_group,
+			file_overridetype,
+			file_sourcemod_v1_sourcemod,
+		],
+	);
 
 /**
  * @generated from message servers.v1.SeedRequest
  */
 export type SeedRequest = Message<"servers.v1.SeedRequest"> & {
-  /**
-   * @generated from field: string steam_id = 1;
-   */
-  steamId: string;
+	/**
+	 * @generated from field: string steam_id = 1;
+	 */
+	steamId: string;
 
-  /**
-   * @generated from field: int32 server_id = 2;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 2;
+	 */
+	serverId: number;
 };
 
 /**
  * Describes the message servers.v1.SeedRequest.
  * Use `create(SeedRequestSchema)` to create a new message.
  */
-export const SeedRequestSchema: GenMessage<SeedRequest> = /*@__PURE__*/
-  messageDesc(file_srcds_v1_srcds, 0);
+export const SeedRequestSchema: GenMessage<SeedRequest> = /*@__PURE__*/ messageDesc(file_srcds_v1_srcds, 0);
 
 /**
  * @generated from message servers.v1.CheckRequest
  */
 export type CheckRequest = Message<"servers.v1.CheckRequest"> & {
-  /**
-   * @generated from field: int32 client_id = 1;
-   */
-  clientId: number;
+	/**
+	 * @generated from field: int32 client_id = 1;
+	 */
+	clientId: number;
 
-  /**
-   * @generated from field: servers.v1.BanType ban_type = 2;
-   */
-  banType: BanType;
+	/**
+	 * @generated from field: servers.v1.BanType ban_type = 2;
+	 */
+	banType: BanType;
 
-  /**
-   * @generated from field: string ip = 3;
-   */
-  ip: string;
+	/**
+	 * @generated from field: string ip = 3;
+	 */
+	ip: string;
 
-  /**
-   * @generated from field: string name = 4;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 4;
+	 */
+	name: string;
 };
 
 /**
  * Describes the message servers.v1.CheckRequest.
  * Use `create(CheckRequestSchema)` to create a new message.
  */
-export const CheckRequestSchema: GenMessage<CheckRequest> = /*@__PURE__*/
-  messageDesc(file_srcds_v1_srcds, 1);
+export const CheckRequestSchema: GenMessage<CheckRequest> = /*@__PURE__*/ messageDesc(file_srcds_v1_srcds, 1);
 
 /**
  * @generated from message servers.v1.CheckResponse
  */
 export type CheckResponse = Message<"servers.v1.CheckResponse"> & {
-  /**
-   * @generated from field: int32 client_id = 1;
-   */
-  clientId: number;
+	/**
+	 * @generated from field: int32 client_id = 1;
+	 */
+	clientId: number;
 
-  /**
-   * @generated from field: servers.v1.BanType ban_type = 2;
-   */
-  banType: BanType;
+	/**
+	 * @generated from field: servers.v1.BanType ban_type = 2;
+	 */
+	banType: BanType;
 
-  /**
-   * @generated from field: string msg = 3;
-   */
-  msg: string;
+	/**
+	 * @generated from field: string msg = 3;
+	 */
+	msg: string;
 };
 
 /**
  * Describes the message servers.v1.CheckResponse.
  * Use `create(CheckResponseSchema)` to create a new message.
  */
-export const CheckResponseSchema: GenMessage<CheckResponse> = /*@__PURE__*/
-  messageDesc(file_srcds_v1_srcds, 2);
+export const CheckResponseSchema: GenMessage<CheckResponse> = /*@__PURE__*/ messageDesc(file_srcds_v1_srcds, 2);
 
 /**
  * @generated from message servers.v1.Override
  */
 export type Override = Message<"servers.v1.Override"> & {
-  /**
-   * @generated from field: int32 override_id = 1;
-   */
-  overrideId: number;
+	/**
+	 * @generated from field: int32 override_id = 1;
+	 */
+	overrideId: number;
 
-  /**
-   * @generated from field: OverrideType type = 2;
-   */
-  type: OverrideType;
+	/**
+	 * @generated from field: OverrideType type = 2;
+	 */
+	type: OverrideType;
 
-  /**
-   * @generated from field: string name = 3;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 3;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: string flags = 4;
-   */
-  flags: string;
+	/**
+	 * @generated from field: string flags = 4;
+	 */
+	flags: string;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 5;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 5;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 6;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 6;
+	 */
+	updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message servers.v1.Override.
  * Use `create(OverrideSchema)` to create a new message.
  */
-export const OverrideSchema: GenMessage<Override> = /*@__PURE__*/
-  messageDesc(file_srcds_v1_srcds, 3);
+export const OverrideSchema: GenMessage<Override> = /*@__PURE__*/ messageDesc(file_srcds_v1_srcds, 3);
 
 /**
  * @generated from message servers.v1.OverridesResponse
  */
 export type OverridesResponse = Message<"servers.v1.OverridesResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.Override overrides = 1;
-   */
-  overrides: Override[];
+	/**
+	 * @generated from field: repeated servers.v1.Override overrides = 1;
+	 */
+	overrides: Override[];
 };
 
 /**
  * Describes the message servers.v1.OverridesResponse.
  * Use `create(OverridesResponseSchema)` to create a new message.
  */
-export const OverridesResponseSchema: GenMessage<OverridesResponse> = /*@__PURE__*/
-  messageDesc(file_srcds_v1_srcds, 4);
+export const OverridesResponseSchema: GenMessage<OverridesResponse> = /*@__PURE__*/ messageDesc(file_srcds_v1_srcds, 4);
 
 /**
  * @generated from message servers.v1.Admin
  */
 export type Admin = Message<"servers.v1.Admin"> & {
-  /**
-   * @generated from field: int32 admin_id = 1;
-   */
-  adminId: number;
+	/**
+	 * @generated from field: int32 admin_id = 1;
+	 */
+	adminId: number;
 
-  /**
-   * @generated from field: string steam_id = 2;
-   */
-  steamId: string;
+	/**
+	 * @generated from field: string steam_id = 2;
+	 */
+	steamId: string;
 
-  /**
-   * @generated from field: servers.v1.AuthType auth_type = 3;
-   */
-  authType: AuthType;
+	/**
+	 * @generated from field: servers.v1.AuthType auth_type = 3;
+	 */
+	authType: AuthType;
 
-  /**
-   * @generated from field: string identity = 4;
-   */
-  identity: string;
+	/**
+	 * @generated from field: string identity = 4;
+	 */
+	identity: string;
 
-  /**
-   * @generated from field: string password = 5;
-   */
-  password: string;
+	/**
+	 * @generated from field: string password = 5;
+	 */
+	password: string;
 
-  /**
-   * @generated from field: string name = 6;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 6;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: int32 immunity = 7;
-   */
-  immunity: number;
+	/**
+	 * @generated from field: int32 immunity = 7;
+	 */
+	immunity: number;
 
-  /**
-   * @generated from field: repeated Group groups = 8;
-   */
-  groups: Group[];
+	/**
+	 * @generated from field: repeated Group groups = 8;
+	 */
+	groups: Group[];
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 9;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 9;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 10;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 10;
+	 */
+	updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message servers.v1.Admin.
  * Use `create(AdminSchema)` to create a new message.
  */
-export const AdminSchema: GenMessage<Admin> = /*@__PURE__*/
-  messageDesc(file_srcds_v1_srcds, 5);
+export const AdminSchema: GenMessage<Admin> = /*@__PURE__*/ messageDesc(file_srcds_v1_srcds, 5);
 
 /**
  * @generated from message servers.v1.UsersResponse
  */
 export type UsersResponse = Message<"servers.v1.UsersResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.Admin admins = 1;
-   */
-  admins: Admin[];
+	/**
+	 * @generated from field: repeated servers.v1.Admin admins = 1;
+	 */
+	admins: Admin[];
 };
 
 /**
  * Describes the message servers.v1.UsersResponse.
  * Use `create(UsersResponseSchema)` to create a new message.
  */
-export const UsersResponseSchema: GenMessage<UsersResponse> = /*@__PURE__*/
-  messageDesc(file_srcds_v1_srcds, 6);
+export const UsersResponseSchema: GenMessage<UsersResponse> = /*@__PURE__*/ messageDesc(file_srcds_v1_srcds, 6);
 
 /**
  * @generated from message servers.v1.GroupsResponse
  */
 export type GroupsResponse = Message<"servers.v1.GroupsResponse"> & {
-  /**
-   * @generated from field: repeated Group groups = 1;
-   */
-  groups: Group[];
+	/**
+	 * @generated from field: repeated Group groups = 1;
+	 */
+	groups: Group[];
 };
 
 /**
  * Describes the message servers.v1.GroupsResponse.
  * Use `create(GroupsResponseSchema)` to create a new message.
  */
-export const GroupsResponseSchema: GenMessage<GroupsResponse> = /*@__PURE__*/
-  messageDesc(file_srcds_v1_srcds, 7);
+export const GroupsResponseSchema: GenMessage<GroupsResponse> = /*@__PURE__*/ messageDesc(file_srcds_v1_srcds, 7);
 
 /**
  * TODO remove this duplicate
@@ -261,103 +263,99 @@ export const GroupsResponseSchema: GenMessage<GroupsResponse> = /*@__PURE__*/
  * @generated from enum servers.v1.BanType
  */
 export enum BanType {
-  /**
-   * @generated from enum value: BAN_TYPE_OK_UNSPECIFIED = 0;
-   */
-  OK_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: BAN_TYPE_OK_UNSPECIFIED = 0;
+	 */
+	OK_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: BAN_TYPE_NO_COMM = 1;
-   */
-  NO_COMM = 1,
+	/**
+	 * @generated from enum value: BAN_TYPE_NO_COMM = 1;
+	 */
+	NO_COMM = 1,
 
-  /**
-   * @generated from enum value: BAN_TYPE_BANNED = 2;
-   */
-  BANNED = 2,
+	/**
+	 * @generated from enum value: BAN_TYPE_BANNED = 2;
+	 */
+	BANNED = 2,
 
-  /**
-   * @generated from enum value: BAN_TYPE_NETWORK = 3;
-   */
-  NETWORK = 3,
+	/**
+	 * @generated from enum value: BAN_TYPE_NETWORK = 3;
+	 */
+	NETWORK = 3,
 }
 
 /**
  * Describes the enum servers.v1.BanType.
  */
-export const BanTypeSchema: GenEnum<BanType> = /*@__PURE__*/
-  enumDesc(file_srcds_v1_srcds, 0);
+export const BanTypeSchema: GenEnum<BanType> = /*@__PURE__*/ enumDesc(file_srcds_v1_srcds, 0);
 
 /**
  * @generated from enum servers.v1.AuthType
  */
 export enum AuthType {
-  /**
-   * @generated from enum value: AUTH_TYPE_STEAM_UNSPECIFIED = 0;
-   */
-  STEAM_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: AUTH_TYPE_STEAM_UNSPECIFIED = 0;
+	 */
+	STEAM_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: AUTH_TYPE_NAME = 1;
-   */
-  NAME = 1,
+	/**
+	 * @generated from enum value: AUTH_TYPE_NAME = 1;
+	 */
+	NAME = 1,
 
-  /**
-   * @generated from enum value: AUTH_TYPE_IP = 2;
-   */
-  IP = 2,
+	/**
+	 * @generated from enum value: AUTH_TYPE_IP = 2;
+	 */
+	IP = 2,
 }
 
 /**
  * Describes the enum servers.v1.AuthType.
  */
-export const AuthTypeSchema: GenEnum<AuthType> = /*@__PURE__*/
-  enumDesc(file_srcds_v1_srcds, 1);
+export const AuthTypeSchema: GenEnum<AuthType> = /*@__PURE__*/ enumDesc(file_srcds_v1_srcds, 1);
 
 /**
  * @generated from service servers.v1.SRCDSService
  */
 export const SRCDSService: GenService<{
-  /**
-   * @generated from rpc servers.v1.SRCDSService.Check
-   */
-  check: {
-    methodKind: "unary";
-    input: typeof CheckRequestSchema;
-    output: typeof CheckResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.SRCDSService.Overrides
-   */
-  overrides: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof OverridesResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.SRCDSService.Users
-   */
-  users: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof UsersResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.SRCDSService.Groups
-   */
-  groups: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof GroupsResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.SRCDSService.Seed
-   */
-  seed: {
-    methodKind: "unary";
-    input: typeof SeedRequestSchema;
-    output: typeof EmptySchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_srcds_v1_srcds, 0);
-
+	/**
+	 * @generated from rpc servers.v1.SRCDSService.Check
+	 */
+	check: {
+		methodKind: "unary";
+		input: typeof CheckRequestSchema;
+		output: typeof CheckResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.SRCDSService.Overrides
+	 */
+	overrides: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof OverridesResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.SRCDSService.Users
+	 */
+	users: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof UsersResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.SRCDSService.Groups
+	 */
+	groups: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof GroupsResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.SRCDSService.Seed
+	 */
+	seed: {
+		methodKind: "unary";
+		input: typeof SeedRequestSchema;
+		output: typeof EmptySchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_srcds_v1_srcds, 0);

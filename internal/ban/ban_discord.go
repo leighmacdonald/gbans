@@ -438,10 +438,10 @@ func createBanResponse(ban Ban, author person.Info, player person.Info) *discord
 
 type deleteReportMessageView struct {
 	Existing ReportMessage
-	Person   person.Info
+	Person   person.BaseUser
 }
 
-func DeleteReportMessage(existing ReportMessage, person person.Info) *discordgo.MessageSend {
+func DeleteReportMessage(existing ReportMessage, person person.BaseUser) *discordgo.MessageSend {
 	content, errContent := discord.RenderTemplate("report_message_deleted", deleteReportMessageView{
 		Existing: existing,
 		Person:   person,
@@ -457,7 +457,7 @@ func DeleteReportMessage(existing ReportMessage, person person.Info) *discordgo.
 	)
 }
 
-func EditReportMessageResponse(body string, oldBody string, link string, _ person.Info, _ string) *discordgo.MessageSend {
+func EditReportMessageResponse(body string, oldBody string, link string, _ person.BaseUser, _ string) *discordgo.MessageSend {
 	return discord.NewMessage(
 		discord.Heading("Report Message Edited"),
 		discord.BodyColouredText(discord.ColourWarn, oldBody),

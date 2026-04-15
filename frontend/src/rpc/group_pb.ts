@@ -11,48 +11,50 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file group.proto.
  */
-export const file_group: GenFile = /*@__PURE__*/
-  fileDesc("Cgtncm91cC5wcm90byKuAQoFR3JvdXASEAoIZ3JvdXBfaWQYASABKAUSDQoFZmxhZ3MYAiABKAkSDAoEbmFtZRgDIAEoCRIWCg5pbW11bml0eV9sZXZlbBgEIAEoBRIuCgpjcmVhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEI4QgpHcm91cFByb3RvUAFaKGdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWxiCGVkaXRpb25zcOgH", [file_google_protobuf_timestamp]);
+export const file_group: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"Cgtncm91cC5wcm90byKuAQoFR3JvdXASEAoIZ3JvdXBfaWQYASABKAUSDQoFZmxhZ3MYAiABKAkSDAoEbmFtZRgDIAEoCRIWCg5pbW11bml0eV9sZXZlbBgEIAEoBRIuCgpjcmVhdGVkX29uGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcEI4QgpHcm91cFByb3RvUAFaKGdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWxiCGVkaXRpb25zcOgH",
+		[file_google_protobuf_timestamp],
+	);
 
 /**
  * @generated from message Group
  */
 export type Group = Message<"Group"> & {
-  /**
-   * @generated from field: int32 group_id = 1;
-   */
-  groupId: number;
+	/**
+	 * @generated from field: int32 group_id = 1;
+	 */
+	groupId: number;
 
-  /**
-   * @generated from field: string flags = 2;
-   */
-  flags: string;
+	/**
+	 * @generated from field: string flags = 2;
+	 */
+	flags: string;
 
-  /**
-   * @generated from field: string name = 3;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 3;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: int32 immunity_level = 4;
-   */
-  immunityLevel: number;
+	/**
+	 * @generated from field: int32 immunity_level = 4;
+	 */
+	immunityLevel: number;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 5;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 5;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 6;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 6;
+	 */
+	updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message Group.
  * Use `create(GroupSchema)` to create a new message.
  */
-export const GroupSchema: GenMessage<Group> = /*@__PURE__*/
-  messageDesc(file_group, 0);
-
+export const GroupSchema: GenMessage<Group> = /*@__PURE__*/ messageDesc(file_group, 0);

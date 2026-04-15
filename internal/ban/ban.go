@@ -442,7 +442,7 @@ func (s Bans) sendBanNotification(ctx context.Context, newBan Ban, author person
 // Unban will set the Current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author person.Info) (bool, error) {
+func (s Bans) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author person.BaseUser) (bool, error) {
 	playerBan, errGetBan := s.QueryOne(ctx, QueryOpts{TargetID: targetSID, EvadeOk: true})
 	if errGetBan != nil {
 		if errors.Is(errGetBan, database.ErrNoResult) {

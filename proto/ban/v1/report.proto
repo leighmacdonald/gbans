@@ -123,8 +123,10 @@ message CreateReportResponse {
 }
 
 message CreateReportMessageRequest {
-  int32 report_id = 1;
+  int64 report_id = 1;
   string body_md = 2;
 }
 
-message CreateReportMessageResponse {}
+message CreateReportMessageResponse {
+  ReportMessage report_message = 1;
+}
