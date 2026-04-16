@@ -14,7 +14,7 @@ service SourcemodService {
   rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {}
   rpc EditGroups(EditGroupsRequest) returns (EditGroupsResponse) {}
   rpc DeleteGroup(DeleteGroupRequest) returns (google.protobuf.Empty) {}
-  rpc GroupOverrides(google.protobuf.Empty) returns (GroupOverridesResponse) {}
+  rpc GroupOverrides(GroupOverridesRequest) returns (GroupOverridesResponse) {}
   rpc CreateGroupOverride(CreateGroupOverrideRequest) returns (CreateGroupOverrideResponse) {}
   rpc EditGroupOverride(EditGroupOverrideRequest) returns (EditGroupOverrideResponse) {}
   rpc DeleteGroupOverride(DeleteGroupOverrideRequest) returns (google.protobuf.Empty) {}
@@ -27,9 +27,9 @@ service SourcemodService {
   rpc DeleteAdminGroup(DeleteAdminGroupRequest) returns (google.protobuf.Empty) {}
 
   rpc Overrides(google.protobuf.Empty) returns (OverridesResponse) {}
-  rpc CreateOverrides(CreateOverridesRequest) returns (CreateOverridesResponse) {}
-  rpc EditOverrides(EditOverridesRequest) returns (EditOverridesResponse) {}
-  rpc DeleteOverrides(DeleteOverridesRequest) returns (google.protobuf.Empty) {}
+  rpc CreateOverrides(CreateOverrideRequest) returns (CreateOverrideResponse) {}
+  rpc EditOverrides(EditOverrideRequest) returns (EditOverrideResponse) {}
+  rpc DeleteOverrides(DeleteOverrideRequest) returns (google.protobuf.Empty) {}
 
   rpc GroupImmunities(google.protobuf.Empty) returns (GroupImmunitiesResponse) {}
   rpc CreateImmunity(CreateImmunityRequest) returns (CreateImmunityResponse) {}
@@ -89,6 +89,12 @@ message SMGroup {
 
 message SMGroupsResponse {
   repeated SMGroup groups = 1;
+  repeated SMGroupImmunity immunities = 2;
+}
+
+message SMGroupImmunity {
+  string group_name = 1;
+  string other_name = 2;
 }
 
 message CheckRequest {
@@ -146,6 +152,10 @@ message DeleteGroupRequest {
   int32 group_id = 1;
 }
 
+message GroupOverridesRequest {
+  int32 group_id = 1;
+}
+
 message GroupOverridesResponse {
   repeated GroupOverrides overrides = 1;
 }
@@ -155,6 +165,7 @@ message CreateGroupOverrideRequest {
   int32 group_id = 2;
   OverrideType type = 3;
   string name = 4;
+  OverrideAccess access = 5;
 }
 
 message CreateGroupOverrideResponse {
@@ -162,17 +173,18 @@ message CreateGroupOverrideResponse {
 }
 
 message EditGroupOverrideRequest {
-  int32 group_override_id = 1;
-  string name = 2;
-  OverrideType override_type = 3;
-  OverrideAccess override_access = 4;
+  int32 group_id = 1;
+  int32 group_override_id = 2;
+  string name = 3;
+  OverrideType override_type = 4;
+  OverrideAccess override_access = 5;
 }
 message EditGroupOverrideResponse {
   GroupOverrides group_override = 1;
 }
 
 message DeleteGroupOverrideRequest {
-  int32 group_override_od = 1;
+  int32 group_override_id = 1;
 }
 message DeleteGroupOverrideResponse {}
 
@@ -210,37 +222,46 @@ message DeleteAdminRequest {
   int32 admin_id = 1;
 }
 
-message AddAdminGroupRequest {}
-message AddAdminGroupResponse {}
+message AddAdminGroupRequest {
+  int32 admin_id = 1;
+  int32 group_id = 2;
+}
+
+message AddAdminGroupResponse {
+  Admin admin = 1;
+}
 
 message DeleteAdminGroupRequest {
-  int32 admin_group_id = 1;
+  int32 admin_id = 1;
+  int32 group_id = 2;
 }
 
 message OverridesResponse {
   repeated Override overrides = 1;
 }
-message CreateOverridesRequest {
+
+message CreateOverrideRequest {
   string name = 1;
   OverrideType override_type = 2;
   string flags = 3;
 }
-message CreateOverridesResponse {
-  repeated Override overrides = 1;
+
+message CreateOverrideResponse {
+  Override override = 1;
 }
 
-message EditOverridesRequest {
+message EditOverrideRequest {
   int32 override_id = 1;
   string name = 2;
   OverrideType override_type = 3;
   string flags = 4;
 }
 
-message EditOverridesResponse {
-  GroupImmunity group_immunity = 1;
+message EditOverrideResponse {
+  Override override = 1;
 }
 
-message DeleteOverridesRequest {
+message DeleteOverrideRequest {
   int32 override_id = 1;
 }
 
@@ -305,7 +326,7 @@ enum AuthType {
 
 message Admin {
   int32 admin_id = 1;
-  string steam_id = 2;
+  int64 steam_id = 2;
   AuthType auth_type = 3;
   string identity = 4;
   string password = 5;
