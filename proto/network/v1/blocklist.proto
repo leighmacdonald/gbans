@@ -1,0 +1,120 @@
+edition = "2023";
+
+package network.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service BlocklistService {
+  rpc BlocklistSources(google.protobuf.Empty) returns (BlocklistSourcesResponse) {}
+  rpc BlocklistSourcesCreate(BlocklistSourcesCreateRequest) returns (BlocklistSourcesCreateResponse) {}
+  rpc BlocklistSourcesEdit(BlocklistSourcesCreateEdit) returns (BlocklistSourcesCreateEdit) {}
+  rpc BlocklistSourcesDelete(BlocklistSourcesDeleteRequest) returns (google.protobuf.Empty) {}
+
+  rpc WhitelistAddress(google.protobuf.Empty) returns (WhitelistAddressResponse) {}
+  rpc WhitelistAddressCreate(WhitelistAddressCreateRequest) returns (WhitelistAddressCreateResponse) {}
+  rpc WhitelistAddressDelete(WhitelistAddressDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc WhitelistAddressEdit(WhitelistAddressEditRequest) returns (WhitelistAddressEditResponse) {}
+
+  rpc WhitelistSteam(google.protobuf.Empty) returns (WhitelistSteamResponse) {}
+  rpc WhitelistSteamDelete(WhitelistSteamDeleteRequest) returns (google.protobuf.Empty) {}
+
+  rpc CheckBlock(CheckBlockRequest) returns (CheckBlockResponse) {}
+}
+
+message WhitelistSteamDeleteRequest {
+  int64 steam_id = 1;
+}
+
+message WhitelistSteamResponse {
+  repeated WhitelistSteam whitelists = 1;
+}
+
+message WhitelistSteam {
+  int64 steam_id = 1;
+  string persona_name = 2;
+  string avatar_hash = 3;
+  google.protobuf.Timestamp created_on = 4;
+  google.protobuf.Timestamp updated_on = 5;
+}
+
+message WhitelistAddressEditRequest {
+  int32 cidr_block_whitelist_id = 1;
+  string address = 2;
+}
+
+message WhitelistAddressEditResponse {
+  WhitelistIP whitelist = 1;
+}
+
+message WhitelistAddressDeleteRequest {
+  int32 cidr_block_whitelist_id = 1;
+}
+
+message WhitelistAddressCreateRequest {
+  string address = 1;
+}
+
+message WhitelistAddressCreateResponse {
+  CIDRBlockWhitelist whitelist = 1;
+}
+message CheckBlockRequest {
+  string address = 1;
+}
+
+message CheckBlockResponse {
+  bool blocked = 1;
+  string source = 2;
+}
+
+message BlocklistSourcesDeleteRequest {
+  int32 cidr_block_source_id = 1;
+}
+
+message BlocklistSourcesCreateEdit {
+  int32 cidr_block_source_id = 1;
+  string name = 2;
+  string url = 3;
+  bool enabled = 4;
+}
+
+message BlocklistSourcesCreateRequest {
+  string name = 1;
+  string url = 2;
+  bool enabled = 3;
+}
+
+message BlocklistSourcesCreateResponse {
+  CIDRBlockSource block_source = 1;
+}
+
+message WhitelistAddressResponse {
+  repeated CIDRBlockWhitelist whitelisted = 1;
+}
+
+message CIDRBlockWhitelist {
+  int32 cidr_block_whitelist_id = 1;
+  string address = 2;
+  google.protobuf.Timestamp created_on = 3;
+  google.protobuf.Timestamp updated_on = 4;
+}
+
+message BlocklistSourcesResponse {
+  repeated CIDRBlockSource blocklist_source = 1;
+}
+
+message CIDRBlockSource {
+  int32 cidr_block_source_id = 1;
+  string name = 2;
+  string url = 3;
+  bool enabled = 4;
+  google.protobuf.Timestamp created_on = 5;
+  google.protobuf.Timestamp updated_on = 6;
+}
+
+message WhitelistIP {
+  int32 cidr_block_whitelist_id = 1;
+  string address = 2;
+  google.protobuf.Timestamp created_on = 3;
+  google.protobuf.Timestamp updated_on = 4;
+}

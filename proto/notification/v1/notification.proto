@@ -9,13 +9,13 @@ import "google/protobuf/timestamp.proto";
 service NotificationService {
   rpc Notifications(google.protobuf.Empty) returns (NotificationsResponse) {}
   rpc MarkRead(MarkReadRequest) returns (google.protobuf.Empty) {}
-  rpc MarkReadAll(google.protobuf.Empty) returns (MarkReadAllResponse) {}
-  rpc DeleteAll(google.protobuf.Empty) returns (DeleteAllResponse) {}
-  rpc Delete(DeleteRequest) returns (DeleteAllResponse) {}
+  rpc MarkReadAll(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc DeleteAll(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc Delete(DeleteRequest) returns (google.protobuf.Empty) {}
 }
 
 message NotificationsResponse {
-  UserNotification notifications = 1;
+  repeated UserNotification notifications = 1;
 }
 
 message DeleteRequest {
@@ -26,14 +26,6 @@ message MarkReadRequest {
   repeated int32 message_id = 1;
 }
 
-message MarkReadAllResponse {
-  int32 changed = 1;
-}
-
-message DeleteAllResponse {
-  int32 changed = 1;
-}
-
 enum Severity {
   SEVERITY_INFO_UNSPECIFIED = 0;
   SEVERITY_WARN = 1;
@@ -42,7 +34,7 @@ enum Severity {
 
 message UserNotification {
   int64 person_notification_id = 1;
-  string steam_id = 2;
+  int64 steam_id = 2;
   bool read = 3;
   bool deleted = 4;
   Severity severity = 5;

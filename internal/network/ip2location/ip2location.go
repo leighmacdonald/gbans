@@ -206,8 +206,8 @@ func (r ASNRecords) Hosts() uint32 {
 }
 
 type LatLong struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Latitude  float32 `json:"latitude"`
+	Longitude float32 `json:"longitude"`
 }
 
 // Value implements the driver.Valuer interface for our custom type.
@@ -235,18 +235,18 @@ func (ll *LatLong) Scan(value any) error {
 		return ErrParseLocation
 	}
 
-	lon, errParseLon := strconv.ParseFloat(pieces[0], 64)
+	lon, errParseLon := strconv.ParseFloat(pieces[0], 32)
 	if errParseLon != nil {
 		return ErrParseLocation
 	}
 
-	lat, errParseLat := strconv.ParseFloat(pieces[1], 64)
+	lat, errParseLat := strconv.ParseFloat(pieces[1], 32)
 	if errParseLat != nil {
 		return ErrParseLocation
 	}
 
-	ll.Longitude = lon
-	ll.Latitude = lat
+	ll.Longitude = float32(lon)
+	ll.Latitude = float32(lat)
 
 	return nil
 }
@@ -487,8 +487,8 @@ func ReadLocationRecords(ctx context.Context, path string, ipv6 bool, onRecords 
 			RegionName:  recordLine[4],
 			CityName:    recordLine[5],
 			LatLong: LatLong{
-				stringutil.StringToFloat64Default(recordLine[6], 0),
-				stringutil.StringToFloat64Default(recordLine[7], 0),
+				float32(stringutil.StringToFloat64Default(recordLine[6], 0)),
+				float32(stringutil.StringToFloat64Default(recordLine[7], 0)),
 			},
 		}
 

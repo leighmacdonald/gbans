@@ -80,12 +80,8 @@ linters:
       - legacy
       - std-error-handling
     paths:
-      - internal/web/data.go
-      - pkg/msqp
-      - pkg/mm
-      - third_party$
-      - builtin$
-      - examples$
+      - ".*\\.pb\\.go$"
+
 formatters:
   enable:
     - gci
@@ -93,11 +89,7 @@ formatters:
     - gofumpt
     - goimports
   exclusions:
-    generated: lax
+    warn-unused: true
+    generated: strict
     paths:
-      - internal/web/data.go
-      - pkg/msqp
-      - pkg/mm
-      - third_party$
-      - builtin$
-      - examples$
+      - ".*\\.pb\\.go$"
