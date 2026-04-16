@@ -116,7 +116,7 @@ type SourcemodServiceClient interface {
 	CreateGroup(context.Context, *v1.CreateGroupRequest) (*v1.CreateGroupResponse, error)
 	EditGroups(context.Context, *v1.EditGroupsRequest) (*v1.EditGroupsResponse, error)
 	DeleteGroup(context.Context, *v1.DeleteGroupRequest) (*emptypb.Empty, error)
-	GroupOverrides(context.Context, *emptypb.Empty) (*v1.GroupOverridesResponse, error)
+	GroupOverrides(context.Context, *v1.GroupOverridesRequest) (*v1.GroupOverridesResponse, error)
 	CreateGroupOverride(context.Context, *v1.CreateGroupOverrideRequest) (*v1.CreateGroupOverrideResponse, error)
 	EditGroupOverride(context.Context, *v1.EditGroupOverrideRequest) (*v1.EditGroupOverrideResponse, error)
 	DeleteGroupOverride(context.Context, *v1.DeleteGroupOverrideRequest) (*emptypb.Empty, error)
@@ -127,9 +127,9 @@ type SourcemodServiceClient interface {
 	AddAdminGroup(context.Context, *v1.AddAdminGroupRequest) (*v1.AddAdminGroupResponse, error)
 	DeleteAdminGroup(context.Context, *v1.DeleteAdminGroupRequest) (*emptypb.Empty, error)
 	Overrides(context.Context, *emptypb.Empty) (*v1.OverridesResponse, error)
-	CreateOverrides(context.Context, *v1.CreateOverridesRequest) (*v1.CreateOverridesResponse, error)
-	EditOverrides(context.Context, *v1.EditOverridesRequest) (*v1.EditOverridesResponse, error)
-	DeleteOverrides(context.Context, *v1.DeleteOverridesRequest) (*emptypb.Empty, error)
+	CreateOverrides(context.Context, *v1.CreateOverrideRequest) (*v1.CreateOverrideResponse, error)
+	EditOverrides(context.Context, *v1.EditOverrideRequest) (*v1.EditOverrideResponse, error)
+	DeleteOverrides(context.Context, *v1.DeleteOverrideRequest) (*emptypb.Empty, error)
 	GroupImmunities(context.Context, *emptypb.Empty) (*v1.GroupImmunitiesResponse, error)
 	CreateImmunity(context.Context, *v1.CreateImmunityRequest) (*v1.CreateImmunityResponse, error)
 	DeleteImmunity(context.Context, *v1.DeleteImmunityRequest) (*emptypb.Empty, error)
@@ -176,7 +176,7 @@ func NewSourcemodServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(sourcemodServiceMethods.ByName("DeleteGroup")),
 			connect.WithClientOptions(opts...),
 		),
-		groupOverrides: connect.NewClient[emptypb.Empty, v1.GroupOverridesResponse](
+		groupOverrides: connect.NewClient[v1.GroupOverridesRequest, v1.GroupOverridesResponse](
 			httpClient,
 			baseURL+SourcemodServiceGroupOverridesProcedure,
 			connect.WithSchema(sourcemodServiceMethods.ByName("GroupOverrides")),
@@ -242,19 +242,19 @@ func NewSourcemodServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(sourcemodServiceMethods.ByName("Overrides")),
 			connect.WithClientOptions(opts...),
 		),
-		createOverrides: connect.NewClient[v1.CreateOverridesRequest, v1.CreateOverridesResponse](
+		createOverrides: connect.NewClient[v1.CreateOverrideRequest, v1.CreateOverrideResponse](
 			httpClient,
 			baseURL+SourcemodServiceCreateOverridesProcedure,
 			connect.WithSchema(sourcemodServiceMethods.ByName("CreateOverrides")),
 			connect.WithClientOptions(opts...),
 		),
-		editOverrides: connect.NewClient[v1.EditOverridesRequest, v1.EditOverridesResponse](
+		editOverrides: connect.NewClient[v1.EditOverrideRequest, v1.EditOverrideResponse](
 			httpClient,
 			baseURL+SourcemodServiceEditOverridesProcedure,
 			connect.WithSchema(sourcemodServiceMethods.ByName("EditOverrides")),
 			connect.WithClientOptions(opts...),
 		),
-		deleteOverrides: connect.NewClient[v1.DeleteOverridesRequest, emptypb.Empty](
+		deleteOverrides: connect.NewClient[v1.DeleteOverrideRequest, emptypb.Empty](
 			httpClient,
 			baseURL+SourcemodServiceDeleteOverridesProcedure,
 			connect.WithSchema(sourcemodServiceMethods.ByName("DeleteOverrides")),
@@ -317,7 +317,7 @@ type sourcemodServiceClient struct {
 	createGroup         *connect.Client[v1.CreateGroupRequest, v1.CreateGroupResponse]
 	editGroups          *connect.Client[v1.EditGroupsRequest, v1.EditGroupsResponse]
 	deleteGroup         *connect.Client[v1.DeleteGroupRequest, emptypb.Empty]
-	groupOverrides      *connect.Client[emptypb.Empty, v1.GroupOverridesResponse]
+	groupOverrides      *connect.Client[v1.GroupOverridesRequest, v1.GroupOverridesResponse]
 	createGroupOverride *connect.Client[v1.CreateGroupOverrideRequest, v1.CreateGroupOverrideResponse]
 	editGroupOverride   *connect.Client[v1.EditGroupOverrideRequest, v1.EditGroupOverrideResponse]
 	deleteGroupOverride *connect.Client[v1.DeleteGroupOverrideRequest, emptypb.Empty]
@@ -328,9 +328,9 @@ type sourcemodServiceClient struct {
 	addAdminGroup       *connect.Client[v1.AddAdminGroupRequest, v1.AddAdminGroupResponse]
 	deleteAdminGroup    *connect.Client[v1.DeleteAdminGroupRequest, emptypb.Empty]
 	overrides           *connect.Client[emptypb.Empty, v1.OverridesResponse]
-	createOverrides     *connect.Client[v1.CreateOverridesRequest, v1.CreateOverridesResponse]
-	editOverrides       *connect.Client[v1.EditOverridesRequest, v1.EditOverridesResponse]
-	deleteOverrides     *connect.Client[v1.DeleteOverridesRequest, emptypb.Empty]
+	createOverrides     *connect.Client[v1.CreateOverrideRequest, v1.CreateOverrideResponse]
+	editOverrides       *connect.Client[v1.EditOverrideRequest, v1.EditOverrideResponse]
+	deleteOverrides     *connect.Client[v1.DeleteOverrideRequest, emptypb.Empty]
 	groupImmunities     *connect.Client[emptypb.Empty, v1.GroupImmunitiesResponse]
 	createImmunity      *connect.Client[v1.CreateImmunityRequest, v1.CreateImmunityResponse]
 	deleteImmunity      *connect.Client[v1.DeleteImmunityRequest, emptypb.Empty]
@@ -378,7 +378,7 @@ func (c *sourcemodServiceClient) DeleteGroup(ctx context.Context, req *v1.Delete
 }
 
 // GroupOverrides calls sourcemod.v1.SourcemodService.GroupOverrides.
-func (c *sourcemodServiceClient) GroupOverrides(ctx context.Context, req *emptypb.Empty) (*v1.GroupOverridesResponse, error) {
+func (c *sourcemodServiceClient) GroupOverrides(ctx context.Context, req *v1.GroupOverridesRequest) (*v1.GroupOverridesResponse, error) {
 	response, err := c.groupOverrides.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -477,7 +477,7 @@ func (c *sourcemodServiceClient) Overrides(ctx context.Context, req *emptypb.Emp
 }
 
 // CreateOverrides calls sourcemod.v1.SourcemodService.CreateOverrides.
-func (c *sourcemodServiceClient) CreateOverrides(ctx context.Context, req *v1.CreateOverridesRequest) (*v1.CreateOverridesResponse, error) {
+func (c *sourcemodServiceClient) CreateOverrides(ctx context.Context, req *v1.CreateOverrideRequest) (*v1.CreateOverrideResponse, error) {
 	response, err := c.createOverrides.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -486,7 +486,7 @@ func (c *sourcemodServiceClient) CreateOverrides(ctx context.Context, req *v1.Cr
 }
 
 // EditOverrides calls sourcemod.v1.SourcemodService.EditOverrides.
-func (c *sourcemodServiceClient) EditOverrides(ctx context.Context, req *v1.EditOverridesRequest) (*v1.EditOverridesResponse, error) {
+func (c *sourcemodServiceClient) EditOverrides(ctx context.Context, req *v1.EditOverrideRequest) (*v1.EditOverrideResponse, error) {
 	response, err := c.editOverrides.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -495,7 +495,7 @@ func (c *sourcemodServiceClient) EditOverrides(ctx context.Context, req *v1.Edit
 }
 
 // DeleteOverrides calls sourcemod.v1.SourcemodService.DeleteOverrides.
-func (c *sourcemodServiceClient) DeleteOverrides(ctx context.Context, req *v1.DeleteOverridesRequest) (*emptypb.Empty, error) {
+func (c *sourcemodServiceClient) DeleteOverrides(ctx context.Context, req *v1.DeleteOverrideRequest) (*emptypb.Empty, error) {
 	response, err := c.deleteOverrides.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -581,7 +581,7 @@ type SourcemodServiceHandler interface {
 	CreateGroup(context.Context, *v1.CreateGroupRequest) (*v1.CreateGroupResponse, error)
 	EditGroups(context.Context, *v1.EditGroupsRequest) (*v1.EditGroupsResponse, error)
 	DeleteGroup(context.Context, *v1.DeleteGroupRequest) (*emptypb.Empty, error)
-	GroupOverrides(context.Context, *emptypb.Empty) (*v1.GroupOverridesResponse, error)
+	GroupOverrides(context.Context, *v1.GroupOverridesRequest) (*v1.GroupOverridesResponse, error)
 	CreateGroupOverride(context.Context, *v1.CreateGroupOverrideRequest) (*v1.CreateGroupOverrideResponse, error)
 	EditGroupOverride(context.Context, *v1.EditGroupOverrideRequest) (*v1.EditGroupOverrideResponse, error)
 	DeleteGroupOverride(context.Context, *v1.DeleteGroupOverrideRequest) (*emptypb.Empty, error)
@@ -592,9 +592,9 @@ type SourcemodServiceHandler interface {
 	AddAdminGroup(context.Context, *v1.AddAdminGroupRequest) (*v1.AddAdminGroupResponse, error)
 	DeleteAdminGroup(context.Context, *v1.DeleteAdminGroupRequest) (*emptypb.Empty, error)
 	Overrides(context.Context, *emptypb.Empty) (*v1.OverridesResponse, error)
-	CreateOverrides(context.Context, *v1.CreateOverridesRequest) (*v1.CreateOverridesResponse, error)
-	EditOverrides(context.Context, *v1.EditOverridesRequest) (*v1.EditOverridesResponse, error)
-	DeleteOverrides(context.Context, *v1.DeleteOverridesRequest) (*emptypb.Empty, error)
+	CreateOverrides(context.Context, *v1.CreateOverrideRequest) (*v1.CreateOverrideResponse, error)
+	EditOverrides(context.Context, *v1.EditOverrideRequest) (*v1.EditOverrideResponse, error)
+	DeleteOverrides(context.Context, *v1.DeleteOverrideRequest) (*emptypb.Empty, error)
 	GroupImmunities(context.Context, *emptypb.Empty) (*v1.GroupImmunitiesResponse, error)
 	CreateImmunity(context.Context, *v1.CreateImmunityRequest) (*v1.CreateImmunityResponse, error)
 	DeleteImmunity(context.Context, *v1.DeleteImmunityRequest) (*emptypb.Empty, error)
@@ -848,7 +848,7 @@ func (UnimplementedSourcemodServiceHandler) DeleteGroup(context.Context, *v1.Del
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.DeleteGroup is not implemented"))
 }
 
-func (UnimplementedSourcemodServiceHandler) GroupOverrides(context.Context, *emptypb.Empty) (*v1.GroupOverridesResponse, error) {
+func (UnimplementedSourcemodServiceHandler) GroupOverrides(context.Context, *v1.GroupOverridesRequest) (*v1.GroupOverridesResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.GroupOverrides is not implemented"))
 }
 
@@ -892,15 +892,15 @@ func (UnimplementedSourcemodServiceHandler) Overrides(context.Context, *emptypb.
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.Overrides is not implemented"))
 }
 
-func (UnimplementedSourcemodServiceHandler) CreateOverrides(context.Context, *v1.CreateOverridesRequest) (*v1.CreateOverridesResponse, error) {
+func (UnimplementedSourcemodServiceHandler) CreateOverrides(context.Context, *v1.CreateOverrideRequest) (*v1.CreateOverrideResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.CreateOverrides is not implemented"))
 }
 
-func (UnimplementedSourcemodServiceHandler) EditOverrides(context.Context, *v1.EditOverridesRequest) (*v1.EditOverridesResponse, error) {
+func (UnimplementedSourcemodServiceHandler) EditOverrides(context.Context, *v1.EditOverrideRequest) (*v1.EditOverrideResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.EditOverrides is not implemented"))
 }
 
-func (UnimplementedSourcemodServiceHandler) DeleteOverrides(context.Context, *v1.DeleteOverridesRequest) (*emptypb.Empty, error) {
+func (UnimplementedSourcemodServiceHandler) DeleteOverrides(context.Context, *v1.DeleteOverrideRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("sourcemod.v1.SourcemodService.DeleteOverrides is not implemented"))
 }
 

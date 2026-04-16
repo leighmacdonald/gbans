@@ -61,6 +61,14 @@ func (u UserInfo) GetAvatar() person.Avatar {
 	return u.AvatarHash
 }
 
+type ServerInfo struct {
+	ServerID int32 `json:"server_id"`
+}
+
+func ServerInfoFromCtx(ctx context.Context) (ServerInfo, error) {
+	panic("fixme")
+}
+
 func UserInfoFromCtx(ctx context.Context) (*UserInfo, bool) {
 	user, ok := authn.GetInfo(ctx).(UserInfo)
 	if !ok {

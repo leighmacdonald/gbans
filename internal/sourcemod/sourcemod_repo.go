@@ -97,7 +97,7 @@ func (r Repository) GetGroupImmunities(ctx context.Context) ([]GroupImmunity, er
 	return immunities, nil
 }
 
-func (r Repository) GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (GroupImmunity, error) {
+func (r Repository) GetGroupImmunityByID(ctx context.Context, groupImmunityID int32) (GroupImmunity, error) {
 	var immunity GroupImmunity
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
@@ -174,7 +174,7 @@ func (r Repository) DelGroupOverride(ctx context.Context, override GroupOverride
 		Where(sq.Eq{"group_override_id": override.GroupOverrideID})))
 }
 
-func (r Repository) GetGroupOverride(ctx context.Context, overrideID int) (GroupOverrides, error) {
+func (r Repository) GetGroupOverride(ctx context.Context, overrideID int32) (GroupOverrides, error) {
 	var override GroupOverrides
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
@@ -254,7 +254,7 @@ func (r Repository) GroupOverrides(ctx context.Context, group Groups) ([]GroupOv
 	return overrides, nil
 }
 
-func (r Repository) GetOverride(ctx context.Context, overrideID int) (Overrides, error) {
+func (r Repository) GetOverride(ctx context.Context, overrideID int32) (Overrides, error) {
 	var override Overrides
 
 	row, err := r.QueryRowBuilder(ctx, r.Builder().
@@ -374,7 +374,7 @@ func (r Repository) Admins(ctx context.Context) ([]Admin, error) {
 	for rows.Next() {
 		var (
 			// array_agg will return a {null} if no group entry exists
-			groupIDs []*int
+			groupIDs []*int32
 			admin    = Admin{Groups: []Groups{}}
 		)
 
@@ -432,7 +432,7 @@ func (r Repository) Groups(ctx context.Context) ([]Groups, error) {
 	return groups, nil
 }
 
-func (r Repository) GetAdminByID(ctx context.Context, adminID int) (Admin, error) {
+func (r Repository) GetAdminByID(ctx context.Context, adminID int32) (Admin, error) {
 	var (
 		admin Admin
 		id64  *int64
@@ -536,7 +536,7 @@ func (r Repository) GetGroupByName(ctx context.Context, groupName string) (Group
 	return group, nil
 }
 
-func (r Repository) GetGroupByID(ctx context.Context, groupID int) (Groups, error) {
+func (r Repository) GetGroupByID(ctx context.Context, groupID int32) (Groups, error) {
 	var group Groups
 
 	row, errRow := r.QueryRowBuilder(ctx, r.Builder().
@@ -628,7 +628,7 @@ func (r Repository) DeleteGroup(ctx context.Context, group Groups) error {
 		return database.Err(err)
 	}
 
-	slog.Info("Deleted SM Group", slog.Int("group_id", group.GroupID), slog.String("name", group.Name))
+	slog.Info("Deleted SM Group", slog.Int("group_id", int(group.GroupID)), slog.String("name", group.Name))
 
 	return nil
 }
@@ -649,7 +649,7 @@ func (r Repository) AddGroup(ctx context.Context, group Groups) (Groups, error) 
 		return group, err
 	}
 
-	slog.Info("Created SM Group", slog.Int("group_id", group.GroupID), slog.String("name", group.Name))
+	slog.Info("Created SM Group", slog.Int("group_id", int(group.GroupID)), slog.String("name", group.Name))
 
 	return group, nil
 }
@@ -667,7 +667,7 @@ func (r Repository) DelAdmin(ctx context.Context, admin Admin) error {
 		return database.Err(err)
 	}
 
-	slog.Info("Deleted SM Admin", slog.Int("id", admin.AdminID),
+	slog.Info("Deleted SM Admin", slog.Int("id", int(admin.AdminID)),
 		slog.String("steam_id", admin.SteamID.String()))
 
 	return nil
@@ -703,7 +703,7 @@ func (r Repository) AddAdmin(ctx context.Context, admin Admin) (Admin, error) {
 		return admin, database.Err(err)
 	}
 
-	slog.Info("Added SM Admin", slog.Int("id", admin.AdminID), slog.String("identity", admin.Identity))
+	slog.Info("Added SM Admin", slog.Int("id", int(admin.AdminID)), slog.String("identity", admin.Identity))
 
 	return admin, nil
 }

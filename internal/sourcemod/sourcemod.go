@@ -99,38 +99,38 @@ type ServerPermission struct {
 }
 
 type Admin struct {
-	AdminID   int             `json:"admin_id"`
+	AdminID   int32           `json:"admin_id"`
 	SteamID   steamid.SteamID `json:"steam_id"`
 	AuthType  AuthType        `json:"auth_type"` // steam | name |ip
 	Identity  string          `json:"identity"`
 	Password  string          `json:"password"`
 	Flags     string          `json:"flags"`
 	Name      string          `json:"name"`
-	Immunity  int             `json:"immunity"`
+	Immunity  int32           `json:"immunity"`
 	Groups    []Groups        `json:"groups"`
 	CreatedOn time.Time       `json:"created_on"`
 	UpdatedOn time.Time       `json:"updated_on"`
 }
 
 type Groups struct {
-	GroupID       int       `json:"group_id"`
+	GroupID       int32     `json:"group_id"`
 	Flags         string    `json:"flags"`
 	Name          string    `json:"name"`
-	ImmunityLevel int       `json:"immunity_level"`
+	ImmunityLevel int32     `json:"immunity_level"`
 	CreatedOn     time.Time `json:"created_on"`
 	UpdatedOn     time.Time `json:"updated_on"`
 }
 
 type GroupImmunity struct {
-	GroupImmunityID int       `json:"group_immunity_id"`
+	GroupImmunityID int32     `json:"group_immunity_id"`
 	Group           Groups    `json:"group"`
 	Other           Groups    `json:"other"`
 	CreatedOn       time.Time `json:"created_on"`
 }
 
 type GroupOverrides struct {
-	GroupOverrideID int            `json:"group_override_id"`
-	GroupID         int            `json:"group_id"`
+	GroupOverrideID int32          `json:"group_override_id"`
+	GroupID         int32          `json:"group_id"`
 	Type            OverrideType   `json:"type"` // command | group
 	Name            string         `json:"name"`
 	Access          OverrideAccess `json:"access"` // allow | deny
@@ -139,7 +139,7 @@ type GroupOverrides struct {
 }
 
 type Overrides struct {
-	OverrideID int          `json:"override_id"`
+	OverrideID int32        `json:"override_id"`
 	Type       OverrideType `json:"type"` // command | group
 	Name       string       `json:"name"`
 	Flags      string       `json:"flags"`
@@ -148,9 +148,9 @@ type Overrides struct {
 }
 
 type AdminGroups struct {
-	AdminID      int       `json:"admin_id"`
-	GroupID      int       `json:"group_id"`
-	InheritOrder int       `json:"inherit_order"`
+	AdminID      int32     `json:"admin_id"`
+	GroupID      int32     `json:"group_id"`
+	InheritOrder int32     `json:"inherit_order"`
 	CreatedOn    time.Time `json:"created_on"`
 	UpdatedOn    time.Time `json:"updated_on"`
 }
@@ -279,11 +279,11 @@ func (h Sourcemod) GetBanState(ctx context.Context, steamID steamid.SteamID, ipA
 	return banState, msg, nil
 }
 
-func (h Sourcemod) Override(ctx context.Context, overrideID int) (Overrides, error) {
+func (h Sourcemod) Override(ctx context.Context, overrideID int32) (Overrides, error) {
 	return h.repository.GetOverride(ctx, overrideID)
 }
 
-func (h Sourcemod) GroupImmunityByID(ctx context.Context, groupImmunityID int) (GroupImmunity, error) {
+func (h Sourcemod) GroupImmunityByID(ctx context.Context, groupImmunityID int32) (GroupImmunity, error) {
 	return h.repository.GetGroupImmunityByID(ctx, groupImmunityID)
 }
 
@@ -291,7 +291,7 @@ func (h Sourcemod) GroupImmunities(ctx context.Context) ([]GroupImmunity, error)
 	return h.repository.GetGroupImmunities(ctx)
 }
 
-func (h Sourcemod) AddGroupImmunity(ctx context.Context, groupID int, otherID int) (GroupImmunity, error) {
+func (h Sourcemod) AddGroupImmunity(ctx context.Context, groupID int32, otherID int32) (GroupImmunity, error) {
 	if groupID == otherID {
 		return GroupImmunity{}, httphelper.ErrBadRequest // TODO fix error
 	}
@@ -309,7 +309,7 @@ func (h Sourcemod) AddGroupImmunity(ctx context.Context, groupID int, otherID in
 	return h.repository.AddGroupImmunity(ctx, group, other)
 }
 
-func (h Sourcemod) DelGroupImmunity(ctx context.Context, groupImmunityID int) error {
+func (h Sourcemod) DelGroupImmunity(ctx context.Context, groupImmunityID int32) error {
 	immunity, errImmunity := h.GroupImmunityByID(ctx, groupImmunityID)
 	if errImmunity != nil {
 		return errImmunity
@@ -319,12 +319,12 @@ func (h Sourcemod) DelGroupImmunity(ctx context.Context, groupImmunityID int) er
 		return err
 	}
 
-	slog.Info("Deleted group immunity", slog.Int("group_immunity_id", immunity.GroupImmunityID))
+	slog.Info("Deleted group immunity", slog.Int("group_immunity_id", int(immunity.GroupImmunityID)))
 
 	return nil
 }
 
-func (h Sourcemod) AddGroupOverride(ctx context.Context, groupID int, name string, overrideType OverrideType, access OverrideAccess) (GroupOverrides, error) {
+func (h Sourcemod) AddGroupOverride(ctx context.Context, groupID int32, name string, overrideType OverrideType, access OverrideAccess) (GroupOverrides, error) {
 	if name == "" || overrideType == "" {
 		return GroupOverrides{}, httphelper.ErrInvalidParameter
 	}
@@ -347,12 +347,12 @@ func (h Sourcemod) AddGroupOverride(ctx context.Context, groupID int, name strin
 		return override, err
 	}
 
-	slog.Info("Added group override", slog.Int("group_id", groupID), slog.String("name", name))
+	slog.Info("Added group override", slog.Int("group_id", int(groupID)), slog.String("name", name))
 
 	return override, nil
 }
 
-func (h Sourcemod) DelGroupOverride(ctx context.Context, groupOverrideID int) error {
+func (h Sourcemod) DelGroupOverride(ctx context.Context, groupOverrideID int32) error {
 	override, errOverride := h.GroupOverride(ctx, groupOverrideID)
 	if errOverride != nil {
 		return errOverride
@@ -361,7 +361,7 @@ func (h Sourcemod) DelGroupOverride(ctx context.Context, groupOverrideID int) er
 	return h.repository.DelGroupOverride(ctx, override)
 }
 
-func (h Sourcemod) GroupOverride(ctx context.Context, groupOverrideID int) (GroupOverrides, error) {
+func (h Sourcemod) GroupOverride(ctx context.Context, groupOverrideID int32) (GroupOverrides, error) {
 	return h.repository.GetGroupOverride(ctx, groupOverrideID)
 }
 
@@ -377,7 +377,7 @@ func (h Sourcemod) SaveGroupOverride(ctx context.Context, override GroupOverride
 	return h.repository.SaveGroupOverride(ctx, override)
 }
 
-func (h Sourcemod) GroupOverrides(ctx context.Context, groupID int) ([]GroupOverrides, error) {
+func (h Sourcemod) GroupOverrides(ctx context.Context, groupID int32) ([]GroupOverrides, error) {
 	group, errGroup := h.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
 		return []GroupOverrides{}, errGroup
@@ -414,7 +414,7 @@ func (h Sourcemod) AddOverride(ctx context.Context, name string, overrideType Ov
 	})
 }
 
-func (h Sourcemod) DelOverride(ctx context.Context, overrideID int) error {
+func (h Sourcemod) DelOverride(ctx context.Context, overrideID int32) error {
 	override, errOverride := h.repository.GetOverride(ctx, overrideID)
 	if errOverride != nil {
 		return errOverride
@@ -423,7 +423,7 @@ func (h Sourcemod) DelOverride(ctx context.Context, overrideID int) error {
 	return h.repository.DelOverride(ctx, override)
 }
 
-func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int, groupID int) (Admin, error) {
+func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int32, groupID int32) (Admin, error) {
 	admin, errAdmin := h.AdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return Admin{}, errAdmin
@@ -454,7 +454,7 @@ func (h Sourcemod) DelAdminGroup(ctx context.Context, adminID int, groupID int) 
 	return admin, nil
 }
 
-func (h Sourcemod) AddAdminGroup(ctx context.Context, adminID int, groupID int) (Admin, error) {
+func (h Sourcemod) AddAdminGroup(ctx context.Context, adminID int32, groupID int32) (Admin, error) {
 	admin, errAdmin := h.AdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return Admin{}, errAdmin
@@ -512,7 +512,7 @@ func (h Sourcemod) SetAdminGroups(ctx context.Context, authType AuthType, identi
 	return nil
 }
 
-func (h Sourcemod) DelGroup(ctx context.Context, groupID int) error {
+func (h Sourcemod) DelGroup(ctx context.Context, groupID int32) error {
 	group, errGroup := h.repository.GetGroupByID(ctx, groupID)
 	if errGroup != nil {
 		return errGroup
@@ -523,7 +523,7 @@ func (h Sourcemod) DelGroup(ctx context.Context, groupID int) error {
 
 const validFlags = "zabcdefghijklmnopqrst"
 
-func (h Sourcemod) AddGroup(ctx context.Context, name string, flags string, immunityLevel int) (Groups, error) {
+func (h Sourcemod) AddGroup(ctx context.Context, name string, flags string, immunityLevel int32) (Groups, error) {
 	if name == "" {
 		return Groups{}, ErrGroupName
 	}
@@ -571,7 +571,7 @@ func validateAuthIdentity(ctx context.Context, authType AuthType, identity strin
 	return identity, nil
 }
 
-func (h Sourcemod) DelAdmin(ctx context.Context, adminID int) error {
+func (h Sourcemod) DelAdmin(ctx context.Context, adminID int32) error {
 	admin, errAdmin := h.repository.GetAdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return errAdmin
@@ -580,7 +580,7 @@ func (h Sourcemod) DelAdmin(ctx context.Context, adminID int) error {
 	return h.repository.DelAdmin(ctx, admin)
 }
 
-func (h Sourcemod) AdminByID(ctx context.Context, adminID int) (Admin, error) {
+func (h Sourcemod) AdminByID(ctx context.Context, adminID int32) (Admin, error) {
 	return h.repository.GetAdminByID(ctx, adminID)
 }
 
@@ -608,7 +608,7 @@ func (h Sourcemod) SaveAdmin(ctx context.Context, admin Admin) (Admin, error) {
 	return h.repository.SaveAdmin(ctx, admin)
 }
 
-func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int, password string) (Admin, error) {
+func (h Sourcemod) AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int32, password string) (Admin, error) {
 	realIdentity, errValidate := validateAuthIdentity(ctx, authType, identity, password)
 	if errValidate != nil {
 		return Admin{}, errValidate
@@ -671,7 +671,7 @@ func (h Sourcemod) Groups(ctx context.Context) ([]Groups, error) {
 	return h.repository.Groups(ctx)
 }
 
-func (h Sourcemod) GetGroupByID(ctx context.Context, groupID int) (Groups, error) {
+func (h Sourcemod) GetGroupByID(ctx context.Context, groupID int32) (Groups, error) {
 	return h.repository.GetGroupByID(ctx, groupID)
 }
 
