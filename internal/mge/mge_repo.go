@@ -11,16 +11,16 @@ import (
 )
 
 type PlayerStats struct {
-	StatsID     int             `json:"stats_id"`
-	Rating      int             `json:"rating"`
+	StatsID     int32           `json:"stats_id"`
+	Rating      int32           `json:"rating"`
 	SteamID     steamid.SteamID `json:"steam_id"`
 	Personaname string          `json:"personaname"`
 	Avatarhash  string          `json:"avatarhash"`
 	Name        string          `json:"name"`
-	Wins        int             `json:"wins"`
-	Losses      int             `json:"losses"`
+	Wins        int32           `json:"wins"`
+	Losses      int32           `json:"losses"`
 	LastPlayed  time.Time       `json:"last_played"`
-	HitBlip     int             `json:"hit_blip"`
+	HitBlip     int32           `json:"hit_blip"`
 }
 
 type QueryOpts struct {
@@ -93,7 +93,7 @@ const (
 )
 
 type Duels struct {
-	DuelID             int             `json:"duel_id"`
+	DuelID             int32           `json:"duel_id"`
 	Winner             steamid.SteamID `json:"winner"`
 	WinnerAvatarhash   string          `json:"winner_avatarhash"`
 	WinnerPersonaname  string          `json:"winner_personaname"`
@@ -106,9 +106,9 @@ type Duels struct {
 	Loser2             steamid.SteamID `json:"loser2"`
 	Loser2Avatarhash   string          `json:"loser2_avatarhash"`
 	Loser2Personaname  string          `json:"loser2_personaname"`
-	WinnerScore        int             `json:"winner_score"`
-	LoserScore         int             `json:"loser_score"`
-	Winlimit           int             `json:"winlimit"`
+	WinnerScore        int32           `json:"winner_score"`
+	LoserScore         int32           `json:"loser_score"`
+	Winlimit           int32           `json:"winlimit"`
 	GameTime           time.Time       `json:"game_time"`
 	MapName            string          `json:"map_name"`
 	ArenaName          string          `json:"arena_name"`

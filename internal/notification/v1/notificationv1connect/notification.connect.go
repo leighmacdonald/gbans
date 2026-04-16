@@ -55,9 +55,9 @@ const (
 type NotificationServiceClient interface {
 	Notifications(context.Context, *emptypb.Empty) (*v1.NotificationsResponse, error)
 	MarkRead(context.Context, *v1.MarkReadRequest) (*emptypb.Empty, error)
-	MarkReadAll(context.Context, *emptypb.Empty) (*v1.MarkReadAllResponse, error)
-	DeleteAll(context.Context, *emptypb.Empty) (*v1.DeleteAllResponse, error)
-	Delete(context.Context, *v1.DeleteRequest) (*v1.DeleteAllResponse, error)
+	MarkReadAll(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	DeleteAll(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
 }
 
 // NewNotificationServiceClient constructs a client for the notification.v1.NotificationService
@@ -83,19 +83,19 @@ func NewNotificationServiceClient(httpClient connect.HTTPClient, baseURL string,
 			connect.WithSchema(notificationServiceMethods.ByName("MarkRead")),
 			connect.WithClientOptions(opts...),
 		),
-		markReadAll: connect.NewClient[emptypb.Empty, v1.MarkReadAllResponse](
+		markReadAll: connect.NewClient[emptypb.Empty, emptypb.Empty](
 			httpClient,
 			baseURL+NotificationServiceMarkReadAllProcedure,
 			connect.WithSchema(notificationServiceMethods.ByName("MarkReadAll")),
 			connect.WithClientOptions(opts...),
 		),
-		deleteAll: connect.NewClient[emptypb.Empty, v1.DeleteAllResponse](
+		deleteAll: connect.NewClient[emptypb.Empty, emptypb.Empty](
 			httpClient,
 			baseURL+NotificationServiceDeleteAllProcedure,
 			connect.WithSchema(notificationServiceMethods.ByName("DeleteAll")),
 			connect.WithClientOptions(opts...),
 		),
-		delete: connect.NewClient[v1.DeleteRequest, v1.DeleteAllResponse](
+		delete: connect.NewClient[v1.DeleteRequest, emptypb.Empty](
 			httpClient,
 			baseURL+NotificationServiceDeleteProcedure,
 			connect.WithSchema(notificationServiceMethods.ByName("Delete")),
@@ -108,9 +108,9 @@ func NewNotificationServiceClient(httpClient connect.HTTPClient, baseURL string,
 type notificationServiceClient struct {
 	notifications *connect.Client[emptypb.Empty, v1.NotificationsResponse]
 	markRead      *connect.Client[v1.MarkReadRequest, emptypb.Empty]
-	markReadAll   *connect.Client[emptypb.Empty, v1.MarkReadAllResponse]
-	deleteAll     *connect.Client[emptypb.Empty, v1.DeleteAllResponse]
-	delete        *connect.Client[v1.DeleteRequest, v1.DeleteAllResponse]
+	markReadAll   *connect.Client[emptypb.Empty, emptypb.Empty]
+	deleteAll     *connect.Client[emptypb.Empty, emptypb.Empty]
+	delete        *connect.Client[v1.DeleteRequest, emptypb.Empty]
 }
 
 // Notifications calls notification.v1.NotificationService.Notifications.
@@ -132,7 +132,7 @@ func (c *notificationServiceClient) MarkRead(ctx context.Context, req *v1.MarkRe
 }
 
 // MarkReadAll calls notification.v1.NotificationService.MarkReadAll.
-func (c *notificationServiceClient) MarkReadAll(ctx context.Context, req *emptypb.Empty) (*v1.MarkReadAllResponse, error) {
+func (c *notificationServiceClient) MarkReadAll(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
 	response, err := c.markReadAll.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -141,7 +141,7 @@ func (c *notificationServiceClient) MarkReadAll(ctx context.Context, req *emptyp
 }
 
 // DeleteAll calls notification.v1.NotificationService.DeleteAll.
-func (c *notificationServiceClient) DeleteAll(ctx context.Context, req *emptypb.Empty) (*v1.DeleteAllResponse, error) {
+func (c *notificationServiceClient) DeleteAll(ctx context.Context, req *emptypb.Empty) (*emptypb.Empty, error) {
 	response, err := c.deleteAll.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -150,7 +150,7 @@ func (c *notificationServiceClient) DeleteAll(ctx context.Context, req *emptypb.
 }
 
 // Delete calls notification.v1.NotificationService.Delete.
-func (c *notificationServiceClient) Delete(ctx context.Context, req *v1.DeleteRequest) (*v1.DeleteAllResponse, error) {
+func (c *notificationServiceClient) Delete(ctx context.Context, req *v1.DeleteRequest) (*emptypb.Empty, error) {
 	response, err := c.delete.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -163,9 +163,9 @@ func (c *notificationServiceClient) Delete(ctx context.Context, req *v1.DeleteRe
 type NotificationServiceHandler interface {
 	Notifications(context.Context, *emptypb.Empty) (*v1.NotificationsResponse, error)
 	MarkRead(context.Context, *v1.MarkReadRequest) (*emptypb.Empty, error)
-	MarkReadAll(context.Context, *emptypb.Empty) (*v1.MarkReadAllResponse, error)
-	DeleteAll(context.Context, *emptypb.Empty) (*v1.DeleteAllResponse, error)
-	Delete(context.Context, *v1.DeleteRequest) (*v1.DeleteAllResponse, error)
+	MarkReadAll(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	DeleteAll(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error)
 }
 
 // NewNotificationServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -234,14 +234,14 @@ func (UnimplementedNotificationServiceHandler) MarkRead(context.Context, *v1.Mar
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("notification.v1.NotificationService.MarkRead is not implemented"))
 }
 
-func (UnimplementedNotificationServiceHandler) MarkReadAll(context.Context, *emptypb.Empty) (*v1.MarkReadAllResponse, error) {
+func (UnimplementedNotificationServiceHandler) MarkReadAll(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("notification.v1.NotificationService.MarkReadAll is not implemented"))
 }
 
-func (UnimplementedNotificationServiceHandler) DeleteAll(context.Context, *emptypb.Empty) (*v1.DeleteAllResponse, error) {
+func (UnimplementedNotificationServiceHandler) DeleteAll(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("notification.v1.NotificationService.DeleteAll is not implemented"))
 }
 
-func (UnimplementedNotificationServiceHandler) Delete(context.Context, *v1.DeleteRequest) (*v1.DeleteAllResponse, error) {
+func (UnimplementedNotificationServiceHandler) Delete(context.Context, *v1.DeleteRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("notification.v1.NotificationService.Delete is not implemented"))
 }

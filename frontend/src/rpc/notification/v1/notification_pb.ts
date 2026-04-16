@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
 export const file_notification_v1_notification: GenFile =
 	/*@__PURE__*/
 	fileDesc(
-		"CiJub3RpZmljYXRpb24vdjEvbm90aWZpY2F0aW9uLnByb3RvEg9ub3RpZmljYXRpb24udjEiUQoVTm90aWZpY2F0aW9uc1Jlc3BvbnNlEjgKDW5vdGlmaWNhdGlvbnMYASABKAsyIS5ub3RpZmljYXRpb24udjEuVXNlck5vdGlmaWNhdGlvbiIjCg1EZWxldGVSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASADKAUiJQoPTWFya1JlYWRSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASADKAUiJgoTTWFya1JlYWRBbGxSZXNwb25zZRIPCgdjaGFuZ2VkGAEgASgFIiQKEURlbGV0ZUFsbFJlc3BvbnNlEg8KB2NoYW5nZWQYASABKAUi7gEKEFVzZXJOb3RpZmljYXRpb24SHgoWcGVyc29uX25vdGlmaWNhdGlvbl9pZBgBIAEoAxIQCghzdGVhbV9pZBgCIAEoCRIMCgRyZWFkGAMgASgIEg8KB2RlbGV0ZWQYBCABKAgSKwoIc2V2ZXJpdHkYBSABKA4yGS5ub3RpZmljYXRpb24udjEuU2V2ZXJpdHkSDwoHbWVzc2FnZRgGIAEoCRIMCgRsaW5rGAcgASgJEg0KBWNvdW50GAggASgFEi4KCmNyZWF0ZWRfb24YCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wKlAKCFNldmVyaXR5Eh0KGVNFVkVSSVRZX0lORk9fVU5TUEVDSUZJRUQQABIRCg1TRVZFUklUWV9XQVJOEAESEgoOU0VWRVJJVFlfRVJST1IQAjKaAwoTTm90aWZpY2F0aW9uU2VydmljZRJRCg1Ob3RpZmljYXRpb25zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiYubm90aWZpY2F0aW9uLnYxLk5vdGlmaWNhdGlvbnNSZXNwb25zZSIAEkYKCE1hcmtSZWFkEiAubm90aWZpY2F0aW9uLnYxLk1hcmtSZWFkUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEk0KC01hcmtSZWFkQWxsEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiQubm90aWZpY2F0aW9uLnYxLk1hcmtSZWFkQWxsUmVzcG9uc2UiABJJCglEZWxldGVBbGwSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIi5ub3RpZmljYXRpb24udjEuRGVsZXRlQWxsUmVzcG9uc2UiABJOCgZEZWxldGUSHi5ub3RpZmljYXRpb24udjEuRGVsZXRlUmVxdWVzdBoiLm5vdGlmaWNhdGlvbi52MS5EZWxldGVBbGxSZXNwb25zZSIAQs4BChNjb20ubm90aWZpY2F0aW9uLnYxQhFOb3RpZmljYXRpb25Qcm90b1ABWkdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL25vdGlmaWNhdGlvbi92MTtub3RpZmljYXRpb252MaICA05YWKoCD05vdGlmaWNhdGlvbi5WMcoCD05vdGlmaWNhdGlvblxWMeICG05vdGlmaWNhdGlvblxWMVxHUEJNZXRhZGF0YeoCEE5vdGlmaWNhdGlvbjo6VjFiCGVkaXRpb25zcOgH",
+		"CiJub3RpZmljYXRpb24vdjEvbm90aWZpY2F0aW9uLnByb3RvEg9ub3RpZmljYXRpb24udjEiUQoVTm90aWZpY2F0aW9uc1Jlc3BvbnNlEjgKDW5vdGlmaWNhdGlvbnMYASADKAsyIS5ub3RpZmljYXRpb24udjEuVXNlck5vdGlmaWNhdGlvbiIjCg1EZWxldGVSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASADKAUiJQoPTWFya1JlYWRSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASADKAUi7gEKEFVzZXJOb3RpZmljYXRpb24SHgoWcGVyc29uX25vdGlmaWNhdGlvbl9pZBgBIAEoAxIQCghzdGVhbV9pZBgCIAEoAxIMCgRyZWFkGAMgASgIEg8KB2RlbGV0ZWQYBCABKAgSKwoIc2V2ZXJpdHkYBSABKA4yGS5ub3RpZmljYXRpb24udjEuU2V2ZXJpdHkSDwoHbWVzc2FnZRgGIAEoCRIMCgRsaW5rGAcgASgJEg0KBWNvdW50GAggASgFEi4KCmNyZWF0ZWRfb24YCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wKlAKCFNldmVyaXR5Eh0KGVNFVkVSSVRZX0lORk9fVU5TUEVDSUZJRUQQABIRCg1TRVZFUklUWV9XQVJOEAESEgoOU0VWRVJJVFlfRVJST1IQAjL0AgoTTm90aWZpY2F0aW9uU2VydmljZRJRCg1Ob3RpZmljYXRpb25zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiYubm90aWZpY2F0aW9uLnYxLk5vdGlmaWNhdGlvbnNSZXNwb25zZSIAEkYKCE1hcmtSZWFkEiAubm90aWZpY2F0aW9uLnYxLk1hcmtSZWFkUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEj8KC01hcmtSZWFkQWxsEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASPQoJRGVsZXRlQWxsEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASQgoGRGVsZXRlEh4ubm90aWZpY2F0aW9uLnYxLkRlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiAELOAQoTY29tLm5vdGlmaWNhdGlvbi52MUIRTm90aWZpY2F0aW9uUHJvdG9QAVpHZ2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9ub3RpZmljYXRpb24vdjE7bm90aWZpY2F0aW9udjGiAgNOWFiqAg9Ob3RpZmljYXRpb24uVjHKAg9Ob3RpZmljYXRpb25cVjHiAhtOb3RpZmljYXRpb25cVjFcR1BCTWV0YWRhdGHqAhBOb3RpZmljYXRpb246OlYxYghlZGl0aW9uc3DoBw",
 		[file_filter, file_google_protobuf_empty, file_google_protobuf_timestamp],
 	);
 
@@ -24,9 +24,9 @@ export const file_notification_v1_notification: GenFile =
  */
 export type NotificationsResponse = Message<"notification.v1.NotificationsResponse"> & {
 	/**
-	 * @generated from field: notification.v1.UserNotification notifications = 1;
+	 * @generated from field: repeated notification.v1.UserNotification notifications = 1;
 	 */
-	notifications?: UserNotification;
+	notifications: UserNotification[];
 };
 
 /**
@@ -74,42 +74,6 @@ export const MarkReadRequestSchema: GenMessage<MarkReadRequest> =
 	messageDesc(file_notification_v1_notification, 2);
 
 /**
- * @generated from message notification.v1.MarkReadAllResponse
- */
-export type MarkReadAllResponse = Message<"notification.v1.MarkReadAllResponse"> & {
-	/**
-	 * @generated from field: int32 changed = 1;
-	 */
-	changed: number;
-};
-
-/**
- * Describes the message notification.v1.MarkReadAllResponse.
- * Use `create(MarkReadAllResponseSchema)` to create a new message.
- */
-export const MarkReadAllResponseSchema: GenMessage<MarkReadAllResponse> =
-	/*@__PURE__*/
-	messageDesc(file_notification_v1_notification, 3);
-
-/**
- * @generated from message notification.v1.DeleteAllResponse
- */
-export type DeleteAllResponse = Message<"notification.v1.DeleteAllResponse"> & {
-	/**
-	 * @generated from field: int32 changed = 1;
-	 */
-	changed: number;
-};
-
-/**
- * Describes the message notification.v1.DeleteAllResponse.
- * Use `create(DeleteAllResponseSchema)` to create a new message.
- */
-export const DeleteAllResponseSchema: GenMessage<DeleteAllResponse> =
-	/*@__PURE__*/
-	messageDesc(file_notification_v1_notification, 4);
-
-/**
  * @generated from message notification.v1.UserNotification
  */
 export type UserNotification = Message<"notification.v1.UserNotification"> & {
@@ -119,9 +83,9 @@ export type UserNotification = Message<"notification.v1.UserNotification"> & {
 	personNotificationId: bigint;
 
 	/**
-	 * @generated from field: string steam_id = 2;
+	 * @generated from field: int64 steam_id = 2;
 	 */
-	steamId: string;
+	steamId: bigint;
 
 	/**
 	 * @generated from field: bool read = 3;
@@ -165,7 +129,7 @@ export type UserNotification = Message<"notification.v1.UserNotification"> & {
  */
 export const UserNotificationSchema: GenMessage<UserNotification> =
 	/*@__PURE__*/
-	messageDesc(file_notification_v1_notification, 5);
+	messageDesc(file_notification_v1_notification, 3);
 
 /**
  * @generated from enum notification.v1.Severity
@@ -218,7 +182,7 @@ export const NotificationService: GenService<{
 	markReadAll: {
 		methodKind: "unary";
 		input: typeof EmptySchema;
-		output: typeof MarkReadAllResponseSchema;
+		output: typeof EmptySchema;
 	};
 	/**
 	 * @generated from rpc notification.v1.NotificationService.DeleteAll
@@ -226,7 +190,7 @@ export const NotificationService: GenService<{
 	deleteAll: {
 		methodKind: "unary";
 		input: typeof EmptySchema;
-		output: typeof DeleteAllResponseSchema;
+		output: typeof EmptySchema;
 	};
 	/**
 	 * @generated from rpc notification.v1.NotificationService.Delete
@@ -234,6 +198,6 @@ export const NotificationService: GenService<{
 	delete: {
 		methodKind: "unary";
 		input: typeof DeleteRequestSchema;
-		output: typeof DeleteAllResponseSchema;
+		output: typeof EmptySchema;
 	};
 }> = /*@__PURE__*/ serviceDesc(file_notification_v1_notification, 0);

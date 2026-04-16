@@ -86,7 +86,9 @@ message LatLong {
   float latitude = 1;
   float longitude = 2;
 }
-message QueryNetworkResponse {}
+message QueryNetworkResponse {
+  Details details = 1;
+}
 
 message QueryConnectionsRequest {
   Filter filter = 1;
@@ -105,7 +107,7 @@ message QueryConnectionsResponse {
 message PersonConnection {
   int64 person_connection_id = 1;
   string ip_addr = 2;
-  string steam_id = 3;
+  int64 steam_id = 3;
   string persona_name = 4;
   int32 server_id = 5;
 }

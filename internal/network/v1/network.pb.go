@@ -654,6 +654,7 @@ func (x *LatLong) GetLongitude() float32 {
 
 type QueryNetworkResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Details       *Details               `protobuf:"bytes,1,opt,name=details" json:"details,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -686,6 +687,13 @@ func (x *QueryNetworkResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use QueryNetworkResponse.ProtoReflect.Descriptor instead.
 func (*QueryNetworkResponse) Descriptor() ([]byte, []int) {
 	return file_network_v1_network_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *QueryNetworkResponse) GetDetails() *Details {
+	if x != nil {
+		return x.Details
+	}
+	return nil
 }
 
 type QueryConnectionsRequest struct {
@@ -828,7 +836,7 @@ type PersonConnection struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	PersonConnectionId *int64                 `protobuf:"varint,1,opt,name=person_connection_id,json=personConnectionId" json:"person_connection_id,omitempty"`
 	IpAddr             *string                `protobuf:"bytes,2,opt,name=ip_addr,json=ipAddr" json:"ip_addr,omitempty"`
-	SteamId            *string                `protobuf:"bytes,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId            *int64                 `protobuf:"varint,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	PersonaName        *string                `protobuf:"bytes,4,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
 	ServerId           *int32                 `protobuf:"varint,5,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
 	unknownFields      protoimpl.UnknownFields
@@ -879,11 +887,11 @@ func (x *PersonConnection) GetIpAddr() string {
 	return ""
 }
 
-func (x *PersonConnection) GetSteamId() string {
+func (x *PersonConnection) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 func (x *PersonConnection) GetPersonaName() string {
@@ -946,8 +954,9 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"threatType\"C\n" +
 	"\aLatLong\x12\x1a\n" +
 	"\blatitude\x18\x01 \x01(\x02R\blatitude\x12\x1c\n" +
-	"\tlongitude\x18\x02 \x01(\x02R\tlongitude\"\x16\n" +
-	"\x14QueryNetworkResponse\"\xe9\x01\n" +
+	"\tlongitude\x18\x02 \x01(\x02R\tlongitude\"E\n" +
+	"\x14QueryNetworkResponse\x12-\n" +
+	"\adetails\x18\x01 \x01(\v2\x13.network.v1.DetailsR\adetails\"\xe9\x01\n" +
 	"\x17QueryConnectionsRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x19\n" +
 	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12\x12\n" +
@@ -963,7 +972,7 @@ const file_network_v1_network_proto_rawDesc = "" +
 	"\x10PersonConnection\x120\n" +
 	"\x14person_connection_id\x18\x01 \x01(\x03R\x12personConnectionId\x12\x17\n" +
 	"\aip_addr\x18\x02 \x01(\tR\x06ipAddr\x12\x19\n" +
-	"\bsteam_id\x18\x03 \x01(\tR\asteamId\x12!\n" +
+	"\bsteam_id\x18\x03 \x01(\x03R\asteamId\x12!\n" +
 	"\fpersona_name\x18\x04 \x01(\tR\vpersonaName\x12\x1b\n" +
 	"\tserver_id\x18\x05 \x01(\x05R\bserverId*\xd0\x01\n" +
 	"\n" +
@@ -1041,19 +1050,20 @@ var file_network_v1_network_proto_depIdxs = []int32{
 	1,  // 6: network.v1.Proxy.usage_type:type_name -> network.v1.UsageType
 	14, // 7: network.v1.Proxy.last_seen:type_name -> google.protobuf.Timestamp
 	0,  // 8: network.v1.Proxy.threat_type:type_name -> network.v1.ThreatType
-	13, // 9: network.v1.QueryConnectionsRequest.filter:type_name -> Filter
-	12, // 10: network.v1.QueryConnectionsResponse.connection:type_name -> network.v1.PersonConnection
-	10, // 11: network.v1.NetworkService.QueryConnections:input_type -> network.v1.QueryConnectionsRequest
-	3,  // 12: network.v1.NetworkService.QueryNetwork:input_type -> network.v1.QueryNetworkRequest
-	15, // 13: network.v1.NetworkService.UpdateDB:input_type -> google.protobuf.Empty
-	11, // 14: network.v1.NetworkService.QueryConnections:output_type -> network.v1.QueryConnectionsResponse
-	9,  // 15: network.v1.NetworkService.QueryNetwork:output_type -> network.v1.QueryNetworkResponse
-	15, // 16: network.v1.NetworkService.UpdateDB:output_type -> google.protobuf.Empty
-	14, // [14:17] is the sub-list for method output_type
-	11, // [11:14] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	4,  // 9: network.v1.QueryNetworkResponse.details:type_name -> network.v1.Details
+	13, // 10: network.v1.QueryConnectionsRequest.filter:type_name -> Filter
+	12, // 11: network.v1.QueryConnectionsResponse.connection:type_name -> network.v1.PersonConnection
+	10, // 12: network.v1.NetworkService.QueryConnections:input_type -> network.v1.QueryConnectionsRequest
+	3,  // 13: network.v1.NetworkService.QueryNetwork:input_type -> network.v1.QueryNetworkRequest
+	15, // 14: network.v1.NetworkService.UpdateDB:input_type -> google.protobuf.Empty
+	11, // 15: network.v1.NetworkService.QueryConnections:output_type -> network.v1.QueryConnectionsResponse
+	9,  // 16: network.v1.NetworkService.QueryNetwork:output_type -> network.v1.QueryNetworkResponse
+	15, // 17: network.v1.NetworkService.UpdateDB:output_type -> google.protobuf.Empty
+	15, // [15:18] is the sub-list for method output_type
+	12, // [12:15] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_network_v1_network_proto_init() }

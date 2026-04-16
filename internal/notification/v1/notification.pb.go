@@ -75,7 +75,7 @@ func (Severity) EnumDescriptor() ([]byte, []int) {
 
 type NotificationsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Notifications *UserNotification      `protobuf:"bytes,1,opt,name=notifications" json:"notifications,omitempty"`
+	Notifications []*UserNotification    `protobuf:"bytes,1,rep,name=notifications" json:"notifications,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -110,7 +110,7 @@ func (*NotificationsResponse) Descriptor() ([]byte, []int) {
 	return file_notification_v1_notification_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *NotificationsResponse) GetNotifications() *UserNotification {
+func (x *NotificationsResponse) GetNotifications() []*UserNotification {
 	if x != nil {
 		return x.Notifications
 	}
@@ -205,98 +205,10 @@ func (x *MarkReadRequest) GetMessageId() []int32 {
 	return nil
 }
 
-type MarkReadAllResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Changed       *int32                 `protobuf:"varint,1,opt,name=changed" json:"changed,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *MarkReadAllResponse) Reset() {
-	*x = MarkReadAllResponse{}
-	mi := &file_notification_v1_notification_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *MarkReadAllResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MarkReadAllResponse) ProtoMessage() {}
-
-func (x *MarkReadAllResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_notification_v1_notification_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MarkReadAllResponse.ProtoReflect.Descriptor instead.
-func (*MarkReadAllResponse) Descriptor() ([]byte, []int) {
-	return file_notification_v1_notification_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *MarkReadAllResponse) GetChanged() int32 {
-	if x != nil && x.Changed != nil {
-		return *x.Changed
-	}
-	return 0
-}
-
-type DeleteAllResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Changed       *int32                 `protobuf:"varint,1,opt,name=changed" json:"changed,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DeleteAllResponse) Reset() {
-	*x = DeleteAllResponse{}
-	mi := &file_notification_v1_notification_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DeleteAllResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteAllResponse) ProtoMessage() {}
-
-func (x *DeleteAllResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_notification_v1_notification_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteAllResponse.ProtoReflect.Descriptor instead.
-func (*DeleteAllResponse) Descriptor() ([]byte, []int) {
-	return file_notification_v1_notification_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *DeleteAllResponse) GetChanged() int32 {
-	if x != nil && x.Changed != nil {
-		return *x.Changed
-	}
-	return 0
-}
-
 type UserNotification struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	PersonNotificationId *int64                 `protobuf:"varint,1,opt,name=person_notification_id,json=personNotificationId" json:"person_notification_id,omitempty"`
-	SteamId              *string                `protobuf:"bytes,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId              *int64                 `protobuf:"varint,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	Read                 *bool                  `protobuf:"varint,3,opt,name=read" json:"read,omitempty"`
 	Deleted              *bool                  `protobuf:"varint,4,opt,name=deleted" json:"deleted,omitempty"`
 	Severity             *Severity              `protobuf:"varint,5,opt,name=severity,enum=notification.v1.Severity" json:"severity,omitempty"`
@@ -310,7 +222,7 @@ type UserNotification struct {
 
 func (x *UserNotification) Reset() {
 	*x = UserNotification{}
-	mi := &file_notification_v1_notification_proto_msgTypes[5]
+	mi := &file_notification_v1_notification_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -322,7 +234,7 @@ func (x *UserNotification) String() string {
 func (*UserNotification) ProtoMessage() {}
 
 func (x *UserNotification) ProtoReflect() protoreflect.Message {
-	mi := &file_notification_v1_notification_proto_msgTypes[5]
+	mi := &file_notification_v1_notification_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -335,7 +247,7 @@ func (x *UserNotification) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserNotification.ProtoReflect.Descriptor instead.
 func (*UserNotification) Descriptor() ([]byte, []int) {
-	return file_notification_v1_notification_proto_rawDescGZIP(), []int{5}
+	return file_notification_v1_notification_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *UserNotification) GetPersonNotificationId() int64 {
@@ -345,11 +257,11 @@ func (x *UserNotification) GetPersonNotificationId() int64 {
 	return 0
 }
 
-func (x *UserNotification) GetSteamId() string {
+func (x *UserNotification) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 func (x *UserNotification) GetRead() bool {
@@ -407,20 +319,16 @@ const file_notification_v1_notification_proto_rawDesc = "" +
 	"\n" +
 	"\"notification/v1/notification.proto\x12\x0fnotification.v1\x1a\ffilter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"`\n" +
 	"\x15NotificationsResponse\x12G\n" +
-	"\rnotifications\x18\x01 \x01(\v2!.notification.v1.UserNotificationR\rnotifications\".\n" +
+	"\rnotifications\x18\x01 \x03(\v2!.notification.v1.UserNotificationR\rnotifications\".\n" +
 	"\rDeleteRequest\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x01 \x03(\x05R\tmessageId\"0\n" +
 	"\x0fMarkReadRequest\x12\x1d\n" +
 	"\n" +
-	"message_id\x18\x01 \x03(\x05R\tmessageId\"/\n" +
-	"\x13MarkReadAllResponse\x12\x18\n" +
-	"\achanged\x18\x01 \x01(\x05R\achanged\"-\n" +
-	"\x11DeleteAllResponse\x12\x18\n" +
-	"\achanged\x18\x01 \x01(\x05R\achanged\"\xc7\x02\n" +
+	"message_id\x18\x01 \x03(\x05R\tmessageId\"\xc7\x02\n" +
 	"\x10UserNotification\x124\n" +
 	"\x16person_notification_id\x18\x01 \x01(\x03R\x14personNotificationId\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12\x12\n" +
+	"\bsteam_id\x18\x02 \x01(\x03R\asteamId\x12\x12\n" +
 	"\x04read\x18\x03 \x01(\bR\x04read\x12\x18\n" +
 	"\adeleted\x18\x04 \x01(\bR\adeleted\x125\n" +
 	"\bseverity\x18\x05 \x01(\x0e2\x19.notification.v1.SeverityR\bseverity\x12\x18\n" +
@@ -432,13 +340,13 @@ const file_notification_v1_notification_proto_rawDesc = "" +
 	"\bSeverity\x12\x1d\n" +
 	"\x19SEVERITY_INFO_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSEVERITY_WARN\x10\x01\x12\x12\n" +
-	"\x0eSEVERITY_ERROR\x10\x022\x9a\x03\n" +
+	"\x0eSEVERITY_ERROR\x10\x022\xf4\x02\n" +
 	"\x13NotificationService\x12Q\n" +
 	"\rNotifications\x12\x16.google.protobuf.Empty\x1a&.notification.v1.NotificationsResponse\"\x00\x12F\n" +
-	"\bMarkRead\x12 .notification.v1.MarkReadRequest\x1a\x16.google.protobuf.Empty\"\x00\x12M\n" +
-	"\vMarkReadAll\x12\x16.google.protobuf.Empty\x1a$.notification.v1.MarkReadAllResponse\"\x00\x12I\n" +
-	"\tDeleteAll\x12\x16.google.protobuf.Empty\x1a\".notification.v1.DeleteAllResponse\"\x00\x12N\n" +
-	"\x06Delete\x12\x1e.notification.v1.DeleteRequest\x1a\".notification.v1.DeleteAllResponse\"\x00B\xce\x01\n" +
+	"\bMarkRead\x12 .notification.v1.MarkReadRequest\x1a\x16.google.protobuf.Empty\"\x00\x12?\n" +
+	"\vMarkReadAll\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x12=\n" +
+	"\tDeleteAll\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\"\x00\x12B\n" +
+	"\x06Delete\x12\x1e.notification.v1.DeleteRequest\x1a\x16.google.protobuf.Empty\"\x00B\xce\x01\n" +
 	"\x13com.notification.v1B\x11NotificationProtoP\x01ZGgithub.com/leighmacdonald/gbans/internal/notification/v1;notificationv1\xa2\x02\x03NXX\xaa\x02\x0fNotification.V1\xca\x02\x0fNotification\\V1\xe2\x02\x1bNotification\\V1\\GPBMetadata\xea\x02\x10Notification::V1b\beditionsp\xe8\a"
 
 var (
@@ -454,32 +362,30 @@ func file_notification_v1_notification_proto_rawDescGZIP() []byte {
 }
 
 var file_notification_v1_notification_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_notification_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_notification_v1_notification_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_notification_v1_notification_proto_goTypes = []any{
 	(Severity)(0),                 // 0: notification.v1.Severity
 	(*NotificationsResponse)(nil), // 1: notification.v1.NotificationsResponse
 	(*DeleteRequest)(nil),         // 2: notification.v1.DeleteRequest
 	(*MarkReadRequest)(nil),       // 3: notification.v1.MarkReadRequest
-	(*MarkReadAllResponse)(nil),   // 4: notification.v1.MarkReadAllResponse
-	(*DeleteAllResponse)(nil),     // 5: notification.v1.DeleteAllResponse
-	(*UserNotification)(nil),      // 6: notification.v1.UserNotification
-	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),         // 8: google.protobuf.Empty
+	(*UserNotification)(nil),      // 4: notification.v1.UserNotification
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 6: google.protobuf.Empty
 }
 var file_notification_v1_notification_proto_depIdxs = []int32{
-	6, // 0: notification.v1.NotificationsResponse.notifications:type_name -> notification.v1.UserNotification
+	4, // 0: notification.v1.NotificationsResponse.notifications:type_name -> notification.v1.UserNotification
 	0, // 1: notification.v1.UserNotification.severity:type_name -> notification.v1.Severity
-	7, // 2: notification.v1.UserNotification.created_on:type_name -> google.protobuf.Timestamp
-	8, // 3: notification.v1.NotificationService.Notifications:input_type -> google.protobuf.Empty
+	5, // 2: notification.v1.UserNotification.created_on:type_name -> google.protobuf.Timestamp
+	6, // 3: notification.v1.NotificationService.Notifications:input_type -> google.protobuf.Empty
 	3, // 4: notification.v1.NotificationService.MarkRead:input_type -> notification.v1.MarkReadRequest
-	8, // 5: notification.v1.NotificationService.MarkReadAll:input_type -> google.protobuf.Empty
-	8, // 6: notification.v1.NotificationService.DeleteAll:input_type -> google.protobuf.Empty
+	6, // 5: notification.v1.NotificationService.MarkReadAll:input_type -> google.protobuf.Empty
+	6, // 6: notification.v1.NotificationService.DeleteAll:input_type -> google.protobuf.Empty
 	2, // 7: notification.v1.NotificationService.Delete:input_type -> notification.v1.DeleteRequest
 	1, // 8: notification.v1.NotificationService.Notifications:output_type -> notification.v1.NotificationsResponse
-	8, // 9: notification.v1.NotificationService.MarkRead:output_type -> google.protobuf.Empty
-	4, // 10: notification.v1.NotificationService.MarkReadAll:output_type -> notification.v1.MarkReadAllResponse
-	5, // 11: notification.v1.NotificationService.DeleteAll:output_type -> notification.v1.DeleteAllResponse
-	5, // 12: notification.v1.NotificationService.Delete:output_type -> notification.v1.DeleteAllResponse
+	6, // 9: notification.v1.NotificationService.MarkRead:output_type -> google.protobuf.Empty
+	6, // 10: notification.v1.NotificationService.MarkReadAll:output_type -> google.protobuf.Empty
+	6, // 11: notification.v1.NotificationService.DeleteAll:output_type -> google.protobuf.Empty
+	6, // 12: notification.v1.NotificationService.Delete:output_type -> google.protobuf.Empty
 	8, // [8:13] is the sub-list for method output_type
 	3, // [3:8] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
@@ -498,7 +404,7 @@ func file_notification_v1_notification_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_notification_v1_notification_proto_rawDesc), len(file_notification_v1_notification_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

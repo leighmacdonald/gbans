@@ -12,7 +12,7 @@ service MGEService {
 
 message GetRatingsOverallRequest {
   Filter filter = 1;
-  int64 steam_id = 2;
+  string steam_id = 2;
 }
 
 message PlayerStats {
@@ -24,11 +24,12 @@ message PlayerStats {
   string name = 6;
   int32 wins = 7;
   int32 losses = 8;
-  google.protobuf.Timestamp last_play = 9;
+  google.protobuf.Timestamp last_played = 9;
 }
 
 message GetRatingsOverallResponse {
   repeated PlayerStats stats = 1;
+  int64 count = 2;
 }
 
 enum DuelMode {
@@ -39,10 +40,10 @@ enum DuelMode {
 message GetHistoryRequest {
   Filter filter = 1;
   DuelMode mode = 2;
-  int64 winner = 3;
-  int64 winner2 = 4;
-  int64 loser = 5;
-  int64 loser2 = 6;
+  string winner = 3;
+  string winner2 = 4;
+  string loser = 5;
+  string loser2 = 6;
 }
 
 message Duel {
@@ -66,4 +67,7 @@ message Duel {
   string map_name = 18;
   string arena_name = 19;
 }
-message GetHistoryResponse {}
+message GetHistoryResponse {
+  repeated Duel history = 1;
+  int64 count = 2;
+}

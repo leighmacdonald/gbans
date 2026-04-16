@@ -51,7 +51,7 @@ func NewBlocklistHandler(engine *gin.Engine, ath httphelper.Authenticator, block
 }
 
 type CIDRBlockWhitelistExport struct {
-	CIDRBlockWhitelistID int       `json:"cidr_block_whitelist_id"`
+	CIDRBlockWhitelistID int32     `json:"cidr_block_whitelist_id"`
 	Address              string    `json:"address"`
 	CreatedOn            time.Time `json:"created_on"`
 	UpdatedOn            time.Time `json:"updated_on"`

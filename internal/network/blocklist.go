@@ -25,7 +25,7 @@ var ErrInvalidCIDR = errors.New("failed to parse CIDR address")
 const maskSingleHost = "/32"
 
 type CIDRBlockSource struct {
-	CIDRBlockSourceID int       `json:"cidr_block_source_id"`
+	CIDRBlockSourceID int32     `json:"cidr_block_source_id"`
 	Name              string    `json:"name"`
 	URL               string    `json:"url"`
 	Enabled           bool      `json:"enabled"`
@@ -34,7 +34,7 @@ type CIDRBlockSource struct {
 }
 
 type WhitelistIP struct {
-	CIDRBlockWhitelistID int        `json:"cidr_block_whitelist_id"`
+	CIDRBlockWhitelistID int32      `json:"cidr_block_whitelist_id"`
 	Address              *net.IPNet `json:"address"`
 	CreatedOn            time.Time  `json:"created_on"`
 	UpdatedOn            time.Time  `json:"updated_on"`
