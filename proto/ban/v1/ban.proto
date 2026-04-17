@@ -3,7 +3,7 @@ edition = "2023";
 package ban.v1;
 
 import "buf/validate/validate.proto";
-import "filter.proto";
+import "database/query/v1/filter.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";

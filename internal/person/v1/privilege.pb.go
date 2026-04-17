@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: privilege.proto
+// source: person/v1/privilege.proto
 
-package internal
+package personv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -66,11 +66,11 @@ func (x Privilege) String() string {
 }
 
 func (Privilege) Descriptor() protoreflect.EnumDescriptor {
-	return file_privilege_proto_enumTypes[0].Descriptor()
+	return file_person_v1_privilege_proto_enumTypes[0].Descriptor()
 }
 
 func (Privilege) Type() protoreflect.EnumType {
-	return &file_privilege_proto_enumTypes[0]
+	return &file_person_v1_privilege_proto_enumTypes[0]
 }
 
 func (x Privilege) Number() protoreflect.EnumNumber {
@@ -79,14 +79,14 @@ func (x Privilege) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Privilege.Descriptor instead.
 func (Privilege) EnumDescriptor() ([]byte, []int) {
-	return file_privilege_proto_rawDescGZIP(), []int{0}
+	return file_person_v1_privilege_proto_rawDescGZIP(), []int{0}
 }
 
-var File_privilege_proto protoreflect.FileDescriptor
+var File_person_v1_privilege_proto protoreflect.FileDescriptor
 
-const file_privilege_proto_rawDesc = "" +
+const file_person_v1_privilege_proto_rawDesc = "" +
 	"\n" +
-	"\x0fprivilege.proto*\xb2\x01\n" +
+	"\x19person/v1/privilege.proto\x12\tperson.v1*\xb2\x01\n" +
 	"\tPrivilege\x12\x14\n" +
 	"\x10PRIVILEGE_BANNED\x10\x00\x12\x1f\n" +
 	"\x1bPRIVILEGE_GUEST_UNSPECIFIED\x10\x01\x12\x12\n" +
@@ -95,25 +95,27 @@ const file_privilege_proto_rawDesc = "" +
 	"\x12PRIVILEGE_RESERVED\x10\x0f\x12\x14\n" +
 	"\x10PRIVILEGE_EDITOR\x10\x19\x12\x17\n" +
 	"\x13PRIVILEGE_MODERATOR\x102\x12\x13\n" +
-	"\x0fPRIVILEGE_ADMIN\x10dB<B\x0ePrivilegeProtoP\x01Z(github.com/leighmacdonald/gbans/internalb\beditionsp\xe8\a"
+	"\x0fPRIVILEGE_ADMIN\x10dB\xa1\x01\n" +
+	"\rcom.person.v1B\x0ePrivilegeProtoP\x01Z;github.com/leighmacdonald/gbans/internal/person/v1;personv1\xa2\x02\x03PXX\xaa\x02\tPerson.V1\xca\x02\tPerson\\V1\xe2\x02\x15Person\\V1\\GPBMetadata\xea\x02\n" +
+	"Person::V1b\beditionsp\xe8\a"
 
 var (
-	file_privilege_proto_rawDescOnce sync.Once
-	file_privilege_proto_rawDescData []byte
+	file_person_v1_privilege_proto_rawDescOnce sync.Once
+	file_person_v1_privilege_proto_rawDescData []byte
 )
 
-func file_privilege_proto_rawDescGZIP() []byte {
-	file_privilege_proto_rawDescOnce.Do(func() {
-		file_privilege_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_privilege_proto_rawDesc), len(file_privilege_proto_rawDesc)))
+func file_person_v1_privilege_proto_rawDescGZIP() []byte {
+	file_person_v1_privilege_proto_rawDescOnce.Do(func() {
+		file_person_v1_privilege_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_person_v1_privilege_proto_rawDesc), len(file_person_v1_privilege_proto_rawDesc)))
 	})
-	return file_privilege_proto_rawDescData
+	return file_person_v1_privilege_proto_rawDescData
 }
 
-var file_privilege_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_privilege_proto_goTypes = []any{
-	(Privilege)(0), // 0: Privilege
+var file_person_v1_privilege_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_person_v1_privilege_proto_goTypes = []any{
+	(Privilege)(0), // 0: person.v1.Privilege
 }
-var file_privilege_proto_depIdxs = []int32{
+var file_person_v1_privilege_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -121,26 +123,26 @@ var file_privilege_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_privilege_proto_init() }
-func file_privilege_proto_init() {
-	if File_privilege_proto != nil {
+func init() { file_person_v1_privilege_proto_init() }
+func file_person_v1_privilege_proto_init() {
+	if File_person_v1_privilege_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_privilege_proto_rawDesc), len(file_privilege_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_person_v1_privilege_proto_rawDesc), len(file_person_v1_privilege_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_privilege_proto_goTypes,
-		DependencyIndexes: file_privilege_proto_depIdxs,
-		EnumInfos:         file_privilege_proto_enumTypes,
+		GoTypes:           file_person_v1_privilege_proto_goTypes,
+		DependencyIndexes: file_person_v1_privilege_proto_depIdxs,
+		EnumInfos:         file_person_v1_privilege_proto_enumTypes,
 	}.Build()
-	File_privilege_proto = out.File
-	file_privilege_proto_goTypes = nil
-	file_privilege_proto_depIdxs = nil
+	File_person_v1_privilege_proto = out.File
+	file_person_v1_privilege_proto_goTypes = nil
+	file_person_v1_privilege_proto_depIdxs = nil
 }

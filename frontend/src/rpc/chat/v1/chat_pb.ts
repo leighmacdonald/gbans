@@ -4,8 +4,8 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { Filter } from "../../filter_pb";
-import { file_filter } from "../../filter_pb";
+import type { Filter } from "../../database/query/v1/filter_pb";
+import { file_database_query_v1_filter } from "../../database/query/v1/filter_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message as Message$1 } from "@bufbuild/protobuf";
@@ -13,205 +13,204 @@ import type { Message as Message$1 } from "@bufbuild/protobuf";
 /**
  * Describes the file chat/v1/chat.proto.
  */
-export const file_chat_v1_chat: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChJjaGF0L3YxL2NoYXQucHJvdG8SB2NoYXQudjEiQQoTUXVlcnlDb250ZXh0UmVxdWVzdBIZChFwZXJzb25fbWVzc2FnZV9pZBgBIAEoAxIPCgdwYWRkaW5nGAIgASgFIjoKFFF1ZXJ5Q29udGV4dFJlc3BvbnNlEiIKCG1lc3NhZ2VzGAEgAygLMhAuY2hhdC52MS5NZXNzYWdlIs8BCgxRdWVyeVJlcXVlc3QSFwoGZmlsdGVyGAEgASgLMgcuRmlsdGVyEg0KBXF1ZXJ5GAIgASgJEhEKCXNlcnZlcl9pZBgDIAEoBRIuCgpkYXRlX3N0YXJ0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCghkYXRlX2VuZBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFAoMZmxhZ2dlZF9vbmx5GAYgASgIEhAKCHN0ZWFtX2lkGAcgASgJIkIKDVF1ZXJ5UmVzcG9uc2USIgoIbWVzc2FnZXMYASADKAsyEC5jaGF0LnYxLk1lc3NhZ2USDQoFY291bnQYAiABKAMihAIKB01lc3NhZ2USGQoRcGVyc29uX21lc3NhZ2VfaWQYASABKAMSEAoIbWF0Y2hfaWQYAiABKAkSEAoIc3RlYW1faWQYAyABKAkSEwoLYXZhdGFyX2hhc2gYBCABKAkSFAoMcGVyc29uYV9uYW1lGAUgASgJEhMKC3NlcnZlcl9uYW1lGAYgASgJEhEKCXNlcnZlcl9pZBgHIAEoBRIMCgRib2R5GAggASgJEgwKBHRlYW0YCSABKAgSLgoKY3JlYXRlZF9vbhgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGwoTYXV0b19maWx0ZXJfZmxhZ2dlZBgLIAEoAzKWAQoLQ2hhdFNlcnZpY2USOAoFUXVlcnkSFS5jaGF0LnYxLlF1ZXJ5UmVxdWVzdBoWLmNoYXQudjEuUXVlcnlSZXNwb25zZSIAEk0KDFF1ZXJ5Q29udGV4dBIcLmNoYXQudjEuUXVlcnlDb250ZXh0UmVxdWVzdBodLmNoYXQudjEuUXVlcnlDb250ZXh0UmVzcG9uc2UiAEKOAQoLY29tLmNoYXQudjFCCUNoYXRQcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2NoYXQvdjE7Y2hhdHYxogIDQ1hYqgIHQ2hhdC5WMcoCB0NoYXRcVjHiAhNDaGF0XFYxXEdQQk1ldGFkYXRh6gIIQ2hhdDo6VjFiCGVkaXRpb25zcOgH",
-		[file_filter, file_google_protobuf_timestamp],
-	);
+export const file_chat_v1_chat: GenFile = /*@__PURE__*/
+  fileDesc("ChJjaGF0L3YxL2NoYXQucHJvdG8SB2NoYXQudjEiQQoTUXVlcnlDb250ZXh0UmVxdWVzdBIZChFwZXJzb25fbWVzc2FnZV9pZBgBIAEoAxIPCgdwYWRkaW5nGAIgASgFIjoKFFF1ZXJ5Q29udGV4dFJlc3BvbnNlEiIKCG1lc3NhZ2VzGAEgAygLMhAuY2hhdC52MS5NZXNzYWdlIs8BCgxRdWVyeVJlcXVlc3QSFwoGZmlsdGVyGAEgASgLMgcuRmlsdGVyEg0KBXF1ZXJ5GAIgASgJEhEKCXNlcnZlcl9pZBgDIAEoBRIuCgpkYXRlX3N0YXJ0GAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIsCghkYXRlX2VuZBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFAoMZmxhZ2dlZF9vbmx5GAYgASgIEhAKCHN0ZWFtX2lkGAcgASgJIkIKDVF1ZXJ5UmVzcG9uc2USIgoIbWVzc2FnZXMYASADKAsyEC5jaGF0LnYxLk1lc3NhZ2USDQoFY291bnQYAiABKAMihAIKB01lc3NhZ2USGQoRcGVyc29uX21lc3NhZ2VfaWQYASABKAMSEAoIbWF0Y2hfaWQYAiABKAkSEAoIc3RlYW1faWQYAyABKAkSEwoLYXZhdGFyX2hhc2gYBCABKAkSFAoMcGVyc29uYV9uYW1lGAUgASgJEhMKC3NlcnZlcl9uYW1lGAYgASgJEhEKCXNlcnZlcl9pZBgHIAEoBRIMCgRib2R5GAggASgJEgwKBHRlYW0YCSABKAgSLgoKY3JlYXRlZF9vbhgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASGwoTYXV0b19maWx0ZXJfZmxhZ2dlZBgLIAEoAzKWAQoLQ2hhdFNlcnZpY2USOAoFUXVlcnkSFS5jaGF0LnYxLlF1ZXJ5UmVxdWVzdBoWLmNoYXQudjEuUXVlcnlSZXNwb25zZSIAEk0KDFF1ZXJ5Q29udGV4dBIcLmNoYXQudjEuUXVlcnlDb250ZXh0UmVxdWVzdBodLmNoYXQudjEuUXVlcnlDb250ZXh0UmVzcG9uc2UiAEKOAQoLY29tLmNoYXQudjFCCUNoYXRQcm90b1ABWjdnaXRodWIuY29tL2xlaWdobWFjZG9uYWxkL2diYW5zL2ludGVybmFsL2NoYXQvdjE7Y2hhdHYxogIDQ1hYqgIHQ2hhdC5WMcoCB0NoYXRcVjHiAhNDaGF0XFYxXEdQQk1ldGFkYXRh6gIIQ2hhdDo6VjFiCGVkaXRpb25zcOgH", [file_database_query_v1_filter, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message chat.v1.QueryContextRequest
  */
 export type QueryContextRequest = Message$1<"chat.v1.QueryContextRequest"> & {
-	/**
-	 * @generated from field: int64 person_message_id = 1;
-	 */
-	personMessageId: bigint;
+  /**
+   * @generated from field: int64 person_message_id = 1;
+   */
+  personMessageId: bigint;
 
-	/**
-	 * @generated from field: int32 padding = 2;
-	 */
-	padding: number;
+  /**
+   * @generated from field: int32 padding = 2;
+   */
+  padding: number;
 };
 
 /**
  * Describes the message chat.v1.QueryContextRequest.
  * Use `create(QueryContextRequestSchema)` to create a new message.
  */
-export const QueryContextRequestSchema: GenMessage<QueryContextRequest> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_chat, 0);
+export const QueryContextRequestSchema: GenMessage<QueryContextRequest> = /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 0);
 
 /**
  * @generated from message chat.v1.QueryContextResponse
  */
 export type QueryContextResponse = Message$1<"chat.v1.QueryContextResponse"> & {
-	/**
-	 * @generated from field: repeated chat.v1.Message messages = 1;
-	 */
-	messages: Message[];
+  /**
+   * @generated from field: repeated chat.v1.Message messages = 1;
+   */
+  messages: Message[];
 };
 
 /**
  * Describes the message chat.v1.QueryContextResponse.
  * Use `create(QueryContextResponseSchema)` to create a new message.
  */
-export const QueryContextResponseSchema: GenMessage<QueryContextResponse> =
-	/*@__PURE__*/
-	messageDesc(file_chat_v1_chat, 1);
+export const QueryContextResponseSchema: GenMessage<QueryContextResponse> = /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 1);
 
 /**
  * @generated from message chat.v1.QueryRequest
  */
 export type QueryRequest = Message$1<"chat.v1.QueryRequest"> & {
-	/**
-	 * @generated from field: Filter filter = 1;
-	 */
-	filter?: Filter;
+  /**
+   * @generated from field: Filter filter = 1;
+   */
+  filter?: Filter;
 
-	/**
-	 * @generated from field: string query = 2;
-	 */
-	query: string;
+  /**
+   * @generated from field: string query = 2;
+   */
+  query: string;
 
-	/**
-	 * @generated from field: int32 server_id = 3;
-	 */
-	serverId: number;
+  /**
+   * @generated from field: int32 server_id = 3;
+   */
+  serverId: number;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp date_start = 4;
-	 */
-	dateStart?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp date_start = 4;
+   */
+  dateStart?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp date_end = 5;
-	 */
-	dateEnd?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp date_end = 5;
+   */
+  dateEnd?: Timestamp;
 
-	/**
-	 * @generated from field: bool flagged_only = 6;
-	 */
-	flaggedOnly: boolean;
+  /**
+   * @generated from field: bool flagged_only = 6;
+   */
+  flaggedOnly: boolean;
 
-	/**
-	 * @generated from field: string steam_id = 7;
-	 */
-	steamId: string;
+  /**
+   * @generated from field: string steam_id = 7;
+   */
+  steamId: string;
 };
 
 /**
  * Describes the message chat.v1.QueryRequest.
  * Use `create(QueryRequestSchema)` to create a new message.
  */
-export const QueryRequestSchema: GenMessage<QueryRequest> = /*@__PURE__*/ messageDesc(file_chat_v1_chat, 2);
+export const QueryRequestSchema: GenMessage<QueryRequest> = /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 2);
 
 /**
  * @generated from message chat.v1.QueryResponse
  */
 export type QueryResponse = Message$1<"chat.v1.QueryResponse"> & {
-	/**
-	 * @generated from field: repeated chat.v1.Message messages = 1;
-	 */
-	messages: Message[];
+  /**
+   * @generated from field: repeated chat.v1.Message messages = 1;
+   */
+  messages: Message[];
 
-	/**
-	 * @generated from field: int64 count = 2;
-	 */
-	count: bigint;
+  /**
+   * @generated from field: int64 count = 2;
+   */
+  count: bigint;
 };
 
 /**
  * Describes the message chat.v1.QueryResponse.
  * Use `create(QueryResponseSchema)` to create a new message.
  */
-export const QueryResponseSchema: GenMessage<QueryResponse> = /*@__PURE__*/ messageDesc(file_chat_v1_chat, 3);
+export const QueryResponseSchema: GenMessage<QueryResponse> = /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 3);
 
 /**
  * @generated from message chat.v1.Message
  */
 export type Message = Message$1<"chat.v1.Message"> & {
-	/**
-	 * @generated from field: int64 person_message_id = 1;
-	 */
-	personMessageId: bigint;
+  /**
+   * @generated from field: int64 person_message_id = 1;
+   */
+  personMessageId: bigint;
 
-	/**
-	 * @generated from field: string match_id = 2;
-	 */
-	matchId: string;
+  /**
+   * @generated from field: string match_id = 2;
+   */
+  matchId: string;
 
-	/**
-	 * @generated from field: string steam_id = 3;
-	 */
-	steamId: string;
+  /**
+   * @generated from field: string steam_id = 3;
+   */
+  steamId: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 4;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 4;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: string persona_name = 5;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 5;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string server_name = 6;
-	 */
-	serverName: string;
+  /**
+   * @generated from field: string server_name = 6;
+   */
+  serverName: string;
 
-	/**
-	 * @generated from field: int32 server_id = 7;
-	 */
-	serverId: number;
+  /**
+   * @generated from field: int32 server_id = 7;
+   */
+  serverId: number;
 
-	/**
-	 * @generated from field: string body = 8;
-	 */
-	body: string;
+  /**
+   * @generated from field: string body = 8;
+   */
+  body: string;
 
-	/**
-	 * @generated from field: bool team = 9;
-	 */
-	team: boolean;
+  /**
+   * @generated from field: bool team = 9;
+   */
+  team: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 10;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 10;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: int64 auto_filter_flagged = 11;
-	 */
-	autoFilterFlagged: bigint;
+  /**
+   * @generated from field: int64 auto_filter_flagged = 11;
+   */
+  autoFilterFlagged: bigint;
 };
 
 /**
  * Describes the message chat.v1.Message.
  * Use `create(MessageSchema)` to create a new message.
  */
-export const MessageSchema: GenMessage<Message> = /*@__PURE__*/ messageDesc(file_chat_v1_chat, 4);
+export const MessageSchema: GenMessage<Message> = /*@__PURE__*/
+  messageDesc(file_chat_v1_chat, 4);
 
 /**
  * @generated from service chat.v1.ChatService
  */
 export const ChatService: GenService<{
-	/**
-	 * @generated from rpc chat.v1.ChatService.Query
-	 */
-	query: {
-		methodKind: "unary";
-		input: typeof QueryRequestSchema;
-		output: typeof QueryResponseSchema;
-	};
-	/**
-	 * @generated from rpc chat.v1.ChatService.QueryContext
-	 */
-	queryContext: {
-		methodKind: "unary";
-		input: typeof QueryContextRequestSchema;
-		output: typeof QueryContextResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_chat_v1_chat, 0);
+  /**
+   * @generated from rpc chat.v1.ChatService.Query
+   */
+  query: {
+    methodKind: "unary";
+    input: typeof QueryRequestSchema;
+    output: typeof QueryResponseSchema;
+  },
+  /**
+   * @generated from rpc chat.v1.ChatService.QueryContext
+   */
+  queryContext: {
+    methodKind: "unary";
+    input: typeof QueryContextRequestSchema;
+    output: typeof QueryContextResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_chat_v1_chat, 0);
+

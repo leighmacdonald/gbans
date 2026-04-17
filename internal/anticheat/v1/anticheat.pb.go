@@ -7,7 +7,9 @@
 package anticheatv1
 
 import (
-	internal "github.com/leighmacdonald/gbans/internal"
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
+	_ "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -98,7 +100,7 @@ func (Detection) EnumDescriptor() ([]byte, []int) {
 
 type QueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *internal.Filter       `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	Name          *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
 	SteamId       *int64                 `protobuf:"varint,3,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	Summary       *string                `protobuf:"bytes,4,opt,name=summary" json:"summary,omitempty"`
@@ -137,7 +139,7 @@ func (*QueryRequest) Descriptor() ([]byte, []int) {
 	return file_anticheat_v1_anticheat_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *QueryRequest) GetFilter() *internal.Filter {
+func (x *QueryRequest) GetFilter() *v1.Filter {
 	if x != nil {
 		return x.Filter
 	}
@@ -376,7 +378,7 @@ var File_anticheat_v1_anticheat_proto protoreflect.FileDescriptor
 
 const file_anticheat_v1_anticheat_proto_rawDesc = "" +
 	"\n" +
-	"\x1canticheat/v1/anticheat.proto\x12\fanticheat.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xaf\x01\n" +
+	"\x1canticheat/v1/anticheat.proto\x12\fanticheat.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17person/v1/steamid.proto\"\xaf\x01\n" +
 	"\fQueryRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
@@ -384,11 +386,13 @@ const file_anticheat_v1_anticheat_proto_rawDesc = "" +
 	"\asummary\x18\x04 \x01(\tR\asummary\x125\n" +
 	"\tdetection\x18\x05 \x01(\x0e2\x17.anticheat.v1.DetectionR\tdetection\">\n" +
 	"\rQueryResponse\x12-\n" +
-	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryR\aentries\"\xf1\x03\n" +
+	"\aentries\x18\x01 \x03(\v2\x13.anticheat.v1.EntryR\aentries\"\x89\x04\n" +
 	"\x05Entry\x12!\n" +
-	"\fanticheat_id\x18\x01 \x01(\x03R\vanticheatId\x12\x19\n" +
-	"\bsteam_id\x18\x02 \x01(\x03R\asteamId\x12\x1b\n" +
-	"\tserver_id\x18\x03 \x01(\x05R\bserverId\x12\x1f\n" +
+	"\fanticheat_id\x18\x01 \x01(\x03R\vanticheatId\x12%\n" +
+	"\bsteam_id\x18\x02 \x01(\x03B\n" +
+	"\xbaH\a\xc8\x01\x01\"\x02 \x00R\asteamId\x12'\n" +
+	"\tserver_id\x18\x03 \x01(\x05B\n" +
+	"\xbaH\a\xc8\x01\x01\"\x02 \x00R\bserverId\x12\x1f\n" +
 	"\vserver_name\x18\x04 \x01(\tR\n" +
 	"serverName\x12\x17\n" +
 	"\ademo_id\x18\x05 \x01(\x05R\x06demoId\x12\x1b\n" +
@@ -442,7 +446,7 @@ var file_anticheat_v1_anticheat_proto_goTypes = []any{
 	(*QueryRequest)(nil),          // 1: anticheat.v1.QueryRequest
 	(*QueryResponse)(nil),         // 2: anticheat.v1.QueryResponse
 	(*Entry)(nil),                 // 3: anticheat.v1.Entry
-	(*internal.Filter)(nil),       // 4: Filter
+	(*v1.Filter)(nil),             // 4: Filter
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_anticheat_v1_anticheat_proto_depIdxs = []int32{

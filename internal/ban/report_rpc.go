@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
@@ -13,6 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -160,7 +160,7 @@ func toReportMessage(msg ReportMessage) *v1.ReportMessage {
 		UpdatedOn:       timestamppb.New(msg.UpdatedOn),
 		PersonaName:     &msg.Personaname,
 		AvatarHash:      &msg.Avatarhash,
-		PermissionLevel: ptr.To(internal.Privilege(msg.PermissionLevel)),
+		PermissionLevel: ptr.To(personv1.Privilege(msg.PermissionLevel)),
 	}
 }
 
@@ -172,10 +172,10 @@ func toReportWithAuthor(report ReportWithAuthor) *v1.ReportWithAuthor {
 	}
 }
 
-func toPersonCore(person person.Core) *internal.PersonCore {
-	return &internal.PersonCore{
+func toPersonCore(person person.Core) *personv1.PersonCore {
+	return &personv1.PersonCore{
 		SteamId:         ptr.To(person.SteamID.String()),
-		PermissionLevel: ptr.To(internal.Privilege(person.PermissionLevel)),
+		PermissionLevel: ptr.To(personv1.Privilege(person.PermissionLevel)),
 		Name:            ptr.To(person.GetName()),
 		AvatarHash:      ptr.To(string(person.GetAvatar())),
 		DiscordId:       ptr.To(person.GetDiscordID()),

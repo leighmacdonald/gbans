@@ -5,10 +5,10 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	v1 "github.com/leighmacdonald/gbans/internal/wiki/v1"
@@ -49,7 +49,7 @@ func (s Service) Get(ctx context.Context, request *v1.GetRequest) (*v1.GetRespon
 			Slug:            &page.Slug,
 			BodyMd:          &page.BodyMD,
 			Revision:        &page.Revision,
-			PermissionLevel: ptr.To(internal.Privilege(page.PermissionLevel)),
+			PermissionLevel: ptr.To(personv1.Privilege(page.PermissionLevel)),
 			CreatedOn:       timestamppb.New(page.CreatedOn),
 			UpdatedOn:       timestamppb.New(page.UpdatedOn),
 		},
@@ -76,7 +76,7 @@ func (s Service) Update(ctx context.Context, request *v1.UpdateRequest) (*v1.Upd
 		Slug:            &updatedPage.Slug,
 		BodyMd:          &updatedPage.BodyMD,
 		Revision:        &updatedPage.Revision,
-		PermissionLevel: ptr.To(internal.Privilege(updatedPage.PermissionLevel)),
+		PermissionLevel: ptr.To(personv1.Privilege(updatedPage.PermissionLevel)),
 		CreatedOn:       timestamppb.New(updatedPage.CreatedOn),
 		UpdatedOn:       timestamppb.New(updatedPage.UpdatedOn),
 	}}, nil

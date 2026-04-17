@@ -7,7 +7,7 @@
 package votesv1
 
 import (
-	internal "github.com/leighmacdonald/gbans/internal"
+	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -74,7 +74,7 @@ func (VoteCode) EnumDescriptor() ([]byte, []int) {
 
 type QueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *internal.Filter       `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	SourceId      *string                `protobuf:"bytes,2,opt,name=source_id,json=sourceId" json:"source_id,omitempty"`
 	TargetId      *string                `protobuf:"bytes,3,opt,name=target_id,json=targetId" json:"target_id,omitempty"`
 	ServerId      *int32                 `protobuf:"varint,4,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
@@ -115,7 +115,7 @@ func (*QueryRequest) Descriptor() ([]byte, []int) {
 	return file_votes_v1_votes_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *QueryRequest) GetFilter() *internal.Filter {
+func (x *QueryRequest) GetFilter() *v1.Filter {
 	if x != nil {
 		return x.Filter
 	}
@@ -360,7 +360,7 @@ var File_votes_v1_votes_proto protoreflect.FileDescriptor
 
 const file_votes_v1_votes_proto_rawDesc = "" +
 	"\n" +
-	"\x14votes/v1/votes.proto\x12\bvotes.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc8\x01\n" +
+	"\x14votes/v1/votes.proto\x12\bvotes.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc8\x01\n" +
 	"\fQueryRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x1b\n" +
 	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12\x1b\n" +
@@ -420,7 +420,7 @@ var file_votes_v1_votes_proto_goTypes = []any{
 	(*QueryRequest)(nil),          // 1: votes.v1.QueryRequest
 	(*VoteResult)(nil),            // 2: votes.v1.VoteResult
 	(*QueryResponse)(nil),         // 3: votes.v1.QueryResponse
-	(*internal.Filter)(nil),       // 4: Filter
+	(*v1.Filter)(nil),             // 4: Filter
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_votes_v1_votes_proto_depIdxs = []int32{

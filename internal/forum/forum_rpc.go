@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database"
 	v1 "github.com/leighmacdonald/gbans/internal/forum/v1"
 	"github.com/leighmacdonald/gbans/internal/forum/v1/forumv1connect"
+	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -38,7 +38,7 @@ func (s Service) ActiveUsers(ctx context.Context, req *emptypb.Empty) (*v1.Activ
 		resp.UserActivity[idx] = &v1.UserActivity{
 			SteamId:         ptr.To(sid.Int64()),
 			PersonaName:     ptr.To(act.Person.GetName()),
-			PermissionLevel: ptr.To(internal.Privilege(act.Person.GetPrivilege())),
+			PermissionLevel: ptr.To(personv1.Privilege(act.Person.GetPrivilege())),
 			CreatedOn:       timestamppb.New(act.LastActivity),
 		}
 	}
@@ -110,7 +110,7 @@ func toMessage(msg Message) *v1.Message {
 		Signature:       &msg.Signature,
 		PersonaName:     &msg.Personaname,
 		AvatarHash:      &msg.Avatarhash,
-		PermissionLevel: ptr.To(internal.Privilege(msg.PermissionLevel)),
+		PermissionLevel: ptr.To(personv1.Privilege(msg.PermissionLevel)),
 		CreatedOn:       timestamppb.New(msg.CreatedOn),
 		UpdatedOn:       timestamppb.New(msg.UpdatedOn),
 	}
@@ -487,7 +487,7 @@ func toForum(forum Forum) *v1.Forum {
 		Ordering:            &forum.Ordering,
 		CountThreads:        &forum.CountThreads,
 		CountMessages:       &forum.CountMessages,
-		PermissionLevel:     ptr.To(internal.Privilege(forum.PermissionLevel)),
+		PermissionLevel:     ptr.To(personv1.Privilege(forum.PermissionLevel)),
 		RecentForumThreadId: &forum.RecentForumThreadID,
 		RecentForumTitle:    &forum.RecentForumTitle,
 		RecentSourceId:      &forum.RecentSourceID,

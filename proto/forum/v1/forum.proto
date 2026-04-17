@@ -4,7 +4,7 @@ package forum.v1;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "privilege.proto";
+import "person/v1/privilege.proto";
 
 service ForumService {
   rpc ActiveUsers(google.protobuf.Empty) returns (ActiveUsersResponse) {}
@@ -50,7 +50,7 @@ message ForumEditResponse {
 message ForumEditRequest {
   int32 forum_id = 1;
   int32 forum_category_id = 2;
-  Privilege permission_level = 3;
+  person.v1.Privilege permission_level = 3;
   string title = 4;
   string description = 5;
   int32 ordering = 6;
@@ -58,7 +58,7 @@ message ForumEditRequest {
 
 message ForumCreateRequest {
   int32 forum_category_id = 1;
-  Privilege permission_level = 2;
+  person.v1.Privilege permission_level = 2;
   string title = 3;
   string description = 4;
   int32 ordering = 5;
@@ -181,7 +181,7 @@ message ThreadWithSource {
   Thread thread = 1;
   string persona_name = 2;
   string avatar_hash = 3;
-  Privilege permission_level = 4;
+  person.v1.Privilege permission_level = 4;
   int64 recent_forum_message_id = 5;
   google.protobuf.Timestamp recent_created_on = 6;
   int64 recent_steam_id = 7;
@@ -192,7 +192,7 @@ message ThreadWithSource {
 message UserActivity {
   int64 steam_id = 1;
   string persona_name = 2;
-  Privilege permission_level = 3;
+  person.v1.Privilege permission_level = 3;
   google.protobuf.Timestamp created_on = 4;
 }
 
@@ -210,7 +210,7 @@ message Message {
   string signature = 7;
   string persona_name = 8;
   string avatar_hash = 9;
-  Privilege permission_level = 10;
+  person.v1.Privilege permission_level = 10;
   google.protobuf.Timestamp created_on = 11;
   google.protobuf.Timestamp updated_on = 12;
 }
@@ -228,7 +228,7 @@ message Forum {
   int32 ordering = 6;
   int64 count_threads = 7;
   int64 count_messages = 8;
-  Privilege permission_level = 9;
+  person.v1.Privilege permission_level = 9;
   int32 recent_forum_thread_id = 10;
   string recent_forum_title = 11;
   string recent_source_id = 12;

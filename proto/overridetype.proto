@@ -1,6 +1,0 @@
-edition = "2023";
-
-enum OverrideType {
-  OVERRIDE_TYPE_COMMAND_UNSPECIFIED = 0;
-  OVERRIDE_TYPE_GROUP = 1;
-}

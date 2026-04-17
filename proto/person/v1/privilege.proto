@@ -1,5 +1,7 @@
 edition = "2023";
 
+package person.v1;
+
 enum Privilege {
   PRIVILEGE_BANNED = 0;
   PRIVILEGE_GUEST_UNSPECIFIED = 1;

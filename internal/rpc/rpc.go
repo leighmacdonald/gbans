@@ -7,9 +7,9 @@ import (
 
 	"connectrpc.com/authn"
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	"github.com/leighmacdonald/gbans/internal/database/query"
+	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	"github.com/leighmacdonald/gbans/internal/domain/person"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -88,7 +88,7 @@ func UserInfoFromCtxWithCheck(ctx context.Context, privilege permission.Privileg
 	return user, nil
 }
 
-func FromRPC(filter *internal.Filter) query.Filter {
+func FromRPC(filter *v1.Filter) query.Filter {
 	return query.Filter{
 		Offset:  filter.GetOffset(),
 		Limit:   filter.GetLimit(),

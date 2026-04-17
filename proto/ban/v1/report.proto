@@ -4,12 +4,12 @@ package ban.v1;
 
 import "ban/v1/ban.proto";
 import "buf/validate/validate.proto";
-import "filter.proto";
+import "database/query/v1/filter.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "person_core.proto";
-import "privilege.proto";
+import "person/v1/person_core.proto";
+import "person/v1/privilege.proto";
 
 service ReportService {
   rpc ReportCreate(CreateReportRequest) returns (CreateReportResponse) {}
@@ -77,7 +77,7 @@ message ReportMessage {
   google.protobuf.Timestamp updated_on = 7;
   string persona_name = 8;
   string avatar_hash = 9;
-  Privilege permission_level = 10;
+  person.v1.Privilege permission_level = 10;
 }
 
 message Report {
@@ -98,8 +98,8 @@ message Report {
 
 message ReportWithAuthor {
   Report report = 1;
-  PersonCore author = 2;
-  PersonCore subject = 3;
+  person.v1.PersonCore author = 2;
+  person.v1.PersonCore subject = 3;
 }
 
 message ReportStatusEditRequest {

@@ -2,7 +2,8 @@ edition = "2023";
 
 package asset.v1;
 
-import "filter.proto";
+import "buf/validate/validate.proto";
+import "database/query/v1/filter.proto";
 import "google/protobuf/timestamp.proto";
 
 service AssetService {
@@ -11,7 +12,7 @@ service AssetService {
 }
 
 message DeleteRequest {
-  string asset_id = 1;
+  string asset_id = 1 [(buf.validate.field).string.uuid = true];
 }
 
 message DeleteResponse {
@@ -28,7 +29,7 @@ message CreateResponse {
 }
 
 message Asset {
-  string asset_id = 1;
+  string asset_id = 1 [(buf.validate.field).string.uuid = true];
   string bucket = 2;
   int64 author_id = 3;
   string hash = 4;

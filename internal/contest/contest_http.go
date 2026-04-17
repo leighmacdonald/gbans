@@ -323,7 +323,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 			return
 		}
 
-		own := 0
+		own := int32(0)
 
 		for _, entry := range existingEntries {
 			if entry.SteamID == user.GetSteamID() {

@@ -2,11 +2,11 @@ edition = "2023";
 
 package person.v1;
 
-import "filter.proto";
+import "database/query/v1/filter.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "person_core.proto";
-import "privilege.proto";
+import "person/v1/person_core.proto";
+import "person/v1/privilege.proto";
 
 service PersonService {
   rpc CurrentProfile(google.protobuf.Empty) returns (CurrentProfileResponse);
