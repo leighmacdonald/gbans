@@ -251,11 +251,11 @@ func (h discordHandler) groupCompleter() func(ctx context.Context, query string)
 		var values []discord.AutoCompleteValuer
 		for _, group := range curGroups {
 			if query == "" ||
-				strconv.Itoa(group.GroupID) == query ||
+				strconv.Itoa(int(group.GroupID)) == query ||
 				strings.Contains(strings.ToLower(group.Name), query) {
 				values = append(values, discord.NewAutoCompleteValue(
 					fmt.Sprintf("%s [#%d]", group.Name, group.GroupID),
-					strconv.Itoa(group.GroupID)))
+					strconv.Itoa(int(group.GroupID))))
 			}
 		}
 
@@ -306,7 +306,7 @@ func (h discordHandler) onAdminsEdit(ctx context.Context, session *discordgo.Ses
 		if admin, errAdmin := h.sourcemod.AdminBySteamID(ctx, sid); errAdmin == nil {
 			alias = admin.Name
 			flags = admin.Flags
-			immunity = strconv.Itoa(admin.Immunity)
+			immunity = strconv.Itoa(int(admin.Immunity))
 		}
 	}
 
@@ -324,7 +324,7 @@ type adminEditModal struct {
 	SteamID  steamid.SteamID `id:"1"`
 	Alias    string          `id:"8"`
 	Flags    string          `id:"9"`
-	Immunity int             `id:"7"`
+	Immunity int32           `id:"7"`
 }
 
 func (h discordHandler) onSourcemodAdminsEditModal(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) error {
@@ -377,14 +377,14 @@ func (h discordHandler) onGroupsEdit(ctx context.Context, session *discordgo.Ses
 			return errors.Join(errGID, discord.ErrCommandInvalid)
 		}
 
-		group, errGroup := h.sourcemod.GetGroupByID(ctx, gid)
+		group, errGroup := h.sourcemod.GetGroupByID(ctx, int32(gid))
 		if errGroup != nil {
 			return errGroup
 		}
 
 		alias = group.Name
 		flags = group.Flags
-		immunity = strconv.Itoa(group.ImmunityLevel)
+		immunity = strconv.Itoa(int(group.ImmunityLevel))
 		customID += "_" + strconv.Itoa(gid)
 	}
 

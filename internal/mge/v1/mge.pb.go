@@ -7,7 +7,7 @@
 package mgev1
 
 import (
-	internal "github.com/leighmacdonald/gbans/internal"
+	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -71,7 +71,7 @@ func (DuelMode) EnumDescriptor() ([]byte, []int) {
 
 type GetRatingsOverallRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *internal.Filter       `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	SteamId       *string                `protobuf:"bytes,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -107,7 +107,7 @@ func (*GetRatingsOverallRequest) Descriptor() ([]byte, []int) {
 	return file_mge_v1_mge_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetRatingsOverallRequest) GetFilter() *internal.Filter {
+func (x *GetRatingsOverallRequest) GetFilter() *v1.Filter {
 	if x != nil {
 		return x.Filter
 	}
@@ -283,7 +283,7 @@ func (x *GetRatingsOverallResponse) GetCount() int64 {
 
 type GetHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *internal.Filter       `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	Mode          *DuelMode              `protobuf:"varint,2,opt,name=mode,enum=mge.v1.DuelMode" json:"mode,omitempty"`
 	Winner        *string                `protobuf:"bytes,3,opt,name=winner" json:"winner,omitempty"`
 	Winner2       *string                `protobuf:"bytes,4,opt,name=winner2" json:"winner2,omitempty"`
@@ -323,7 +323,7 @@ func (*GetHistoryRequest) Descriptor() ([]byte, []int) {
 	return file_mge_v1_mge_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetHistoryRequest) GetFilter() *internal.Filter {
+func (x *GetHistoryRequest) GetFilter() *v1.Filter {
 	if x != nil {
 		return x.Filter
 	}
@@ -609,7 +609,7 @@ var File_mge_v1_mge_proto protoreflect.FileDescriptor
 
 const file_mge_v1_mge_proto_rawDesc = "" +
 	"\n" +
-	"\x10mge/v1/mge.proto\x12\x06mge.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"V\n" +
+	"\x10mge/v1/mge.proto\x12\x06mge.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"V\n" +
 	"\x18GetRatingsOverallRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x19\n" +
 	"\bsteam_id\x18\x02 \x01(\tR\asteamId\"\x9c\x02\n" +
@@ -694,7 +694,7 @@ var file_mge_v1_mge_proto_goTypes = []any{
 	(*GetHistoryRequest)(nil),         // 4: mge.v1.GetHistoryRequest
 	(*Duel)(nil),                      // 5: mge.v1.Duel
 	(*GetHistoryResponse)(nil),        // 6: mge.v1.GetHistoryResponse
-	(*internal.Filter)(nil),           // 7: Filter
+	(*v1.Filter)(nil),                 // 7: Filter
 	(*timestamppb.Timestamp)(nil),     // 8: google.protobuf.Timestamp
 }
 var file_mge_v1_mge_proto_depIdxs = []int32{

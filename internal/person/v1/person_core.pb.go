@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: person_core.proto
+// source: person/v1/person_core.proto
 
-package internal
+package personv1
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -25,7 +25,7 @@ const (
 type PersonCore struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	SteamId         *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
-	PermissionLevel *Privilege             `protobuf:"varint,2,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel *Privilege             `protobuf:"varint,2,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	Name            *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
 	AvatarHash      *string                `protobuf:"bytes,4,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
 	DiscordId       *string                `protobuf:"bytes,5,opt,name=discord_id,json=discordId" json:"discord_id,omitempty"`
@@ -39,7 +39,7 @@ type PersonCore struct {
 
 func (x *PersonCore) Reset() {
 	*x = PersonCore{}
-	mi := &file_person_core_proto_msgTypes[0]
+	mi := &file_person_v1_person_core_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -51,7 +51,7 @@ func (x *PersonCore) String() string {
 func (*PersonCore) ProtoMessage() {}
 
 func (x *PersonCore) ProtoReflect() protoreflect.Message {
-	mi := &file_person_core_proto_msgTypes[0]
+	mi := &file_person_v1_person_core_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -64,7 +64,7 @@ func (x *PersonCore) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PersonCore.ProtoReflect.Descriptor instead.
 func (*PersonCore) Descriptor() ([]byte, []int) {
-	return file_person_core_proto_rawDescGZIP(), []int{0}
+	return file_person_v1_person_core_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *PersonCore) GetSteamId() string {
@@ -130,16 +130,15 @@ func (x *PersonCore) GetTimeCreated() *timestamppb.Timestamp {
 	return nil
 }
 
-var File_person_core_proto protoreflect.FileDescriptor
+var File_person_v1_person_core_proto protoreflect.FileDescriptor
 
-const file_person_core_proto_rawDesc = "" +
+const file_person_v1_person_core_proto_rawDesc = "" +
 	"\n" +
-	"\x11person_core.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0fprivilege.proto\"\xc0\x02\n" +
+	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\xca\x02\n" +
 	"\n" +
 	"PersonCore\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x125\n" +
-	"\x10permission_level\x18\x02 \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\x12\x12\n" +
+	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x12?\n" +
+	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1f\n" +
 	"\vavatar_hash\x18\x04 \x01(\tR\n" +
 	"avatarHash\x12\x1d\n" +
@@ -148,29 +147,31 @@ const file_person_core_proto_rawDesc = "" +
 	"\bvac_bans\x18\x06 \x01(\x05R\avacBans\x12\x1b\n" +
 	"\tgame_bans\x18\a \x01(\x05R\bgameBans\x12\x15\n" +
 	"\x06ban_id\x18\b \x01(\x03R\x05banId\x12=\n" +
-	"\ftime_created\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\vtimeCreatedB=B\x0fPersonCoreProtoP\x01Z(github.com/leighmacdonald/gbans/internalb\beditionsp\xe8\a"
+	"\ftime_created\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\vtimeCreatedB\xa2\x01\n" +
+	"\rcom.person.v1B\x0fPersonCoreProtoP\x01Z;github.com/leighmacdonald/gbans/internal/person/v1;personv1\xa2\x02\x03PXX\xaa\x02\tPerson.V1\xca\x02\tPerson\\V1\xe2\x02\x15Person\\V1\\GPBMetadata\xea\x02\n" +
+	"Person::V1b\beditionsp\xe8\a"
 
 var (
-	file_person_core_proto_rawDescOnce sync.Once
-	file_person_core_proto_rawDescData []byte
+	file_person_v1_person_core_proto_rawDescOnce sync.Once
+	file_person_v1_person_core_proto_rawDescData []byte
 )
 
-func file_person_core_proto_rawDescGZIP() []byte {
-	file_person_core_proto_rawDescOnce.Do(func() {
-		file_person_core_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_person_core_proto_rawDesc), len(file_person_core_proto_rawDesc)))
+func file_person_v1_person_core_proto_rawDescGZIP() []byte {
+	file_person_v1_person_core_proto_rawDescOnce.Do(func() {
+		file_person_v1_person_core_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_person_v1_person_core_proto_rawDesc), len(file_person_v1_person_core_proto_rawDesc)))
 	})
-	return file_person_core_proto_rawDescData
+	return file_person_v1_person_core_proto_rawDescData
 }
 
-var file_person_core_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_person_core_proto_goTypes = []any{
-	(*PersonCore)(nil),            // 0: PersonCore
-	(Privilege)(0),                // 1: Privilege
+var file_person_v1_person_core_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_person_v1_person_core_proto_goTypes = []any{
+	(*PersonCore)(nil),            // 0: person.v1.PersonCore
+	(Privilege)(0),                // 1: person.v1.Privilege
 	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 }
-var file_person_core_proto_depIdxs = []int32{
-	1, // 0: PersonCore.permission_level:type_name -> Privilege
-	2, // 1: PersonCore.time_created:type_name -> google.protobuf.Timestamp
+var file_person_v1_person_core_proto_depIdxs = []int32{
+	1, // 0: person.v1.PersonCore.permission_level:type_name -> person.v1.Privilege
+	2, // 1: person.v1.PersonCore.time_created:type_name -> google.protobuf.Timestamp
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -178,27 +179,27 @@ var file_person_core_proto_depIdxs = []int32{
 	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_person_core_proto_init() }
-func file_person_core_proto_init() {
-	if File_person_core_proto != nil {
+func init() { file_person_v1_person_core_proto_init() }
+func file_person_v1_person_core_proto_init() {
+	if File_person_v1_person_core_proto != nil {
 		return
 	}
-	file_privilege_proto_init()
+	file_person_v1_privilege_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_person_core_proto_rawDesc), len(file_person_core_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_person_v1_person_core_proto_rawDesc), len(file_person_v1_person_core_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_person_core_proto_goTypes,
-		DependencyIndexes: file_person_core_proto_depIdxs,
-		MessageInfos:      file_person_core_proto_msgTypes,
+		GoTypes:           file_person_v1_person_core_proto_goTypes,
+		DependencyIndexes: file_person_v1_person_core_proto_depIdxs,
+		MessageInfos:      file_person_v1_person_core_proto_msgTypes,
 	}.Build()
-	File_person_core_proto = out.File
-	file_person_core_proto_goTypes = nil
-	file_person_core_proto_depIdxs = nil
+	File_person_v1_person_core_proto = out.File
+	file_person_v1_person_core_proto_goTypes = nil
+	file_person_v1_person_core_proto_depIdxs = nil
 }

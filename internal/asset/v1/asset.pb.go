@@ -7,7 +7,8 @@
 package assetv1
 
 import (
-	_ "github.com/leighmacdonald/gbans/internal"
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	_ "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -327,18 +328,18 @@ var File_asset_v1_asset_proto protoreflect.FileDescriptor
 
 const file_asset_v1_asset_proto_rawDesc = "" +
 	"\n" +
-	"\x14asset/v1/asset.proto\x12\basset.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"*\n" +
-	"\rDeleteRequest\x12\x19\n" +
-	"\basset_id\x18\x01 \x01(\tR\aassetId\"$\n" +
+	"\x14asset/v1/asset.proto\x12\basset.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"4\n" +
+	"\rDeleteRequest\x12#\n" +
+	"\basset_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId\"$\n" +
 	"\x0eDeleteResponse\x12\x12\n" +
 	"\x04size\x18\x01 \x01(\x03R\x04size\"?\n" +
 	"\rCreateRequest\x12\x1a\n" +
 	"\bcontents\x18\x01 \x01(\fR\bcontents\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"7\n" +
 	"\x0eCreateResponse\x12%\n" +
-	"\x05asset\x18\x01 \x01(\v2\x0f.asset.v1.AssetR\x05asset\"\xc5\x02\n" +
-	"\x05Asset\x12\x19\n" +
-	"\basset_id\x18\x01 \x01(\tR\aassetId\x12\x16\n" +
+	"\x05asset\x18\x01 \x01(\v2\x0f.asset.v1.AssetR\x05asset\"\xcf\x02\n" +
+	"\x05Asset\x12#\n" +
+	"\basset_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aassetId\x12\x16\n" +
 	"\x06bucket\x18\x02 \x01(\tR\x06bucket\x12\x1b\n" +
 	"\tauthor_id\x18\x03 \x01(\x03R\bauthorId\x12\x12\n" +
 	"\x04hash\x18\x04 \x01(\tR\x04hash\x12\x1d\n" +

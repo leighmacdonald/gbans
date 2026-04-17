@@ -8,7 +8,8 @@ package banv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	internal "github.com/leighmacdonald/gbans/internal"
+	_ "github.com/leighmacdonald/gbans/internal/database/query/v1"
+	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	_ "google.golang.org/protobuf/types/known/durationpb"
@@ -493,7 +494,7 @@ type ReportMessage struct {
 	UpdatedOn       *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	PersonaName     *string                `protobuf:"bytes,8,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
 	AvatarHash      *string                `protobuf:"bytes,9,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
-	PermissionLevel *internal.Privilege    `protobuf:"varint,10,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel *v1.Privilege          `protobuf:"varint,10,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -591,11 +592,11 @@ func (x *ReportMessage) GetAvatarHash() string {
 	return ""
 }
 
-func (x *ReportMessage) GetPermissionLevel() internal.Privilege {
+func (x *ReportMessage) GetPermissionLevel() v1.Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return internal.Privilege(0)
+	return v1.Privilege(0)
 }
 
 type Report struct {
@@ -741,8 +742,8 @@ func (x *Report) GetUpdatedOn() *timestamppb.Timestamp {
 type ReportWithAuthor struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Report        *Report                `protobuf:"bytes,1,opt,name=report" json:"report,omitempty"`
-	Author        *internal.PersonCore   `protobuf:"bytes,2,opt,name=author" json:"author,omitempty"`
-	Subject       *internal.PersonCore   `protobuf:"bytes,3,opt,name=subject" json:"subject,omitempty"`
+	Author        *v1.PersonCore         `protobuf:"bytes,2,opt,name=author" json:"author,omitempty"`
+	Subject       *v1.PersonCore         `protobuf:"bytes,3,opt,name=subject" json:"subject,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -784,14 +785,14 @@ func (x *ReportWithAuthor) GetReport() *Report {
 	return nil
 }
 
-func (x *ReportWithAuthor) GetAuthor() *internal.PersonCore {
+func (x *ReportWithAuthor) GetAuthor() *v1.PersonCore {
 	if x != nil {
 		return x.Author
 	}
 	return nil
 }
 
-func (x *ReportWithAuthor) GetSubject() *internal.PersonCore {
+func (x *ReportWithAuthor) GetSubject() *v1.PersonCore {
 	if x != nil {
 		return x.Subject
 	}
@@ -1094,7 +1095,7 @@ var File_ban_v1_report_proto protoreflect.FileDescriptor
 
 const file_ban_v1_report_proto_rawDesc = "" +
 	"\n" +
-	"\x13ban/v1/report.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\ffilter.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x11person_core.proto\x1a\x0fprivilege.proto\"H\n" +
+	"\x13ban/v1/report.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\x1a\x19person/v1/privilege.proto\"H\n" +
 	"\x1aReportMessageDeleteRequest\x12*\n" +
 	"\x11report_message_id\x18\x01 \x01(\x03R\x0freportMessageId\"_\n" +
 	"\x18ReportMessageEditRequest\x12*\n" +
@@ -1113,7 +1114,7 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\rReportRequest\x12\x1b\n" +
 	"\treport_id\x18\x01 \x01(\x03R\breportId\"B\n" +
 	"\x0eReportResponse\x120\n" +
-	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorR\x06report\"\x9f\x03\n" +
+	"\x06report\x18\x01 \x01(\v2\x18.ban.v1.ReportWithAuthorR\x06report\"\xa9\x03\n" +
 	"\rReportMessage\x12\x1b\n" +
 	"\treport_id\x18\x01 \x01(\x03R\breportId\x12*\n" +
 	"\x11report_message_id\x18\x02 \x01(\x03R\x0freportMessageId\x12\x1b\n" +
@@ -1127,10 +1128,9 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12!\n" +
 	"\fpersona_name\x18\b \x01(\tR\vpersonaName\x12\x1f\n" +
 	"\vavatar_hash\x18\t \x01(\tR\n" +
-	"avatarHash\x125\n" +
+	"avatarHash\x12?\n" +
 	"\x10permission_level\x18\n" +
-	" \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\"\xfa\x03\n" +
+	" \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\"\xfa\x03\n" +
 	"\x06Report\x12\x1b\n" +
 	"\treport_id\x18\x01 \x01(\x03R\breportId\x12\x1b\n" +
 	"\tsource_id\x18\x02 \x01(\x03R\bsourceId\x12\x1b\n" +
@@ -1148,11 +1148,11 @@ const file_ban_v1_report_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
-	"updated_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\x86\x01\n" +
+	"updated_on\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\x9a\x01\n" +
 	"\x10ReportWithAuthor\x12&\n" +
-	"\x06report\x18\x01 \x01(\v2\x0e.ban.v1.ReportR\x06report\x12#\n" +
-	"\x06author\x18\x02 \x01(\v2\v.PersonCoreR\x06author\x12%\n" +
-	"\asubject\x18\x03 \x01(\v2\v.PersonCoreR\asubject\"q\n" +
+	"\x06report\x18\x01 \x01(\v2\x0e.ban.v1.ReportR\x06report\x12-\n" +
+	"\x06author\x18\x02 \x01(\v2\x15.person.v1.PersonCoreR\x06author\x12/\n" +
+	"\asubject\x18\x03 \x01(\v2\x15.person.v1.PersonCoreR\asubject\"q\n" +
 	"\x17ReportStatusEditRequest\x12\x1b\n" +
 	"\treport_id\x18\x01 \x01(\x03R\breportId\x129\n" +
 	"\rreport_status\x18\x02 \x01(\x0e2\x14.ban.v1.ReportStatusR\freportStatus\"\x9f\x02\n" +
@@ -1224,9 +1224,9 @@ var file_ban_v1_report_proto_goTypes = []any{
 	(*CreateReportMessageRequest)(nil),  // 16: ban.v1.CreateReportMessageRequest
 	(*CreateReportMessageResponse)(nil), // 17: ban.v1.CreateReportMessageResponse
 	(*timestamppb.Timestamp)(nil),       // 18: google.protobuf.Timestamp
-	(internal.Privilege)(0),             // 19: Privilege
+	(v1.Privilege)(0),                   // 19: person.v1.Privilege
 	(BanReason)(0),                      // 20: ban.v1.BanReason
-	(*internal.PersonCore)(nil),         // 21: PersonCore
+	(*v1.PersonCore)(nil),               // 21: person.v1.PersonCore
 	(*emptypb.Empty)(nil),               // 22: google.protobuf.Empty
 }
 var file_ban_v1_report_proto_depIdxs = []int32{
@@ -1236,14 +1236,14 @@ var file_ban_v1_report_proto_depIdxs = []int32{
 	12, // 3: ban.v1.ReportResponse.report:type_name -> ban.v1.ReportWithAuthor
 	18, // 4: ban.v1.ReportMessage.created_on:type_name -> google.protobuf.Timestamp
 	18, // 5: ban.v1.ReportMessage.updated_on:type_name -> google.protobuf.Timestamp
-	19, // 6: ban.v1.ReportMessage.permission_level:type_name -> Privilege
+	19, // 6: ban.v1.ReportMessage.permission_level:type_name -> person.v1.Privilege
 	0,  // 7: ban.v1.Report.report_status:type_name -> ban.v1.ReportStatus
 	20, // 8: ban.v1.Report.reason:type_name -> ban.v1.BanReason
 	18, // 9: ban.v1.Report.created_on:type_name -> google.protobuf.Timestamp
 	18, // 10: ban.v1.Report.updated_on:type_name -> google.protobuf.Timestamp
 	11, // 11: ban.v1.ReportWithAuthor.report:type_name -> ban.v1.Report
-	21, // 12: ban.v1.ReportWithAuthor.author:type_name -> PersonCore
-	21, // 13: ban.v1.ReportWithAuthor.subject:type_name -> PersonCore
+	21, // 12: ban.v1.ReportWithAuthor.author:type_name -> person.v1.PersonCore
+	21, // 13: ban.v1.ReportWithAuthor.subject:type_name -> person.v1.PersonCore
 	0,  // 14: ban.v1.ReportStatusEditRequest.report_status:type_name -> ban.v1.ReportStatus
 	20, // 15: ban.v1.CreateReportRequest.reason:type_name -> ban.v1.BanReason
 	12, // 16: ban.v1.CreateReportResponse.report:type_name -> ban.v1.ReportWithAuthor

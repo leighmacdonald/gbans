@@ -4,11 +4,11 @@ package ban.v1;
 
 import "ban/v1/ban.proto";
 import "buf/validate/validate.proto";
-import "filter.proto";
+import "database/query/v1/filter.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "privilege.proto";
+import "person/v1/privilege.proto";
 
 service AppealService {
   rpc Appeals(AppealsRequest) returns (AppealsResponse) {}
@@ -52,7 +52,7 @@ message AppealMessage {
   google.protobuf.Timestamp updated_on = 7;
   string avatar_hash = 8;
   string persona_name = 9;
-  Privilege privilege = 10;
+  person.v1.Privilege privilege = 10;
 }
 
 message ReplyRequest {

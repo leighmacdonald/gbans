@@ -6,8 +6,6 @@ import "ban/v1/ban.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "group.proto";
-import "overridetype.proto";
 
 service SourcemodService {
   rpc Groups(google.protobuf.Empty) returns (GroupsResponse) {}

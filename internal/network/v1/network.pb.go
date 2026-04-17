@@ -7,7 +7,7 @@
 package networkv1
 
 import (
-	internal "github.com/leighmacdonald/gbans/internal"
+	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -206,7 +206,7 @@ func (ProxyType) EnumDescriptor() ([]byte, []int) {
 
 type QueryNetworkRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *internal.Filter       `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	Ip            *string                `protobuf:"bytes,2,opt,name=ip" json:"ip,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -242,7 +242,7 @@ func (*QueryNetworkRequest) Descriptor() ([]byte, []int) {
 	return file_network_v1_network_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *QueryNetworkRequest) GetFilter() *internal.Filter {
+func (x *QueryNetworkRequest) GetFilter() *v1.Filter {
 	if x != nil {
 		return x.Filter
 	}
@@ -698,7 +698,7 @@ func (x *QueryNetworkResponse) GetDetails() *Details {
 
 type QueryConnectionsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *internal.Filter       `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	SteamId       *string                `protobuf:"bytes,2,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	Cidr          *string                `protobuf:"bytes,3,opt,name=cidr" json:"cidr,omitempty"`
 	CountryCode   *string                `protobuf:"bytes,4,opt,name=country_code,json=countryCode" json:"country_code,omitempty"`
@@ -739,7 +739,7 @@ func (*QueryConnectionsRequest) Descriptor() ([]byte, []int) {
 	return file_network_v1_network_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *QueryConnectionsRequest) GetFilter() *internal.Filter {
+func (x *QueryConnectionsRequest) GetFilter() *v1.Filter {
 	if x != nil {
 		return x.Filter
 	}
@@ -913,7 +913,7 @@ var File_network_v1_network_proto protoreflect.FileDescriptor
 const file_network_v1_network_proto_rawDesc = "" +
 	"\n" +
 	"\x18network/v1/network.proto\x12\n" +
-	"network.v1\x1a\ffilter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"F\n" +
+	"network.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"F\n" +
 	"\x13QueryNetworkRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12\x0e\n" +
 	"\x02ip\x18\x02 \x01(\tR\x02ip\"\x87\x01\n" +
@@ -1036,7 +1036,7 @@ var file_network_v1_network_proto_goTypes = []any{
 	(*QueryConnectionsRequest)(nil),  // 10: network.v1.QueryConnectionsRequest
 	(*QueryConnectionsResponse)(nil), // 11: network.v1.QueryConnectionsResponse
 	(*PersonConnection)(nil),         // 12: network.v1.PersonConnection
-	(*internal.Filter)(nil),          // 13: Filter
+	(*v1.Filter)(nil),                // 13: Filter
 	(*timestamppb.Timestamp)(nil),    // 14: google.protobuf.Timestamp
 	(*emptypb.Empty)(nil),            // 15: google.protobuf.Empty
 }

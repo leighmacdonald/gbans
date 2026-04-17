@@ -8,7 +8,8 @@ package banv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
-	internal "github.com/leighmacdonald/gbans/internal"
+	_ "github.com/leighmacdonald/gbans/internal/database/query/v1"
+	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	_ "google.golang.org/protobuf/types/known/durationpb"
@@ -289,7 +290,7 @@ type AppealMessage struct {
 	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	AvatarHash    *string                `protobuf:"bytes,8,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
 	PersonaName   *string                `protobuf:"bytes,9,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
-	Privilege     *internal.Privilege    `protobuf:"varint,10,opt,name=privilege,enum=Privilege" json:"privilege,omitempty"`
+	Privilege     *v1.Privilege          `protobuf:"varint,10,opt,name=privilege,enum=person.v1.Privilege" json:"privilege,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -387,11 +388,11 @@ func (x *AppealMessage) GetPersonaName() string {
 	return ""
 }
 
-func (x *AppealMessage) GetPrivilege() internal.Privilege {
+func (x *AppealMessage) GetPrivilege() v1.Privilege {
 	if x != nil && x.Privilege != nil {
 		return *x.Privilege
 	}
-	return internal.Privilege(0)
+	return v1.Privilege(0)
 }
 
 type ReplyRequest struct {
@@ -634,7 +635,7 @@ var File_ban_v1_appeal_proto protoreflect.FileDescriptor
 
 const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\n" +
-	"\x13ban/v1/appeal.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\ffilter.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0fprivilege.proto\"*\n" +
+	"\x13ban/v1/appeal.proto\x12\x06ban.v1\x1a\x10ban/v1/ban.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1edatabase/query/v1/filter.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"*\n" +
 	"\x0eAppealsRequest\x12\x18\n" +
 	"\adeleted\x18\x01 \x01(\bR\adeleted\"C\n" +
 	"\x0fAppealsResponse\x120\n" +
@@ -648,7 +649,7 @@ const file_ban_v1_appeal_proto_rawDesc = "" +
 	"\x13source_persona_name\x18\x02 \x01(\tR\x11sourcePersonaName\x12,\n" +
 	"\x12source_avatar_hash\x18\x03 \x01(\tR\x10sourceAvatarHash\x12.\n" +
 	"\x13target_persona_name\x18\x04 \x01(\tR\x11targetPersonaName\x12,\n" +
-	"\x12target_avatar_hash\x18\x05 \x01(\tR\x10targetAvatarHash\"\x86\x03\n" +
+	"\x12target_avatar_hash\x18\x05 \x01(\tR\x10targetAvatarHash\"\x90\x03\n" +
 	"\rAppealMessage\x12\x15\n" +
 	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\x12$\n" +
 	"\x0eban_message_id\x18\x02 \x01(\x03R\fbanMessageId\x12\x1b\n" +
@@ -662,10 +663,9 @@ const file_ban_v1_appeal_proto_rawDesc = "" +
 	"updated_on\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12\x1f\n" +
 	"\vavatar_hash\x18\b \x01(\tR\n" +
 	"avatarHash\x12!\n" +
-	"\fpersona_name\x18\t \x01(\tR\vpersonaName\x12(\n" +
+	"\fpersona_name\x18\t \x01(\tR\vpersonaName\x122\n" +
 	"\tprivilege\x18\n" +
-	" \x01(\x0e2\n" +
-	".PrivilegeR\tprivilege\">\n" +
+	" \x01(\x0e2\x14.person.v1.PrivilegeR\tprivilege\">\n" +
 	"\fReplyRequest\x12\x15\n" +
 	"\x06ban_id\x18\x01 \x01(\x03R\x05banId\x12\x17\n" +
 	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\"@\n" +
@@ -714,7 +714,7 @@ var file_ban_v1_appeal_proto_goTypes = []any{
 	(*DeleteAppealMessageRequest)(nil), // 10: ban.v1.DeleteAppealMessageRequest
 	(*Ban)(nil),                        // 11: ban.v1.Ban
 	(*timestamppb.Timestamp)(nil),      // 12: google.protobuf.Timestamp
-	(internal.Privilege)(0),            // 13: Privilege
+	(v1.Privilege)(0),                  // 13: person.v1.Privilege
 	(*emptypb.Empty)(nil),              // 14: google.protobuf.Empty
 }
 var file_ban_v1_appeal_proto_depIdxs = []int32{
@@ -723,7 +723,7 @@ var file_ban_v1_appeal_proto_depIdxs = []int32{
 	11, // 2: ban.v1.AppealOverview.ban:type_name -> ban.v1.Ban
 	12, // 3: ban.v1.AppealMessage.created_on:type_name -> google.protobuf.Timestamp
 	12, // 4: ban.v1.AppealMessage.updated_on:type_name -> google.protobuf.Timestamp
-	13, // 5: ban.v1.AppealMessage.privilege:type_name -> Privilege
+	13, // 5: ban.v1.AppealMessage.privilege:type_name -> person.v1.Privilege
 	5,  // 6: ban.v1.ReplyResponse.message:type_name -> ban.v1.AppealMessage
 	5,  // 7: ban.v1.EditAppealMessageResponse.message:type_name -> ban.v1.AppealMessage
 	0,  // 8: ban.v1.AppealService.Appeals:input_type -> ban.v1.AppealsRequest

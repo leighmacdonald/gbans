@@ -4,8 +4,6 @@ package servers.v1;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
-import "group.proto";
-import "overridetype.proto";
 import "sourcemod/v1/sourcemod.proto";
 
 // TODO remove this duplicate
@@ -44,7 +42,7 @@ message CheckResponse {
 
 message Override {
   int32 override_id = 1;
-  OverrideType type = 2;
+  sourcemod.v1.OverrideType type = 2;
   string name = 3;
   string flags = 4;
   google.protobuf.Timestamp created_on = 5;
@@ -69,7 +67,7 @@ message Admin {
   string password = 5;
   string name = 6;
   int32 immunity = 7;
-  repeated Group groups = 8;
+  repeated sourcemod.v1.Group groups = 8;
   google.protobuf.Timestamp created_on = 9;
   google.protobuf.Timestamp updated_on = 10;
 }
@@ -79,5 +77,5 @@ message UsersResponse {
 }
 
 message GroupsResponse {
-  repeated Group groups = 1;
+  repeated sourcemod.v1.Group groups = 1;
 }

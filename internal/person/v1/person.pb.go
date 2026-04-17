@@ -7,7 +7,7 @@
 package personv1
 
 import (
-	internal "github.com/leighmacdonald/gbans/internal"
+	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -194,7 +194,7 @@ func (x *EditProfileSettingsRequest) GetCenterProjectiles() bool {
 
 type CurrentProfileResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Person        *internal.PersonCore   `protobuf:"bytes,1,opt,name=person" json:"person,omitempty"`
+	Person        *PersonCore            `protobuf:"bytes,1,opt,name=person" json:"person,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -229,7 +229,7 @@ func (*CurrentProfileResponse) Descriptor() ([]byte, []int) {
 	return file_person_v1_person_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *CurrentProfileResponse) GetPerson() *internal.PersonCore {
+func (x *CurrentProfileResponse) GetPerson() *PersonCore {
 	if x != nil {
 		return x.Person
 	}
@@ -419,7 +419,7 @@ func (x *EditProfileSettingsResponse) GetSettings() *UserSettings {
 type EditPermissionsRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	SteamId         *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
-	PermissionLevel *internal.Privilege    `protobuf:"varint,2,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel *Privilege             `protobuf:"varint,2,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -461,11 +461,11 @@ func (x *EditPermissionsRequest) GetSteamId() string {
 	return ""
 }
 
-func (x *EditPermissionsRequest) GetPermissionLevel() internal.Privilege {
+func (x *EditPermissionsRequest) GetPermissionLevel() Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return internal.Privilege(0)
+	return Privilege_PRIVILEGE_BANNED
 }
 
 type EditPermissionsResponse struct {
@@ -514,9 +514,9 @@ func (x *EditPermissionsResponse) GetPerson() *Person {
 
 type QueryRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
-	Filter            *internal.Filter       `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Filter            *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	PersonaName       *string                `protobuf:"bytes,2,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
-	WithPermissions   []internal.Privilege   `protobuf:"varint,3,rep,packed,name=with_permissions,json=withPermissions,enum=Privilege" json:"with_permissions,omitempty"`
+	WithPermissions   []Privilege            `protobuf:"varint,3,rep,packed,name=with_permissions,json=withPermissions,enum=person.v1.Privilege" json:"with_permissions,omitempty"`
 	DiscordId         *string                `protobuf:"bytes,4,opt,name=discord_id,json=discordId" json:"discord_id,omitempty"`
 	SteamIds          []string               `protobuf:"bytes,5,rep,name=steam_ids,json=steamIds" json:"steam_ids,omitempty"`
 	VacBans           *int32                 `protobuf:"varint,6,opt,name=vac_bans,json=vacBans" json:"vac_bans,omitempty"`
@@ -559,7 +559,7 @@ func (*QueryRequest) Descriptor() ([]byte, []int) {
 	return file_person_v1_person_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *QueryRequest) GetFilter() *internal.Filter {
+func (x *QueryRequest) GetFilter() *v1.Filter {
 	if x != nil {
 		return x.Filter
 	}
@@ -573,7 +573,7 @@ func (x *QueryRequest) GetPersonaName() string {
 	return ""
 }
 
-func (x *QueryRequest) GetWithPermissions() []internal.Privilege {
+func (x *QueryRequest) GetWithPermissions() []Privilege {
 	if x != nil {
 		return x.WithPermissions
 	}
@@ -641,7 +641,7 @@ type Person struct {
 	SteamId               *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	CreatedOn             *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	UpdatedOn             *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
-	PermissionLevel       *internal.Privilege    `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel       *Privilege             `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	Muted                 *bool                  `protobuf:"varint,5,opt,name=muted" json:"muted,omitempty"`
 	DiscordId             *string                `protobuf:"bytes,6,opt,name=discord_id,json=discordId" json:"discord_id,omitempty"`
 	PatreonId             *string                `protobuf:"bytes,7,opt,name=patreon_id,json=patreonId" json:"patreon_id,omitempty"`
@@ -724,11 +724,11 @@ func (x *Person) GetUpdatedOn() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *Person) GetPermissionLevel() internal.Privilege {
+func (x *Person) GetPermissionLevel() Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return internal.Privilege(0)
+	return Privilege_PRIVILEGE_BANNED
 }
 
 func (x *Person) GetMuted() bool {
@@ -922,7 +922,7 @@ func (x *Person) GetVisibilityState() int64 {
 
 type QueryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	People        []*internal.PersonCore `protobuf:"bytes,1,rep,name=people" json:"people,omitempty"`
+	People        []*PersonCore          `protobuf:"bytes,1,rep,name=people" json:"people,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -957,7 +957,7 @@ func (*QueryResponse) Descriptor() ([]byte, []int) {
 	return file_person_v1_person_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *QueryResponse) GetPeople() []*internal.PersonCore {
+func (x *QueryResponse) GetPeople() []*PersonCore {
 	if x != nil {
 		return x.People
 	}
@@ -968,7 +968,7 @@ var File_person_v1_person_proto protoreflect.FileDescriptor
 
 const file_person_v1_person_proto_rawDesc = "" +
 	"\n" +
-	"\x16person/v1/person.proto\x12\tperson.v1\x1a\ffilter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x11person_core.proto\x1a\x0fprivilege.proto\"\xfa\x02\n" +
+	"\x16person/v1/person.proto\x12\tperson.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bperson/v1/person_core.proto\x1a\x19person/v1/privilege.proto\"\xfa\x02\n" +
 	"\bSettings\x12,\n" +
 	"\x12person_settings_id\x18\x01 \x01(\x03R\x10personSettingsId\x12\x19\n" +
 	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12'\n" +
@@ -984,9 +984,9 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x0fforum_signature\x18\x01 \x01(\tR\x0eforumSignature\x124\n" +
 	"\x16forum_profile_messages\x18\x02 \x01(\bR\x14forumProfileMessages\x12!\n" +
 	"\fstats_hidden\x18\x03 \x01(\bR\vstatsHidden\x12-\n" +
-	"\x12center_projectiles\x18\x04 \x01(\bR\x11centerProjectiles\"=\n" +
-	"\x16CurrentProfileResponse\x12#\n" +
-	"\x06person\x18\x01 \x01(\v2\v.PersonCoreR\x06person\"\xcf\x02\n" +
+	"\x12center_projectiles\x18\x04 \x01(\bR\x11centerProjectiles\"G\n" +
+	"\x16CurrentProfileResponse\x12-\n" +
+	"\x06person\x18\x01 \x01(\v2\x15.person.v1.PersonCoreR\x06person\"\xcf\x02\n" +
 	"\fUserSettings\x12,\n" +
 	"\x12person_settings_id\x18\x01 \x01(\x03R\x10personSettingsId\x12\x19\n" +
 	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x12'\n" +
@@ -1000,18 +1000,16 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x17ProfileSettingsResponse\x123\n" +
 	"\bsettings\x18\x01 \x01(\v2\x17.person.v1.UserSettingsR\bsettings\"R\n" +
 	"\x1bEditProfileSettingsResponse\x123\n" +
-	"\bsettings\x18\x01 \x01(\v2\x17.person.v1.UserSettingsR\bsettings\"j\n" +
+	"\bsettings\x18\x01 \x01(\v2\x17.person.v1.UserSettingsR\bsettings\"t\n" +
 	"\x16EditPermissionsRequest\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x125\n" +
-	"\x10permission_level\x18\x02 \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\"D\n" +
+	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x12?\n" +
+	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\"D\n" +
 	"\x17EditPermissionsResponse\x12)\n" +
-	"\x06person\x18\x01 \x01(\v2\x11.person.v1.PersonR\x06person\"\xdf\x03\n" +
+	"\x06person\x18\x01 \x01(\v2\x11.person.v1.PersonR\x06person\"\xe9\x03\n" +
 	"\fQueryRequest\x12\x1f\n" +
 	"\x06filter\x18\x01 \x01(\v2\a.FilterR\x06filter\x12!\n" +
-	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x125\n" +
-	"\x10with_permissions\x18\x03 \x03(\x0e2\n" +
-	".PrivilegeR\x0fwithPermissions\x12\x1d\n" +
+	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12?\n" +
+	"\x10with_permissions\x18\x03 \x03(\x0e2\x14.person.v1.PrivilegeR\x0fwithPermissions\x12\x1d\n" +
 	"\n" +
 	"discord_id\x18\x04 \x01(\tR\tdiscordId\x12\x1b\n" +
 	"\tsteam_ids\x18\x05 \x03(\tR\bsteamIds\x12\x19\n" +
@@ -1022,15 +1020,14 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"\x10community_banned\x18\t \x01(\bR\x0fcommunityBanned\x12H\n" +
 	"\x12time_created_after\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\x10timeCreatedAfter\x12J\n" +
-	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\xf4\t\n" +
+	"\x13time_created_before\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\x11timeCreatedBefore\"\xfe\t\n" +
 	"\x06Person\x12\x19\n" +
 	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x129\n" +
 	"\n" +
 	"created_on\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
-	"updated_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x125\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\x12\x14\n" +
+	"updated_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\x12?\n" +
+	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x12\x14\n" +
 	"\x05muted\x18\x05 \x01(\bR\x05muted\x12\x1d\n" +
 	"\n" +
 	"discord_id\x18\x06 \x01(\tR\tdiscordId\x12\x1d\n" +
@@ -1064,9 +1061,9 @@ const file_person_v1_person_proto_rawDesc = "" +
 	"profileUrl\x12\x1b\n" +
 	"\treal_name\x18\x1d \x01(\tR\brealName\x12=\n" +
 	"\ftime_created\x18\x1e \x01(\v2\x1a.google.protobuf.TimestampR\vtimeCreated\x12)\n" +
-	"\x10visibility_state\x18\x1f \x01(\x03R\x0fvisibilityState\"4\n" +
-	"\rQueryResponse\x12#\n" +
-	"\x06people\x18\x01 \x03(\v2\v.PersonCoreR\x06people2\xa7\x03\n" +
+	"\x10visibility_state\x18\x1f \x01(\x03R\x0fvisibilityState\">\n" +
+	"\rQueryResponse\x12-\n" +
+	"\x06people\x18\x01 \x03(\v2\x15.person.v1.PersonCoreR\x06people2\xa7\x03\n" +
 	"\rPersonService\x12K\n" +
 	"\x0eCurrentProfile\x12\x16.google.protobuf.Empty\x1a!.person.v1.CurrentProfileResponse\x12M\n" +
 	"\x0fProfileSettings\x12\x16.google.protobuf.Empty\x1a\".person.v1.ProfileSettingsResponse\x12d\n" +
@@ -1102,31 +1099,31 @@ var file_person_v1_person_proto_goTypes = []any{
 	(*Person)(nil),                      // 9: person.v1.Person
 	(*QueryResponse)(nil),               // 10: person.v1.QueryResponse
 	(*timestamppb.Timestamp)(nil),       // 11: google.protobuf.Timestamp
-	(*internal.PersonCore)(nil),         // 12: PersonCore
-	(internal.Privilege)(0),             // 13: Privilege
-	(*internal.Filter)(nil),             // 14: Filter
+	(*PersonCore)(nil),                  // 12: person.v1.PersonCore
+	(Privilege)(0),                      // 13: person.v1.Privilege
+	(*v1.Filter)(nil),                   // 14: Filter
 	(*emptypb.Empty)(nil),               // 15: google.protobuf.Empty
 }
 var file_person_v1_person_proto_depIdxs = []int32{
 	11, // 0: person.v1.Settings.created_on:type_name -> google.protobuf.Timestamp
 	11, // 1: person.v1.Settings.updated_on:type_name -> google.protobuf.Timestamp
-	12, // 2: person.v1.CurrentProfileResponse.person:type_name -> PersonCore
+	12, // 2: person.v1.CurrentProfileResponse.person:type_name -> person.v1.PersonCore
 	11, // 3: person.v1.UserSettings.created_on:type_name -> google.protobuf.Timestamp
 	11, // 4: person.v1.UserSettings.updated_on:type_name -> google.protobuf.Timestamp
 	3,  // 5: person.v1.ProfileSettingsResponse.settings:type_name -> person.v1.UserSettings
 	3,  // 6: person.v1.EditProfileSettingsResponse.settings:type_name -> person.v1.UserSettings
-	13, // 7: person.v1.EditPermissionsRequest.permission_level:type_name -> Privilege
+	13, // 7: person.v1.EditPermissionsRequest.permission_level:type_name -> person.v1.Privilege
 	9,  // 8: person.v1.EditPermissionsResponse.person:type_name -> person.v1.Person
 	14, // 9: person.v1.QueryRequest.filter:type_name -> Filter
-	13, // 10: person.v1.QueryRequest.with_permissions:type_name -> Privilege
+	13, // 10: person.v1.QueryRequest.with_permissions:type_name -> person.v1.Privilege
 	11, // 11: person.v1.QueryRequest.time_created_after:type_name -> google.protobuf.Timestamp
 	11, // 12: person.v1.QueryRequest.time_created_before:type_name -> google.protobuf.Timestamp
 	11, // 13: person.v1.Person.created_on:type_name -> google.protobuf.Timestamp
 	11, // 14: person.v1.Person.updated_on:type_name -> google.protobuf.Timestamp
-	13, // 15: person.v1.Person.permission_level:type_name -> Privilege
+	13, // 15: person.v1.Person.permission_level:type_name -> person.v1.Privilege
 	11, // 16: person.v1.Person.updated_on_steam:type_name -> google.protobuf.Timestamp
 	11, // 17: person.v1.Person.time_created:type_name -> google.protobuf.Timestamp
-	12, // 18: person.v1.QueryResponse.people:type_name -> PersonCore
+	12, // 18: person.v1.QueryResponse.people:type_name -> person.v1.PersonCore
 	15, // 19: person.v1.PersonService.CurrentProfile:input_type -> google.protobuf.Empty
 	15, // 20: person.v1.PersonService.ProfileSettings:input_type -> google.protobuf.Empty
 	1,  // 21: person.v1.PersonService.EditProfileSettings:input_type -> person.v1.EditProfileSettingsRequest
@@ -1149,6 +1146,8 @@ func file_person_v1_person_proto_init() {
 	if File_person_v1_person_proto != nil {
 		return
 	}
+	file_person_v1_person_core_proto_init()
+	file_person_v1_privilege_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

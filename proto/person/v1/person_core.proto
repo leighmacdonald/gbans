@@ -1,11 +1,13 @@
 edition = "2023";
 
+package person.v1;
+
 import "google/protobuf/timestamp.proto";
-import "privilege.proto";
+import "person/v1/privilege.proto";
 
 message PersonCore {
   string steam_id = 1;
-  Privilege permission_level = 2;
+  person.v1.Privilege permission_level = 2;
   string name = 3;
   string avatar_hash = 4;
   string discord_id = 5;

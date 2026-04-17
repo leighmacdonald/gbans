@@ -7,8 +7,7 @@
 package serversv1
 
 import (
-	internal "github.com/leighmacdonald/gbans/internal"
-	_ "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
+	v1 "github.com/leighmacdonald/gbans/internal/sourcemod/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -310,7 +309,7 @@ func (x *CheckResponse) GetMsg() string {
 type Override struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OverrideId    *int32                 `protobuf:"varint,1,opt,name=override_id,json=overrideId" json:"override_id,omitempty"`
-	Type          *internal.OverrideType `protobuf:"varint,2,opt,name=type,enum=OverrideType" json:"type,omitempty"`
+	Type          *v1.OverrideType       `protobuf:"varint,2,opt,name=type,enum=sourcemod.v1.OverrideType" json:"type,omitempty"`
 	Name          *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
 	Flags         *string                `protobuf:"bytes,4,opt,name=flags" json:"flags,omitempty"`
 	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
@@ -356,11 +355,11 @@ func (x *Override) GetOverrideId() int32 {
 	return 0
 }
 
-func (x *Override) GetType() internal.OverrideType {
+func (x *Override) GetType() v1.OverrideType {
 	if x != nil && x.Type != nil {
 		return *x.Type
 	}
-	return internal.OverrideType(0)
+	return v1.OverrideType(0)
 }
 
 func (x *Override) GetName() string {
@@ -444,7 +443,7 @@ type Admin struct {
 	Password      *string                `protobuf:"bytes,5,opt,name=password" json:"password,omitempty"`
 	Name          *string                `protobuf:"bytes,6,opt,name=name" json:"name,omitempty"`
 	Immunity      *int32                 `protobuf:"varint,7,opt,name=immunity" json:"immunity,omitempty"`
-	Groups        []*internal.Group      `protobuf:"bytes,8,rep,name=groups" json:"groups,omitempty"`
+	Groups        []*v1.Group            `protobuf:"bytes,8,rep,name=groups" json:"groups,omitempty"`
 	CreatedOn     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	UpdatedOn     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -530,7 +529,7 @@ func (x *Admin) GetImmunity() int32 {
 	return 0
 }
 
-func (x *Admin) GetGroups() []*internal.Group {
+func (x *Admin) GetGroups() []*v1.Group {
 	if x != nil {
 		return x.Groups
 	}
@@ -597,7 +596,7 @@ func (x *UsersResponse) GetAdmins() []*Admin {
 
 type GroupsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Groups        []*internal.Group      `protobuf:"bytes,1,rep,name=groups" json:"groups,omitempty"`
+	Groups        []*v1.Group            `protobuf:"bytes,1,rep,name=groups" json:"groups,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -632,7 +631,7 @@ func (*GroupsResponse) Descriptor() ([]byte, []int) {
 	return file_srcds_v1_srcds_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *GroupsResponse) GetGroups() []*internal.Group {
+func (x *GroupsResponse) GetGroups() []*v1.Group {
 	if x != nil {
 		return x.Groups
 	}
@@ -644,7 +643,7 @@ var File_srcds_v1_srcds_proto protoreflect.FileDescriptor
 const file_srcds_v1_srcds_proto_rawDesc = "" +
 	"\n" +
 	"\x14srcds/v1/srcds.proto\x12\n" +
-	"servers.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\vgroup.proto\x1a\x12overridetype.proto\x1a\x1csourcemod/v1/sourcemod.proto\"E\n" +
+	"servers.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1csourcemod/v1/sourcemod.proto\"E\n" +
 	"\vSeedRequest\x12\x19\n" +
 	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x12\x1b\n" +
 	"\tserver_id\x18\x02 \x01(\x05R\bserverId\"\x7f\n" +
@@ -656,11 +655,11 @@ const file_srcds_v1_srcds_proto_rawDesc = "" +
 	"\rCheckResponse\x12\x1b\n" +
 	"\tclient_id\x18\x01 \x01(\x05R\bclientId\x12.\n" +
 	"\bban_type\x18\x02 \x01(\x0e2\x13.servers.v1.BanTypeR\abanType\x12\x10\n" +
-	"\x03msg\x18\x03 \x01(\tR\x03msg\"\xee\x01\n" +
+	"\x03msg\x18\x03 \x01(\tR\x03msg\"\xfb\x01\n" +
 	"\bOverride\x12\x1f\n" +
 	"\voverride_id\x18\x01 \x01(\x05R\n" +
-	"overrideId\x12!\n" +
-	"\x04type\x18\x02 \x01(\x0e2\r.OverrideTypeR\x04type\x12\x12\n" +
+	"overrideId\x12.\n" +
+	"\x04type\x18\x02 \x01(\x0e2\x1a.sourcemod.v1.OverrideTypeR\x04type\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x14\n" +
 	"\x05flags\x18\x04 \x01(\tR\x05flags\x129\n" +
 	"\n" +
@@ -668,7 +667,7 @@ const file_srcds_v1_srcds_proto_rawDesc = "" +
 	"\n" +
 	"updated_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"G\n" +
 	"\x11OverridesResponse\x122\n" +
-	"\toverrides\x18\x01 \x03(\v2\x14.servers.v1.OverrideR\toverrides\"\xee\x02\n" +
+	"\toverrides\x18\x01 \x03(\v2\x14.servers.v1.OverrideR\toverrides\"\xfb\x02\n" +
 	"\x05Admin\x12\x19\n" +
 	"\badmin_id\x18\x01 \x01(\x05R\aadminId\x12\x19\n" +
 	"\bsteam_id\x18\x02 \x01(\tR\asteamId\x121\n" +
@@ -676,17 +675,17 @@ const file_srcds_v1_srcds_proto_rawDesc = "" +
 	"\bidentity\x18\x04 \x01(\tR\bidentity\x12\x1a\n" +
 	"\bpassword\x18\x05 \x01(\tR\bpassword\x12\x12\n" +
 	"\x04name\x18\x06 \x01(\tR\x04name\x12\x1a\n" +
-	"\bimmunity\x18\a \x01(\x05R\bimmunity\x12\x1e\n" +
-	"\x06groups\x18\b \x03(\v2\x06.GroupR\x06groups\x129\n" +
+	"\bimmunity\x18\a \x01(\x05R\bimmunity\x12+\n" +
+	"\x06groups\x18\b \x03(\v2\x13.sourcemod.v1.GroupR\x06groups\x129\n" +
 	"\n" +
 	"created_on\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
 	"updated_on\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\":\n" +
 	"\rUsersResponse\x12)\n" +
-	"\x06admins\x18\x01 \x03(\v2\x11.servers.v1.AdminR\x06admins\"0\n" +
-	"\x0eGroupsResponse\x12\x1e\n" +
-	"\x06groups\x18\x01 \x03(\v2\x06.GroupR\x06groups*g\n" +
+	"\x06admins\x18\x01 \x03(\v2\x11.servers.v1.AdminR\x06admins\"=\n" +
+	"\x0eGroupsResponse\x12+\n" +
+	"\x06groups\x18\x01 \x03(\v2\x13.sourcemod.v1.GroupR\x06groups*g\n" +
 	"\aBanType\x12\x1b\n" +
 	"\x17BAN_TYPE_OK_UNSPECIFIED\x10\x00\x12\x14\n" +
 	"\x10BAN_TYPE_NO_COMM\x10\x01\x12\x13\n" +
@@ -732,24 +731,24 @@ var file_srcds_v1_srcds_proto_goTypes = []any{
 	(*Admin)(nil),                 // 7: servers.v1.Admin
 	(*UsersResponse)(nil),         // 8: servers.v1.UsersResponse
 	(*GroupsResponse)(nil),        // 9: servers.v1.GroupsResponse
-	(internal.OverrideType)(0),    // 10: OverrideType
+	(v1.OverrideType)(0),          // 10: sourcemod.v1.OverrideType
 	(*timestamppb.Timestamp)(nil), // 11: google.protobuf.Timestamp
-	(*internal.Group)(nil),        // 12: Group
+	(*v1.Group)(nil),              // 12: sourcemod.v1.Group
 	(*emptypb.Empty)(nil),         // 13: google.protobuf.Empty
 }
 var file_srcds_v1_srcds_proto_depIdxs = []int32{
 	0,  // 0: servers.v1.CheckRequest.ban_type:type_name -> servers.v1.BanType
 	0,  // 1: servers.v1.CheckResponse.ban_type:type_name -> servers.v1.BanType
-	10, // 2: servers.v1.Override.type:type_name -> OverrideType
+	10, // 2: servers.v1.Override.type:type_name -> sourcemod.v1.OverrideType
 	11, // 3: servers.v1.Override.created_on:type_name -> google.protobuf.Timestamp
 	11, // 4: servers.v1.Override.updated_on:type_name -> google.protobuf.Timestamp
 	5,  // 5: servers.v1.OverridesResponse.overrides:type_name -> servers.v1.Override
 	1,  // 6: servers.v1.Admin.auth_type:type_name -> servers.v1.AuthType
-	12, // 7: servers.v1.Admin.groups:type_name -> Group
+	12, // 7: servers.v1.Admin.groups:type_name -> sourcemod.v1.Group
 	11, // 8: servers.v1.Admin.created_on:type_name -> google.protobuf.Timestamp
 	11, // 9: servers.v1.Admin.updated_on:type_name -> google.protobuf.Timestamp
 	7,  // 10: servers.v1.UsersResponse.admins:type_name -> servers.v1.Admin
-	12, // 11: servers.v1.GroupsResponse.groups:type_name -> Group
+	12, // 11: servers.v1.GroupsResponse.groups:type_name -> sourcemod.v1.Group
 	3,  // 12: servers.v1.SRCDSService.Check:input_type -> servers.v1.CheckRequest
 	13, // 13: servers.v1.SRCDSService.Overrides:input_type -> google.protobuf.Empty
 	13, // 14: servers.v1.SRCDSService.Users:input_type -> google.protobuf.Empty

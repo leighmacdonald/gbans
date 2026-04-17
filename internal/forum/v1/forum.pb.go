@@ -7,7 +7,7 @@
 package forumv1
 
 import (
-	internal "github.com/leighmacdonald/gbans/internal"
+	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -184,7 +184,7 @@ type ForumEditRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ForumId         *int32                 `protobuf:"varint,1,opt,name=forum_id,json=forumId" json:"forum_id,omitempty"`
 	ForumCategoryId *int32                 `protobuf:"varint,2,opt,name=forum_category_id,json=forumCategoryId" json:"forum_category_id,omitempty"`
-	PermissionLevel *internal.Privilege    `protobuf:"varint,3,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel *v1.Privilege          `protobuf:"varint,3,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	Title           *string                `protobuf:"bytes,4,opt,name=title" json:"title,omitempty"`
 	Description     *string                `protobuf:"bytes,5,opt,name=description" json:"description,omitempty"`
 	Ordering        *int32                 `protobuf:"varint,6,opt,name=ordering" json:"ordering,omitempty"`
@@ -236,11 +236,11 @@ func (x *ForumEditRequest) GetForumCategoryId() int32 {
 	return 0
 }
 
-func (x *ForumEditRequest) GetPermissionLevel() internal.Privilege {
+func (x *ForumEditRequest) GetPermissionLevel() v1.Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return internal.Privilege(0)
+	return v1.Privilege(0)
 }
 
 func (x *ForumEditRequest) GetTitle() string {
@@ -267,7 +267,7 @@ func (x *ForumEditRequest) GetOrdering() int32 {
 type ForumCreateRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ForumCategoryId *int32                 `protobuf:"varint,1,opt,name=forum_category_id,json=forumCategoryId" json:"forum_category_id,omitempty"`
-	PermissionLevel *internal.Privilege    `protobuf:"varint,2,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel *v1.Privilege          `protobuf:"varint,2,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	Title           *string                `protobuf:"bytes,3,opt,name=title" json:"title,omitempty"`
 	Description     *string                `protobuf:"bytes,4,opt,name=description" json:"description,omitempty"`
 	Ordering        *int32                 `protobuf:"varint,5,opt,name=ordering" json:"ordering,omitempty"`
@@ -312,11 +312,11 @@ func (x *ForumCreateRequest) GetForumCategoryId() int32 {
 	return 0
 }
 
-func (x *ForumCreateRequest) GetPermissionLevel() internal.Privilege {
+func (x *ForumCreateRequest) GetPermissionLevel() v1.Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return internal.Privilege(0)
+	return v1.Privilege(0)
 }
 
 func (x *ForumCreateRequest) GetTitle() string {
@@ -1537,7 +1537,7 @@ type ThreadWithSource struct {
 	Thread               *Thread                `protobuf:"bytes,1,opt,name=thread" json:"thread,omitempty"`
 	PersonaName          *string                `protobuf:"bytes,2,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
 	AvatarHash           *string                `protobuf:"bytes,3,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
-	PermissionLevel      *internal.Privilege    `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel      *v1.Privilege          `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	RecentForumMessageId *int64                 `protobuf:"varint,5,opt,name=recent_forum_message_id,json=recentForumMessageId" json:"recent_forum_message_id,omitempty"`
 	RecentCreatedOn      *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=recent_created_on,json=recentCreatedOn" json:"recent_created_on,omitempty"`
 	RecentSteamId        *int64                 `protobuf:"varint,7,opt,name=recent_steam_id,json=recentSteamId" json:"recent_steam_id,omitempty"`
@@ -1598,11 +1598,11 @@ func (x *ThreadWithSource) GetAvatarHash() string {
 	return ""
 }
 
-func (x *ThreadWithSource) GetPermissionLevel() internal.Privilege {
+func (x *ThreadWithSource) GetPermissionLevel() v1.Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return internal.Privilege(0)
+	return v1.Privilege(0)
 }
 
 func (x *ThreadWithSource) GetRecentForumMessageId() int64 {
@@ -1644,7 +1644,7 @@ type UserActivity struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	SteamId         *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	PersonaName     *string                `protobuf:"bytes,2,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
-	PermissionLevel *internal.Privilege    `protobuf:"varint,3,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel *v1.Privilege          `protobuf:"varint,3,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	CreatedOn       *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -1694,11 +1694,11 @@ func (x *UserActivity) GetPersonaName() string {
 	return ""
 }
 
-func (x *UserActivity) GetPermissionLevel() internal.Privilege {
+func (x *UserActivity) GetPermissionLevel() v1.Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return internal.Privilege(0)
+	return v1.Privilege(0)
 }
 
 func (x *UserActivity) GetCreatedOn() *timestamppb.Timestamp {
@@ -1763,7 +1763,7 @@ type Message struct {
 	Signature       *string                `protobuf:"bytes,7,opt,name=signature" json:"signature,omitempty"`
 	PersonaName     *string                `protobuf:"bytes,8,opt,name=persona_name,json=personaName" json:"persona_name,omitempty"`
 	AvatarHash      *string                `protobuf:"bytes,9,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
-	PermissionLevel *internal.Privilege    `protobuf:"varint,10,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel *v1.Privilege          `protobuf:"varint,10,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	CreatedOn       *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	UpdatedOn       *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	unknownFields   protoimpl.UnknownFields
@@ -1863,11 +1863,11 @@ func (x *Message) GetAvatarHash() string {
 	return ""
 }
 
-func (x *Message) GetPermissionLevel() internal.Privilege {
+func (x *Message) GetPermissionLevel() v1.Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return internal.Privilege(0)
+	return v1.Privilege(0)
 }
 
 func (x *Message) GetCreatedOn() *timestamppb.Timestamp {
@@ -1938,7 +1938,7 @@ type Forum struct {
 	Ordering            *int32                 `protobuf:"varint,6,opt,name=ordering" json:"ordering,omitempty"`
 	CountThreads        *int64                 `protobuf:"varint,7,opt,name=count_threads,json=countThreads" json:"count_threads,omitempty"`
 	CountMessages       *int64                 `protobuf:"varint,8,opt,name=count_messages,json=countMessages" json:"count_messages,omitempty"`
-	PermissionLevel     *internal.Privilege    `protobuf:"varint,9,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel     *v1.Privilege          `protobuf:"varint,9,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	RecentForumThreadId *int32                 `protobuf:"varint,10,opt,name=recent_forum_thread_id,json=recentForumThreadId" json:"recent_forum_thread_id,omitempty"`
 	RecentForumTitle    *string                `protobuf:"bytes,11,opt,name=recent_forum_title,json=recentForumTitle" json:"recent_forum_title,omitempty"`
 	RecentSourceId      *string                `protobuf:"bytes,12,opt,name=recent_source_id,json=recentSourceId" json:"recent_source_id,omitempty"`
@@ -2037,11 +2037,11 @@ func (x *Forum) GetCountMessages() int64 {
 	return 0
 }
 
-func (x *Forum) GetPermissionLevel() internal.Privilege {
+func (x *Forum) GetPermissionLevel() v1.Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return internal.Privilege(0)
+	return v1.Privilege(0)
 }
 
 func (x *Forum) GetRecentForumThreadId() int32 {
@@ -2240,7 +2240,7 @@ var File_forum_v1_forum_proto protoreflect.FileDescriptor
 
 const file_forum_v1_forum_proto_rawDesc = "" +
 	"\n" +
-	"\x14forum/v1/forum.proto\x12\bforum.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0fprivilege.proto\"\x81\x01\n" +
+	"\x14forum/v1/forum.proto\x12\bforum.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\x81\x01\n" +
 	"\x11ThreadEditRequest\x12&\n" +
 	"\x0fforum_thread_id\x18\x01 \x01(\x05R\rforumThreadId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x16\n" +
@@ -2249,19 +2249,17 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\x12ThreadEditResponse\x12(\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\":\n" +
 	"\x11ForumEditResponse\x12%\n" +
-	"\x05forum\x18\x01 \x01(\v2\x0f.forum.v1.ForumR\x05forum\"\xe4\x01\n" +
+	"\x05forum\x18\x01 \x01(\v2\x0f.forum.v1.ForumR\x05forum\"\xee\x01\n" +
 	"\x10ForumEditRequest\x12\x19\n" +
 	"\bforum_id\x18\x01 \x01(\x05R\aforumId\x12*\n" +
-	"\x11forum_category_id\x18\x02 \x01(\x05R\x0fforumCategoryId\x125\n" +
-	"\x10permission_level\x18\x03 \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\x12\x14\n" +
+	"\x11forum_category_id\x18\x02 \x01(\x05R\x0fforumCategoryId\x12?\n" +
+	"\x10permission_level\x18\x03 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x12\x14\n" +
 	"\x05title\x18\x04 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1a\n" +
-	"\bordering\x18\x06 \x01(\x05R\bordering\"\xcb\x01\n" +
+	"\bordering\x18\x06 \x01(\x05R\bordering\"\xd5\x01\n" +
 	"\x12ForumCreateRequest\x12*\n" +
-	"\x11forum_category_id\x18\x01 \x01(\x05R\x0fforumCategoryId\x125\n" +
-	"\x10permission_level\x18\x02 \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\x12\x14\n" +
+	"\x11forum_category_id\x18\x01 \x01(\x05R\x0fforumCategoryId\x12?\n" +
+	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x12\x14\n" +
 	"\x05title\x18\x03 \x01(\tR\x05title\x12 \n" +
 	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\x1a\n" +
 	"\bordering\x18\x05 \x01(\x05R\bordering\"<\n" +
@@ -2331,28 +2329,26 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
-	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\xbc\x03\n" +
+	"updated_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"\xc6\x03\n" +
 	"\x10ThreadWithSource\x12(\n" +
 	"\x06thread\x18\x01 \x01(\v2\x10.forum.v1.ThreadR\x06thread\x12!\n" +
 	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12\x1f\n" +
 	"\vavatar_hash\x18\x03 \x01(\tR\n" +
-	"avatarHash\x125\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\x125\n" +
+	"avatarHash\x12?\n" +
+	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x125\n" +
 	"\x17recent_forum_message_id\x18\x05 \x01(\x03R\x14recentForumMessageId\x12F\n" +
 	"\x11recent_created_on\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x0frecentCreatedOn\x12&\n" +
 	"\x0frecent_steam_id\x18\a \x01(\x03R\rrecentSteamId\x12.\n" +
 	"\x13recent_persona_name\x18\b \x01(\tR\x11recentPersonaName\x12,\n" +
-	"\x12recent_avatar_hash\x18\t \x01(\tR\x10recentAvatarHash\"\xbe\x01\n" +
+	"\x12recent_avatar_hash\x18\t \x01(\tR\x10recentAvatarHash\"\xc8\x01\n" +
 	"\fUserActivity\x12\x19\n" +
 	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\x12!\n" +
-	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x125\n" +
-	"\x10permission_level\x18\x03 \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\x129\n" +
+	"\fpersona_name\x18\x02 \x01(\tR\vpersonaName\x12?\n" +
+	"\x10permission_level\x18\x03 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x129\n" +
 	"\n" +
 	"created_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\"R\n" +
 	"\x13ActiveUsersResponse\x12;\n" +
-	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityR\fuserActivity\"\xce\x03\n" +
+	"\ruser_activity\x18\x01 \x03(\v2\x16.forum.v1.UserActivityR\fuserActivity\"\xd8\x03\n" +
 	"\aMessage\x12(\n" +
 	"\x10forum_message_id\x18\x01 \x01(\x03R\x0eforumMessageId\x12&\n" +
 	"\x0fforum_thread_id\x18\x02 \x01(\x05R\rforumThreadId\x12\x1b\n" +
@@ -2363,16 +2359,15 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\tsignature\x18\a \x01(\tR\tsignature\x12!\n" +
 	"\fpersona_name\x18\b \x01(\tR\vpersonaName\x12\x1f\n" +
 	"\vavatar_hash\x18\t \x01(\tR\n" +
-	"avatarHash\x125\n" +
+	"avatarHash\x12?\n" +
 	"\x10permission_level\x18\n" +
-	" \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\x129\n" +
+	" \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x129\n" +
 	"\n" +
 	"created_on\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
 	"updated_on\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn\"G\n" +
 	"\x16RecentMessagesResponse\x12-\n" +
-	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageR\bmessages\"\xf4\x05\n" +
+	"\bmessages\x18\x01 \x03(\v2\x11.forum.v1.MessageR\bmessages\"\xfe\x05\n" +
 	"\x05Forum\x12\x19\n" +
 	"\bforum_id\x18\x01 \x01(\x05R\aforumId\x12*\n" +
 	"\x11forum_category_id\x18\x02 \x01(\x05R\x0fforumCategoryId\x12$\n" +
@@ -2381,9 +2376,8 @@ const file_forum_v1_forum_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tR\vdescription\x12\x1a\n" +
 	"\bordering\x18\x06 \x01(\x05R\bordering\x12#\n" +
 	"\rcount_threads\x18\a \x01(\x03R\fcountThreads\x12%\n" +
-	"\x0ecount_messages\x18\b \x01(\x03R\rcountMessages\x125\n" +
-	"\x10permission_level\x18\t \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\x123\n" +
+	"\x0ecount_messages\x18\b \x01(\x03R\rcountMessages\x12?\n" +
+	"\x10permission_level\x18\t \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x123\n" +
 	"\x16recent_forum_thread_id\x18\n" +
 	" \x01(\x05R\x13recentForumThreadId\x12,\n" +
 	"\x12recent_forum_title\x18\v \x01(\tR\x10recentForumTitle\x12(\n" +
@@ -2484,15 +2478,15 @@ var file_forum_v1_forum_proto_goTypes = []any{
 	(*Forum)(nil),                     // 34: forum.v1.Forum
 	(*Category)(nil),                  // 35: forum.v1.Category
 	(*OverviewResponse)(nil),          // 36: forum.v1.OverviewResponse
-	(internal.Privilege)(0),           // 37: Privilege
+	(v1.Privilege)(0),                 // 37: person.v1.Privilege
 	(*timestamppb.Timestamp)(nil),     // 38: google.protobuf.Timestamp
 	(*emptypb.Empty)(nil),             // 39: google.protobuf.Empty
 }
 var file_forum_v1_forum_proto_depIdxs = []int32{
 	28, // 0: forum.v1.ThreadEditResponse.thread:type_name -> forum.v1.Thread
 	34, // 1: forum.v1.ForumEditResponse.forum:type_name -> forum.v1.Forum
-	37, // 2: forum.v1.ForumEditRequest.permission_level:type_name -> Privilege
-	37, // 3: forum.v1.ForumCreateRequest.permission_level:type_name -> Privilege
+	37, // 2: forum.v1.ForumEditRequest.permission_level:type_name -> person.v1.Privilege
+	37, // 3: forum.v1.ForumCreateRequest.permission_level:type_name -> person.v1.Privilege
 	34, // 4: forum.v1.ForumCreateResponse.forum:type_name -> forum.v1.Forum
 	35, // 5: forum.v1.CategoryEditResponse.category:type_name -> forum.v1.Category
 	35, // 6: forum.v1.CategoryResponse.category:type_name -> forum.v1.Category
@@ -2508,16 +2502,16 @@ var file_forum_v1_forum_proto_depIdxs = []int32{
 	38, // 16: forum.v1.Thread.created_on:type_name -> google.protobuf.Timestamp
 	38, // 17: forum.v1.Thread.updated_on:type_name -> google.protobuf.Timestamp
 	28, // 18: forum.v1.ThreadWithSource.thread:type_name -> forum.v1.Thread
-	37, // 19: forum.v1.ThreadWithSource.permission_level:type_name -> Privilege
+	37, // 19: forum.v1.ThreadWithSource.permission_level:type_name -> person.v1.Privilege
 	38, // 20: forum.v1.ThreadWithSource.recent_created_on:type_name -> google.protobuf.Timestamp
-	37, // 21: forum.v1.UserActivity.permission_level:type_name -> Privilege
+	37, // 21: forum.v1.UserActivity.permission_level:type_name -> person.v1.Privilege
 	38, // 22: forum.v1.UserActivity.created_on:type_name -> google.protobuf.Timestamp
 	30, // 23: forum.v1.ActiveUsersResponse.user_activity:type_name -> forum.v1.UserActivity
-	37, // 24: forum.v1.Message.permission_level:type_name -> Privilege
+	37, // 24: forum.v1.Message.permission_level:type_name -> person.v1.Privilege
 	38, // 25: forum.v1.Message.created_on:type_name -> google.protobuf.Timestamp
 	38, // 26: forum.v1.Message.updated_on:type_name -> google.protobuf.Timestamp
 	32, // 27: forum.v1.RecentMessagesResponse.messages:type_name -> forum.v1.Message
-	37, // 28: forum.v1.Forum.permission_level:type_name -> Privilege
+	37, // 28: forum.v1.Forum.permission_level:type_name -> person.v1.Privilege
 	38, // 29: forum.v1.Forum.recent_created_on:type_name -> google.protobuf.Timestamp
 	38, // 30: forum.v1.Forum.created_on:type_name -> google.protobuf.Timestamp
 	38, // 31: forum.v1.Forum.updated_on:type_name -> google.protobuf.Timestamp

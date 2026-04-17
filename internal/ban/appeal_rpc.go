@@ -5,12 +5,12 @@ import (
 	"errors"
 
 	"connectrpc.com/connect"
-	"github.com/leighmacdonald/gbans/internal"
 	"github.com/leighmacdonald/gbans/internal/auth/permission"
 	v1 "github.com/leighmacdonald/gbans/internal/ban/v1"
 	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	personv1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	"github.com/leighmacdonald/gbans/internal/ptr"
 	"github.com/leighmacdonald/gbans/internal/rpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -123,6 +123,6 @@ func toAppealMessage(message AppealMessage) *v1.AppealMessage {
 		UpdatedOn:    timestamppb.New(message.UpdatedOn),
 		AvatarHash:   &message.Avatarhash,
 		PersonaName:  &message.Personaname,
-		Privilege:    ptr.To(internal.Privilege(message.PermissionLevel)),
+		Privilege:    ptr.To(personv1.Privilege(message.PermissionLevel)),
 	}
 }

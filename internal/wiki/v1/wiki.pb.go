@@ -7,7 +7,7 @@
 package wikiv1
 
 import (
-	internal "github.com/leighmacdonald/gbans/internal"
+	v1 "github.com/leighmacdonald/gbans/internal/person/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -28,7 +28,7 @@ type Wiki struct {
 	Slug            *string                `protobuf:"bytes,1,opt,name=slug" json:"slug,omitempty"`
 	BodyMd          *string                `protobuf:"bytes,2,opt,name=body_md,json=bodyMd" json:"body_md,omitempty"`
 	Revision        *int32                 `protobuf:"varint,3,opt,name=revision" json:"revision,omitempty"`
-	PermissionLevel *internal.Privilege    `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,enum=Privilege" json:"permission_level,omitempty"`
+	PermissionLevel *v1.Privilege          `protobuf:"varint,4,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	CreatedOn       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_on,json=createdOn" json:"created_on,omitempty"`
 	UpdatedOn       *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_on,json=updatedOn" json:"updated_on,omitempty"`
 	unknownFields   protoimpl.UnknownFields
@@ -86,11 +86,11 @@ func (x *Wiki) GetRevision() int32 {
 	return 0
 }
 
-func (x *Wiki) GetPermissionLevel() internal.Privilege {
+func (x *Wiki) GetPermissionLevel() v1.Privilege {
 	if x != nil && x.PermissionLevel != nil {
 		return *x.PermissionLevel
 	}
-	return internal.Privilege(0)
+	return v1.Privilege(0)
 }
 
 func (x *Wiki) GetCreatedOn() *timestamppb.Timestamp {
@@ -287,13 +287,12 @@ var File_wiki_v1_wiki_proto protoreflect.FileDescriptor
 
 const file_wiki_v1_wiki_proto_rawDesc = "" +
 	"\n" +
-	"\x12wiki/v1/wiki.proto\x12\awiki.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0fprivilege.proto\"\xfc\x01\n" +
+	"\x12wiki/v1/wiki.proto\x12\awiki.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\x86\x02\n" +
 	"\x04Wiki\x12\x12\n" +
 	"\x04slug\x18\x01 \x01(\tR\x04slug\x12\x17\n" +
 	"\abody_md\x18\x02 \x01(\tR\x06bodyMd\x12\x1a\n" +
-	"\brevision\x18\x03 \x01(\x05R\brevision\x125\n" +
-	"\x10permission_level\x18\x04 \x01(\x0e2\n" +
-	".PrivilegeR\x0fpermissionLevel\x129\n" +
+	"\brevision\x18\x03 \x01(\x05R\brevision\x12?\n" +
+	"\x10permission_level\x18\x04 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x129\n" +
 	"\n" +
 	"created_on\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
@@ -331,11 +330,11 @@ var file_wiki_v1_wiki_proto_goTypes = []any{
 	(*GetResponse)(nil),           // 2: wiki.v1.GetResponse
 	(*UpdateRequest)(nil),         // 3: wiki.v1.UpdateRequest
 	(*UpdateResponse)(nil),        // 4: wiki.v1.UpdateResponse
-	(internal.Privilege)(0),       // 5: Privilege
+	(v1.Privilege)(0),             // 5: person.v1.Privilege
 	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
 }
 var file_wiki_v1_wiki_proto_depIdxs = []int32{
-	5, // 0: wiki.v1.Wiki.permission_level:type_name -> Privilege
+	5, // 0: wiki.v1.Wiki.permission_level:type_name -> person.v1.Privilege
 	6, // 1: wiki.v1.Wiki.created_on:type_name -> google.protobuf.Timestamp
 	6, // 2: wiki.v1.Wiki.updated_on:type_name -> google.protobuf.Timestamp
 	0, // 3: wiki.v1.GetResponse.wiki:type_name -> wiki.v1.Wiki

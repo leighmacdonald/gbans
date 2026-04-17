@@ -2,8 +2,10 @@ edition = "2023";
 
 package anticheat.v1;
 
-import "filter.proto";
+import "buf/validate/validate.proto";
+import "database/query/v1/filter.proto";
 import "google/protobuf/timestamp.proto";
+import "person/v1/steamid.proto";
 
 service AnticheatService {
   rpc Query(QueryRequest) returns (QueryResponse) {}
@@ -37,8 +39,14 @@ message QueryResponse {
 
 message Entry {
   int64 anticheat_id = 1;
-  int64 steam_id = 2;
-  int32 server_id = 3;
+  int64 steam_id = 2 [(buf.validate.field) = {
+    int64: {gt: 0}
+    required: true
+  }];
+  int32 server_id = 3 [(buf.validate.field) = {
+    int64: {gt: 0}
+    required: true
+  }];
   string server_name = 4;
   int32 demo_id = 5;
   string demo_name = 6;

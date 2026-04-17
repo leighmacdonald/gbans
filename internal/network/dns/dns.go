@@ -52,7 +52,7 @@ type hostState struct {
 type ChangeDetector struct {
 	provider Provider
 	servers  ServerProvider
-	current  map[int]hostState
+	current  map[int32]hostState
 	started  bool
 }
 
@@ -60,7 +60,7 @@ func NewChangeDetector(dnsProvider Provider, servers ServerProvider) *ChangeDete
 	return &ChangeDetector{
 		provider: dnsProvider,
 		servers:  servers,
-		current:  map[int]hostState{},
+		current:  map[int32]hostState{},
 	}
 }
 
@@ -88,7 +88,7 @@ func (c *ChangeDetector) sync(ctx context.Context) error {
 		curHostState, found := c.current[server.ServerID]
 		if !found || !curHostState.idAddr.Equal(currentIP) {
 			if err := c.provider.Update(ctx, currentIP, server.Address); err != nil && !errors.Is(err, errNoChange) {
-				slog.Error("Failed to update DNS record", slog.Int("server_id", server.ServerID), slog.String("error", err.Error()))
+				slog.Error("Failed to update DNS record", slog.Int("server_id", int(server.ServerID)), slog.String("error", err.Error()))
 
 				continue
 			}

@@ -7,7 +7,7 @@
 package chatv1
 
 import (
-	internal "github.com/leighmacdonald/gbans/internal"
+	v1 "github.com/leighmacdonald/gbans/internal/database/query/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -121,7 +121,7 @@ func (x *QueryContextResponse) GetMessages() []*Message {
 
 type QueryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filter        *internal.Filter       `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
+	Filter        *v1.Filter             `protobuf:"bytes,1,opt,name=filter" json:"filter,omitempty"`
 	Query         *string                `protobuf:"bytes,2,opt,name=query" json:"query,omitempty"`
 	ServerId      *int32                 `protobuf:"varint,3,opt,name=server_id,json=serverId" json:"server_id,omitempty"`
 	DateStart     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=date_start,json=dateStart" json:"date_start,omitempty"`
@@ -162,7 +162,7 @@ func (*QueryRequest) Descriptor() ([]byte, []int) {
 	return file_chat_v1_chat_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *QueryRequest) GetFilter() *internal.Filter {
+func (x *QueryRequest) GetFilter() *v1.Filter {
 	if x != nil {
 		return x.Filter
 	}
@@ -391,7 +391,7 @@ var File_chat_v1_chat_proto protoreflect.FileDescriptor
 
 const file_chat_v1_chat_proto_rawDesc = "" +
 	"\n" +
-	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\ffilter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"[\n" +
+	"\x12chat/v1/chat.proto\x12\achat.v1\x1a\x1edatabase/query/v1/filter.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"[\n" +
 	"\x13QueryContextRequest\x12*\n" +
 	"\x11person_message_id\x18\x01 \x01(\x03R\x0fpersonMessageId\x12\x18\n" +
 	"\apadding\x18\x02 \x01(\x05R\apadding\"D\n" +
@@ -449,7 +449,7 @@ var file_chat_v1_chat_proto_goTypes = []any{
 	(*QueryRequest)(nil),          // 2: chat.v1.QueryRequest
 	(*QueryResponse)(nil),         // 3: chat.v1.QueryResponse
 	(*Message)(nil),               // 4: chat.v1.Message
-	(*internal.Filter)(nil),       // 5: Filter
+	(*v1.Filter)(nil),             // 5: Filter
 	(*timestamppb.Timestamp)(nil), // 6: google.protobuf.Timestamp
 }
 var file_chat_v1_chat_proto_depIdxs = []int32{
