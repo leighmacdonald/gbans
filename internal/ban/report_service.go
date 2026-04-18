@@ -174,7 +174,7 @@ func toReportWithAuthor(report ReportWithAuthor) *v1.ReportWithAuthor {
 
 func toPersonCore(person person.Core) *personv1.PersonCore {
 	return &personv1.PersonCore{
-		SteamId:         ptr.To(person.SteamID.String()),
+		SteamId:         ptr.To(person.SteamID.Int64()),
 		PermissionLevel: ptr.To(personv1.Privilege(person.PermissionLevel)),
 		Name:            ptr.To(person.GetName()),
 		AvatarHash:      ptr.To(string(person.GetAvatar())),

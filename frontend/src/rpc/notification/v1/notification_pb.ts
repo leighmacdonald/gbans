@@ -12,187 +12,192 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file notification/v1/notification.proto.
  */
-export const file_notification_v1_notification: GenFile = /*@__PURE__*/
-  fileDesc("CiJub3RpZmljYXRpb24vdjEvbm90aWZpY2F0aW9uLnByb3RvEg9ub3RpZmljYXRpb24udjEiUQoVTm90aWZpY2F0aW9uc1Jlc3BvbnNlEjgKDW5vdGlmaWNhdGlvbnMYASADKAsyIS5ub3RpZmljYXRpb24udjEuVXNlck5vdGlmaWNhdGlvbiIjCg1EZWxldGVSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASADKAUiJQoPTWFya1JlYWRSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASADKAUi7gEKEFVzZXJOb3RpZmljYXRpb24SHgoWcGVyc29uX25vdGlmaWNhdGlvbl9pZBgBIAEoAxIQCghzdGVhbV9pZBgCIAEoAxIMCgRyZWFkGAMgASgIEg8KB2RlbGV0ZWQYBCABKAgSKwoIc2V2ZXJpdHkYBSABKA4yGS5ub3RpZmljYXRpb24udjEuU2V2ZXJpdHkSDwoHbWVzc2FnZRgGIAEoCRIMCgRsaW5rGAcgASgJEg0KBWNvdW50GAggASgFEi4KCmNyZWF0ZWRfb24YCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wKlAKCFNldmVyaXR5Eh0KGVNFVkVSSVRZX0lORk9fVU5TUEVDSUZJRUQQABIRCg1TRVZFUklUWV9XQVJOEAESEgoOU0VWRVJJVFlfRVJST1IQAjL0AgoTTm90aWZpY2F0aW9uU2VydmljZRJRCg1Ob3RpZmljYXRpb25zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiYubm90aWZpY2F0aW9uLnYxLk5vdGlmaWNhdGlvbnNSZXNwb25zZSIAEkYKCE1hcmtSZWFkEiAubm90aWZpY2F0aW9uLnYxLk1hcmtSZWFkUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEj8KC01hcmtSZWFkQWxsEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASPQoJRGVsZXRlQWxsEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASQgoGRGVsZXRlEh4ubm90aWZpY2F0aW9uLnYxLkRlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiAELOAQoTY29tLm5vdGlmaWNhdGlvbi52MUIRTm90aWZpY2F0aW9uUHJvdG9QAVpHZ2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9ub3RpZmljYXRpb24vdjE7bm90aWZpY2F0aW9udjGiAgNOWFiqAg9Ob3RpZmljYXRpb24uVjHKAg9Ob3RpZmljYXRpb25cVjHiAhtOb3RpZmljYXRpb25cVjFcR1BCTWV0YWRhdGHqAhBOb3RpZmljYXRpb246OlYxYghlZGl0aW9uc3DoBw", [file_database_query_v1_filter, file_google_protobuf_empty, file_google_protobuf_timestamp]);
+export const file_notification_v1_notification: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"CiJub3RpZmljYXRpb24vdjEvbm90aWZpY2F0aW9uLnByb3RvEg9ub3RpZmljYXRpb24udjEiUQoVTm90aWZpY2F0aW9uc1Jlc3BvbnNlEjgKDW5vdGlmaWNhdGlvbnMYASADKAsyIS5ub3RpZmljYXRpb24udjEuVXNlck5vdGlmaWNhdGlvbiIjCg1EZWxldGVSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASADKAUiJQoPTWFya1JlYWRSZXF1ZXN0EhIKCm1lc3NhZ2VfaWQYASADKAUi7gEKEFVzZXJOb3RpZmljYXRpb24SHgoWcGVyc29uX25vdGlmaWNhdGlvbl9pZBgBIAEoAxIQCghzdGVhbV9pZBgCIAEoAxIMCgRyZWFkGAMgASgIEg8KB2RlbGV0ZWQYBCABKAgSKwoIc2V2ZXJpdHkYBSABKA4yGS5ub3RpZmljYXRpb24udjEuU2V2ZXJpdHkSDwoHbWVzc2FnZRgGIAEoCRIMCgRsaW5rGAcgASgJEg0KBWNvdW50GAggASgFEi4KCmNyZWF0ZWRfb24YCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wKlAKCFNldmVyaXR5Eh0KGVNFVkVSSVRZX0lORk9fVU5TUEVDSUZJRUQQABIRCg1TRVZFUklUWV9XQVJOEAESEgoOU0VWRVJJVFlfRVJST1IQAjL0AgoTTm90aWZpY2F0aW9uU2VydmljZRJRCg1Ob3RpZmljYXRpb25zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiYubm90aWZpY2F0aW9uLnYxLk5vdGlmaWNhdGlvbnNSZXNwb25zZSIAEkYKCE1hcmtSZWFkEiAubm90aWZpY2F0aW9uLnYxLk1hcmtSZWFkUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEj8KC01hcmtSZWFkQWxsEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASPQoJRGVsZXRlQWxsEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASQgoGRGVsZXRlEh4ubm90aWZpY2F0aW9uLnYxLkRlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiAELOAQoTY29tLm5vdGlmaWNhdGlvbi52MUIRTm90aWZpY2F0aW9uUHJvdG9QAVpHZ2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9ub3RpZmljYXRpb24vdjE7bm90aWZpY2F0aW9udjGiAgNOWFiqAg9Ob3RpZmljYXRpb24uVjHKAg9Ob3RpZmljYXRpb25cVjHiAhtOb3RpZmljYXRpb25cVjFcR1BCTWV0YWRhdGHqAhBOb3RpZmljYXRpb246OlYxYghlZGl0aW9uc3DoBw",
+		[file_database_query_v1_filter, file_google_protobuf_empty, file_google_protobuf_timestamp],
+	);
 
 /**
  * @generated from message notification.v1.NotificationsResponse
  */
 export type NotificationsResponse = Message<"notification.v1.NotificationsResponse"> & {
-  /**
-   * @generated from field: repeated notification.v1.UserNotification notifications = 1;
-   */
-  notifications: UserNotification[];
+	/**
+	 * @generated from field: repeated notification.v1.UserNotification notifications = 1;
+	 */
+	notifications: UserNotification[];
 };
 
 /**
  * Describes the message notification.v1.NotificationsResponse.
  * Use `create(NotificationsResponseSchema)` to create a new message.
  */
-export const NotificationsResponseSchema: GenMessage<NotificationsResponse> = /*@__PURE__*/
-  messageDesc(file_notification_v1_notification, 0);
+export const NotificationsResponseSchema: GenMessage<NotificationsResponse> =
+	/*@__PURE__*/
+	messageDesc(file_notification_v1_notification, 0);
 
 /**
  * @generated from message notification.v1.DeleteRequest
  */
 export type DeleteRequest = Message<"notification.v1.DeleteRequest"> & {
-  /**
-   * @generated from field: repeated int32 message_id = 1;
-   */
-  messageId: number[];
+	/**
+	 * @generated from field: repeated int32 message_id = 1;
+	 */
+	messageId: number[];
 };
 
 /**
  * Describes the message notification.v1.DeleteRequest.
  * Use `create(DeleteRequestSchema)` to create a new message.
  */
-export const DeleteRequestSchema: GenMessage<DeleteRequest> = /*@__PURE__*/
-  messageDesc(file_notification_v1_notification, 1);
+export const DeleteRequestSchema: GenMessage<DeleteRequest> =
+	/*@__PURE__*/
+	messageDesc(file_notification_v1_notification, 1);
 
 /**
  * @generated from message notification.v1.MarkReadRequest
  */
 export type MarkReadRequest = Message<"notification.v1.MarkReadRequest"> & {
-  /**
-   * @generated from field: repeated int32 message_id = 1;
-   */
-  messageId: number[];
+	/**
+	 * @generated from field: repeated int32 message_id = 1;
+	 */
+	messageId: number[];
 };
 
 /**
  * Describes the message notification.v1.MarkReadRequest.
  * Use `create(MarkReadRequestSchema)` to create a new message.
  */
-export const MarkReadRequestSchema: GenMessage<MarkReadRequest> = /*@__PURE__*/
-  messageDesc(file_notification_v1_notification, 2);
+export const MarkReadRequestSchema: GenMessage<MarkReadRequest> =
+	/*@__PURE__*/
+	messageDesc(file_notification_v1_notification, 2);
 
 /**
  * @generated from message notification.v1.UserNotification
  */
 export type UserNotification = Message<"notification.v1.UserNotification"> & {
-  /**
-   * @generated from field: int64 person_notification_id = 1;
-   */
-  personNotificationId: bigint;
+	/**
+	 * @generated from field: int64 person_notification_id = 1;
+	 */
+	personNotificationId: bigint;
 
-  /**
-   * @generated from field: int64 steam_id = 2;
-   */
-  steamId: bigint;
+	/**
+	 * @generated from field: int64 steam_id = 2;
+	 */
+	steamId: bigint;
 
-  /**
-   * @generated from field: bool read = 3;
-   */
-  read: boolean;
+	/**
+	 * @generated from field: bool read = 3;
+	 */
+	read: boolean;
 
-  /**
-   * @generated from field: bool deleted = 4;
-   */
-  deleted: boolean;
+	/**
+	 * @generated from field: bool deleted = 4;
+	 */
+	deleted: boolean;
 
-  /**
-   * @generated from field: notification.v1.Severity severity = 5;
-   */
-  severity: Severity;
+	/**
+	 * @generated from field: notification.v1.Severity severity = 5;
+	 */
+	severity: Severity;
 
-  /**
-   * @generated from field: string message = 6;
-   */
-  message: string;
+	/**
+	 * @generated from field: string message = 6;
+	 */
+	message: string;
 
-  /**
-   * @generated from field: string link = 7;
-   */
-  link: string;
+	/**
+	 * @generated from field: string link = 7;
+	 */
+	link: string;
 
-  /**
-   * @generated from field: int32 count = 8;
-   */
-  count: number;
+	/**
+	 * @generated from field: int32 count = 8;
+	 */
+	count: number;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 9;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 9;
+	 */
+	createdOn?: Timestamp;
 };
 
 /**
  * Describes the message notification.v1.UserNotification.
  * Use `create(UserNotificationSchema)` to create a new message.
  */
-export const UserNotificationSchema: GenMessage<UserNotification> = /*@__PURE__*/
-  messageDesc(file_notification_v1_notification, 3);
+export const UserNotificationSchema: GenMessage<UserNotification> =
+	/*@__PURE__*/
+	messageDesc(file_notification_v1_notification, 3);
 
 /**
  * @generated from enum notification.v1.Severity
  */
 export enum Severity {
-  /**
-   * @generated from enum value: SEVERITY_INFO_UNSPECIFIED = 0;
-   */
-  INFO_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: SEVERITY_INFO_UNSPECIFIED = 0;
+	 */
+	INFO_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: SEVERITY_WARN = 1;
-   */
-  WARN = 1,
+	/**
+	 * @generated from enum value: SEVERITY_WARN = 1;
+	 */
+	WARN = 1,
 
-  /**
-   * @generated from enum value: SEVERITY_ERROR = 2;
-   */
-  ERROR = 2,
+	/**
+	 * @generated from enum value: SEVERITY_ERROR = 2;
+	 */
+	ERROR = 2,
 }
 
 /**
  * Describes the enum notification.v1.Severity.
  */
-export const SeveritySchema: GenEnum<Severity> = /*@__PURE__*/
-  enumDesc(file_notification_v1_notification, 0);
+export const SeveritySchema: GenEnum<Severity> = /*@__PURE__*/ enumDesc(file_notification_v1_notification, 0);
 
 /**
  * @generated from service notification.v1.NotificationService
  */
 export const NotificationService: GenService<{
-  /**
-   * @generated from rpc notification.v1.NotificationService.Notifications
-   */
-  notifications: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof NotificationsResponseSchema;
-  },
-  /**
-   * @generated from rpc notification.v1.NotificationService.MarkRead
-   */
-  markRead: {
-    methodKind: "unary";
-    input: typeof MarkReadRequestSchema;
-    output: typeof EmptySchema;
-  },
-  /**
-   * @generated from rpc notification.v1.NotificationService.MarkReadAll
-   */
-  markReadAll: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof EmptySchema;
-  },
-  /**
-   * @generated from rpc notification.v1.NotificationService.DeleteAll
-   */
-  deleteAll: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof EmptySchema;
-  },
-  /**
-   * @generated from rpc notification.v1.NotificationService.Delete
-   */
-  delete: {
-    methodKind: "unary";
-    input: typeof DeleteRequestSchema;
-    output: typeof EmptySchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_notification_v1_notification, 0);
-
+	/**
+	 * @generated from rpc notification.v1.NotificationService.Notifications
+	 */
+	notifications: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof NotificationsResponseSchema;
+	};
+	/**
+	 * @generated from rpc notification.v1.NotificationService.MarkRead
+	 */
+	markRead: {
+		methodKind: "unary";
+		input: typeof MarkReadRequestSchema;
+		output: typeof EmptySchema;
+	};
+	/**
+	 * @generated from rpc notification.v1.NotificationService.MarkReadAll
+	 */
+	markReadAll: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof EmptySchema;
+	};
+	/**
+	 * @generated from rpc notification.v1.NotificationService.DeleteAll
+	 */
+	deleteAll: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof EmptySchema;
+	};
+	/**
+	 * @generated from rpc notification.v1.NotificationService.Delete
+	 */
+	delete: {
+		methodKind: "unary";
+		input: typeof DeleteRequestSchema;
+		output: typeof EmptySchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_notification_v1_notification, 0);

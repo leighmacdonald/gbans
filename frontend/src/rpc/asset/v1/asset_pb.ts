@@ -13,164 +13,161 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file asset/v1/asset.proto.
  */
-export const file_asset_v1_asset: GenFile = /*@__PURE__*/
-  fileDesc("ChRhc3NldC92MS9hc3NldC5wcm90bxIIYXNzZXQudjEiKwoNRGVsZXRlUmVxdWVzdBIaCghhc3NldF9pZBgBIAEoCUIIukgFcgOwAQEiHgoORGVsZXRlUmVzcG9uc2USDAoEc2l6ZRgBIAEoAyIvCg1DcmVhdGVSZXF1ZXN0EhAKCGNvbnRlbnRzGAEgASgMEgwKBG5hbWUYAiABKAkiMAoOQ3JlYXRlUmVzcG9uc2USHgoFYXNzZXQYASABKAsyDy5hc3NldC52MS5Bc3NldCL3AQoFQXNzZXQSGgoIYXNzZXRfaWQYASABKAlCCLpIBXIDsAEBEg4KBmJ1Y2tldBgCIAEoCRIRCglhdXRob3JfaWQYAyABKAMSDAoEaGFzaBgEIAEoCRISCgppc19wcml2YXRlGAUgASgIEhEKCW1pbWVfdHlwZRgGIAEoCRIMCgRuYW1lGAcgASgJEgwKBHNpemUYCCABKAMSLgoKY3JlYXRlZF9vbhgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAyjAEKDEFzc2V0U2VydmljZRI9CgZDcmVhdGUSFy5hc3NldC52MS5DcmVhdGVSZXF1ZXN0GhguYXNzZXQudjEuQ3JlYXRlUmVzcG9uc2UiABI9CgZEZWxldGUSFy5hc3NldC52MS5EZWxldGVSZXF1ZXN0GhguYXNzZXQudjEuRGVsZXRlUmVzcG9uc2UiAEKWAQoMY29tLmFzc2V0LnYxQgpBc3NldFByb3RvUAFaOWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvYXNzZXQvdjE7YXNzZXR2MaICA0FYWKoCCEFzc2V0LlYxygIIQXNzZXRcVjHiAhRBc3NldFxWMVxHUEJNZXRhZGF0YeoCCUFzc2V0OjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp]);
+export const file_asset_v1_asset: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChRhc3NldC92MS9hc3NldC5wcm90bxIIYXNzZXQudjEiKwoNRGVsZXRlUmVxdWVzdBIaCghhc3NldF9pZBgBIAEoCUIIukgFcgOwAQEiHgoORGVsZXRlUmVzcG9uc2USDAoEc2l6ZRgBIAEoAyIvCg1DcmVhdGVSZXF1ZXN0EhAKCGNvbnRlbnRzGAEgASgMEgwKBG5hbWUYAiABKAkiMAoOQ3JlYXRlUmVzcG9uc2USHgoFYXNzZXQYASABKAsyDy5hc3NldC52MS5Bc3NldCL3AQoFQXNzZXQSGgoIYXNzZXRfaWQYASABKAlCCLpIBXIDsAEBEg4KBmJ1Y2tldBgCIAEoCRIRCglhdXRob3JfaWQYAyABKAMSDAoEaGFzaBgEIAEoCRISCgppc19wcml2YXRlGAUgASgIEhEKCW1pbWVfdHlwZRgGIAEoCRIMCgRuYW1lGAcgASgJEgwKBHNpemUYCCABKAMSLgoKY3JlYXRlZF9vbhgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAyjAEKDEFzc2V0U2VydmljZRI9CgZDcmVhdGUSFy5hc3NldC52MS5DcmVhdGVSZXF1ZXN0GhguYXNzZXQudjEuQ3JlYXRlUmVzcG9uc2UiABI9CgZEZWxldGUSFy5hc3NldC52MS5EZWxldGVSZXF1ZXN0GhguYXNzZXQudjEuRGVsZXRlUmVzcG9uc2UiAEKWAQoMY29tLmFzc2V0LnYxQgpBc3NldFByb3RvUAFaOWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvYXNzZXQvdjE7YXNzZXR2MaICA0FYWKoCCEFzc2V0LlYxygIIQXNzZXRcVjHiAhRBc3NldFxWMVxHUEJNZXRhZGF0YeoCCUFzc2V0OjpWMWIIZWRpdGlvbnNw6Ac",
+		[file_buf_validate_validate, file_database_query_v1_filter, file_google_protobuf_timestamp],
+	);
 
 /**
  * @generated from message asset.v1.DeleteRequest
  */
 export type DeleteRequest = Message<"asset.v1.DeleteRequest"> & {
-  /**
-   * @generated from field: string asset_id = 1;
-   */
-  assetId: string;
+	/**
+	 * @generated from field: string asset_id = 1;
+	 */
+	assetId: string;
 };
 
 /**
  * Describes the message asset.v1.DeleteRequest.
  * Use `create(DeleteRequestSchema)` to create a new message.
  */
-export const DeleteRequestSchema: GenMessage<DeleteRequest> = /*@__PURE__*/
-  messageDesc(file_asset_v1_asset, 0);
+export const DeleteRequestSchema: GenMessage<DeleteRequest> = /*@__PURE__*/ messageDesc(file_asset_v1_asset, 0);
 
 /**
  * @generated from message asset.v1.DeleteResponse
  */
 export type DeleteResponse = Message<"asset.v1.DeleteResponse"> & {
-  /**
-   * @generated from field: int64 size = 1;
-   */
-  size: bigint;
+	/**
+	 * @generated from field: int64 size = 1;
+	 */
+	size: bigint;
 };
 
 /**
  * Describes the message asset.v1.DeleteResponse.
  * Use `create(DeleteResponseSchema)` to create a new message.
  */
-export const DeleteResponseSchema: GenMessage<DeleteResponse> = /*@__PURE__*/
-  messageDesc(file_asset_v1_asset, 1);
+export const DeleteResponseSchema: GenMessage<DeleteResponse> = /*@__PURE__*/ messageDesc(file_asset_v1_asset, 1);
 
 /**
  * @generated from message asset.v1.CreateRequest
  */
 export type CreateRequest = Message<"asset.v1.CreateRequest"> & {
-  /**
-   * @generated from field: bytes contents = 1;
-   */
-  contents: Uint8Array;
+	/**
+	 * @generated from field: bytes contents = 1;
+	 */
+	contents: Uint8Array;
 
-  /**
-   * @generated from field: string name = 2;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 2;
+	 */
+	name: string;
 };
 
 /**
  * Describes the message asset.v1.CreateRequest.
  * Use `create(CreateRequestSchema)` to create a new message.
  */
-export const CreateRequestSchema: GenMessage<CreateRequest> = /*@__PURE__*/
-  messageDesc(file_asset_v1_asset, 2);
+export const CreateRequestSchema: GenMessage<CreateRequest> = /*@__PURE__*/ messageDesc(file_asset_v1_asset, 2);
 
 /**
  * @generated from message asset.v1.CreateResponse
  */
 export type CreateResponse = Message<"asset.v1.CreateResponse"> & {
-  /**
-   * @generated from field: asset.v1.Asset asset = 1;
-   */
-  asset?: Asset;
+	/**
+	 * @generated from field: asset.v1.Asset asset = 1;
+	 */
+	asset?: Asset;
 };
 
 /**
  * Describes the message asset.v1.CreateResponse.
  * Use `create(CreateResponseSchema)` to create a new message.
  */
-export const CreateResponseSchema: GenMessage<CreateResponse> = /*@__PURE__*/
-  messageDesc(file_asset_v1_asset, 3);
+export const CreateResponseSchema: GenMessage<CreateResponse> = /*@__PURE__*/ messageDesc(file_asset_v1_asset, 3);
 
 /**
  * @generated from message asset.v1.Asset
  */
 export type Asset = Message<"asset.v1.Asset"> & {
-  /**
-   * @generated from field: string asset_id = 1;
-   */
-  assetId: string;
+	/**
+	 * @generated from field: string asset_id = 1;
+	 */
+	assetId: string;
 
-  /**
-   * @generated from field: string bucket = 2;
-   */
-  bucket: string;
+	/**
+	 * @generated from field: string bucket = 2;
+	 */
+	bucket: string;
 
-  /**
-   * @generated from field: int64 author_id = 3;
-   */
-  authorId: bigint;
+	/**
+	 * @generated from field: int64 author_id = 3;
+	 */
+	authorId: bigint;
 
-  /**
-   * @generated from field: string hash = 4;
-   */
-  hash: string;
+	/**
+	 * @generated from field: string hash = 4;
+	 */
+	hash: string;
 
-  /**
-   * @generated from field: bool is_private = 5;
-   */
-  isPrivate: boolean;
+	/**
+	 * @generated from field: bool is_private = 5;
+	 */
+	isPrivate: boolean;
 
-  /**
-   * @generated from field: string mime_type = 6;
-   */
-  mimeType: string;
+	/**
+	 * @generated from field: string mime_type = 6;
+	 */
+	mimeType: string;
 
-  /**
-   * @generated from field: string name = 7;
-   */
-  name: string;
+	/**
+	 * @generated from field: string name = 7;
+	 */
+	name: string;
 
-  /**
-   * @generated from field: int64 size = 8;
-   */
-  size: bigint;
+	/**
+	 * @generated from field: int64 size = 8;
+	 */
+	size: bigint;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 9;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 9;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 10;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 10;
+	 */
+	updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message asset.v1.Asset.
  * Use `create(AssetSchema)` to create a new message.
  */
-export const AssetSchema: GenMessage<Asset> = /*@__PURE__*/
-  messageDesc(file_asset_v1_asset, 4);
+export const AssetSchema: GenMessage<Asset> = /*@__PURE__*/ messageDesc(file_asset_v1_asset, 4);
 
 /**
  * @generated from service asset.v1.AssetService
  */
 export const AssetService: GenService<{
-  /**
-   * @generated from rpc asset.v1.AssetService.Create
-   */
-  create: {
-    methodKind: "unary";
-    input: typeof CreateRequestSchema;
-    output: typeof CreateResponseSchema;
-  },
-  /**
-   * @generated from rpc asset.v1.AssetService.Delete
-   */
-  delete: {
-    methodKind: "unary";
-    input: typeof DeleteRequestSchema;
-    output: typeof DeleteResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_asset_v1_asset, 0);
-
+	/**
+	 * @generated from rpc asset.v1.AssetService.Create
+	 */
+	create: {
+		methodKind: "unary";
+		input: typeof CreateRequestSchema;
+		output: typeof CreateResponseSchema;
+	};
+	/**
+	 * @generated from rpc asset.v1.AssetService.Delete
+	 */
+	delete: {
+		methodKind: "unary";
+		input: typeof DeleteRequestSchema;
+		output: typeof DeleteResponseSchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_asset_v1_asset, 0);

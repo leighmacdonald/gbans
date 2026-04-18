@@ -29,12 +29,12 @@ type Service struct {
 
 	sourcemod    Sourcemod
 	notifier     notification.Notifier
-	persons      person.Persons
+	persons      *person.Persons
 	evades       EvadeChecker
 	logChannelID string
 }
 
-func NewService(sourcemod Sourcemod, persons person.Persons, notifier notification.Notifier) Service {
+func NewService(sourcemod Sourcemod, persons *person.Persons, notifier notification.Notifier) Service {
 	return Service{sourcemod: sourcemod, persons: persons, notifier: notifier}
 }
 

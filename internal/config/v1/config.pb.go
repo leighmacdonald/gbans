@@ -11,6 +11,7 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	_ "google.golang.org/protobuf/types/descriptorpb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -311,6 +312,50 @@ func (Action) EnumDescriptor() ([]byte, []int) {
 	return file_config_v1_config_proto_rawDescGZIP(), []int{5}
 }
 
+type ChangelogResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Changelog     []*GithubRelease       `protobuf:"bytes,1,rep,name=changelog" json:"changelog,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangelogResponse) Reset() {
+	*x = ChangelogResponse{}
+	mi := &file_config_v1_config_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangelogResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangelogResponse) ProtoMessage() {}
+
+func (x *ChangelogResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_config_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangelogResponse.ProtoReflect.Descriptor instead.
+func (*ChangelogResponse) Descriptor() ([]byte, []int) {
+	return file_config_v1_config_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ChangelogResponse) GetChangelog() []*GithubRelease {
+	if x != nil {
+		return x.Changelog
+	}
+	return nil
+}
+
 type InfoResponse struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	SiteName         *string                `protobuf:"bytes,1,opt,name=site_name,json=siteName" json:"site_name,omitempty"`
@@ -343,7 +388,7 @@ type InfoResponse struct {
 
 func (x *InfoResponse) Reset() {
 	*x = InfoResponse{}
-	mi := &file_config_v1_config_proto_msgTypes[0]
+	mi := &file_config_v1_config_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -355,7 +400,7 @@ func (x *InfoResponse) String() string {
 func (*InfoResponse) ProtoMessage() {}
 
 func (x *InfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[0]
+	mi := &file_config_v1_config_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -368,7 +413,7 @@ func (x *InfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InfoResponse.ProtoReflect.Descriptor instead.
 func (*InfoResponse) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{0}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *InfoResponse) GetSiteName() string {
@@ -548,7 +593,7 @@ type GetResponse struct {
 
 func (x *GetResponse) Reset() {
 	*x = GetResponse{}
-	mi := &file_config_v1_config_proto_msgTypes[1]
+	mi := &file_config_v1_config_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -560,7 +605,7 @@ func (x *GetResponse) String() string {
 func (*GetResponse) ProtoMessage() {}
 
 func (x *GetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[1]
+	mi := &file_config_v1_config_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -573,7 +618,7 @@ func (x *GetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{1}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetResponse) GetConfig() *Config {
@@ -592,7 +637,7 @@ type UpdateRequest struct {
 
 func (x *UpdateRequest) Reset() {
 	*x = UpdateRequest{}
-	mi := &file_config_v1_config_proto_msgTypes[2]
+	mi := &file_config_v1_config_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -604,7 +649,7 @@ func (x *UpdateRequest) String() string {
 func (*UpdateRequest) ProtoMessage() {}
 
 func (x *UpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[2]
+	mi := &file_config_v1_config_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -617,7 +662,7 @@ func (x *UpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRequest) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{2}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *UpdateRequest) GetConfig() *Config {
@@ -636,7 +681,7 @@ type UpdateResponse struct {
 
 func (x *UpdateResponse) Reset() {
 	*x = UpdateResponse{}
-	mi := &file_config_v1_config_proto_msgTypes[3]
+	mi := &file_config_v1_config_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -648,7 +693,7 @@ func (x *UpdateResponse) String() string {
 func (*UpdateResponse) ProtoMessage() {}
 
 func (x *UpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[3]
+	mi := &file_config_v1_config_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -661,7 +706,7 @@ func (x *UpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateResponse.ProtoReflect.Descriptor instead.
 func (*UpdateResponse) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{3}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UpdateResponse) GetConfig() *Config {
@@ -699,7 +744,7 @@ type General struct {
 
 func (x *General) Reset() {
 	*x = General{}
-	mi := &file_config_v1_config_proto_msgTypes[4]
+	mi := &file_config_v1_config_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -711,7 +756,7 @@ func (x *General) String() string {
 func (*General) ProtoMessage() {}
 
 func (x *General) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[4]
+	mi := &file_config_v1_config_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -724,7 +769,7 @@ func (x *General) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use General.ProtoReflect.Descriptor instead.
 func (*General) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{4}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *General) GetSiteName() string {
@@ -877,7 +922,7 @@ type Debug struct {
 
 func (x *Debug) Reset() {
 	*x = Debug{}
-	mi := &file_config_v1_config_proto_msgTypes[5]
+	mi := &file_config_v1_config_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -889,7 +934,7 @@ func (x *Debug) String() string {
 func (*Debug) ProtoMessage() {}
 
 func (x *Debug) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[5]
+	mi := &file_config_v1_config_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -902,7 +947,7 @@ func (x *Debug) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Debug.ProtoReflect.Descriptor instead.
 func (*Debug) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{5}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Debug) GetSkipOpenIdValidation() bool {
@@ -933,7 +978,7 @@ type Demo struct {
 
 func (x *Demo) Reset() {
 	*x = Demo{}
-	mi := &file_config_v1_config_proto_msgTypes[6]
+	mi := &file_config_v1_config_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -945,7 +990,7 @@ func (x *Demo) String() string {
 func (*Demo) ProtoMessage() {}
 
 func (x *Demo) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[6]
+	mi := &file_config_v1_config_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -958,7 +1003,7 @@ func (x *Demo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Demo.ProtoReflect.Descriptor instead.
 func (*Demo) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{6}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Demo) GetCleanupEnabled() bool {
@@ -1019,7 +1064,7 @@ type Filters struct {
 
 func (x *Filters) Reset() {
 	*x = Filters{}
-	mi := &file_config_v1_config_proto_msgTypes[7]
+	mi := &file_config_v1_config_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1031,7 +1076,7 @@ func (x *Filters) String() string {
 func (*Filters) ProtoMessage() {}
 
 func (x *Filters) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[7]
+	mi := &file_config_v1_config_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1044,7 +1089,7 @@ func (x *Filters) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Filters.ProtoReflect.Descriptor instead.
 func (*Filters) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{7}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Filters) GetEnabled() bool {
@@ -1132,7 +1177,7 @@ type Discord struct {
 
 func (x *Discord) Reset() {
 	*x = Discord{}
-	mi := &file_config_v1_config_proto_msgTypes[8]
+	mi := &file_config_v1_config_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1144,7 +1189,7 @@ func (x *Discord) String() string {
 func (*Discord) ProtoMessage() {}
 
 func (x *Discord) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[8]
+	mi := &file_config_v1_config_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1157,7 +1202,7 @@ func (x *Discord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Discord.ProtoReflect.Descriptor instead.
 func (*Discord) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{8}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Discord) GetEnabled() bool {
@@ -1316,7 +1361,7 @@ type Sourcemod struct {
 
 func (x *Sourcemod) Reset() {
 	*x = Sourcemod{}
-	mi := &file_config_v1_config_proto_msgTypes[9]
+	mi := &file_config_v1_config_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1328,7 +1373,7 @@ func (x *Sourcemod) String() string {
 func (*Sourcemod) ProtoMessage() {}
 
 func (x *Sourcemod) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[9]
+	mi := &file_config_v1_config_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1341,7 +1386,7 @@ func (x *Sourcemod) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Sourcemod.ProtoReflect.Descriptor instead.
 func (*Sourcemod) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{9}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Sourcemod) GetCenterProjectiles() bool {
@@ -1364,7 +1409,7 @@ type Log struct {
 
 func (x *Log) Reset() {
 	*x = Log{}
-	mi := &file_config_v1_config_proto_msgTypes[10]
+	mi := &file_config_v1_config_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1376,7 +1421,7 @@ func (x *Log) String() string {
 func (*Log) ProtoMessage() {}
 
 func (x *Log) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[10]
+	mi := &file_config_v1_config_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1389,7 +1434,7 @@ func (x *Log) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Log.ProtoReflect.Descriptor instead.
 func (*Log) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{10}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Log) GetLevel() Level {
@@ -1438,7 +1483,7 @@ type GeoLocation struct {
 
 func (x *GeoLocation) Reset() {
 	*x = GeoLocation{}
-	mi := &file_config_v1_config_proto_msgTypes[11]
+	mi := &file_config_v1_config_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1450,7 +1495,7 @@ func (x *GeoLocation) String() string {
 func (*GeoLocation) ProtoMessage() {}
 
 func (x *GeoLocation) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[11]
+	mi := &file_config_v1_config_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1463,7 +1508,7 @@ func (x *GeoLocation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GeoLocation.ProtoReflect.Descriptor instead.
 func (*GeoLocation) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{11}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GeoLocation) GetEnabled() bool {
@@ -1501,7 +1546,7 @@ type Patreon struct {
 
 func (x *Patreon) Reset() {
 	*x = Patreon{}
-	mi := &file_config_v1_config_proto_msgTypes[12]
+	mi := &file_config_v1_config_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1513,7 +1558,7 @@ func (x *Patreon) String() string {
 func (*Patreon) ProtoMessage() {}
 
 func (x *Patreon) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[12]
+	mi := &file_config_v1_config_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1526,7 +1571,7 @@ func (x *Patreon) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Patreon.ProtoReflect.Descriptor instead.
 func (*Patreon) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{12}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Patreon) GetEnabled() bool {
@@ -1589,7 +1634,7 @@ type SSH struct {
 
 func (x *SSH) Reset() {
 	*x = SSH{}
-	mi := &file_config_v1_config_proto_msgTypes[13]
+	mi := &file_config_v1_config_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1601,7 +1646,7 @@ func (x *SSH) String() string {
 func (*SSH) ProtoMessage() {}
 
 func (x *SSH) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[13]
+	mi := &file_config_v1_config_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1614,7 +1659,7 @@ func (x *SSH) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SSH.ProtoReflect.Descriptor instead.
 func (*SSH) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{13}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SSH) GetEnabled() bool {
@@ -1700,7 +1745,7 @@ type Network struct {
 
 func (x *Network) Reset() {
 	*x = Network{}
-	mi := &file_config_v1_config_proto_msgTypes[14]
+	mi := &file_config_v1_config_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1712,7 +1757,7 @@ func (x *Network) String() string {
 func (*Network) ProtoMessage() {}
 
 func (x *Network) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[14]
+	mi := &file_config_v1_config_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1725,7 +1770,7 @@ func (x *Network) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Network.ProtoReflect.Descriptor instead.
 func (*Network) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{14}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *Network) GetSdrEnabled() bool {
@@ -1772,7 +1817,7 @@ type LocalStore struct {
 
 func (x *LocalStore) Reset() {
 	*x = LocalStore{}
-	mi := &file_config_v1_config_proto_msgTypes[15]
+	mi := &file_config_v1_config_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1784,7 +1829,7 @@ func (x *LocalStore) String() string {
 func (*LocalStore) ProtoMessage() {}
 
 func (x *LocalStore) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[15]
+	mi := &file_config_v1_config_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1797,7 +1842,7 @@ func (x *LocalStore) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LocalStore.ProtoReflect.Descriptor instead.
 func (*LocalStore) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{15}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *LocalStore) GetPathRoot() string {
@@ -1818,7 +1863,7 @@ type Exports struct {
 
 func (x *Exports) Reset() {
 	*x = Exports{}
-	mi := &file_config_v1_config_proto_msgTypes[16]
+	mi := &file_config_v1_config_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1830,7 +1875,7 @@ func (x *Exports) String() string {
 func (*Exports) ProtoMessage() {}
 
 func (x *Exports) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[16]
+	mi := &file_config_v1_config_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1843,7 +1888,7 @@ func (x *Exports) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Exports.ProtoReflect.Descriptor instead.
 func (*Exports) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{16}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Exports) GetBdEnabled() bool {
@@ -1887,7 +1932,7 @@ type Anticheat struct {
 
 func (x *Anticheat) Reset() {
 	*x = Anticheat{}
-	mi := &file_config_v1_config_proto_msgTypes[17]
+	mi := &file_config_v1_config_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1899,7 +1944,7 @@ func (x *Anticheat) String() string {
 func (*Anticheat) ProtoMessage() {}
 
 func (x *Anticheat) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[17]
+	mi := &file_config_v1_config_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1912,7 +1957,7 @@ func (x *Anticheat) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Anticheat.ProtoReflect.Descriptor instead.
 func (*Anticheat) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{17}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *Anticheat) GetEnabled() bool {
@@ -2008,7 +2053,7 @@ type Clientprefs struct {
 
 func (x *Clientprefs) Reset() {
 	*x = Clientprefs{}
-	mi := &file_config_v1_config_proto_msgTypes[18]
+	mi := &file_config_v1_config_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2020,7 +2065,7 @@ func (x *Clientprefs) String() string {
 func (*Clientprefs) ProtoMessage() {}
 
 func (x *Clientprefs) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[18]
+	mi := &file_config_v1_config_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2033,7 +2078,7 @@ func (x *Clientprefs) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Clientprefs.ProtoReflect.Descriptor instead.
 func (*Clientprefs) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{18}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Clientprefs) GetCenterProjectiles() bool {
@@ -2065,7 +2110,7 @@ type Config struct {
 
 func (x *Config) Reset() {
 	*x = Config{}
-	mi := &file_config_v1_config_proto_msgTypes[19]
+	mi := &file_config_v1_config_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2077,7 +2122,7 @@ func (x *Config) String() string {
 func (*Config) ProtoMessage() {}
 
 func (x *Config) ProtoReflect() protoreflect.Message {
-	mi := &file_config_v1_config_proto_msgTypes[19]
+	mi := &file_config_v1_config_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2090,7 +2135,7 @@ func (x *Config) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Config.ProtoReflect.Descriptor instead.
 func (*Config) Descriptor() ([]byte, []int) {
-	return file_config_v1_config_proto_rawDescGZIP(), []int{19}
+	return file_config_v1_config_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *Config) GetGeneral() *General {
@@ -2191,11 +2236,497 @@ func (x *Config) GetAnticheat() *Anticheat {
 	return nil
 }
 
+type GithubRelease struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Url             *string                `protobuf:"bytes,1,opt,name=url" json:"url,omitempty"`
+	HtmlUrl         *string                `protobuf:"bytes,2,opt,name=html_url,json=htmlUrl" json:"html_url,omitempty"`
+	AssetUrl        *string                `protobuf:"bytes,3,opt,name=asset_url,json=assetUrl" json:"asset_url,omitempty"`
+	UploadUrl       *string                `protobuf:"bytes,4,opt,name=upload_url,json=uploadUrl" json:"upload_url,omitempty"`
+	TarballUrl      *string                `protobuf:"bytes,5,opt,name=tarball_url,json=tarballUrl" json:"tarball_url,omitempty"`
+	Id              *int32                 `protobuf:"varint,6,opt,name=id" json:"id,omitempty"`
+	NodeId          *string                `protobuf:"bytes,7,opt,name=node_id,json=nodeId" json:"node_id,omitempty"`
+	TagName         *string                `protobuf:"bytes,8,opt,name=tag_name,json=tagName" json:"tag_name,omitempty"`
+	TargetCommitish *string                `protobuf:"bytes,9,opt,name=target_commitish,json=targetCommitish" json:"target_commitish,omitempty"`
+	Name            *string                `protobuf:"bytes,10,opt,name=name" json:"name,omitempty"`
+	Body            *string                `protobuf:"bytes,11,opt,name=body" json:"body,omitempty"`
+	Draft           *bool                  `protobuf:"varint,12,opt,name=draft" json:"draft,omitempty"`
+	Prerelease      *bool                  `protobuf:"varint,13,opt,name=prerelease" json:"prerelease,omitempty"`
+	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=created_at,json=createdAt" json:"created_at,omitempty"`
+	PublishedAt     *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=published_at,json=publishedAt" json:"published_at,omitempty"`
+	Author          *GithubRelease_Author  `protobuf:"bytes,16,opt,name=author" json:"author,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *GithubRelease) Reset() {
+	*x = GithubRelease{}
+	mi := &file_config_v1_config_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GithubRelease) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GithubRelease) ProtoMessage() {}
+
+func (x *GithubRelease) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_config_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GithubRelease.ProtoReflect.Descriptor instead.
+func (*GithubRelease) Descriptor() ([]byte, []int) {
+	return file_config_v1_config_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *GithubRelease) GetUrl() string {
+	if x != nil && x.Url != nil {
+		return *x.Url
+	}
+	return ""
+}
+
+func (x *GithubRelease) GetHtmlUrl() string {
+	if x != nil && x.HtmlUrl != nil {
+		return *x.HtmlUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease) GetAssetUrl() string {
+	if x != nil && x.AssetUrl != nil {
+		return *x.AssetUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease) GetUploadUrl() string {
+	if x != nil && x.UploadUrl != nil {
+		return *x.UploadUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease) GetTarballUrl() string {
+	if x != nil && x.TarballUrl != nil {
+		return *x.TarballUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease) GetId() int32 {
+	if x != nil && x.Id != nil {
+		return *x.Id
+	}
+	return 0
+}
+
+func (x *GithubRelease) GetNodeId() string {
+	if x != nil && x.NodeId != nil {
+		return *x.NodeId
+	}
+	return ""
+}
+
+func (x *GithubRelease) GetTagName() string {
+	if x != nil && x.TagName != nil {
+		return *x.TagName
+	}
+	return ""
+}
+
+func (x *GithubRelease) GetTargetCommitish() string {
+	if x != nil && x.TargetCommitish != nil {
+		return *x.TargetCommitish
+	}
+	return ""
+}
+
+func (x *GithubRelease) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *GithubRelease) GetBody() string {
+	if x != nil && x.Body != nil {
+		return *x.Body
+	}
+	return ""
+}
+
+func (x *GithubRelease) GetDraft() bool {
+	if x != nil && x.Draft != nil {
+		return *x.Draft
+	}
+	return false
+}
+
+func (x *GithubRelease) GetPrerelease() bool {
+	if x != nil && x.Prerelease != nil {
+		return *x.Prerelease
+	}
+	return false
+}
+
+func (x *GithubRelease) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *GithubRelease) GetPublishedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.PublishedAt
+	}
+	return nil
+}
+
+func (x *GithubRelease) GetAuthor() *GithubRelease_Author {
+	if x != nil {
+		return x.Author
+	}
+	return nil
+}
+
+type GithubRelease_Author struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Login             *string                `protobuf:"bytes,1,opt,name=login" json:"login,omitempty"`
+	Id                *int32                 `protobuf:"varint,2,opt,name=id" json:"id,omitempty"`
+	NodeId            *string                `protobuf:"bytes,3,opt,name=node_id,json=nodeId" json:"node_id,omitempty"`
+	AvatarUrl         *string                `protobuf:"bytes,4,opt,name=avatar_url,json=avatarUrl" json:"avatar_url,omitempty"`
+	GravatarUrl       *string                `protobuf:"bytes,5,opt,name=gravatar_url,json=gravatarUrl" json:"gravatar_url,omitempty"`
+	Url               *string                `protobuf:"bytes,6,opt,name=url" json:"url,omitempty"`
+	HtmlUrl           *string                `protobuf:"bytes,7,opt,name=html_url,json=htmlUrl" json:"html_url,omitempty"`
+	FollowersUrl      *string                `protobuf:"bytes,8,opt,name=followers_url,json=followersUrl" json:"followers_url,omitempty"`
+	FollowingUrl      *string                `protobuf:"bytes,9,opt,name=following_url,json=followingUrl" json:"following_url,omitempty"`
+	GistsUrl          *string                `protobuf:"bytes,10,opt,name=gists_url,json=gistsUrl" json:"gists_url,omitempty"`
+	StartedUrl        *string                `protobuf:"bytes,11,opt,name=started_url,json=startedUrl" json:"started_url,omitempty"`
+	SubscriptionsUrl  *string                `protobuf:"bytes,12,opt,name=subscriptions_url,json=subscriptionsUrl" json:"subscriptions_url,omitempty"`
+	OrganizationsUrl  *string                `protobuf:"bytes,13,opt,name=organizations_url,json=organizationsUrl" json:"organizations_url,omitempty"`
+	ReposUrl          *string                `protobuf:"bytes,14,opt,name=repos_url,json=reposUrl" json:"repos_url,omitempty"`
+	EventsUrl         *string                `protobuf:"bytes,15,opt,name=events_url,json=eventsUrl" json:"events_url,omitempty"`
+	ReceivedEventsUrl *string                `protobuf:"bytes,16,opt,name=received_events_url,json=receivedEventsUrl" json:"received_events_url,omitempty"`
+	Type              *string                `protobuf:"bytes,17,opt,name=type" json:"type,omitempty"`
+	SiteAdmin         *bool                  `protobuf:"varint,18,opt,name=site_admin,json=siteAdmin" json:"site_admin,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *GithubRelease_Author) Reset() {
+	*x = GithubRelease_Author{}
+	mi := &file_config_v1_config_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GithubRelease_Author) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GithubRelease_Author) ProtoMessage() {}
+
+func (x *GithubRelease_Author) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_config_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GithubRelease_Author.ProtoReflect.Descriptor instead.
+func (*GithubRelease_Author) Descriptor() ([]byte, []int) {
+	return file_config_v1_config_proto_rawDescGZIP(), []int{21, 0}
+}
+
+func (x *GithubRelease_Author) GetLogin() string {
+	if x != nil && x.Login != nil {
+		return *x.Login
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetId() int32 {
+	if x != nil && x.Id != nil {
+		return *x.Id
+	}
+	return 0
+}
+
+func (x *GithubRelease_Author) GetNodeId() string {
+	if x != nil && x.NodeId != nil {
+		return *x.NodeId
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetAvatarUrl() string {
+	if x != nil && x.AvatarUrl != nil {
+		return *x.AvatarUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetGravatarUrl() string {
+	if x != nil && x.GravatarUrl != nil {
+		return *x.GravatarUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetUrl() string {
+	if x != nil && x.Url != nil {
+		return *x.Url
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetHtmlUrl() string {
+	if x != nil && x.HtmlUrl != nil {
+		return *x.HtmlUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetFollowersUrl() string {
+	if x != nil && x.FollowersUrl != nil {
+		return *x.FollowersUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetFollowingUrl() string {
+	if x != nil && x.FollowingUrl != nil {
+		return *x.FollowingUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetGistsUrl() string {
+	if x != nil && x.GistsUrl != nil {
+		return *x.GistsUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetStartedUrl() string {
+	if x != nil && x.StartedUrl != nil {
+		return *x.StartedUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetSubscriptionsUrl() string {
+	if x != nil && x.SubscriptionsUrl != nil {
+		return *x.SubscriptionsUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetOrganizationsUrl() string {
+	if x != nil && x.OrganizationsUrl != nil {
+		return *x.OrganizationsUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetReposUrl() string {
+	if x != nil && x.ReposUrl != nil {
+		return *x.ReposUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetEventsUrl() string {
+	if x != nil && x.EventsUrl != nil {
+		return *x.EventsUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetReceivedEventsUrl() string {
+	if x != nil && x.ReceivedEventsUrl != nil {
+		return *x.ReceivedEventsUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetType() string {
+	if x != nil && x.Type != nil {
+		return *x.Type
+	}
+	return ""
+}
+
+func (x *GithubRelease_Author) GetSiteAdmin() bool {
+	if x != nil && x.SiteAdmin != nil {
+		return *x.SiteAdmin
+	}
+	return false
+}
+
+type GithubRelease_Asset struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Url                *string                `protobuf:"bytes,1,opt,name=url" json:"url,omitempty"`
+	BrowserDownloadUrl *string                `protobuf:"bytes,2,opt,name=browser_download_url,json=browserDownloadUrl" json:"browser_download_url,omitempty"`
+	Id                 *int32                 `protobuf:"varint,3,opt,name=id" json:"id,omitempty"`
+	NodeId             *string                `protobuf:"bytes,4,opt,name=node_id,json=nodeId" json:"node_id,omitempty"`
+	Name               *string                `protobuf:"bytes,5,opt,name=name" json:"name,omitempty"`
+	Label              *string                `protobuf:"bytes,6,opt,name=label" json:"label,omitempty"`
+	State              *string                `protobuf:"bytes,7,opt,name=state" json:"state,omitempty"`
+	ContentType        *string                `protobuf:"bytes,8,opt,name=content_type,json=contentType" json:"content_type,omitempty"`
+	Size               *int64                 `protobuf:"varint,9,opt,name=size" json:"size,omitempty"`
+	DownloadCount      *int32                 `protobuf:"varint,10,opt,name=download_count,json=downloadCount" json:"download_count,omitempty"`
+	CreatedAt          *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=created_at,json=createdAt" json:"created_at,omitempty"`
+	UpdatedAt          *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt" json:"updated_at,omitempty"`
+	Uploader           *GithubRelease_Author  `protobuf:"bytes,13,opt,name=uploader" json:"uploader,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *GithubRelease_Asset) Reset() {
+	*x = GithubRelease_Asset{}
+	mi := &file_config_v1_config_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GithubRelease_Asset) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GithubRelease_Asset) ProtoMessage() {}
+
+func (x *GithubRelease_Asset) ProtoReflect() protoreflect.Message {
+	mi := &file_config_v1_config_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GithubRelease_Asset.ProtoReflect.Descriptor instead.
+func (*GithubRelease_Asset) Descriptor() ([]byte, []int) {
+	return file_config_v1_config_proto_rawDescGZIP(), []int{21, 1}
+}
+
+func (x *GithubRelease_Asset) GetUrl() string {
+	if x != nil && x.Url != nil {
+		return *x.Url
+	}
+	return ""
+}
+
+func (x *GithubRelease_Asset) GetBrowserDownloadUrl() string {
+	if x != nil && x.BrowserDownloadUrl != nil {
+		return *x.BrowserDownloadUrl
+	}
+	return ""
+}
+
+func (x *GithubRelease_Asset) GetId() int32 {
+	if x != nil && x.Id != nil {
+		return *x.Id
+	}
+	return 0
+}
+
+func (x *GithubRelease_Asset) GetNodeId() string {
+	if x != nil && x.NodeId != nil {
+		return *x.NodeId
+	}
+	return ""
+}
+
+func (x *GithubRelease_Asset) GetName() string {
+	if x != nil && x.Name != nil {
+		return *x.Name
+	}
+	return ""
+}
+
+func (x *GithubRelease_Asset) GetLabel() string {
+	if x != nil && x.Label != nil {
+		return *x.Label
+	}
+	return ""
+}
+
+func (x *GithubRelease_Asset) GetState() string {
+	if x != nil && x.State != nil {
+		return *x.State
+	}
+	return ""
+}
+
+func (x *GithubRelease_Asset) GetContentType() string {
+	if x != nil && x.ContentType != nil {
+		return *x.ContentType
+	}
+	return ""
+}
+
+func (x *GithubRelease_Asset) GetSize() int64 {
+	if x != nil && x.Size != nil {
+		return *x.Size
+	}
+	return 0
+}
+
+func (x *GithubRelease_Asset) GetDownloadCount() int32 {
+	if x != nil && x.DownloadCount != nil {
+		return *x.DownloadCount
+	}
+	return 0
+}
+
+func (x *GithubRelease_Asset) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *GithubRelease_Asset) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *GithubRelease_Asset) GetUploader() *GithubRelease_Author {
+	if x != nil {
+		return x.Uploader
+	}
+	return nil
+}
+
 var File_config_v1_config_proto protoreflect.FileDescriptor
 
 const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
-	"\x16config/v1/config.proto\x12\tconfig.v1\x1a google/protobuf/descriptor.proto\x1a\x1bgoogle/protobuf/empty.proto\"\x92\a\n" +
+	"\x16config/v1/config.proto\x12\tconfig.v1\x1a google/protobuf/descriptor.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"K\n" +
+	"\x11ChangelogResponse\x126\n" +
+	"\tchangelog\x18\x01 \x03(\v2\x18.config.v1.GithubReleaseR\tchangelog\"\x92\a\n" +
 	"\fInfoResponse\x12\x1b\n" +
 	"\tsite_name\x18\x01 \x01(\tR\bsiteName\x12)\n" +
 	"\x10site_description\x18\x02 \x01(\tR\x0fsiteDescription\x12\x1b\n" +
@@ -2383,7 +2914,71 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\vlocal_store\x18\f \x01(\v2\x15.config.v1.LocalStoreR\n" +
 	"localStore\x12,\n" +
 	"\aexports\x18\r \x01(\v2\x12.config.v1.ExportsR\aexports\x122\n" +
-	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatR\tanticheat*R\n" +
+	"\tanticheat\x18\x0e \x01(\v2\x14.config.v1.AnticheatR\tanticheat\"\x9b\f\n" +
+	"\rGithubRelease\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x19\n" +
+	"\bhtml_url\x18\x02 \x01(\tR\ahtmlUrl\x12\x1b\n" +
+	"\tasset_url\x18\x03 \x01(\tR\bassetUrl\x12\x1d\n" +
+	"\n" +
+	"upload_url\x18\x04 \x01(\tR\tuploadUrl\x12\x1f\n" +
+	"\vtarball_url\x18\x05 \x01(\tR\n" +
+	"tarballUrl\x12\x0e\n" +
+	"\x02id\x18\x06 \x01(\x05R\x02id\x12\x17\n" +
+	"\anode_id\x18\a \x01(\tR\x06nodeId\x12\x19\n" +
+	"\btag_name\x18\b \x01(\tR\atagName\x12)\n" +
+	"\x10target_commitish\x18\t \x01(\tR\x0ftargetCommitish\x12\x12\n" +
+	"\x04name\x18\n" +
+	" \x01(\tR\x04name\x12\x12\n" +
+	"\x04body\x18\v \x01(\tR\x04body\x12\x14\n" +
+	"\x05draft\x18\f \x01(\bR\x05draft\x12\x1e\n" +
+	"\n" +
+	"prerelease\x18\r \x01(\bR\n" +
+	"prerelease\x129\n" +
+	"\n" +
+	"created_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12=\n" +
+	"\fpublished_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\vpublishedAt\x127\n" +
+	"\x06author\x18\x10 \x01(\v2\x1f.config.v1.GithubRelease.AuthorR\x06author\x1a\xb7\x04\n" +
+	"\x06Author\x12\x14\n" +
+	"\x05login\x18\x01 \x01(\tR\x05login\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\x05R\x02id\x12\x17\n" +
+	"\anode_id\x18\x03 \x01(\tR\x06nodeId\x12\x1d\n" +
+	"\n" +
+	"avatar_url\x18\x04 \x01(\tR\tavatarUrl\x12!\n" +
+	"\fgravatar_url\x18\x05 \x01(\tR\vgravatarUrl\x12\x10\n" +
+	"\x03url\x18\x06 \x01(\tR\x03url\x12\x19\n" +
+	"\bhtml_url\x18\a \x01(\tR\ahtmlUrl\x12#\n" +
+	"\rfollowers_url\x18\b \x01(\tR\ffollowersUrl\x12#\n" +
+	"\rfollowing_url\x18\t \x01(\tR\ffollowingUrl\x12\x1b\n" +
+	"\tgists_url\x18\n" +
+	" \x01(\tR\bgistsUrl\x12\x1f\n" +
+	"\vstarted_url\x18\v \x01(\tR\n" +
+	"startedUrl\x12+\n" +
+	"\x11subscriptions_url\x18\f \x01(\tR\x10subscriptionsUrl\x12+\n" +
+	"\x11organizations_url\x18\r \x01(\tR\x10organizationsUrl\x12\x1b\n" +
+	"\trepos_url\x18\x0e \x01(\tR\breposUrl\x12\x1d\n" +
+	"\n" +
+	"events_url\x18\x0f \x01(\tR\teventsUrl\x12.\n" +
+	"\x13received_events_url\x18\x10 \x01(\tR\x11receivedEventsUrl\x12\x12\n" +
+	"\x04type\x18\x11 \x01(\tR\x04type\x12\x1d\n" +
+	"\n" +
+	"site_admin\x18\x12 \x01(\bR\tsiteAdmin\x1a\xc5\x03\n" +
+	"\x05Asset\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x120\n" +
+	"\x14browser_download_url\x18\x02 \x01(\tR\x12browserDownloadUrl\x12\x0e\n" +
+	"\x02id\x18\x03 \x01(\x05R\x02id\x12\x17\n" +
+	"\anode_id\x18\x04 \x01(\tR\x06nodeId\x12\x12\n" +
+	"\x04name\x18\x05 \x01(\tR\x04name\x12\x14\n" +
+	"\x05label\x18\x06 \x01(\tR\x05label\x12\x14\n" +
+	"\x05state\x18\a \x01(\tR\x05state\x12!\n" +
+	"\fcontent_type\x18\b \x01(\tR\vcontentType\x12\x12\n" +
+	"\x04size\x18\t \x01(\x03R\x04size\x12%\n" +
+	"\x0edownload_count\x18\n" +
+	" \x01(\x05R\rdownloadCount\x129\n" +
+	"\n" +
+	"created_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12;\n" +
+	"\buploader\x18\r \x01(\v2\x1f.config.v1.GithubRelease.AuthorR\buploader*R\n" +
 	"\aRunMode\x12 \n" +
 	"\x1cRUN_MODE_RELEASE_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eRUN_MODE_DEBUG\x10\x01\x12\x11\n" +
@@ -2408,11 +3003,12 @@ const file_config_v1_config_proto_rawDesc = "" +
 	"\n" +
 	"ACTION_GAG\x10\x01\x12\x0e\n" +
 	"\n" +
-	"ACTION_BAN\x10\x022\xc7\x01\n" +
+	"ACTION_BAN\x10\x022\x8c\x02\n" +
 	"\rConfigService\x12<\n" +
 	"\x04Info\x12\x16.google.protobuf.Empty\x1a\x17.config.v1.InfoResponse\"\x03\x90\x02\x01\x127\n" +
 	"\x03Get\x12\x16.google.protobuf.Empty\x1a\x16.config.v1.GetResponse\"\x00\x12?\n" +
-	"\x06Update\x12\x18.config.v1.UpdateRequest\x1a\x19.config.v1.UpdateResponse\"\x00B\x9e\x01\n" +
+	"\x06Update\x12\x18.config.v1.UpdateRequest\x1a\x19.config.v1.UpdateResponse\"\x00\x12C\n" +
+	"\tChangelog\x12\x16.google.protobuf.Empty\x1a\x1c.config.v1.ChangelogResponse\"\x00B\x9e\x01\n" +
 	"\rcom.config.v1B\vConfigProtoP\x01Z;github.com/leighmacdonald/gbans/internal/config/v1;configv1\xa2\x02\x03CXX\xaa\x02\tConfig.V1\xca\x02\tConfig\\V1\xe2\x02\x15Config\\V1\\GPBMetadata\xea\x02\n" +
 	"Config::V1b\beditionsp\xe8\a"
 
@@ -2429,72 +3025,86 @@ func file_config_v1_config_proto_rawDescGZIP() []byte {
 }
 
 var file_config_v1_config_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_config_v1_config_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_config_v1_config_proto_goTypes = []any{
-	(RunMode)(0),           // 0: config.v1.RunMode
-	(FileServeMode)(0),     // 1: config.v1.FileServeMode
-	(DemoStrategy)(0),      // 2: config.v1.DemoStrategy
-	(Level)(0),             // 3: config.v1.Level
-	(HostKeyStrategy)(0),   // 4: config.v1.HostKeyStrategy
-	(Action)(0),            // 5: config.v1.Action
-	(*InfoResponse)(nil),   // 6: config.v1.InfoResponse
-	(*GetResponse)(nil),    // 7: config.v1.GetResponse
-	(*UpdateRequest)(nil),  // 8: config.v1.UpdateRequest
-	(*UpdateResponse)(nil), // 9: config.v1.UpdateResponse
-	(*General)(nil),        // 10: config.v1.General
-	(*Debug)(nil),          // 11: config.v1.Debug
-	(*Demo)(nil),           // 12: config.v1.Demo
-	(*Filters)(nil),        // 13: config.v1.Filters
-	(*Discord)(nil),        // 14: config.v1.Discord
-	(*Sourcemod)(nil),      // 15: config.v1.Sourcemod
-	(*Log)(nil),            // 16: config.v1.Log
-	(*GeoLocation)(nil),    // 17: config.v1.GeoLocation
-	(*Patreon)(nil),        // 18: config.v1.Patreon
-	(*SSH)(nil),            // 19: config.v1.SSH
-	(*Network)(nil),        // 20: config.v1.Network
-	(*LocalStore)(nil),     // 21: config.v1.LocalStore
-	(*Exports)(nil),        // 22: config.v1.Exports
-	(*Anticheat)(nil),      // 23: config.v1.Anticheat
-	(*Clientprefs)(nil),    // 24: config.v1.Clientprefs
-	(*Config)(nil),         // 25: config.v1.Config
-	(*emptypb.Empty)(nil),  // 26: google.protobuf.Empty
+	(RunMode)(0),                  // 0: config.v1.RunMode
+	(FileServeMode)(0),            // 1: config.v1.FileServeMode
+	(DemoStrategy)(0),             // 2: config.v1.DemoStrategy
+	(Level)(0),                    // 3: config.v1.Level
+	(HostKeyStrategy)(0),          // 4: config.v1.HostKeyStrategy
+	(Action)(0),                   // 5: config.v1.Action
+	(*ChangelogResponse)(nil),     // 6: config.v1.ChangelogResponse
+	(*InfoResponse)(nil),          // 7: config.v1.InfoResponse
+	(*GetResponse)(nil),           // 8: config.v1.GetResponse
+	(*UpdateRequest)(nil),         // 9: config.v1.UpdateRequest
+	(*UpdateResponse)(nil),        // 10: config.v1.UpdateResponse
+	(*General)(nil),               // 11: config.v1.General
+	(*Debug)(nil),                 // 12: config.v1.Debug
+	(*Demo)(nil),                  // 13: config.v1.Demo
+	(*Filters)(nil),               // 14: config.v1.Filters
+	(*Discord)(nil),               // 15: config.v1.Discord
+	(*Sourcemod)(nil),             // 16: config.v1.Sourcemod
+	(*Log)(nil),                   // 17: config.v1.Log
+	(*GeoLocation)(nil),           // 18: config.v1.GeoLocation
+	(*Patreon)(nil),               // 19: config.v1.Patreon
+	(*SSH)(nil),                   // 20: config.v1.SSH
+	(*Network)(nil),               // 21: config.v1.Network
+	(*LocalStore)(nil),            // 22: config.v1.LocalStore
+	(*Exports)(nil),               // 23: config.v1.Exports
+	(*Anticheat)(nil),             // 24: config.v1.Anticheat
+	(*Clientprefs)(nil),           // 25: config.v1.Clientprefs
+	(*Config)(nil),                // 26: config.v1.Config
+	(*GithubRelease)(nil),         // 27: config.v1.GithubRelease
+	(*GithubRelease_Author)(nil),  // 28: config.v1.GithubRelease.Author
+	(*GithubRelease_Asset)(nil),   // 29: config.v1.GithubRelease.Asset
+	(*timestamppb.Timestamp)(nil), // 30: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 31: google.protobuf.Empty
 }
 var file_config_v1_config_proto_depIdxs = []int32{
-	25, // 0: config.v1.GetResponse.config:type_name -> config.v1.Config
-	25, // 1: config.v1.UpdateRequest.config:type_name -> config.v1.Config
-	25, // 2: config.v1.UpdateResponse.config:type_name -> config.v1.Config
-	0,  // 3: config.v1.General.mode:type_name -> config.v1.RunMode
-	1,  // 4: config.v1.General.file_serve_mode:type_name -> config.v1.FileServeMode
-	2,  // 5: config.v1.Demo.strategy:type_name -> config.v1.DemoStrategy
-	3,  // 6: config.v1.Log.level:type_name -> config.v1.Level
-	3,  // 7: config.v1.Log.http_level:type_name -> config.v1.Level
-	4,  // 8: config.v1.SSH.host_key_strategy:type_name -> config.v1.HostKeyStrategy
-	5,  // 9: config.v1.Anticheat.action:type_name -> config.v1.Action
-	10, // 10: config.v1.Config.general:type_name -> config.v1.General
-	11, // 11: config.v1.Config.debug:type_name -> config.v1.Debug
-	12, // 12: config.v1.Config.demo:type_name -> config.v1.Demo
-	13, // 13: config.v1.Config.filters:type_name -> config.v1.Filters
-	14, // 14: config.v1.Config.discord:type_name -> config.v1.Discord
-	24, // 15: config.v1.Config.client_prefs:type_name -> config.v1.Clientprefs
-	16, // 16: config.v1.Config.log:type_name -> config.v1.Log
-	17, // 17: config.v1.Config.geo_location:type_name -> config.v1.GeoLocation
-	18, // 18: config.v1.Config.patreon:type_name -> config.v1.Patreon
-	19, // 19: config.v1.Config.ssh:type_name -> config.v1.SSH
-	20, // 20: config.v1.Config.network:type_name -> config.v1.Network
-	21, // 21: config.v1.Config.local_store:type_name -> config.v1.LocalStore
-	22, // 22: config.v1.Config.exports:type_name -> config.v1.Exports
-	23, // 23: config.v1.Config.anticheat:type_name -> config.v1.Anticheat
-	26, // 24: config.v1.ConfigService.Info:input_type -> google.protobuf.Empty
-	26, // 25: config.v1.ConfigService.Get:input_type -> google.protobuf.Empty
-	8,  // 26: config.v1.ConfigService.Update:input_type -> config.v1.UpdateRequest
-	6,  // 27: config.v1.ConfigService.Info:output_type -> config.v1.InfoResponse
-	7,  // 28: config.v1.ConfigService.Get:output_type -> config.v1.GetResponse
-	9,  // 29: config.v1.ConfigService.Update:output_type -> config.v1.UpdateResponse
-	27, // [27:30] is the sub-list for method output_type
-	24, // [24:27] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	27, // 0: config.v1.ChangelogResponse.changelog:type_name -> config.v1.GithubRelease
+	26, // 1: config.v1.GetResponse.config:type_name -> config.v1.Config
+	26, // 2: config.v1.UpdateRequest.config:type_name -> config.v1.Config
+	26, // 3: config.v1.UpdateResponse.config:type_name -> config.v1.Config
+	0,  // 4: config.v1.General.mode:type_name -> config.v1.RunMode
+	1,  // 5: config.v1.General.file_serve_mode:type_name -> config.v1.FileServeMode
+	2,  // 6: config.v1.Demo.strategy:type_name -> config.v1.DemoStrategy
+	3,  // 7: config.v1.Log.level:type_name -> config.v1.Level
+	3,  // 8: config.v1.Log.http_level:type_name -> config.v1.Level
+	4,  // 9: config.v1.SSH.host_key_strategy:type_name -> config.v1.HostKeyStrategy
+	5,  // 10: config.v1.Anticheat.action:type_name -> config.v1.Action
+	11, // 11: config.v1.Config.general:type_name -> config.v1.General
+	12, // 12: config.v1.Config.debug:type_name -> config.v1.Debug
+	13, // 13: config.v1.Config.demo:type_name -> config.v1.Demo
+	14, // 14: config.v1.Config.filters:type_name -> config.v1.Filters
+	15, // 15: config.v1.Config.discord:type_name -> config.v1.Discord
+	25, // 16: config.v1.Config.client_prefs:type_name -> config.v1.Clientprefs
+	17, // 17: config.v1.Config.log:type_name -> config.v1.Log
+	18, // 18: config.v1.Config.geo_location:type_name -> config.v1.GeoLocation
+	19, // 19: config.v1.Config.patreon:type_name -> config.v1.Patreon
+	20, // 20: config.v1.Config.ssh:type_name -> config.v1.SSH
+	21, // 21: config.v1.Config.network:type_name -> config.v1.Network
+	22, // 22: config.v1.Config.local_store:type_name -> config.v1.LocalStore
+	23, // 23: config.v1.Config.exports:type_name -> config.v1.Exports
+	24, // 24: config.v1.Config.anticheat:type_name -> config.v1.Anticheat
+	30, // 25: config.v1.GithubRelease.created_at:type_name -> google.protobuf.Timestamp
+	30, // 26: config.v1.GithubRelease.published_at:type_name -> google.protobuf.Timestamp
+	28, // 27: config.v1.GithubRelease.author:type_name -> config.v1.GithubRelease.Author
+	30, // 28: config.v1.GithubRelease.Asset.created_at:type_name -> google.protobuf.Timestamp
+	30, // 29: config.v1.GithubRelease.Asset.updated_at:type_name -> google.protobuf.Timestamp
+	28, // 30: config.v1.GithubRelease.Asset.uploader:type_name -> config.v1.GithubRelease.Author
+	31, // 31: config.v1.ConfigService.Info:input_type -> google.protobuf.Empty
+	31, // 32: config.v1.ConfigService.Get:input_type -> google.protobuf.Empty
+	9,  // 33: config.v1.ConfigService.Update:input_type -> config.v1.UpdateRequest
+	31, // 34: config.v1.ConfigService.Changelog:input_type -> google.protobuf.Empty
+	7,  // 35: config.v1.ConfigService.Info:output_type -> config.v1.InfoResponse
+	8,  // 36: config.v1.ConfigService.Get:output_type -> config.v1.GetResponse
+	10, // 37: config.v1.ConfigService.Update:output_type -> config.v1.UpdateResponse
+	6,  // 38: config.v1.ConfigService.Changelog:output_type -> config.v1.ChangelogResponse
+	35, // [35:39] is the sub-list for method output_type
+	31, // [31:35] is the sub-list for method input_type
+	31, // [31:31] is the sub-list for extension type_name
+	31, // [31:31] is the sub-list for extension extendee
+	0,  // [0:31] is the sub-list for field type_name
 }
 
 func init() { file_config_v1_config_proto_init() }
@@ -2508,7 +3118,7 @@ func file_config_v1_config_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_config_v1_config_proto_rawDesc), len(file_config_v1_config_proto_rawDesc)),
 			NumEnums:      6,
-			NumMessages:   20,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

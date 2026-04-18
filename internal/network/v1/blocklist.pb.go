@@ -23,6 +23,94 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type WhitelistSteamCreateRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SteamId       *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WhitelistSteamCreateRequest) Reset() {
+	*x = WhitelistSteamCreateRequest{}
+	mi := &file_network_v1_blocklist_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WhitelistSteamCreateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WhitelistSteamCreateRequest) ProtoMessage() {}
+
+func (x *WhitelistSteamCreateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_network_v1_blocklist_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WhitelistSteamCreateRequest.ProtoReflect.Descriptor instead.
+func (*WhitelistSteamCreateRequest) Descriptor() ([]byte, []int) {
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *WhitelistSteamCreateRequest) GetSteamId() int64 {
+	if x != nil && x.SteamId != nil {
+		return *x.SteamId
+	}
+	return 0
+}
+
+type WhitelistSteamCreateResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Whitelist     *WhitelistSteam        `protobuf:"bytes,1,opt,name=whitelist" json:"whitelist,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WhitelistSteamCreateResponse) Reset() {
+	*x = WhitelistSteamCreateResponse{}
+	mi := &file_network_v1_blocklist_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WhitelistSteamCreateResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WhitelistSteamCreateResponse) ProtoMessage() {}
+
+func (x *WhitelistSteamCreateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_network_v1_blocklist_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WhitelistSteamCreateResponse.ProtoReflect.Descriptor instead.
+func (*WhitelistSteamCreateResponse) Descriptor() ([]byte, []int) {
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *WhitelistSteamCreateResponse) GetWhitelist() *WhitelistSteam {
+	if x != nil {
+		return x.Whitelist
+	}
+	return nil
+}
+
 type WhitelistSteamDeleteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SteamId       *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
@@ -32,7 +120,7 @@ type WhitelistSteamDeleteRequest struct {
 
 func (x *WhitelistSteamDeleteRequest) Reset() {
 	*x = WhitelistSteamDeleteRequest{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[0]
+	mi := &file_network_v1_blocklist_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +132,7 @@ func (x *WhitelistSteamDeleteRequest) String() string {
 func (*WhitelistSteamDeleteRequest) ProtoMessage() {}
 
 func (x *WhitelistSteamDeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[0]
+	mi := &file_network_v1_blocklist_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +145,7 @@ func (x *WhitelistSteamDeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WhitelistSteamDeleteRequest.ProtoReflect.Descriptor instead.
 func (*WhitelistSteamDeleteRequest) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{0}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *WhitelistSteamDeleteRequest) GetSteamId() int64 {
@@ -76,7 +164,7 @@ type WhitelistSteamResponse struct {
 
 func (x *WhitelistSteamResponse) Reset() {
 	*x = WhitelistSteamResponse{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[1]
+	mi := &file_network_v1_blocklist_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -88,7 +176,7 @@ func (x *WhitelistSteamResponse) String() string {
 func (*WhitelistSteamResponse) ProtoMessage() {}
 
 func (x *WhitelistSteamResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[1]
+	mi := &file_network_v1_blocklist_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -101,7 +189,7 @@ func (x *WhitelistSteamResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WhitelistSteamResponse.ProtoReflect.Descriptor instead.
 func (*WhitelistSteamResponse) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{1}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *WhitelistSteamResponse) GetWhitelists() []*WhitelistSteam {
@@ -124,7 +212,7 @@ type WhitelistSteam struct {
 
 func (x *WhitelistSteam) Reset() {
 	*x = WhitelistSteam{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[2]
+	mi := &file_network_v1_blocklist_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -136,7 +224,7 @@ func (x *WhitelistSteam) String() string {
 func (*WhitelistSteam) ProtoMessage() {}
 
 func (x *WhitelistSteam) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[2]
+	mi := &file_network_v1_blocklist_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -149,7 +237,7 @@ func (x *WhitelistSteam) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WhitelistSteam.ProtoReflect.Descriptor instead.
 func (*WhitelistSteam) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{2}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *WhitelistSteam) GetSteamId() int64 {
@@ -197,7 +285,7 @@ type WhitelistAddressEditRequest struct {
 
 func (x *WhitelistAddressEditRequest) Reset() {
 	*x = WhitelistAddressEditRequest{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[3]
+	mi := &file_network_v1_blocklist_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -209,7 +297,7 @@ func (x *WhitelistAddressEditRequest) String() string {
 func (*WhitelistAddressEditRequest) ProtoMessage() {}
 
 func (x *WhitelistAddressEditRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[3]
+	mi := &file_network_v1_blocklist_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -222,7 +310,7 @@ func (x *WhitelistAddressEditRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WhitelistAddressEditRequest.ProtoReflect.Descriptor instead.
 func (*WhitelistAddressEditRequest) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{3}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *WhitelistAddressEditRequest) GetCidrBlockWhitelistId() int32 {
@@ -248,7 +336,7 @@ type WhitelistAddressEditResponse struct {
 
 func (x *WhitelistAddressEditResponse) Reset() {
 	*x = WhitelistAddressEditResponse{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[4]
+	mi := &file_network_v1_blocklist_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -260,7 +348,7 @@ func (x *WhitelistAddressEditResponse) String() string {
 func (*WhitelistAddressEditResponse) ProtoMessage() {}
 
 func (x *WhitelistAddressEditResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[4]
+	mi := &file_network_v1_blocklist_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -273,7 +361,7 @@ func (x *WhitelistAddressEditResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WhitelistAddressEditResponse.ProtoReflect.Descriptor instead.
 func (*WhitelistAddressEditResponse) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{4}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *WhitelistAddressEditResponse) GetWhitelist() *WhitelistIP {
@@ -292,7 +380,7 @@ type WhitelistAddressDeleteRequest struct {
 
 func (x *WhitelistAddressDeleteRequest) Reset() {
 	*x = WhitelistAddressDeleteRequest{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[5]
+	mi := &file_network_v1_blocklist_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -304,7 +392,7 @@ func (x *WhitelistAddressDeleteRequest) String() string {
 func (*WhitelistAddressDeleteRequest) ProtoMessage() {}
 
 func (x *WhitelistAddressDeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[5]
+	mi := &file_network_v1_blocklist_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -317,7 +405,7 @@ func (x *WhitelistAddressDeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WhitelistAddressDeleteRequest.ProtoReflect.Descriptor instead.
 func (*WhitelistAddressDeleteRequest) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{5}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *WhitelistAddressDeleteRequest) GetCidrBlockWhitelistId() int32 {
@@ -336,7 +424,7 @@ type WhitelistAddressCreateRequest struct {
 
 func (x *WhitelistAddressCreateRequest) Reset() {
 	*x = WhitelistAddressCreateRequest{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[6]
+	mi := &file_network_v1_blocklist_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -348,7 +436,7 @@ func (x *WhitelistAddressCreateRequest) String() string {
 func (*WhitelistAddressCreateRequest) ProtoMessage() {}
 
 func (x *WhitelistAddressCreateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[6]
+	mi := &file_network_v1_blocklist_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -361,7 +449,7 @@ func (x *WhitelistAddressCreateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WhitelistAddressCreateRequest.ProtoReflect.Descriptor instead.
 func (*WhitelistAddressCreateRequest) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{6}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *WhitelistAddressCreateRequest) GetAddress() string {
@@ -380,7 +468,7 @@ type WhitelistAddressCreateResponse struct {
 
 func (x *WhitelistAddressCreateResponse) Reset() {
 	*x = WhitelistAddressCreateResponse{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[7]
+	mi := &file_network_v1_blocklist_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -392,7 +480,7 @@ func (x *WhitelistAddressCreateResponse) String() string {
 func (*WhitelistAddressCreateResponse) ProtoMessage() {}
 
 func (x *WhitelistAddressCreateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[7]
+	mi := &file_network_v1_blocklist_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -405,7 +493,7 @@ func (x *WhitelistAddressCreateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WhitelistAddressCreateResponse.ProtoReflect.Descriptor instead.
 func (*WhitelistAddressCreateResponse) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{7}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *WhitelistAddressCreateResponse) GetWhitelist() *CIDRBlockWhitelist {
@@ -424,7 +512,7 @@ type CheckBlockRequest struct {
 
 func (x *CheckBlockRequest) Reset() {
 	*x = CheckBlockRequest{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[8]
+	mi := &file_network_v1_blocklist_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -436,7 +524,7 @@ func (x *CheckBlockRequest) String() string {
 func (*CheckBlockRequest) ProtoMessage() {}
 
 func (x *CheckBlockRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[8]
+	mi := &file_network_v1_blocklist_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -449,7 +537,7 @@ func (x *CheckBlockRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckBlockRequest.ProtoReflect.Descriptor instead.
 func (*CheckBlockRequest) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{8}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CheckBlockRequest) GetAddress() string {
@@ -469,7 +557,7 @@ type CheckBlockResponse struct {
 
 func (x *CheckBlockResponse) Reset() {
 	*x = CheckBlockResponse{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[9]
+	mi := &file_network_v1_blocklist_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -481,7 +569,7 @@ func (x *CheckBlockResponse) String() string {
 func (*CheckBlockResponse) ProtoMessage() {}
 
 func (x *CheckBlockResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[9]
+	mi := &file_network_v1_blocklist_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -494,7 +582,7 @@ func (x *CheckBlockResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckBlockResponse.ProtoReflect.Descriptor instead.
 func (*CheckBlockResponse) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{9}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CheckBlockResponse) GetBlocked() bool {
@@ -520,7 +608,7 @@ type BlocklistSourcesDeleteRequest struct {
 
 func (x *BlocklistSourcesDeleteRequest) Reset() {
 	*x = BlocklistSourcesDeleteRequest{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[10]
+	mi := &file_network_v1_blocklist_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -532,7 +620,7 @@ func (x *BlocklistSourcesDeleteRequest) String() string {
 func (*BlocklistSourcesDeleteRequest) ProtoMessage() {}
 
 func (x *BlocklistSourcesDeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[10]
+	mi := &file_network_v1_blocklist_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -545,7 +633,7 @@ func (x *BlocklistSourcesDeleteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlocklistSourcesDeleteRequest.ProtoReflect.Descriptor instead.
 func (*BlocklistSourcesDeleteRequest) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{10}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *BlocklistSourcesDeleteRequest) GetCidrBlockSourceId() int32 {
@@ -555,7 +643,7 @@ func (x *BlocklistSourcesDeleteRequest) GetCidrBlockSourceId() int32 {
 	return 0
 }
 
-type BlocklistSourcesCreateEdit struct {
+type BlocklistSourcesEditRequest struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	CidrBlockSourceId *int32                 `protobuf:"varint,1,opt,name=cidr_block_source_id,json=cidrBlockSourceId" json:"cidr_block_source_id,omitempty"`
 	Name              *string                `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
@@ -565,21 +653,21 @@ type BlocklistSourcesCreateEdit struct {
 	sizeCache         protoimpl.SizeCache
 }
 
-func (x *BlocklistSourcesCreateEdit) Reset() {
-	*x = BlocklistSourcesCreateEdit{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[11]
+func (x *BlocklistSourcesEditRequest) Reset() {
+	*x = BlocklistSourcesEditRequest{}
+	mi := &file_network_v1_blocklist_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *BlocklistSourcesCreateEdit) String() string {
+func (x *BlocklistSourcesEditRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*BlocklistSourcesCreateEdit) ProtoMessage() {}
+func (*BlocklistSourcesEditRequest) ProtoMessage() {}
 
-func (x *BlocklistSourcesCreateEdit) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[11]
+func (x *BlocklistSourcesEditRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_network_v1_blocklist_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -590,37 +678,81 @@ func (x *BlocklistSourcesCreateEdit) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use BlocklistSourcesCreateEdit.ProtoReflect.Descriptor instead.
-func (*BlocklistSourcesCreateEdit) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{11}
+// Deprecated: Use BlocklistSourcesEditRequest.ProtoReflect.Descriptor instead.
+func (*BlocklistSourcesEditRequest) Descriptor() ([]byte, []int) {
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *BlocklistSourcesCreateEdit) GetCidrBlockSourceId() int32 {
+func (x *BlocklistSourcesEditRequest) GetCidrBlockSourceId() int32 {
 	if x != nil && x.CidrBlockSourceId != nil {
 		return *x.CidrBlockSourceId
 	}
 	return 0
 }
 
-func (x *BlocklistSourcesCreateEdit) GetName() string {
+func (x *BlocklistSourcesEditRequest) GetName() string {
 	if x != nil && x.Name != nil {
 		return *x.Name
 	}
 	return ""
 }
 
-func (x *BlocklistSourcesCreateEdit) GetUrl() string {
+func (x *BlocklistSourcesEditRequest) GetUrl() string {
 	if x != nil && x.Url != nil {
 		return *x.Url
 	}
 	return ""
 }
 
-func (x *BlocklistSourcesCreateEdit) GetEnabled() bool {
+func (x *BlocklistSourcesEditRequest) GetEnabled() bool {
 	if x != nil && x.Enabled != nil {
 		return *x.Enabled
 	}
 	return false
+}
+
+type BlocklistSourcesEditResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BlockSource   *CIDRBlockSource       `protobuf:"bytes,1,opt,name=block_source,json=blockSource" json:"block_source,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BlocklistSourcesEditResponse) Reset() {
+	*x = BlocklistSourcesEditResponse{}
+	mi := &file_network_v1_blocklist_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlocklistSourcesEditResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlocklistSourcesEditResponse) ProtoMessage() {}
+
+func (x *BlocklistSourcesEditResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_network_v1_blocklist_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlocklistSourcesEditResponse.ProtoReflect.Descriptor instead.
+func (*BlocklistSourcesEditResponse) Descriptor() ([]byte, []int) {
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *BlocklistSourcesEditResponse) GetBlockSource() *CIDRBlockSource {
+	if x != nil {
+		return x.BlockSource
+	}
+	return nil
 }
 
 type BlocklistSourcesCreateRequest struct {
@@ -634,7 +766,7 @@ type BlocklistSourcesCreateRequest struct {
 
 func (x *BlocklistSourcesCreateRequest) Reset() {
 	*x = BlocklistSourcesCreateRequest{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[12]
+	mi := &file_network_v1_blocklist_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -646,7 +778,7 @@ func (x *BlocklistSourcesCreateRequest) String() string {
 func (*BlocklistSourcesCreateRequest) ProtoMessage() {}
 
 func (x *BlocklistSourcesCreateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[12]
+	mi := &file_network_v1_blocklist_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -659,7 +791,7 @@ func (x *BlocklistSourcesCreateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlocklistSourcesCreateRequest.ProtoReflect.Descriptor instead.
 func (*BlocklistSourcesCreateRequest) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{12}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *BlocklistSourcesCreateRequest) GetName() string {
@@ -692,7 +824,7 @@ type BlocklistSourcesCreateResponse struct {
 
 func (x *BlocklistSourcesCreateResponse) Reset() {
 	*x = BlocklistSourcesCreateResponse{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[13]
+	mi := &file_network_v1_blocklist_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -704,7 +836,7 @@ func (x *BlocklistSourcesCreateResponse) String() string {
 func (*BlocklistSourcesCreateResponse) ProtoMessage() {}
 
 func (x *BlocklistSourcesCreateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[13]
+	mi := &file_network_v1_blocklist_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -717,7 +849,7 @@ func (x *BlocklistSourcesCreateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlocklistSourcesCreateResponse.ProtoReflect.Descriptor instead.
 func (*BlocklistSourcesCreateResponse) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{13}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *BlocklistSourcesCreateResponse) GetBlockSource() *CIDRBlockSource {
@@ -736,7 +868,7 @@ type WhitelistAddressResponse struct {
 
 func (x *WhitelistAddressResponse) Reset() {
 	*x = WhitelistAddressResponse{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[14]
+	mi := &file_network_v1_blocklist_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -748,7 +880,7 @@ func (x *WhitelistAddressResponse) String() string {
 func (*WhitelistAddressResponse) ProtoMessage() {}
 
 func (x *WhitelistAddressResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[14]
+	mi := &file_network_v1_blocklist_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -761,7 +893,7 @@ func (x *WhitelistAddressResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WhitelistAddressResponse.ProtoReflect.Descriptor instead.
 func (*WhitelistAddressResponse) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{14}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *WhitelistAddressResponse) GetWhitelisted() []*CIDRBlockWhitelist {
@@ -783,7 +915,7 @@ type CIDRBlockWhitelist struct {
 
 func (x *CIDRBlockWhitelist) Reset() {
 	*x = CIDRBlockWhitelist{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[15]
+	mi := &file_network_v1_blocklist_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -795,7 +927,7 @@ func (x *CIDRBlockWhitelist) String() string {
 func (*CIDRBlockWhitelist) ProtoMessage() {}
 
 func (x *CIDRBlockWhitelist) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[15]
+	mi := &file_network_v1_blocklist_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -808,7 +940,7 @@ func (x *CIDRBlockWhitelist) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CIDRBlockWhitelist.ProtoReflect.Descriptor instead.
 func (*CIDRBlockWhitelist) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{15}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *CIDRBlockWhitelist) GetCidrBlockWhitelistId() int32 {
@@ -848,7 +980,7 @@ type BlocklistSourcesResponse struct {
 
 func (x *BlocklistSourcesResponse) Reset() {
 	*x = BlocklistSourcesResponse{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[16]
+	mi := &file_network_v1_blocklist_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -860,7 +992,7 @@ func (x *BlocklistSourcesResponse) String() string {
 func (*BlocklistSourcesResponse) ProtoMessage() {}
 
 func (x *BlocklistSourcesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[16]
+	mi := &file_network_v1_blocklist_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -873,7 +1005,7 @@ func (x *BlocklistSourcesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BlocklistSourcesResponse.ProtoReflect.Descriptor instead.
 func (*BlocklistSourcesResponse) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{16}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *BlocklistSourcesResponse) GetBlocklistSource() []*CIDRBlockSource {
@@ -897,7 +1029,7 @@ type CIDRBlockSource struct {
 
 func (x *CIDRBlockSource) Reset() {
 	*x = CIDRBlockSource{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[17]
+	mi := &file_network_v1_blocklist_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -909,7 +1041,7 @@ func (x *CIDRBlockSource) String() string {
 func (*CIDRBlockSource) ProtoMessage() {}
 
 func (x *CIDRBlockSource) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[17]
+	mi := &file_network_v1_blocklist_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -922,7 +1054,7 @@ func (x *CIDRBlockSource) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CIDRBlockSource.ProtoReflect.Descriptor instead.
 func (*CIDRBlockSource) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{17}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *CIDRBlockSource) GetCidrBlockSourceId() int32 {
@@ -979,7 +1111,7 @@ type WhitelistIP struct {
 
 func (x *WhitelistIP) Reset() {
 	*x = WhitelistIP{}
-	mi := &file_network_v1_blocklist_proto_msgTypes[18]
+	mi := &file_network_v1_blocklist_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -991,7 +1123,7 @@ func (x *WhitelistIP) String() string {
 func (*WhitelistIP) ProtoMessage() {}
 
 func (x *WhitelistIP) ProtoReflect() protoreflect.Message {
-	mi := &file_network_v1_blocklist_proto_msgTypes[18]
+	mi := &file_network_v1_blocklist_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1004,7 +1136,7 @@ func (x *WhitelistIP) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WhitelistIP.ProtoReflect.Descriptor instead.
 func (*WhitelistIP) Descriptor() ([]byte, []int) {
-	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{18}
+	return file_network_v1_blocklist_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *WhitelistIP) GetCidrBlockWhitelistId() int32 {
@@ -1041,6 +1173,10 @@ const file_network_v1_blocklist_proto_rawDesc = "" +
 	"\n" +
 	"\x1anetwork/v1/blocklist.proto\x12\n" +
 	"network.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"8\n" +
+	"\x1bWhitelistSteamCreateRequest\x12\x19\n" +
+	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\"X\n" +
+	"\x1cWhitelistSteamCreateResponse\x128\n" +
+	"\twhitelist\x18\x01 \x01(\v2\x1a.network.v1.WhitelistSteamR\twhitelist\"8\n" +
 	"\x1bWhitelistSteamDeleteRequest\x12\x19\n" +
 	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\"T\n" +
 	"\x16WhitelistSteamResponse\x12:\n" +
@@ -1073,12 +1209,14 @@ const file_network_v1_blocklist_proto_rawDesc = "" +
 	"\ablocked\x18\x01 \x01(\bR\ablocked\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\"P\n" +
 	"\x1dBlocklistSourcesDeleteRequest\x12/\n" +
-	"\x14cidr_block_source_id\x18\x01 \x01(\x05R\x11cidrBlockSourceId\"\x8d\x01\n" +
-	"\x1aBlocklistSourcesCreateEdit\x12/\n" +
+	"\x14cidr_block_source_id\x18\x01 \x01(\x05R\x11cidrBlockSourceId\"\x8e\x01\n" +
+	"\x1bBlocklistSourcesEditRequest\x12/\n" +
 	"\x14cidr_block_source_id\x18\x01 \x01(\x05R\x11cidrBlockSourceId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12\x18\n" +
-	"\aenabled\x18\x04 \x01(\bR\aenabled\"_\n" +
+	"\aenabled\x18\x04 \x01(\bR\aenabled\"^\n" +
+	"\x1cBlocklistSourcesEditResponse\x12>\n" +
+	"\fblock_source\x18\x01 \x01(\v2\x1b.network.v1.CIDRBlockSourceR\vblockSource\"_\n" +
 	"\x1dBlocklistSourcesCreateRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x18\n" +
@@ -1111,18 +1249,19 @@ const file_network_v1_blocklist_proto_rawDesc = "" +
 	"\n" +
 	"created_on\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedOn\x129\n" +
 	"\n" +
-	"updated_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn2\xaf\b\n" +
+	"updated_on\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedOn2\x9f\t\n" +
 	"\x10BlocklistService\x12R\n" +
 	"\x10BlocklistSources\x12\x16.google.protobuf.Empty\x1a$.network.v1.BlocklistSourcesResponse\"\x00\x12q\n" +
-	"\x16BlocklistSourcesCreate\x12).network.v1.BlocklistSourcesCreateRequest\x1a*.network.v1.BlocklistSourcesCreateResponse\"\x00\x12h\n" +
-	"\x14BlocklistSourcesEdit\x12&.network.v1.BlocklistSourcesCreateEdit\x1a&.network.v1.BlocklistSourcesCreateEdit\"\x00\x12]\n" +
+	"\x16BlocklistSourcesCreate\x12).network.v1.BlocklistSourcesCreateRequest\x1a*.network.v1.BlocklistSourcesCreateResponse\"\x00\x12k\n" +
+	"\x14BlocklistSourcesEdit\x12'.network.v1.BlocklistSourcesEditRequest\x1a(.network.v1.BlocklistSourcesEditResponse\"\x00\x12]\n" +
 	"\x16BlocklistSourcesDelete\x12).network.v1.BlocklistSourcesDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x12R\n" +
 	"\x10WhitelistAddress\x12\x16.google.protobuf.Empty\x1a$.network.v1.WhitelistAddressResponse\"\x00\x12q\n" +
 	"\x16WhitelistAddressCreate\x12).network.v1.WhitelistAddressCreateRequest\x1a*.network.v1.WhitelistAddressCreateResponse\"\x00\x12]\n" +
 	"\x16WhitelistAddressDelete\x12).network.v1.WhitelistAddressDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x12k\n" +
 	"\x14WhitelistAddressEdit\x12'.network.v1.WhitelistAddressEditRequest\x1a(.network.v1.WhitelistAddressEditResponse\"\x00\x12N\n" +
 	"\x0eWhitelistSteam\x12\x16.google.protobuf.Empty\x1a\".network.v1.WhitelistSteamResponse\"\x00\x12Y\n" +
-	"\x14WhitelistSteamDelete\x12'.network.v1.WhitelistSteamDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x12M\n" +
+	"\x14WhitelistSteamDelete\x12'.network.v1.WhitelistSteamDeleteRequest\x1a\x16.google.protobuf.Empty\"\x00\x12k\n" +
+	"\x14WhitelistSteamCreate\x12'.network.v1.WhitelistSteamCreateRequest\x1a(.network.v1.WhitelistSteamCreateResponse\"\x00\x12M\n" +
 	"\n" +
 	"CheckBlock\x12\x1d.network.v1.CheckBlockRequest\x1a\x1e.network.v1.CheckBlockResponse\"\x00B\xa8\x01\n" +
 	"\x0ecom.network.v1B\x0eBlocklistProtoP\x01Z=github.com/leighmacdonald/gbans/internal/network/v1;networkv1\xa2\x02\x03NXX\xaa\x02\n" +
@@ -1141,72 +1280,79 @@ func file_network_v1_blocklist_proto_rawDescGZIP() []byte {
 	return file_network_v1_blocklist_proto_rawDescData
 }
 
-var file_network_v1_blocklist_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_network_v1_blocklist_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_network_v1_blocklist_proto_goTypes = []any{
-	(*WhitelistSteamDeleteRequest)(nil),    // 0: network.v1.WhitelistSteamDeleteRequest
-	(*WhitelistSteamResponse)(nil),         // 1: network.v1.WhitelistSteamResponse
-	(*WhitelistSteam)(nil),                 // 2: network.v1.WhitelistSteam
-	(*WhitelistAddressEditRequest)(nil),    // 3: network.v1.WhitelistAddressEditRequest
-	(*WhitelistAddressEditResponse)(nil),   // 4: network.v1.WhitelistAddressEditResponse
-	(*WhitelistAddressDeleteRequest)(nil),  // 5: network.v1.WhitelistAddressDeleteRequest
-	(*WhitelistAddressCreateRequest)(nil),  // 6: network.v1.WhitelistAddressCreateRequest
-	(*WhitelistAddressCreateResponse)(nil), // 7: network.v1.WhitelistAddressCreateResponse
-	(*CheckBlockRequest)(nil),              // 8: network.v1.CheckBlockRequest
-	(*CheckBlockResponse)(nil),             // 9: network.v1.CheckBlockResponse
-	(*BlocklistSourcesDeleteRequest)(nil),  // 10: network.v1.BlocklistSourcesDeleteRequest
-	(*BlocklistSourcesCreateEdit)(nil),     // 11: network.v1.BlocklistSourcesCreateEdit
-	(*BlocklistSourcesCreateRequest)(nil),  // 12: network.v1.BlocklistSourcesCreateRequest
-	(*BlocklistSourcesCreateResponse)(nil), // 13: network.v1.BlocklistSourcesCreateResponse
-	(*WhitelistAddressResponse)(nil),       // 14: network.v1.WhitelistAddressResponse
-	(*CIDRBlockWhitelist)(nil),             // 15: network.v1.CIDRBlockWhitelist
-	(*BlocklistSourcesResponse)(nil),       // 16: network.v1.BlocklistSourcesResponse
-	(*CIDRBlockSource)(nil),                // 17: network.v1.CIDRBlockSource
-	(*WhitelistIP)(nil),                    // 18: network.v1.WhitelistIP
-	(*timestamppb.Timestamp)(nil),          // 19: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),                  // 20: google.protobuf.Empty
+	(*WhitelistSteamCreateRequest)(nil),    // 0: network.v1.WhitelistSteamCreateRequest
+	(*WhitelistSteamCreateResponse)(nil),   // 1: network.v1.WhitelistSteamCreateResponse
+	(*WhitelistSteamDeleteRequest)(nil),    // 2: network.v1.WhitelistSteamDeleteRequest
+	(*WhitelistSteamResponse)(nil),         // 3: network.v1.WhitelistSteamResponse
+	(*WhitelistSteam)(nil),                 // 4: network.v1.WhitelistSteam
+	(*WhitelistAddressEditRequest)(nil),    // 5: network.v1.WhitelistAddressEditRequest
+	(*WhitelistAddressEditResponse)(nil),   // 6: network.v1.WhitelistAddressEditResponse
+	(*WhitelistAddressDeleteRequest)(nil),  // 7: network.v1.WhitelistAddressDeleteRequest
+	(*WhitelistAddressCreateRequest)(nil),  // 8: network.v1.WhitelistAddressCreateRequest
+	(*WhitelistAddressCreateResponse)(nil), // 9: network.v1.WhitelistAddressCreateResponse
+	(*CheckBlockRequest)(nil),              // 10: network.v1.CheckBlockRequest
+	(*CheckBlockResponse)(nil),             // 11: network.v1.CheckBlockResponse
+	(*BlocklistSourcesDeleteRequest)(nil),  // 12: network.v1.BlocklistSourcesDeleteRequest
+	(*BlocklistSourcesEditRequest)(nil),    // 13: network.v1.BlocklistSourcesEditRequest
+	(*BlocklistSourcesEditResponse)(nil),   // 14: network.v1.BlocklistSourcesEditResponse
+	(*BlocklistSourcesCreateRequest)(nil),  // 15: network.v1.BlocklistSourcesCreateRequest
+	(*BlocklistSourcesCreateResponse)(nil), // 16: network.v1.BlocklistSourcesCreateResponse
+	(*WhitelistAddressResponse)(nil),       // 17: network.v1.WhitelistAddressResponse
+	(*CIDRBlockWhitelist)(nil),             // 18: network.v1.CIDRBlockWhitelist
+	(*BlocklistSourcesResponse)(nil),       // 19: network.v1.BlocklistSourcesResponse
+	(*CIDRBlockSource)(nil),                // 20: network.v1.CIDRBlockSource
+	(*WhitelistIP)(nil),                    // 21: network.v1.WhitelistIP
+	(*timestamppb.Timestamp)(nil),          // 22: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),                  // 23: google.protobuf.Empty
 }
 var file_network_v1_blocklist_proto_depIdxs = []int32{
-	2,  // 0: network.v1.WhitelistSteamResponse.whitelists:type_name -> network.v1.WhitelistSteam
-	19, // 1: network.v1.WhitelistSteam.created_on:type_name -> google.protobuf.Timestamp
-	19, // 2: network.v1.WhitelistSteam.updated_on:type_name -> google.protobuf.Timestamp
-	18, // 3: network.v1.WhitelistAddressEditResponse.whitelist:type_name -> network.v1.WhitelistIP
-	15, // 4: network.v1.WhitelistAddressCreateResponse.whitelist:type_name -> network.v1.CIDRBlockWhitelist
-	17, // 5: network.v1.BlocklistSourcesCreateResponse.block_source:type_name -> network.v1.CIDRBlockSource
-	15, // 6: network.v1.WhitelistAddressResponse.whitelisted:type_name -> network.v1.CIDRBlockWhitelist
-	19, // 7: network.v1.CIDRBlockWhitelist.created_on:type_name -> google.protobuf.Timestamp
-	19, // 8: network.v1.CIDRBlockWhitelist.updated_on:type_name -> google.protobuf.Timestamp
-	17, // 9: network.v1.BlocklistSourcesResponse.blocklist_source:type_name -> network.v1.CIDRBlockSource
-	19, // 10: network.v1.CIDRBlockSource.created_on:type_name -> google.protobuf.Timestamp
-	19, // 11: network.v1.CIDRBlockSource.updated_on:type_name -> google.protobuf.Timestamp
-	19, // 12: network.v1.WhitelistIP.created_on:type_name -> google.protobuf.Timestamp
-	19, // 13: network.v1.WhitelistIP.updated_on:type_name -> google.protobuf.Timestamp
-	20, // 14: network.v1.BlocklistService.BlocklistSources:input_type -> google.protobuf.Empty
-	12, // 15: network.v1.BlocklistService.BlocklistSourcesCreate:input_type -> network.v1.BlocklistSourcesCreateRequest
-	11, // 16: network.v1.BlocklistService.BlocklistSourcesEdit:input_type -> network.v1.BlocklistSourcesCreateEdit
-	10, // 17: network.v1.BlocklistService.BlocklistSourcesDelete:input_type -> network.v1.BlocklistSourcesDeleteRequest
-	20, // 18: network.v1.BlocklistService.WhitelistAddress:input_type -> google.protobuf.Empty
-	6,  // 19: network.v1.BlocklistService.WhitelistAddressCreate:input_type -> network.v1.WhitelistAddressCreateRequest
-	5,  // 20: network.v1.BlocklistService.WhitelistAddressDelete:input_type -> network.v1.WhitelistAddressDeleteRequest
-	3,  // 21: network.v1.BlocklistService.WhitelistAddressEdit:input_type -> network.v1.WhitelistAddressEditRequest
-	20, // 22: network.v1.BlocklistService.WhitelistSteam:input_type -> google.protobuf.Empty
-	0,  // 23: network.v1.BlocklistService.WhitelistSteamDelete:input_type -> network.v1.WhitelistSteamDeleteRequest
-	8,  // 24: network.v1.BlocklistService.CheckBlock:input_type -> network.v1.CheckBlockRequest
-	16, // 25: network.v1.BlocklistService.BlocklistSources:output_type -> network.v1.BlocklistSourcesResponse
-	13, // 26: network.v1.BlocklistService.BlocklistSourcesCreate:output_type -> network.v1.BlocklistSourcesCreateResponse
-	11, // 27: network.v1.BlocklistService.BlocklistSourcesEdit:output_type -> network.v1.BlocklistSourcesCreateEdit
-	20, // 28: network.v1.BlocklistService.BlocklistSourcesDelete:output_type -> google.protobuf.Empty
-	14, // 29: network.v1.BlocklistService.WhitelistAddress:output_type -> network.v1.WhitelistAddressResponse
-	7,  // 30: network.v1.BlocklistService.WhitelistAddressCreate:output_type -> network.v1.WhitelistAddressCreateResponse
-	20, // 31: network.v1.BlocklistService.WhitelistAddressDelete:output_type -> google.protobuf.Empty
-	4,  // 32: network.v1.BlocklistService.WhitelistAddressEdit:output_type -> network.v1.WhitelistAddressEditResponse
-	1,  // 33: network.v1.BlocklistService.WhitelistSteam:output_type -> network.v1.WhitelistSteamResponse
-	20, // 34: network.v1.BlocklistService.WhitelistSteamDelete:output_type -> google.protobuf.Empty
-	9,  // 35: network.v1.BlocklistService.CheckBlock:output_type -> network.v1.CheckBlockResponse
-	25, // [25:36] is the sub-list for method output_type
-	14, // [14:25] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	4,  // 0: network.v1.WhitelistSteamCreateResponse.whitelist:type_name -> network.v1.WhitelistSteam
+	4,  // 1: network.v1.WhitelistSteamResponse.whitelists:type_name -> network.v1.WhitelistSteam
+	22, // 2: network.v1.WhitelistSteam.created_on:type_name -> google.protobuf.Timestamp
+	22, // 3: network.v1.WhitelistSteam.updated_on:type_name -> google.protobuf.Timestamp
+	21, // 4: network.v1.WhitelistAddressEditResponse.whitelist:type_name -> network.v1.WhitelistIP
+	18, // 5: network.v1.WhitelistAddressCreateResponse.whitelist:type_name -> network.v1.CIDRBlockWhitelist
+	20, // 6: network.v1.BlocklistSourcesEditResponse.block_source:type_name -> network.v1.CIDRBlockSource
+	20, // 7: network.v1.BlocklistSourcesCreateResponse.block_source:type_name -> network.v1.CIDRBlockSource
+	18, // 8: network.v1.WhitelistAddressResponse.whitelisted:type_name -> network.v1.CIDRBlockWhitelist
+	22, // 9: network.v1.CIDRBlockWhitelist.created_on:type_name -> google.protobuf.Timestamp
+	22, // 10: network.v1.CIDRBlockWhitelist.updated_on:type_name -> google.protobuf.Timestamp
+	20, // 11: network.v1.BlocklistSourcesResponse.blocklist_source:type_name -> network.v1.CIDRBlockSource
+	22, // 12: network.v1.CIDRBlockSource.created_on:type_name -> google.protobuf.Timestamp
+	22, // 13: network.v1.CIDRBlockSource.updated_on:type_name -> google.protobuf.Timestamp
+	22, // 14: network.v1.WhitelistIP.created_on:type_name -> google.protobuf.Timestamp
+	22, // 15: network.v1.WhitelistIP.updated_on:type_name -> google.protobuf.Timestamp
+	23, // 16: network.v1.BlocklistService.BlocklistSources:input_type -> google.protobuf.Empty
+	15, // 17: network.v1.BlocklistService.BlocklistSourcesCreate:input_type -> network.v1.BlocklistSourcesCreateRequest
+	13, // 18: network.v1.BlocklistService.BlocklistSourcesEdit:input_type -> network.v1.BlocklistSourcesEditRequest
+	12, // 19: network.v1.BlocklistService.BlocklistSourcesDelete:input_type -> network.v1.BlocklistSourcesDeleteRequest
+	23, // 20: network.v1.BlocklistService.WhitelistAddress:input_type -> google.protobuf.Empty
+	8,  // 21: network.v1.BlocklistService.WhitelistAddressCreate:input_type -> network.v1.WhitelistAddressCreateRequest
+	7,  // 22: network.v1.BlocklistService.WhitelistAddressDelete:input_type -> network.v1.WhitelistAddressDeleteRequest
+	5,  // 23: network.v1.BlocklistService.WhitelistAddressEdit:input_type -> network.v1.WhitelistAddressEditRequest
+	23, // 24: network.v1.BlocklistService.WhitelistSteam:input_type -> google.protobuf.Empty
+	2,  // 25: network.v1.BlocklistService.WhitelistSteamDelete:input_type -> network.v1.WhitelistSteamDeleteRequest
+	0,  // 26: network.v1.BlocklistService.WhitelistSteamCreate:input_type -> network.v1.WhitelistSteamCreateRequest
+	10, // 27: network.v1.BlocklistService.CheckBlock:input_type -> network.v1.CheckBlockRequest
+	19, // 28: network.v1.BlocklistService.BlocklistSources:output_type -> network.v1.BlocklistSourcesResponse
+	16, // 29: network.v1.BlocklistService.BlocklistSourcesCreate:output_type -> network.v1.BlocklistSourcesCreateResponse
+	14, // 30: network.v1.BlocklistService.BlocklistSourcesEdit:output_type -> network.v1.BlocklistSourcesEditResponse
+	23, // 31: network.v1.BlocklistService.BlocklistSourcesDelete:output_type -> google.protobuf.Empty
+	17, // 32: network.v1.BlocklistService.WhitelistAddress:output_type -> network.v1.WhitelistAddressResponse
+	9,  // 33: network.v1.BlocklistService.WhitelistAddressCreate:output_type -> network.v1.WhitelistAddressCreateResponse
+	23, // 34: network.v1.BlocklistService.WhitelistAddressDelete:output_type -> google.protobuf.Empty
+	6,  // 35: network.v1.BlocklistService.WhitelistAddressEdit:output_type -> network.v1.WhitelistAddressEditResponse
+	3,  // 36: network.v1.BlocklistService.WhitelistSteam:output_type -> network.v1.WhitelistSteamResponse
+	23, // 37: network.v1.BlocklistService.WhitelistSteamDelete:output_type -> google.protobuf.Empty
+	1,  // 38: network.v1.BlocklistService.WhitelistSteamCreate:output_type -> network.v1.WhitelistSteamCreateResponse
+	11, // 39: network.v1.BlocklistService.CheckBlock:output_type -> network.v1.CheckBlockResponse
+	28, // [28:40] is the sub-list for method output_type
+	16, // [16:28] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_network_v1_blocklist_proto_init() }
@@ -1220,7 +1366,7 @@ func file_network_v1_blocklist_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_network_v1_blocklist_proto_rawDesc), len(file_network_v1_blocklist_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -24,7 +24,7 @@ const (
 
 type PersonCore struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	SteamId         *string                `protobuf:"bytes,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
+	SteamId         *int64                 `protobuf:"varint,1,opt,name=steam_id,json=steamId" json:"steam_id,omitempty"`
 	PermissionLevel *Privilege             `protobuf:"varint,2,opt,name=permission_level,json=permissionLevel,enum=person.v1.Privilege" json:"permission_level,omitempty"`
 	Name            *string                `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
 	AvatarHash      *string                `protobuf:"bytes,4,opt,name=avatar_hash,json=avatarHash" json:"avatar_hash,omitempty"`
@@ -67,11 +67,11 @@ func (*PersonCore) Descriptor() ([]byte, []int) {
 	return file_person_v1_person_core_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *PersonCore) GetSteamId() string {
+func (x *PersonCore) GetSteamId() int64 {
 	if x != nil && x.SteamId != nil {
 		return *x.SteamId
 	}
-	return ""
+	return 0
 }
 
 func (x *PersonCore) GetPermissionLevel() Privilege {
@@ -137,7 +137,7 @@ const file_person_v1_person_core_proto_rawDesc = "" +
 	"\x1bperson/v1/person_core.proto\x12\tperson.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19person/v1/privilege.proto\"\xca\x02\n" +
 	"\n" +
 	"PersonCore\x12\x19\n" +
-	"\bsteam_id\x18\x01 \x01(\tR\asteamId\x12?\n" +
+	"\bsteam_id\x18\x01 \x01(\x03R\asteamId\x12?\n" +
 	"\x10permission_level\x18\x02 \x01(\x0e2\x14.person.v1.PrivilegeR\x0fpermissionLevel\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x1f\n" +
 	"\vavatar_hash\x18\x04 \x01(\tR\n" +

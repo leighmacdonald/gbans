@@ -37,7 +37,7 @@ func NewService(contests Contests, assets asset.Assets) Service {
 	return Service{contests: contests, assets: assets}
 }
 
-func (s Service) Contests(ctx context.Context, req *emptypb.Empty) (*v1.ContestsResponse, error) {
+func (s Service) Contests(ctx context.Context, _ *emptypb.Empty) (*v1.ContestsResponse, error) {
 	user, _ := rpc.UserInfoFromCtx(ctx)
 	contests, errContests := s.contests.Contests(ctx, user)
 	if errContests != nil {
@@ -230,9 +230,7 @@ func (s Service) EntryDelete(ctx context.Context, req *v1.EntryDeleteRequest) (*
 }
 
 func (s Service) ContestCreate(ctx context.Context, req *v1.ContestCreateRequest) (*v1.ContestCreateResponse, error) {
-	newContest, _ := NewContest(req.GetName(), req.GetDescription(), time.Now(), time.Now(), false)
-
-	contest, errSave := s.contests.Save(ctx, newContest)
+	contest, errSave := s.contests.Save(ctx, fromContest(req.Contest))
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, rpc.ErrInternal)
 	}

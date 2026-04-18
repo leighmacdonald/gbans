@@ -1,0 +1,110 @@
+edition = "2023";
+
+package servers.v1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "maps/v1/maps.proto";
+
+service SpeedrunsService {
+  rpc MapSpeedruns(MapSpeedrunsRequest) returns (MapSpeedrunsResponse) {}
+  rpc OverallTopN(OverallTopNRequest) returns (OverallTopNResponse) {}
+  rpc OverallRecent(OverallRecentRequest) returns (OverallRecentResponse) {}
+  rpc SpeedrunCreate(SpeedrunCreateRequest) returns (SpeedrunCreateResponse) {}
+  rpc Query(QueryRequest) returns (QueryResponse) {}
+}
+
+message SpeedrunCreateRequest {
+  Speedrun speedrun = 1;
+}
+
+message SpeedrunCreateResponse {
+  Speedrun speedrun = 1;
+}
+
+message QueryRequest {
+  int32 speedrun_id = 1;
+}
+
+message QueryResponse {
+  Speedrun speedrun = 1;
+}
+
+message SpeedrunMapOverview {
+  repeated SpeedrunOverview speedruns = 1;
+}
+
+message OverallRecentRequest {
+  int32 count = 1;
+}
+
+message OverallRecentResponse {
+  repeated SpeedrunMapOverview speedruns = 1;
+}
+
+message OverallTopNRequest {
+  int32 count = 1;
+}
+
+message Speedruns {
+  repeated Speedrun speedruns = 1;
+}
+
+message OverallTopNResponse {
+  map<string, Speedruns> speedruns = 1;
+}
+
+message MapSpeedrunsRequest {
+  string map_name = 1;
+}
+
+message Speedrun {
+  int32 speedrun_id = 1;
+  int32 server_id = 2;
+  int32 rank = 3;
+  int32 initial_rank = 4;
+  maps.v1.Map map = 5;
+  google.protobuf.Duration duration = 6;
+  int32 player_count = 7;
+  int32 bot_count = 8;
+  google.protobuf.Timestamp created_on = 9;
+  string category = 10;
+  int32 total_players = 11;
+  repeated Capture captures = 12;
+  repeated Participant participants = 13;
+}
+
+message SpeedrunOverview {
+  int32 speedrun_id = 1;
+  int32 server_id = 2;
+  int32 rank = 3;
+  int32 initial_rank = 4;
+  maps.v1.Map map = 5;
+  google.protobuf.Duration duration = 6;
+  int32 player_count = 7;
+  int32 bot_count = 8;
+  google.protobuf.Timestamp created_on = 9;
+  string category = 10;
+  int32 total_players = 11;
+}
+
+message MapSpeedrunsResponse {
+  repeated SpeedrunOverview speedruns = 1;
+}
+
+message Participant {
+  int32 round_id = 1;
+  int64 steam_id = 2;
+  google.protobuf.Duration duration = 3;
+  string avatar_hash = 4;
+  string persona_name = 5;
+}
+
+message Capture {
+  int32 speedrun_id = 1;
+  int32 round_id = 2;
+  repeated Participant players = 3;
+  google.protobuf.Duration duration = 4;
+  string point_name = 5;
+}

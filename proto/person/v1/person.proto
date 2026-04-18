@@ -9,6 +9,9 @@ import "person/v1/person_core.proto";
 import "person/v1/privilege.proto";
 
 service PersonService {
+  rpc Profile(ProfileRequest) returns (ProfileResponse) {}
+  rpc ResolveSteamID(ResolveSteamIDRequest) returns (ResolveSteamIDResponse) {}
+
   rpc CurrentProfile(google.protobuf.Empty) returns (CurrentProfileResponse);
   rpc ProfileSettings(google.protobuf.Empty) returns (ProfileSettingsResponse);
   rpc EditProfileSettings(EditProfileSettingsRequest) returns (EditProfileSettingsResponse);
@@ -16,9 +19,31 @@ service PersonService {
   rpc EditPermissions(EditPermissionsRequest) returns (EditPermissionsResponse);
 }
 
+message ProfileRequest {
+  string steam_id = 1;
+}
+
+message ProfileResponse {
+  Profile profile = 1;
+}
+
+message ResolveSteamIDRequest {
+  string steam_id = 1;
+}
+
+message ResolveSteamIDResponse {
+  int64 steam_id = 1;
+  string avatar_hash = 2;
+  string persona_name = 3;
+}
+
+message CurrentProfileResponse {
+  PersonCore profile = 1;
+}
+
 message Settings {
   int64 person_settings_id = 1;
-  string steam_id = 2;
+  int64 steam_id = 2;
   string forum_signature = 3;
   bool forum_profile_messages = 4;
   bool stats_hidden = 5;
@@ -34,13 +59,22 @@ message EditProfileSettingsRequest {
   bool center_projectiles = 4;
 }
 
-message CurrentProfileResponse {
-  PersonCore person = 1;
+message Profile {
+  PersonCore player = 1;
+  repeated SteamFriend friends = 2;
+  Settings settings = 3;
+}
+
+message SteamFriend {
+  google.protobuf.Timestamp friend_since = 1;
+  string relationship = 2;
+  google.protobuf.Timestamp removed_on = 3;
+  int64 steam_id = 4;
 }
 
 message UserSettings {
   int64 person_settings_id = 1;
-  string steam_id = 2;
+  int64 steam_id = 2;
   string forum_signature = 3;
   bool forum_profile_messages = 4;
   bool stats_hidden = 5;
@@ -57,12 +91,12 @@ message EditProfileSettingsResponse {
 }
 
 message EditPermissionsRequest {
-  string steam_id = 1;
+  int64 steam_id = 1;
   Privilege permission_level = 2;
 }
 
 message EditPermissionsResponse {
-  Person person = 1;
+  PersonCore person = 1;
 }
 
 message QueryRequest {
@@ -80,7 +114,7 @@ message QueryRequest {
 }
 
 message Person {
-  string steam_id = 1;
+  int64 steam_id = 1;
   google.protobuf.Timestamp created_on = 2;
   google.protobuf.Timestamp updated_on = 3;
   Privilege permission_level = 4;
@@ -114,4 +148,5 @@ message Person {
 }
 message QueryResponse {
   repeated PersonCore people = 1;
+  int64 count = 2;
 }

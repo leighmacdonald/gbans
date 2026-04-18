@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -26,29 +25,38 @@ import (
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/ban/bantype"
 	"github.com/leighmacdonald/gbans/internal/ban/reason"
+	"github.com/leighmacdonald/gbans/internal/ban/v1/banv1connect"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/chat/v1/chatv1connect"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/config/v1/configv1connect"
+	"github.com/leighmacdonald/gbans/internal/contest"
+	"github.com/leighmacdonald/gbans/internal/contest/v1/contestv1connect"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	discordoauth "github.com/leighmacdonald/gbans/internal/discord/oauth"
 	"github.com/leighmacdonald/gbans/internal/forum"
+	"github.com/leighmacdonald/gbans/internal/forum/v1/forumv1connect"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/maps"
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/mge"
+	"github.com/leighmacdonald/gbans/internal/mge/v1/mgev1connect"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/network/asn"
 	"github.com/leighmacdonald/gbans/internal/network/scp"
+	"github.com/leighmacdonald/gbans/internal/network/v1/networkv1connect"
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/news/v1/newsv1connect"
 	"github.com/leighmacdonald/gbans/internal/notification"
+	"github.com/leighmacdonald/gbans/internal/notification/v1/notificationv1connect"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/person/v1/personv1connect"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/servers/v1/serversv1connect"
 	"github.com/leighmacdonald/gbans/internal/sourcemod"
+	"github.com/leighmacdonald/gbans/internal/sourcemod/v1/sourcemodv1connect"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/votes/v1/votesv1connect"
@@ -58,7 +66,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/sosodev/duration"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 var (
@@ -76,11 +83,13 @@ type BuildInfo struct {
 type GBans struct {
 	anticheat      anticheat.AntiCheat
 	assets         asset.Assets
+	appeals        ban.Appeals
 	banExpirations *ban.ExpirationMonitor
 	bans           ban.Bans
 	blocklists     network.Blocklists
 	chat           *chat.Chat
 	config         *config.Configuration
+	contests       contest.Contests
 	database       database.Database
 	demos          servers.Demos
 	forums         forum.Forums
@@ -462,14 +471,28 @@ func (g *GBans) createAPI() *http.ServeMux {
 	interceptor := connect.WithInterceptors(validate.NewInterceptor())
 	api := http.NewServeMux()
 
-	api.Handle(assetv1connect.NewAssetServiceHandler(asset.NewService(g.assets), interceptor))
 	api.Handle(anticheatv1connect.NewAnticheatServiceHandler(anticheat.NewService(g.anticheat), interceptor))
+	api.Handle(assetv1connect.NewAssetServiceHandler(asset.NewService(g.assets), interceptor))
+	api.Handle(banv1connect.NewAppealServiceHandler(ban.NewAppealService(g.appeals), interceptor))
+	api.Handle(banv1connect.NewBanServiceHandler(ban.NewBanService(g.bans), interceptor))
+	api.Handle(banv1connect.NewReportServiceHandler(ban.NewReportService(g.reports), interceptor))
 	api.Handle(chatv1connect.NewChatServiceHandler(chat.NewService(g.chat), interceptor))
-	api.Handle(configv1connect.NewConfigServiceHandler(config.NewRPC(g.config, BuildVersion), interceptor))
-	api.Handle(serversv1connect.NewServersServiceHandler(servers.NewRPC(g.servers), interceptor))
+	api.Handle(chatv1connect.NewWordfilterServiceHandler(chat.NewWordfilterService(g.wordFilters, g.chat, g.config.Config().Filters), interceptor))
+	api.Handle(configv1connect.NewConfigServiceHandler(config.NewService(g.config, BuildVersion), interceptor))
+	api.Handle(contestv1connect.NewServiceHandler(contest.NewService(g.contests, g.assets), interceptor))
+	api.Handle(forumv1connect.NewForumServiceHandler(forum.NewService(g.forums), interceptor))
+	api.Handle(mgev1connect.NewMGEServiceHandler(mge.NewService(g.mge), interceptor))
+	api.Handle(networkv1connect.NewBlocklistServiceHandler(network.NewBlocklistService(g.blocklists), interceptor))
+	api.Handle(networkv1connect.NewNetworkServiceHandler(network.NewNetworkService(g.networks), interceptor))
+	api.Handle(newsv1connect.NewNewsServiceHandler(news.NewService(g.news), interceptor))
+	api.Handle(notificationv1connect.NewNotificationServiceHandler(notification.NewService(g.notifications), interceptor))
+	api.Handle(personv1connect.NewPersonServiceHandler(person.NewPersonService(g.persons), interceptor))
+	api.Handle(serversv1connect.NewServersServiceHandler(servers.NewServersService(g.servers), interceptor))
+	api.Handle(serversv1connect.NewDemoServiceHandler(servers.NewDemoService(g.demos), interceptor))
+	api.Handle(serversv1connect.NewSpeedrunsServiceHandler(servers.NewSpeedrunsService(g.speedruns), interceptor))
+	api.Handle(sourcemodv1connect.NewSourcemodServiceHandler(sourcemod.NewService(g.sourcemod, g.persons, g.notifications), interceptor))
 	api.Handle(votesv1connect.NewVotesServiceHandler(votes.NewService(g.votes), interceptor))
 	api.Handle(wikiv1connect.NewWikiServiceHandler(wiki.NewService(g.wiki), interceptor))
-	api.Handle(newsv1connect.NewNewsServiceHandler(news.NewService(g.news), interceptor))
 
 	return api
 }
@@ -561,14 +584,6 @@ func (g *GBans) Serve(rootCtx context.Context) error {
 	}()
 
 	slog.Info("Starting HTTP server", slog.String("address", conf.Addr()), slog.String("url", conf.ExternalURL))
-
-	go func() {
-		time.Sleep(time.Second * 2)
-		client := configv1connect.NewConfigServiceClient(http.DefaultClient, "http://localhost:6006/connect")
-		resp, err := client.Info(context.Background(), &emptypb.Empty{})
-		fmt.Println(resp)
-		fmt.Println(err)
-	}()
 
 	if errServe := httpServer.ListenAndServe(); errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
 		slog.Error("HTTP server returned error", slog.String("error", errServe.Error()))

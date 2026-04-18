@@ -1422,7 +1422,7 @@ type MatchRoundSum struct {
 	UbersRed    float64       `json:"ubers_red"`
 	DamageBlu   int           `json:"damage_blu"`
 	DamageRed   int           `json:"damage_red"`
-	RoundWinner Team          `json:"round_winner,"`
+	RoundWinner Team          `json:"round_winner"`
 	// MidFight    Team          `json:"mid_fight"`
 }
 

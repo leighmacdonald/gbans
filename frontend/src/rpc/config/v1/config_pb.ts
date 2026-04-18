@@ -4,1155 +4,1433 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import type { EmptySchema } from "@bufbuild/protobuf/wkt";
-import { file_google_protobuf_descriptor, file_google_protobuf_empty } from "@bufbuild/protobuf/wkt";
+import type { EmptySchema, Timestamp } from "@bufbuild/protobuf/wkt";
+import {
+	file_google_protobuf_descriptor,
+	file_google_protobuf_empty,
+	file_google_protobuf_timestamp,
+} from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file config/v1/config.proto.
  */
-export const file_config_v1_config: GenFile = /*@__PURE__*/
-  fileDesc("ChZjb25maWcvdjEvY29uZmlnLnByb3RvEgljb25maWcudjEivQQKDEluZm9SZXNwb25zZRIRCglzaXRlX25hbWUYASABKAkSGAoQc2l0ZV9kZXNjcmlwdGlvbhgCIAEoCRIRCglhc3NldF91cmwYAyABKAkSDwoHZmF2aWNvbhgEIAEoCRIPCgdsaW5rX2lkGAUgASgJEhMKC2FwcF92ZXJzaW9uGAYgASgJEhYKDnNlbnRyeV9kc25fd2ViGAcgASgJEhcKD2RvY3VtZW50X3BvbGljeRgIIAEoCRIZChFwYXRyZW9uX2NsaWVudF9pZBgJIAEoCRIZChFkaXNjb3JkX2NsaWVudF9pZBgKIAEoCRIXCg9kaXNjb3JkX2VuYWJsZWQYCyABKAgSFwoPcGF0cmVvbl9lbmFibGVkGAwgASgIEhUKDWRlZmF1bHRfcm91dGUYDSABKAkSFAoMbmV3c19lbmFibGVkGA4gASgIEhgKEGNvbnRlc3RzX2VuYWJsZWQYDyABKAgSFAoMd2lraV9lbmFibGVkGBAgASgIEhUKDXN0YXRzX2VuYWJsZWQYESABKAgSFwoPc2VydmVyc19lbmFibGVkGBIgASgIEhcKD3JlcG9ydHNfZW5hYmxlZBgTIAEoCBIYChBjaGF0bG9nc19lbmFibGVkGBQgASgIEhUKDWRlbW9zX2VuYWJsZWQYFSABKAgSGQoRc3BlZWRydW5zX2VuYWJsZWQYFiABKAgSFgoOZm9ydW1zX2VuYWJsZWQYFyABKAgSEwoLbWdlX2VuYWJsZWQYGCABKAgiMAoLR2V0UmVzcG9uc2USIQoGY29uZmlnGAEgASgLMhEuY29uZmlnLnYxLkNvbmZpZyIyCg1VcGRhdGVSZXF1ZXN0EiEKBmNvbmZpZxgBIAEoCzIRLmNvbmZpZy52MS5Db25maWciMwoOVXBkYXRlUmVzcG9uc2USIQoGY29uZmlnGAEgASgLMhEuY29uZmlnLnYxLkNvbmZpZyL9AwoHR2VuZXJhbBIRCglzaXRlX25hbWUYASABKAkSGAoQc2l0ZV9kZXNjcmlwdGlvbhgCIAEoCRIgCgRtb2RlGAMgASgOMhIuY29uZmlnLnYxLlJ1bk1vZGUSMQoPZmlsZV9zZXJ2ZV9tb2RlGAQgASgOMhguY29uZmlnLnYxLkZpbGVTZXJ2ZU1vZGUSFgoOc3JjZHNfbG9nX2FkZHIYBSABKAkSEQoJYXNzZXRfdXJsGAYgASgJEg8KB2Zhdmljb24YByABKAkSFQoNZGVmYXVsdF9yb3V0ZRgIIAEoCRIUCgxuZXdzX2VuYWJsZWQYCSABKAgSFgoOZm9ydW1zX2VuYWJsZWQYCiABKAgSGAoQY29udGVzdHNfZW5hYmxlZBgLIAEoCBIUCgx3aWtpX2VuYWJsZWQYDCABKAgSFQoNc3RhdHNfZW5hYmxlZBgNIAEoCBIXCg9zZXJ2ZXJzX2VuYWJsZWQYDiABKAgSFwoPcmVwb3J0c19lbmFibGVkGA8gASgIEhgKEGNoYXRsb2dzX2VuYWJsZWQYECABKAgSFQoNZGVtb3NfZW5hYmxlZBgRIAEoCBIZChFzcGVlZHJ1bnNfZW5hYmxlZBgSIAEoCBISCgpzZW50cnlfZHNuGBMgASgJEhYKDnNlbnRyeV9kc25fd2ViGBQgASgJIkYKBURlYnVnEh8KF3NraXBfb3Blbl9pZF92YWxpZGF0aW9uGAEgASgIEhwKFGFkZF9yY29uX2xvZ19hZGRyZXNzGAIgASgJIqMBCgREZW1vEhcKD2NsZWFudXBfZW5hYmxlZBgBIAEoCBIpCghzdHJhdGVneRgCIAEoDjIXLmNvbmZpZy52MS5EZW1vU3RyYXRlZ3kSFwoPY2xlYW51cF9taW5fcGN0GAMgASgCEhUKDWNsZWFudXBfbW91bnQYBCABKAkSEwoLY291bnRfbGltaXQYBSABKAMSEgoKcGFyc2VyX3VybBgGIAEoCSKvAQoHRmlsdGVycxIPCgdlbmFibGVkGAEgASgIEhcKD3dhcm5pbmdfdGltZW91dBgCIAEoBRIVCg13YXJuaW5nX2xpbWl0GAMgASgFEgsKA2RyeRgEIAEoCBIUCgxwaW5nX2Rpc2NvcmQYBSABKAgSEgoKbWF4X3dlaWdodBgGIAEoBRIVCg1jaGVja190aW1lb3V0GAcgASgFEhUKDW1hdGNoX3RpbWVvdXQYCCABKAUiqAQKB0Rpc2NvcmQSDwoHZW5hYmxlZBgBIAEoCBITCgtib3RfZW5hYmxlZBgCIAEoCBIcChRpbnRlZ3JhdGlvbnNfZW5hYmxlZBgDIAEoCBIOCgZhcHBfaWQYBCABKAkSEgoKYXBwX3NlY3JldBgFIAEoCRIPCgdsaW5rX2lkGAYgASgJEg0KBXRva2VuGAcgASgJEhAKCGd1aWxkX2lkGAggASgJEiEKGXB1YmxpY19sb2dfY2hhbm5lbF9lbmFibGUYCSABKAgSFgoObG9nX2NoYW5uZWxfaWQYCiABKAkSIwobcHVibGljX21hdGNoX2xvZ19jaGFubmVsX2lkGAsgASgJEhsKE3ZvdGVfbG9nX2NoYW5uZWxfaWQYDCABKAkSHQoVYXBwZWFsX2xvZ19jaGFubmVsX2lkGA0gASgJEhoKEmJhbl9sb2dfY2hhbm5lbF9pZBgOIAEoCRIcChRmb3J1bV9sb2dfY2hhbm5lbF9pZBgPIAEoCRIbChNraWNrX2xvZ19jaGFubmVsX2lkGBAgASgJEhgKEG1vZF9waW5nX3JvbGVfaWQYESABKAkSHAoUYW50aWNoZWF0X2NoYW5uZWxfaWQYEiABKAkSFwoPc2VlZF9jaGFubmVsX2lkGBMgASgJEiIKGndvcmRfZmlsdGVyX2xvZ19jaGFubmVsX2lkGBQgASgJEhsKE2NoYXRfbG9nX2NoYW5uZWxfaWQYFSABKAkiJwoJU291cmNlbW9kEhoKEmNlbnRlcl9wcm9qZWN0aWxlcxgBIAEoCCKLAQoDTG9nEh8KBWxldmVsGAEgASgOMhAuY29uZmlnLnYxLkxldmVsEgwKBGZpbGUYAiABKAkSFAoMaHR0cF9lbmFibGVkGAMgASgIEhkKEWh0dHBfb3RlbF9lbmFibGVkGAQgASgIEiQKCmh0dHBfbGV2ZWwYBSABKA4yEC5jb25maWcudjEuTGV2ZWwiQQoLR2VvTG9jYXRpb24SDwoHZW5hYmxlZBgBIAEoCBISCgpjYWNoZV9wYXRoGAIgASgJEg0KBXRva2VuGAMgASgJIp8BCgdQYXRyZW9uEg8KB2VuYWJsZWQYASABKAgSHAoUaW50ZWdyYXRpb25zX2VuYWJsZWQYAiABKAgSEQoJY2xpZW50X2lkGAMgASgJEhUKDWNsaWVudF9zZWNyZXQYBCABKAkSHAoUY3JlYXRvcl9hY2Nlc3NfdG9rZW4YBSABKAkSHQoVY3JlYXRvcl9yZWZyZXNoX3Rva2VuGAYgASgJIu0BCgNTU0gSDwoHZW5hYmxlZBgBIAEoCBIQCgh1c2VybmFtZRgCIAEoCRIMCgRwb3J0GAMgASgFEhgKEHByaXZhdGVfa2V5X3BhdGgYBCABKAkSNQoRaG9zdF9rZXlfc3RyYXRlZ3kYBSABKA4yGi5jb25maWcudjEuSG9zdEtleVN0cmF0ZWd5EhAKCHBhc3N3b3JkGAYgASgJEhcKD3VwZGF0ZV9pbnRlcnZhbBgHIAEoBRIPCgd0aW1lb3V0GAggASgFEhUKDWRlbW9fcGF0aF9mbXQYCSABKAkSEQoJc3RhY19wYXRoGAogASgJIm0KB05ldHdvcmsSEwoLc2RyX2VuYWJsZWQYASABKAgSFwoPc2RyX2Ruc19lbmFibGVkGAIgASgIEg4KBmNmX2tleRgDIAEoCRIQCghjZl9lbWFpbBgEIAEoCRISCgpjZl96b25lX2lkGAUgASgJIh8KCkxvY2FsU3RvcmUSEQoJcGF0aF9yb290GAEgASgJIk0KB0V4cG9ydHMSEgoKYmRfZW5hYmxlZBgBIAEoCBIVCg12YWx2ZV9lbmFibGVkGAIgASgIEhcKD2F1dGhvcml6ZWRfa2V5cxgDIAMoCSKnAgoJQW50aWNoZWF0Eg8KB2VuYWJsZWQYASABKAgSIQoGYWN0aW9uGAIgASgOMhEuY29uZmlnLnYxLkFjdGlvbhIQCghkdXJhdGlvbhgDIAEoBRIVCg1tYXhfYWltX3NuYXBzGAQgASgFEhMKC21heF9wc2lsZW50GAUgASgFEhAKCG1heF9iaG9wGAYgASgFEhQKDG1heF9mYWtlX2FuZxgHIAEoBRITCgttYXhfY21kX251bRgIIAEoBRIgChhtYXhfdG9vX21hbnlfY29ubmVjdGlvbnMYCSABKAUSEwoLbWF4X29vYl92YXIYCiABKAUSHAoUbWF4X2ludmFsaWRfdXNlcl9jbWQYCyABKAUSFgoObWF4X2NoZWF0X2N2YXIYDCABKAUiKQoLQ2xpZW50cHJlZnMSGgoSY2VudGVyX3Byb2plY3RpbGVzGAEgASgIIpEECgZDb25maWcSIwoHZ2VuZXJhbBgBIAEoCzISLmNvbmZpZy52MS5HZW5lcmFsEh8KBWRlYnVnGAIgASgLMhAuY29uZmlnLnYxLkRlYnVnEh0KBGRlbW8YAyABKAsyDy5jb25maWcudjEuRGVtbxIjCgdmaWx0ZXJzGAQgASgLMhIuY29uZmlnLnYxLkZpbHRlcnMSIwoHZGlzY29yZBgFIAEoCzISLmNvbmZpZy52MS5EaXNjb3JkEiwKDGNsaWVudF9wcmVmcxgGIAEoCzIWLmNvbmZpZy52MS5DbGllbnRwcmVmcxIbCgNsb2cYByABKAsyDi5jb25maWcudjEuTG9nEiwKDGdlb19sb2NhdGlvbhgIIAEoCzIWLmNvbmZpZy52MS5HZW9Mb2NhdGlvbhIjCgdwYXRyZW9uGAkgASgLMhIuY29uZmlnLnYxLlBhdHJlb24SGwoDc3NoGAogASgLMg4uY29uZmlnLnYxLlNTSBIjCgduZXR3b3JrGAsgASgLMhIuY29uZmlnLnYxLk5ldHdvcmsSKgoLbG9jYWxfc3RvcmUYDCABKAsyFS5jb25maWcudjEuTG9jYWxTdG9yZRIjCgdleHBvcnRzGA0gASgLMhIuY29uZmlnLnYxLkV4cG9ydHMSJwoJYW50aWNoZWF0GA4gASgLMhQuY29uZmlnLnYxLkFudGljaGVhdCpSCgdSdW5Nb2RlEiAKHFJVTl9NT0RFX1JFTEVBU0VfVU5TUEVDSUZJRUQQABISCg5SVU5fTU9ERV9ERUJVRxABEhEKDVJVTl9NT0RFX1RFU1QQAyo2Cg1GaWxlU2VydmVNb2RlEiUKIUZJTEVfU0VSVkVfTU9ERV9MT0NBTF9VTlNQRUNJRklFRBAAKk4KDERlbW9TdHJhdGVneRIlCiFERU1PX1NUUkFURUdZX1BDVEZSRUVfVU5TUEVDSUZJRUQQABIXChNERU1PX1NUUkFURUdZX0NPVU5UEAEqWAoFTGV2ZWwSGwoXTEVWRUxfRVJST1JfVU5TUEVDSUZJRUQQABIRCg1MRVZFTF9XQVJOSU5HEAESDgoKTEVWRUxfSU5GTxACEg8KC0xFVkVMX0RFQlVHEAMqhgEKD0hvc3RLZXlTdHJhdGVneRItCilIT1NUX0tFWV9TVFJBVEVHWV9BVVRPX0FDQ0VQVF9VTlNQRUNJRklFRBAAEiIKHkhPU1RfS0VZX1NUUkFURUdZX0FDQ0VQVF9GSVJTVBABEiAKHEhPU1RfS0VZX1NUUkFURUdZX0lHTk9SRV9BTEwQAipFCgZBY3Rpb24SGwoXQUNUSU9OX0tJQ0tfVU5TUEVDSUZJRUQQABIOCgpBQ1RJT05fR0FHEAESDgoKQUNUSU9OX0JBThACMscBCg1Db25maWdTZXJ2aWNlEjwKBEluZm8SFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFy5jb25maWcudjEuSW5mb1Jlc3BvbnNlIgOQAgESNwoDR2V0EhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuY29uZmlnLnYxLkdldFJlc3BvbnNlIgASPwoGVXBkYXRlEhguY29uZmlnLnYxLlVwZGF0ZVJlcXVlc3QaGS5jb25maWcudjEuVXBkYXRlUmVzcG9uc2UiAEKeAQoNY29tLmNvbmZpZy52MUILQ29uZmlnUHJvdG9QAVo7Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9jb25maWcvdjE7Y29uZmlndjGiAgNDWFiqAglDb25maWcuVjHKAglDb25maWdcVjHiAhVDb25maWdcVjFcR1BCTWV0YWRhdGHqAgpDb25maWc6OlYxYghlZGl0aW9uc3DoBw", [file_google_protobuf_descriptor, file_google_protobuf_empty]);
+export const file_config_v1_config: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChZjb25maWcvdjEvY29uZmlnLnByb3RvEgljb25maWcudjEiQAoRQ2hhbmdlbG9nUmVzcG9uc2USKwoJY2hhbmdlbG9nGAEgAygLMhguY29uZmlnLnYxLkdpdGh1YlJlbGVhc2UivQQKDEluZm9SZXNwb25zZRIRCglzaXRlX25hbWUYASABKAkSGAoQc2l0ZV9kZXNjcmlwdGlvbhgCIAEoCRIRCglhc3NldF91cmwYAyABKAkSDwoHZmF2aWNvbhgEIAEoCRIPCgdsaW5rX2lkGAUgASgJEhMKC2FwcF92ZXJzaW9uGAYgASgJEhYKDnNlbnRyeV9kc25fd2ViGAcgASgJEhcKD2RvY3VtZW50X3BvbGljeRgIIAEoCRIZChFwYXRyZW9uX2NsaWVudF9pZBgJIAEoCRIZChFkaXNjb3JkX2NsaWVudF9pZBgKIAEoCRIXCg9kaXNjb3JkX2VuYWJsZWQYCyABKAgSFwoPcGF0cmVvbl9lbmFibGVkGAwgASgIEhUKDWRlZmF1bHRfcm91dGUYDSABKAkSFAoMbmV3c19lbmFibGVkGA4gASgIEhgKEGNvbnRlc3RzX2VuYWJsZWQYDyABKAgSFAoMd2lraV9lbmFibGVkGBAgASgIEhUKDXN0YXRzX2VuYWJsZWQYESABKAgSFwoPc2VydmVyc19lbmFibGVkGBIgASgIEhcKD3JlcG9ydHNfZW5hYmxlZBgTIAEoCBIYChBjaGF0bG9nc19lbmFibGVkGBQgASgIEhUKDWRlbW9zX2VuYWJsZWQYFSABKAgSGQoRc3BlZWRydW5zX2VuYWJsZWQYFiABKAgSFgoOZm9ydW1zX2VuYWJsZWQYFyABKAgSEwoLbWdlX2VuYWJsZWQYGCABKAgiMAoLR2V0UmVzcG9uc2USIQoGY29uZmlnGAEgASgLMhEuY29uZmlnLnYxLkNvbmZpZyIyCg1VcGRhdGVSZXF1ZXN0EiEKBmNvbmZpZxgBIAEoCzIRLmNvbmZpZy52MS5Db25maWciMwoOVXBkYXRlUmVzcG9uc2USIQoGY29uZmlnGAEgASgLMhEuY29uZmlnLnYxLkNvbmZpZyL9AwoHR2VuZXJhbBIRCglzaXRlX25hbWUYASABKAkSGAoQc2l0ZV9kZXNjcmlwdGlvbhgCIAEoCRIgCgRtb2RlGAMgASgOMhIuY29uZmlnLnYxLlJ1bk1vZGUSMQoPZmlsZV9zZXJ2ZV9tb2RlGAQgASgOMhguY29uZmlnLnYxLkZpbGVTZXJ2ZU1vZGUSFgoOc3JjZHNfbG9nX2FkZHIYBSABKAkSEQoJYXNzZXRfdXJsGAYgASgJEg8KB2Zhdmljb24YByABKAkSFQoNZGVmYXVsdF9yb3V0ZRgIIAEoCRIUCgxuZXdzX2VuYWJsZWQYCSABKAgSFgoOZm9ydW1zX2VuYWJsZWQYCiABKAgSGAoQY29udGVzdHNfZW5hYmxlZBgLIAEoCBIUCgx3aWtpX2VuYWJsZWQYDCABKAgSFQoNc3RhdHNfZW5hYmxlZBgNIAEoCBIXCg9zZXJ2ZXJzX2VuYWJsZWQYDiABKAgSFwoPcmVwb3J0c19lbmFibGVkGA8gASgIEhgKEGNoYXRsb2dzX2VuYWJsZWQYECABKAgSFQoNZGVtb3NfZW5hYmxlZBgRIAEoCBIZChFzcGVlZHJ1bnNfZW5hYmxlZBgSIAEoCBISCgpzZW50cnlfZHNuGBMgASgJEhYKDnNlbnRyeV9kc25fd2ViGBQgASgJIkYKBURlYnVnEh8KF3NraXBfb3Blbl9pZF92YWxpZGF0aW9uGAEgASgIEhwKFGFkZF9yY29uX2xvZ19hZGRyZXNzGAIgASgJIqMBCgREZW1vEhcKD2NsZWFudXBfZW5hYmxlZBgBIAEoCBIpCghzdHJhdGVneRgCIAEoDjIXLmNvbmZpZy52MS5EZW1vU3RyYXRlZ3kSFwoPY2xlYW51cF9taW5fcGN0GAMgASgCEhUKDWNsZWFudXBfbW91bnQYBCABKAkSEwoLY291bnRfbGltaXQYBSABKAMSEgoKcGFyc2VyX3VybBgGIAEoCSKvAQoHRmlsdGVycxIPCgdlbmFibGVkGAEgASgIEhcKD3dhcm5pbmdfdGltZW91dBgCIAEoBRIVCg13YXJuaW5nX2xpbWl0GAMgASgFEgsKA2RyeRgEIAEoCBIUCgxwaW5nX2Rpc2NvcmQYBSABKAgSEgoKbWF4X3dlaWdodBgGIAEoBRIVCg1jaGVja190aW1lb3V0GAcgASgFEhUKDW1hdGNoX3RpbWVvdXQYCCABKAUiqAQKB0Rpc2NvcmQSDwoHZW5hYmxlZBgBIAEoCBITCgtib3RfZW5hYmxlZBgCIAEoCBIcChRpbnRlZ3JhdGlvbnNfZW5hYmxlZBgDIAEoCBIOCgZhcHBfaWQYBCABKAkSEgoKYXBwX3NlY3JldBgFIAEoCRIPCgdsaW5rX2lkGAYgASgJEg0KBXRva2VuGAcgASgJEhAKCGd1aWxkX2lkGAggASgJEiEKGXB1YmxpY19sb2dfY2hhbm5lbF9lbmFibGUYCSABKAgSFgoObG9nX2NoYW5uZWxfaWQYCiABKAkSIwobcHVibGljX21hdGNoX2xvZ19jaGFubmVsX2lkGAsgASgJEhsKE3ZvdGVfbG9nX2NoYW5uZWxfaWQYDCABKAkSHQoVYXBwZWFsX2xvZ19jaGFubmVsX2lkGA0gASgJEhoKEmJhbl9sb2dfY2hhbm5lbF9pZBgOIAEoCRIcChRmb3J1bV9sb2dfY2hhbm5lbF9pZBgPIAEoCRIbChNraWNrX2xvZ19jaGFubmVsX2lkGBAgASgJEhgKEG1vZF9waW5nX3JvbGVfaWQYESABKAkSHAoUYW50aWNoZWF0X2NoYW5uZWxfaWQYEiABKAkSFwoPc2VlZF9jaGFubmVsX2lkGBMgASgJEiIKGndvcmRfZmlsdGVyX2xvZ19jaGFubmVsX2lkGBQgASgJEhsKE2NoYXRfbG9nX2NoYW5uZWxfaWQYFSABKAkiJwoJU291cmNlbW9kEhoKEmNlbnRlcl9wcm9qZWN0aWxlcxgBIAEoCCKLAQoDTG9nEh8KBWxldmVsGAEgASgOMhAuY29uZmlnLnYxLkxldmVsEgwKBGZpbGUYAiABKAkSFAoMaHR0cF9lbmFibGVkGAMgASgIEhkKEWh0dHBfb3RlbF9lbmFibGVkGAQgASgIEiQKCmh0dHBfbGV2ZWwYBSABKA4yEC5jb25maWcudjEuTGV2ZWwiQQoLR2VvTG9jYXRpb24SDwoHZW5hYmxlZBgBIAEoCBISCgpjYWNoZV9wYXRoGAIgASgJEg0KBXRva2VuGAMgASgJIp8BCgdQYXRyZW9uEg8KB2VuYWJsZWQYASABKAgSHAoUaW50ZWdyYXRpb25zX2VuYWJsZWQYAiABKAgSEQoJY2xpZW50X2lkGAMgASgJEhUKDWNsaWVudF9zZWNyZXQYBCABKAkSHAoUY3JlYXRvcl9hY2Nlc3NfdG9rZW4YBSABKAkSHQoVY3JlYXRvcl9yZWZyZXNoX3Rva2VuGAYgASgJIu0BCgNTU0gSDwoHZW5hYmxlZBgBIAEoCBIQCgh1c2VybmFtZRgCIAEoCRIMCgRwb3J0GAMgASgFEhgKEHByaXZhdGVfa2V5X3BhdGgYBCABKAkSNQoRaG9zdF9rZXlfc3RyYXRlZ3kYBSABKA4yGi5jb25maWcudjEuSG9zdEtleVN0cmF0ZWd5EhAKCHBhc3N3b3JkGAYgASgJEhcKD3VwZGF0ZV9pbnRlcnZhbBgHIAEoBRIPCgd0aW1lb3V0GAggASgFEhUKDWRlbW9fcGF0aF9mbXQYCSABKAkSEQoJc3RhY19wYXRoGAogASgJIm0KB05ldHdvcmsSEwoLc2RyX2VuYWJsZWQYASABKAgSFwoPc2RyX2Ruc19lbmFibGVkGAIgASgIEg4KBmNmX2tleRgDIAEoCRIQCghjZl9lbWFpbBgEIAEoCRISCgpjZl96b25lX2lkGAUgASgJIh8KCkxvY2FsU3RvcmUSEQoJcGF0aF9yb290GAEgASgJIk0KB0V4cG9ydHMSEgoKYmRfZW5hYmxlZBgBIAEoCBIVCg12YWx2ZV9lbmFibGVkGAIgASgIEhcKD2F1dGhvcml6ZWRfa2V5cxgDIAMoCSKnAgoJQW50aWNoZWF0Eg8KB2VuYWJsZWQYASABKAgSIQoGYWN0aW9uGAIgASgOMhEuY29uZmlnLnYxLkFjdGlvbhIQCghkdXJhdGlvbhgDIAEoBRIVCg1tYXhfYWltX3NuYXBzGAQgASgFEhMKC21heF9wc2lsZW50GAUgASgFEhAKCG1heF9iaG9wGAYgASgFEhQKDG1heF9mYWtlX2FuZxgHIAEoBRITCgttYXhfY21kX251bRgIIAEoBRIgChhtYXhfdG9vX21hbnlfY29ubmVjdGlvbnMYCSABKAUSEwoLbWF4X29vYl92YXIYCiABKAUSHAoUbWF4X2ludmFsaWRfdXNlcl9jbWQYCyABKAUSFgoObWF4X2NoZWF0X2N2YXIYDCABKAUiKQoLQ2xpZW50cHJlZnMSGgoSY2VudGVyX3Byb2plY3RpbGVzGAEgASgIIpEECgZDb25maWcSIwoHZ2VuZXJhbBgBIAEoCzISLmNvbmZpZy52MS5HZW5lcmFsEh8KBWRlYnVnGAIgASgLMhAuY29uZmlnLnYxLkRlYnVnEh0KBGRlbW8YAyABKAsyDy5jb25maWcudjEuRGVtbxIjCgdmaWx0ZXJzGAQgASgLMhIuY29uZmlnLnYxLkZpbHRlcnMSIwoHZGlzY29yZBgFIAEoCzISLmNvbmZpZy52MS5EaXNjb3JkEiwKDGNsaWVudF9wcmVmcxgGIAEoCzIWLmNvbmZpZy52MS5DbGllbnRwcmVmcxIbCgNsb2cYByABKAsyDi5jb25maWcudjEuTG9nEiwKDGdlb19sb2NhdGlvbhgIIAEoCzIWLmNvbmZpZy52MS5HZW9Mb2NhdGlvbhIjCgdwYXRyZW9uGAkgASgLMhIuY29uZmlnLnYxLlBhdHJlb24SGwoDc3NoGAogASgLMg4uY29uZmlnLnYxLlNTSBIjCgduZXR3b3JrGAsgASgLMhIuY29uZmlnLnYxLk5ldHdvcmsSKgoLbG9jYWxfc3RvcmUYDCABKAsyFS5jb25maWcudjEuTG9jYWxTdG9yZRIjCgdleHBvcnRzGA0gASgLMhIuY29uZmlnLnYxLkV4cG9ydHMSJwoJYW50aWNoZWF0GA4gASgLMhQuY29uZmlnLnYxLkFudGljaGVhdCLECAoNR2l0aHViUmVsZWFzZRILCgN1cmwYASABKAkSEAoIaHRtbF91cmwYAiABKAkSEQoJYXNzZXRfdXJsGAMgASgJEhIKCnVwbG9hZF91cmwYBCABKAkSEwoLdGFyYmFsbF91cmwYBSABKAkSCgoCaWQYBiABKAUSDwoHbm9kZV9pZBgHIAEoCRIQCgh0YWdfbmFtZRgIIAEoCRIYChB0YXJnZXRfY29tbWl0aXNoGAkgASgJEgwKBG5hbWUYCiABKAkSDAoEYm9keRgLIAEoCRINCgVkcmFmdBgMIAEoCBISCgpwcmVyZWxlYXNlGA0gASgIEi4KCmNyZWF0ZWRfYXQYDiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjAKDHB1Ymxpc2hlZF9hdBgPIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoGYXV0aG9yGBAgASgLMh8uY29uZmlnLnYxLkdpdGh1YlJlbGVhc2UuQXV0aG9yGu8CCgZBdXRob3ISDQoFbG9naW4YASABKAkSCgoCaWQYAiABKAUSDwoHbm9kZV9pZBgDIAEoCRISCgphdmF0YXJfdXJsGAQgASgJEhQKDGdyYXZhdGFyX3VybBgFIAEoCRILCgN1cmwYBiABKAkSEAoIaHRtbF91cmwYByABKAkSFQoNZm9sbG93ZXJzX3VybBgIIAEoCRIVCg1mb2xsb3dpbmdfdXJsGAkgASgJEhEKCWdpc3RzX3VybBgKIAEoCRITCgtzdGFydGVkX3VybBgLIAEoCRIZChFzdWJzY3JpcHRpb25zX3VybBgMIAEoCRIZChFvcmdhbml6YXRpb25zX3VybBgNIAEoCRIRCglyZXBvc191cmwYDiABKAkSEgoKZXZlbnRzX3VybBgPIAEoCRIbChNyZWNlaXZlZF9ldmVudHNfdXJsGBAgASgJEgwKBHR5cGUYESABKAkSEgoKc2l0ZV9hZG1pbhgSIAEoCBrKAgoFQXNzZXQSCwoDdXJsGAEgASgJEhwKFGJyb3dzZXJfZG93bmxvYWRfdXJsGAIgASgJEgoKAmlkGAMgASgFEg8KB25vZGVfaWQYBCABKAkSDAoEbmFtZRgFIAEoCRINCgVsYWJlbBgGIAEoCRINCgVzdGF0ZRgHIAEoCRIUCgxjb250ZW50X3R5cGUYCCABKAkSDAoEc2l6ZRgJIAEoAxIWCg5kb3dubG9hZF9jb3VudBgKIAEoBRIuCgpjcmVhdGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX2F0GAwgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIxCgh1cGxvYWRlchgNIAEoCzIfLmNvbmZpZy52MS5HaXRodWJSZWxlYXNlLkF1dGhvcipSCgdSdW5Nb2RlEiAKHFJVTl9NT0RFX1JFTEVBU0VfVU5TUEVDSUZJRUQQABISCg5SVU5fTU9ERV9ERUJVRxABEhEKDVJVTl9NT0RFX1RFU1QQAyo2Cg1GaWxlU2VydmVNb2RlEiUKIUZJTEVfU0VSVkVfTU9ERV9MT0NBTF9VTlNQRUNJRklFRBAAKk4KDERlbW9TdHJhdGVneRIlCiFERU1PX1NUUkFURUdZX1BDVEZSRUVfVU5TUEVDSUZJRUQQABIXChNERU1PX1NUUkFURUdZX0NPVU5UEAEqWAoFTGV2ZWwSGwoXTEVWRUxfRVJST1JfVU5TUEVDSUZJRUQQABIRCg1MRVZFTF9XQVJOSU5HEAESDgoKTEVWRUxfSU5GTxACEg8KC0xFVkVMX0RFQlVHEAMqhgEKD0hvc3RLZXlTdHJhdGVneRItCilIT1NUX0tFWV9TVFJBVEVHWV9BVVRPX0FDQ0VQVF9VTlNQRUNJRklFRBAAEiIKHkhPU1RfS0VZX1NUUkFURUdZX0FDQ0VQVF9GSVJTVBABEiAKHEhPU1RfS0VZX1NUUkFURUdZX0lHTk9SRV9BTEwQAipFCgZBY3Rpb24SGwoXQUNUSU9OX0tJQ0tfVU5TUEVDSUZJRUQQABIOCgpBQ1RJT05fR0FHEAESDgoKQUNUSU9OX0JBThACMowCCg1Db25maWdTZXJ2aWNlEjwKBEluZm8SFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFy5jb25maWcudjEuSW5mb1Jlc3BvbnNlIgOQAgESNwoDR2V0EhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GhYuY29uZmlnLnYxLkdldFJlc3BvbnNlIgASPwoGVXBkYXRlEhguY29uZmlnLnYxLlVwZGF0ZVJlcXVlc3QaGS5jb25maWcudjEuVXBkYXRlUmVzcG9uc2UiABJDCglDaGFuZ2Vsb2cSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaHC5jb25maWcudjEuQ2hhbmdlbG9nUmVzcG9uc2UiAEKeAQoNY29tLmNvbmZpZy52MUILQ29uZmlnUHJvdG9QAVo7Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9jb25maWcvdjE7Y29uZmlndjGiAgNDWFiqAglDb25maWcuVjHKAglDb25maWdcVjHiAhVDb25maWdcVjFcR1BCTWV0YWRhdGHqAgpDb25maWc6OlYxYghlZGl0aW9uc3DoBw",
+		[file_google_protobuf_descriptor, file_google_protobuf_empty, file_google_protobuf_timestamp],
+	);
+
+/**
+ * @generated from message config.v1.ChangelogResponse
+ */
+export type ChangelogResponse = Message<"config.v1.ChangelogResponse"> & {
+	/**
+	 * @generated from field: repeated config.v1.GithubRelease changelog = 1;
+	 */
+	changelog: GithubRelease[];
+};
+
+/**
+ * Describes the message config.v1.ChangelogResponse.
+ * Use `create(ChangelogResponseSchema)` to create a new message.
+ */
+export const ChangelogResponseSchema: GenMessage<ChangelogResponse> =
+	/*@__PURE__*/
+	messageDesc(file_config_v1_config, 0);
 
 /**
  * @generated from message config.v1.InfoResponse
  */
 export type InfoResponse = Message<"config.v1.InfoResponse"> & {
-  /**
-   * @generated from field: string site_name = 1;
-   */
-  siteName: string;
+	/**
+	 * @generated from field: string site_name = 1;
+	 */
+	siteName: string;
 
-  /**
-   * @generated from field: string site_description = 2;
-   */
-  siteDescription: string;
+	/**
+	 * @generated from field: string site_description = 2;
+	 */
+	siteDescription: string;
 
-  /**
-   * @generated from field: string asset_url = 3;
-   */
-  assetUrl: string;
+	/**
+	 * @generated from field: string asset_url = 3;
+	 */
+	assetUrl: string;
 
-  /**
-   * @generated from field: string favicon = 4;
-   */
-  favicon: string;
+	/**
+	 * @generated from field: string favicon = 4;
+	 */
+	favicon: string;
 
-  /**
-   * @generated from field: string link_id = 5;
-   */
-  linkId: string;
+	/**
+	 * @generated from field: string link_id = 5;
+	 */
+	linkId: string;
 
-  /**
-   * @generated from field: string app_version = 6;
-   */
-  appVersion: string;
+	/**
+	 * @generated from field: string app_version = 6;
+	 */
+	appVersion: string;
 
-  /**
-   * @generated from field: string sentry_dsn_web = 7;
-   */
-  sentryDsnWeb: string;
+	/**
+	 * @generated from field: string sentry_dsn_web = 7;
+	 */
+	sentryDsnWeb: string;
 
-  /**
-   * @generated from field: string document_policy = 8;
-   */
-  documentPolicy: string;
+	/**
+	 * @generated from field: string document_policy = 8;
+	 */
+	documentPolicy: string;
 
-  /**
-   * @generated from field: string patreon_client_id = 9;
-   */
-  patreonClientId: string;
+	/**
+	 * @generated from field: string patreon_client_id = 9;
+	 */
+	patreonClientId: string;
 
-  /**
-   * @generated from field: string discord_client_id = 10;
-   */
-  discordClientId: string;
+	/**
+	 * @generated from field: string discord_client_id = 10;
+	 */
+	discordClientId: string;
 
-  /**
-   * @generated from field: bool discord_enabled = 11;
-   */
-  discordEnabled: boolean;
+	/**
+	 * @generated from field: bool discord_enabled = 11;
+	 */
+	discordEnabled: boolean;
 
-  /**
-   * @generated from field: bool patreon_enabled = 12;
-   */
-  patreonEnabled: boolean;
+	/**
+	 * @generated from field: bool patreon_enabled = 12;
+	 */
+	patreonEnabled: boolean;
 
-  /**
-   * @generated from field: string default_route = 13;
-   */
-  defaultRoute: string;
+	/**
+	 * @generated from field: string default_route = 13;
+	 */
+	defaultRoute: string;
 
-  /**
-   * @generated from field: bool news_enabled = 14;
-   */
-  newsEnabled: boolean;
+	/**
+	 * @generated from field: bool news_enabled = 14;
+	 */
+	newsEnabled: boolean;
 
-  /**
-   * @generated from field: bool contests_enabled = 15;
-   */
-  contestsEnabled: boolean;
+	/**
+	 * @generated from field: bool contests_enabled = 15;
+	 */
+	contestsEnabled: boolean;
 
-  /**
-   * @generated from field: bool wiki_enabled = 16;
-   */
-  wikiEnabled: boolean;
+	/**
+	 * @generated from field: bool wiki_enabled = 16;
+	 */
+	wikiEnabled: boolean;
 
-  /**
-   * @generated from field: bool stats_enabled = 17;
-   */
-  statsEnabled: boolean;
+	/**
+	 * @generated from field: bool stats_enabled = 17;
+	 */
+	statsEnabled: boolean;
 
-  /**
-   * @generated from field: bool servers_enabled = 18;
-   */
-  serversEnabled: boolean;
+	/**
+	 * @generated from field: bool servers_enabled = 18;
+	 */
+	serversEnabled: boolean;
 
-  /**
-   * @generated from field: bool reports_enabled = 19;
-   */
-  reportsEnabled: boolean;
+	/**
+	 * @generated from field: bool reports_enabled = 19;
+	 */
+	reportsEnabled: boolean;
 
-  /**
-   * @generated from field: bool chatlogs_enabled = 20;
-   */
-  chatlogsEnabled: boolean;
+	/**
+	 * @generated from field: bool chatlogs_enabled = 20;
+	 */
+	chatlogsEnabled: boolean;
 
-  /**
-   * @generated from field: bool demos_enabled = 21;
-   */
-  demosEnabled: boolean;
+	/**
+	 * @generated from field: bool demos_enabled = 21;
+	 */
+	demosEnabled: boolean;
 
-  /**
-   * @generated from field: bool speedruns_enabled = 22;
-   */
-  speedrunsEnabled: boolean;
+	/**
+	 * @generated from field: bool speedruns_enabled = 22;
+	 */
+	speedrunsEnabled: boolean;
 
-  /**
-   * @generated from field: bool forums_enabled = 23;
-   */
-  forumsEnabled: boolean;
+	/**
+	 * @generated from field: bool forums_enabled = 23;
+	 */
+	forumsEnabled: boolean;
 
-  /**
-   * @generated from field: bool mge_enabled = 24;
-   */
-  mgeEnabled: boolean;
+	/**
+	 * @generated from field: bool mge_enabled = 24;
+	 */
+	mgeEnabled: boolean;
 };
 
 /**
  * Describes the message config.v1.InfoResponse.
  * Use `create(InfoResponseSchema)` to create a new message.
  */
-export const InfoResponseSchema: GenMessage<InfoResponse> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 0);
+export const InfoResponseSchema: GenMessage<InfoResponse> = /*@__PURE__*/ messageDesc(file_config_v1_config, 1);
 
 /**
  * @generated from message config.v1.GetResponse
  */
 export type GetResponse = Message<"config.v1.GetResponse"> & {
-  /**
-   * @generated from field: config.v1.Config config = 1;
-   */
-  config?: Config;
+	/**
+	 * @generated from field: config.v1.Config config = 1;
+	 */
+	config?: Config;
 };
 
 /**
  * Describes the message config.v1.GetResponse.
  * Use `create(GetResponseSchema)` to create a new message.
  */
-export const GetResponseSchema: GenMessage<GetResponse> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 1);
+export const GetResponseSchema: GenMessage<GetResponse> = /*@__PURE__*/ messageDesc(file_config_v1_config, 2);
 
 /**
  * @generated from message config.v1.UpdateRequest
  */
 export type UpdateRequest = Message<"config.v1.UpdateRequest"> & {
-  /**
-   * @generated from field: config.v1.Config config = 1;
-   */
-  config?: Config;
+	/**
+	 * @generated from field: config.v1.Config config = 1;
+	 */
+	config?: Config;
 };
 
 /**
  * Describes the message config.v1.UpdateRequest.
  * Use `create(UpdateRequestSchema)` to create a new message.
  */
-export const UpdateRequestSchema: GenMessage<UpdateRequest> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 2);
+export const UpdateRequestSchema: GenMessage<UpdateRequest> = /*@__PURE__*/ messageDesc(file_config_v1_config, 3);
 
 /**
  * @generated from message config.v1.UpdateResponse
  */
 export type UpdateResponse = Message<"config.v1.UpdateResponse"> & {
-  /**
-   * @generated from field: config.v1.Config config = 1;
-   */
-  config?: Config;
+	/**
+	 * @generated from field: config.v1.Config config = 1;
+	 */
+	config?: Config;
 };
 
 /**
  * Describes the message config.v1.UpdateResponse.
  * Use `create(UpdateResponseSchema)` to create a new message.
  */
-export const UpdateResponseSchema: GenMessage<UpdateResponse> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 3);
+export const UpdateResponseSchema: GenMessage<UpdateResponse> = /*@__PURE__*/ messageDesc(file_config_v1_config, 4);
 
 /**
  * @generated from message config.v1.General
  */
 export type General = Message<"config.v1.General"> & {
-  /**
-   * @generated from field: string site_name = 1;
-   */
-  siteName: string;
+	/**
+	 * @generated from field: string site_name = 1;
+	 */
+	siteName: string;
 
-  /**
-   * @generated from field: string site_description = 2;
-   */
-  siteDescription: string;
+	/**
+	 * @generated from field: string site_description = 2;
+	 */
+	siteDescription: string;
 
-  /**
-   * @generated from field: config.v1.RunMode mode = 3;
-   */
-  mode: RunMode;
+	/**
+	 * @generated from field: config.v1.RunMode mode = 3;
+	 */
+	mode: RunMode;
 
-  /**
-   * @generated from field: config.v1.FileServeMode file_serve_mode = 4;
-   */
-  fileServeMode: FileServeMode;
+	/**
+	 * @generated from field: config.v1.FileServeMode file_serve_mode = 4;
+	 */
+	fileServeMode: FileServeMode;
 
-  /**
-   * @generated from field: string srcds_log_addr = 5;
-   */
-  srcdsLogAddr: string;
+	/**
+	 * @generated from field: string srcds_log_addr = 5;
+	 */
+	srcdsLogAddr: string;
 
-  /**
-   * @generated from field: string asset_url = 6;
-   */
-  assetUrl: string;
+	/**
+	 * @generated from field: string asset_url = 6;
+	 */
+	assetUrl: string;
 
-  /**
-   * @generated from field: string favicon = 7;
-   */
-  favicon: string;
+	/**
+	 * @generated from field: string favicon = 7;
+	 */
+	favicon: string;
 
-  /**
-   * @generated from field: string default_route = 8;
-   */
-  defaultRoute: string;
+	/**
+	 * @generated from field: string default_route = 8;
+	 */
+	defaultRoute: string;
 
-  /**
-   * @generated from field: bool news_enabled = 9;
-   */
-  newsEnabled: boolean;
+	/**
+	 * @generated from field: bool news_enabled = 9;
+	 */
+	newsEnabled: boolean;
 
-  /**
-   * @generated from field: bool forums_enabled = 10;
-   */
-  forumsEnabled: boolean;
+	/**
+	 * @generated from field: bool forums_enabled = 10;
+	 */
+	forumsEnabled: boolean;
 
-  /**
-   * @generated from field: bool contests_enabled = 11;
-   */
-  contestsEnabled: boolean;
+	/**
+	 * @generated from field: bool contests_enabled = 11;
+	 */
+	contestsEnabled: boolean;
 
-  /**
-   * @generated from field: bool wiki_enabled = 12;
-   */
-  wikiEnabled: boolean;
+	/**
+	 * @generated from field: bool wiki_enabled = 12;
+	 */
+	wikiEnabled: boolean;
 
-  /**
-   * @generated from field: bool stats_enabled = 13;
-   */
-  statsEnabled: boolean;
+	/**
+	 * @generated from field: bool stats_enabled = 13;
+	 */
+	statsEnabled: boolean;
 
-  /**
-   * @generated from field: bool servers_enabled = 14;
-   */
-  serversEnabled: boolean;
+	/**
+	 * @generated from field: bool servers_enabled = 14;
+	 */
+	serversEnabled: boolean;
 
-  /**
-   * @generated from field: bool reports_enabled = 15;
-   */
-  reportsEnabled: boolean;
+	/**
+	 * @generated from field: bool reports_enabled = 15;
+	 */
+	reportsEnabled: boolean;
 
-  /**
-   * @generated from field: bool chatlogs_enabled = 16;
-   */
-  chatlogsEnabled: boolean;
+	/**
+	 * @generated from field: bool chatlogs_enabled = 16;
+	 */
+	chatlogsEnabled: boolean;
 
-  /**
-   * @generated from field: bool demos_enabled = 17;
-   */
-  demosEnabled: boolean;
+	/**
+	 * @generated from field: bool demos_enabled = 17;
+	 */
+	demosEnabled: boolean;
 
-  /**
-   * @generated from field: bool speedruns_enabled = 18;
-   */
-  speedrunsEnabled: boolean;
+	/**
+	 * @generated from field: bool speedruns_enabled = 18;
+	 */
+	speedrunsEnabled: boolean;
 
-  /**
-   * @generated from field: string sentry_dsn = 19;
-   */
-  sentryDsn: string;
+	/**
+	 * @generated from field: string sentry_dsn = 19;
+	 */
+	sentryDsn: string;
 
-  /**
-   * @generated from field: string sentry_dsn_web = 20;
-   */
-  sentryDsnWeb: string;
+	/**
+	 * @generated from field: string sentry_dsn_web = 20;
+	 */
+	sentryDsnWeb: string;
 };
 
 /**
  * Describes the message config.v1.General.
  * Use `create(GeneralSchema)` to create a new message.
  */
-export const GeneralSchema: GenMessage<General> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 4);
+export const GeneralSchema: GenMessage<General> = /*@__PURE__*/ messageDesc(file_config_v1_config, 5);
 
 /**
  * @generated from message config.v1.Debug
  */
 export type Debug = Message<"config.v1.Debug"> & {
-  /**
-   * @generated from field: bool skip_open_id_validation = 1;
-   */
-  skipOpenIdValidation: boolean;
+	/**
+	 * @generated from field: bool skip_open_id_validation = 1;
+	 */
+	skipOpenIdValidation: boolean;
 
-  /**
-   * @generated from field: string add_rcon_log_address = 2;
-   */
-  addRconLogAddress: string;
+	/**
+	 * @generated from field: string add_rcon_log_address = 2;
+	 */
+	addRconLogAddress: string;
 };
 
 /**
  * Describes the message config.v1.Debug.
  * Use `create(DebugSchema)` to create a new message.
  */
-export const DebugSchema: GenMessage<Debug> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 5);
+export const DebugSchema: GenMessage<Debug> = /*@__PURE__*/ messageDesc(file_config_v1_config, 6);
 
 /**
  * @generated from message config.v1.Demo
  */
 export type Demo = Message<"config.v1.Demo"> & {
-  /**
-   * @generated from field: bool cleanup_enabled = 1;
-   */
-  cleanupEnabled: boolean;
+	/**
+	 * @generated from field: bool cleanup_enabled = 1;
+	 */
+	cleanupEnabled: boolean;
 
-  /**
-   * @generated from field: config.v1.DemoStrategy strategy = 2;
-   */
-  strategy: DemoStrategy;
+	/**
+	 * @generated from field: config.v1.DemoStrategy strategy = 2;
+	 */
+	strategy: DemoStrategy;
 
-  /**
-   * @generated from field: float cleanup_min_pct = 3;
-   */
-  cleanupMinPct: number;
+	/**
+	 * @generated from field: float cleanup_min_pct = 3;
+	 */
+	cleanupMinPct: number;
 
-  /**
-   * @generated from field: string cleanup_mount = 4;
-   */
-  cleanupMount: string;
+	/**
+	 * @generated from field: string cleanup_mount = 4;
+	 */
+	cleanupMount: string;
 
-  /**
-   * @generated from field: int64 count_limit = 5;
-   */
-  countLimit: bigint;
+	/**
+	 * @generated from field: int64 count_limit = 5;
+	 */
+	countLimit: bigint;
 
-  /**
-   * @generated from field: string parser_url = 6;
-   */
-  parserUrl: string;
+	/**
+	 * @generated from field: string parser_url = 6;
+	 */
+	parserUrl: string;
 };
 
 /**
  * Describes the message config.v1.Demo.
  * Use `create(DemoSchema)` to create a new message.
  */
-export const DemoSchema: GenMessage<Demo> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 6);
+export const DemoSchema: GenMessage<Demo> = /*@__PURE__*/ messageDesc(file_config_v1_config, 7);
 
 /**
  * @generated from message config.v1.Filters
  */
 export type Filters = Message<"config.v1.Filters"> & {
-  /**
-   * @generated from field: bool enabled = 1;
-   */
-  enabled: boolean;
+	/**
+	 * @generated from field: bool enabled = 1;
+	 */
+	enabled: boolean;
 
-  /**
-   * @generated from field: int32 warning_timeout = 2;
-   */
-  warningTimeout: number;
+	/**
+	 * @generated from field: int32 warning_timeout = 2;
+	 */
+	warningTimeout: number;
 
-  /**
-   * @generated from field: int32 warning_limit = 3;
-   */
-  warningLimit: number;
+	/**
+	 * @generated from field: int32 warning_limit = 3;
+	 */
+	warningLimit: number;
 
-  /**
-   * @generated from field: bool dry = 4;
-   */
-  dry: boolean;
+	/**
+	 * @generated from field: bool dry = 4;
+	 */
+	dry: boolean;
 
-  /**
-   * @generated from field: bool ping_discord = 5;
-   */
-  pingDiscord: boolean;
+	/**
+	 * @generated from field: bool ping_discord = 5;
+	 */
+	pingDiscord: boolean;
 
-  /**
-   * @generated from field: int32 max_weight = 6;
-   */
-  maxWeight: number;
+	/**
+	 * @generated from field: int32 max_weight = 6;
+	 */
+	maxWeight: number;
 
-  /**
-   * @generated from field: int32 check_timeout = 7;
-   */
-  checkTimeout: number;
+	/**
+	 * @generated from field: int32 check_timeout = 7;
+	 */
+	checkTimeout: number;
 
-  /**
-   * @generated from field: int32 match_timeout = 8;
-   */
-  matchTimeout: number;
+	/**
+	 * @generated from field: int32 match_timeout = 8;
+	 */
+	matchTimeout: number;
 };
 
 /**
  * Describes the message config.v1.Filters.
  * Use `create(FiltersSchema)` to create a new message.
  */
-export const FiltersSchema: GenMessage<Filters> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 7);
+export const FiltersSchema: GenMessage<Filters> = /*@__PURE__*/ messageDesc(file_config_v1_config, 8);
 
 /**
  * @generated from message config.v1.Discord
  */
 export type Discord = Message<"config.v1.Discord"> & {
-  /**
-   * @generated from field: bool enabled = 1;
-   */
-  enabled: boolean;
+	/**
+	 * @generated from field: bool enabled = 1;
+	 */
+	enabled: boolean;
 
-  /**
-   * @generated from field: bool bot_enabled = 2;
-   */
-  botEnabled: boolean;
+	/**
+	 * @generated from field: bool bot_enabled = 2;
+	 */
+	botEnabled: boolean;
 
-  /**
-   * @generated from field: bool integrations_enabled = 3;
-   */
-  integrationsEnabled: boolean;
+	/**
+	 * @generated from field: bool integrations_enabled = 3;
+	 */
+	integrationsEnabled: boolean;
 
-  /**
-   * @generated from field: string app_id = 4;
-   */
-  appId: string;
+	/**
+	 * @generated from field: string app_id = 4;
+	 */
+	appId: string;
 
-  /**
-   * @generated from field: string app_secret = 5;
-   */
-  appSecret: string;
+	/**
+	 * @generated from field: string app_secret = 5;
+	 */
+	appSecret: string;
 
-  /**
-   * @generated from field: string link_id = 6;
-   */
-  linkId: string;
+	/**
+	 * @generated from field: string link_id = 6;
+	 */
+	linkId: string;
 
-  /**
-   * @generated from field: string token = 7;
-   */
-  token: string;
+	/**
+	 * @generated from field: string token = 7;
+	 */
+	token: string;
 
-  /**
-   * @generated from field: string guild_id = 8;
-   */
-  guildId: string;
+	/**
+	 * @generated from field: string guild_id = 8;
+	 */
+	guildId: string;
 
-  /**
-   * @generated from field: bool public_log_channel_enable = 9;
-   */
-  publicLogChannelEnable: boolean;
+	/**
+	 * @generated from field: bool public_log_channel_enable = 9;
+	 */
+	publicLogChannelEnable: boolean;
 
-  /**
-   * @generated from field: string log_channel_id = 10;
-   */
-  logChannelId: string;
+	/**
+	 * @generated from field: string log_channel_id = 10;
+	 */
+	logChannelId: string;
 
-  /**
-   * @generated from field: string public_match_log_channel_id = 11;
-   */
-  publicMatchLogChannelId: string;
+	/**
+	 * @generated from field: string public_match_log_channel_id = 11;
+	 */
+	publicMatchLogChannelId: string;
 
-  /**
-   * @generated from field: string vote_log_channel_id = 12;
-   */
-  voteLogChannelId: string;
+	/**
+	 * @generated from field: string vote_log_channel_id = 12;
+	 */
+	voteLogChannelId: string;
 
-  /**
-   * @generated from field: string appeal_log_channel_id = 13;
-   */
-  appealLogChannelId: string;
+	/**
+	 * @generated from field: string appeal_log_channel_id = 13;
+	 */
+	appealLogChannelId: string;
 
-  /**
-   * @generated from field: string ban_log_channel_id = 14;
-   */
-  banLogChannelId: string;
+	/**
+	 * @generated from field: string ban_log_channel_id = 14;
+	 */
+	banLogChannelId: string;
 
-  /**
-   * @generated from field: string forum_log_channel_id = 15;
-   */
-  forumLogChannelId: string;
+	/**
+	 * @generated from field: string forum_log_channel_id = 15;
+	 */
+	forumLogChannelId: string;
 
-  /**
-   * @generated from field: string kick_log_channel_id = 16;
-   */
-  kickLogChannelId: string;
+	/**
+	 * @generated from field: string kick_log_channel_id = 16;
+	 */
+	kickLogChannelId: string;
 
-  /**
-   * @generated from field: string mod_ping_role_id = 17;
-   */
-  modPingRoleId: string;
+	/**
+	 * @generated from field: string mod_ping_role_id = 17;
+	 */
+	modPingRoleId: string;
 
-  /**
-   * @generated from field: string anticheat_channel_id = 18;
-   */
-  anticheatChannelId: string;
+	/**
+	 * @generated from field: string anticheat_channel_id = 18;
+	 */
+	anticheatChannelId: string;
 
-  /**
-   * @generated from field: string seed_channel_id = 19;
-   */
-  seedChannelId: string;
+	/**
+	 * @generated from field: string seed_channel_id = 19;
+	 */
+	seedChannelId: string;
 
-  /**
-   * @generated from field: string word_filter_log_channel_id = 20;
-   */
-  wordFilterLogChannelId: string;
+	/**
+	 * @generated from field: string word_filter_log_channel_id = 20;
+	 */
+	wordFilterLogChannelId: string;
 
-  /**
-   * @generated from field: string chat_log_channel_id = 21;
-   */
-  chatLogChannelId: string;
+	/**
+	 * @generated from field: string chat_log_channel_id = 21;
+	 */
+	chatLogChannelId: string;
 };
 
 /**
  * Describes the message config.v1.Discord.
  * Use `create(DiscordSchema)` to create a new message.
  */
-export const DiscordSchema: GenMessage<Discord> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 8);
+export const DiscordSchema: GenMessage<Discord> = /*@__PURE__*/ messageDesc(file_config_v1_config, 9);
 
 /**
  * @generated from message config.v1.Sourcemod
  */
 export type Sourcemod = Message<"config.v1.Sourcemod"> & {
-  /**
-   * @generated from field: bool center_projectiles = 1;
-   */
-  centerProjectiles: boolean;
+	/**
+	 * @generated from field: bool center_projectiles = 1;
+	 */
+	centerProjectiles: boolean;
 };
 
 /**
  * Describes the message config.v1.Sourcemod.
  * Use `create(SourcemodSchema)` to create a new message.
  */
-export const SourcemodSchema: GenMessage<Sourcemod> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 9);
+export const SourcemodSchema: GenMessage<Sourcemod> = /*@__PURE__*/ messageDesc(file_config_v1_config, 10);
 
 /**
  * @generated from message config.v1.Log
  */
 export type Log = Message<"config.v1.Log"> & {
-  /**
-   * @generated from field: config.v1.Level level = 1;
-   */
-  level: Level;
+	/**
+	 * @generated from field: config.v1.Level level = 1;
+	 */
+	level: Level;
 
-  /**
-   * @generated from field: string file = 2;
-   */
-  file: string;
+	/**
+	 * @generated from field: string file = 2;
+	 */
+	file: string;
 
-  /**
-   * @generated from field: bool http_enabled = 3;
-   */
-  httpEnabled: boolean;
+	/**
+	 * @generated from field: bool http_enabled = 3;
+	 */
+	httpEnabled: boolean;
 
-  /**
-   * @generated from field: bool http_otel_enabled = 4;
-   */
-  httpOtelEnabled: boolean;
+	/**
+	 * @generated from field: bool http_otel_enabled = 4;
+	 */
+	httpOtelEnabled: boolean;
 
-  /**
-   * @generated from field: config.v1.Level http_level = 5;
-   */
-  httpLevel: Level;
+	/**
+	 * @generated from field: config.v1.Level http_level = 5;
+	 */
+	httpLevel: Level;
 };
 
 /**
  * Describes the message config.v1.Log.
  * Use `create(LogSchema)` to create a new message.
  */
-export const LogSchema: GenMessage<Log> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 10);
+export const LogSchema: GenMessage<Log> = /*@__PURE__*/ messageDesc(file_config_v1_config, 11);
 
 /**
  * @generated from message config.v1.GeoLocation
  */
 export type GeoLocation = Message<"config.v1.GeoLocation"> & {
-  /**
-   * @generated from field: bool enabled = 1;
-   */
-  enabled: boolean;
+	/**
+	 * @generated from field: bool enabled = 1;
+	 */
+	enabled: boolean;
 
-  /**
-   * @generated from field: string cache_path = 2;
-   */
-  cachePath: string;
+	/**
+	 * @generated from field: string cache_path = 2;
+	 */
+	cachePath: string;
 
-  /**
-   * @generated from field: string token = 3;
-   */
-  token: string;
+	/**
+	 * @generated from field: string token = 3;
+	 */
+	token: string;
 };
 
 /**
  * Describes the message config.v1.GeoLocation.
  * Use `create(GeoLocationSchema)` to create a new message.
  */
-export const GeoLocationSchema: GenMessage<GeoLocation> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 11);
+export const GeoLocationSchema: GenMessage<GeoLocation> = /*@__PURE__*/ messageDesc(file_config_v1_config, 12);
 
 /**
  * @generated from message config.v1.Patreon
  */
 export type Patreon = Message<"config.v1.Patreon"> & {
-  /**
-   * @generated from field: bool enabled = 1;
-   */
-  enabled: boolean;
+	/**
+	 * @generated from field: bool enabled = 1;
+	 */
+	enabled: boolean;
 
-  /**
-   * @generated from field: bool integrations_enabled = 2;
-   */
-  integrationsEnabled: boolean;
+	/**
+	 * @generated from field: bool integrations_enabled = 2;
+	 */
+	integrationsEnabled: boolean;
 
-  /**
-   * @generated from field: string client_id = 3;
-   */
-  clientId: string;
+	/**
+	 * @generated from field: string client_id = 3;
+	 */
+	clientId: string;
 
-  /**
-   * @generated from field: string client_secret = 4;
-   */
-  clientSecret: string;
+	/**
+	 * @generated from field: string client_secret = 4;
+	 */
+	clientSecret: string;
 
-  /**
-   * @generated from field: string creator_access_token = 5;
-   */
-  creatorAccessToken: string;
+	/**
+	 * @generated from field: string creator_access_token = 5;
+	 */
+	creatorAccessToken: string;
 
-  /**
-   * @generated from field: string creator_refresh_token = 6;
-   */
-  creatorRefreshToken: string;
+	/**
+	 * @generated from field: string creator_refresh_token = 6;
+	 */
+	creatorRefreshToken: string;
 };
 
 /**
  * Describes the message config.v1.Patreon.
  * Use `create(PatreonSchema)` to create a new message.
  */
-export const PatreonSchema: GenMessage<Patreon> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 12);
+export const PatreonSchema: GenMessage<Patreon> = /*@__PURE__*/ messageDesc(file_config_v1_config, 13);
 
 /**
  * @generated from message config.v1.SSH
  */
 export type SSH = Message<"config.v1.SSH"> & {
-  /**
-   * @generated from field: bool enabled = 1;
-   */
-  enabled: boolean;
+	/**
+	 * @generated from field: bool enabled = 1;
+	 */
+	enabled: boolean;
 
-  /**
-   * @generated from field: string username = 2;
-   */
-  username: string;
+	/**
+	 * @generated from field: string username = 2;
+	 */
+	username: string;
 
-  /**
-   * @generated from field: int32 port = 3;
-   */
-  port: number;
+	/**
+	 * @generated from field: int32 port = 3;
+	 */
+	port: number;
 
-  /**
-   * @generated from field: string private_key_path = 4;
-   */
-  privateKeyPath: string;
+	/**
+	 * @generated from field: string private_key_path = 4;
+	 */
+	privateKeyPath: string;
 
-  /**
-   * @generated from field: config.v1.HostKeyStrategy host_key_strategy = 5;
-   */
-  hostKeyStrategy: HostKeyStrategy;
+	/**
+	 * @generated from field: config.v1.HostKeyStrategy host_key_strategy = 5;
+	 */
+	hostKeyStrategy: HostKeyStrategy;
 
-  /**
-   * @generated from field: string password = 6;
-   */
-  password: string;
+	/**
+	 * @generated from field: string password = 6;
+	 */
+	password: string;
 
-  /**
-   * @generated from field: int32 update_interval = 7;
-   */
-  updateInterval: number;
+	/**
+	 * @generated from field: int32 update_interval = 7;
+	 */
+	updateInterval: number;
 
-  /**
-   * @generated from field: int32 timeout = 8;
-   */
-  timeout: number;
+	/**
+	 * @generated from field: int32 timeout = 8;
+	 */
+	timeout: number;
 
-  /**
-   * @generated from field: string demo_path_fmt = 9;
-   */
-  demoPathFmt: string;
+	/**
+	 * @generated from field: string demo_path_fmt = 9;
+	 */
+	demoPathFmt: string;
 
-  /**
-   * @generated from field: string stac_path = 10;
-   */
-  stacPath: string;
+	/**
+	 * @generated from field: string stac_path = 10;
+	 */
+	stacPath: string;
 };
 
 /**
  * Describes the message config.v1.SSH.
  * Use `create(SSHSchema)` to create a new message.
  */
-export const SSHSchema: GenMessage<SSH> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 13);
+export const SSHSchema: GenMessage<SSH> = /*@__PURE__*/ messageDesc(file_config_v1_config, 14);
 
 /**
  * @generated from message config.v1.Network
  */
 export type Network = Message<"config.v1.Network"> & {
-  /**
-   * @generated from field: bool sdr_enabled = 1;
-   */
-  sdrEnabled: boolean;
+	/**
+	 * @generated from field: bool sdr_enabled = 1;
+	 */
+	sdrEnabled: boolean;
 
-  /**
-   * @generated from field: bool sdr_dns_enabled = 2;
-   */
-  sdrDnsEnabled: boolean;
+	/**
+	 * @generated from field: bool sdr_dns_enabled = 2;
+	 */
+	sdrDnsEnabled: boolean;
 
-  /**
-   * @generated from field: string cf_key = 3;
-   */
-  cfKey: string;
+	/**
+	 * @generated from field: string cf_key = 3;
+	 */
+	cfKey: string;
 
-  /**
-   * @generated from field: string cf_email = 4;
-   */
-  cfEmail: string;
+	/**
+	 * @generated from field: string cf_email = 4;
+	 */
+	cfEmail: string;
 
-  /**
-   * @generated from field: string cf_zone_id = 5;
-   */
-  cfZoneId: string;
+	/**
+	 * @generated from field: string cf_zone_id = 5;
+	 */
+	cfZoneId: string;
 };
 
 /**
  * Describes the message config.v1.Network.
  * Use `create(NetworkSchema)` to create a new message.
  */
-export const NetworkSchema: GenMessage<Network> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 14);
+export const NetworkSchema: GenMessage<Network> = /*@__PURE__*/ messageDesc(file_config_v1_config, 15);
 
 /**
  * @generated from message config.v1.LocalStore
  */
 export type LocalStore = Message<"config.v1.LocalStore"> & {
-  /**
-   * @generated from field: string path_root = 1;
-   */
-  pathRoot: string;
+	/**
+	 * @generated from field: string path_root = 1;
+	 */
+	pathRoot: string;
 };
 
 /**
  * Describes the message config.v1.LocalStore.
  * Use `create(LocalStoreSchema)` to create a new message.
  */
-export const LocalStoreSchema: GenMessage<LocalStore> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 15);
+export const LocalStoreSchema: GenMessage<LocalStore> = /*@__PURE__*/ messageDesc(file_config_v1_config, 16);
 
 /**
  * @generated from message config.v1.Exports
  */
 export type Exports = Message<"config.v1.Exports"> & {
-  /**
-   * @generated from field: bool bd_enabled = 1;
-   */
-  bdEnabled: boolean;
+	/**
+	 * @generated from field: bool bd_enabled = 1;
+	 */
+	bdEnabled: boolean;
 
-  /**
-   * @generated from field: bool valve_enabled = 2;
-   */
-  valveEnabled: boolean;
+	/**
+	 * @generated from field: bool valve_enabled = 2;
+	 */
+	valveEnabled: boolean;
 
-  /**
-   * @generated from field: repeated string authorized_keys = 3;
-   */
-  authorizedKeys: string[];
+	/**
+	 * @generated from field: repeated string authorized_keys = 3;
+	 */
+	authorizedKeys: string[];
 };
 
 /**
  * Describes the message config.v1.Exports.
  * Use `create(ExportsSchema)` to create a new message.
  */
-export const ExportsSchema: GenMessage<Exports> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 16);
+export const ExportsSchema: GenMessage<Exports> = /*@__PURE__*/ messageDesc(file_config_v1_config, 17);
 
 /**
  * @generated from message config.v1.Anticheat
  */
 export type Anticheat = Message<"config.v1.Anticheat"> & {
-  /**
-   * @generated from field: bool enabled = 1;
-   */
-  enabled: boolean;
+	/**
+	 * @generated from field: bool enabled = 1;
+	 */
+	enabled: boolean;
 
-  /**
-   * @generated from field: config.v1.Action action = 2;
-   */
-  action: Action;
+	/**
+	 * @generated from field: config.v1.Action action = 2;
+	 */
+	action: Action;
 
-  /**
-   * @generated from field: int32 duration = 3;
-   */
-  duration: number;
+	/**
+	 * @generated from field: int32 duration = 3;
+	 */
+	duration: number;
 
-  /**
-   * @generated from field: int32 max_aim_snaps = 4;
-   */
-  maxAimSnaps: number;
+	/**
+	 * @generated from field: int32 max_aim_snaps = 4;
+	 */
+	maxAimSnaps: number;
 
-  /**
-   * @generated from field: int32 max_psilent = 5;
-   */
-  maxPsilent: number;
+	/**
+	 * @generated from field: int32 max_psilent = 5;
+	 */
+	maxPsilent: number;
 
-  /**
-   * @generated from field: int32 max_bhop = 6;
-   */
-  maxBhop: number;
+	/**
+	 * @generated from field: int32 max_bhop = 6;
+	 */
+	maxBhop: number;
 
-  /**
-   * @generated from field: int32 max_fake_ang = 7;
-   */
-  maxFakeAng: number;
+	/**
+	 * @generated from field: int32 max_fake_ang = 7;
+	 */
+	maxFakeAng: number;
 
-  /**
-   * @generated from field: int32 max_cmd_num = 8;
-   */
-  maxCmdNum: number;
+	/**
+	 * @generated from field: int32 max_cmd_num = 8;
+	 */
+	maxCmdNum: number;
 
-  /**
-   * @generated from field: int32 max_too_many_connections = 9;
-   */
-  maxTooManyConnections: number;
+	/**
+	 * @generated from field: int32 max_too_many_connections = 9;
+	 */
+	maxTooManyConnections: number;
 
-  /**
-   * @generated from field: int32 max_oob_var = 10;
-   */
-  maxOobVar: number;
+	/**
+	 * @generated from field: int32 max_oob_var = 10;
+	 */
+	maxOobVar: number;
 
-  /**
-   * @generated from field: int32 max_invalid_user_cmd = 11;
-   */
-  maxInvalidUserCmd: number;
+	/**
+	 * @generated from field: int32 max_invalid_user_cmd = 11;
+	 */
+	maxInvalidUserCmd: number;
 
-  /**
-   * @generated from field: int32 max_cheat_cvar = 12;
-   */
-  maxCheatCvar: number;
+	/**
+	 * @generated from field: int32 max_cheat_cvar = 12;
+	 */
+	maxCheatCvar: number;
 };
 
 /**
  * Describes the message config.v1.Anticheat.
  * Use `create(AnticheatSchema)` to create a new message.
  */
-export const AnticheatSchema: GenMessage<Anticheat> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 17);
+export const AnticheatSchema: GenMessage<Anticheat> = /*@__PURE__*/ messageDesc(file_config_v1_config, 18);
 
 /**
  * @generated from message config.v1.Clientprefs
  */
 export type Clientprefs = Message<"config.v1.Clientprefs"> & {
-  /**
-   * @generated from field: bool center_projectiles = 1;
-   */
-  centerProjectiles: boolean;
+	/**
+	 * @generated from field: bool center_projectiles = 1;
+	 */
+	centerProjectiles: boolean;
 };
 
 /**
  * Describes the message config.v1.Clientprefs.
  * Use `create(ClientprefsSchema)` to create a new message.
  */
-export const ClientprefsSchema: GenMessage<Clientprefs> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 18);
+export const ClientprefsSchema: GenMessage<Clientprefs> = /*@__PURE__*/ messageDesc(file_config_v1_config, 19);
 
 /**
  * @generated from message config.v1.Config
  */
 export type Config = Message<"config.v1.Config"> & {
-  /**
-   * @generated from field: config.v1.General general = 1;
-   */
-  general?: General;
+	/**
+	 * @generated from field: config.v1.General general = 1;
+	 */
+	general?: General;
 
-  /**
-   * @generated from field: config.v1.Debug debug = 2;
-   */
-  debug?: Debug;
+	/**
+	 * @generated from field: config.v1.Debug debug = 2;
+	 */
+	debug?: Debug;
 
-  /**
-   * @generated from field: config.v1.Demo demo = 3;
-   */
-  demo?: Demo;
+	/**
+	 * @generated from field: config.v1.Demo demo = 3;
+	 */
+	demo?: Demo;
 
-  /**
-   * @generated from field: config.v1.Filters filters = 4;
-   */
-  filters?: Filters;
+	/**
+	 * @generated from field: config.v1.Filters filters = 4;
+	 */
+	filters?: Filters;
 
-  /**
-   * @generated from field: config.v1.Discord discord = 5;
-   */
-  discord?: Discord;
+	/**
+	 * @generated from field: config.v1.Discord discord = 5;
+	 */
+	discord?: Discord;
 
-  /**
-   * @generated from field: config.v1.Clientprefs client_prefs = 6;
-   */
-  clientPrefs?: Clientprefs;
+	/**
+	 * @generated from field: config.v1.Clientprefs client_prefs = 6;
+	 */
+	clientPrefs?: Clientprefs;
 
-  /**
-   * @generated from field: config.v1.Log log = 7;
-   */
-  log?: Log;
+	/**
+	 * @generated from field: config.v1.Log log = 7;
+	 */
+	log?: Log;
 
-  /**
-   * @generated from field: config.v1.GeoLocation geo_location = 8;
-   */
-  geoLocation?: GeoLocation;
+	/**
+	 * @generated from field: config.v1.GeoLocation geo_location = 8;
+	 */
+	geoLocation?: GeoLocation;
 
-  /**
-   * @generated from field: config.v1.Patreon patreon = 9;
-   */
-  patreon?: Patreon;
+	/**
+	 * @generated from field: config.v1.Patreon patreon = 9;
+	 */
+	patreon?: Patreon;
 
-  /**
-   * @generated from field: config.v1.SSH ssh = 10;
-   */
-  ssh?: SSH;
+	/**
+	 * @generated from field: config.v1.SSH ssh = 10;
+	 */
+	ssh?: SSH;
 
-  /**
-   * @generated from field: config.v1.Network network = 11;
-   */
-  network?: Network;
+	/**
+	 * @generated from field: config.v1.Network network = 11;
+	 */
+	network?: Network;
 
-  /**
-   * @generated from field: config.v1.LocalStore local_store = 12;
-   */
-  localStore?: LocalStore;
+	/**
+	 * @generated from field: config.v1.LocalStore local_store = 12;
+	 */
+	localStore?: LocalStore;
 
-  /**
-   * @generated from field: config.v1.Exports exports = 13;
-   */
-  exports?: Exports;
+	/**
+	 * @generated from field: config.v1.Exports exports = 13;
+	 */
+	exports?: Exports;
 
-  /**
-   * @generated from field: config.v1.Anticheat anticheat = 14;
-   */
-  anticheat?: Anticheat;
+	/**
+	 * @generated from field: config.v1.Anticheat anticheat = 14;
+	 */
+	anticheat?: Anticheat;
 };
 
 /**
  * Describes the message config.v1.Config.
  * Use `create(ConfigSchema)` to create a new message.
  */
-export const ConfigSchema: GenMessage<Config> = /*@__PURE__*/
-  messageDesc(file_config_v1_config, 19);
+export const ConfigSchema: GenMessage<Config> = /*@__PURE__*/ messageDesc(file_config_v1_config, 20);
+
+/**
+ * @generated from message config.v1.GithubRelease
+ */
+export type GithubRelease = Message<"config.v1.GithubRelease"> & {
+	/**
+	 * @generated from field: string url = 1;
+	 */
+	url: string;
+
+	/**
+	 * @generated from field: string html_url = 2;
+	 */
+	htmlUrl: string;
+
+	/**
+	 * @generated from field: string asset_url = 3;
+	 */
+	assetUrl: string;
+
+	/**
+	 * @generated from field: string upload_url = 4;
+	 */
+	uploadUrl: string;
+
+	/**
+	 * @generated from field: string tarball_url = 5;
+	 */
+	tarballUrl: string;
+
+	/**
+	 * @generated from field: int32 id = 6;
+	 */
+	id: number;
+
+	/**
+	 * @generated from field: string node_id = 7;
+	 */
+	nodeId: string;
+
+	/**
+	 * @generated from field: string tag_name = 8;
+	 */
+	tagName: string;
+
+	/**
+	 * @generated from field: string target_commitish = 9;
+	 */
+	targetCommitish: string;
+
+	/**
+	 * @generated from field: string name = 10;
+	 */
+	name: string;
+
+	/**
+	 * @generated from field: string body = 11;
+	 */
+	body: string;
+
+	/**
+	 * @generated from field: bool draft = 12;
+	 */
+	draft: boolean;
+
+	/**
+	 * @generated from field: bool prerelease = 13;
+	 */
+	prerelease: boolean;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_at = 14;
+	 */
+	createdAt?: Timestamp;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp published_at = 15;
+	 */
+	publishedAt?: Timestamp;
+
+	/**
+	 * @generated from field: config.v1.GithubRelease.Author author = 16;
+	 */
+	author?: GithubRelease_Author;
+};
+
+/**
+ * Describes the message config.v1.GithubRelease.
+ * Use `create(GithubReleaseSchema)` to create a new message.
+ */
+export const GithubReleaseSchema: GenMessage<GithubRelease> = /*@__PURE__*/ messageDesc(file_config_v1_config, 21);
+
+/**
+ * @generated from message config.v1.GithubRelease.Author
+ */
+export type GithubRelease_Author = Message<"config.v1.GithubRelease.Author"> & {
+	/**
+	 * @generated from field: string login = 1;
+	 */
+	login: string;
+
+	/**
+	 * @generated from field: int32 id = 2;
+	 */
+	id: number;
+
+	/**
+	 * @generated from field: string node_id = 3;
+	 */
+	nodeId: string;
+
+	/**
+	 * @generated from field: string avatar_url = 4;
+	 */
+	avatarUrl: string;
+
+	/**
+	 * @generated from field: string gravatar_url = 5;
+	 */
+	gravatarUrl: string;
+
+	/**
+	 * @generated from field: string url = 6;
+	 */
+	url: string;
+
+	/**
+	 * @generated from field: string html_url = 7;
+	 */
+	htmlUrl: string;
+
+	/**
+	 * @generated from field: string followers_url = 8;
+	 */
+	followersUrl: string;
+
+	/**
+	 * @generated from field: string following_url = 9;
+	 */
+	followingUrl: string;
+
+	/**
+	 * @generated from field: string gists_url = 10;
+	 */
+	gistsUrl: string;
+
+	/**
+	 * @generated from field: string started_url = 11;
+	 */
+	startedUrl: string;
+
+	/**
+	 * @generated from field: string subscriptions_url = 12;
+	 */
+	subscriptionsUrl: string;
+
+	/**
+	 * @generated from field: string organizations_url = 13;
+	 */
+	organizationsUrl: string;
+
+	/**
+	 * @generated from field: string repos_url = 14;
+	 */
+	reposUrl: string;
+
+	/**
+	 * @generated from field: string events_url = 15;
+	 */
+	eventsUrl: string;
+
+	/**
+	 * @generated from field: string received_events_url = 16;
+	 */
+	receivedEventsUrl: string;
+
+	/**
+	 * @generated from field: string type = 17;
+	 */
+	type: string;
+
+	/**
+	 * @generated from field: bool site_admin = 18;
+	 */
+	siteAdmin: boolean;
+};
+
+/**
+ * Describes the message config.v1.GithubRelease.Author.
+ * Use `create(GithubRelease_AuthorSchema)` to create a new message.
+ */
+export const GithubRelease_AuthorSchema: GenMessage<GithubRelease_Author> =
+	/*@__PURE__*/
+	messageDesc(file_config_v1_config, 21, 0);
+
+/**
+ * @generated from message config.v1.GithubRelease.Asset
+ */
+export type GithubRelease_Asset = Message<"config.v1.GithubRelease.Asset"> & {
+	/**
+	 * @generated from field: string url = 1;
+	 */
+	url: string;
+
+	/**
+	 * @generated from field: string browser_download_url = 2;
+	 */
+	browserDownloadUrl: string;
+
+	/**
+	 * @generated from field: int32 id = 3;
+	 */
+	id: number;
+
+	/**
+	 * @generated from field: string node_id = 4;
+	 */
+	nodeId: string;
+
+	/**
+	 * @generated from field: string name = 5;
+	 */
+	name: string;
+
+	/**
+	 * @generated from field: string label = 6;
+	 */
+	label: string;
+
+	/**
+	 * @generated from field: string state = 7;
+	 */
+	state: string;
+
+	/**
+	 * @generated from field: string content_type = 8;
+	 */
+	contentType: string;
+
+	/**
+	 * @generated from field: int64 size = 9;
+	 */
+	size: bigint;
+
+	/**
+	 * @generated from field: int32 download_count = 10;
+	 */
+	downloadCount: number;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_at = 11;
+	 */
+	createdAt?: Timestamp;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_at = 12;
+	 */
+	updatedAt?: Timestamp;
+
+	/**
+	 * @generated from field: config.v1.GithubRelease.Author uploader = 13;
+	 */
+	uploader?: GithubRelease_Author;
+};
+
+/**
+ * Describes the message config.v1.GithubRelease.Asset.
+ * Use `create(GithubRelease_AssetSchema)` to create a new message.
+ */
+export const GithubRelease_AssetSchema: GenMessage<GithubRelease_Asset> =
+	/*@__PURE__*/
+	messageDesc(file_config_v1_config, 21, 1);
 
 /**
  * @generated from enum config.v1.RunMode
  */
 export enum RunMode {
-  /**
-   * @generated from enum value: RUN_MODE_RELEASE_UNSPECIFIED = 0;
-   */
-  RELEASE_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: RUN_MODE_RELEASE_UNSPECIFIED = 0;
+	 */
+	RELEASE_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: RUN_MODE_DEBUG = 1;
-   */
-  DEBUG = 1,
+	/**
+	 * @generated from enum value: RUN_MODE_DEBUG = 1;
+	 */
+	DEBUG = 1,
 
-  /**
-   * @generated from enum value: RUN_MODE_TEST = 3;
-   */
-  TEST = 3,
+	/**
+	 * @generated from enum value: RUN_MODE_TEST = 3;
+	 */
+	TEST = 3,
 }
 
 /**
  * Describes the enum config.v1.RunMode.
  */
-export const RunModeSchema: GenEnum<RunMode> = /*@__PURE__*/
-  enumDesc(file_config_v1_config, 0);
+export const RunModeSchema: GenEnum<RunMode> = /*@__PURE__*/ enumDesc(file_config_v1_config, 0);
 
 /**
  * @generated from enum config.v1.FileServeMode
  */
 export enum FileServeMode {
-  /**
-   * @generated from enum value: FILE_SERVE_MODE_LOCAL_UNSPECIFIED = 0;
-   */
-  LOCAL_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: FILE_SERVE_MODE_LOCAL_UNSPECIFIED = 0;
+	 */
+	LOCAL_UNSPECIFIED = 0,
 }
 
 /**
  * Describes the enum config.v1.FileServeMode.
  */
-export const FileServeModeSchema: GenEnum<FileServeMode> = /*@__PURE__*/
-  enumDesc(file_config_v1_config, 1);
+export const FileServeModeSchema: GenEnum<FileServeMode> = /*@__PURE__*/ enumDesc(file_config_v1_config, 1);
 
 /**
  * @generated from enum config.v1.DemoStrategy
  */
 export enum DemoStrategy {
-  /**
-   * @generated from enum value: DEMO_STRATEGY_PCTFREE_UNSPECIFIED = 0;
-   */
-  PCTFREE_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: DEMO_STRATEGY_PCTFREE_UNSPECIFIED = 0;
+	 */
+	PCTFREE_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: DEMO_STRATEGY_COUNT = 1;
-   */
-  COUNT = 1,
+	/**
+	 * @generated from enum value: DEMO_STRATEGY_COUNT = 1;
+	 */
+	COUNT = 1,
 }
 
 /**
  * Describes the enum config.v1.DemoStrategy.
  */
-export const DemoStrategySchema: GenEnum<DemoStrategy> = /*@__PURE__*/
-  enumDesc(file_config_v1_config, 2);
+export const DemoStrategySchema: GenEnum<DemoStrategy> = /*@__PURE__*/ enumDesc(file_config_v1_config, 2);
 
 /**
  * @generated from enum config.v1.Level
  */
 export enum Level {
-  /**
-   * @generated from enum value: LEVEL_ERROR_UNSPECIFIED = 0;
-   */
-  ERROR_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: LEVEL_ERROR_UNSPECIFIED = 0;
+	 */
+	ERROR_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: LEVEL_WARNING = 1;
-   */
-  WARNING = 1,
+	/**
+	 * @generated from enum value: LEVEL_WARNING = 1;
+	 */
+	WARNING = 1,
 
-  /**
-   * @generated from enum value: LEVEL_INFO = 2;
-   */
-  INFO = 2,
+	/**
+	 * @generated from enum value: LEVEL_INFO = 2;
+	 */
+	INFO = 2,
 
-  /**
-   * @generated from enum value: LEVEL_DEBUG = 3;
-   */
-  DEBUG = 3,
+	/**
+	 * @generated from enum value: LEVEL_DEBUG = 3;
+	 */
+	DEBUG = 3,
 }
 
 /**
  * Describes the enum config.v1.Level.
  */
-export const LevelSchema: GenEnum<Level> = /*@__PURE__*/
-  enumDesc(file_config_v1_config, 3);
+export const LevelSchema: GenEnum<Level> = /*@__PURE__*/ enumDesc(file_config_v1_config, 3);
 
 /**
  * @generated from enum config.v1.HostKeyStrategy
  */
 export enum HostKeyStrategy {
-  /**
-   * @generated from enum value: HOST_KEY_STRATEGY_AUTO_ACCEPT_UNSPECIFIED = 0;
-   */
-  AUTO_ACCEPT_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: HOST_KEY_STRATEGY_AUTO_ACCEPT_UNSPECIFIED = 0;
+	 */
+	AUTO_ACCEPT_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: HOST_KEY_STRATEGY_ACCEPT_FIRST = 1;
-   */
-  ACCEPT_FIRST = 1,
+	/**
+	 * @generated from enum value: HOST_KEY_STRATEGY_ACCEPT_FIRST = 1;
+	 */
+	ACCEPT_FIRST = 1,
 
-  /**
-   * @generated from enum value: HOST_KEY_STRATEGY_IGNORE_ALL = 2;
-   */
-  IGNORE_ALL = 2,
+	/**
+	 * @generated from enum value: HOST_KEY_STRATEGY_IGNORE_ALL = 2;
+	 */
+	IGNORE_ALL = 2,
 }
 
 /**
  * Describes the enum config.v1.HostKeyStrategy.
  */
-export const HostKeyStrategySchema: GenEnum<HostKeyStrategy> = /*@__PURE__*/
-  enumDesc(file_config_v1_config, 4);
+export const HostKeyStrategySchema: GenEnum<HostKeyStrategy> = /*@__PURE__*/ enumDesc(file_config_v1_config, 4);
 
 /**
  * @generated from enum config.v1.Action
  */
 export enum Action {
-  /**
-   * @generated from enum value: ACTION_KICK_UNSPECIFIED = 0;
-   */
-  KICK_UNSPECIFIED = 0,
+	/**
+	 * @generated from enum value: ACTION_KICK_UNSPECIFIED = 0;
+	 */
+	KICK_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: ACTION_GAG = 1;
-   */
-  GAG = 1,
+	/**
+	 * @generated from enum value: ACTION_GAG = 1;
+	 */
+	GAG = 1,
 
-  /**
-   * @generated from enum value: ACTION_BAN = 2;
-   */
-  BAN = 2,
+	/**
+	 * @generated from enum value: ACTION_BAN = 2;
+	 */
+	BAN = 2,
 }
 
 /**
  * Describes the enum config.v1.Action.
  */
-export const ActionSchema: GenEnum<Action> = /*@__PURE__*/
-  enumDesc(file_config_v1_config, 5);
+export const ActionSchema: GenEnum<Action> = /*@__PURE__*/ enumDesc(file_config_v1_config, 5);
 
 /**
  * @generated from service config.v1.ConfigService
  */
 export const ConfigService: GenService<{
-  /**
-   * @generated from rpc config.v1.ConfigService.Info
-   */
-  info: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof InfoResponseSchema;
-  },
-  /**
-   * @generated from rpc config.v1.ConfigService.Get
-   */
-  get: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof GetResponseSchema;
-  },
-  /**
-   * @generated from rpc config.v1.ConfigService.Update
-   */
-  update: {
-    methodKind: "unary";
-    input: typeof UpdateRequestSchema;
-    output: typeof UpdateResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_config_v1_config, 0);
-
+	/**
+	 * @generated from rpc config.v1.ConfigService.Info
+	 */
+	info: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof InfoResponseSchema;
+	};
+	/**
+	 * @generated from rpc config.v1.ConfigService.Get
+	 */
+	get: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof GetResponseSchema;
+	};
+	/**
+	 * @generated from rpc config.v1.ConfigService.Update
+	 */
+	update: {
+		methodKind: "unary";
+		input: typeof UpdateRequestSchema;
+		output: typeof UpdateResponseSchema;
+	};
+	/**
+	 * @generated from rpc config.v1.ConfigService.Changelog
+	 */
+	changelog: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof ChangelogResponseSchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_config_v1_config, 0);

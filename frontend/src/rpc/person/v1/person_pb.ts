@@ -17,525 +17,690 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file person/v1/person.proto.
  */
-export const file_person_v1_person: GenFile = /*@__PURE__*/
-  fileDesc("ChZwZXJzb24vdjEvcGVyc29uLnByb3RvEglwZXJzb24udjEigwIKCFNldHRpbmdzEhoKEnBlcnNvbl9zZXR0aW5nc19pZBgBIAEoAxIQCghzdGVhbV9pZBgCIAEoCRIXCg9mb3J1bV9zaWduYXR1cmUYAyABKAkSHgoWZm9ydW1fcHJvZmlsZV9tZXNzYWdlcxgEIAEoCBIUCgxzdGF0c19oaWRkZW4YBSABKAgSGgoSY2VudGVyX3Byb2plY3RpbGVzGAYgASgIEi4KCmNyZWF0ZWRfb24YByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIocBChpFZGl0UHJvZmlsZVNldHRpbmdzUmVxdWVzdBIXCg9mb3J1bV9zaWduYXR1cmUYASABKAkSHgoWZm9ydW1fcHJvZmlsZV9tZXNzYWdlcxgCIAEoCBIUCgxzdGF0c19oaWRkZW4YAyABKAgSGgoSY2VudGVyX3Byb2plY3RpbGVzGAQgASgIIj8KFkN1cnJlbnRQcm9maWxlUmVzcG9uc2USJQoGcGVyc29uGAEgASgLMhUucGVyc29uLnYxLlBlcnNvbkNvcmUi6wEKDFVzZXJTZXR0aW5ncxIaChJwZXJzb25fc2V0dGluZ3NfaWQYASABKAMSEAoIc3RlYW1faWQYAiABKAkSFwoPZm9ydW1fc2lnbmF0dXJlGAMgASgJEh4KFmZvcnVtX3Byb2ZpbGVfbWVzc2FnZXMYBCABKAgSFAoMc3RhdHNfaGlkZGVuGAUgASgIEi4KCmNyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIkQKF1Byb2ZpbGVTZXR0aW5nc1Jlc3BvbnNlEikKCHNldHRpbmdzGAEgASgLMhcucGVyc29uLnYxLlVzZXJTZXR0aW5ncyJIChtFZGl0UHJvZmlsZVNldHRpbmdzUmVzcG9uc2USKQoIc2V0dGluZ3MYASABKAsyFy5wZXJzb24udjEuVXNlclNldHRpbmdzIloKFkVkaXRQZXJtaXNzaW9uc1JlcXVlc3QSEAoIc3RlYW1faWQYASABKAkSLgoQcGVybWlzc2lvbl9sZXZlbBgCIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2UiPAoXRWRpdFBlcm1pc3Npb25zUmVzcG9uc2USIQoGcGVyc29uGAEgASgLMhEucGVyc29uLnYxLlBlcnNvbiLZAgoMUXVlcnlSZXF1ZXN0EhcKBmZpbHRlchgBIAEoCzIHLkZpbHRlchIUCgxwZXJzb25hX25hbWUYAiABKAkSLgoQd2l0aF9wZXJtaXNzaW9ucxgDIAMoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2USEgoKZGlzY29yZF9pZBgEIAEoCRIRCglzdGVhbV9pZHMYBSADKAkSEAoIdmFjX2JhbnMYBiABKAUSEQoJZ2FtZV9iYW5zGAcgASgFEhMKC2F2YXRhcl9oYXNoGAggASgJEhgKEGNvbW11bml0eV9iYW5uZWQYCSABKAgSNgoSdGltZV9jcmVhdGVkX2FmdGVyGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBI3ChN0aW1lX2NyZWF0ZWRfYmVmb3JlGAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCLWBgoGUGVyc29uEhAKCHN0ZWFtX2lkGAEgASgJEi4KCmNyZWF0ZWRfb24YAiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KEHBlcm1pc3Npb25fbGV2ZWwYBCABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlEg0KBW11dGVkGAUgASgIEhIKCmRpc2NvcmRfaWQYBiABKAkSEgoKcGF0cmVvbl9pZBgHIAEoCRIPCgdpcF9hZGRyGAggASgJEhgKEGNvbW11bml0eV9iYW5uZWQYCSABKAgSEAoIdmFjX2JhbnMYCiABKAUSEQoJZ2FtZV9iYW5zGAsgASgFEhMKC2Vjb25vbXlfYmFuGAwgASgJEhsKE2RheXNfc2luY2VfbGFzdF9iYW4YDSABKAUSNAoQdXBkYXRlZF9vbl9zdGVhbRgOIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASHwoXcGxheWVycXVldWVfY2hhdF9zdGF0dXMYDyABKAUSHwoXcGxheWVycXVldWVfY2hhdF9yZWFzb24YECABKAkSEwoLYXZhdGFyX2hhc2gYESABKAkSGgoSY29tbWVudF9wZXJtaXNzaW9uGBIgASgDEhMKC2xhc3RfbG9nb2ZmGBMgASgDEhMKC2xvY19jaXR5X2lkGBQgASgDEhgKEGxvY19jb3VudHJ5X2NvZGUYFSABKAkSFgoObG9jX3N0YXRlX2NvZGUYFiABKAkSFAoMcGVyc29uYV9uYW1lGBcgASgJEhUKDXBlcnNvbmFfc3RhdGUYGCABKAUSGwoTcGVyc29uYV9zdGF0ZV9mbGFncxgZIAEoBRIXCg9wcmltYXJ5X2NsYW5faWQYGiABKAkSFQoNcHJvZmlsZV9zdGF0ZRgbIAEoAxITCgtwcm9maWxlX3VybBgcIAEoCRIRCglyZWFsX25hbWUYHSABKAkSMAoMdGltZV9jcmVhdGVkGB4gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIYChB2aXNpYmlsaXR5X3N0YXRlGB8gASgDIjYKDVF1ZXJ5UmVzcG9uc2USJQoGcGVvcGxlGAEgAygLMhUucGVyc29uLnYxLlBlcnNvbkNvcmUypwMKDVBlcnNvblNlcnZpY2USSwoOQ3VycmVudFByb2ZpbGUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIS5wZXJzb24udjEuQ3VycmVudFByb2ZpbGVSZXNwb25zZRJNCg9Qcm9maWxlU2V0dGluZ3MSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIi5wZXJzb24udjEuUHJvZmlsZVNldHRpbmdzUmVzcG9uc2USZAoTRWRpdFByb2ZpbGVTZXR0aW5ncxIlLnBlcnNvbi52MS5FZGl0UHJvZmlsZVNldHRpbmdzUmVxdWVzdBomLnBlcnNvbi52MS5FZGl0UHJvZmlsZVNldHRpbmdzUmVzcG9uc2USOgoFUXVlcnkSFy5wZXJzb24udjEuUXVlcnlSZXF1ZXN0GhgucGVyc29uLnYxLlF1ZXJ5UmVzcG9uc2USWAoPRWRpdFBlcm1pc3Npb25zEiEucGVyc29uLnYxLkVkaXRQZXJtaXNzaW9uc1JlcXVlc3QaIi5wZXJzb24udjEuRWRpdFBlcm1pc3Npb25zUmVzcG9uc2VCngEKDWNvbS5wZXJzb24udjFCC1BlcnNvblByb3RvUAFaO2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvcGVyc29uL3YxO3BlcnNvbnYxogIDUFhYqgIJUGVyc29uLlYxygIJUGVyc29uXFYx4gIVUGVyc29uXFYxXEdQQk1ldGFkYXRh6gIKUGVyc29uOjpWMWIIZWRpdGlvbnNw6Ac", [file_database_query_v1_filter, file_google_protobuf_empty, file_google_protobuf_timestamp, file_person_v1_person_core, file_person_v1_privilege]);
+export const file_person_v1_person: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChZwZXJzb24vdjEvcGVyc29uLnByb3RvEglwZXJzb24udjEiIgoOUHJvZmlsZVJlcXVlc3QSEAoIc3RlYW1faWQYASABKAkiNgoPUHJvZmlsZVJlc3BvbnNlEiMKB3Byb2ZpbGUYASABKAsyEi5wZXJzb24udjEuUHJvZmlsZSIpChVSZXNvbHZlU3RlYW1JRFJlcXVlc3QSEAoIc3RlYW1faWQYASABKAkiVQoWUmVzb2x2ZVN0ZWFtSURSZXNwb25zZRIQCghzdGVhbV9pZBgBIAEoAxITCgthdmF0YXJfaGFzaBgCIAEoCRIUCgxwZXJzb25hX25hbWUYAyABKAkiQAoWQ3VycmVudFByb2ZpbGVSZXNwb25zZRImCgdwcm9maWxlGAEgASgLMhUucGVyc29uLnYxLlBlcnNvbkNvcmUigwIKCFNldHRpbmdzEhoKEnBlcnNvbl9zZXR0aW5nc19pZBgBIAEoAxIQCghzdGVhbV9pZBgCIAEoAxIXCg9mb3J1bV9zaWduYXR1cmUYAyABKAkSHgoWZm9ydW1fcHJvZmlsZV9tZXNzYWdlcxgEIAEoCBIUCgxzdGF0c19oaWRkZW4YBSABKAgSGgoSY2VudGVyX3Byb2plY3RpbGVzGAYgASgIEi4KCmNyZWF0ZWRfb24YByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIocBChpFZGl0UHJvZmlsZVNldHRpbmdzUmVxdWVzdBIXCg9mb3J1bV9zaWduYXR1cmUYASABKAkSHgoWZm9ydW1fcHJvZmlsZV9tZXNzYWdlcxgCIAEoCBIUCgxzdGF0c19oaWRkZW4YAyABKAgSGgoSY2VudGVyX3Byb2plY3RpbGVzGAQgASgIIoABCgdQcm9maWxlEiUKBnBsYXllchgBIAEoCzIVLnBlcnNvbi52MS5QZXJzb25Db3JlEicKB2ZyaWVuZHMYAiADKAsyFi5wZXJzb24udjEuU3RlYW1GcmllbmQSJQoIc2V0dGluZ3MYAyABKAsyEy5wZXJzb24udjEuU2V0dGluZ3MilwEKC1N0ZWFtRnJpZW5kEjAKDGZyaWVuZF9zaW5jZRgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASFAoMcmVsYXRpb25zaGlwGAIgASgJEi4KCnJlbW92ZWRfb24YAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhAKCHN0ZWFtX2lkGAQgASgDIusBCgxVc2VyU2V0dGluZ3MSGgoScGVyc29uX3NldHRpbmdzX2lkGAEgASgDEhAKCHN0ZWFtX2lkGAIgASgDEhcKD2ZvcnVtX3NpZ25hdHVyZRgDIAEoCRIeChZmb3J1bV9wcm9maWxlX21lc3NhZ2VzGAQgASgIEhQKDHN0YXRzX2hpZGRlbhgFIAEoCBIuCgpjcmVhdGVkX29uGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIuCgp1cGRhdGVkX29uGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJEChdQcm9maWxlU2V0dGluZ3NSZXNwb25zZRIpCghzZXR0aW5ncxgBIAEoCzIXLnBlcnNvbi52MS5Vc2VyU2V0dGluZ3MiSAobRWRpdFByb2ZpbGVTZXR0aW5nc1Jlc3BvbnNlEikKCHNldHRpbmdzGAEgASgLMhcucGVyc29uLnYxLlVzZXJTZXR0aW5ncyJaChZFZGl0UGVybWlzc2lvbnNSZXF1ZXN0EhAKCHN0ZWFtX2lkGAEgASgDEi4KEHBlcm1pc3Npb25fbGV2ZWwYAiABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlIkAKF0VkaXRQZXJtaXNzaW9uc1Jlc3BvbnNlEiUKBnBlcnNvbhgBIAEoCzIVLnBlcnNvbi52MS5QZXJzb25Db3JlItkCCgxRdWVyeVJlcXVlc3QSFwoGZmlsdGVyGAEgASgLMgcuRmlsdGVyEhQKDHBlcnNvbmFfbmFtZRgCIAEoCRIuChB3aXRoX3Blcm1pc3Npb25zGAMgAygOMhQucGVyc29uLnYxLlByaXZpbGVnZRISCgpkaXNjb3JkX2lkGAQgASgJEhEKCXN0ZWFtX2lkcxgFIAMoCRIQCgh2YWNfYmFucxgGIAEoBRIRCglnYW1lX2JhbnMYByABKAUSEwoLYXZhdGFyX2hhc2gYCCABKAkSGAoQY29tbXVuaXR5X2Jhbm5lZBgJIAEoCBI2ChJ0aW1lX2NyZWF0ZWRfYWZ0ZXIYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjcKE3RpbWVfY3JlYXRlZF9iZWZvcmUYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wItYGCgZQZXJzb24SEAoIc3RlYW1faWQYASABKAMSLgoKY3JlYXRlZF9vbhgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoQcGVybWlzc2lvbl9sZXZlbBgEIAEoDjIULnBlcnNvbi52MS5Qcml2aWxlZ2USDQoFbXV0ZWQYBSABKAgSEgoKZGlzY29yZF9pZBgGIAEoCRISCgpwYXRyZW9uX2lkGAcgASgJEg8KB2lwX2FkZHIYCCABKAkSGAoQY29tbXVuaXR5X2Jhbm5lZBgJIAEoCBIQCgh2YWNfYmFucxgKIAEoBRIRCglnYW1lX2JhbnMYCyABKAUSEwoLZWNvbm9teV9iYW4YDCABKAkSGwoTZGF5c19zaW5jZV9sYXN0X2JhbhgNIAEoBRI0ChB1cGRhdGVkX29uX3N0ZWFtGA4gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIfChdwbGF5ZXJxdWV1ZV9jaGF0X3N0YXR1cxgPIAEoBRIfChdwbGF5ZXJxdWV1ZV9jaGF0X3JlYXNvbhgQIAEoCRITCgthdmF0YXJfaGFzaBgRIAEoCRIaChJjb21tZW50X3Blcm1pc3Npb24YEiABKAMSEwoLbGFzdF9sb2dvZmYYEyABKAMSEwoLbG9jX2NpdHlfaWQYFCABKAMSGAoQbG9jX2NvdW50cnlfY29kZRgVIAEoCRIWCg5sb2Nfc3RhdGVfY29kZRgWIAEoCRIUCgxwZXJzb25hX25hbWUYFyABKAkSFQoNcGVyc29uYV9zdGF0ZRgYIAEoBRIbChNwZXJzb25hX3N0YXRlX2ZsYWdzGBkgASgFEhcKD3ByaW1hcnlfY2xhbl9pZBgaIAEoCRIVCg1wcm9maWxlX3N0YXRlGBsgASgDEhMKC3Byb2ZpbGVfdXJsGBwgASgJEhEKCXJlYWxfbmFtZRgdIAEoCRIwCgx0aW1lX2NyZWF0ZWQYHiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhgKEHZpc2liaWxpdHlfc3RhdGUYHyABKAMiRQoNUXVlcnlSZXNwb25zZRIlCgZwZW9wbGUYASADKAsyFS5wZXJzb24udjEuUGVyc29uQ29yZRINCgVjb3VudBgCIAEoAzLEBAoNUGVyc29uU2VydmljZRJCCgdQcm9maWxlEhkucGVyc29uLnYxLlByb2ZpbGVSZXF1ZXN0GhoucGVyc29uLnYxLlByb2ZpbGVSZXNwb25zZSIAElcKDlJlc29sdmVTdGVhbUlEEiAucGVyc29uLnYxLlJlc29sdmVTdGVhbUlEUmVxdWVzdBohLnBlcnNvbi52MS5SZXNvbHZlU3RlYW1JRFJlc3BvbnNlIgASSwoOQ3VycmVudFByb2ZpbGUSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIS5wZXJzb24udjEuQ3VycmVudFByb2ZpbGVSZXNwb25zZRJNCg9Qcm9maWxlU2V0dGluZ3MSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIi5wZXJzb24udjEuUHJvZmlsZVNldHRpbmdzUmVzcG9uc2USZAoTRWRpdFByb2ZpbGVTZXR0aW5ncxIlLnBlcnNvbi52MS5FZGl0UHJvZmlsZVNldHRpbmdzUmVxdWVzdBomLnBlcnNvbi52MS5FZGl0UHJvZmlsZVNldHRpbmdzUmVzcG9uc2USOgoFUXVlcnkSFy5wZXJzb24udjEuUXVlcnlSZXF1ZXN0GhgucGVyc29uLnYxLlF1ZXJ5UmVzcG9uc2USWAoPRWRpdFBlcm1pc3Npb25zEiEucGVyc29uLnYxLkVkaXRQZXJtaXNzaW9uc1JlcXVlc3QaIi5wZXJzb24udjEuRWRpdFBlcm1pc3Npb25zUmVzcG9uc2VCngEKDWNvbS5wZXJzb24udjFCC1BlcnNvblByb3RvUAFaO2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvcGVyc29uL3YxO3BlcnNvbnYxogIDUFhYqgIJUGVyc29uLlYxygIJUGVyc29uXFYx4gIVUGVyc29uXFYxXEdQQk1ldGFkYXRh6gIKUGVyc29uOjpWMWIIZWRpdGlvbnNw6Ac",
+		[
+			file_database_query_v1_filter,
+			file_google_protobuf_empty,
+			file_google_protobuf_timestamp,
+			file_person_v1_person_core,
+			file_person_v1_privilege,
+		],
+	);
 
 /**
- * @generated from message person.v1.Settings
+ * @generated from message person.v1.ProfileRequest
  */
-export type Settings = Message<"person.v1.Settings"> & {
-  /**
-   * @generated from field: int64 person_settings_id = 1;
-   */
-  personSettingsId: bigint;
-
-  /**
-   * @generated from field: string steam_id = 2;
-   */
-  steamId: string;
-
-  /**
-   * @generated from field: string forum_signature = 3;
-   */
-  forumSignature: string;
-
-  /**
-   * @generated from field: bool forum_profile_messages = 4;
-   */
-  forumProfileMessages: boolean;
-
-  /**
-   * @generated from field: bool stats_hidden = 5;
-   */
-  statsHidden: boolean;
-
-  /**
-   * @generated from field: bool center_projectiles = 6;
-   */
-  centerProjectiles: boolean;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 7;
-   */
-  createdOn?: Timestamp;
-
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 8;
-   */
-  updatedOn?: Timestamp;
+export type ProfileRequest = Message<"person.v1.ProfileRequest"> & {
+	/**
+	 * @generated from field: string steam_id = 1;
+	 */
+	steamId: string;
 };
 
 /**
- * Describes the message person.v1.Settings.
- * Use `create(SettingsSchema)` to create a new message.
+ * Describes the message person.v1.ProfileRequest.
+ * Use `create(ProfileRequestSchema)` to create a new message.
  */
-export const SettingsSchema: GenMessage<Settings> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 0);
+export const ProfileRequestSchema: GenMessage<ProfileRequest> = /*@__PURE__*/ messageDesc(file_person_v1_person, 0);
 
 /**
- * @generated from message person.v1.EditProfileSettingsRequest
+ * @generated from message person.v1.ProfileResponse
  */
-export type EditProfileSettingsRequest = Message<"person.v1.EditProfileSettingsRequest"> & {
-  /**
-   * @generated from field: string forum_signature = 1;
-   */
-  forumSignature: string;
-
-  /**
-   * @generated from field: bool forum_profile_messages = 2;
-   */
-  forumProfileMessages: boolean;
-
-  /**
-   * @generated from field: bool stats_hidden = 3;
-   */
-  statsHidden: boolean;
-
-  /**
-   * @generated from field: bool center_projectiles = 4;
-   */
-  centerProjectiles: boolean;
+export type ProfileResponse = Message<"person.v1.ProfileResponse"> & {
+	/**
+	 * @generated from field: person.v1.Profile profile = 1;
+	 */
+	profile?: Profile;
 };
 
 /**
- * Describes the message person.v1.EditProfileSettingsRequest.
- * Use `create(EditProfileSettingsRequestSchema)` to create a new message.
+ * Describes the message person.v1.ProfileResponse.
+ * Use `create(ProfileResponseSchema)` to create a new message.
  */
-export const EditProfileSettingsRequestSchema: GenMessage<EditProfileSettingsRequest> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 1);
+export const ProfileResponseSchema: GenMessage<ProfileResponse> = /*@__PURE__*/ messageDesc(file_person_v1_person, 1);
+
+/**
+ * @generated from message person.v1.ResolveSteamIDRequest
+ */
+export type ResolveSteamIDRequest = Message<"person.v1.ResolveSteamIDRequest"> & {
+	/**
+	 * @generated from field: string steam_id = 1;
+	 */
+	steamId: string;
+};
+
+/**
+ * Describes the message person.v1.ResolveSteamIDRequest.
+ * Use `create(ResolveSteamIDRequestSchema)` to create a new message.
+ */
+export const ResolveSteamIDRequestSchema: GenMessage<ResolveSteamIDRequest> =
+	/*@__PURE__*/
+	messageDesc(file_person_v1_person, 2);
+
+/**
+ * @generated from message person.v1.ResolveSteamIDResponse
+ */
+export type ResolveSteamIDResponse = Message<"person.v1.ResolveSteamIDResponse"> & {
+	/**
+	 * @generated from field: int64 steam_id = 1;
+	 */
+	steamId: bigint;
+
+	/**
+	 * @generated from field: string avatar_hash = 2;
+	 */
+	avatarHash: string;
+
+	/**
+	 * @generated from field: string persona_name = 3;
+	 */
+	personaName: string;
+};
+
+/**
+ * Describes the message person.v1.ResolveSteamIDResponse.
+ * Use `create(ResolveSteamIDResponseSchema)` to create a new message.
+ */
+export const ResolveSteamIDResponseSchema: GenMessage<ResolveSteamIDResponse> =
+	/*@__PURE__*/
+	messageDesc(file_person_v1_person, 3);
 
 /**
  * @generated from message person.v1.CurrentProfileResponse
  */
 export type CurrentProfileResponse = Message<"person.v1.CurrentProfileResponse"> & {
-  /**
-   * @generated from field: person.v1.PersonCore person = 1;
-   */
-  person?: PersonCore;
+	/**
+	 * @generated from field: person.v1.PersonCore profile = 1;
+	 */
+	profile?: PersonCore;
 };
 
 /**
  * Describes the message person.v1.CurrentProfileResponse.
  * Use `create(CurrentProfileResponseSchema)` to create a new message.
  */
-export const CurrentProfileResponseSchema: GenMessage<CurrentProfileResponse> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 2);
+export const CurrentProfileResponseSchema: GenMessage<CurrentProfileResponse> =
+	/*@__PURE__*/
+	messageDesc(file_person_v1_person, 4);
+
+/**
+ * @generated from message person.v1.Settings
+ */
+export type Settings = Message<"person.v1.Settings"> & {
+	/**
+	 * @generated from field: int64 person_settings_id = 1;
+	 */
+	personSettingsId: bigint;
+
+	/**
+	 * @generated from field: int64 steam_id = 2;
+	 */
+	steamId: bigint;
+
+	/**
+	 * @generated from field: string forum_signature = 3;
+	 */
+	forumSignature: string;
+
+	/**
+	 * @generated from field: bool forum_profile_messages = 4;
+	 */
+	forumProfileMessages: boolean;
+
+	/**
+	 * @generated from field: bool stats_hidden = 5;
+	 */
+	statsHidden: boolean;
+
+	/**
+	 * @generated from field: bool center_projectiles = 6;
+	 */
+	centerProjectiles: boolean;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 7;
+	 */
+	createdOn?: Timestamp;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 8;
+	 */
+	updatedOn?: Timestamp;
+};
+
+/**
+ * Describes the message person.v1.Settings.
+ * Use `create(SettingsSchema)` to create a new message.
+ */
+export const SettingsSchema: GenMessage<Settings> = /*@__PURE__*/ messageDesc(file_person_v1_person, 5);
+
+/**
+ * @generated from message person.v1.EditProfileSettingsRequest
+ */
+export type EditProfileSettingsRequest = Message<"person.v1.EditProfileSettingsRequest"> & {
+	/**
+	 * @generated from field: string forum_signature = 1;
+	 */
+	forumSignature: string;
+
+	/**
+	 * @generated from field: bool forum_profile_messages = 2;
+	 */
+	forumProfileMessages: boolean;
+
+	/**
+	 * @generated from field: bool stats_hidden = 3;
+	 */
+	statsHidden: boolean;
+
+	/**
+	 * @generated from field: bool center_projectiles = 4;
+	 */
+	centerProjectiles: boolean;
+};
+
+/**
+ * Describes the message person.v1.EditProfileSettingsRequest.
+ * Use `create(EditProfileSettingsRequestSchema)` to create a new message.
+ */
+export const EditProfileSettingsRequestSchema: GenMessage<EditProfileSettingsRequest> =
+	/*@__PURE__*/
+	messageDesc(file_person_v1_person, 6);
+
+/**
+ * @generated from message person.v1.Profile
+ */
+export type Profile = Message<"person.v1.Profile"> & {
+	/**
+	 * @generated from field: person.v1.PersonCore player = 1;
+	 */
+	player?: PersonCore;
+
+	/**
+	 * @generated from field: repeated person.v1.SteamFriend friends = 2;
+	 */
+	friends: SteamFriend[];
+
+	/**
+	 * @generated from field: person.v1.Settings settings = 3;
+	 */
+	settings?: Settings;
+};
+
+/**
+ * Describes the message person.v1.Profile.
+ * Use `create(ProfileSchema)` to create a new message.
+ */
+export const ProfileSchema: GenMessage<Profile> = /*@__PURE__*/ messageDesc(file_person_v1_person, 7);
+
+/**
+ * @generated from message person.v1.SteamFriend
+ */
+export type SteamFriend = Message<"person.v1.SteamFriend"> & {
+	/**
+	 * @generated from field: google.protobuf.Timestamp friend_since = 1;
+	 */
+	friendSince?: Timestamp;
+
+	/**
+	 * @generated from field: string relationship = 2;
+	 */
+	relationship: string;
+
+	/**
+	 * @generated from field: google.protobuf.Timestamp removed_on = 3;
+	 */
+	removedOn?: Timestamp;
+
+	/**
+	 * @generated from field: int64 steam_id = 4;
+	 */
+	steamId: bigint;
+};
+
+/**
+ * Describes the message person.v1.SteamFriend.
+ * Use `create(SteamFriendSchema)` to create a new message.
+ */
+export const SteamFriendSchema: GenMessage<SteamFriend> = /*@__PURE__*/ messageDesc(file_person_v1_person, 8);
 
 /**
  * @generated from message person.v1.UserSettings
  */
 export type UserSettings = Message<"person.v1.UserSettings"> & {
-  /**
-   * @generated from field: int64 person_settings_id = 1;
-   */
-  personSettingsId: bigint;
+	/**
+	 * @generated from field: int64 person_settings_id = 1;
+	 */
+	personSettingsId: bigint;
 
-  /**
-   * @generated from field: string steam_id = 2;
-   */
-  steamId: string;
+	/**
+	 * @generated from field: int64 steam_id = 2;
+	 */
+	steamId: bigint;
 
-  /**
-   * @generated from field: string forum_signature = 3;
-   */
-  forumSignature: string;
+	/**
+	 * @generated from field: string forum_signature = 3;
+	 */
+	forumSignature: string;
 
-  /**
-   * @generated from field: bool forum_profile_messages = 4;
-   */
-  forumProfileMessages: boolean;
+	/**
+	 * @generated from field: bool forum_profile_messages = 4;
+	 */
+	forumProfileMessages: boolean;
 
-  /**
-   * @generated from field: bool stats_hidden = 5;
-   */
-  statsHidden: boolean;
+	/**
+	 * @generated from field: bool stats_hidden = 5;
+	 */
+	statsHidden: boolean;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 6;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 6;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 7;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 7;
+	 */
+	updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message person.v1.UserSettings.
  * Use `create(UserSettingsSchema)` to create a new message.
  */
-export const UserSettingsSchema: GenMessage<UserSettings> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 3);
+export const UserSettingsSchema: GenMessage<UserSettings> = /*@__PURE__*/ messageDesc(file_person_v1_person, 9);
 
 /**
  * @generated from message person.v1.ProfileSettingsResponse
  */
 export type ProfileSettingsResponse = Message<"person.v1.ProfileSettingsResponse"> & {
-  /**
-   * @generated from field: person.v1.UserSettings settings = 1;
-   */
-  settings?: UserSettings;
+	/**
+	 * @generated from field: person.v1.UserSettings settings = 1;
+	 */
+	settings?: UserSettings;
 };
 
 /**
  * Describes the message person.v1.ProfileSettingsResponse.
  * Use `create(ProfileSettingsResponseSchema)` to create a new message.
  */
-export const ProfileSettingsResponseSchema: GenMessage<ProfileSettingsResponse> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 4);
+export const ProfileSettingsResponseSchema: GenMessage<ProfileSettingsResponse> =
+	/*@__PURE__*/
+	messageDesc(file_person_v1_person, 10);
 
 /**
  * @generated from message person.v1.EditProfileSettingsResponse
  */
 export type EditProfileSettingsResponse = Message<"person.v1.EditProfileSettingsResponse"> & {
-  /**
-   * @generated from field: person.v1.UserSettings settings = 1;
-   */
-  settings?: UserSettings;
+	/**
+	 * @generated from field: person.v1.UserSettings settings = 1;
+	 */
+	settings?: UserSettings;
 };
 
 /**
  * Describes the message person.v1.EditProfileSettingsResponse.
  * Use `create(EditProfileSettingsResponseSchema)` to create a new message.
  */
-export const EditProfileSettingsResponseSchema: GenMessage<EditProfileSettingsResponse> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 5);
+export const EditProfileSettingsResponseSchema: GenMessage<EditProfileSettingsResponse> =
+	/*@__PURE__*/
+	messageDesc(file_person_v1_person, 11);
 
 /**
  * @generated from message person.v1.EditPermissionsRequest
  */
 export type EditPermissionsRequest = Message<"person.v1.EditPermissionsRequest"> & {
-  /**
-   * @generated from field: string steam_id = 1;
-   */
-  steamId: string;
+	/**
+	 * @generated from field: int64 steam_id = 1;
+	 */
+	steamId: bigint;
 
-  /**
-   * @generated from field: person.v1.Privilege permission_level = 2;
-   */
-  permissionLevel: Privilege;
+	/**
+	 * @generated from field: person.v1.Privilege permission_level = 2;
+	 */
+	permissionLevel: Privilege;
 };
 
 /**
  * Describes the message person.v1.EditPermissionsRequest.
  * Use `create(EditPermissionsRequestSchema)` to create a new message.
  */
-export const EditPermissionsRequestSchema: GenMessage<EditPermissionsRequest> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 6);
+export const EditPermissionsRequestSchema: GenMessage<EditPermissionsRequest> =
+	/*@__PURE__*/
+	messageDesc(file_person_v1_person, 12);
 
 /**
  * @generated from message person.v1.EditPermissionsResponse
  */
 export type EditPermissionsResponse = Message<"person.v1.EditPermissionsResponse"> & {
-  /**
-   * @generated from field: person.v1.Person person = 1;
-   */
-  person?: Person;
+	/**
+	 * @generated from field: person.v1.PersonCore person = 1;
+	 */
+	person?: PersonCore;
 };
 
 /**
  * Describes the message person.v1.EditPermissionsResponse.
  * Use `create(EditPermissionsResponseSchema)` to create a new message.
  */
-export const EditPermissionsResponseSchema: GenMessage<EditPermissionsResponse> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 7);
+export const EditPermissionsResponseSchema: GenMessage<EditPermissionsResponse> =
+	/*@__PURE__*/
+	messageDesc(file_person_v1_person, 13);
 
 /**
  * @generated from message person.v1.QueryRequest
  */
 export type QueryRequest = Message<"person.v1.QueryRequest"> & {
-  /**
-   * @generated from field: Filter filter = 1;
-   */
-  filter?: Filter;
+	/**
+	 * @generated from field: Filter filter = 1;
+	 */
+	filter?: Filter;
 
-  /**
-   * @generated from field: string persona_name = 2;
-   */
-  personaName: string;
+	/**
+	 * @generated from field: string persona_name = 2;
+	 */
+	personaName: string;
 
-  /**
-   * @generated from field: repeated person.v1.Privilege with_permissions = 3;
-   */
-  withPermissions: Privilege[];
+	/**
+	 * @generated from field: repeated person.v1.Privilege with_permissions = 3;
+	 */
+	withPermissions: Privilege[];
 
-  /**
-   * @generated from field: string discord_id = 4;
-   */
-  discordId: string;
+	/**
+	 * @generated from field: string discord_id = 4;
+	 */
+	discordId: string;
 
-  /**
-   * @generated from field: repeated string steam_ids = 5;
-   */
-  steamIds: string[];
+	/**
+	 * @generated from field: repeated string steam_ids = 5;
+	 */
+	steamIds: string[];
 
-  /**
-   * @generated from field: int32 vac_bans = 6;
-   */
-  vacBans: number;
+	/**
+	 * @generated from field: int32 vac_bans = 6;
+	 */
+	vacBans: number;
 
-  /**
-   * @generated from field: int32 game_bans = 7;
-   */
-  gameBans: number;
+	/**
+	 * @generated from field: int32 game_bans = 7;
+	 */
+	gameBans: number;
 
-  /**
-   * @generated from field: string avatar_hash = 8;
-   */
-  avatarHash: string;
+	/**
+	 * @generated from field: string avatar_hash = 8;
+	 */
+	avatarHash: string;
 
-  /**
-   * @generated from field: bool community_banned = 9;
-   */
-  communityBanned: boolean;
+	/**
+	 * @generated from field: bool community_banned = 9;
+	 */
+	communityBanned: boolean;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp time_created_after = 10;
-   */
-  timeCreatedAfter?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp time_created_after = 10;
+	 */
+	timeCreatedAfter?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp time_created_before = 11;
-   */
-  timeCreatedBefore?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp time_created_before = 11;
+	 */
+	timeCreatedBefore?: Timestamp;
 };
 
 /**
  * Describes the message person.v1.QueryRequest.
  * Use `create(QueryRequestSchema)` to create a new message.
  */
-export const QueryRequestSchema: GenMessage<QueryRequest> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 8);
+export const QueryRequestSchema: GenMessage<QueryRequest> = /*@__PURE__*/ messageDesc(file_person_v1_person, 14);
 
 /**
  * @generated from message person.v1.Person
  */
 export type Person = Message<"person.v1.Person"> & {
-  /**
-   * @generated from field: string steam_id = 1;
-   */
-  steamId: string;
+	/**
+	 * @generated from field: int64 steam_id = 1;
+	 */
+	steamId: bigint;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 2;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 2;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 3;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 3;
+	 */
+	updatedOn?: Timestamp;
 
-  /**
-   * @generated from field: person.v1.Privilege permission_level = 4;
-   */
-  permissionLevel: Privilege;
+	/**
+	 * @generated from field: person.v1.Privilege permission_level = 4;
+	 */
+	permissionLevel: Privilege;
 
-  /**
-   * @generated from field: bool muted = 5;
-   */
-  muted: boolean;
+	/**
+	 * @generated from field: bool muted = 5;
+	 */
+	muted: boolean;
 
-  /**
-   * @generated from field: string discord_id = 6;
-   */
-  discordId: string;
+	/**
+	 * @generated from field: string discord_id = 6;
+	 */
+	discordId: string;
 
-  /**
-   * @generated from field: string patreon_id = 7;
-   */
-  patreonId: string;
+	/**
+	 * @generated from field: string patreon_id = 7;
+	 */
+	patreonId: string;
 
-  /**
-   * @generated from field: string ip_addr = 8;
-   */
-  ipAddr: string;
+	/**
+	 * @generated from field: string ip_addr = 8;
+	 */
+	ipAddr: string;
 
-  /**
-   * @generated from field: bool community_banned = 9;
-   */
-  communityBanned: boolean;
+	/**
+	 * @generated from field: bool community_banned = 9;
+	 */
+	communityBanned: boolean;
 
-  /**
-   * @generated from field: int32 vac_bans = 10;
-   */
-  vacBans: number;
+	/**
+	 * @generated from field: int32 vac_bans = 10;
+	 */
+	vacBans: number;
 
-  /**
-   * @generated from field: int32 game_bans = 11;
-   */
-  gameBans: number;
+	/**
+	 * @generated from field: int32 game_bans = 11;
+	 */
+	gameBans: number;
 
-  /**
-   * @generated from field: string economy_ban = 12;
-   */
-  economyBan: string;
+	/**
+	 * @generated from field: string economy_ban = 12;
+	 */
+	economyBan: string;
 
-  /**
-   * @generated from field: int32 days_since_last_ban = 13;
-   */
-  daysSinceLastBan: number;
+	/**
+	 * @generated from field: int32 days_since_last_ban = 13;
+	 */
+	daysSinceLastBan: number;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on_steam = 14;
-   */
-  updatedOnSteam?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on_steam = 14;
+	 */
+	updatedOnSteam?: Timestamp;
 
-  /**
-   * @generated from field: int32 playerqueue_chat_status = 15;
-   */
-  playerqueueChatStatus: number;
+	/**
+	 * @generated from field: int32 playerqueue_chat_status = 15;
+	 */
+	playerqueueChatStatus: number;
 
-  /**
-   * @generated from field: string playerqueue_chat_reason = 16;
-   */
-  playerqueueChatReason: string;
+	/**
+	 * @generated from field: string playerqueue_chat_reason = 16;
+	 */
+	playerqueueChatReason: string;
 
-  /**
-   * @generated from field: string avatar_hash = 17;
-   */
-  avatarHash: string;
+	/**
+	 * @generated from field: string avatar_hash = 17;
+	 */
+	avatarHash: string;
 
-  /**
-   * @generated from field: int64 comment_permission = 18;
-   */
-  commentPermission: bigint;
+	/**
+	 * @generated from field: int64 comment_permission = 18;
+	 */
+	commentPermission: bigint;
 
-  /**
-   * @generated from field: int64 last_logoff = 19;
-   */
-  lastLogoff: bigint;
+	/**
+	 * @generated from field: int64 last_logoff = 19;
+	 */
+	lastLogoff: bigint;
 
-  /**
-   * @generated from field: int64 loc_city_id = 20;
-   */
-  locCityId: bigint;
+	/**
+	 * @generated from field: int64 loc_city_id = 20;
+	 */
+	locCityId: bigint;
 
-  /**
-   * @generated from field: string loc_country_code = 21;
-   */
-  locCountryCode: string;
+	/**
+	 * @generated from field: string loc_country_code = 21;
+	 */
+	locCountryCode: string;
 
-  /**
-   * @generated from field: string loc_state_code = 22;
-   */
-  locStateCode: string;
+	/**
+	 * @generated from field: string loc_state_code = 22;
+	 */
+	locStateCode: string;
 
-  /**
-   * @generated from field: string persona_name = 23;
-   */
-  personaName: string;
+	/**
+	 * @generated from field: string persona_name = 23;
+	 */
+	personaName: string;
 
-  /**
-   * @generated from field: int32 persona_state = 24;
-   */
-  personaState: number;
+	/**
+	 * @generated from field: int32 persona_state = 24;
+	 */
+	personaState: number;
 
-  /**
-   * @generated from field: int32 persona_state_flags = 25;
-   */
-  personaStateFlags: number;
+	/**
+	 * @generated from field: int32 persona_state_flags = 25;
+	 */
+	personaStateFlags: number;
 
-  /**
-   * @generated from field: string primary_clan_id = 26;
-   */
-  primaryClanId: string;
+	/**
+	 * @generated from field: string primary_clan_id = 26;
+	 */
+	primaryClanId: string;
 
-  /**
-   * @generated from field: int64 profile_state = 27;
-   */
-  profileState: bigint;
+	/**
+	 * @generated from field: int64 profile_state = 27;
+	 */
+	profileState: bigint;
 
-  /**
-   * @generated from field: string profile_url = 28;
-   */
-  profileUrl: string;
+	/**
+	 * @generated from field: string profile_url = 28;
+	 */
+	profileUrl: string;
 
-  /**
-   * @generated from field: string real_name = 29;
-   */
-  realName: string;
+	/**
+	 * @generated from field: string real_name = 29;
+	 */
+	realName: string;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp time_created = 30;
-   */
-  timeCreated?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp time_created = 30;
+	 */
+	timeCreated?: Timestamp;
 
-  /**
-   * @generated from field: int64 visibility_state = 31;
-   */
-  visibilityState: bigint;
+	/**
+	 * @generated from field: int64 visibility_state = 31;
+	 */
+	visibilityState: bigint;
 };
 
 /**
  * Describes the message person.v1.Person.
  * Use `create(PersonSchema)` to create a new message.
  */
-export const PersonSchema: GenMessage<Person> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 9);
+export const PersonSchema: GenMessage<Person> = /*@__PURE__*/ messageDesc(file_person_v1_person, 15);
 
 /**
  * @generated from message person.v1.QueryResponse
  */
 export type QueryResponse = Message<"person.v1.QueryResponse"> & {
-  /**
-   * @generated from field: repeated person.v1.PersonCore people = 1;
-   */
-  people: PersonCore[];
+	/**
+	 * @generated from field: repeated person.v1.PersonCore people = 1;
+	 */
+	people: PersonCore[];
+
+	/**
+	 * @generated from field: int64 count = 2;
+	 */
+	count: bigint;
 };
 
 /**
  * Describes the message person.v1.QueryResponse.
  * Use `create(QueryResponseSchema)` to create a new message.
  */
-export const QueryResponseSchema: GenMessage<QueryResponse> = /*@__PURE__*/
-  messageDesc(file_person_v1_person, 10);
+export const QueryResponseSchema: GenMessage<QueryResponse> = /*@__PURE__*/ messageDesc(file_person_v1_person, 16);
 
 /**
  * @generated from service person.v1.PersonService
  */
 export const PersonService: GenService<{
-  /**
-   * @generated from rpc person.v1.PersonService.CurrentProfile
-   */
-  currentProfile: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof CurrentProfileResponseSchema;
-  },
-  /**
-   * @generated from rpc person.v1.PersonService.ProfileSettings
-   */
-  profileSettings: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof ProfileSettingsResponseSchema;
-  },
-  /**
-   * @generated from rpc person.v1.PersonService.EditProfileSettings
-   */
-  editProfileSettings: {
-    methodKind: "unary";
-    input: typeof EditProfileSettingsRequestSchema;
-    output: typeof EditProfileSettingsResponseSchema;
-  },
-  /**
-   * @generated from rpc person.v1.PersonService.Query
-   */
-  query: {
-    methodKind: "unary";
-    input: typeof QueryRequestSchema;
-    output: typeof QueryResponseSchema;
-  },
-  /**
-   * @generated from rpc person.v1.PersonService.EditPermissions
-   */
-  editPermissions: {
-    methodKind: "unary";
-    input: typeof EditPermissionsRequestSchema;
-    output: typeof EditPermissionsResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_person_v1_person, 0);
-
+	/**
+	 * @generated from rpc person.v1.PersonService.Profile
+	 */
+	profile: {
+		methodKind: "unary";
+		input: typeof ProfileRequestSchema;
+		output: typeof ProfileResponseSchema;
+	};
+	/**
+	 * @generated from rpc person.v1.PersonService.ResolveSteamID
+	 */
+	resolveSteamID: {
+		methodKind: "unary";
+		input: typeof ResolveSteamIDRequestSchema;
+		output: typeof ResolveSteamIDResponseSchema;
+	};
+	/**
+	 * @generated from rpc person.v1.PersonService.CurrentProfile
+	 */
+	currentProfile: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof CurrentProfileResponseSchema;
+	};
+	/**
+	 * @generated from rpc person.v1.PersonService.ProfileSettings
+	 */
+	profileSettings: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof ProfileSettingsResponseSchema;
+	};
+	/**
+	 * @generated from rpc person.v1.PersonService.EditProfileSettings
+	 */
+	editProfileSettings: {
+		methodKind: "unary";
+		input: typeof EditProfileSettingsRequestSchema;
+		output: typeof EditProfileSettingsResponseSchema;
+	};
+	/**
+	 * @generated from rpc person.v1.PersonService.Query
+	 */
+	query: {
+		methodKind: "unary";
+		input: typeof QueryRequestSchema;
+		output: typeof QueryResponseSchema;
+	};
+	/**
+	 * @generated from rpc person.v1.PersonService.EditPermissions
+	 */
+	editPermissions: {
+		methodKind: "unary";
+		input: typeof EditPermissionsRequestSchema;
+		output: typeof EditPermissionsResponseSchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_person_v1_person, 0);

@@ -10,12 +10,14 @@ import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
 /**
  * Describes the file person/v1/steamid.proto.
  */
-export const file_person_v1_steamid: GenFile = /*@__PURE__*/
-  fileDesc("ChdwZXJzb24vdjEvc3RlYW1pZC5wcm90bxIJcGVyc29uLnYxOqwBCg5zdGVhbV9pZF9yYW5nZRIYLmJ1Zi52YWxpZGF0ZS5JbnQ2NFJ1bGVzGJBOIAEoCEJrwkhoCmYKDmludDY0LnN0ZWFtX2lkEh5pbnZhbGlkIHN0ZWFtX2lkLCBvdXQgb2YgcmFuZ2UaNHRoaXMgPiA3NjU2MTE5Nzk2MDI2NTcyOSAmJiB0aGlzIDwgNzY1NjEyMDAwMDAwMDAwMDBSDHN0ZWFtSWRSYW5nZUKfAQoNY29tLnBlcnNvbi52MUIMU3RlYW1pZFByb3RvUAFaO2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvcGVyc29uL3YxO3BlcnNvbnYxogIDUFhYqgIJUGVyc29uLlYxygIJUGVyc29uXFYx4gIVUGVyc29uXFYxXEdQQk1ldGFkYXRh6gIKUGVyc29uOjpWMWIIZWRpdGlvbnNw6Ac", [file_buf_validate_validate]);
+export const file_person_v1_steamid: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChdwZXJzb24vdjEvc3RlYW1pZC5wcm90bxIJcGVyc29uLnYxOqwBCg5zdGVhbV9pZF9yYW5nZRIYLmJ1Zi52YWxpZGF0ZS5JbnQ2NFJ1bGVzGJBOIAEoCEJrwkhoCmYKDmludDY0LnN0ZWFtX2lkEh5pbnZhbGlkIHN0ZWFtX2lkLCBvdXQgb2YgcmFuZ2UaNHRoaXMgPiA3NjU2MTE5Nzk2MDI2NTcyOSAmJiB0aGlzIDwgNzY1NjEyMDAwMDAwMDAwMDBSDHN0ZWFtSWRSYW5nZUKfAQoNY29tLnBlcnNvbi52MUIMU3RlYW1pZFByb3RvUAFaO2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvcGVyc29uL3YxO3BlcnNvbnYxogIDUFhYqgIJUGVyc29uLlYxygIJUGVyc29uXFYx4gIVUGVyc29uXFYxXEdQQk1ldGFkYXRh6gIKUGVyc29uOjpWMWIIZWRpdGlvbnNw6Ac",
+		[file_buf_validate_validate],
+	);
 
 /**
  * @generated from extension: bool steam_id_range = 10000;
  */
-export const steam_id_range: GenExtension<Int64Rules, boolean> = /*@__PURE__*/
-  extDesc(file_person_v1_steamid, 0);
-
+export const steam_id_range: GenExtension<Int64Rules, boolean> = /*@__PURE__*/ extDesc(file_person_v1_steamid, 0);

@@ -43,8 +43,8 @@ type Query struct {
 	DiscordID            string                 `schema:"discord_id,omitempty" json:"discord_id,omitempty"`
 	SteamUpdateOlderThan time.Time              `schema:"steam_update_older_than" json:"steam_update_older_than"`
 	SteamIDs             []string               `schema:"steam_ids,omitempty" json:"steam_ids,omitempty"` //nolint:tagliatelle
-	VacBans              int                    `schema:"vac_bans,omitempty" json:"vac_bans,omitempty"`
-	GameBans             int                    `schema:"game_bans,omitempty" json:"game_bans,omitempty"`
+	VacBans              int32                  `schema:"vac_bans,omitempty" json:"vac_bans,omitempty"`
+	GameBans             int32                  `schema:"game_bans,omitempty" json:"game_bans,omitempty"`
 	AvatarHash           string                 `schema:"avatar_hash,omitempty" json:"avatar_hash,omitempty"`
 	CommunityBanned      *bool                  `schema:"community_banned,omitempty" json:"community_banned,omitempty"`
 	TimeCreatedAfter     *time.Time             `schema:"time_created_after,omitzero" json:"time_created_after,omitzero"`
@@ -98,6 +98,10 @@ type Person struct {
 	RealName          string       `json:"real_name"`
 	TimeCreated       int64        `json:"time_created"`
 	VisibilityState   int64        `json:"visibility_state"`
+}
+
+func (p Person) GetPrivilege() permission.Privilege {
+	return p.PermissionLevel
 }
 
 func (p Person) ApplySteamInfo(summary thirdparty.PlayerSummaryResponse, steamBan thirdparty.SteamBan) Person {
@@ -627,7 +631,7 @@ func (u *Persons) GetPersonSettings(ctx context.Context, steamID steamid.SteamID
 	return settings, nil
 }
 
-func (u *Persons) SavePersonSettings(ctx context.Context, user person.Info, update SettingsUpdate) (Settings, error) {
+func (u *Persons) SavePersonSettings(ctx context.Context, user person.BaseUser, update SettingsUpdate) (Settings, error) {
 	settings, err := u.GetPersonSettings(ctx, user.GetSteamID())
 	if err != nil {
 		return settings, err

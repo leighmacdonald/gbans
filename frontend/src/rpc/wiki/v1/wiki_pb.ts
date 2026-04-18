@@ -13,139 +13,136 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file wiki/v1/wiki.proto.
  */
-export const file_wiki_v1_wiki: GenFile = /*@__PURE__*/
-  fileDesc("ChJ3aWtpL3YxL3dpa2kucHJvdG8SB3dpa2kudjEixwEKBFdpa2kSDAoEc2x1ZxgBIAEoCRIPCgdib2R5X21kGAIgASgJEhAKCHJldmlzaW9uGAMgASgFEi4KEHBlcm1pc3Npb25fbGV2ZWwYBCABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlEi4KCmNyZWF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIhoKCkdldFJlcXVlc3QSDAoEc2x1ZxgBIAEoCSIqCgtHZXRSZXNwb25zZRIbCgR3aWtpGAEgASgLMg0ud2lraS52MS5XaWtpIiwKDVVwZGF0ZVJlcXVlc3QSGwoEd2lraRgBIAEoCzINLndpa2kudjEuV2lraSItCg5VcGRhdGVSZXNwb25zZRIbCgR3aWtpGAEgASgLMg0ud2lraS52MS5XaWtpMn4KC1dpa2lTZXJ2aWNlEjIKA0dldBITLndpa2kudjEuR2V0UmVxdWVzdBoULndpa2kudjEuR2V0UmVzcG9uc2UiABI7CgZVcGRhdGUSFi53aWtpLnYxLlVwZGF0ZVJlcXVlc3QaFy53aWtpLnYxLlVwZGF0ZVJlc3BvbnNlIgBCjgEKC2NvbS53aWtpLnYxQglXaWtpUHJvdG9QAVo3Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC93aWtpL3YxO3dpa2l2MaICA1dYWKoCB1dpa2kuVjHKAgdXaWtpXFYx4gITV2lraVxWMVxHUEJNZXRhZGF0YeoCCFdpa2k6OlYxYghlZGl0aW9uc3DoBw", [file_google_protobuf_timestamp, file_person_v1_privilege]);
+export const file_wiki_v1_wiki: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChJ3aWtpL3YxL3dpa2kucHJvdG8SB3dpa2kudjEixwEKBFdpa2kSDAoEc2x1ZxgBIAEoCRIPCgdib2R5X21kGAIgASgJEhAKCHJldmlzaW9uGAMgASgFEi4KEHBlcm1pc3Npb25fbGV2ZWwYBCABKA4yFC5wZXJzb24udjEuUHJpdmlsZWdlEi4KCmNyZWF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIhoKCkdldFJlcXVlc3QSDAoEc2x1ZxgBIAEoCSIqCgtHZXRSZXNwb25zZRIbCgR3aWtpGAEgASgLMg0ud2lraS52MS5XaWtpIiwKDVVwZGF0ZVJlcXVlc3QSGwoEd2lraRgBIAEoCzINLndpa2kudjEuV2lraSItCg5VcGRhdGVSZXNwb25zZRIbCgR3aWtpGAEgASgLMg0ud2lraS52MS5XaWtpMn4KC1dpa2lTZXJ2aWNlEjIKA0dldBITLndpa2kudjEuR2V0UmVxdWVzdBoULndpa2kudjEuR2V0UmVzcG9uc2UiABI7CgZVcGRhdGUSFi53aWtpLnYxLlVwZGF0ZVJlcXVlc3QaFy53aWtpLnYxLlVwZGF0ZVJlc3BvbnNlIgBCjgEKC2NvbS53aWtpLnYxQglXaWtpUHJvdG9QAVo3Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC93aWtpL3YxO3dpa2l2MaICA1dYWKoCB1dpa2kuVjHKAgdXaWtpXFYx4gITV2lraVxWMVxHUEJNZXRhZGF0YeoCCFdpa2k6OlYxYghlZGl0aW9uc3DoBw",
+		[file_google_protobuf_timestamp, file_person_v1_privilege],
+	);
 
 /**
  * @generated from message wiki.v1.Wiki
  */
 export type Wiki = Message<"wiki.v1.Wiki"> & {
-  /**
-   * @generated from field: string slug = 1;
-   */
-  slug: string;
+	/**
+	 * @generated from field: string slug = 1;
+	 */
+	slug: string;
 
-  /**
-   * @generated from field: string body_md = 2;
-   */
-  bodyMd: string;
+	/**
+	 * @generated from field: string body_md = 2;
+	 */
+	bodyMd: string;
 
-  /**
-   * @generated from field: int32 revision = 3;
-   */
-  revision: number;
+	/**
+	 * @generated from field: int32 revision = 3;
+	 */
+	revision: number;
 
-  /**
-   * @generated from field: person.v1.Privilege permission_level = 4;
-   */
-  permissionLevel: Privilege;
+	/**
+	 * @generated from field: person.v1.Privilege permission_level = 4;
+	 */
+	permissionLevel: Privilege;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 5;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 5;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp updated_on = 6;
-   */
-  updatedOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp updated_on = 6;
+	 */
+	updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message wiki.v1.Wiki.
  * Use `create(WikiSchema)` to create a new message.
  */
-export const WikiSchema: GenMessage<Wiki> = /*@__PURE__*/
-  messageDesc(file_wiki_v1_wiki, 0);
+export const WikiSchema: GenMessage<Wiki> = /*@__PURE__*/ messageDesc(file_wiki_v1_wiki, 0);
 
 /**
  * @generated from message wiki.v1.GetRequest
  */
 export type GetRequest = Message<"wiki.v1.GetRequest"> & {
-  /**
-   * @generated from field: string slug = 1;
-   */
-  slug: string;
+	/**
+	 * @generated from field: string slug = 1;
+	 */
+	slug: string;
 };
 
 /**
  * Describes the message wiki.v1.GetRequest.
  * Use `create(GetRequestSchema)` to create a new message.
  */
-export const GetRequestSchema: GenMessage<GetRequest> = /*@__PURE__*/
-  messageDesc(file_wiki_v1_wiki, 1);
+export const GetRequestSchema: GenMessage<GetRequest> = /*@__PURE__*/ messageDesc(file_wiki_v1_wiki, 1);
 
 /**
  * @generated from message wiki.v1.GetResponse
  */
 export type GetResponse = Message<"wiki.v1.GetResponse"> & {
-  /**
-   * @generated from field: wiki.v1.Wiki wiki = 1;
-   */
-  wiki?: Wiki;
+	/**
+	 * @generated from field: wiki.v1.Wiki wiki = 1;
+	 */
+	wiki?: Wiki;
 };
 
 /**
  * Describes the message wiki.v1.GetResponse.
  * Use `create(GetResponseSchema)` to create a new message.
  */
-export const GetResponseSchema: GenMessage<GetResponse> = /*@__PURE__*/
-  messageDesc(file_wiki_v1_wiki, 2);
+export const GetResponseSchema: GenMessage<GetResponse> = /*@__PURE__*/ messageDesc(file_wiki_v1_wiki, 2);
 
 /**
  * @generated from message wiki.v1.UpdateRequest
  */
 export type UpdateRequest = Message<"wiki.v1.UpdateRequest"> & {
-  /**
-   * @generated from field: wiki.v1.Wiki wiki = 1;
-   */
-  wiki?: Wiki;
+	/**
+	 * @generated from field: wiki.v1.Wiki wiki = 1;
+	 */
+	wiki?: Wiki;
 };
 
 /**
  * Describes the message wiki.v1.UpdateRequest.
  * Use `create(UpdateRequestSchema)` to create a new message.
  */
-export const UpdateRequestSchema: GenMessage<UpdateRequest> = /*@__PURE__*/
-  messageDesc(file_wiki_v1_wiki, 3);
+export const UpdateRequestSchema: GenMessage<UpdateRequest> = /*@__PURE__*/ messageDesc(file_wiki_v1_wiki, 3);
 
 /**
  * @generated from message wiki.v1.UpdateResponse
  */
 export type UpdateResponse = Message<"wiki.v1.UpdateResponse"> & {
-  /**
-   * @generated from field: wiki.v1.Wiki wiki = 1;
-   */
-  wiki?: Wiki;
+	/**
+	 * @generated from field: wiki.v1.Wiki wiki = 1;
+	 */
+	wiki?: Wiki;
 };
 
 /**
  * Describes the message wiki.v1.UpdateResponse.
  * Use `create(UpdateResponseSchema)` to create a new message.
  */
-export const UpdateResponseSchema: GenMessage<UpdateResponse> = /*@__PURE__*/
-  messageDesc(file_wiki_v1_wiki, 4);
+export const UpdateResponseSchema: GenMessage<UpdateResponse> = /*@__PURE__*/ messageDesc(file_wiki_v1_wiki, 4);
 
 /**
  * @generated from service wiki.v1.WikiService
  */
 export const WikiService: GenService<{
-  /**
-   * @generated from rpc wiki.v1.WikiService.Get
-   */
-  get: {
-    methodKind: "unary";
-    input: typeof GetRequestSchema;
-    output: typeof GetResponseSchema;
-  },
-  /**
-   * @generated from rpc wiki.v1.WikiService.Update
-   */
-  update: {
-    methodKind: "unary";
-    input: typeof UpdateRequestSchema;
-    output: typeof UpdateResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_wiki_v1_wiki, 0);
-
+	/**
+	 * @generated from rpc wiki.v1.WikiService.Get
+	 */
+	get: {
+		methodKind: "unary";
+		input: typeof GetRequestSchema;
+		output: typeof GetResponseSchema;
+	};
+	/**
+	 * @generated from rpc wiki.v1.WikiService.Update
+	 */
+	update: {
+		methodKind: "unary";
+		input: typeof UpdateRequestSchema;
+		output: typeof UpdateResponseSchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_wiki_v1_wiki, 0);
