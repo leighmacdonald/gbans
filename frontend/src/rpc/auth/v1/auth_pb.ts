@@ -10,45 +10,47 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file auth/v1/auth.proto.
  */
-export const file_auth_v1_auth: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChJhdXRoL3YxL2F1dGgucHJvdG8SB2F1dGgudjEiDwoNTG9nb3V0UmVxdWVzdCIQCg5Mb2dvdXRSZXNwb25zZTJLCgxBc3NldFNlcnZpY2USOwoGTG9nb3V0EhYuYXV0aC52MS5Mb2dvdXRSZXF1ZXN0GhcuYXV0aC52MS5Mb2dvdXRSZXNwb25zZSIAQo4BCgtjb20uYXV0aC52MUIJQXV0aFByb3RvUAFaN2dpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvYXV0aC92MTthdXRodjGiAgNBWFiqAgdBdXRoLlYxygIHQXV0aFxWMeICE0F1dGhcVjFcR1BCTWV0YWRhdGHqAghBdXRoOjpWMWIIZWRpdGlvbnNw6Ac",
-		[file_google_protobuf_timestamp],
-	);
+export const file_auth_v1_auth: GenFile = /*@__PURE__*/
+  fileDesc("ChJhdXRoL3YxL2F1dGgucHJvdG8SB2F1dGgudjEiDwoNTG9nb3V0UmVxdWVzdCIQCg5Mb2dvdXRSZXNwb25zZTJKCgtBdXRoU2VydmljZRI7CgZMb2dvdXQSFi5hdXRoLnYxLkxvZ291dFJlcXVlc3QaFy5hdXRoLnYxLkxvZ291dFJlc3BvbnNlIgBCjgEKC2NvbS5hdXRoLnYxQglBdXRoUHJvdG9QAVo3Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9hdXRoL3YxO2F1dGh2MaICA0FYWKoCB0F1dGguVjHKAgdBdXRoXFYx4gITQXV0aFxWMVxHUEJNZXRhZGF0YeoCCEF1dGg6OlYxYghlZGl0aW9uc3DoBw", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message auth.v1.LogoutRequest
  */
-export type LogoutRequest = Message<"auth.v1.LogoutRequest"> & {};
+export type LogoutRequest = Message<"auth.v1.LogoutRequest"> & {
+};
 
 /**
  * Describes the message auth.v1.LogoutRequest.
  * Use `create(LogoutRequestSchema)` to create a new message.
  */
-export const LogoutRequestSchema: GenMessage<LogoutRequest> = /*@__PURE__*/ messageDesc(file_auth_v1_auth, 0);
+export const LogoutRequestSchema: GenMessage<LogoutRequest> = /*@__PURE__*/
+  messageDesc(file_auth_v1_auth, 0);
 
 /**
  * @generated from message auth.v1.LogoutResponse
  */
-export type LogoutResponse = Message<"auth.v1.LogoutResponse"> & {};
+export type LogoutResponse = Message<"auth.v1.LogoutResponse"> & {
+};
 
 /**
  * Describes the message auth.v1.LogoutResponse.
  * Use `create(LogoutResponseSchema)` to create a new message.
  */
-export const LogoutResponseSchema: GenMessage<LogoutResponse> = /*@__PURE__*/ messageDesc(file_auth_v1_auth, 1);
+export const LogoutResponseSchema: GenMessage<LogoutResponse> = /*@__PURE__*/
+  messageDesc(file_auth_v1_auth, 1);
 
 /**
- * @generated from service auth.v1.AssetService
+ * @generated from service auth.v1.AuthService
  */
-export const AssetService: GenService<{
-	/**
-	 * @generated from rpc auth.v1.AssetService.Logout
-	 */
-	logout: {
-		methodKind: "unary";
-		input: typeof LogoutRequestSchema;
-		output: typeof LogoutResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_auth_v1_auth, 0);
+export const AuthService: GenService<{
+  /**
+   * @generated from rpc auth.v1.AuthService.Logout
+   */
+  logout: {
+    methodKind: "unary";
+    input: typeof LogoutRequestSchema;
+    output: typeof LogoutResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_auth_v1_auth, 0);
+

@@ -42,14 +42,14 @@ type UserDetail struct {
 	Avatar           string          `json:"avatar"`
 	AvatarDecoration any             `json:"avatar_decoration"`
 	Discriminator    string          `json:"discriminator"`
-	PublicFlags      int             `json:"public_flags"`
-	Flags            int             `json:"flags"`
+	PublicFlags      int32           `json:"public_flags"`
+	Flags            int32           `json:"flags"`
 	Banner           any             `json:"banner"`
 	BannerColor      any             `json:"banner_color"`
 	AccentColor      any             `json:"accent_color"`
 	Locale           string          `json:"locale"`
 	MfaEnabled       bool            `json:"mfa_enabled"`
-	PremiumType      int             `json:"premium_type"`
+	PremiumType      int32           `json:"premium_type"`
 	CreatedOn        time.Time       `json:"created_on"`
 	UpdatedOn        time.Time       `json:"updated_on"`
 }

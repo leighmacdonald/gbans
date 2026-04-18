@@ -11,613 +11,593 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file network/v1/blocklist.proto.
  */
-export const file_network_v1_blocklist: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChpuZXR3b3JrL3YxL2Jsb2NrbGlzdC5wcm90bxIKbmV0d29yay52MSIvChtXaGl0ZWxpc3RTdGVhbUNyZWF0ZVJlcXVlc3QSEAoIc3RlYW1faWQYASABKAMiTQocV2hpdGVsaXN0U3RlYW1DcmVhdGVSZXNwb25zZRItCgl3aGl0ZWxpc3QYASABKAsyGi5uZXR3b3JrLnYxLldoaXRlbGlzdFN0ZWFtIi8KG1doaXRlbGlzdFN0ZWFtRGVsZXRlUmVxdWVzdBIQCghzdGVhbV9pZBgBIAEoAyJIChZXaGl0ZWxpc3RTdGVhbVJlc3BvbnNlEi4KCndoaXRlbGlzdHMYASADKAsyGi5uZXR3b3JrLnYxLldoaXRlbGlzdFN0ZWFtIq0BCg5XaGl0ZWxpc3RTdGVhbRIQCghzdGVhbV9pZBgBIAEoAxIUCgxwZXJzb25hX25hbWUYAiABKAkSEwoLYXZhdGFyX2hhc2gYAyABKAkSLgoKY3JlYXRlZF9vbhgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiTwobV2hpdGVsaXN0QWRkcmVzc0VkaXRSZXF1ZXN0Eh8KF2NpZHJfYmxvY2tfd2hpdGVsaXN0X2lkGAEgASgFEg8KB2FkZHJlc3MYAiABKAkiSgocV2hpdGVsaXN0QWRkcmVzc0VkaXRSZXNwb25zZRIqCgl3aGl0ZWxpc3QYASABKAsyFy5uZXR3b3JrLnYxLldoaXRlbGlzdElQIkAKHVdoaXRlbGlzdEFkZHJlc3NEZWxldGVSZXF1ZXN0Eh8KF2NpZHJfYmxvY2tfd2hpdGVsaXN0X2lkGAEgASgFIjAKHVdoaXRlbGlzdEFkZHJlc3NDcmVhdGVSZXF1ZXN0Eg8KB2FkZHJlc3MYASABKAkiUwoeV2hpdGVsaXN0QWRkcmVzc0NyZWF0ZVJlc3BvbnNlEjEKCXdoaXRlbGlzdBgBIAEoCzIeLm5ldHdvcmsudjEuQ0lEUkJsb2NrV2hpdGVsaXN0IiQKEUNoZWNrQmxvY2tSZXF1ZXN0Eg8KB2FkZHJlc3MYASABKAkiNQoSQ2hlY2tCbG9ja1Jlc3BvbnNlEg8KB2Jsb2NrZWQYASABKAgSDgoGc291cmNlGAIgASgJIj0KHUJsb2NrbGlzdFNvdXJjZXNEZWxldGVSZXF1ZXN0EhwKFGNpZHJfYmxvY2tfc291cmNlX2lkGAEgASgFImcKG0Jsb2NrbGlzdFNvdXJjZXNFZGl0UmVxdWVzdBIcChRjaWRyX2Jsb2NrX3NvdXJjZV9pZBgBIAEoBRIMCgRuYW1lGAIgASgJEgsKA3VybBgDIAEoCRIPCgdlbmFibGVkGAQgASgIIlEKHEJsb2NrbGlzdFNvdXJjZXNFZGl0UmVzcG9uc2USMQoMYmxvY2tfc291cmNlGAEgASgLMhsubmV0d29yay52MS5DSURSQmxvY2tTb3VyY2UiSwodQmxvY2tsaXN0U291cmNlc0NyZWF0ZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRILCgN1cmwYAiABKAkSDwoHZW5hYmxlZBgDIAEoCCJTCh5CbG9ja2xpc3RTb3VyY2VzQ3JlYXRlUmVzcG9uc2USMQoMYmxvY2tfc291cmNlGAEgASgLMhsubmV0d29yay52MS5DSURSQmxvY2tTb3VyY2UiTwoYV2hpdGVsaXN0QWRkcmVzc1Jlc3BvbnNlEjMKC3doaXRlbGlzdGVkGAEgAygLMh4ubmV0d29yay52MS5DSURSQmxvY2tXaGl0ZWxpc3QipgEKEkNJRFJCbG9ja1doaXRlbGlzdBIfChdjaWRyX2Jsb2NrX3doaXRlbGlzdF9pZBgBIAEoBRIPCgdhZGRyZXNzGAIgASgJEi4KCmNyZWF0ZWRfb24YAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIlEKGEJsb2NrbGlzdFNvdXJjZXNSZXNwb25zZRI1ChBibG9ja2xpc3Rfc291cmNlGAEgAygLMhsubmV0d29yay52MS5DSURSQmxvY2tTb3VyY2UiuwEKD0NJRFJCbG9ja1NvdXJjZRIcChRjaWRyX2Jsb2NrX3NvdXJjZV9pZBgBIAEoBRIMCgRuYW1lGAIgASgJEgsKA3VybBgDIAEoCRIPCgdlbmFibGVkGAQgASgIEi4KCmNyZWF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIp8BCgtXaGl0ZWxpc3RJUBIfChdjaWRyX2Jsb2NrX3doaXRlbGlzdF9pZBgBIAEoBRIPCgdhZGRyZXNzGAIgASgJEi4KCmNyZWF0ZWRfb24YAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wMp8JChBCbG9ja2xpc3RTZXJ2aWNlElIKEEJsb2NrbGlzdFNvdXJjZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaJC5uZXR3b3JrLnYxLkJsb2NrbGlzdFNvdXJjZXNSZXNwb25zZSIAEnEKFkJsb2NrbGlzdFNvdXJjZXNDcmVhdGUSKS5uZXR3b3JrLnYxLkJsb2NrbGlzdFNvdXJjZXNDcmVhdGVSZXF1ZXN0GioubmV0d29yay52MS5CbG9ja2xpc3RTb3VyY2VzQ3JlYXRlUmVzcG9uc2UiABJrChRCbG9ja2xpc3RTb3VyY2VzRWRpdBInLm5ldHdvcmsudjEuQmxvY2tsaXN0U291cmNlc0VkaXRSZXF1ZXN0GigubmV0d29yay52MS5CbG9ja2xpc3RTb3VyY2VzRWRpdFJlc3BvbnNlIgASXQoWQmxvY2tsaXN0U291cmNlc0RlbGV0ZRIpLm5ldHdvcmsudjEuQmxvY2tsaXN0U291cmNlc0RlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJSChBXaGl0ZWxpc3RBZGRyZXNzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiQubmV0d29yay52MS5XaGl0ZWxpc3RBZGRyZXNzUmVzcG9uc2UiABJxChZXaGl0ZWxpc3RBZGRyZXNzQ3JlYXRlEikubmV0d29yay52MS5XaGl0ZWxpc3RBZGRyZXNzQ3JlYXRlUmVxdWVzdBoqLm5ldHdvcmsudjEuV2hpdGVsaXN0QWRkcmVzc0NyZWF0ZVJlc3BvbnNlIgASXQoWV2hpdGVsaXN0QWRkcmVzc0RlbGV0ZRIpLm5ldHdvcmsudjEuV2hpdGVsaXN0QWRkcmVzc0RlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJrChRXaGl0ZWxpc3RBZGRyZXNzRWRpdBInLm5ldHdvcmsudjEuV2hpdGVsaXN0QWRkcmVzc0VkaXRSZXF1ZXN0GigubmV0d29yay52MS5XaGl0ZWxpc3RBZGRyZXNzRWRpdFJlc3BvbnNlIgASTgoOV2hpdGVsaXN0U3RlYW0SFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIi5uZXR3b3JrLnYxLldoaXRlbGlzdFN0ZWFtUmVzcG9uc2UiABJZChRXaGl0ZWxpc3RTdGVhbURlbGV0ZRInLm5ldHdvcmsudjEuV2hpdGVsaXN0U3RlYW1EZWxldGVSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASawoUV2hpdGVsaXN0U3RlYW1DcmVhdGUSJy5uZXR3b3JrLnYxLldoaXRlbGlzdFN0ZWFtQ3JlYXRlUmVxdWVzdBooLm5ldHdvcmsudjEuV2hpdGVsaXN0U3RlYW1DcmVhdGVSZXNwb25zZSIAEk0KCkNoZWNrQmxvY2sSHS5uZXR3b3JrLnYxLkNoZWNrQmxvY2tSZXF1ZXN0Gh4ubmV0d29yay52MS5DaGVja0Jsb2NrUmVzcG9uc2UiAEKoAQoOY29tLm5ldHdvcmsudjFCDkJsb2NrbGlzdFByb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvbmV0d29yay92MTtuZXR3b3JrdjGiAgNOWFiqAgpOZXR3b3JrLlYxygIKTmV0d29ya1xWMeICFk5ldHdvcmtcVjFcR1BCTWV0YWRhdGHqAgtOZXR3b3JrOjpWMWIIZWRpdGlvbnNw6Ac",
-		[file_google_protobuf_empty, file_google_protobuf_timestamp],
-	);
+export const file_network_v1_blocklist: GenFile = /*@__PURE__*/
+  fileDesc("ChpuZXR3b3JrL3YxL2Jsb2NrbGlzdC5wcm90bxIKbmV0d29yay52MSIvChtXaGl0ZWxpc3RTdGVhbUNyZWF0ZVJlcXVlc3QSEAoIc3RlYW1faWQYASABKAMiTQocV2hpdGVsaXN0U3RlYW1DcmVhdGVSZXNwb25zZRItCgl3aGl0ZWxpc3QYASABKAsyGi5uZXR3b3JrLnYxLldoaXRlbGlzdFN0ZWFtIi8KG1doaXRlbGlzdFN0ZWFtRGVsZXRlUmVxdWVzdBIQCghzdGVhbV9pZBgBIAEoAyJIChZXaGl0ZWxpc3RTdGVhbVJlc3BvbnNlEi4KCndoaXRlbGlzdHMYASADKAsyGi5uZXR3b3JrLnYxLldoaXRlbGlzdFN0ZWFtIq0BCg5XaGl0ZWxpc3RTdGVhbRIQCghzdGVhbV9pZBgBIAEoAxIUCgxwZXJzb25hX25hbWUYAiABKAkSEwoLYXZhdGFyX2hhc2gYAyABKAkSLgoKY3JlYXRlZF9vbhgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9vbhgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiTwobV2hpdGVsaXN0QWRkcmVzc0VkaXRSZXF1ZXN0Eh8KF2NpZHJfYmxvY2tfd2hpdGVsaXN0X2lkGAEgASgFEg8KB2FkZHJlc3MYAiABKAkiSgocV2hpdGVsaXN0QWRkcmVzc0VkaXRSZXNwb25zZRIqCgl3aGl0ZWxpc3QYASABKAsyFy5uZXR3b3JrLnYxLldoaXRlbGlzdElQIkAKHVdoaXRlbGlzdEFkZHJlc3NEZWxldGVSZXF1ZXN0Eh8KF2NpZHJfYmxvY2tfd2hpdGVsaXN0X2lkGAEgASgFIjAKHVdoaXRlbGlzdEFkZHJlc3NDcmVhdGVSZXF1ZXN0Eg8KB2FkZHJlc3MYASABKAkiUwoeV2hpdGVsaXN0QWRkcmVzc0NyZWF0ZVJlc3BvbnNlEjEKCXdoaXRlbGlzdBgBIAEoCzIeLm5ldHdvcmsudjEuQ0lEUkJsb2NrV2hpdGVsaXN0IiQKEUNoZWNrQmxvY2tSZXF1ZXN0Eg8KB2FkZHJlc3MYASABKAkiNQoSQ2hlY2tCbG9ja1Jlc3BvbnNlEg8KB2Jsb2NrZWQYASABKAgSDgoGc291cmNlGAIgASgJIj0KHUJsb2NrbGlzdFNvdXJjZXNEZWxldGVSZXF1ZXN0EhwKFGNpZHJfYmxvY2tfc291cmNlX2lkGAEgASgFImcKG0Jsb2NrbGlzdFNvdXJjZXNFZGl0UmVxdWVzdBIcChRjaWRyX2Jsb2NrX3NvdXJjZV9pZBgBIAEoBRIMCgRuYW1lGAIgASgJEgsKA3VybBgDIAEoCRIPCgdlbmFibGVkGAQgASgIIlEKHEJsb2NrbGlzdFNvdXJjZXNFZGl0UmVzcG9uc2USMQoMYmxvY2tfc291cmNlGAEgASgLMhsubmV0d29yay52MS5DSURSQmxvY2tTb3VyY2UiSwodQmxvY2tsaXN0U291cmNlc0NyZWF0ZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRILCgN1cmwYAiABKAkSDwoHZW5hYmxlZBgDIAEoCCJTCh5CbG9ja2xpc3RTb3VyY2VzQ3JlYXRlUmVzcG9uc2USMQoMYmxvY2tfc291cmNlGAEgASgLMhsubmV0d29yay52MS5DSURSQmxvY2tTb3VyY2UiTwoYV2hpdGVsaXN0QWRkcmVzc1Jlc3BvbnNlEjMKC3doaXRlbGlzdGVkGAEgAygLMh4ubmV0d29yay52MS5DSURSQmxvY2tXaGl0ZWxpc3QipgEKEkNJRFJCbG9ja1doaXRlbGlzdBIfChdjaWRyX2Jsb2NrX3doaXRlbGlzdF9pZBgBIAEoBRIPCgdhZGRyZXNzGAIgASgJEi4KCmNyZWF0ZWRfb24YAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIlEKGEJsb2NrbGlzdFNvdXJjZXNSZXNwb25zZRI1ChBibG9ja2xpc3Rfc291cmNlGAEgAygLMhsubmV0d29yay52MS5DSURSQmxvY2tTb3VyY2UiuwEKD0NJRFJCbG9ja1NvdXJjZRIcChRjaWRyX2Jsb2NrX3NvdXJjZV9pZBgBIAEoBRIMCgRuYW1lGAIgASgJEgsKA3VybBgDIAEoCRIPCgdlbmFibGVkGAQgASgIEi4KCmNyZWF0ZWRfb24YBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIp8BCgtXaGl0ZWxpc3RJUBIfChdjaWRyX2Jsb2NrX3doaXRlbGlzdF9pZBgBIAEoBRIPCgdhZGRyZXNzGAIgASgJEi4KCmNyZWF0ZWRfb24YAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi4KCnVwZGF0ZWRfb24YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wMp8JChBCbG9ja2xpc3RTZXJ2aWNlElIKEEJsb2NrbGlzdFNvdXJjZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaJC5uZXR3b3JrLnYxLkJsb2NrbGlzdFNvdXJjZXNSZXNwb25zZSIAEnEKFkJsb2NrbGlzdFNvdXJjZXNDcmVhdGUSKS5uZXR3b3JrLnYxLkJsb2NrbGlzdFNvdXJjZXNDcmVhdGVSZXF1ZXN0GioubmV0d29yay52MS5CbG9ja2xpc3RTb3VyY2VzQ3JlYXRlUmVzcG9uc2UiABJrChRCbG9ja2xpc3RTb3VyY2VzRWRpdBInLm5ldHdvcmsudjEuQmxvY2tsaXN0U291cmNlc0VkaXRSZXF1ZXN0GigubmV0d29yay52MS5CbG9ja2xpc3RTb3VyY2VzRWRpdFJlc3BvbnNlIgASXQoWQmxvY2tsaXN0U291cmNlc0RlbGV0ZRIpLm5ldHdvcmsudjEuQmxvY2tsaXN0U291cmNlc0RlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJSChBXaGl0ZWxpc3RBZGRyZXNzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GiQubmV0d29yay52MS5XaGl0ZWxpc3RBZGRyZXNzUmVzcG9uc2UiABJxChZXaGl0ZWxpc3RBZGRyZXNzQ3JlYXRlEikubmV0d29yay52MS5XaGl0ZWxpc3RBZGRyZXNzQ3JlYXRlUmVxdWVzdBoqLm5ldHdvcmsudjEuV2hpdGVsaXN0QWRkcmVzc0NyZWF0ZVJlc3BvbnNlIgASXQoWV2hpdGVsaXN0QWRkcmVzc0RlbGV0ZRIpLm5ldHdvcmsudjEuV2hpdGVsaXN0QWRkcmVzc0RlbGV0ZVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJrChRXaGl0ZWxpc3RBZGRyZXNzRWRpdBInLm5ldHdvcmsudjEuV2hpdGVsaXN0QWRkcmVzc0VkaXRSZXF1ZXN0GigubmV0d29yay52MS5XaGl0ZWxpc3RBZGRyZXNzRWRpdFJlc3BvbnNlIgASTgoOV2hpdGVsaXN0U3RlYW0SFi5nb29nbGUucHJvdG9idWYuRW1wdHkaIi5uZXR3b3JrLnYxLldoaXRlbGlzdFN0ZWFtUmVzcG9uc2UiABJZChRXaGl0ZWxpc3RTdGVhbURlbGV0ZRInLm5ldHdvcmsudjEuV2hpdGVsaXN0U3RlYW1EZWxldGVSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASawoUV2hpdGVsaXN0U3RlYW1DcmVhdGUSJy5uZXR3b3JrLnYxLldoaXRlbGlzdFN0ZWFtQ3JlYXRlUmVxdWVzdBooLm5ldHdvcmsudjEuV2hpdGVsaXN0U3RlYW1DcmVhdGVSZXNwb25zZSIAEk0KCkNoZWNrQmxvY2sSHS5uZXR3b3JrLnYxLkNoZWNrQmxvY2tSZXF1ZXN0Gh4ubmV0d29yay52MS5DaGVja0Jsb2NrUmVzcG9uc2UiAEKoAQoOY29tLm5ldHdvcmsudjFCDkJsb2NrbGlzdFByb3RvUAFaPWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvbmV0d29yay92MTtuZXR3b3JrdjGiAgNOWFiqAgpOZXR3b3JrLlYxygIKTmV0d29ya1xWMeICFk5ldHdvcmtcVjFcR1BCTWV0YWRhdGHqAgtOZXR3b3JrOjpWMWIIZWRpdGlvbnNw6Ac", [file_google_protobuf_empty, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message network.v1.WhitelistSteamCreateRequest
  */
 export type WhitelistSteamCreateRequest = Message<"network.v1.WhitelistSteamCreateRequest"> & {
-	/**
-	 * @generated from field: int64 steam_id = 1;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 1;
+   */
+  steamId: bigint;
 };
 
 /**
  * Describes the message network.v1.WhitelistSteamCreateRequest.
  * Use `create(WhitelistSteamCreateRequestSchema)` to create a new message.
  */
-export const WhitelistSteamCreateRequestSchema: GenMessage<WhitelistSteamCreateRequest> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 0);
+export const WhitelistSteamCreateRequestSchema: GenMessage<WhitelistSteamCreateRequest> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 0);
 
 /**
  * @generated from message network.v1.WhitelistSteamCreateResponse
  */
 export type WhitelistSteamCreateResponse = Message<"network.v1.WhitelistSteamCreateResponse"> & {
-	/**
-	 * @generated from field: network.v1.WhitelistSteam whitelist = 1;
-	 */
-	whitelist?: WhitelistSteam;
+  /**
+   * @generated from field: network.v1.WhitelistSteam whitelist = 1;
+   */
+  whitelist?: WhitelistSteam;
 };
 
 /**
  * Describes the message network.v1.WhitelistSteamCreateResponse.
  * Use `create(WhitelistSteamCreateResponseSchema)` to create a new message.
  */
-export const WhitelistSteamCreateResponseSchema: GenMessage<WhitelistSteamCreateResponse> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 1);
+export const WhitelistSteamCreateResponseSchema: GenMessage<WhitelistSteamCreateResponse> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 1);
 
 /**
  * @generated from message network.v1.WhitelistSteamDeleteRequest
  */
 export type WhitelistSteamDeleteRequest = Message<"network.v1.WhitelistSteamDeleteRequest"> & {
-	/**
-	 * @generated from field: int64 steam_id = 1;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 1;
+   */
+  steamId: bigint;
 };
 
 /**
  * Describes the message network.v1.WhitelistSteamDeleteRequest.
  * Use `create(WhitelistSteamDeleteRequestSchema)` to create a new message.
  */
-export const WhitelistSteamDeleteRequestSchema: GenMessage<WhitelistSteamDeleteRequest> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 2);
+export const WhitelistSteamDeleteRequestSchema: GenMessage<WhitelistSteamDeleteRequest> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 2);
 
 /**
  * @generated from message network.v1.WhitelistSteamResponse
  */
 export type WhitelistSteamResponse = Message<"network.v1.WhitelistSteamResponse"> & {
-	/**
-	 * @generated from field: repeated network.v1.WhitelistSteam whitelists = 1;
-	 */
-	whitelists: WhitelistSteam[];
+  /**
+   * @generated from field: repeated network.v1.WhitelistSteam whitelists = 1;
+   */
+  whitelists: WhitelistSteam[];
 };
 
 /**
  * Describes the message network.v1.WhitelistSteamResponse.
  * Use `create(WhitelistSteamResponseSchema)` to create a new message.
  */
-export const WhitelistSteamResponseSchema: GenMessage<WhitelistSteamResponse> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 3);
+export const WhitelistSteamResponseSchema: GenMessage<WhitelistSteamResponse> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 3);
 
 /**
  * @generated from message network.v1.WhitelistSteam
  */
 export type WhitelistSteam = Message<"network.v1.WhitelistSteam"> & {
-	/**
-	 * @generated from field: int64 steam_id = 1;
-	 */
-	steamId: bigint;
+  /**
+   * @generated from field: int64 steam_id = 1;
+   */
+  steamId: bigint;
 
-	/**
-	 * @generated from field: string persona_name = 2;
-	 */
-	personaName: string;
+  /**
+   * @generated from field: string persona_name = 2;
+   */
+  personaName: string;
 
-	/**
-	 * @generated from field: string avatar_hash = 3;
-	 */
-	avatarHash: string;
+  /**
+   * @generated from field: string avatar_hash = 3;
+   */
+  avatarHash: string;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 4;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 4;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 5;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 5;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message network.v1.WhitelistSteam.
  * Use `create(WhitelistSteamSchema)` to create a new message.
  */
-export const WhitelistSteamSchema: GenMessage<WhitelistSteam> = /*@__PURE__*/ messageDesc(file_network_v1_blocklist, 4);
+export const WhitelistSteamSchema: GenMessage<WhitelistSteam> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 4);
 
 /**
  * @generated from message network.v1.WhitelistAddressEditRequest
  */
 export type WhitelistAddressEditRequest = Message<"network.v1.WhitelistAddressEditRequest"> & {
-	/**
-	 * @generated from field: int32 cidr_block_whitelist_id = 1;
-	 */
-	cidrBlockWhitelistId: number;
+  /**
+   * @generated from field: int32 cidr_block_whitelist_id = 1;
+   */
+  cidrBlockWhitelistId: number;
 
-	/**
-	 * @generated from field: string address = 2;
-	 */
-	address: string;
+  /**
+   * @generated from field: string address = 2;
+   */
+  address: string;
 };
 
 /**
  * Describes the message network.v1.WhitelistAddressEditRequest.
  * Use `create(WhitelistAddressEditRequestSchema)` to create a new message.
  */
-export const WhitelistAddressEditRequestSchema: GenMessage<WhitelistAddressEditRequest> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 5);
+export const WhitelistAddressEditRequestSchema: GenMessage<WhitelistAddressEditRequest> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 5);
 
 /**
  * @generated from message network.v1.WhitelistAddressEditResponse
  */
 export type WhitelistAddressEditResponse = Message<"network.v1.WhitelistAddressEditResponse"> & {
-	/**
-	 * @generated from field: network.v1.WhitelistIP whitelist = 1;
-	 */
-	whitelist?: WhitelistIP;
+  /**
+   * @generated from field: network.v1.WhitelistIP whitelist = 1;
+   */
+  whitelist?: WhitelistIP;
 };
 
 /**
  * Describes the message network.v1.WhitelistAddressEditResponse.
  * Use `create(WhitelistAddressEditResponseSchema)` to create a new message.
  */
-export const WhitelistAddressEditResponseSchema: GenMessage<WhitelistAddressEditResponse> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 6);
+export const WhitelistAddressEditResponseSchema: GenMessage<WhitelistAddressEditResponse> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 6);
 
 /**
  * @generated from message network.v1.WhitelistAddressDeleteRequest
  */
 export type WhitelistAddressDeleteRequest = Message<"network.v1.WhitelistAddressDeleteRequest"> & {
-	/**
-	 * @generated from field: int32 cidr_block_whitelist_id = 1;
-	 */
-	cidrBlockWhitelistId: number;
+  /**
+   * @generated from field: int32 cidr_block_whitelist_id = 1;
+   */
+  cidrBlockWhitelistId: number;
 };
 
 /**
  * Describes the message network.v1.WhitelistAddressDeleteRequest.
  * Use `create(WhitelistAddressDeleteRequestSchema)` to create a new message.
  */
-export const WhitelistAddressDeleteRequestSchema: GenMessage<WhitelistAddressDeleteRequest> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 7);
+export const WhitelistAddressDeleteRequestSchema: GenMessage<WhitelistAddressDeleteRequest> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 7);
 
 /**
  * @generated from message network.v1.WhitelistAddressCreateRequest
  */
 export type WhitelistAddressCreateRequest = Message<"network.v1.WhitelistAddressCreateRequest"> & {
-	/**
-	 * @generated from field: string address = 1;
-	 */
-	address: string;
+  /**
+   * @generated from field: string address = 1;
+   */
+  address: string;
 };
 
 /**
  * Describes the message network.v1.WhitelistAddressCreateRequest.
  * Use `create(WhitelistAddressCreateRequestSchema)` to create a new message.
  */
-export const WhitelistAddressCreateRequestSchema: GenMessage<WhitelistAddressCreateRequest> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 8);
+export const WhitelistAddressCreateRequestSchema: GenMessage<WhitelistAddressCreateRequest> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 8);
 
 /**
  * @generated from message network.v1.WhitelistAddressCreateResponse
  */
 export type WhitelistAddressCreateResponse = Message<"network.v1.WhitelistAddressCreateResponse"> & {
-	/**
-	 * @generated from field: network.v1.CIDRBlockWhitelist whitelist = 1;
-	 */
-	whitelist?: CIDRBlockWhitelist;
+  /**
+   * @generated from field: network.v1.CIDRBlockWhitelist whitelist = 1;
+   */
+  whitelist?: CIDRBlockWhitelist;
 };
 
 /**
  * Describes the message network.v1.WhitelistAddressCreateResponse.
  * Use `create(WhitelistAddressCreateResponseSchema)` to create a new message.
  */
-export const WhitelistAddressCreateResponseSchema: GenMessage<WhitelistAddressCreateResponse> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 9);
+export const WhitelistAddressCreateResponseSchema: GenMessage<WhitelistAddressCreateResponse> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 9);
 
 /**
  * @generated from message network.v1.CheckBlockRequest
  */
 export type CheckBlockRequest = Message<"network.v1.CheckBlockRequest"> & {
-	/**
-	 * @generated from field: string address = 1;
-	 */
-	address: string;
+  /**
+   * @generated from field: string address = 1;
+   */
+  address: string;
 };
 
 /**
  * Describes the message network.v1.CheckBlockRequest.
  * Use `create(CheckBlockRequestSchema)` to create a new message.
  */
-export const CheckBlockRequestSchema: GenMessage<CheckBlockRequest> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 10);
+export const CheckBlockRequestSchema: GenMessage<CheckBlockRequest> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 10);
 
 /**
  * @generated from message network.v1.CheckBlockResponse
  */
 export type CheckBlockResponse = Message<"network.v1.CheckBlockResponse"> & {
-	/**
-	 * @generated from field: bool blocked = 1;
-	 */
-	blocked: boolean;
+  /**
+   * @generated from field: bool blocked = 1;
+   */
+  blocked: boolean;
 
-	/**
-	 * @generated from field: string source = 2;
-	 */
-	source: string;
+  /**
+   * @generated from field: string source = 2;
+   */
+  source: string;
 };
 
 /**
  * Describes the message network.v1.CheckBlockResponse.
  * Use `create(CheckBlockResponseSchema)` to create a new message.
  */
-export const CheckBlockResponseSchema: GenMessage<CheckBlockResponse> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 11);
+export const CheckBlockResponseSchema: GenMessage<CheckBlockResponse> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 11);
 
 /**
  * @generated from message network.v1.BlocklistSourcesDeleteRequest
  */
 export type BlocklistSourcesDeleteRequest = Message<"network.v1.BlocklistSourcesDeleteRequest"> & {
-	/**
-	 * @generated from field: int32 cidr_block_source_id = 1;
-	 */
-	cidrBlockSourceId: number;
+  /**
+   * @generated from field: int32 cidr_block_source_id = 1;
+   */
+  cidrBlockSourceId: number;
 };
 
 /**
  * Describes the message network.v1.BlocklistSourcesDeleteRequest.
  * Use `create(BlocklistSourcesDeleteRequestSchema)` to create a new message.
  */
-export const BlocklistSourcesDeleteRequestSchema: GenMessage<BlocklistSourcesDeleteRequest> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 12);
+export const BlocklistSourcesDeleteRequestSchema: GenMessage<BlocklistSourcesDeleteRequest> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 12);
 
 /**
  * @generated from message network.v1.BlocklistSourcesEditRequest
  */
 export type BlocklistSourcesEditRequest = Message<"network.v1.BlocklistSourcesEditRequest"> & {
-	/**
-	 * @generated from field: int32 cidr_block_source_id = 1;
-	 */
-	cidrBlockSourceId: number;
+  /**
+   * @generated from field: int32 cidr_block_source_id = 1;
+   */
+  cidrBlockSourceId: number;
 
-	/**
-	 * @generated from field: string name = 2;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: string url = 3;
-	 */
-	url: string;
+  /**
+   * @generated from field: string url = 3;
+   */
+  url: string;
 
-	/**
-	 * @generated from field: bool enabled = 4;
-	 */
-	enabled: boolean;
+  /**
+   * @generated from field: bool enabled = 4;
+   */
+  enabled: boolean;
 };
 
 /**
  * Describes the message network.v1.BlocklistSourcesEditRequest.
  * Use `create(BlocklistSourcesEditRequestSchema)` to create a new message.
  */
-export const BlocklistSourcesEditRequestSchema: GenMessage<BlocklistSourcesEditRequest> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 13);
+export const BlocklistSourcesEditRequestSchema: GenMessage<BlocklistSourcesEditRequest> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 13);
 
 /**
  * @generated from message network.v1.BlocklistSourcesEditResponse
  */
 export type BlocklistSourcesEditResponse = Message<"network.v1.BlocklistSourcesEditResponse"> & {
-	/**
-	 * @generated from field: network.v1.CIDRBlockSource block_source = 1;
-	 */
-	blockSource?: CIDRBlockSource;
+  /**
+   * @generated from field: network.v1.CIDRBlockSource block_source = 1;
+   */
+  blockSource?: CIDRBlockSource;
 };
 
 /**
  * Describes the message network.v1.BlocklistSourcesEditResponse.
  * Use `create(BlocklistSourcesEditResponseSchema)` to create a new message.
  */
-export const BlocklistSourcesEditResponseSchema: GenMessage<BlocklistSourcesEditResponse> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 14);
+export const BlocklistSourcesEditResponseSchema: GenMessage<BlocklistSourcesEditResponse> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 14);
 
 /**
  * @generated from message network.v1.BlocklistSourcesCreateRequest
  */
 export type BlocklistSourcesCreateRequest = Message<"network.v1.BlocklistSourcesCreateRequest"> & {
-	/**
-	 * @generated from field: string name = 1;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: string url = 2;
-	 */
-	url: string;
+  /**
+   * @generated from field: string url = 2;
+   */
+  url: string;
 
-	/**
-	 * @generated from field: bool enabled = 3;
-	 */
-	enabled: boolean;
+  /**
+   * @generated from field: bool enabled = 3;
+   */
+  enabled: boolean;
 };
 
 /**
  * Describes the message network.v1.BlocklistSourcesCreateRequest.
  * Use `create(BlocklistSourcesCreateRequestSchema)` to create a new message.
  */
-export const BlocklistSourcesCreateRequestSchema: GenMessage<BlocklistSourcesCreateRequest> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 15);
+export const BlocklistSourcesCreateRequestSchema: GenMessage<BlocklistSourcesCreateRequest> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 15);
 
 /**
  * @generated from message network.v1.BlocklistSourcesCreateResponse
  */
 export type BlocklistSourcesCreateResponse = Message<"network.v1.BlocklistSourcesCreateResponse"> & {
-	/**
-	 * @generated from field: network.v1.CIDRBlockSource block_source = 1;
-	 */
-	blockSource?: CIDRBlockSource;
+  /**
+   * @generated from field: network.v1.CIDRBlockSource block_source = 1;
+   */
+  blockSource?: CIDRBlockSource;
 };
 
 /**
  * Describes the message network.v1.BlocklistSourcesCreateResponse.
  * Use `create(BlocklistSourcesCreateResponseSchema)` to create a new message.
  */
-export const BlocklistSourcesCreateResponseSchema: GenMessage<BlocklistSourcesCreateResponse> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 16);
+export const BlocklistSourcesCreateResponseSchema: GenMessage<BlocklistSourcesCreateResponse> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 16);
 
 /**
  * @generated from message network.v1.WhitelistAddressResponse
  */
 export type WhitelistAddressResponse = Message<"network.v1.WhitelistAddressResponse"> & {
-	/**
-	 * @generated from field: repeated network.v1.CIDRBlockWhitelist whitelisted = 1;
-	 */
-	whitelisted: CIDRBlockWhitelist[];
+  /**
+   * @generated from field: repeated network.v1.CIDRBlockWhitelist whitelisted = 1;
+   */
+  whitelisted: CIDRBlockWhitelist[];
 };
 
 /**
  * Describes the message network.v1.WhitelistAddressResponse.
  * Use `create(WhitelistAddressResponseSchema)` to create a new message.
  */
-export const WhitelistAddressResponseSchema: GenMessage<WhitelistAddressResponse> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 17);
+export const WhitelistAddressResponseSchema: GenMessage<WhitelistAddressResponse> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 17);
 
 /**
  * @generated from message network.v1.CIDRBlockWhitelist
  */
 export type CIDRBlockWhitelist = Message<"network.v1.CIDRBlockWhitelist"> & {
-	/**
-	 * @generated from field: int32 cidr_block_whitelist_id = 1;
-	 */
-	cidrBlockWhitelistId: number;
+  /**
+   * @generated from field: int32 cidr_block_whitelist_id = 1;
+   */
+  cidrBlockWhitelistId: number;
 
-	/**
-	 * @generated from field: string address = 2;
-	 */
-	address: string;
+  /**
+   * @generated from field: string address = 2;
+   */
+  address: string;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 3;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 3;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 4;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 4;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message network.v1.CIDRBlockWhitelist.
  * Use `create(CIDRBlockWhitelistSchema)` to create a new message.
  */
-export const CIDRBlockWhitelistSchema: GenMessage<CIDRBlockWhitelist> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 18);
+export const CIDRBlockWhitelistSchema: GenMessage<CIDRBlockWhitelist> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 18);
 
 /**
  * @generated from message network.v1.BlocklistSourcesResponse
  */
 export type BlocklistSourcesResponse = Message<"network.v1.BlocklistSourcesResponse"> & {
-	/**
-	 * @generated from field: repeated network.v1.CIDRBlockSource blocklist_source = 1;
-	 */
-	blocklistSource: CIDRBlockSource[];
+  /**
+   * @generated from field: repeated network.v1.CIDRBlockSource blocklist_source = 1;
+   */
+  blocklistSource: CIDRBlockSource[];
 };
 
 /**
  * Describes the message network.v1.BlocklistSourcesResponse.
  * Use `create(BlocklistSourcesResponseSchema)` to create a new message.
  */
-export const BlocklistSourcesResponseSchema: GenMessage<BlocklistSourcesResponse> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 19);
+export const BlocklistSourcesResponseSchema: GenMessage<BlocklistSourcesResponse> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 19);
 
 /**
  * @generated from message network.v1.CIDRBlockSource
  */
 export type CIDRBlockSource = Message<"network.v1.CIDRBlockSource"> & {
-	/**
-	 * @generated from field: int32 cidr_block_source_id = 1;
-	 */
-	cidrBlockSourceId: number;
+  /**
+   * @generated from field: int32 cidr_block_source_id = 1;
+   */
+  cidrBlockSourceId: number;
 
-	/**
-	 * @generated from field: string name = 2;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: string url = 3;
-	 */
-	url: string;
+  /**
+   * @generated from field: string url = 3;
+   */
+  url: string;
 
-	/**
-	 * @generated from field: bool enabled = 4;
-	 */
-	enabled: boolean;
+  /**
+   * @generated from field: bool enabled = 4;
+   */
+  enabled: boolean;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 5;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 5;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 6;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 6;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message network.v1.CIDRBlockSource.
  * Use `create(CIDRBlockSourceSchema)` to create a new message.
  */
-export const CIDRBlockSourceSchema: GenMessage<CIDRBlockSource> =
-	/*@__PURE__*/
-	messageDesc(file_network_v1_blocklist, 20);
+export const CIDRBlockSourceSchema: GenMessage<CIDRBlockSource> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 20);
 
 /**
  * @generated from message network.v1.WhitelistIP
  */
 export type WhitelistIP = Message<"network.v1.WhitelistIP"> & {
-	/**
-	 * @generated from field: int32 cidr_block_whitelist_id = 1;
-	 */
-	cidrBlockWhitelistId: number;
+  /**
+   * @generated from field: int32 cidr_block_whitelist_id = 1;
+   */
+  cidrBlockWhitelistId: number;
 
-	/**
-	 * @generated from field: string address = 2;
-	 */
-	address: string;
+  /**
+   * @generated from field: string address = 2;
+   */
+  address: string;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 3;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 3;
+   */
+  createdOn?: Timestamp;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp updated_on = 4;
-	 */
-	updatedOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp updated_on = 4;
+   */
+  updatedOn?: Timestamp;
 };
 
 /**
  * Describes the message network.v1.WhitelistIP.
  * Use `create(WhitelistIPSchema)` to create a new message.
  */
-export const WhitelistIPSchema: GenMessage<WhitelistIP> = /*@__PURE__*/ messageDesc(file_network_v1_blocklist, 21);
+export const WhitelistIPSchema: GenMessage<WhitelistIP> = /*@__PURE__*/
+  messageDesc(file_network_v1_blocklist, 21);
 
 /**
  * @generated from service network.v1.BlocklistService
  */
 export const BlocklistService: GenService<{
-	/**
-	 * @generated from rpc network.v1.BlocklistService.BlocklistSources
-	 */
-	blocklistSources: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof BlocklistSourcesResponseSchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.BlocklistSourcesCreate
-	 */
-	blocklistSourcesCreate: {
-		methodKind: "unary";
-		input: typeof BlocklistSourcesCreateRequestSchema;
-		output: typeof BlocklistSourcesCreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.BlocklistSourcesEdit
-	 */
-	blocklistSourcesEdit: {
-		methodKind: "unary";
-		input: typeof BlocklistSourcesEditRequestSchema;
-		output: typeof BlocklistSourcesEditResponseSchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.BlocklistSourcesDelete
-	 */
-	blocklistSourcesDelete: {
-		methodKind: "unary";
-		input: typeof BlocklistSourcesDeleteRequestSchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.WhitelistAddress
-	 */
-	whitelistAddress: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof WhitelistAddressResponseSchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.WhitelistAddressCreate
-	 */
-	whitelistAddressCreate: {
-		methodKind: "unary";
-		input: typeof WhitelistAddressCreateRequestSchema;
-		output: typeof WhitelistAddressCreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.WhitelistAddressDelete
-	 */
-	whitelistAddressDelete: {
-		methodKind: "unary";
-		input: typeof WhitelistAddressDeleteRequestSchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.WhitelistAddressEdit
-	 */
-	whitelistAddressEdit: {
-		methodKind: "unary";
-		input: typeof WhitelistAddressEditRequestSchema;
-		output: typeof WhitelistAddressEditResponseSchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.WhitelistSteam
-	 */
-	whitelistSteam: {
-		methodKind: "unary";
-		input: typeof EmptySchema;
-		output: typeof WhitelistSteamResponseSchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.WhitelistSteamDelete
-	 */
-	whitelistSteamDelete: {
-		methodKind: "unary";
-		input: typeof WhitelistSteamDeleteRequestSchema;
-		output: typeof EmptySchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.WhitelistSteamCreate
-	 */
-	whitelistSteamCreate: {
-		methodKind: "unary";
-		input: typeof WhitelistSteamCreateRequestSchema;
-		output: typeof WhitelistSteamCreateResponseSchema;
-	};
-	/**
-	 * @generated from rpc network.v1.BlocklistService.CheckBlock
-	 */
-	checkBlock: {
-		methodKind: "unary";
-		input: typeof CheckBlockRequestSchema;
-		output: typeof CheckBlockResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_network_v1_blocklist, 0);
+  /**
+   * @generated from rpc network.v1.BlocklistService.BlocklistSources
+   */
+  blocklistSources: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof BlocklistSourcesResponseSchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.BlocklistSourcesCreate
+   */
+  blocklistSourcesCreate: {
+    methodKind: "unary";
+    input: typeof BlocklistSourcesCreateRequestSchema;
+    output: typeof BlocklistSourcesCreateResponseSchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.BlocklistSourcesEdit
+   */
+  blocklistSourcesEdit: {
+    methodKind: "unary";
+    input: typeof BlocklistSourcesEditRequestSchema;
+    output: typeof BlocklistSourcesEditResponseSchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.BlocklistSourcesDelete
+   */
+  blocklistSourcesDelete: {
+    methodKind: "unary";
+    input: typeof BlocklistSourcesDeleteRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.WhitelistAddress
+   */
+  whitelistAddress: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof WhitelistAddressResponseSchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.WhitelistAddressCreate
+   */
+  whitelistAddressCreate: {
+    methodKind: "unary";
+    input: typeof WhitelistAddressCreateRequestSchema;
+    output: typeof WhitelistAddressCreateResponseSchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.WhitelistAddressDelete
+   */
+  whitelistAddressDelete: {
+    methodKind: "unary";
+    input: typeof WhitelistAddressDeleteRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.WhitelistAddressEdit
+   */
+  whitelistAddressEdit: {
+    methodKind: "unary";
+    input: typeof WhitelistAddressEditRequestSchema;
+    output: typeof WhitelistAddressEditResponseSchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.WhitelistSteam
+   */
+  whitelistSteam: {
+    methodKind: "unary";
+    input: typeof EmptySchema;
+    output: typeof WhitelistSteamResponseSchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.WhitelistSteamDelete
+   */
+  whitelistSteamDelete: {
+    methodKind: "unary";
+    input: typeof WhitelistSteamDeleteRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.WhitelistSteamCreate
+   */
+  whitelistSteamCreate: {
+    methodKind: "unary";
+    input: typeof WhitelistSteamCreateRequestSchema;
+    output: typeof WhitelistSteamCreateResponseSchema;
+  },
+  /**
+   * @generated from rpc network.v1.BlocklistService.CheckBlock
+   */
+  checkBlock: {
+    methodKind: "unary";
+    input: typeof CheckBlockRequestSchema;
+    output: typeof CheckBlockResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_network_v1_blocklist, 0);
+

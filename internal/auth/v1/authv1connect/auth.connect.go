@@ -21,8 +21,8 @@ import (
 const _ = connect.IsAtLeastVersion1_13_0
 
 const (
-	// AssetServiceName is the fully-qualified name of the AssetService service.
-	AssetServiceName = "auth.v1.AssetService"
+	// AuthServiceName is the fully-qualified name of the AuthService service.
+	AuthServiceName = "auth.v1.AuthService"
 )
 
 // These constants are the fully-qualified names of the RPCs defined in this package. They're
@@ -33,42 +33,42 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// AssetServiceLogoutProcedure is the fully-qualified name of the AssetService's Logout RPC.
-	AssetServiceLogoutProcedure = "/auth.v1.AssetService/Logout"
+	// AuthServiceLogoutProcedure is the fully-qualified name of the AuthService's Logout RPC.
+	AuthServiceLogoutProcedure = "/auth.v1.AuthService/Logout"
 )
 
-// AssetServiceClient is a client for the auth.v1.AssetService service.
-type AssetServiceClient interface {
+// AuthServiceClient is a client for the auth.v1.AuthService service.
+type AuthServiceClient interface {
 	Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error)
 }
 
-// NewAssetServiceClient constructs a client for the auth.v1.AssetService service. By default, it
-// uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
+// NewAuthServiceClient constructs a client for the auth.v1.AuthService service. By default, it uses
+// the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and sends
 // uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
 // connect.WithGRPCWeb() options.
 //
 // The URL supplied here should be the base URL for the Connect or gRPC server (for example,
 // http://api.acme.com or https://acme.com/grpc).
-func NewAssetServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) AssetServiceClient {
+func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) AuthServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
-	assetServiceMethods := v1.File_auth_v1_auth_proto.Services().ByName("AssetService").Methods()
-	return &assetServiceClient{
+	authServiceMethods := v1.File_auth_v1_auth_proto.Services().ByName("AuthService").Methods()
+	return &authServiceClient{
 		logout: connect.NewClient[v1.LogoutRequest, v1.LogoutResponse](
 			httpClient,
-			baseURL+AssetServiceLogoutProcedure,
-			connect.WithSchema(assetServiceMethods.ByName("Logout")),
+			baseURL+AuthServiceLogoutProcedure,
+			connect.WithSchema(authServiceMethods.ByName("Logout")),
 			connect.WithClientOptions(opts...),
 		),
 	}
 }
 
-// assetServiceClient implements AssetServiceClient.
-type assetServiceClient struct {
+// authServiceClient implements AuthServiceClient.
+type authServiceClient struct {
 	logout *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
 }
 
-// Logout calls auth.v1.AssetService.Logout.
-func (c *assetServiceClient) Logout(ctx context.Context, req *v1.LogoutRequest) (*v1.LogoutResponse, error) {
+// Logout calls auth.v1.AuthService.Logout.
+func (c *authServiceClient) Logout(ctx context.Context, req *v1.LogoutRequest) (*v1.LogoutResponse, error) {
 	response, err := c.logout.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -76,37 +76,37 @@ func (c *assetServiceClient) Logout(ctx context.Context, req *v1.LogoutRequest) 
 	return nil, err
 }
 
-// AssetServiceHandler is an implementation of the auth.v1.AssetService service.
-type AssetServiceHandler interface {
+// AuthServiceHandler is an implementation of the auth.v1.AuthService service.
+type AuthServiceHandler interface {
 	Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error)
 }
 
-// NewAssetServiceHandler builds an HTTP handler from the service implementation. It returns the
-// path on which to mount the handler and the handler itself.
+// NewAuthServiceHandler builds an HTTP handler from the service implementation. It returns the path
+// on which to mount the handler and the handler itself.
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewAssetServiceHandler(svc AssetServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	assetServiceMethods := v1.File_auth_v1_auth_proto.Services().ByName("AssetService").Methods()
-	assetServiceLogoutHandler := connect.NewUnaryHandlerSimple(
-		AssetServiceLogoutProcedure,
+func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	authServiceMethods := v1.File_auth_v1_auth_proto.Services().ByName("AuthService").Methods()
+	authServiceLogoutHandler := connect.NewUnaryHandlerSimple(
+		AuthServiceLogoutProcedure,
 		svc.Logout,
-		connect.WithSchema(assetServiceMethods.ByName("Logout")),
+		connect.WithSchema(authServiceMethods.ByName("Logout")),
 		connect.WithHandlerOptions(opts...),
 	)
-	return "/auth.v1.AssetService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return "/auth.v1.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case AssetServiceLogoutProcedure:
-			assetServiceLogoutHandler.ServeHTTP(w, r)
+		case AuthServiceLogoutProcedure:
+			authServiceLogoutHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
 	})
 }
 
-// UnimplementedAssetServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedAssetServiceHandler struct{}
+// UnimplementedAuthServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedAuthServiceHandler struct{}
 
-func (UnimplementedAssetServiceHandler) Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("auth.v1.AssetService.Logout is not implemented"))
+func (UnimplementedAuthServiceHandler) Logout(context.Context, *v1.LogoutRequest) (*v1.LogoutResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("auth.v1.AuthService.Logout is not implemented"))
 }

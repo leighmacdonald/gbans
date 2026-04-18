@@ -13,191 +13,193 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file votes/v1/votes.proto.
  */
-export const file_votes_v1_votes: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"ChR2b3Rlcy92MS92b3Rlcy5wcm90bxIIdm90ZXMudjEijQEKDFF1ZXJ5UmVxdWVzdBIXCgZmaWx0ZXIYASABKAsyBy5GaWx0ZXISEQoJc291cmNlX2lkGAIgASgJEhEKCXRhcmdldF9pZBgDIAEoCRIRCglzZXJ2ZXJfaWQYBCABKAUSDAoEbmFtZRgFIAEoCRIPCgdzdWNjZXNzGAYgASgFEgwKBGNvZGUYByABKAgivgIKClZvdGVSZXN1bHQSDwoHdm90ZV9pZBgBIAEoBRIRCglzb3VyY2VfaWQYAiABKAkSEwoLc291cmNlX25hbWUYAyABKAkSGgoSc291cmNlX2F2YXRhcl9oYXNoGAQgASgJEhEKCXRhcmdldF9pZBgFIAEoCRITCgt0YXJnZXRfbmFtZRgGIAEoCRIaChJ0YXJnZXRfYXZhdGFyX2hhc2gYByABKAkSDAoEbmFtZRgIIAEoCRIPCgdzdWNjZXNzGAkgASgIEhEKCXNlcnZlcl9pZBgKIAEoBRITCgtzZXJ2ZXJfbmFtZRgLIAEoCRIgCgRjb2RlGAwgASgOMhIudm90ZXMudjEuVm90ZUNvZGUSLgoKY3JlYXRlZF9vbhgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiRQoNUXVlcnlSZXNwb25zZRIlCgdyZXN1bHRzGAEgAygLMhQudm90ZXMudjEuVm90ZVJlc3VsdBINCgVjb3VudBgCIAEoAypyCghWb3RlQ29kZRImCiJWT1RFX0NPREVfRkFJTF9HRU5FUklDX1VOU1BFQ0lGSUVEEAASIwofVk9URV9DT0RFX0ZBSUxfTk9fT1VUTlVNQkVSX1lFUxABEhkKFVZPVEVfQ09ERV9GQUlMX1FVT1JVTRACMkoKDFZvdGVzU2VydmljZRI6CgVRdWVyeRIWLnZvdGVzLnYxLlF1ZXJ5UmVxdWVzdBoXLnZvdGVzLnYxLlF1ZXJ5UmVzcG9uc2UiAEKWAQoMY29tLnZvdGVzLnYxQgpWb3Rlc1Byb3RvUAFaOWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvdm90ZXMvdjE7dm90ZXN2MaICA1ZYWKoCCFZvdGVzLlYxygIIVm90ZXNcVjHiAhRWb3Rlc1xWMVxHUEJNZXRhZGF0YeoCCVZvdGVzOjpWMWIIZWRpdGlvbnNw6Ac",
-		[file_database_query_v1_filter, file_google_protobuf_timestamp],
-	);
+export const file_votes_v1_votes: GenFile = /*@__PURE__*/
+  fileDesc("ChR2b3Rlcy92MS92b3Rlcy5wcm90bxIIdm90ZXMudjEijQEKDFF1ZXJ5UmVxdWVzdBIXCgZmaWx0ZXIYASABKAsyBy5GaWx0ZXISEQoJc291cmNlX2lkGAIgASgJEhEKCXRhcmdldF9pZBgDIAEoCRIRCglzZXJ2ZXJfaWQYBCABKAUSDAoEbmFtZRgFIAEoCRIPCgdzdWNjZXNzGAYgASgFEgwKBGNvZGUYByABKAgivgIKClZvdGVSZXN1bHQSDwoHdm90ZV9pZBgBIAEoBRIRCglzb3VyY2VfaWQYAiABKAkSEwoLc291cmNlX25hbWUYAyABKAkSGgoSc291cmNlX2F2YXRhcl9oYXNoGAQgASgJEhEKCXRhcmdldF9pZBgFIAEoCRITCgt0YXJnZXRfbmFtZRgGIAEoCRIaChJ0YXJnZXRfYXZhdGFyX2hhc2gYByABKAkSDAoEbmFtZRgIIAEoCRIPCgdzdWNjZXNzGAkgASgIEhEKCXNlcnZlcl9pZBgKIAEoBRITCgtzZXJ2ZXJfbmFtZRgLIAEoCRIgCgRjb2RlGAwgASgOMhIudm90ZXMudjEuVm90ZUNvZGUSLgoKY3JlYXRlZF9vbhgNIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiRQoNUXVlcnlSZXNwb25zZRIlCgdyZXN1bHRzGAEgAygLMhQudm90ZXMudjEuVm90ZVJlc3VsdBINCgVjb3VudBgCIAEoAypyCghWb3RlQ29kZRImCiJWT1RFX0NPREVfRkFJTF9HRU5FUklDX1VOU1BFQ0lGSUVEEAASIwofVk9URV9DT0RFX0ZBSUxfTk9fT1VUTlVNQkVSX1lFUxABEhkKFVZPVEVfQ09ERV9GQUlMX1FVT1JVTRACMkoKDFZvdGVzU2VydmljZRI6CgVRdWVyeRIWLnZvdGVzLnYxLlF1ZXJ5UmVxdWVzdBoXLnZvdGVzLnYxLlF1ZXJ5UmVzcG9uc2UiAEKWAQoMY29tLnZvdGVzLnYxQgpWb3Rlc1Byb3RvUAFaOWdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvdm90ZXMvdjE7dm90ZXN2MaICA1ZYWKoCCFZvdGVzLlYxygIIVm90ZXNcVjHiAhRWb3Rlc1xWMVxHUEJNZXRhZGF0YeoCCVZvdGVzOjpWMWIIZWRpdGlvbnNw6Ac", [file_database_query_v1_filter, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message votes.v1.QueryRequest
  */
 export type QueryRequest = Message<"votes.v1.QueryRequest"> & {
-	/**
-	 * @generated from field: Filter filter = 1;
-	 */
-	filter?: Filter;
+  /**
+   * @generated from field: Filter filter = 1;
+   */
+  filter?: Filter;
 
-	/**
-	 * @generated from field: string source_id = 2;
-	 */
-	sourceId: string;
+  /**
+   * @generated from field: string source_id = 2;
+   */
+  sourceId: string;
 
-	/**
-	 * @generated from field: string target_id = 3;
-	 */
-	targetId: string;
+  /**
+   * @generated from field: string target_id = 3;
+   */
+  targetId: string;
 
-	/**
-	 * @generated from field: int32 server_id = 4;
-	 */
-	serverId: number;
+  /**
+   * @generated from field: int32 server_id = 4;
+   */
+  serverId: number;
 
-	/**
-	 * @generated from field: string name = 5;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 5;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: int32 success = 6;
-	 */
-	success: number;
+  /**
+   * @generated from field: int32 success = 6;
+   */
+  success: number;
 
-	/**
-	 * @generated from field: bool code = 7;
-	 */
-	code: boolean;
+  /**
+   * @generated from field: bool code = 7;
+   */
+  code: boolean;
 };
 
 /**
  * Describes the message votes.v1.QueryRequest.
  * Use `create(QueryRequestSchema)` to create a new message.
  */
-export const QueryRequestSchema: GenMessage<QueryRequest> = /*@__PURE__*/ messageDesc(file_votes_v1_votes, 0);
+export const QueryRequestSchema: GenMessage<QueryRequest> = /*@__PURE__*/
+  messageDesc(file_votes_v1_votes, 0);
 
 /**
  * @generated from message votes.v1.VoteResult
  */
 export type VoteResult = Message<"votes.v1.VoteResult"> & {
-	/**
-	 * @generated from field: int32 vote_id = 1;
-	 */
-	voteId: number;
+  /**
+   * @generated from field: int32 vote_id = 1;
+   */
+  voteId: number;
 
-	/**
-	 * @generated from field: string source_id = 2;
-	 */
-	sourceId: string;
+  /**
+   * @generated from field: string source_id = 2;
+   */
+  sourceId: string;
 
-	/**
-	 * @generated from field: string source_name = 3;
-	 */
-	sourceName: string;
+  /**
+   * @generated from field: string source_name = 3;
+   */
+  sourceName: string;
 
-	/**
-	 * @generated from field: string source_avatar_hash = 4;
-	 */
-	sourceAvatarHash: string;
+  /**
+   * @generated from field: string source_avatar_hash = 4;
+   */
+  sourceAvatarHash: string;
 
-	/**
-	 * @generated from field: string target_id = 5;
-	 */
-	targetId: string;
+  /**
+   * @generated from field: string target_id = 5;
+   */
+  targetId: string;
 
-	/**
-	 * @generated from field: string target_name = 6;
-	 */
-	targetName: string;
+  /**
+   * @generated from field: string target_name = 6;
+   */
+  targetName: string;
 
-	/**
-	 * @generated from field: string target_avatar_hash = 7;
-	 */
-	targetAvatarHash: string;
+  /**
+   * @generated from field: string target_avatar_hash = 7;
+   */
+  targetAvatarHash: string;
 
-	/**
-	 * @generated from field: string name = 8;
-	 */
-	name: string;
+  /**
+   * @generated from field: string name = 8;
+   */
+  name: string;
 
-	/**
-	 * @generated from field: bool success = 9;
-	 */
-	success: boolean;
+  /**
+   * @generated from field: bool success = 9;
+   */
+  success: boolean;
 
-	/**
-	 * @generated from field: int32 server_id = 10;
-	 */
-	serverId: number;
+  /**
+   * @generated from field: int32 server_id = 10;
+   */
+  serverId: number;
 
-	/**
-	 * @generated from field: string server_name = 11;
-	 */
-	serverName: string;
+  /**
+   * @generated from field: string server_name = 11;
+   */
+  serverName: string;
 
-	/**
-	 * @generated from field: votes.v1.VoteCode code = 12;
-	 */
-	code: VoteCode;
+  /**
+   * @generated from field: votes.v1.VoteCode code = 12;
+   */
+  code: VoteCode;
 
-	/**
-	 * @generated from field: google.protobuf.Timestamp created_on = 13;
-	 */
-	createdOn?: Timestamp;
+  /**
+   * @generated from field: google.protobuf.Timestamp created_on = 13;
+   */
+  createdOn?: Timestamp;
 };
 
 /**
  * Describes the message votes.v1.VoteResult.
  * Use `create(VoteResultSchema)` to create a new message.
  */
-export const VoteResultSchema: GenMessage<VoteResult> = /*@__PURE__*/ messageDesc(file_votes_v1_votes, 1);
+export const VoteResultSchema: GenMessage<VoteResult> = /*@__PURE__*/
+  messageDesc(file_votes_v1_votes, 1);
 
 /**
  * @generated from message votes.v1.QueryResponse
  */
 export type QueryResponse = Message<"votes.v1.QueryResponse"> & {
-	/**
-	 * @generated from field: repeated votes.v1.VoteResult results = 1;
-	 */
-	results: VoteResult[];
+  /**
+   * @generated from field: repeated votes.v1.VoteResult results = 1;
+   */
+  results: VoteResult[];
 
-	/**
-	 * @generated from field: int64 count = 2;
-	 */
-	count: bigint;
+  /**
+   * @generated from field: int64 count = 2;
+   */
+  count: bigint;
 };
 
 /**
  * Describes the message votes.v1.QueryResponse.
  * Use `create(QueryResponseSchema)` to create a new message.
  */
-export const QueryResponseSchema: GenMessage<QueryResponse> = /*@__PURE__*/ messageDesc(file_votes_v1_votes, 2);
+export const QueryResponseSchema: GenMessage<QueryResponse> = /*@__PURE__*/
+  messageDesc(file_votes_v1_votes, 2);
 
 /**
  * @generated from enum votes.v1.VoteCode
  */
 export enum VoteCode {
-	/**
-	 * @generated from enum value: VOTE_CODE_FAIL_GENERIC_UNSPECIFIED = 0;
-	 */
-	FAIL_GENERIC_UNSPECIFIED = 0,
+  /**
+   * @generated from enum value: VOTE_CODE_FAIL_GENERIC_UNSPECIFIED = 0;
+   */
+  FAIL_GENERIC_UNSPECIFIED = 0,
 
-	/**
-	 * @generated from enum value: VOTE_CODE_FAIL_NO_OUTNUMBER_YES = 1;
-	 */
-	FAIL_NO_OUTNUMBER_YES = 1,
+  /**
+   * @generated from enum value: VOTE_CODE_FAIL_NO_OUTNUMBER_YES = 1;
+   */
+  FAIL_NO_OUTNUMBER_YES = 1,
 
-	/**
-	 * @generated from enum value: VOTE_CODE_FAIL_QUORUM = 2;
-	 */
-	FAIL_QUORUM = 2,
+  /**
+   * @generated from enum value: VOTE_CODE_FAIL_QUORUM = 2;
+   */
+  FAIL_QUORUM = 2,
 }
 
 /**
  * Describes the enum votes.v1.VoteCode.
  */
-export const VoteCodeSchema: GenEnum<VoteCode> = /*@__PURE__*/ enumDesc(file_votes_v1_votes, 0);
+export const VoteCodeSchema: GenEnum<VoteCode> = /*@__PURE__*/
+  enumDesc(file_votes_v1_votes, 0);
 
 /**
  * @generated from service votes.v1.VotesService
  */
 export const VotesService: GenService<{
-	/**
-	 * @generated from rpc votes.v1.VotesService.Query
-	 */
-	query: {
-		methodKind: "unary";
-		input: typeof QueryRequestSchema;
-		output: typeof QueryResponseSchema;
-	};
-}> = /*@__PURE__*/ serviceDesc(file_votes_v1_votes, 0);
+  /**
+   * @generated from rpc votes.v1.VotesService.Query
+   */
+  query: {
+    methodKind: "unary";
+    input: typeof QueryRequestSchema;
+    output: typeof QueryResponseSchema;
+  },
+}> = /*@__PURE__*/
+  serviceDesc(file_votes_v1_votes, 0);
+

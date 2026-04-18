@@ -5,33 +5,26 @@ import Button from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Grid from "@mui/material/Grid";
 import MenuItem from "@mui/material/MenuItem";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { z } from "zod/v4";
-import { apiSaveWikiPage } from "../api/wiki.ts";
 import { useAppForm } from "../contexts/formContext.tsx";
 import { useAuth } from "../hooks/useAuth.ts";
 import { useUserFlashCtx } from "../hooks/useUserFlashCtx.ts";
 import {
 	PermissionLevel,
 	PermissionLevelCollection,
-	type PermissionLevelEnum,
 	permissionLevelString,
 } from "../schema/people.ts";
-import type { Page } from "../schema/wiki.ts";
 import { ContainerWithHeaderAndButtons } from "./ContainerWithHeaderAndButtons.tsx";
 import { mdEditorRef } from "./form/field/MarkdownField.tsx";
 import { MarkDownRenderer } from "./MarkdownRenderer.tsx";
+import type {Wiki} from "../rpc/wiki/v1/wiki_pb.ts";
+import  {update} from "../rpc/wiki/v1/wiki-WikiService_connectquery.ts";
+import {useMutation} from "@connectrpc/connect-query";
 
-interface WikiValues {
-	body_md: string;
-	permission_level: PermissionLevelEnum;
-}
-
-export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page: Page; assetURL: string }) => {
+export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page: Wiki; assetURL: string }) => {
 	const [editMode, setEditMode] = useState<boolean>(false);
-	const [currentPage, setCurrentPage] = useState<Page>(page);
-	const queryClient = useQueryClient();
+	const [currentPage, setCurrentPage] = useState<Wiki>(page);
 	const { hasPermission } = useAuth();
 	const { sendFlash, sendError } = useUserFlashCtx();
 
@@ -51,36 +44,27 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 				>
 					Edit
 				</Button>
-			</ButtonGroup>,
+			</ButtonGroup>
 		];
 	}, [hasPermission]);
 
-	const mutation = useMutation({
-		mutationKey: ["wiki", { slug }],
-		mutationFn: async (values: WikiValues) => {
-			const newPage: Page = {
-				body_md: values.body_md,
-				slug: slug ?? "home",
-				permission_level: values.permission_level,
-				created_on: page?.created_on ?? new Date(),
-				updated_on: page?.updated_on ?? new Date(),
-			};
-			const ac = new AbortController();
-			return await apiSaveWikiPage(newPage, ac.signal);
-		},
+	const mutation = useMutation(update, {
 		onSuccess: (savedPage) => {
-			queryClient.setQueryData(["wiki", { slug }], savedPage);
+			//queryClient.setQueryData(["wiki", { slug }], savedPage);
 			setEditMode(false);
 			mdEditorRef.current?.setMarkdown("");
-			sendFlash("success", `Updated ${slug} successfully. Revision: ${savedPage.revision}`);
-			setCurrentPage(savedPage);
+            if (!savedPage.wiki) {
+                return;
+            }
+			sendFlash("success", `Updated ${slug} successfully. Revision: ${savedPage.wiki.revision}`);
+			setCurrentPage(savedPage.wiki);
 		},
 		onError: sendError,
 	});
 
 	const form = useAppForm({
 		onSubmit: async ({ value }) => {
-			mutation.mutate(value);
+			await mutation.mutateAsync({ wiki: value});
 		},
 		validators: {
 			onChange: z.object({
@@ -89,8 +73,8 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 			}),
 		},
 		defaultValues: {
-			permission_level: page?.permission_level ?? PermissionLevel.Guest,
-			body_md: page?.body_md ?? "",
+			permission_level: page?.permissionLevel ?? PermissionLevel.Guest,
+			body_md: page?.bodyMd ?? "",
 		},
 	});
 
@@ -156,7 +140,7 @@ export const WikiPage = ({ slug = "home", page, assetURL }: { slug: string; page
 					iconLeft={<ArticleIcon />}
 					buttons={buttons}
 				>
-					<MarkDownRenderer body_md={currentPage?.body_md ?? ""} assetURL={assetURL} />
+					<MarkDownRenderer body_md={currentPage?.bodyMd ?? ""} assetURL={assetURL} />
 				</ContainerWithHeaderAndButtons>
 			</Grid>
 		</Grid>

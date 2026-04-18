@@ -10,40 +10,38 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file database/query/v1/filter.proto.
  */
-export const file_database_query_v1_filter: GenFile =
-	/*@__PURE__*/
-	fileDesc(
-		"Ch5kYXRhYmFzZS9xdWVyeS92MS9maWx0ZXIucHJvdG8iUAoGRmlsdGVyEhcKBm9mZnNldBgBIAEoBEIHukgEMgIoABINCgVsaW1pdBgCIAEoBBIMCgRkZXNjGAMgASgIEhAKCG9yZGVyX2J5GAQgASgJQktCC0ZpbHRlclByb3RvUAFaOmdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvZGF0YWJhc2UvcXVlcnkvdjFiCGVkaXRpb25zcOgH",
-		[file_buf_validate_validate],
-	);
+export const file_database_query_v1_filter: GenFile = /*@__PURE__*/
+  fileDesc("Ch5kYXRhYmFzZS9xdWVyeS92MS9maWx0ZXIucHJvdG8iUAoGRmlsdGVyEhcKBm9mZnNldBgBIAEoBEIHukgEMgIoABINCgVsaW1pdBgCIAEoBBIMCgRkZXNjGAMgASgIEhAKCG9yZGVyX2J5GAQgASgJQktCC0ZpbHRlclByb3RvUAFaOmdpdGh1Yi5jb20vbGVpZ2htYWNkb25hbGQvZ2JhbnMvaW50ZXJuYWwvZGF0YWJhc2UvcXVlcnkvdjFiCGVkaXRpb25zcOgH", [file_buf_validate_validate]);
 
 /**
  * @generated from message Filter
  */
 export type Filter = Message<"Filter"> & {
-	/**
-	 * @generated from field: uint64 offset = 1;
-	 */
-	offset: bigint;
+  /**
+   * @generated from field: uint64 offset = 1;
+   */
+  offset: bigint;
 
-	/**
-	 * @generated from field: uint64 limit = 2;
-	 */
-	limit: bigint;
+  /**
+   * @generated from field: uint64 limit = 2;
+   */
+  limit: bigint;
 
-	/**
-	 * @generated from field: bool desc = 3;
-	 */
-	desc: boolean;
+  /**
+   * @generated from field: bool desc = 3;
+   */
+  desc: boolean;
 
-	/**
-	 * @generated from field: string order_by = 4;
-	 */
-	orderBy: string;
+  /**
+   * @generated from field: string order_by = 4;
+   */
+  orderBy: string;
 };
 
 /**
  * Describes the message Filter.
  * Use `create(FilterSchema)` to create a new message.
  */
-export const FilterSchema: GenMessage<Filter> = /*@__PURE__*/ messageDesc(file_database_query_v1_filter, 0);
+export const FilterSchema: GenMessage<Filter> = /*@__PURE__*/
+  messageDesc(file_database_query_v1_filter, 0);
+

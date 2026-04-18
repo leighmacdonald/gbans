@@ -1,0 +1,38 @@
+edition = "2023";
+
+package discord.oauth.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+service DiscordOAuthService {
+  rpc Login(google.protobuf.Empty) returns (LoginResponse) {}
+  rpc Logout(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc Profile(google.protobuf.Empty) returns (ProfileResponse) {}
+}
+
+message ProfileResponse {
+  DiscordProfile discord_profile = 1;
+}
+
+message LoginResponse {
+  string login_url = 1;
+}
+
+message DiscordProfile {
+  int64 steam_id = 1;
+  string id = 2;
+  string avatar = 3;
+  google.protobuf.Any avatar_decoration = 4;
+  string discriminator = 5;
+  int32 flags = 6;
+  google.protobuf.Any banner = 7;
+  google.protobuf.Any banner_colour = 8;
+  google.protobuf.Any accent_colour = 9;
+  string locale = 10;
+  bool mfa_enabled = 11;
+  int32 premium_type = 12;
+  google.protobuf.Timestamp created_on = 13;
+  google.protobuf.Timestamp updated_on = 14;
+}

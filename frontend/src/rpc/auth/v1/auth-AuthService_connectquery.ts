@@ -2,9 +2,9 @@
 // @generated from file auth/v1/auth.proto (package auth.v1, edition 2023)
 /* eslint-disable */
 
-import { AssetService } from "./auth_pb";
+import { AuthService } from "./auth_pb";
 
 /**
- * @generated from rpc auth.v1.AssetService.Logout
+ * @generated from rpc auth.v1.AuthService.Logout
  */
-export const logout = AssetService.method.logout;
+export const logout = AuthService.method.logout;
