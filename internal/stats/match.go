@@ -201,7 +201,7 @@ type PlayerMatchWeapon struct {
 
 type Result struct {
 	MatchID    uuid.UUID           `json:"match_id"`
-	ServerID   int                 `json:"server_id"`
+	ServerID   int32               `json:"server_id"`
 	Title      string              `json:"title"`
 	Map        maps.Map            `json:"map"`
 	TeamScores logparse.TeamScores `json:"team_scores"`
@@ -218,7 +218,7 @@ type PersonMessage struct {
 	AvatarHash        string          `json:"avatar_hash"`
 	PersonaName       string          `json:"persona_name"`
 	ServerName        string          `json:"server_name"`
-	ServerID          int             `json:"server_id"`
+	ServerID          int32           `json:"server_id"`
 	Body              string          `json:"body"`
 	Tick              int64           `json:"tick"`
 	Team              bool            `json:"team"`

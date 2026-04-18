@@ -17,10 +17,10 @@ import (
 type Service struct {
 	notificationv1connect.UnimplementedNotificationServiceHandler
 
-	notifications Notifications
+	notifications *Notifications
 }
 
-func NewService(notifications Notifications) Service {
+func NewService(notifications *Notifications) Service {
 	return Service{notifications: notifications}
 }
 

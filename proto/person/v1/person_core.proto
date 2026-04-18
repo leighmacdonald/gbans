@@ -6,7 +6,7 @@ import "google/protobuf/timestamp.proto";
 import "person/v1/privilege.proto";
 
 message PersonCore {
-  string steam_id = 1;
+  int64 steam_id = 1;
   person.v1.Privilege permission_level = 2;
   string name = 3;
   string avatar_hash = 4;

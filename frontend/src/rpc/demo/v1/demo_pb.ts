@@ -11,118 +11,118 @@ import type { Message } from "@bufbuild/protobuf";
 /**
  * Describes the file demo/v1/demo.proto.
  */
-export const file_demo_v1_demo: GenFile = /*@__PURE__*/
-  fileDesc("ChJkZW1vL3YxL2RlbW8ucHJvdG8SCnNlcnZlcnMudjEiMwoQR2V0RGVtb3NSZXNwb25zZRIfCgVkZW1vcxgBIAMoCzIQLnNlcnZlcnMudjEuRGVtbyLOAgoERGVtbxIPCgdkZW1vX2lkGAEgASgDEhEKCXNlcnZlcl9pZBgCIAEoBRIZChFzZXJ2ZXJfbmFtZV9zaG9ydBgDIAEoCRIYChBzZXJ2ZXJfbmFtZV9sb25nGAQgASgJEg0KBXRpdGxlGAUgASgJEi4KCmNyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCWRvd25sb2FkcxgHIAEoAxIMCgRzaXplGAggASgDEhAKCG1hcF9uYW1lGAkgASgJEg8KB2FyY2hpdmUYCiABKAgSKgoFc3RhdHMYCyADKAsyGy5zZXJ2ZXJzLnYxLkRlbW8uU3RhdHNFbnRyeRIQCghhc3NldF9pZBgMIAEoCRosCgpTdGF0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEyjQEKC0RlbW9TZXJ2aWNlEkAKCEdldERlbW9zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ghwuc2VydmVycy52MS5HZXREZW1vc1Jlc3BvbnNlEjwKClJ1bkNsZWFudXASFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFi5nb29nbGUucHJvdG9idWYuRW1wdHlCoAEKDmNvbS5zZXJ2ZXJzLnYxQglEZW1vUHJvdG9QAVo6Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9kZW1vL3YxO3NlcnZlcnN2MaICA1NYWKoCClNlcnZlcnMuVjHKAgpTZXJ2ZXJzXFYx4gIWU2VydmVyc1xWMVxHUEJNZXRhZGF0YeoCC1NlcnZlcnM6OlYxYghlZGl0aW9uc3DoBw", [file_google_protobuf_empty, file_google_protobuf_timestamp]);
+export const file_demo_v1_demo: GenFile =
+	/*@__PURE__*/
+	fileDesc(
+		"ChJkZW1vL3YxL2RlbW8ucHJvdG8SCnNlcnZlcnMudjEiMwoQR2V0RGVtb3NSZXNwb25zZRIfCgVkZW1vcxgBIAMoCzIQLnNlcnZlcnMudjEuRGVtbyLOAgoERGVtbxIPCgdkZW1vX2lkGAEgASgDEhEKCXNlcnZlcl9pZBgCIAEoBRIZChFzZXJ2ZXJfbmFtZV9zaG9ydBgDIAEoCRIYChBzZXJ2ZXJfbmFtZV9sb25nGAQgASgJEg0KBXRpdGxlGAUgASgJEi4KCmNyZWF0ZWRfb24YBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCWRvd25sb2FkcxgHIAEoAxIMCgRzaXplGAggASgDEhAKCG1hcF9uYW1lGAkgASgJEg8KB2FyY2hpdmUYCiABKAgSKgoFc3RhdHMYCyADKAsyGy5zZXJ2ZXJzLnYxLkRlbW8uU3RhdHNFbnRyeRIQCghhc3NldF9pZBgMIAEoCRosCgpTdGF0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEyjQEKC0RlbW9TZXJ2aWNlEkAKCEdldERlbW9zEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ghwuc2VydmVycy52MS5HZXREZW1vc1Jlc3BvbnNlEjwKClJ1bkNsZWFudXASFi5nb29nbGUucHJvdG9idWYuRW1wdHkaFi5nb29nbGUucHJvdG9idWYuRW1wdHlCoAEKDmNvbS5zZXJ2ZXJzLnYxQglEZW1vUHJvdG9QAVo6Z2l0aHViLmNvbS9sZWlnaG1hY2RvbmFsZC9nYmFucy9pbnRlcm5hbC9kZW1vL3YxO3NlcnZlcnN2MaICA1NYWKoCClNlcnZlcnMuVjHKAgpTZXJ2ZXJzXFYx4gIWU2VydmVyc1xWMVxHUEJNZXRhZGF0YeoCC1NlcnZlcnM6OlYxYghlZGl0aW9uc3DoBw",
+		[file_google_protobuf_empty, file_google_protobuf_timestamp],
+	);
 
 /**
  * @generated from message servers.v1.GetDemosResponse
  */
 export type GetDemosResponse = Message<"servers.v1.GetDemosResponse"> & {
-  /**
-   * @generated from field: repeated servers.v1.Demo demos = 1;
-   */
-  demos: Demo[];
+	/**
+	 * @generated from field: repeated servers.v1.Demo demos = 1;
+	 */
+	demos: Demo[];
 };
 
 /**
  * Describes the message servers.v1.GetDemosResponse.
  * Use `create(GetDemosResponseSchema)` to create a new message.
  */
-export const GetDemosResponseSchema: GenMessage<GetDemosResponse> = /*@__PURE__*/
-  messageDesc(file_demo_v1_demo, 0);
+export const GetDemosResponseSchema: GenMessage<GetDemosResponse> = /*@__PURE__*/ messageDesc(file_demo_v1_demo, 0);
 
 /**
  * @generated from message servers.v1.Demo
  */
 export type Demo = Message<"servers.v1.Demo"> & {
-  /**
-   * @generated from field: int64 demo_id = 1;
-   */
-  demoId: bigint;
+	/**
+	 * @generated from field: int64 demo_id = 1;
+	 */
+	demoId: bigint;
 
-  /**
-   * @generated from field: int32 server_id = 2;
-   */
-  serverId: number;
+	/**
+	 * @generated from field: int32 server_id = 2;
+	 */
+	serverId: number;
 
-  /**
-   * @generated from field: string server_name_short = 3;
-   */
-  serverNameShort: string;
+	/**
+	 * @generated from field: string server_name_short = 3;
+	 */
+	serverNameShort: string;
 
-  /**
-   * @generated from field: string server_name_long = 4;
-   */
-  serverNameLong: string;
+	/**
+	 * @generated from field: string server_name_long = 4;
+	 */
+	serverNameLong: string;
 
-  /**
-   * @generated from field: string title = 5;
-   */
-  title: string;
+	/**
+	 * @generated from field: string title = 5;
+	 */
+	title: string;
 
-  /**
-   * @generated from field: google.protobuf.Timestamp created_on = 6;
-   */
-  createdOn?: Timestamp;
+	/**
+	 * @generated from field: google.protobuf.Timestamp created_on = 6;
+	 */
+	createdOn?: Timestamp;
 
-  /**
-   * @generated from field: int64 downloads = 7;
-   */
-  downloads: bigint;
+	/**
+	 * @generated from field: int64 downloads = 7;
+	 */
+	downloads: bigint;
 
-  /**
-   * @generated from field: int64 size = 8;
-   */
-  size: bigint;
+	/**
+	 * @generated from field: int64 size = 8;
+	 */
+	size: bigint;
 
-  /**
-   * @generated from field: string map_name = 9;
-   */
-  mapName: string;
+	/**
+	 * @generated from field: string map_name = 9;
+	 */
+	mapName: string;
 
-  /**
-   * @generated from field: bool archive = 10;
-   */
-  archive: boolean;
+	/**
+	 * @generated from field: bool archive = 10;
+	 */
+	archive: boolean;
 
-  /**
-   * @generated from field: map<string, string> stats = 11;
-   */
-  stats: { [key: string]: string };
+	/**
+	 * @generated from field: map<string, string> stats = 11;
+	 */
+	stats: { [key: string]: string };
 
-  /**
-   * @generated from field: string asset_id = 12;
-   */
-  assetId: string;
+	/**
+	 * @generated from field: string asset_id = 12;
+	 */
+	assetId: string;
 };
 
 /**
  * Describes the message servers.v1.Demo.
  * Use `create(DemoSchema)` to create a new message.
  */
-export const DemoSchema: GenMessage<Demo> = /*@__PURE__*/
-  messageDesc(file_demo_v1_demo, 1);
+export const DemoSchema: GenMessage<Demo> = /*@__PURE__*/ messageDesc(file_demo_v1_demo, 1);
 
 /**
  * @generated from service servers.v1.DemoService
  */
 export const DemoService: GenService<{
-  /**
-   * @generated from rpc servers.v1.DemoService.GetDemos
-   */
-  getDemos: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof GetDemosResponseSchema;
-  },
-  /**
-   * @generated from rpc servers.v1.DemoService.RunCleanup
-   */
-  runCleanup: {
-    methodKind: "unary";
-    input: typeof EmptySchema;
-    output: typeof EmptySchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_demo_v1_demo, 0);
-
+	/**
+	 * @generated from rpc servers.v1.DemoService.GetDemos
+	 */
+	getDemos: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof GetDemosResponseSchema;
+	};
+	/**
+	 * @generated from rpc servers.v1.DemoService.RunCleanup
+	 */
+	runCleanup: {
+		methodKind: "unary";
+		input: typeof EmptySchema;
+		output: typeof EmptySchema;
+	};
+}> = /*@__PURE__*/ serviceDesc(file_demo_v1_demo, 0);

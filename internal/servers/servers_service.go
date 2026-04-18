@@ -17,17 +17,17 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type RPC struct {
+type ServersService struct {
 	serversv1connect.UnimplementedServersServiceHandler
 
 	servers *Servers
 }
 
-func NewRPC(servers *Servers) *RPC {
-	return &RPC{servers: servers}
+func NewServersService(servers *Servers) *ServersService {
+	return &ServersService{servers: servers}
 }
 
-func (s RPC) State(_ context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {
+func (s ServersService) State(_ context.Context, req *v1.StateRequest) (*v1.StateResponse, error) {
 	var (
 		// TODO
 		lat = float64(ptr.From(req.LatLong.Latitude))
@@ -44,33 +44,33 @@ func (s RPC) State(_ context.Context, req *v1.StateRequest) (*v1.StateResponse, 
 	})
 
 	resp := v1.StateResponse{}
-	for _, cs := range servers {
+	for _, current := range servers {
 		resp.Servers = append(resp.Servers, &v1.SafeServer{
-			ServerId:   ptr.To(cs.ServerID),
-			Host:       &cs.Host,
-			Port:       ptr.To(uint32(cs.Port)),
-			Ip:         &cs.IP,
-			Name:       &cs.Name,
-			NameShort:  &cs.NameShort,
-			Region:     &cs.Region,
-			Cc:         &cs.CC,
-			Players:    ptr.To(cs.Players),
-			MaxPlayers: ptr.To(cs.MaxPlayers),
-			Bot:        ptr.To(cs.Bots),
-			Map:        &cs.Map,
-			GameTypes:  cs.GameTypes,
-			Latitude:   ptr.To(float32(cs.Latitude)),
-			Longitude:  ptr.To(float32(cs.Longitude)),
-			Distance:   ptr.To(float32(cs.Distance)),
-			Humans:     ptr.To(cs.Humans),
-			Tags:       cs.Tags,
+			ServerId:   ptr.To(current.ServerID),
+			Host:       &current.Host,
+			Port:       ptr.To(uint32(current.Port)),
+			Ip:         &current.IP,
+			Name:       &current.Name,
+			NameShort:  &current.NameShort,
+			Region:     &current.Region,
+			Cc:         &current.CC,
+			Players:    ptr.To(current.Players),
+			MaxPlayers: ptr.To(current.MaxPlayers),
+			Bot:        ptr.To(current.Bots),
+			Map:        &current.Map,
+			GameTypes:  current.GameTypes,
+			Latitude:   ptr.To(float32(current.Latitude)),
+			Longitude:  ptr.To(float32(current.Longitude)),
+			Distance:   ptr.To(float32(current.Distance)),
+			Humans:     ptr.To(current.Humans),
+			Tags:       current.Tags,
 		})
 	}
 
 	return &resp, nil
 }
 
-func (s RPC) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.ServersResponse, error) {
+func (s ServersService) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.ServersResponse, error) {
 	fullServers, errServers := s.servers.Servers(ctx, Query{IncludeDisabled: false, IncludeDeleted: false})
 	if errServers != nil {
 		return nil, connect.NewError(connect.CodeInternal, errors.Join(errServers, httphelper.ErrInternal))
@@ -89,7 +89,7 @@ func (s RPC) Servers(ctx context.Context, _ *emptypb.Empty) (*v1.ServersResponse
 	return &resp, nil
 }
 
-func (s RPC) EditServer(ctx context.Context, req *v1.EditServerRequest) (*v1.EditServerResponse, error) {
+func (s ServersService) EditServer(ctx context.Context, req *v1.EditServerRequest) (*v1.EditServerResponse, error) {
 	server, errSave := s.servers.Save(ctx, fromRPCServer(req.Server))
 	if errSave != nil {
 		return nil, connect.NewError(connect.CodeInternal, errors.Join(errSave, httphelper.ErrInternal))
@@ -98,7 +98,7 @@ func (s RPC) EditServer(ctx context.Context, req *v1.EditServerRequest) (*v1.Edi
 	return &v1.EditServerResponse{Server: toRPCServer(server)}, nil
 }
 
-func (s RPC) DeleteServer(ctx context.Context, req *v1.DeleteServerRequest) (*emptypb.Empty, error) {
+func (s ServersService) DeleteServer(ctx context.Context, req *v1.DeleteServerRequest) (*emptypb.Empty, error) {
 	if req.ServerId == nil || *req.ServerId <= 0 {
 		return nil, connect.NewError(connect.CodeInvalidArgument, httphelper.ErrNotFound)
 	}
@@ -114,30 +114,30 @@ func (s RPC) DeleteServer(ctx context.Context, req *v1.DeleteServerRequest) (*em
 	return &emptypb.Empty{}, nil
 }
 
-func fromRPCServer(s *v1.Server) Server {
+func fromRPCServer(server *v1.Server) Server {
 	return Server{
-		ServerID:           ptr.From(s.ServerId),
-		ShortName:          ptr.From(s.ShortName),
-		Name:               ptr.From(s.Name),
-		Address:            ptr.From(s.Address),
-		AddressInternal:    ptr.From(s.AddressInternal),
-		SDREnabled:         ptr.From(s.SdrEnabled),
-		Port:               uint16(ptr.From(s.Port)),
-		RCON:               ptr.From(s.Rcon),
-		Password:           ptr.From(s.Password),
-		IsEnabled:          ptr.From(s.IsEnabled),
-		Deleted:            ptr.From(s.Deleted),
-		Region:             ptr.From(s.Region),
-		CC:                 ptr.From(s.Cc),
-		Latitude:           float64(ptr.From(s.Latitude)),
-		Longitude:          float64(ptr.From(s.Longitude)),
-		LogSecret:          ptr.From(s.LogSecret),
-		EnableStats:        ptr.From(s.EnableStats),
-		TokenCreatedOn:     s.TokenCreatedOn.AsTime(),
-		CreatedOn:          s.CreatedOn.AsTime(),
-		UpdatedOn:          s.UpdatedOn.AsTime(),
-		DiscordSeedRoleIDs: s.DiscordSeedRoleIds,
-		IP:                 net.ParseIP(ptr.From(s.Ip)),
+		ServerID:           ptr.From(server.ServerId),
+		ShortName:          ptr.From(server.ShortName),
+		Name:               ptr.From(server.Name),
+		Address:            ptr.From(server.Address),
+		AddressInternal:    ptr.From(server.AddressInternal),
+		SDREnabled:         ptr.From(server.SdrEnabled),
+		Port:               uint16(ptr.From(server.Port)),
+		RCON:               ptr.From(server.Rcon),
+		Password:           ptr.From(server.Password),
+		IsEnabled:          ptr.From(server.IsEnabled),
+		Deleted:            ptr.From(server.Deleted),
+		Region:             ptr.From(server.Region),
+		CC:                 ptr.From(server.Cc),
+		Latitude:           float64(ptr.From(server.Latitude)),
+		Longitude:          float64(ptr.From(server.Longitude)),
+		LogSecret:          ptr.From(server.LogSecret),
+		EnableStats:        ptr.From(server.EnableStats),
+		TokenCreatedOn:     server.TokenCreatedOn.AsTime(),
+		CreatedOn:          server.CreatedOn.AsTime(),
+		UpdatedOn:          server.UpdatedOn.AsTime(),
+		DiscordSeedRoleIDs: server.DiscordSeedRoleIds,
+		IP:                 net.ParseIP(ptr.From(server.Ip)),
 	}
 }
 
@@ -168,7 +168,7 @@ func toRPCServer(server Server) *v1.Server {
 	}
 }
 
-func (s RPC) ServersAdmin(ctx context.Context, _ *emptypb.Empty) (*v1.ServersAdminResponse, error) {
+func (s ServersService) ServersAdmin(ctx context.Context, _ *emptypb.Empty) (*v1.ServersAdminResponse, error) {
 	fullServers, errServers := s.servers.Servers(ctx, Query{IncludeDisabled: true})
 	if errServers != nil {
 		return nil, connect.NewError(connect.CodeInternal, errors.Join(errServers, httphelper.ErrInternal))

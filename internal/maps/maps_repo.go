@@ -26,7 +26,7 @@ func (r Repository) GetOrCreate(ctx context.Context, mapName string) (Map, error
 		UNION
 		SELECT * FROM map
 		WHERE map_name = lower($1);
-		`
+		` //nolint:unqueryvet
 
 	var mapDetail Map
 	if errQuery := r.

@@ -18,3 +18,8 @@ export const get = ConfigService.method.get;
  * @generated from rpc config.v1.ConfigService.Update
  */
 export const update = ConfigService.method.update;
+
+/**
+ * @generated from rpc config.v1.ConfigService.Changelog
+ */
+export const changelog = ConfigService.method.changelog;

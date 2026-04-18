@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: demo/v1/demo.proto
+// source: servers/v1/demo.proto
 
 package serversv1
 
@@ -32,7 +32,7 @@ type GetDemosResponse struct {
 
 func (x *GetDemosResponse) Reset() {
 	*x = GetDemosResponse{}
-	mi := &file_demo_v1_demo_proto_msgTypes[0]
+	mi := &file_servers_v1_demo_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +44,7 @@ func (x *GetDemosResponse) String() string {
 func (*GetDemosResponse) ProtoMessage() {}
 
 func (x *GetDemosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_demo_v1_demo_proto_msgTypes[0]
+	mi := &file_servers_v1_demo_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +57,7 @@ func (x *GetDemosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDemosResponse.ProtoReflect.Descriptor instead.
 func (*GetDemosResponse) Descriptor() ([]byte, []int) {
-	return file_demo_v1_demo_proto_rawDescGZIP(), []int{0}
+	return file_servers_v1_demo_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GetDemosResponse) GetDemos() []*Demo {
@@ -87,7 +87,7 @@ type Demo struct {
 
 func (x *Demo) Reset() {
 	*x = Demo{}
-	mi := &file_demo_v1_demo_proto_msgTypes[1]
+	mi := &file_servers_v1_demo_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -99,7 +99,7 @@ func (x *Demo) String() string {
 func (*Demo) ProtoMessage() {}
 
 func (x *Demo) ProtoReflect() protoreflect.Message {
-	mi := &file_demo_v1_demo_proto_msgTypes[1]
+	mi := &file_servers_v1_demo_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -112,7 +112,7 @@ func (x *Demo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Demo.ProtoReflect.Descriptor instead.
 func (*Demo) Descriptor() ([]byte, []int) {
-	return file_demo_v1_demo_proto_rawDescGZIP(), []int{1}
+	return file_servers_v1_demo_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Demo) GetDemoId() int64 {
@@ -199,11 +199,11 @@ func (x *Demo) GetAssetId() string {
 	return ""
 }
 
-var File_demo_v1_demo_proto protoreflect.FileDescriptor
+var File_servers_v1_demo_proto protoreflect.FileDescriptor
 
-const file_demo_v1_demo_proto_rawDesc = "" +
+const file_servers_v1_demo_proto_rawDesc = "" +
 	"\n" +
-	"\x12demo/v1/demo.proto\x12\n" +
+	"\x15servers/v1/demo.proto\x12\n" +
 	"servers.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\":\n" +
 	"\x10GetDemosResponse\x12&\n" +
 	"\x05demos\x18\x01 \x03(\v2\x10.servers.v1.DemoR\x05demos\"\xd2\x03\n" +
@@ -229,32 +229,32 @@ const file_demo_v1_demo_proto_rawDesc = "" +
 	"\vDemoService\x12@\n" +
 	"\bGetDemos\x12\x16.google.protobuf.Empty\x1a\x1c.servers.v1.GetDemosResponse\x12<\n" +
 	"\n" +
-	"RunCleanup\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.EmptyB\xa0\x01\n" +
-	"\x0ecom.servers.v1B\tDemoProtoP\x01Z:github.com/leighmacdonald/gbans/internal/demo/v1;serversv1\xa2\x02\x03SXX\xaa\x02\n" +
+	"RunCleanup\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.EmptyB\xa3\x01\n" +
+	"\x0ecom.servers.v1B\tDemoProtoP\x01Z=github.com/leighmacdonald/gbans/internal/servers/v1;serversv1\xa2\x02\x03SXX\xaa\x02\n" +
 	"Servers.V1\xca\x02\n" +
 	"Servers\\V1\xe2\x02\x16Servers\\V1\\GPBMetadata\xea\x02\vServers::V1b\beditionsp\xe8\a"
 
 var (
-	file_demo_v1_demo_proto_rawDescOnce sync.Once
-	file_demo_v1_demo_proto_rawDescData []byte
+	file_servers_v1_demo_proto_rawDescOnce sync.Once
+	file_servers_v1_demo_proto_rawDescData []byte
 )
 
-func file_demo_v1_demo_proto_rawDescGZIP() []byte {
-	file_demo_v1_demo_proto_rawDescOnce.Do(func() {
-		file_demo_v1_demo_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_demo_v1_demo_proto_rawDesc), len(file_demo_v1_demo_proto_rawDesc)))
+func file_servers_v1_demo_proto_rawDescGZIP() []byte {
+	file_servers_v1_demo_proto_rawDescOnce.Do(func() {
+		file_servers_v1_demo_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_servers_v1_demo_proto_rawDesc), len(file_servers_v1_demo_proto_rawDesc)))
 	})
-	return file_demo_v1_demo_proto_rawDescData
+	return file_servers_v1_demo_proto_rawDescData
 }
 
-var file_demo_v1_demo_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_demo_v1_demo_proto_goTypes = []any{
+var file_servers_v1_demo_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_servers_v1_demo_proto_goTypes = []any{
 	(*GetDemosResponse)(nil),      // 0: servers.v1.GetDemosResponse
 	(*Demo)(nil),                  // 1: servers.v1.Demo
 	nil,                           // 2: servers.v1.Demo.StatsEntry
 	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 	(*emptypb.Empty)(nil),         // 4: google.protobuf.Empty
 }
-var file_demo_v1_demo_proto_depIdxs = []int32{
+var file_servers_v1_demo_proto_depIdxs = []int32{
 	1, // 0: servers.v1.GetDemosResponse.demos:type_name -> servers.v1.Demo
 	3, // 1: servers.v1.Demo.created_on:type_name -> google.protobuf.Timestamp
 	2, // 2: servers.v1.Demo.stats:type_name -> servers.v1.Demo.StatsEntry
@@ -269,26 +269,26 @@ var file_demo_v1_demo_proto_depIdxs = []int32{
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_demo_v1_demo_proto_init() }
-func file_demo_v1_demo_proto_init() {
-	if File_demo_v1_demo_proto != nil {
+func init() { file_servers_v1_demo_proto_init() }
+func file_servers_v1_demo_proto_init() {
+	if File_servers_v1_demo_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_demo_v1_demo_proto_rawDesc), len(file_demo_v1_demo_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_servers_v1_demo_proto_rawDesc), len(file_servers_v1_demo_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_demo_v1_demo_proto_goTypes,
-		DependencyIndexes: file_demo_v1_demo_proto_depIdxs,
-		MessageInfos:      file_demo_v1_demo_proto_msgTypes,
+		GoTypes:           file_servers_v1_demo_proto_goTypes,
+		DependencyIndexes: file_servers_v1_demo_proto_depIdxs,
+		MessageInfos:      file_servers_v1_demo_proto_msgTypes,
 	}.Build()
-	File_demo_v1_demo_proto = out.File
-	file_demo_v1_demo_proto_goTypes = nil
-	file_demo_v1_demo_proto_depIdxs = nil
+	File_servers_v1_demo_proto = out.File
+	file_servers_v1_demo_proto_goTypes = nil
+	file_servers_v1_demo_proto_depIdxs = nil
 }

@@ -5,6 +5,16 @@
 import { PersonService } from "./person_pb";
 
 /**
+ * @generated from rpc person.v1.PersonService.Profile
+ */
+export const profile = PersonService.method.profile;
+
+/**
+ * @generated from rpc person.v1.PersonService.ResolveSteamID
+ */
+export const resolveSteamID = PersonService.method.resolveSteamID;
+
+/**
  * @generated from rpc person.v1.PersonService.CurrentProfile
  */
 export const currentProfile = PersonService.method.currentProfile;

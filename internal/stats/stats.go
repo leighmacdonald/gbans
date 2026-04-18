@@ -28,7 +28,7 @@ func New(repo Repository, maps maps.Maps) Stats {
 	return Stats{repo: repo, maps: maps}
 }
 
-func (s Stats) Import(ctx context.Context, serverID int, demo demoparse.Demo) (*Result, error) {
+func (s Stats) Import(ctx context.Context, serverID int32, demo demoparse.Demo) (*Result, error) {
 	timeStart := time.Now().Add(-time.Duration(demo.Duration) * time.Second)
 	if demo.DemoType != demoparse.HL2Demo {
 		return nil, fmt.Errorf("%w: invalid demo type", ErrInvalidState)

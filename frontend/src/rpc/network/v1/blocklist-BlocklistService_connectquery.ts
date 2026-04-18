@@ -55,6 +55,11 @@ export const whitelistSteam = BlocklistService.method.whitelistSteam;
 export const whitelistSteamDelete = BlocklistService.method.whitelistSteamDelete;
 
 /**
+ * @generated from rpc network.v1.BlocklistService.WhitelistSteamCreate
+ */
+export const whitelistSteamCreate = BlocklistService.method.whitelistSteamCreate;
+
+/**
  * @generated from rpc network.v1.BlocklistService.CheckBlock
  */
 export const checkBlock = BlocklistService.method.checkBlock;

@@ -64,6 +64,9 @@ const (
 	// BlocklistServiceWhitelistSteamDeleteProcedure is the fully-qualified name of the
 	// BlocklistService's WhitelistSteamDelete RPC.
 	BlocklistServiceWhitelistSteamDeleteProcedure = "/network.v1.BlocklistService/WhitelistSteamDelete"
+	// BlocklistServiceWhitelistSteamCreateProcedure is the fully-qualified name of the
+	// BlocklistService's WhitelistSteamCreate RPC.
+	BlocklistServiceWhitelistSteamCreateProcedure = "/network.v1.BlocklistService/WhitelistSteamCreate"
 	// BlocklistServiceCheckBlockProcedure is the fully-qualified name of the BlocklistService's
 	// CheckBlock RPC.
 	BlocklistServiceCheckBlockProcedure = "/network.v1.BlocklistService/CheckBlock"
@@ -73,7 +76,7 @@ const (
 type BlocklistServiceClient interface {
 	BlocklistSources(context.Context, *emptypb.Empty) (*v1.BlocklistSourcesResponse, error)
 	BlocklistSourcesCreate(context.Context, *v1.BlocklistSourcesCreateRequest) (*v1.BlocklistSourcesCreateResponse, error)
-	BlocklistSourcesEdit(context.Context, *v1.BlocklistSourcesCreateEdit) (*v1.BlocklistSourcesCreateEdit, error)
+	BlocklistSourcesEdit(context.Context, *v1.BlocklistSourcesEditRequest) (*v1.BlocklistSourcesEditResponse, error)
 	BlocklistSourcesDelete(context.Context, *v1.BlocklistSourcesDeleteRequest) (*emptypb.Empty, error)
 	WhitelistAddress(context.Context, *emptypb.Empty) (*v1.WhitelistAddressResponse, error)
 	WhitelistAddressCreate(context.Context, *v1.WhitelistAddressCreateRequest) (*v1.WhitelistAddressCreateResponse, error)
@@ -81,6 +84,7 @@ type BlocklistServiceClient interface {
 	WhitelistAddressEdit(context.Context, *v1.WhitelistAddressEditRequest) (*v1.WhitelistAddressEditResponse, error)
 	WhitelistSteam(context.Context, *emptypb.Empty) (*v1.WhitelistSteamResponse, error)
 	WhitelistSteamDelete(context.Context, *v1.WhitelistSteamDeleteRequest) (*emptypb.Empty, error)
+	WhitelistSteamCreate(context.Context, *v1.WhitelistSteamCreateRequest) (*v1.WhitelistSteamCreateResponse, error)
 	CheckBlock(context.Context, *v1.CheckBlockRequest) (*v1.CheckBlockResponse, error)
 }
 
@@ -107,7 +111,7 @@ func NewBlocklistServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(blocklistServiceMethods.ByName("BlocklistSourcesCreate")),
 			connect.WithClientOptions(opts...),
 		),
-		blocklistSourcesEdit: connect.NewClient[v1.BlocklistSourcesCreateEdit, v1.BlocklistSourcesCreateEdit](
+		blocklistSourcesEdit: connect.NewClient[v1.BlocklistSourcesEditRequest, v1.BlocklistSourcesEditResponse](
 			httpClient,
 			baseURL+BlocklistServiceBlocklistSourcesEditProcedure,
 			connect.WithSchema(blocklistServiceMethods.ByName("BlocklistSourcesEdit")),
@@ -155,6 +159,12 @@ func NewBlocklistServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(blocklistServiceMethods.ByName("WhitelistSteamDelete")),
 			connect.WithClientOptions(opts...),
 		),
+		whitelistSteamCreate: connect.NewClient[v1.WhitelistSteamCreateRequest, v1.WhitelistSteamCreateResponse](
+			httpClient,
+			baseURL+BlocklistServiceWhitelistSteamCreateProcedure,
+			connect.WithSchema(blocklistServiceMethods.ByName("WhitelistSteamCreate")),
+			connect.WithClientOptions(opts...),
+		),
 		checkBlock: connect.NewClient[v1.CheckBlockRequest, v1.CheckBlockResponse](
 			httpClient,
 			baseURL+BlocklistServiceCheckBlockProcedure,
@@ -168,7 +178,7 @@ func NewBlocklistServiceClient(httpClient connect.HTTPClient, baseURL string, op
 type blocklistServiceClient struct {
 	blocklistSources       *connect.Client[emptypb.Empty, v1.BlocklistSourcesResponse]
 	blocklistSourcesCreate *connect.Client[v1.BlocklistSourcesCreateRequest, v1.BlocklistSourcesCreateResponse]
-	blocklistSourcesEdit   *connect.Client[v1.BlocklistSourcesCreateEdit, v1.BlocklistSourcesCreateEdit]
+	blocklistSourcesEdit   *connect.Client[v1.BlocklistSourcesEditRequest, v1.BlocklistSourcesEditResponse]
 	blocklistSourcesDelete *connect.Client[v1.BlocklistSourcesDeleteRequest, emptypb.Empty]
 	whitelistAddress       *connect.Client[emptypb.Empty, v1.WhitelistAddressResponse]
 	whitelistAddressCreate *connect.Client[v1.WhitelistAddressCreateRequest, v1.WhitelistAddressCreateResponse]
@@ -176,6 +186,7 @@ type blocklistServiceClient struct {
 	whitelistAddressEdit   *connect.Client[v1.WhitelistAddressEditRequest, v1.WhitelistAddressEditResponse]
 	whitelistSteam         *connect.Client[emptypb.Empty, v1.WhitelistSteamResponse]
 	whitelistSteamDelete   *connect.Client[v1.WhitelistSteamDeleteRequest, emptypb.Empty]
+	whitelistSteamCreate   *connect.Client[v1.WhitelistSteamCreateRequest, v1.WhitelistSteamCreateResponse]
 	checkBlock             *connect.Client[v1.CheckBlockRequest, v1.CheckBlockResponse]
 }
 
@@ -198,7 +209,7 @@ func (c *blocklistServiceClient) BlocklistSourcesCreate(ctx context.Context, req
 }
 
 // BlocklistSourcesEdit calls network.v1.BlocklistService.BlocklistSourcesEdit.
-func (c *blocklistServiceClient) BlocklistSourcesEdit(ctx context.Context, req *v1.BlocklistSourcesCreateEdit) (*v1.BlocklistSourcesCreateEdit, error) {
+func (c *blocklistServiceClient) BlocklistSourcesEdit(ctx context.Context, req *v1.BlocklistSourcesEditRequest) (*v1.BlocklistSourcesEditResponse, error) {
 	response, err := c.blocklistSourcesEdit.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
@@ -269,6 +280,15 @@ func (c *blocklistServiceClient) WhitelistSteamDelete(ctx context.Context, req *
 	return nil, err
 }
 
+// WhitelistSteamCreate calls network.v1.BlocklistService.WhitelistSteamCreate.
+func (c *blocklistServiceClient) WhitelistSteamCreate(ctx context.Context, req *v1.WhitelistSteamCreateRequest) (*v1.WhitelistSteamCreateResponse, error) {
+	response, err := c.whitelistSteamCreate.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // CheckBlock calls network.v1.BlocklistService.CheckBlock.
 func (c *blocklistServiceClient) CheckBlock(ctx context.Context, req *v1.CheckBlockRequest) (*v1.CheckBlockResponse, error) {
 	response, err := c.checkBlock.CallUnary(ctx, connect.NewRequest(req))
@@ -282,7 +302,7 @@ func (c *blocklistServiceClient) CheckBlock(ctx context.Context, req *v1.CheckBl
 type BlocklistServiceHandler interface {
 	BlocklistSources(context.Context, *emptypb.Empty) (*v1.BlocklistSourcesResponse, error)
 	BlocklistSourcesCreate(context.Context, *v1.BlocklistSourcesCreateRequest) (*v1.BlocklistSourcesCreateResponse, error)
-	BlocklistSourcesEdit(context.Context, *v1.BlocklistSourcesCreateEdit) (*v1.BlocklistSourcesCreateEdit, error)
+	BlocklistSourcesEdit(context.Context, *v1.BlocklistSourcesEditRequest) (*v1.BlocklistSourcesEditResponse, error)
 	BlocklistSourcesDelete(context.Context, *v1.BlocklistSourcesDeleteRequest) (*emptypb.Empty, error)
 	WhitelistAddress(context.Context, *emptypb.Empty) (*v1.WhitelistAddressResponse, error)
 	WhitelistAddressCreate(context.Context, *v1.WhitelistAddressCreateRequest) (*v1.WhitelistAddressCreateResponse, error)
@@ -290,6 +310,7 @@ type BlocklistServiceHandler interface {
 	WhitelistAddressEdit(context.Context, *v1.WhitelistAddressEditRequest) (*v1.WhitelistAddressEditResponse, error)
 	WhitelistSteam(context.Context, *emptypb.Empty) (*v1.WhitelistSteamResponse, error)
 	WhitelistSteamDelete(context.Context, *v1.WhitelistSteamDeleteRequest) (*emptypb.Empty, error)
+	WhitelistSteamCreate(context.Context, *v1.WhitelistSteamCreateRequest) (*v1.WhitelistSteamCreateResponse, error)
 	CheckBlock(context.Context, *v1.CheckBlockRequest) (*v1.CheckBlockResponse, error)
 }
 
@@ -360,6 +381,12 @@ func NewBlocklistServiceHandler(svc BlocklistServiceHandler, opts ...connect.Han
 		connect.WithSchema(blocklistServiceMethods.ByName("WhitelistSteamDelete")),
 		connect.WithHandlerOptions(opts...),
 	)
+	blocklistServiceWhitelistSteamCreateHandler := connect.NewUnaryHandlerSimple(
+		BlocklistServiceWhitelistSteamCreateProcedure,
+		svc.WhitelistSteamCreate,
+		connect.WithSchema(blocklistServiceMethods.ByName("WhitelistSteamCreate")),
+		connect.WithHandlerOptions(opts...),
+	)
 	blocklistServiceCheckBlockHandler := connect.NewUnaryHandlerSimple(
 		BlocklistServiceCheckBlockProcedure,
 		svc.CheckBlock,
@@ -388,6 +415,8 @@ func NewBlocklistServiceHandler(svc BlocklistServiceHandler, opts ...connect.Han
 			blocklistServiceWhitelistSteamHandler.ServeHTTP(w, r)
 		case BlocklistServiceWhitelistSteamDeleteProcedure:
 			blocklistServiceWhitelistSteamDeleteHandler.ServeHTTP(w, r)
+		case BlocklistServiceWhitelistSteamCreateProcedure:
+			blocklistServiceWhitelistSteamCreateHandler.ServeHTTP(w, r)
 		case BlocklistServiceCheckBlockProcedure:
 			blocklistServiceCheckBlockHandler.ServeHTTP(w, r)
 		default:
@@ -407,7 +436,7 @@ func (UnimplementedBlocklistServiceHandler) BlocklistSourcesCreate(context.Conte
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("network.v1.BlocklistService.BlocklistSourcesCreate is not implemented"))
 }
 
-func (UnimplementedBlocklistServiceHandler) BlocklistSourcesEdit(context.Context, *v1.BlocklistSourcesCreateEdit) (*v1.BlocklistSourcesCreateEdit, error) {
+func (UnimplementedBlocklistServiceHandler) BlocklistSourcesEdit(context.Context, *v1.BlocklistSourcesEditRequest) (*v1.BlocklistSourcesEditResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("network.v1.BlocklistService.BlocklistSourcesEdit is not implemented"))
 }
 
@@ -437,6 +466,10 @@ func (UnimplementedBlocklistServiceHandler) WhitelistSteam(context.Context, *emp
 
 func (UnimplementedBlocklistServiceHandler) WhitelistSteamDelete(context.Context, *v1.WhitelistSteamDeleteRequest) (*emptypb.Empty, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("network.v1.BlocklistService.WhitelistSteamDelete is not implemented"))
+}
+
+func (UnimplementedBlocklistServiceHandler) WhitelistSteamCreate(context.Context, *v1.WhitelistSteamCreateRequest) (*v1.WhitelistSteamCreateResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("network.v1.BlocklistService.WhitelistSteamCreate is not implemented"))
 }
 
 func (UnimplementedBlocklistServiceHandler) CheckBlock(context.Context, *v1.CheckBlockRequest) (*v1.CheckBlockResponse, error) {

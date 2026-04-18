@@ -40,6 +40,8 @@ const (
 	ConfigServiceGetProcedure = "/config.v1.ConfigService/Get"
 	// ConfigServiceUpdateProcedure is the fully-qualified name of the ConfigService's Update RPC.
 	ConfigServiceUpdateProcedure = "/config.v1.ConfigService/Update"
+	// ConfigServiceChangelogProcedure is the fully-qualified name of the ConfigService's Changelog RPC.
+	ConfigServiceChangelogProcedure = "/config.v1.ConfigService/Changelog"
 )
 
 // ConfigServiceClient is a client for the config.v1.ConfigService service.
@@ -47,6 +49,7 @@ type ConfigServiceClient interface {
 	Info(context.Context, *emptypb.Empty) (*v1.InfoResponse, error)
 	Get(context.Context, *emptypb.Empty) (*v1.GetResponse, error)
 	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
+	Changelog(context.Context, *emptypb.Empty) (*v1.ChangelogResponse, error)
 }
 
 // NewConfigServiceClient constructs a client for the config.v1.ConfigService service. By default,
@@ -79,14 +82,21 @@ func NewConfigServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(configServiceMethods.ByName("Update")),
 			connect.WithClientOptions(opts...),
 		),
+		changelog: connect.NewClient[emptypb.Empty, v1.ChangelogResponse](
+			httpClient,
+			baseURL+ConfigServiceChangelogProcedure,
+			connect.WithSchema(configServiceMethods.ByName("Changelog")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // configServiceClient implements ConfigServiceClient.
 type configServiceClient struct {
-	info   *connect.Client[emptypb.Empty, v1.InfoResponse]
-	get    *connect.Client[emptypb.Empty, v1.GetResponse]
-	update *connect.Client[v1.UpdateRequest, v1.UpdateResponse]
+	info      *connect.Client[emptypb.Empty, v1.InfoResponse]
+	get       *connect.Client[emptypb.Empty, v1.GetResponse]
+	update    *connect.Client[v1.UpdateRequest, v1.UpdateResponse]
+	changelog *connect.Client[emptypb.Empty, v1.ChangelogResponse]
 }
 
 // Info calls config.v1.ConfigService.Info.
@@ -116,11 +126,21 @@ func (c *configServiceClient) Update(ctx context.Context, req *v1.UpdateRequest)
 	return nil, err
 }
 
+// Changelog calls config.v1.ConfigService.Changelog.
+func (c *configServiceClient) Changelog(ctx context.Context, req *emptypb.Empty) (*v1.ChangelogResponse, error) {
+	response, err := c.changelog.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ConfigServiceHandler is an implementation of the config.v1.ConfigService service.
 type ConfigServiceHandler interface {
 	Info(context.Context, *emptypb.Empty) (*v1.InfoResponse, error)
 	Get(context.Context, *emptypb.Empty) (*v1.GetResponse, error)
 	Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error)
+	Changelog(context.Context, *emptypb.Empty) (*v1.ChangelogResponse, error)
 }
 
 // NewConfigServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -149,6 +169,12 @@ func NewConfigServiceHandler(svc ConfigServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(configServiceMethods.ByName("Update")),
 		connect.WithHandlerOptions(opts...),
 	)
+	configServiceChangelogHandler := connect.NewUnaryHandlerSimple(
+		ConfigServiceChangelogProcedure,
+		svc.Changelog,
+		connect.WithSchema(configServiceMethods.ByName("Changelog")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/config.v1.ConfigService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ConfigServiceInfoProcedure:
@@ -157,6 +183,8 @@ func NewConfigServiceHandler(svc ConfigServiceHandler, opts ...connect.HandlerOp
 			configServiceGetHandler.ServeHTTP(w, r)
 		case ConfigServiceUpdateProcedure:
 			configServiceUpdateHandler.ServeHTTP(w, r)
+		case ConfigServiceChangelogProcedure:
+			configServiceChangelogHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -176,4 +204,8 @@ func (UnimplementedConfigServiceHandler) Get(context.Context, *emptypb.Empty) (*
 
 func (UnimplementedConfigServiceHandler) Update(context.Context, *v1.UpdateRequest) (*v1.UpdateResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("config.v1.ConfigService.Update is not implemented"))
+}
+
+func (UnimplementedConfigServiceHandler) Changelog(context.Context, *emptypb.Empty) (*v1.ChangelogResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("config.v1.ConfigService.Changelog is not implemented"))
 }

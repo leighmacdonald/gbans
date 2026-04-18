@@ -23,7 +23,7 @@ type Speedruns struct {
 	maps maps.Maps
 }
 
-func (u *Speedruns) Recent(ctx context.Context, limit int) ([]SpeedrunMapOverview, error) {
+func (u *Speedruns) Recent(ctx context.Context, limit int32) ([]SpeedrunMapOverview, error) {
 	if limit <= 0 || limit > 100 {
 		return nil, ErrValueOutOfRange
 	}
@@ -31,7 +31,7 @@ func (u *Speedruns) Recent(ctx context.Context, limit int) ([]SpeedrunMapOvervie
 	return u.repo.Recent(ctx, limit)
 }
 
-func (u *Speedruns) TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error) {
+func (u *Speedruns) TopNOverall(ctx context.Context, count int32) (map[string][]Speedrun, error) {
 	if count <= 0 || count > 1000 {
 		return nil, ErrValueOutOfRange
 	}
@@ -39,7 +39,7 @@ func (u *Speedruns) TopNOverall(ctx context.Context, count int) (map[string][]Sp
 	return u.repo.TopNOverall(ctx, count)
 }
 
-func (u *Speedruns) ByID(ctx context.Context, speedrunID int) (Speedrun, error) {
+func (u *Speedruns) ByID(ctx context.Context, speedrunID int32) (Speedrun, error) {
 	if speedrunID <= 0 {
 		return Speedrun{}, ErrValueOutOfRange
 	}

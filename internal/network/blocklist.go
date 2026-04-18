@@ -190,7 +190,7 @@ func (b *Blocklists) GetCIDRBlockSources(ctx context.Context) ([]CIDRBlockSource
 	return b.repository.GetCIDRBlockSources(ctx)
 }
 
-func (b *Blocklists) GetCIDRBlockSource(ctx context.Context, sourceID int, block *CIDRBlockSource) error {
+func (b *Blocklists) GetCIDRBlockSource(ctx context.Context, sourceID int32, block *CIDRBlockSource) error {
 	return b.repository.GetCIDRBlockSource(ctx, sourceID, block)
 }
 
@@ -221,7 +221,7 @@ func (b *Blocklists) CreateCIDRBlockSources(ctx context.Context, name string, li
 	return blockList, nil
 }
 
-func (b *Blocklists) UpdateCIDRBlockSource(ctx context.Context, sourceID int, name string, url string, enabled bool) (CIDRBlockSource, error) {
+func (b *Blocklists) UpdateCIDRBlockSource(ctx context.Context, sourceID int32, name string, url string, enabled bool) (CIDRBlockSource, error) {
 	var blockSource CIDRBlockSource
 
 	if errSource := b.GetCIDRBlockSource(ctx, sourceID, &blockSource); errSource != nil {
@@ -245,12 +245,12 @@ func (b *Blocklists) UpdateCIDRBlockSource(ctx context.Context, sourceID int, na
 	return blockSource, nil
 }
 
-func (b *Blocklists) DeleteCIDRBlockSources(ctx context.Context, blockSourceID int) error {
+func (b *Blocklists) DeleteCIDRBlockSources(ctx context.Context, blockSourceID int32) error {
 	if err := b.repository.DeleteCIDRBlockSources(ctx, blockSourceID); err != nil {
 		return err
 	}
 
-	slog.Info("Deleted blocklist", slog.Int("cidr_block_source_id", blockSourceID))
+	slog.Info("Deleted blocklist", slog.Int("cidr_block_source_id", int(blockSourceID)))
 
 	return nil
 }
@@ -259,7 +259,7 @@ func (b *Blocklists) GetCIDRBlockWhitelists(ctx context.Context) ([]WhitelistIP,
 	return b.repository.GetCIDRBlockWhitelists(ctx)
 }
 
-func (b *Blocklists) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *WhitelistIP) error {
+func (b *Blocklists) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int32, whitelist *WhitelistIP) error {
 	return b.repository.GetCIDRBlockWhitelist(ctx, whitelistID, whitelist)
 }
 
@@ -288,7 +288,7 @@ func (b *Blocklists) CreateCIDRBlockWhitelist(ctx context.Context, address strin
 	return whitelist, nil
 }
 
-func (b *Blocklists) UpdateCIDRBlockWhitelist(ctx context.Context, whitelistID int, address string) (WhitelistIP, error) {
+func (b *Blocklists) UpdateCIDRBlockWhitelist(ctx context.Context, whitelistID int32, address string) (WhitelistIP, error) {
 	_, cidr, errParse := net.ParseCIDR(address)
 	if errParse != nil {
 		return WhitelistIP{}, ErrInvalidCIDR
@@ -305,17 +305,17 @@ func (b *Blocklists) UpdateCIDRBlockWhitelist(ctx context.Context, whitelistID i
 		return WhitelistIP{}, errSave
 	}
 
-	slog.Info("Updated ip whitelist", slog.String("addr", address), slog.Int("whitelist_id", whitelistID))
+	slog.Info("Updated ip whitelist", slog.String("addr", address), slog.Int("whitelist_id", int(whitelistID)))
 
 	return whitelist, nil
 }
 
-func (b *Blocklists) DeleteCIDRBlockWhitelist(ctx context.Context, whitelistID int) error {
+func (b *Blocklists) DeleteCIDRBlockWhitelist(ctx context.Context, whitelistID int32) error {
 	if err := b.repository.DeleteCIDRBlockWhitelist(ctx, whitelistID); err != nil {
 		return err
 	}
 
-	slog.Info("Blocklist deleted", slog.Int("cidr_block_source_id", whitelistID))
+	slog.Info("Blocklist deleted", slog.Int("cidr_block_source_id", int(whitelistID)))
 
 	return nil
 }

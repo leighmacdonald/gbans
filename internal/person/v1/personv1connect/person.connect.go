@@ -34,6 +34,11 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// PersonServiceProfileProcedure is the fully-qualified name of the PersonService's Profile RPC.
+	PersonServiceProfileProcedure = "/person.v1.PersonService/Profile"
+	// PersonServiceResolveSteamIDProcedure is the fully-qualified name of the PersonService's
+	// ResolveSteamID RPC.
+	PersonServiceResolveSteamIDProcedure = "/person.v1.PersonService/ResolveSteamID"
 	// PersonServiceCurrentProfileProcedure is the fully-qualified name of the PersonService's
 	// CurrentProfile RPC.
 	PersonServiceCurrentProfileProcedure = "/person.v1.PersonService/CurrentProfile"
@@ -52,6 +57,8 @@ const (
 
 // PersonServiceClient is a client for the person.v1.PersonService service.
 type PersonServiceClient interface {
+	Profile(context.Context, *v1.ProfileRequest) (*v1.ProfileResponse, error)
+	ResolveSteamID(context.Context, *v1.ResolveSteamIDRequest) (*v1.ResolveSteamIDResponse, error)
 	CurrentProfile(context.Context, *emptypb.Empty) (*v1.CurrentProfileResponse, error)
 	ProfileSettings(context.Context, *emptypb.Empty) (*v1.ProfileSettingsResponse, error)
 	EditProfileSettings(context.Context, *v1.EditProfileSettingsRequest) (*v1.EditProfileSettingsResponse, error)
@@ -70,6 +77,18 @@ func NewPersonServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 	baseURL = strings.TrimRight(baseURL, "/")
 	personServiceMethods := v1.File_person_v1_person_proto.Services().ByName("PersonService").Methods()
 	return &personServiceClient{
+		profile: connect.NewClient[v1.ProfileRequest, v1.ProfileResponse](
+			httpClient,
+			baseURL+PersonServiceProfileProcedure,
+			connect.WithSchema(personServiceMethods.ByName("Profile")),
+			connect.WithClientOptions(opts...),
+		),
+		resolveSteamID: connect.NewClient[v1.ResolveSteamIDRequest, v1.ResolveSteamIDResponse](
+			httpClient,
+			baseURL+PersonServiceResolveSteamIDProcedure,
+			connect.WithSchema(personServiceMethods.ByName("ResolveSteamID")),
+			connect.WithClientOptions(opts...),
+		),
 		currentProfile: connect.NewClient[emptypb.Empty, v1.CurrentProfileResponse](
 			httpClient,
 			baseURL+PersonServiceCurrentProfileProcedure,
@@ -105,11 +124,31 @@ func NewPersonServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // personServiceClient implements PersonServiceClient.
 type personServiceClient struct {
+	profile             *connect.Client[v1.ProfileRequest, v1.ProfileResponse]
+	resolveSteamID      *connect.Client[v1.ResolveSteamIDRequest, v1.ResolveSteamIDResponse]
 	currentProfile      *connect.Client[emptypb.Empty, v1.CurrentProfileResponse]
 	profileSettings     *connect.Client[emptypb.Empty, v1.ProfileSettingsResponse]
 	editProfileSettings *connect.Client[v1.EditProfileSettingsRequest, v1.EditProfileSettingsResponse]
 	query               *connect.Client[v1.QueryRequest, v1.QueryResponse]
 	editPermissions     *connect.Client[v1.EditPermissionsRequest, v1.EditPermissionsResponse]
+}
+
+// Profile calls person.v1.PersonService.Profile.
+func (c *personServiceClient) Profile(ctx context.Context, req *v1.ProfileRequest) (*v1.ProfileResponse, error) {
+	response, err := c.profile.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// ResolveSteamID calls person.v1.PersonService.ResolveSteamID.
+func (c *personServiceClient) ResolveSteamID(ctx context.Context, req *v1.ResolveSteamIDRequest) (*v1.ResolveSteamIDResponse, error) {
+	response, err := c.resolveSteamID.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
 }
 
 // CurrentProfile calls person.v1.PersonService.CurrentProfile.
@@ -159,6 +198,8 @@ func (c *personServiceClient) EditPermissions(ctx context.Context, req *v1.EditP
 
 // PersonServiceHandler is an implementation of the person.v1.PersonService service.
 type PersonServiceHandler interface {
+	Profile(context.Context, *v1.ProfileRequest) (*v1.ProfileResponse, error)
+	ResolveSteamID(context.Context, *v1.ResolveSteamIDRequest) (*v1.ResolveSteamIDResponse, error)
 	CurrentProfile(context.Context, *emptypb.Empty) (*v1.CurrentProfileResponse, error)
 	ProfileSettings(context.Context, *emptypb.Empty) (*v1.ProfileSettingsResponse, error)
 	EditProfileSettings(context.Context, *v1.EditProfileSettingsRequest) (*v1.EditProfileSettingsResponse, error)
@@ -173,6 +214,18 @@ type PersonServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewPersonServiceHandler(svc PersonServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	personServiceMethods := v1.File_person_v1_person_proto.Services().ByName("PersonService").Methods()
+	personServiceProfileHandler := connect.NewUnaryHandlerSimple(
+		PersonServiceProfileProcedure,
+		svc.Profile,
+		connect.WithSchema(personServiceMethods.ByName("Profile")),
+		connect.WithHandlerOptions(opts...),
+	)
+	personServiceResolveSteamIDHandler := connect.NewUnaryHandlerSimple(
+		PersonServiceResolveSteamIDProcedure,
+		svc.ResolveSteamID,
+		connect.WithSchema(personServiceMethods.ByName("ResolveSteamID")),
+		connect.WithHandlerOptions(opts...),
+	)
 	personServiceCurrentProfileHandler := connect.NewUnaryHandlerSimple(
 		PersonServiceCurrentProfileProcedure,
 		svc.CurrentProfile,
@@ -205,6 +258,10 @@ func NewPersonServiceHandler(svc PersonServiceHandler, opts ...connect.HandlerOp
 	)
 	return "/person.v1.PersonService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case PersonServiceProfileProcedure:
+			personServiceProfileHandler.ServeHTTP(w, r)
+		case PersonServiceResolveSteamIDProcedure:
+			personServiceResolveSteamIDHandler.ServeHTTP(w, r)
 		case PersonServiceCurrentProfileProcedure:
 			personServiceCurrentProfileHandler.ServeHTTP(w, r)
 		case PersonServiceProfileSettingsProcedure:
@@ -223,6 +280,14 @@ func NewPersonServiceHandler(svc PersonServiceHandler, opts ...connect.HandlerOp
 
 // UnimplementedPersonServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPersonServiceHandler struct{}
+
+func (UnimplementedPersonServiceHandler) Profile(context.Context, *v1.ProfileRequest) (*v1.ProfileResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("person.v1.PersonService.Profile is not implemented"))
+}
+
+func (UnimplementedPersonServiceHandler) ResolveSteamID(context.Context, *v1.ResolveSteamIDRequest) (*v1.ResolveSteamIDResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("person.v1.PersonService.ResolveSteamID is not implemented"))
+}
 
 func (UnimplementedPersonServiceHandler) CurrentProfile(context.Context, *emptypb.Empty) (*v1.CurrentProfileResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("person.v1.PersonService.CurrentProfile is not implemented"))

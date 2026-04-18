@@ -8,7 +8,7 @@ import "google/protobuf/timestamp.proto";
 service BlocklistService {
   rpc BlocklistSources(google.protobuf.Empty) returns (BlocklistSourcesResponse) {}
   rpc BlocklistSourcesCreate(BlocklistSourcesCreateRequest) returns (BlocklistSourcesCreateResponse) {}
-  rpc BlocklistSourcesEdit(BlocklistSourcesCreateEdit) returns (BlocklistSourcesCreateEdit) {}
+  rpc BlocklistSourcesEdit(BlocklistSourcesEditRequest) returns (BlocklistSourcesEditResponse) {}
   rpc BlocklistSourcesDelete(BlocklistSourcesDeleteRequest) returns (google.protobuf.Empty) {}
 
   rpc WhitelistAddress(google.protobuf.Empty) returns (WhitelistAddressResponse) {}
@@ -18,8 +18,17 @@ service BlocklistService {
 
   rpc WhitelistSteam(google.protobuf.Empty) returns (WhitelistSteamResponse) {}
   rpc WhitelistSteamDelete(WhitelistSteamDeleteRequest) returns (google.protobuf.Empty) {}
+  rpc WhitelistSteamCreate(WhitelistSteamCreateRequest) returns (WhitelistSteamCreateResponse) {}
 
   rpc CheckBlock(CheckBlockRequest) returns (CheckBlockResponse) {}
+}
+
+message WhitelistSteamCreateRequest {
+  int64 steam_id = 1;
+}
+
+message WhitelistSteamCreateResponse {
+  WhitelistSteam whitelist = 1;
 }
 
 message WhitelistSteamDeleteRequest {
@@ -71,11 +80,15 @@ message BlocklistSourcesDeleteRequest {
   int32 cidr_block_source_id = 1;
 }
 
-message BlocklistSourcesCreateEdit {
+message BlocklistSourcesEditRequest {
   int32 cidr_block_source_id = 1;
   string name = 2;
   string url = 3;
   bool enabled = 4;
+}
+
+message BlocklistSourcesEditResponse {
+  CIDRBlockSource block_source = 1;
 }
 
 message BlocklistSourcesCreateRequest {
